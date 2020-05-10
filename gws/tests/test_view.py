@@ -8,77 +8,106 @@ from starlette.responses import JSONResponse, HTMLResponse
 from starlette.testclient import TestClient
 
 from gws.prism.app import App
-from gws.prism.model import Model, Resource
-from gws.prism.view import HTMLView, JSONView
+from gws.prism.model import Model, Resource, ViewModel
+from gws.prism.view import HTMLViewTemplate, JSONViewTemplate
 
+from gws.prism.controller import Controller
 
-class PersonHTMLView(HTMLView):
+from peewee import ForeignKeyField
+
+class Person(Resource):
+    name = CharField(null=True)
+    # vmodel_types = {
+    #     'gws.test.person-html-view': PersonHTMLViewModel, 
+    #     'person-json-view': PersonJSONViewModel 
+    # }
+
+class PersonHTMLViewModel(ViewModel):
     name = 'gws.test.person-html-view'
-    content = "I am <b>{{view.model.name}}</b>! My job is {{params.job}}."
+    template = HTMLViewTemplate("I am <b>{{view_model.model.name}}</b>! My job is {{view_model.data.job}}.")
+    model = ForeignKeyField(Person, backref='view_model')
 
-class PersonJSONView(HTMLView):
+class PersonJSONViewModel(ViewModel):
     name = 'person-json-view'
-    content = '{"name": "{{view.model.name}}!", "job":"{{params.job}}"}'
+    template = JSONViewTemplate('{"name": "{{view_model.model.name}}!", "job":"{{view_model.data.job}}"}')
+    model = ForeignKeyField(Person, backref='view_model')
 
-class Person(Model):
-    name = CharField()
-    view_types = {
-        PersonHTMLView.name: PersonHTMLView, 
-        PersonJSONView.name: PersonJSONView 
-    }
-    
 class TestHTMLView(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
+        Person.drop_table()
+        PersonHTMLViewModel.drop_table()
+        PersonJSONViewModel.drop_table()
         pass
 
     @classmethod
     def tearDownClass(cls):
+        PersonHTMLViewModel.drop_table()
+        PersonJSONViewModel.drop_table()
+        Person.drop_table()
         pass
     
     def test_view(self):
         elon = Person()
-        view = PersonHTMLView(elon)
-
-        full_params = {'params': {}, '__meta__': {'view_class': 'PersonHTMLView', 'model_id': None}}
-        self.assertEqual(view.view_model.params, {})
-        self.assertEqual(view.view_model.data, full_params)
+        view_model = PersonHTMLViewModel(elon)
+        self.assertEqual(view_model.data, {})
 
         elon.name = 'Elon Musk'
         params = {"job" : "engineer"}
-        html = view.render(params)
+        html = view_model.render(params)
         print(html)
 
         self.assertEqual(html, "I am <b>Elon Musk</b>! My job is engineer.")
-        self.assertEqual(view.params, params)
+        self.assertEqual(view_model.data, params)
+        self.assertEqual(view_model.data, params)
+        self.assertEqual(len(Controller.models), 2)
 
-        full_params = {'params': params, '__meta__': {'view_class': 'PersonHTMLView', 'model_id': None}}
-        self.assertEqual(view.view_model.params, params)
-        self.assertEqual(view.view_model.data, full_params)
-
+        self.assertTrue( view_model.model is elon )
+        self.assertTrue( view_model.id is None )
+        self.assertTrue( elon.id is None )
+        
 class TestJSONView(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
+        Person.drop_table()
+        PersonHTMLViewModel.drop_table()
+        PersonJSONViewModel.drop_table()
         pass
 
     @classmethod
     def tearDownClass(cls):
+        Person.drop_table()
+        PersonHTMLViewModel.drop_table()
+        PersonJSONViewModel.drop_table()
         pass
     
     def test_view(self):
         elon = Person()
-        view = PersonJSONView(elon)
+        view_model = PersonJSONViewModel(elon)
         elon.name = 'Elon Musk'
 
         params = {"job" : "engineer"}
-        json_text = view.render(params)
+        json_text = view_model.render(params)
         print(json_text)
 
         self.assertEqual(json_text, '{"name": "Elon Musk!", "job":"engineer"}')
-        self.assertEqual(view.params, params)
+        self.assertEqual(view_model.data, params)
+        self.assertEqual(view_model.data, params)
+        self.assertEqual(len(Controller.models), 4)
+        self.assertEqual(view_model.model.id, None)
+        self.assertEqual(view_model.id, None)
 
-        full_params = {'params': params, '__meta__': {'view_class': 'PersonJSONView', 'model_id': None}}
-        self.assertEqual(view.view_model.params, params)
-        self.assertEqual(view.view_model.data, full_params)
+        view_model.save()     #save the model and view_model
+        
+        self.assertTrue(isinstance(view_model.model.id, int))
+        self.assertTrue(isinstance(view_model.id, int))
+
+        # retrieve the view_model
+        vmodel2 = PersonJSONViewModel.get( PersonJSONViewModel.id == view_model.id )
+        self.assertEqual(vmodel2.id, view_model.id)
+        self.assertEqual(vmodel2.model.id, view_model.model.id)
+
+        # print("-----")
+        # print(vmodel2.model.id)

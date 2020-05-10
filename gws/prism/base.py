@@ -18,3 +18,13 @@ class Base:
             name = convert_to_slug(name, to_lower=True, separator='_')
         
         return name
+    
+    @property
+    def property_names(self):
+        property_names = [p for p in dir(self) if isinstance(getattr(self,p),property)]
+        return property_names
+    
+    @property
+    def method_names(self):
+        property_names = [p for p in dir(self) if not isinstance(getattr(self,p),property)]
+        return property_names

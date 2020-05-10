@@ -10,102 +10,140 @@ import json
 from gws.prism.base import Base
 
 class Controller(Base):
-    views = dict()
-    routes = [
-       "/{action}/{uri}/{params}",
-    ] 
+    models = []
+    model_specs = dict()
+    is_query_params = False
 
     @classmethod
-    async def action(cls, request: 'Request') -> list:
+    async def action(cls, request: 'Request') -> 'ViewModel':
         """
             Deal with user actions
             Receive a request through a request url
-            * url = /{action}/{uri|id}/{params}
+            * url = /{action}/{uri_name}/{uri_id}/{params}
                 * action:
                     - update_view:  to update the current active view
                     - create_view:  to create a new view using params
                     - run_proc:     to run the current process and return the result view
-                * uri|id: 
-                    - uri|id of the model on which the action is applied (view_model|resource)
+                * uri_name: 
+                    - the name of the targeted resource
+                * uri_id: 
+                    - the id of the targeted resource
                 * params: parameter ins JSON format    
                     e.g.:
+
+                    update_view_params = {
+                        ...
+                    } 
+                    
                     create_view_params = {
-                        "view": "full.classname.of.the.new.view.to.create",
+                        "view": "<unique.name.of.the.new.view.to.create>",
                         ...
                     } 
 
                     run_proc_params = {
-                        "name": "<process name>",
+                        "name": "<unique.name.of.the.process.to.run>",
                         "input":{
-                            "resource_id": "<resource_id>",
-                            "resource_type": "<resource_type>"
+                            "resource_id": "<resource.id>",
+                            "resource_type": "<resource.type>"
                         }
                     } 
         """
-        action = request.query_params.get('action','')
-        uri = request.query_params.get('uri','')
-        params = request.query_params.get('params','{}')
+
+        if Controller.is_query_params:
+            action = request.query_params.get('action','')
+            uri_id = request.query_params.get('uri_id','')
+            uri_name = request.query_params.get('uri_name','')
+            params = request.query_params.get('params','{}')
+        else:
+            action = request.path_params.get('action','')
+            uri_id = request.path_params.get('uri_id','')
+            uri_name = request.path_params.get('uri_name','')
+            params = request.path_params.get('params','{}')
 
         try:
             params = json.loads(params)
         except:
-            raise Exception(type(cls).__name__, "action", "The params is not a valid JSON text")
-        
+            raise Exception("Controller", "action", "The params is not a valid JSON text")
 
-        view = cls.get_view(uri)
+        view_model = cls.fetch_model_by_uri_name_id(uri_name, uri_id)
+
+        from gws.prism.model import Model, ViewModel
+        if not isinstance(view_model, ViewModel):
+            raise Exception("Controller", "action", "The action uri must target a ViewModel.")
 
         if action == "update_view":
-            return view.render(params)
-        if action == "create_view":
-            if view is None:
-                raise Exception(type(cls).__name__, "action", "It seems that this request comes form an undefined view")
+            view_model.set_data(params)
+        elif action == "create_view":
+            if view_model is None:
+                raise Exception("Controller", "action", "It seems that this request comes form an undefined view")
             else:
-                #try to generate a new view
                 view_name = params["view"]
                 params = params["params"]
-                view = view.model.create_view_instance(view_name)
-                return view.render(params)
-
+                view_model = view_model.model.create_view_model_by_name(view_name)
+                view_model.set_data(params)
         elif action == "run":
             #run a process and render its view
             pass
-
-        # if isinstance(model, ViewModel):
-        #     # only show a view rendering
-        #     view_name = params["view_name"]
-        #     view = model.create_view_instance(view_name)
-        #     return [ view.render(params) ]
-        # elif isinstance(model, Process):
-        #     # run action
-        #     proc = model
-        #     port_name = proc.input.get_port_names()[0]
-
-        #     input_resource_id = params["input_resource_id"]
-        #     input_resource_type = params["resource_type"]
-
-        #     proc.input[port_name] = XXX
-        #     asyncio.run( proc.run(params) )
-
-        #     #return the views on the results
-        #     view_list = []
-        #     view_params = params.get('view_params', None)
-
-        #     if view_params is None:
-        #         return [ "" ]
-        #     else:
-        #         for k in proc.output.get_port_names():
-        #             rendering = proc.output[k]._deal(view_params)[0]
-        #             view_list.append( rendering )
         else:
-            return ""
+            pass # OK!
+        
+        # ensure that all models are saved
+        Controller.save_all()   
+        return view_model
 
     @classmethod
-    def get_view(cls, uri: str) -> 'View':
-        return cls.views.get(uri, None)
+    def build_url(cls, action = None, uri_name = None, uri_id = None, params = None):
+        if Controller.is_query_params:
+            return '/?action='+action+'&uri_name='+uri_name+'&uri_id='+str(uri_id)+'&params=' + str(params)
+        else:
+            return '/'+action+'/'+uri_name+'/'+str(uri_id)+'/' + str(params)
+
 
     @classmethod
-    def register(cls, view: 'View'):
+    def fetch_model_by_uri_name_id(cls, uri_name: str, uri_id: str) -> 'Model':
+        model_class = cls.model_specs[uri_name]
+        return model_class.get_by_id(uri_id)
+
+    @classmethod
+    def fetch_model(cls, uri: str) -> 'Model':
+        from gws.prism.model import Model
+        tab = Model.parse_uri(uri)
+        return cls.fetch_model_by_uri_name_id(tab[0], tab[1])
+
+
+    @classmethod
+    def _register_model_instances(cls, models: list):
+        from gws.prism.model import Model
+        for model in models:
+            if isinstance(model, Model):
+                cls.models.append(model)
+            else:
+                raise Exception("Controller", "register_model_specs", "Invalid model")
+
+    @classmethod
+    def register_model_specs(cls, model_specs: list):
         """
-            Each view is uniquely registered in the system using the UUID of it view_model
+            Uniquely register the model type
         """
-        cls.views[view.uri] = view
+        for model_type in model_specs:
+            if isinstance(model_type, type):
+                cls.model_specs[(model_type.__name__).lower()] = model_type
+            else:
+                raise Exception("Controller", "register_model_specs", "Invalid model type")
+
+    @classmethod
+    def save_all(cls) -> bool:
+        from gws.prism.model import Model, ViewModel
+
+        # save all models first
+        for model in cls.models:
+            if not isinstance(model, ViewModel):
+                model.save()
+        
+        # now save all view_models
+        for model in cls.models:
+            if isinstance(model, ViewModel):
+                model.save()
+
+        return True
+        

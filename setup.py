@@ -37,6 +37,6 @@ setuptools.setup(
         'jinja2',
         'requests',
         'itsdangerous',
-        'awesome-slugify'
+        'awesome-slugify',
     ],
 )

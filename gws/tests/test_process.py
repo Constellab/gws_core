@@ -2,8 +2,8 @@
 import asyncio
 import unittest
 from gws.prism.app import App
-from gws.prism.model import Process, Resource, Model
-from gws.prism.chain import Chain
+from gws.prism.model import Process, Resource, Model, ViewModel
+from gws.prism.controller import Controller
 
 class Person(Resource):
     def __init__(self, *args, **kwargs):
@@ -62,10 +62,18 @@ class TestProcess(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
+        Person.drop_table()
+        Move.drop_table()
+        Eat.drop_table()
+        Wait.drop_table()
         pass
 
     @classmethod
     def tearDownClass(cls):
+        Person.drop_table()
+        Move.drop_table()
+        Eat.drop_table()
+        Wait.drop_table()
         pass
 
     def test_process(self):
@@ -106,19 +114,9 @@ class TestProcess(unittest.TestCase):
         self.assertEqual( elon, p1.input['person'] )
         self.assertTrue( elon is p1.input['person'] )
         
-        self.assertEqual( p1.data, {'__params__': params} )
-        self.assertEqual( p_wait.data, {'__params__': params})
-        self.assertEqual( p5.data, {'__params__': params})
-
-        print("Params")
-        print(p1.data)
-
-        # test <() and >() operators
-        #self.assertEqual( elon, p1<'person' )
-        #self.assertEqual( p1.input['person'], p1<'person' )
-        #self.assertEqual( p1.output['person'], p1>'person' )
-        #self.assertTrue( elon is p1<'person' )
-
+        self.assertEqual( p1.data, params )
+        self.assertEqual( p_wait.data, params)
+        self.assertEqual( p5.data, params)
 
         # check p1
         self.assertEqual( p1.output['person'].position, elon.position + params['moving_step'] )
@@ -134,3 +132,4 @@ class TestProcess(unittest.TestCase):
         self.assertEqual( p3.output['person'].position, p3.input['person'].position + params['moving_step'])
         self.assertEqual( p3.output['person'].weight, p3.input['person'].weight)
 
+        Controller.save_all()

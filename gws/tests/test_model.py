@@ -3,7 +3,6 @@ import os
 import unittest
 from peewee import CharField
 from gws.prism.model import Model, DbManager
-from gws.prism.view import HTMLView
 
 ############################################################################################
 #
@@ -12,7 +11,7 @@ from gws.prism.view import HTMLView
 ############################################################################################
 
 class Person(Model):
-    name = CharField()
+    name = CharField(null=True)
 
 class TestModel(unittest.TestCase):
     

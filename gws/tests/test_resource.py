@@ -25,16 +25,4 @@ class TestResource(unittest.TestCase):
         pass
 
     def test_model(self):
-        car = Car()
-        car.bind_listener(Start())
-        message = """{
-            "action":"start",
-            "params":{
-                "speed" : 50
-            }
-        }"""
-
-        running_car = car.deal(message)
-        assert isinstance(running_car, Car)
-        assert car.speed == 0
-        assert running_car.speed == 50
+        pass

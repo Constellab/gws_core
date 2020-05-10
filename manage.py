@@ -13,15 +13,16 @@ import uvicorn
 
 cdir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(cdir,"/gws"))
-import gws.settings as settings
-from gws.prism.model import DbManager
+from gws.settings import Settings
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-t", "--test", nargs="?", action='store', type=str, help="run tests using name pattern")
-    #parser.add_argument("-r", "--run", action='store_true', help="run server")
+    parser.add_argument("-d", "--db", nargs="?", action='store', type=str, help="Database file name")
     args = parser.parse_args()
+
+    settings = Settings.retrieve()
 
     if args.test:
         if args.test == "*":
@@ -29,10 +30,27 @@ if __name__ == "__main__":
         if args.test == "all":
             args.test = "test*"
 
-        settings.is_test = True
+        settings.data["db_name"] = 'db_test.sqlite3'
+        settings.data["is_test"] = True
+
+        if args.db:
+            settings.data["db_name"] = args.db
+
+        settings.save()
+
+        #print('------')
+        # print(settings.data)
+        # print(settings.data)
+        #print(settings.db_path)
+
+        from gws.prism.model import DbManager
         DbManager.connect_db()
         loader = unittest.TestLoader()
         test_suite = loader.discover(".", pattern=args.test+"*.py")
         test_runner = unittest.TextTestRunner()
         test_runner.run(test_suite)
         DbManager.close_db()
+    
+    if args.db:
+        settings.data["db_name"] = args.db
+        settings.save()
