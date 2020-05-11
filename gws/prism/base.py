@@ -9,14 +9,21 @@ from slugify import slugify as convert_to_slug
 
 class Base:
 
-    def classname(self, slugify = False, snakefy = False) -> str:
+    def classname(self, slugify = False, snakefy = False, full=False) -> str:
         name = type(self).__name__
 
-        if slugify:
-            name = convert_to_slug(name, to_lower=True, separator='-')
-        elif snakefy:
-            name = convert_to_slug(name, to_lower=True, separator='_')
-        
+        if full:
+            module = self.__class__.__module__
+            if module is None or module == str.__class__.__module__:
+                return self.__class__.__name__  # Avoid reporting __builtin__
+            else:
+                return module + '.' + self.__class__.__name__
+        else:
+            if slugify:
+                name = convert_to_slug(name, to_lower=True, separator='-')
+            elif snakefy:
+                name = convert_to_slug(name, to_lower=True, separator='_')
+            
         return name
     
     @property

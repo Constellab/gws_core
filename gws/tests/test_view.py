@@ -17,10 +17,6 @@ from peewee import ForeignKeyField
 
 class Person(Resource):
     name = CharField(null=True)
-    # vmodel_types = {
-    #     'gws.test.person-html-view': PersonHTMLViewModel, 
-    #     'person-json-view': PersonJSONViewModel 
-    # }
 
 class PersonHTMLViewModel(ViewModel):
     name = 'gws.test.person-html-view'
@@ -31,6 +27,8 @@ class PersonJSONViewModel(ViewModel):
     name = 'person-json-view'
     template = JSONViewTemplate('{"name": "{{view_model.model.name}}!", "job":"{{view_model.data.job}}"}')
     model = ForeignKeyField(Person, backref='view_model')
+
+Controller.register_models([Person, PersonHTMLViewModel, PersonJSONViewModel])
 
 class TestHTMLView(unittest.TestCase):
     

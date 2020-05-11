@@ -48,12 +48,12 @@ class RobotJSONViewModel(ViewModel):
     template = JSONViewTemplate('{"name":"{{view_model.data.name}}"}')
     model: Robot = ForeignKeyField(Robot, backref='view_model')
     
-Robot.register_view_model_specs([
+Robot.register_view_models([
     RobotHTMLViewModel, 
     RobotJSONViewModel
 ])
 
-Controller.register_model_specs([
+Controller.register_models([
     Robot,
     RobotHTMLViewModel,
     RobotJSONViewModel
@@ -61,7 +61,7 @@ Controller.register_model_specs([
 
 ####################################################################################
 #
-# Endpoints
+# HTTP and WebSocket endpoints
 #
 ####################################################################################
 
@@ -149,16 +149,10 @@ class App :
             view_model.save()
 
         print("GWS application started!")
-        print("Server: {}:{}".format(settings.get_data("app_host"), settings.get_data("app_port")))
-        print("Testing the app: http://{}:{}{}".format(settings.get_data("app_host"), settings.get_data("app_port"), view_model.get_update_view_uri()))
-    
-    @classmethod
-    async def ws_action(cls, websocket):
-        await websocket.accept()
-        await websocket.send_text('Hello, websocket!')
-        await websocket.close()
+        print("* Server: {}:{}".format(settings.get_data("app_host"), settings.get_data("app_port")))
+        print("* HTTP Testing: http://{}:{}{}".format(settings.get_data("app_host"), settings.get_data("app_port"), view_model.get_update_view_uri()))    
+        print("* WebSocket Testing: ws://ws/{}:{}{}".format(settings.get_data("app_host"), settings.get_data("app_port"), view_model.get_update_view_uri()))
 
-    
     @classmethod 
     def test(cls, url):
         """
@@ -176,9 +170,3 @@ class App :
 ####################################################################################
 
 App.init()
-
-
-# put in user app.py file
-# app = gws.prism.App()
-# if __name__ == "__main__":
-#     uvicorn.run(app.app, host='0.0.0.0', port=8000)

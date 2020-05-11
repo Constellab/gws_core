@@ -34,12 +34,12 @@ class PersonJSONViewModel(ViewModel):
     template = JSONViewTemplate('{"model_id":"{{view_model.model.id}}", "view_uri":"{{view_model.uri}}", "name": "{{view_model.model.name}}!", "job":"{{view_model.data.job}}"}')
     model = ForeignKeyField(Person, backref='view_model')
 
-Person.register_view_model_specs([
+Person.register_view_models([
     PersonHTMLViewModel, 
     PersonJSONViewModel
 ])
 
-Controller.register_model_specs([
+Controller.register_models([
     Person, 
     PersonHTMLViewModel, 
     PersonJSONViewModel

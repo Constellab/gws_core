@@ -1,8 +1,12 @@
 import sys
 import os
 import unittest
+
+from gws.prism.model import Model, Resource, DbManager
+from gws.prism.controller import Controller
+
 from peewee import CharField
-from gws.prism.model import Model, DbManager
+
 
 ############################################################################################
 #
@@ -10,8 +14,10 @@ from gws.prism.model import Model, DbManager
 #                                         
 ############################################################################################
 
-class Person(Model):
+class Person(Resource):
     name = CharField(null=True)
+
+Controller.register_models([Person])
 
 class TestModel(unittest.TestCase):
     

@@ -58,6 +58,8 @@ class Wait(Process):
         self.output['person'] = p
         await asyncio.sleep(.5) #wait for .5 sec
 
+Controller.register_models([Person, Move, Eat, Wait])
+
 class TestProcess(unittest.TestCase):
     
     @classmethod

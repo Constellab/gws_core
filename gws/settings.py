@@ -21,7 +21,6 @@ class Settings(PWModel):
     _data = dict(
         app_host        = 'localhost',
         app_port        = 3000,
-        app_protocol    = 'http',           # http | ws
         app_dir         = current_dir,
         static_path     = os.path.join(current_dir, 'static'),
         db_dir          = os.path.join(current_dir,'../'),

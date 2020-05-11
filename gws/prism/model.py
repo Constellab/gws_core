@@ -7,9 +7,11 @@
 
 import asyncio
 from datetime import datetime
+
 from peewee import IntegerField, DateField, DateTimeField, CharField, ForeignKeyField, Model as PWModel
 from peewee import SqliteDatabase
 from playhouse.sqlite_ext import JSONField
+
 from starlette.requests import Request
 from starlette.responses import Response, HTMLResponse, JSONResponse, PlainTextResponse
 import urllib.parse
@@ -66,27 +68,34 @@ class Model(PWModel,Base):
     """
         GWS Model class for storing data in databases. 
     """
-    id = IntegerField(primary_key = True)
-    data = JSONField(null = True, default={})
-    creation_datetime = DateTimeField(default = datetime.now)
+    id = IntegerField(primary_key=True)
+    data = JSONField(null=True, default={})
+    creation_datetime = DateTimeField(default=datetime.now)
     registration_datetime = DateTimeField()
+    type = CharField(null=True, index=True)
     
-    __uri_name = "model"
-    __uri_delimiter = "/"
+    _uri_name = "model"
+    _uri_delimiter = "/"
+
+    _table_name = 'model'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.__uri_name = self.classname(slugify=True)     
+        # ensures that field type is allways equal to the name of the class
+        if self.type is None:
+            self.type = self.classname(full=True)
+        elif self.type != self.classname(full=True):
+            raise Exception(self.classname(), "__init__", "Invalid model type. You probably created the model using a wrong database entry.")
 
-        Controller.register_model_specs([type(self)])   
+        self._uri_name = self.classname(slugify=True)
+        Controller.register_models([type(self)])  
         Controller._register_model_instances([self])
 
     def clear_data(self, save: bool = False):
         self.data = None
         if save:
             self.save()
-    
     
     def has_data(self) -> bool:
         return len(self.data) > 0
@@ -103,7 +112,7 @@ class Model(PWModel,Base):
 
     @classmethod
     def parse_uri(cls, uri: str) -> list:
-        return uri.split(cls.__uri_delimiter)
+        return uri.split(cls._uri_delimiter)
 
     
     @property
@@ -112,14 +121,14 @@ class Model(PWModel,Base):
 
     @property
     def uri_name(self) -> str:
-        return self.__uri_name
+        return self._uri_name
 
     @property
     def uri(self) -> str:
         if self.id is None:
             raise Exception(self.classname(), "uri", "No uri available. Please save the resource before")
         else:
-            return self.__uri_name + Model.__uri_delimiter + str(self.id)
+            return self._uri_name + Model._uri_delimiter + str(self.id)
 
     def set_data(self, kv: dict):
         if isinstance(kv,dict):
@@ -168,22 +177,11 @@ class Viewable(Model):
             raise Exception(self.classname(), "create_view_model_by_name", "The view type is not valid")
 
     @classmethod
-    def register_view_model_specs(cls, view_model_specs: list):
+    def register_view_models(cls, view_model_specs: list):
         for t in view_model_specs:
             if not isinstance(t, type):
-                raise Exception("Model", "register_view_model_specs", "Invalid spec. A {name, type} dictionnary or [type] list is expected, where type is must be a ViewModel type or sub-type")
+                raise Exception("Model", "register_view_models", "Invalid spec. A {name, type} dictionnary or [type] list is expected, where type is must be a ViewModel type or sub-type")
             cls.view_model_specs[t.name] = t
-
-# ####################################################################
-#
-# Resource class
-#
-# ####################################################################
-
-class Resource(Viewable):
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
 
 # ####################################################################
 #
@@ -192,8 +190,8 @@ class Resource(Viewable):
 # ####################################################################
 
 class Port(Base):
-    _resource_type: Resource
-    _resource: Resource
+    _resource_type: 'Resource'
+    _resource: 'Resource'
     _next: list = []
     _is_connected : bool = False
     _parent: 'IO'
@@ -205,7 +203,7 @@ class Port(Base):
         self._parent = parent
 
     @property
-    def resource(self) -> Resource:
+    def resource(self) -> 'Resource':
         return self._resource
     
     def is_connnected(self) -> bool:
@@ -225,7 +223,7 @@ class Port(Base):
         for port in self._next:
             port._resource = self._resource
 
-    def set_resource(self, resource: Resource):
+    def set_resource(self, resource: 'Resource'):
         if not isinstance(resource, Resource):
             raise Exception(self.classname(), "set_resource", "The resource must be an instance of Resource")
 
@@ -262,7 +260,9 @@ class IO(Base):
         self._parent = parent
         self._ports = dict()
 
-    def __getitem__(self, name: str) -> Resource:
+    def __getitem__(self, name: str) -> 'Resource':
+        #print("xxxxxxx")
+        #print(name)
         if not isinstance(name, str):
             raise Exception(self.classname(), "__getitem__", "The port name must be a string")
 
@@ -271,7 +271,7 @@ class IO(Base):
 
         return self._ports[name].resource
 
-    def __setitem__(self, name: str, resource: Resource):
+    def __setitem__(self, name: str, resource: 'Resource'):
         if not isinstance(name, str):
             raise Exception(self.classname(), "__setitem__", "The port name must be a string")
 
@@ -358,6 +358,8 @@ class Process(Viewable):
     _is_started : bool = False
     _is_finished : bool = False
 
+    _table_name = 'process'
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._input = Input(self)
@@ -408,6 +410,9 @@ class Process(Viewable):
         if not self._output.is_ready():
             raise Exception(self.classname(), "run", "The output was not set after task end")
         
+        for k in self._output._ports:
+            self._output._ports[k].resource.set_process(self)
+
         self._output.propagate()
 
         for proc in self._output.next_processes():
@@ -423,7 +428,7 @@ class Process(Viewable):
         """
         pass
 
-    def set_input(self, name: str, resource: Resource):
+    def set_input(self, name: str, resource: 'Resource'):
         if not isinstance(name, str):
             raise Exception(self.classname(), "set_input", "The name must be a string")
         
@@ -462,6 +467,29 @@ class Process(Viewable):
         """
         return self.oport(name)
 
+    class Meta:
+        table_name = 'process'
+
+# ####################################################################
+#
+# Resource class
+#
+# ####################################################################
+
+class Resource(Viewable):
+    _table_name = 'resource'
+    process = ForeignKeyField(Process, null=True,backref='process')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def set_process(self, process: 'Process'):
+        self.process = process
+
+    class Meta:
+        database = DbManager.db
+        table_name = 'resource'
+
 # ####################################################################
 #
 # View class
@@ -473,6 +501,8 @@ class ViewModel(Model):
     template: ViewTemplate = ''
     model: 'Model' = ForeignKeyField(Model, backref='view_model')
 
+    _table_name = 'view_model'
+
     def __init__(self, model_instance: Model = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
@@ -483,7 +513,7 @@ class ViewModel(Model):
             raise Exception(self.classname(),"__init__","The model must be an instance af Model")
         elif isinstance(model_instance, Model):
             self.model = model_instance
-            self.model.register_view_model_specs([ type(self) ])
+            self.model.register_view_models([ type(self) ])
 
     def get_update_view_uri(self, params={}) -> str:
         if len(params) == 0:

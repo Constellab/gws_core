@@ -118,23 +118,32 @@ class Controller(Base):
             if isinstance(model, Model):
                 cls.models.append(model)
             else:
-                raise Exception("Controller", "register_model_specs", "Invalid model")
+                raise Exception("Controller", "register_models", "Invalid model")
 
     @classmethod
-    def register_model_specs(cls, model_specs: list):
+    def register_models(cls, model_specs: list):
         """
             Uniquely register the model type
         """
+        from gws.prism.model import Resource, Process, ViewModel
         for model_type in model_specs:
             if isinstance(model_type, type):
                 cls.model_specs[(model_type.__name__).lower()] = model_type
+
+                if( issubclass(model_type, Resource) ):
+                    model_type._meta.table_name = Resource._table_name
+                elif( issubclass(model_type, Process) ):
+                    model_type._meta.table_name = Process._table_name
+                elif( issubclass(model_type, ViewModel) ):
+                    model_type._meta.table_name = ViewModel._table_name
+                
             else:
-                raise Exception("Controller", "register_model_specs", "Invalid model type")
+                raise Exception("Controller", "register_models", "Invalid model type")
 
     @classmethod
     def save_all(cls) -> bool:
         from gws.prism.model import Model, ViewModel
-
+        
         # save all models first
         for model in cls.models:
             if not isinstance(model, ViewModel):
