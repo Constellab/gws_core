@@ -6,26 +6,31 @@
 #
 
 from slugify import slugify as convert_to_slug
+import inspect
 
 class Base:
 
-    def classname(self, slugify = False, snakefy = False, full=False) -> str:
+    def classname(self, slugify = False, snakefy = False) -> str:
         name = type(self).__name__
-
-        if full:
-            module = self.__class__.__module__
-            if module is None or module == str.__class__.__module__:
-                return self.__class__.__name__  # Avoid reporting __builtin__
-            else:
-                return module + '.' + self.__class__.__name__
-        else:
-            if slugify:
-                name = convert_to_slug(name, to_lower=True, separator='-')
-            elif snakefy:
-                name = convert_to_slug(name, to_lower=True, separator='_')
-            
+        if slugify:
+            name = convert_to_slug(name, to_lower=True, separator='-')
+        elif snakefy:
+            name = convert_to_slug(name, to_lower=True, separator='_')
         return name
     
+    @classmethod
+    def full_classname(cls, slugify = False, snakefy = False):
+        module = inspect.getmodule(cls).__name__
+        name = cls.__name__
+        full_name = module + "." + name
+
+        if slugify:
+            full_name = convert_to_slug(full_name, to_lower=True, separator='-')
+        elif snakefy:
+            full_name = convert_to_slug(full_name, to_lower=True, separator='_')
+        
+        return full_name
+         
     @property
     def property_names(self):
         property_names = [p for p in dir(self) if isinstance(getattr(self,p),property)]
@@ -35,3 +40,11 @@ class Base:
     def method_names(self):
         property_names = [p for p in dir(self) if not isinstance(getattr(self,p),property)]
         return property_names
+
+
+def slugify(name, snakefy = False) -> str:
+    if slugify:
+        name = convert_to_slug(name, to_lower=True, separator='-')
+    elif snakefy:
+        name = convert_to_slug(name, to_lower=True, separator='_')
+    return name

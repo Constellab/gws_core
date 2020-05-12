@@ -11,7 +11,7 @@ import uvicorn
 
 from gws.settings import Settings
 from gws.prism.view import HTMLViewTemplate, JSONViewTemplate, PlainTextViewTemplate
-from gws.prism.model import Resource, ViewModel
+from gws.prism.model import Resource, ResourceViewModel
 from gws.prism.controller import Controller
 
 settings = Settings.retrieve()
@@ -34,19 +34,15 @@ async def hello(request):
 class Robot(Resource):
     pass
 
-class RobotHTMLViewModel(ViewModel):
-    name = 'gws.test.robot-html-view'
+class RobotHTMLViewModel(ResourceViewModel):
     template = HTMLViewTemplate("""
         Hi!<br>
         I'am {{view_model.model.data.name}}.<br>
         Welcome to GWS!
     """)
-    model: Robot = ForeignKeyField(Robot, backref='view_model')
 
-class RobotJSONViewModel(ViewModel):
-    name = 'gws.test.robot-json-view'
+class RobotJSONViewModel(ResourceViewModel):
     template = JSONViewTemplate('{"name":"{{view_model.data.name}}"}')
-    model: Robot = ForeignKeyField(Robot, backref='view_model')
     
 Robot.register_view_models([
     RobotHTMLViewModel, 

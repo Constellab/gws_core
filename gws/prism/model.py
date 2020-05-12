@@ -6,8 +6,8 @@
 #
 
 import asyncio
+import uuid
 from datetime import datetime
-
 from peewee import IntegerField, DateField, DateTimeField, CharField, ForeignKeyField, Model as PWModel
 from peewee import SqliteDatabase
 from playhouse.sqlite_ext import JSONField
@@ -16,6 +16,7 @@ from starlette.requests import Request
 from starlette.responses import Response, HTMLResponse, JSONResponse, PlainTextResponse
 import urllib.parse
 
+from gws.prism.base import slugify
 from gws.settings import Settings
 from gws.prism.base import Base
 from gws.prism.controller import Controller
@@ -66,7 +67,7 @@ class ModelProp(ForeignKeyField):
  
 class Model(PWModel,Base):
     """
-        GWS Model class for storing data in databases. 
+        Model class for storing data in databases. 
     """
     id = IntegerField(primary_key=True)
     data = JSONField(null=True, default={})
@@ -74,6 +75,7 @@ class Model(PWModel,Base):
     registration_datetime = DateTimeField()
     type = CharField(null=True, index=True)
     
+    _uuid = None
     _uri_name = "model"
     _uri_delimiter = "/"
 
@@ -81,23 +83,57 @@ class Model(PWModel,Base):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._uuid = str(uuid.uuid4())
 
         # ensures that field type is allways equal to the name of the class
         if self.type is None:
-            self.type = self.classname(full=True)
-        elif self.type != self.classname(full=True):
-            raise Exception(self.classname(), "__init__", "Invalid model type. You probably created the model using a wrong database entry.")
+            self.type = self.full_classname()
+        elif self.type != self.full_classname():
+            # allow object cast after ...
+            pass
 
-        self._uri_name = self.classname(slugify=True)
-        Controller.register_models([type(self)])  
+        self._uri_name = self.full_classname(slugify=True)
+        #self._uri_name = self.classname(slugify=True)
+
+        Controller.register_models([type(self)])
         Controller._register_model_instances([self])
 
+    def cast(self, keep_registered: bool = True) -> 'Model':
+        """
+            Cast a model instance according the class description in the
+            @type field
+            * If keep_registered = True, the casted model instance is kept registrer in the Controller.
+              It is removed from the Controller register otherwise
+        """
+
+        type_str = slugify(self.type)
+        model_class = Controller.model_specs[type_str]
+
+        # instanciate the class and copy data
+        model = model_class()
+        model.id = self.id
+        model.data = self.data
+        model.creation_datetime = self.creation_datetime
+        model.registration_datetime = self.registration_datetime
+
+        if not keep_registered:
+            Controller._unregister_model_instances([self._uuid])
+
+        return model
+
     def clear_data(self, save: bool = False):
+        """
+            Clear the JSON content in the @data field
+            * if save = True, the model is saved after clearing. It is not saved otherwise
+        """
         self.data = None
         if save:
             self.save()
     
     def has_data(self) -> bool:
+        """
+            Returns True is the @data field has JSON content, False otherwise
+        """
         return len(self.data) > 0
 
     def insert_data(self, kv: dict):
@@ -151,9 +187,10 @@ class Model(PWModel,Base):
             return False
 
         return (self is other) or (self.id == other.id)
-
+    
     class Meta:
         database = DbManager.db
+        table_name = 'model'
 
 # ####################################################################
 #
@@ -163,6 +200,11 @@ class Model(PWModel,Base):
  
 class Viewable(Model):
     view_model_specs: dict = {}
+
+    def cast(self, *args, **kwargs):
+        viewable = super().cast(*args, **kwargs)
+        viewable.view_model_specs = self.view_model_specs
+        return viewable
 
     def create_view_model_by_name(self, view_name: str):
         if not isinstance(view_name, str):
@@ -174,14 +216,14 @@ class Viewable(Model):
             view_model = view_model_type(self)
             return view_model
         else:
-            raise Exception(self.classname(), "create_view_model_by_name", "The view type is not valid")
+            raise Exception(self.classname(), "create_view_model_by_name", "The view_model '"+view_name+"' is not found")
 
     @classmethod
     def register_view_models(cls, view_model_specs: list):
         for t in view_model_specs:
             if not isinstance(t, type):
                 raise Exception("Model", "register_view_models", "Invalid spec. A {name, type} dictionnary or [type] list is expected, where type is must be a ViewModel type or sub-type")
-            cls.view_model_specs[t.name] = t
+            cls.view_model_specs[t.full_classname(slugify=True)] = t
 
 # ####################################################################
 #
@@ -351,7 +393,6 @@ class Process(Viewable):
     input_specs: dict = {}
     output_specs: dict = {}
 
-    _type = 'proc'
     _input: Input
     _output: Output
 
@@ -477,27 +518,34 @@ class Process(Viewable):
 # ####################################################################
 
 class Resource(Viewable):
+    process = ForeignKeyField(Process, null=True, backref='process')
     _table_name = 'resource'
-    process = ForeignKeyField(Process, null=True,backref='process')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if self.process:
+            self.process = self.process.cast(keep_registered = False)
+            #Controller.models.remove(self.process)
+
+    def cast(self, *args, **kwargs):
+        resource = super().cast(*args, **kwargs)
+        resource.process = self.process
+        return resource
 
     def set_process(self, process: 'Process'):
         self.process = process
 
     class Meta:
-        database = DbManager.db
         table_name = 'resource'
 
 # ####################################################################
 #
-# View class
+# ViewModel class
 #
 # ####################################################################
 
 class ViewModel(Model):
-    name: str = None
+    #name: str = None
     template: ViewTemplate = ''
     model: 'Model' = ForeignKeyField(Model, backref='view_model')
 
@@ -506,14 +554,23 @@ class ViewModel(Model):
     def __init__(self, model_instance: Model = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        if self.name is None:
-            raise Exception(self.classname(), "__init__", "No view name povided. It seems that you did set this property in the definition of the class")
-  
-        if not model_instance is None and not isinstance(model_instance, Model):
+        # if self.name is None:
+        #     raise Exception(self.classname(), "__init__", "No view name povided. It seems that you did set this property in the definition of the class")
+
+        is_invalid_model_instance = not model_instance is None and \
+                                    not isinstance(model_instance, Model)
+        if is_invalid_model_instance:
             raise Exception(self.classname(),"__init__","The model must be an instance af Model")
         elif isinstance(model_instance, Model):
             self.model = model_instance
             self.model.register_view_models([ type(self) ])
+        else:
+            self.model = self.model.cast(keep_registered = False)
+
+    def cast(self, *args, **kwargs):
+        view_model = super().cast(*args, **kwargs)
+        view_model.model = self.model
+        return view_model
 
     def get_update_view_uri(self, params={}) -> str:
         if len(params) == 0:
@@ -550,3 +607,50 @@ class ViewModel(Model):
                 return super().save(*args, **kwargs)
             else:
                 raise Exception(self.classname(),"__init__","Failure while trying to save the model of the view_model. Please ensure that the model of the view_model's is saved before saving the view_model.")
+    
+    class Meta:
+        table_name = 'view_model'
+
+# ####################################################################
+#
+# Process ViewModel class
+#
+# ####################################################################
+
+class ProcessViewModel(ViewModel):
+    model: 'Process' = ForeignKeyField(Process, backref='view_model')
+    _table_name = 'process_view_model'
+
+    def __init__(self, model_instance=None, *args, **kwargs):
+
+        is_invalid_model_instance = not model_instance is None and \
+                                    not isinstance(model_instance, Process)
+        if is_invalid_model_instance:
+            raise Exception("ProcessViewModel", "__init__", "The model must be an instance af Process")
+
+        super().__init__(model_instance=model_instance, *args, **kwargs)
+
+    class Meta:
+        table_name = 'process_view_model'
+
+# ####################################################################
+#
+# Resource ViewModel class
+#
+# ####################################################################
+
+class ResourceViewModel(ViewModel):
+    model: 'Resource' = ForeignKeyField(Resource, backref='view_model')
+    _table_name = 'resource_view_model'
+
+    def __init__(self, model_instance=None, *args, **kwargs):
+
+        is_invalid_model_instance = not model_instance is None and \
+                                    not isinstance(model_instance, Resource)
+        if is_invalid_model_instance:
+            raise Exception("ResourceViewModel", "__init__", "The model must be an instance af Process")
+
+        super().__init__(model_instance=model_instance, *args, **kwargs)
+
+    class Meta:
+        table_name = 'resource_view_model'

@@ -1,32 +1,28 @@
 
 import unittest
-import copy
 
-from peewee import CharField
 from starlette.requests import Request
 from starlette.responses import JSONResponse, HTMLResponse
 from starlette.testclient import TestClient
 
 from gws.prism.app import App
-from gws.prism.model import Model, Resource, ViewModel
+from gws.prism.model import Model, Resource, ResourceViewModel
 from gws.prism.view import HTMLViewTemplate, JSONViewTemplate
-
 from gws.prism.controller import Controller
 
-from peewee import ForeignKeyField
-
 class Person(Resource):
-    name = CharField(null=True)
+    @property
+    def name(self):
+        return self.data['name']
+    
+    def set_name(self, name):
+        self.data['name'] = name
 
-class PersonHTMLViewModel(ViewModel):
-    name = 'gws.test.person-html-view'
+class PersonHTMLViewModel(ResourceViewModel):
     template = HTMLViewTemplate("I am <b>{{view_model.model.name}}</b>! My job is {{view_model.data.job}}.")
-    model = ForeignKeyField(Person, backref='view_model')
 
-class PersonJSONViewModel(ViewModel):
-    name = 'person-json-view'
+class PersonJSONViewModel(ResourceViewModel):
     template = JSONViewTemplate('{"name": "{{view_model.model.name}}!", "job":"{{view_model.data.job}}"}')
-    model = ForeignKeyField(Person, backref='view_model')
 
 Controller.register_models([Person, PersonHTMLViewModel, PersonJSONViewModel])
 
@@ -34,6 +30,7 @@ class TestHTMLView(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
+        Controller.reset()
         Person.drop_table()
         PersonHTMLViewModel.drop_table()
         PersonJSONViewModel.drop_table()
@@ -51,7 +48,7 @@ class TestHTMLView(unittest.TestCase):
         view_model = PersonHTMLViewModel(elon)
         self.assertEqual(view_model.data, {})
 
-        elon.name = 'Elon Musk'
+        elon.set_name('Elon Musk')
         params = {"job" : "engineer"}
         html = view_model.render(params)
         print(html)
@@ -65,10 +62,21 @@ class TestHTMLView(unittest.TestCase):
         self.assertTrue( view_model.id is None )
         self.assertTrue( elon.id is None )
         
+        Controller.save_all()
+
+        self.assertEqual(len(Controller.models), 2)
+
+        vm = PersonHTMLViewModel.get_by_id(view_model.id)
+        self.assertEqual(vm, view_model)
+        self.assertEqual(vm.model, elon)
+
+        self.assertEqual(len(Controller.models), 4)
+
 class TestJSONView(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
+        Controller.reset()
         Person.drop_table()
         PersonHTMLViewModel.drop_table()
         PersonJSONViewModel.drop_table()
@@ -84,7 +92,7 @@ class TestJSONView(unittest.TestCase):
     def test_view(self):
         elon = Person()
         view_model = PersonJSONViewModel(elon)
-        elon.name = 'Elon Musk'
+        elon.set_name('Elon Musk')
 
         params = {"job" : "engineer"}
         json_text = view_model.render(params)
@@ -93,10 +101,11 @@ class TestJSONView(unittest.TestCase):
         self.assertEqual(json_text, '{"name": "Elon Musk!", "job":"engineer"}')
         self.assertEqual(view_model.data, params)
         self.assertEqual(view_model.data, params)
-        self.assertEqual(len(Controller.models), 4)
         self.assertEqual(view_model.model.id, None)
         self.assertEqual(view_model.id, None)
 
+        self.assertEqual(len(Controller.models), 2)
+        
         view_model.save()     #save the model and view_model
         
         self.assertTrue(isinstance(view_model.model.id, int))
@@ -107,5 +116,4 @@ class TestJSONView(unittest.TestCase):
         self.assertEqual(vmodel2.id, view_model.id)
         self.assertEqual(vmodel2.model.id, view_model.model.id)
 
-        # print("-----")
-        # print(vmodel2.model.id)
+        self.assertEqual(len(Controller.models), 4)

@@ -10,7 +10,7 @@ import json
 from gws.prism.base import Base
 
 class Controller(Base):
-    models = []
+    models = dict()
     model_specs = dict()
     is_query_params = False
 
@@ -98,7 +98,6 @@ class Controller(Base):
         else:
             return '/'+action+'/'+uri_name+'/'+str(uri_id)+'/' + str(params)
 
-
     @classmethod
     def fetch_model_by_uri_name_id(cls, uri_name: str, uri_id: str) -> 'Model':
         model_class = cls.model_specs[uri_name]
@@ -110,13 +109,16 @@ class Controller(Base):
         tab = Model.parse_uri(uri)
         return cls.fetch_model_by_uri_name_id(tab[0], tab[1])
 
+    @classmethod
+    def reset(cls):
+        cls.models.clear()
 
     @classmethod
     def _register_model_instances(cls, models: list):
         from gws.prism.model import Model
         for model in models:
             if isinstance(model, Model):
-                cls.models.append(model)
+                cls.models[model._uuid] = model
             else:
                 raise Exception("Controller", "register_models", "Invalid model")
 
@@ -125,34 +127,48 @@ class Controller(Base):
         """
             Uniquely register the model type
         """
-        from gws.prism.model import Resource, Process, ViewModel
+        from gws.prism.model import Resource, Process, ResourceViewModel, ProcessViewModel, ViewModel
         for model_type in model_specs:
             if isinstance(model_type, type):
-                cls.model_specs[(model_type.__name__).lower()] = model_type
+                full_cname = model_type.full_classname(slugify=True)
+                cls.model_specs[full_cname] = model_type
 
+                # change names of the tables of instances of prism objects
                 if( issubclass(model_type, Resource) ):
                     model_type._meta.table_name = Resource._table_name
                 elif( issubclass(model_type, Process) ):
                     model_type._meta.table_name = Process._table_name
-                elif( issubclass(model_type, ViewModel) ):
-                    model_type._meta.table_name = ViewModel._table_name
+                elif( issubclass(model_type, ResourceViewModel) ):
+                    model_type._meta.table_name = ResourceViewModel._table_name
+                elif( issubclass(model_type, ProcessViewModel) ):
+                    model_type._meta.table_name = ProcessViewModel._table_name
                 
             else:
                 raise Exception("Controller", "register_models", "Invalid model type")
 
     @classmethod
     def save_all(cls) -> bool:
-        from gws.prism.model import Model, ViewModel
+        from gws.prism.model import Process, Resource, ViewModel
         
-        # save all models first
-        for model in cls.models:
-            if not isinstance(model, ViewModel):
-                model.save()
+        # first) save all viewable processes
+        for k in cls.models:
+            if isinstance(cls.models[k], Process):
+                cls.models[k].save()
         
-        # now save all view_models
-        for model in cls.models:
-            if isinstance(model, ViewModel):
-                model.save()
+        # second) save all viewable resources
+        for k in cls.models:
+            if isinstance(cls.models[k], Resource):
+                cls.models[k].save()
+
+        # third) save all view_models
+        for k in cls.models:
+            if isinstance(cls.models[k], ViewModel):
+                cls.models[k].save()
 
         return True
-        
+    
+    @classmethod
+    def _unregister_model_instances(cls, uuids: list):
+        from gws.prism.model import Model
+        for uuid in uuids:
+            cls.models.pop(uuid,None)

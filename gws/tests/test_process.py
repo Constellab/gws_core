@@ -135,3 +135,9 @@ class TestProcess(unittest.TestCase):
         self.assertEqual( p3.output['person'].weight, p3.input['person'].weight)
 
         Controller.save_all()
+
+        res = Person.get_by_id( p3.output['person'].id )
+        self.assertTrue( isinstance(res, Person) )
+        self.assertEqual( res.process, p3 )
+        self.assertTrue( isinstance(res.process, type(p3)) )
+        

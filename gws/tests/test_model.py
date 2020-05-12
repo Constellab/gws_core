@@ -14,7 +14,7 @@ from peewee import CharField
 #                                         
 ############################################################################################
 
-class Person(Resource):
+class Person(Model):
     name = CharField(null=True)
 
 Controller.register_models([Person])

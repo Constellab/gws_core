@@ -7,13 +7,24 @@ from gws.prism.model import Resource
 from gws.prism.controller import Controller
 
 class Car(Resource):
-    name = "Tesla"
-    speed = 0
+    @property
+    def name(self):
+        return self.data['name']
+    
+    def set_name(self, name):
+        self.data['name'] = name
+
+    @property
+    def speed(self):
+        return self.data['name']
+    
+    def set_speed(self, name):
+        self.data['name'] = name
 
 class Start(Process):
     def run(self, params={}):
         self._output = copy.deepcopy(self._input)
-        self._output.speed = params['speed']
+        self._output.set_speed(params['speed'])
 
 Controller.register_models([Car, Start])
 

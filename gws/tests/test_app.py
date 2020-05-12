@@ -10,23 +10,31 @@ from starlette.responses import JSONResponse, HTMLResponse
 from starlette.testclient import TestClient
 
 from gws.prism.app import App
-from gws.prism.model import Model, Resource, Process, ViewModel
+from gws.prism.model import Model, Resource, Process, ResourceViewModel
 from gws.prism.view import HTMLViewTemplate, JSONViewTemplate
 from gws.prism.controller import Controller
 
 
+# ##############################################################################
+#
+# Class definition
+#
+# ##############################################################################
+
+
 class Person(Resource):
-    name = CharField(null=True)
+    @property
+    def name(self):
+        return self.data['name']
+    
+    def set_name(self, name):
+        self.data['name'] = name
 
-class PersonHTMLViewModel(ViewModel):
-    name = 'gws.test.person-html-view'
+class PersonHTMLViewModel(ResourceViewModel):
     template = HTMLViewTemplate("Model={{view_model.model.id}} & View URI={{view_model.uri}}: I am <b>{{view_model.model.name}}</b>! My job is {{view_model.data.job}}.")
-    model = ForeignKeyField(Person, backref='view_model')
 
-class PersonJSONViewModel(ViewModel):
-    name = 'gws.test.person-json-view'
+class PersonJSONViewModel(ResourceViewModel):
     template = JSONViewTemplate('{"model_id":"{{view_model.model.id}}", "view_uri":"{{view_model.uri}}", "name": "{{view_model.model.name}}!", "job":"{{view_model.data.job}}"}')
-    model = ForeignKeyField(Person, backref='view_model')
 
 Person.register_view_models([
     PersonHTMLViewModel, 
@@ -38,6 +46,13 @@ Controller.register_models([
     PersonHTMLViewModel, 
     PersonJSONViewModel
 ])
+
+# ##############################################################################
+#
+# Testing
+#
+# ##############################################################################
+
 
 class TestApp(unittest.TestCase):
     
@@ -58,7 +73,7 @@ class TestApp(unittest.TestCase):
     def test_view(self):
         elon = Person()
         elon_vmodel = PersonHTMLViewModel(elon)
-        elon.name = 'Elon Musk'
+        elon.set_name('Elon Musk')
 
         Controller.save_all()
 
