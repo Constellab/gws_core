@@ -525,7 +525,6 @@ class Resource(Viewable):
         super().__init__(*args, **kwargs)
         if self.process:
             self.process = self.process.cast(keep_registered = False)
-            #Controller.models.remove(self.process)
 
     def cast(self, *args, **kwargs):
         resource = super().cast(*args, **kwargs)

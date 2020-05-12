@@ -148,22 +148,26 @@ class Controller(Base):
 
     @classmethod
     def save_all(cls) -> bool:
-        from gws.prism.model import Process, Resource, ViewModel
-        
-        # first) save all viewable processes
-        for k in cls.models:
-            if isinstance(cls.models[k], Process):
-                cls.models[k].save()
-        
-        # second) save all viewable resources
-        for k in cls.models:
-            if isinstance(cls.models[k], Resource):
-                cls.models[k].save()
+        from gws.prism.model import DbManager, Process, Resource, ViewModel
+        with DbManager.db.atomic() as transaction:
+            try:
+                # first) save all viewable processes
+                for k in cls.models:
+                    if isinstance(cls.models[k], Process):
+                        cls.models[k].save()
+                
+                # second) save all viewable resources
+                for k in cls.models:
+                    if isinstance(cls.models[k], Resource):
+                        cls.models[k].save()
 
-        # third) save all view_models
-        for k in cls.models:
-            if isinstance(cls.models[k], ViewModel):
-                cls.models[k].save()
+                # third) save all view_models
+                for k in cls.models:
+                    if isinstance(cls.models[k], ViewModel):
+                        cls.models[k].save()
+            except:
+                transaction.rollback()
+                return False
 
         return True
     

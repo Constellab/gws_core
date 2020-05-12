@@ -38,6 +38,5 @@ setuptools.setup(
         'requests',
         'itsdangerous',
         'awesome-slugify',
-        'sqlalchemy'
     ],
 )

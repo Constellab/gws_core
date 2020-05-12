@@ -6,4 +6,3 @@ jinja2
 requests
 itsdangerous
 awesome-slugify
-sqlalchemy
