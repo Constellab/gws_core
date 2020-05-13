@@ -40,7 +40,7 @@ class RobotHTMLViewModel(ResourceViewModel):
     """)
 
 class RobotJSONViewModel(ResourceViewModel):
-    template = JSONViewTemplate('{"name":"{{view_model.data.name}}"}')
+    template = JSONViewTemplate('{"name":"{{view_model.model.data.name}}"}')
     
 Robot.register_view_models([
     RobotHTMLViewModel, 
@@ -136,18 +136,21 @@ class App :
     def on_startup(cls):
         try:
             robot = Robot.get( Robot.id==1 )
-            view_model = RobotHTMLViewModel.get( RobotHTMLViewModel.id == 1 )
+            html_view_model = RobotHTMLViewModel.get( RobotHTMLViewModel.id == 1 )
         except:
             robot = Robot()
             robot.insert_data({"name":"R. Giskard Reventlov"})
             robot.save()
-            view_model = RobotHTMLViewModel(robot)
-            view_model.save()
+            html_view_model = RobotHTMLViewModel(robot)
+            html_view_model.save()
+            json_view_model = RobotJSONViewModel(robot)
+            json_view_model.save()
+            
 
         print("GWS application started!")
         print("* Server: {}:{}".format(settings.get_data("app_host"), settings.get_data("app_port")))
-        print("* HTTP Testing: http://{}:{}{}".format(settings.get_data("app_host"), settings.get_data("app_port"), view_model.get_update_view_uri()))    
-        print("* WebSocket Testing: ws://ws/{}:{}{}".format(settings.get_data("app_host"), settings.get_data("app_port"), view_model.get_update_view_uri()))
+        print("* HTTP Testing: http://{}:{}{}".format(settings.get_data("app_host"), settings.get_data("app_port"), html_view_model.get_update_view_uri()))    
+        print("* WebSocket Testing: ws://ws/{}:{}{}".format(settings.get_data("app_host"), settings.get_data("app_port"), html_view_model.get_update_view_uri()))
 
     @classmethod 
     def test(cls, url):
