@@ -1,3 +1,4 @@
+import uvicorn
 from starlette.applications import Starlette
 from starlette.responses import Response, JSONResponse, PlainTextResponse,  FileResponse,  HTMLResponse
 from starlette.routing import Route, Mount, WebSocketRoute
@@ -5,9 +6,6 @@ from starlette.templating import Jinja2Templates
 from starlette.staticfiles import StaticFiles
 from starlette.requests import Request
 from starlette.endpoints import HTTPEndpoint, WebSocketEndpoint
-from peewee import ForeignKeyField
-
-import uvicorn
 
 from gws.settings import Settings
 from gws.prism.view import HTMLViewTemplate, JSONViewTemplate, PlainTextViewTemplate
@@ -27,7 +25,7 @@ async def hello(request):
 
 ####################################################################################
 #
-# Robot classÒ
+# Robot class
 #
 ####################################################################################
 
@@ -61,14 +59,12 @@ Controller.register_models([
 #
 ####################################################################################
 
-
 class HTTPApp(HTTPEndpoint):
     async def get(self, request):
         return await App.action(request)
     
     async def post(self, request):
         return await App.action(request)
-
 
 class WebSocketApp(WebSocketEndpoint):
     encoding = 'bytes'
@@ -100,7 +96,6 @@ class App :
     ctrl: Controller = None
     routes = [
         Route('/hello', hello),
-        Mount('/static', StaticFiles(directory=settings.get_data("static_path")), name='static'),
     ]
     debug = settings.get_data("is_test")
     is_started = False
@@ -111,6 +106,11 @@ class App :
         cls.routes.append(WebSocketRoute('/ws/{action}/{uri_name}/{uri_id}/', WebSocketApp))
         cls.routes.append(Route('/{action}/{uri_name}/{uri_id}/{params}/', HTTPApp) )
         cls.routes.append(Route('/{action}/{uri_name}/{uri_id}/', HTTPApp) )
+
+        static_dirs = settings.get_data("static_dirs")
+        for k in static_dirs:
+            cls.routes.append(Mount(k, StaticFiles(directory=static_dirs[k]), name=k))
+
         cls.app = Starlette(debug=cls.debug, routes=cls.routes, on_startup=[cls.on_startup])
     
     @classmethod

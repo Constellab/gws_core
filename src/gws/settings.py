@@ -8,24 +8,23 @@
 import os
 from playhouse.sqlite_ext import JSONField
 from peewee import Model as PWModel
-from peewee import SqliteDatabase
+from peewee import SqliteDatabase, Proxy
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-db = SqliteDatabase( os.path.join(current_dir,"../db_settings.sqlite3") )
-#db = SqliteDatabase( ":memory:" )  #use of in-memory database
+database_proxy = Proxy()  # create a proxy for our db.
+__cdir__ = os.path.dirname(os.path.abspath(__file__))
 
 # app settings
 class Settings(PWModel):
     data = JSONField(null = True, default={})
 
     _data = dict(
+        app_dir         = __cdir__,
         app_host        = 'localhost',
         app_port        = 3000,
-        app_dir         = current_dir,
-        static_path     = os.path.join(current_dir, 'static'),
-        db_dir          = os.path.join(current_dir,'../'),
+        static_dirs     = {},
+        db_dir          = os.path.join(__cdir__, '../../'),
         db_name         = 'db.sqlite3',     # ':memory:'
-        is_test         = False
+        is_test         = False,
     )
 
     def __init__(self, *args, **kwargs):
@@ -35,6 +34,28 @@ class Settings(PWModel):
             self.data = {}
             for k in self._data:
                 self.data[k] = self._data[k]
+
+    @classmethod
+    def add_statics(cls, dirs: dict):
+        for k in dirs:
+            cls._data['static_dirs'][k] = dirs[k]
+
+    @classmethod
+    def init( cls, params: dict = None):
+        cls._data["app_dir"] = params["app_dir"]
+        cls._data["db_dir"] = params["db_dir"]
+        
+        for k in params:
+            cls._data[k] = params[k]
+
+        db = SqliteDatabase( os.path.join(cls._data["db_dir"], "db_settings.sqlite3") )
+        database_proxy.initialize(db)
+
+        db.connect(reuse_if_open=True)
+        if not cls.table_exists():
+            cls.create_table()
+            settings = Settings()
+            settings.save()
 
     @property
     def db_path(self):
@@ -55,13 +76,5 @@ class Settings(PWModel):
         return Settings.get_by_id(1)
 
     class Meta:
-        database = db
+        database = database_proxy
 
-
-db.connect(reuse_if_open=True)
-if not Settings.table_exists():
-    Settings.create_table()
-    settings = Settings()
-    settings.save()
-
-#db.close()

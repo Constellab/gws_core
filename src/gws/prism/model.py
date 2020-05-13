@@ -78,7 +78,6 @@ class Model(PWModel,Base):
     _uuid = None
     _uri_name = "model"
     _uri_delimiter = "/"
-
     _table_name = 'model'
 
     def __init__(self, *args, **kwargs):

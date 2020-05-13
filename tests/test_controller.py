@@ -141,7 +141,7 @@ class TestControllerHTTP(unittest.TestCase):
         
         # Test create_view => json
         params = """{
-            "view":"gws-tests-test-controller-personjsonviewmodel", 
+            "view":"tests-test-controller-personjsonviewmodel", 
             "params":{
                 "job" : "SpaceX CEO"
             } 

@@ -12,13 +12,25 @@ import argparse
 import uvicorn
 
 # load prism module
-cdir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.join(cdir,"./gws"))
+__cdir__ = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(__cdir__,"./"))        # -> load gws tests
+sys.path.append(os.path.join(__cdir__,"./src"))     # -> load gws module
 
 # set settings
 from gws.settings import Settings
 
-# ... set setting here ...
+Settings.add_statics({
+    '/static/gws'   : os.path.join(__cdir__, './src/static/gws')
+})
+
+Settings.init(dict(
+    app_dir         = __cdir__,
+    app_host        = 'localhost',
+    app_port        = 3000,
+    db_dir          = __cdir__,
+    db_name         = 'db.sqlite3',     # ':memory:'
+    is_test         = False,
+))
 
 from gws.prism.manage import manage
 
