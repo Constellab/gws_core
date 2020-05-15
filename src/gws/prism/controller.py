@@ -61,7 +61,10 @@ class Controller(Base):
             params = request.path_params.get('params','{}')
 
         try:
-            params = json.loads(params)
+            if len(params) == 0:
+                params = {}
+            else:
+                params = json.loads(params)
         except:
             raise Exception("Controller", "action", "The params is not a valid JSON text")
 
@@ -70,8 +73,10 @@ class Controller(Base):
         from gws.prism.model import Model, ViewModel
         if not isinstance(view_model, ViewModel):
             raise Exception("Controller", "action", "The action uri must target a ViewModel.")
-
-        if action == "update_view":
+        
+        if action == "get_view":
+            view_model.set_data()
+        elif action == "update_view":
             view_model.set_data(params)
         elif action == "create_view":
             if view_model is None:
