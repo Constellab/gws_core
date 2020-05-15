@@ -149,8 +149,8 @@ class App :
 
         print("GWS application started!")
         print("* Server: {}:{}".format(settings.get_data("app_host"), settings.get_data("app_port")))
-        print("* HTTP Testing: http://{}:{}{}".format(settings.get_data("app_host"), settings.get_data("app_port"), html_view_model.get_update_view_uri()))    
-        print("* WebSocket Testing: ws://ws/{}:{}{}".format(settings.get_data("app_host"), settings.get_data("app_port"), html_view_model.get_update_view_uri()))
+        print("* HTTP Testing: http://{}:{}{}".format(settings.get_data("app_host"), settings.get_data("app_port"), html_view_model.get_view_uri()))    
+        print("* WebSocket Testing: ws://ws/{}:{}{}".format(settings.get_data("app_host"), settings.get_data("app_port"), html_view_model.get_view_uri()))
 
     @classmethod 
     def test(cls, url):

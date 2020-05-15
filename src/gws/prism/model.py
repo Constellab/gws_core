@@ -129,6 +129,12 @@ class Model(PWModel,Base):
         if save:
             self.save()
     
+    def get_name(self) -> str:
+        return self.data.get("name", None)
+    
+    def set_description(self, value: str):
+        return self.data.get("description", None)
+
     def has_data(self) -> bool:
         """
             Returns True is the @data field has JSON content, False otherwise
@@ -149,7 +155,6 @@ class Model(PWModel,Base):
     def parse_uri(cls, uri: str) -> list:
         return uri.split(cls._uri_delimiter)
 
-    
     @property
     def uri_id(self) -> str:
         return self.id
@@ -170,6 +175,17 @@ class Model(PWModel,Base):
             self.data = kv
         else:
             raise Exception(self.classname(),"set_data","The data must be a JSONable dictionary")  
+    
+    def set_name(self, value: str):
+        if not isinstance(value, str):
+            raise Exception(self.classname(),"set_name","The name must be a string")  
+        self.data["name"] = value
+    
+    def set_description(self, value: str):
+        if not isinstance(value, str):
+            raise Exception(self.classname(),"set_description","The description must be a string")  
+        
+        self.data["description"] = value
 
     def save(self, *args, **kwargs) -> bool:
         if not self.table_exists():
@@ -570,19 +586,19 @@ class ViewModel(Model):
         view_model.model = self.model
         return view_model
 
-    def get_update_view_uri(self, params={}) -> str:
+    def get_view_uri(self, params={}) -> str:
         if len(params) == 0:
             params = ""
         else:
             params = urllib.parse.quote(str(params))
-        return '/update_view/' + self.uri + '/' + params
+        return '/view/' + self.uri + '/' + params
 
-    def get_create_view_uri(self, params={}) -> str:
-        if len(params) == 0:
-            params = ""
-        else:
-            params = urllib.parse.quote(str(params))
-        return '/create_view/' + self.uri + '/' + params
+    # def get_create_view_uri(self, params={}) -> str:
+    #     if len(params) == 0:
+    #         params = ""
+    #     else:
+    #         params = urllib.parse.quote(str(params))
+    #     return '/view/' + self.uri + '/' + params
 
     def render(self, params: dict = None) -> str:
         if isinstance(params, dict):

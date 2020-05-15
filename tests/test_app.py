@@ -91,7 +91,7 @@ class TestApp(unittest.TestCase):
         # Test update_view => html
         params = """{ "job" : "engineer" }"""
         response = client.get(Controller.build_url(
-            action = 'update_view', 
+            action = "view", 
             uri_name = elon_vmodel.uri_name,
             uri_id = elon_vmodel.uri_id,
             params = str(params)

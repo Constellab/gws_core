@@ -21,9 +21,8 @@ class Controller(Base):
             Receive a request through a request url
             * url = /{action}/{uri_name}/{uri_id}/{params}
                 * action:
-                    - update_view:  to update the current active view
-                    - create_view:  to create a new view using params
-                    - run_proc:     to run the current process and return the result view
+                    - view:  to get or create a view of a view_model
+                    - run:   to run the current process and return the result view
                 * uri_name: 
                     - the name of the targeted resource
                 * uri_id: 
@@ -31,21 +30,18 @@ class Controller(Base):
                 * params: parameter ins JSON format    
                     e.g.:
 
-                    update_view_params = {
-                        ...
-                    } 
-                    
-                    create_view_params = {
-                        "view": "<unique.name.of.the.new.view.to.create>",
-                        ...
+                    view_params = {
+                        "view": "<optional_unique.name.of.the.new.view.to.create>",
+                        ... other params ...
                     } 
 
-                    run_proc_params = {
+                    run_params = {
                         "name": "<unique.name.of.the.process.to.run>",
                         "input":{
                             "resource_id": "<resource.id>",
                             "resource_type": "<resource.type>"
                         }
+                        ... other params ...
                     } 
         """
 
@@ -67,25 +63,28 @@ class Controller(Base):
                 params = json.loads(params)
         except:
             raise Exception("Controller", "action", "The params is not a valid JSON text")
-
+        
         view_model = cls.fetch_model_by_uri_name_id(uri_name, uri_id)
-
-        from gws.prism.model import Model, ViewModel
+        from gws.prism.model import ViewModel
         if not isinstance(view_model, ViewModel):
             raise Exception("Controller", "action", "The action uri must target a ViewModel.")
-        
-        if action == "get_view":
-            view_model.set_data()
-        elif action == "update_view":
-            view_model.set_data(params)
-        elif action == "create_view":
-            if view_model is None:
-                raise Exception("Controller", "action", "It seems that this request comes form an undefined view")
-            else:
-                view_name = params["view"]
+         
+        if action == "view":
+            if params.get("view", None):
+                # generate a new view
+                name = params["view"]
                 params = params["params"]
-                view_model = view_model.model.create_view_model_by_name(view_name)
+                view_model = view_model.model.create_view_model_by_name(name)
+                if not isinstance(view_model, ViewModel):
+                    raise Exception("Controller", "action", "The the view '"+ name+"' cannot ne created.")
+         
                 view_model.set_data(params)
+            else:
+                # OK!
+                # simply loads the current view with the new parameters
+                pass
+        
+            view_model.set_data(params)
         elif action == "run":
             #run a process and render its view
             pass

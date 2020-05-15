@@ -106,7 +106,7 @@ class TestControllerHTTP(unittest.TestCase):
         # Test update_view => html
         params = """{ "job" : "engineer" }"""
         response = client.get(Controller.build_url(
-            action = 'update_view', 
+            action = "view", 
             uri_name = elon_vmodel.uri_name,
             uri_id = elon_vmodel.uri_id,
             params = params
@@ -118,7 +118,7 @@ class TestControllerHTTP(unittest.TestCase):
         # Test update_view => json
         params = """{ "job" : "engineer" }"""
         response = client.get(Controller.build_url(
-            action = 'update_view', 
+            action = "view", 
             uri_name = json_vmodel.uri_name,
             uri_id = json_vmodel.uri_id,
             params = params
@@ -130,7 +130,7 @@ class TestControllerHTTP(unittest.TestCase):
         # Test update_view different params => json
         params = """{ "job" : "Tesla Maker" }"""
         response = client.get(Controller.build_url(
-            action = 'update_view', 
+            action = "view", 
             uri_name = json_vmodel.uri_name,
             uri_id = json_vmodel.uri_id,
             params = params
@@ -148,7 +148,7 @@ class TestControllerHTTP(unittest.TestCase):
         }"""
 
         response = client.get(Controller.build_url(
-            action = 'create_view', 
+            action = "view", 
             uri_name = elon_vmodel.uri_name,
             uri_id = elon_vmodel.uri_id,
             params = params
@@ -211,7 +211,7 @@ class TestControllerWebSocket(unittest.TestCase):
 
         with client.websocket_connect(
             Controller.build_url(
-                action = 'update_view', 
+                action = "view", 
                 uri_name = elon_vmodel.uri_name,
                 uri_id = elon_vmodel.uri_id,
                 params = '{ "job" : "engineer" }'
