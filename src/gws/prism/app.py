@@ -120,9 +120,9 @@ class App :
         """
 
         view_model = await Controller.action(request)
-        if isinstance(view_model.template, HTMLViewTemplate):
+        if view_model.template.is_html():
             return HTMLResponse(view_model.render())
-        elif isinstance(view_model.template, JSONViewTemplate):
+        elif view_model.template.is_json():
             return JSONResponse(view_model.render())
         else:
             return PlainTextResponse(view_model.render())

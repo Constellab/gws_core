@@ -7,11 +7,16 @@
 
 from slugify import slugify as convert_to_slug
 import inspect
+import re
 
 class Base:
 
-    def classname(self, slugify = False, snakefy = False) -> str:
+    def classname(self, slugify = False, snakefy = False, separate_upper = False) -> str:
         name = type(self).__name__
+        if separate_upper:
+            name = re.sub('([A-Z]{1})', r'-\1', name)
+            name = name.strip("-")
+
         if slugify:
             name = convert_to_slug(name, to_lower=True, separator='-')
         elif snakefy:
@@ -30,7 +35,12 @@ class Base:
             full_name = convert_to_slug(full_name, to_lower=True, separator='_')
         
         return full_name
-         
+
+    @classmethod
+    def module(cls):
+        module = inspect.getmodule(cls).__name__
+        return module
+
     @property
     def property_names(self):
         property_names = [p for p in dir(self) if isinstance(getattr(self,p),property)]

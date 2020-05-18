@@ -5,6 +5,7 @@
 # About us: https://gencovery.com
 #
 
+import os
 import asyncio
 import uuid
 from datetime import datetime
@@ -20,7 +21,9 @@ from gws.prism.base import slugify
 from gws.settings import Settings
 from gws.prism.base import Base
 from gws.prism.controller import Controller
-from gws.prism.view import ViewTemplate
+from gws.prism.view import ViewTemplate, ViewTemplateFile
+
+__cdir__ = os.path.dirname(os.path.abspath(__file__))
 
 class DbManager(Base):
     """
@@ -132,7 +135,7 @@ class Model(PWModel,Base):
     def get_name(self) -> str:
         return self.data.get("name", None)
     
-    def set_description(self, value: str):
+    def get_description(self, value: str):
         return self.data.get("description", None)
 
     def has_data(self) -> bool:
@@ -560,7 +563,7 @@ class Resource(Viewable):
 
 class ViewModel(Model):
     #name: str = None
-    template: ViewTemplate = ''
+    template: ViewTemplate = None
     model: 'Model' = ForeignKeyField(Model, backref='view_model')
 
     _table_name = 'view_model'
@@ -568,9 +571,6 @@ class ViewModel(Model):
     def __init__(self, model_instance: Model = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # if self.name is None:
-        #     raise Exception(self.classname(), "__init__", "No view name povided. It seems that you did set this property in the definition of the class")
-
         is_invalid_model_instance = not model_instance is None and \
                                     not isinstance(model_instance, Model)
         if is_invalid_model_instance:
@@ -580,6 +580,7 @@ class ViewModel(Model):
             self.model.register_view_models([ type(self) ])
         else:
             self.model = self.model.cast(keep_registered = False)
+
 
     def cast(self, *args, **kwargs):
         view_model = super().cast(*args, **kwargs)
@@ -592,13 +593,6 @@ class ViewModel(Model):
         else:
             params = urllib.parse.quote(str(params))
         return '/view/' + self.uri + '/' + params
-
-    # def get_create_view_uri(self, params={}) -> str:
-    #     if len(params) == 0:
-    #         params = ""
-    #     else:
-    #         params = urllib.parse.quote(str(params))
-    #     return '/view/' + self.uri + '/' + params
 
     def render(self, params: dict = None) -> str:
         if isinstance(params, dict):
@@ -617,7 +611,7 @@ class ViewModel(Model):
             raise Exception(self.classname(),"__init__","Failure while trying to save the model of the view_model. Please ensure that the model of the view_model's is saved before saving the view_model.")
         else:
             if self.model.save(*args, **kwargs):
-                self.data["model_id"] = self.model.id
+                #self.data["model_id"] = self.model.id
                 return super().save(*args, **kwargs)
             else:
                 raise Exception(self.classname(),"__init__","Failure while trying to save the model of the view_model. Please ensure that the model of the view_model's is saved before saving the view_model.")
@@ -644,6 +638,9 @@ class ProcessViewModel(ViewModel):
 
         super().__init__(model_instance=model_instance, *args, **kwargs)
 
+        if self.template is None:
+            self.template = ViewTemplateFile(os.path.join(__cdir__, "process-view-model.html"), type="html")
+
     class Meta:
         table_name = 'process_view_model'
 
@@ -665,6 +662,9 @@ class ResourceViewModel(ViewModel):
             raise Exception("ResourceViewModel", "__init__", "The model must be an instance af Process")
 
         super().__init__(model_instance=model_instance, *args, **kwargs)
+
+        if self.template is None:
+            self.template = ViewTemplateFile(os.path.join(__cdir__, "templates/model/resource-view-model.html"), type="html")
 
     class Meta:
         table_name = 'resource_view_model'

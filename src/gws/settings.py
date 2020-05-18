@@ -73,7 +73,11 @@ class Settings(PWModel):
 
     @classmethod
     def retrieve(cls):
-        return Settings.get_by_id(1)
+        try:
+            return Settings.get_by_id(1)
+        except:
+            raise Exception("Settings", "retrieve", "Cannot retrieve settings from the database")
+        
 
     class Meta:
         database = database_proxy

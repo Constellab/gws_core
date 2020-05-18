@@ -7,8 +7,11 @@ from starlette.testclient import TestClient
 
 from gws.prism.app import App
 from gws.prism.model import Model, Resource, ResourceViewModel
-from gws.prism.view import HTMLViewTemplate, JSONViewTemplate
+from gws.prism.view import HTMLViewTemplate, JSONViewTemplate, ViewTemplateFile
 from gws.prism.controller import Controller
+
+import os
+__cdir__ = os.path.dirname(os.path.abspath(__file__))
 
 class Person(Resource):
     @property
@@ -23,6 +26,9 @@ class PersonHTMLViewModel(ResourceViewModel):
 
 class PersonJSONViewModel(ResourceViewModel):
     template = JSONViewTemplate('{"name": "{{view_model.model.name}}!", "job":"{{view_model.data.job}}"}')
+
+class FunnyView(ResourceViewModel):
+    template = ViewTemplateFile(os.path.join(__cdir__, 'test-view/funny-view.html'), type="html")
 
 Controller.register_models([Person, PersonHTMLViewModel, PersonJSONViewModel])
 
@@ -117,3 +123,52 @@ class TestJSONView(unittest.TestCase):
         self.assertEqual(vmodel2.model.id, view_model.model.id)
 
         self.assertEqual(len(Controller.models), 4)
+
+class TestFunnyView(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        Controller.reset()
+        Person.drop_table()
+        PersonHTMLViewModel.drop_table()
+        PersonJSONViewModel.drop_table()
+        pass
+
+    @classmethod
+    def tearDownClass(cls):
+        Person.drop_table()
+        PersonHTMLViewModel.drop_table()
+        PersonJSONViewModel.drop_table()
+        pass
+
+    
+    def test_view_file(self):
+        elon = Person()
+        view_model = FunnyView(elon)
+        elon.set_name('Elon')
+
+        text = view_model.render({})
+        print(text)
+
+        expected_text = """
+        <div>
+            This is my funny view!<br>
+            My name is: Elon
+        </div>
+        """
+        self.assertEqual(expected_text.replace("\n", "").replace(" ", ""), text.replace("\n", "").replace(" ", ""))
+
+    def test_default_view_file(self):
+        elon = Person()
+        view_model = ResourceViewModel(elon)
+        elon.set_name('Elon Musk')
+
+        text = view_model.render({})
+        print(text)
+
+        expected_text = """
+        <div style="padding:50px 20px; border: 1px solid #dcdcdc; border-radius: 4px;">
+            Resource
+        </div>
+        """
+
+        self.assertEqual(expected_text.replace("\n", "").replace(" ", ""), text.replace("\n", "").replace(" ", ""))

@@ -32,7 +32,8 @@ def manage():
         if args.db:
             settings.data["db_name"] = args.db
 
-        settings.save()
+        if not settings.save():
+            raise Exception("manage", "Cannot save settings in database")
 
         from gws.prism.model import DbManager
         DbManager.connect_db()

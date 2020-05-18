@@ -64,10 +64,17 @@ class Controller(Base):
         except:
             raise Exception("Controller", "action", "The params is not a valid JSON text")
         
-        view_model = cls.fetch_model_by_uri_name_id(uri_name, uri_id)
+        Q = cls.fetch_model_by_uri_name_id(uri_name, uri_id)
+        if len(Q) == 1:
+            view_model = Q[0]
+        elif len(Q) == 0:
+            raise Exception("Controller", "action", "No view_model matchs with the request")
+        else:
+            raise Exception("Controller", "action", "Several view_model match with the request")
+
         from gws.prism.model import ViewModel
         if not isinstance(view_model, ViewModel):
-            raise Exception("Controller", "action", "The action uri must target a ViewModel.")
+            raise Exception("Controller", "action", "The action uri must target a ViewModel")
          
         if action == "view":
             if params.get("view", None):
@@ -105,7 +112,11 @@ class Controller(Base):
     @classmethod
     def fetch_model_by_uri_name_id(cls, uri_name: str, uri_id: str) -> 'Model':
         model_class = cls.model_specs[uri_name]
-        return model_class.get_by_id(uri_id)
+        Q = model_class.select().where(
+            model_class.id == uri_id, 
+            model_class.type == model_class.full_classname()
+        )
+        return Q
 
     @classmethod
     def fetch_model(cls, uri: str) -> 'Model':
