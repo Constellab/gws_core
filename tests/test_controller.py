@@ -158,6 +158,9 @@ class TestControllerHTTP(unittest.TestCase):
         json_response = json.loads(response.content.decode("utf-8"))
         new_uri = json_response["view_uri"]
         new_json_view = Controller.fetch_model(new_uri)
+
+        print(new_json_view)
+        
         self.assertEqual(type(new_json_view), PersonJSONViewModel)
         self.assertFalse(new_json_view is json_vmodel)
         self.assertEqual(new_json_view.model, elon)
