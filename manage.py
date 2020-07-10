@@ -7,32 +7,58 @@
 
 import sys
 import os
+import json
 import unittest
 import argparse
 import uvicorn
 
-# load prism module
-__cdir__ = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.join(__cdir__,"./"))        # -> load gws tests
-sys.path.append(os.path.join(__cdir__,"./src"))     # -> load gws module
+def parse_setting(cwd: str = None, module_name:str = None, setting_file:str = "settings.json"):
+    if cwd is None:
+        raise Exception("Parameter cwd is is required")
+    
+    if module_name is None:
+        raise Exception("Parameter cwd is is required")
 
-# set settings
-from gws.settings import Settings
+    if not os.path.exists(setting_file):
+        raise "No setting.json file found"
+    
+    sys.path.append(os.path.join(cwd,"./"))         # -> load current module tests
+    sys.path.append(os.path.join(cwd,"./src"))      # -> load current module sources
 
-Settings.add_statics({
-    '/static/gws'   : os.path.join(__cdir__, './src/static/gws')
-})
+    with open(setting_file) as f:
+        settings = json.load(f)
 
-Settings.init(dict(
-    app_dir         = __cdir__,
-    app_host        = 'localhost',
-    app_port        = 3000,
-    db_dir          = __cdir__,
-    db_name         = 'db.sqlite3',     # ':memory:'
-    is_test         = False,
-))
+    # load modules
+    for name in settings["modules"]:
+        path = settings["modules"][name]
+        sys.path.append(os.path.join(cwd,path))            # -> load module tests
+        sys.path.append(os.path.join(cwd,path,"./src"))    # -> load module sources
 
-from gws.prism.manage import manage
+        if not name == module_name:
+            settings_tmp = parse_setting(os.path.join(path,"./settings.json"))
+            settings_tmp.update(settings)
+            settings = settings_tmp
+
+    return settings
 
 if __name__ == "__main__":
-    manage()
+    __cdir__ = os.path.dirname(os.path.abspath(__file__))
+    settings = {
+        "app_dir"       : "./",
+        "app_host"      : "localhost",
+        "app_port"      : 3000,
+        "db_dir"        : "./",
+        "db_name"       : "db.sqlite3",
+        "is_test"       : False,
+        "modules"       : {},
+        "static_dirs"       : {},
+        "__cwd__"       : __cdir__
+    }
+
+    settings.update(parse_setting(cwd=__cdir__, module_name="gws", setting_file="./settings.json"))
+
+    from gws.settings import Settings
+    Settings.init(settings)
+
+    from gws import runner
+    runner.run()

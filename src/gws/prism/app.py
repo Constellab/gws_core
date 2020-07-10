@@ -1,3 +1,4 @@
+import os
 import uvicorn
 from starlette.applications import Starlette
 from starlette.responses import Response, JSONResponse, PlainTextResponse,  FileResponse,  HTMLResponse
@@ -22,6 +23,26 @@ settings = Settings.retrieve()
 
 async def hello(request):
     return PlainTextResponse("Hello!")
+
+####################################################################################
+#
+# Homepage!
+#
+####################################################################################
+
+templates = Jinja2Templates(directory=settings.get_public_dir())
+async def homepage(request):
+    settings = Settings.retrieve()
+    app = settings.data.get("app", {})
+    text_script = """
+        window.addEventListener("load", function(event) {
+            """ + app.get("onload","") + ";" + """
+        });
+    """
+
+    print("----------")
+    print(settings.app)
+    return templates.TemplateResponse('index.html', {'request': request, "settings": settings})
 
 ####################################################################################
 #
@@ -102,15 +123,22 @@ class App :
 
     @classmethod
     def init(cls):
-        cls.routes.append(WebSocketRoute('/ws/{action}/{uri_name}/{uri_id}/{params}/', WebSocketApp))
-        cls.routes.append(WebSocketRoute('/ws/{action}/{uri_name}/{uri_id}/', WebSocketApp))
-        cls.routes.append(Route('/{action}/{uri_name}/{uri_id}/{params}/', HTTPApp) )
-        cls.routes.append(Route('/{action}/{uri_name}/{uri_id}/', HTTPApp) )
+        # process and resource routes
+        cls.routes.append(WebSocketRoute('/qw/{action}/{uri_name}/{uri_id}/{params}/', WebSocketApp))
+        cls.routes.append(WebSocketRoute('/qw/{action}/{uri_name}/{uri_id}/', WebSocketApp))
+        cls.routes.append(Route('/q/{action}/{uri_name}/{uri_id}/{params}/', HTTPApp) )
+        cls.routes.append(Route('/q/{action}/{uri_name}/{uri_id}/', HTTPApp) )
 
-        static_dirs = settings.get_data("static_dirs")
-        for k in static_dirs:
-            cls.routes.append(Mount(k, StaticFiles(directory=static_dirs[k]), name=k))
+        # static module dirs
+        statics = settings.get_static_dirs()
+        for k in statics:
+            print(statics[k])
+            cls.routes.append(Mount(k, StaticFiles(directory=statics[k]), name=k))
 
+        # home
+        cls.routes.append(Route("/", homepage))
+
+        # starlette
         cls.app = Starlette(debug=cls.debug, routes=cls.routes, on_startup=[cls.on_startup])
     
     @classmethod
@@ -146,11 +174,10 @@ class App :
             json_view_model = RobotJSONViewModel(robot)
             json_view_model.save()
             
-
         print("GWS application started!")
         print("* Server: {}:{}".format(settings.get_data("app_host"), settings.get_data("app_port")))
-        print("* HTTP Testing: http://{}:{}{}".format(settings.get_data("app_host"), settings.get_data("app_port"), html_view_model.get_view_uri()))    
-        print("* WebSocket Testing: ws://ws/{}:{}{}".format(settings.get_data("app_host"), settings.get_data("app_port"), html_view_model.get_view_uri()))
+        print("* HTTP Testing: http://{}:{}/q{}".format(settings.get_data("app_host"), settings.get_data("app_port"), html_view_model.get_view_uri()))    
+        print("* WebSocket Testing: ws://{}:{}/qw{}".format(settings.get_data("app_host"), settings.get_data("app_port"), html_view_model.get_view_uri()))
 
     @classmethod 
     def test(cls, url):

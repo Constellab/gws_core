@@ -131,7 +131,7 @@ class Model(PWModel,Base):
         self.data = None
         if save:
             self.save()
-    
+
     def get_name(self) -> str:
         return self.data.get("name", None)
     
@@ -321,8 +321,6 @@ class IO(Base):
         self._ports = dict()
 
     def __getitem__(self, name: str) -> 'Resource':
-        #print("xxxxxxx")
-        #print(name)
         if not isinstance(name, str):
             raise Exception(self.classname(), "__getitem__", "The port name must be a string")
 
@@ -426,11 +424,20 @@ class Process(Viewable):
         self._is_started = False
         self._is_finished = False
 
+        if self.data.get("config", None) is None:
+            self.data["config"] = {}
+
         for k in self.input_specs:
             self._input.create_port(k,self.input_specs[k])
 
         for k in self.output_specs:
             self._output.create_port(k,self.output_specs[k])
+
+    def get_config(self, config: dict):
+        return self.data["config"]
+
+    def get_param(self, name: str):
+        return self.data["config"].get(name)
 
     @property
     def input(self) -> 'Port':
@@ -446,6 +453,16 @@ class Process(Viewable):
         return  (not self._is_started or \
                 not self._is_finished) and \
                 self._input.is_ready()
+
+    def iport(self, name: str) -> Port:
+        """ 
+            Operator iport(). Retrun input port by name
+        """
+        if not isinstance(name, str):
+            raise Exception(self.classname(), "<<", "The port name must be a string")
+
+        return self._input._ports[name]
+
 
     def next_processes(self) -> list:
         return self._output.next_processes()
@@ -481,6 +498,15 @@ class Process(Viewable):
     def output(self) -> 'Port':
         return self._output
 
+    def oport(self, name: str) -> Port:
+        """ 
+            Operator oport(). Return output port by name
+        """
+        if not isinstance(name, str):
+            raise Exception(self.classname(), ">>", "The port name must be a string")
+
+        return self._output._ports[name]
+
     async def task(self, params={}):
         """ 
             Process task
@@ -496,29 +522,24 @@ class Process(Viewable):
 
         self._input[name] = resource
 
-    def iport(self, name: str) -> Port:
-        """ 
-            Operator iport(). Retrun input port by name
-        """
-        if not isinstance(name, str):
-            raise Exception(self.classname(), "<<", "The port name must be a string")
+    def set_config(self, config: dict):
+        if not isinstance(config, dict):
+            raise Exception(self.classname(), "set_config", "The config must be dictionary of string, float or boolean")
 
-        return self._input._ports[name]
+        for k in config:
+            self.set_param(k, config[k])
 
+    def set_param(self, name: str, value):
+        if not isinstance(value, str) and not isinstance(value, float) and not isinstance(value, bool):
+            raise Exception(self.classname(), "set_param", "The parameter must a string, float or boolean")
+        
+        self.data["config"][name] = value
+    
     def __lshift__(self, name: str) -> Port:
         """ 
             Operator <<(). Retrun input port by name
         """
         return self.iport(name)
-
-    def oport(self, name: str) -> Port:
-        """ 
-            Operator oport(). Return output port by name
-        """
-        if not isinstance(name, str):
-            raise Exception(self.classname(), ">>", "The port name must be a string")
-
-        return self._output._ports[name]
 
     def __rshift__(self, name: str) -> Port:
         """ 
@@ -562,7 +583,6 @@ class Resource(Viewable):
 # ####################################################################
 
 class ViewModel(Model):
-    #name: str = None
     template: ViewTemplate = None
     model: 'Model' = ForeignKeyField(Model, backref='view_model')
 
@@ -574,7 +594,7 @@ class ViewModel(Model):
         is_invalid_model_instance = not model_instance is None and \
                                     not isinstance(model_instance, Model)
         if is_invalid_model_instance:
-            raise Exception(self.classname(),"__init__","The model must be an instance af Model")
+            raise Exception(self.classname(),"__init__","The model must be an instance of Model")
         elif isinstance(model_instance, Model):
             self.model = model_instance
             self.model.register_view_models([ type(self) ])
@@ -611,7 +631,6 @@ class ViewModel(Model):
             raise Exception(self.classname(),"__init__","Failure while trying to save the model of the view_model. Please ensure that the model of the view_model's is saved before saving the view_model.")
         else:
             if self.model.save(*args, **kwargs):
-                #self.data["model_id"] = self.model.id
                 return super().save(*args, **kwargs)
             else:
                 raise Exception(self.classname(),"__init__","Failure while trying to save the model of the view_model. Please ensure that the model of the view_model's is saved before saving the view_model.")
@@ -639,7 +658,9 @@ class ProcessViewModel(ViewModel):
         super().__init__(model_instance=model_instance, *args, **kwargs)
 
         if self.template is None:
-            self.template = ViewTemplateFile(os.path.join(__cdir__, "process-view-model.html"), type="html")
+            settings = Settings()
+            template_dir = settings.get_template_dir("gws")
+            self.template = ViewTemplateFile(os.path.join(template_dir, "./model/process.html"), type="html")
 
     class Meta:
         table_name = 'process_view_model'
@@ -664,7 +685,9 @@ class ResourceViewModel(ViewModel):
         super().__init__(model_instance=model_instance, *args, **kwargs)
 
         if self.template is None:
-            self.template = ViewTemplateFile(os.path.join(__cdir__, "templates/model/resource-view-model.html"), type="html")
+            settings = Settings.retrieve()
+            template_dir = settings.get_template_dir("gws")
+            self.template = ViewTemplateFile(os.path.join(template_dir, "./model/resourcs.html"), type="html")
 
     class Meta:
         table_name = 'resource_view_model'

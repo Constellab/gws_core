@@ -21,10 +21,10 @@ class Settings(PWModel):
         app_dir         = __cdir__,
         app_host        = 'localhost',
         app_port        = 3000,
-        static_dirs     = {},
         db_dir          = os.path.join(__cdir__, '../../'),
         db_name         = 'db.sqlite3',     # ':memory:'
         is_test         = False,
+        modules         = {}
     )
 
     def __init__(self, *args, **kwargs):
@@ -34,14 +34,9 @@ class Settings(PWModel):
             self.data = {}
             for k in self._data:
                 self.data[k] = self._data[k]
-
+        
     @classmethod
-    def add_statics(cls, dirs: dict):
-        for k in dirs:
-            cls._data['static_dirs'][k] = dirs[k]
-
-    @classmethod
-    def init( cls, params: dict = None):
+    def init( cls, params: dict = None ):
         cls._data["app_dir"] = params["app_dir"]
         cls._data["db_dir"] = params["db_dir"]
         
@@ -54,8 +49,18 @@ class Settings(PWModel):
         db.connect(reuse_if_open=True)
         if not cls.table_exists():
             cls.create_table()
+            
+        try:
+            settings = Settings.get_by_id(1)
+            settings.data = cls._data
+            settings.save()
+        except:
             settings = Settings()
             settings.save()
+
+    @property
+    def app(self):
+        return self.data.get("app", {})
 
     @property
     def db_path(self):
@@ -63,6 +68,30 @@ class Settings(PWModel):
             return self.data["db_name"]
         else:
             return os.path.join(self.data["db_dir"], self.data["db_name"])
+
+    def get_cwd(self) -> dict:
+        return self.data["__cwd__"]
+
+    def get_app_dir(self) -> dict:
+        return os.path.join(self.get_cwd(),self.data["app_dir"])
+    
+    def get_public_dir(self) -> dict:
+        return os.path.join(self.get_cwd(),"./public")
+
+    def get_static_dirs(self) -> dict:
+        statics = {}
+        m_dir = self.data["statics"]
+        for k in m_dir:
+            statics["/"+k.strip('/')] = os.path.join(self.get_cwd(),m_dir[k])
+        
+        return statics
+
+    def get_module_dir(self, module_name: str) -> str:
+        return os.path.join(self.get_cwd(),self.data["modules"][module_name])
+
+    def get_template_dir(self, module_name: str) -> str:
+        module_dir = self.get_module_dir(module_name)
+        return os.path.join(module_dir, "./templates")
 
     def get_data(self, k:str) -> str:
         return self.data[k]
@@ -78,7 +107,6 @@ class Settings(PWModel):
         except:
             raise Exception("Settings", "retrieve", "Cannot retrieve settings from the database")
         
-
     class Meta:
         database = database_proxy
 
