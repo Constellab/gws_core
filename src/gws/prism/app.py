@@ -1,3 +1,8 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS. 
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
+
 import os
 import uvicorn
 from starlette.applications import Starlette
@@ -33,16 +38,10 @@ async def hello(request):
 templates = Jinja2Templates(directory=settings.get_public_dir())
 async def homepage(request):
     settings = Settings.retrieve()
-    app = settings.data.get("app", {})
-    text_script = """
-        window.addEventListener("load", function(event) {
-            """ + app.get("onload","") + ";" + """
-        });
-    """
-
-    print("----------")
-    print(settings.app)
-    return templates.TemplateResponse('index.html', {'request': request, "settings": settings})
+    return templates.TemplateResponse('index.html', {
+        'request': request, 
+        'settings': settings,
+    })
 
 ####################################################################################
 #
@@ -129,7 +128,7 @@ class App :
         cls.routes.append(Route('/q/{action}/{uri_name}/{uri_id}/{params}/', HTTPApp) )
         cls.routes.append(Route('/q/{action}/{uri_name}/{uri_id}/', HTTPApp) )
 
-        # static module dirs
+        # static dirs
         statics = settings.get_static_dirs()
         for k in statics:
             print(statics[k])

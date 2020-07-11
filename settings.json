@@ -7,10 +7,8 @@
     "user_db_dir"   : "./",
     "user_db_name"  : "./db.sqlite3",
     "is_test"       : false,
-    "modules"       :{
-        "gws"       : "./"
-    },
-    "statics"        :{
+    "dependencies"  : {},
+    "statics"       : {
         "/static/dis"   : "../../extern/distrib-js",
         "/static/gws"   : "../gws-js/static/gws",
         "/static/pub"   : "./public/static"
@@ -35,12 +33,13 @@
             "/static/gws/dashboard/base-theme.css",
             "/static/gws/dashboard/dark-theme.css"
         ],
-        "onload": "window.initDasboard()",
-        "buttons":[
-            {
-            "icon": "<i class='fas fa-vials'></i>",
-            "onclick": "window.openExperiments()"
-            }
+        "left_buttons":[
+            { "name": "explorer", "icon": "fas fa-copy", "onclick": "window.gws.explorer" },
+            { "name": "collab", "icon": "fas fa-users", "onclick": "window.gws.collab" },
+            { "name": "biox", "icon": "fas fa-vials", "onclick": "window.gws.biox" },
+            { "name": "biotadb", "icon": "fas fa-database", "onclick": "window.gws.biotadb" },
+            { "name": "code", "icon": "fas fa-code", "onclick": "window.gws.code" },
+            { "name": "settings", "icon": "fas fa-cog", "onclick": "window.gws.settings" }
         ]
     }
 }

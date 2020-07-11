@@ -1,20 +1,38 @@
+/**
+ * LICENSE
+ * This software is the exclusive property of Gencovery SAS. 
+ * The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+ * About us: https://gencovery.com
+ */
+
 import * as GBoard from '/static/gws/dashboard/all.js'
 
-var board = new GBoard.Dashboard({canvas: "#gws-dashboard"});
-var row = new GBoard.Row();
-board.setPanel(row);
+GBoard.init();
 
-var t1 = new GBoard.Tab();
-var col = new GBoard.Column();
-row.add([t1,col]);
+if(window.gws == undefined)
+    window.gws = {};
 
-var t2 = new GBoard.Tab();
-var t3 = new GBoard.Tab();
-col.add([t2, t3]);
+// implement callback functions
+window.gws.explorer = function(){
+    console.log("explorer loaded")
+}
 
-board.view();
+window.gws.biox = function(){
+    console.log("experiments loaded")
+}
 
-if(!window.hasOwnProperty("gws"))
-    window.gws = {}
+window.gws.biotadb = function(){
+    console.log("databases loaded")
+}
 
-window.gws.dashboard = board;
+window.gws.collab = function(){
+    console.log("users loaded")
+}
+
+window.gws.code = function(){
+    console.log("codes loaded")
+}
+
+window.gws.settings = function(){
+    console.log("settings loaded")
+}

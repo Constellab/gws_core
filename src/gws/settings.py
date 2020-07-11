@@ -24,7 +24,7 @@ class Settings(PWModel):
         db_dir          = os.path.join(__cdir__, '../../'),
         db_name         = 'db.sqlite3',     # ':memory:'
         is_test         = False,
-        modules         = {}
+        dependencies    = {}
     )
 
     def __init__(self, *args, **kwargs):
@@ -82,16 +82,17 @@ class Settings(PWModel):
         statics = {}
         m_dir = self.data["statics"]
         for k in m_dir:
-            statics["/"+k.strip('/')] = os.path.join(self.get_cwd(),m_dir[k])
+            if ("/"+k.strip('/')+"/").startswith("/static/"):
+                statics["/"+k.strip('/')] = os.path.join(self.get_cwd(),m_dir[k])
         
         return statics
 
-    def get_module_dir(self, module_name: str) -> str:
-        return os.path.join(self.get_cwd(),self.data["modules"][module_name])
+    def get_dependency_dir(self, dependency_name: str) -> str:
+        return os.path.join(self.get_cwd(),self.data["dependencies"][dependency_name])
 
-    def get_template_dir(self, module_name: str) -> str:
-        module_dir = self.get_module_dir(module_name)
-        return os.path.join(module_dir, "./templates")
+    def get_template_dir(self, dependency_name: str) -> str:
+        dependency_dir = self.get_dependency_dir(dependency_name)
+        return os.path.join(dependency_dir, "./templates")
 
     def get_data(self, k:str) -> str:
         return self.data[k]
