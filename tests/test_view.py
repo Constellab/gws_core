@@ -13,6 +13,10 @@ from gws.prism.controller import Controller
 import os
 __cdir__ = os.path.dirname(os.path.abspath(__file__))
 
+from gws.settings import Settings
+settings = Settings.retrieve()
+print(settings.db_path)
+
 class Person(Resource):
     @property
     def name(self):

@@ -45,8 +45,8 @@ class Settings(PWModel):
 
         db = SqliteDatabase( os.path.join(cls._data["db_dir"], "db_settings.sqlite3") )
         database_proxy.initialize(db)
+        #db.connect(reuse_if_open=True)
 
-        db.connect(reuse_if_open=True)
         if not cls.table_exists():
             cls.create_table()
             

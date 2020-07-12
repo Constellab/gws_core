@@ -15,8 +15,6 @@ import click
 import importlib
 
 from gws.settings import Settings
-from gws.prism.controller import Controller
-from gws.prism.app import App
 
 @click.command(context_settings=dict(
     ignore_unknown_options=True,
@@ -32,8 +30,9 @@ def run(ctx, test, db, cli, runserver):
     settings = Settings.retrieve()
 
     if runserver:   
-        #from gws.prism.model import DbManager
-        #DbManager.connect_db()
+        from gws.prism.controller import Controller
+        from gws.prism.app import App
+        
         Controller.is_query_params = False
         app = App()
         app.start()
@@ -52,24 +51,16 @@ def run(ctx, test, db, cli, runserver):
 
         if not settings.save():
             raise Exception("manage", "Cannot save the settings in the database")
-
-        #from gws.prism.model import DbManager
-        #DbManager.connect_db()
+        
         loader = unittest.TestLoader()
         test_suite = loader.discover(".", pattern=test+"*.py")
         test_runner = unittest.TextTestRunner()
         test_runner.run(test_suite)
-        #DbManager.close_db()
 
     elif cli:
-        #from gws.prism.model import DbManager
-        #DbManager.connect_db()
-
         tab = cli.split(".")
         n = len(tab)
         module_name = ".".join(tab[0:n-1])
         function_name = tab[n-1]
         module = importlib.import_module(module_name)
         getattr(module, function_name)()
-  
-        #DbManager.close_db()

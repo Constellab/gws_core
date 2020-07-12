@@ -11,7 +11,21 @@ import argparse
 import uvicorn
 import collections.abc
 
-module_name = "gws"
+__cdir__ = os.path.dirname(os.path.abspath(__file__))
+
+def read_module_name():
+    module_name = None
+    with open(os.path.join(__cdir__,"settings.json")) as f:
+        try:
+            settings = json.load(f)
+        except:
+            raise Exception("Error while parsing the settings JSON file. Please check file setting file.")
+
+    module_name = settings.get("name",None)
+    if module_name is None:
+        raise Exception("The module name is required. Please check file setting file.")
+    
+    return module_name
 
 def update_json(d, u):
     for k, v in u.items():
@@ -21,20 +35,20 @@ def update_json(d, u):
             d[k] = v
     return d
 
-def parse_settings(cwd: str = None, dep_name:str = None, setting_file:str = "settings.json"):
-    if cwd is None:
-        raise Exception("Parameter cwd is is required")
+def parse_settings(module_cwd: str = None, module_name:str = None, module_setting_file:str = "settings.json"):
+    if module_cwd is None:
+        raise Exception("Paremeter module_cwd is required")
     
-    if dep_name is None:
-        raise Exception("Parameter cwd is is required")
+    if module_name is None:
+        raise Exception("Paremeter module_name is required")
 
-    if not os.path.exists(setting_file):
-        raise "No setting.json file found"
+    if not os.path.exists(module_setting_file):
+        raise Exception("The setting file of module '"+module_name+"' is not found. Please check that file '"+module_setting_file+"'.")
     
-    sys.path.append(os.path.join(cwd,"./"))         # -> load current module tests
-    sys.path.append(os.path.join(cwd,"./src"))      # -> load current module sources
+    sys.path.append(os.path.join(module_cwd,"./"))         # -> load current module tests
+    sys.path.append(os.path.join(module_cwd,"./src"))      # -> load current module sources
 
-    with open(setting_file) as f:
+    with open(module_setting_file) as f:
         try:
             settings = json.load(f)
         except:
@@ -44,19 +58,21 @@ def parse_settings(cwd: str = None, dep_name:str = None, setting_file:str = "set
         settings["dependencies"][module_name] = "./"
 
     # recursive load of dependencies
-    for name in settings["dependencies"]:
-        path = settings["dependencies"][name]
-        sys.path.append(os.path.join(cwd,path))            # -> load module tests
-        sys.path.append(os.path.join(cwd,path,"./src"))    # -> load module sources
+    for dep_name in settings["dependencies"]:
+        dep_path = settings["dependencies"][dep_name]
+        dep_cwd = os.path.join(module_cwd,dep_path)
+        dep_setting_file = os.path.join(dep_cwd,"./settings.json")
 
-        if not name == dep_name:
-            new_settings = parse_settings(os.path.join(path,"./settings.json"))
+        sys.path.append(dep_cwd)            # -> load module tests
+        sys.path.append(os.path.join(dep_cwd,"./src"))    # -> load module sources
+
+        if not dep_name == module_name:
+            new_settings = parse_settings(module_cwd=dep_cwd, module_name=dep_name, module_setting_file=dep_setting_file)
             settings = update_json(new_settings, settings)
 
     return settings
 
 if __name__ == "__main__":
-    __cdir__ = os.path.dirname(os.path.abspath(__file__))
     settings = {
         "app_dir"       : "./",
         "app_host"      : "localhost",
@@ -69,7 +85,8 @@ if __name__ == "__main__":
         "__cwd__"       : __cdir__
     }
 
-    settings = update_json(settings, parse_settings(cwd=__cdir__, dep_name=module_name, setting_file="./settings.json"))
+    module_name = read_module_name()
+    settings = update_json(settings, parse_settings(module_cwd=__cdir__, module_name=module_name, module_setting_file="./settings.json"))
     
     from gws.settings import Settings
     Settings.init(settings)    

@@ -21,8 +21,6 @@ from gws.prism.base import Base
 from gws.prism.controller import Controller
 from gws.prism.view import ViewTemplate, ViewTemplateFile
 
-__cdir__ = os.path.dirname(os.path.abspath(__file__))
-
 class DbManager(Base):
     """
         GWS DbManager for managing backend sqlite databases. 

@@ -1,4 +1,5 @@
 {
+    "name"          : "gws",
     "app_dir"       : "./",
     "app_host"      : "localhost",
     "app_port"      : 3000,
@@ -12,7 +13,7 @@
         "/static/pub-gws"   : "./public/static"
     },
     "app":{
-        "favicon": {"src":"/static/pub/favicon.png", "type":"image/png"},
+        "favicon": {"src":"/static/pub-gws/favicon.png", "type":"image/png"},
         "title": "GWS",
         "scripts": [
             "/static/dis/jquery/3.5.1/jquery.slim.min.js",
