@@ -9,7 +9,7 @@ import json
 import unittest
 import argparse
 import uvicorn
-import collections.abc
+#import collections.abc
 
 __cdir__ = os.path.dirname(os.path.abspath(__file__))
 
@@ -29,11 +29,28 @@ def read_module_name():
 
 def update_json(d, u):
     for k, v in u.items():
-        if isinstance(v, collections.abc.Mapping):
+        if isinstance(v, dict):
             d[k] = update_json(d.get(k, {}), v)
+        elif isinstance(v, list):
+            d[k]= d.get(k, []) + v
         else:
             d[k] = v
     return d
+
+def update_relative_static_paths(dep_rel_path, dep_settings):
+    for k in dep_settings["statics"]:
+        dep_settings["statics"][k] = os.path.join(dep_rel_path,dep_settings["statics"][k])
+    
+    if dep_settings.get("app", None) is None:
+        return dep_settings["app"]
+
+    for k in dep_settings["app"]:
+        if k in ["scripts","modules","styles"]:
+            length = len(dep_settings["app"][k])
+            for i in range(length):
+                dep_settings["app"][k][i] = os.path.join(dep_rel_path,dep_settings["app"][k][i])
+    
+    return dep_settings
 
 def parse_settings(module_cwd: str = None, module_name:str = None, module_setting_file:str = "settings.json"):
     if module_cwd is None:
@@ -59,16 +76,21 @@ def parse_settings(module_cwd: str = None, module_name:str = None, module_settin
 
     # recursive load of dependencies
     for dep_name in settings["dependencies"]:
-        dep_path = settings["dependencies"][dep_name]
-        dep_cwd = os.path.join(module_cwd,dep_path)
-        dep_setting_file = os.path.join(dep_cwd,"./settings.json")
+        if dep_name == ":external:":
+            for dep_urls in settings["dependencies"][dep_name]:
+                sys.path.append(os.path.join(module_cwd,dep_urls))    # -> load module sources
+        else:
+            dep_path = settings["dependencies"][dep_name]
+            dep_cwd = os.path.join(module_cwd,dep_path)
+            dep_setting_file = os.path.join(dep_cwd,"./settings.json")
 
-        sys.path.append(dep_cwd)            # -> load module tests
-        sys.path.append(os.path.join(dep_cwd,"./src"))    # -> load module sources
+            sys.path.append(dep_cwd)            # -> load module tests
+            sys.path.append(os.path.join(dep_cwd,"./src"))    # -> load module sources
 
-        if not dep_name == module_name:
-            new_settings = parse_settings(module_cwd=dep_cwd, module_name=dep_name, module_setting_file=dep_setting_file)
-            settings = update_json(new_settings, settings)
+            if not dep_name == module_name:
+                dep_settings = parse_settings(module_cwd=dep_cwd, module_name=dep_name, module_setting_file=dep_setting_file)
+                dep_settings = update_relative_static_paths(dep_path,dep_settings)
+                settings = update_json(dep_settings, settings)
 
     return settings
 
@@ -87,7 +109,7 @@ if __name__ == "__main__":
 
     module_name = read_module_name()
     settings = update_json(settings, parse_settings(module_cwd=__cdir__, module_name=module_name, module_setting_file="./settings.json"))
-    
+
     from gws.settings import Settings
     Settings.init(settings)    
 
