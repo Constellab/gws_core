@@ -161,14 +161,12 @@ class TestFunnyView(unittest.TestCase):
         elon = Person()
         view_model = ResourceViewModel(elon)
         elon.set_name('Elon Musk')
+        
+        ResourceViewModel.save_all()
 
         text = view_model.render({})
         print(text)
 
-        expected_text = """
-        <div style="padding:50px 20px; border: 1px solid #dcdcdc; border-radius: 4px;">
-            Resource
-        </div>
-        """
+        expected_text = "<x-gws-element class='gws-model' id='{}' data-id='{}' data-uri='{}'></x-gws-element>".format(view_model._uuid, view_model.id, view_model.uri)
 
         self.assertEqual(expected_text.replace("\n", "").replace(" ", ""), text.replace("\n", "").replace(" ", ""))

@@ -4,14 +4,12 @@
     "app_port"      : 3000,
     "db_dir"        : "./",
     "db_name"       : "db.sqlite3",
-    "user_db_dir"   : "./",
-    "user_db_name"  : "./db.sqlite3",
     "is_test"       : false,
     "dependencies"  : {},
     "statics"       : {
         "/static/dis"   : "../../extern/distrib-js",
         "/static/gws"   : "../gws-js/static/gws",
-        "/static/pub"   : "./public/static"
+        "/static/pub-gws"   : "./public/static"
     },
     "app":{
         "favicon": {"src":"/static/pub/favicon.png", "type":"image/png"},
@@ -25,7 +23,7 @@
             "/static/dis/fontawesome/5.13.1/all.min.js"
         ],
         "modules": [
-            "/static/pub/index.js"
+            "/static/pub-gws/index.js"
         ],
         "styles": [
             "/static/dis/bootstrap/4.5.0/css/bootstrap.min.css",

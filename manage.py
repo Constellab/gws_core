@@ -11,6 +11,8 @@ import argparse
 import uvicorn
 import collections.abc
 
+module_name = "gws"
+
 def update_json(d, u):
     for k, v in u.items():
         if isinstance(v, collections.abc.Mapping):
@@ -37,6 +39,9 @@ def parse_settings(cwd: str = None, dep_name:str = None, setting_file:str = "set
             settings = json.load(f)
         except:
             raise Exception("Error while parsing the settings JSON file. Please check file.")
+    
+    if settings["dependencies"].get(module_name, None) is None:
+        settings["dependencies"][module_name] = "./"
 
     # recursive load of dependencies
     for name in settings["dependencies"]:
@@ -64,7 +69,7 @@ if __name__ == "__main__":
         "__cwd__"       : __cdir__
     }
 
-    settings = update_json(settings, parse_settings(cwd=__cdir__, dep_name="gws", setting_file="./settings.json"))
+    settings = update_json(settings, parse_settings(cwd=__cdir__, dep_name=module_name, setting_file="./settings.json"))
     
     from gws.settings import Settings
     Settings.init(settings)    

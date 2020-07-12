@@ -195,6 +195,20 @@ class Model(PWModel,Base):
         self.registration_datetime = datetime.now()
         return super().save(*args, **kwargs)
     
+    @classmethod
+    def save_all(cls) -> bool:
+        with DbManager.db.atomic() as transaction:
+            try:
+                for k in Controller.models:
+                    if isinstance(Controller.models[k], cls):
+                        Controller.models[k].save()
+
+            except:
+                transaction.rollback()
+                return False
+
+        return True
+
     def __eq__(self, other: 'Model') -> bool:
         """ 
             Comparison
@@ -216,6 +230,19 @@ class Model(PWModel,Base):
  
 class Viewable(Model):
     view_model_specs: dict = {}
+
+    @property
+    def as_json(self):
+        return {
+            "id" : self.id,
+            "data" : self.data.as_json(),
+            "uri": self.uri,
+            "creation_datetime" : self.creation_datetime,
+        }
+
+    @property
+    def as_html(self):
+        return "<x-gws-element class='gws-model' id='{}' data-id='{}' data-uri='{}'></x-gws-element>".format(self._uuid, self.id, self.uri)
 
     def cast(self, *args, **kwargs):
         viewable = super().cast(*args, **kwargs)
@@ -599,6 +626,19 @@ class ViewModel(Model):
         else:
             self.model = self.model.cast(keep_registered = False)
 
+    @property
+    def as_json(self):
+        return {
+            "id" : self.id,
+            "data" : self.data.as_json(),
+            "uri": self.uri,
+            "model": self.model.as_json(),
+            "creation_datetime" : self.creation_datetime,
+        }
+
+    @property
+    def as_html(self):
+        return "<x-gws-element class='gws-model' id='{}' data-id='{}' data-uri='{}'></x-gws-element>".format(self._uuid, self.id, self.uri)
 
     def cast(self, *args, **kwargs):
         view_model = super().cast(*args, **kwargs)
@@ -658,7 +698,7 @@ class ProcessViewModel(ViewModel):
         if self.template is None:
             settings = Settings()
             template_dir = settings.get_template_dir("gws")
-            self.template = ViewTemplateFile(os.path.join(template_dir, "./model/process.html"), type="html")
+            self.template = ViewTemplateFile(os.path.join(template_dir, "./prism/model/process.html"), type="html")
 
     class Meta:
         table_name = 'process_view_model'
@@ -685,7 +725,7 @@ class ResourceViewModel(ViewModel):
         if self.template is None:
             settings = Settings.retrieve()
             template_dir = settings.get_template_dir("gws")
-            self.template = ViewTemplateFile(os.path.join(template_dir, "./model/resourcs.html"), type="html")
+            self.template = ViewTemplateFile(os.path.join(template_dir, "./prism/model/resource.html"), type="html")
 
     class Meta:
         table_name = 'resource_view_model'

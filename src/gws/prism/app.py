@@ -131,7 +131,6 @@ class App :
         # static dirs
         statics = settings.get_static_dirs()
         for k in statics:
-            print(statics[k])
             cls.routes.append(Mount(k, StaticFiles(directory=statics[k]), name=k))
 
         # home
