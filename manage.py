@@ -9,7 +9,6 @@ import json
 import unittest
 import argparse
 import uvicorn
-#import collections.abc
 
 __cdir__ = os.path.dirname(os.path.abspath(__file__))
 
