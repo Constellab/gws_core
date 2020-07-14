@@ -80,7 +80,9 @@ class TestControllerHTTP(unittest.TestCase):
         json_vmodel = PersonJSONViewModel(elon)
         elon.set_name('Elon Musk')
         
-        Controller.save_all()
+        Person.save_all()
+        PersonHTMLViewModel.save_all()
+        PersonJSONViewModel.save_all()
 
         self.assertEqual( Controller.fetch_model(elon_vmodel.uri), elon_vmodel )
 
@@ -191,7 +193,8 @@ class TestControllerWebSocket(unittest.TestCase):
         elon_vmodel = PersonHTMLViewModel(elon)
         elon.set_name('Elon Musk')
         
-        Controller.save_all()
+        Person.save_all()
+        PersonHTMLViewModel.save_all()
 
         self.assertEqual(Controller.fetch_model(elon_vmodel.uri), elon_vmodel)
 

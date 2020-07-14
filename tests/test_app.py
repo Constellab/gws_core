@@ -75,7 +75,8 @@ class TestApp(unittest.TestCase):
         elon_vmodel = PersonHTMLViewModel(elon)
         elon.set_name('Elon Musk')
 
-        Controller.save_all()
+        Person.save_all()
+        PersonHTMLViewModel.save_all()
 
         # we suppose that the request comes from the view
         async def app(scope, receive, send):
