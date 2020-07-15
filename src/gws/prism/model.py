@@ -7,7 +7,7 @@ import os
 import asyncio
 import uuid
 from datetime import datetime
-from peewee import IntegerField, DateField, DateTimeField, CharField, ForeignKeyField, Model as PWModel
+from peewee import Field, IntegerField, DateField, DateTimeField, CharField, ForeignKeyField, Model as PWModel
 from peewee import SqliteDatabase
 from playhouse.sqlite_ext import JSONField
 
@@ -100,19 +100,25 @@ class Model(PWModel,Base):
         """
             Cast a model instance according the class description in the
             @type field
-            * If keep_registered = True, the casted model instance is kept registrer in the Controller.
+            * If keep_registered = True, the casted model instance is kept registred in the Controller.
               It is removed from the Controller register otherwise
         """
 
         type_str = slugify(self.type)
-        model_class = Controller.model_specs[type_str]
+        mew_model_class = Controller.model_specs[type_str]
 
-        # instanciate the class and copy data
-        model = model_class()
-        model.id = self.id
-        model.data = self.data
-        model.creation_datetime = self.creation_datetime
-        model.registration_datetime = self.registration_datetime
+        if type(self) == mew_model_class:
+            return self
+   
+        # instanciate the class and shallow copy data
+        model = mew_model_class()
+        for prop in self.property_names(Field):
+            val = getattr(self, prop)
+            setattr(model, prop, val)
+            # model.id = self.id
+            # model.data = self.data
+            # model.creation_datetime = self.creation_datetime
+            # model.registration_datetime = self.registration_datetime
 
         if not keep_registered:
             Controller._unregister_model_instances([self._uuid])
@@ -242,10 +248,10 @@ class Viewable(Model):
     def as_html(self):
         return "<x-gws-element class='gws-model' id='{}' data-id='{}' data-uri='{}'></x-gws-element>".format(self._uuid, self.id, self.uri)
 
-    def cast(self, *args, **kwargs):
-        viewable = super().cast(*args, **kwargs)
-        viewable.view_model_specs = self.view_model_specs
-        return viewable
+    # def cast(self, *args, **kwargs):
+    #     viewable = super().cast(*args, **kwargs)
+    #     viewable.view_model_specs = self.view_model_specs
+    #     return viewable
 
     def create_view_model_by_name(self, view_name: str):
         if not isinstance(view_name, str):
@@ -573,6 +579,30 @@ class Process(Viewable):
     class Meta:
         table_name = 'process'
 
+class NullProcess(Process):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.id = 1
+        self.data["config"] = {}
+        self._input = Input(self)
+        self._output = Output(self)
+        self._is_started = True
+        self._is_finished = True
+    
+    async def run(self, params={}):
+        raise Exception("NullProcess", "run", "NullProcess cannot be executed")
+    
+    async def task(self, params={}):
+        raise Exception("NullProcess", "task", "NullProcess cannot cannot have a task")
+    
+    def save(self, *args, **kwargs):
+        if self.id is None:
+            self.id = 1
+        return self.save(*args, **kwargs)
+
+    class Meta:
+        table_name = 'null_process'
+
 # ####################################################################
 #
 # Resource class
@@ -588,16 +618,33 @@ class Resource(Viewable):
         if self.process:
             self.process = self.process.cast(keep_registered = False)
 
-    def cast(self, *args, **kwargs):
-        resource = super().cast(*args, **kwargs)
-        resource.process = self.process
-        return resource
+    # def cast(self, *args, **kwargs):
+    #     resource = super().cast(*args, **kwargs)
+    #     resource.process = self.process
+    #     return resource
 
     def set_process(self, process: 'Process'):
         self.process = process
-
+    
     class Meta:
         table_name = 'resource'
+
+class NullResource(Resource):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.id = 1
+        self.process = NullProcess()
+    
+    def set_process(self, process: 'Process'):
+        raise Exception("NullResource", "set_process", "NullResource is related to a NullProcess")
+
+    def save(self, *args, **kwargs):
+        if self.id is None:
+            self.id = 1
+        return self.save(*args, **kwargs)
+
+    class Meta:
+        table_name = 'null_resource'
 
 # ####################################################################
 #
@@ -638,10 +685,10 @@ class ViewModel(Model):
     def as_html(self):
         return "<x-gws-element class='gws-model' id='{}' data-id='{}' data-uri='{}'></x-gws-element>".format(self._uuid, self.id, self.uri)
 
-    def cast(self, *args, **kwargs):
-        view_model = super().cast(*args, **kwargs)
-        view_model.model = self.model
-        return view_model
+    # def cast(self, *args, **kwargs):
+    #     view_model = super().cast(*args, **kwargs)
+    #     view_model.model = self.model
+    #     return view_model
 
     def get_view_uri(self, params={}) -> str:
         if len(params) == 0:

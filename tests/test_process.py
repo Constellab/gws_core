@@ -89,7 +89,7 @@ class TestProcess(unittest.TestCase):
         p4 = Move()
         p5 = Eat()
         p_wait = Wait()
- 
+
         # create a chain
         p1>>'person'        | p2<<'person'
         p2>>'person'        | p_wait<<'person'

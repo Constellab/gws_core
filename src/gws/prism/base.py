@@ -39,15 +39,28 @@ class Base:
         module = inspect.getmodule(cls).__name__
         return module
 
-    @property
-    def property_names(self):
-        property_names = [p for p in dir(self) if isinstance(getattr(self,p),property)]
+    def property_names(self, instance = None):
+        cls = type(self)
+        property_names = []
+        m = inspect.getmembers(cls)
+        for i in m:
+            if not instance is None:
+                if isinstance(i[1], instance):
+                    property_names.append(i[0])
+            elif not i[0].startswith('_') and not inspect.isfunction(i[1]) and not inspect.ismethod(i[1]) and not inspect.isclass(i[1]):
+                property_names.append(i[0])
+
         return property_names
     
-    @property
     def method_names(self):
-        property_names = [p for p in dir(self) if not isinstance(getattr(self,p),property)]
-        return property_names
+        cls = type(self)
+        method_names = []
+        m = inspect.getmembers(cls)
+        for i in m:
+            if not i[0].startswith('_') and inspect.isfunction(i[1]) and inspect.ismethod(i[1]):
+                method_names.append(i[0])
+
+        return method_names
 
 
 def slugify(name, snakefy = False) -> str:
