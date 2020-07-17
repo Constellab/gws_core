@@ -5,7 +5,7 @@
  * About us: https://gencovery.com
  */
 
-import * as GBoard from '/static/pub-gws/dashboard/all.js'
+import * as GBoard from '/static/gws/dashboard/all.js'
 
 GBoard.init();
 

@@ -75,7 +75,6 @@ def _parse_settings(module_cwd: str = None, module_name:str = None, module_setti
         raise Exception("The setting file of module '"+module_name+"' is not found. Please check that file '"+module_setting_file+"'.")
     
     sys.path.append(os.path.join(module_cwd,"./"))         # -> load current module tests
-    sys.path.append(os.path.join(module_cwd,"./src"))      # -> load current module sources
 
     with open(module_setting_file) as f:
         try:
@@ -97,7 +96,6 @@ def _parse_settings(module_cwd: str = None, module_name:str = None, module_setti
             dep_setting_file = os.path.join(dep_cwd,"./settings.json")
 
             sys.path.append(dep_cwd)                            # -> load module tests
-            sys.path.append(os.path.join(dep_cwd,"./src"))      # -> load module sources
 
             if not dep_name == module_name:
                 dep_settings = _parse_settings(module_cwd=dep_cwd, module_name=dep_name, module_setting_file=dep_setting_file)

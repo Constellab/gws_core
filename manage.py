@@ -10,7 +10,7 @@ import unittest
 import argparse
 import uvicorn
 
-sys.path.append(os.path.join("./src"))
+sys.path.append(os.path.join("./"))
 from gws import runner
 from gws.settings import Settings
 from gws.manage import read_module_name, parse_settings
