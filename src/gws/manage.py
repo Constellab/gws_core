@@ -39,6 +39,8 @@ def _update_json(d, u):
 def _update_relative_static_paths(dep_rel_path, dep_settings):
     for k in dep_settings:
         if k.endswith("_dir"):
+            if not isinstance(dep_settings[k], str):
+                raise Exception("Error while parsing setting. Parameter " + k + " must be a string")
             d = os.path.join(dep_rel_path,dep_settings[k])
             if os.path.exists(d):
                 dep_settings[k] = d
