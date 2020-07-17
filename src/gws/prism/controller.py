@@ -162,24 +162,27 @@ class Controller(Base):
                 raise Exception("Controller", "register_models", "Invalid model type")
 
     @classmethod
-    def save_all(cls) -> bool:
+    def save_all(cls, model_list: list = None) -> bool:
         from gws.prism.model import DbManager, Process, Resource, ViewModel
         with DbManager.db.atomic() as transaction:
             try:
+                if model_list is None:
+                    model_list = cls.models
+
                 # first) save all viewable processes
-                for k in cls.models:
-                    if isinstance(cls.models[k], Process):
-                        cls.models[k].save()
+                for k in model_list:
+                    if isinstance(model_list[k], Process):
+                        model_list[k].save()
                 
                 # second) save all viewable resources
-                for k in cls.models:
-                    if isinstance(cls.models[k], Resource):
-                        cls.models[k].save()
+                for k in model_list:
+                    if isinstance(model_list[k], Resource):
+                        model_list[k].save()
 
                 # third) save all view_models
-                for k in cls.models:
-                    if isinstance(cls.models[k], ViewModel):
-                        cls.models[k].save()
+                for k in model_list:
+                    if isinstance(model_list[k], ViewModel):
+                        model_list[k].save()
             except:
                 transaction.rollback()
                 return False

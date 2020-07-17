@@ -200,12 +200,15 @@ class Model(PWModel,Base):
         return super().save(*args, **kwargs)
     
     @classmethod
-    def save_all(cls) -> bool:
+    def save_all(cls, model_list: list = None) -> bool:
         with DbManager.db.atomic() as transaction:
             try:
-                for k in Controller.models:
-                    if isinstance(Controller.models[k], cls):
-                        Controller.models[k].save()
+                if model_list is None:
+                    model_list = Controller.models
+
+                for k in model_list:
+                    if isinstance(model_list[k], cls):
+                        model_list[k].save()
 
             except:
                 transaction.rollback()
