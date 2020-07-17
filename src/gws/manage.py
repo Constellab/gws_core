@@ -10,6 +10,8 @@ import unittest
 import argparse
 import uvicorn
 
+loaded_modules = []
+
 def read_module_name(cwd):
     module_name = None
     with open(os.path.join(cwd,"settings.json")) as f:
@@ -24,17 +26,17 @@ def read_module_name(cwd):
     
     return module_name
 
-def update_json(d, u):
+def _update_json(d, u):
     for k, v in u.items():
         if isinstance(v, dict):
-            d[k] = update_json(d.get(k, {}), v)
+            d[k] = _update_json(d.get(k, {}), v)
         elif isinstance(v, list):
             d[k]= d.get(k, []) + v
         else:
             d[k] = v
     return d
 
-def update_relative_static_paths(dep_rel_path, dep_settings):
+def _update_relative_static_paths(dep_rel_path, dep_settings):
     for k in dep_settings:
         if k.endswith("_dir"):
             d = os.path.join(dep_rel_path,dep_settings[k])
@@ -55,7 +57,12 @@ def update_relative_static_paths(dep_rel_path, dep_settings):
     
     return dep_settings
 
-def parse_settings(module_cwd: str = None, module_name:str = None, module_setting_file:str = "settings.json"):
+def _parse_settings(module_cwd: str = None, module_name:str = None, module_setting_file:str = "settings.json"):    
+    if module_name in loaded_modules:
+        return {}
+
+    loaded_modules.append(module_name)
+
     if module_cwd is None:
         raise Exception("Paremeter module_cwd is required")
     
@@ -87,12 +94,28 @@ def parse_settings(module_cwd: str = None, module_name:str = None, module_settin
             dep_cwd = os.path.join(module_cwd,dep_path)
             dep_setting_file = os.path.join(dep_cwd,"./settings.json")
 
-            sys.path.append(dep_cwd)            # -> load module tests
-            sys.path.append(os.path.join(dep_cwd,"./src"))    # -> load module sources
+            sys.path.append(dep_cwd)                            # -> load module tests
+            sys.path.append(os.path.join(dep_cwd,"./src"))      # -> load module sources
 
             if not dep_name == module_name:
-                dep_settings = parse_settings(module_cwd=dep_cwd, module_name=dep_name, module_setting_file=dep_setting_file)
-                dep_settings = update_relative_static_paths(dep_path,dep_settings)
-                settings = update_json(dep_settings, settings)
+                dep_settings = _parse_settings(module_cwd=dep_cwd, module_name=dep_name, module_setting_file=dep_setting_file)
+                if len(dep_settings) > 0:
+                    dep_settings = _update_relative_static_paths(dep_path,dep_settings)
+                    settings = _update_json(dep_settings, settings)
+    return settings
+ 
+def parse_settings(module_cwd: str = None, module_name:str = None, module_setting_file:str = "settings.json"):
+    default_settings = {
+        "app_dir"       : "./",
+        "app_host"      : "localhost",
+        "app_port"      : 3000,
+        "db_dir"        : "./",
+        "db_name"       : "db.sqlite3",
+        "is_test"       : False,
+        "dependencies"  : {},
+        "static_dirs"   : {},
+        "__cwd__"       : module_cwd
+    }
 
+    settings = _update_json(default_settings, _parse_settings(module_cwd=module_cwd, module_name=module_name, module_setting_file=module_setting_file))
     return settings
