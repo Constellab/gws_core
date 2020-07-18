@@ -61,14 +61,12 @@ class TestControllerHTTP(unittest.TestCase):
         Person.create_table()
         PersonHTMLViewModel.create_table()
         PersonJSONViewModel.create_table()
-        pass
 
     @classmethod
     def tearDownClass(cls):
         Person.drop_table()
         PersonHTMLViewModel.drop_table()
         PersonJSONViewModel.drop_table()
-        pass
     
     def test_controller(self):
         print("")
@@ -76,19 +74,23 @@ class TestControllerHTTP(unittest.TestCase):
         print("# -----------------")
 
         elon = Person()
-        elon_vmodel = PersonHTMLViewModel(elon)
+        html_vmodel = PersonHTMLViewModel(elon)
         json_vmodel = PersonJSONViewModel(elon)
         elon.set_name('Elon Musk')
         
-        Person.save_all()
-        PersonHTMLViewModel.save_all()
-        PersonJSONViewModel.save_all()
+        elon.save()
+        html_vmodel.save()
+        json_vmodel.save()
 
-        self.assertEqual( Controller.fetch_model(elon_vmodel.uri), elon_vmodel )
+        #Person.save_all()
+        #PersonHTMLViewModel.save_all()
+        #PersonJSONViewModel.save_all()
+
+        self.assertEqual( Controller.fetch_model(html_vmodel.uri), html_vmodel )
 
         # assert that local import does not affect class
         from gws.prism.controller import Controller as Ctrl
-        self.assertEqual(Ctrl.fetch_model(elon_vmodel.uri), elon_vmodel)
+        self.assertEqual(Ctrl.fetch_model(html_vmodel.uri), html_vmodel)
 
         self.assertEqual(Ctrl.models, Controller.models)
 
@@ -109,12 +111,12 @@ class TestControllerHTTP(unittest.TestCase):
         params = """{ "job" : "engineer" }"""
         response = client.get(Controller.build_url(
             action = "view", 
-            uri_name = elon_vmodel.uri_name,
-            uri_id = elon_vmodel.uri_id,
+            uri_name = html_vmodel.uri_name,
+            uri_id = html_vmodel.uri_id,
             params = params
         ))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content.decode("utf-8"), "Model="+str(elon.id)+" & View URI="+elon_vmodel.uri+": I am <b>Elon Musk</b>! My job is engineer.")
+        self.assertEqual(response.content.decode("utf-8"), "Model="+str(elon.id)+" & View URI="+html_vmodel.uri+": I am <b>Elon Musk</b>! My job is engineer.")
         print(response.content)
 
         # Test update_view => json
@@ -151,8 +153,8 @@ class TestControllerHTTP(unittest.TestCase):
 
         response = client.get(Controller.build_url(
             action = "view", 
-            uri_name = elon_vmodel.uri_name,
-            uri_id = elon_vmodel.uri_id,
+            uri_name = html_vmodel.uri_name,
+            uri_id = html_vmodel.uri_id,
             params = params
         ))
         self.assertEqual(response.status_code, 200)
@@ -161,8 +163,6 @@ class TestControllerHTTP(unittest.TestCase):
         new_uri = json_response["view_uri"]
         new_json_view = Controller.fetch_model(new_uri)
 
-        print(new_json_view)
-        
         self.assertEqual(type(new_json_view), PersonJSONViewModel)
         self.assertFalse(new_json_view is json_vmodel)
         self.assertEqual(new_json_view.model, elon)
@@ -190,13 +190,13 @@ class TestControllerWebSocket(unittest.TestCase):
         print("# -----------------")
 
         elon = Person()
-        elon_vmodel = PersonHTMLViewModel(elon)
+        html_vmodel = PersonHTMLViewModel(elon)
         elon.set_name('Elon Musk')
         
         Person.save_all()
         PersonHTMLViewModel.save_all()
 
-        self.assertEqual(Controller.fetch_model(elon_vmodel.uri), elon_vmodel)
+        self.assertEqual(Controller.fetch_model(html_vmodel.uri), html_vmodel)
 
         # we suppose that the request comes from the view
         # url = "/action/{uri}/{params}",
@@ -218,13 +218,13 @@ class TestControllerWebSocket(unittest.TestCase):
         with client.websocket_connect(
             Controller.build_url(
                 action = "view", 
-                uri_name = elon_vmodel.uri_name,
-                uri_id = elon_vmodel.uri_id,
+                uri_name = html_vmodel.uri_name,
+                uri_id = html_vmodel.uri_id,
                 params = '{ "job" : "engineer" }'
             )) as websocket:
             response = websocket.receive_text()
             #self.assertEqual(response.status_code, 200)
-            self.assertEqual(response, "Model="+str(elon.id)+" & View URI="+elon_vmodel.uri+": I am <b>Elon Musk</b>! My job is engineer.")
+            self.assertEqual(response, "Model="+str(elon.id)+" & View URI="+html_vmodel.uri+": I am <b>Elon Musk</b>! My job is engineer.")
             print(response)
 
        

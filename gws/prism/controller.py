@@ -70,7 +70,7 @@ class Controller(Base):
          
         if action == "view":
             if params.get("view", None):
-                # generate a new view
+                # generate a new view model
                 name = params["view"]
                 params = params["params"]
                 view_model = view_model.model.create_view_model_by_name(name)
@@ -78,6 +78,7 @@ class Controller(Base):
                     raise Exception("Controller", "action", "The the view '"+ name+"' cannot ne created.")
          
                 view_model.set_data(params)
+                view_model.save()
             else:
                 # OK!
                 # simply loads the current view with the new parameters
@@ -91,7 +92,7 @@ class Controller(Base):
             pass # OK!
         
         # ensure that all models are saved
-        Controller.save_all()   
+        #Controller.save_all()   
         return view_model
 
     @classmethod
