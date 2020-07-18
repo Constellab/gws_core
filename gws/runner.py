@@ -53,7 +53,7 @@ def run(ctx, test, db, cli, runserver):
             raise Exception("manage", "Cannot save the settings in the database")
         
         loader = unittest.TestLoader()
-        test_suite = loader.discover(".", pattern=test+"*.py")
+        test_suite = loader.discover(".", pattern=test+".py")
         test_runner = unittest.TextTestRunner()
         test_runner.run(test_suite)
 
