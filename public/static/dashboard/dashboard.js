@@ -18,7 +18,7 @@ class Leftbar{
 
     //-- A -- 
     addButton(name, icon, callback){
-        var container = document.querySelector("#gws-dashboard-main-left-"+this.parent.uuid);
+        var container = document.querySelector("#gws-dashboard-sidebar-"+this.parent.uuid);
         var btn = document.createElement('div');
         btn.classList.add("left-toolbar-btn")
         btn.innerHTML = `<i class="`+icon+`"></i>`;
@@ -28,7 +28,7 @@ class Leftbar{
     }
 
     addSeparator(){
-        var container = document.querySelector("#gws-dashboard-main-left-"+this.parent.uuid);
+        var container = document.querySelector("#gws-dashboard-sidebar-"+this.parent.uuid);
         var hr = document.createElement('hr');
         hr.classList.add("")
         container.appendChild(hr);
@@ -139,10 +139,10 @@ export class Dashboard {
 
     refreshSize(){
         var h = document.getElementById(`gws-dashboard-${this.uuid}`).offsetHeight;
-        var topH = document.getElementById(`gws-dashboard-top-${this.uuid}`).offsetHeight;
-        var bottomH = document.getElementById(`gws-dashboard-bottom-${this.uuid}`).offsetHeight;
+        var topH = document.getElementById(`gws-dashboard-top-bar-${this.uuid}`).offsetHeight;
+        var bottomH = document.getElementById(`gws-dashboard-bottom-bar-${this.uuid}`).offsetHeight;
         h = (h - topH - bottomH) + "px";
-        document.getElementById(`gws-dashboard-main-${this.uuid}`).style.height = h;
+        document.getElementById(`gws-dashboard-main-bar-${this.uuid}`).style.height = h;
         this._layout.updateSize(this.getWidth(), this.getHeight());
     }
 
@@ -182,15 +182,15 @@ export class Dashboard {
 
         var html = `
             <div id="gws-dashboard-`+this.uuid+`" class="gws-dashboard">
-                <div id="gws-dashboard-top-`+this.uuid+`" class="gws-dashboard-top padding-5">
+                <div id="gws-dashboard-top-bar-`+this.uuid+`" class="gws-dashboard-top-bar padding-5">
+                    <div id="gws-dashboard-logo`+this.uuid+`" class="gws-dashboard-logo"></div>
                     <input class="gws-input"/>
                 </div>
-                <div id="gws-dashboard-main-`+this.uuid+`" class="gws-dashboard-main">
-                    <div id="gws-dashboard-main-left-`+this.uuid+`" class="gws-dashboard-main-left"></div>
-                    <div id="gws-dashboard-main-middle-`+this.uuid+`" class="gws-dashboard-main-middle"></div>
-                    <div id="gws-dashboard-main-right-`+this.uuid+`" class="gws-dashboard-main-right"></div>
+                <div id="gws-dashboard-main-bar-`+this.uuid+`" class="gws-dashboard-main-bar">
+                    <div id="gws-dashboard-sidebar-`+this.uuid+`" class="gws-dashboard-sidebar"></div>
+                    <div id="gws-dashboard-content-`+this.uuid+`" class="gws-dashboard-content"></div>
                 </div>
-                <div id="gws-dashboard-bottom-`+this.uuid+`" class="gws-row gws-dashboard-bottom">
+                <div id="gws-dashboard-bottom-bar-`+this.uuid+`" class="gws-dashboard-bottom-bar-">
                     <div id="bottom-grid-`+this.uuid+`" class="grid"></div>
                 </div>
             </div>
@@ -199,7 +199,7 @@ export class Dashboard {
 
         // init golden layout
         var that = this;
-        this._layout = new window.GoldenLayout( this.getConfig(), "#gws-dashboard-main-right-"+this.uuid );
+        this._layout = new window.GoldenLayout( this.getConfig(), "#gws-dashboard-content-"+this.uuid );
         this._layout.registerComponent( Panel.componentName, function( container, state ){
             container.getElement().html(state.HTMLContent);
         });

@@ -26,22 +26,22 @@ body{
     font-size: var(--gws-dashboard-text-size);
 }
 
-.gws-dashboard-top{
+.gws-dashboard-top-bar{
     display: flex; 
     flex-direction: row;
     align-items: stretch;
     justify-content: center;
-    background: var(--gws-dashboard-topbar-color);
-    border-top: 0px solid var(--gws-dashboard-topbar-color);
-    -moz-box-shadow: 1px 0px 3px var(--gws-dashboard-topbar-color);;
-    -webkit-box-shadow: 1px 0px 3px var(--gws-dashboard-topbar-color);;
-    box-shadow: 1px 0px 3px var(--gws-dashboard-topbar-color);;
+    background: var(--gws-dashboard-top-bar-color);
+    border-top: 0px solid var(--gws-dashboard-top-bar-color);
+    -moz-box-shadow: 1px 0px 3px var(--gws-dashboard-top-bar-color);;
+    -webkit-box-shadow: 1px 0px 3px var(--gws-dashboard-top-bar-color);;
+    box-shadow: 1px 0px 3px var(--gws-dashboard-top-bar-color);;
     width: 100%;
     height: 50px;
     z-index: 2;
 }
 
-.gws-dashboard-main{
+.gws-dashboard-main-bar{
     display: flex;
     flex-direction: row;
     align-items: stretch;
@@ -52,7 +52,7 @@ body{
     z-index: 0;
 }
 
-.gws-dashboard-main-left{
+.gws-dashboard-sidebar{
     display: flex;
     flex-direction: column;
     align-content: center;
@@ -62,13 +62,13 @@ body{
     z-index: 1;
 }
 
-.gws-dashboard-main-right{
+.gws-dashboard-content{
     flex: 1;
     background: var(--gws-dashboard-bg-color);
     min-height: 350px;
 }
 
-.gws-dashboard-bottom{
+.gws-dashboard-bottom-bar-{
     flex-direction: row;
     align-items: stretch;
     background: var(--gws-dashboard-bg-color);

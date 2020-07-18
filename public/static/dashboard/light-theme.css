@@ -12,7 +12,7 @@
     --gws-dashboard-border-color: #a9a9a9;
     --gws-dashboard-text-color: #333 !important;
     --gws-dashboard-text-size: 12px;
-    --gws-dashboard-topbar-color: var(--gws-dashboard-bg-color);
+    --gws-dashboard-top-bar-color: var(--gws-dashboard-bg-color);
     --gws-dashboard-header-bg-color: #f7f7f7;
     --gws-dashboard-panel-bg-color: #e9e9e9;
     --gws-dashboard-panel-border: none;

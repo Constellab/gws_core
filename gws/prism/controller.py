@@ -167,22 +167,22 @@ class Controller(Base):
         with DbManager.db.atomic() as transaction:
             try:
                 if model_list is None:
-                    model_list = cls.models
+                    model_list = cls.models.values()
 
                 # first) save all viewable processes
-                for k in model_list:
-                    if isinstance(model_list[k], Process):
-                        model_list[k].save()
+                for m in model_list:
+                    if isinstance(m, Process):
+                        m.save()
                 
                 # second) save all viewable resources
-                for k in model_list:
-                    if isinstance(model_list[k], Resource):
-                        model_list[k].save()
+                for m in model_list:
+                    if isinstance(m, Resource):
+                        m.save()
 
                 # third) save all view_models
-                for k in model_list:
-                    if isinstance(model_list[k], ViewModel):
-                        model_list[k].save()
+                for m in model_list:
+                    if isinstance(m, ViewModel):
+                        m.save()
             except:
                 transaction.rollback()
                 return False

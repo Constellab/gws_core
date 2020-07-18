@@ -204,12 +204,12 @@ class Model(PWModel,Base):
         with DbManager.db.atomic() as transaction:
             try:
                 if model_list is None:
-                    model_list = Controller.models
+                    model_list = Controller.models.values()
 
-                for k in model_list:
-                    if isinstance(model_list[k], cls):
-                        model_list[k].save()
-
+                for m in model_list:
+                    if isinstance(m, cls):
+                        m.save()
+                
             except:
                 transaction.rollback()
                 return False
