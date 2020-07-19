@@ -41,7 +41,7 @@ Person.register_view_models([
     PersonJSONViewModel
 ])
 
-Controller.register_models([
+Controller.register_model_classes([
     Person, 
     PersonHTMLViewModel, 
     PersonJSONViewModel
@@ -81,10 +81,6 @@ class TestControllerHTTP(unittest.TestCase):
         elon.save()
         html_vmodel.save()
         json_vmodel.save()
-
-        #Person.save_all()
-        #PersonHTMLViewModel.save_all()
-        #PersonJSONViewModel.save_all()
 
         self.assertEqual( Controller.fetch_model(html_vmodel.uri), html_vmodel )
 
@@ -189,9 +185,14 @@ class TestControllerWebSocket(unittest.TestCase):
         print("# WebSocket Testing")
         print("# -----------------")
 
+        self.assertEqual(len(Controller.models), 0)
+
         elon = Person()
         html_vmodel = PersonHTMLViewModel(elon)
         elon.set_name('Elon Musk')
+        
+        Controller.register_model_instances([elon, html_vmodel])
+        self.assertEqual(len(Controller.models), 2)
         
         Person.save_all()
         PersonHTMLViewModel.save_all()

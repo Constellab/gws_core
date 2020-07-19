@@ -34,7 +34,7 @@ class PersonJSONViewModel(ResourceViewModel):
 class FunnyView(ResourceViewModel):
     template = ViewTemplateFile(os.path.join(__cdir__, 'test-view/funny-view.html'), type="html")
 
-Controller.register_models([Person, PersonHTMLViewModel, PersonJSONViewModel])
+Controller.register_model_classes([Person, PersonHTMLViewModel, PersonJSONViewModel])
 
 class TestHTMLView(unittest.TestCase):
     
@@ -66,12 +66,13 @@ class TestHTMLView(unittest.TestCase):
         self.assertEqual(html, "I am <b>Elon Musk</b>! My job is engineer.")
         self.assertEqual(view_model.data, params)
         self.assertEqual(view_model.data, params)
-        self.assertEqual(len(Controller.models), 2)
 
         self.assertTrue( view_model.model is elon )
         self.assertTrue( view_model.id is None )
         self.assertTrue( elon.id is None )
         
+        Controller.register_model_instances([elon, view_model])
+        self.assertEqual(len(Controller.models), 2)
         Controller.save_all()
 
         self.assertEqual(len(Controller.models), 2)
@@ -80,7 +81,7 @@ class TestHTMLView(unittest.TestCase):
         self.assertEqual(vm, view_model)
         self.assertEqual(vm.model, elon)
 
-        self.assertEqual(len(Controller.models), 4)
+        self.assertEqual(len(Controller.models), 2)
 
 class TestJSONView(unittest.TestCase):
     
@@ -114,7 +115,7 @@ class TestJSONView(unittest.TestCase):
         self.assertEqual(view_model.model.id, None)
         self.assertEqual(view_model.id, None)
 
-        self.assertEqual(len(Controller.models), 2)
+        self.assertEqual(len(Controller.models), 0)
         
         view_model.save()     #save the model and view_model
         
@@ -126,7 +127,7 @@ class TestJSONView(unittest.TestCase):
         self.assertEqual(vmodel2.id, view_model.id)
         self.assertEqual(vmodel2.model.id, view_model.model.id)
 
-        self.assertEqual(len(Controller.models), 4)
+        self.assertEqual(len(Controller.models), 0)
 
 class TestFunnyView(unittest.TestCase):
     @classmethod
@@ -166,7 +167,7 @@ class TestFunnyView(unittest.TestCase):
         view_model = ResourceViewModel(elon)
         elon.set_name('Elon Musk')
         
-        ResourceViewModel.save_all()
+        view_model.save()
 
         text = view_model.render({})
         print(text)

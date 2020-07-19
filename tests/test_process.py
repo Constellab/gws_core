@@ -58,7 +58,7 @@ class Wait(Process):
         self.output['person'] = p
         await asyncio.sleep(.5) #wait for .5 sec
 
-Controller.register_models([Person, Move, Eat, Wait])
+Controller.register_model_classes([Person, Move, Eat, Wait])
 
 class TestProcess(unittest.TestCase):
     
@@ -89,6 +89,8 @@ class TestProcess(unittest.TestCase):
         p4 = Move()
         p5 = Eat()
         p_wait = Wait()
+
+        Controller.register_model_instances([elon,p1,p2,p3,p4,p5,p_wait])
 
         # create a chain
         p1>>'person'        | p2<<'person'
@@ -133,8 +135,10 @@ class TestProcess(unittest.TestCase):
         self.assertEqual( p_wait.output['person'], p3.input['person'])
         self.assertEqual( p3.output['person'].position, p3.input['person'].position + params['moving_step'])
         self.assertEqual( p3.output['person'].weight, p3.input['person'].weight)
-
-        Controller.save_all()
+        
+        elon.save()
+        p1.save()
+        #Controller.save_all()
 
         res = Person.get_by_id( p3.output['person'].id )
         self.assertTrue( isinstance(res, Person) )

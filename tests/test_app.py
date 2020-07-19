@@ -41,7 +41,7 @@ Person.register_view_models([
     PersonJSONViewModel
 ])
 
-Controller.register_models([
+Controller.register_model_classes([
     Person, 
     PersonHTMLViewModel, 
     PersonJSONViewModel
@@ -75,6 +75,7 @@ class TestApp(unittest.TestCase):
         elon_vmodel = PersonHTMLViewModel(elon)
         elon.set_name('Elon Musk')
 
+        Controller.register_model_instances([elon, elon_vmodel])
         Person.save_all()
         PersonHTMLViewModel.save_all()
 

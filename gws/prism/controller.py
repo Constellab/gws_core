@@ -91,8 +91,6 @@ class Controller(Base):
         else:
             pass # OK!
         
-        # ensure that all models are saved
-        #Controller.save_all()   
         return view_model
 
     @classmethod
@@ -130,16 +128,16 @@ class Controller(Base):
         cls.models.clear()
 
     @classmethod
-    def _register_model_instances(cls, models: list):
+    def register_model_instances(cls, models: list):
         from gws.prism.model import Model
         for model in models:
             if isinstance(model, Model):
                 cls.models[model._uuid] = model
             else:
-                raise Exception("Controller", "register_models", "Invalid model")
+                raise Exception("Controller", "register_model_classes", "Invalid model")
 
     @classmethod
-    def register_models(cls, model_specs: list):
+    def register_model_classes(cls, model_specs: list):
         """
             Uniquely register the model type
         """
@@ -160,7 +158,7 @@ class Controller(Base):
                     model_type._meta.table_name = ProcessViewModel._table_name
                 
             else:
-                raise Exception("Controller", "register_models", "Invalid model type")
+                raise Exception("Controller", "register_model_classes", "Invalid model type")
 
     @classmethod
     def save_all(cls, model_list: list = None) -> bool:
@@ -191,7 +189,7 @@ class Controller(Base):
         return True
     
     @classmethod
-    def _unregister_model_instances(cls, uuids: list):
+    def unregister_model_instances(cls, uuids: list):
         from gws.prism.model import Model
         for uuid in uuids:
             cls.models.pop(uuid,None)

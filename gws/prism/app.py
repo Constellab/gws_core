@@ -67,7 +67,7 @@ Robot.register_view_models([
     RobotJSONViewModel
 ])
 
-Controller.register_models([
+Controller.register_model_classes([
     Robot,
     RobotHTMLViewModel,
     RobotJSONViewModel

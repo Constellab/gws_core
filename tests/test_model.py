@@ -17,7 +17,7 @@ from peewee import CharField
 class Person(Model):
     name = CharField(null=True)
 
-Controller.register_models([Person])
+Controller.register_model_classes([Person])
 
 class TestModel(unittest.TestCase):
     

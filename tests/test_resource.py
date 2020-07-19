@@ -26,7 +26,7 @@ class Start(Process):
         self._output = copy.deepcopy(self._input)
         self._output.set_speed(params['speed'])
 
-Controller.register_models([Car, Start])
+Controller.register_model_classes([Car, Start])
 
 class TestResource(unittest.TestCase):
     

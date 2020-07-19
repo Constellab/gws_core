@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import sys
 import os
 import asyncio
 import uuid
@@ -71,7 +72,7 @@ class Model(PWModel,Base):
     id = IntegerField(primary_key=True)
     data = JSONField(null=True, default={})
     creation_datetime = DateTimeField(default=datetime.now)
-    registration_datetime = DateTimeField()
+    save_datetine = DateTimeField()
     type = CharField(null=True, index=True)
     
     _uuid = None
@@ -93,8 +94,8 @@ class Model(PWModel,Base):
         self._uri_name = self.full_classname(slugify=True)
         #self._uri_name = self.classname(slugify=True)
 
-        Controller.register_models([type(self)])
-        Controller._register_model_instances([self])
+        Controller.register_model_classes([type(self)])
+        #Controller.register_model_instances([self])
 
     def cast(self, keep_registered: bool = True) -> 'Model':
         """
@@ -118,10 +119,10 @@ class Model(PWModel,Base):
             # model.id = self.id
             # model.data = self.data
             # model.creation_datetime = self.creation_datetime
-            # model.registration_datetime = self.registration_datetime
+            # model.save_datetine = self.save_datetine
 
         if not keep_registered:
-            Controller._unregister_model_instances([self._uuid])
+            Controller.unregister_model_instances([self._uuid])
 
         return model
 
@@ -152,9 +153,9 @@ class Model(PWModel,Base):
                 self.data[k] = kv[k]
         else:
             raise Exception(self.classname(),"add_data","The data must be a dictionary")
-
+    
     def is_registered(self) -> bool:
-        return (self.registration_datetime is not None)
+        return self.uuid in Controller.models
 
     @classmethod
     def parse_uri(cls, uri: str) -> list:
@@ -196,11 +197,15 @@ class Model(PWModel,Base):
         if not self.table_exists():
             self.create_table()
 
-        self.registration_datetime = datetime.now()
+        self.save_datetine = datetime.now()
         return super().save(*args, **kwargs)
     
     @classmethod
     def save_all(cls, model_list: list = None) -> bool:
+        """
+        If model_list = None, save all models that are regristered to the Controller
+        Else, save the given models in @model_list that are instances of this class
+        """
         with DbManager.db.atomic() as transaction:
             try:
                 if model_list is None:
@@ -209,7 +214,6 @@ class Model(PWModel,Base):
                 for m in model_list:
                     if isinstance(m, cls):
                         m.save()
-                
             except:
                 transaction.rollback()
                 return False
@@ -218,12 +222,13 @@ class Model(PWModel,Base):
 
     def __eq__(self, other: 'Model') -> bool:
         """ 
-            Comparison
+            Compare this model with another model
+            The models are equal if they are identical or have the same id in the database
         """
         if not isinstance(other, Model):
             return False
 
-        return (self is other) or (self.id == other.id)
+        return (self is other) or ((self.id != None) and (self.id == other.id))
     
     class Meta:
         database = DbManager.db
@@ -399,12 +404,22 @@ class IO(Base):
     def get_port_names(self) -> list:
         return list(self._ports.keys)
 
+    def get_resources(self) -> dict:
+        resources = {}
+        for k in self._ports:
+            resources[k] = self._ports[k].resource
+        return resources
+
     def next_processes(self) -> list:
         next_proc = []
         for k in self._ports:
             for proc in self._ports[k].next_processes():
                 next_proc.append(proc)
         return next_proc
+
+    @property
+    def ports(self) -> dict:
+        return self._ports
 
     @property
     def parent(self):
@@ -579,6 +594,41 @@ class Process(Viewable):
         """
         return self.oport(name)
 
+    def save(self, *args, **kwargs):
+        with DbManager.db.atomic() as transaction:
+            try:
+                tf = True
+
+                self.data["inputs"] = []
+                resources = self.input.get_resources()
+                for k in resources:
+                    if resources[k].id is None:
+                        raise Exception("Process", "save", f"The input resource {resources} is not yet saved. Cannot save the process")
+                    
+                    tf = tf and resources[k].save(*args, **kwargs)
+                    self.data["inputs"].append({
+                        "uri_name": resources[k].uri_name,
+                        "uri_id": resources[k].uri_id,
+                    })
+
+                tf = tf and super().save(*args, **kwargs)
+        
+                resources = self.output.get_resources()
+                for k in resources:
+                    tf = tf and resources[k].save(*args, **kwargs)
+
+                for proc in self.next_processes():
+                    tf = tf and proc.save(*args, **kwargs)
+
+                if not tf:
+                    raise Exception("Process", "save", "Cannot save process")
+
+                return tf
+            except Exception as inst:
+                transaction.rollback()
+                print(inst)
+                return False
+
     class Meta:
         table_name = 'process'
 
@@ -708,19 +758,25 @@ class ViewModel(Model):
     
     def set_template(self, template: ViewTemplate):
         if not isinstance(template, ViewTemplate):
-            raise Exception(self.classname(),"__init__","The template must be an instance of ViewTemplate")
+            raise Exception(self.classname(),"set_template","The template must be an instance of ViewTemplate")
 
         self.template = template
     
     def save(self, *args, **kwargs):
         if self.model is None:
-            raise Exception(self.classname(),"__init__","Failure while trying to save the model of the view_model. Please ensure that the model of the view_model's is saved before saving the view_model.")
+            raise Exception(self.classname(),"save","This view_model has not model")
         else:
-            if self.model.save(*args, **kwargs):
-                return super().save(*args, **kwargs)
-            else:
-                raise Exception(self.classname(),"__init__","Failure while trying to save the model of the view_model. Please ensure that the model of the view_model's is saved before saving the view_model.")
-    
+            with DbManager.db.atomic() as transaction:
+                try:
+                    if self.model.save(*args, **kwargs):
+                        return super().save(*args, **kwargs)
+                    else:
+                        raise Exception(self.classname(),"save","Cannot save the view_model. Please ensure that the model of the view_model is saved before")
+                except Exception as e:
+                    transaction.rollback()
+                    print(e)
+                    return False
+
     class Meta:
         table_name = 'view_model'
 
