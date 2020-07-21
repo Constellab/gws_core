@@ -18,6 +18,8 @@ import { Row } from "./panel.js";
 import { Column } from "./panel.js";
 import { Tab } from "./panel.js";
 
+import "../utils/observer.js";
+
 export function init( canvas_id = "#gws-dashboard" ){
 
     window.addEventListener("load", function(){
@@ -37,14 +39,12 @@ export function init( canvas_id = "#gws-dashboard" ){
             title: "Viewer"
         });
         var t3 = new Tab({
-            name: "viewer",
-            title: "Viewer"
+            name: "log",
+            title: "Log"
         });
         col.add([t2, t3]);
 
         board.view();
-
-        
 
         if(!window.hasOwnProperty("gws"))
             window.gws = {}

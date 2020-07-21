@@ -31,10 +31,13 @@ def run(ctx, test, db, cli, runserver):
 
     if runserver:   
         from gws.prism.controller import Controller
-        from gws.prism.app import App
-        
+        current_module_name = settings.data.get("name", None)
+        if current_module_name is None:
+            raise Exception("Error while running server. The module name is not found. Please check the settings file")
+
+        module = importlib.import_module(current_module_name+".app")
         Controller.is_query_params = False
-        app = App()
+        app = getattr(module, "App")()
         app.start()
 
     elif test:

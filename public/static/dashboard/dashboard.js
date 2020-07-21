@@ -18,7 +18,7 @@ class Leftbar{
 
     //-- A -- 
     addButton(name, icon, callback){
-        var container = document.querySelector("#gws-dashboard-sidebar-"+this.parent.uuid);
+        var container = document.querySelector("#gws-dashboard-left-bar-"+this.parent.uuid);
         var btn = document.createElement('div');
         btn.classList.add("left-toolbar-btn")
         btn.innerHTML = `<i class="`+icon+`"></i>`;
@@ -28,7 +28,7 @@ class Leftbar{
     }
 
     addSeparator(){
-        var container = document.querySelector("#gws-dashboard-sidebar-"+this.parent.uuid);
+        var container = document.querySelector("#gws-dashboard-left-bar-"+this.parent.uuid);
         var hr = document.createElement('hr');
         hr.classList.add("")
         container.appendChild(hr);
@@ -54,7 +54,7 @@ class Leftbar{
 
     _view(){
         //add btn using <g-left-btn> tags
-        var buttons = document.querySelectorAll("x-gws-element.gws-dashboard-left-btn");
+        var buttons = document.querySelectorAll("x-gws.gws-dashboard-btn");
         var btn_tab = []
         for(var b of buttons){
             var pos = b.dataset.position || 0
@@ -87,6 +87,7 @@ export class Dashboard {
             this.canvas = document.querySelector(this.canvas);
 
         this.data = data;
+        this._tabs = {};
         this._panel = null;
         this._layout = null;
         this._leftBar = new Leftbar(this);
@@ -97,10 +98,6 @@ export class Dashboard {
     }
 
     //-- A --
-
-    addTab(){
-        
-    }
 
     //-- G --
 
@@ -125,6 +122,10 @@ export class Dashboard {
 
     getHeight(){
         return this.canvas.offsetHeight;
+    }
+
+    getTabByName(name){
+        return this._panel.getTabByName(name)
     }
 
     //-- I --
@@ -162,6 +163,14 @@ export class Dashboard {
         }
     }
 
+    setTabHTMLContent(name, content){
+        var tab = this.getTabByName(name);
+        if(tab == null)
+            throw "The Tab '"+name+"' does not exist"
+
+        tab.setHTMLContent(content);
+    }
+
     setHeight( h ){
         this.canvas.style.height = h
     }
@@ -187,10 +196,10 @@ export class Dashboard {
                     <input class="gws-input"/>
                 </div>
                 <div id="gws-dashboard-main-bar-`+this.uuid+`" class="gws-dashboard-main-bar">
-                    <div id="gws-dashboard-sidebar-`+this.uuid+`" class="gws-dashboard-sidebar"></div>
+                    <div id="gws-dashboard-left-bar-`+this.uuid+`" class="gws-dashboard-left-bar"></div>
                     <div id="gws-dashboard-content-`+this.uuid+`" class="gws-dashboard-content"></div>
                 </div>
-                <div id="gws-dashboard-bottom-bar-`+this.uuid+`" class="gws-dashboard-bottom-bar-">
+                <div id="gws-dashboard-bottom-bar-`+this.uuid+`" class="gws-dashboard-bottom-bar">
                     <div id="bottom-grid-`+this.uuid+`" class="grid"></div>
                 </div>
             </div>
@@ -201,8 +210,16 @@ export class Dashboard {
         var that = this;
         this._layout = new window.GoldenLayout( this.getConfig(), "#gws-dashboard-content-"+this.uuid );
         this._layout.registerComponent( Panel.componentName, function( container, state ){
-            container.getElement().html(state.HTMLContent);
+            container.getElement().html(`
+                <div id="gws-dashboard-tab-content-`+state.uuid+`" class="gws-dashboard-tab-content">
+                    `+state.HTMLContent+`
+                </div>`);
         });
+        
+        // this._layout.on( 'stateChanged', function(state){
+        //     console.log(state)
+        //     state.origin.contentItems[0].container.getElement().html(state.HTMLContent);
+        // });
 
         this.refreshSize();
         this._layout.init();

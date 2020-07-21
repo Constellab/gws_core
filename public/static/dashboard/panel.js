@@ -20,6 +20,10 @@ export class Panel {
 
     add( panels ){
         for(var panel of panels){
+            if(this.tabExists(panel.data.name)){
+                throw "A panel or tab with name '" + panel.data.name + "' already exists"
+            }
+
             if(panel.parent != null)
                 throw "The element has already a parent"
 
@@ -73,13 +77,21 @@ export class Panel {
     getTabByName(name){
         for(var i in this._children){
             var elem = this._children[i];
-            if(elem instanceof Tab && elem.getName() == name){
-                return tab;
+            if(elem instanceof Tab){
+                if(elem.getName() == name)
+                    return elem;
+            } else{
+                //traverse the panel to check for sub-elements
+                return elem.getTabByName(name)
             }
         }
         return null;
     }
     
+    tabExists(name){
+        return this.getTabByName(name) != null
+    }
+
     //-- I --
 
     //-- M --
@@ -89,9 +101,9 @@ export class Panel {
 
     //-- S --
 
-    setName( name ){
-        this.data.name = name;
-    }
+    //setName( name ){
+    //    this.data.name = name;
+    //}
 
     //-- R --
 
@@ -178,9 +190,64 @@ export class Tab extends Panel{
             title: this.getTitle(),
             componentName: Panel.componentName,
             componentState: {
+                uuid: this.uuid,
                 HTMLContent : this.getHTMLContent()
         }};
         return config;
+    }
+
+    //-- L --
+
+    load( url, data = {} ){
+        var that = this;
+        var xobj = new XMLHttpRequest();
+        data.type = data.type || "html"
+        data.onload = data.onload || function(){}
+
+        var mime = "text/html"
+        if(data.type == "json"){
+            mime = "applciation/json"
+        }else if(data.type == "text"){
+            mime = "text/plain; charset=utf8" 
+        }
+
+        xobj.upload.addEventListener("progress", updateProgress, false);
+        xobj.upload.addEventListener("load", transferComplete, false);
+        xobj.upload.addEventListener("error", transferFailed, false);
+        xobj.upload.addEventListener("abort", transferCanceled, false);
+
+        xobj.overrideMimeType(mime);
+        xobj.open('GET', url, true);
+        xobj.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                that.setHTMLContent(xobj.responseText);
+                data.onload(xobj.responseText);
+            } else{
+                // nothing
+            }
+        }
+        xobj.send(null);  
+
+        function updateProgress (oEvent) {
+            if (oEvent.lengthComputable) {
+                var percentComplete = oEvent.loaded / oEvent.total;
+                that.setHTMLContent(percentComplete+"");
+            } else {
+                // Impossible de calculer la progression puisque la taille totale est inconnue
+            }
+        }
+
+        function transferComplete(evt) {
+            that.setHTMLContent("Tranfert done");
+        }
+        
+        function transferFailed(evt) {
+            that.setHTMLContent("An error occured");
+        }
+        
+        function transferCanceled(evt) {
+            that.setHTMLContent("Loading cenceled");
+        }
     }
 
     //-- R --
@@ -197,6 +264,7 @@ export class Tab extends Panel{
 
     setHTMLContent( html ){
         if(this.getState() != null){
+            document.getElementById("gws-dashboard-tab-content-"+this.uuid).innerHTML = html
             return this.data.componentState.HTMLContent = html;
         }
     }

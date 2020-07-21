@@ -113,7 +113,7 @@ class App :
     """
 
     app: Starlette = None
-    ctrl: Controller = None
+    ctrl = Controller
     routes = [
         Route('/hello', hello),
     ]
@@ -121,12 +121,14 @@ class App :
     is_started = False
 
     @classmethod
-    def init(cls):
+    def _init(cls):
+        cls.on_init()
+
         # process and resource routes
-        cls.routes.append(WebSocketRoute('/qw/{action}/{uri_name}/{uri_id}/{params}/', WebSocketApp))
-        cls.routes.append(WebSocketRoute('/qw/{action}/{uri_name}/{uri_id}/', WebSocketApp))
-        cls.routes.append(Route('/q/{action}/{uri_name}/{uri_id}/{params}/', HTTPApp) )
-        cls.routes.append(Route('/q/{action}/{uri_name}/{uri_id}/', HTTPApp) )
+        #cls.routes.append(WebSocketRoute('/gws/qw/{action}/{uri_name}/{uri_id}/{params}/', WebSocketApp))
+        #cls.routes.append(WebSocketRoute('/gws/qw/{action}/{uri_name}/{uri_id}/', WebSocketApp))
+        cls.routes.append(Route('/gws/{action}/{uri_name}/{uri_id}/{params}/', HTTPApp) )
+        cls.routes.append(Route('/gws/{action}/{uri_name}/{uri_id}/', HTTPApp) )
 
         # static dirs
         statics = settings.get_static_dirs()
@@ -155,8 +157,13 @@ class App :
 
     @classmethod 
     def start(cls):
+        cls._init()
         uvicorn.run(cls.app, host=settings.get_data("app_host"), port=settings.get_data("app_port"))
-        App.is_started = True
+        cls.is_started = True
+
+    @classmethod
+    def on_init(cls):
+        pass
 
     @classmethod 
     def on_startup(cls):
@@ -174,23 +181,17 @@ class App :
             
         print("GWS application started!")
         print("* Server: {}:{}".format(settings.get_data("app_host"), settings.get_data("app_port")))
-        print("* HTTP Testing: http://{}:{}/q{}".format(settings.get_data("app_host"), settings.get_data("app_port"), html_view_model.get_view_uri()))    
-        print("* WebSocket Testing: ws://{}:{}/qw{}".format(settings.get_data("app_host"), settings.get_data("app_port"), html_view_model.get_view_uri()))
+        print("* HTTP Testing: http://{}:{}/gws{}".format(settings.get_data("app_host"), settings.get_data("app_port"), html_view_model.get_view_uri()))    
+        #print("* WebSocket Testing: ws://{}:{}/qw{}".format(settings.get_data("app_host"), settings.get_data("app_port"), html_view_model.get_view_uri()))
 
     @classmethod 
     def test(cls, url):
         """
         Return a response in test mode
         """
+        cls._init()
         from starlette.testclient import TestClient
         client = TestClient(cls.app)
         response = client.get(url)
         return response
 
-####################################################################################
-#
-# Initialize the app
-#
-####################################################################################
-
-App.init()

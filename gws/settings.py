@@ -92,7 +92,7 @@ class Settings(PWModel):
 
     def get_template_dir(self, dependency_name: str) -> str:
         dependency_dir = self.get_dependency_dir(dependency_name)
-        return os.path.join(dependency_dir, "./public/templates")
+        return os.path.join(dependency_dir, "./templates")
 
     def get_data(self, k:str) -> str:
         return self.data[k]

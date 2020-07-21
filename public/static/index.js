@@ -12,10 +12,6 @@ GBoard.init();
 if(window.gws == undefined)
     window.gws = {};
 
-window.gws.code = function(){
-    console.log("codes loaded")
-}
-
 window.gws.settings = function(){
     console.log("settings loaded")
 }

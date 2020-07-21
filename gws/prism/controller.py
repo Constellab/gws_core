@@ -11,7 +11,7 @@ class Controller(Base):
     models = dict()
     model_specs = dict()
     is_query_params = False
-
+    
     @classmethod
     async def action(cls, request: 'Request') -> 'ViewModel':
         """

@@ -254,7 +254,7 @@ class Viewable(Model):
 
     @property
     def as_html(self):
-        return "<x-gws-element class='gws-model' id='{}' data-id='{}' data-uri='{}'></x-gws-element>".format(self._uuid, self.id, self.uri)
+        return "<x-gws class='gws-model' id='{}' data-id='{}' data-uri='{}'></x-gws>".format(self._uuid, self.id, self.uri)
 
     # def cast(self, *args, **kwargs):
     #     viewable = super().cast(*args, **kwargs)
@@ -736,7 +736,7 @@ class ViewModel(Model):
 
     @property
     def as_html(self):
-        return "<x-gws-element class='gws-model' id='{}' data-id='{}' data-uri='{}'></x-gws-element>".format(self._uuid, self.id, self.uri)
+        return "<x-gws class='gws-model' id='{}' data-id='{}' data-uri='{}'></x-gws>".format(self._uuid, self.id, self.uri)
 
     # def cast(self, *args, **kwargs):
     #     view_model = super().cast(*args, **kwargs)

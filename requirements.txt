@@ -1,5 +1,6 @@
 peewee
 starlette
+Starlette-WTF
 uvicorn
 aiofiles
 jinja2
