@@ -118,4 +118,8 @@ def parse_settings(module_cwd: str = None, module_name:str = None, module_settin
     }
 
     settings = _update_json(default_settings, _parse_settings(module_cwd=module_cwd, module_name=module_name, module_setting_file=module_setting_file))
+    
+    if not os.path.exists(settings.get("db_dir")):
+        os.mkdir(settings.get("db_dir"))
+        
     return settings

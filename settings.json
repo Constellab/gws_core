@@ -3,7 +3,7 @@
     "app_dir"       : "./",
     "app_host"      : "localhost",
     "app_port"      : 3000,
-    "db_dir"        : "./",
+    "db_dir"        : "./data",
     "db_name"       : "db.sqlite3",
     "is_test"       : false,
     "dependencies"  : {},
