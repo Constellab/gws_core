@@ -9,8 +9,6 @@
 import sys
 import os
 import unittest
-import argparse
-import uvicorn
 import click
 import importlib
 

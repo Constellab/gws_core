@@ -6,9 +6,6 @@
 import sys
 import os
 import json
-import unittest
-import argparse
-import uvicorn
 
 loaded_modules = []
 
