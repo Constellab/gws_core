@@ -5,10 +5,6 @@
 
 import sys
 import os
-import json
-import unittest
-import argparse
-import uvicorn
 
 sys.path.append(os.path.join("./"))
 from gws import runner
