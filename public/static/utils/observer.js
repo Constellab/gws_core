@@ -20,10 +20,22 @@ window.addEventListener("load", function(){
     });
 
     function createGWSNode(element){
-        if(typeof element.tagName == "string" && element.tagName.toLowerCase() == "x-gws"){
+        if(typeof element.tagName == "string" && element.tagName.toLowerCase() == "script"){
+            if(element.dataset.lazy != undefined && element.dataset.lazy){
+                eval(element.innerText)
+            }
+        }else if(typeof element.tagName == "string" && element.tagName.toLowerCase() == "x-gws"){
             console.log("gws element added")
             console.log(element)
+
+            if(element.className == "gws-loader"){
+                console.log("loader")
+                console.log(element.innerText)
+                eval(element.innerText)
+            }
         }   
+
+        
     }
 
 })
