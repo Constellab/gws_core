@@ -99,10 +99,9 @@ class Model(PWModel,Base):
 
     def cast(self, keep_registered: bool = True) -> 'Model':
         """
-            Cast a model instance according the class description in the
-            @type field
-            * If keep_registered = True, the casted model instance is kept registred in the Controller.
-              It is removed from the Controller register otherwise
+        Cast a model instance according the class description in the
+        :param keep_registered: bool, Default to True, If True, the casted model instance is kept registred in the Controller.
+        It is removed from the Controller register otherwise
         """
 
         type_str = slugify(self.type)

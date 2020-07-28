@@ -15,32 +15,8 @@ class Controller(Base):
     @classmethod
     async def action(cls, request: 'Request') -> 'ViewModel':
         """
-            Deal with user actions
-            Receive a request through a request url
-            * url = /{action}/{uri_name}/{uri_id}/{params}
-                * action:
-                    - view:  to get or create a view of a view_model
-                    - run:   to run the current process and return the result view
-                * uri_name: 
-                    - the name of the targeted resource
-                * uri_id: 
-                    - the id of the targeted resource
-                * params: parameter ins JSON format    
-                    e.g.:
-
-                    view_params = {
-                        "view": "<optional_unique.name.of.the.new.view.to.create>",
-                        ... other params ...
-                    } 
-
-                    run_params = {
-                        "name": "<unique.name.of.the.process.to.run>",
-                        "input":{
-                            "resource_id": "<resource.id>",
-                            "resource_type": "<resource.type>"
-                        }
-                        ... other params ...
-                    } 
+        Deal with user actions
+        Receive a request through a request url
         """
 
         if Controller.is_query_params:

@@ -33,7 +33,8 @@ bazel-*
 # Docs
 # -----------------------------------------------------------
 
-docs/
+docs/*
+!docs/templates/
 
 # https://github.com/github/gitignore
 
