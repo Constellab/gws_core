@@ -8,12 +8,9 @@ import os
 
 sys.path.append(os.path.join("./"))
 from gws import runner
-from gws.settings import Settings
-from gws.manage import read_module_name, parse_settings
+from gws.manage import load_settings
 
 if __name__ == "__main__":
     __cdir__ = os.path.dirname(os.path.abspath(__file__))
-    module_name = read_module_name(__cdir__)
-    settings = parse_settings(module_cwd=__cdir__, module_name=module_name, module_setting_file="./settings.json")
-    Settings.init(settings)
+    load_settings(__cdir__)
     runner.run()

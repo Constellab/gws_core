@@ -56,7 +56,7 @@ def _update_relative_static_paths(dep_rel_path, dep_settings):
     
     return dep_settings
 
-def _parse_settings(module_cwd: str = None, module_name:str = None, module_setting_file:str = "settings.json"):    
+def _parse_settings(module_cwd: str = None, module_name:str = None, module_settings_file_path:str = "settings.json"):    
     if module_name in loaded_modules:
         return {}
 
@@ -68,12 +68,12 @@ def _parse_settings(module_cwd: str = None, module_name:str = None, module_setti
     if module_name is None:
         raise Exception("Paremeter module_name is required")
 
-    if not os.path.exists(module_setting_file):
-        raise Exception("The setting file of module '"+module_name+"' is not found. Please check that file '"+module_setting_file+"'.")
+    if not os.path.exists(module_settings_file_path):
+        raise Exception("The setting file of module '"+module_name+"' is not found. Please check that file '"+module_settings_file_path+"'.")
     
     sys.path.append(os.path.join(module_cwd,"./"))         # -> load current module tests
 
-    with open(module_setting_file) as f:
+    with open(module_settings_file_path) as f:
         try:
             settings = json.load(f)
         except:
@@ -95,13 +95,15 @@ def _parse_settings(module_cwd: str = None, module_name:str = None, module_setti
             sys.path.append(dep_cwd)                            # -> load module tests
 
             if not dep_name == module_name:
-                dep_settings = _parse_settings(module_cwd=dep_cwd, module_name=dep_name, module_setting_file=dep_setting_file)
+                dep_settings = _parse_settings(module_cwd=dep_cwd, module_name=dep_name, module_settings_file_path=dep_setting_file)
                 if len(dep_settings) > 0:
                     dep_settings = _update_relative_static_paths(dep_path,dep_settings)
                     settings = _update_json(dep_settings, settings)
     return settings
  
-def parse_settings(module_cwd: str = None, module_name:str = None, module_setting_file:str = "settings.json"):
+def parse_settings(module_cwd: str = None):
+    module_name = read_module_name(module_cwd)
+    module_settings_file_path = os.path.join(module_cwd, "settings.json")
     default_settings = {
         "app_dir"       : "./",
         "app_host"      : "localhost",
@@ -114,9 +116,14 @@ def parse_settings(module_cwd: str = None, module_name:str = None, module_settin
         "__cwd__"       : module_cwd
     }
 
-    settings = _update_json(default_settings, _parse_settings(module_cwd=module_cwd, module_name=module_name, module_setting_file=module_setting_file))
+    settings = _update_json(default_settings, _parse_settings(module_cwd=module_cwd, module_name=module_name, module_settings_file_path=module_settings_file_path))
     
     if not os.path.exists(settings.get("db_dir")):
         os.mkdir(settings.get("db_dir"))
         
     return settings
+
+def load_settings(module_cwd: str = None):
+    from gws.settings import Settings
+    settings = parse_settings(module_cwd)
+    Settings.init(settings)

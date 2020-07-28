@@ -15,17 +15,8 @@ import subprocess
 
 from gws.settings import Settings
 
-@click.command(context_settings=dict(
-    ignore_unknown_options=True,
-    allow_extra_args=True
-))
-@click.pass_context
-@click.option('--test', '-t', help='The name test file to launch (regular expression)')
-@click.option('--db', '-d', help="The name of the database to use")
-@click.option('--cli', '-c', help='Command to run using the command line interface')
-@click.option('--runserver', '-r', is_flag=True, help='Starts the server')
-@click.option('--docgen', '-m', is_flag=True, help='Genrate documentation')
-def run(ctx, test, db, cli, runserver, docgen):
+
+def _run(ctx = None, test = False, db = False, cli = False, runserver = False):
     settings = Settings.retrieve()
 
     if runserver:   
@@ -67,14 +58,27 @@ def run(ctx, test, db, cli, runserver, docgen):
         module = importlib.import_module(module_name)
         getattr(module, function_name)()
     
-    elif docgen:
+    else:
         settings.data["db_name"] = ':memory:'
 
         if not settings.save():
             raise Exception("manage", "Cannot save the settings in the database")
         
-        app_dir = settings.get_app_dir()
-        try:
-            subprocess.check_call(os.path.join(app_dir,"docgen.sh"), cwd=app_dir)
-        except:
-            pass
+        # app_dir = settings.get_app_dir()
+        # try:
+        #     subprocess.check_call(os.path.join(app_dir,"docgen.sh"), cwd=app_dir)
+        # except:
+        #     pass
+
+@click.command(context_settings=dict(
+    ignore_unknown_options=True,
+    allow_extra_args=True
+))
+@click.pass_context
+@click.option('--test', '-t', help='The name test file to launch (regular expression)')
+@click.option('--db', '-d', help="The name of the database to use")
+@click.option('--cli', '-c', help='Command to run using the command line interface')
+@click.option('--runserver', '-r', is_flag=True, help='Starts the server')
+def run(ctx, test, db, cli, runserver):
+    _run(ctx, test, db, cli, runserver)
+

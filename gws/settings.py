@@ -34,7 +34,7 @@ class Settings(PWModel):
             self.data = {}
             for k in self._data:
                 self.data[k] = self._data[k]
-        
+
     @classmethod
     def init( cls, params: dict = None ):
         cls._data["app_dir"] = params["app_dir"]

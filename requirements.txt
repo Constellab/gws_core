@@ -8,3 +8,6 @@ requests
 itsdangerous
 awesome-slugify
 click
+sphinx
+sphinx-rtd-theme
+rinohtype
