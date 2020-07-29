@@ -41,14 +41,16 @@ def _update_relative_static_paths(dep_rel_path, dep_settings):
             d = os.path.join(dep_rel_path,dep_settings[k])
             if os.path.exists(d):
                 dep_settings[k] = d
+            else:
+                raise Exception(f"Directory {d} does not exist")
 
-    for k in dep_settings["statics"]:
+    for k in dep_settings.get("statics",{}):
         dep_settings["statics"][k] = os.path.join(dep_rel_path,dep_settings["statics"][k])
     
-    if dep_settings.get("app", None) is None:
-        return dep_settings["app"]
+    #if dep_settings.get("app", None) is None:
+    #    return dep_settings["app"]
 
-    for k in dep_settings["app"]:
+    for k in dep_settings.get("app",{}):
         if k in ["scripts","modules","styles"]:
             length = len(dep_settings["app"][k])
             for i in range(length):
@@ -56,7 +58,7 @@ def _update_relative_static_paths(dep_rel_path, dep_settings):
     
     return dep_settings
 
-def _parse_settings(module_cwd: str = None, module_name:str = None, module_settings_file_path:str = "settings.json"):    
+def _parse_settings(module_cwd: str = None, module_name:str = None, module_settings_file_path:str = None):    
     if module_name in loaded_modules:
         return {}
 
@@ -70,8 +72,6 @@ def _parse_settings(module_cwd: str = None, module_name:str = None, module_setti
 
     if not os.path.exists(module_settings_file_path):
         raise Exception("The setting file of module '"+module_name+"' is not found. Please check that file '"+module_settings_file_path+"'.")
-    
-    sys.path.append(os.path.join(module_cwd,"./"))         # -> load current module tests
 
     with open(module_settings_file_path) as f:
         try:
@@ -86,19 +86,23 @@ def _parse_settings(module_cwd: str = None, module_name:str = None, module_setti
     for dep_name in settings["dependencies"]:
         if dep_name == ":external:":
             for dep_urls in settings["dependencies"][dep_name]:
-                sys.path.append(os.path.join(module_cwd,dep_urls))    # -> load module sources
+                sys.path.insert(0,os.path.join(module_cwd,dep_urls)) 
         else:
-            dep_path = settings["dependencies"][dep_name]
-            dep_cwd = os.path.join(module_cwd,dep_path)
+            dep_rel_path = settings["dependencies"][dep_name]
+            dep_cwd = os.path.join(module_cwd,dep_rel_path)
             dep_setting_file = os.path.join(dep_cwd,"./settings.json")
 
-            sys.path.append(dep_cwd)                            # -> load module tests
+            sys.path.insert(0,dep_cwd)                                 
 
             if not dep_name == module_name:
                 dep_settings = _parse_settings(module_cwd=dep_cwd, module_name=dep_name, module_settings_file_path=dep_setting_file)
                 if len(dep_settings) > 0:
-                    dep_settings = _update_relative_static_paths(dep_path,dep_settings)
+                    dep_settings = _update_relative_static_paths(dep_cwd,dep_settings)
                     settings = _update_json(dep_settings, settings)
+            else:
+                if len(settings) > 0:
+                    settings = _update_relative_static_paths(dep_cwd,settings)
+
     return settings
  
 def parse_settings(module_cwd: str = None):
@@ -127,3 +131,5 @@ def load_settings(module_cwd: str = None):
     from gws.settings import Settings
     settings = parse_settings(module_cwd)
     Settings.init(settings)
+    settings = Settings.retrieve()
+    return settings

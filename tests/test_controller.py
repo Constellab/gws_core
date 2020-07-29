@@ -9,7 +9,7 @@ from starlette.responses import JSONResponse, HTMLResponse
 from starlette.testclient import TestClient
 from starlette.websockets import WebSocket
 
-from gws.prism.app import App
+from gws.app import App
 from gws.prism.model import Model, Resource, ResourceViewModel
 from gws.prism.view import HTMLViewTemplate, JSONViewTemplate
 from gws.prism.controller import Controller

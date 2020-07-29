@@ -1,5 +1,9 @@
 {
     "name"          : "gws",
+    "title"         : "Core Gencovery Web Services (GWS)",
+    "description"   : "This application provides core functionalities for GWS-based modules",
+    "authors"       : "2020, Gencovery",
+    "version"       : "0.1",
     "app_dir"       : "./",
     "app_host"      : "localhost",
     "app_port"      : 3000,
@@ -13,7 +17,7 @@
     },
     "app":{
         "favicon": {"src":"/static/gws/favicon.png", "type":"image/png"},
-        "title": "GWS",
+        "title": "Wecome to GWS",
         "scripts": [
             "/static/dis/jquery/3.5.1/jquery.slim.min.js",
             "/static/dis/popper/2.4.2/popper.min.js",

@@ -1,7 +1,6 @@
 
 import asyncio
 import unittest
-from gws.prism.app import App
 from gws.prism.model import Process, Resource, Model, ViewModel
 from gws.prism.controller import Controller
 

@@ -9,11 +9,12 @@ import unittest
 import click
 import importlib
 import subprocess
+import shutil
 
 from gws.settings import Settings
 
 
-def _run(ctx = None, test = False, db = False, cli = False, runserver = False):
+def _run(ctx = None, test = False, db = False, cli = False, runserver = False, docgen = False, force = False):
     settings = Settings.retrieve()
 
     if runserver:   
@@ -55,17 +56,92 @@ def _run(ctx = None, test = False, db = False, cli = False, runserver = False):
         module = importlib.import_module(module_name)
         getattr(module, function_name)()
     
+    elif docgen:
+        settings.data["db_name"] = ':memory:'
+
+        if not settings.save():
+            raise Exception("manage", "Cannot save the settings in the database")
+        
+        app_dir = settings.get_cwd()
+
+        try:
+            if force:
+                try:
+                    shutil.rmtree(os.path.join(app_dir, "./docs"), ignore_errors=True)
+                except:
+                    pass
+            
+            if not os.path.exists(os.path.join(app_dir,"docs")):
+                os.mkdir(os.path.join(app_dir,"./docs"))
+
+            subprocess.check_call([
+                "sphinx-quickstart", "-q",
+                f"-p {settings.title}",
+                f"-a {settings.authors}",
+                f"-v {settings.version}",
+                f"-l en",
+                "--sep",
+                "--ext-autodoc",
+                "--ext-todo",
+                "--ext-coverage",
+                "--ext-mathjax",
+                "--ext-ifconfig",
+                "--ext-viewcode",
+                "--ext-githubpages",
+                ], cwd=os.path.join(app_dir,"./docs"))
+            
+            with open(os.path.join(app_dir,"./docs/source/conf.py"), "r+") as f:
+                content = f.read()
+                f.seek(0, 0)
+                f.write('\n')
+                f.write("import os")
+                f.write('\n')
+                f.write("import sys")
+                f.write('\n')
+                f.write(f"wd = os.path.abspath('../../')")
+                f.write('\n')
+                f.write("sys.path.insert(0, os.path.join(wd,'../gws-py'))")
+                f.write('\n')
+                f.write("from gws import sphynx_conf")
+                f.write('\n')
+                f.write(content)
+                f.write('\n')
+                f.write("extensions = extensions + sphynx_conf.extensions")
+                f.write('\n')
+                f.write("exclude_patterns = exclude_patterns + sphynx_conf.exclude_patterns")
+                f.write('\n')
+                f.write("html_theme = 'sphinx_rtd_theme'")
+
+
+            subprocess.check_call([
+                "sphinx-apidoc",
+                "-M",
+                f"-H {settings.title}",
+                f"-A {settings.authors}",
+                f"-V {settings.version}",
+                "-f",
+                "-o", "./source",
+                os.path.join("../",settings.name)
+                ], cwd=os.path.join(app_dir,"./docs"))
+
+            subprocess.check_call([
+                "sphinx-build",
+                "-b",
+                "html",
+                "./source",
+                "./build",
+                ], cwd=os.path.join(app_dir,"./docs"))
+
+        except:
+            pass
+
     else:
         settings.data["db_name"] = ':memory:'
 
         if not settings.save():
             raise Exception("manage", "Cannot save the settings in the database")
         
-        # app_dir = settings.get_app_dir()
-        # try:
-        #     subprocess.check_call(os.path.join(app_dir,"docgen.sh"), cwd=app_dir)
-        # except:
-        #     pass
+        
 
 @click.command(context_settings=dict(
     ignore_unknown_options=True,
@@ -75,7 +151,9 @@ def _run(ctx = None, test = False, db = False, cli = False, runserver = False):
 @click.option('--test', '-t', help='The name test file to launch (regular expression)')
 @click.option('--db', '-d', help="The name of the database to use")
 @click.option('--cli', '-c', help='Command to run using the command line interface')
-@click.option('--runserver', '-r', is_flag=True, help='Starts the server')
-def run(ctx, test, db, cli, runserver):
-    _run(ctx, test, db, cli, runserver)
+@click.option('--runserver', is_flag=True, help='Starts the server')
+@click.option('--docgen', is_flag=True, help='Generate documentation')
+@click.option('--force', "-f", is_flag=True, help='Remove directory before')
+def run(ctx, test, db, cli, runserver, docgen, force):
+    _run(ctx, test, db, cli, runserver, docgen, force)
 

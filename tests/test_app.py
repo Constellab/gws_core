@@ -9,7 +9,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, HTMLResponse
 from starlette.testclient import TestClient
 
-from gws.prism.app import App
+from gws.app import App
 from gws.prism.model import Model, Resource, Process, ResourceViewModel
 from gws.prism.view import HTMLViewTemplate, JSONViewTemplate
 from gws.prism.controller import Controller
@@ -102,7 +102,7 @@ class TestApp(unittest.TestCase):
         self.assertEqual(response.content.decode("utf-8"), "Model="+str(elon.id)+" & View URI="+elon_vmodel.uri+": I am <b>Elon Musk</b>! My job is engineer.")
         print(response.content)
 
-    def test_app(self):
-        Controller.is_query_params = False
-        app = App()
-        app.start()
+    # def test_app(self):
+    #     Controller.is_query_params = False
+    #     app = App()
+    #     app.start()

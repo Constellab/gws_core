@@ -61,6 +61,26 @@ class Settings(PWModel):
         return self.data.get("app", {})
 
     @property
+    def name(self):
+        return self.data.get("name", "Unamed")
+
+    @property
+    def title(self):
+        return self.data.get("title", "No title")
+
+    @property
+    def description(self):
+        return self.data.get("description", "No Description")
+
+    @property
+    def authors(self):
+        return self.data.get("authors", "No authors")
+    
+    @property
+    def version(self):
+        return self.data.get("authors", "0.1")
+
+    @property
     def db_path(self):
         if self.data["db_name"] == ':memory:':
             return self.data["db_name"]
@@ -70,9 +90,6 @@ class Settings(PWModel):
     def get_cwd(self) -> dict:
         return self.data["__cwd__"]
 
-    def get_app_dir(self) -> dict:
-        return os.path.join(self.get_cwd(),self.data["app_dir"])
-    
     def get_public_dir(self) -> dict:
         return os.path.join(self.get_cwd(),"./public")
 
@@ -88,6 +105,13 @@ class Settings(PWModel):
     def get_dependency_dir(self, dependency_name: str) -> str:
         return os.path.join(self.get_cwd(),self.data["dependencies"][dependency_name])
 
+    def get_dependency_dirs(self) -> dict:
+        dirs = {}
+        for dep_name in self.data["dependencies"]:
+            if not dep_name == ":external:":
+                dirs[dep_name] = os.path.join(self.get_cwd(),self.data["dependencies"][dep_name])
+        return dirs
+    
     def get_template_dir(self, dependency_name: str) -> str:
         dependency_dir = self.get_dependency_dir(dependency_name)
         return os.path.join(dependency_dir, "./templates")
