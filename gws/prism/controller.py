@@ -122,8 +122,17 @@ class Controller(Base):
             if isinstance(model_type, type):
                 full_cname = model_type.full_classname(slugify=True)
                 cls.model_specs[full_cname] = model_type
-                model_type._meta.table_name = model_type._table_name
 
+                # change names of the tables of instances of prism objects
+                if( issubclass(model_type, Resource) ):
+                    model_type._meta.table_name = Resource._table_name
+                elif( issubclass(model_type, Process) ):
+                    model_type._meta.table_name = Process._table_name
+                elif( issubclass(model_type, ResourceViewModel) ):
+                    model_type._meta.table_name = ResourceViewModel._table_name
+                elif( issubclass(model_type, ProcessViewModel) ):
+                    model_type._meta.table_name = ProcessViewModel._table_name
+                
             else:
                 raise Exception("Controller", "register_model_classes", "Invalid model type")
 
