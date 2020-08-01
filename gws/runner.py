@@ -10,11 +10,12 @@ import click
 import importlib
 import subprocess
 import shutil
+import re
 
 from gws.settings import Settings
 
 
-def _run(ctx = None, test = False, db = False, cli = False, runserver = False, docgen = False, force = False):
+def _run(ctx=None, test=False, db=False, cli=False, runserver=False, docgen=False, force=False, pull=False, push=False, tag=""):
     settings = Settings.retrieve()
 
     if runserver:   
@@ -63,22 +64,23 @@ def _run(ctx = None, test = False, db = False, cli = False, runserver = False, d
             raise Exception("manage", "Cannot save the settings in the database")
         
         app_dir = settings.get_cwd()
+        gen_folder = "./docs/html/"
 
         try:
             if force:
                 try:
-                    shutil.rmtree(os.path.join(app_dir, "./docs"), ignore_errors=True)
+                    shutil.rmtree(os.path.join(app_dir, gen_folder), ignore_errors=True)
                 except:
                     pass
-            
-            if not os.path.exists(os.path.join(app_dir,"docs")):
-                os.mkdir(os.path.join(app_dir,"./docs"))
+
+            if not os.path.exists(os.path.join(app_dir, gen_folder)):
+                os.mkdir(os.path.join(app_dir, gen_folder))
 
             subprocess.check_call([
                 "sphinx-quickstart", "-q",
-                f"-p {settings.title}",
-                f"-a {settings.authors}",
-                f"-v {settings.version}",
+                f"-p{settings.title}",
+                f"-a{settings.authors}",
+                f"-v{settings.version}",
                 f"-l en",
                 "--sep",
                 "--ext-autodoc",
@@ -88,41 +90,62 @@ def _run(ctx = None, test = False, db = False, cli = False, runserver = False, d
                 "--ext-ifconfig",
                 "--ext-viewcode",
                 "--ext-githubpages",
-                ], cwd=os.path.join(app_dir,"./docs"))
+                ], cwd=os.path.join(app_dir, gen_folder))
             
-            with open(os.path.join(app_dir,"./docs/source/conf.py"), "r+") as f:
+            with open(os.path.join(app_dir, gen_folder, "./source/conf.py"), "r+") as f:
                 content = f.read()
                 f.seek(0, 0)
                 f.write('\n')
-                f.write("import os")
-                f.write('\n')
-                f.write("import sys")
-                f.write('\n')
-                f.write(f"wd = os.path.abspath('../../')")
-                f.write('\n')
-                f.write("sys.path.insert(0, os.path.join(wd,'../gws-py'))")
-                f.write('\n')
-                f.write("from gws import sphynx_conf")
-                f.write('\n')
-                f.write(content)
-                f.write('\n')
-                f.write("extensions = extensions + sphynx_conf.extensions")
-                f.write('\n')
-                f.write("exclude_patterns = exclude_patterns + sphynx_conf.exclude_patterns")
-                f.write('\n')
+                f.write("import os\n")
+                f.write("import sys\n")
+                f.write("wd = os.path.abspath('../../../')\n")
+                f.write("sys.path.insert(0, os.path.join(wd,'../gws-py'))\n")
+                f.write("from gws import sphynx_conf\n\n\n")
+                f.write(content + '\n')
+                f.write("extensions = extensions + sphynx_conf.extensions\n")
+                f.write("exclude_patterns = exclude_patterns + sphynx_conf.exclude_patterns\n")
                 f.write("html_theme = 'sphinx_rtd_theme'")
-
 
             subprocess.check_call([
                 "sphinx-apidoc",
                 "-M",
-                f"-H {settings.title}",
-                f"-A {settings.authors}",
-                f"-V {settings.version}",
+                f"-H{settings.title}",
+                f"-A{settings.authors}",
+                f"-V{settings.version}",
                 "-f",
                 "-o", "./source",
-                os.path.join("../",settings.name)
-                ], cwd=os.path.join(app_dir,"./docs"))
+                os.path.join("../../",settings.name)
+                ], cwd=os.path.join(app_dir, gen_folder))
+
+            for f in ['intro.rst', 'usage.rst', 'contrib.rst', 'changes.rst']:
+                if os.path.exists(os.path.join(app_dir,"./docs/"+f)):
+                    shutil.copyfile(
+                        os.path.join(app_dir,"./docs/"+f), 
+                        os.path.join(app_dir,"./docs/html/source/"+f))
+
+            # insert modules in index
+            with open(os.path.join(app_dir, gen_folder, "./source/index.rst"), "r") as f:
+                content = f.read()
+                content = content.replace(
+                    ":caption: Contents:",
+                    ":caption: API documentation:\n\n   modules\n\n")
+
+                content = content.replace(
+                    ".. toctree::",
+
+                    settings.description + "\n\n" +
+                    ".. toctree::\n"+
+                    "   :hidden:\n\n"+
+                    "   self\n\n"+
+                    ".. toctree::\n\n"+
+                    "   intro\n"+
+                    "   usage\n"+
+                    "   contrib\n"+
+                    "   changes\n\n\n"+
+                    ".. toctree::")
+                
+            with open(os.path.join(app_dir, gen_folder, "./source/index.rst"), "w") as f:
+                f.write(content)
 
             subprocess.check_call([
                 "sphinx-build",
@@ -130,9 +153,26 @@ def _run(ctx = None, test = False, db = False, cli = False, runserver = False, d
                 "html",
                 "./source",
                 "./build",
-                ], cwd=os.path.join(app_dir,"./docs"))
+                ], cwd=os.path.join(app_dir, gen_folder))
 
         except:
+            pass
+    
+    elif pull:
+        app_server = ""
+        docs_server = ""
+        # pull app
+
+        # pull docs
+
+    elif push:
+        app_server = ""
+        docs_server = ""
+        # push app
+
+        # push docs
+        if not os.path.exists(os.path.join(app_dir, gen_folder)):
+            # send html doc to a remote server
             pass
 
     else:
@@ -153,7 +193,10 @@ def _run(ctx = None, test = False, db = False, cli = False, runserver = False, d
 @click.option('--cli', '-c', help='Command to run using the command line interface')
 @click.option('--runserver', is_flag=True, help='Starts the server')
 @click.option('--docgen', is_flag=True, help='Generate documentation')
-@click.option('--force', "-f", is_flag=True, help='Remove directory before')
-def run(ctx, test, db, cli, runserver, docgen, force):
-    _run(ctx, test, db, cli, runserver, docgen, force)
+@click.option('--force', "-f", is_flag=True, help='Force documentation generation by removing any existing documentation (used if --docgen is given)')
+@click.option('--pull', is_flag=True, help='Update the app')
+@click.option('--push', is_flag=True, help='Publish the app')
+@click.option('--tag', help='Tag of the published app (default is the current version)')
+def run(ctx, test, db, cli, runserver, docgen, force, pull, push, tag):
+    _run(ctx, test, db, cli, runserver, docgen, force, pull, push, tag)
 
