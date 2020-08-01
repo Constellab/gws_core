@@ -1,0 +1,159 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS. 
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
+
+import sys
+import os
+import unittest
+import click
+import importlib
+import subprocess
+import shutil
+
+from gws.settings import Settings
+
+
+def _run(ctx = None, test = False, db = False, cli = False, runserver = False, docgen = False, force = False):
+    settings = Settings.retrieve()
+
+    if runserver:   
+        from gws.prism.controller import Controller
+        current_module_name = settings.data.get("name", None)
+        if current_module_name is None:
+            raise Exception("Error while running server. The module name is not found. Please check the settings file")
+
+        module = importlib.import_module(current_module_name+".app")
+        Controller.is_query_params = False
+        app = getattr(module, "App")()
+        app.start()
+
+    elif test:
+        if test == "*":
+            test = "test*"
+        if test == "all":
+            test = "test*"
+
+        settings.data["db_name"] = 'db_test.sqlite3'
+        settings.data["is_test"] = True
+
+        if db:
+            settings.data["db_name"] = db
+
+        if not settings.save():
+            raise Exception("manage", "Cannot save the settings in the database")
+        
+        loader = unittest.TestLoader()
+        test_suite = loader.discover(".", pattern=test+".py")
+        test_runner = unittest.TextTestRunner()
+        test_runner.run(test_suite)
+
+    elif cli:
+        tab = cli.split(".")
+        n = len(tab)
+        module_name = ".".join(tab[0:n-1])
+        function_name = tab[n-1]
+        module = importlib.import_module(module_name)
+        getattr(module, function_name)()
+    
+    elif docgen:
+        settings.data["db_name"] = ':memory:'
+
+        if not settings.save():
+            raise Exception("manage", "Cannot save the settings in the database")
+        
+        app_dir = settings.get_cwd()
+
+        try:
+            if force:
+                try:
+                    shutil.rmtree(os.path.join(app_dir, "./docs"), ignore_errors=True)
+                except:
+                    pass
+            
+            if not os.path.exists(os.path.join(app_dir,"docs")):
+                os.mkdir(os.path.join(app_dir,"./docs"))
+
+            subprocess.check_call([
+                "sphinx-quickstart", "-q",
+                f"-p {settings.title}",
+                f"-a {settings.authors}",
+                f"-v {settings.version}",
+                f"-l en",
+                "--sep",
+                "--ext-autodoc",
+                "--ext-todo",
+                "--ext-coverage",
+                "--ext-mathjax",
+                "--ext-ifconfig",
+                "--ext-viewcode",
+                "--ext-githubpages",
+                ], cwd=os.path.join(app_dir,"./docs"))
+            
+            with open(os.path.join(app_dir,"./docs/source/conf.py"), "r+") as f:
+                content = f.read()
+                f.seek(0, 0)
+                f.write('\n')
+                f.write("import os")
+                f.write('\n')
+                f.write("import sys")
+                f.write('\n')
+                f.write(f"wd = os.path.abspath('../../')")
+                f.write('\n')
+                f.write("sys.path.insert(0, os.path.join(wd,'../gws-py'))")
+                f.write('\n')
+                f.write("from gws import sphynx_conf")
+                f.write('\n')
+                f.write(content)
+                f.write('\n')
+                f.write("extensions = extensions + sphynx_conf.extensions")
+                f.write('\n')
+                f.write("exclude_patterns = exclude_patterns + sphynx_conf.exclude_patterns")
+                f.write('\n')
+                f.write("html_theme = 'sphinx_rtd_theme'")
+
+
+            subprocess.check_call([
+                "sphinx-apidoc",
+                "-M",
+                f"-H {settings.title}",
+                f"-A {settings.authors}",
+                f"-V {settings.version}",
+                "-f",
+                "-o", "./source",
+                os.path.join("../",settings.name)
+                ], cwd=os.path.join(app_dir,"./docs"))
+
+            subprocess.check_call([
+                "sphinx-build",
+                "-b",
+                "html",
+                "./source",
+                "./build",
+                ], cwd=os.path.join(app_dir,"./docs"))
+
+        except:
+            pass
+
+    else:
+        settings.data["db_name"] = ':memory:'
+
+        if not settings.save():
+            raise Exception("manage", "Cannot save the settings in the database")
+        
+        
+
+@click.command(context_settings=dict(
+    ignore_unknown_options=True,
+    allow_extra_args=True
+))
+@click.pass_context
+@click.option('--test', '-t', help='The name test file to launch (regular expression)')
+@click.option('--db', '-d', help="The name of the database to use")
+@click.option('--cli', '-c', help='Command to run using the command line interface')
+@click.option('--runserver', is_flag=True, help='Starts the server')
+@click.option('--docgen', is_flag=True, help='Generate documentation')
+@click.option('--force', "-f", is_flag=True, help='Remove directory before')
+def run(ctx, test, db, cli, runserver, docgen, force):
+    _run(ctx, test, db, cli, runserver, docgen, force)
+
