@@ -134,11 +134,11 @@ class Model(PWModel,Base):
         if save:
             self.save()
 
-    def get_name(self) -> str:
-        return self.data.get("name", None)
+    # def get_name(self) -> str:
+    #     return self.data.get("name", None)
     
-    def get_description(self, value: str):
-        return self.data.get("description", None)
+    # def get_description(self, value: str):
+    #     return self.data.get("description", None)
 
     def has_data(self) -> bool:
         """
@@ -181,16 +181,15 @@ class Model(PWModel,Base):
         else:
             raise Exception(self.classname(),"set_data","The data must be a JSONable dictionary")  
     
-    def set_name(self, value: str):
-        if not isinstance(value, str):
-            raise Exception(self.classname(),"set_name","The name must be a string")  
-        self.data["name"] = value
+    # def set_name(self, value: str):
+    #     if not isinstance(value, str):
+    #         raise Exception(self.classname(),"set_name","The name must be a string")  
+    #     self.data["name"] = value
     
-    def set_description(self, value: str):
-        if not isinstance(value, str):
-            raise Exception(self.classname(),"set_description","The description must be a string")  
-        
-        self.data["description"] = value
+    # def set_description(self, value: str):
+    #     if not isinstance(value, str):
+    #         raise Exception(self.classname(),"set_description","The description must be a string")  
+    #     self.data["description"] = value
 
     def save(self, *args, **kwargs) -> bool:
         if not self.table_exists():
@@ -209,7 +208,7 @@ class Model(PWModel,Base):
             try:
                 if model_list is None:
                     model_list = Controller.models.values()
-
+                
                 for m in model_list:
                     if isinstance(m, cls):
                         m.save()
