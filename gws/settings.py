@@ -90,6 +90,9 @@ class Settings(PWModel):
     def get_cwd(self) -> dict:
         return self.data["__cwd__"]
 
+    def get_log_dir(self) -> dict:
+        return os.path.join(self.get_cwd(),"./logs")
+
     def get_public_dir(self) -> dict:
         return os.path.join(self.get_cwd(),"./public")
 
