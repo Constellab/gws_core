@@ -42,7 +42,8 @@ def _update_relative_static_paths(dep_rel_path, dep_settings):
             if os.path.exists(d):
                 dep_settings[k] = d
             else:
-                raise Exception(f"Directory {d} does not exist")
+                pass
+                #raise Exception(f"Directory {d} does not exist")
 
     for k in dep_settings.get("statics",{}):
         dep_settings["statics"][k] = os.path.join(dep_rel_path,dep_settings["statics"][k])

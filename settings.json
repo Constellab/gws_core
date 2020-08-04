@@ -2,7 +2,7 @@
     "name"          : "gws",
     "title"         : "Core Gencovery Web Services (GWS)",
     "description"   : "This application provides core functionalities for GWS-based modules",
-    "authors"       : "2020, Gencovery",
+    "authors"       : "Gencovery",
     "version"       : "0.1",
     "app_dir"       : "./",
     "app_host"      : "localhost",
