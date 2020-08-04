@@ -4,12 +4,16 @@
     "description"   : "This application provides core functionalities for GWS-based modules",
     "authors"       : "Gencovery",
     "version"       : "0.1",
+
     "app_dir"       : "./",
-    "app_host"      : "localhost",
+    "app_host"      : "0.0.0.0",
     "app_port"      : 3000,
+
     "db_dir"        : "./data",
     "db_name"       : "db.sqlite3",
+
     "is_test"       : false,
+    
     "dependencies"  : {},
     "statics"       : {
         "/static/dis"   : "../../extern/distrib-js",

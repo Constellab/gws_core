@@ -178,11 +178,15 @@ class App :
             html_view_model.save()
             json_view_model = RobotJSONViewModel(robot)
             json_view_model.save()
-            
+        
+        host = settings.get_data("app_host")
+        if host == "0.0.0.0":
+            host = "localhost"
+
         print("GWS application started!")
         print("* Server: {}:{}".format(settings.get_data("app_host"), settings.get_data("app_port")))
-        print("* HTTP Testing: http://{}:{}/gws{}".format(settings.get_data("app_host"), settings.get_data("app_port"), html_view_model.get_view_uri()))    
-        #print("* WebSocket Testing: ws://{}:{}/qw{}".format(settings.get_data("app_host"), settings.get_data("app_port"), html_view_model.get_view_uri()))
+        print("* HTTP Testing: http://{}:{}/gws{}".format(host, settings.get_data("app_port"), html_view_model.get_view_uri()))    
+        #print("* WebSocket Testing: ws://{}:{}/qw{}".format(host, settings.get_data("app_port"), html_view_model.get_view_uri()))
 
     @classmethod 
     def test(cls, url):

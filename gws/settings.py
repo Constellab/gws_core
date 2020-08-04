@@ -17,7 +17,7 @@ class Settings(PWModel):
 
     _data = dict(
         app_dir         = __cdir__,
-        app_host        = 'localhost',
+        app_host        = '0.0.0.0',
         app_port        = 3000,
         db_dir          = os.path.join(__cdir__, '../../'),
         db_name         = 'db.sqlite3',     # ':memory:'
