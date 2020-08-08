@@ -8,10 +8,24 @@ import inspect
 import re
 
 class Base:
+    """
+    Base class
+    """
 
-    def classname(self, slugify = False, snakefy = False, separate_upper = False) -> str:
+    def classname(self, slugify = False, snakefy = False, replace_uppercase = False) -> str:
+        """
+        Returns the name the class
+        :param slugify: Slugify the returned class name if True, defaults to False
+        :type slugify: bool, optional
+        :param snakefy: Snakefy the returned class name if True, defaults to False
+        :type snakefy: bool, optional
+        :param replace_uppercase: Replace upper cases by "-" if True, defaults to False
+        :type replace_uppercase: bool, optional
+        :return: The class name
+        :rtype: str
+        """
         name = type(self).__name__
-        if separate_upper:
+        if replace_uppercase:
             name = re.sub('([A-Z]{1})', r'-\1', name)
             name = name.strip("-")
 
@@ -23,6 +37,15 @@ class Base:
     
     @classmethod
     def full_classname(cls, slugify = False, snakefy = False):
+        """
+        Returns the full name of the class
+        :param slugify: Slugify the returned class name if True, defaults to False
+        :type slugify: bool, optional
+        :param snakefy: Snakefy the returned class name if True, defaults to False
+        :type snakefy: bool, optional
+        :return: The class name
+        :rtype: str
+        """
         module = inspect.getmodule(cls).__name__
         name = cls.__name__
         full_name = module + "." + name
@@ -35,11 +58,21 @@ class Base:
         return full_name
 
     @classmethod
-    def module(cls):
+    def module(cls) -> str:
+        """
+        Returns the module of the class
+        :return: The module
+        :rtype: str
+        """
         module = inspect.getmodule(cls).__name__
         return module
 
-    def property_names(self, instance = None):
+    def property_names(self, instance = None) -> list:
+        """
+        Returns the property names
+        :return: The list of the properties
+        :rtype: list
+        """
         cls = type(self)
         property_names = []
         m = inspect.getmembers(cls)
@@ -63,9 +96,16 @@ class Base:
         return method_names
 
 
-def slugify(name, snakefy = False) -> str:
+def slugify(text, snakefy = False) -> str:
+    """
+    Returns the slugified text
+    :param snakefy: Snakefy the text if True (i.e. uses undescores instead of dashes to separate text words), defaults to False
+    :type snakefy: bool, optional
+    :return: The slugified name
+    :rtype: str
+    """
     if slugify:
-        name = convert_to_slug(name, to_lower=True, separator='-')
+        text = convert_to_slug(text, to_lower=True, separator='-')
     elif snakefy:
-        name = convert_to_slug(name, to_lower=True, separator='_')
-    return name
+        text = convert_to_slug(text, to_lower=True, separator='_')
+    return text

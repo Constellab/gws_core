@@ -17,7 +17,7 @@ from peewee import CharField
 class Person(Model):
     name = CharField(null=True)
 
-Controller.register_model_classes([Person])
+Controller.register_model_specs([Person])
 
 class TestModel(unittest.TestCase):
     
@@ -25,8 +25,6 @@ class TestModel(unittest.TestCase):
     def setUpClass(cls):
         Person.drop_table()
         Person.create_table()
-        Person.create(name = 'Jhon Smith', data={})
-        Person.create(name = 'Robert Vincent', data={})
 
     @classmethod
     def tearDownClass(cls):
@@ -34,6 +32,9 @@ class TestModel(unittest.TestCase):
         pass
 
     def test_db_object(self):
+        Person.create(name = 'Jhon Smith', data={})
+        Person.create(name = 'Robert Vincent', data={})
+
         john = Person.get(Person.name == 'Jhon Smith')
         robert = Person.get(Person.name == 'Robert Vincent')
 
@@ -47,12 +48,9 @@ class TestModel(unittest.TestCase):
         self.assertEqual(john.data['firstname'], 'Jhon')
         self.assertEqual(john.data['sirname'], 'Smith')
 
-        john.insert_data({'firstname':'Alan'})
+        john.data['firstname'] = 'Alan'
         john.save()
         self.assertEqual(john.data['firstname'], 'Alan')
-
-        # print(Person.get(Person.id == john.id).data)
-        # print(john.id)
 
         self.assertEqual(Person.get(Person.id == john.id).data, {'firstname': 'Alan', 'sirname': 'Smith', 'city': 'NY'})
         self.assertEqual(Person.get(Person.data['firstname'] == 'Alan').name, 'Jhon Smith')
@@ -64,5 +62,5 @@ class TestModel(unittest.TestCase):
         
         john.clear_data()
         john.save()
-        self.assertEqual(john.data, None)
+        self.assertEqual(john.data, {})
 

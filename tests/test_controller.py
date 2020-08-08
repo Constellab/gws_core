@@ -36,12 +36,12 @@ class PersonHTMLViewModel(ResourceViewModel):
 class PersonJSONViewModel(ResourceViewModel):
     template = JSONViewTemplate('{"model_id":"{{view_model.model.id}}", "view_uri":"{{view_model.uri}}", "name": "{{view_model.model.name}}!", "job":"{{view_model.data.job}}"}')
 
-Person.register_view_models([
+Person.register_view_model_specs([
     PersonHTMLViewModel, 
     PersonJSONViewModel
 ])
 
-Controller.register_model_classes([
+Controller.register_model_specs([
     Person, 
     PersonHTMLViewModel, 
     PersonJSONViewModel
@@ -88,7 +88,7 @@ class TestControllerHTTP(unittest.TestCase):
         from gws.prism.controller import Controller as Ctrl
         self.assertEqual(Ctrl.fetch_model(html_vmodel.uri), html_vmodel)
 
-        self.assertEqual(Ctrl.models, Controller.models)
+        #self.assertEqual(Ctrl.models, Controller.models)
 
         # we suppose that the request comes from the view
         # url = "/action/{uri}/{params}",
@@ -107,8 +107,7 @@ class TestControllerHTTP(unittest.TestCase):
         params = """{ "job" : "engineer" }"""
         response = client.get(Controller.build_url(
             action = "view", 
-            uri_name = html_vmodel.uri_name,
-            uri_id = html_vmodel.uri_id,
+            uri = html_vmodel.uri,
             params = params
         ))
         self.assertEqual(response.status_code, 200)
@@ -119,8 +118,7 @@ class TestControllerHTTP(unittest.TestCase):
         params = """{ "job" : "engineer" }"""
         response = client.get(Controller.build_url(
             action = "view", 
-            uri_name = json_vmodel.uri_name,
-            uri_id = json_vmodel.uri_id,
+            uri = json_vmodel.uri,
             params = params
         ))
         self.assertEqual(response.status_code, 200)
@@ -131,8 +129,7 @@ class TestControllerHTTP(unittest.TestCase):
         params = """{ "job" : "Tesla Maker" }"""
         response = client.get(Controller.build_url(
             action = "view", 
-            uri_name = json_vmodel.uri_name,
-            uri_id = json_vmodel.uri_id,
+            uri = json_vmodel.uri,
             params = params
         ))
         self.assertEqual(response.status_code, 200)
@@ -149,8 +146,7 @@ class TestControllerHTTP(unittest.TestCase):
 
         response = client.get(Controller.build_url(
             action = "view", 
-            uri_name = html_vmodel.uri_name,
-            uri_id = html_vmodel.uri_id,
+            uri = html_vmodel.uri,
             params = params
         ))
         self.assertEqual(response.status_code, 200)
@@ -185,17 +181,12 @@ class TestControllerWebSocket(unittest.TestCase):
         print("# WebSocket Testing")
         print("# -----------------")
 
-        self.assertEqual(len(Controller.models), 0)
-
         elon = Person()
         html_vmodel = PersonHTMLViewModel(elon)
         elon.set_name('Elon Musk')
-        
-        Controller.register_model_instances([elon, html_vmodel])
-        self.assertEqual(len(Controller.models), 2)
-        
-        Person.save_all()
-        PersonHTMLViewModel.save_all()
+                
+        elon.save()
+        html_vmodel.save()
 
         self.assertEqual(Controller.fetch_model(html_vmodel.uri), html_vmodel)
 
@@ -219,8 +210,7 @@ class TestControllerWebSocket(unittest.TestCase):
         with client.websocket_connect(
             Controller.build_url(
                 action = "view", 
-                uri_name = html_vmodel.uri_name,
-                uri_id = html_vmodel.uri_id,
+                uri = html_vmodel.uri,
                 params = '{ "job" : "engineer" }'
             )) as websocket:
             response = websocket.receive_text()

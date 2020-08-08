@@ -36,12 +36,12 @@ class PersonHTMLViewModel(ResourceViewModel):
 class PersonJSONViewModel(ResourceViewModel):
     template = JSONViewTemplate('{"model_id":"{{view_model.model.id}}", "view_uri":"{{view_model.uri}}", "name": "{{view_model.model.name}}!", "job":"{{view_model.data.job}}"}')
 
-Person.register_view_models([
+Person.register_view_model_specs([
     PersonHTMLViewModel, 
     PersonJSONViewModel
 ])
 
-Controller.register_model_classes([
+Controller.register_model_specs([
     Person, 
     PersonHTMLViewModel, 
     PersonJSONViewModel
@@ -75,9 +75,8 @@ class TestApp(unittest.TestCase):
         elon_vmodel = PersonHTMLViewModel(elon)
         elon.set_name('Elon Musk')
 
-        Controller.register_model_instances([elon, elon_vmodel])
-        Person.save_all()
-        PersonHTMLViewModel.save_all()
+        elon.save()
+        elon_vmodel.save()
 
         # we suppose that the request comes from the view
         async def app(scope, receive, send):
@@ -94,8 +93,7 @@ class TestApp(unittest.TestCase):
         params = """{ "job" : "engineer" }"""
         response = client.get(Controller.build_url(
             action = "view", 
-            uri_name = elon_vmodel.uri_name,
-            uri_id = elon_vmodel.uri_id,
+            uri = elon_vmodel.uri,
             params = str(params)
         ))
         self.assertEqual(response.status_code, 200)

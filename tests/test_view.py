@@ -34,13 +34,12 @@ class PersonJSONViewModel(ResourceViewModel):
 class FunnyView(ResourceViewModel):
     template = ViewTemplateFile(os.path.join(__cdir__, 'test-view/funny-view.html'), type="html")
 
-Controller.register_model_classes([Person, PersonHTMLViewModel, PersonJSONViewModel])
+Controller.register_model_specs([Person, PersonHTMLViewModel, PersonJSONViewModel])
 
 class TestHTMLView(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        Controller.reset()
         Person.drop_table()
         PersonHTMLViewModel.drop_table()
         PersonJSONViewModel.drop_table()
@@ -70,24 +69,17 @@ class TestHTMLView(unittest.TestCase):
         self.assertTrue( view_model.model is elon )
         self.assertTrue( view_model.id is None )
         self.assertTrue( elon.id is None )
-        
-        Controller.register_model_instances([elon, view_model])
-        self.assertEqual(len(Controller.models), 2)
-        Controller.save_all()
 
-        self.assertEqual(len(Controller.models), 2)
+        Controller.save_all([elon, view_model])
 
         vm = PersonHTMLViewModel.get_by_id(view_model.id)
         self.assertEqual(vm, view_model)
         self.assertEqual(vm.model, elon)
 
-        self.assertEqual(len(Controller.models), 2)
-
 class TestJSONView(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        Controller.reset()
         Person.drop_table()
         PersonHTMLViewModel.drop_table()
         PersonJSONViewModel.drop_table()
@@ -114,8 +106,6 @@ class TestJSONView(unittest.TestCase):
         self.assertEqual(view_model.data, params)
         self.assertEqual(view_model.model.id, None)
         self.assertEqual(view_model.id, None)
-
-        self.assertEqual(len(Controller.models), 0)
         
         view_model.save()     #save the model and view_model
         
@@ -127,12 +117,9 @@ class TestJSONView(unittest.TestCase):
         self.assertEqual(vmodel2.id, view_model.id)
         self.assertEqual(vmodel2.model.id, view_model.model.id)
 
-        self.assertEqual(len(Controller.models), 0)
-
 class TestFunnyView(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        Controller.reset()
         Person.drop_table()
         PersonHTMLViewModel.drop_table()
         PersonJSONViewModel.drop_table()

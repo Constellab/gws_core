@@ -62,12 +62,12 @@ class RobotHTMLViewModel(ResourceViewModel):
 class RobotJSONViewModel(ResourceViewModel):
     template = JSONViewTemplate('{"name":"{{view_model.model.data.name}}"}')
     
-Robot.register_view_models([
+Robot.register_view_model_specs([
     RobotHTMLViewModel, 
     RobotJSONViewModel
 ])
 
-Controller.register_model_classes([
+Controller.register_model_specs([
     Robot,
     RobotHTMLViewModel,
     RobotJSONViewModel
@@ -118,17 +118,15 @@ class App :
         Route('/hello', hello),
     ]
     debug = settings.get_data("is_test")
-    is_started = False
+    is_running = False
 
     @classmethod
     def _init(cls):
         cls.on_init()
 
         # process and resource routes
-        #cls.routes.append(WebSocketRoute('/gws/qw/{action}/{uri_name}/{uri_id}/{params}/', WebSocketApp))
-        #cls.routes.append(WebSocketRoute('/gws/qw/{action}/{uri_name}/{uri_id}/', WebSocketApp))
-        cls.routes.append(Route('/gws/{action}/{uri_name}/{uri_id}/{params}/', HTTPApp) )
-        cls.routes.append(Route('/gws/{action}/{uri_name}/{uri_id}/', HTTPApp) )
+        cls.routes.append(Route('/gws/{action}/{uri}/{params}/', HTTPApp) )
+        cls.routes.append(Route('/gws/{action}/{uri}/', HTTPApp) )
 
         # static dirs
         statics = settings.get_static_dirs()
@@ -159,7 +157,7 @@ class App :
     def start(cls):
         cls._init()
         uvicorn.run(cls.app, host=settings.get_data("app_host"), port=settings.get_data("app_port"))
-        cls.is_started = True
+        cls.is_running = True
 
     @classmethod
     def on_init(cls):
@@ -172,7 +170,7 @@ class App :
             html_view_model = RobotHTMLViewModel.get( RobotHTMLViewModel.id == 1 )
         except:
             robot = Robot()
-            robot.insert_data({"name":"R. Giskard Reventlov"})
+            robot.data["name"] = "R. Giskard Reventlov"
             robot.save()
             html_view_model = RobotHTMLViewModel(robot)
             html_view_model.save()

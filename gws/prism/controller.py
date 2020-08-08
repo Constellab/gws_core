@@ -8,26 +8,30 @@ import json
 from gws.prism.base import Base
 
 class Controller(Base):
-    models = dict()
+    """
+    Controller class
+    """
+
+    #models = dict()
     model_specs = dict()
     is_query_params = False
     
     @classmethod
     async def action(cls, request: 'Request') -> 'ViewModel':
         """
-        Deal with user actions
-        Receive a request through a request url
+        Asynchronously process user actions
+        :param request: Starlette request
+        :type request: `starlette.requests.Request`
+        :return: A view model corresponding to the action
+        :rtype: `gws.prims.model.ViewModel`
         """
-
         if Controller.is_query_params:
             action = request.query_params.get('action','')
-            uri_id = request.query_params.get('uri_id','')
-            uri_name = request.query_params.get('uri_name','')
+            uri = request.query_params.get('uri','')
             params = request.query_params.get('params','{}')
         else:
             action = request.path_params.get('action','')
-            uri_id = request.path_params.get('uri_id','')
-            uri_name = request.path_params.get('uri_name','')
+            uri = request.path_params.get('uri','')
             params = request.path_params.get('params','{}')
 
         try:
@@ -38,7 +42,7 @@ class Controller(Base):
         except:
             raise Exception("Controller", "action", "The params is not a valid JSON text")
         
-        view_model = cls.fetch_model_by_uri_name_id(uri_name, uri_id)
+        view_model = cls.fetch_model(uri)
 
         from gws.prism.model import ViewModel
         if not isinstance(view_model, ViewModel):
@@ -70,14 +74,47 @@ class Controller(Base):
         return view_model
 
     @classmethod
-    def build_url(cls, action = None, uri_name = None, uri_id = None, params = None):
+    def build_url(cls, action: str = None, uri: str = None, params: dict = None) -> str:
+        """
+        Build the url of action using the action name, the target model uri and request parameters
+        :param action: User action
+        :type action: str
+        :param uri: The uri of the target model
+        :type uri: str
+        :param params: Action parameters
+        :type params: dict
+        :return: A view model corresponding to the action
+        :rtype: `gws.prims.model.ViewModel`
+        """        
         if Controller.is_query_params:
-            return '/?action='+action+'&uri_name='+uri_name+'&uri_id='+str(uri_id)+'&params=' + str(params)
+            return '/?action='+action+'&uri='+uri+'&params=' + str(params)
         else:
-            return '/'+action+'/'+uri_name+'/'+str(uri_id)+'/' + str(params)
+            return '/'+action+'/'+uri+'/'+str(params)
+
+    @classmethod
+    def fetch_model(cls, uri: str) -> 'Model':
+        """
+        Fetch a model using its uri
+        :param uri: The uri_name of the target model
+        :type uri: str
+        :return: A model
+        :rtype: `gws.prims.model.Model`
+        """
+        from gws.prism.model import Model
+        tab = Model.parse_uri(uri)
+        return cls.fetch_model_by_uri_name_id(tab[0], tab[1])
 
     @classmethod
     def fetch_model_by_uri_name_id(cls, uri_name: str, uri_id: str) -> 'Model':
+        """
+        Fetch a model using its uri_name and uri_id
+        :param uri_name: The uri_name of the target model
+        :type uri_name: str
+        :param uri_id: The uri_id of the target model
+        :type uri_id: str
+        :return: A model
+        :rtype: `gws.prims.model.Model`
+        """
         model_class = cls.model_specs[uri_name]
         Q = model_class.select().where(
             model_class.id == uri_id, 
@@ -91,72 +128,50 @@ class Controller(Base):
         else:
             raise Exception("Controller", "action", "Several models match with the request")
 
-        #return Q
-
     @classmethod
-    def fetch_model(cls, uri: str) -> 'Model':
-        from gws.prism.model import Model
-        tab = Model.parse_uri(uri)
-        return cls.fetch_model_by_uri_name_id(tab[0], tab[1])
-
-    @classmethod
-    def reset(cls):
-        cls.models.clear()
-
-    @classmethod
-    def register_model_instances(cls, models: list):
-        from gws.prism.model import Model
-        for model in models:
-            if isinstance(model, Model):
-                cls.models[model._uuid] = model
-            else:
-                raise Exception("Controller", "register_model_classes", "Invalid model")
-
-    @classmethod
-    def register_model_classes(cls, model_specs: list):
+    def register_model_specs(cls, model_specs: list):
         """
-            Uniquely register the model type
+        Register Model types. Only Model instances of registered Model types are actionable, i.e. 
+        can controlled by the Controller through :meth:`Controller.action`
+        :param model_specs: List of Model types to regiters
+        :type model_specs: list
         """
-        from gws.prism.model import Resource, Process, ResourceViewModel, ProcessViewModel, ViewModel
         for model_type in model_specs:
             if isinstance(model_type, type):
                 full_cname = model_type.full_classname(slugify=True)
                 cls.model_specs[full_cname] = model_type
-
                 model_type._meta.table_name = model_type._table_name
-
-                # change names of the tables of instances of prism objects
-                # if( issubclass(model_type, Resource) ):
-                #     model_type._meta.table_name = Resource._table_name
-                # elif( issubclass(model_type, Process) ):
-                #     model_type._meta.table_name = Process._table_name
-                # elif( issubclass(model_type, ResourceViewModel) ):
-                #     model_type._meta.table_name = ResourceViewModel._table_name
-                # elif( issubclass(model_type, ProcessViewModel) ):
-                #     model_type._meta.table_name = ProcessViewModel._table_name
-                
             else:
-                raise Exception("Controller", "register_model_classes", "Invalid model type")
+                raise Exception("Controller", "register_model_specs", "Invalid model type")
 
     @classmethod
     def save_all(cls, model_list: list = None) -> bool:
+        """
+        Atomically and safely save a list of models in the database. If an error occurs
+        during the operation, the whole transactions is rolled back.
+        :param model_list: List of models
+        :type model_list: list
+        :return: True if all the model are successfully saved, False otherwise. 
+        :rtype: bool
+        """
         from gws.prism.model import DbManager, Process, Resource, ViewModel
         with DbManager.db.atomic() as transaction:
             try:
                 if model_list is None:
-                    model_list = cls.models.values()
-
-                # first) save all viewable processes
+                    return
+                    #model_list = cls.models.values()
+                
+                # 1) save processes
                 for m in model_list:
                     if isinstance(m, Process):
                         m.save()
                 
-                # second) save all viewable resources
+                # 2) save resources
                 for m in model_list:
                     if isinstance(m, Resource):
                         m.save()
 
-                # third) save all view_models
+                # 3) save view_models
                 for m in model_list:
                     if isinstance(m, ViewModel):
                         m.save()
@@ -165,9 +180,4 @@ class Controller(Base):
                 return False
 
         return True
-    
-    @classmethod
-    def unregister_model_instances(cls, uuids: list):
-        from gws.prism.model import Model
-        for uuid in uuids:
-            cls.models.pop(uuid,None)
+  

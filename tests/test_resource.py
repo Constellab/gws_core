@@ -1,7 +1,7 @@
 
 import unittest
 import copy
-from gws.prism.app import App
+from gws.app import App
 from gws.prism.model import Process
 from gws.prism.model import Resource
 from gws.prism.controller import Controller
@@ -26,7 +26,7 @@ class Start(Process):
         self._output = copy.deepcopy(self._input)
         self._output.set_speed(params['speed'])
 
-Controller.register_model_classes([Car, Start])
+Controller.register_model_specs([Car, Start])
 
 class TestResource(unittest.TestCase):
     
