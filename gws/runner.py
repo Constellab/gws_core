@@ -20,13 +20,25 @@ def _run(ctx=None, test=False, db=False, cli=False, runserver=False, docgen=Fals
 
     if runserver:   
         from gws.prism.controller import Controller
-        current_module_name = settings.data.get("name", None)
-        if current_module_name is None:
-            raise Exception("Error while running server. The module name is not found. Please check the settings file")
-
-        module = importlib.import_module(current_module_name+".app")
         Controller.is_query_params = False
-        app = getattr(module, "App")()
+
+        # dynamical inheritance of App
+        dep_module_names = settings.get_dependency_names()    
+        apps_t = tuple()
+        for name in dep_module_names:
+            try:
+                module = importlib.import_module(name+".app")
+                t = getattr(module, "App", None)
+                if not t is None:
+                    apps_t = apps_t + (t,)
+            except Exception as err:
+                raise Exception(f"Cannot run server. It seems that your App module '{name}' is not well implemented.\n Error message: {err}")
+                
+        #print("------")
+        #print(apps_t)
+
+        current_app_t = type("App", apps_t, {})
+        app = current_app_t()
         app.start()
 
     elif test:
@@ -176,10 +188,12 @@ def _run(ctx=None, test=False, db=False, cli=False, runserver=False, docgen=Fals
             pass
 
     else:
-        settings.data["db_name"] = ':memory:'
+        # only load gws environmenet
+        pass
 
-        if not settings.save():
-            raise Exception("manage", "Cannot save the settings in the database")
+        #settings.data["db_name"] = ':memory:'
+        #if not settings.save():
+        #    raise Exception("manage", "Cannot save the settings in the database")
         
         
 

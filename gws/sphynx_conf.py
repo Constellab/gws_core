@@ -33,10 +33,10 @@ extensions = [
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = [
-    './gws/settings.py', 
-    './gws/manage.py', 
-    './gws/runner.py',
-    './gws/sphynx_conf.py'    
+    'settings.py', 
+    'manage.py', 
+    '**/gws/runner.py',
+    '**/gws/sphynx_conf.py'    
 ]
 
 

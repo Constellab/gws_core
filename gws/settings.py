@@ -62,23 +62,23 @@ class Settings(PWModel):
 
     @property
     def name(self):
-        return self.data.get("name", "Unamed")
+        return self.data.get("name", None)
 
     @property
     def title(self):
-        return self.data.get("title", "No title")
+        return self.data.get("title", None)
 
     @property
     def description(self):
-        return self.data.get("description", "No Description")
+        return self.data.get("description", None)
 
     @property
     def authors(self):
-        return self.data.get("authors", "No authors")
+        return self.data.get("authors", None)
     
     @property
     def version(self):
-        return self.data.get("authors", "0.1")
+        return self.data.get("authors", None)
 
     @property
     def db_path(self):
@@ -115,6 +115,13 @@ class Settings(PWModel):
                 dirs[dep_name] = os.path.join(self.get_cwd(),self.data["dependencies"][dep_name])
         return dirs
     
+    def get_dependency_names(self) -> list:
+        names = []
+        for dep_name in self.data["dependencies"]:
+            if not dep_name == ":external:":
+                names.append(dep_name)
+        return names
+
     def get_template_dir(self, dependency_name: str) -> str:
         dependency_dir = self.get_dependency_dir(dependency_name)
         return os.path.join(dependency_dir, "./templates")

@@ -106,19 +106,19 @@ class Model(PWModel,Base):
     type = CharField(null=True, index=True)
     creation_datetime = DateTimeField(default=datetime.now)
     save_datetine = DateTimeField()
-    data = JSONField(null=True, default=dict)
+    data = JSONField(null=True)
     
     _uuid = None
     _uri_name = "model"
-    _uri_delimiter = "/"
+    _uri_delimiter = "$"
     _table_name = 'model'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._uuid = str(uuid.uuid4())
 
-        #if not self.id:
-        #    self.data = {}
+        if self.data is None:
+            self.data = {}
 
         # ensures that field type is allways equal to the name of the class
         if self.type is None:
@@ -132,14 +132,11 @@ class Model(PWModel,Base):
 
         Controller.register_model_specs([type(self)])
 
-    def cast(self, register_to_controller: bool = False) -> 'Model':
+    def cast(self) -> 'Model':
         """
-        Casts a model instance to its :property:`type` in database
-        :param register_to_controller: If True, the casted model instance is registered to the 
-        Controller, defaults to True
-        :type param: register_to_controller:, bool
+        Casts a model instance to its `type` in database
         :return: The model
-        :rtype: `Model`instance
+        :rtype: `Model` instance
         """
         type_str = slugify(self.type)
         mew_model_t = Controller.model_specs[type_str]
@@ -157,8 +154,8 @@ class Model(PWModel,Base):
 
     def clear_data(self, save: bool = False):
         """
-        Clears the :property:`data`
-        :param save: If True, save the model the :property:`data` is cleared
+        Clears the `data`
+        :param save: If True, save the model the `data` is cleared
         :type save: bool
         """
         self.data = {}
@@ -195,8 +192,8 @@ class Model(PWModel,Base):
 
     def has_data(self) -> bool:
         """
-        Returns True if the :property:`data` is not empty, False otherwise
-        :return: True if the :property:`data` is not empty, False otherwise
+        Returns True if the `data` is not empty, False otherwise
+        :return: True if the `data` is not empty, False otherwise
         :rtype: bool
         """
         return len(self.data) > 0
@@ -271,7 +268,7 @@ class Model(PWModel,Base):
 
     def set_data(self, data: dict):
         """ 
-        Sets the :property:`data`
+        Sets the `data`
         :param data: The input data
         :type data: dict
         :raises Exception: If the input parameter data is not a `dict`
@@ -283,7 +280,7 @@ class Model(PWModel,Base):
     
     def save(self, *args, **kwargs) -> bool:
         """ 
-        Sets the :property:`data`
+        Sets the `data`
         :param data: The input data
         :type data: dict
         :raises Exception: If the input data is not a `dict`
@@ -359,7 +356,6 @@ class Viewable(Model):
 
     view_model_specs: dict = {}
 
-    @property
     def as_json(self):
         """
         Returns JSON (a dictionnary) representation of the model
@@ -368,12 +364,11 @@ class Viewable(Model):
         """
         return {
             "id" : self.id,
-            "data" : self.data.as_json(),
+            "data" : self.data,
             "uri": self.uri,
             "creation_datetime" : self.creation_datetime,
         }
 
-    @property
     def as_html(self):
         """
         Returns HTML representation of the model
@@ -381,11 +376,6 @@ class Viewable(Model):
         :rtype: str
         """
         return "<x-gws class='gws-model' id='{}' data-id='{}' data-uri='{}'></x-gws>".format(self._uuid, self.id, self.uri)
-
-    # def cast(self, *args, **kwargs):
-    #     viewable = super().cast(*args, **kwargs)
-    #     viewable.view_model_specs = self.view_model_specs
-    #     return viewable
 
     def create_view_model_by_name(self, type_name: str):
         """
@@ -802,6 +792,9 @@ class Process(Viewable):
     output_specs: dict = {}
     config_specs: dict = {}
     
+    _on_start = None
+    _on_end = None
+
     _config: Config
     _input: Input
     _output: Output
@@ -1144,12 +1137,7 @@ class Resource(Viewable):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.process:
-            self.process = self.process.cast(register_to_controller = False)
-
-    # def cast(self, *args, **kwargs):
-    #     resource = super().cast(*args, **kwargs)
-    #     resource.process = self.process
-    #     return resource
+            self.process = self.process.cast()
 
     def _set_process(self, process: 'Process'):
         """ 
@@ -1209,9 +1197,8 @@ class ViewModel(Model):
             self.model = model_instance
             self.model.register_view_model_specs([ type(self) ])
         else:
-            self.model = self.model.cast(register_to_controller = False)
+            self.model = self.model.cast()
 
-    @property
     def as_json(self):
         """
         Returns JSON (a dictionnary) representation of the view mode
@@ -1220,13 +1207,12 @@ class ViewModel(Model):
         """
         return {
             "id" : self.id,
-            "data" : self.data.as_json(),
+            "data" : self.data,
             "uri": self.uri,
             "model": self.model.as_json(),
             "creation_datetime" : self.creation_datetime,
         }
 
-    @property
     def as_html(self):
         """
         Returns HTML representation of the view model
@@ -1234,11 +1220,6 @@ class ViewModel(Model):
         :rtype: str
         """
         return "<x-gws class='gws-model' id='{}' data-id='{}' data-uri='{}'></x-gws>".format(self._uuid, self.id, self.uri)
-
-    # def cast(self, *args, **kwargs):
-    #     view_model = super().cast(*args, **kwargs)
-    #     view_model.model = self.model
-    #     return view_model
 
     def get_view_uri(self, params: dict={}) -> str:
         """

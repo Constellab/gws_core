@@ -102,6 +102,9 @@ class Controller(Base):
         """
         from gws.prism.model import Model
         tab = Model.parse_uri(uri)
+        print("--------")
+        print(uri)
+        print(tab)
         return cls.fetch_model_by_uri_name_id(tab[0], tab[1])
 
     @classmethod

@@ -109,7 +109,7 @@ class WebSocketApp(WebSocketEndpoint):
 
 class App :
     """
-        GWS application. 
+    Base App
     """
 
     app: Starlette = None
@@ -122,11 +122,16 @@ class App :
 
     @classmethod
     def _init(cls):
+        """
+        Initializes the application. This method is automatically called after by the constructor. 
+        It calls on_init() method to perform custom user initializations
+        """
+
         cls.on_init()
 
         # process and resource routes
-        cls.routes.append(Route('/gws/{action}/{uri}/{params}/', HTTPApp) )
-        cls.routes.append(Route('/gws/{action}/{uri}/', HTTPApp) )
+        cls.routes.append(Route('/gws/{action}/{uri}/{params}/', HTTPApp))
+        cls.routes.append(Route('/gws/{action}/{uri}/', HTTPApp))
 
         # static dirs
         statics = settings.get_static_dirs()
@@ -137,14 +142,15 @@ class App :
         cls.routes.append(Route("/", homepage))
 
         # starlette
-        cls.app = Starlette(debug=cls.debug, routes=cls.routes, on_startup=[cls.on_startup])
+        cls.app = Starlette(debug=cls.debug, routes=cls.routes, on_startup=[cls._on_startup])
     
     @classmethod
     async def action(cls, request) -> Response:
         """
-        Return a response
+        Deals a user action and returns a response
+        :return: The response
+        :rtype: `starlette.responses.Response`
         """
-
         view_model = await Controller.action(request)
         if view_model.template.is_html():
             return HTMLResponse(view_model.render())
@@ -155,16 +161,25 @@ class App :
 
     @classmethod 
     def start(cls):
+        """
+        Starts the starlette uvicorn web application
+        """
         cls._init()
         uvicorn.run(cls.app, host=settings.get_data("app_host"), port=settings.get_data("app_port"))
         cls.is_running = True
 
     @classmethod
     def on_init(cls):
+        """
+        Initializes the application. This method is automatically called after by the constructor
+        """
         pass
 
     @classmethod 
-    def on_startup(cls):
+    def _on_startup(cls):
+        """
+        Called on application startup to create test objects
+        """
         try:
             robot = Robot.get( Robot.id==1 )
             html_view_model = RobotHTMLViewModel.get( RobotHTMLViewModel.id == 1 )
@@ -187,9 +202,13 @@ class App :
         #print("* WebSocket Testing: ws://{}:{}/qw{}".format(host, settings.get_data("app_port"), html_view_model.get_view_uri()))
 
     @classmethod 
-    def test(cls, url):
+    def test(cls, url: str) -> Response:
         """
-        Return a response in test mode
+        Returns a response in test mode
+        :param url: The test url
+        :type url: str
+        :return: The response
+        :rtype: `starlette.responses.Response`
         """
         cls._init()
         from starlette.testclient import TestClient
