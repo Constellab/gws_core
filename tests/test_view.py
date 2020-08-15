@@ -160,5 +160,4 @@ class TestFunnyView(unittest.TestCase):
         print(text)
 
         expected_text = "<x-gws class='gws-model' id='{}' data-id='{}' data-uri='{}'></x-gws>".format(view_model._uuid, view_model.id, view_model.uri)
-
         self.assertEqual(expected_text.replace("\n", "").replace(" ", ""), text.replace("\n", "").replace(" ", ""))

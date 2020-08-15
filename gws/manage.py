@@ -38,15 +38,15 @@ def _update_relative_static_paths(dep_rel_path, dep_settings):
         if k.endswith("_dir"):
             if not isinstance(dep_settings[k], str):
                 raise Exception("Error while parsing setting. Parameter " + k + " must be a string")
-            d = os.path.join(dep_rel_path,dep_settings[k])
-            if os.path.exists(d):
-                dep_settings[k] = d
-            else:
-                pass
-                #raise Exception(f"Directory {d} does not exist")
+            dep_settings[k] = os.path.join(dep_rel_path,dep_settings[k])
+    
+    for k in dep_settings.get("dirs",{}):
+        if not isinstance(dep_settings["dirs"][k], str):
+            raise Exception("Error while parsing setting. Parameter " + k + " must be a string")
+        dep_settings["dirs"][k] = os.path.join(dep_rel_path,dep_settings["dirs"][k])
 
-    for k in dep_settings.get("statics",{}):
-        dep_settings["statics"][k] = os.path.join(dep_rel_path,dep_settings["statics"][k])
+    for k in dep_settings.get("app",{}).get("statics",{}):
+        dep_settings["app"]["statics"][k] = os.path.join(dep_rel_path,dep_settings["app"]["statics"][k])
     
     #if dep_settings.get("app", None) is None:
     #    return dep_settings["app"]

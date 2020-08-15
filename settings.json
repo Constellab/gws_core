@@ -15,13 +15,14 @@
     "is_test"       : false,
     
     "dependencies"  : {},
-    "statics"       : {
-        "/static/dis"   : "../../extern/distrib-js",
-        "/static/gws"   : "./public/static"
-    },
+    
     "app":{
         "favicon": {"src":"/static/gws/favicon.png", "type":"image/png"},
         "title": "Wecome to GWS",
+        "statics"       : {
+            "/static/dis"   : "../../extern/distrib-js",
+            "/static/gws"   : "./public/static"
+        },
         "scripts": [
             "/static/dis/jquery/3.5.1/jquery.slim.min.js",
             "/static/dis/popper/2.4.2/popper.min.js",

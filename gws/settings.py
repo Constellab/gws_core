@@ -90,6 +90,18 @@ class Settings(PWModel):
     def get_cwd(self) -> dict:
         return self.data["__cwd__"]
 
+    def get_dirs(self) -> dict:
+        return self.data.get("dirs",{})
+
+    def get_dir(self, name) -> str:
+        return self.data.get("dirs",{}).get(name,None)
+
+    def get_urls(self) -> dict:
+        return self.data.get("urls",{})
+
+    def get_url(self, name) -> str:
+        return self.data.get("urls",{}).get(name,None)
+
     def get_log_dir(self) -> dict:
         return os.path.join(self.get_cwd(),"./logs")
 
@@ -97,11 +109,16 @@ class Settings(PWModel):
         return os.path.join(self.get_cwd(),"./public")
 
     def get_static_dirs(self) -> dict:
+        """
+        Returns the absolute paths of the static directories
+        :return: The absolute paths of the static directories
+        :rtype: dict
+        """
         statics = {}
-        m_dir = self.data["statics"]
-        for k in m_dir:
+        static_dir = self.data["app"]["statics"]
+        for k in static_dir:
             if ("/"+k.strip('/')+"/").startswith("/static/"):
-                statics["/"+k.strip('/')] = os.path.join(self.get_cwd(),m_dir[k])
+                statics["/"+k.strip('/')] = os.path.join(self.get_cwd(),static_dir[k])
         
         return statics
 
