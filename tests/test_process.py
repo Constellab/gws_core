@@ -101,67 +101,70 @@ class TestProcess(unittest.TestCase):
         pass
 
     def test_process(self):
-        asyncio.run( self._process() )
-
-    async def _process(self):
-        p0 = Create()
-        p1 = Move()
-        p2 = Eat()
-        p3 = Move()
-        p4 = Move()
-        p5 = Eat()
-        p_wait = Wait()
         
-        # create a chain
-        p0>>'person'        | p1<<'person'
-        p1>>'person'        | p2<<'person'
-        p2>>'person'        | p_wait<<'person'
-        p_wait>>'person'    | p3<<'person'
-        p3>>'person'        | p4<<'person'
-        p2>>'person'        | p5<<'person'
+        async def _process(self):
+            p0 = Create()
+            p1 = Move()
+            p2 = Eat()
+            p3 = Move()
+            p4 = Move()
+            p5 = Eat()
+            p_wait = Wait()
+            
+            # create a chain
+            p0>>'person'        | p1<<'person'
+            p1>>'person'        | p2<<'person'
+            p2>>'person'        | p_wait<<'person'
+            p_wait>>'person'    | p3<<'person'
+            p3>>'person'        | p4<<'person'
+            p2>>'person'        | p5<<'person'
 
-        self.assertEqual( len(p1.next_processes()), 1 )
-        self.assertEqual( len(p2.next_processes()), 2 )
+            self.assertEqual( len(p1.next_processes()), 1 )
+            self.assertEqual( len(p2.next_processes()), 2 )
 
-        p2.set_param('food_weight', 5.6)
-        await p0.run()
+            p2.set_param('food_weight', '5.6')
+            await p0.run()
 
-        print("Sleeping 1 sec for waiting all tasks to finish ...")
-        await asyncio.sleep(1)
+            print("Sleeping 1 sec for waiting all tasks to finish ...")
+            await asyncio.sleep(1)
 
-        elon = p0.output['person']
-        alan = elon
-        self.assertEqual( elon, alan )
-        self.assertTrue( elon is alan )
+            elon = p0.output['person']
+            alan = elon
+            self.assertEqual( elon, alan )
+            self.assertTrue( elon is alan )
 
-        self.assertEqual( elon.position, 0 )
-        self.assertEqual( elon.weight, 70 )
-        self.assertEqual( elon, p1.input['person'] )
-        self.assertTrue( elon is p1.input['person'] )
-        
-        self.assertEqual( p1.data, {'inputs': {'person': p1.input['person'].uri}} )
-        self.assertEqual( p_wait.data, {'inputs': {'person': p_wait.input['person'].uri}} )
-        self.assertEqual( p5.data, {'inputs': {'person': p5.input['person'].uri}} )
+            self.assertEqual( elon.position, 0 )
+            self.assertEqual( elon.weight, 70 )
+            self.assertEqual( elon, p1.input['person'] )
+            self.assertTrue( elon is p1.input['person'] )
+            
+            self.assertEqual( p1.data, {'inputs': {'person': p1.input['person'].uri}} )
+            self.assertEqual( p_wait.data, {'inputs': {'person': p_wait.input['person'].uri}} )
+            self.assertEqual( p5.data, {'inputs': {'person': p5.input['person'].uri}} )
 
-        # check p1
-        self.assertEqual( p1.output['person'].position, elon.position + p1.get_param('moving_step') )
-        self.assertEqual( p1.output['person'].weight, elon.weight )
+            # check p1
+            self.assertEqual( p1.output['person'].position, elon.position + p1.get_param('moving_step') )
+            self.assertEqual( p1.output['person'].weight, elon.weight )
 
-        # check p2
-        self.assertEqual( p1.output['person'], p2.input['person'])
-        self.assertEqual( p2.output['person'].position, p2.input['person'].position)
-        self.assertEqual( p2.output['person'].weight, p2.input['person'].weight + p2.get_param('food_weight'))
+            # check p2
+            self.assertEqual( p1.output['person'], p2.input['person'])
+            self.assertEqual( p2.output['person'].position, p2.input['person'].position)
+            self.assertEqual( p2.output['person'].weight, p2.input['person'].weight + p2.get_param('food_weight'))
 
-        # check p3
-        self.assertEqual( p_wait.output['person'], p3.input['person'])
-        self.assertEqual( p3.output['person'].position, p3.input['person'].position + p3.get_param('moving_step'))
-        self.assertEqual( p3.output['person'].weight, p3.input['person'].weight)
-        
-        #elon.save()
-        #p0.save()
+            # check p3
+            self.assertEqual( p_wait.output['person'], p3.input['person'])
+            self.assertEqual( p3.output['person'].position, p3.input['person'].position + p3.get_param('moving_step'))
+            self.assertEqual( p3.output['person'].weight, p3.input['person'].weight)
+            
+            #elon.save()
+            #p0.save()
 
-        res = Person.get_by_id( p3.output['person'].id )
-        self.assertTrue( isinstance(res, Person) )
-        self.assertEqual( res.process, p3 )
-        self.assertTrue( isinstance(res.process, type(p3)) )
+            res = Person.get_by_id( p3.output['person'].id )
+            self.assertTrue( isinstance(res, Person) )
+            self.assertEqual( res.process, p3 )
+            self.assertTrue( isinstance(res.process, type(p3)) )
+
+        asyncio.run( _process(self) )
+
+    
         

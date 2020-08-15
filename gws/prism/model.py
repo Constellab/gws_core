@@ -715,6 +715,7 @@ class Output(IO):
 #
 # ####################################################################
 
+
 class Config(Viewable):
     """
     Config class that represent the configuration of a process. A configuration is
@@ -728,7 +729,7 @@ class Config(Viewable):
         """ 
         Returns the value of a parameter by its name
         :param name: The name of the parameter
-        :rype: str
+        :type: str
         :return: The value of the parameter (base type)
         :rtype: [str, int, float, bool]
         """
@@ -742,19 +743,23 @@ class Config(Viewable):
         """ 
         Sets the value of a parameter by its name
         :param name: The name of the parameter
-        :rype: str
+        :type: str
         :param value: The value of the parameter (base type)
-        :rype: [str, int, float, bool]
+        :type: [str, int, float, bool, NoneType]
         """
+
+        from gws.validator import Validator
+
         if not name in self.specs:
-            raise Exception(self.classname(), "set_param", f"Parameter {name} does not exist'")
-
+            raise Exception(self.classname(), "set_param", f"Parameter '{name}' does not exist.")
+        
         param_t = self.specs[name]["type"]
-        if not isinstance(value, (str, int, float, bool)):
-            raise Exception(self.classname(), "set_param", f"The parameter value {name} be a base type [str, int, float, bool]. Given value is {value}.")
 
-        if not isinstance(value, param_t):
-            raise Exception(self.classname(), "set_param", f"The parameter value {name} be a {param_t}. Given value is {value}.")
+        try:
+            validator = Validator.from_type(param_t)
+            value = validator.validate(value)
+        except Exception as err:
+            raise Exception(self.classname(), "set_param", f"Invalid parameter value '{name}'. Error message: {err}")
 
         self.data[name] = value
 
