@@ -45,5 +45,6 @@
                 "icon": "fas fa-cog", "onclick": "window.gws.settings", "position": 0
             }
         }
-    }
+    },
+    "verbose": false
 }

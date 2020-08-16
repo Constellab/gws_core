@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 import os
+import tempfile
 from playhouse.sqlite_ext import JSONField
 from peewee import Model as PWModel
 from peewee import SqliteDatabase, Proxy
@@ -101,9 +102,15 @@ class Settings(PWModel):
 
     def get_url(self, name) -> str:
         return self.data.get("urls",{}).get(name,None)
-
+    
     def get_log_dir(self) -> dict:
-        return os.path.join(self.get_cwd(),"./logs")
+        # if self.data.get("is_test"):
+        #     log_dir = os.path.join(tempfile.gettempdir(),"gws/logs")
+        #     if not os.path.exists(log_dir):
+        #         os.makedirs(log_dir)
+        #     return log_dir
+        # else:
+        return os.path.join(self.get_cwd(),"logs/")
 
     def get_public_dir(self) -> dict:
         return os.path.join(self.get_cwd(),"./public")

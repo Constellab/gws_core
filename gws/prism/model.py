@@ -17,6 +17,7 @@ from starlette.requests import Request
 from starlette.responses import Response, HTMLResponse, JSONResponse, PlainTextResponse
 import urllib.parse
 
+from gws.logger import Logger
 from gws.settings import Settings
 from gws.store import KVStore
 from gws.prism.base import slugify
@@ -934,7 +935,12 @@ class Process(Viewable):
         self.is_running = True
 
         # run task
+        logger = Logger()
+        logger.info(f"Running task {self.classname()} ...")
+
         await self.task()
+
+        logger.info(f"Task successfully finished!")
 
         self.is_running = False
         self.is_finished = True
@@ -1096,22 +1102,6 @@ class Process(Viewable):
 
     class Meta:
         table_name = 'process'
-
-# class NullProcess(Process):
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.id = 1
-#         self._input = Input(self)
-#         self._output = Output(self)
-    
-#     async def run(self, params={}):
-#         raise Exception("NullProcess", "run", "NullProcess cannot be executed")
-    
-#     async def task(self, params={}):
-#         raise Exception("NullProcess", "task", "NullProcess cannot cannot have a task")
-
-#     class Meta:
-#         table_name = 'null_process'
 
 # ####################################################################
 #

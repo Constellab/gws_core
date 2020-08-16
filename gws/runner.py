@@ -18,6 +18,9 @@ from gws.settings import Settings
 def _run(ctx=None, test=False, db=False, cli=False, runserver=False, docgen=False, force=False, pull=False, push=False, tag=""):
     settings = Settings.retrieve()
 
+    from gws.logger import Logger
+    logger = Logger(is_new_session=True, is_test=test)
+    
     if runserver:   
         from gws.prism.controller import Controller
         Controller.is_query_params = False
@@ -49,7 +52,7 @@ def _run(ctx=None, test=False, db=False, cli=False, runserver=False, docgen=Fals
 
         settings.data["db_name"] = 'db_test.sqlite3'
         settings.data["is_test"] = True
-
+        
         if db:
             settings.data["db_name"] = db
 
@@ -194,7 +197,8 @@ def _run(ctx=None, test=False, db=False, cli=False, runserver=False, docgen=Fals
         #settings.data["db_name"] = ':memory:'
         #if not settings.save():
         #    raise Exception("manage", "Cannot save the settings in the database")
-        
+    
+    print(f"Log file: {logger.file_path}")
         
 
 @click.command(context_settings=dict(
