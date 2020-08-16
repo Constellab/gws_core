@@ -17,6 +17,14 @@ from peewee import CharField
 class Person(Model):
     name = CharField(null=True)
 
+class PersonKVStore(Model):
+    name = CharField(null=True)
+    def set_age(self, age):
+        self.store['age'] = age
+
+    def get_age(self):
+        return self.store['age']
+
 Controller.register_model_specs([Person])
 
 class TestModel(unittest.TestCase):
@@ -31,7 +39,7 @@ class TestModel(unittest.TestCase):
         Person.drop_table()
         pass
 
-    def test_db_object(self):
+    def test_model(self):
         Person.create(name = 'Jhon Smith', data={})
         Person.create(name = 'Robert Vincent', data={})
 
@@ -63,4 +71,18 @@ class TestModel(unittest.TestCase):
         john.clear_data()
         john.save()
         self.assertEqual(john.data, {})
+        self.assertTrue(john.store.is_connected())
+
+    def test_model_with_kn_store(self):
+        p = PersonKVStore()
+        p.name = 'Isaac Asimov'
+        p.set_age(30)
+        self.assertFalse(p.store.is_connected())
+        p.save()
+
+        p2 = PersonKVStore.get(PersonKVStore.name == 'Isaac Asimov')
+        self.assertEqual(p2.name, 'Isaac Asimov')
+        self.assertEqual(p2.get_age(), 30)
+        self.assertTrue(p.store.is_connected())
+        self.assertTrue(p2.store.is_connected())
 

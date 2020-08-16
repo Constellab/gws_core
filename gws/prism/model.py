@@ -7,6 +7,7 @@ import sys
 import os
 import asyncio
 import uuid
+
 from datetime import datetime
 from peewee import Field, IntegerField, DateField, DateTimeField, CharField, BooleanField, ForeignKeyField, Model as PWModel
 from peewee import SqliteDatabase
@@ -16,8 +17,9 @@ from starlette.requests import Request
 from starlette.responses import Response, HTMLResponse, JSONResponse, PlainTextResponse
 import urllib.parse
 
-from gws.prism.base import slugify
 from gws.settings import Settings
+from gws.store import KVStore
+from gws.prism.base import slugify
 from gws.prism.base import Base
 from gws.prism.controller import Controller
 from gws.prism.view import ViewTemplate, ViewTemplateFile
@@ -107,10 +109,12 @@ class Model(PWModel,Base):
     creation_datetime = DateTimeField(default=datetime.now)
     save_datetine = DateTimeField()
     data = JSONField(null=True)
-    
+
+    _kv_store: KVStore = None
     _uuid = None
     _uri_name = "model"
     _uri_delimiter = "$"
+
     _table_name = 'model'
 
     def __init__(self, *args, **kwargs):
@@ -128,7 +132,7 @@ class Model(PWModel,Base):
             pass
 
         self._uri_name = self.full_classname(slugify=True)
-        self._read_store()
+        self._init_store()
 
         Controller.register_model_specs([type(self)])
 
@@ -200,13 +204,17 @@ class Model(PWModel,Base):
 
     # -- I --
 
-    # def is_registered(self) -> bool:
-    #     """
-    #     Returns True if the model is registered to the controller, False otherwise
-    #     :return: True if the model is registered to the controller, False otherwise
-    #     :rtype: bool
-    #     """
-    #     return self.uuid in Controller.models
+    def _init_store(self):
+        """ 
+        Sets the object storage interface
+        """
+        self._kv_store = KVStore(self.store_path)
+
+    # -- K --
+
+    @property
+    def store(self):
+        return self._kv_store
 
     # -- P --
 
@@ -221,17 +229,7 @@ class Model(PWModel,Base):
         """
         return uri.split(cls._uri_delimiter)
 
-    # -- R --
-
-    def _read_store(self):
-        """ 
-        Interface to implement. Allows to read huge model content from the store.
-
-        Reads the model content from the store when creating the model. 
-        This method is called by the constructor and must be implemented by 
-        child classes if required
-        """
-        pass
+    # -- S --
 
     # -- U --
 
@@ -258,13 +256,17 @@ class Model(PWModel,Base):
     @property
     def store_path(self) -> str:
         """ 
-        Returns the path of the store of the model
-        :return: The path of the store
+        Returns the path of the KVStore of the model
+        :return: The path of the KVStore
         :rtype: str
         """
         settings = Settings.retrieve()
-        db_dir = settings.get("db_dir")
-        return os.path.join(db_dir, self.uri)
+        db_dir = settings.get_data("db_dir")
+
+        if self.uri is None:
+            return None
+        else:
+            return os.path.join(db_dir, 'store', self.uri)
 
     def set_data(self, data: dict):
         """ 
@@ -293,10 +295,9 @@ class Model(PWModel,Base):
 
         if self.uri is None:
             self.uri = self.__generate_uri()
+            self._kv_store.connect(self.store_path)
             tf = self.save()
-        
-        self._write_store()
-
+            
         return tf
     
     @classmethod
@@ -324,17 +325,7 @@ class Model(PWModel,Base):
 
         return True
 
-     
     # -- W --
-
-    def _write_store(self):
-        """ 
-        Interface to implement. Allows to write huge model content in the store.
-
-        Writes the model content in the store when saving the model. This method is called by the 
-        :meth:`save` and must be implemented by child classes to define if required 
-        """
-        pass
 
     class Meta:
         database = DbManager.db
