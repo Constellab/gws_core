@@ -5,7 +5,7 @@
 # About us: https://gencovery.com
 
 import json
-import decimal
+import math
 
 class Validator:
     """
@@ -34,13 +34,13 @@ class Validator:
     _type = None
     _default = None
 
-    def __init__(self, default = None, type = None):
+    def __init__(self, default=None, type=None):
         if not type is None:
             self._type = type
         
         if not default is None:
             try:
-                self._default = self.__validate(default)
+                self._default = self._validate(default)
             except Exception as err:
                 raise Exception(f"The default value is not valid. Error message: {err}")
 
@@ -71,9 +71,9 @@ class Validator:
         if value is None:
             return value
 
-        return self.__validate(value)
+        return self._validate(value)
     
-    def __validate(self, value):
+    def _validate(self, value):
         if not isinstance(self._type, type):
             raise ValueError(f"The validator is not well configured. Invalid type {self._type}.")
         
@@ -104,7 +104,6 @@ class Validator:
                 is_maybe_convertible_without_floating_error =   not isinstance(value, bool) and \
                                                                 isinstance(value, (int,float,)) and self._type in (int,float,)
                 if is_maybe_convertible_without_floating_error:
-                    import math
                     is_valid = math.isnan(value) or (self._type(value) == value)
                     if not is_valid:
                         raise ValueError(f"The value {value} cannot be casted to the class {self._type} with floating point alteration.")
@@ -121,7 +120,7 @@ class Validator:
             raise ValueError(f"Invalid value {value}")
 
     @staticmethod
-    def from_type(type: type, default: (bool, int, float, str, list, dict) = None) -> 'Validator':
+    def from_type(type: type, default: (bool, int, float, str, list, dict) = None, **kwargs) -> 'Validator':
         """
         Constructs usable basic validators.
 
@@ -143,17 +142,17 @@ class Validator:
         """
 
         if type == bool:
-            return BooleanValidator(default)
+            return BooleanValidator(default=default, **kwargs)
         elif type == int:
-            return IntegerValidator(default)
+            return IntegerValidator(default=default, **kwargs)
         elif type == float:
-            return FloatValidator(default)
+            return FloatValidator(default=default, **kwargs)
         elif type == str:
-            return CharValidator(default)
+            return CharValidator(default=default, **kwargs)
         elif type == list:
-            return ArrayValidator(default)
+            return ArrayValidator(default=default, **kwargs)
         elif type == dict:
-            return JSONValidator(default)
+            return JSONValidator(default=default, **kwargs)
         else:
             raise Exception("Invalid type. Valid types are (bool, int, float, str, list, dict).")
 
@@ -177,10 +176,61 @@ class BooleanValidator(Validator):
     """
     _type = bool
 
-    def __init__(self, default = None):
+    def __init__(self, default=None):
         super().__init__(default=default, type=bool)
 
-class IntegerValidator(Validator):
+class NumericValidator(Validator):
+    """
+    Validator class
+
+    This validator allows validating serialized (or deserialized) numerical parameter values.
+
+    :property default: The default value returned by method :meth:`validate`
+    :type default: int
+    :property min: The default value returned by method :meth:`validate`
+    :type min: int
+    :property max: The default value returned by method :meth:`validate`
+    :type max: int
+
+    Usage: Let `validator = IntegerValidator(default=5)`, then
+        * `validator.validate('3') -> 3`
+        * `validator.validate(3) -> 3)`
+        * `validator.validate(3.0) -> 3`
+        * `validator.validate(None) -> 5`
+        * `validator.validate('false') -> ValueError`
+        * `validator.validate('true') -> ValueError`
+        * `validator.validate('foo') -> ValueError`
+    """
+    _min = None
+    _max = None
+    _include_min = True
+    _include_max = True
+
+    def __init__(self, default=None, type=float, min=-math.inf, max=math.inf, include_min=False, include_max=False):
+        self._min = min
+        self._max = max
+        self._include_min = include_min
+        self._include_max = include_max
+        if math.isfinite(self._min):
+            self._include_min = True
+        
+        if math.isfinite(self._max):
+            self._include_max = True
+
+        super().__init__(default=default, type=type)
+ 
+    def _validate(self, value):
+        value = super()._validate(value)
+
+        if value < self._min or (value == self._min and not self._include_min):
+            raise ValueError(f"The value must be greater than {self._min}. The actual value is {value}")
+
+        if value > self._max or (value == self._max and not self._include_max):
+            raise ValueError(f"The value must be less than {self._max}. The actual value is {value}")
+        
+        return value
+
+class IntegerValidator(NumericValidator):
     """
     Validator class
 
@@ -200,10 +250,11 @@ class IntegerValidator(Validator):
     """
     _type = int
     
-    def __init__(self, default = None):
-        super().__init__(default=default, type=int)
+    def __init__(self, default=None, min=-math.inf, max=math.inf, include_min=True, include_max=True):
+        super().__init__(default=default, type=int, min=min, max=max, include_min=include_min, include_max=include_max)
+        self._type = int
 
-class FloatValidator(Validator):
+class FloatValidator(NumericValidator):
     """
     Validator class
 
@@ -230,8 +281,9 @@ class FloatValidator(Validator):
     """
     _type = float
     
-    def __init__(self, default = None):
-        super().__init__(default=default, type=float)
+    def __init__(self, default=None, min=-math.inf, max=math.inf, include_min=True, include_max=True):
+        super().__init__(default=default, type=float, min=min, max=max, include_min=include_min, include_max=include_max)
+        self._type = float
 
 class CharValidator(Validator):
     """
@@ -281,7 +333,7 @@ class ArrayValidator(Validator):
     """
     _type = list
     
-    def __init__(self, default = None):
+    def __init__(self, default=None):
         super().__init__(default=default, type=list)
 
 class JSONValidator(Validator):
@@ -307,5 +359,5 @@ class JSONValidator(Validator):
     """
     _type = dict
     
-    def __init__(self, default = None):
+    def __init__(self, default=None):
         super().__init__(default=default, type=dict)

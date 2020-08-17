@@ -67,6 +67,8 @@ class TestValidator(unittest.TestCase):
         self.assertEqual(v.validate(4), 4.0)
         self.assertEqual(v.validate('4'), 4.0)
         self.assertEqual(v.validate('4.8'), 4.8)
+        self.assertEqual(v.validate('-4.8'), -4.8)
+        self.assertEqual(v.validate(-7), -7.0)
         self.assertEqual(v.validate(None), 8)
         self.assertEqual(v.validate(math.inf), math.inf)
         self.assertEqual(v.validate('Infinity'), math.inf)
@@ -80,6 +82,11 @@ class TestValidator(unittest.TestCase):
 
         #invalid validator
         self.assertRaises(Exception, Validator.from_type, float, default='foo')
+
+        #min constaint
+        v = Validator.from_type(float, default='8', min=-5)
+        self.assertEqual(v.validate('-4.8'), -4.8)
+        self.assertRaises(ValueError, v.validate, '-7')
 
     def test_list_validator(self):
         v = Validator.from_type(list, default='[1,2,"foo"]')
