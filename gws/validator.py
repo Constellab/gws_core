@@ -33,6 +33,7 @@ class Validator:
 
     _type = None
     _default = None
+    _valid_types = ['bool', 'int', 'float', 'str', 'list', 'dict']
 
     def __init__(self, default=None, type=None):
         if not type is None:
@@ -43,6 +44,23 @@ class Validator:
                 self._default = self._validate(default)
             except Exception as err:
                 raise Exception(f"The default value is not valid. Error message: {err}")
+    
+    @property
+    def type(self) -> type:
+        if self._type == bool or self._type == 'bool':
+            return bool
+        elif self._type == int or self._type == 'int':
+            return int
+        elif self._type == float or self._type == 'float':
+            return float
+        elif self._type == str or self._type == 'str':
+            return str
+        elif self._type == list or self._type == 'list':
+            return list
+        elif self._type == dict or self._type == 'dict':
+            return dict
+        else:
+            raise Exception(f"Invalid type")
 
     def validate(self, value: (bool, int, float, str, list, dict)) -> (bool, int, float, str, list, dict):
         """
@@ -74,10 +92,11 @@ class Validator:
         return self._validate(value)
     
     def _validate(self, value):
-        if not isinstance(self._type, type):
-            raise ValueError(f"The validator is not well configured. Invalid type {self._type}.")
         
-        if type(value) == self._type:
+        if not isinstance(self.type, type):
+            raise ValueError(f"The validator is not well configured. Invalid type {self.type}.")
+        
+        if type(value) == self.type:
             if isinstance(value, (list,dict,)):
                 try:
                     is_serilizable = (json.loads(json.dumps(value)) == value)
@@ -90,27 +109,27 @@ class Validator:
             return value
         else:
             is_maybe_convertible_without_floating_error =   not isinstance(value, bool) and \
-                                                            isinstance(value, (int,float,)) and self._type in (int,float,)
+                                                            isinstance(value, (int,float,)) and self.type in (int,float,)
             if is_maybe_convertible_without_floating_error:
-                is_valid = (self._type(value) == value)
+                is_valid = (self.type(value) == value)
                 if not is_valid:
-                    raise ValueError(f"The value {value} cannot be casted to the class {self._type} with floating point alteratiion.")
+                    raise ValueError(f"The value {value} cannot be casted to the class {self.type} with floating point alteratiion.")
                 
-                return self._type(value)
+                return self.type(value)
 
         if isinstance(value, str):
             try:
                 value = json.loads(value)
                 is_maybe_convertible_without_floating_error =   not isinstance(value, bool) and \
-                                                                isinstance(value, (int,float,)) and self._type in (int,float,)
+                                                                isinstance(value, (int,float,)) and self.type in (int,float,)
                 if is_maybe_convertible_without_floating_error:
-                    is_valid = math.isnan(value) or (self._type(value) == value)
+                    is_valid = math.isnan(value) or (self.type(value) == value)
                     if not is_valid:
-                        raise ValueError(f"The value {value} cannot be casted to the class {self._type} with floating point alteration.")
+                        raise ValueError(f"The value {value} cannot be casted to the class {self.type} with floating point alteration.")
                     
-                    return self._type(value)
-                elif type(value) != self._type:
-                    raise ValueError(f"The deserialized value must be an instance of {self._type}. The actual deserialized value is {value}.")
+                    return self.type(value)
+                elif type(value) != self.type:
+                    raise ValueError(f"The deserialized value must be an instance of {self.type}. The actual deserialized value is {value}.")
 
             except:
                 raise ValueError("The value cannot be deserialized. Please give a valid serialized string value")
@@ -120,12 +139,12 @@ class Validator:
             raise ValueError(f"Invalid value {value}")
 
     @staticmethod
-    def from_type(type: type, default: (bool, int, float, str, list, dict) = None, **kwargs) -> 'Validator':
+    def from_type(type, default = None, **kwargs) -> 'Validator':
         """
         Constructs usable basic validators.
 
         :param type: The type used for validation
-        :type type: `type` in built-in types `bool`, `int`, `float`, `str`, `list`, `dict`
+        :type type: `type` or `str` in built-in types `bool`, `int`, `float`, `str`, `list`, `dict`
         :param default: The default value to return, Defaults to `None`
         :type default: any, An instance of :param:`type`
         :return: The Validator corresponding to the :param:`type`
@@ -133,25 +152,27 @@ class Validator:
         :raise `Exception`: If the :param:`type` is not valid or the the type if :param:`default` is not equal to :param:`type`
 
         Usage:
+            * `Validator.from_type('int', default=5) -> IntegerValidator(default=5)`
             * `Validator.from_type(int, default=5) -> IntegerValidator(default=5)`
+            * `Validator.from_type('bool', default=True) -> BooleanValidator(default=True)`
             * `Validator.from_type(bool, default=True) -> BooleanValidator(default=True)`
-            * `Validator.from_type(float, default=5.5) -> FloatValidator(default=5.5)`
-            * `Validator.from_type(str, default='foo') -> CharValidator(default='foo')`
-            * `Validator.from_type(list, default=[1,"foo"]) -> ArrayValidator(default=[1,"foo"])`
-            * `Validator.from_type(dict, default={"foo":1}) -> JSONValidator(default={"foo":1})`
+            * `Validator.from_type('float', default=5.5) -> FloatValidator(default=5.5)`
+            * `Validator.from_type('str', default='foo') -> CharValidator(default='foo')`
+            * `Validator.from_type('list', default=[1,"foo"]) -> ArrayValidator(default=[1,"foo"])`
+            * `Validator.from_type('dict', default={"foo":1}) -> JSONValidator(default={"foo":1})`
         """
 
-        if type == bool:
+        if type == bool or type == 'bool':
             return BooleanValidator(default=default, **kwargs)
-        elif type == int:
+        elif type == int or type == 'int':
             return IntegerValidator(default=default, **kwargs)
-        elif type == float:
+        elif type == float or type == 'float':
             return FloatValidator(default=default, **kwargs)
-        elif type == str:
+        elif type == str or type == 'str':
             return CharValidator(default=default, **kwargs)
-        elif type == list:
+        elif type == list or type == 'list':
             return ArrayValidator(default=default, **kwargs)
-        elif type == dict:
+        elif type == dict or type == 'dict':
             return JSONValidator(default=default, **kwargs)
         else:
             raise Exception("Invalid type. Valid types are (bool, int, float, str, list, dict).")

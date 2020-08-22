@@ -6,7 +6,7 @@ from gws.validator import Validator
 class TestValidator(unittest.TestCase):
 
     def test_int_validator(self):
-        v = Validator.from_type(int, default='5')
+        v = Validator.from_type('int', default='5')
         self.assertEqual(v.validate('3'), 3)
         self.assertEqual(v.validate(3), 3)
         self.assertEqual(v.validate(3.0), 3)
@@ -26,7 +26,7 @@ class TestValidator(unittest.TestCase):
         
 
     def test_str_validator(self):
-        v = Validator.from_type(str, default='5')
+        v = Validator.from_type('str', default='5')
         self.assertEqual(v.validate('4'), '4')
         self.assertEqual(v.validate(None), '5')
         self.assertEqual(v.validate('false'), 'false')
@@ -48,7 +48,7 @@ class TestValidator(unittest.TestCase):
         self.assertRaises(ValueError, v.validate, 'foo')
         self.assertRaises(ValueError, v.validate, 4)
 
-        v = Validator.from_type(bool, default='true')
+        v = Validator.from_type('bool', default='true')
         self.assertEqual(v.validate(None), True)
 
         v = Validator.from_type(bool)
@@ -81,7 +81,7 @@ class TestValidator(unittest.TestCase):
         self.assertRaises(ValueError, v.validate, '[1,3]')
 
         #invalid validator
-        self.assertRaises(Exception, Validator.from_type, float, default='foo')
+        self.assertRaises(Exception, Validator.from_type, 'float', default='foo')
 
         #min constaint
         v = Validator.from_type(float, default='8', min=-5)
@@ -89,7 +89,7 @@ class TestValidator(unittest.TestCase):
         self.assertRaises(ValueError, v.validate, '-7')
 
     def test_list_validator(self):
-        v = Validator.from_type(list, default='[1,2,"foo"]')
+        v = Validator.from_type('list', default='[1,2,"foo"]')
         self.assertEqual(v.validate([5.5,3]), [5.5,3])
         self.assertEqual(v.validate('[5.5,3]'), [5.5,3])
         self.assertEqual(v.validate('[5.5,3,["foo","bar"]]'), [5.5,3,["foo","bar"]])
@@ -106,7 +106,7 @@ class TestValidator(unittest.TestCase):
         self.assertRaises(Exception, Validator.from_type, list, default=True)
 
     def test_dict_validator(self):
-        v = Validator.from_type(dict, default='{"foo":1.2}')
+        v = Validator.from_type('dict', default='{"foo":1.2}')
         self.assertEqual(v.validate(None), {"foo":1.2})
         self.assertEqual(v.validate('{"foo":0.5}'), {"foo":0.5})
         self.assertRaises(ValueError, v.validate, 'oui')

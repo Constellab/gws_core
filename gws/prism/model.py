@@ -7,15 +7,20 @@ import sys
 import os
 import asyncio
 import uuid
+import inspect
+import hashlib
+import urllib.parse
 
 from datetime import datetime
-from peewee import Field, IntegerField, DateField, DateTimeField, CharField, BooleanField, ForeignKeyField, Model as PWModel
-from peewee import SqliteDatabase
+from peewee import SqliteDatabase, Model as PWModel
+from peewee import  Field, IntegerField, DateField, \
+                    DateTimeField, CharField, BooleanField, \
+                    ForeignKeyField             
 from playhouse.sqlite_ext import JSONField
 
 from starlette.requests import Request
-from starlette.responses import Response, HTMLResponse, JSONResponse, PlainTextResponse
-import urllib.parse
+from starlette.responses import Response, HTMLResponse, \
+                                JSONResponse, PlainTextResponse
 
 from gws.logger import Logger
 from gws.settings import Settings
@@ -95,7 +100,7 @@ class Model(PWModel,Base):
     :type id: int, `peewee.model.IntegerField`
     :property uri: The Unique Resource Identifier of the model
     :type uri: str, `peewee.model.CharField`
-    :property type: The type of the model
+    :property type: The type of the model (the full Python class name)
     :type type: str, `peewee.model.CharField`
     :property creation_datetime: The creation datetime of the model (on the server)
     :type creation_datetime: datetime, `peewee.model.DateTimeField`
@@ -135,8 +140,6 @@ class Model(PWModel,Base):
         self._uri_name = self.full_classname(slugify=True)
         self._init_store()
 
-        Controller.register_model_specs([type(self)])
-
     def cast(self) -> 'Model':
         """
         Casts a model instance to its `type` in database
@@ -144,7 +147,7 @@ class Model(PWModel,Base):
         :rtype: `Model` instance
         """
         type_str = slugify(self.type)
-        mew_model_t = Controller.model_specs[type_str]
+        mew_model_t = Controller.get_model_type(type_str)
 
         if type(self) == mew_model_t:
             return self
@@ -195,15 +198,23 @@ class Model(PWModel,Base):
 
     # -- H --
 
-    def has_data(self) -> bool:
-        """
-        Returns True if the `data` is not empty, False otherwise
-        :return: True if the `data` is not empty, False otherwise
-        :rtype: bool
-        """
-        return len(self.data) > 0
+    # def has_data(self) -> bool:
+    #     """
+    #     Returns True if the `data` is not empty, False otherwise
+    #     :return: True if the `data` is not empty, False otherwise
+    #     :rtype: bool
+    #     """
+    #     return bool(self.data)
 
     # -- I --
+
+    def is_saved(self):
+        """ 
+        Returns True if the model is saved in db, False otherwise
+        :return: True if the model is saved in db, False otherwise
+        :rtype: bool
+        """
+        return not self.id is None
 
     def _init_store(self):
         """ 
@@ -231,6 +242,27 @@ class Model(PWModel,Base):
         return uri.split(cls._uri_delimiter)
 
     # -- S --
+
+    # -- T --
+
+    def fetch_type_by_id(self, id) -> type:
+        """ 
+        Fecth the model type (string) by its `id` from the database and return the corresponding python type.
+        Use the proper table even if the table name has changed.
+
+        :param id: The id of the model
+        :type id: int
+        :return: The model type
+        :rtype: type
+        :raise Exception: If no model is found
+        """
+        cursor = DbManager.db.execute_sql(f'SELECT type FROM {self._table_name} WHERE id = ?', str(id))
+        row = cursor.fetchone()
+        if len(row) == 0:
+            raise Exception("Model", "fetch_type_by_id", "The model is not found.")
+        type_str = row[0]
+        model_t = Controller.get_model_type(type_str)
+        return model_t
 
     # -- U --
 
@@ -341,12 +373,12 @@ class Model(PWModel,Base):
 class Viewable(Model):
     """
     Viewable class
-    :property view_model_specs: A dictionnary of registered view model types. Only 
-    registered instance view models type can be created by the viewable.
-    :type view_model_specs: dict
+    :property default_view_models: The default list of registered view model types.
+    :type specs: dict
     """
 
-    view_model_specs: dict = {}
+    default_view_models = []
+    _view_model_specs: dict = {}
 
     def as_json(self):
         """
@@ -381,7 +413,7 @@ class Viewable(Model):
         if not isinstance(type_name, str):
             raise Exception(self.classname(), "create_view_model_by_name", "The view name must be a string")
         
-        view_model_t = self.view_model_specs.get(type_name,None)
+        view_model_t = self._view_model_specs.get(type_name,None)
 
         if isinstance(view_model_t, type):
             view_model = view_model_t(self)
@@ -399,7 +431,7 @@ class Viewable(Model):
         for t in specs:
             if not isinstance(t, type):
                 raise Exception("Model", "register_specs", "Invalid spec. A {name, type} dictionnary or [type] list is expected, where type is must be a ViewModel type or sub-type")
-            cls.view_model_specs[t.full_classname(slugify=True)] = t
+            cls._view_model_specs[t.full_classname(slugify=True)] = t
 
 # ####################################################################
 #
@@ -416,15 +448,17 @@ class Port(Base):
 
     _resource_type: 'Resource'
     _resource: 'Resource'
+    _prev: 'Port' = None
     _next: list = []
-    _is_connected : bool = False
+    _is_left_connected : bool = False
     _parent: 'IO'
 
     def __init__(self, parent: 'IO'):
         self._resource = None
         self._next = []
-        self._is_connected = False
+        self._is_left_connected = False
         self._parent = parent
+        self._resource_type = Resource
 
     @property
     def resource(self) -> 'Resource':
@@ -436,14 +470,39 @@ class Port(Base):
         return self._resource
     
     @property
-    def is_connected(self) -> bool:
+    def is_left_connected(self) -> bool:
         """
-        Returns True if the port is connected to a process, False otherwise
+        Returns True if the port is left-connected to a another port
+        :return: True if the port is left-connected, False otherwise.
+        :rtype: bool
+        """
+        return not self._prev is None
+    
+    def is_left_connected_to(self, port: 'Port') -> bool:
+        """
+        Returns True if the port is left-connected to a given Port, False otherwise
         :return: True if the port is connected, False otherwise.
         :rtype: bool
         """
-        return self._is_connected
-    
+        return self._prev is port
+
+    @property
+    def is_right_connected(self) -> bool:
+        """
+        Returns True if the port is right-connected to a another port
+        :return: True if the port is right-connected, False otherwise.
+        :rtype: bool
+        """
+        return len(self._next) > 0
+
+    def is_right_connected_to(self, port: 'Port') -> bool:
+        """
+        Returns True if the port is right-connected to a given Port, False otherwise
+        :return: True if the port is connected, False otherwise.
+        :rtype: bool
+        """
+        return port in self._next
+
     @property
     def is_ready(self)->bool:
         """
@@ -451,9 +510,9 @@ class Port(Base):
         :return: True if the port is ready, False otherwise.
         :rtype: bool
         """
-        return isinstance(self._resource, Resource)
+        return isinstance(self._resource, self._resource_type) and self._resource.is_saved()
 
-    def next_processes(self):
+    def get_next_procs(self):
         """
         Returns the list of right-hand side processes connected to the port
         :return: List of processes
@@ -496,14 +555,14 @@ class Port(Base):
         if not isinstance(other, Port):
             raise Exception(self.classname(), "|", "The port can only be connected to an instance of Port")
 
-        if other.is_connected:
+        if other.is_left_connected:
             raise Exception(self.classname(), "|", "The right-hand side port is already connected")
 
         if self == other:
             raise Exception(self.classname(), "|", "Self connection not allowed")
 
         self._next.append(other)
-        other._is_connected = True
+        other._prev = self
         return other
 
 # ####################################################################
@@ -525,39 +584,7 @@ class IO(Base):
         self._parent = parent
         self._ports = dict()
 
-    def __getitem__(self, name: str) -> 'Resource':
-        """ 
-        Bracket (getter) operator. Gets the content of a port by its name
-        :param name: Name of the port
-        :type name: str
-        :return: The resource of the port
-        :rtype: Resource
-        :raise Exception: If the port is not found
-        """
-        if not isinstance(name, str):
-            raise Exception(self.classname(), "__getitem__", "The port name must be a string")
-
-        if self._ports.get(name, None) is None:
-            raise Exception(self.classname(), "__getitem__", self.classname() +" port '"+name+"' not found")
-
-        return self._ports[name].resource
-
-    def __setitem__(self, name: str, resource: 'Resource'):
-        """ 
-        Bracket (setter) operator. Sets the content of a port by its name
-        :param name: Name of the port
-        :type name: str
-        :param resource: The input resource
-        :type resource: Resource
-        :raise Exception: If the port is not found
-        """
-        if not isinstance(name, str):
-            raise Exception(self.classname(), "__setitem__", "The port name must be a string")
-
-        if self._ports.get(name, None) is None:
-            raise Exception(self.classname(), "__setitem__", self.classname() +" port '"+name+"' not found")
-
-        self._ports[name].set_resource(resource)
+    # -- C --
 
     def create_port(self, name: str, resource_type: type):
         """ 
@@ -583,18 +610,25 @@ class IO(Base):
         port._resource_type = resource_type
         self._ports[name] = port
 
-    @property
-    def is_ready(self)->bool:
+    # -- G --
+
+    def __getitem__(self, name: str) -> 'Resource':
+        """ 
+        Bracket (getter) operator. Gets the content of a port by its name
+        :param name: Name of the port
+        :type name: str
+        :return: The resource of the port
+        :rtype: Resource
+        :raise Exception: If the port is not found
         """
-        Returns True if the IO is ready (i.e. all its ports are ready), False otherwise
-        :return: True if the IO is ready, False otherwise.
-        :rtype: bool
-        """
-        for k in self._ports:
-            if not self._ports[k].is_ready:
-                return False
-        return True
-    
+        if not isinstance(name, str):
+            raise Exception(self.classname(), "__getitem__", "The port name must be a string")
+
+        if self._ports.get(name, None) is None:
+            raise Exception(self.classname(), "__getitem__", self.classname() +" port '"+name+"' not found")
+
+        return self._ports[name].resource
+
     def get_port_names(self) -> list:
         """ 
         Returns the names of all the ports
@@ -614,7 +648,23 @@ class IO(Base):
             resources[k] = self._ports[k].resource
         return resources
 
-    def next_processes(self) -> list:
+    # -- I --
+
+    @property
+    def is_ready(self)->bool:
+        """
+        Returns True if the IO is ready (i.e. all its ports are ready), False otherwise
+        :return: True if the IO is ready, False otherwise.
+        :rtype: bool
+        """
+        for k in self._ports:
+            if not self._ports[k].is_ready:
+                return False
+        return True
+
+    # -- N --
+
+    def get_next_procs(self) -> list:
         """ 
         Returns the list of (right-hand side) processes connected to the IO ports
         :return: List of processes
@@ -622,9 +672,11 @@ class IO(Base):
         """
         next_proc = []
         for k in self._ports:
-            for proc in self._ports[k].next_processes():
+            for proc in self._ports[k].get_next_procs():
                 next_proc.append(proc)
         return next_proc
+
+    # -- P --
 
     @property
     def ports(self) -> dict:
@@ -643,6 +695,26 @@ class IO(Base):
         :rtype: Process
         """
         return self._parent
+
+    # -- S --
+
+    def __setitem__(self, name: str, resource: 'Resource'):
+        """ 
+        Bracket (setter) operator. Sets the content of a port by its name
+        :param name: Name of the port
+        :type name: str
+        :param resource: The input resource
+        :type resource: Resource
+        :raise Exception: If the port is not found
+        """
+        if not isinstance(name, str):
+            raise Exception(self.classname(), "__setitem__", "The port name must be a string")
+
+        if self._ports.get(name, None) is None:
+            raise Exception(self.classname(), "__setitem__", self.classname() +" port '"+name+"' not found")
+
+        self._ports[name].set_resource(resource)
+    
 
 # ####################################################################
 #
@@ -680,6 +752,25 @@ class Output(IO):
     Output class
     """
 
+    def links(self):
+        proc = self._parent
+        links = []
+        for o_name in self.ports:
+            o_port = self.ports[o_name]
+            
+            for next_proc in self.get_next_procs():
+                for i_name in next_proc.input.ports:
+                    i_port = next_proc.input.ports[i_name]
+                    
+                    if o_port.is_right_connected_to(i_port):
+                        links.append(
+                            {
+                                "from": {"node": proc,  "port": o_name},
+                                "to": {"node": next_proc,  "port": i_name}
+                            }
+                        )
+        return links
+
     def propagate(self):
         """
         Propagates the resources of the child port sto the connected (right-hande side) ports
@@ -707,15 +798,27 @@ class Output(IO):
 #
 # ####################################################################
 
-
 class Config(Viewable):
     """
-    Config class that represent the configuration of a process. A configuration is
+    Config class that represents the configuration of a process. A configuration is
     a collection of parameters
     """
 
-    specs = {}
     _table_name = 'config'
+
+    def __init__(self, specs: dict = None, *args, **kwargs):
+        super().__init__(specs, *args, **kwargs)
+
+        if self.id is None:
+            self.data = {
+                "specs": {},
+                "params": {}
+            }
+            
+        if not specs is None:
+            self.set_specs( specs )
+
+    # -- G --
 
     def get_param(self, name: str) -> [str, int, float, bool]:
         """ 
@@ -729,7 +832,18 @@ class Config(Viewable):
             raise Exception(self.classname(), "get_param", f"Parameter {name} does not exist'")
         
         default = self.specs[name].get("default", None)
-        return self.data.get(name,default)
+        return self.data["params"].get(name,default)
+
+    # -- P 
+
+    @property
+    def params(self) -> dict:
+        """ 
+        Returns specs
+        """
+        return self.data["params"]
+
+    # -- S --
 
     def set_param(self, name: str, value: [str, int, float, bool]):
         """ 
@@ -753,10 +867,51 @@ class Config(Viewable):
         except Exception as err:
             raise Exception(self.classname(), "set_param", f"Invalid parameter value '{name}'. Error message: {err}")
 
-        self.data[name] = value
+        self.data["params"][name] = value
+
+    @property
+    def specs(self) -> dict:
+        """ 
+        Returns specs
+        """
+        return self.data["specs"]
+
+    def set_specs(self, specs: dict):
+        """ 
+        Sets the specs of the config (remove current parameters)
+        :param specs: The config specs
+        :type: dict
+        :raise Exception: If the config is already saved
+        """
+        if not isinstance(specs, dict):
+            raise Exception(self.classname(), "set_specs", f"The specs must be a dictionary.")
+        
+        if not self.id is None:
+            raise Exception(self.classname(), "set_specs", f"Cannot alter the specs of a saved config")
+        
+        self.data = {
+            "specs" : specs,
+            "params" : {}
+        }
 
     class Meta:
         table_name = 'config'
+
+# # ####################################################################
+# #
+# # ProcessConfig class
+# #
+# # ####################################################################
+
+# class ProcessConfig(Config):
+#     """
+#     ProcessConfig class.
+#     """
+
+#     _table_name = 'process_config'
+
+#     class Meta:
+#         table_name = 'process_config'
 
 # ####################################################################
 #
@@ -781,27 +936,47 @@ class Process(Viewable):
     :property config_specs: The specs of the config
     :type config_specs: dict
     """
-    config_id = IntegerField(null=True, index=True)         #lazy FK reference
-    is_running = BooleanField(default=False, index=True)
-    is_finished = BooleanField(default=False, index=True)
-    
+
+    hash = CharField(index=True, unique=True)
+    is_running: bool = False 
+    is_finished: bool = False 
+
     input_specs: dict = {}
     output_specs: dict = {}
     config_specs: dict = {}
-    
+
     _on_start = None
     _on_end = None
 
-    _config: Config
+    
     _input: Input
     _output: Output
     _table_name = 'process'
 
+    _on_start = None
+    _on_end = None
+
+    _job: 'Job' = None  #ref to the current job
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
+        if self.id is None:
+            self.hash = self.__create_hash()
+
+            C = type(self)
+            try:
+                proc = C.get(C.hash == self.hash)
+                self.id = proc.id
+            except:
+                self.save()
+                proc = C.get(C.hash == self.hash)
+                self.id = proc.id
+        else:
+            self.__check_hash()
+
         self._input = Input(self)
         self._output = Output(self)
-        self._config = None
 
         for k in self.input_specs:
             self._input.create_port(k,self.input_specs[k])
@@ -809,35 +984,55 @@ class Process(Viewable):
         for k in self.output_specs:
             self._output.create_port(k,self.output_specs[k])
 
-        self.__retrieve_config()
-
+    @property
+    def config(self):
+        return self.get_active_job().config
+        
     # -- C --
 
-    @property
-    def config(self) -> Config:
-        """
-        Returns the config of the process
-        :return: The config
-        :rtype: Config
-        """
-        return self._config
+    def __check_hash(self):
+        actual_hash = self.__create_hash()
+        if self.hash and self.hash != actual_hash:
+            raise Exception("Process", "__set_hash", "Invalid process hash. The code source of the current process has changed.")
+
+    def __create_hash(self):
+        type_str = slugify(self.type)
+        model_t = Controller.get_model_type(type_str)
+        source = inspect.getsource(model_t)
+        hash_object = hashlib.sha256((self.type+source).encode())
+        return hash_object.hexdigest()
 
     # -- G --
 
     def get_param(self, name: str) -> [str, int, float, bool]:
         """
-        Returns the value of a parameter of the process config by its name
+        Returns the value of a parameter of the process config by its name.
         :return: The paremter value
         :rtype: [str, int, float, bool]
         """
-        return self._config.get_param(name)
+        return self.config.get_param(name)
+
+    # -- L --
 
     # -- I --
+
+    def get_active_job(self):
+        """
+        Initialize an job for the process.
+        :return: The job
+        :rtype: Job
+        """
+
+        if self._job is None:
+            config = Config(specs = self.config_specs)
+            self._job = Job(process=self, config=config)
+
+        return self._job
 
     @property
     def input(self) -> 'Input':
         """
-        Returns input of the process
+        Returns input of the process.
         :return: The input
         :rtype: Input
         """
@@ -846,16 +1041,15 @@ class Process(Viewable):
     @property
     def is_ready(self) -> bool:
         """
-        Returns True if the process is ready (i.e. all its ports are ready, it has never been run before), False otherwise
+        Returns True if the process is ready (i.e. all its ports are ready or it has never been run before), False otherwise.
         :return: True if the process is ready, False otherwise.
         :rtype: bool
         """
         return  (not self.is_running or \
                 not self.is_finished) and \
-                self._input.is_ready and \
-                not self._config is None
+                self._input.is_ready 
 
-    def iport(self, name: str) -> Port:
+    def get_input_port(self, name: str) -> Port:
         """
         Returns the port of the input by its name
         :return: The port
@@ -870,38 +1064,38 @@ class Process(Viewable):
 
     def __lshift__(self, name: str) -> Port:
         """
-        Alias of :meth:`iport`.
+        Alias of :meth:`get_input_port`.
 
         Returns the port of the input by its name
         :return: The port
         :rtype: Port
         """
-        return self.iport(name)
+        return self.get_input_port(name)
 
     # -- N --
 
-    def next_processes(self) -> list:
+    def get_next_procs(self) -> list:
         """ 
-        Returns the list of (right-hand side) processes connected to the IO ports
+        Returns the list of (right-hand side) processes connected to the IO ports.
         :return: List of processes
         :rtype: list
         """
-        return self._output.next_processes()
+        return self._output.get_next_procs()
 
     # -- O --
 
     @property
     def output(self) -> 'Output':
         """
-        Returns output of the process
+        Returns output of the process.
         :return: The output
         :rtype: Output
         """
         return self._output
 
-    def oport(self, name: str) -> Port:
+    def get_output_port(self, name: str) -> Port:
         """
-        Returns the port of the output by its name
+        Returns the port of the output by its name.
         :return: The port
         :rtype: Port
         """
@@ -910,20 +1104,37 @@ class Process(Viewable):
 
         return self._output._ports[name]
 
-    # -- R -- 
+    @property
+    def on_end(self):
+        return self._on_end
 
-    @classmethod
-    def register_config_specs(cls, config_specs: list):
-        """ 
-        Register a list of config types. Only instances of registered config types can be
-        used to configure the process
-        :param config_specs: List of config types
-        :type config_specs: list
+    @on_end.setter
+    def on_end(self, callback):
         """
-        for config_t in config_specs:
-            if not isinstance(config_t, type):
-                raise Exception("Process", "register_config_specs", "Invalid specs")
-            cls.config_specs[config_t.full_classname(slugify=True)] = config_t
+        Sets the function the execute after the process ends running. 
+        :param callback: The function to execute
+        :callback: `function`
+        """
+        if not hasattr(callback, '__call__'):
+            raise Exception("Process", "on_start", "The callback function is not callable")
+        self._on_end = callback
+
+    @property
+    def on_start(self):
+        return self._on_start
+
+    @on_start.setter
+    def on_start(self, callback):
+        """
+        Sets the function the execute before running the process. 
+        :param callback: The function to execute
+        :callback: `function`
+        """
+        if not hasattr(callback, '__call__'):
+            raise Exception("Process", "on_start", "The callback function is not callable")
+        self._on_start = callback
+
+    # -- R -- 
 
     async def run(self):
         """ 
@@ -931,177 +1142,383 @@ class Process(Viewable):
         """
         if not self.is_ready:
             raise Exception(self.classname(), "run", "The process is not ready. Please ensure that the process receives valid input resources and has not already been run")
- 
+
         self.is_running = True
 
         # run task
         logger = Logger()
         logger.info(f"Running task {self.classname()} ...")
 
+        if not self._on_start is None:
+            await self._on_start( self )
+        
+        e = self.get_active_job()
+        if not e.save():
+            raise Exception("Process", "run", "Cannot save the job")
+
         await self.task()
+
+        if not self._on_end is None:
+            await self._on_end( self )
 
         logger.info(f"Task successfully finished!")
 
         self.is_running = False
         self.is_finished = True
+        e.update_state()
+        e.save()
+
+        res = self.output.get_resources()
+        for k in res:
+            res[k]._set_job(e)
+            res[k].save()
 
         if not self._output.is_ready:
-            raise Exception(self.classname(), "run", "The output was not set after task end")
-        
-        output_resources = self.output.get_resources()
-        for k in output_resources:
-            output_resources[k]._set_process(self)
-
-        self.save()
+            raise Exception(self.classname(), "run", "The output was not set after the task ended.")
+       
         self._output.propagate()
         
-        for proc in self._output.next_processes():
-            asyncio.create_task( proc.run() )       # schedule task be executed soon!
+        for proc in self._output.get_next_procs():
+            asyncio.create_task( proc.run() )       # schedule task will be executed as soon as possible!
 
     def __rshift__(self, name: str) -> Port:
         """ 
-        Alias of :meth:`oport`.
+        Alias of :meth:`get_output_port`.
         
         Returns the port of the output by its name
         :return: The port
         :rtype: Port
         """
-        return self.oport(name)
-
-    def __retrieve_config(self):
-        """ 
-        Retrieves the config of th eprocess from the database
-        """
-        try:
-            self._config = Config.get_by_id(self.config_id)     #lazy reference
-        except:
-            config_t = None
-            if 'default' in self.config_specs:
-                config_t =  self.config_specs['default']
-            else:
-                if not bool(self.config_specs):
-                    raise Exception("Process", "__retrieve_config", f"No default config defined for {type(self)}")
-            
-                config_t =  list(self.config_specs.values())[0]
-
-            self._config = config_t()
-            
-
+        return self.get_output_port(name)     
+        
     # -- S --
 
     def set_input(self, name: str, resource: 'Resource'):
         """ 
         Sets the resource of an input port by its name
+
         :param name: The name of the input port 
         :type name: str
         :param resource: A reources to assign to the port
         :type resource: Resource
         """
         if not isinstance(name, str):
-            raise Exception(self.classname(), "set_input", "The name must be a string")
+            raise Exception(self.classname(), "set_input", "The name must be a string.")
         
         if not isinstance(resource, Resource):
-            raise Exception(self.classname(), "set_input", "The resource must be an instance of Resource")
+            raise Exception(self.classname(), "set_input", "The resource must be an instance of Resource.")
 
         self._input[name] = resource
-
-    def set_config(self, config: ['Config', dict]):
+        
+    def set_config(self, config: 'Config'):
         """ 
-        Sets the config of the process
+        Sets the config of the process.
         :param config: A config to assign
-        :type config: [Config, dict]
+        :type config: Config
         """
-        if not bool(self.config_specs):
-            raise Exception(self.classname(), "set_config", "The config_specs is empty")
 
-        if isinstance(config, tuple(self.config_specs.values())):
-            self._config = config
-        elif isinstance(config, dict):
-            if self._config is None:
-                tab = list(self.config_specs.values())
-                if len(tab) == 1:
-                    self._config = tab[0]()
-                else:
-                    raise Exception(self.classname(), "set_config", "Cannot resolve the approriate Config to create. Please create the config before.")
-
-            self._config.data = config
+        if isinstance(config, Config):
+            self.config = config
         else:
-            raise Exception(self.classname(), "set_config", "The config must be a Config or a dictionnary")
+            raise Exception(self.classname(), "set_config", "The config must be an instance of Config.")
 
     def set_param(self, name: str, value: [str, int, float, bool]):
         """ 
-        Sets the value of a config parameter
+        Sets the value of a config parameter.
         :param name: Name of the parameter
         :type name: str
         :param value: A value to assign
         :type value: [str, int, float, bool]
         """
-        self._config.set_param(name, value)
+        self.config.set_param(name, value)
 
-    def save(self, *args, **kwargs):
-        """ 
-        Save the process in the database. 
-        
-        Also save the config, the input/output resources
-        and the next processes.
-        """
-        with DbManager.db.atomic() as transaction:
-            try:
-                tf = True
-
-                self.data["inputs"] = {}
-                resources = self.input.get_resources()
-                for k in resources:
-                    if resources[k] is None:
-                        continue
-                    
-                    tf = tf and resources[k].save(*args, **kwargs)
-                    self.data["inputs"][k] = resources[k].uri
-
-                self.__save_config()
-                tf = tf and super().save(*args, **kwargs)
-        
-                resources = self.output.get_resources()
-                for k in resources:
-                    if resources[k] is None:
-                        continue
-
-                    if not resources[k].id is None:
-                        tf = tf and resources[k].save(*args, **kwargs)
-
-                for proc in self.next_processes():
-                    tf = tf and proc.save(*args, **kwargs)
-
-                if not tf:
-                    raise Exception("Process", "save", "Cannot save process")
-
-                return tf
-            except Exception as err:
-               transaction.rollback()
-               print(err)
-               return False
-
-    def __save_config(self) -> bool:
-        """ 
-        Save the config in the database. 
-        """
-        if not self._config.save():
-            raise Exception("Process", "__save_config", "Cannot save config")
-        self.config_id = self._config.id
-
-    # -- T --
-
-    async def task(self, params={}):
+    async def task(self):
         """ 
         Task interface.
-        
-        To be implemented in child classes
+        To be implemented in child classes.
         """
         pass
 
-
     class Meta:
         table_name = 'process'
+
+# ####################################################################
+#
+# Project class
+#
+# ####################################################################
+
+class Project(Model):
+    
+    name: CharField(index=True, unique=True)
+
+    _table_name = 'project'
+
+    class Meta:
+        table_name = 'project'
+
+# ####################################################################
+#
+# User class
+#
+# ####################################################################
+
+class User(Model):
+    firstname: CharField(index=True)
+    sirname: CharField(index=True)
+    email: CharField(index=True, unique=True)
+
+    _table_name = 'user'
+
+    class Meta:
+        table_name = 'user'
+
+# ####################################################################
+#
+# Job class
+#
+# ####################################################################
+
+class Job(Model):
+    """
+    Job class.
+
+    :property process: The process of the job
+    :type process: Process
+    :property config: The config of the job's process
+    :type config: Config
+    :property user: The user
+    :type user: User
+    """
+
+    process_id = IntegerField(index=True)   # store id ref as it may represent different classes
+    config_id = IntegerField(index=True)    # store id ref as it may represent config classes
+    is_running: bool = BooleanField(default=False, index=True)
+    is_finished: bool = BooleanField(default=False, index=True)
+    
+    _process = None
+    _config = None
+
+    _table_name = 'job'
+
+    def __init__(self, process: Process = None, config: Config = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if self.id is None:
+            if isinstance(config, Config):
+                #self.config_id = config.id
+                self._config = config
+            
+            if isinstance(process, Process):
+                #self.process_id = process.id
+                self._process = process
+                self.update_state()
+
+    # -- I -- 
+
+ 
+    # -- P --
+
+    @property
+    def process(self):
+        if not self._process is None:
+            return self._process
+
+        if self.process_id:
+            proc = Process.get(Process.id == self.process_id)
+            self._process = proc.cast()
+            return self._process
+        else:
+            return None
+
+    @property
+    def config(self):
+        if not self._config is None:
+            return self._config
+
+        if self.config_id:
+            config = Config.get(Config.id == self.config_id)
+            self._config = config.cast()
+            return self._config
+        else:
+            return None
+
+    # -- S --
+    # def set_config(self, config: Config):
+    #     self.config = config
+
+    # def set_process(self, process: Process):
+    #     self.process = process
+    #     self.update_state()
+
+    def update_state(self):
+        """ 
+        Update the state of the job
+        """
+
+        self.is_running = self.process.is_running
+        self.is_finished = self.process.is_finished
+
+    def save(self, *args, **kwargs):
+        """ 
+        Save the job 
+        """
+
+        with DbManager.db.atomic() as transaction:
+            try:
+                if self.process is None:
+                    raise Exception("Job", "save", "Cannot save the job. The process is not saved.")
+                
+                if not self.config.save():
+                    raise Exception("Job", "save", "Cannot save the job. The config cannnot be saved.")
+                
+                self.process_id = self._process.id
+                self.config_id = self._config.id
+
+                self.__track_input_uri()
+                if not super().save(*args, **kwargs):
+                    raise Exception("Job", "save", "Cannot save the job.")
+                
+                res = self.process.output.get_resources()
+                for k in res:
+                    if res[k] is None:
+                        continue
+
+                    if not res[k].is_saved():
+                        if not res[k].save(*args, **kwargs):
+                            raise Exception("Job", "save", f"Cannot save the resource output {k} of the job")
+
+                return True
+            except Exception as err:
+                transaction.rollback()
+                print(err)
+                return False
+
+    # -- T --
+
+    def __track_input_uri(self):
+        res = self.process.input.get_resources()
+        for k in res:
+            if res[k] is None:
+                continue
+            
+            if not res[k].is_saved():
+                raise Exception("Process", "__track_input_uri", "Cannot track input uri. Please save the input resource before.")
+
+            self.data["inputs"] = {}    
+            self.data["inputs"][k] = res[k].uri
+
+    class Meta:
+        table_name = 'job'
+
+# # ####################################################################
+# #
+# # ProtocolConfig class
+# #
+# # ####################################################################
+
+# class ProtocolConfig(ProcessConfig):
+#     """
+#     ProtocolConfig class
+#     """
+
+#     _table_name = 'protocol_config'
+
+#     class Meta:
+#         table_name = 'protocol_config'
+
+# ####################################################################
+#
+# Protocol class
+#
+# ####################################################################
+
+class Protocol(Model):
+
+    #config = ForeignKeyField(ProtocolConfig, null=True, backref='config')
+
+    _procs: dict = {}
+    _table_name = 'protocol'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        #if not self.config:
+        #    self.config = ProtocolConfig(specs = self.config_specs)
+        #self.config = None
+
+        self._procs = {}
+
+    # -- A --
+
+    def add(self, procs: dict):
+        """ 
+        Adds a dictionary of processes to the protocol
+        :param procs: Dictionnary of processes. Keys are process names and Values are process instances.
+        :type procs: dict
+        """
+        for k in procs:
+            if not isinstance(procs[k], Process):
+                raise Exception("Protocol", "add", "The process must be an instance of Process")
+            self._procs[k] = procs[k]
+
+    # -- B --
+
+    def __build_from_settings(self, settings):
+        pass
+    
+    # -- C --
+
+    def __create_settings( self ):
+        settings = dict(
+            nodes = {},
+            links = []
+        )
+        
+        for k in self._procs:
+            links = self._procs[k].output.links()
+            for link in links:
+                for name in self._procs:
+                    if link["from"]["node"] is self._procs[name]:
+                        link["from"]["node"] = name 
+                        
+                    if link["to"]["node"] is self._procs[name]:
+                        link["to"]["node"] = name 
+
+                settings["links"].append(links)
+
+        for k in self._procs:
+            settings["nodes"][k] = self._procs[k].full_classname()
+
+        return settings
+
+    # -- R --
+
+    def remove(self, name: dict):
+        """ 
+        Remove a process from the protocol
+        :param name: Name of the process to remove
+        :type name: str
+        """
+        if name in self._procs:
+            del self._procs[name]
+
+    def realize(self):
+        pass
+
+    # -- S --
+
+    @property
+    def settings( self ):
+        return self.__create_settings()
+
+    @settings.setter
+    def settings( self, settings: dict ):
+        self.__build_from_settings( settings )
+
+    class Meta:
+        table_name = 'protocol'
+
 
 # ####################################################################
 #
@@ -1117,41 +1534,23 @@ class Resource(Viewable):
     :type process: Process
     """
 
-    process = ForeignKeyField(Process, null=True, backref='process')
+    job = ForeignKeyField(Job, null=True, backref='resources')
     _table_name = 'resource'
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.process:
-            self.process = self.process.cast()
-
-    def _set_process(self, process: 'Process'):
+    def _set_job(self, job: 'Job'):
         """ 
         Sets the process of the resource
         :param process: The process
         :type process: Process
         """
-        self.process = process
+
+        if not isinstance(job, Job):
+            raise Exception("Resource", "_set_job", "The job must be an instance of Job.")
+
+        self.job = job
     
     class Meta:
         table_name = 'resource'
-
-# class NullResource(Resource):
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.id = 1
-#         self.process = NullProcess()
-    
-#     def _set_process(self, process: 'Process'):
-#         raise Exception("NullResource", "_set_process", "NullResource is related to a NullProcess")
-
-#     def save(self, *args, **kwargs):
-#         if self.id is None:
-#             self.id = 1
-#         return self.save(*args, **kwargs)
-
-#     class Meta:
-#         table_name = 'null_resource'
 
 # ####################################################################
 #
@@ -1168,22 +1567,31 @@ class ViewModel(Model):
     :type template: ViewTemplate
     """
 
-    model: 'Model' = ForeignKeyField(Model, backref='view_model')
+    #model: 'Model' = ForeignKeyField(Model, backref='view_models')
+    model_id: int = IntegerField(index=True)
+    model_type :str = CharField(index=True)
+    _model = None
     template: ViewTemplate = None
     _table_name = 'view_model'
 
     def __init__(self, model_instance: Model = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        is_invalid_model_instance = not model_instance is None and \
-                                    not isinstance(model_instance, Model)
-        if is_invalid_model_instance:
-            raise Exception(self.classname(),"__init__","The model must be an instance of Model")
-        elif isinstance(model_instance, Model):
-            self.model = model_instance
-            self.model.register_view_model_specs([ type(self) ])
-        else:
-            self.model = self.model.cast()
+        # is_invalid_model_instance = not model_instance is None and \
+        #                             not isinstance(model_instance, Model)
+        # if is_invalid_model_instance:
+        #     raise Exception(self.classname(),"__init__","The model must be an instance of Model")
+        # elif isinstance(model_instance, Model):
+        #     self.model = model_instance
+        #     self.model.register_view_model_specs([ type(self) ])
+        # else:
+        #     self.model = self.model.cast()
+
+        if isinstance(model_instance, Model):
+            self._model = model_instance
+            self._model.register_view_model_specs( [type(self)] )
+
+    # -- A --
 
     def as_json(self):
         """
@@ -1207,6 +1615,8 @@ class ViewModel(Model):
         """
         return "<x-gws class='gws-model' id='{}' data-id='{}' data-uri='{}'></x-gws>".format(self._uuid, self.id, self.uri)
 
+    # -- G --
+
     def get_view_uri(self, params: dict={}) -> str:
         """
         Returns the uri of the view (alias of the uri of the view model)
@@ -1221,6 +1631,20 @@ class ViewModel(Model):
             params = urllib.parse.quote(str(params))
         return '/view/' + self.uri + '/' + params
 
+    # -- M --
+
+    @property
+    def model(self):
+        if not self._model is None:
+            return self._model
+        
+        model_t = Controller.get_model_type(self.model_type)
+        model = model_t.get(model_t.id == self.model_id)
+        self._model = model.cast()
+        return self._model
+
+    # -- R --
+
     def render(self, params: dict = None) -> str:
         """
         Renders the view of the view model
@@ -1234,6 +1658,8 @@ class ViewModel(Model):
 
         return self.template.render(self)
     
+    # -- S --
+
     def set_template(self, template: ViewTemplate):
         """
         Sets the view template
@@ -1249,12 +1675,14 @@ class ViewModel(Model):
         """
         Saves the view model in database
         """
-        if self.model is None:
+        if self._model is None:
             raise Exception(self.classname(),"save","This view_model has not model")
         else:
             with DbManager.db.atomic() as transaction:
                 try:
-                    if self.model.save(*args, **kwargs):
+                    if self._model.save(*args, **kwargs):
+                        self.model_id = self._model.id
+                        self.model_type = self._model.full_classname()
                         return super().save(*args, **kwargs)
                     else:
                         raise Exception(self.classname(),"save","Cannot save the view_model. Please ensure that the model of the view_model is saved before")
@@ -1279,15 +1707,15 @@ class ProcessViewModel(ViewModel):
     :type model: Process
     """
 
-    model: 'Process' = ForeignKeyField(Process, backref='view_model')
+    #model: 'Process' = ForeignKeyField(Process, backref='view_models')
     _table_name = 'process_view_model'
 
     def __init__(self, model_instance=None, *args, **kwargs):
 
-        is_invalid_model_instance = not model_instance is None and \
-                                    not isinstance(model_instance, Process)
-        if is_invalid_model_instance:
-            raise Exception("ProcessViewModel", "__init__", "The model must be an instance af Process")
+        # is_invalid_model_instance = not model_instance is None and \
+        #                             not isinstance(model_instance, Process)
+        # if is_invalid_model_instance:
+        #     raise Exception("ProcessViewModel", "__init__", f"The model must be an instance af Process. Actual class is {type(model_instance)}")
 
         super().__init__(model_instance=model_instance, *args, **kwargs)
 
@@ -1295,6 +1723,10 @@ class ProcessViewModel(ViewModel):
             settings = Settings()
             template_dir = settings.get_template_dir("gws")
             self.template = ViewTemplateFile(os.path.join(template_dir, "./prism/model/process.html"), type="html")
+
+        # force all ProcessViewModel in the same table 
+        cls = type(self)
+        cls._table_name = 'resource_view_model'
 
     class Meta:
         table_name = 'process_view_model'
@@ -1312,15 +1744,15 @@ class ResourceViewModel(ViewModel):
     :type model: Resource
     """
 
-    model: 'Resource' = ForeignKeyField(Resource, backref='view_model')
+    #model: 'Resource' = ForeignKeyField(Resource, backref='view_models')
     _table_name = 'resource_view_model'
 
     def __init__(self, model_instance=None, *args, **kwargs):
 
-        is_invalid_model_instance = not model_instance is None and \
-                                    not isinstance(model_instance, Resource)
-        if is_invalid_model_instance:
-            raise Exception("ResourceViewModel", "__init__", "The model must be an instance af Process")
+        # is_invalid_model_instance = not model_instance is None and \
+        #                             not isinstance(model_instance, Resource)
+        # if is_invalid_model_instance:
+        #     raise Exception("ResourceViewModel", "__init__", f"The model must be an instance af Process. Actual class is {type(model_instance)}")
 
         super().__init__(model_instance=model_instance, *args, **kwargs)
 
@@ -1328,6 +1760,10 @@ class ResourceViewModel(ViewModel):
             settings = Settings.retrieve()
             template_dir = settings.get_template_dir("gws")
             self.template = ViewTemplateFile(os.path.join(template_dir, "./prism/model/resource.html"), type="html")
+        
+        # force all ResourceViewModel in the same table 
+        cls = type(self)
+        cls._table_name = 'resource_view_model'
 
     class Meta:
         table_name = 'resource_view_model'

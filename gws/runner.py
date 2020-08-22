@@ -36,9 +36,6 @@ def _run(ctx=None, test=False, db=False, cli=False, runserver=False, docgen=Fals
                     apps_t = apps_t + (t,)
             except Exception as err:
                 raise Exception(f"Cannot run server. It seems that your App module '{name}' is not well implemented.\n Error message: {err}")
-                
-        #print("------")
-        #print(apps_t)
 
         current_app_t = type("App", apps_t, {})
         app = current_app_t()

@@ -31,9 +31,11 @@ class Person(Resource):
         self.data['name'] = name
 
 class PersonHTMLViewModel(ResourceViewModel):
+    default_view_models = [Person]
     template = HTMLViewTemplate("Model={{view_model.model.id}} & View URI={{view_model.uri}}: I am <b>{{view_model.model.name}}</b>! My job is {{view_model.data.job}}.")
 
 class PersonJSONViewModel(ResourceViewModel):
+    default_view_models = [Person]
     template = JSONViewTemplate('{"model_id":"{{view_model.model.id}}", "view_uri":"{{view_model.uri}}", "name": "{{view_model.model.name}}!", "job":"{{view_model.data.job}}"}')
 
 Person.register_view_model_specs([
@@ -41,11 +43,11 @@ Person.register_view_model_specs([
     PersonJSONViewModel
 ])
 
-Controller.register_model_specs([
-    Person, 
-    PersonHTMLViewModel, 
-    PersonJSONViewModel
-])
+# Controller.register_model_specs([
+#     Person, 
+#     PersonHTMLViewModel, 
+#     PersonJSONViewModel
+# ])
 
 # ##############################################################################
 #
@@ -58,16 +60,16 @@ class TestApp(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        Person.drop_table()
-        PersonHTMLViewModel.drop_table()
-        PersonJSONViewModel.drop_table()
+        # Person.drop_table()
+        # PersonHTMLViewModel.drop_table()
+        # PersonJSONViewModel.drop_table()
         pass
 
     @classmethod
     def tearDownClass(cls):
-        Person.drop_table()
-        PersonHTMLViewModel.drop_table()
-        PersonJSONViewModel.drop_table()
+        # Person.drop_table()
+        # PersonHTMLViewModel.drop_table()
+        # PersonJSONViewModel.drop_table()
         pass
    
     def test_view(self):
@@ -97,7 +99,10 @@ class TestApp(unittest.TestCase):
             params = str(params)
         ))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content.decode("utf-8"), "Model="+str(elon.id)+" & View URI="+elon_vmodel.uri+": I am <b>Elon Musk</b>! My job is engineer.")
+        self.assertEqual(
+            response.content.decode("utf-8"), 
+            "Model="+str(elon.id)+" & View URI="+elon_vmodel.uri+": I am <b>Elon Musk</b>! My job is engineer."
+        )
         print(response.content)
 
     # def test_app(self):

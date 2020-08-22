@@ -25,7 +25,7 @@ class PersonKVStore(Model):
     def get_age(self):
         return self.store['age']
 
-Controller.register_model_specs([Person])
+# Controller.register_model_specs([Person])
 
 class TestModel(unittest.TestCase):
     

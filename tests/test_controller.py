@@ -41,11 +41,11 @@ Person.register_view_model_specs([
     PersonJSONViewModel
 ])
 
-Controller.register_model_specs([
-    Person, 
-    PersonHTMLViewModel, 
-    PersonJSONViewModel
-])
+# Controller.register_model_specs([
+#     Person, 
+#     PersonHTMLViewModel, 
+#     PersonJSONViewModel
+# ])
 
 
 # ##############################################################################

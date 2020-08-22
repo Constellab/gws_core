@@ -12,8 +12,9 @@
     "db_dir"        : "./data",
     "db_name"       : "db.sqlite3",
 
-    "is_test"       : false,
-    
+    "is_test"           : false,
+    "gws:testdata_dir" : "./tests/testdata",
+
     "dependencies"  : {},
     
     "app":{

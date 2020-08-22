@@ -1,4 +1,6 @@
 
+
+import os
 import unittest
 
 from starlette.requests import Request
@@ -9,13 +11,10 @@ from gws.app import App
 from gws.prism.model import Model, Resource, ResourceViewModel
 from gws.prism.view import HTMLViewTemplate, JSONViewTemplate, ViewTemplateFile
 from gws.prism.controller import Controller
-
-import os
-__cdir__ = os.path.dirname(os.path.abspath(__file__))
-
 from gws.settings import Settings
+
 settings = Settings.retrieve()
-print(settings.db_path)
+testdata_dir = settings.get_data("gws:testdata_dir")
 
 class Person(Resource):
     @property
@@ -26,15 +25,18 @@ class Person(Resource):
         self.data['name'] = name
 
 class PersonHTMLViewModel(ResourceViewModel):
+    default_view_models = [Person]
     template = HTMLViewTemplate("I am <b>{{view_model.model.name}}</b>! My job is {{view_model.data.job}}.")
 
 class PersonJSONViewModel(ResourceViewModel):
+    default_view_models = [Person]
     template = JSONViewTemplate('{"name": "{{view_model.model.name}}!", "job":"{{view_model.data.job}}"}')
 
 class FunnyView(ResourceViewModel):
-    template = ViewTemplateFile(os.path.join(__cdir__, 'test-view/funny-view.html'), type="html")
+    default_view_models = [Person]
+    template = ViewTemplateFile(os.path.join(testdata_dir, './funny-view.html'), type="html")
 
-Controller.register_model_specs([Person, PersonHTMLViewModel, PersonJSONViewModel])
+# Controller.register_model_specs([Person, PersonHTMLViewModel, PersonJSONViewModel])
 
 class TestHTMLView(unittest.TestCase):
     
