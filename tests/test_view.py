@@ -25,18 +25,16 @@ class Person(Resource):
         self.data['name'] = name
 
 class PersonHTMLViewModel(ResourceViewModel):
-    default_view_models = [Person]
+    model_specs = [Person]
     template = HTMLViewTemplate("I am <b>{{view_model.model.name}}</b>! My job is {{view_model.data.job}}.")
 
 class PersonJSONViewModel(ResourceViewModel):
-    default_view_models = [Person]
+    model_specs = [Person]
     template = JSONViewTemplate('{"name": "{{view_model.model.name}}!", "job":"{{view_model.data.job}}"}')
 
-class FunnyView(ResourceViewModel):
-    default_view_models = [Person]
+class FunnyViewModel(ResourceViewModel):
+    model_specs = [Person]
     template = ViewTemplateFile(os.path.join(testdata_dir, './funny-view.html'), type="html")
-
-# Controller.register_model_specs([Person, PersonHTMLViewModel, PersonJSONViewModel])
 
 class TestHTMLView(unittest.TestCase):
     
@@ -137,7 +135,7 @@ class TestFunnyView(unittest.TestCase):
     
     def test_view_file(self):
         elon = Person()
-        view_model = FunnyView(elon)
+        view_model = FunnyViewModel(elon)
         elon.set_name('Elon')
 
         text = view_model.render({})

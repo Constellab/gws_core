@@ -26,6 +26,8 @@ class Controller(Base):
         :return: A view model corresponding to the action
         :rtype: `gws.prims.model.ViewModel`
         """
+        cls._inspects()
+        
         if Controller.is_query_params:
             action = request.query_params.get('action','')
             uri = request.query_params.get('uri','')
@@ -146,7 +148,7 @@ class Controller(Base):
         :rtype: type
         :raise Exception: No registered model matchs with the given `type_str`
         """
-        cls.__inspects()
+        cls._inspects()
 
         type_str = slugify(type_str)
         if type_str in cls._model_specs:
@@ -157,7 +159,7 @@ class Controller(Base):
     # -- I --
 
     @classmethod
-    def __inspects(cls):
+    def _inspects(cls):
         if len(cls._model_specs):
             return
 
@@ -166,15 +168,15 @@ class Controller(Base):
         module_names = settings.get_dependency_names()
  
         for k in module_names:
-            cls.__inspects_module(k)
+            cls._inspects_module(k)
         
-        cls.__inspects_module('tests')  #for testing
+        cls._inspects_module('tests')  #for testing
 
     @classmethod
-    def __inspects_module(cls, name = 'gws'):
+    def _inspects_module(cls, name):
         import inspect
         import sys
-        from gws.prism.model import Model
+        from gws.prism.model import Model, ViewModel
         if not name in sys.modules:
             return
 
@@ -183,8 +185,10 @@ class Controller(Base):
             if inspect.isclass(obj):
                 if issubclass(obj, Model):
                     cls._register_model_specs([obj])
+                    if issubclass(obj, ViewModel):
+                        obj.register_to_models()
             elif inspect.ismodule(obj):
-                cls.__inspects_module(name+"."+subname)
+                cls._inspects_module(name+"."+subname)
 
     # -- R --
 

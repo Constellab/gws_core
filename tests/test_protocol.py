@@ -82,8 +82,6 @@ class Wait(Process):
         self.output['person'] = p
         await asyncio.sleep(self.get_param('waiting_time')) 
 
-# Controller.register_model_specs([Person, Move, Eat, Wait])
-
 class TestProcess(unittest.TestCase):
     
     @classmethod

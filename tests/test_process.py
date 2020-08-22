@@ -75,7 +75,6 @@ class Wait(Process):
         self.output['person'] = p
         await asyncio.sleep(self.get_param('waiting_time')) 
 
-# Controller.register_model_specs([Person, Move, Eat, Wait])
 
 class TestProcess(unittest.TestCase):
     
@@ -85,12 +84,12 @@ class TestProcess(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        # Job.drop_table()
-        # Config.drop_table()
-        # Person.drop_table()
-        # Move.drop_table()
-        # Eat.drop_table()
-        # Wait.drop_table()
+        Job.drop_table()
+        Config.drop_table()
+        Person.drop_table()
+        Move.drop_table()
+        Eat.drop_table()
+        Wait.drop_table()
         pass
 
     def test_process_singleton(self):

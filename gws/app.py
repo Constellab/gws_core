@@ -53,7 +53,7 @@ class Robot(Resource):
     pass
 
 class RobotHTMLViewModel(ResourceViewModel):
-    default_view_models = [Robot]
+    model_specs = [ Robot ]
     template = HTMLViewTemplate("""
         Hi!<br>
         I'am {{view_model.model.data.name}}.<br>
@@ -61,19 +61,8 @@ class RobotHTMLViewModel(ResourceViewModel):
     """)
 
 class RobotJSONViewModel(ResourceViewModel):
-    default_view_models = [Robot]
+    model_specs = [ Robot ]
     template = JSONViewTemplate('{"name":"{{view_model.model.data.name}}"}')
-    
-Robot.register_view_model_specs([
-    RobotHTMLViewModel, 
-    RobotJSONViewModel
-])
-
-# Controller.register_model_specs([
-#     Robot,
-#     RobotHTMLViewModel,
-#     RobotJSONViewModel
-# ])
 
 ####################################################################################
 #

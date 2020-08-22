@@ -204,7 +204,7 @@ class Model(PWModel,Base):
     #     :return: True if the `data` is not empty, False otherwise
     #     :rtype: bool
     #     """
-    #     return bool(self.data)
+    #     return len(self.data) > 0
 
     # -- I --
 
@@ -347,7 +347,6 @@ class Model(PWModel,Base):
             try:
                 if model_list is None:
                     return
-                    #model_list = Controller.models.values()
                 
                 for m in model_list:
                     if isinstance(m, cls):
@@ -373,7 +372,7 @@ class Model(PWModel,Base):
 class Viewable(Model):
     """
     Viewable class
-    :property default_view_models: The list of registered view model types.
+    :property _view_model_specs: The list of registered view model types.
     :type specs: dict
     """
 
@@ -1343,12 +1342,6 @@ class Job(Model):
             return None
 
     # -- S --
-    # def set_config(self, config: Config):
-    #     self.config = config
-
-    # def set_process(self, process: Process):
-    #     self.process = process
-    #     self.update_state()
 
     def update_state(self):
         """ 
@@ -1434,18 +1427,11 @@ class Job(Model):
 
 class Protocol(Model):
 
-    #config = ForeignKeyField(ProtocolConfig, null=True, backref='config')
-
     _procs: dict = {}
     _table_name = 'protocol'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        #if not self.config:
-        #    self.config = ProtocolConfig(specs = self.config_specs)
-        #self.config = None
-
         self._procs = {}
 
     # -- A --
@@ -1560,16 +1546,19 @@ class Resource(Viewable):
 class ViewModel(Model):
     """ 
     ViewModel class
-    :property model: Model of the view model
-    :type model: Model
+    :property model_id: Id of the Model of the ViewModel
+    :type model: int
+    :property model_type: Type of the Model of the ViewModel
+    :type model_type: str
     :property template: The view template
     :type template: ViewTemplate
+    :property model_specs: List containing the type of the default Models associated with the ViewModel.
+    :type model_specs: list
     """
 
-    #model: 'Model' = ForeignKeyField(Model, backref='view_models')
     model_id: int = IntegerField(index=True)
     model_type :str = CharField(index=True)
-    
+    model_specs: list = []
     template: ViewTemplate = None
 
     _model = None
@@ -1577,17 +1566,6 @@ class ViewModel(Model):
 
     def __init__(self, model_instance: Model = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
-        # is_invalid_model_instance = not model_instance is None and \
-        #                             not isinstance(model_instance, Model)
-        # if is_invalid_model_instance:
-        #     raise Exception(self.classname(),"__init__","The model must be an instance of Model")
-        # elif isinstance(model_instance, Model):
-        #     self.model = model_instance
-        #     self.model.register_view_model_specs([ type(self) ])
-        # else:
-        #     self.model = self.model.cast()
-
         if isinstance(model_instance, Model):
             self._model = model_instance
             self._model.register_view_model_specs( [type(self)] )
@@ -1645,6 +1623,11 @@ class ViewModel(Model):
         return self._model
 
     # -- R --
+
+    @classmethod
+    def register_to_models(cls):
+        for model_t in cls.model_specs:
+            model_t.register_view_model_specs( [cls] )
 
     def render(self, params: dict = None) -> str:
         """
@@ -1708,16 +1691,9 @@ class ProcessViewModel(ViewModel):
     :type model: Process
     """
 
-    #model: 'Process' = ForeignKeyField(Process, backref='view_models')
     _table_name = 'process_view_model'
 
     def __init__(self, model_instance=None, *args, **kwargs):
-
-        # is_invalid_model_instance = not model_instance is None and \
-        #                             not isinstance(model_instance, Process)
-        # if is_invalid_model_instance:
-        #     raise Exception("ProcessViewModel", "__init__", f"The model must be an instance af Process. Actual class is {type(model_instance)}")
-
         super().__init__(model_instance=model_instance, *args, **kwargs)
 
         if self.template is None:
@@ -1745,16 +1721,9 @@ class ResourceViewModel(ViewModel):
     :type model: Resource
     """
 
-    #model: 'Resource' = ForeignKeyField(Resource, backref='view_models')
     _table_name = 'resource_view_model'
 
     def __init__(self, model_instance=None, *args, **kwargs):
-
-        # is_invalid_model_instance = not model_instance is None and \
-        #                             not isinstance(model_instance, Resource)
-        # if is_invalid_model_instance:
-        #     raise Exception("ResourceViewModel", "__init__", f"The model must be an instance af Process. Actual class is {type(model_instance)}")
-
         super().__init__(model_instance=model_instance, *args, **kwargs)
 
         if self.template is None:

@@ -13,7 +13,7 @@ from gws.app import App
 from gws.prism.model import Model, Resource, ResourceViewModel
 from gws.prism.view import HTMLViewTemplate, JSONViewTemplate
 from gws.prism.controller import Controller
-
+from gws.prism.base import slugify
 
 # ##############################################################################
 #
@@ -31,22 +31,17 @@ class Person(Resource):
         self.data['name'] = name
 
 class PersonHTMLViewModel(ResourceViewModel):
+    model_specs = [ Person ]
     template = HTMLViewTemplate("Model={{view_model.model.id}} & View URI={{view_model.uri}}: I am <b>{{view_model.model.name}}</b>! My job is {{view_model.data.job}}.")
 
 class PersonJSONViewModel(ResourceViewModel):
+    model_specs = [ Person ]
     template = JSONViewTemplate('{"model_id":"{{view_model.model.id}}", "view_uri":"{{view_model.uri}}", "name": "{{view_model.model.name}}!", "job":"{{view_model.data.job}}"}')
 
-Person.register_view_model_specs([
-    PersonHTMLViewModel, 
-    PersonJSONViewModel
-])
-
-# Controller.register_model_specs([
-#     Person, 
+# Person.register_view_model_specs([
 #     PersonHTMLViewModel, 
 #     PersonJSONViewModel
 # ])
-
 
 # ##############################################################################
 #
@@ -159,6 +154,11 @@ class TestControllerHTTP(unittest.TestCase):
         self.assertFalse(new_json_view is json_vmodel)
         self.assertEqual(new_json_view.model, elon)
         print(response.content)
+
+        # Check that the view_models a registered to their conrresponding models
+        k = slugify(PersonHTMLViewModel.full_classname())
+        self.assertEquals(Person._view_model_specs[k], PersonHTMLViewModel)
+
 
 class TestControllerWebSocket(unittest.TestCase):
     
