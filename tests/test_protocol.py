@@ -5,7 +5,7 @@ import unittest
 import json
 
 from gws.settings import Settings
-from gws.prism.model import Config, Process, ProcessConfig, Resource, Model, ViewModel, Protocol
+from gws.prism.model import Config, Process, Resource, Model, ViewModel, Protocol
 from gws.prism.controller import Controller
 
 settings = Settings.retrieve()
@@ -89,13 +89,11 @@ class TestProcess(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         Protocol.create_table()
-        ProcessConfig.create_table()
         pass
 
     @classmethod
     def tearDownClass(cls):
         Protocol.drop_table()
-        ProcessConfig.drop_table()
 
         Person.drop_table()
         Move.drop_table()

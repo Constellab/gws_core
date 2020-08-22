@@ -373,11 +373,10 @@ class Model(PWModel,Base):
 class Viewable(Model):
     """
     Viewable class
-    :property default_view_models: The default list of registered view model types.
+    :property default_view_models: The list of registered view model types.
     :type specs: dict
     """
 
-    default_view_models = []
     _view_model_specs: dict = {}
 
     def as_json(self):
@@ -1570,8 +1569,10 @@ class ViewModel(Model):
     #model: 'Model' = ForeignKeyField(Model, backref='view_models')
     model_id: int = IntegerField(index=True)
     model_type :str = CharField(index=True)
-    _model = None
+    
     template: ViewTemplate = None
+
+    _model = None
     _table_name = 'view_model'
 
     def __init__(self, model_instance: Model = None, *args, **kwargs):
