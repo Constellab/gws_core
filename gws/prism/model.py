@@ -635,6 +635,16 @@ class Process(Viewable):
 
     # -- C --
 
+    @classmethod
+    def create_table(cls, *args, **kwargs):
+        if not Job.table_exists():
+            Job.create_table()
+        
+        if not Config.table_exists():
+            Config.create_table()
+
+        super().create_table(*args, **kwargs)
+
     @property
     def config(self):
         return self.get_active_job().config
@@ -1223,6 +1233,16 @@ class Protocol(Process):
         pass
     
     # -- C --
+
+    @classmethod
+    def create_table(cls, *args, **kwargs):
+        if not Experiment.table_exists():
+            Experiment.create_table()
+        
+        if not Config.table_exists():
+            Config.create_table()
+
+        super().create_table(*args, **kwargs)
 
     def __create_settings( self ):
         settings = dict(
