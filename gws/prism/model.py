@@ -1143,7 +1143,7 @@ class Protocol(Process):
     _outerfaces = {}
 
     #/!\ Write protocols in the 'process' table
-    _table_name = 'processs'
+    #_table_name = 'process'
 
     def __init__(self, name: str = None, processes: dict = None, connectors: list = None, \
                 interfaces: dict = None, outerfaces: dict = None, \
