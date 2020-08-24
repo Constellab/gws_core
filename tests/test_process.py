@@ -30,23 +30,27 @@ class Create(Process):
     input_specs = {}
     output_specs = {'person' : Person}
     config_specs = {}
-    async def task(self):
+    
+    def task(self):
         print("Create")
         p = Person()
         self.output['person'] = p
+        #await super().task()
 
 class Move(Process):
     input_specs = {'person' : Person}
     output_specs = {'person' : Person}
     config_specs = {
-        'moving_step': {"type": 'float', "default": 0.1}
+        'moving_step': {"type": float, "default": 0.1}
     }
-    async def task(self):
+    
+    def task(self):
         print(f"Moving {self.get_param('moving_step')}")
         p = Person()
         p.set_position(self._input['person'].position + self.get_param('moving_step'))
         p.set_weight(self._input['person'].weight)
         self.output['person'] = p
+        #await super().task()
 
 class Eat(Process):
     input_specs = {'person' : Person}
@@ -54,7 +58,8 @@ class Eat(Process):
     config_specs = {
         'food_weight': {"type": 'float', "default": 3.14}
     }
-    async def task(self):
+    
+    def task(self):
         print(f"Eating {self.get_param('food_weight')}")
         p = Person()
         p.set_position(self.input['person'].position)
@@ -67,14 +72,15 @@ class Wait(Process):
     config_specs = {
         'waiting_time': {"type": 'float', "default": 0.5} #wait for .5 secs by default
     }
-    async def task(self):
+    
+    def task(self):
         print(f"Waiting {self.get_param('waiting_time')}")
         p = Person()
         p.set_position(self.input['person'].position)
         p.set_weight(self.input['person'].weight)
         self.output['person'] = p
-        await asyncio.sleep(self.get_param('waiting_time')) 
-
+        import time
+        time.sleep(self.get_param('waiting_time'))
 
 class TestProcess(unittest.TestCase):
     
@@ -86,10 +92,8 @@ class TestProcess(unittest.TestCase):
     def tearDownClass(cls):
         Job.drop_table()
         Config.drop_table()
+        Create.drop_table()
         Person.drop_table()
-        Move.drop_table()
-        Eat.drop_table()
-        Wait.drop_table()
         pass
 
     def test_process_singleton(self):
@@ -111,44 +115,33 @@ class TestProcess(unittest.TestCase):
         p_wait = Wait()
         
         # create a chain
-        p0>>'person'        | p1<<'person'
-        p1>>'person'        | p2<<'person'
-        p2>>'person'        | p_wait<<'person'
-        p_wait>>'person'    | p3<<'person'
-        p3>>'person'        | p4<<'person'
-        p2>>'person'        | p5<<'person'
-
-        rules = p0.output.links()
-        self.assertEqual(rules, [
-            {'from': {'node': p0, 'port': 'person'}, 'to': {'node': p1, 'port': 'person'}}
-        ])
-
-        rules = p2.output.links()
-        self.assertEqual(rules, [
-            {'from': {'node': p2, 'port': 'person'}, 'to': {'node': p_wait, 'port': 'person'}},
-            {'from': {'node': p2, 'port': 'person'}, 'to': {'node': p5, 'port': 'person'}},
-        ])
+        p0.out_port('person')   | p1.in_port('person')
+        p1.out_port('person')   | p2<<'person'
+        p2>>'person'            | p_wait<<'person'
+        p_wait>>'person'        | p3<<'person'
+        p3>>'person'            | p4<<'person'
+        p2>>'person'            | p5<<'person'
 
         self.assertEqual( len(p1.get_next_procs()), 1 )
         self.assertEqual( len(p2.get_next_procs()), 2 )
 
         p2.set_param('food_weight', '5.6')
         
-        async def _on_p3_start( proc ):
+        def _on_p3_start( proc ):
             self.assertEqual( proc, p3 )
 
-        async def _on_p5_start( proc ):
+        def _on_p5_start( proc ):
             self.assertEqual( proc, p5 )
 
-        async def _on_p5_end( proc ):
+        def _on_p5_end( proc ):
             self.assertEqual( proc, p5 )
 
         async def _run():
             
             # set events
-            p3.on_start = _on_p3_start
-            p5.on_start = _on_p5_start
-            p5.on_end = _on_p5_end
+            p3.on_start(_on_p3_start)
+            p5.on_start(_on_p5_start)
+            p5.on_end(_on_p5_end)
 
             # start
             await p0.run()

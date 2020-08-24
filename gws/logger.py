@@ -13,24 +13,30 @@ class Logger:
     _file_path = None
 
     def __init__(self, is_new_session = False, is_test=False):
-        settings = Settings.retrieve()
-        self._is_test = is_test
 
-        log_dir = settings.get_log_dir()
-        if not os.path.exists(log_dir):
-            os.makedirs(log_dir)
-        self._file_path = os.path.join(log_dir, LOGGER_FILE_NAME)
+        if not type(self)._logger is None:
+            self._logger = type(self)._logger
+        else:
+            settings = Settings.retrieve()
+            self._is_test = is_test
 
-        fh = logging.FileHandler(self._file_path)
-        self._logger = logging.getLogger(LOGGER_NAME)
-        self._logger.setLevel(logging.DEBUG)
-        formatter = logging.Formatter(" %(message)s")
-        fh.setFormatter(formatter)
-        self._logger.addHandler(fh)
+            log_dir = settings.get_log_dir()
+            if not os.path.exists(log_dir):
+                os.makedirs(log_dir)
+            self._file_path = os.path.join(log_dir, LOGGER_FILE_NAME)
 
-        if is_new_session:
-            self._logger.info("\nSession: " + str(datetime.datetime.now()) + "\n")
-    
+            fh = logging.FileHandler(self._file_path)
+            self._logger = logging.getLogger(LOGGER_NAME)
+            self._logger.setLevel(logging.DEBUG)
+            formatter = logging.Formatter(" %(message)s")
+            fh.setFormatter(formatter)
+            self._logger.addHandler(fh)
+
+            if is_new_session:
+                self._logger.info("\nSession: " + str(datetime.datetime.now()) + "\n")
+
+            type(self)._logger = self._logger
+
     # -- E --
 
     def error(self,message, *args, **kwargs):

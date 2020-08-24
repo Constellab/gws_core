@@ -34,6 +34,7 @@ class TestModel(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        PersonKVStore.drop_table()
         Person.drop_table()
         pass
 

@@ -109,3 +109,7 @@ def slugify(text, snakefy = False) -> str:
     elif snakefy:
         text = convert_to_slug(text, to_lower=True, separator='_')
     return text
+
+def format_table_name(cls):
+    model_name = cls._table_name
+    return model_name.lower()

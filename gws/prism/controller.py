@@ -13,8 +13,8 @@ class Controller(Base):
     Controller class
     """
 
-    #models = dict()
     _model_specs = dict()
+    _session = None
     is_query_params = False
     
     @classmethod
@@ -26,8 +26,10 @@ class Controller(Base):
         :return: A view model corresponding to the action
         :rtype: `gws.prims.model.ViewModel`
         """
-        cls._inspects()
-        
+
+        cls._session = request.session
+        cls.__inspects()
+
         if Controller.is_query_params:
             action = request.query_params.get('action','')
             uri = request.query_params.get('uri','')
@@ -96,6 +98,43 @@ class Controller(Base):
         else:
             return '/'+action+'/'+uri+'/'+str(params)
 
+    # -- D --
+
+    @classmethod
+    def get_test_user(cls):
+        from gws.prism.model import User
+        User.create_table()
+        try:
+            user = User.get(User.email == "test@gencovery.com", User.organization == "Gencovery")
+        except: 
+            user = User(
+                firstname = "Guest", 
+                sirname = "Guest", 
+                email = "test@gencovery.com",
+                organization = "Gencovery",
+                is_active = True
+            )
+            user.save()
+        
+        return user
+
+    @classmethod
+    def get_test_project(cls):
+        from gws.prism.model import Project
+        Project.create_table()
+        try:
+            project = Project.get(Project.name == "Test", Project.organization == "Gencovery")
+        except: 
+            project = Project(
+                name = "Test", 
+                organization = "Gencovery",
+                is_active = True,
+            )
+            project.description = "This is a fake project for code testing."
+            project.save()
+        
+        return project
+
     # -- F --
 
     @classmethod
@@ -148,7 +187,7 @@ class Controller(Base):
         :rtype: type
         :raise Exception: No registered model matchs with the given `type_str`
         """
-        cls._inspects()
+        cls.__inspects()
 
         type_str = slugify(type_str)
         if type_str in cls._model_specs:
@@ -159,7 +198,7 @@ class Controller(Base):
     # -- I --
 
     @classmethod
-    def _inspects(cls):
+    def __inspects(cls):
         if len(cls._model_specs):
             return
 
@@ -168,12 +207,12 @@ class Controller(Base):
         module_names = settings.get_dependency_names()
  
         for k in module_names:
-            cls._inspects_module(k)
+            cls.__inspects_module(k)
         
-        cls._inspects_module('tests')  #for testing
+        cls.__inspects_module('tests')  #for testing
 
     @classmethod
-    def _inspects_module(cls, name):
+    def __inspects_module(cls, name):
         import inspect
         import sys
         from gws.prism.model import Model, ViewModel
@@ -188,15 +227,18 @@ class Controller(Base):
                     if issubclass(obj, ViewModel):
                         obj.register_to_models()
             elif inspect.ismodule(obj):
-                cls._inspects_module(name+"."+subname)
+                cls.__inspects_module(name+"."+subname)
 
     # -- R --
 
     @classmethod
     def _register_model_specs(cls, model_specs: list):
         """
-        Register Model types. Only Model instances of registered Model types are actionable, i.e. 
-        can controlled by the Controller through :meth:`Controller.action`
+        Register Models. 
+        
+        Only Models of which types are registered will be actionable.
+        Override the names of the model tables.
+
         :param model_specs: List of Model types to regiters
         :type model_specs: list
         """
@@ -204,7 +246,7 @@ class Controller(Base):
             if isinstance(model_type, type):
                 full_cname = model_type.full_classname(slugify=True)
                 cls._model_specs[full_cname] = model_type
-                model_type._meta.table_name = model_type._table_name
+                #model_type._meta.table_name = model_type._table_name
             else:
                 raise Exception("Controller", "_register_model_specs", "Invalid model type")
 

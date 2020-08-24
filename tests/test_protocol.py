@@ -5,7 +5,7 @@ import unittest
 import json
 
 from gws.settings import Settings
-from gws.prism.model import Config, Process, Resource, Model, ViewModel, Protocol
+from gws.prism.model import Config, Process, Resource, Model, ViewModel, Protocol, Job, Experiment
 from gws.prism.controller import Controller
 
 settings = Settings.retrieve()
@@ -37,8 +37,9 @@ class Create(Process):
     input_specs = {}
     output_specs = {'person' : Person}
     config_specs = {}
-    async def task(self):
-        print("Create")
+
+    def task(self):
+        print("Create", flush=True)
         p = Person()
         self.output['person'] = p
 
@@ -48,8 +49,9 @@ class Move(Process):
     config_specs = {
         'moving_step': {"type": float, "default": 0.1}
     }
-    async def task(self):
-        print(f"Moving {self.get_param('moving_step')}")
+
+    def task(self):
+        print(f"Moving {self.get_param('moving_step')}", flush=True)
         p = Person()
         p.set_position(self._input['person'].position + self.get_param('moving_step'))
         p.set_weight(self._input['person'].weight)
@@ -61,8 +63,9 @@ class Eat(Process):
     config_specs = {
         'food_weight': {"type": float, "default": 3.14}
     }
-    async def task(self):
-        print(f"Eating {self.get_param('food_weight')}")
+
+    def task(self):
+        print(f"Eating {self.get_param('food_weight')}", flush=True)
         p = Person()
         p.set_position(self.input['person'].position)
         p.set_weight(self.input['person'].weight + self.get_param('food_weight'))
@@ -74,33 +77,33 @@ class Wait(Process):
     config_specs = {
         'waiting_time': {"type": float, "default": 0.5} #wait for .5 secs by default
     }
-    async def task(self):
-        print(f"Waiting {self.get_param('waiting_time')}")
+
+    def task(self):
+        print(f"Waiting {self.get_param('waiting_time')}", flush=True)
         p = Person()
         p.set_position(self.input['person'].position)
         p.set_weight(self.input['person'].weight)
-        self.output['person'] = p
-        await asyncio.sleep(self.get_param('waiting_time')) 
+        self.output['person'] = p  
+        import time
+        time.sleep(self.get_param('waiting_time'))
 
 class TestProcess(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        Protocol.create_table()
         pass
 
     @classmethod
     def tearDownClass(cls):
+        Config.drop_table()
+        Process.drop_table()
         Protocol.drop_table()
-
+        Experiment.drop_table()
+        Job.drop_table()
         Person.drop_table()
-        Move.drop_table()
-        Eat.drop_table()
-        Wait.drop_table()
         pass
     
     def test_protocol(self):
-        
         p0 = Create()
         p1 = Move()
         p2 = Eat()
@@ -110,27 +113,72 @@ class TestProcess(unittest.TestCase):
         p_wait = Wait()
         
         # create a chain
-        p0>>'person'        | p1<<'person'
-        p1>>'person'        | p2<<'person'
-        p2>>'person'        | p_wait<<'person'
-        p_wait>>'person'    | p3<<'person'
-        p3>>'person'        | p4<<'person'
-        p2>>'person'        | p5<<'person'
+        proto = Protocol(
+            processes = {
+                'p0' : p0,  
+                'p1' : p1, 
+                'p2' : p2, 
+                'p3' : p3,  
+                'p4' : p4,  
+                'p5' : p5, 
+                'p_wait' : p_wait
+            },
+            connectors=[
+                p0>>'person'        | p1<<'person',
+                p1>>'person'        | p2<<'person',
+                p2>>'person'        | p_wait<<'person',
+                p_wait>>'person'    | p3<<'person',
+                p3>>'person'        | p4<<'person',
+                p2>>'person'        | p5<<'person'
+            ],
+            interfaces = {},
+            outerfaces = {}
+        )
 
-        proto = Protocol()
-        proto.add({
-            'p0' : p0, 
-            'p1' : p1, 
-            'p2' : p2, 
-            'p3' : p3, 
-            'p4' : p4, 
-            'p5' : p5, 
-            'p_wait' : p_wait
-        })
+        async def _run():
+            await proto.run()
 
-        s = proto.settings
-        print(s)
+            print("Sleeping 1 sec for waiting all tasks to finish ...")
+            await asyncio.sleep(1)
 
-        with open(os.path.join(testdata_dir,"./links.json")) as fp:
-            text = json.load(fp)
-            self.assertEquals(s, text)
+        asyncio.run( _run() )
+
+    def test_connected_protocol(self):
+        p0 = Create(name="p0")
+        p1 = Move()
+        p2 = Eat()
+        p3 = Move()
+        p4 = Move()
+        p5 = Eat(name="p5")
+        p_wait = Wait()
+        
+        # create a chain
+        proto = Protocol(
+            name = "proto",
+            processes = {
+                'p1' : p1, 
+                'p2' : p2, 
+                'p3' : p3,  
+                'p4' : p4,  
+                'p_wait' : p_wait
+            },
+            connectors=[
+                p1>>'person'        | p2<<'person',
+                p2>>'person'        | p_wait<<'person',
+                p_wait>>'person'    | p3<<'person',
+                p2>>'person'        | p4<<'person'
+            ],
+            interfaces = { 'person' : p1.in_port('person') },
+            outerfaces = { 'person' : p2.out_port('person') }
+        )
+
+        p0>>'person'        | proto<<'person'
+        proto>>'person'     | p5<<'person'
+
+        async def _run():
+            await p0.run()
+
+            print("Sleeping 1 sec for waiting all tasks to finish ...")
+            await asyncio.sleep(1)
+
+        asyncio.run( _run() )

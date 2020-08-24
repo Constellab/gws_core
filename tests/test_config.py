@@ -33,7 +33,7 @@ class TestConfig(unittest.TestCase):
 
         self.assertEquals(c.data, {
             "specs" : {
-                'moving_step': {"type": float, "default": 0.1}
+                'moving_step': {"type": "float", "default": 0.1}
             },
             "params":{
                 'moving_step': 4.5

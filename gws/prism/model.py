@@ -21,14 +21,18 @@ from playhouse.sqlite_ext import JSONField
 from starlette.requests import Request
 from starlette.responses import Response, HTMLResponse, \
                                 JSONResponse, PlainTextResponse
+from starlette.authentication import BaseUser
 
 from gws.logger import Logger
 from gws.settings import Settings
 from gws.store import KVStore
 from gws.prism.base import slugify
-from gws.prism.base import Base
+from gws.prism.base import Base, format_table_name
 from gws.prism.controller import Controller
 from gws.prism.view import ViewTemplate, ViewTemplateFile
+from gws.prism.io import Input, Output, InPort, OutPort, Connector
+
+
 
 class DbManager(Base):
     """
@@ -361,7 +365,7 @@ class Model(PWModel,Base):
 
     class Meta:
         database = DbManager.db
-        table_name = 'model'
+        table_function = format_table_name
 
 # ####################################################################
 #
@@ -431,365 +435,7 @@ class Viewable(Model):
                 raise Exception("Model", "register_specs", "Invalid spec. A {name, type} dictionnary or [type] list is expected, where type is must be a ViewModel type or sub-type")
             cls._view_model_specs[t.full_classname(slugify=True)] = t
 
-# ####################################################################
-#
-# Port class
-#
-# ####################################################################
 
-class Port(Base):
-    """
-    Port class. A port contains a resource and allows connecting processes.
-
-    Example: [Left Process]-<output port> ---> <input port>-[Right Process]. 
-    """
-
-    _resource_type: 'Resource'
-    _resource: 'Resource'
-    _prev: 'Port' = None
-    _next: list = []
-    _is_left_connected : bool = False
-    _parent: 'IO'
-
-    def __init__(self, parent: 'IO'):
-        self._resource = None
-        self._next = []
-        self._is_left_connected = False
-        self._parent = parent
-        self._resource_type = Resource
-
-    @property
-    def resource(self) -> 'Resource':
-        """
-        Returns the resoruce of the port
-        :return: The resource
-        :rtype: Resource
-        """
-        return self._resource
-    
-    @property
-    def is_left_connected(self) -> bool:
-        """
-        Returns True if the port is left-connected to a another port
-        :return: True if the port is left-connected, False otherwise.
-        :rtype: bool
-        """
-        return not self._prev is None
-    
-    def is_left_connected_to(self, port: 'Port') -> bool:
-        """
-        Returns True if the port is left-connected to a given Port, False otherwise
-        :return: True if the port is connected, False otherwise.
-        :rtype: bool
-        """
-        return self._prev is port
-
-    @property
-    def is_right_connected(self) -> bool:
-        """
-        Returns True if the port is right-connected to a another port
-        :return: True if the port is right-connected, False otherwise.
-        :rtype: bool
-        """
-        return len(self._next) > 0
-
-    def is_right_connected_to(self, port: 'Port') -> bool:
-        """
-        Returns True if the port is right-connected to a given Port, False otherwise
-        :return: True if the port is connected, False otherwise.
-        :rtype: bool
-        """
-        return port in self._next
-
-    @property
-    def is_ready(self)->bool:
-        """
-        Returns True if the port is ready (i.e. contains a resource), False otherwise
-        :return: True if the port is ready, False otherwise.
-        :rtype: bool
-        """
-        return isinstance(self._resource, self._resource_type) and self._resource.is_saved()
-
-    def get_next_procs(self):
-        """
-        Returns the list of right-hand side processes connected to the port
-        :return: List of processes
-        :rtype: list
-        """
-        next_proc = []
-        for port in self._next:
-            io = port._parent
-            next_proc.append(io._parent)
-        return next_proc
-
-    def propagate(self):
-        """
-        Propagates the resource of the port to the connected (right-hande side) port
-        """
-        for port in self._next:
-            port._resource = self._resource
-
-    def set_resource(self, resource: 'Resource'):
-        """
-        Sets the resource of the port
-        :param resource: The input resource
-        :type resource: Resource
-        :raise Exception: If reource is not compatible with port
-        """
-        if not isinstance(resource, Resource):
-            raise Exception(self.classname(), "set_resource", "The resource must be an instance of Resource")
-
-        self._resource = resource
-
-    def __or__(self, other: 'Port'):
-        """ 
-        Connection operator.
-
-        Connect the port to another (right-hand side) port.
-        :return: The right-hand sode port
-        :rtype: Port
-        :raise Exception: If the connection is not possible
-        """
-        if not isinstance(other, Port):
-            raise Exception(self.classname(), "|", "The port can only be connected to an instance of Port")
-
-        if other.is_left_connected:
-            raise Exception(self.classname(), "|", "The right-hand side port is already connected")
-
-        if self == other:
-            raise Exception(self.classname(), "|", "Self connection not allowed")
-
-        self._next.append(other)
-        other._prev = self
-        return other
-
-# ####################################################################
-#
-# IO class
-#
-# ####################################################################
-
-class IO(Base):
-    """
-    Base IO class. The IO class defines base functionalitie for the 
-    Input and Output classes. A IO is a set of ports.
-    """
-
-    _ports: dict = {}
-    _parent: 'Process'
-
-    def __init__(self, parent: 'Process'):
-        self._parent = parent
-        self._ports = dict()
-
-    # -- C --
-
-    def create_port(self, name: str, resource_type: type):
-        """ 
-        Creates a port
-        :param name: Name of the port
-        :type name: str
-        :param resource_type: The expected type of the resoruce of the port
-        :type resource_type: type
-        """
-        if not isinstance(name, str):
-            raise Exception(self.classname(), "create_port", "Invalid port specs. The port name must be a string")
-
-        if not isinstance(resource_type, type):
-            raise Exception(self.classname(), "create_port", "Invalid port specs. The resource_type must be type. Maybe you provided an object instead of object type.")
-        
-        if not issubclass(resource_type, Resource):
-            raise Exception(self.classname(), "create_port", "Invalid port specs. The resource_type must refer to subclass of Resource")
-        
-        if self._parent.is_running or self._parent.is_finished:
-            raise Exception(self.classname(), "__setitem__", "Cannot alter inputs/outputs of processes during or after running")
-
-        port = Port(self)
-        port._resource_type = resource_type
-        self._ports[name] = port
-
-    # -- G --
-
-    def __getitem__(self, name: str) -> 'Resource':
-        """ 
-        Bracket (getter) operator. Gets the content of a port by its name
-        :param name: Name of the port
-        :type name: str
-        :return: The resource of the port
-        :rtype: Resource
-        :raise Exception: If the port is not found
-        """
-        if not isinstance(name, str):
-            raise Exception(self.classname(), "__getitem__", "The port name must be a string")
-
-        if self._ports.get(name, None) is None:
-            raise Exception(self.classname(), "__getitem__", self.classname() +" port '"+name+"' not found")
-
-        return self._ports[name].resource
-
-    def get_port_names(self) -> list:
-        """ 
-        Returns the names of all the ports
-        :return: List of names
-        :rtype: list
-        """
-        return list(self._ports.keys)
-
-    def get_resources(self) -> dict:
-        """ 
-        Returns the resources of all the ports
-        :return: List of resources
-        :rtype: list
-        """
-        resources = {}
-        for k in self._ports:
-            resources[k] = self._ports[k].resource
-        return resources
-
-    # -- I --
-
-    @property
-    def is_ready(self)->bool:
-        """
-        Returns True if the IO is ready (i.e. all its ports are ready), False otherwise
-        :return: True if the IO is ready, False otherwise.
-        :rtype: bool
-        """
-        for k in self._ports:
-            if not self._ports[k].is_ready:
-                return False
-        return True
-
-    # -- N --
-
-    def get_next_procs(self) -> list:
-        """ 
-        Returns the list of (right-hand side) processes connected to the IO ports
-        :return: List of processes
-        :rtype: list
-        """
-        next_proc = []
-        for k in self._ports:
-            for proc in self._ports[k].get_next_procs():
-                next_proc.append(proc)
-        return next_proc
-
-    # -- P --
-
-    @property
-    def ports(self) -> dict:
-        """ 
-        Returns the list of ports
-        :return: List of port
-        :rtype: list
-        """
-        return self._ports
-
-    @property
-    def parent(self) -> 'Process':
-        """ 
-        Returns the parent of the IO, i.e. the process that holds this IO
-        :return: The parent process
-        :rtype: Process
-        """
-        return self._parent
-
-    # -- S --
-
-    def __setitem__(self, name: str, resource: 'Resource'):
-        """ 
-        Bracket (setter) operator. Sets the content of a port by its name
-        :param name: Name of the port
-        :type name: str
-        :param resource: The input resource
-        :type resource: Resource
-        :raise Exception: If the port is not found
-        """
-        if not isinstance(name, str):
-            raise Exception(self.classname(), "__setitem__", "The port name must be a string")
-
-        if self._ports.get(name, None) is None:
-            raise Exception(self.classname(), "__setitem__", self.classname() +" port '"+name+"' not found")
-
-        self._ports[name].set_resource(resource)
-    
-
-# ####################################################################
-#
-# Input class
-#
-# ####################################################################
-
-class Input(IO):
-    """
-    Input class
-    """
-
-    def __setitem__(self, name: str, resource: 'Resource'):
-        """ 
-        Bracket (setter) operator. Sets the content of a port by its name
-        :param name: Name of the port
-        :type name: str
-        :param resource: The input resource
-        :type resource: Resource
-        :raise Exception: If the port is not found
-        """
-        if self._parent.is_running or self._parent.is_finished:
-            raise Exception(self.classname(), "__setitem__", "Cannot alter inputs of processes during or after running")
-
-        super().__setitem__(name,resource)
-
-# ####################################################################
-#
-# Output class
-#
-# ####################################################################
-
-class Output(IO):
-    """
-    Output class
-    """
-
-    def links(self):
-        proc = self._parent
-        links = []
-        for o_name in self.ports:
-            o_port = self.ports[o_name]
-            
-            for next_proc in self.get_next_procs():
-                for i_name in next_proc.input.ports:
-                    i_port = next_proc.input.ports[i_name]
-                    
-                    if o_port.is_right_connected_to(i_port):
-                        links.append(
-                            {
-                                "from": {"node": proc,  "port": o_name},
-                                "to": {"node": next_proc,  "port": i_name}
-                            }
-                        )
-        return links
-
-    def propagate(self):
-        """
-        Propagates the resources of the child port sto the connected (right-hande side) ports
-        """
-        for k in self._ports:
-            self._ports[k].propagate()
-
-    def __setitem__(self, name: str, resource: 'Resource'):
-        """ 
-        Bracket (setter) operator. Sets the content of a port by its name
-        :param name: Name of the port
-        :type name: str
-        :param resource: The input resource
-        :type resource: Resource
-        :raise Exception: If the port is not found
-        """
-        if not self._parent.is_running or self._parent.is_finished:
-            raise Exception(self.classname(), "__setitem__", "Cannot alter outputs of processes during that is not started or after running")
-
-        super().__setitem__(name,resource)
-        
 # ####################################################################
 #
 # Config class
@@ -814,6 +460,14 @@ class Config(Viewable):
             }
             
         if not specs is None:
+            if not isinstance(specs, dict):
+                raise Exception(self.classname(), "__init__", f"The specs must be a dictionnary")
+            
+            #convert type to str
+            for k in specs:
+                if isinstance(specs[k]["type"], type):
+                    specs[k]["type"] = specs[k]["type"].__name__
+            
             self.set_specs( specs )
 
     # -- G --
@@ -892,31 +546,13 @@ class Config(Viewable):
             "params" : {}
         }
 
-    class Meta:
-        table_name = 'config'
-
-# # ####################################################################
-# #
-# # ProcessConfig class
-# #
-# # ####################################################################
-
-# class ProcessConfig(Config):
-#     """
-#     ProcessConfig class.
-#     """
-
-#     _table_name = 'process_config'
-
-#     class Meta:
-#         table_name = 'process_config'
-
 # ####################################################################
 #
 # Process class
 #
 # ####################################################################
 
+from gws.prism.event import EventListener
 class Process(Viewable):
     """
     Process class.
@@ -943,20 +579,15 @@ class Process(Viewable):
     output_specs: dict = {}
     config_specs: dict = {}
 
-    _on_start = None
-    _on_end = None
+    _event_listener: EventListener = None
 
-    
     _input: Input
     _output: Output
     _table_name = 'process'
 
-    _on_start = None
-    _on_end = None
-
     _job: 'Job' = None  #ref to the current job
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, name: str=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
         if self.id is None:
@@ -973,6 +604,9 @@ class Process(Viewable):
         else:
             self.__check_hash()
 
+        if not name is None:
+            self.data['name'] = name
+
         self._input = Input(self)
         self._output = Output(self)
 
@@ -982,11 +616,28 @@ class Process(Viewable):
         for k in self.output_specs:
             self._output.create_port(k,self.output_specs[k])
 
+        self._event_listener = EventListener()
+
+    # -- A --
+
+    def add_event(self, name, callback):
+        """
+        Adds an event the event listener
+        :param name: The name of the event
+        :type name: `str`
+        :param callback: The callback function of the event
+        :type callback: `function`
+        """
+        try:
+            self._event_listener.add( name, callback )
+        except Exception as err:
+            raise Exception("Process", "add_event", f"Cannot add event. Error message: {err}")
+
+    # -- C --
+
     @property
     def config(self):
         return self.get_active_job().config
-        
-    # -- C --
 
     def __check_hash(self):
         actual_hash = self.__create_hash()
@@ -1047,30 +698,51 @@ class Process(Viewable):
                 not self.is_finished) and \
                 self._input.is_ready 
 
-    def get_input_port(self, name: str) -> Port:
+    def in_port(self, name: str) -> InPort:
         """
         Returns the port of the input by its name
         :return: The port
-        :rtype: Port
+        :rtype: InPort
         """
         if not isinstance(name, str):
-            raise Exception(self.classname(), "<<", "The port name must be a string")
+            raise Exception(self.classname(), "in_port", "The name of the input port must be a string")
+        
+        if not name in self._input._ports:
+            raise Exception(self.classname(), "in_port", f"The input port '{name}' is not found")
 
         return self._input._ports[name]
 
     # -- L --
 
-    def __lshift__(self, name: str) -> Port:
+    def __lshift__(self, name: str) -> InPort:
         """
-        Alias of :meth:`get_input_port`.
+        Alias of :meth:`in_port`.
 
         Returns the port of the input by its name
         :return: The port
-        :rtype: Port
+        :rtype: InPort
         """
-        return self.get_input_port(name)
+        return self.in_port(name)
 
     # -- N --
+
+    @property
+    def name(self) -> str:
+        """ 
+        Returns the context name of the process
+        :return: The name
+        :rtype: str
+        """
+        return self.data.get("name","")
+
+    @name.setter
+    def name(self, name: str) -> str:
+        """ 
+        Returns the context name of the process
+        :return: The name
+        :rtype: str
+        """
+        self.data["name"] = name
 
     def get_next_procs(self) -> list:
         """ 
@@ -1091,46 +763,35 @@ class Process(Viewable):
         """
         return self._output
 
-    def get_output_port(self, name: str) -> Port:
+    def out_port(self, name: str) -> OutPort:
         """
         Returns the port of the output by its name.
         :return: The port
-        :rtype: Port
+        :rtype: OutPort
         """
         if not isinstance(name, str):
-            raise Exception(self.classname(), ">>", "The port name must be a string")
+            raise Exception(self.classname(), "out_port", "The name of the output port must be a string")
+        
+        if not name in self._output._ports:
+            raise Exception(self.classname(), "out_port", f"The output port '{name}' is not found")
 
         return self._output._ports[name]
 
-    @property
-    def on_end(self):
-        return self._on_end
-
-    @on_end.setter
     def on_end(self, callback):
         """
-        Sets the function the execute after the process ends running. 
+        Adds an event to execute after the process ends running. 
         :param callback: The function to execute
         :callback: `function`
         """
-        if not hasattr(callback, '__call__'):
-            raise Exception("Process", "on_start", "The callback function is not callable")
-        self._on_end = callback
+        self.add_event('end', callback)
 
-    @property
-    def on_start(self):
-        return self._on_start
-
-    @on_start.setter
     def on_start(self, callback):
         """
-        Sets the function the execute before running the process. 
+        Adds an event to execute before the process starts running. 
         :param callback: The function to execute
         :callback: `function`
         """
-        if not hasattr(callback, '__call__'):
-            raise Exception("Process", "on_start", "The callback function is not callable")
-        self._on_start = callback
+        self.add_event('start', callback)
 
     # -- R -- 
 
@@ -1138,56 +799,79 @@ class Process(Viewable):
         """ 
         Runs the process and save its state in the database.
         """
-        if not self.is_ready:
-            raise Exception(self.classname(), "run", "The process is not ready. Please ensure that the process receives valid input resources and has not already been run")
+        self._run_before_task()
+
+        self.task()
+        
+        self._run_after_task()
+
+    def _run_before_task( self, *args, **kwargs ):
+        if self._event_listener.exists('pre_start'):
+            self._event_listener.call('pre_start', self)
 
         self.is_running = True
-
-        # run task
         logger = Logger()
-        logger.info(f"Running task {self.classname()} ...")
-
-        if not self._on_start is None:
-            await self._on_start( self )
+        if self.name:
+            logger.info(f"Running {self.full_classname()} '{self.name}' ...")
+        else:
+            logger.info(f"Running {self.full_classname()} ...")
         
-        e = self.get_active_job()
-        if not e.save():
-            raise Exception("Process", "run", "Cannot save the job")
+        if not self.is_ready:
+            msg = "The process is not ready. Please ensure that the process receives valid input resources and has not already been run"
+            logger.error(msg)
+            raise Exception(self.classname(), "run", msg)
 
-        await self.task()
+        job = self.get_active_job()
+        if not job.save():
+            msg = "Cannot save the job"
+            logger.error(msg)
+            raise Exception(msg)
+        
+        if self._event_listener.exists('start'):
+            self._event_listener.call('start', self)
 
-        if not self._on_end is None:
-            await self._on_end( self )
+    def _run_after_task( self, *args, **kwargs ):
 
-        logger.info(f"Task successfully finished!")
+        if self._event_listener.exists('end'):
+            self._event_listener.call('end', self)
+
+        logger = Logger()
+        if self.name:
+            logger.info(f"Task of {self.full_classname()} '{self.name}' successfully finished!")
+        else:
+            logger.info(f"Task of {self.full_classname()} successfully finished!")
 
         self.is_running = False
         self.is_finished = True
-        e.update_state()
-        e.save()
+
+        job = self.get_active_job()
+        job.update_state()
+        job.save()
 
         res = self.output.get_resources()
         for k in res:
-            res[k]._set_job(e)
-            res[k].save()
+            if not res[k] is None:
+                res[k]._set_job(job)
+                res[k].save()
 
         if not self._output.is_ready:
-            raise Exception(self.classname(), "run", "The output was not set after the task ended.")
-       
+            return
+            #raise Exception(self.classname(), "run", "The output was not set after the task ended.")
+        
         self._output.propagate()
         
         for proc in self._output.get_next_procs():
-            asyncio.create_task( proc.run() )       # schedule task will be executed as soon as possible!
+            asyncio.create_task( proc.run() )
 
-    def __rshift__(self, name: str) -> Port:
+    def __rshift__(self, name: str) -> OutPort:
         """ 
-        Alias of :meth:`get_output_port`.
+        Alias of :meth:`out_port`.
         
         Returns the port of the output by its name
         :return: The port
-        :rtype: Port
+        :rtype: OutPort
         """
-        return self.get_output_port(name)     
+        return self.out_port(name)     
         
     # -- S --
 
@@ -1230,15 +914,9 @@ class Process(Viewable):
         """
         self.config.set_param(name, value)
 
-    async def task(self):
-        """ 
-        Task interface.
-        To be implemented in child classes.
-        """
+    def task(self):
         pass
 
-    class Meta:
-        table_name = 'process'
 
 # ####################################################################
 #
@@ -1247,29 +925,47 @@ class Process(Viewable):
 # ####################################################################
 
 class Project(Model):
-    
-    name: CharField(index=True, unique=True)
+
+    name = CharField(index=True)
+    organization = CharField(index=True)
+    is_active =  BooleanField(default=False, index=True)
 
     _table_name = 'project'
+    
+    @property
+    def description(self):
+        return self.data.get("description","")
+
+    @description.setter
+    def description(self, text):
+        self.data["description"] = text
 
     class Meta:
-        table_name = 'project'
-
+        indexes = (
+            # create a unique on name,organization
+            (('name', 'organization'), True),
+        )
 # ####################################################################
 #
 # User class
 #
 # ####################################################################
 
-class User(Model):
-    firstname: CharField(index=True)
-    sirname: CharField(index=True)
-    email: CharField(index=True, unique=True)
+class User(Model, BaseUser):
+
+    firstname = CharField(index=True)
+    sirname = CharField(index=True)
+    organization = CharField(index=True)
+    email =  CharField(index=True)
+    is_active =  BooleanField(default=False, index=True)
 
     _table_name = 'user'
 
     class Meta:
-        table_name = 'user'
+        indexes = (
+            # create a unique on email,organization
+            (('email', 'organization'), True),
+        )
 
 # ####################################################################
 #
@@ -1303,18 +999,18 @@ class Job(Model):
         super().__init__(*args, **kwargs)
 
         if self.id is None:
-            if isinstance(config, Config):
-                #self.config_id = config.id
-                self._config = config
+            if not isinstance(config, Config):
+                raise Exception("Job", "__init__", "The config must be an instance of Config")
+ 
+            if not isinstance(process, Process):
+                raise Exception("Job", "__init__", "The process must be an instance of Process")
             
-            if isinstance(process, Process):
-                #self.process_id = process.id
-                self._process = process
-                self.update_state()
+            self._config = config
+            self._process = process
+            self.update_state()
 
     # -- I -- 
 
- 
     # -- P --
 
     @property
@@ -1400,24 +1096,20 @@ class Job(Model):
             self.data["inputs"] = {}    
             self.data["inputs"][k] = res[k].uri
 
-    class Meta:
-        table_name = 'job'
+# ####################################################################
+#
+# Experiment class
+#
+# ####################################################################
 
-# # ####################################################################
-# #
-# # ProtocolConfig class
-# #
-# # ####################################################################
+class Experiment(Model):
+    
+    job = ForeignKeyField(Job, backref="experiment")
+    user = ForeignKeyField(User, backref="experiments")
+    project = ForeignKeyField(Project, backref="experiments")
 
-# class ProtocolConfig(ProcessConfig):
-#     """
-#     ProtocolConfig class
-#     """
+    _table_name = 'experiment'
 
-#     _table_name = 'protocol_config'
-
-#     class Meta:
-#         table_name = 'protocol_config'
 
 # ####################################################################
 #
@@ -1425,27 +1117,105 @@ class Job(Model):
 #
 # ####################################################################
 
-class Protocol(Model):
+class Protocol(Process):
+    """ 
+    Protocol class.
 
-    _procs: dict = {}
-    _table_name = 'protocol'
+    :param processes: Dictionnary of processes
+    :type processes: dict
+    :param connectors: List of connectors represinting process connection
+    :type connectors: list
+    """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._procs = {}
+    _processes = {}
+    _connectors = []
+    _interfaces = {}
+    _outerfaces = {}
+
+    #/!\ Write protocols in the 'process' table
+    _table_name = 'processs'
+
+    def __init__(self, name: str = None, processes: dict = None, connectors: list = None, \
+                interfaces: dict = None, outerfaces: dict = None, \
+                *args, **kwargs):
+        super().__init__(name = name, *args, **kwargs)
+
+        if not processes is None:
+            if not isinstance(processes, dict):
+                raise Exception("Protocol", "__init__", "A dictionnary of processes is expected")
+            
+            for name in processes:
+                proc = processes[name]
+                proc.name = name    #set context name
+                if not isinstance(proc, Process):
+                    raise Exception("Protocol", "__init__", "The dictionnary of processes must contain instances of Process")
+            
+            self._processes = processes
+
+            if not connectors is None:
+                if not isinstance(connectors, list):
+                    raise Exception("Protocol", "__init__", "A list of connectors is expected")
+
+                for conn in connectors:
+                    if not isinstance(conn, Connector):
+                        raise Exception("Protocol", "__init__", "The list of connector must contain instances of Connectors")
+            
+                self._connectors = connectors
+
+        if not interfaces is None:
+            input_specs = { }
+            for k in interfaces:
+                input_specs[k] = interfaces[k]._resource_type
+
+            # print(input_specs)
+            self.__set_input_specs(input_specs)
+            self._interfaces = interfaces
+
+        if not outerfaces is None:
+            output_specs = { }
+            for k in outerfaces:
+                output_specs[k] = outerfaces[k]._resource_type
+
+            # print(output_specs)
+            self.__set_output_specs(output_specs)
+            self._outerfaces = outerfaces
+
+        self.__set_pre_start_event()
+        self.__set_on_end_event()
 
     # -- A --
 
-    def add(self, procs: dict):
+    def add_process(self, name: str, process: Process):
         """ 
-        Adds a dictionary of processes to the protocol
-        :param procs: Dictionnary of processes. Keys are process names and Values are process instances.
-        :type procs: dict
+        Adds a process to the protocol
+        :param name: Unique name of the process
+        :type name: str
+        :param process: The process
+        :type process: Process
         """
-        for k in procs:
-            if not isinstance(procs[k], Process):
-                raise Exception("Protocol", "add", "The process must be an instance of Process")
-            self._procs[k] = procs[k]
+        if not isinstance(process, Process):
+            raise Exception("Protocol", "add_process", "The process must be an instance of Process")
+
+        self._processes[name] = process
+
+    def add_connector(self, connector: Connector):
+        """ 
+        Adds a connector to the protocol
+        :param connector: The connector
+        :type connector: Connector
+        :raise Exception: It the processes of the connection do not belong to the protocol
+        """
+        if not isinstance(connector, Connector):
+            raise Exception("Protocol", "add_connector", "The connector must be an instance of Connector")
+        
+        if  not connector.left_process in self._processes.values() or \
+            not connector.right_process in self._processes.values():
+            raise Exception("Protocol", "add_connector", "The connector processes must be belong to the protocol")
+        
+        if connector in self._connectors:
+            raise Exception("Protocol", "add_connector", "Duplciated connector")
+
+        self._connectors.append(connector)
 
     # -- B --
 
@@ -1460,39 +1230,136 @@ class Protocol(Model):
             links = []
         )
         
-        for k in self._procs:
-            links = self._procs[k].output.links()
-            for link in links:
-                for name in self._procs:
-                    if link["from"]["node"] is self._procs[name]:
-                        link["from"]["node"] = name 
-                        
-                    if link["to"]["node"] is self._procs[name]:
-                        link["to"]["node"] = name 
+        for conn in self._connectors:
+            link = conn.link
+            for k in self._processes:
+                if link["from"]["node"] is self._processes[k]:
+                    link["from"]["node"] = k
+                elif link["to"]["node"] is self._processes[k]:
+                    link["to"]["node"] = k
+        
+        for k in self._processes:
+            settings["nodes"][k] = self._processes.full_classname()
 
-                settings["links"].append(links)
-
-        for k in self._procs:
-            settings["nodes"][k] = self._procs[k].full_classname()
+        #settings["interfaces"] = {}
+        #settings["outerfaces"] = {}
 
         return settings
 
-    # -- R --
+    # -- I --
 
-    def remove(self, name: dict):
+    def is_child(self, process: Process) -> bool:
         """ 
-        Remove a process from the protocol
-        :param name: Name of the process to remove
-        :type name: str
+        Returns True if the process is in the Protocol, False otherwise
+        :param process: The process
+        :type process: Process
+        :return: True if the process is in the Protocol, False otherwise
+        :rtype: bool
         """
-        if name in self._procs:
-            del self._procs[name]
+        return process in self._processes.values()
+    
+    def is_interfaced_with(self, process: Process) -> bool:
+        """ 
+        Returns True if the input poort the process is an interface of the protocol
+        """
+        
+        for k in self._interfaces:
+            port = self._interfaces[k] 
+            if process is port.parent.parent:
+                return True
 
-    def realize(self):
-        pass
+        return False
+
+    def is_outerfaced_with(self, process: Process) -> bool:
+        """ 
+        Returns True if the input poort the process is an outerface of the protocol
+        """
+        for k in self._outerfaces:
+            port = self._outerfaces[k] 
+            if process is port.parent.parent:
+                return True
+
+        return False
+
+    # -- R --
+    
+    async def run(self):
+        """ 
+        Runs the process and save its state in the database.
+        Override mother class method.
+        """
+        self._run_before_task()
+
+        # self.task()
+        #--------- START BUILT-IN PROTOCOL TASK ---------
+
+        sources = []
+        for k in self._processes:
+            proc = self._processes[k]
+            if proc.is_ready or self.is_interfaced_with(proc):
+                sources.append(proc)
+
+        for proc in sources:
+            await proc.run()
+
+        #------------- END BUILT-IN PROTOCOL TASK ---------
+
+
+    def _run_after_task(self, *args, **kwargs):
+        self._set_outputs()
+        e = Experiment(
+            job = self.get_active_job(),
+            user = Controller.get_test_user(),
+            project = Controller.get_test_project()
+        )
+        e.save()
+        super()._run_after_task()
 
     # -- S --
 
+    def _set_inputs(self, *args, **kwargs):
+        for k in self._interfaces:
+            port = self._interfaces[k]
+            port.resource = self.input[k]
+
+    def _set_outputs(self, *args, **kwargs):
+        for k in self._outerfaces:
+            port = self._outerfaces[k]
+            self.output[k] = port.resource
+
+    def __set_pre_start_event(self):
+        self._event_listener.add('pre_start', self._set_inputs)
+
+    def __set_on_end_event(self):
+        sinks = []
+        for k in self._processes:
+            proc = self._processes[k]
+            if self.is_outerfaced_with(proc):
+                sinks.append(proc)
+
+        for proc in sinks:
+            # proc.on_end( _set_outputs_and_propagate )
+            proc.on_end( self._run_after_task )
+
+    def __set_input_specs(self, input_specs):
+        self.input_specs = input_specs
+        for k in self.input_specs:
+            self._input.create_port(k,self.input_specs[k])
+
+        for k in input_specs:
+            input_specs[k] = input_specs[k].__name__
+
+        self.data['input_specs'] = input_specs
+
+    def __set_output_specs(self, output_specs):
+        self.output_specs = output_specs
+        for k in self.output_specs:
+            self._output.create_port(k,self.output_specs[k])
+
+        for k in output_specs:
+            output_specs[k] = output_specs[k].__name__
+        self.data['output_specs'] = output_specs
+        
     @property
     def settings( self ):
         return self.__create_settings()
@@ -1500,10 +1367,6 @@ class Protocol(Model):
     @settings.setter
     def settings( self, settings: dict ):
         self.__build_from_settings( settings )
-
-    class Meta:
-        table_name = 'protocol'
-
 
 # ####################################################################
 #
@@ -1533,9 +1396,6 @@ class Resource(Viewable):
             raise Exception("Resource", "_set_job", "The job must be an instance of Job.")
 
         self.job = job
-    
-    class Meta:
-        table_name = 'resource'
 
 # ####################################################################
 #
@@ -1566,6 +1426,7 @@ class ViewModel(Model):
 
     def __init__(self, model_instance: Model = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
         if isinstance(model_instance, Model):
             self._model = model_instance
             self._model.register_view_model_specs( [type(self)] )
@@ -1675,9 +1536,6 @@ class ViewModel(Model):
                     print(err)
                     return False
 
-    class Meta:
-        table_name = 'view_model'
-
 # ####################################################################
 #
 # Process ViewModel class
@@ -1701,12 +1559,7 @@ class ProcessViewModel(ViewModel):
             template_dir = settings.get_template_dir("gws")
             self.template = ViewTemplateFile(os.path.join(template_dir, "./prism/model/process.html"), type="html")
 
-        # force all ProcessViewModel in the same table 
-        cls = type(self)
-        cls._table_name = 'resource_view_model'
 
-    class Meta:
-        table_name = 'process_view_model'
 
 # ####################################################################
 #
@@ -1730,10 +1583,5 @@ class ResourceViewModel(ViewModel):
             settings = Settings.retrieve()
             template_dir = settings.get_template_dir("gws")
             self.template = ViewTemplateFile(os.path.join(template_dir, "./prism/model/resource.html"), type="html")
-        
-        # force all ResourceViewModel in the same table 
-        cls = type(self)
-        cls._table_name = 'resource_view_model'
 
-    class Meta:
-        table_name = 'resource_view_model'
+
