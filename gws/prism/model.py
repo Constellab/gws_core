@@ -258,12 +258,12 @@ class Model(PWModel,Base):
         :type id: int
         :return: The model type
         :rtype: type
-        :raise Exception: If no model is found
+        :Logger.error(Exception: If no model is found)
         """
         cursor = DbManager.db.execute_sql(f'SELECT type FROM {self._table_name} WHERE id = ?', str(id))
         row = cursor.fetchone()
         if len(row) == 0:
-            raise Exception("Model", "fetch_type_by_id", "The model is not found.")
+            Logger.error(Exception("Model", "fetch_type_by_id", "The model is not found."))
         type_str = row[0]
         model_t = Controller.get_model_type(type_str)
         return model_t
@@ -315,7 +315,7 @@ class Model(PWModel,Base):
         if isinstance(data,dict):
             self.data = data
         else:
-            raise Exception(self.classname(),"set_data","The data must be a JSONable dictionary")  
+            Logger.error(Exception(self.classname(),"set_data","The data must be a JSONable dictionary")  )
     
     def save(self, *args, **kwargs) -> bool:
         """ 
@@ -413,7 +413,7 @@ class Viewable(Model):
         :raises Exception: If the view model cannot be created
         """
         if not isinstance(type_name, str):
-            raise Exception(self.classname(), "create_view_model_by_name", "The view name must be a string")
+            Logger.error(Exception(self.classname(), "create_view_model_by_name", "The view name must be a string"))
         
         view_model_t = self._view_model_specs.get(type_name,None)
 
@@ -421,7 +421,7 @@ class Viewable(Model):
             view_model = view_model_t(self)
             return view_model
         else:
-            raise Exception(self.classname(), "create_view_model_by_name", "The view_model '"+view_model_type+"' is not found")
+            Logger.error(Exception(self.classname(), "create_view_model_by_name", "The view_model '"+view_model_type+"' is not found"))
 
     @classmethod
     def register_view_model_specs(cls, specs: list):
@@ -432,7 +432,7 @@ class Viewable(Model):
         """
         for t in specs:
             if not isinstance(t, type):
-                raise Exception("Model", "register_specs", "Invalid spec. A {name, type} dictionnary or [type] list is expected, where type is must be a ViewModel type or sub-type")
+                Logger.error(Exception("Model", "register_specs", "Invalid spec. A {name, type} dictionnary or [type] list is expected, where type is must be a ViewModel type or sub-type"))
             cls._view_model_specs[t.full_classname(slugify=True)] = t
 
 
@@ -461,7 +461,7 @@ class Config(Viewable):
             
         if not specs is None:
             if not isinstance(specs, dict):
-                raise Exception(self.classname(), "__init__", f"The specs must be a dictionnary")
+                Logger.error(Exception(self.classname(), "__init__", f"The specs must be a dictionnary"))
             
             #convert type to str
             for k in specs:
@@ -481,7 +481,7 @@ class Config(Viewable):
         :rtype: [str, int, float, bool]
         """
         if not name in self.specs:
-            raise Exception(self.classname(), "get_param", f"Parameter {name} does not exist'")
+            Logger.error(Exception(self.classname(), "get_param", f"Parameter {name} does not exist'"))
         
         default = self.specs[name].get("default", None)
         return self.data["params"].get(name,default)
@@ -509,7 +509,7 @@ class Config(Viewable):
         from gws.validator import Validator
 
         if not name in self.specs:
-            raise Exception(self.classname(), "set_param", f"Parameter '{name}' does not exist.")
+            Logger.error(Exception(self.classname(), "set_param", f"Parameter '{name}' does not exist."))
         
         param_t = self.specs[name]["type"]
 
@@ -517,7 +517,7 @@ class Config(Viewable):
             validator = Validator.from_type(param_t)
             value = validator.validate(value)
         except Exception as err:
-            raise Exception(self.classname(), "set_param", f"Invalid parameter value '{name}'. Error message: {err}")
+            Logger.error(Exception(self.classname(), "set_param", f"Invalid parameter value '{name}'. Error message: {err}"))
 
         self.data["params"][name] = value
 
@@ -533,13 +533,13 @@ class Config(Viewable):
         Sets the specs of the config (remove current parameters)
         :param specs: The config specs
         :type: dict
-        :raise Exception: If the config is already saved
+        :Logger.error(Exception: If the config is already saved)
         """
         if not isinstance(specs, dict):
-            raise Exception(self.classname(), "set_specs", f"The specs must be a dictionary.")
+            Logger.error(Exception(self.classname(), "set_specs", f"The specs must be a dictionary."))
         
         if not self.id is None:
-            raise Exception(self.classname(), "set_specs", f"Cannot alter the specs of a saved config")
+            Logger.error(Exception(self.classname(), "set_specs", f"Cannot alter the specs of a saved config"))
         
         self.data = {
             "specs" : specs,
@@ -631,7 +631,7 @@ class Process(Viewable):
         try:
             self._event_listener.add( name, callback )
         except Exception as err:
-            raise Exception("Process", "add_event", f"Cannot add event. Error message: {err}")
+            Logger.error(Exception("Process", "add_event", f"Cannot add event. Error message: {err}"))
 
     # -- C --
 
@@ -652,7 +652,7 @@ class Process(Viewable):
     def __check_hash(self):
         actual_hash = self.__create_hash()
         if self.hash and self.hash != actual_hash:
-            raise Exception("Process", "__set_hash", "Invalid process hash. The code source of the current process has changed.")
+            Logger.error(Exception("Process", "__set_hash", "Invalid process hash. The code source of the current process has changed."))
 
     def __create_hash(self):
         type_str = slugify(self.type)
@@ -715,10 +715,10 @@ class Process(Viewable):
         :rtype: InPort
         """
         if not isinstance(name, str):
-            raise Exception(self.classname(), "in_port", "The name of the input port must be a string")
+            Logger.error(Exception(self.classname(), "in_port", "The name of the input port must be a string"))
         
         if not name in self._input._ports:
-            raise Exception(self.classname(), "in_port", f"The input port '{name}' is not found")
+            Logger.error(Exception(self.classname(), "in_port", f"The input port '{name}' is not found"))
 
         return self._input._ports[name]
 
@@ -780,10 +780,10 @@ class Process(Viewable):
         :rtype: OutPort
         """
         if not isinstance(name, str):
-            raise Exception(self.classname(), "out_port", "The name of the output port must be a string")
+            Logger.error(Exception(self.classname(), "out_port", "The name of the output port must be a string"))
         
         if not name in self._output._ports:
-            raise Exception(self.classname(), "out_port", f"The output port '{name}' is not found")
+            Logger.error(Exception(self.classname(), "out_port", f"The output port '{name}' is not found"))
 
         return self._output._ports[name]
 
@@ -809,11 +809,14 @@ class Process(Viewable):
         """ 
         Runs the process and save its state in the database.
         """
-        self._run_before_task()
+        try:
+            self._run_before_task()
+            self.task()
+            self._run_after_task()
+        except Exception as err:
+            Logger.error(err)
 
-        self.task()
         
-        self._run_after_task()
 
     def _run_before_task( self, *args, **kwargs ):
         if self._event_listener.exists('pre_start'):
@@ -828,14 +831,12 @@ class Process(Viewable):
         
         if not self.is_ready:
             msg = "The process is not ready. Please ensure that the process receives valid input resources and has not already been run"
-            logger.error(msg)
-            raise Exception(self.classname(), "run", msg)
+            Logger.error(Exception(self.classname(), "run", msg))
 
         job = self.get_active_job()
         if not job.save():
             msg = "Cannot save the job"
-            logger.error(msg)
-            raise Exception(msg)
+            Logger.error(Exception(msg))
         
         if self._event_listener.exists('start'):
             self._event_listener.call('start', self)
@@ -866,7 +867,7 @@ class Process(Viewable):
 
         if not self._output.is_ready:
             return
-            #raise Exception(self.classname(), "run", "The output was not set after the task ended.")
+            #Logger.error(Exception(self.classname(), "run", "The output was not set after the task ended."))
         
         self._output.propagate()
         
@@ -895,10 +896,10 @@ class Process(Viewable):
         :type resource: Resource
         """
         if not isinstance(name, str):
-            raise Exception(self.classname(), "set_input", "The name must be a string.")
+            Logger.error(Exception(self.classname(), "set_input", "The name must be a string."))
         
         if not isinstance(resource, Resource):
-            raise Exception(self.classname(), "set_input", "The resource must be an instance of Resource.")
+            Logger.error(Exception(self.classname(), "set_input", "The resource must be an instance of Resource."))
 
         self._input[name] = resource
         
@@ -912,7 +913,7 @@ class Process(Viewable):
         if isinstance(config, Config):
             self.config = config
         else:
-            raise Exception(self.classname(), "set_config", "The config must be an instance of Config.")
+            Logger.error(Exception(self.classname(), "set_config", "The config must be an instance of Config."))
 
     def set_param(self, name: str, value: [str, int, float, bool]):
         """ 
@@ -1010,10 +1011,10 @@ class Job(Model):
 
         if self.id is None:
             if not isinstance(config, Config):
-                raise Exception("Job", "__init__", "The config must be an instance of Config")
+                Logger.error(Exception("Job", "__init__", "The config must be an instance of Config"))
  
             if not isinstance(process, Process):
-                raise Exception("Job", "__init__", "The process must be an instance of Process")
+                Logger.error(Exception("Job", "__init__", "The process must be an instance of Process"))
             
             self._config = config
             self._process = process
@@ -1065,17 +1066,17 @@ class Job(Model):
         with DbManager.db.atomic() as transaction:
             try:
                 if self.process is None:
-                    raise Exception("Job", "save", "Cannot save the job. The process is not saved.")
+                    Logger.error(Exception("Job", "save", "Cannot save the job. The process is not saved."))
                 
                 if not self.config.save():
-                    raise Exception("Job", "save", "Cannot save the job. The config cannnot be saved.")
+                    Logger.error(Exception("Job", "save", "Cannot save the job. The config cannnot be saved."))
                 
                 self.process_id = self._process.id
                 self.config_id = self._config.id
 
                 self.__track_input_uri()
                 if not super().save(*args, **kwargs):
-                    raise Exception("Job", "save", "Cannot save the job.")
+                    Logger.error(Exception("Job", "save", "Cannot save the job."))
                 
                 res = self.process.output.get_resources()
                 for k in res:
@@ -1084,7 +1085,7 @@ class Job(Model):
 
                     if not res[k].is_saved():
                         if not res[k].save(*args, **kwargs):
-                            raise Exception("Job", "save", f"Cannot save the resource output {k} of the job")
+                            Logger.error(Exception("Job", "save", f"Cannot save the resource output {k} of the job"))
 
                 return True
             except Exception as err:
@@ -1101,7 +1102,7 @@ class Job(Model):
                 continue
             
             if not res[k].is_saved():
-                raise Exception("Process", "__track_input_uri", "Cannot track input uri. Please save the input resource before.")
+                Logger.error(Exception("Process", "__track_input_uri", "Cannot track input uri. Please save the input resource before."))
 
             self.data["inputs"] = {}    
             self.data["inputs"][k] = res[k].uri
@@ -1152,23 +1153,23 @@ class Protocol(Process):
 
         if not processes is None:
             if not isinstance(processes, dict):
-                raise Exception("Protocol", "__init__", "A dictionnary of processes is expected")
+                Logger.error(Exception("Protocol", "__init__", "A dictionnary of processes is expected"))
             
             for name in processes:
                 proc = processes[name]
                 proc.name = name    #set context name
                 if not isinstance(proc, Process):
-                    raise Exception("Protocol", "__init__", "The dictionnary of processes must contain instances of Process")
+                    Logger.error(Exception("Protocol", "__init__", "The dictionnary of processes must contain instances of Process"))
             
             self._processes = processes
 
             if not connectors is None:
                 if not isinstance(connectors, list):
-                    raise Exception("Protocol", "__init__", "A list of connectors is expected")
+                    Logger.error(Exception("Protocol", "__init__", "A list of connectors is expected"))
 
                 for conn in connectors:
                     if not isinstance(conn, Connector):
-                        raise Exception("Protocol", "__init__", "The list of connector must contain instances of Connectors")
+                        Logger.error(Exception("Protocol", "__init__", "The list of connector must contain instances of Connectors"))
             
                 self._connectors = connectors
 
@@ -1204,7 +1205,7 @@ class Protocol(Process):
         :type process: Process
         """
         if not isinstance(process, Process):
-            raise Exception("Protocol", "add_process", "The process must be an instance of Process")
+            Logger.error(Exception("Protocol", "add_process", "The process must be an instance of Process"))
 
         self._processes[name] = process
 
@@ -1213,17 +1214,17 @@ class Protocol(Process):
         Adds a connector to the protocol
         :param connector: The connector
         :type connector: Connector
-        :raise Exception: It the processes of the connection do not belong to the protocol
+        :Logger.error(Exception: It the processes of the connection do not belong to the protocol)
         """
         if not isinstance(connector, Connector):
-            raise Exception("Protocol", "add_connector", "The connector must be an instance of Connector")
+            Logger.error(Exception("Protocol", "add_connector", "The connector must be an instance of Connector"))
         
         if  not connector.left_process in self._processes.values() or \
             not connector.right_process in self._processes.values():
-            raise Exception("Protocol", "add_connector", "The connector processes must be belong to the protocol")
+            Logger.error(Exception("Protocol", "add_connector", "The connector processes must be belong to the protocol"))
         
         if connector in self._connectors:
-            raise Exception("Protocol", "add_connector", "Duplciated connector")
+            Logger.error(Exception("Protocol", "add_connector", "Duplciated connector"))
 
         self._connectors.append(connector)
 
@@ -1413,7 +1414,7 @@ class Resource(Viewable):
         """
 
         if not isinstance(job, Job):
-            raise Exception("Resource", "_set_job", "The job must be an instance of Job.")
+            Logger.error(Exception("Resource", "_set_job", "The job must be an instance of Job."))
 
         self.job = job
 
@@ -1532,7 +1533,7 @@ class ViewModel(Model):
         :type template: ViewTemplate
         """
         if not isinstance(template, ViewTemplate):
-            raise Exception(self.classname(),"set_template","The template must be an instance of ViewTemplate")
+            Logger.error(Exception(self.classname(),"set_template","The template must be an instance of ViewTemplate"))
 
         self.template = template
     
@@ -1541,7 +1542,7 @@ class ViewModel(Model):
         Saves the view model in database
         """
         if self._model is None:
-            raise Exception(self.classname(),"save","This view_model has not model")
+            Logger.error(Exception(self.classname(),"save","This view_model has not model"))
         else:
             with DbManager.db.atomic() as transaction:
                 try:
@@ -1550,7 +1551,7 @@ class ViewModel(Model):
                         self.model_type = self._model.full_classname()
                         return super().save(*args, **kwargs)
                     else:
-                        raise Exception(self.classname(),"save","Cannot save the view_model. Please ensure that the model of the view_model is saved before")
+                        Logger.error(Exception(self.classname(),"save","Cannot save the view_model. Please ensure that the model of the view_model is saved before"))
                 except Exception as err:
                     transaction.rollback()
                     print(err)

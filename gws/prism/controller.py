@@ -27,7 +27,7 @@ class Controller(Base):
         :rtype: `gws.prims.model.ViewModel`
         """
 
-        cls._session = request.session
+        #cls._session = request.session
         cls.__inspects()
 
         if Controller.is_query_params:
@@ -45,13 +45,13 @@ class Controller(Base):
             else:
                 params = json.loads(params)
         except:
-            raise Exception("Controller", "action", "The params is not a valid JSON text")
+            Logger.error(Exception("Controller", "action", "The params is not a valid JSON text"))
         
         view_model = cls.fetch_model(uri)
 
         from gws.prism.model import ViewModel
         if not isinstance(view_model, ViewModel):
-            raise Exception("Controller", "action", "The action uri must target a ViewModel")
+            Logger.error(Exception("Controller", "action", "The action uri must target a ViewModel"))
          
         if action == "view":
             if params.get("view", None):
@@ -60,7 +60,7 @@ class Controller(Base):
                 params = params["params"]
                 view_model = view_model.model.create_view_model_by_name(name)
                 if not isinstance(view_model, ViewModel):
-                    raise Exception("Controller", "action", "The the view '"+ name+"' cannot ne created.")
+                    Logger.error(Exception("Controller", "action", "The the view '"+ name+"' cannot ne created."))
          
                 view_model.set_data(params)
                 view_model.save()
@@ -171,9 +171,9 @@ class Controller(Base):
         if len(Q) == 1:
             return Q[0]
         elif len(Q) == 0:
-            raise Exception("Controller", "action", "No model matchs with the request: (uri_name={uri_name}, uri_id={uri_id})")
+            Logger.error(Exception("Controller", "action", "No model matchs with the request: (uri_name={uri_name}, uri_id={uri_id})"))
         else:
-            raise Exception("Controller", f"action", "Db integrity error. Several models match with the request: (uri_name={uri_name}, uri_id={uri_id})")
+            Logger.error(Exception("Controller", f"action", "Db integrity error. Several models match with the request: (uri_name={uri_name}, uri_id={uri_id})"))
         
     # -- G --
 
@@ -185,7 +185,7 @@ class Controller(Base):
         :type type_str: str
         :return: The type if the model is registered, None otherwise
         :rtype: type
-        :raise Exception: No registered model matchs with the given `type_str`
+        :Logger.error(Exception: No registered model matchs with the given `type_str`)
         """
         cls.__inspects()
 
@@ -193,7 +193,7 @@ class Controller(Base):
         if type_str in cls._model_specs:
             return cls._model_specs[type_str]
         else:
-            raise Exception("Controller", "get_model_type", f"No registered model matchs with '{type_str}'")
+            Logger.error(Exception("Controller", "get_model_type", f"No registered model matchs with '{type_str}'"))
 
     # -- I --
 
@@ -248,7 +248,7 @@ class Controller(Base):
                 cls._model_specs[full_cname] = model_type
                 #model_type._meta.table_name = model_type._table_name
             else:
-                raise Exception("Controller", "_register_model_specs", "Invalid model type")
+                Logger.error(Exception("Controller", "_register_model_specs", "Invalid model type"))
 
     @classmethod
     def save_all(cls, model_list: list = None) -> bool:

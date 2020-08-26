@@ -17,6 +17,7 @@ from gws.settings import Settings
 from gws.prism.view import HTMLViewTemplate, JSONViewTemplate, PlainTextViewTemplate
 from gws.prism.model import Resource, ResourceViewModel
 from gws.prism.controller import Controller
+from gws.logger import Logger
 
 settings = Settings.retrieve()
 
@@ -110,15 +111,12 @@ class App :
     ]
     debug = settings.get_data("is_test")
     is_running = False
-
+    
     @classmethod
-    def _init(cls):
+    def init_routes(cls):
         """
-        Initializes the application. This method is automatically called after by the constructor. 
-        It calls on_init() method to perform custom user initializations
+        Initializes routes
         """
-
-        cls.on_init()
 
         # process and resource routes
         cls.routes.append(Route('/gws/{action}/{uri}/{params}/', HTTPApp))
@@ -132,8 +130,6 @@ class App :
         # home
         cls.routes.append(Route("/", homepage))
 
-        # starlette
-        cls.app = Starlette(debug=cls.debug, routes=cls.routes, on_startup=[cls._on_startup])
     
     @classmethod
     async def action(cls, request) -> Response:
@@ -155,16 +151,11 @@ class App :
         """
         Starts the starlette uvicorn web application
         """
-        cls._init()
+        # starlette
+        cls.app = Starlette(debug=cls.debug, routes=cls.routes, on_startup=[cls._on_startup])
+
         uvicorn.run(cls.app, host=settings.get_data("app_host"), port=settings.get_data("app_port"))
         cls.is_running = True
-
-    @classmethod
-    def on_init(cls):
-        """
-        Initializes the application. This method is automatically called after by the constructor
-        """
-        pass
 
     @classmethod 
     def _on_startup(cls):
@@ -201,7 +192,6 @@ class App :
         :return: The response
         :rtype: `starlette.responses.Response`
         """
-        cls._init()
         from starlette.testclient import TestClient
         client = TestClient(cls.app)
         response = client.get(url)

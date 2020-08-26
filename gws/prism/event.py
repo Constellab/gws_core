@@ -3,6 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws.logger import Logger
+
 class EventListener:
     """
     EventListener class.
@@ -35,11 +37,11 @@ class EventListener:
         # @TODO
         # Also check that callback is awaitable
         # if not inspect.iscoroutinefunction(callback):
-        #     raise Exception("Process", "on_start", "The callback must be an awaitable function")
+        #     Logger.error(Exception("Process", "on_start", "The callback must be an awaitable function"))
 
 
         if not hasattr(callback, '__call__'):
-            raise Exception("Process", "on_start", "The callback function is not callable")
+            Logger.error(Exception("Process", "on_start", "The callback function is not callable"))
         
         if self.exists(name):
             self._events[name].append( callback )

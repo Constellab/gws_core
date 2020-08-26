@@ -146,6 +146,9 @@ class Settings(PWModel):
                 names.append(dep_name)
         return names
 
+    def get_dependency_paths(self) -> dict:
+        return self.data["dependency_paths"]
+
     def get_template_dir(self, dependency_name: str) -> str:
         dependency_dir = self.get_dependency_dir(dependency_name)
         return os.path.join(dependency_dir, "./templates")

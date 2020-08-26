@@ -5,6 +5,7 @@
 
 
 from gws.prism.base import Base
+from gws.logger import Logger
 
 class Port(Base):
     """
@@ -109,7 +110,7 @@ class Port(Base):
             port._resource = self._resource
 
     def __or__(self, other: 'Port'):
-        raise Exception(self.classname(), "|", f"Port cannot be . Use InPort or OutPort class")
+        Logger.error(Exception(self.classname(), "|", f"Port cannot be . Use InPort or OutPort class"))
     
     # -- R -- 
 
@@ -129,12 +130,12 @@ class Port(Base):
         Sets the resource of the port
         :param resource: The input resource
         :type resource: Resource
-        :raise Exception: If reource is not compatible with port
+        :Logger.error(Exception: If reource is not compatible with port)
         """
 
         from gws.prism.model import Resource
         if not isinstance(resource, Resource):
-            raise Exception(self.classname(), "resource", "The resource must be an instance of Resource")
+            Logger.error(Exception(self.classname(), "resource", "The resource must be an instance of Resource"))
 
         self._resource = resource
     
@@ -168,7 +169,7 @@ class InPort(Port):
                 return name
 
     def __or__(self, other: 'Port'):
-        raise Exception(self.classname(), "|", f"The input port cannot be connected on the right")
+        Logger.error(Exception(self.classname(), "|", f"The input port cannot be connected on the right"))
 
 
 # ####################################################################
@@ -189,19 +190,19 @@ class OutPort(Port):
         Connect the output port to another (right-hand side) input port.
         :return: The right-hand sode port
         :rtype: Port
-        :raise Exception: If the connection is not possible
+        :Logger.error(Exception: If the connection is not possible)
         """
         if not isinstance(other, InPort):
-            raise Exception(self.classname(), "|", "The output port can only be connected to an input port")
+            Logger.error(Exception(self.classname(), "|", "The output port can only be connected to an input port"))
 
         if other.is_left_connected:
-            raise Exception(self.classname(), "|", f"The right-hand side port is already connected")
+            Logger.error(Exception(self.classname(), "|", f"The right-hand side port is already connected"))
 
         if self == other:
-            raise Exception(self.classname(), "|", "Self connection not allowed")
+            Logger.error(Exception(self.classname(), "|", "Self connection not allowed"))
         
         if not issubclass(self._resource_type, other._resource_type):
-            raise Exception(self.classname(), "|", f"Invalid connection. {self._resource_type} is not a subclass of {other._resource_type}")
+            Logger.error(Exception(self.classname(), "|", f"Invalid connection. {self._resource_type} is not a subclass of {other._resource_type}"))
 
         self._next.append(other)
         other._prev = self
@@ -250,16 +251,16 @@ class Connector:
 
     def __init__(self, out_port: OutPort = None, in_port : InPort = None):
         if not isinstance(in_port, InPort):
-            raise Exception("Connector", "__init__", "The input port must be an instance of InPort")
+            Logger.error(Exception("Connector", "__init__", "The input port must be an instance of InPort"))
         
         if not isinstance(out_port, OutPort):
-            raise Exception("Connector", "__init__", "The output port must be an instance of OutPort")
+            Logger.error(Exception("Connector", "__init__", "The output port must be an instance of OutPort"))
         
         if in_port.parent is None or in_port.parent.parent is None:
-            raise Exception("Connector", "__init__", "The input port is not associated with a process")
+            Logger.error(Exception("Connector", "__init__", "The input port is not associated with a process"))
         
         if out_port.parent is None or out_port.parent.parent is None:
-            raise Exception("Connector", "__init__", "The output port is not associated with a process")
+            Logger.error(Exception("Connector", "__init__", "The output port is not associated with a process"))
         
         self.in_port = in_port
         self.out_port = out_port
@@ -340,16 +341,16 @@ class IO(Base):
         """
         from gws.prism.model import Resource
         if not isinstance(name, str):
-            raise Exception(self.classname(), "create_port", "Invalid port specs. The port name must be a string")
+            Logger.error(Exception(self.classname(), "create_port", "Invalid port specs. The port name must be a string"))
 
         if not isinstance(resource_type, type):
-            raise Exception(self.classname(), "create_port", "Invalid port specs. The resource_type must be type. Maybe you provided an object instead of object type.")
+            Logger.error(Exception(self.classname(), "create_port", "Invalid port specs. The resource_type must be type. Maybe you provided an object instead of object type."))
         
         if not issubclass(resource_type, Resource):
-            raise Exception(self.classname(), "create_port", "Invalid port specs. The resource_type must refer to subclass of Resource")
+            Logger.error(Exception(self.classname(), "create_port", "Invalid port specs. The resource_type must refer to subclass of Resource"))
         
         if self._parent.is_running or self._parent.is_finished:
-            raise Exception(self.classname(), "__setitem__", "Cannot alter inputs/outputs of processes during or after running")
+            Logger.error(Exception(self.classname(), "__setitem__", "Cannot alter inputs/outputs of processes during or after running"))
         
         if type(self) == Output:
             port = OutPort(self)
@@ -368,13 +369,13 @@ class IO(Base):
         :type name: str
         :return: The resource of the port
         :rtype: Resource
-        :raise Exception: If the port is not found
+        :Logger.error(Exception: If the port is not found)
         """
         if not isinstance(name, str):
-            raise Exception(self.classname(), "__getitem__", "The port name must be a string")
+            Logger.error(Exception(self.classname(), "__getitem__", "The port name must be a string"))
 
         if self._ports.get(name, None) is None:
-            raise Exception(self.classname(), "__getitem__", self.classname() +" port '"+name+"' not found")
+            Logger.error(Exception(self.classname(), "__getitem__", self.classname() +" port '"+name+"' not found"))
 
         return self._ports[name].resource
 
@@ -454,13 +455,13 @@ class IO(Base):
         :type name: str
         :param resource: The input resource
         :type resource: Resource
-        :raise Exception: If the port is not found
+        :Logger.error(Exception: If the port is not found)
         """
         if not isinstance(name, str):
-            raise Exception(self.classname(), "__setitem__", "The port name must be a string")
+            Logger.error(Exception(self.classname(), "__setitem__", "The port name must be a string"))
 
         if self._ports.get(name, None) is None:
-            raise Exception(self.classname(), "__setitem__", self.classname() +" port '"+name+"' not found")
+            Logger.error(Exception(self.classname(), "__setitem__", self.classname() +" port '"+name+"' not found"))
         
         self._ports[name].resource = resource
     
@@ -483,10 +484,10 @@ class Input(IO):
         :type name: str
         :param resource: The input resource
         :type resource: Resource
-        :raise Exception: If the port is not found
+        :Logger.error(Exception: If the port is not found)
         """
         if self._parent.is_running:
-            raise Exception(self.classname(), "__setitem__", "Cannot alter the input of process while running")
+            Logger.error(Exception(self.classname(), "__setitem__", "Cannot alter the input of process while running"))
 
         super().__setitem__(name,resource)
 
@@ -515,10 +516,10 @@ class Output(IO):
         :type name: str
         :param resource: The input resource
         :type resource: Resource
-        :raise Exception: If the port is not found
+        :Logger.error(Exception: If the port is not found)
         """
         if self._parent.is_finished:
-            raise Exception(self.classname(), "__setitem__", "Cannot alter the output of a process after running")
+            Logger.error(Exception(self.classname(), "__setitem__", "Cannot alter the output of a process after running"))
 
         super().__setitem__(name,resource)
         

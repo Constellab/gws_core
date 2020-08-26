@@ -14,12 +14,11 @@ import re
 
 from gws.settings import Settings
 
-
 def _run(ctx=None, test=False, db=False, cli=False, runserver=False, docgen=False, force=False, pull=False, push=False, tag=""):
     settings = Settings.retrieve()
 
     from gws.logger import Logger
-    logger = Logger(is_new_session=True, is_test=test)
+    Logger(is_new_session=True, is_test=test)
     
     if runserver:   
         from gws.prism.controller import Controller
@@ -35,12 +34,20 @@ def _run(ctx=None, test=False, db=False, cli=False, runserver=False, docgen=Fals
                 if not t is None:
                     apps_t = apps_t + (t,)
             except Exception as err:
-                raise Exception(f"Cannot run server. It seems that your App module '{name}' is not well implemented.\n Error message: {err}")
+                Logger.error(Exception(f"Cannot run server. It seems that your App module '{name}' is not well implemented.\n Error message: {err}"))
+        
+        routes = []
+        for app_t in apps_t:
+            app_t.init_routes()
+            routes = routes + app_t.routes
 
         current_app_t = type("App", apps_t, {})
+        current_app_t.routes = routes
+
+        #print(current_app_t.routes)
+        
         app = current_app_t()
         app.start()
-
     elif test:
         if test == "*":
             test = "test*"
@@ -54,7 +61,7 @@ def _run(ctx=None, test=False, db=False, cli=False, runserver=False, docgen=Fals
             settings.data["db_name"] = db
 
         if not settings.save():
-            raise Exception("manage", "Cannot save the settings in the database")
+            Logger.error(Exception("manage", "Cannot save the settings in the database"))
         
         loader = unittest.TestLoader()
         test_suite = loader.discover(".", pattern=test+".py")
@@ -73,7 +80,7 @@ def _run(ctx=None, test=False, db=False, cli=False, runserver=False, docgen=Fals
         settings.data["db_name"] = ':memory:'
 
         if not settings.save():
-            raise Exception("manage", "Cannot save the settings in the database")
+            Logger.error(Exception("manage", "Cannot save the settings in the database"))
         
         app_dir = settings.get_cwd()
         gen_folder = "./docs/html/"
@@ -193,9 +200,9 @@ def _run(ctx=None, test=False, db=False, cli=False, runserver=False, docgen=Fals
 
         #settings.data["db_name"] = ':memory:'
         #if not settings.save():
-        #    raise Exception("manage", "Cannot save the settings in the database")
+        #    Logger.error(Exception("manage", "Cannot save the settings in the database"))
     
-    print(f"Log file: {logger.file_path}")
+    print(f"Log file: {Logger.get_file_path()}")
         
 
 @click.command(context_settings=dict(

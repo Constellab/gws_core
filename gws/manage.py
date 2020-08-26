@@ -7,6 +7,7 @@ import sys
 import os
 import json
 
+dep_paths = {}
 loaded_modules = []
 
 def read_module_name(cwd):
@@ -47,9 +48,6 @@ def _update_relative_static_paths(dep_rel_path, dep_settings):
 
     for k in dep_settings.get("app",{}).get("statics",{}):
         dep_settings["app"]["statics"][k] = os.path.join(dep_rel_path,dep_settings["app"]["statics"][k])
-    
-    #if dep_settings.get("app", None) is None:
-    #    return dep_settings["app"]
 
     for k in dep_settings.get("app",{}):
         if k in ["scripts","modules","styles"]:
@@ -73,13 +71,19 @@ def _parse_settings(module_cwd: str = None, module_name:str = None, module_setti
 
     if not os.path.exists(module_settings_file_path):
         raise Exception("The setting file of module '"+module_name+"' is not found. Please check that file '"+module_settings_file_path+"'.")
-
+        
     with open(module_settings_file_path) as f:
         try:
             settings = json.load(f)
         except:
             raise Exception("Error while parsing the settings JSON file. Please check file.")
     
+    import copy
+    
+    dep_paths[module_name] = [module_name]
+    for k in settings["dependencies"]:
+        dep_paths[module_name].append(k)
+
     if settings["dependencies"].get(module_name, None) is None:
         settings["dependencies"][module_name] = "./"
 
@@ -122,10 +126,11 @@ def parse_settings(module_cwd: str = None):
     }
 
     settings = _update_json(default_settings, _parse_settings(module_cwd=module_cwd, module_name=module_name, module_settings_file_path=module_settings_file_path))
-    
+    settings["dependency_paths"] = dep_paths
+
     if not os.path.exists(settings.get("db_dir")):
         os.mkdir(settings.get("db_dir"))
-        
+    
     return settings
 
 def load_settings(module_cwd: str = None):

@@ -6,6 +6,7 @@
 
 import json
 import math
+from gws.logger import Logger
 
 class Validator:
     """
@@ -43,7 +44,7 @@ class Validator:
             try:
                 self._default = self._validate(default)
             except Exception as err:
-                raise Exception(f"The default value is not valid. Error message: {err}")
+                Logger.error(Exception(f"The default value is not valid. Error message: {err}"))
     
     @property
     def type(self) -> type:
@@ -60,7 +61,7 @@ class Validator:
         elif self._type == dict or self._type == 'dict':
             return dict
         else:
-            raise Exception(f"Invalid type")
+            Logger.error(Exception(f"Invalid type"))
 
     def validate(self, value: (bool, int, float, str, list, dict)) -> (bool, int, float, str, list, dict):
         """
@@ -73,7 +74,7 @@ class Validator:
         :type value: An instance of `bool`, `int`, `float`, `str` or serilaizable `list`, `dict`
         :return: The validated value
         :rtype: An instance of `bool`, `int`, `float`, `str` or serilaizable `list`, `dict`
-        :raise `Exception`: If the :param:`value` is not valid
+        :Logger.error(`Exception`: If the :param:`value` is not valid)
 
         Usage:
             * `Validator.from_type(int, default=5) -> IntegerValidator(default=5)`
@@ -94,7 +95,7 @@ class Validator:
     def _validate(self, value):
         
         if not isinstance(self.type, type):
-            raise ValueError(f"The validator is not well configured. Invalid type {self.type}.")
+            Logger.error(ValueError(f"The validator is not well configured. Invalid type {self.type}."))
         
         if type(value) == self.type:
             if isinstance(value, (list,dict,)):
@@ -104,7 +105,7 @@ class Validator:
                     is_serilizable = False
                 
                 if not is_serilizable:
-                    raise ValueError(f"The value {value} is not serializable.")
+                    Logger.error(ValueError(f"The value {value} is not serializable."))
 
             return value
         else:
@@ -113,7 +114,7 @@ class Validator:
             if is_maybe_convertible_without_floating_error:
                 is_valid = (self.type(value) == value)
                 if not is_valid:
-                    raise ValueError(f"The value {value} cannot be casted to the class {self.type} with floating point alteratiion.")
+                    Logger.error(ValueError(f"The value {value} cannot be casted to the class {self.type} with floating point alteratiion."))
                 
                 return self.type(value)
 
@@ -125,18 +126,18 @@ class Validator:
                 if is_maybe_convertible_without_floating_error:
                     is_valid = math.isnan(value) or (self.type(value) == value)
                     if not is_valid:
-                        raise ValueError(f"The value {value} cannot be casted to the class {self.type} with floating point alteration.")
+                        Logger.error(ValueError(f"The value {value} cannot be casted to the class {self.type} with floating point alteration."))
                     
                     return self.type(value)
                 elif type(value) != self.type:
-                    raise ValueError(f"The deserialized value must be an instance of {self.type}. The actual deserialized value is {value}.")
+                    Logger.error(ValueError(f"The deserialized value must be an instance of {self.type}. The actual deserialized value is {value}."))
 
             except:
-                raise ValueError("The value cannot be deserialized. Please give a valid serialized string value")
+                Logger.error(ValueError("The value cannot be deserialized. Please give a valid serialized string value"))
 
             return value
         else:
-            raise ValueError(f"Invalid value {value}")
+            Logger.error(ValueError(f"Invalid value {value}"))
 
     @staticmethod
     def from_type(type, default = None, **kwargs) -> 'Validator':
@@ -149,7 +150,7 @@ class Validator:
         :type default: any, An instance of :param:`type`
         :return: The Validator corresponding to the :param:`type`
         :rtype: subclass of `Validator`
-        :raise `Exception`: If the :param:`type` is not valid or the the type if :param:`default` is not equal to :param:`type`
+        :Logger.error(`Exception`: If the :param:`type` is not valid or the the type if :param:`default` is not equal to :param:`type`)
 
         Usage:
             * `Validator.from_type('int', default=5) -> IntegerValidator(default=5)`
@@ -175,7 +176,7 @@ class Validator:
         elif type == dict or type == 'dict':
             return JSONValidator(default=default, **kwargs)
         else:
-            raise Exception("Invalid type. Valid types are (bool, int, float, str, list, dict).")
+            Logger.error(Exception("Invalid type. Valid types are (bool, int, float, str, list, dict)."))
 
 class BooleanValidator(Validator):
     """
@@ -244,10 +245,10 @@ class NumericValidator(Validator):
         value = super()._validate(value)
 
         if value < self._min or (value == self._min and not self._include_min):
-            raise ValueError(f"The value must be greater than {self._min}. The actual value is {value}")
+            Logger.error(ValueError(f"The value must be greater than {self._min}. The actual value is {value}"))
 
         if value > self._max or (value == self._max and not self._include_max):
-            raise ValueError(f"The value must be less than {self._max}. The actual value is {value}")
+            Logger.error(ValueError(f"The value must be less than {self._max}. The actual value is {value}"))
         
         return value
 

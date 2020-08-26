@@ -10,6 +10,7 @@ from starlette.responses import Response, HTMLResponse, JSONResponse, PlainTextR
 from jinja2 import Template
 
 from gws.prism.base import Base
+from gws.logger import Logger
 
 class ViewTemplate(Base):
     content: str = ''
@@ -73,14 +74,14 @@ class ViewTemplateFile(ViewTemplate):
 
         content = ""
         if file_path == "":
-            raise Exception("ViewTemplateFile", "__init__", "A valid file path is required")
+            Logger.error(Exception("ViewTemplateFile", "__init__", "A valid file path is required"))
         else:
             if os.path.exists(file_path):
                 fl = open(file_path, "r")
                 content = fl.read()
                 fl.close()
             else:
-                raise Exception("ViewTemplateFile", "__init__", "The template file is not found")
+                Logger.error(Exception("ViewTemplateFile", "__init__", "The template file is not found"))
 
         super().__init__(content, type=type, *args, **kwargs)
 

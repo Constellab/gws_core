@@ -5,6 +5,7 @@
 
 import click
 from gws.settings import Settings
+from gws.logger import Logger
 
 @click.command(context_settings=dict(
     ignore_unknown_options=True,

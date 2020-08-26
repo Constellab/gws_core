@@ -6,6 +6,7 @@
 import os
 import uuid
 import shelve
+from gws.logger import Logger
 
 class KVStore:
     """ 
@@ -41,7 +42,7 @@ class KVStore:
         :type value: any
         """
         if not isinstance(key, str):
-            raise Exception(f"The key must be a string. The actual value is {key}")
+            Logger.error(Exception(f"The key must be a string. The actual value is {key}"))
 
         if self.file_path is None:
             self.__lazy_kv_data[key] = value
@@ -71,7 +72,7 @@ class KVStore:
         :type path: str
         """
         if not isinstance(path, str) or path == "":
-            raise Exception("The path must be a non-empty string.")
+            Logger.error(Exception("The path must be a non-empty string."))
 
         self._path = path
 
@@ -112,7 +113,7 @@ class KVStore:
 
     def __getitem__(self, key):
         if not isinstance(key, str):
-            raise Exception(f"The key must be a string. The actual value is {key}")
+            Logger.error(Exception(f"The key must be a string. The actual value is {key}"))
 
         if self.file_path is None:
             return self.__lazy_kv_data.get(key, None)

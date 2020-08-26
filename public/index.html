@@ -5,24 +5,9 @@
     <meta name="description" content="Gencovery Web Services" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="icon" type="{{ settings.app.favicon.type }}" href="{{ settings.app.favicon.src }}" />
-
-    {% for url in settings.app.styles %}
-        <link rel="stylesheet" type="text/css" href="{{ url }}"></link>
-    {% endfor %}
-
-    {% for url in settings.app.scripts %}
-        <script defer src="{{ url }}"></script>
-    {% endfor %}
-
-    {% for url in settings.app.modules %}
-        <script defer src="{{ url }}" type="module"></script>
-    {% endfor %}
-
-    <title>{{ settings.app.title }}</title>
+    <title>GWS</title>
 </head>
 <body>
-    <div class="gws-dashboard" id="gws-dashboard" style="top: 0; left: 0; width: 100%; height: 100vh;"></div>
-    {% for name, btn in settings.app.buttons.items() %}
-        <x-gws class="gws-dashboard-btn" data-name="{{ name }}", data-position="{{ btn.position }}" data-icon="{{ btn.icon }}" data-onclick="{{ btn.onclick }}"></x-gws>
-    {% endfor %}
+    Humm!<br/>
+    It seems that you did'nt load the GView brick!
 </body>
