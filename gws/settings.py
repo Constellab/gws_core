@@ -67,11 +67,11 @@ class Settings(PWModel):
 
     @property
     def title(self):
-        return self.data.get("title", None)
+        return self.app.get("title", None)
 
     @property
     def description(self):
-        return self.data.get("description", None)
+        return self.app.get("description", None)
 
     @property
     def authors(self):
@@ -80,6 +80,15 @@ class Settings(PWModel):
     @property
     def version(self):
         return self.data.get("authors", None)
+
+    @property
+    def buttons(self) -> dict:
+        sortedList = sorted(self.app["buttons"].items(),  key=lambda x: x[1].get("position",9999), reverse=True)
+        btns = {}
+        for btn in sortedList:
+            btns[ btn[0] ] = btn[1]
+
+        return btns
 
     @property
     def db_path(self):
@@ -112,8 +121,11 @@ class Settings(PWModel):
         # else:
         return os.path.join(self.get_cwd(),"logs/")
 
-    def get_public_dir(self) -> dict:
-        return os.path.join(self.get_cwd(),"./public")
+    def get_public_dir(self, name:str = None) -> dict:
+        if name is None:
+            return os.path.join(self.get_cwd(),"./public")
+        else:
+            return os.path.join(self.get_dependency_dir(name),"./public")
 
     def get_static_dirs(self) -> dict:
         """

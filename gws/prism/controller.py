@@ -7,6 +7,7 @@ import asyncio
 import json
 from gws.prism.base import Base
 from gws.prism.base import slugify
+from gws.logger import Logger
 
 class Controller(Base):
     """

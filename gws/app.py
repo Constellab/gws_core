@@ -36,7 +36,12 @@ async def hello(request):
 #
 ####################################################################################
 
-templates = Jinja2Templates(directory=settings.get_public_dir())
+
+public_dir = settings.get_public_dir()
+if not os.path.exists(os.path.join(public_dir, "index.html")):
+    public_dir = settings.get_public_dir("gview")
+
+templates = Jinja2Templates(directory=public_dir)
 async def homepage(request):
     settings = Settings.retrieve()
     return templates.TemplateResponse('index.html', {
@@ -88,7 +93,6 @@ class WebSocketApp(WebSocketEndpoint):
         view = await App.action(websocket)
         html = view.render()
         await websocket.send_bytes(b""+html)
-        #await websocket.send_bytes(b"Message: " + data)
 
     async def on_disconnect(self, websocket, close_code):
         pass
@@ -106,16 +110,24 @@ class App :
 
     app: Starlette = None
     ctrl = Controller
-    routes = [
-        Route('/hello', hello),
-    ]
+
+    routes = []
     debug = settings.get_data("is_test")
+    
     is_running = False
     
     @classmethod
     def init_routes(cls):
         """
-        Initializes routes
+        Defines the web routes of the brick.
+
+        Routing coventions: 
+        
+        To prevent route collisions, it is highly recommended to 
+        prefix route names of the name of the current brick.
+        e.g.: 
+            * /<brick name>/home/       -> home page route
+            * /<brick name>/settings/   -> setting page route
         """
 
         # process and resource routes
@@ -129,6 +141,9 @@ class App :
 
         # home
         cls.routes.append(Route("/", homepage))
+
+        # robot testing route
+        cls.routes.append(Route("/hello", hello))
 
     
     @classmethod
