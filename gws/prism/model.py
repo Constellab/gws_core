@@ -1084,7 +1084,7 @@ class Job(Model):
 
                     if not res[k].is_saved():
                         if not res[k].save(*args, **kwargs):
-                            Logger.error(Exception("Job", "save", f"Cannot save the resource output {k} of the job"))
+                            Logger.error(Exception("Job", "save", f"Cannot save the resource output '{k}' of the job"))
 
                 return True
             except Exception as err:
@@ -1095,14 +1095,14 @@ class Job(Model):
 
     def __track_input_uri(self):
         res = self.process.input.get_resources()
+        self.data["inputs"] = {}
         for k in res:
             if res[k] is None:
                 continue
             
             if not res[k].is_saved():
-                Logger.error(Exception("Process", "__track_input_uri", "Cannot track input uri. Please save the input resource before."))
+                Logger.error(Exception("Process", "__track_input_uri", "Cannot track input '{k}' uri. Please save the input resource before."))
 
-            self.data["inputs"] = {}    
             self.data["inputs"][k] = res[k].uri
 
 # ####################################################################
