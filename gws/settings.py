@@ -83,7 +83,7 @@ class Settings(PWModel):
 
     @property
     def buttons(self) -> dict:
-        sortedList = sorted(self.app["buttons"].items(),  key=lambda x: x[1].get("position",9999), reverse=True)
+        sortedList = sorted(self.app["buttons"].items(),  key=lambda x: x[1].get("position",0), reverse=True)
         btns = {}
         for btn in sortedList:
             btns[ btn[0] ] = btn[1]

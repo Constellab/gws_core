@@ -355,9 +355,9 @@ class Model(PWModel,Base):
                 for m in model_list:
                     if isinstance(m, cls):
                         m.save()
-            except:
+            except Exception as err:
                 transaction.rollback()
-                return False
+                Logger.error(Exception("Model", "save_all", f"Error message: {err}"))
 
         return True
 
@@ -830,13 +830,11 @@ class Process(Viewable):
             logger.info(f"Running {self.full_classname()} ...")
         
         if not self.is_ready:
-            msg = "The process is not ready. Please ensure that the process receives valid input resources and has not already been run"
-            Logger.error(Exception(self.classname(), "run", msg))
+            Logger.error(Exception(self.classname(), "run", "The process is not ready. Please ensure that the process receives valid input resources and has not already been run"))
 
         job = self.get_active_job()
         if not job.save():
-            msg = "Cannot save the job"
-            Logger.error(Exception(msg))
+            Logger.error(Exception(self.classname(), "run", "Cannot save the job"))
         
         if self._event_listener.exists('start'):
             self._event_listener.call('start', self)
@@ -857,7 +855,8 @@ class Process(Viewable):
 
         job = self.get_active_job()
         job.update_state()
-        job.save()
+        if not job.save():
+            logger.error(Exception(self.classname(), "_run_after_task", f"Cannot save the job"))
 
         res = self.output.get_resources()
         for k in res:
@@ -1090,8 +1089,7 @@ class Job(Model):
                 return True
             except Exception as err:
                 transaction.rollback()
-                print(err)
-                return False
+                Logger.error(Exception("Job", "save", f"Error message: {err}"))
 
     # -- T --
 
@@ -1333,7 +1331,9 @@ class Protocol(Process):
             user = Controller.get_test_user(),
             project = Controller.get_test_project()
         )
-        e.save()
+        if not e.save():
+            Logger.error(Exception("Protocol", "_run_after_task", "The experiment cannot be saved"))
+        
         super()._run_after_task()
 
     # -- S --
@@ -1554,8 +1554,7 @@ class ViewModel(Model):
                         Logger.error(Exception(self.classname(),"save","Cannot save the view_model. Please ensure that the model of the view_model is saved before"))
                 except Exception as err:
                     transaction.rollback()
-                    print(err)
-                    return False
+                    Logger.error(Exception("ViewModel", "save", f"Error message: {err}"))
 
 # ####################################################################
 #

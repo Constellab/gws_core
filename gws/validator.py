@@ -114,7 +114,7 @@ class Validator:
             if is_maybe_convertible_without_floating_error:
                 is_valid = (self.type(value) == value)
                 if not is_valid:
-                    Logger.error(ValueError(f"The value {value} cannot be casted to the class {self.type} with floating point alteratiion."))
+                    Logger.error(ValueError(f"The value {value} cannot be casted to the class {self.type} with floating point alteration."))
                 
                 return self.type(value)
 
