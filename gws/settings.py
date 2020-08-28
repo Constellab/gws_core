@@ -142,13 +142,15 @@ class Settings(PWModel):
         return statics
 
     def get_dependency_dir(self, dependency_name: str) -> str:
-        return os.path.join(self.get_cwd(),self.data["dependencies"][dependency_name])
+        #return os.path.join(self.get_cwd(),self.data["dependencies"][dependency_name])
+        return self.data["dependencies"][dependency_name]
 
     def get_dependency_dirs(self) -> dict:
         dirs = {}
         for dep_name in self.data["dependencies"]:
             if not dep_name == ":external:":
-                dirs[dep_name] = os.path.join(self.get_cwd(),self.data["dependencies"][dep_name])
+                #dirs[dep_name] = os.path.join(self.get_cwd(),self.data["dependencies"][dep_name])
+                dirs[dep_name] = self.data["dependencies"][dep_name]
         return dirs
     
     def get_dependency_names(self) -> list:

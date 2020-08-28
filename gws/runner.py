@@ -38,13 +38,14 @@ def _run(ctx=None, test=False, db=False, cli=False, runserver=False, docgen=Fals
         
         routes = []
         for app_t in apps_t:
+            #print(app_t)
             app_t.init_routes()
             routes = routes + app_t.routes
 
         current_app_t = type("App", apps_t, {})
         current_app_t.routes = routes
 
-        #print(current_app_t.routes)
+        #print(current_app_t)
         
         app = current_app_t()
         app.start()

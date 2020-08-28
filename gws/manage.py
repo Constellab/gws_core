@@ -39,21 +39,21 @@ def _update_relative_static_paths(dep_rel_path, dep_settings):
         if k.endswith("_dir"):
             if not isinstance(dep_settings[k], str):
                 raise Exception("Error while parsing setting. Parameter " + k + " must be a string")
-            dep_settings[k] = os.path.join(dep_rel_path,dep_settings[k])
+            dep_settings[k] = os.path.abspath(os.path.join(dep_rel_path,dep_settings[k]))
     
     for k in dep_settings.get("dirs",{}):
         if not isinstance(dep_settings["dirs"][k], str):
             raise Exception("Error while parsing setting. Parameter " + k + " must be a string")
-        dep_settings["dirs"][k] = os.path.join(dep_rel_path,dep_settings["dirs"][k])
+        dep_settings["dirs"][k] = os.path.abspath(os.path.join(dep_rel_path,dep_settings["dirs"][k]))
 
     for k in dep_settings.get("app",{}).get("statics",{}):
-        dep_settings["app"]["statics"][k] = os.path.join(dep_rel_path,dep_settings["app"]["statics"][k])
+        dep_settings["app"]["statics"][k] = os.path.abspath(os.path.join(dep_rel_path,dep_settings["app"]["statics"][k]))
 
     for k in dep_settings.get("app",{}):
         if k in ["scripts","modules","styles"]:
             length = len(dep_settings["app"][k])
             for i in range(length):
-                dep_settings["app"][k][i] = os.path.join(dep_rel_path,dep_settings["app"][k][i])
+                dep_settings["app"][k][i] = os.path.abspath(os.path.join(dep_rel_path,dep_settings["app"][k][i]))
     
     return dep_settings
 
@@ -91,10 +91,16 @@ def _parse_settings(module_cwd: str = None, module_name:str = None, module_setti
     for dep_name in settings["dependencies"]:
         if dep_name == ":external:":
             for dep_urls in settings["dependencies"][dep_name]:
-                sys.path.insert(0,os.path.join(module_cwd,dep_urls)) 
+                dep_cwd = os.path.join(module_cwd,dep_urls)
+                settings["dependencies"][dep_name] = os.path.abspath(dep_cwd)
+                sys.path.insert(0,dep_cwd) 
         else:
             dep_rel_path = settings["dependencies"][dep_name]
             dep_cwd = os.path.join(module_cwd,dep_rel_path)
+            settings["dependencies"][dep_name] = os.path.abspath(dep_cwd)
+
+            #print(dep_cwd)
+            
             dep_setting_file = os.path.join(dep_cwd,"./settings.json")
 
             sys.path.insert(0,dep_cwd)                                 

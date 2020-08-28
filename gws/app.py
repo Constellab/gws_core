@@ -142,7 +142,7 @@ class App :
         # home
         cls.routes.append(Route("/", homepage))
 
-        # robot testing route
+        # hello testing route
         cls.routes.append(Route("/hello", hello))
 
     
