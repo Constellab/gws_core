@@ -49,13 +49,14 @@ def _run(ctx=None, test=False, db=False, cli=False, runserver=False, docgen=Fals
         
         app = current_app_t()
         app.start()
+        
     elif test:
         if test == "*":
             test = "test*"
         if test == "all":
             test = "test*"
 
-        settings.data["db_name"] = 'db_test.sqlite3'
+        settings.data["db_name"] = settings.data.get("test_db_name", "db_test.sqlite3")
         settings.data["is_test"] = True
         
         if db:

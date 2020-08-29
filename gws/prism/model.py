@@ -466,7 +466,7 @@ class Config(Viewable):
             #convert type to str
             for k in specs:
                 if isinstance(specs[k]["type"], type):
-                    specs[k]["type"] = specs[k]["type"].__name__
+                    specs[k]["type"] = specs[k]["type"].__name__ 
             
             self.set_specs( specs )
 
@@ -815,8 +815,6 @@ class Process(Viewable):
             self._run_after_task()
         except Exception as err:
             Logger.error(err)
-
-        
 
     def _run_before_task( self, *args, **kwargs ):
         if self._event_listener.exists('pre_start'):
@@ -1417,6 +1415,24 @@ class Resource(Viewable):
             Logger.error(Exception("Resource", "_set_job", "The job must be an instance of Job."))
 
         self.job = job
+
+# ####################################################################
+#
+# ResourceSet class
+#
+# ####################################################################
+
+class ResourceSet(Resource):
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)
+        self.data["_set_"] = []
+
+    def add( self, resource ):
+        self.data["_set_"].add(resource.id)
+    
+    def remove(self, resource ):
+        self.data["_set_"].remove(resource.id)
 
 # ####################################################################
 #
