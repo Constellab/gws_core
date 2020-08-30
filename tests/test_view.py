@@ -8,7 +8,7 @@ from starlette.responses import JSONResponse, HTMLResponse
 from starlette.testclient import TestClient
 
 from gws.app import App
-from gws.prism.model import Model, Resource, ResourceViewModel
+from gws.prism.model import Model, Resource, HTMLViewModel, JSONViewModel
 from gws.prism.view import HTMLViewTemplate, JSONViewTemplate, ViewTemplateFile
 from gws.prism.controller import Controller
 from gws.settings import Settings
@@ -24,15 +24,15 @@ class Person(Resource):
     def set_name(self, name):
         self.data['name'] = name
 
-class PersonHTMLViewModel(ResourceViewModel):
+class HTMLPersonViewModel(HTMLViewModel):
     model_specs = [Person]
     template = HTMLViewTemplate("I am <b>{{view_model.model.name}}</b>! My job is {{view_model.data.job}}.")
 
-class PersonJSONViewModel(ResourceViewModel):
+class JSONPersonViewModel(JSONViewModel):
     model_specs = [Person]
     template = JSONViewTemplate('{"name": "{{view_model.model.name}}!", "job":"{{view_model.data.job}}"}')
 
-class FunnyViewModel(ResourceViewModel):
+class FunnyViewModel(HTMLViewModel):
     model_specs = [Person]
     template = ViewTemplateFile(os.path.join(testdata_dir, './funny-view.html'), type="html")
 
@@ -41,20 +41,20 @@ class TestHTMLView(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         Person.drop_table()
-        PersonHTMLViewModel.drop_table()
-        PersonJSONViewModel.drop_table()
+        HTMLPersonViewModel.drop_table()
+        JSONPersonViewModel.drop_table()
         pass
 
     @classmethod
     def tearDownClass(cls):
-        PersonHTMLViewModel.drop_table()
-        PersonJSONViewModel.drop_table()
+        HTMLPersonViewModel.drop_table()
+        JSONPersonViewModel.drop_table()
         Person.drop_table()
         pass
     
     def test_view(self):
         elon = Person()
-        view_model = PersonHTMLViewModel(elon)
+        view_model = HTMLPersonViewModel(elon)
         self.assertEqual(view_model.data, {})
 
         elon.set_name('Elon Musk')
@@ -72,7 +72,7 @@ class TestHTMLView(unittest.TestCase):
 
         Controller.save_all([elon, view_model])
 
-        vm = PersonHTMLViewModel.get_by_id(view_model.id)
+        vm = HTMLPersonViewModel.get_by_id(view_model.id)
         self.assertEqual(vm, view_model)
         self.assertEqual(vm.model, elon)
 
@@ -81,20 +81,20 @@ class TestJSONView(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         Person.drop_table()
-        PersonHTMLViewModel.drop_table()
-        PersonJSONViewModel.drop_table()
+        HTMLPersonViewModel.drop_table()
+        JSONPersonViewModel.drop_table()
         pass
 
     @classmethod
     def tearDownClass(cls):
         Person.drop_table()
-        PersonHTMLViewModel.drop_table()
-        PersonJSONViewModel.drop_table()
+        HTMLPersonViewModel.drop_table()
+        JSONPersonViewModel.drop_table()
         pass
     
     def test_view(self):
         elon = Person()
-        view_model = PersonJSONViewModel(elon)
+        view_model = JSONPersonViewModel(elon)
         elon.set_name('Elon Musk')
 
         params = {"job" : "engineer"}
@@ -113,7 +113,7 @@ class TestJSONView(unittest.TestCase):
         self.assertTrue(isinstance(view_model.id, int))
 
         # retrieve the view_model
-        vmodel2 = PersonJSONViewModel.get( PersonJSONViewModel.id == view_model.id )
+        vmodel2 = JSONPersonViewModel.get( JSONPersonViewModel.id == view_model.id )
         self.assertEqual(vmodel2.id, view_model.id)
         self.assertEqual(vmodel2.model.id, view_model.model.id)
 
@@ -121,15 +121,15 @@ class TestFunnyView(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         Person.drop_table()
-        PersonHTMLViewModel.drop_table()
-        PersonJSONViewModel.drop_table()
+        HTMLPersonViewModel.drop_table()
+        JSONPersonViewModel.drop_table()
         pass
 
     @classmethod
     def tearDownClass(cls):
         Person.drop_table()
-        PersonHTMLViewModel.drop_table()
-        PersonJSONViewModel.drop_table()
+        HTMLPersonViewModel.drop_table()
+        JSONPersonViewModel.drop_table()
         pass
 
     
@@ -151,13 +151,11 @@ class TestFunnyView(unittest.TestCase):
 
     def test_default_view_file(self):
         elon = Person()
-        view_model = ResourceViewModel(elon)
+        view_model = HTMLViewModel(elon)
         elon.set_name('Elon Musk')
         
         view_model.save()
-
         text = view_model.render({})
-        print(text)
 
-        expected_text = "<x-gws class='gws-model' id='{}' data-id='{}' data-uri='{}'></x-gws>".format(view_model._uuid, view_model.id, view_model.uri)
-        self.assertEqual(expected_text.replace("\n", "").replace(" ", ""), text.replace("\n", "").replace(" ", ""))
+        expected_text = view_model.as_html()
+        self.assertEqual(expected_text, text)

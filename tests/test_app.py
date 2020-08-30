@@ -10,7 +10,7 @@ from starlette.responses import JSONResponse, HTMLResponse
 from starlette.testclient import TestClient
 
 from gws.app import App
-from gws.prism.model import Model, Resource, Process, ResourceViewModel
+from gws.prism.model import Model, Resource, Process, HTMLViewModel, JSONViewModel
 from gws.prism.view import HTMLViewTemplate, JSONViewTemplate
 from gws.prism.controller import Controller
 
@@ -30,17 +30,17 @@ class Person(Resource):
     def set_name(self, name):
         self.data['name'] = name
 
-class PersonHTMLViewModel(ResourceViewModel):
+class HTMLPersonViewModel(HTMLViewModel):
     model_specs = [ Person ]
     template = HTMLViewTemplate("Model={{view_model.model.id}} & View URI={{view_model.uri}}: I am <b>{{view_model.model.name}}</b>! My job is {{view_model.data.job}}.")
 
-class PersonJSONViewModel(ResourceViewModel):
+class JSONPersonViewModel(JSONViewModel):
     model_specs = [ Person ]
     template = JSONViewTemplate('{"model_id":"{{view_model.model.id}}", "view_uri":"{{view_model.uri}}", "name": "{{view_model.model.name}}!", "job":"{{view_model.data.job}}"}')
 
 # Person.register_view_model_specs([
-#     PersonHTMLViewModel, 
-#     PersonJSONViewModel
+#     HTMLPersonViewModel, 
+#     JSONPersonViewModel
 # ])
 
 # ##############################################################################
@@ -55,20 +55,20 @@ class TestApp(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         Person.drop_table()
-        PersonHTMLViewModel.drop_table()
-        PersonJSONViewModel.drop_table()
+        HTMLPersonViewModel.drop_table()
+        JSONPersonViewModel.drop_table()
         pass
 
     @classmethod
     def tearDownClass(cls):
         Person.drop_table()
-        PersonHTMLViewModel.drop_table()
-        PersonJSONViewModel.drop_table()
+        HTMLPersonViewModel.drop_table()
+        JSONPersonViewModel.drop_table()
         pass
    
     def test_view(self):
         elon = Person()
-        elon_vmodel = PersonHTMLViewModel(elon)
+        elon_vmodel = HTMLPersonViewModel(elon)
         elon.set_name('Elon Musk')
 
         elon.save()
@@ -86,7 +86,7 @@ class TestApp(unittest.TestCase):
         client = TestClient(app)
 
         # Test update_view => html
-        params = """{ "job" : "engineer" }"""
+        params = """{"params": { "job" : "engineer" }}"""
         response = client.get(Controller.build_url(
             action = "view", 
             uri = elon_vmodel.uri,

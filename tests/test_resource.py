@@ -3,7 +3,7 @@ import unittest
 import copy
 from gws.app import App
 from gws.prism.model import Process
-from gws.prism.model import Resource
+from gws.prism.model import Resource, ResourceSet
 from gws.prism.controller import Controller
 
 class Car(Resource):
@@ -37,4 +37,22 @@ class TestResource(unittest.TestCase):
         pass
 
     def test_model(self):
-        pass
+
+        c1 = Car()
+        c2 = Car()
+
+        rs = ResourceSet()
+        self.assertEquals(len(rs), 0)
+
+        rs['c1'] = c1
+        rs['c2'] = c2
+        self.assertEquals(len(rs), 2)
+        
+        self.assertTrue(rs.save())
+
+        rs2 = ResourceSet.get_by_id(rs.id)
+        self.assertEquals(rs, rs2)
+        self.assertEquals(len(rs2),2)
+
+        self.assertEquals(rs2['c1'],c1)
+        self.assertEquals(rs2['c2'],c2)

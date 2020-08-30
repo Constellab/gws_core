@@ -477,6 +477,19 @@ class Input(IO):
     Input class
     """
 
+    @property
+    def is_connected(self) -> bool:
+        """
+        Returns True if a port of the Input is left-connected
+        :return: True if a port of the Input is left-connected.
+        :rtype: bool
+        """
+        for k in self._ports:
+            if not self._ports[k].is_left_connected:
+                return False
+        
+        return True
+
     def __setitem__(self, name: str, resource: 'Resource'):
         """ 
         Bracket (setter) operator. Sets the content of a port by its name
@@ -501,6 +514,19 @@ class Output(IO):
     """
     Output class
     """
+
+    @property
+    def is_connected(self) -> bool:
+        """
+        Returns True if a port of the Output is right-connected
+        :return: True if a port of the Output is right-connected.
+        :rtype: bool
+        """
+        for k in self._ports:
+            if not self._ports[k].is_right_connected:
+                return False
+        
+        return True
 
     def propagate(self):
         """

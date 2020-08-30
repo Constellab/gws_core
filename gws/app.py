@@ -15,7 +15,7 @@ from starlette.endpoints import HTTPEndpoint, WebSocketEndpoint
 
 from gws.settings import Settings
 from gws.prism.view import HTMLViewTemplate, JSONViewTemplate, PlainTextViewTemplate
-from gws.prism.model import Resource, ResourceViewModel
+from gws.prism.model import Resource, HTMLViewModel, JSONViewModel
 from gws.prism.controller import Controller
 from gws.logger import Logger
 
@@ -58,7 +58,7 @@ async def homepage(request):
 class Robot(Resource):
     pass
 
-class RobotHTMLViewModel(ResourceViewModel):
+class HTMLRobotViewModel(HTMLViewModel):
     model_specs = [ Robot ]
     template = HTMLViewTemplate("""
         Hi!<br>
@@ -66,9 +66,8 @@ class RobotHTMLViewModel(ResourceViewModel):
         Welcome to GWS!
     """)
 
-class RobotJSONViewModel(ResourceViewModel):
+class JSONRobotViewModel(JSONViewModel):
     model_specs = [ Robot ]
-    template = JSONViewTemplate('{"name":"{{view_model.model.data.name}}"}')
 
 ####################################################################################
 #
@@ -179,14 +178,14 @@ class App :
         """
         try:
             robot = Robot.get( Robot.id==1 )
-            html_view_model = RobotHTMLViewModel.get( RobotHTMLViewModel.id == 1 )
+            html_view_model = HTMLRobotViewModel.get( HTMLRobotViewModel.id == 1 )
         except:
             robot = Robot()
             robot.data["name"] = "R. Giskard Reventlov"
             robot.save()
-            html_view_model = RobotHTMLViewModel(robot)
+            html_view_model = HTMLRobotViewModel(robot)
             html_view_model.save()
-            json_view_model = RobotJSONViewModel(robot)
+            json_view_model = JSONRobotViewModel(robot)
             json_view_model.save()
         
         host = settings.get_data("app_host")
@@ -195,8 +194,8 @@ class App :
 
         print("GWS application started!")
         print("* Server: {}:{}".format(settings.get_data("app_host"), settings.get_data("app_port")))
-        print("* HTTP Testing: http://{}:{}/gws{}".format(host, settings.get_data("app_port"), html_view_model.get_view_uri()))    
-        #print("* WebSocket Testing: ws://{}:{}/qw{}".format(host, settings.get_data("app_port"), html_view_model.get_view_uri()))
+        print("* HTTP Testing: http://{}:{}/gws{}".format(host, settings.get_data("app_port"), html_view_model.get_view_url()))    
+        #print("* WebSocket Testing: ws://{}:{}/qw{}".format(host, settings.get_data("app_port"), html_view_model.get_view_url()))
 
     @classmethod 
     def test(cls, url: str) -> Response:

@@ -39,6 +39,9 @@ class TestModel(unittest.TestCase):
         pass
 
     def test_model(self):
+
+        self.assertEquals(Person.get_uri_name(), 'tests-test-model-person')
+
         Person.create(name = 'Jhon Smith', data={})
         Person.create(name = 'Robert Vincent', data={})
 

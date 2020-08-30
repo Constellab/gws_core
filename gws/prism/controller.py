@@ -21,7 +21,7 @@ class Controller(Base):
     @classmethod
     async def action(cls, request: 'Request') -> 'ViewModel':
         """
-        Asynchronously process user actions
+        Process user actions
         :param request: Starlette request
         :type request: `starlette.requests.Request`
         :return: A view model corresponding to the action
@@ -47,32 +47,55 @@ class Controller(Base):
                 params = json.loads(params)
         except:
             Logger.error(Exception("Controller", "action", "The params is not a valid JSON text"))
-        
+
+        return cls._do_action(action, uri, params)
+    
+    @classmethod
+    def _do_action(cls, action: str, uri: str, params: dict) -> 'ViewModel':
+        """
+        Process user actions
+        :param action: Action name.
+            Accpeted values are 'view' to render a ViewModel or 'run' to launch a Process
+        :type action: str
+        :param uri: The uri of the target ViewModel or Process 
+        :type uri: str
+        :param params: The action parameters (JSON dictionnary)
+            Accepted keys,values are:
+            * 'target': uri_name of the target ViewModel, Defaults to 'self'
+                * `None` or 'self' to deal with the current ViewModel represented by the uri or 
+                * The name of a new ViewModel to generate.
+            * 'params': The parameter data
+        :type params: dict
+        :return: A view model corresponding to the action
+        :rtype: `gws.prims.model.ViewModel`
+        """
+      
         view_model = cls.fetch_model(uri)
 
         from gws.prism.model import ViewModel
         if not isinstance(view_model, ViewModel):
             Logger.error(Exception("Controller", "action", "The action uri must target a ViewModel"))
-         
+        
         if action == "view":
-            if params.get("view", None):
-                # generate a new view model
-                name = params["view"]
-                params = params["params"]
-                view_model = view_model.model.create_view_model_by_name(name)
+            target = params.get("target",None)
+            params = params.get("params",{})
+
+            if target is None or target == "self":
+                # OK!
+                # simply load the current ViewModel with the new parameters
+                pass
+            else:
+                # generate a new ViewModel
+                view_model = view_model.model.create_view_model_by_name(target)
                 if not isinstance(view_model, ViewModel):
-                    Logger.error(Exception("Controller", "action", "The the view '"+ name+"' cannot ne created."))
+                    Logger.error(Exception("Controller", "action", "The view model '"+ target+"' cannot ne created."))
          
                 view_model.set_data(params)
                 view_model.save()
-            else:
-                # OK!
-                # simply loads the current view with the new parameters
-                pass
         
             view_model.set_data(params)
         elif action == "run":
-            #run a process and render its view
+            # run a Process and render its default ViewModel
             pass
         else:
             pass # OK!
@@ -142,7 +165,7 @@ class Controller(Base):
     def fetch_model(cls, uri: str) -> 'Model':
         """
         Fetch a model using its uri
-        :param uri: The uri_name of the target model
+        :param uri: The uri of the target model
         :type uri: str
         :return: A model
         :rtype: `gws.prims.model.Model`

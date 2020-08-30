@@ -10,7 +10,7 @@ from starlette.testclient import TestClient
 from starlette.websockets import WebSocket
 
 from gws.app import App
-from gws.prism.model import Model, Resource, ResourceViewModel
+from gws.prism.model import Model, Resource, HTMLViewModel, JSONViewModel
 from gws.prism.view import HTMLViewTemplate, JSONViewTemplate
 from gws.prism.controller import Controller
 from gws.prism.base import slugify
@@ -30,18 +30,13 @@ class Person(Resource):
     def set_name(self, name):
         self.data['name'] = name
 
-class PersonHTMLViewModel(ResourceViewModel):
+class HTMLPersonViewModel(HTMLViewModel):
     model_specs = [ Person ]
     template = HTMLViewTemplate("Model={{view_model.model.id}} & View URI={{view_model.uri}}: I am <b>{{view_model.model.name}}</b>! My job is {{view_model.data.job}}.")
 
-class PersonJSONViewModel(ResourceViewModel):
+class JSONPersonViewModel(JSONViewModel):
     model_specs = [ Person ]
     template = JSONViewTemplate('{"model_id":"{{view_model.model.id}}", "view_uri":"{{view_model.uri}}", "name": "{{view_model.model.name}}!", "job":"{{view_model.data.job}}"}')
-
-# Person.register_view_model_specs([
-#     PersonHTMLViewModel, 
-#     PersonJSONViewModel
-# ])
 
 # ##############################################################################
 #
@@ -54,14 +49,14 @@ class TestControllerHTTP(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         Person.create_table()
-        PersonHTMLViewModel.create_table()
-        PersonJSONViewModel.create_table()
+        HTMLPersonViewModel.create_table()
+        JSONPersonViewModel.create_table()
 
     @classmethod
     def tearDownClass(cls):
         Person.drop_table()
-        PersonHTMLViewModel.drop_table()
-        PersonJSONViewModel.drop_table()
+        HTMLPersonViewModel.drop_table()
+        JSONPersonViewModel.drop_table()
     
     def test_controller(self):
         print("")
@@ -69,8 +64,8 @@ class TestControllerHTTP(unittest.TestCase):
         print("# -----------------")
 
         elon = Person()
-        html_vmodel = PersonHTMLViewModel(elon)
-        json_vmodel = PersonJSONViewModel(elon)
+        html_vmodel = HTMLPersonViewModel(elon)
+        json_vmodel = JSONPersonViewModel(elon)
         elon.set_name('Elon Musk')
         
         elon.save()
@@ -99,7 +94,7 @@ class TestControllerHTTP(unittest.TestCase):
         client = TestClient(app)
 
         # Test update_view => html
-        params = """{ "job" : "engineer" }"""
+        params = '{"params": { "job" : "engineer"} }'
         response = client.get(Controller.build_url(
             action = "view", 
             uri = html_vmodel.uri,
@@ -110,7 +105,7 @@ class TestControllerHTTP(unittest.TestCase):
         print(response.content)
 
         # Test update_view => json
-        params = """{ "job" : "engineer" }"""
+        params = '{"params": { "job" : "engineer"} }'
         response = client.get(Controller.build_url(
             action = "view", 
             uri = json_vmodel.uri,
@@ -121,7 +116,7 @@ class TestControllerHTTP(unittest.TestCase):
         print(response.content)
 
         # Test update_view different params => json
-        params = """{ "job" : "Tesla Maker" }"""
+        params = """{"params": { "job" : "Tesla Maker" } }"""
         response = client.get(Controller.build_url(
             action = "view", 
             uri = json_vmodel.uri,
@@ -133,7 +128,7 @@ class TestControllerHTTP(unittest.TestCase):
         
         # Test create_view => json
         params = """{
-            "view":"tests-test-controller-personjsonviewmodel", 
+            "target": "tests-test-controller-jsonpersonviewmodel", 
             "params":{
                 "job" : "SpaceX CEO"
             } 
@@ -150,14 +145,14 @@ class TestControllerHTTP(unittest.TestCase):
         new_uri = json_response["view_uri"]
         new_json_view = Controller.fetch_model(new_uri)
 
-        self.assertEqual(type(new_json_view), PersonJSONViewModel)
+        self.assertEqual(type(new_json_view), JSONPersonViewModel)
         self.assertFalse(new_json_view is json_vmodel)
         self.assertEqual(new_json_view.model, elon)
         print(response.content)
 
         # Check that the view_models a registered to their conrresponding models
-        k = slugify(PersonHTMLViewModel.full_classname())
-        self.assertEquals(Person._view_model_specs[k], PersonHTMLViewModel)
+        k = slugify(HTMLPersonViewModel.full_classname())
+        self.assertEquals(Person._view_model_specs[k], HTMLPersonViewModel)
 
 
 class TestControllerWebSocket(unittest.TestCase):
@@ -165,15 +160,15 @@ class TestControllerWebSocket(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         Person.create_table()
-        PersonHTMLViewModel.create_table()
-        PersonJSONViewModel.create_table()
+        HTMLPersonViewModel.create_table()
+        JSONPersonViewModel.create_table()
         pass
 
     @classmethod
     def tearDownClass(cls):
         Person.drop_table()
-        PersonHTMLViewModel.drop_table()
-        PersonJSONViewModel.drop_table()
+        HTMLPersonViewModel.drop_table()
+        JSONPersonViewModel.drop_table()
         pass
     
     def test_controller(self):
@@ -182,7 +177,7 @@ class TestControllerWebSocket(unittest.TestCase):
         print("# -----------------")
 
         elon = Person()
-        html_vmodel = PersonHTMLViewModel(elon)
+        html_vmodel = HTMLPersonViewModel(elon)
         elon.set_name('Elon Musk')
                 
         elon.save()
@@ -211,7 +206,7 @@ class TestControllerWebSocket(unittest.TestCase):
             Controller.build_url(
                 action = "view", 
                 uri = html_vmodel.uri,
-                params = '{ "job" : "engineer" }'
+                params = '{"params": { "job" : "engineer"} }'
             )) as websocket:
             response = websocket.receive_text()
             #self.assertEqual(response.status_code, 200)

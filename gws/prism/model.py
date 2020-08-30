@@ -29,7 +29,7 @@ from gws.store import KVStore
 from gws.prism.base import slugify
 from gws.prism.base import Base, format_table_name
 from gws.prism.controller import Controller
-from gws.prism.view import ViewTemplate, ViewTemplateFile
+from gws.prism.view import ViewTemplate, HTMLViewTemplate, JSONViewTemplate
 from gws.prism.io import Input, Output, InPort, OutPort, Connector
 
 
@@ -122,7 +122,6 @@ class Model(PWModel,Base):
 
     _kv_store: KVStore = None
     _uuid = None
-    _uri_name = "model"
     _uri_delimiter = "$"
 
     _table_name = 'model'
@@ -141,7 +140,6 @@ class Model(PWModel,Base):
             # allow object cast after ...
             pass
 
-        self._uri_name = self.full_classname(slugify=True)
         self._init_store()
 
     def cast(self) -> 'Model':
@@ -192,13 +190,23 @@ class Model(PWModel,Base):
    
     # -- G --
 
+    @classmethod
+    def get_uri_name(cls) -> str:
+        """ 
+        Returns the uri_name of the model
+        :return: The uri_name
+        :rtype: str
+        """
+        return cls.full_classname(slugify=True)
+
+
     def __generate_uri(self) -> str:
         """ 
         Generates the uri of the model
         :return: The uri
         :rtype: str
         """
-        return self._uri_name + Model._uri_delimiter + str(self.id)
+        return self.get_uri_name() + Model._uri_delimiter + str(self.id)
 
     # -- H --
 
@@ -278,15 +286,6 @@ class Model(PWModel,Base):
         :rtype: str
         """
         return self.id
-
-    @property
-    def uri_name(self) -> str:
-        """ 
-        Returns the uri_name of the model
-        :return: The uri_name
-        :rtype: str
-        """
-        return self._uri_name
 
     # -- S --
 
@@ -412,6 +411,7 @@ class Viewable(Model):
         :rtype: ViewModel
         :raises Exception: If the view model cannot be created
         """
+
         if not isinstance(type_name, str):
             Logger.error(Exception(self.classname(), "create_view_model_by_name", "The view name must be a string"))
         
@@ -421,7 +421,7 @@ class Viewable(Model):
             view_model = view_model_t(self)
             return view_model
         else:
-            Logger.error(Exception(self.classname(), "create_view_model_by_name", "The view_model '"+view_model_type+"' is not found"))
+            Logger.error(Exception(self.classname(), "create_view_model_by_name", f"The view_model '{view_model_t}' is not found"))
 
     @classmethod
     def register_view_model_specs(cls, specs: list):
@@ -839,9 +839,6 @@ class Process(Viewable):
 
     def _run_after_task( self, *args, **kwargs ):
 
-        if self._event_listener.exists('end'):
-            self._event_listener.call('end', self)
-
         logger = Logger()
         if self.name:
             logger.info(f"Task of {self.full_classname()} '{self.name}' successfully finished!")
@@ -861,11 +858,14 @@ class Process(Viewable):
             if not res[k] is None:
                 res[k]._set_job(job)
                 res[k].save()
-
+        
         if not self._output.is_ready:
             return
             #Logger.error(Exception(self.classname(), "run", "The output was not set after the task ended."))
         
+        if self._event_listener.exists('end'):
+            self._event_listener.call('end', self)
+
         self._output.propagate()
         
         for proc in self._output.get_next_procs():
@@ -1308,7 +1308,7 @@ class Protocol(Process):
         self._run_before_task()
 
         # self.task()
-        #--------- START BUILT-IN PROTOCOL TASK ---------
+        #---------- START OF BUILT-IN PROTOCOL TASK ---------
 
         sources = []
         for k in self._processes:
@@ -1319,10 +1319,16 @@ class Protocol(Process):
         for proc in sources:
             await proc.run()
 
-        #------------- END BUILT-IN PROTOCOL TASK ---------
+        #----------- END OF BUILT-IN PROTOCOL TASK ----------
 
 
     def _run_after_task(self, *args, **kwargs):
+        # Exit the function if an inner process has not yet finished!
+        for k in self._processes:
+            if not self._processes[k].is_finished:
+                return
+
+        # Good! The protocol task is finished!
         self._set_outputs()
         e = Experiment(
             job = self.get_active_job(),
@@ -1353,11 +1359,10 @@ class Protocol(Process):
         sinks = []
         for k in self._processes:
             proc = self._processes[k]
-            if self.is_outerfaced_with(proc):
+            if self.is_outerfaced_with(proc) or not proc.output.is_connected:
                 sinks.append(proc)
 
         for proc in sinks:
-            # proc.on_end( _set_outputs_and_propagate )
             proc.on_end( self._run_after_task )
 
     def __set_input_specs(self, input_specs):
@@ -1424,15 +1429,61 @@ class Resource(Viewable):
 
 class ResourceSet(Resource):
     
+    _set = {}
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
-        self.data["_set_"] = []
-
-    def add( self, resource ):
-        self.data["_set_"].add(resource.id)
+        if self.id is None:
+            self.data["set"] = {}
+            self._set = {}
+        else:
+            self._is_lazy = True
     
-    def remove(self, resource ):
-        self.data["_set_"].remove(resource.id)
+    def exists( self, resource ) -> bool:
+        return resource in self._set
+
+    def len(self):
+        return self.len()
+
+    def __len__(self):
+        return len(self.set)
+
+    def __getitem__(self, key):
+        return self.set[key]
+
+    def remove(self, key):
+        del self._set[key]
+
+    def __setitem__(self, key, val):
+        if not isinstance(val, Resource):
+            Logger.error(Exception("ResourceSet", "__setitem__", f"The value must be an instance of Resource. The actual value is a {type(val)}."))
+        
+        self.set[key] = val
+
+    def save(self, *args, **kwrags):
+
+        with DbManager.db.atomic() as transaction:
+            try:
+                self.data["set"] = {}
+                for k in self._set:
+                    if not (self._set[k].is_saved() or self._set[k].save()):
+                        raise Exception("ResourceSet", "save", f"Cannot save the resource '{k}' of the resource set")
+                        
+                    self.data["set"][k] = self._set[k].uri
+
+                return super().save(*args, **kwrags)
+
+            except Exception as err:
+                transaction.rollback()
+                Logger.error(err)
+
+    @property
+    def set(self):
+        if self.is_saved() and len(self._set) == 0:
+            for k in self.data["set"]:
+                uri = self.data["set"][k]
+                self._set[k] = Controller.fetch_model(uri)
+        
+        return self._set
 
 # ####################################################################
 #
@@ -1472,8 +1523,8 @@ class ViewModel(Model):
 
     def as_json(self):
         """
-        Returns JSON (a dictionnary) representation of the view mode
-        :return: The JSON (dictionary)
+        Returns a JSON (a dictionnary) representation of the view mode
+        :return: A JSON (dictionary)
         :rtype: dict
         """
         return {
@@ -1490,11 +1541,19 @@ class ViewModel(Model):
         :return: The HTML text
         :rtype: str
         """
-        return "<x-gws class='gws-model' id='{}' data-id='{}' data-uri='{}'></x-gws>".format(self._uuid, self.id, self.uri)
+
+        type_ = 'model'
+        for model_t in self.model_specs:
+            if self.get_uri_name() == model_t.get_uri_name():
+                if issubclass(model_t, Process):
+                    type_ = 'process'
+                    break
+
+        return f"<div class='gview:{self.get_uri_name()}' data-type='{type_}'>{self.as_json()}</div>"
 
     # -- G --
 
-    def get_view_uri(self, params: dict={}) -> str:
+    def get_view_url(self, params: dict={}) -> str:
         """
         Returns the uri of the view (alias of the uri of the view model)
         :param params: The uri parameters
@@ -1572,52 +1631,37 @@ class ViewModel(Model):
                     transaction.rollback()
                     Logger.error(Exception("ViewModel", "save", f"Error message: {err}"))
 
+    # -- U --
+
 # ####################################################################
 #
-# Process ViewModel class
+# HTMLViewModel class
 #
 # ####################################################################
 
-class ProcessViewModel(ViewModel):
+class HTMLViewModel(ViewModel):
     """ 
-    ProcessViewModel class
+    HTMLViewModel class
     :property model: The model of the view model
     :type model: Process
     """
 
-    _table_name = 'process_view_model'
-
-    def __init__(self, model_instance=None, *args, **kwargs):
-        super().__init__(model_instance=model_instance, *args, **kwargs)
-
-        if self.template is None:
-            settings = Settings()
-            template_dir = settings.get_template_dir("gws")
-            self.template = ViewTemplateFile(os.path.join(template_dir, "./prism/model/process.html"), type="html")
-
-
+    _table_name = 'view_model'
+    template = HTMLViewTemplate("{{ view_model.as_html() }}")
 
 # ####################################################################
 #
-# Resource ViewModel class
+# JSONViewModel class
 #
 # ####################################################################
 
-class ResourceViewModel(ViewModel):
+class JSONViewModel(ViewModel):
     """ 
-    ResourceViewModel class
+    JSONViewModel class
     :property model: The model of the view model
     :type model: Resource
     """
 
-    _table_name = 'resource_view_model'
-
-    def __init__(self, model_instance=None, *args, **kwargs):
-        super().__init__(model_instance=model_instance, *args, **kwargs)
-
-        if self.template is None:
-            settings = Settings.retrieve()
-            template_dir = settings.get_template_dir("gws")
-            self.template = ViewTemplateFile(os.path.join(template_dir, "./prism/model/resource.html"), type="html")
-
+    _table_name = 'view_model'
+    template = JSONViewTemplate("{{ view_model.as_json() }}")
 
