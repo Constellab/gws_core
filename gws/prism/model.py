@@ -488,11 +488,24 @@ class Config(Viewable):
                 Logger.error(Exception(self.classname(), "__init__", f"The specs must be a dictionnary"))
             
             #convert type to str
+            from gws.validator import Validator
             for k in specs:
                 if isinstance(specs[k]["type"], type):
                     specs[k]["type"] = specs[k]["type"].__name__ 
-            
+
+                default = specs[k].get("default", None)
+                if not default is None:
+                    param_t = specs[k]["type"]
+                    try:
+                        validator = Validator.from_type(param_t)
+                        default = validator.validate(default)
+                        specs[k]["default"] = default
+                    except Exception as err:
+                        Logger.error(Exception(self.classname(), "__init__", f"Invalid default config value. Error message: {err}"))
+
             self.set_specs( specs )
+        
+        
 
     # -- G --
 
