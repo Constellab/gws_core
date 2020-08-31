@@ -239,7 +239,7 @@ class Controller(Base):
     def __inspects_module(cls, name):
         import inspect
         import sys
-        from gws.prism.model import Model, ViewModel
+        from gws.prism.model import Model, ViewModel, HTMLViewModel, JSONViewModel
         if not name in sys.modules:
             return
 
@@ -247,9 +247,11 @@ class Controller(Base):
             #print(subname)
             if inspect.isclass(obj):
                 if issubclass(obj, Model):
-                    cls._register_model_specs([obj])
+                    cls._register_model_specs([ obj ])
+                    # register the ViewModel to the default Model
                     if issubclass(obj, ViewModel):
                         obj.register_to_models()
+
             elif inspect.ismodule(obj):
                 cls.__inspects_module(name+"."+subname)
 

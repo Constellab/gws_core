@@ -149,13 +149,13 @@ class Model(PWModel,Base):
         :rtype: `Model` instance
         """
         type_str = slugify(self.type)
-        mew_model_t = Controller.get_model_type(type_str)
+        new_model_t = Controller.get_model_type(type_str)
 
-        if type(self) == mew_model_t:
+        if type(self) == new_model_t:
             return self
    
         # instanciate the class and shallow copy data
-        model = mew_model_t()
+        model = new_model_t()
         for prop in self.property_names(Field):
             val = getattr(self, prop)
             setattr(model, prop, val)
@@ -381,20 +381,21 @@ class Viewable(Model):
 
     _view_model_specs: dict = {}
 
-    def as_json(self):
+    def as_json(self) -> str:
         """
         Returns JSON (a dictionnary) representation of the model
         :return: The JSON dictionary 
         :rtype: dict
         """
-        return {
+        import json
+        return json.dumps({
             "id" : self.id,
             "data" : self.data,
             "uri": self.uri,
-            "creation_datetime" : self.creation_datetime,
-        }
+            "creation_datetime" : str(self.creation_datetime),
+        })
 
-    def as_html(self):
+    def as_html(self) -> str:
         """
         Returns HTML representation of the model
         :return: The HTML text
@@ -402,9 +403,26 @@ class Viewable(Model):
         """
         return "<x-gws class='gws-model' id='{}' data-id='{}' data-uri='{}'></x-gws>".format(self._uuid, self.id, self.uri)
 
+    def create_html_view_model(self):
+        """
+        Creates an instance of HTMLViewModel
+        :return: The view model
+        :rtype: HTMLViewModel
+        """
+        return HTMLViewModel(model_instance=self)
+
+    def create_json_view_model(self):
+        """
+        Creates an instance of JSONViewModel
+        :return: The view model
+        :rtype: JSONViewModel
+        """
+
+        return JSONViewModel(model_instance=self)
+
     def create_view_model_by_name(self, type_name: str):
         """
-        Creates an instance of a registered view model type
+        Creates an instance of a registered ViewModel
         :param type_name: The slugified type name of the view model to create
         :type type_name: str
         :return: The created view model
@@ -415,7 +433,12 @@ class Viewable(Model):
         if not isinstance(type_name, str):
             Logger.error(Exception(self.classname(), "create_view_model_by_name", "The view name must be a string"))
         
-        view_model_t = self._view_model_specs.get(type_name,None)
+        if type_name == HTMLViewModel.get_uri_name():
+            view_model_t = HTMLViewModel
+        elif type_name == JSONViewModel.get_uri_name():
+            view_model_t = HTMLViewModel
+        else:
+            view_model_t = self._view_model_specs.get(type_name, None)
 
         if isinstance(view_model_t, type):
             view_model = view_model_t(self)
@@ -431,10 +454,11 @@ class Viewable(Model):
         :type specs: list
         """
         for t in specs:
-            if not isinstance(t, type):
-                Logger.error(Exception("Model", "register_specs", "Invalid spec. A {name, type} dictionnary or [type] list is expected, where type is must be a ViewModel type or sub-type"))
-            cls._view_model_specs[t.full_classname(slugify=True)] = t
-
+            if not isinstance(t, type) or not issubclass(t, ViewModel):
+                Logger.error(Exception("Model", "register_view_model_specs", "Invalid specs. A list of ViewModel types is expected"))
+            
+            name = t.full_classname(slugify=True)
+            cls._view_model_specs[name] = t
 
 # ####################################################################
 #
@@ -1532,7 +1556,7 @@ class ViewModel(Model):
             "data" : self.data,
             "uri": self.uri,
             "model": self.model.as_json(),
-            "creation_datetime" : self.creation_datetime,
+            "creation_datetime" : str(self.creation_datetime),
         }
 
     def as_html(self):
