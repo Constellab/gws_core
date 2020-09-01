@@ -26,70 +26,12 @@ from starlette.authentication import BaseUser
 from gws.logger import Logger
 from gws.settings import Settings
 from gws.store import KVStore
-from gws.prism.base import slugify
-from gws.prism.base import Base, format_table_name
+from gws.prism.base import slugify, Base, DbManager
+from gws.prism.base import format_table_name
 from gws.prism.controller import Controller
 from gws.prism.view import ViewTemplate, HTMLViewTemplate, JSONViewTemplate
 from gws.prism.io import Input, Output, InPort, OutPort, Connector
-
-
-
-class DbManager(Base):
-    """
-    DbManager class. Provides backend feature for managing databases. 
-    """
-    settings = Settings.retrieve()
-    db = SqliteDatabase(settings.db_path)
-    
-    @staticmethod
-    def create_tables(models: list, **options):
-        """
-        Creates the tables of a list of models. Wrapper of :meth:`DbManager.db.create_tables`
-        :param models: List of model instances
-        :type models: list
-        :param options: Extra parameters passed to :meth:`DbManager.db.create_tables`
-        :type options: dict, optional
-        """
-        DbManager.db.create_tables(models, **options)
-
-    @staticmethod
-    def drop_tables(models: list, **options):
-        """
-        Drops the tables of a list of models. Wrapper of :meth:`DbManager.db.drop_tables`
-        :param models: List of model instances
-        :type models: list
-        :param options: Extra parameters passed to :meth:`DbManager.db.create_tables`
-        :type options: dict, optional
-        """
-        DbManager.db.drop_tables(models, **options)
-
-    @staticmethod
-    def connect_db() -> bool:
-        """
-        Open a connection to the database. Reuse existing open connection if any. 
-        Wrapper of :meth:`DbManager.db.connect`
-        :return: True if the connection successfully opened, False otherwise
-        :rtype: bool
-        """
-        return DbManager.db.connect(reuse_if_open=True)
-    
-    @staticmethod
-    def close_db() -> bool:
-        """
-        Close the connection to the database. Wrapper of :meth:`DbManager.db.close`
-        :return: True if the connection successfully closed, False otherwise
-        :rtype: bool
-        """
-        return DbManager.db.close()
-
-    @staticmethod
-    def get_tables(schema=None) -> list:
-        """
-        Get the list of tables. Wrapper of :meth:`DbManager.db.get_tables`
-        :return: The list of the tables
-        :rtype: list
-        """
-        return DbManager.db.get_tables(schema)
+from gws.prism.event import EventListener
 
 # ####################################################################
 #
@@ -97,7 +39,7 @@ class DbManager(Base):
 #
 # ####################################################################
  
-class Model(PWModel,Base):
+class Model(Base):
     """
     Model class
     :property id: The id of the model (in database)
@@ -362,10 +304,6 @@ class Model(PWModel,Base):
 
     # -- W --
 
-    class Meta:
-        database = DbManager.db
-        table_function = format_table_name
-
 # ####################################################################
 #
 # Viewable class
@@ -589,7 +527,6 @@ class Config(Viewable):
 #
 # ####################################################################
 
-from gws.prism.event import EventListener
 class Process(Viewable):
     """
     Process class.
@@ -1369,8 +1306,8 @@ class Protocol(Process):
         self._set_outputs()
         e = Experiment(
             job = self.get_active_job(),
-            user = Controller.get_test_user(),
-            project = Controller.get_test_project()
+            user = Controller.get_user(),
+            project = Controller.get_project()
         )
         if not e.save():
             Logger.error(Exception("Protocol", "_run_after_task", "The experiment cannot be saved"))

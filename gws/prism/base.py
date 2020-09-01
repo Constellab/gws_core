@@ -3,14 +3,96 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from slugify import slugify as convert_to_slug
 import inspect
 import re
+from peewee import SqliteDatabase, Model
+from slugify import slugify as convert_to_slug
 
-class Base:
+from gws.settings import Settings
+
+def slugify(text, snakefy = False) -> str:
+    """
+    Returns the slugified text
+    :param snakefy: Snakefy the text if True (i.e. uses undescores instead of dashes to separate text words), defaults to False
+    :type snakefy: bool, optional
+    :return: The slugified name
+    :rtype: str
+    """
+    if slugify:
+        text = convert_to_slug(text, to_lower=True, separator='-')
+    elif snakefy:
+        text = convert_to_slug(text, to_lower=True, separator='_')
+    return text
+
+
+def format_table_name(cls):
+    model_name = cls._table_name
+    return model_name.lower()
+
+
+class DbManager:
+    """
+    DbManager class. Provides backend feature for managing databases. 
+    """
+    settings = Settings.retrieve()
+    db = SqliteDatabase(settings.db_path)
+    
+    # @staticmethod
+    # def create_tables(models: list, **options):
+    #     """
+    #     Creates the tables of a list of models. Wrapper of :meth:`DbManager.db.create_tables`
+    #     :param models: List of model instances
+    #     :type models: list
+    #     :param options: Extra parameters passed to :meth:`DbManager.db.create_tables`
+    #     :type options: dict, optional
+    #     """
+    #     DbManager.db.create_tables(models, **options)
+
+    # @staticmethod
+    # def drop_tables(models: list, **options):
+    #     """
+    #     Drops the tables of a list of models. Wrapper of :meth:`DbManager.db.drop_tables`
+    #     :param models: List of model instances
+    #     :type models: list
+    #     :param options: Extra parameters passed to :meth:`DbManager.db.create_tables`
+    #     :type options: dict, optional
+    #     """
+    #     DbManager.db.drop_tables(models, **options)
+
+    # @staticmethod
+    # def connect_db() -> bool:
+    #     """
+    #     Open a connection to the database. Reuse existing open connection if any. 
+    #     Wrapper of :meth:`DbManager.db.connect`
+    #     :return: True if the connection successfully opened, False otherwise
+    #     :rtype: bool
+    #     """
+    #     return DbManager.db.connect(reuse_if_open=True)
+    
+    # @staticmethod
+    # def close_db() -> bool:
+    #     """
+    #     Close the connection to the database. Wrapper of :meth:`DbManager.db.close`
+    #     :return: True if the connection successfully closed, False otherwise
+    #     :rtype: bool
+    #     """
+    #     return DbManager.db.close()
+
+    # @staticmethod
+    # def get_tables(schema=None) -> list:
+    #     """
+    #     Get the list of tables. Wrapper of :meth:`DbManager.db.get_tables`
+    #     :return: The list of the tables
+    #     :rtype: list
+    #     """
+    #     return DbManager.db.get_tables(schema)
+
+class Base(Model):
     """
     Base class
     """
+
+    _table_name = 'base'
 
     def classname(self, slugify = False, snakefy = False, replace_uppercase = False) -> str:
         """
@@ -95,21 +177,6 @@ class Base:
 
         return method_names
 
-
-def slugify(text, snakefy = False) -> str:
-    """
-    Returns the slugified text
-    :param snakefy: Snakefy the text if True (i.e. uses undescores instead of dashes to separate text words), defaults to False
-    :type snakefy: bool, optional
-    :return: The slugified name
-    :rtype: str
-    """
-    if slugify:
-        text = convert_to_slug(text, to_lower=True, separator='-')
-    elif snakefy:
-        text = convert_to_slug(text, to_lower=True, separator='_')
-    return text
-
-def format_table_name(cls):
-    model_name = cls._table_name
-    return model_name.lower()
+    class Meta:
+        database = DbManager.db
+        table_function = format_table_name

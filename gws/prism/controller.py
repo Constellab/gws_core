@@ -125,7 +125,7 @@ class Controller(Base):
     # -- D --
 
     @classmethod
-    def get_test_user(cls):
+    def get_user(cls):
         from gws.prism.model import User
         User.create_table()
         try:
@@ -143,7 +143,7 @@ class Controller(Base):
         return user
 
     @classmethod
-    def get_test_project(cls):
+    def get_project(cls):
         from gws.prism.model import Project
         Project.create_table()
         try:
@@ -286,7 +286,8 @@ class Controller(Base):
         :return: True if all the model are successfully saved, False otherwise. 
         :rtype: bool
         """
-        from gws.prism.model import DbManager, Process, Resource, ViewModel
+        from gws.prism.base import DbManager
+        from gws.prism.model import Process, Resource, ViewModel
         with DbManager.db.atomic() as transaction:
             try:
                 if model_list is None:
