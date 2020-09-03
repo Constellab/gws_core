@@ -26,7 +26,9 @@ from starlette.authentication import BaseUser
 from gws.logger import Logger
 from gws.settings import Settings
 from gws.store import KVStore
-from gws.prism.base import slugify, Base, DbManager
+from gws.session import Session
+
+from gws.prism.base import slugify, BaseModel, DbManager
 from gws.prism.base import format_table_name
 from gws.prism.controller import Controller
 from gws.prism.view import ViewTemplate, HTMLViewTemplate, JSONViewTemplate
@@ -39,7 +41,7 @@ from gws.prism.event import EventListener
 #
 # ####################################################################
  
-class Model(Base):
+class Model(BaseModel):
     """
     Model class
     :property id: The id of the model (in database)
@@ -548,6 +550,7 @@ class Process(Viewable):
     hash = CharField(index=True, unique=True)
     is_running: bool = False 
     is_finished: bool = False 
+    #pid = IntegerField()
 
     input_specs: dict = {}
     output_specs: dict = {}
@@ -644,10 +647,6 @@ class Process(Viewable):
         :rtype: [str, int, float, bool]
         """
         return self.config.get_param(name)
-
-    # -- L --
-
-    # -- I --
 
     def get_active_job(self):
         """
@@ -951,6 +950,37 @@ class User(Model, BaseUser):
 
 # ####################################################################
 #
+# Experiment class
+#
+# ####################################################################
+
+class Experiment(Model):
+    
+    #job = ForeignKeyField(Job, backref="experiment")
+    user = ForeignKeyField(User, backref="experiments")
+    project = ForeignKeyField(Project, backref="experiments")
+
+    _table_name = 'experiment'
+
+
+    @property
+    def is_finished(self):
+        for job in self.jobs:
+            if not job.is_finished:
+                return False
+
+        return True
+
+    @property
+    def is_running(self):
+        for job in self.jobs:
+            if not job.is_running:
+                return True
+
+        return False
+
+# ####################################################################
+#
 # Job class
 #
 # ####################################################################
@@ -966,9 +996,11 @@ class Job(Model):
     :property user: The user
     :type user: User
     """
+    
+    process_id = IntegerField(null=False, index=True)       # store id ref as it may represent different classes
+    config_id = IntegerField(null=False, index=True)        # store id ref as it may represent config classes
+    experiment = ForeignKeyField(Experiment, null=False, backref='jobs') 
 
-    process_id = IntegerField(index=True)   # store id ref as it may represent different classes
-    config_id = IntegerField(index=True)    # store id ref as it may represent config classes
     is_running: bool = BooleanField(default=False, index=True)
     is_finished: bool = BooleanField(default=False, index=True)
     
@@ -989,9 +1021,22 @@ class Job(Model):
             
             self._config = config
             self._process = process
+            self.experiment = Session.get_experiment()
             self.update_state()
 
-    # -- I -- 
+    # -- C --
+
+    @property
+    def config(self):
+        if not self._config is None:
+            return self._config
+
+        if self.config_id:
+            config = Config.get(Config.id == self.config_id)
+            self._config = config.cast()
+            return self._config
+        else:
+            return None
 
     # -- P --
 
@@ -1004,18 +1049,6 @@ class Job(Model):
             proc = Process.get(Process.id == self.process_id)
             self._process = proc.cast()
             return self._process
-        else:
-            return None
-
-    @property
-    def config(self):
-        if not self._config is None:
-            return self._config
-
-        if self.config_id:
-            config = Config.get(Config.id == self.config_id)
-            self._config = config.cast()
-            return self._config
         else:
             return None
 
@@ -1076,21 +1109,6 @@ class Job(Model):
                 Logger.error(Exception("Process", "__track_input_uri", "Cannot track input '{k}' uri. Please save the input resource before."))
 
             self.data["inputs"][k] = res[k].uri
-
-# ####################################################################
-#
-# Experiment class
-#
-# ####################################################################
-
-class Experiment(Model):
-    
-    job = ForeignKeyField(Job, backref="experiment")
-    user = ForeignKeyField(User, backref="experiments")
-    project = ForeignKeyField(Project, backref="experiments")
-
-    _table_name = 'experiment'
-
 
 # ####################################################################
 #
@@ -1304,13 +1322,13 @@ class Protocol(Process):
 
         # Good! The protocol task is finished!
         self._set_outputs()
-        e = Experiment(
-            job = self.get_active_job(),
-            user = Controller.get_user(),
-            project = Controller.get_project()
-        )
-        if not e.save():
-            Logger.error(Exception("Protocol", "_run_after_task", "The experiment cannot be saved"))
+        # e = Experiment(
+        #     #job = self.get_active_job(),
+        #     user = Controller.get_user(),
+        #     project = Controller.get_project()
+        # )
+        # if not e.save():
+        #     Logger.error(Exception("Protocol", "_run_after_task", "The experiment cannot be saved"))
         
         super()._run_after_task()
 

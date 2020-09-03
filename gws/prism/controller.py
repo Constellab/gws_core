@@ -8,14 +8,14 @@ import json
 from gws.prism.base import Base
 from gws.prism.base import slugify
 from gws.logger import Logger
+from gws.session import Session
 
 class Controller(Base):
     """
     Controller class
     """
 
-    _model_specs = dict()
-    _session = None
+    _model_specs = dict()    
     is_query_params = False
     
     @classmethod
@@ -121,43 +121,6 @@ class Controller(Base):
             return '/?action='+action+'&uri='+uri+'&params=' + str(params)
         else:
             return '/'+action+'/'+uri+'/'+str(params)
-
-    # -- D --
-
-    @classmethod
-    def get_user(cls):
-        from gws.prism.model import User
-        User.create_table()
-        try:
-            user = User.get(User.email == "test@gencovery.com", User.organization == "Gencovery")
-        except: 
-            user = User(
-                firstname = "Guest", 
-                sirname = "Guest", 
-                email = "test@gencovery.com",
-                organization = "Gencovery",
-                is_active = True
-            )
-            user.save()
-        
-        return user
-
-    @classmethod
-    def get_project(cls):
-        from gws.prism.model import Project
-        Project.create_table()
-        try:
-            project = Project.get(Project.name == "Test", Project.organization == "Gencovery")
-        except: 
-            project = Project(
-                name = "Test", 
-                organization = "Gencovery",
-                is_active = True,
-            )
-            project.description = "This is a fake project for code testing."
-            project.save()
-        
-        return project
 
     # -- F --
 

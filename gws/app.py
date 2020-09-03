@@ -13,6 +13,9 @@ from starlette.staticfiles import StaticFiles
 from starlette.requests import Request
 from starlette.endpoints import HTTPEndpoint, WebSocketEndpoint
 
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.middleware import Middleware
+
 from gws.settings import Settings
 from gws.prism.view import HTMLViewTemplate, JSONViewTemplate, PlainTextViewTemplate
 from gws.prism.model import Resource, HTMLViewModel, JSONViewModel
@@ -111,6 +114,9 @@ class App :
     ctrl = Controller
 
     routes = []
+    middleware = [
+        Middleware(SessionMiddleware)
+    ]
     debug = settings.get_data("is_test")
     
     is_running = False
@@ -166,6 +172,7 @@ class App :
         Starts the starlette uvicorn web application
         """
         # starlette
+        #cls.app = Starlette(debug=cls.debug, routes=cls.routes, middleware=cls.middleware, on_startup=[cls._on_startup])
         cls.app = Starlette(debug=cls.debug, routes=cls.routes, on_startup=[cls._on_startup])
 
         uvicorn.run(cls.app, host=settings.get_data("app_host"), port=settings.get_data("app_port"))

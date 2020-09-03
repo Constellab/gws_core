@@ -87,10 +87,16 @@ class Wait(Process):
         import time
         time.sleep(self.get_param('waiting_time'))
 
-class TestProcess(unittest.TestCase):
+class TestProtocol(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
+        Config.drop_table()
+        Process.drop_table()
+        Protocol.drop_table()
+        Experiment.drop_table()
+        Job.drop_table()
+        Person.drop_table()
         pass
 
     @classmethod
@@ -140,6 +146,13 @@ class TestProcess(unittest.TestCase):
 
             print("Sleeping 1 sec for waiting all tasks to finish ...")
             await asyncio.sleep(1)
+
+        from gws.session import Session
+        e = Session.get_experiment()
+
+        self.assertTrue(e.jobs.count(), 8)
+        self.assertTrue(e.is_finished, False)
+        self.assertTrue(e.is_running, False)
 
         asyncio.run( _run() )
 

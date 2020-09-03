@@ -24,11 +24,108 @@ def slugify(text, snakefy = False) -> str:
         text = convert_to_slug(text, to_lower=True, separator='_')
     return text
 
+# ####################################################################
+#
+# Base class
+#
+# ####################################################################
+
+
+class Base:
+
+    @classmethod
+    def classname(cls, slugify = False, snakefy = False, replace_uppercase = False) -> str:
+        """
+        Returns the name the class
+        :param slugify: Slugify the returned class name if True, defaults to False
+        :type slugify: bool, optional
+        :param snakefy: Snakefy the returned class name if True, defaults to False
+        :type snakefy: bool, optional
+        :param replace_uppercase: Replace upper cases by "-" if True, defaults to False
+        :type replace_uppercase: bool, optional
+        :return: The class name
+        :rtype: str
+        """
+        name = cls.__name__
+        if replace_uppercase:
+            name = re.sub('([A-Z]{1})', r'-\1', name)
+            name = name.strip("-")
+
+        if slugify:
+            name = convert_to_slug(name, to_lower=True, separator='-')
+        elif snakefy:
+            name = convert_to_slug(name, to_lower=True, separator='_')
+        return name
+    
+    @classmethod
+    def full_classname(cls, slugify = False, snakefy = False):
+        """
+        Returns the full name of the class
+        :param slugify: Slugify the returned class name if True, defaults to False
+        :type slugify: bool, optional
+        :param snakefy: Snakefy the returned class name if True, defaults to False
+        :type snakefy: bool, optional
+        :return: The class name
+        :rtype: str
+        """
+        module = inspect.getmodule(cls).__name__
+        name = cls.__name__
+        full_name = module + "." + name
+
+        if slugify:
+            full_name = convert_to_slug(full_name, to_lower=True, separator='-')
+        elif snakefy:
+            full_name = convert_to_slug(full_name, to_lower=True, separator='_')
+        
+        return full_name
+
+    @classmethod
+    def module(cls) -> str:
+        """
+        Returns the module of the class
+        :return: The module
+        :rtype: str
+        """
+        module = inspect.getmodule(cls).__name__
+        return module
+
+    @classmethod
+    def property_names(cls, instance = None) -> list:
+        """
+        Returns the property names
+        :return: The list of the properties
+        :rtype: list
+        """
+        property_names = []
+        m = inspect.getmembers(cls)
+        for i in m:
+            if not instance is None:
+                if isinstance(i[1], instance):
+                    property_names.append(i[0])
+            elif not i[0].startswith('_') and not inspect.isfunction(i[1]) and not inspect.ismethod(i[1]) and not inspect.isclass(i[1]):
+                property_names.append(i[0])
+
+        return property_names
+    
+    @classmethod
+    def method_names(cls):
+        method_names = []
+        m = inspect.getmembers(cls)
+        for i in m:
+            if not i[0].startswith('_') and inspect.isfunction(i[1]) and inspect.ismethod(i[1]):
+                method_names.append(i[0])
+
+        return method_names
+
+# ####################################################################
+#
+# DbManager class
+#
+# ####################################################################
 
 def format_table_name(cls):
     model_name = cls._table_name
     return model_name.lower()
-
 
 class DbManager:
     """
@@ -87,95 +184,18 @@ class DbManager:
     #     """
     #     return DbManager.db.get_tables(schema)
 
-class Base(Model):
+# ####################################################################
+#
+# BaseModel class
+#
+# ####################################################################
+
+class BaseModel(Base, Model):
     """
     Base class
     """
 
     _table_name = 'base'
-
-    def classname(self, slugify = False, snakefy = False, replace_uppercase = False) -> str:
-        """
-        Returns the name the class
-        :param slugify: Slugify the returned class name if True, defaults to False
-        :type slugify: bool, optional
-        :param snakefy: Snakefy the returned class name if True, defaults to False
-        :type snakefy: bool, optional
-        :param replace_uppercase: Replace upper cases by "-" if True, defaults to False
-        :type replace_uppercase: bool, optional
-        :return: The class name
-        :rtype: str
-        """
-        name = type(self).__name__
-        if replace_uppercase:
-            name = re.sub('([A-Z]{1})', r'-\1', name)
-            name = name.strip("-")
-
-        if slugify:
-            name = convert_to_slug(name, to_lower=True, separator='-')
-        elif snakefy:
-            name = convert_to_slug(name, to_lower=True, separator='_')
-        return name
-    
-    @classmethod
-    def full_classname(cls, slugify = False, snakefy = False):
-        """
-        Returns the full name of the class
-        :param slugify: Slugify the returned class name if True, defaults to False
-        :type slugify: bool, optional
-        :param snakefy: Snakefy the returned class name if True, defaults to False
-        :type snakefy: bool, optional
-        :return: The class name
-        :rtype: str
-        """
-        module = inspect.getmodule(cls).__name__
-        name = cls.__name__
-        full_name = module + "." + name
-
-        if slugify:
-            full_name = convert_to_slug(full_name, to_lower=True, separator='-')
-        elif snakefy:
-            full_name = convert_to_slug(full_name, to_lower=True, separator='_')
-        
-        return full_name
-
-    @classmethod
-    def module(cls) -> str:
-        """
-        Returns the module of the class
-        :return: The module
-        :rtype: str
-        """
-        module = inspect.getmodule(cls).__name__
-        return module
-
-    def property_names(self, instance = None) -> list:
-        """
-        Returns the property names
-        :return: The list of the properties
-        :rtype: list
-        """
-        cls = type(self)
-        property_names = []
-        m = inspect.getmembers(cls)
-        for i in m:
-            if not instance is None:
-                if isinstance(i[1], instance):
-                    property_names.append(i[0])
-            elif not i[0].startswith('_') and not inspect.isfunction(i[1]) and not inspect.ismethod(i[1]) and not inspect.isclass(i[1]):
-                property_names.append(i[0])
-
-        return property_names
-    
-    def method_names(self):
-        cls = type(self)
-        method_names = []
-        m = inspect.getmembers(cls)
-        for i in m:
-            if not i[0].startswith('_') and inspect.isfunction(i[1]) and inspect.ismethod(i[1]):
-                method_names.append(i[0])
-
-        return method_names
 
     class Meta:
         database = DbManager.db
