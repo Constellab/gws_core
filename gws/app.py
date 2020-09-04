@@ -47,6 +47,7 @@ if not os.path.exists(os.path.join(public_dir, "index.html")):
 templates = Jinja2Templates(directory=public_dir)
 async def homepage(request):
     settings = Settings.retrieve()
+    print(request.session)
     return templates.TemplateResponse('index.html', {
         'request': request, 
         'settings': settings,
@@ -112,13 +113,15 @@ class App :
 
     app: Starlette = None
     ctrl = Controller
-
     routes = []
     middleware = [
-        Middleware(SessionMiddleware)
+        Middleware( 
+            SessionMiddleware, 
+            secret_key=settings.get_data("secret_key"), 
+            session_cookie="gws"
+        )
     ]
     debug = settings.get_data("is_test")
-    
     is_running = False
     
     @classmethod
@@ -172,8 +175,8 @@ class App :
         Starts the starlette uvicorn web application
         """
         # starlette
-        #cls.app = Starlette(debug=cls.debug, routes=cls.routes, middleware=cls.middleware, on_startup=[cls._on_startup])
-        cls.app = Starlette(debug=cls.debug, routes=cls.routes, on_startup=[cls._on_startup])
+        cls.app = Starlette(debug=cls.debug, routes=cls.routes, middleware=cls.middleware, on_startup=[cls._on_startup])
+        #cls.app = Starlette(debug=cls.debug, routes=cls.routes, on_startup=[cls._on_startup])
 
         uvicorn.run(cls.app, host=settings.get_data("app_host"), port=settings.get_data("app_port"))
         cls.is_running = True

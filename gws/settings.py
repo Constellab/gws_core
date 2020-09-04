@@ -35,51 +35,40 @@ class Settings(PWModel):
                 self.data[k] = self._data[k]
 
     @classmethod
-    def init( cls, params: dict = None ):
-        cls._data["app_dir"] = params["app_dir"]
-        cls._data["db_dir"] = params["db_dir"]
-        
-        for k in params:
-            cls._data[k] = params[k]
+    def init( cls, settings_json: dict = None ):
+        for k in settings_json:
+            cls._data[k] = settings_json[k]
 
         db = SqliteDatabase( os.path.join(cls._data["db_dir"], "db_settings.sqlite3") )
         database_proxy.initialize(db)
-        #db.connect(reuse_if_open=True)
 
         if not cls.table_exists():
             cls.create_table()
             
         try:
             settings = Settings.get_by_id(1)
-            settings.data = cls._data
+            for k in cls._data:
+                settings.data[k] = cls._data[k]
             settings.save()
         except:
             settings = Settings()
+            from base64 import b64encode
+            random_bytes = os.urandom(64)
+            token = b64encode(random_bytes).decode('utf-8')
+            settings.set_data("secret_key", token)
             settings.save()
+
+    # -- A --
 
     @property
     def app(self):
         return self.data.get("app", {})
 
     @property
-    def name(self):
-        return self.data.get("name", None)
-
-    @property
-    def title(self):
-        return self.app.get("title", None)
-
-    @property
-    def description(self):
-        return self.app.get("description", None)
-
-    @property
     def authors(self):
         return self.data.get("authors", None)
-    
-    @property
-    def version(self):
-        return self.data.get("authors", None)
+
+    # -- B --
 
     @property
     def buttons(self) -> dict:
@@ -90,6 +79,12 @@ class Settings(PWModel):
 
         return btns
 
+    # -- D --
+
+    @property
+    def description(self):
+        return self.app.get("description", None)
+    
     @property
     def db_path(self):
         if self.data["db_name"] == ':memory:':
@@ -97,8 +92,13 @@ class Settings(PWModel):
         else:
             return os.path.join(self.data["db_dir"], self.data["db_name"])
 
+    # -- G --
+
     def get_cwd(self) -> dict:
         return self.data["__cwd__"]
+
+    def get_data(self, k:str) -> str:
+        return self.data[k]
 
     def get_dirs(self) -> dict:
         return self.data.get("dirs",{})
@@ -167,12 +167,13 @@ class Settings(PWModel):
         dependency_dir = self.get_dependency_dir(dependency_name)
         return os.path.join(dependency_dir, "./templates")
 
-    def get_data(self, k:str) -> str:
-        return self.data[k]
+    # -- N --
 
-    def set_data(self, k: str, val: str):
-        self.data[k] = val
-        self.save()
+    @property
+    def name(self):
+        return self.data.get("name", None)
+
+    # -- R --
 
     @classmethod
     def retrieve(cls):
@@ -180,7 +181,27 @@ class Settings(PWModel):
             return Settings.get_by_id(1)
         except:
             raise Exception("Settings", "retrieve", "Cannot retrieve settings from the database")
-        
+   
+    # -- S --
+
+    def set_data(self, k: str, val: str):
+        self.data[k] = val
+        self.save()
+
+    # -- T --
+
+    @property
+    def title(self):
+        return self.app.get("title", None)
+
+    # -- V --
+
+    @property
+    def version(self):
+        return self.data.get("authors", None)
+
+
+         
     class Meta:
         database = database_proxy
 
