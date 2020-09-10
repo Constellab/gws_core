@@ -4,8 +4,8 @@
 # About us: https://gencovery.com
 
 from gws.settings import Settings
-from gws.prism.model import Resource, HTMLViewModel, JSONViewModel
-from gws.prism.view import ViewJinja2TemplateFiles
+from gws.model import Resource, HTMLViewModel, JSONViewModel
+from gws.view import ViewJinja2TemplateFiles
 
 settings = Settings.retrieve()
 template_dir = settings.get_template_dir("gws")

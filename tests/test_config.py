@@ -1,8 +1,8 @@
 
 import asyncio
 import unittest
-from gws.prism.model import Config, Process, Config, Resource, Model, ViewModel
-from gws.prism.controller import Controller
+from gws.model import Config, Process, Config, Resource, Model, ViewModel
+from gws.controller import Controller
 
 
 class TestConfig(unittest.TestCase):

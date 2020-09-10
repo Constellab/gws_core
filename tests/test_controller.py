@@ -10,10 +10,10 @@ from starlette.testclient import TestClient
 from starlette.websockets import WebSocket
 
 from gws.app import App
-from gws.prism.model import Model, Resource, HTMLViewModel, JSONViewModel
-from gws.prism.view import HTMLViewTemplate, JSONViewTemplate
-from gws.prism.controller import Controller
-from gws.prism.base import slugify
+from gws.model import Model, Resource, HTMLViewModel, JSONViewModel
+from gws.view import HTMLViewTemplate, JSONViewTemplate
+from gws.controller import Controller
+from gws.base import slugify
 
 # ##############################################################################
 #
@@ -88,7 +88,7 @@ class TestControllerHTTP(unittest.TestCase):
         self.assertEqual( Controller.fetch_model(html_vmodel.uri), html_vmodel )
 
         # assert that local import does not affect class
-        from gws.prism.controller import Controller as Ctrl
+        from gws.controller import Controller as Ctrl
         self.assertEqual(Ctrl.fetch_model(html_vmodel.uri), html_vmodel)
 
         #self.assertEqual(Ctrl.models, Controller.models)

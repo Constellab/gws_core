@@ -1,7 +1,7 @@
 
 import unittest
-from gws.prism.model import Process, Resource
-from gws.prism.io import Connector
+from gws.model import Process, Resource
+from gws.io import Connector
 
 class Person(Resource):
     pass

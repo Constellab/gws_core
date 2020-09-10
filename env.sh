@@ -13,4 +13,8 @@ python3 -m virtualenv .venv --python=python3
 . ./.venv/bin/activate
 
 # prism requirement file
-python3 -m pip install -r requirements.txt
+for req in "$@"
+do
+  python3 -m pip install -r "$req"
+done
+

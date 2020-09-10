@@ -5,8 +5,8 @@ import unittest
 import json
 
 from gws.settings import Settings
-from gws.prism.model import Config, Process, Resource, Model, ViewModel, Protocol, Job, Experiment
-from gws.prism.controller import Controller
+from gws.model import Config, Process, Resource, Model, ViewModel, Protocol, Job, Experiment
+from gws.controller import Controller
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_data("gws:testdata_dir")

@@ -1,8 +1,8 @@
 
 import asyncio
 import unittest
-from gws.prism.model import Job, Config, Process, Resource, Model, ViewModel
-from gws.prism.controller import Controller
+from gws.model import Job, Config, Process, Resource, Model, ViewModel
+from gws.controller import Controller
 
 class Person(Resource):
     def __init__(self, *args, **kwargs):

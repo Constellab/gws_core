@@ -4,7 +4,7 @@ from base64 import b64encode
 from starlette.requests import Request
 from fastapi_mail import FastMail
 
-from gws.prism.view import HTMLViewTemplate
+from gws.view import HTMLViewTemplate
 
 def crsf_protect(function):
     def wrapper(*args, **kwargs):

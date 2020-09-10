@@ -2,9 +2,9 @@
 import unittest
 import copy
 from gws.app import App
-from gws.prism.model import Process
-from gws.prism.model import Resource, ResourceSet
-from gws.prism.controller import Controller
+from gws.model import Process
+from gws.model import Resource, ResourceSet
+from gws.controller import Controller
 
 class Car(Resource):
     @property

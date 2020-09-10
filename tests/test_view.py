@@ -8,9 +8,9 @@ from starlette.responses import JSONResponse, HTMLResponse
 from starlette.testclient import TestClient
 
 from gws.app import App
-from gws.prism.model import Model, Resource, HTMLViewModel, JSONViewModel
-from gws.prism.view import HTMLViewTemplate, JSONViewTemplate, ViewTemplateFile
-from gws.prism.controller import Controller
+from gws.model import Model, Resource, HTMLViewModel, JSONViewModel
+from gws.view import HTMLViewTemplate, JSONViewTemplate, ViewTemplateFile
+from gws.controller import Controller
 from gws.settings import Settings
 
 settings = Settings.retrieve()

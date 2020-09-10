@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws.prism.base import Base
+from gws.base import Base
 from gws.logger import Logger
 
 class Session(Base):
@@ -14,7 +14,7 @@ class Session(Base):
 
     @classmethod
     def get_user(cls):
-        from gws.prism.model import User
+        from gws.model import User
 
         if cls._user is None:
             try:
@@ -34,7 +34,7 @@ class Session(Base):
 
     @classmethod
     def get_project(cls):
-        from gws.prism.model import Project
+        from gws.model import Project
 
         if cls._project is None:
             try:
@@ -52,7 +52,7 @@ class Session(Base):
 
     @classmethod
     def get_experiment(cls):
-        from gws.prism.model import Experiment
+        from gws.model import Experiment
 
         if cls._experiment is None:
             cls._experiment = Experiment(

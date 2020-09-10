@@ -25,9 +25,9 @@ from starlette.authentication import (
 )
 
 from gws.settings import Settings
-from gws.prism.view import HTMLViewTemplate, JSONViewTemplate, PlainTextViewTemplate
-from gws.prism.model import Resource, HTMLViewModel, JSONViewModel, User
-from gws.prism.controller import Controller
+from gws.view import HTMLViewTemplate, JSONViewTemplate, PlainTextViewTemplate
+from gws.model import Resource, HTMLViewModel, JSONViewModel, User
+from gws.controller import Controller
 from gws.logger import Logger
 
 settings = Settings.retrieve()

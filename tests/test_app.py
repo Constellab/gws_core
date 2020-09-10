@@ -10,9 +10,9 @@ from starlette.responses import JSONResponse, HTMLResponse
 from starlette.testclient import TestClient
 
 from gws.app import App
-from gws.prism.model import Model, Resource, Process, HTMLViewModel, JSONViewModel
-from gws.prism.view import HTMLViewTemplate, JSONViewTemplate
-from gws.prism.controller import Controller
+from gws.model import Model, Resource, Process, HTMLViewModel, JSONViewModel
+from gws.view import HTMLViewTemplate, JSONViewTemplate
+from gws.controller import Controller
 
 
 # ##############################################################################

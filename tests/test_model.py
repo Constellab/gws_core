@@ -2,8 +2,8 @@ import sys
 import os
 import unittest
 
-from gws.prism.model import Model, Resource, DbManager
-from gws.prism.controller import Controller
+from gws.model import Model, Resource, DbManager
+from gws.controller import Controller
 
 from peewee import CharField
 
