@@ -17,15 +17,12 @@ from gws.settings import Settings
 def _run(   ctx=None, test=False, db=False, \
             cli=False, runserver=False, docgen=False, \
             force=False, show=False, pull=False, push=False, tag=""):
-    settings = Settings.retrieve()
-
+    
     from gws.logger import Logger
+    settings = Settings.retrieve()
     Logger(is_new_session=True, is_test=test)
     
-    if runserver:   
-        from gws.controller import Controller
-        Controller.is_query_params = False
-
+    if runserver:
         # dynamical inheritance of App
         dep_module_names = settings.get_dependency_names()    
         apps_t = tuple()
@@ -206,7 +203,6 @@ def _run(   ctx=None, test=False, db=False, \
         if not os.path.exists(os.path.join(app_dir, gen_folder)):
             # send html doc to a remote server
             pass
-
         
     else:
         # only load gws environmenet
@@ -216,7 +212,6 @@ def _run(   ctx=None, test=False, db=False, \
         #if not settings.save():
         #    Logger.error(Exception("manage", "Cannot save the settings in the database"))
     
-
     print(f"Log file: {Logger.get_file_path()}")
         
 
