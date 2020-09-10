@@ -54,12 +54,12 @@ class TestIO(unittest.TestCase):
         p3 = Drive()
         self.assertRaises(Exception, p2.out_port('move_person_out').pipe,  p3.in_port('move_drive_in'))
 
-        self.assertEquals(port_connect.link(), {
+        self.assertEquals(port_connect.to_json(), {
             "from": {"node": p0,  "port": "create_person_out"},
             "to": {"node": p1,  "port": "move_person_in"}
         })
 
-        self.assertEquals(port_connect.link(True), {
+        self.assertEquals(port_connect.to_json(True), {
             "from": {"node": p0.full_classname(),  "port": "create_person_out"},
             "to": {"node": p1.full_classname(),  "port": "move_person_in"}
         })
