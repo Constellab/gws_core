@@ -87,12 +87,14 @@ def _run(   ctx=None, test=False, db=False, \
             Logger.error(Exception("manage", "Cannot save the settings in the database"))
         
         app_dir = settings.get_cwd()
+        doc_folder = "./docs/"
         gen_folder = "./docs/html/"
+        rst_folder = "./rst/"
 
         try:
             if force:
                 try:
-                    shutil.rmtree(os.path.join(app_dir, gen_folder), ignore_errors=True)
+                    shutil.rmtree(os.path.join(app_dir, doc_folder), ignore_errors=True)
                 except:
                     pass
             
@@ -141,9 +143,9 @@ def _run(   ctx=None, test=False, db=False, \
                 ], cwd=os.path.join(app_dir, gen_folder))
 
             for f in ['intro.rst', 'usage.rst', 'contrib.rst', 'changes.rst']:
-                if os.path.exists(os.path.join(app_dir,"./docs/"+f)):
+                if os.path.exists(os.path.join(app_dir, rst_folder, f)):
                     shutil.copyfile(
-                        os.path.join(app_dir,"./docs/"+f), 
+                        os.path.join(app_dir, rst_folder, f), 
                         os.path.join(app_dir,gen_folder,"./source/"+f))
 
             # insert modules in index

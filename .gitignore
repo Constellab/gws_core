@@ -33,7 +33,7 @@ bazel-*
 # Docs
 # -----------------------------------------------------------
 
-docs/html/
+docs/
 
 # https://github.com/github/gitignore
 
