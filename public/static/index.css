@@ -1,0 +1,36 @@
+:root {
+    /* base */
+    --gws-color: rgb(104, 156, 153);
+
+    /* form */
+    --gws-input-bg-color: #dcdcdc;
+    --gws-input-border-color: #dcdcdc;
+    --gws-input-border-hover-color: var(--gws-color);
+
+    /* dashboard */
+    --gws-dashboard-bg-color: #f5f5f5;
+    --gws-dashboard-border-color: #a9a9a9;
+    --gws-dashboard-text-color: #333 !important;
+    --gws-dashboard-text-size: 12px;
+    --gws-dashboard-top-bar-color: var(--gws-dashboard-bg-color);
+    --gws-dashboard-header-bg-color: #f7f7f7;
+    --gws-dashboard-panel-bg-color: #e9e9e9;
+    --gws-dashboard-panel-border: none;
+    --gws-dashboard-drag-box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
+    --gws-dashboard-dragging-splitter-bg-color: #dcdcdc;
+
+    --gws-dashboard-drop-target-indicator-outline-color: #cccccc;
+    --gws-dashboard-drop-target-indicator-bg-color: #000;
+}
+
+div[class^='gview:']{
+    display: none
+}
+
+.d-block{
+    display: block
+}
+
+.d-none{
+    display: none
+}

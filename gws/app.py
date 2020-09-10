@@ -4,6 +4,9 @@
 # About us: https://gencovery.com
 
 import os
+import base64
+import binascii
+
 import uvicorn
 from starlette.applications import Starlette
 from starlette.responses import Response, JSONResponse, PlainTextResponse,  FileResponse,  HTMLResponse
@@ -13,12 +16,17 @@ from starlette.staticfiles import StaticFiles
 from starlette.requests import Request
 from starlette.endpoints import HTTPEndpoint, WebSocketEndpoint
 
-from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware import Middleware
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.middleware.authentication import AuthenticationMiddleware
+from starlette.authentication import (
+    AuthenticationBackend, AuthenticationError, SimpleUser, UnauthenticatedUser,
+    AuthCredentials
+)
 
 from gws.settings import Settings
 from gws.prism.view import HTMLViewTemplate, JSONViewTemplate, PlainTextViewTemplate
-from gws.prism.model import Resource, HTMLViewModel, JSONViewModel
+from gws.prism.model import Resource, HTMLViewModel, JSONViewModel, User
 from gws.prism.controller import Controller
 from gws.logger import Logger
 
@@ -26,58 +34,24 @@ settings = Settings.retrieve()
 
 ####################################################################################
 #
-# Hello!
+# Endpoints
 #
 ####################################################################################
+
+template_dir = settings.get_template_dir("gws")
+templates = Jinja2Templates(directory=template_dir)
 
 async def hello(request):
-    return PlainTextResponse("Hello!")
-
-####################################################################################
-#
-# Homepage!
-#
-####################################################################################
-
-
-public_dir = settings.get_public_dir()
-if not os.path.exists(os.path.join(public_dir, "index.html")):
-    public_dir = settings.get_public_dir("gview")
-
-templates = Jinja2Templates(directory=public_dir)
-async def homepage(request):
-    settings = Settings.retrieve()
-    print(request.session)
-    return templates.TemplateResponse('index.html', {
+    return templates.TemplateResponse("hello/index.html", {
         'request': request, 
         'settings': settings,
     })
 
-####################################################################################
-#
-# Robot class
-#
-####################################################################################
-
-class Robot(Resource):
-    pass
-
-class HTMLRobotViewModel(HTMLViewModel):
-    model_specs = [ Robot ]
-    template = HTMLViewTemplate("""
-        Hi!<br>
-        I'am {{view_model.model.data.name}}.<br>
-        Welcome to GWS!
-    """)
-
-class JSONRobotViewModel(JSONViewModel):
-    model_specs = [ Robot ]
-
-####################################################################################
-#
-# HTTP and WebSocket endpoints
-#
-####################################################################################
+async def homepage(request):
+    return templates.TemplateResponse("index/index.html", {
+        'request': request, 
+        'settings': settings,
+    })
 
 class HTTPApp(HTTPEndpoint):
     async def get(self, request):
@@ -86,19 +60,57 @@ class HTTPApp(HTTPEndpoint):
     async def post(self, request):
         return await App.action(request)
 
-class WebSocketApp(WebSocketEndpoint):
-    encoding = 'bytes'
+# class WebSocketApp(WebSocketEndpoint):
+#     encoding = 'bytes'
 
-    async def on_connect(self, websocket):
-        await websocket.accept()
+#     async def on_connect(self, websocket):
+#         await websocket.accept()
 
-    async def on_receive(self, websocket, data):
-        view = await App.action(websocket)
-        html = view.render()
-        await websocket.send_bytes(b""+html)
+#     async def on_receive(self, websocket, data):
+#         vmodel = await App.action(websocket)
+#         html = vmodel.render(request=websocket)
+#         await websocket.send_bytes(b""+html)
 
-    async def on_disconnect(self, websocket, close_code):
-        pass
+#     async def on_disconnect(self, websocket, close_code):
+#         pass
+
+from gws._app import user as user_endpoint
+from gws._app import demo as demo_endpoint
+
+####################################################################################
+#
+# AuthBackend class
+#
+####################################################################################
+
+class AuthBackend(AuthenticationBackend):
+
+    async def authenticate(self, request):
+        if "Authorization" not in request.headers:
+            return
+
+        auth = request.headers["Authorization"]
+        try:
+            scheme, credentials = auth.split()
+            if scheme.lower() != 'basic':
+                return
+            decoded = base64.b64decode(credentials).decode("ascii")
+        except (ValueError, UnicodeDecodeError, binascii.Error) as err:
+            raise AuthenticationError(f'Invalid basic auth credentials. Error: {err}')
+
+        email, _, password = decoded.partition(":")
+        
+        try:
+            user = User.get(email=email, password=password)
+        except:
+            raise AuthenticationError('User not found')
+
+        scopes = ["authenticated"]
+        if user.is_admin:
+            scopes.append("admin")
+
+        auth_credentials = AuthCredentials(scopes)
+        return auth_credentials, user
 
 ####################################################################################
 #
@@ -119,6 +131,10 @@ class App :
             SessionMiddleware, 
             secret_key=settings.get_data("secret_key"), 
             session_cookie="gws"
+        ),
+        Middleware( 
+            AuthenticationMiddleware, 
+            backend = AuthBackend()
         )
     ]
     debug = settings.get_data("is_test")
@@ -133,13 +149,13 @@ class App :
         
         To prevent route collisions, it is highly recommended to 
         prefix route names of the name of the current brick.
-        e.g.: 
-            * /<brick name>/home/       -> home page route
-            * /<brick name>/settings/   -> setting page route
+        For example: 
+        * /<brick name>/home/       -> home page route
+        * /<brick name>/settings/   -> setting page route
         """
-
+        
         # process and resource routes
-        cls.routes.append(Route('/gws/{action}/{uri}/{params}/', HTTPApp))
+        cls.routes.append(Route('/gws/{action}/{uri}/{data}/', HTTPApp))
         cls.routes.append(Route('/gws/{action}/{uri}/', HTTPApp))
 
         # static dirs
@@ -153,6 +169,13 @@ class App :
         # hello testing route
         cls.routes.append(Route("/hello", hello))
 
+        # user
+        #cls.routes.append(Route("/user/", HTTPApp))
+        #cls.routes.append(Route("/user/login/", HTTPApp))
+        #cls.routes.append(Route("/user/signup/", HTTPApp))
+
+        # adds new routes
+        cls.routes.append(Route('/demo/', endpoint=demo_endpoint.demo))
     
     @classmethod
     async def action(cls, request) -> Response:
@@ -161,13 +184,18 @@ class App :
         :return: The response
         :rtype: `starlette.responses.Response`
         """
-        view_model = await Controller.action(request)
-        if view_model.template.is_html():
-            return HTMLResponse(view_model.render())
-        elif view_model.template.is_json():
-            return JSONResponse(view_model.render())
+        vmodel = await Controller.action(request)
+        rendering = vmodel.render(request=request)
+
+        if isinstance(rendering, Response):
+            return rendering
         else:
-            return PlainTextResponse(view_model.render())
+            if vmodel.template.is_html():
+                return HTMLResponse(rendering)
+            elif vmodel.template.is_json():
+                return JSONResponse(rendering)
+            else:
+                return PlainTextResponse(rendering)
 
     @classmethod 
     def start(cls):
@@ -186,6 +214,9 @@ class App :
         """
         Called on application startup to create test objects
         """
+
+        from gws.robot import Robot, HTMLRobotViewModel, JSONRobotViewModel
+
         try:
             robot = Robot.get( Robot.id==1 )
             html_view_model = HTMLRobotViewModel.get( HTMLRobotViewModel.id == 1 )

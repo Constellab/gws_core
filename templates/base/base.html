@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% block head %}
+    <meta charset="utf-8" />
+    <meta name="author" content="Gencovery" />
+    <meta name="description" content="Gencovery Web Services" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="apple-touch-icon" sizes="76x76" href="{{ settings.app.favicon.src }}" />
+    <link rel="icon" type="{{ settings.app.favicon.type }}" href="{{ settings.app.favicon.src }}" />
+    
+    {% for url in settings.app.styles %}
+    <link rel="stylesheet" type="text/css" href="{{ url }}"></link>
+    {% endfor %}
+
+    {% for url in settings.app.scripts %}
+    <script src="{{ url }}"></script>
+    {% endfor %}
+
+    {% for url in settings.app.modules %}
+    <script src="{{ url }}" type="module"></script>
+    {% endfor %}
+
+    <title>{% block title %}{% endblock %}</title>
+    {% endblock %}
+</head>
+<body>
+    {% block body %}{% endblock %}
+</body>
+</html>

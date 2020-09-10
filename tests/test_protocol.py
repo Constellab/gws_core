@@ -87,6 +87,9 @@ class Wait(Process):
         import time
         time.sleep(self.get_param('waiting_time'))
 
+def create_protocol():
+    pass
+
 class TestProtocol(unittest.TestCase):
     
     @classmethod
@@ -101,12 +104,12 @@ class TestProtocol(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        Config.drop_table()
-        Process.drop_table()
-        Protocol.drop_table()
-        Experiment.drop_table()
-        Job.drop_table()
-        Person.drop_table()
+        # Config.drop_table()
+        # Process.drop_table()
+        # Protocol.drop_table()
+        # Experiment.drop_table()
+        # Job.drop_table()
+        # Person.drop_table()
         pass
     
     def test_protocol(self):
@@ -147,16 +150,18 @@ class TestProtocol(unittest.TestCase):
             print("Sleeping 1 sec for waiting all tasks to finish ...")
             await asyncio.sleep(1)
 
-        from gws.session import Session
-        e = Session.get_experiment()
+        def _check_exp():
+            from gws.session import Session
+            e = Session.get_experiment()
+            self.assertEqual(e.jobs.count(), 8)
+            self.assertEqual(e.is_finished, False)
+            self.assertEqual(e.is_running, False)
 
-        self.assertTrue(e.jobs.count(), 8)
-        self.assertTrue(e.is_finished, False)
-        self.assertTrue(e.is_running, False)
+        proto.on_end = _check_exp
 
         asyncio.run( _run() )
 
-    def test_connected_protocol(self):
+    def test_setting_dump(self):
         p0 = Create(name="p0")
         p1 = Move()
         p2 = Eat()
@@ -188,10 +193,53 @@ class TestProtocol(unittest.TestCase):
         p0>>'person'        | proto<<'person'
         proto>>'person'     | p5<<'person'
 
+        p1 = proto.get_process("p1")
+        proto.is_interfaced_with(p1)
+        p2 = proto.get_process("p2")
+        proto.is_outerfaced_with(p2)
+
+        with open(os.path.join(testdata_dir, "protocol_settings.json"), "r") as f:
+            import json
+            s1 = json.load(f)
+            s2 = json.loads(proto.dumps_settings())
+            self.assertEqual(s1,s2)
+
         async def _run():
             await p0.run()
 
             print("Sleeping 1 sec for waiting all tasks to finish ...")
             await asyncio.sleep(1)
 
+        asyncio.run( _run() )
+
+    def test_setting_load(self):
+        with open(os.path.join(testdata_dir, "protocol_settings.json"), "r") as f:
+            import json
+            s1 = json.load(f)
+
+            proto = Protocol.from_settings(s1)
+            
+            import json
+            s2 = json.loads(proto.dumps_settings())
+
+            self.assertEqual(s1,s2)
+
+        p1 = proto.get_process("p1")
+        proto.is_interfaced_with(p1)
+
+        p2 = proto.get_process("p2")
+        proto.is_outerfaced_with(p2)
+
+        p0 = Create(name="p0")
+        p5 = Eat(name="p5")
+
+        p0>>'person'        | proto<<'person'
+        proto>>'person'     | p5<<'person'
+
+        async def _run():
+            await p0.run()
+
+            print("Sleeping 1 sec for waiting all tasks to finish ...")
+            await asyncio.sleep(1)
+            
         asyncio.run( _run() )

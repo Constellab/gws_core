@@ -32,11 +32,11 @@ class Person(Resource):
 
 class HTMLPersonViewModel(HTMLViewModel):
     model_specs = [ Person ]
-    template = HTMLViewTemplate("Model={{view_model.model.id}} & View URI={{view_model.uri}}: I am <b>{{view_model.model.name}}</b>! My job is {{view_model.data.job}}.")
+    template = HTMLViewTemplate("Model={{vmodel.model.id}} & View URI={{vmodel.uri}}: I am <b>{{vmodel.model.name}}</b>! My job is {{vmodel.data.job}}.")
 
 class JSONPersonViewModel(JSONViewModel):
     model_specs = [ Person ]
-    template = JSONViewTemplate('{"model_id":"{{view_model.model.id}}", "view_uri":"{{view_model.uri}}", "name": "{{view_model.model.name}}!", "job":"{{view_model.data.job}}"}')
+    template = JSONViewTemplate('{"model_id":"{{vmodel.model.id}}", "view_uri":"{{vmodel.uri}}", "name": "{{vmodel.model.name}}!", "job":"{{vmodel.data.job}}"}')
 
 # Person.register_view_model_specs([
 #     HTMLPersonViewModel, 
@@ -86,11 +86,11 @@ class TestApp(unittest.TestCase):
         client = TestClient(app)
 
         # Test update_view => html
-        params = """{"params": { "job" : "engineer" }}"""
+        params = """{"vdata": { "job" : "engineer" }}"""
         response = client.get(Controller.build_url(
-            action = "view", 
+            action = "read", 
             uri = elon_vmodel.uri,
-            params = str(params)
+            data = str(params)
         ))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
@@ -98,8 +98,3 @@ class TestApp(unittest.TestCase):
             "Model="+str(elon.id)+" & View URI="+elon_vmodel.uri+": I am <b>Elon Musk</b>! My job is engineer."
         )
         print(response.content)
-
-    # def test_app(self):
-    #     Controller.is_query_params = False
-    #     app = App()
-    #     app.start()

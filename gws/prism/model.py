@@ -15,7 +15,7 @@ from datetime import datetime
 from peewee import SqliteDatabase, Model as PWModel
 from peewee import  Field, IntegerField, DateField, \
                     DateTimeField, CharField, BooleanField, \
-                    ForeignKeyField             
+                    ForeignKeyField, IPField      
 from playhouse.sqlite_ext import JSONField
 
 from starlette.requests import Request
@@ -44,6 +44,7 @@ from gws.prism.event import EventListener
 class Model(BaseModel):
     """
     Model class
+
     :property id: The id of the model (in database)
     :type id: int, `peewee.model.IntegerField`
     :property uri: The Unique Resource Identifier of the model
@@ -89,6 +90,7 @@ class Model(BaseModel):
     def cast(self) -> 'Model':
         """
         Casts a model instance to its `type` in database
+
         :return: The model
         :rtype: `Model` instance
         """
@@ -108,7 +110,8 @@ class Model(BaseModel):
 
     def clear_data(self, save: bool = False):
         """
-        Clears the `data`
+        Clears the :property:`data`
+
         :param save: If True, save the model the `data` is cleared
         :type save: bool
         """
@@ -122,6 +125,7 @@ class Model(BaseModel):
         """ 
         Compares the model with another model. The models are equal if they are 
         identical (same handle in memory) or have the same id in the database
+
         :param other: The model to compare
         :type other: `Model`
         :return: True if the models are equal
@@ -138,6 +142,7 @@ class Model(BaseModel):
     def get_uri_name(cls) -> str:
         """ 
         Returns the uri_name of the model
+
         :return: The uri_name
         :rtype: str
         """
@@ -147,12 +152,29 @@ class Model(BaseModel):
     def __generate_uri(self) -> str:
         """ 
         Generates the uri of the model
+
         :return: The uri
         :rtype: str
         """
         return self.get_uri_name() + Model._uri_delimiter + str(self.id)
 
     # -- H --
+
+    def hydrate_with(self, data):
+        """
+        Hydrate the model with data
+        """
+
+        col_names = self.property_names(Field)
+        for prop in data:
+            if prop == "id":
+                continue
+
+            if prop in col_names:
+                setattr(self, prop, data[prop])
+            else:
+                self.data[prop] = data[prop]
+
 
     # def has_data(self) -> bool:
     #     """
@@ -167,6 +189,7 @@ class Model(BaseModel):
     def is_saved(self):
         """ 
         Returns True if the model is saved in db, False otherwise
+
         :return: True if the model is saved in db, False otherwise
         :rtype: bool
         """
@@ -190,12 +213,17 @@ class Model(BaseModel):
     def parse_uri(cls, uri: str) -> list:
         """ 
         Parses the uri of a model and returns the corresponding `uri_name` an `uri_id`
+
         :param uri: The uri to parse
         :type uri: str
         :return: A list containing the uri_name and uri_id
         :rtype: list
         """
-        return uri.split(cls._uri_delimiter)
+
+        tab = uri.split(cls._uri_delimiter)
+        if len(tab) == 1:
+            tab.append(0)
+        return tab
 
     # -- S --
 
@@ -226,6 +254,7 @@ class Model(BaseModel):
     def uri_id(self) -> str:
         """ 
         Returns the uri_id of the model
+
         :return: The uri_id
         :rtype: str
         """
@@ -237,6 +266,7 @@ class Model(BaseModel):
     def store_path(self) -> str:
         """ 
         Returns the path of the KVStore of the model
+
         :return: The path of the KVStore
         :rtype: str
         """
@@ -251,6 +281,7 @@ class Model(BaseModel):
     def set_data(self, data: dict):
         """ 
         Sets the `data`
+
         :param data: The input data
         :type data: dict
         :raises Exception: If the input parameter data is not a `dict`
@@ -263,6 +294,7 @@ class Model(BaseModel):
     def save(self, *args, **kwargs) -> bool:
         """ 
         Sets the `data`
+
         :param data: The input data
         :type data: dict
         :raises Exception: If the input data is not a `dict`
@@ -285,6 +317,7 @@ class Model(BaseModel):
         """
         Atomically and safely save a list of models in the database. If an error occurs
         during the operation, the whole transactions is rolled back.
+
         :param model_list: List of models
         :type model_list: list
         :return: True if all the model are successfully saved, False otherwise. 
@@ -315,6 +348,7 @@ class Model(BaseModel):
 class Viewable(Model):
     """
     Viewable class
+
     :property _view_model_specs: The list of registered view model types.
     :type specs: dict
     """
@@ -328,6 +362,12 @@ class Viewable(Model):
         :rtype: dict
         """
         import json
+
+        # dumps = {}
+        # for prop in self.property_names(Field):
+        #     val = getattr(self, prop)
+        #     if isinstance()
+        #     data[prop] = getattr(self, prop)
         return json.dumps({
             "id" : self.id,
             "data" : self.data,
@@ -338,31 +378,43 @@ class Viewable(Model):
     def as_html(self) -> str:
         """
         Returns HTML representation of the model
+
         :return: The HTML text
         :rtype: str
         """
         return "<x-gws class='gws-model' id='{}' data-id='{}' data-uri='{}'></x-gws>".format(self._uuid, self.id, self.uri)
 
-    def create_html_view_model(self):
-        """
-        Creates an instance of HTMLViewModel
-        :return: The view model
-        :rtype: HTMLViewModel
-        """
-        return HTMLViewModel(model_instance=self)
+    def create_default_view_model(self):
+        if "default" in self._view_model_specs:
+            model_t = self._view_model_specs["default"]
+            return model_t(model_instance=self)
+        else:   
+            for k in self._view_model_specs:
+                model_t = self._view_model_specs[k]
+                return model_t(model_instance=self) #return the 1st view_model
 
-    def create_json_view_model(self):
-        """
-        Creates an instance of JSONViewModel
-        :return: The view model
-        :rtype: JSONViewModel
-        """
+        return None
 
-        return JSONViewModel(model_instance=self)
+    # def create_html_view_model(self):
+    #     """
+    #     Creates an instance of HTMLViewModel
+    #     :return: The view model
+    #     :rtype: HTMLViewModel
+    #     """
+    #     return HTMLViewModel(model_instance=self)
+
+    # def create_json_view_model(self):
+    #     """
+    #     Creates an instance of JSONViewModel
+    #     :return: The view model
+    #     :rtype: JSONViewModel
+    #     """
+    #     return JSONViewModel(model_instance=self)
 
     def create_view_model_by_name(self, type_name: str):
         """
         Creates an instance of a registered ViewModel
+
         :param type_name: The slugified type name of the view model to create
         :type type_name: str
         :return: The created view model
@@ -381,15 +433,16 @@ class Viewable(Model):
             view_model_t = self._view_model_specs.get(type_name, None)
 
         if isinstance(view_model_t, type):
-            view_model = view_model_t(self)
-            return view_model
+            vmodel = view_model_t(model_instance=self)
+            return vmodel
         else:
-            Logger.error(Exception(self.classname(), "create_view_model_by_name", f"The view_model '{view_model_t}' is not found"))
+            Logger.error(Exception(self.classname(), "create_view_model_by_name", f"The vmodel '{view_model_t}' is not found"))
 
     @classmethod
     def register_view_model_specs(cls, specs: list):
         """
         Registers a list of view model types
+
         :param specs: List of view model types
         :type specs: list
         """
@@ -452,6 +505,7 @@ class Config(Viewable):
     def get_param(self, name: str) -> [str, int, float, bool]:
         """ 
         Returns the value of a parameter by its name
+
         :param name: The name of the parameter
         :type: str
         :return: The value of the parameter (base type)
@@ -477,6 +531,7 @@ class Config(Viewable):
     def set_param(self, name: str, value: [str, int, float, bool]):
         """ 
         Sets the value of a parameter by its name
+
         :param name: The name of the parameter
         :type: str
         :param value: The value of the parameter (base type)
@@ -508,6 +563,7 @@ class Config(Viewable):
     def set_specs(self, specs: dict):
         """ 
         Sets the specs of the config (remove current parameters)
+
         :param specs: The config specs
         :type: dict
         :Logger.error(Exception: If the config is already saved)
@@ -600,6 +656,7 @@ class Process(Viewable):
     def add_event(self, name, callback):
         """
         Adds an event the event listener
+
         :param name: The name of the event
         :type name: `str`
         :param callback: The callback function of the event
@@ -623,7 +680,16 @@ class Process(Viewable):
         super().create_table(*args, **kwargs)
 
     @property
-    def config(self):
+    def config(self) -> Config:
+        """
+        Returns the config. 
+        Note that the config is actually related to the job of the process. 
+        The config is therefore retrieved 
+        through the job instance.
+
+        :return: The config
+        :rtype: Config
+        """
         return self.get_active_job().config
 
     def __check_hash(self):
@@ -635,7 +701,7 @@ class Process(Viewable):
         type_str = slugify(self.type)
         model_t = Controller.get_model_type(type_str)
         source = inspect.getsource(model_t)
-        hash_object = hashlib.sha256((self.type+source).encode())
+        hash_object = hashlib.sha512((self.type+source).encode())
         return hash_object.hexdigest()
 
     # -- G --
@@ -643,6 +709,7 @@ class Process(Viewable):
     def get_param(self, name: str) -> [str, int, float, bool]:
         """
         Returns the value of a parameter of the process config by its name.
+
         :return: The paremter value
         :rtype: [str, int, float, bool]
         """
@@ -651,6 +718,7 @@ class Process(Viewable):
     def get_active_job(self):
         """
         Initialize an job for the process.
+
         :return: The job
         :rtype: Job
         """
@@ -665,6 +733,7 @@ class Process(Viewable):
     def input(self) -> 'Input':
         """
         Returns input of the process.
+
         :return: The input
         :rtype: Input
         """
@@ -673,7 +742,9 @@ class Process(Viewable):
     @property
     def is_ready(self) -> bool:
         """
-        Returns True if the process is ready (i.e. all its ports are ready or it has never been run before), False otherwise.
+        Returns True if the process is ready (i.e. all its ports are 
+        ready or it has never been run before), False otherwise.
+
         :return: True if the process is ready, False otherwise.
         :rtype: bool
         """
@@ -683,7 +754,8 @@ class Process(Viewable):
 
     def in_port(self, name: str) -> InPort:
         """
-        Returns the port of the input by its name
+        Returns the port of the input by its name.
+
         :return: The port
         :rtype: InPort
         """
@@ -712,7 +784,8 @@ class Process(Viewable):
     @property
     def name(self) -> str:
         """ 
-        Returns the context name of the process
+        Returns the context name of the process.
+
         :return: The name
         :rtype: str
         """
@@ -721,7 +794,8 @@ class Process(Viewable):
     @name.setter
     def name(self, name: str) -> str:
         """ 
-        Returns the context name of the process
+        Returns the context name of the process.
+
         :return: The name
         :rtype: str
         """
@@ -730,6 +804,7 @@ class Process(Viewable):
     def get_next_procs(self) -> list:
         """ 
         Returns the list of (right-hand side) processes connected to the IO ports.
+
         :return: List of processes
         :rtype: list
         """
@@ -741,6 +816,7 @@ class Process(Viewable):
     def output(self) -> 'Output':
         """
         Returns output of the process.
+
         :return: The output
         :rtype: Output
         """
@@ -749,6 +825,7 @@ class Process(Viewable):
     def out_port(self, name: str) -> OutPort:
         """
         Returns the port of the output by its name.
+
         :return: The port
         :rtype: OutPort
         """
@@ -763,6 +840,7 @@ class Process(Viewable):
     def on_end(self, callback):
         """
         Adds an event to execute after the process ends running. 
+
         :param callback: The function to execute
         :callback: `function`
         """
@@ -771,6 +849,7 @@ class Process(Viewable):
     def on_start(self, callback):
         """
         Adds an event to execute before the process starts running. 
+
         :param callback: The function to execute
         :callback: `function`
         """
@@ -858,7 +937,7 @@ class Process(Viewable):
 
     def set_input(self, name: str, resource: 'Resource'):
         """ 
-        Sets the resource of an input port by its name
+        Sets the resource of an input port by its name.
 
         :param name: The name of the input port 
         :type name: str
@@ -876,6 +955,7 @@ class Process(Viewable):
     def set_config(self, config: 'Config'):
         """ 
         Sets the config of the process.
+
         :param config: A config to assign
         :type config: Config
         """
@@ -888,6 +968,7 @@ class Process(Viewable):
     def set_param(self, name: str, value: [str, int, float, bool]):
         """ 
         Sets the value of a config parameter.
+
         :param name: Name of the parameter
         :type name: str
         :param value: A value to assign
@@ -926,6 +1007,7 @@ class Project(Model):
             # create a unique on name,organization
             (('name', 'organization'), True),
         )
+
 # ####################################################################
 #
 # User class
@@ -938,9 +1020,56 @@ class User(Model, BaseUser):
     sirname = CharField(index=True)
     organization = CharField(index=True)
     email =  CharField(index=True)
+    password =  CharField()
+    token =  CharField()
     is_active =  BooleanField(default=False, index=True)
+    is_locked =  BooleanField(default=False, index=True)
 
     _table_name = 'user'
+
+    # -- G --
+    
+    def __generate_token(self):
+        settings = Settings.retrieve()
+        hash_object = hashlib.sha512(
+            (self.email + self.organization + str(self.creation_datetime) + settings.name).encode()
+        )
+        self.token = hash_object.hexdigest()
+    
+    @classmethod
+    def __generate_password_hash(self, email, password):
+        if email is None or password is None:
+            Logger.error(Exception("User", "__generate_password_hash", "The user email and password are required"))
+        hash_object = hashlib.sha512((email + password).encode())
+        return hash_object.hexdigest()
+
+    # -- S --
+
+    def save(self, *arg, **kwargs):
+        if self.id is None:
+            self.__generate_token()
+            self.password = self.__generate_password_hash(self.email, self.password)
+
+        super().save(*arg, **kwargs)
+
+    # -- V --
+
+    @classmethod
+    def verify_user_password(cls, email: str, password: str) -> ('User', bool,):
+        """ 
+        Verify the email and password and returns the corresponding user 
+
+        :param email: The email to check
+        :type email: str
+        :param password: The password to check
+        :type password: str
+        :return: The user if successfully verified, False otherwise
+        :rtype: User, False
+        """
+        try:
+            return User.get(User.email==email, User.email==cls.__generate_password_hash(email,password))
+        except:
+            return False
 
     class Meta:
         indexes = (
@@ -948,6 +1077,21 @@ class User(Model, BaseUser):
             (('email', 'organization'), True),
         )
 
+# ####################################################################
+#
+# UserLogin class
+#
+# ####################################################################
+
+class UserLogin(Model, BaseUser):
+    user = ForeignKeyField(User)
+    status = BooleanField(index=True)
+    ip_address = IPField()
+    login_date = DateTimeField()
+
+    def last_login(self, user):
+        pass
+ 
 # ####################################################################
 #
 # Experiment class
@@ -1028,6 +1172,13 @@ class Job(Model):
 
     @property
     def config(self):
+        """
+        Returns the config fo the job.
+
+        :return: The config
+        :rtype: Config
+        """
+
         if not self._config is None:
             return self._config
 
@@ -1042,6 +1193,13 @@ class Job(Model):
 
     @property
     def process(self):
+        """
+        Returns the process fo the job.
+
+        :return: The config
+        :rtype: Config
+        """
+
         if not self._process is None:
             return self._process
 
@@ -1166,7 +1324,6 @@ class Protocol(Process):
             for k in interfaces:
                 input_specs[k] = interfaces[k]._resource_type
 
-            # print(input_specs)
             self.__set_input_specs(input_specs)
             self._interfaces = interfaces
 
@@ -1175,7 +1332,6 @@ class Protocol(Process):
             for k in outerfaces:
                 output_specs[k] = outerfaces[k]._resource_type
 
-            # print(output_specs)
             self.__set_output_specs(output_specs)
             self._outerfaces = outerfaces
 
@@ -1186,12 +1342,17 @@ class Protocol(Process):
 
     def add_process(self, name: str, process: Process):
         """ 
-        Adds a process to the protocol
+        Adds a process to the protocol.
+
         :param name: Unique name of the process
         :type name: str
         :param process: The process
         :type process: Process
         """
+
+        if self.is_finished or self.is_running:
+            Logger.error(Exception("Protocol", "add_process", "The protocol has already been run"))
+       
         if not isinstance(process, Process):
             Logger.error(Exception("Protocol", "add_process", "The process must be an instance of Process"))
 
@@ -1199,11 +1360,16 @@ class Protocol(Process):
 
     def add_connector(self, connector: Connector):
         """ 
-        Adds a connector to the protocol
+        Adds a connector to the protocol.
+
         :param connector: The connector
         :type connector: Connector
         :Logger.error(Exception: It the processes of the connection do not belong to the protocol)
         """
+
+        if self.is_finished or self.is_running:
+            Logger.error(Exception("Protocol", "add_connector", "The protocol has already been run"))
+        
         if not isinstance(connector, Connector):
             Logger.error(Exception("Protocol", "add_connector", "The connector must be an instance of Connector"))
         
@@ -1216,11 +1382,6 @@ class Protocol(Process):
 
         self._connectors.append(connector)
 
-    # -- B --
-
-    def __build_from_settings(self, settings):
-        pass
-    
     # -- C --
 
     @classmethod
@@ -1233,33 +1394,23 @@ class Protocol(Process):
 
         super().create_table(*args, **kwargs)
 
-    def __create_settings( self ):
-        settings = dict(
-            nodes = {},
-            links = []
-        )
-        
-        for conn in self._connectors:
-            link = conn.link
-            for k in self._processes:
-                if link["from"]["node"] is self._processes[k]:
-                    link["from"]["node"] = k
-                elif link["to"]["node"] is self._processes[k]:
-                    link["to"]["node"] = k
-        
-        for k in self._processes:
-            settings["nodes"][k] = self._processes.full_classname()
+    # -- G --
 
-        #settings["interfaces"] = {}
-        #settings["outerfaces"] = {}
+    def get_process(self, name: str) -> Process:
+        """ 
+        Returns a process by its name.
 
-        return settings
+        :return: The process
+        :rtype": Process
+        """
+        return self._processes[name]
 
     # -- I --
 
     def is_child(self, process: Process) -> bool:
         """ 
-        Returns True if the process is in the Protocol, False otherwise
+        Returns True if the process is in the Protocol, False otherwise.
+
         :param process: The process
         :type process: Process
         :return: True if the process is in the Protocol, False otherwise
@@ -1322,14 +1473,6 @@ class Protocol(Process):
 
         # Good! The protocol task is finished!
         self._set_outputs()
-        # e = Experiment(
-        #     #job = self.get_active_job(),
-        #     user = Controller.get_user(),
-        #     project = Controller.get_project()
-        # )
-        # if not e.save():
-        #     Logger.error(Exception("Protocol", "_run_after_task", "The experiment cannot be saved"))
-        
         super()._run_after_task()
 
     # -- S --
@@ -1375,14 +1518,110 @@ class Protocol(Process):
         for k in output_specs:
             output_specs[k] = output_specs[k].__name__
         self.data['output_specs'] = output_specs
-        
-    @property
-    def settings( self ):
-        return self.__create_settings()
+    
+    def dumps_settings( self ) -> str:
+        """ 
+        Returns protocol settings
+        """
+        settings = dict(
+            name = self.name,
+            nodes = {},
+            links = [],
+            interfaces = {},
+            outerfaces = {},
+        )
 
-    @settings.setter
-    def settings( self, settings: dict ):
-        self.__build_from_settings( settings )
+        for conn in self._connectors:
+            link = conn.to_json()
+            is_left_node_found = False
+            is_right_node_found = False
+            for k in self._processes:
+                if link["from"]["node"] is self._processes[k]:
+                    link["from"]["node"] = k
+                    is_left_node_found = True
+
+                if link["to"]["node"] is self._processes[k]:
+                    link["to"]["node"] = k
+                    is_right_node_found = True
+                
+                if is_left_node_found and is_right_node_found:
+                    settings['links'].append(link)
+                    break
+
+        for k in self._processes:
+            settings["nodes"][k] = self._processes[k].full_classname()
+
+        for k in self._interfaces:
+            port = self._interfaces[k]
+            proc = port.parent.parent
+            for name in self._processes:
+                if proc is self._processes[name]:
+                    settings['interfaces'][k] = {"proc": name, "port": port.name}
+                    break
+        
+        for k in self._outerfaces:
+            port = self._outerfaces[k]
+            proc = port.parent.parent
+            for name in self._processes:
+                if proc is self._processes[name]:
+                    settings['outerfaces'][k] = {"proc": name, "port": port.name}
+                    break
+
+        import json
+        return json.dumps(settings)
+
+    @staticmethod
+    def from_settings( settings ) -> 'Protocol':
+        """ 
+        Construct a Protocol instance using a setting dump.
+
+        :return: The protocol
+        :rtype: Protocol
+        """
+
+        processes = {}
+        connectors = []
+        interfaces = {}
+        outerfaces = {}
+
+        for k in settings["nodes"]:
+            type_str = settings["nodes"][k]
+            t = Controller.get_model_type(type_str)
+            processes[k] = t()
+
+        for link in settings["links"]:
+            proc_name = link["from"]["node"]
+            lhs_port_name = link["from"]["port"]
+            lhs_proc = processes[proc_name]
+
+            proc_name = link["to"]["node"]
+            rhs_port_name = link["to"]["port"]
+            rhs_proc = processes[proc_name]
+
+            connector = (lhs_proc>>lhs_port_name | rhs_proc<<rhs_port_name)
+            connectors.append(connector)
+
+        for k in settings["interfaces"]:
+            proc_name = settings["interfaces"][k]["proc"]
+            port_name = settings["interfaces"][k]["port"]
+            proc = processes[proc_name]
+            port = proc.input.ports[port_name]
+            interfaces[k] =  port
+
+        for k in settings["outerfaces"]:
+            proc_name = settings["outerfaces"][k]["proc"]
+            port_name = settings["outerfaces"][k]["port"]
+            proc = processes[proc_name]
+            port = proc.input.ports[port_name]
+            outerfaces[k] =  port
+
+        return Protocol(
+            name = settings["name"],
+            processes = processes,
+            connectors = connectors,
+            interfaces = interfaces,
+            outerfaces = outerfaces
+        )
 
 # ####################################################################
 #
@@ -1403,7 +1642,8 @@ class Resource(Viewable):
 
     def _set_job(self, job: 'Job'):
         """ 
-        Sets the process of the resource
+        Sets the process of the resource.
+
         :param process: The process
         :type process: Process
         """
@@ -1485,7 +1725,8 @@ class ResourceSet(Resource):
 
 class ViewModel(Model):
     """ 
-    ViewModel class
+    ViewModel class.
+
     :property model_id: Id of the Model of the ViewModel
     :type model: int
     :property model_type: Type of the Model of the ViewModel
@@ -1502,7 +1743,7 @@ class ViewModel(Model):
     template: ViewTemplate = None
 
     _model = None
-    _table_name = 'view_model'
+    _table_name = 'vmodel'
 
     def __init__(self, model_instance: Model = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1511,11 +1752,15 @@ class ViewModel(Model):
             self._model = model_instance
             self._model.register_view_model_specs( [type(self)] )
 
+        if not self.id is None:
+            self._model = self.model
+
     # -- A --
 
     def as_json(self):
         """
-        Returns a JSON (a dictionnary) representation of the view mode
+        Returns a JSON (a dictionnary) representation of the view mode.
+
         :return: A JSON (dictionary)
         :rtype: dict
         """
@@ -1529,7 +1774,8 @@ class ViewModel(Model):
 
     def as_html(self):
         """
-        Returns HTML representation of the view model
+        Returns HTML representation of the view model.
+
         :return: The HTML text
         :rtype: str
         """
@@ -1543,11 +1789,14 @@ class ViewModel(Model):
 
         return f"<div class='gview:{self.get_uri_name()}' data-type='{type_}'>{self.as_json()}</div>"
 
+    # -- C --
+
     # -- G --
 
     def get_view_url(self, params: dict={}) -> str:
         """
-        Returns the uri of the view (alias of the uri of the view model)
+        Returns the uri of the view (alias of the uri of the view model).
+
         :param params: The uri parameters
         :type params: dict
         :return: The uri
@@ -1557,7 +1806,7 @@ class ViewModel(Model):
             params = ""
         else:
             params = urllib.parse.quote(str(params))
-        return '/view/' + self.uri + '/' + params
+        return '/read/' + self.uri + '/' + params
 
     # -- M --
 
@@ -1578,9 +1827,10 @@ class ViewModel(Model):
         for model_t in cls.model_specs:
             model_t.register_view_model_specs( [cls] )
 
-    def render(self, params: dict = None) -> str:
+    def render(self, params: dict = None, request: 'Request' = None) -> (str, 'Response'):
         """
-        Renders the view of the view model
+        Renders the view of the view model.
+
         :param params: Rendering parameters
         :type params: dict
         :return: The rendering
@@ -1589,13 +1839,24 @@ class ViewModel(Model):
         if isinstance(params, dict):
             self.set_data(params)
 
-        return self.template.render(self)
+        return self.template.render(self, request = request)
     
     # -- S --
 
+    def set_model(cls, model: None):
+        if not self.model_id is None:
+            Logger.error(Exception(self.classname(),"save","A model already exists"))
+        
+        self._model = model
+
+        if model.is_saved():
+            self.model_id = model.id
+
+
     def set_template(self, template: ViewTemplate):
         """
-        Sets the view template
+        Sets the view template.
+
         :param template: The view template
         :type template: ViewTemplate
         """
@@ -1609,8 +1870,11 @@ class ViewModel(Model):
         Saves the view model in database
         """
         if self._model is None:
-            Logger.error(Exception(self.classname(),"save","This view_model has not model"))
+            Logger.error(Exception(self.classname(),"save","The ViewModel has no model"))
         else:
+            if not self.model_id is None and self._model.id != self.model_id:
+                Logger.error(Exception(self.classname(),"save","It is not allowed to change model of the ViewModel that is already saved"))
+                
             with DbManager.db.atomic() as transaction:
                 try:
                     if self._model.save(*args, **kwargs):
@@ -1618,7 +1882,7 @@ class ViewModel(Model):
                         self.model_type = self._model.full_classname()
                         return super().save(*args, **kwargs)
                     else:
-                        Logger.error(Exception(self.classname(),"save","Cannot save the view_model. Please ensure that the model of the view_model is saved before"))
+                        Logger.error(Exception(self.classname(),"save","Cannot save the vmodel. Please ensure that the model of the vmodel is saved before"))
                 except Exception as err:
                     transaction.rollback()
                     Logger.error(Exception("ViewModel", "save", f"Error message: {err}"))
@@ -1633,13 +1897,14 @@ class ViewModel(Model):
 
 class HTMLViewModel(ViewModel):
     """ 
-    HTMLViewModel class
+    HTMLViewModel class.
+
     :property model: The model of the view model
     :type model: Process
     """
 
-    _table_name = 'view_model'
-    template = HTMLViewTemplate("{{ view_model.as_html() }}")
+    _table_name = 'vmodel'
+    template = HTMLViewTemplate("{{ vmodel.as_html() }}")
 
 # ####################################################################
 #
@@ -1649,11 +1914,12 @@ class HTMLViewModel(ViewModel):
 
 class JSONViewModel(ViewModel):
     """ 
-    JSONViewModel class
+    JSONViewModel class.
+
     :property model: The model of the view model
     :type model: Resource
     """
 
-    _table_name = 'view_model'
-    template = JSONViewTemplate("{{ view_model.as_json() }}")
+    _table_name = 'vmodel'
+    template = JSONViewTemplate("{{ vmodel.as_json() }}")
 

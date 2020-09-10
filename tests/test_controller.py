@@ -32,17 +32,28 @@ class Person(Resource):
 
 class HTMLPersonViewModel(HTMLViewModel):
     model_specs = [ Person ]
-    template = HTMLViewTemplate("Model={{view_model.model.id}} & View URI={{view_model.uri}}: I am <b>{{view_model.model.name}}</b>! My job is {{view_model.data.job}}.")
+    template = HTMLViewTemplate("Model={{vmodel.model.id}} & View URI={{vmodel.uri}}: I am <b>{{vmodel.model.name}}</b>! My job is {{vmodel.data.job}}.")
 
 class JSONPersonViewModel(JSONViewModel):
     model_specs = [ Person ]
-    template = JSONViewTemplate('{"model_id":"{{view_model.model.id}}", "view_uri":"{{view_model.uri}}", "name": "{{view_model.model.name}}!", "job":"{{view_model.data.job}}"}')
+    template = JSONViewTemplate('{"model_id":"{{vmodel.model.id}}", "view_uri":"{{vmodel.uri}}", "name": "{{vmodel.model.name}}!", "job":"{{vmodel.data.job}}"}')
 
 # ##############################################################################
 #
 # Testing
 #
 # ##############################################################################
+
+# we suppose that the request comes from the view
+# url = "/action/{uri}/{data}",
+async def app(scope, receive, send):
+    assert scope['type'] == 'http'
+    request = Request(scope, receive)
+    vm = await Controller.action(request)
+    html = vm.render()
+    response = HTMLResponse(html)
+    await response(scope, receive, send)
+
 
 class TestControllerHTTP(unittest.TestCase):
     
@@ -58,9 +69,11 @@ class TestControllerHTTP(unittest.TestCase):
         HTMLPersonViewModel.drop_table()
         JSONPersonViewModel.drop_table()
     
-    def test_controller(self):
+    
+
+    def test_read_model(self):
         print("")
-        print("# HTTP Testing")
+        print("# Controller testing: read model")
         print("# -----------------")
 
         elon = Person()
@@ -79,65 +92,64 @@ class TestControllerHTTP(unittest.TestCase):
         self.assertEqual(Ctrl.fetch_model(html_vmodel.uri), html_vmodel)
 
         #self.assertEqual(Ctrl.models, Controller.models)
-
-        # we suppose that the request comes from the view
-        # url = "/action/{uri}/{params}",
-        async def app(scope, receive, send):
-            assert scope['type'] == 'http'
-            request = Request(scope, receive)
-            vm = await Controller.action(request)
-            html = vm.render()
-            response = HTMLResponse(html)
-            await response(scope, receive, send)
-
+        
         Controller.is_query_params = True
         client = TestClient(app)
 
         # Test update_view => html
-        params = '{"params": { "job" : "engineer"} }'
+        data = '{"vdata" : { "job" : "engineer"} }'
         response = client.get(Controller.build_url(
-            action = "view", 
+            action = "read", 
             uri = html_vmodel.uri,
-            params = params
+            data = data
         ))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content.decode("utf-8"), "Model="+str(elon.id)+" & View URI="+html_vmodel.uri+": I am <b>Elon Musk</b>! My job is engineer.")
         print(response.content)
 
         # Test update_view => json
-        params = '{"params": { "job" : "engineer"} }'
+        data = '{"vdata" : { "job" : "engineer" } }'
         response = client.get(Controller.build_url(
-            action = "view", 
+            action = "read", 
             uri = json_vmodel.uri,
-            params = params
+            data = data
         ))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content.decode("utf-8"), '{"model_id":"'+str(elon.id)+'", "view_uri":"'+json_vmodel.uri+'", "name": "Elon Musk!", "job":"engineer"}')
         print(response.content)
 
-        # Test update_view different params => json
-        params = """{"params": { "job" : "Tesla Maker" } }"""
+        # Test update_view different data => json
+        data = '{"vdata" : { "job" : "Tesla Maker" } }'
         response = client.get(Controller.build_url(
-            action = "view", 
+            action = "read", 
             uri = json_vmodel.uri,
-            params = params
+            data = data
         ))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content.decode("utf-8"), '{"model_id":"'+str(elon.id)+'", "view_uri":"'+json_vmodel.uri+'", "name": "Elon Musk!", "job":"Tesla Maker"}')
         print(response.content)
         
-        # Test create_view => json
-        params = """{
-            "target": "tests-test-controller-jsonpersonviewmodel", 
-            "params":{
-                "job" : "SpaceX CEO"
-            } 
-        }"""
-
+        # Read JSONView
+        data = '{ "vdata" : { "job" : "SpaceX CEO" } }'
         response = client.get(Controller.build_url(
-            action = "view", 
+            action = "read", 
+            uri = json_vmodel.uri,
+            data = data
+        ))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content.decode("utf-8"), '{"model_id":"'+str(elon.id)+'", "view_uri":"'+json_vmodel.uri+'", "name": "Elon Musk!", "job":"SpaceX CEO"}')
+  
+        # Create JSONView form HTMLView
+        data = """
+            {
+                "vdata" : { "job" : "SpaceX CEO" }, 
+                "target" : "tests-test-controller-jsonpersonviewmodel"
+            }
+        """
+        response = client.get(Controller.build_url(
+            action = "create", 
             uri = html_vmodel.uri,
-            params = params
+            data = data
         ))
         self.assertEqual(response.status_code, 200)
         self.assertNotEqual(response.content.decode("utf-8"), '{"model_id":"'+str(elon.id)+'", "view_uri":"'+json_vmodel.uri+'", "name": "Elon Musk!", "job":"SpaceX CEO"}')
@@ -154,64 +166,100 @@ class TestControllerHTTP(unittest.TestCase):
         k = slugify(HTMLPersonViewModel.full_classname())
         self.assertEquals(Person._view_model_specs[k], HTMLPersonViewModel)
 
-
-class TestControllerWebSocket(unittest.TestCase):
-    
-    @classmethod
-    def setUpClass(cls):
-        Person.create_table()
-        HTMLPersonViewModel.create_table()
-        JSONPersonViewModel.create_table()
-        pass
-
-    @classmethod
-    def tearDownClass(cls):
-        Person.drop_table()
-        HTMLPersonViewModel.drop_table()
-        JSONPersonViewModel.drop_table()
-        pass
-    
-    def test_controller(self):
+    def test_create_model(self):
         print("")
-        print("# WebSocket Testing")
+        print("# Controller testing: create model")
         print("# -----------------")
 
-        elon = Person()
-        html_vmodel = HTMLPersonViewModel(elon)
-        elon.set_name('Elon Musk')
-                
-        elon.save()
-        html_vmodel.save()
-
-        self.assertEqual(Controller.fetch_model(html_vmodel.uri), html_vmodel)
-
-        # we suppose that the request comes from the view
-        # url = "/action/{uri}/{params}",
-        async def app(scope, receive, send):
-            assert scope['type'] == 'websocket'
-            websocket = WebSocket(scope, receive=receive, send=send)
-            await websocket.accept()
-            Controller.is_query_params = True
-            vm = await Controller.action(websocket)
-            html = vm.render()
-            await websocket.send_text(html)
-            await websocket.close()
+        bill = Person()
+        bill.set_name('Bill Gate')
+        bill.save()
 
         Controller.is_query_params = True
         client = TestClient(app)
         
-        # Test update_view => html
+        data = '{ "mdata": {"name": "Bill Gate From Microsoft"} }'
+        response = client.get(Controller.build_url(
+            action = "create", 
+            uri = bill.uri,
+            data = data
+        ))
 
-        with client.websocket_connect(
-            Controller.build_url(
-                action = "view", 
-                uri = html_vmodel.uri,
-                params = '{"params": { "job" : "engineer"} }'
-            )) as websocket:
-            response = websocket.receive_text()
-            #self.assertEqual(response.status_code, 200)
-            self.assertEqual(response, "Model="+str(elon.id)+" & View URI="+html_vmodel.uri+": I am <b>Elon Musk</b>! My job is engineer.")
-            print(response)
+        self.assertEqual(response.status_code, 200)
+
+        Q = Person.select()
+
+        self.assertEqual(len(Q), 2)
+        self.assertEqual(Q[0].data, {'name': 'Bill Gate'})
+        self.assertEqual(Q[1].data, {'name': 'Bill Gate From Microsoft'})
+
+        data = '{ "mdata": {"name": "Bill and Melinda Gate"} }'
+        response = client.get(Controller.build_url(
+            action = "update", 
+            uri = bill.uri,
+            data = data
+        ))
+
+        p = Person.select(Person.data['name'] == 'Bill & Melinda Gate')
+        self.assertEqual(p, bill)
+
+# class TestControllerWebSocket(unittest.TestCase):
+    
+#     @classmethod
+#     def setUpClass(cls):
+#         Person.create_table()
+#         HTMLPersonViewModel.create_table()
+#         JSONPersonViewModel.create_table()
+#         pass
+
+#     @classmethod
+#     def tearDownClass(cls):
+#         Person.drop_table()
+#         HTMLPersonViewModel.drop_table()
+#         JSONPersonViewModel.drop_table()
+#         pass
+    
+#     def test_controller(self):
+#         print("")
+#         print("# WebSocket Testing")
+#         print("# -----------------")
+
+#         elon = Person()
+#         html_vmodel = HTMLPersonViewModel(elon)
+#         elon.set_name('Elon Musk')
+                
+#         elon.save()
+#         html_vmodel.save()
+
+#         self.assertEqual(Controller.fetch_model(html_vmodel.uri), html_vmodel)
+
+#         # we suppose that the request comes from the view
+#         # url = "/action/{uri}/{data}",
+#         async def app(scope, receive, send):
+#             assert scope['type'] == 'websocket'
+#             websocket = WebSocket(scope, receive=receive, send=send)
+#             await websocket.accept()
+#             Controller.is_query_params = True
+#             vm = await Controller.action(websocket)
+#             html = vm.render()
+#             await websocket.send_text(html)
+#             await websocket.close()
+
+#         Controller.is_query_params = True
+#         client = TestClient(app)
+        
+#         # Test update_view => html
+
+#         with client.websocket_connect(
+#             Controller.build_url(
+#                 action = "read", 
+#                 uri = html_vmodel.uri,
+#                 data = '{"vdata" : { "job" : "engineer"} }'
+#             )) as websocket:
+#             response = websocket.receive_text()
+#             #self.assertEqual(response.status_code, 200)
+#             self.assertEqual(response, "Model="+str(elon.id)+" & View URI="+html_vmodel.uri+": I am <b>Elon Musk</b>! My job is engineer.")
+#             print(response)
 
        
 

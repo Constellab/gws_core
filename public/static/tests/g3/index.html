@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="author" content="Gencovery" />
+    <meta name="description" content="Gencovery JS views" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!--g3-->
+    <link rel="stylesheet" type="text/css" href="/static/gws/g3/all.css"></link>
+
+    <!--bootstrap-->
+    <script defer src="/static/dis/jquery/3.5.1/jquery.slim.min.js"></script>
+     <script defer src="/static/dis/popper/2.4.2/popper.min.js"></script>
+    <script defer src="/static/dis/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/dis/bootstrap/4.5.0/css/bootstrap.min.css">
+    </link>
+
+    <!--d3-force-3d-->
+    <script defer src="/static/dis/d3/d3-dispatch/1.0.6/d3-dispatch.min.js"></script>
+    <script defer src="/static/dis/d3/d3-timer/1.0.10/d3-timer.min.js"></script>
+    <script defer src="/static/dis/d3/d3-quadtree/1.0.7/d3-quadtree.min.js"></script>
+    <script defer src="/static/dis/d3/d3-binarytree/0.1.8/d3-binarytree.min.js"></script>
+    <script defer src="/static/dis/d3/d3-octree/0.1.8/d3-octree.min.js"></script>
+    <script defer src="/static/dis/d3/d3-force-3d/2.1.0/d3-force-3d.min.js"></script>
+    
+    <!--uuidv4-->
+    <script defer src="/static/dis/uuidv4/8.1.0/uuidv4.js"></script>
+
+    <!--fontawesome-->
+    <script defer src="/static/dis/fontawesome/5.13.1/all.min.js"></script>
+
+    <title>Dashboard</title>
+</head>
+
+<body>
+    
+    <div class="container-fluid" style="margin-top: 50px">
+
+        <h1>Graph 3d</h1>
+
+        <button class="btn btn-sm btn-outline-secondary" id="line">Line</button>
+        <button class="btn btn-sm btn-outline-secondary" id="random-small">Random small</button>
+        <button class="btn btn-sm btn-outline-secondary" id="random-large">Random large (~2k)</button>
+        <button class="btn btn-sm btn-outline-secondary" id="miserables">Miserables</button>
+        <button class="btn btn-sm btn-outline-secondary" id="block">Block (~4k)</button>
+
+        <hr class="my-4">
+
+        <div class="container-fluid g3-map" id="graph-3d" style="height: 60vh"></div>
+        
+        <script type="module" src="index.js"></script>
+
+    </div>
+
+</body>

@@ -1,0 +1,13 @@
+
+{% extends "index/index.html" %}
+
+{% block content %}
+<div class="gview:card" data-style="">
+    <div title>{{view_model.model.data.name}}</div>
+    <div body>
+        Hi!<br>
+        I'am {{view_model.model.data.name}}.<br>
+        Welcome to GWS!
+    </div>
+</div>
+{% endblock %}

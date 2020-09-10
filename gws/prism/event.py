@@ -19,6 +19,7 @@ class EventListener:
     def call(self, name, *args, **kwargs):
         """
         Calls an event by its name 
+
         :param name: Name of the event
         :type name: `str`
         """
@@ -28,6 +29,7 @@ class EventListener:
     def add(self, name, callback):
         """
         Adds an event (i.e. callback function) to the listener 
+
         :param name: The name of the event
         :type name: `str`
         :param callback: The callback function of the event
@@ -51,6 +53,7 @@ class EventListener:
     def exists(self, name) -> bool:
         """
         Returns True if an event exists, False otherwise
+        
         :rtype: bool
         """
         return name in self._events

@@ -1,7 +1,5 @@
 {
     "name"          : "gws",
-    "title"         : "Core Gencovery Web Services (GWS)",
-    "description"   : "This application provides core functionalities for GWS-based modules",
     "authors"       : "Gencovery",
     "version"       : "0.1",
 
@@ -17,16 +15,59 @@
 
     "dependencies"  : {},
     
+    "smtp": {
+        "url": "ssl0.ovh.net",
+        "port": "465",
+        "ssl" : true,
+        "login": "no-reply@gencovery.com",
+        "password": "Genc0ver1-N0-Reply"
+    },
+
     "app":{
         "favicon": {"src":"/static/gws/favicon.png", "type":"image/png"},
-        "title": "Wecome to GWS",
+        "title"         : "Wecome to GWS",
+        "description"   : "This application provides core functionalities for GWS-based modules",
         "statics"       : {
+            "/static/dis"   : "../../extern/gview-js",
             "/static/gws"   : "./public/static"
         },
-        "scripts": [ ],
-        "modules": [ ],
-        "styles": [ ],
-        "buttons":{ }
+        "themes" : [ ],
+        "scripts": [
+            "/static/dis/creative-tim/black-dashboard/assets/js/core/jquery.min.js",
+            "/static/dis/creative-tim/black-dashboard/assets/js/core/popper.min.js",
+            "/static/dis/creative-tim/black-dashboard/assets/js/core/bootstrap.min.js",
+            "/static/dis/creative-tim/black-dashboard/assets/js/plugins/perfect-scrollbar.jquery.min.js",
+            "/static/dis/creative-tim/black-dashboard/assets/js/plugins/chartjs.min.js",
+            "/static/dis/creative-tim/black-dashboard/assets/js/plugins/bootstrap-notify.js",
+            "/static/dis/creative-tim/black-dashboard/assets/js/black-dashboard.min.js?v=1.0.0",
+            
+            "/static/dis/uuidv4/8.1.0/uuidv4.js",
+            
+            "/static/dis/d3/d3-dispatch/1.0.6/d3-dispatch.min.js",
+            "/static/dis/d3/d3-timer/1.0.10/d3-timer.min.js",
+            "/static/dis/d3/d3-quadtree/1.0.7/d3-quadtree.min.js",
+            "/static/dis/d3/d3-binarytree/0.1.8/d3-binarytree.min.js",
+            "/static/dis/d3/d3-octree/0.1.8/d3-octree.min.js",
+            "/static/dis/d3/d3-force-3d/2.1.0/d3-force-3d.min.js",
+
+            "/static/gws/src/gview/gview.js",
+            "/static/gws/src/gview/templates.js"
+        ],
+        "modules": ["/static/gws/index.js"],
+        "styles": [
+            "/static/dis/fontawesome/5.14.0/css/all.min.css",
+            "/static/dis/creative-tim/black-dashboard/assets/css/nucleo-icons.css",
+            "/static/dis/creative-tim/black-dashboard/assets/css/black-dashboard.css?v=1.0.0",
+            
+            "/static/gws/index.css",
+            "/static/gws/src/g3/all.css",
+            "/static/gws/src/gview/fonts.css"
+        ],
+        "buttons":{
+            "settings": {
+                "label": "Settings", "icon": "tim-icons icon-settings-gear-63", "onclick": "window.gws.settings", "url": "./", "position": 0
+            }
+        }
     },
     "verbose": false
 }

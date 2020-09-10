@@ -1,6 +1,7 @@
 peewee
 starlette
 Starlette-WTF
+fastapi-mail
 uvicorn
 aiofiles
 jinja2

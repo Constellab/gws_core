@@ -37,7 +37,8 @@ class Port(Base):
     @property
     def is_left_connected(self) -> bool:
         """
-        Returns True if the port is left-connected to a another port
+        Returns True if the port is left-connected to a another port.
+
         :return: True if the port is left-connected, False otherwise.
         :rtype: bool
         """
@@ -45,7 +46,8 @@ class Port(Base):
     
     def is_left_connected_to(self, port: 'Port') -> bool:
         """
-        Returns True if the port is left-connected to a given Port, False otherwise
+        Returns True if the port is left-connected to a given Port, False otherwise.
+
         :return: True if the port is connected, False otherwise.
         :rtype: bool
         """
@@ -54,7 +56,8 @@ class Port(Base):
     @property
     def is_right_connected(self) -> bool:
         """
-        Returns True if the port is right-connected to a another port
+        Returns True if the port is right-connected to a another port.
+
         :return: True if the port is right-connected, False otherwise.
         :rtype: bool
         """
@@ -62,7 +65,8 @@ class Port(Base):
 
     def is_right_connected_to(self, port: 'Port') -> bool:
         """
-        Returns True if the port is right-connected to a given Port, False otherwise
+        Returns True if the port is right-connected to a given Port, False otherwise.
+
         :return: True if the port is connected, False otherwise.
         :rtype: bool
         """
@@ -71,7 +75,8 @@ class Port(Base):
     @property
     def is_ready(self)->bool:
         """
-        Returns True if the port is ready (i.e. contains a resource), False otherwise
+        Returns True if the port is ready (i.e. contains a resource), False otherwise.
+
         :return: True if the port is ready, False otherwise.
         :rtype: bool
         """
@@ -81,7 +86,8 @@ class Port(Base):
 
     def get_next_procs(self):
         """
-        Returns the list of right-hand side processes connected to the port
+        Returns the list of right-hand side processes connected to the port.
+
         :return: List of processes
         :rtype: list
         """
@@ -96,7 +102,8 @@ class Port(Base):
     @property
     def parent(self) -> 'IO':
         """ 
-        Returns the parent of the Port, i.e. the IO (Input or Output) that holds this Port
+        Returns the parent of the Port, i.e. the IO (Input or Output) that holds this Port.
+
         :return: The parent IO
         :rtype: IO
         """
@@ -117,7 +124,8 @@ class Port(Base):
     @property
     def resource(self) -> 'Resource':
         """
-        Returns the resoruce of the port
+        Returns the resoruce of the port.
+
         :return: The resource
         :rtype: Resource
         """
@@ -127,7 +135,8 @@ class Port(Base):
     @resource.setter
     def resource(self, resource: 'Resource'):
         """
-        Sets the resource of the port
+        Sets the resource of the port.
+
         :param resource: The input resource
         :type resource: Resource
         :Logger.error(Exception: If reource is not compatible with port)
@@ -157,7 +166,8 @@ class InPort(Port):
     @property
     def name(self) -> str:
         """ 
-        Returns the name of the port
+        Returns the name of the port.
+
         :return: The name
         :rtype: str
         """
@@ -219,7 +229,8 @@ class OutPort(Port):
     @property
     def name(self) -> str:
         """ 
-        Returns the name of the port
+        Returns the name of the port.
+
         :return: The name
         :rtype: str
         """
@@ -278,7 +289,7 @@ class Connector:
 
     # -- L --
 
-    def link(self, serialize: bool=False) -> dict:
+    def to_json(self, serialize: bool=False) -> dict:
         """
         Returns a dictionnary describing the Connector.
 
@@ -333,7 +344,8 @@ class IO(Base):
 
     def create_port(self, name: str, resource_type: type):
         """ 
-        Creates a port
+        Creates a port.
+
         :param name: Name of the port
         :type name: str
         :param resource_type: The expected type of the resoruce of the port
@@ -364,7 +376,8 @@ class IO(Base):
 
     def __getitem__(self, name: str) -> 'Resource':
         """ 
-        Bracket (getter) operator. Gets the content of a port by its name
+        Bracket (getter) operator. Gets the content of a port by its name.
+
         :param name: Name of the port
         :type name: str
         :return: The resource of the port
@@ -381,7 +394,8 @@ class IO(Base):
 
     def get_port_names(self) -> list:
         """ 
-        Returns the names of all the ports
+        Returns the names of all the ports.
+
         :return: List of names
         :rtype: list
         """
@@ -389,7 +403,8 @@ class IO(Base):
 
     def get_resources(self) -> dict:
         """ 
-        Returns the resources of all the ports
+        Returns the resources of all the ports.
+
         :return: List of resources
         :rtype: list
         """
@@ -403,7 +418,8 @@ class IO(Base):
     @property
     def is_ready(self)->bool:
         """
-        Returns True if the IO is ready (i.e. all its ports are ready), False otherwise
+        Returns True if the IO is ready (i.e. all its ports are ready), False otherwise.
+
         :return: True if the IO is ready, False otherwise.
         :rtype: bool
         """
@@ -416,7 +432,8 @@ class IO(Base):
 
     def get_next_procs(self) -> list:
         """ 
-        Returns the list of (right-hand side) processes connected to the IO ports
+        Returns the list of (right-hand side) processes connected to the IO ports.
+
         :return: List of processes
         :rtype: list
         """
@@ -431,7 +448,8 @@ class IO(Base):
     @property
     def ports(self) -> dict:
         """ 
-        Returns the list of ports
+        Returns the list of ports.
+
         :return: List of port
         :rtype: list
         """
@@ -440,7 +458,8 @@ class IO(Base):
     @property
     def parent(self) -> 'Process':
         """ 
-        Returns the parent of the IO, i.e. the process that holds this IO
+        Returns the parent of the IO, i.e. the process that holds this IO.
+
         :return: The parent process
         :rtype: Process
         """
@@ -450,7 +469,8 @@ class IO(Base):
 
     def __setitem__(self, name: str, resource: 'Resource'):
         """ 
-        Bracket (setter) operator. Sets the content of a port by its name
+        Bracket (setter) operator. Sets the content of a port by its name.
+
         :param name: Name of the port
         :type name: str
         :param resource: The input resource
@@ -480,7 +500,8 @@ class Input(IO):
     @property
     def is_connected(self) -> bool:
         """
-        Returns True if a port of the Input is left-connected
+        Returns True if a port of the Input is left-connected.
+
         :return: True if a port of the Input is left-connected.
         :rtype: bool
         """
@@ -492,7 +513,8 @@ class Input(IO):
 
     def __setitem__(self, name: str, resource: 'Resource'):
         """ 
-        Bracket (setter) operator. Sets the content of a port by its name
+        Bracket (setter) operator. Sets the content of a port by its name.
+
         :param name: Name of the port
         :type name: str
         :param resource: The input resource
@@ -518,7 +540,8 @@ class Output(IO):
     @property
     def is_connected(self) -> bool:
         """
-        Returns True if a port of the Output is right-connected
+        Returns True if a port of the Output is right-connected.
+
         :return: True if a port of the Output is right-connected.
         :rtype: bool
         """
@@ -537,7 +560,8 @@ class Output(IO):
 
     def __setitem__(self, name: str, resource: 'Resource'):
         """ 
-        Bracket (setter) operator. Sets the content of a port by its name
+        Bracket (setter) operator. Sets the content of a port by its name.
+
         :param name: Name of the port
         :type name: str
         :param resource: The input resource

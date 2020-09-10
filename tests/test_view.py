@@ -26,11 +26,11 @@ class Person(Resource):
 
 class HTMLPersonViewModel(HTMLViewModel):
     model_specs = [Person]
-    template = HTMLViewTemplate("I am <b>{{view_model.model.name}}</b>! My job is {{view_model.data.job}}.")
+    template = HTMLViewTemplate("I am <b>{{vmodel.model.name}}</b>! My job is {{vmodel.data.job}}.")
 
 class JSONPersonViewModel(JSONViewModel):
     model_specs = [Person]
-    template = JSONViewTemplate('{"name": "{{view_model.model.name}}!", "job":"{{view_model.data.job}}"}')
+    template = JSONViewTemplate('{"name": "{{vmodel.model.name}}!", "job":"{{vmodel.data.job}}"}')
 
 class FunnyViewModel(HTMLViewModel):
     model_specs = [Person]
@@ -54,26 +54,26 @@ class TestHTMLView(unittest.TestCase):
     
     def test_view(self):
         elon = Person()
-        view_model = HTMLPersonViewModel(elon)
-        self.assertEqual(view_model.data, {})
+        vmodel = HTMLPersonViewModel(elon)
+        self.assertEqual(vmodel.data, {})
 
         elon.set_name('Elon Musk')
         params = {"job" : "engineer"}
-        html = view_model.render(params)
+        html = vmodel.render(params)
         print(html)
 
         self.assertEqual(html, "I am <b>Elon Musk</b>! My job is engineer.")
-        self.assertEqual(view_model.data, params)
-        self.assertEqual(view_model.data, params)
+        self.assertEqual(vmodel.data, params)
+        self.assertEqual(vmodel.data, params)
 
-        self.assertTrue( view_model.model is elon )
-        self.assertTrue( view_model.id is None )
+        self.assertTrue( vmodel.model is elon )
+        self.assertTrue( vmodel.id is None )
         self.assertTrue( elon.id is None )
 
-        Controller.save_all([elon, view_model])
+        Controller.save_all([elon, vmodel])
 
-        vm = HTMLPersonViewModel.get_by_id(view_model.id)
-        self.assertEqual(vm, view_model)
+        vm = HTMLPersonViewModel.get_by_id(vmodel.id)
+        self.assertEqual(vm, vmodel)
         self.assertEqual(vm.model, elon)
 
 class TestJSONView(unittest.TestCase):
@@ -94,28 +94,28 @@ class TestJSONView(unittest.TestCase):
     
     def test_view(self):
         elon = Person()
-        view_model = JSONPersonViewModel(elon)
+        vmodel = JSONPersonViewModel(elon)
         elon.set_name('Elon Musk')
 
         params = {"job" : "engineer"}
-        json_text = view_model.render(params)
+        json_text = vmodel.render(params)
         print(json_text)
 
         self.assertEqual(json_text, '{"name": "Elon Musk!", "job":"engineer"}')
-        self.assertEqual(view_model.data, params)
-        self.assertEqual(view_model.data, params)
-        self.assertEqual(view_model.model.id, None)
-        self.assertEqual(view_model.id, None)
+        self.assertEqual(vmodel.data, params)
+        self.assertEqual(vmodel.data, params)
+        self.assertEqual(vmodel.model.id, None)
+        self.assertEqual(vmodel.id, None)
         
-        view_model.save()     #save the model and view_model
+        vmodel.save()     #save the model and vmodel
         
-        self.assertTrue(isinstance(view_model.model.id, int))
-        self.assertTrue(isinstance(view_model.id, int))
+        self.assertTrue(isinstance(vmodel.model.id, int))
+        self.assertTrue(isinstance(vmodel.id, int))
 
-        # retrieve the view_model
-        vmodel2 = JSONPersonViewModel.get( JSONPersonViewModel.id == view_model.id )
-        self.assertEqual(vmodel2.id, view_model.id)
-        self.assertEqual(vmodel2.model.id, view_model.model.id)
+        # retrieve the vmodel
+        vmodel2 = JSONPersonViewModel.get( JSONPersonViewModel.id == vmodel.id )
+        self.assertEqual(vmodel2.id, vmodel.id)
+        self.assertEqual(vmodel2.model.id, vmodel.model.id)
 
 class TestFunnyView(unittest.TestCase):
     @classmethod
@@ -135,10 +135,10 @@ class TestFunnyView(unittest.TestCase):
     
     def test_view_file(self):
         elon = Person()
-        view_model = FunnyViewModel(elon)
+        vmodel = FunnyViewModel(elon)
         elon.set_name('Elon')
 
-        text = view_model.render({})
+        text = vmodel.render({})
         print(text)
 
         expected_text = """
@@ -151,11 +151,11 @@ class TestFunnyView(unittest.TestCase):
 
     def test_default_view_file(self):
         elon = Person()
-        view_model = HTMLViewModel(elon)
+        vmodel = HTMLViewModel(elon)
         elon.set_name('Elon Musk')
         
-        view_model.save()
-        text = view_model.render({})
+        vmodel.save()
+        text = vmodel.render({})
 
-        expected_text = view_model.as_html()
+        expected_text = vmodel.as_html()
         self.assertEqual(expected_text, text)

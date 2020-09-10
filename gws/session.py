@@ -24,10 +24,11 @@ class Session(Base):
                     firstname = "Guest", 
                     sirname = "Guest", 
                     email = "test@gencovery.com",
+                    password = "azerty123",
                     organization = "Gencovery",
                     is_active = True
                 )
-            cls._user.save()
+                cls._user.save()
         
         return cls._user
 

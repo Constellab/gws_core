@@ -1,0 +1,58 @@
+html{
+    width:100%;
+    height:100%;
+    padding: 0;
+    margin: 0;
+}
+
+body{
+    width:100%;
+    height:100%;
+    padding: 0;
+    margin: 0;
+}
+
+.g3-map{
+    background: #000011;
+}
+
+.g3-tooltip {
+    position: absolute;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 200px;
+    padding: 0px;
+    background: #f7f7f7;
+    opacity: 1;
+    border: 0px solid #f7f7f7;
+    box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.5);
+    transition: opacity 0.25s linear;
+    border-radius: 3px;
+    font-size: 13px;
+    overflow: hidden;
+    color: #333;
+}
+
+.g3-tooltip-title {
+    border-bottom: 1px solid #dcdcdc;
+    font-weight: bold;
+    border-radius: 3px 3px 0px 0px;
+    width: 100%;
+    padding: 3px;
+}
+
+.g3-tooltip-text {
+    width: 100%;
+    overflow: auto;
+    border-radius: 0px 0px 3px 3px;
+    padding: 3px;
+}
+
+.d-block{
+    display:block !important
+}
+
+.d-none{
+    display:none !important
+}

@@ -79,6 +79,12 @@ class Settings(PWModel):
 
         return btns
 
+    # -- C --
+
+    @property
+    def smtp(self):
+        return self.data.get("smtp", None)
+
     # -- D --
 
     @property
@@ -98,7 +104,11 @@ class Settings(PWModel):
         return self.data["__cwd__"]
 
     def get_data(self, k:str) -> str:
-        return self.data[k]
+        if k == "secret_key":
+            from starlette.datastructures import Secret
+            return Secret(self.data[k])
+        else:
+            return self.data[k]
 
     def get_dirs(self) -> dict:
         return self.data.get("dirs",{})
@@ -125,6 +135,9 @@ class Settings(PWModel):
         if name is None:
             return os.path.join(self.get_cwd(),"./public")
         else:
+            if self.get_dependency_dir(name) is None:
+                return None
+
             return os.path.join(self.get_dependency_dir(name),"./public")
 
     def get_static_dirs(self) -> dict:
@@ -142,14 +155,12 @@ class Settings(PWModel):
         return statics
 
     def get_dependency_dir(self, dependency_name: str) -> str:
-        #return os.path.join(self.get_cwd(),self.data["dependencies"][dependency_name])
-        return self.data["dependencies"][dependency_name]
+        return self.data["dependencies"].get(dependency_name, None)
 
     def get_dependency_dirs(self) -> dict:
         dirs = {}
         for dep_name in self.data["dependencies"]:
             if not dep_name == ":external:":
-                #dirs[dep_name] = os.path.join(self.get_cwd(),self.data["dependencies"][dep_name])
                 dirs[dep_name] = self.data["dependencies"][dep_name]
         return dirs
     
@@ -165,6 +176,9 @@ class Settings(PWModel):
 
     def get_template_dir(self, dependency_name: str) -> str:
         dependency_dir = self.get_dependency_dir(dependency_name)
+        if dependency_dir is None:
+            return None
+
         return os.path.join(dependency_dir, "./templates")
 
     # -- N --

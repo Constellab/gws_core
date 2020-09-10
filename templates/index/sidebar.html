@@ -1,0 +1,25 @@
+<div class="sidebar">
+    <!--
+    Tip 1: You can change the color of the sidebar using: data-color="blue | green | orange | red"
+    -->
+    <div class="sidebar-wrapper">
+        <div class="logo">
+            <a href="javascript:void(0)" class="simple-text logo-mini">
+                GWS
+            </a>
+            <a href="javascript:void(0)" class="simple-text logo-normal">
+                {{ settings.name }}
+            </a>
+        </div>
+        <ul class="nav">
+            {% for name, btn in settings.buttons.items() %}
+            <div id="user-btn" class="gview:sidebar-btn">
+                <div name>{{ btn.label }}</div>
+                <div position>{{ btn.position }}</div>
+                <div icon>{{ btn.icon }}</div>
+                <div url>{{ btn.url }}</div>
+            </div>
+            {% endfor %}
+        </ul>
+    </div>
+</div>

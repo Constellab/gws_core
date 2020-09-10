@@ -1,0 +1,76 @@
+
+{% extends "index/index.html" %}
+
+{% block content %}
+
+<div class="gview:simple-table" json="true">
+    {
+    "title": "Database",
+    "header": ["Mon","Tues","Thurs"],
+    "body": [["1","2",3],["yes","no","maybe"]]
+    }
+</div>
+
+<div class="gview:card">
+    <div title>Test card</div>
+    <div body>
+        This is a more complex div with HTML content<br>
+        <div style="color:red">Red Text</div>
+        <a href="gencovery.com">Gencovery</a>
+    </div>
+</div>
+
+<div class="gview:card" new="no">
+    <div title>Nested card</div>
+    <div body>
+        This is a more complex div with HTML content<br>
+        <div style="color:red">Red Text</div>
+        <a href="gencovery.com">Gencovery</a>
+        <hr />
+        <div id="nested-table"></div>
+    </div>
+</div>
+
+<div class="gview:simple-table" json="true" target="#nested-table">
+    {
+    "style": "card-plain",
+    "title": "Nested Database",
+    "header": ["Mon","Tues","Thurs"],
+    "body": [["1","2",3],["yes","no","maybe"]]
+    }
+</div>
+
+<div class="gview:card" data-style="card-plain">
+    <div title>Tokyo</div>
+    <div body>
+        Tokyo is a beautiful hitoric city<br>
+        <div style="color:red">Red Text</div>
+        <a href="gencovery.com">Gencovery</a>
+    </div>
+</div>
+
+<div class="gview:form" json="true" id="my-form">
+    {
+    "title": "My GWS Form",
+    "col": "col-md-6",
+    "fields":[
+    {"type": "text", "value": "", "placeholder": "Sirname", "disabled": false, "label": "Sirname"},
+    {"type": "text", "value": "", "placeholder": "Firstname", "disabled": false, "label": "Firstname"}
+    ],
+    "submit": {"value": "Submit", "url": "./"}
+    }
+</div>
+
+<div class="gview:form" json="true" target="#my-form">
+    {
+    "title": "My GWS Form 2",
+    "col": "col-md-6",
+    "fields":[
+    {"type": "text", "value": "", "placeholder": "Tokyo", "disabled": false, "label": "City"},
+    {"type": "text", "value": "", "placeholder": "Firstname", "disabled": false, "label": "Firstname"}
+    ],
+    "submit": {"value": "Submit", "url": "./"}
+    }
+</div>
+
+{% endblock %}

@@ -14,7 +14,9 @@ import re
 
 from gws.settings import Settings
 
-def _run(ctx=None, test=False, db=False, cli=False, runserver=False, docgen=False, force=False, pull=False, push=False, tag=""):
+def _run(   ctx=None, test=False, db=False, \
+            cli=False, runserver=False, docgen=False, \
+            force=False, show=False, pull=False, push=False, tag=""):
     settings = Settings.retrieve()
 
     from gws.logger import Logger
@@ -77,7 +79,7 @@ def _run(ctx=None, test=False, db=False, cli=False, runserver=False, docgen=Fals
         function_name = tab[n-1]
         module = importlib.import_module(module_name)
         getattr(module, function_name)()
-    
+
     elif docgen:
         settings.data["db_name"] = ':memory:'
 
@@ -93,10 +95,10 @@ def _run(ctx=None, test=False, db=False, cli=False, runserver=False, docgen=Fals
                     shutil.rmtree(os.path.join(app_dir, gen_folder), ignore_errors=True)
                 except:
                     pass
-
-            if not os.path.exists(os.path.join(app_dir, gen_folder)):
-                os.mkdir(os.path.join(app_dir, gen_folder))
-
+            
+            if not os.path.exists(os.path.join(app_dir, gen_folder)):             
+                os.makedirs(os.path.join(app_dir, gen_folder))
+  
             subprocess.check_call([
                 "sphinx-quickstart", "-q",
                 f"-p{settings.title}",
@@ -112,7 +114,7 @@ def _run(ctx=None, test=False, db=False, cli=False, runserver=False, docgen=Fals
                 "--ext-viewcode",
                 "--ext-githubpages",
                 ], cwd=os.path.join(app_dir, gen_folder))
-            
+
             with open(os.path.join(app_dir, gen_folder, "./source/conf.py"), "r+") as f:
                 content = f.read()
                 f.seek(0, 0)
@@ -142,7 +144,7 @@ def _run(ctx=None, test=False, db=False, cli=False, runserver=False, docgen=Fals
                 if os.path.exists(os.path.join(app_dir,"./docs/"+f)):
                     shutil.copyfile(
                         os.path.join(app_dir,"./docs/"+f), 
-                        os.path.join(app_dir,"./docs/html/source/"+f))
+                        os.path.join(app_dir,gen_folder,"./source/"+f))
 
             # insert modules in index
             with open(os.path.join(app_dir, gen_folder, "./source/index.rst"), "r") as f:
@@ -154,7 +156,7 @@ def _run(ctx=None, test=False, db=False, cli=False, runserver=False, docgen=Fals
                 content = content.replace(
                     ".. toctree::",
 
-                    settings.description + "\n\n" +
+                    (settings.description or "") + "\n\n" +
                     ".. toctree::\n"+
                     "   :hidden:\n\n"+
                     "   self\n\n"+
@@ -164,10 +166,12 @@ def _run(ctx=None, test=False, db=False, cli=False, runserver=False, docgen=Fals
                     "   contrib\n"+
                     "   changes\n\n\n"+
                     ".. toctree::")
-                
+            
+            print(content)
+
             with open(os.path.join(app_dir, gen_folder, "./source/index.rst"), "w") as f:
                 f.write(content)
-
+            
             subprocess.check_call([
                 "sphinx-build",
                 "-b",
@@ -176,8 +180,15 @@ def _run(ctx=None, test=False, db=False, cli=False, runserver=False, docgen=Fals
                 "./build",
                 ], cwd=os.path.join(app_dir, gen_folder))
 
-        except:
-            pass
+            if show:
+                import webbrowser
+                location = settings.get_dependency_dir(show)
+                url = os.path.join(location, gen_folder, "./build/index.html")
+                print(url)
+                webbrowser.open(f"file://{url}", new=2)
+                
+        except Exception as err:
+            Logger.error(Exception(f"An error occurred. Error message: {err}"))
     
     elif pull:
         app_server = ""
@@ -218,9 +229,10 @@ def _run(ctx=None, test=False, db=False, cli=False, runserver=False, docgen=Fals
 @click.option('--runserver', is_flag=True, help='Starts the server')
 @click.option('--docgen', is_flag=True, help='Generate documentation')
 @click.option('--force', "-f", is_flag=True, help='Force documentation generation by removing any existing documentation (used if --docgen is given)')
+@click.option('--show', "-f", help='Force documentation generation by removing any existing documentation (used if --docgen is given)')
 @click.option('--pull', is_flag=True, help='Update the app')
 @click.option('--push', is_flag=True, help='Publish the app')
 @click.option('--tag', help='Tag of the published app (default is the current version)')
-def run(ctx, test, db, cli, runserver, docgen, force, pull, push, tag):
-    _run(ctx, test, db, cli, runserver, docgen, force, pull, push, tag)
+def run(ctx, test, db, cli, runserver, docgen, force, show, pull, push, tag):
+    _run(ctx, test, db, cli, runserver, docgen, force, show, pull, push, tag)
 

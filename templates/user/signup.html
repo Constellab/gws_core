@@ -1,0 +1,16 @@
+{% extends "index/index.html" %}
+
+{% block content %}
+    
+<div class="gview:form" json="true" id="login">
+    {
+        "title": "Signup",
+        "col": "col-md-6",
+        "fields":[
+            {"type": "email", "value": "", "placeholder": "Email", "disabled": false, "label": "Email"},
+        ],
+        "submit": {"value": "Submit", "url": "./"}
+    }
+</div>
+
+{% endblock %}
