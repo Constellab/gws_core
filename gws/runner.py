@@ -16,7 +16,7 @@ from gws.settings import Settings
 
 def _run(   ctx=None, test=False, db=False, \
             cli=False, runserver=False, docgen=False, \
-            force=False, show=False, pull=False, push=False, tag="", venv=False):
+            force=False, show=False, pull=False, push=False, tag=""):
     settings = Settings.retrieve()
 
     from gws.logger import Logger
@@ -206,20 +206,7 @@ def _run(   ctx=None, test=False, db=False, \
         if not os.path.exists(os.path.join(app_dir, gen_folder)):
             # send html doc to a remote server
             pass
-    
-    elif venv:
-        settings = Settings.retrieve()
-        current_dir = settings.get_dependency_dir(settings.name)
-        paths = settings.get_dependency_dirs()
-        args = []
-        for k in paths:
-            args.append( os.path.join(paths[k],'requirements.txt') )
 
-        subprocess.check_call([
-            "bash",
-            "env.sh",
-            *args
-        ], cwd=current_dir)
         
     else:
         # only load gws environmenet
@@ -229,6 +216,7 @@ def _run(   ctx=None, test=False, db=False, \
         #if not settings.save():
         #    Logger.error(Exception("manage", "Cannot save the settings in the database"))
     
+
     print(f"Log file: {Logger.get_file_path()}")
         
 
@@ -247,7 +235,6 @@ def _run(   ctx=None, test=False, db=False, \
 @click.option('--pull', is_flag=True, help='Update the app')
 @click.option('--push', is_flag=True, help='Publish the app')
 @click.option('--tag', help='Tag of the published app (default is the current version)')
-@click.option('--venv', is_flag=True, help='Tag of the published app (default is the current version)')
-def run(ctx, test, db, cli, runserver, docgen, force, show, pull, push, tag, venv):
-    _run(ctx, test, db, cli, runserver, docgen, force, show, pull, push, tag, venv)
+def run(ctx, test, db, cli, runserver, docgen, force, show, pull, push, tag):
+    _run(ctx, test, db, cli, runserver, docgen, force, show, pull, push, tag)
 

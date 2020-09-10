@@ -10,11 +10,13 @@ python3 -m pip install virtualenv
 python3 -m virtualenv .venv --python=python3
 
 # activate vitual env
-. ./.venv/bin/activate
+source ./.venv/bin/activate
 
-# prism requirement file
-for req in "$@"
-do
-  python3 -m pip install -r "$req"
-done
+# install requirement files
+python3 -m pip install -r requirements.txt
+
+# for req in "$@"
+# do
+#   python3 -m pip install -r "$req"
+# done
 
