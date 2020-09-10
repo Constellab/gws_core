@@ -132,8 +132,8 @@ class Validator:
                 elif type(value) != self.type:
                     Logger.error(ValueError(f"The deserialized value must be an instance of {self.type}. The actual deserialized value is {value}."))
 
-            except:
-                Logger.error(ValueError("The value cannot be deserialized. Please give a valid serialized string value"))
+            except Exception as err:
+                Logger.error(ValueError(f"The value cannot be deserialized. Please give a valid serialized string value. Error message: {err}"))
 
             return value
         else:

@@ -166,8 +166,6 @@ def _run(   ctx=None, test=False, db=False, \
                     "   contrib\n"+
                     "   changes\n\n\n"+
                     ".. toctree::")
-            
-            print(content)
 
             with open(os.path.join(app_dir, gen_folder, "./source/index.rst"), "w") as f:
                 f.write(content)
