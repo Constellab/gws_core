@@ -41,6 +41,20 @@ settings = Settings.retrieve()
 template_dir = settings.get_template_dir("gws")
 templates = Jinja2Templates(directory=template_dir)
 
+async def not_found(request, exc):
+    return templates.TemplateResponse("error/404.html", {
+        'request': request, 
+        'settings': settings,
+        'exception': exc
+    }, status_code=404)
+
+async def server_error(request, exc):
+    return templates.TemplateResponse("error/500.html", {
+        'request': request, 
+        'settings': settings,
+        'exception': exc
+    }, status_code=500)
+
 async def hello(request):
     return templates.TemplateResponse("hello/index.html", {
         'request': request, 
@@ -155,27 +169,22 @@ class App :
         """
         
         # process and resource routes
-        cls.routes.append(Route('/gws/{action}/{uri}/{data}/', HTTPApp))
-        cls.routes.append(Route('/gws/{action}/{uri}/', HTTPApp))
+        cls.routes.append(Route('/{action}/{uri}/{data}/', HTTPApp))
+        cls.routes.append(Route('/{action}/{uri}/', HTTPApp))
 
         # static dirs
         statics = settings.get_static_dirs()
         for k in statics:
             cls.routes.append(Mount(k, StaticFiles(directory=statics[k]), name=k))
 
-        # home
-        cls.routes.append(Route("/", homepage))
-
         # hello testing route
         cls.routes.append(Route("/hello", hello))
 
-        # user
-        #cls.routes.append(Route("/user/", HTTPApp))
-        #cls.routes.append(Route("/user/login/", HTTPApp))
-        #cls.routes.append(Route("/user/signup/", HTTPApp))
-
         # adds new routes
         cls.routes.append(Route('/demo/', endpoint=demo_endpoint.demo))
+
+        # home
+        cls.routes.append(Route("/", homepage))
     
     @classmethod
     async def action(cls, request) -> Response:
@@ -202,8 +211,20 @@ class App :
         """
         Starts the starlette uvicorn web application
         """
+
+        exception_handlers = {
+            404: not_found,
+            500: server_error
+        }
+
         # starlette
-        cls.app = Starlette(debug=cls.debug, routes=cls.routes, middleware=cls.middleware, on_startup=[cls._on_startup])
+        cls.app = Starlette(
+            debug=cls.debug, 
+            routes=cls.routes, 
+            middleware=cls.middleware, 
+            on_startup=[cls._on_startup],
+            exception_handlers=exception_handlers
+        )
         #cls.app = Starlette(debug=cls.debug, routes=cls.routes, on_startup=[cls._on_startup])
 
         uvicorn.run(cls.app, host=settings.get_data("app_host"), port=settings.get_data("app_port"))
@@ -219,15 +240,15 @@ class App :
 
         try:
             robot = Robot.get( Robot.id==1 )
-            html_view_model = HTMLRobotViewModel.get( HTMLRobotViewModel.id == 1 )
+            html_vmodel = HTMLRobotViewModel.get( HTMLRobotViewModel.id == 1 )
         except:
             robot = Robot()
             robot.data["name"] = "R. Giskard Reventlov"
             robot.save()
-            html_view_model = HTMLRobotViewModel(robot)
-            html_view_model.save()
-            json_view_model = JSONRobotViewModel(robot)
-            json_view_model.save()
+            html_vmodel = HTMLRobotViewModel(robot)
+            html_vmodel.save()
+            json_vmodel = JSONRobotViewModel(robot)
+            json_vmodel.save()
         
         host = settings.get_data("app_host")
         if host == "0.0.0.0":
@@ -235,8 +256,8 @@ class App :
 
         print("GWS application started!")
         print("* Server: {}:{}".format(settings.get_data("app_host"), settings.get_data("app_port")))
-        print("* HTTP Testing: http://{}:{}/gws{}".format(host, settings.get_data("app_port"), html_view_model.get_view_url()))    
-        #print("* WebSocket Testing: ws://{}:{}/qw{}".format(host, settings.get_data("app_port"), html_view_model.get_view_url()))
+        print("* HTTP Testing: http://{}:{}{}".format(host, settings.get_data("app_port"), html_vmodel.get_view_url()))    
+        #print("* WebSocket Testing: ws://{}:{}/qw{}".format(host, settings.get_data("app_port"), html_vmodel.get_view_url()))
 
     @classmethod 
     def test(cls, url: str) -> Response:

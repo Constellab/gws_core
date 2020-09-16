@@ -1,0 +1,14 @@
+{% extends "index/index.html" %}
+
+{% block content %}
+<div class="gview:card" data-style="">
+    <div title>505 ERROR</div>
+    <div body>
+        Server error
+        {% if settings.is_debug %}
+        <br><br>
+        {{ exception }}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

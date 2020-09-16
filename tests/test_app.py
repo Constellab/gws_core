@@ -38,7 +38,7 @@ class JSONPersonViewModel(JSONViewModel):
     model_specs = [ Person ]
     template = JSONViewTemplate('{"model_id":"{{vmodel.model.id}}", "view_uri":"{{vmodel.uri}}", "name": "{{vmodel.model.name}}!", "job":"{{vmodel.data.job}}"}')
 
-# Person.register_view_model_specs([
+# Person.register_vmodel_specs([
 #     HTMLPersonViewModel, 
 #     JSONPersonViewModel
 # ])

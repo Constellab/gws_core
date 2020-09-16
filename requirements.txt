@@ -12,3 +12,4 @@ click
 sphinx
 sphinx-rtd-theme
 rinohtype
+jupyterlab

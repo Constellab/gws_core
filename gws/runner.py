@@ -16,7 +16,7 @@ from gws.settings import Settings
 
 def _run(   ctx=None, test=False, db=False, \
             cli=False, runserver=False, docgen=False, \
-            force=False, show=False, pull=False, push=False, tag=""):
+            force=False, show=False, jlab=False):
     
     from gws.logger import Logger
     settings = Settings.retrieve()
@@ -36,16 +36,20 @@ def _run(   ctx=None, test=False, db=False, \
                 Logger.error(Exception(f"Cannot run server. It seems that your App module '{name}' is not well implemented.\n Error message: {err}"))
         
         routes = []
+        from gws.app import App
         for app_t in apps_t:
-            #print(app_t)
+            if issubclass(app_t, App):
+                app_t.init_routes()
+                gws_routes = app_t.routes
+                continue
             app_t.init_routes()
             routes = routes + app_t.routes
+
+        routes = routes + gws_routes
 
         current_app_t = type("App", apps_t, {})
         current_app_t.routes = routes
 
-        #print(current_app_t)
-        
         app = current_app_t()
         app.start()
         
@@ -121,7 +125,7 @@ def _run(   ctx=None, test=False, db=False, \
                 f.write("import os\n")
                 f.write("import sys\n")
                 f.write("wd = os.path.abspath('../../../')\n")
-                f.write("sys.path.insert(0, os.path.join(wd,'../gws-py'))\n")
+                f.write("sys.path.insert(0, os.path.join(wd,'../gws'))\n")
                 f.write("from gws import sphynx_conf\n\n\n")
                 f.write(content + '\n')
                 f.write("extensions = extensions + sphynx_conf.extensions\n")
@@ -186,32 +190,20 @@ def _run(   ctx=None, test=False, db=False, \
                 
         except Exception as err:
             Logger.error(Exception(f"An error occurred. Error message: {err}"))
-    
-    elif pull:
-        app_server = ""
-        docs_server = ""
-        # pull app
+    elif jlab:
+        if jlab == ".":
+            lab_dir = settings.get_dependency_dir(settings.name)
+        else:
+            lab_dir = settings.get_dependency_dir(jlab)
 
-        # pull docs
-
-    elif push:
-        app_server = ""
-        docs_server = ""
-        # push app
-
-        # push docs
-        if not os.path.exists(os.path.join(app_dir, gen_folder)):
-            # send html doc to a remote server
-            pass
-        
+        subprocess.check_call([
+            "jupyter", 
+            "lab"
+            ], cwd=os.path.join(lab_dir))
     else:
         # only load gws environmenet
         pass
 
-        #settings.data["db_name"] = ':memory:'
-        #if not settings.save():
-        #    Logger.error(Exception("manage", "Cannot save the settings in the database"))
-    
     print(f"Log file: {Logger.get_file_path()}")
         
 
@@ -220,16 +212,14 @@ def _run(   ctx=None, test=False, db=False, \
     allow_extra_args=True
 ))
 @click.pass_context
-@click.option('--test', '-t', help='The name test file to launch (regular expression)')
-@click.option('--db', '-d', help="The name of the database to use")
-@click.option('--cli', '-c', help='Command to run using the command line interface')
+@click.option('--test', help='The name test file to launch (regular expression). Enter "all" to launch all')
+@click.option('--db', help="The name of the database to use")
+@click.option('--cli', help='Command to run using the command line interface')
 @click.option('--runserver', is_flag=True, help='Starts the server')
-@click.option('--docgen', is_flag=True, help='Generate documentation')
-@click.option('--force', "-f", is_flag=True, help='Force documentation generation by removing any existing documentation (used if --docgen is given)')
-@click.option('--show', "-f", help='Force documentation generation by removing any existing documentation (used if --docgen is given)')
-@click.option('--pull', is_flag=True, help='Update the app')
-@click.option('--push', is_flag=True, help='Publish the app')
-@click.option('--tag', help='Tag of the published app (default is the current version)')
-def run(ctx, test, db, cli, runserver, docgen, force, show, pull, push, tag):
-    _run(ctx, test, db, cli, runserver, docgen, force, show, pull, push, tag)
+@click.option('--docgen', is_flag=True, help='Generates documentation')
+@click.option('--force', is_flag=True, help='Forces documentation generation by removing any existing documentation (used if --docgen is given)')
+@click.option('--show', help='Forces documentation generation by removing any existing documentation (used if --docgen is given)')
+@click.option('--jlab', help='Runs Jupiter lab', show_default=True)
+def run(ctx, test, db, cli, runserver, docgen, force, show, jlab):
+    _run(ctx, test, db, cli, runserver, docgen, force, show, jlab)
 

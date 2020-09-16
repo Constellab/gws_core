@@ -10,7 +10,7 @@ from starlette.testclient import TestClient
 from starlette.websockets import WebSocket
 
 from gws.app import App
-from gws.model import Model, Resource, HTMLViewModel, JSONViewModel
+from gws.model import Model, Resource, HTMLViewModel, JSONViewModel, Viewable
 from gws.view import HTMLViewTemplate, JSONViewTemplate
 from gws.controller import Controller
 from gws.base import slugify
@@ -21,6 +21,14 @@ from gws.base import slugify
 #
 # ##############################################################################
 
+
+class Home(Viewable):
+    @property
+    def name(self):
+        return self.data['name']
+    
+    def set_name(self, name):
+        self.data['name'] = name
 
 class Person(Resource):
     @property
@@ -59,6 +67,11 @@ class TestControllerHTTP(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
+        Home.drop_table()
+        Person.drop_table()
+        HTMLPersonViewModel.drop_table()
+        JSONPersonViewModel.drop_table()
+
         Person.create_table()
         HTMLPersonViewModel.create_table()
         JSONPersonViewModel.create_table()
@@ -67,9 +80,7 @@ class TestControllerHTTP(unittest.TestCase):
     def tearDownClass(cls):
         Person.drop_table()
         HTMLPersonViewModel.drop_table()
-        JSONPersonViewModel.drop_table()
-    
-    
+        JSONPersonViewModel.drop_table()    
 
     def test_read_model(self):
         print("")
@@ -162,13 +173,13 @@ class TestControllerHTTP(unittest.TestCase):
         self.assertEqual(new_json_view.model, elon)
         print(response.content)
 
-        # Check that the view_models a registered to their conrresponding models
+        # Check that the vmodels a registered to their conrresponding models
         k = slugify(HTMLPersonViewModel.full_classname())
-        self.assertEquals(Person._view_model_specs[k], HTMLPersonViewModel)
+        self.assertEquals(Person._vmodel_specs[k], HTMLPersonViewModel)
 
-    def test_create_model(self):
+    def test_create_system_trackable_model_error(self):
         print("")
-        print("# Controller testing: create model")
+        print("# Controller testing: create system trackable model")
         print("# -----------------")
 
         bill = Person()
@@ -179,29 +190,54 @@ class TestControllerHTTP(unittest.TestCase):
         client = TestClient(app)
         
         data = '{ "mdata": {"name": "Bill Gate From Microsoft"} }'
+        try:
+            client.get(Controller.build_url(
+                action = "create", 
+                uri = bill.uri,
+                data = data
+            ))
+            is_system_trackable_altered = True
+        except:
+            is_system_trackable_altered = False
+        finally:
+            self.assertFalse(is_system_trackable_altered)
+    
+
+    def test_create_model(self):
+        print("")
+        print("# Controller testing: create model")
+        print("# -----------------")
+
+        home = Home()
+        home.set_name('Good Home!')
+        home.save()
+
+        Controller.is_query_params = True
+        client = TestClient(app)
+        
+        data = '{ "mdata": {"name": "Good Blue Home!"} }'
         response = client.get(Controller.build_url(
             action = "create", 
-            uri = bill.uri,
+            uri = home.uri,
             data = data
         ))
-
         self.assertEqual(response.status_code, 200)
 
-        Q = Person.select()
+        Q = Home.select_me()
 
         self.assertEqual(len(Q), 2)
-        self.assertEqual(Q[0].data, {'name': 'Bill Gate'})
-        self.assertEqual(Q[1].data, {'name': 'Bill Gate From Microsoft'})
+        self.assertEqual(Q[0].data, {'name': 'Good Home!'})
+        self.assertEqual(Q[1].data, {'name': 'Good Blue Home!'})
 
-        data = '{ "mdata": {"name": "Bill and Melinda Gate"} }'
+        data = '{ "mdata": {"name": "Good Blue and Red Home!"} }'
         response = client.get(Controller.build_url(
             action = "update", 
-            uri = bill.uri,
+            uri = home.uri,
             data = data
         ))
 
-        p = Person.select(Person.data['name'] == 'Bill & Melinda Gate')
-        self.assertEqual(p, bill)
+        h = Home.select().where(Home.data['name'] == 'Good Blue & Red Home!')
+        self.assertEqual(h, home)
 
 # class TestControllerWebSocket(unittest.TestCase):
     

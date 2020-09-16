@@ -53,47 +53,7 @@ def _update_relative_static_paths(dep_rel_path, dep_settings):
     for k in dep_settings.get("app",{}).get("themes",{}):
         dep_settings["app"]["themes"][k] = os.path.abspath(os.path.join(dep_rel_path,dep_settings["app"]["themes"][k]))
 
-    # for k in dep_settings.get("app",{}):
-    #     if k in ["scripts","modules","styles"]:
-    #         length = len(dep_settings["app"][k])
-    #         for i in range(length):
-    #             dep_settings["app"][k][i] = os.path.abspath(os.path.join(dep_rel_path,dep_settings["app"][k][i]))
-    
     return dep_settings
-
-# def _parse_themes(settings):
-#     themes_settings = {}
-#     for k in settings.get("app",{}).get("themes",{}):
-#         theme_path = settings["app"]["themes"][k]
-#         settings_file_path = os.path.join(theme_path,"settings.json")
-#         if not os.path.exists(settings_file_path):
-#             raise Exception(f"The setting JSON file of the theme '{k}' does not exists. Expected file path: '{settings_file_path}'")
-    
-#         with open(settings_file_path) as f:
-#             try:
-#                 themes_settings = json.load(f)
-#             except:
-#                 raise Exception(f"Error while parsing the setting JSON file of the themes '{k}'. Please check file setting file '{settings_file_path}'")
-    
-#     if len(themes_settings) > 0:
-#         if len(themes_settings.get("app",{}).get("statics",{})) > 0:
-#             if not "scripts" in settings["app"]:
-#                 settings["app"]["scripts"] = {}
-            
-#             for k in themes_settings["app"]["statics"]:
-#                 settings["app"]["statics"][k] = themes_settings["app"]["statics"][k]
-
-#         if len(themes_settings.get("app",{}).get("scripts",{})) > 0:
-#             if not "scripts" in settings["app"]:
-#                 settings["app"]["scripts"] = []
-#             settings["app"]["scripts"] = settings["app"]["scripts"] + themes_settings["app"]["scripts"]
-            
-#         if len(themes_settings.get("app",{}).get("styles",{})) > 0:
-#             if not "styles" in settings["app"]:
-#                 settings["app"]["styles"] = []
-#             settings["app"]["styles"] = settings["app"]["styles"] + themes_settings["app"]["styles"]
-    
-#     return settings
 
 def _parse_settings(module_cwd: str = None, module_name:str = None, module_settings_file_path:str = None):    
     if module_name in loaded_modules:

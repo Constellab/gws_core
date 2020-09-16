@@ -37,6 +37,18 @@ from gws.event import EventListener
 
 # ####################################################################
 #
+# SystemTrackable class
+#
+# ####################################################################
+ 
+class SystemTrackable:
+    """
+    SystemTrackable class representing elements that can only be create by the system.
+    """
+    pass
+
+# ####################################################################
+#
 # Model class
 #
 # ####################################################################
@@ -175,15 +187,6 @@ class Model(BaseModel):
             else:
                 self.data[prop] = data[prop]
 
-
-    # def has_data(self) -> bool:
-    #     """
-    #     Returns True if the `data` is not empty, False otherwise
-    #     :return: True if the `data` is not empty, False otherwise
-    #     :rtype: bool
-    #     """
-    #     return len(self.data) > 0
-
     # -- I --
 
     def is_saved(self):
@@ -226,6 +229,20 @@ class Model(BaseModel):
         return tab
 
     # -- S --
+
+    @classmethod
+    def select(cls):
+        if not cls.table_exists():
+            cls.create_table()
+            
+        return super().select()
+
+    @classmethod
+    def select_me(cls):
+        if not cls.table_exists():
+            cls.create_table()
+
+        return cls.select().where(cls.type == cls.full_classname())
 
     # -- T --
 
@@ -347,27 +364,22 @@ class Model(BaseModel):
  
 class Viewable(Model):
     """
-    Viewable class
+    Viewable class.
 
-    :property _view_model_specs: The list of registered view model types.
+    :property _vmodel_specs: The list of registered view model types.
     :type specs: dict
     """
 
-    _view_model_specs: dict = {}
+    _vmodel_specs: dict = {}
 
     def as_json(self) -> str:
         """
-        Returns JSON (a dictionnary) representation of the model
+        Returns JSON (a dictionnary) representation of the model.
+
         :return: The JSON dictionary 
         :rtype: dict
         """
         import json
-
-        # dumps = {}
-        # for prop in self.property_names(Field):
-        #     val = getattr(self, prop)
-        #     if isinstance()
-        #     data[prop] = getattr(self, prop)
         return json.dumps({
             "id" : self.id,
             "data" : self.data,
@@ -384,34 +396,18 @@ class Viewable(Model):
         """
         return "<x-gws class='gws-model' id='{}' data-id='{}' data-uri='{}'></x-gws>".format(self._uuid, self.id, self.uri)
 
-    def create_default_view_model(self):
-        if "default" in self._view_model_specs:
-            model_t = self._view_model_specs["default"]
+    def create_default_vmodel(self):
+        if "default" in self._vmodel_specs:
+            model_t = self._vmodel_specs["default"]
             return model_t(model_instance=self)
         else:   
-            for k in self._view_model_specs:
-                model_t = self._view_model_specs[k]
-                return model_t(model_instance=self) #return the 1st view_model
+            for k in self._vmodel_specs:
+                model_t = self._vmodel_specs[k]
+                return model_t(model_instance=self) #return the 1st vmodel
 
         return None
 
-    # def create_html_view_model(self):
-    #     """
-    #     Creates an instance of HTMLViewModel
-    #     :return: The view model
-    #     :rtype: HTMLViewModel
-    #     """
-    #     return HTMLViewModel(model_instance=self)
-
-    # def create_json_view_model(self):
-    #     """
-    #     Creates an instance of JSONViewModel
-    #     :return: The view model
-    #     :rtype: JSONViewModel
-    #     """
-    #     return JSONViewModel(model_instance=self)
-
-    def create_view_model_by_name(self, type_name: str):
+    def create_vmodel_by_name(self, type_name: str):
         """
         Creates an instance of a registered ViewModel
 
@@ -423,23 +419,23 @@ class Viewable(Model):
         """
 
         if not isinstance(type_name, str):
-            Logger.error(Exception(self.classname(), "create_view_model_by_name", "The view name must be a string"))
+            Logger.error(Exception(self.classname(), "create_vmodel_by_name", "The view name must be a string"))
         
         if type_name == HTMLViewModel.get_uri_name():
-            view_model_t = HTMLViewModel
+            vmodel_t = HTMLViewModel
         elif type_name == JSONViewModel.get_uri_name():
-            view_model_t = HTMLViewModel
+            vmodel_t = HTMLViewModel
         else:
-            view_model_t = self._view_model_specs.get(type_name, None)
+            vmodel_t = self._vmodel_specs.get(type_name, None)
 
-        if isinstance(view_model_t, type):
-            vmodel = view_model_t(model_instance=self)
+        if isinstance(vmodel_t, type):
+            vmodel = vmodel_t(model_instance=self)
             return vmodel
         else:
-            Logger.error(Exception(self.classname(), "create_view_model_by_name", f"The vmodel '{view_model_t}' is not found"))
+            Logger.error(Exception(self.classname(), "create_vmodel_by_name", f"The vmodel '{vmodel_t}' is not found"))
 
     @classmethod
-    def register_view_model_specs(cls, specs: list):
+    def register_vmodel_specs(cls, specs: list):
         """
         Registers a list of view model types
 
@@ -448,10 +444,10 @@ class Viewable(Model):
         """
         for t in specs:
             if not isinstance(t, type) or not issubclass(t, ViewModel):
-                Logger.error(Exception("Model", "register_view_model_specs", "Invalid specs. A list of ViewModel types is expected"))
+                Logger.error(Exception("Model", "register_vmodel_specs", "Invalid specs. A list of ViewModel types is expected"))
             
             name = t.full_classname(slugify=True)
-            cls._view_model_specs[name] = t
+            cls._vmodel_specs[name] = t
 
 # ####################################################################
 #
@@ -585,7 +581,7 @@ class Config(Viewable):
 #
 # ####################################################################
 
-class Process(Viewable):
+class Process(Viewable, SystemTrackable):
     """
     Process class.
     
@@ -1100,7 +1096,6 @@ class UserLogin(Model, BaseUser):
 
 class Experiment(Model):
     
-    #job = ForeignKeyField(Job, backref="experiment")
     user = ForeignKeyField(User, backref="experiments")
     project = ForeignKeyField(Project, backref="experiments")
 
@@ -1129,7 +1124,7 @@ class Experiment(Model):
 #
 # ####################################################################
 
-class Job(Model):
+class Job(Model, SystemTrackable):
     """
     Job class.
 
@@ -1274,7 +1269,7 @@ class Job(Model):
 #
 # ####################################################################
 
-class Protocol(Process):
+class Protocol(Process, SystemTrackable):
     """ 
     Protocol class.
 
@@ -1629,7 +1624,7 @@ class Protocol(Process):
 #
 # ####################################################################
 
-class Resource(Viewable):
+class Resource(Viewable, SystemTrackable):
     """
     Resource class.
     
@@ -1750,7 +1745,7 @@ class ViewModel(Model):
         
         if isinstance(model_instance, Model):
             self._model = model_instance
-            self._model.register_view_model_specs( [type(self)] )
+            self._model.register_vmodel_specs( [type(self)] )
 
         if not self.id is None:
             self._model = self.model
@@ -1825,7 +1820,7 @@ class ViewModel(Model):
     @classmethod
     def register_to_models(cls):
         for model_t in cls.model_specs:
-            model_t.register_view_model_specs( [cls] )
+            model_t.register_vmodel_specs( [cls] )
 
     def render(self, params: dict = None, request: 'Request' = None) -> (str, 'Response'):
         """

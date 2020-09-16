@@ -57,48 +57,32 @@ class Controller(Base):
             return cls.__read(uri, data)
 
         elif action == "update":
-            vmodel =  cls.__read(uri, data)
-            mdata = data.get("mdata", {})
-            vdata = data.get("vdata", {})
-            vmodel.hydrate_with(vdata)
-            vmodel.model.hydrate_with(mdata)
-            return vmodel
+            return cls.__update(uri, data)
 
         elif action == "delete":
-            pass
+            return cls.__delete(uri, data)
 
         elif action == "run":
-            pass
+            return cls.__run(uri, data)
         
     @classmethod
-    def __read(cls, uri, data):
-        model = cls.fetch_model(uri)
-
-        from gws.model import ViewModel
-        if isinstance(model, ViewModel):
-            vmodel = model
-        else:
-            vmodel = model.create_default_view_model()
-
-        vdata = data.get("vdata", {})
-        vmodel.hydrate_with(vdata)
-        return vmodel
-
-    @classmethod
     def __create(cls, uri, data):
-        model = cls.fetch_model(uri)
-        from gws.model import ViewModel
-        if isinstance(model, ViewModel):
-            vmodel = model
-            vmodel = cls.__create_new_view_model(vmodel, data)
-        else:
-            vmodel = cls.__create_new_model(uri, data)
+        obj = cls.fetch_model(uri)
+        from gws.model import SystemTrackable
 
-        return vmodel
+        if isinstance(obj, SystemTrackable):
+            Logger.error(Exception("Controller", "__create", f"Object {type(obj)} is SystemTrackable. It can only be created by the PRISM system"))
+
+        from gws.model import ViewModel
+        if isinstance(obj, ViewModel):
+            vmodel = cls.__create_new_vmodel(obj, data)
+            return vmodel
+        else:
+            model = cls.__create_new_model(uri, data)
+            return model
 
     @classmethod
-    def __create_new_view_model(cls, vmodel, data):
-
+    def __create_new_vmodel(cls, vmodel, data):
         if data["target"] == "self":
             vmodel_t = type(vmodel)
         else:
@@ -122,7 +106,7 @@ class Controller(Base):
         mdata = data.get("mdata", {})
         model.hydrate_with(mdata)
 
-        vmodel = model.create_default_view_model()
+        vmodel = model.create_default_vmodel()
         vdata = data.get("vdata", {})
         vmodel.hydrate_with(vdata)
         vmodel.save()
@@ -150,6 +134,12 @@ class Controller(Base):
             return f"/?action={action}&uri={uri}&data={str(data)}"
         else:
             return f"/{action}/{uri}/{str(data)}"
+
+    # -- D --
+
+    @classmethod
+    def __delete(cls, uri, data):
+        pass
 
     # -- F --
 
@@ -267,6 +257,21 @@ class Controller(Base):
     # -- R --
 
     @classmethod
+    def __read(cls, uri, data):
+        obj = cls.fetch_model(uri)
+
+        from gws.model import ViewModel
+        if isinstance(obj, ViewModel):
+            vmodel = obj
+        else:
+            vmodel = obj.create_default_vmodel()
+
+        vdata = data.get("vdata", {})
+        obj.hydrate_with(vdata)
+        return vmodel
+
+
+    @classmethod
     def _register_model_specs(cls, model_specs: list):
         """
         Register Models. 
@@ -284,6 +289,16 @@ class Controller(Base):
                 #model_type._meta.table_name = model_type._table_name
             else:
                 Logger.error(Exception("Controller", "_register_model_specs", "Invalid model type"))
+
+    @classmethod
+    def __run(cls, uri, data):
+        obj = cls.__read(uri, data)
+        from gws.model import Process
+        import asyncio 
+        if isinstance(obj, Process):
+            asyncio.run( obj.run() )
+        else:
+            Logger.error(Exception("Controller", "__run", "Only processes can be run"))
 
     @classmethod
     def save_all(cls, model_list: list = None) -> bool:
@@ -314,7 +329,7 @@ class Controller(Base):
                     if isinstance(m, Resource):
                         m.save()
 
-                # 3) save view_models
+                # 3) save vmodels
                 for m in model_list:
                     if isinstance(m, ViewModel):
                         m.save()
@@ -323,3 +338,20 @@ class Controller(Base):
                 return False
 
         return True
+
+    # -- R --
+
+    @classmethod
+    def __update(cls, uri, data):
+        obj = cls.__read(uri, data)
+
+        from gws.model import SystemTrackable
+        if isinstance(obj, SystemTrackable):
+            Logger.error(Exception("Controller", "__create", f"Object {type(obj)} is SystemTrackable. It can only be updated by the PRISM system"))
+
+        from gws.model import ViewModel
+        if isinstance(obj, ViewModel):
+            vdata = data.get("vdata", {})
+            obj.hydrate_with(vdata)
+            obj.save()
+            return obj
