@@ -129,7 +129,11 @@ class Settings(PWModel):
         #         os.makedirs(log_dir)
         #     return log_dir
         # else:
-        return os.path.join(self.get_cwd(),"logs/")
+        
+        #return os.path.join(self.get_cwd(),"logs/")
+
+        default = os.path.join(self.get_cwd(),"logs/")
+        return self.data.get("log_dir", default)
 
     def get_public_dir(self, name:str = None) -> dict:
         if name is None:

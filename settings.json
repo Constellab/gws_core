@@ -1,27 +1,29 @@
 {
+    "type"          : "brick",
     "name"          : "gws",
     "authors"       : "Gencovery",
     "version"       : "0.1",
-
     "app_dir"       : "./",
     "app_host"      : "0.0.0.0",
     "app_port"      : 3000,
-
+    "log_dir"        : "../../logs/",
     "db_dir"        : "../../data/db/",
     "db_name"       : "db.sqlite3",
-
     "is_test"       : false,
     "is_debug"      : true,
-    "gws:testdata_dir" : "./tests/testdata",
 
-    "dependencies"  : {},
+    "dirs" : {
+        "gws:testdata_dir" : "./tests/testdata"
+    },
     
-    "smtp": {
-        "url": "ssl0.ovh.net",
-        "port": "465",
+    "dependencies" : {},
+    
+    "smtp" : {
+        "url" : "ssl0.ovh.net",
+        "port" : "465",
         "ssl" : true,
-        "login": "no-reply@gencovery.com",
-        "password": "Genc0ver1-N0-Reply"
+        "login" : "no-reply@gencovery.com",
+        "password" : "Genc0ver1-N0-Reply"
     },
 
     "app":{

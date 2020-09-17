@@ -9,7 +9,7 @@ from gws.model import Config, Process, Resource, Model, ViewModel, Protocol, Job
 from gws.controller import Controller
 
 settings = Settings.retrieve()
-testdata_dir = settings.get_data("gws:testdata_dir")
+testdata_dir = settings.get_dir("gws:testdata_dir")
 
 class Person(Resource):
     def __init__(self, *args, **kwargs):

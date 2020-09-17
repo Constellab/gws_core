@@ -14,7 +14,7 @@ from gws.controller import Controller
 from gws.settings import Settings
 
 settings = Settings.retrieve()
-testdata_dir = settings.get_data("gws:testdata_dir")
+testdata_dir = settings.get_dir("gws:testdata_dir")
 
 class Person(Resource):
     @property
