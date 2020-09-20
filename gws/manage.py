@@ -135,8 +135,10 @@ def _parse_settings(brick_cwd: str = None, brick_name:str = None, brick_settings
         settings["extern_dirs"][dep] = os.path.abspath(dep_cwd)
         sys.path.insert(0,dep_cwd)
 
+    # allows loading the current brick
+    settings["dependencies"].append(brick_name)
+
     # loads dependencies
-    settings["dependencies"].append(brick_name) #allows loading the current brick
     for dep in settings.get("dependencies",[]):
         dep_cwd = os.path.join(BASE_BRICK_DIR, dep)
         if not os.path.exists(dep_cwd):
@@ -158,6 +160,10 @@ def _parse_settings(brick_cwd: str = None, brick_name:str = None, brick_settings
         else:
             if len(settings) > 0:
                 settings = _update_relative_static_paths(dep_cwd,settings)
+
+    # uniquefy dependencies
+    settings["dependencies"] = list(set(settings["dependencies"]))
+    settings["externs"] = list(set(settings["externs"]))
 
     return settings
     
