@@ -7,11 +7,39 @@ import sys
 import os
 import json
 
-dep_paths = {}
-loaded_modules = []
+__cdir__ = os.path.dirname(os.path.abspath(__file__))
 
-def read_module_name(cwd):
-    module_name = None
+ROOT_DIR = os.path.join(__cdir__, "../../../../")
+BASE_WORKSPACE_DIR = os.path.join(ROOT_DIR, "./gws")
+BASE_BRICK_DIR = os.path.join(BASE_WORKSPACE_DIR, "./bricks")
+BASE_EXTERN_DIR = os.path.join(BASE_WORKSPACE_DIR, "./externs")
+BASE_LOG_DIR = os.path.join(BASE_WORKSPACE_DIR, "./logs")
+BASE_DATA_DIR = os.path.join(BASE_WORKSPACE_DIR, "./data")
+
+USER_WORKSPACE_DIR = os.path.join(ROOT_DIR, "./user/")
+USER_BRICK_DIR = os.path.join(USER_WORKSPACE_DIR, "./bricks/")
+USER_EXTERN_DIR = os.path.join(USER_WORKSPACE_DIR, "./externs")
+USER_LOG_DIR = os.path.join(USER_WORKSPACE_DIR, "./logs")
+USER_DATA_DIR = os.path.join(USER_WORKSPACE_DIR, "./data")
+
+DIR_TOKENS = dict(
+    ROOT_DIR = ROOT_DIR,
+    BASE_WORKSPACE_DIR = BASE_WORKSPACE_DIR,
+    BASE_BRICK_DIR = BASE_BRICK_DIR,
+    BASE_EXTERN_DIR = BASE_EXTERN_DIR,
+    BASE_LOG_DIR = BASE_LOG_DIR,
+    BASE_DATA_DIR = BASE_DATA_DIR,
+    USER_WORKSPACE_DIR = USER_WORKSPACE_DIR,
+    USER_BRICK_DIR = USER_BRICK_DIR,
+    USER_EXTERN_DIR = USER_EXTERN_DIR,
+    USER_LOG_DIR = USER_LOG_DIR,
+    USER_DATA_DIR = USER_DATA_DIR
+)
+
+loaded_bricks = []
+
+def read_brick_name(cwd):
+    brick_name = None
     file_path = os.path.join(cwd,"settings.json")
     with open(file_path) as f:
         try:
@@ -19,11 +47,11 @@ def read_module_name(cwd):
         except:
             raise Exception(f"Error while parsing the setting JSON file. Please check file setting file '{file_path}'")
 
-    module_name = settings.get("name",None)
-    if module_name is None:
-        raise Exception(f"The module name is required. Please check file setting file '{file_path}")
+    brick_name = settings.get("name",None)
+    if brick_name is None:
+        raise Exception(f"The brick name is required. Please check file setting file '{file_path}")
     
-    return module_name
+    return brick_name
 
 def _update_json(d, u):
     for k, v in u.items():
@@ -35,90 +63,107 @@ def _update_json(d, u):
             d[k] = v
     return d
 
-def _update_relative_static_paths(dep_rel_path, dep_settings):
+def _replace_dir_tokens(path):
+    for k in DIR_TOKENS:
+        path = path.replace(f"${{{k}}}", DIR_TOKENS[k])
+
+    return path
+
+def _update_relative_static_paths(dep_cwd, dep_settings):
+
     for k in dep_settings:
         if k.endswith("_dir"):
             if not isinstance(dep_settings[k], str):
                 raise Exception("Error while parsing setting. Parameter " + k + " must be a string")
-            dep_settings[k] = os.path.abspath(os.path.join(dep_rel_path,dep_settings[k]))
+            
+            dep_settings[k] = _replace_dir_tokens(dep_settings[k])
+            if dep_settings[k].startswith("."):
+                dep_settings[k] = os.path.abspath(os.path.join(dep_cwd,dep_settings[k]))
     
     for k in dep_settings.get("dirs",{}):
         if not isinstance(dep_settings["dirs"][k], str):
             raise Exception("Error while parsing setting. Parameter " + k + " must be a string")
-        dep_settings["dirs"][k] = os.path.abspath(os.path.join(dep_rel_path,dep_settings["dirs"][k]))
+        
+        dep_settings["dirs"][k] = _replace_dir_tokens(dep_settings["dirs"][k])
+        if dep_settings["dirs"][k].startswith("."):
+            dep_settings["dirs"][k] = os.path.abspath(os.path.join(dep_cwd,dep_settings["dirs"][k]))
 
     for k in dep_settings.get("app",{}).get("statics",{}):
-        dep_settings["app"]["statics"][k] = os.path.abspath(os.path.join(dep_rel_path,dep_settings["app"]["statics"][k]))
+        dep_settings["app"]["statics"][k] = _replace_dir_tokens(dep_settings["app"]["statics"][k])
 
-    for k in dep_settings.get("app",{}).get("themes",{}):
-        dep_settings["app"]["themes"][k] = os.path.abspath(os.path.join(dep_rel_path,dep_settings["app"]["themes"][k]))
+        if dep_settings["app"]["statics"][k].startswith("."):
+            dep_settings["app"]["statics"][k] = os.path.abspath(os.path.join(dep_cwd,dep_settings["app"]["statics"][k]))
+
 
     return dep_settings
 
-def _parse_settings(module_cwd: str = None, module_name:str = None, module_settings_file_path:str = None):    
-    if module_name in loaded_modules:
+def _parse_settings(brick_cwd: str = None, brick_name:str = None, brick_settings_file_path:str = None):    
+    if brick_name in loaded_bricks:
         return {}
 
-    loaded_modules.append(module_name)
+    loaded_bricks.append(brick_name)
 
-    if module_cwd is None:
-        raise Exception("Paremeter module_cwd is required")
+    if brick_cwd is None:
+        raise Exception("Parameter brick_cwd is required")
     
-    if module_name is None:
-        raise Exception("Paremeter module_name is required")
-
-    if not os.path.exists(module_settings_file_path):
-        raise Exception(f"The setting file of module '{module_name}' is not found. Please check file '{module_settings_file_path}'")
+    if not os.path.exists(brick_settings_file_path):
+        raise Exception(f"The setting file of brick '{brick_name}' is not found. Please check file '{brick_settings_file_path}'")
         
-    with open(module_settings_file_path) as f:
+    with open(brick_settings_file_path) as f:
         try:
             settings = json.load(f)
         except:
-            raise Exception(f"Error while parsing the setting JSON file. Please check file '{module_settings_file_path}'")
+            raise Exception(f"Error while parsing the setting JSON file. Please check file '{brick_settings_file_path}'")
     
-    import copy
-    
-    dep_paths[module_name] = [module_name]
-    for k in settings["dependencies"]:
-        dep_paths[module_name].append(k)
+    settings["extern_dirs"] = {}
+    settings["dependency_dirs"] = {}
 
-    if settings["dependencies"].get(module_name, None) is None:
-        settings["dependencies"][module_name] = "./"
-
-    # recursive load of dependencies
-    for dep_name in settings["dependencies"]:
-        if dep_name == ":external:":
-            for dep_urls in settings["dependencies"][dep_name]:
-                dep_cwd = os.path.join(module_cwd,dep_urls)
-                settings["dependencies"][dep_name] = os.path.abspath(dep_cwd)
-                sys.path.insert(0,dep_cwd) 
-        else:
-            dep_rel_path = settings["dependencies"][dep_name]
-            dep_cwd = os.path.join(module_cwd,dep_rel_path)
-            settings["dependencies"][dep_name] = os.path.abspath(dep_cwd)
-
-            #print(dep_cwd)
-            
-            dep_setting_file = os.path.join(dep_cwd,"./settings.json")
-
-            sys.path.insert(0,dep_cwd)                                 
-
-            if not dep_name == module_name:
-                dep_settings = _parse_settings(module_cwd=dep_cwd, module_name=dep_name, module_settings_file_path=dep_setting_file)
-                if len(dep_settings) > 0:
-                    #dep_settings = _parse_themes(dep_settings)
-                    dep_settings = _update_relative_static_paths(dep_cwd,dep_settings)
-                    settings = _update_json(dep_settings, settings)
+    # loads extern libs
+    for dep in settings.get("externs",[]):
+        if "/" in dep:
+            if dep.startswith("/"):
+                dep_cwd = dep
             else:
-                if len(settings) > 0:
-                    #settings = _parse_themes(settings)
-                    settings = _update_relative_static_paths(dep_cwd,settings)
+                dep_cwd = os.path.join(brick_cwd, dep)
+        else:
+            dep_cwd = os.path.join(BASE_EXTERN_DIR, dep)
+            if not os.path.exists(dep_cwd):
+                dep_cwd = os.path.join(USER_EXTERN_DIR, dep)
+                if not os.path.exists(dep_cwd):
+                    raise Exception(f"The extern lib {dep} is not found")
+        
+        settings["extern_dirs"][dep] = os.path.abspath(dep_cwd)
+        sys.path.insert(0,dep_cwd)
+
+    # loads dependencies
+    settings["dependencies"].append(brick_name) #allows loading the current brick
+    for dep in settings.get("dependencies",[]):
+        dep_cwd = os.path.join(BASE_BRICK_DIR, dep)
+        if not os.path.exists(dep_cwd):
+            dep_cwd = os.path.join(USER_BRICK_DIR, dep)
+            if not os.path.exists(dep_cwd):
+                raise Exception(f"The brick {dep} is not found")
+        
+        sys.path.insert(0,dep_cwd)
+
+        settings["dependency_dirs"][dep] = os.path.abspath(dep_cwd)
+        dep_setting_file = os.path.join(dep_cwd,"./settings.json")
+                                         
+        dep_exist = (dep != brick_name)
+        if dep_exist:
+            dep_settings = _parse_settings(brick_cwd=dep_cwd, brick_name=dep, brick_settings_file_path=dep_setting_file)
+            if len(dep_settings) > 0:
+                dep_settings = _update_relative_static_paths(dep_cwd,dep_settings)
+                settings = _update_json(dep_settings, settings)
+        else:
+            if len(settings) > 0:
+                settings = _update_relative_static_paths(dep_cwd,settings)
 
     return settings
-
-def parse_settings(module_cwd: str = None):
-    module_name = read_module_name(module_cwd)
-    module_settings_file_path = os.path.join(module_cwd, "settings.json")
+    
+def parse_settings(brick_cwd: str = None):
+    brick_name = read_brick_name(brick_cwd)
+    brick_settings_file_path = os.path.join(brick_cwd, "settings.json")
     default_settings = {
         "app_dir"       : "./",
         "app_host"      : "localhost",
@@ -126,22 +171,22 @@ def parse_settings(module_cwd: str = None):
         "db_dir"        : "./",
         "db_name"       : "db.sqlite3",
         "is_test"       : False,
-        "dependencies"  : {},
+        "externs"       : [],
+        "dependencies"  : [],
         "static_dirs"   : {},
-        "__cwd__"       : module_cwd
+        "__cwd__"       : brick_cwd
     }
 
-    settings = _update_json(default_settings, _parse_settings(module_cwd=module_cwd, module_name=module_name, module_settings_file_path=module_settings_file_path))
-    settings["dependency_paths"] = dep_paths
+    settings = _update_json(default_settings, _parse_settings(brick_cwd=brick_cwd, brick_name=brick_name, brick_settings_file_path=brick_settings_file_path))
 
     if not os.path.exists(settings.get("db_dir")):
         os.mkdir(settings.get("db_dir"))
     
     return settings
 
-def load_settings(module_cwd: str = None):
+def load_settings(brick_cwd: str = None):
     from gws.settings import Settings
-    settings = parse_settings(module_cwd)
+    settings = parse_settings(brick_cwd)
     Settings.init(settings)
     settings = Settings.retrieve()
     return settings

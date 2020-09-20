@@ -13,9 +13,9 @@ import * as FORCE from "./layout/force.js";
 import * as UTILS from "../utils/files.js";
 import * as COLOR from '../utils/color.js'
 
-import * as THREE from '/static/dis/three-js/build/three.module.js';
-import { TrackballControls } from '/static/dis/three-js/examples/jsm/controls/TrackballControls.js';
-import { DragControls } from '/static/dis/three-js/examples/jsm/controls/DragControls.js';
+import * as THREE from '/static/dist/three-js/build/three.module.js';
+import { TrackballControls } from '/static/dist/three-js/examples/jsm/controls/TrackballControls.js';
+import { DragControls } from '/static/dist/three-js/examples/jsm/controls/DragControls.js';
 
 export class Map {
 

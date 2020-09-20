@@ -159,24 +159,19 @@ class Settings(PWModel):
         return statics
 
     def get_dependency_dir(self, dependency_name: str) -> str:
-        return self.data["dependencies"].get(dependency_name, None)
+        return self.data["dependency_dirs"].get(dependency_name, None)
 
     def get_dependency_dirs(self) -> dict:
         dirs = {}
-        for dep_name in self.data["dependencies"]:
-            if not dep_name == ":external:":
-                dirs[dep_name] = self.data["dependencies"][dep_name]
+        for dep_name in self.data["dependency_dirs"]:
+            dirs[dep_name] = self.data["dependency_dirs"][dep_name]
         return dirs
     
     def get_dependency_names(self) -> list:
-        names = []
-        for dep_name in self.data["dependencies"]:
-            if not dep_name == ":external:":
-                names.append(dep_name)
-        return names
+        return self.data["dependencies"]
 
-    def get_dependency_paths(self) -> dict:
-        return self.data["dependency_paths"]
+    # def get_dependency_paths(self) -> dict:
+    #     return self.data["dependency_paths"]
 
     def get_template_dir(self, dependency_name: str) -> str:
         dependency_dir = self.get_dependency_dir(dependency_name)

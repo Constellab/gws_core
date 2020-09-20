@@ -16,7 +16,8 @@
         "gws:testdata_dir" : "./tests/testdata"
     },
     
-    "dependencies" : {},
+    "externs" : [],
+    "dependencies" : [],
     
     "smtp" : {
         "url" : "ssl0.ovh.net",
@@ -31,36 +32,36 @@
         "title"         : "Wecome to GWS",
         "description"   : "This application provides core functionalities for GWS-based modules",
         "statics"       : {
-            "/static/distrib"   : "../../extern/distrib-js",
-            "/static/gws"   : "./public/static"
+            "/static/dist"  : "${BASE_EXTERN_DIR}/distrib-js",
+            "/static/gws"  : "./public/static"
         },
         "themes" : [ ],
         "scripts": [
-            "/static/distrib/creative-tim/black-dashboard/assets/js/core/jquery.min.js",
-            "/static/distrib/creative-tim/black-dashboard/assets/js/core/popper.min.js",
-            "/static/distrib/creative-tim/black-dashboard/assets/js/core/bootstrap.min.js",
-            "/static/distrib/creative-tim/black-dashboard/assets/js/plugins/perfect-scrollbar.jquery.min.js",
-            "/static/distrib/creative-tim/black-dashboard/assets/js/plugins/chartjs.min.js",
-            "/static/distrib/creative-tim/black-dashboard/assets/js/plugins/bootstrap-notify.js",
-            "/static/distrib/creative-tim/black-dashboard/assets/js/black-dashboard.min.js?v=1.0.0",
+            "/static/dist/creative-tim/black-dashboard/assets/js/core/jquery.min.js",
+            "/static/dist/creative-tim/black-dashboard/assets/js/core/popper.min.js",
+            "/static/dist/creative-tim/black-dashboard/assets/js/core/bootstrap.min.js",
+            "/static/dist/creative-tim/black-dashboard/assets/js/plugins/perfect-scrollbar.jquery.min.js",
+            "/static/dist/creative-tim/black-dashboard/assets/js/plugins/chartjs.min.js",
+            "/static/dist/creative-tim/black-dashboard/assets/js/plugins/bootstrap-notify.js",
+            "/static/dist/creative-tim/black-dashboard/assets/js/black-dashboard.min.js?v=1.0.0",
             
-            "/static/distrib/uuidv4/8.1.0/uuidv4.js",
+            "/static/dist/uuidv4/8.1.0/uuidv4.js",
             
-            "/static/distrib/d3/d3-dispatch/1.0.6/d3-dispatch.min.js",
-            "/static/distrib/d3/d3-timer/1.0.10/d3-timer.min.js",
-            "/static/distrib/d3/d3-quadtree/1.0.7/d3-quadtree.min.js",
-            "/static/distrib/d3/d3-binarytree/0.1.8/d3-binarytree.min.js",
-            "/static/distrib/d3/d3-octree/0.1.8/d3-octree.min.js",
-            "/static/distrib/d3/d3-force-3d/2.1.0/d3-force-3d.min.js",
+            "/static/dist/d3/d3-dispatch/1.0.6/d3-dispatch.min.js",
+            "/static/dist/d3/d3-timer/1.0.10/d3-timer.min.js",
+            "/static/dist/d3/d3-quadtree/1.0.7/d3-quadtree.min.js",
+            "/static/dist/d3/d3-binarytree/0.1.8/d3-binarytree.min.js",
+            "/static/dist/d3/d3-octree/0.1.8/d3-octree.min.js",
+            "/static/dist/d3/d3-force-3d/2.1.0/d3-force-3d.min.js",
 
             "/static/gws/src/gview/gview.js",
             "/static/gws/src/gview/templates.js"
         ],
         "modules": ["/static/gws/index.js"],
         "styles": [
-            "/static/distrib/fontawesome/5.14.0/css/all.min.css",
-            "/static/distrib/creative-tim/black-dashboard/assets/css/nucleo-icons.css",
-            "/static/distrib/creative-tim/black-dashboard/assets/css/black-dashboard.css?v=1.0.0",
+            "/static/dist/fontawesome/5.14.0/css/all.min.css",
+            "/static/dist/creative-tim/black-dashboard/assets/css/nucleo-icons.css",
+            "/static/dist/creative-tim/black-dashboard/assets/css/black-dashboard.css?v=1.0.0",
             
             "/static/gws/index.css",
             "/static/gws/src/g3/all.css",
