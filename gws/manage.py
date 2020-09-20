@@ -12,12 +12,14 @@ __cdir__ = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.join(__cdir__, "../../../../")
 BASE_WORKSPACE_DIR = os.path.join(ROOT_DIR, "./gws")
 BASE_BRICK_DIR = os.path.join(BASE_WORKSPACE_DIR, "./bricks")
+BASE_LAB_DIR = os.path.join(BASE_WORKSPACE_DIR, "./labs")
 BASE_EXTERN_DIR = os.path.join(BASE_WORKSPACE_DIR, "./externs")
 BASE_LOG_DIR = os.path.join(BASE_WORKSPACE_DIR, "./logs")
 BASE_DATA_DIR = os.path.join(BASE_WORKSPACE_DIR, "./data")
 
-USER_WORKSPACE_DIR = os.path.join(ROOT_DIR, "./user/")
+USER_WORKSPACE_DIR = os.path.join(ROOT_DIR, "./user")
 USER_BRICK_DIR = os.path.join(USER_WORKSPACE_DIR, "./bricks/")
+USER_LAB_DIR = os.path.join(USER_WORKSPACE_DIR, "./labs/")
 USER_EXTERN_DIR = os.path.join(USER_WORKSPACE_DIR, "./externs")
 USER_LOG_DIR = os.path.join(USER_WORKSPACE_DIR, "./logs")
 USER_DATA_DIR = os.path.join(USER_WORKSPACE_DIR, "./data")
@@ -97,6 +99,28 @@ def _update_relative_static_paths(dep_cwd, dep_settings):
 
     return dep_settings
 
+def _find_brick(name):
+    dep_cwd = os.path.join(BASE_BRICK_DIR, name)
+    if os.path.exists(dep_cwd):
+        return dep_cwd
+
+    dep_cwd = os.path.join(USER_BRICK_DIR, name)
+    if os.path.exists(dep_cwd):
+        return dep_cwd
+    
+    return None
+
+def _find_lab(name):
+    dep_cwd = os.path.join(BASE_LAB_DIR, name)
+    if os.path.exists(dep_cwd):
+        return dep_cwd
+
+    dep_cwd = os.path.join(USER_LAB_DIR, name)
+    if os.path.exists(dep_cwd):
+        return dep_cwd
+    
+    return None
+
 def _parse_settings(brick_cwd: str = None, brick_name:str = None, brick_settings_file_path:str = None):    
     if brick_name in loaded_bricks:
         return {}
@@ -112,6 +136,8 @@ def _parse_settings(brick_cwd: str = None, brick_name:str = None, brick_settings
     with open(brick_settings_file_path) as f:
         try:
             settings = json.load(f)
+            if not settings["type"] in ["brick", "lab"]:
+                raise Exception(f"The type of the brick '{brick_name}' is invalid. Please check file '{brick_settings_file_path}'")
         except:
             raise Exception(f"Error while parsing the setting JSON file. Please check file '{brick_settings_file_path}'")
     
@@ -140,12 +166,14 @@ def _parse_settings(brick_cwd: str = None, brick_name:str = None, brick_settings
 
     # loads dependencies
     for dep in settings.get("dependencies",[]):
-        dep_cwd = os.path.join(BASE_BRICK_DIR, dep)
-        if not os.path.exists(dep_cwd):
-            dep_cwd = os.path.join(USER_BRICK_DIR, dep)
-            if not os.path.exists(dep_cwd):
-                raise Exception(f"The brick {dep} is not found")
+        dep_cwd = _find_brick(dep)
         
+        if dep_cwd is None:
+            dep_cwd = _find_lab(dep)
+        
+        if dep_cwd is None:
+            continue
+
         sys.path.insert(0,dep_cwd)
 
         settings["dependency_dirs"][dep] = os.path.abspath(dep_cwd)
@@ -171,6 +199,7 @@ def parse_settings(brick_cwd: str = None):
     brick_name = read_brick_name(brick_cwd)
     brick_settings_file_path = os.path.join(brick_cwd, "settings.json")
     default_settings = {
+        "type"          : "brick",
         "app_dir"       : "./",
         "app_host"      : "localhost",
         "app_port"      : 3000,
