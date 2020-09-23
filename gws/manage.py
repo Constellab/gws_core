@@ -216,12 +216,11 @@ def parse_settings(brick_cwd: str = None):
 
     if not os.path.exists(settings.get("db_dir")):
         os.mkdir(settings.get("db_dir"))
-    
+
     return settings
 
 def load_settings(brick_cwd: str = None):
     from gws.settings import Settings
     settings = parse_settings(brick_cwd)
     Settings.init(settings)
-    settings = Settings.retrieve()
     return settings

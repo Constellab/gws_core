@@ -55,7 +55,7 @@ async def server_error(request, exc):
         'exception': exc
     }, status_code=500)
 
-async def hello(request):
+async def hellopage(request):
     return templates.TemplateResponse("hello/index.html", {
         'request': request, 
         'settings': settings,
@@ -63,6 +63,12 @@ async def hello(request):
 
 async def homepage(request):
     return templates.TemplateResponse("index/index.html", {
+        'request': request, 
+        'settings': settings,
+    })
+
+async def settingpage(request):
+    return templates.TemplateResponse("settings/index.html", {
         'request': request, 
         'settings': settings,
     })
@@ -178,7 +184,10 @@ class App :
             cls.routes.append(Mount(k, StaticFiles(directory=statics[k]), name=k))
 
         # hello testing route
-        cls.routes.append(Route("/hello", hello))
+        cls.routes.append(Route("/settings/", settingpage))
+
+        # hello testing route
+        cls.routes.append(Route("/hello/", hellopage))
 
         # adds new routes
         cls.routes.append(Route('/demo/', endpoint=demo_endpoint.demo))
