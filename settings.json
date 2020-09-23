@@ -69,7 +69,7 @@
         ],
         "buttons":{
             "settings": {
-                "label": "Settings", "icon": "tim-icons icon-settings-gear-63", "onclick": "window.gws.settings", "url": "./", "position": 0
+                "label": "Settings", "icon": "tim-icons icon-settings-gear-63", "url": "/settings", "position": 0
             }
         }
     },
