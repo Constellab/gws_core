@@ -55,23 +55,23 @@ async def server_error(request, exc):
         'exception': exc
     }, status_code=500)
 
-@requires("authenticated", redirect='auth')
+@requires("authenticated")
 async def hellopage(request):
-    return templates.TemplateResponse("hello/index.html", {
+    return templates.TemplateResponse("hello.html", {
         'request': request, 
         'settings': settings,
     })
 
-@requires("authenticated", redirect='auth')
+@requires("authenticated")
 async def homepage(request):
     return templates.TemplateResponse("index/index.html", {
         'request': request, 
         'settings': settings,
     })
 
-@requires("authenticated", redirect='404')
+@requires("authenticated")
 async def settingpage(request):
-    return templates.TemplateResponse("settings/index.html", {
+    return templates.TemplateResponse("settings.html", {
         'request': request, 
         'settings': settings,
     })
@@ -149,19 +149,20 @@ class App :
         for k in statics:
             cls.routes.append(Mount(k, StaticFiles(directory=statics[k]), name=k))
 
-        # hello testing route
+        # settings
         cls.routes.append(Route("/settings/", settingpage))
 
-        # hello testing route
+        # hello
         cls.routes.append(Route("/hello/", hellopage))
 
-        # adds new routes
+        # demo
         cls.routes.append(Route('/demo/', endpoint=demo.demo))
 
-        # login/signup
-        cls.routes.append(Route('/auth', endpoint=auth.authpage, name="auth"))
-        #cls.routes.append(Route('/signup', endpoint=auth.Signup))
-        
+        # auth
+        cls.routes.append(Route('/login', endpoint=auth.loginpage, name="auth"))
+        cls.routes.append(Route('/logout', endpoint=auth.logoutpage, name="auth"))
+        cls.routes.append(Route('/profile', endpoint=auth.profilepage, name="auth"))
+
         # home
         cls.routes.append(Route("/", homepage))
     
@@ -236,7 +237,7 @@ class App :
         import urllib
         print("GWS application started!")
         print("* Server: {}:{}".format(settings.get_data("app_host"), settings.get_data("app_port")))
-        print("* HTTP connection: http://{}:{}/auth?token={}".format(host, settings.get_data("app_port"), urllib.parse.quote(settings.get_data("token"), safe='')))
+        print("* HTTP connection: http://{}:{}/login?token={}".format(host, settings.get_data("app_port"), urllib.parse.quote(settings.get_data("token"), safe='')))
         #print("* HTTP Testing: http://{}:{}{}?token={}".format(host, settings.get_data("app_port"), html_vmodel.get_view_url(), settings.get_data("token")))    
         #print("* WebSocket Testing: ws://{}:{}/qw{}".format(host, settings.get_data("app_port"), html_vmodel.get_view_url()))
 
