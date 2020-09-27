@@ -15,20 +15,19 @@ from starlette.templating import Jinja2Templates
 from starlette.staticfiles import StaticFiles
 from starlette.requests import Request
 from starlette.endpoints import HTTPEndpoint, WebSocketEndpoint
+from starlette.authentication import requires
 
 from starlette.middleware import Middleware
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.authentication import AuthenticationMiddleware
-from starlette.authentication import (
-    AuthenticationBackend, AuthenticationError, SimpleUser, UnauthenticatedUser,
-    AuthCredentials
-)
+
 
 from gws.settings import Settings
 from gws.view import HTMLViewTemplate, JSONViewTemplate, PlainTextViewTemplate
 from gws.model import Resource, HTMLViewModel, JSONViewModel, User
 from gws.controller import Controller
 from gws.logger import Logger
+from gws._app import auth, demo
 
 settings = Settings.retrieve()
 
@@ -55,18 +54,21 @@ async def server_error(request, exc):
         'exception': exc
     }, status_code=500)
 
+@requires("authenticated", redirect='login')
 async def hellopage(request):
     return templates.TemplateResponse("hello/index.html", {
         'request': request, 
         'settings': settings,
     })
 
+@requires("authenticated", redirect='login')
 async def homepage(request):
     return templates.TemplateResponse("index/index.html", {
         'request': request, 
         'settings': settings,
     })
 
+@requires("authenticated", redirect='login')
 async def settingpage(request):
     return templates.TemplateResponse("settings/index.html", {
         'request': request, 
@@ -94,43 +96,13 @@ class HTTPApp(HTTPEndpoint):
 #     async def on_disconnect(self, websocket, close_code):
 #         pass
 
-from gws._app import user as user_endpoint
-from gws._app import demo as demo_endpoint
-
 ####################################################################################
 #
 # AuthBackend class
 #
 ####################################################################################
 
-class AuthBackend(AuthenticationBackend):
 
-    async def authenticate(self, request):
-        if "Authorization" not in request.headers:
-            return
-
-        auth = request.headers["Authorization"]
-        try:
-            scheme, credentials = auth.split()
-            if scheme.lower() != 'basic':
-                return
-            decoded = base64.b64decode(credentials).decode("ascii")
-        except (ValueError, UnicodeDecodeError, binascii.Error) as err:
-            raise AuthenticationError(f'Invalid basic auth credentials. Error: {err}')
-
-        email, _, password = decoded.partition(":")
-        
-        try:
-            user = User.get(email=email, password=password)
-        except:
-            raise AuthenticationError('User not found')
-
-        scopes = ["authenticated"]
-        if user.is_admin:
-            scopes.append("admin")
-
-        auth_credentials = AuthCredentials(scopes)
-        return auth_credentials, user
 
 ####################################################################################
 #
@@ -154,7 +126,7 @@ class App :
         ),
         Middleware( 
             AuthenticationMiddleware, 
-            backend = AuthBackend()
+            backend = auth.AuthBackend()
         )
     ]
     debug = settings.get_data("is_test")
@@ -190,8 +162,12 @@ class App :
         cls.routes.append(Route("/hello/", hellopage))
 
         # adds new routes
-        cls.routes.append(Route('/demo/', endpoint=demo_endpoint.demo))
+        cls.routes.append(Route('/demo/', endpoint=demo.demo))
 
+        # login/signup
+        cls.routes.append(Route('/login', endpoint=auth.Login, name="login"))
+        cls.routes.append(Route('/signup', endpoint=auth.Signup))
+        
         # home
         cls.routes.append(Route("/", homepage))
     

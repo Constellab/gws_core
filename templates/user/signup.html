@@ -2,14 +2,16 @@
 
 {% block content %}
     
-<div class="gview:form" json="true" id="login">
+<div class="gview:form" json="true" id="signup">
     {
         "title": "Signup",
         "col": "col-md-6",
         "fields":[
-            {"type": "email", "value": "", "placeholder": "Email", "disabled": false, "label": "Email"},
+            {"type": "email", "value": "", "name": "email", "placeholder": "Email", "disabled": false, "label": "Email"},
+            {"type": "password", "value": "", "name": "password", "placeholder": "Password", "disabled": false, "label": "Password"},
+            {"type": "hidden", "value": "{{ request.session.crsf }}", "name": "crsf"}
         ],
-        "submit": {"value": "Submit", "url": "./"}
+        "submit": {"value": "Signup", "url": "/signup"}
     }
 </div>
 
