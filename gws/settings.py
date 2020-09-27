@@ -52,10 +52,19 @@ class Settings(PWModel):
             settings.save()
         except:
             settings = Settings()
+
+            #session_key
+            from base64 import b64encode
+            random_bytes = os.urandom(64)
+            session_key = b64encode(random_bytes).decode('utf-8')
+            settings.set_data("session_key", session_key)
+
+            #token
             from base64 import b64encode
             random_bytes = os.urandom(64)
             token = b64encode(random_bytes).decode('utf-8')
-            settings.set_data("secret_key", token)
+            settings.set_data("token", token)
+
             settings.save()
 
     # -- A --
@@ -104,7 +113,7 @@ class Settings(PWModel):
         return self.data["__cwd__"]
 
     def get_data(self, k:str) -> str:
-        if k == "secret_key":
+        if k == "session_key":
             from starlette.datastructures import Secret
             return Secret(self.data[k])
         else:
