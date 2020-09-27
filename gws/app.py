@@ -15,20 +15,19 @@ from starlette.templating import Jinja2Templates
 from starlette.staticfiles import StaticFiles
 from starlette.requests import Request
 from starlette.endpoints import HTTPEndpoint, WebSocketEndpoint
+from starlette.authentication import requires
 
 from starlette.middleware import Middleware
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.authentication import AuthenticationMiddleware
-from starlette.authentication import (
-    AuthenticationBackend, AuthenticationError, SimpleUser, UnauthenticatedUser,
-    AuthCredentials
-)
+
 
 from gws.settings import Settings
 from gws.view import HTMLViewTemplate, JSONViewTemplate, PlainTextViewTemplate
 from gws.model import Resource, HTMLViewModel, JSONViewModel, User
 from gws.controller import Controller
 from gws.logger import Logger
+from gws._app import auth, demo
 
 settings = Settings.retrieve()
 
@@ -40,6 +39,7 @@ settings = Settings.retrieve()
 
 template_dir = settings.get_template_dir("gws")
 templates = Jinja2Templates(directory=template_dir)
+
 
 async def not_found(request, exc):
     return templates.TemplateResponse("error/404.html", {
@@ -55,18 +55,21 @@ async def server_error(request, exc):
         'exception': exc
     }, status_code=500)
 
+@requires("authenticated", redirect='auth')
 async def hellopage(request):
     return templates.TemplateResponse("hello/index.html", {
         'request': request, 
         'settings': settings,
     })
 
+@requires("authenticated", redirect='auth')
 async def homepage(request):
     return templates.TemplateResponse("index/index.html", {
         'request': request, 
         'settings': settings,
     })
 
+@requires("authenticated", redirect='404')
 async def settingpage(request):
     return templates.TemplateResponse("settings/index.html", {
         'request': request, 
@@ -94,44 +97,6 @@ class HTTPApp(HTTPEndpoint):
 #     async def on_disconnect(self, websocket, close_code):
 #         pass
 
-from gws._app import user as user_endpoint
-from gws._app import demo as demo_endpoint
-
-####################################################################################
-#
-# AuthBackend class
-#
-####################################################################################
-
-class AuthBackend(AuthenticationBackend):
-
-    async def authenticate(self, request):
-        if "Authorization" not in request.headers:
-            return
-
-        auth = request.headers["Authorization"]
-        try:
-            scheme, credentials = auth.split()
-            if scheme.lower() != 'basic':
-                return
-            decoded = base64.b64decode(credentials).decode("ascii")
-        except (ValueError, UnicodeDecodeError, binascii.Error) as err:
-            raise AuthenticationError(f'Invalid basic auth credentials. Error: {err}')
-
-        email, _, password = decoded.partition(":")
-        
-        try:
-            user = User.get(email=email, password=password)
-        except:
-            raise AuthenticationError('User not found')
-
-        scopes = ["authenticated"]
-        if user.is_admin:
-            scopes.append("admin")
-
-        auth_credentials = AuthCredentials(scopes)
-        return auth_credentials, user
-
 ####################################################################################
 #
 # App class
@@ -149,12 +114,13 @@ class App :
     middleware = [
         Middleware( 
             SessionMiddleware, 
-            secret_key=settings.get_data("secret_key"), 
-            session_cookie="gws"
+            secret_key=settings.get_data("session_key"), 
+            session_cookie="gws",
+            max_age=60*60*24
         ),
         Middleware( 
             AuthenticationMiddleware, 
-            backend = AuthBackend()
+            backend = auth.AuthBackend()
         )
     ]
     debug = settings.get_data("is_test")
@@ -190,8 +156,12 @@ class App :
         cls.routes.append(Route("/hello/", hellopage))
 
         # adds new routes
-        cls.routes.append(Route('/demo/', endpoint=demo_endpoint.demo))
+        cls.routes.append(Route('/demo/', endpoint=demo.demo))
 
+        # login/signup
+        cls.routes.append(Route('/auth', endpoint=auth.authpage, name="auth"))
+        #cls.routes.append(Route('/signup', endpoint=auth.Signup))
+        
         # home
         cls.routes.append(Route("/", homepage))
     
@@ -263,9 +233,11 @@ class App :
         if host == "0.0.0.0":
             host = "localhost"
 
+        import urllib
         print("GWS application started!")
         print("* Server: {}:{}".format(settings.get_data("app_host"), settings.get_data("app_port")))
-        print("* HTTP Testing: http://{}:{}{}".format(host, settings.get_data("app_port"), html_vmodel.get_view_url()))    
+        print("* HTTP connection: http://{}:{}/auth?token={}".format(host, settings.get_data("app_port"), urllib.parse.quote(settings.get_data("token"), safe='')))
+        #print("* HTTP Testing: http://{}:{}{}?token={}".format(host, settings.get_data("app_port"), html_vmodel.get_view_url(), settings.get_data("token")))    
         #print("* WebSocket Testing: ws://{}:{}/qw{}".format(host, settings.get_data("app_port"), html_vmodel.get_view_url()))
 
     @classmethod 

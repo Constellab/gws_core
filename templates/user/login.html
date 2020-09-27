@@ -2,17 +2,24 @@
 
 {% block content %}
 
+
 <div class="gview:form" json="true" id="login">
     {
         "title": "Login",
         "col": "col-md-6",
         "fields":[
-            {"type": "email", "value": "", "placeholder": "Email", "disabled": false, "label": "Email"},
-            {"type": "password", "value": "", "placeholder": "Password", "disabled": false, "label": "Password"},
-            {"type": "hidden", "value": "{{ request.session.crsf }}"}
+            {"type": "email", "value": "", "name": "email", "placeholder": "Email", "disabled": false, "label": "Email"},
+            {"type": "password", "value": "", "name": "password", "placeholder": "Password", "disabled": false, "label": "Password"},
+            {"type": "hidden", "value": "{{ request.session.crsf }}", "name": "crsf"}
         ],
-        "submit": {"value": "Submit", "url": "./"}
+        "submit": {"value": "Login", "url": "/login"}
     }
 </div>
 
+<div class="card card-plain">
+    <div class="card-body" style="text-align: center">
+        <a href="/signup">Singup</a> to create an account
+    </div>
+</div>
+        
 {% endblock %}

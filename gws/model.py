@@ -1018,9 +1018,11 @@ class User(Model, BaseUser):
     email =  CharField(index=True)
     password =  CharField()
     token =  CharField()
+    is_admin =  BooleanField(default=False, index=True)
     is_active =  BooleanField(default=False, index=True)
     is_locked =  BooleanField(default=False, index=True)
 
+    is_authenticated = False
     _table_name = 'user'
 
     # -- G --
