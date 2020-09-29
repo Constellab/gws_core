@@ -221,7 +221,7 @@ class App :
         """
         Called on application startup to create test objects
         """
-
+        settings = Settings.retrieve()
         from gws.robot import Robot, HTMLRobotViewModel, JSONRobotViewModel
 
         try:
@@ -243,7 +243,13 @@ class App :
         import urllib
         print("GWS application started!")
         print("* Server: {}:{}".format(settings.get_data("app_host"), settings.get_data("app_port")))
-        print("* HTTP connection: http://{}:{}/login?token={}".format(host, settings.get_data("app_port"), urllib.parse.quote(settings.get_data("token"), safe='')))
+
+        if settings.get_data("is_demo"):
+            print("* HTTP connection: http://{}:{}/demo".format(host, settings.get_data("app_port")))
+        else:
+            print("* HTTP connection: http://{}:{}/login?token={}".format(host, settings.get_data("app_port"), urllib.parse.quote(settings.get_data("token"), safe='')))
+            print("* Token: {}".format(urllib.parse.quote(settings.get_data("token"), safe='')))
+
         #print("* HTTP Testing: http://{}:{}{}?token={}".format(host, settings.get_data("app_port"), html_vmodel.get_view_url(), settings.get_data("token")))    
         #print("* WebSocket Testing: ws://{}:{}/qw{}".format(host, settings.get_data("app_port"), html_vmodel.get_view_url()))
 
