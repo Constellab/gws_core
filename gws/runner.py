@@ -23,6 +23,11 @@ def _run(   ctx=None, test=False, db=False, \
     Logger(is_new_session=True, is_test=test)
     
     if runserver:
+        settings.set_data("is_demo", demo)
+        if not settings.save():
+            Logger.error(Exception("manage", "Cannot save the settings in the database"))
+
+
         # dynamical inheritance of App
         dep_module_names = settings.get_dependency_names()    
         apps_t = tuple()
@@ -49,11 +54,6 @@ def _run(   ctx=None, test=False, db=False, \
 
         current_app_t = type("App", apps_t, {})
         current_app_t.routes = routes
-
-        print(demo)
-        settings.set_data("is_demo", demo)
-        if not settings.save():
-            Logger.error(Exception("manage", "Cannot save the settings in the database"))
 
         app = current_app_t()
         app.start()
