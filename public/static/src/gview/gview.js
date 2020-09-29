@@ -90,18 +90,18 @@ class GView{
                 this._domTarget = document.querySelector(target)
                 var response = template._render(data)
                 if(typeof response == "function"){
-                    response(data)
+                    response(this._domTarget, data)
                 }else{
                     this._domTarget.innerHTML = response
                 }
             } else{
                 var response = template._render(data)
                 if(typeof response == "function"){
-                    response(data)
+                    response(this._dom, data)
                 }else{
-                    this._domTarget.innerHTML = response
+                    this._dom.innerHTML = response
                 }
-                this._domTarget.style.display = "initial"
+                this._dom.style.display = "initial"
             }
 
             if(this._dom.userData == null){

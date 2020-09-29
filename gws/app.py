@@ -21,7 +21,6 @@ from starlette.middleware import Middleware
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.authentication import AuthenticationMiddleware
 
-
 from gws.settings import Settings
 from gws.view import HTMLViewTemplate, JSONViewTemplate, PlainTextViewTemplate
 from gws.model import Resource, HTMLViewModel, JSONViewModel, User
@@ -29,7 +28,7 @@ from gws.controller import Controller
 from gws.logger import Logger
 from gws._app import auth, demo
 
-settings = Settings.retrieve()
+
 
 ####################################################################################
 #
@@ -37,11 +36,13 @@ settings = Settings.retrieve()
 #
 ####################################################################################
 
-template_dir = settings.get_template_dir("gws")
-templates = Jinja2Templates(directory=template_dir)
-
+def get_templates():
+    settings = Settings.retrieve()
+    template_dir = settings.get_template_dir("gws")
+    return Jinja2Templates(directory=template_dir), settings
 
 async def not_found(request, exc):
+    templates, settings = get_templates()
     return templates.TemplateResponse("error/404.html", {
         'request': request, 
         'settings': settings,
@@ -49,6 +50,7 @@ async def not_found(request, exc):
     }, status_code=404)
 
 async def server_error(request, exc):
+    templates, settings = get_templates()
     return templates.TemplateResponse("error/500.html", {
         'request': request, 
         'settings': settings,
@@ -57,6 +59,7 @@ async def server_error(request, exc):
 
 @requires("authenticated")
 async def hellopage(request):
+    templates, settings = get_templates()
     return templates.TemplateResponse("hello.html", {
         'request': request, 
         'settings': settings,
@@ -64,6 +67,7 @@ async def hellopage(request):
 
 @requires("authenticated")
 async def homepage(request):
+    templates, settings = get_templates()
     return templates.TemplateResponse("index/index.html", {
         'request': request, 
         'settings': settings,
@@ -71,6 +75,7 @@ async def homepage(request):
 
 @requires("authenticated")
 async def settingpage(request):
+    templates, settings = get_templates()
     return templates.TemplateResponse("settings.html", {
         'request': request, 
         'settings': settings,
@@ -102,7 +107,7 @@ class HTTPApp(HTTPEndpoint):
 # App class
 #
 ####################################################################################
-
+settings = Settings.retrieve()
 class App :
     """
     Base App
@@ -123,7 +128,7 @@ class App :
             backend = auth.AuthBackend()
         )
     ]
-    debug = settings.get_data("is_test")
+    debug = settings.get_data("is_test") or settings.get_data("is_demo")
     is_running = False
     
     @classmethod
@@ -192,6 +197,7 @@ class App :
         Starts the starlette uvicorn web application
         """
 
+        settings = Settings.retrieve()
         exception_handlers = {
             404: not_found,
             500: server_error

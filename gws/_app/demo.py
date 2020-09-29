@@ -4,14 +4,17 @@
 # About us: https://gencovery.com
 
 from starlette.templating import Jinja2Templates
+from starlette.authentication import requires
+
 from gws.settings import Settings
 
-settings = Settings.retrieve()
-template_dir = settings.get_template_dir("gws")
-templates = Jinja2Templates(directory=template_dir)
-
+@requires("authenticated")
 async def demo(request):
-    return templates.TemplateResponse("demo/index.html", {
+    settings = Settings.retrieve()
+    template_dir = settings.get_template_dir("gws")
+    templates = Jinja2Templates(directory=template_dir)
+
+    return templates.TemplateResponse("demo.html", {
         "request": request, 
         "settings": settings
     })

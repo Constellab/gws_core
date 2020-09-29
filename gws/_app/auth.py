@@ -21,9 +21,10 @@ from gws.mail import Email
 from gws.settings import Settings
 from gws.session import Session
 
-settings = Settings.retrieve()
-template_dir = settings.get_template_dir("gws")
-templates = Jinja2Templates(directory=template_dir)
+def get_templates():
+    settings = Settings.retrieve()
+    template_dir = settings.get_template_dir("gws")
+    return Jinja2Templates(directory=template_dir), settings
 
 @requires("authenticated")
 async def loginpage(request):
@@ -35,6 +36,7 @@ async def loginpage(request):
 
 @requires("authenticated")
 async def logoutpage(request):
+    templates, settings = get_templates()
     if request.user.is_authenticated:
         request.session['token'] = None
     
@@ -46,6 +48,7 @@ async def logoutpage(request):
 
 @requires("authenticated")
 async def profilepage(request):
+    templates, settings = get_templates()
     return templates.TemplateResponse("auth/profile.html", {
         'request': request, 
         'settings': settings,
@@ -55,15 +58,17 @@ async def profilepage(request):
 class AuthBackend(AuthenticationBackend):
 
     async def authenticate(self, request):
-        token = request.query_params.get("token", None)
-        
-        if token is None:
-            token = request.session.get("token", None)
+        settings = Settings.retrieve()
+        if not settings.get_data("is_demo"):
+            token = request.query_params.get("token", None)
+            
+            if token is None:
+                token = request.session.get("token", None)
 
-        if token == settings.get_data("token"):
-            request.session['token'] = token
-        else:
-            raise AuthenticationError('Authentication failed')
+            if token == settings.get_data("token"):
+                request.session['token'] = token
+            else:
+                raise AuthenticationError('Authentication failed')
 
         try:
             user = Session.get_user() #User.get(email=email, password=password)
