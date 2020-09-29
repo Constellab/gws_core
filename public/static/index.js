@@ -9,8 +9,8 @@ import * as G3 from '/static/gws/src/g3/all.js'
 import { Color } from "/static/gws/src/utils/color.js";
 
 
-window.loadG3Data = function( data ){
-    var canvas = document.getElementsByClassName("gview:cell-g3")[0]
+window.loadG3Data = function( canvas, data ){
+    //var canvas = document.getElementsByClassName("gview:cell-g3")[0]
     //canvas.innerHTML = "<div id='map-canvas'></div>"
     canvas.style.width = "100%"
     canvas.style.height = "600px"

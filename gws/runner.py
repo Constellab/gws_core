@@ -16,7 +16,7 @@ from gws.settings import Settings
 
 def _run(   ctx=None, test=False, db=False, \
             cli=False, runserver=False, docgen=False, \
-            force=False, show=False, jlab=False):
+            force=False, show=False, jlab=False, demo=False):
     
     from gws.logger import Logger
     settings = Settings.retrieve()
@@ -49,6 +49,11 @@ def _run(   ctx=None, test=False, db=False, \
 
         current_app_t = type("App", apps_t, {})
         current_app_t.routes = routes
+
+        print(demo)
+        settings.set_data("is_demo", demo)
+        if not settings.save():
+            Logger.error(Exception("manage", "Cannot save the settings in the database"))
 
         app = current_app_t()
         app.start()
@@ -220,6 +225,7 @@ def _run(   ctx=None, test=False, db=False, \
 @click.option('--force', is_flag=True, help='Forces documentation generation by removing any existing documentation (used if --docgen is given)')
 @click.option('--show', help='Forces documentation generation by removing any existing documentation (used if --docgen is given)')
 @click.option('--jlab', help='Runs Jupiter lab', show_default=True)
-def run(ctx, test, db, cli, runserver, docgen, force, show, jlab):
-    _run(ctx, test, db, cli, runserver, docgen, force, show, jlab)
+@click.option('--demo', is_flag=True, help='Run in demo mode [to only use for demonstration tests]')
+def run(ctx, test, db, cli, runserver, docgen, force, show, jlab, demo):
+    _run(ctx, test, db, cli, runserver, docgen, force, show, jlab, demo)
 
