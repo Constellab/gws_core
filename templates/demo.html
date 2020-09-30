@@ -3,11 +3,19 @@
 
 {% block content %}
 
-<div class="gview:simple-table" json="true">
+<div class="gview:table" json="true">
     {
     "title": "Database",
-    "header": ["Mon","Tues","Thurs"],
-    "body": [["1","2",3],["yes","no","maybe"]]
+    "colnames": ["Mon","Tues","Thurs"],
+    "data": [["1","2",3],["yes","no","maybe"]]
+    }
+</div>
+
+<div class="gview:table task" json="true">
+    {
+    "title": "Database",
+    "colnames": ["Mon","Tues","Thurs"],
+    "data": [["1","2",3],["yes","no","maybe"]]
     }
 </div>
 
@@ -35,8 +43,8 @@
     {
     "style": "card-plain",
     "title": "Nested Database",
-    "header": ["Mon","Tues","Thurs"],
-    "body": [["1","2",3],["yes","no","maybe"]]
+    "colnames": ["Mon","Tues","Thurs"],
+    "data": [["1","2",3],["yes","no","maybe"]]
     }
 </div>
 

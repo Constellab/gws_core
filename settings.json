@@ -55,7 +55,13 @@
             "/static/dist/d3/d3-force-3d/2.1.0/d3-force-3d.min.js",
 
             "/static/gws/src/gview/gview.js",
-            "/static/gws/src/gview/templates.js"
+            "/static/gws/src/gview/templates/cards.js",
+            "/static/gws/src/gview/templates/charts.js",
+            "/static/gws/src/gview/templates/forms.js",
+            "/static/gws/src/gview/templates/tables.js",
+            "/static/gws/src/gview/templates/ui.js",
+            "/static/gws/src/gview/templates/g3.js",
+            "/static/gws/src/gview/templates/prism.js"
         ],
         "modules": ["/static/gws/index.js"],
         "styles": [
