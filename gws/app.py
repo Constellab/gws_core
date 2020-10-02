@@ -107,15 +107,25 @@ class HTTPApp(HTTPEndpoint):
 # App class
 #
 ####################################################################################
+
+class BaseApp:
+    routes = []
+    on_startup = []
+    on_shutdown = []
+
+    @classmethod
+    def init(cls):
+        pass
+    
+
 settings = Settings.retrieve()
-class App :
+class App(BaseApp):
     """
     Base App
     """
 
     app: Starlette = None
     ctrl = Controller
-    routes = []
     middleware = [
         Middleware( 
             SessionMiddleware, 
@@ -130,9 +140,9 @@ class App :
     ]
     debug = settings.get_data("is_test") or settings.get_data("is_demo")
     is_running = False
-    
+
     @classmethod
-    def init_routes(cls):
+    def init(cls):
         """
         Defines the web routes of the brick.
 
@@ -170,6 +180,10 @@ class App :
 
         # home
         cls.routes.append(Route("/", homepage))
+
+        #misc
+        cls.on_startup.append(cls._on_startup)
+        cls.on_shutdown.append(cls._on_shutdown)
     
     @classmethod
     async def action(cls, request) -> Response:
@@ -208,7 +222,8 @@ class App :
             debug=cls.debug, 
             routes=cls.routes, 
             middleware=cls.middleware, 
-            on_startup=[cls._on_startup],
+            on_startup=cls.on_startup,
+            on_shutdown=cls.on_shutdown,
             exception_handlers=exception_handlers
         )
         #cls.app = Starlette(debug=cls.debug, routes=cls.routes, on_startup=[cls._on_startup])
@@ -252,6 +267,10 @@ class App :
 
         #print("* HTTP Testing: http://{}:{}{}?token={}".format(host, settings.get_data("app_port"), html_vmodel.get_view_url(), settings.get_data("token")))    
         #print("* WebSocket Testing: ws://{}:{}/qw{}".format(host, settings.get_data("app_port"), html_vmodel.get_view_url()))
+
+    @classmethod 
+    def _on_shutdown(cls):
+        return
 
     @classmethod 
     def test(cls, url: str) -> Response:

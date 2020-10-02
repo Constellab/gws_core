@@ -67,6 +67,7 @@ class Settings(PWModel):
             token = b64encode(random_bytes).decode('utf-8')
             settings.set_data("token", token)
             settings.set_data("demo", False)
+
             settings.save()
 
     # -- A --
@@ -119,7 +120,19 @@ class Settings(PWModel):
             from starlette.datastructures import Secret
             return Secret(self.data[k])
         else:
-            return self.data[k]
+            return self.data.get(k, None)
+
+    def get_root_dir(self) -> dict:
+        d = self.get_dependency_dir("gws")
+        return os.path.join(d, "../../../")
+
+    def get_gws_workspace_dir(self) -> dict:
+        rd = self.get_gws_root_dir()
+        return os.path.join(rd, "./gws/")
+
+    def get_user_workspace_dir(self) -> dict:
+        rd = self.get_gws_root_dir()
+        return os.path.join(rd, "./user/")
 
     def get_dirs(self) -> dict:
         return self.data.get("dirs",{})
@@ -134,15 +147,6 @@ class Settings(PWModel):
         return self.data.get("urls",{}).get(name,None)
     
     def get_log_dir(self) -> dict:
-        # if self.data.get("is_test"):
-        #     log_dir = os.path.join(tempfile.gettempdir(),"gws/logs")
-        #     if not os.path.exists(log_dir):
-        #         os.makedirs(log_dir)
-        #     return log_dir
-        # else:
-        
-        #return os.path.join(self.get_cwd(),"logs/")
-
         default = os.path.join(self.get_cwd(),"logs/")
         return self.data.get("log_dir", default)
 

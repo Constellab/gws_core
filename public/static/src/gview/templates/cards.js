@@ -2,6 +2,8 @@ new GViewTemplate({
     class: "gview:card",
     render: function (data) {
         data.style = data.style || ""
+        data.title = data.title || ""
+        data.body = data.body || ""
         return `
             <div class="card ` + data.style + `">
                 <div class="card-header">

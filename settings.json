@@ -54,6 +54,8 @@
             "/static/dist/d3/d3-octree/0.1.8/d3-octree.min.js",
             "/static/dist/d3/d3-force-3d/2.1.0/d3-force-3d.min.js",
 
+            "/static/gws/src/gws/gws.js",
+
             "/static/gws/src/gview/gview.js",
             "/static/gws/src/gview/templates/cards.js",
             "/static/gws/src/gview/templates/charts.js",
@@ -63,7 +65,7 @@
             "/static/gws/src/gview/templates/g3.js",
             "/static/gws/src/gview/templates/prism.js"
         ],
-        "modules": ["/static/gws/index.js"],
+        "modules": ["/static/gws/src/g3/import.js"],
         "styles": [
             "/static/dist/fontawesome/5.14.0/css/all.min.css",
             "/static/dist/creative-tim/black-dashboard/assets/css/nucleo-icons.css",

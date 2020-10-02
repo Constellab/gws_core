@@ -60,7 +60,7 @@ class GView{
 
     static get(request) {   
         request.method = "GET"
-        GView.send(request)
+        GWS.send(request)
     }
 
     //-- I --
@@ -77,7 +77,7 @@ class GView{
 
     static post(request) {   
         request.method = "POST"
-        GView.send(request)
+        GWS.send(request)
     }
 
     //-- R --
@@ -115,26 +115,6 @@ class GView{
 
     static selectAll(){
         return document.querySelectorAll("div[class^='"+GView.classPrefix+"']")
-    }
-
-    static send(request) {   
-        request.type = data.type | "application/json"
-        request.method = data.method | "GET"
-        var xobj = new XMLHttpRequest();
-        xobj.overrideMimeType(request.type);
-        xobj.open(request.method, request.url, true);
-        xobj.onreadystatechange = function () {
-                if (xobj.readyState == 4 && xobj.status == "200") {
-                    if(request.type == "application/json"){
-                        request.success(JSON.parse(xobj.responseText));
-                    } else{
-                        request.success(xobj.responseText);
-                    }
-                } else{
-                    request.fail(xobj.responseText);
-                }
-        };
-        xobj.send(null);  
     }
 
 }

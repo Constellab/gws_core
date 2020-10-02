@@ -27,34 +27,34 @@ def _run(   ctx=None, test=False, db=False, \
         if not settings.save():
             Logger.error(Exception("manage", "Cannot save the settings in the database"))
 
-
-        # dynamical inheritance of App
+        # gathers all App information
         dep_module_names = settings.get_dependency_names()    
         apps_t = tuple()
         for name in dep_module_names:
             try:
                 module = importlib.import_module(name+".app")
                 t = getattr(module, "App", None)
-                if not t is None:
+                if (not t is None) and (not t in apps_t):
                     apps_t = apps_t + (t,)
             except Exception as err:
                 Logger.error(Exception(f"Cannot run server. It seems that your App module '{name}' is not well implemented.\n Error message: {err}"))
         
         routes = []
-        from gws.app import App
+        on_startup = []
+        on_shutdown = []
         for app_t in apps_t:
-            if issubclass(app_t, App):
-                app_t.init_routes()
-                gws_routes = app_t.routes
-                continue
-            app_t.init_routes()
+            app_t.init()
             routes = routes + app_t.routes
+            on_startup = on_startup + app_t.on_startup
+            on_shutdown = on_shutdown + app_t.on_shutdown
 
-        routes = routes + gws_routes
-
+        # creates and initialize the final App
         current_app_t = type("App", apps_t, {})
         current_app_t.routes = routes
+        current_app_t.on_startup = on_startup
+        current_app_t.on_shutdown = on_shutdown
 
+        # instantiates and starts the final App
         app = current_app_t()
         app.start()
         
