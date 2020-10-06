@@ -39,20 +39,11 @@ def _run(   ctx=None, test=False, db=False, \
             except Exception as err:
                 Logger.error(Exception(f"Cannot run server. It seems that your App module '{name}' is not well implemented.\n Error message: {err}"))
         
-        routes = []
-        on_startup = []
-        on_shutdown = []
         for app_t in apps_t:
             app_t.init()
-            routes = routes + app_t.routes
-            on_startup = on_startup + app_t.on_startup
-            on_shutdown = on_shutdown + app_t.on_shutdown
-
+ 
         # creates and initialize the final App
         current_app_t = type("App", apps_t, {})
-        current_app_t.routes = routes
-        current_app_t.on_startup = on_startup
-        current_app_t.on_shutdown = on_shutdown
 
         # instantiates and starts the final App
         app = current_app_t()
