@@ -127,11 +127,11 @@ class Settings(PWModel):
         return os.path.join(d, "../../../")
 
     def get_gws_workspace_dir(self) -> dict:
-        rd = self.get_gws_root_dir()
+        rd = self.get_root_dir()
         return os.path.join(rd, "./gws/")
 
     def get_user_workspace_dir(self) -> dict:
-        rd = self.get_gws_root_dir()
+        rd = self.get_root_dir()
         return os.path.join(rd, "./user/")
 
     def get_dirs(self) -> dict:
