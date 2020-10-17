@@ -236,10 +236,8 @@ class Settings(PWModel):
 
     @property
     def version(self):
-        return self.data.get("authors", None)
-
-
-         
+        return self.data.get("version", None)
+ 
     class Meta:
         database = database_proxy
 

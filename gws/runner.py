@@ -83,7 +83,7 @@ def _run(   ctx=None, test=False, db=False, \
         if not settings.save():
             Logger.error(Exception("manage", "Cannot save the settings in the database"))
         
-        app_dir = settings.get_cwd()
+        brick_dir = settings.get_cwd()
         doc_folder = "./docs/"
         gen_folder = "./docs/html/"
         rst_folder = "./rst/"
@@ -91,13 +91,13 @@ def _run(   ctx=None, test=False, db=False, \
         try:
             if force:
                 try:
-                    shutil.rmtree(os.path.join(app_dir, doc_folder), ignore_errors=True)
+                    shutil.rmtree(os.path.join(brick_dir, doc_folder), ignore_errors=True)
                 except:
                     pass
             
-            if not os.path.exists(os.path.join(app_dir, gen_folder)):             
-                os.makedirs(os.path.join(app_dir, gen_folder))
-  
+            if not os.path.exists(os.path.join(brick_dir, gen_folder)):             
+                os.makedirs(os.path.join(brick_dir, gen_folder))
+
             subprocess.check_call([
                 "sphinx-quickstart", "-q",
                 f"-p{settings.title}",
@@ -112,16 +112,17 @@ def _run(   ctx=None, test=False, db=False, \
                 "--ext-ifconfig",
                 "--ext-viewcode",
                 "--ext-githubpages",
-                ], cwd=os.path.join(app_dir, gen_folder))
+                ], cwd=os.path.join(brick_dir, gen_folder))
 
-            with open(os.path.join(app_dir, gen_folder, "./source/conf.py"), "r+") as f:
+            with open(os.path.join(brick_dir, gen_folder, "./source/conf.py"), "r+") as f:
                 content = f.read()
                 f.seek(0, 0)
                 f.write('\n')
                 f.write("import os\n")
                 f.write("import sys\n")
-                f.write("wd = os.path.abspath('../../../')\n")
-                f.write("sys.path.insert(0, os.path.join(wd,'../gws'))\n")
+                f.write("__cdir__ = os.path.dirname(os.path.abspath(__file__))\n")
+                f.write("wd = os.path.join(__cdir__,'../../../')\n")
+                f.write("sys.path.insert(0, wd)\n")
                 f.write("from gws import sphynx_conf\n\n\n")
                 f.write(content + '\n')
                 f.write("extensions = extensions + sphynx_conf.extensions\n")
@@ -137,16 +138,16 @@ def _run(   ctx=None, test=False, db=False, \
                 "-f",
                 "-o", "./source",
                 os.path.join("../../",settings.name)
-                ], cwd=os.path.join(app_dir, gen_folder))
+                ], cwd=os.path.join(brick_dir, gen_folder))
 
             for f in ['intro.rst', 'usage.rst', 'contrib.rst', 'changes.rst']:
-                if os.path.exists(os.path.join(app_dir, rst_folder, f)):
+                if os.path.exists(os.path.join(brick_dir, rst_folder, f)):
                     shutil.copyfile(
-                        os.path.join(app_dir, rst_folder, f), 
-                        os.path.join(app_dir,gen_folder,"./source/"+f))
+                        os.path.join(brick_dir, rst_folder, f), 
+                        os.path.join(brick_dir,gen_folder,"./source/"+f))
 
             # insert modules in index
-            with open(os.path.join(app_dir, gen_folder, "./source/index.rst"), "r") as f:
+            with open(os.path.join(brick_dir, gen_folder, "./source/index.rst"), "r") as f:
                 content = f.read()
                 content = content.replace(
                     ":caption: Contents:",
@@ -166,7 +167,7 @@ def _run(   ctx=None, test=False, db=False, \
                     "   changes\n\n\n"+
                     ".. toctree::")
 
-            with open(os.path.join(app_dir, gen_folder, "./source/index.rst"), "w") as f:
+            with open(os.path.join(brick_dir, gen_folder, "./source/index.rst"), "w") as f:
                 f.write(content)
             
             subprocess.check_call([
@@ -175,7 +176,7 @@ def _run(   ctx=None, test=False, db=False, \
                 "html",
                 "./source",
                 "./build",
-                ], cwd=os.path.join(app_dir, gen_folder))
+                ], cwd=os.path.join(brick_dir, gen_folder))
 
             if show:
                 import webbrowser

@@ -16,7 +16,8 @@ import sphinx_rtd_theme
 
 # -- Initialize GWS -----------------------------------------------------
 
-wd = os.path.abspath('../../../')
+__cdir__ = os.path.dirname(os.path.abspath(__file__))
+wd = os.path.join(__cdir__,'../')
 sys.path.insert(0, os.path.join(wd,'../gws'))
 from gws import runner
 from gws.manage import load_settings
