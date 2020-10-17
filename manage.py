@@ -12,7 +12,7 @@ is_found  = False
 for k in range(0,10):
     rel_gws_path = os.path.join("../", rel_gws_path)
     abs_gws_path = os.path.join(__cdir__, rel_gws_path)
-    if os.path.exists(rel_gws_path):
+    if os.path.exists(abs_gws_path):
         sys.path.append(abs_gws_path)
         is_found  = True
         break
