@@ -16,7 +16,10 @@
         "gws:testdata_dir" : "./tests/testdata"
     },
     
-    "externs" : [],
+    "externs" : [
+        "distrib-js"
+    ],
+    
     "dependencies" : [],
     
     "smtp" : {
