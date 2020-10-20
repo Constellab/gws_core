@@ -61,13 +61,16 @@ class Settings(PWModel):
             session_key = b64encode(random_bytes).decode('utf-8')
             settings.set_data("session_key", session_key)
 
-            #token
+            #random token by default (security)
             from base64 import b64encode
             random_bytes = os.urandom(64)
             token = b64encode(random_bytes).decode('utf-8')
             settings.set_data("token", token)
-            settings.set_data("demo", False)
 
+            #no uri by default
+            settings.set_data("uri", "")
+
+            settings.set_data("demo", False)
             settings.save()
 
     # -- A --

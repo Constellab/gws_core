@@ -11,19 +11,70 @@ import importlib
 import subprocess
 import shutil
 import re
-
 from gws.settings import Settings
+from gws.logger import Logger
 
-def _run(   ctx=None, test=False, db=False, \
-            cli=False, runserver=False, docgen=False, \
+def _ip_type(IP):
+    """
+    :type IP: str
+    :rtype: str
+    """
+    def is_ip_v4(s):
+        try: return str(int(s)) == s and 0 <= int(s) <= 255
+        except: return False
+    def is_ip_v6(s):
+        if len(s) > 4:
+            return False
+
+        try : 
+            return int(s, 16) >= 0 and s[0] != '-'
+        except:
+            return False
+    
+    if IP.count(".") == 3 and all(is_ip_v4(i) for i in IP.split(".")):
+        return "IPv4"
+
+    if IP.count(":") == 7 and all(is_ip_v6(i) for i in IP.split(":")):
+        return "IPv6"
+
+    return "Neither"
+
+def _run(   ctx=None, uri=False, token=False, test=False, db=False, \
+            cli=False, runserver=False, ip="0.0.0.0", port="3000", docgen=False, \
             force=False, show=False, jlab=False, demo=False):
     
-    from gws.logger import Logger
-    settings = Settings.retrieve()
     Logger(is_new_session=True, is_test=test)
+    settings = Settings.retrieve()
+
+    if token:
+        settings.set_data("token", token)
     
+    if uri:
+        settings.set_data("uri", uri)
+    
+    settings.set_data("is_demo", demo)
+
+    if not settings.save():
+        Logger.error(Exception("manage", "Cannot save the settings in the database"))
+ 
     if runserver:
-        settings.set_data("is_demo", demo)
+        ips = ip.split(",")
+        ports = port.split(",")
+
+        ip_type = _ip_type(ips[0])
+        is_local = (ip_type == "IPv4" or ip_type == "IPv6" or ip == "localhost")
+        if is_local:
+            jlab_ip = ips[0]
+            jlab_port = "8888"
+        else:
+            jlab_ip = "jlab." + ips[0]
+            jlab_port = ports[0]
+
+        settings.set_data("app_host", ips[0])
+        settings.set_data("app_port", ports[0])
+        settings.set_data("jlab_host", jlab_ip)
+        settings.set_data("jlab_port", jlab_port)
+
         if not settings.save():
             Logger.error(Exception("manage", "Cannot save the settings in the database"))
 
@@ -202,22 +253,25 @@ def _run(   ctx=None, test=False, db=False, \
         pass
 
     print(f"Log file: {Logger.get_file_path()}")
-        
 
 @click.command(context_settings=dict(
     ignore_unknown_options=True,
     allow_extra_args=True
 ))
 @click.pass_context
+@click.option('--uri', help='Lab URI', show_default=True)
+@click.option('--token', help='Lab token', show_default=True)
 @click.option('--test', help='The name test file to launch (regular expression). Enter "all" to launch all')
 @click.option('--db', help="The name of the database to use")
 @click.option('--cli', help='Command to run using the command line interface')
 @click.option('--runserver', is_flag=True, help='Starts the server')
+@click.option('--ip', default="0.0.0.0", help='Server ip', show_default=True)
+@click.option('--port', default="3000", help='Server port', show_default=True)
 @click.option('--docgen', is_flag=True, help='Generates documentation')
 @click.option('--force', is_flag=True, help='Forces documentation generation by removing any existing documentation (used if --docgen is given)')
 @click.option('--show', help='Forces documentation generation by removing any existing documentation (used if --docgen is given)')
 @click.option('--jlab', help='Runs Jupiter lab', show_default=True)
 @click.option('--demo', is_flag=True, help='Run in demo mode [to only use for demonstration tests]')
-def run(ctx, test, db, cli, runserver, docgen, force, show, jlab, demo):
-    _run(ctx, test, db, cli, runserver, docgen, force, show, jlab, demo)
+def run(ctx, uri, token, test, db, cli, runserver, ip, port, docgen, force, show, jlab, demo):       
+    _run(ctx, uri, token, test, db, cli, runserver, ip, port, docgen, force, show, jlab, demo)
 

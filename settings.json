@@ -31,7 +31,7 @@
     },
 
     "app":{
-        "favicon": {"src":"/static/gws/favicon.png", "type":"image/png"},
+        "favicon"       : {"src":"/static/gws/favicon.png", "type":"image/png"},
         "title"         : "Wecome to GWS",
         "description"   : "This application provides core functionalities for GWS-based modules",
         "statics"       : {

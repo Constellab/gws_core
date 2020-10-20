@@ -1716,6 +1716,15 @@ class ResourceSet(Resource):
 
 # ####################################################################
 #
+# Report class
+#
+# ####################################################################
+
+class Report(Resource):
+    pass
+
+# ####################################################################
+#
 # ViewModel class
 #
 # ####################################################################
@@ -1840,7 +1849,7 @@ class ViewModel(Model):
     
     # -- S --
 
-    def set_model(cls, model: None):
+    def set_model(self, model: None):
         if not self.model_id is None:
             Logger.error(Exception(self.classname(),"save","A model already exists"))
         

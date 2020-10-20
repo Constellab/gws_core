@@ -4,10 +4,8 @@
 # About us: https://gencovery.com
 
 import os
-import base64
-import binascii
-
 import uvicorn
+
 from starlette.applications import Starlette
 from starlette.responses import Response, JSONResponse, PlainTextResponse,  FileResponse,  HTMLResponse
 from starlette.routing import Route, Mount, WebSocketRoute
@@ -16,7 +14,6 @@ from starlette.staticfiles import StaticFiles
 from starlette.requests import Request
 from starlette.endpoints import HTTPEndpoint, WebSocketEndpoint
 from starlette.authentication import requires
-
 from starlette.middleware import Middleware
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.authentication import AuthenticationMiddleware
@@ -25,9 +22,8 @@ from gws.settings import Settings
 from gws.view import HTMLViewTemplate, JSONViewTemplate, PlainTextViewTemplate
 from gws.model import Resource, HTMLViewModel, JSONViewModel, User
 from gws.controller import Controller
-from gws.logger import Logger
+from gws.central import Central
 from gws._app import auth, demo
-
 
 
 ####################################################################################
@@ -80,6 +76,11 @@ async def settingpage(request):
         'request': request, 
         'settings': settings,
     })
+
+@requires("authenticated")
+async def statuspage(request):
+    from gws.lab import Lab
+    return JSONResponse(Lab.get_status())
 
 class HTTPApp(HTTPEndpoint):
     async def get(self, request):
@@ -181,6 +182,9 @@ class App(BaseApp):
         # home
         cls.routes.append(Route("/", homepage))
 
+        # api
+        cls.routes.append(Route("/status", statuspage))
+
         #misc
         cls.on_startup.append(cls._on_startup)
         cls.on_shutdown.append(cls._on_shutdown)
@@ -226,9 +230,8 @@ class App(BaseApp):
             on_shutdown=cls.on_shutdown,
             exception_handlers=exception_handlers
         )
-        #cls.app = Starlette(debug=cls.debug, routes=cls.routes, on_startup=[cls._on_startup])
 
-        uvicorn.run(cls.app, host=settings.get_data("app_host"), port=settings.get_data("app_port"))
+        uvicorn.run(cls.app, host=settings.get_data("app_host"), port=int(settings.get_data("app_port")))
         cls.is_running = True
 
     @classmethod 
@@ -236,6 +239,7 @@ class App(BaseApp):
         """
         Called on application startup to create test objects
         """
+        Central.tell_is_running()
         settings = Settings.retrieve()
         from gws.robot import Robot, HTMLRobotViewModel, JSONRobotViewModel
 
@@ -251,26 +255,28 @@ class App(BaseApp):
             json_vmodel = JSONRobotViewModel(robot)
             json_vmodel.save()
         
-        host = settings.get_data("app_host")
-        if host == "0.0.0.0":
-            host = "localhost"
-
         import urllib
         print("GWS application started!")
         print("* Server: {}:{}".format(settings.get_data("app_host"), settings.get_data("app_port")))
 
         if settings.get_data("is_demo"):
-            print("* HTTP connection: http://{}:{}/demo".format(host, settings.get_data("app_port")))
+            print("* HTTP connection: http://{}:{}/demo".format(
+                settings.get_data("app_host"), 
+                settings.get_data("app_port")
+            ))
         else:
-            print("* HTTP connection: http://{}:{}/login?token={}".format(host, settings.get_data("app_port"), urllib.parse.quote(settings.get_data("token"), safe='')))
-            print("* Token: {}".format(urllib.parse.quote(settings.get_data("token"), safe='')))
-
-        #print("* HTTP Testing: http://{}:{}{}?token={}".format(host, settings.get_data("app_port"), html_vmodel.get_view_url(), settings.get_data("token")))    
-        #print("* WebSocket Testing: ws://{}:{}/qw{}".format(host, settings.get_data("app_port"), html_vmodel.get_view_url()))
+            print("* HTTP connection: http://{}:{}/login?token={}".format(
+                settings.get_data("app_host"), 
+                settings.get_data("app_port"), 
+                urllib.parse.quote(settings.get_data("token"), safe='')
+            ))
+            print("* Token: {}".format(
+                urllib.parse.quote(settings.get_data("token"), safe='')
+            ))
 
     @classmethod 
     def _on_shutdown(cls):
-        return
+        Central.tell_is_stopped()
 
     @classmethod 
     def test(cls, url: str) -> Response:
