@@ -23,5 +23,6 @@ class Lab:
         return {
             "uri": settings.get_data("uri"),
             "token": settings.get_data("token"),
-            "is_running": True
+            "is_debug": settings.is_debug,
+            "is_test": settings.is_test
         }

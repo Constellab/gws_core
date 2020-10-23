@@ -239,7 +239,9 @@ class App(BaseApp):
         """
         Called on application startup to create test objects
         """
+
         Central.tell_is_running()
+        
         settings = Settings.retrieve()
         from gws.robot import Robot, HTMLRobotViewModel, JSONRobotViewModel
 

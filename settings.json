@@ -30,6 +30,10 @@
         "password" : "Genc0ver1-N0-Reply"
     },
 
+    "central": {
+        "api_url" : "https://api.gws.gencovery.com/{resource}/{uri}/{action}"
+    },
+
     "app":{
         "favicon"       : {"src":"/static/gws/favicon.png", "type":"image/png"},
         "title"         : "Wecome to GWS",
