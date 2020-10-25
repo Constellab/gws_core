@@ -7,7 +7,7 @@ import os
 import uvicorn
 
 from starlette.applications import Starlette
-from starlette.responses import Response, JSONResponse, PlainTextResponse,  FileResponse,  HTMLResponse
+from starlette.responses import Response, JSONResponse, PlainTextResponse,  FileResponse,  HTMLResponse, RedirectResponse
 from starlette.routing import Route, Mount, WebSocketRoute
 from starlette.templating import Jinja2Templates
 from starlette.staticfiles import StaticFiles
@@ -61,16 +61,12 @@ async def server_error_page(request, exc):
 
 @requires("authenticated")
 async def home_page(request):
-    templates, settings = get_templates()
-    return templates.TemplateResponse("index/index.html", {
-        'request': request, 
-        'settings': settings,
-    })
+    return RedirectResponse(url=f'/page/{brick}')
 
 @requires("authenticated")
 async def page(request):
     brick = request.path_params["brick"]
-    page = request.path_params["page"]
+    page = request.path_params.get("page","index")
     only = request.query_params.get("only_inner_html",False)
 
     if only == "true":
@@ -88,8 +84,8 @@ async def page(request):
             return templates.TemplateResponse("index/index.html", {
                 'request': request, 
                 'settings': settings,
-                'page': request.path_params["page"],
-                'brick': request.path_params["brick"]
+                'page': page,
+                'brick': brick
             })
 
 class HTTPApp(HTTPEndpoint):
@@ -184,6 +180,7 @@ class App(BaseApp):
         cls.routes.append(Route("/api/", not_found_page))
 
         # pages
+        cls.routes.append(Route("/page/{brick}/", page))
         cls.routes.append(Route("/page/{brick}/{page}", page))
 
         # process and resource routes
