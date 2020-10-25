@@ -5,6 +5,7 @@
 
 import os
 import uvicorn
+import importlib
 
 from starlette.applications import Starlette
 from starlette.responses import Response, JSONResponse, PlainTextResponse,  FileResponse,  HTMLResponse, RedirectResponse
@@ -70,10 +71,19 @@ async def page(request):
     only = request.query_params.get("only_inner_html",False)
 
     if only == "true":
+        #run user staff
+        brick_app = importlib.import_module(f"{brick}.app")
+        async_func = getattr(brick_app, page, None)
+        if not async_func is None:
+            data = await async_func(request)
+        else:
+            data = None
+
         templates, settings = get_templates(brick)
         return templates.TemplateResponse(f"{page}.html", {
+            'data': data,
             'request': request, 
-            'settings': settings,
+            'settings': settings
         })
     else:
         if not page_exists(page,brick):
@@ -85,8 +95,12 @@ async def page(request):
                 'request': request, 
                 'settings': settings,
                 'page': page,
-                'brick': brick
+                'brick': brick,
             })
+
+@requires("authenticated")
+async def demo(request):
+    return { "title": "Welcome to the demo!" }
 
 class HTTPApp(HTTPEndpoint):
     async def get(self, request):
