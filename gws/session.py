@@ -24,7 +24,7 @@ class Session(Base):
                     firstname = "Guest", 
                     sirname = "Guest", 
                     email = "test@gencovery.com",
-                    password = "azerty123",
+                    #password = "azerty123",
                     organization = "Gencovery",
                     is_active = True
                 )

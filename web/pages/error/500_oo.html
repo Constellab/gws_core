@@ -1,0 +1,28 @@
+{% extends "base/base.html" %}
+
+{% block title %}GWS{% endblock %}
+
+{% block body %}
+
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+
+    {% include 'index/header.html' %}
+
+    {% include 'index/sidebar.html' %}
+
+    <main class="mdl-layout__content">
+        <div class="page-content gws-page-content">
+            {% block content %}
+                <h4>405 ERROR</h4>
+                Server error!
+                {% if settings.is_debug %}
+                    {{ exception }}
+                {% endif %}
+            {% endblock %}
+        </div>
+    </main>
+    {% include 'index/footer.html' %}
+
+</div>
+
+{% endblock %}

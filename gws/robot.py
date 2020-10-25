@@ -15,7 +15,7 @@ class Robot(Resource):
 
 class HTMLRobotViewModel(HTMLViewModel):
     model_specs = [ Robot ]
-    template = ViewJinja2TemplateFiles(directory=template_dir, file_path="robot/index.html") 
+    template = ViewJinja2TemplateFiles(directory=template_dir, file_path="robot/robot.html") 
 
 class JSONRobotViewModel(JSONViewModel):
     model_specs = [ Robot ]

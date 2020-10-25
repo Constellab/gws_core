@@ -40,18 +40,12 @@
         "description"   : "This application provides core functionalities for GWS-based modules",
         "statics"       : {
             "/static/dist"  : "${BASE_EXTERN_DIR}/distrib-js",
-            "/static/gws"  : "./public/static"
+            "/static/gws"  : "./web/static/"
         },
         "themes" : [ ],
         "scripts": [
-            "/static/dist/creative-tim/black-dashboard/assets/js/core/jquery.min.js",
-            "/static/dist/creative-tim/black-dashboard/assets/js/core/popper.min.js",
-            "/static/dist/creative-tim/black-dashboard/assets/js/core/bootstrap.min.js",
-            "/static/dist/creative-tim/black-dashboard/assets/js/plugins/perfect-scrollbar.jquery.min.js",
-            "/static/dist/creative-tim/black-dashboard/assets/js/plugins/chartjs.min.js",
-            "/static/dist/creative-tim/black-dashboard/assets/js/plugins/bootstrap-notify.js",
-            "/static/dist/creative-tim/black-dashboard/assets/js/black-dashboard.min.js?v=1.0.0",
-            
+            "/static/dist/mdl/material.min.js",
+
             "/static/dist/uuidv4/8.1.0/uuidv4.js",
             
             "/static/dist/d3/d3-dispatch/1.0.6/d3-dispatch.min.js",
@@ -61,30 +55,30 @@
             "/static/dist/d3/d3-octree/0.1.8/d3-octree.min.js",
             "/static/dist/d3/d3-force-3d/2.1.0/d3-force-3d.min.js",
 
-            "/static/gws/src/gws/gws.js",
+            "/static/gws/js/gws/gws.js",
 
-            "/static/gws/src/gview/gview.js",
-            "/static/gws/src/gview/templates/cards.js",
-            "/static/gws/src/gview/templates/charts.js",
-            "/static/gws/src/gview/templates/forms.js",
-            "/static/gws/src/gview/templates/tables.js",
-            "/static/gws/src/gview/templates/ui.js",
-            "/static/gws/src/gview/templates/g3.js",
-            "/static/gws/src/gview/templates/prism.js"
+            "/static/gws/js/gview/gview.js",
+            "/static/gws/js/gview/templates/cards.js",
+            "/static/gws/js/gview/templates/forms.js",
+            "/static/gws/js/gview/templates/tables.js",
+            "/static/gws/js/gview/templates/ui.js",
+            "/static/gws/js/gview/templates/g3.js",
+            "/static/gws/js/gview/templates/prism.js"
         ],
-        "modules": ["/static/gws/src/g3/import.js"],
+        "modules": ["/static/gws/js/g3/g3.js"],
         "styles": [
-            "/static/dist/fontawesome/5.14.0/css/all.min.css",
-            "/static/dist/creative-tim/black-dashboard/assets/css/nucleo-icons.css",
-            "/static/dist/creative-tim/black-dashboard/assets/css/black-dashboard.css?v=1.0.0",
+            "/static/dist/mdl/material.min.css",
+            "https://fonts.googleapis.com/icon?family=Material+Icons",
             
+            "/static/dist/fontawesome/5.14.0/css/all.min.css",
+
             "/static/gws/index.css",
-            "/static/gws/src/g3/all.css",
-            "/static/gws/src/gview/fonts.css"
+            "/static/gws/js/g3/all.css",
+            "/static/gws/js/gview/fonts.css"
         ],
         "buttons":{
             "settings": {
-                "label": "Settings", "icon": "tim-icons icon-settings-gear-63", "url": "/settings", "position": 0
+                "label": "Settings", "icon": "settings", "url": "/page/gws/settings", "position": 0
             }
         }
     },

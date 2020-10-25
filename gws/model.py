@@ -151,6 +151,13 @@ class Model(BaseModel):
     # -- G --
 
     @classmethod
+    def get_by_uri(cls, uri: str) -> str:
+        try:
+            return cls.get(cls.uri == uri)
+        except:
+            return None
+
+    @classmethod
     def get_uri_name(cls) -> str:
         """ 
         Returns the uri_name of the model
@@ -1015,13 +1022,12 @@ class User(Model, BaseUser):
     firstname = CharField(index=True)
     sirname = CharField(index=True)
     organization = CharField(index=True)
-    email =  CharField(index=True)
-    password =  CharField()
-    token =  CharField()
-    is_admin =  BooleanField(default=False, index=True)
-    is_active =  BooleanField(default=False, index=True)
-    is_locked =  BooleanField(default=False, index=True)
-
+    email = CharField(index=True)
+    #password = CharField()
+    token = CharField()
+    is_admin = BooleanField(default=False, index=True)
+    is_active = BooleanField(default=True, index=True)
+    is_locked = BooleanField(default=False, index=True)
     is_authenticated = False
     _table_name = 'user'
 
@@ -1034,38 +1040,54 @@ class User(Model, BaseUser):
         )
         self.token = hash_object.hexdigest()
     
-    @classmethod
-    def __generate_password_hash(self, email, password):
-        if email is None or password is None:
-            Logger.error(Exception("User", "__generate_password_hash", "The user email and password are required"))
-        hash_object = hashlib.sha512((email + password).encode())
-        return hash_object.hexdigest()
+    # @classmethod
+    # def __generate_password_hash(self, email, password):
+    #     if email is None or password is None:
+    #         Logger.error(Exception("User", "__generate_password_hash", "The user email and password are required"))
+    #     hash_object = hashlib.sha512((email + password).encode())
+    #     return hash_object.hexdigest()
 
     # -- S --
 
     def save(self, *arg, **kwargs):
         if self.id is None:
-            self.__generate_token()
-            self.password = self.__generate_password_hash(self.email, self.password)
+            if self.token is None:
+                self.__generate_token()
+            #self.password = self.__generate_password_hash(self.email, self.password)
 
-        super().save(*arg, **kwargs)
+        return super().save(*arg, **kwargs)
 
     # -- V --
 
+    # @classmethod
+    # def verify_user_password(cls, email: str, password: str) -> ('User', bool,):
+    #     """ 
+    #     Verify the email and password and returns the corresponding user 
+    #     :param email: The email to check
+    #     :type email: str
+    #     :param password: The password to check
+    #     :type password: str
+    #     :return: The user if successfully verified, False otherwise
+    #     :rtype: User, False
+    #     """
+    #     try:
+    #         return User.get(User.email==email, User.email==cls.__generate_password_hash(email,password))
+    #     except:
+    #         return False
+
     @classmethod
-    def verify_user_password(cls, email: str, password: str) -> ('User', bool,):
+    def verify_user_token(cls, email: str, token: str) -> ('User', bool,):
         """ 
         Verify the email and password and returns the corresponding user 
-
         :param email: The email to check
         :type email: str
-        :param password: The password to check
-        :type password: str
+        :param token: The token to check
+        :type token: str
         :return: The user if successfully verified, False otherwise
         :rtype: User, False
         """
         try:
-            return User.get(User.email==email, User.email==cls.__generate_password_hash(email,password))
+            return User.get(User.email==email, User.token==token)
         except:
             return False
 
@@ -1102,7 +1124,6 @@ class Experiment(Model):
     project = ForeignKeyField(Project, backref="experiments")
 
     _table_name = 'experiment'
-
 
     @property
     def is_finished(self):

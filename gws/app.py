@@ -23,7 +23,7 @@ from gws.view import HTMLViewTemplate, JSONViewTemplate, PlainTextViewTemplate
 from gws.model import Resource, HTMLViewModel, JSONViewModel, User
 from gws.controller import Controller
 from gws.central import Central
-from gws._app import auth, demo
+from gws._app import auth, api
 
 
 ####################################################################################
@@ -32,12 +32,18 @@ from gws._app import auth, demo
 #
 ####################################################################################
 
-def get_templates():
+brick = "gws"
+
+def get_templates(brick=brick):
     settings = Settings.retrieve()
-    template_dir = settings.get_template_dir("gws")
+    template_dir = settings.get_page_dir(brick)
     return Jinja2Templates(directory=template_dir), settings
 
-async def not_found(request, exc):
+def page_exists(page,brick=brick):
+    template_dir = settings.get_page_dir(brick)
+    return os.path.exists(os.path.join(template_dir,page+".html"))
+
+async def not_found_page(request, exc):
     templates, settings = get_templates()
     return templates.TemplateResponse("error/404.html", {
         'request': request, 
@@ -45,7 +51,7 @@ async def not_found(request, exc):
         'exception': exc
     }, status_code=404)
 
-async def server_error(request, exc):
+async def server_error_page(request, exc):
     templates, settings = get_templates()
     return templates.TemplateResponse("error/500.html", {
         'request': request, 
@@ -54,15 +60,7 @@ async def server_error(request, exc):
     }, status_code=500)
 
 @requires("authenticated")
-async def hellopage(request):
-    templates, settings = get_templates()
-    return templates.TemplateResponse("hello.html", {
-        'request': request, 
-        'settings': settings,
-    })
-
-@requires("authenticated")
-async def homepage(request):
+async def home_page(request):
     templates, settings = get_templates()
     return templates.TemplateResponse("index/index.html", {
         'request': request, 
@@ -70,17 +68,29 @@ async def homepage(request):
     })
 
 @requires("authenticated")
-async def settingpage(request):
-    templates, settings = get_templates()
-    return templates.TemplateResponse("settings.html", {
-        'request': request, 
-        'settings': settings,
-    })
+async def page(request):
+    brick = request.path_params["brick"]
+    page = request.path_params["page"]
+    only = request.query_params.get("only_inner_html",False)
 
-@requires("authenticated")
-async def statuspage(request):
-    from gws.lab import Lab
-    return JSONResponse(Lab.get_status())
+    if only == "true":
+        templates, settings = get_templates(brick)
+        return templates.TemplateResponse(f"{page}.html", {
+            'request': request, 
+            'settings': settings,
+        })
+    else:
+        if not page_exists(page,brick):
+            # redirect to 404 error
+            return await not_found_page(request, Exception(f"Page '{page}' is not found"))
+        else:
+            templates, settings = get_templates()
+            return templates.TemplateResponse("index/index.html", {
+                'request': request, 
+                'settings': settings,
+                'page': request.path_params["page"],
+                'brick': request.path_params["brick"]
+            })
 
 class HTTPApp(HTTPEndpoint):
     async def get(self, request):
@@ -131,7 +141,7 @@ class App(BaseApp):
         Middleware( 
             SessionMiddleware, 
             secret_key=settings.get_data("session_key"), 
-            session_cookie="gws",
+            session_cookie="gws_lab",
             max_age=60*60*24
         ),
         Middleware( 
@@ -155,35 +165,33 @@ class App(BaseApp):
         * /<brick name>/home/       -> home page route
         * /<brick name>/settings/   -> setting page route
         """
-        
-        # process and resource routes
-        cls.routes.append(Route('/{action}/{uri}/{data}/', HTTPApp))
-        cls.routes.append(Route('/{action}/{uri}/', HTTPApp))
+
+        # auth
+        cls.routes.append(Route('/login', endpoint=auth.login_page, name="auth"))
+        cls.routes.append(Route('/logout', endpoint=auth.logout_page, name="auth"))
 
         # static dirs
         statics = settings.get_static_dirs()
         for k in statics:
             cls.routes.append(Mount(k, StaticFiles(directory=statics[k]), name=k))
 
-        # settings
-        cls.routes.append(Route("/settings/", settingpage))
+        # api
+        cls.routes.append(Route("/api/lab", api.lab_status_page))
+        cls.routes.append(Route("/api/user/{user_id}/activate", api.lab_status_page))
+        cls.routes.append(Route("/api/user/{user_id}/deactivate", api.lab_status_page))
+        cls.routes.append(Route("/api/experiment/create", api.create_experiment_page))
+        cls.routes.append(Route("/api/experiment/{experiment_uri}", api.get_experiment_page))
+        cls.routes.append(Route("/api/", not_found_page))
 
-        # hello
-        cls.routes.append(Route("/hello/", hellopage))
+        # pages
+        cls.routes.append(Route("/page/{brick}/{page}", page))
 
-        # demo
-        cls.routes.append(Route('/demo/', endpoint=demo.demo))
-
-        # auth
-        cls.routes.append(Route('/login', endpoint=auth.loginpage, name="auth"))
-        cls.routes.append(Route('/logout', endpoint=auth.logoutpage, name="auth"))
-        cls.routes.append(Route('/profile', endpoint=auth.profilepage, name="auth"))
+        # process and resource routes
+        cls.routes.append(Route('/{action}/{uri}/{data}/', HTTPApp))
+        cls.routes.append(Route('/{action}/{uri}/', HTTPApp))
 
         # home
-        cls.routes.append(Route("/", homepage))
-
-        # api
-        cls.routes.append(Route("/status", statuspage))
+        cls.routes.append(Route("/", home_page))
 
         #misc
         cls.on_startup.append(cls._on_startup)
@@ -217,8 +225,8 @@ class App(BaseApp):
 
         settings = Settings.retrieve()
         exception_handlers = {
-            404: not_found,
-            500: server_error
+            404: not_found_page,
+            500: server_error_page
         }
 
         # starlette

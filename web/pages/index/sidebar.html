@@ -1,0 +1,14 @@
+
+
+<div class="mdl-layout__drawer">
+    <span class="mdl-layout-title">Lab</span>
+    <nav class="mdl-navigation">
+
+        {% for name, btn in settings.buttons.items() %}
+            <a class="mdl-navigation__link" href="{{ btn.url }}">
+                <i class="material-icons" role="presentation">{{ btn.icon }}</i>
+                {{ btn.label }}
+            </a>
+        {% endfor %}
+    </nav>
+</div>

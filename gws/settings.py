@@ -36,15 +36,14 @@ class Settings(PWModel):
 
     @classmethod
     def init( cls, settings_json: dict = None ):
+        db = SqliteDatabase( os.path.join(cls._data["db_dir"], "db_settings.sqlite3") )
+        database_proxy.initialize(db)
+        if not cls.table_exists():
+            cls.create_table()
+        
         for k in settings_json:
             cls._data[k] = settings_json[k]
 
-        db = SqliteDatabase( os.path.join(cls._data["db_dir"], "db_settings.sqlite3") )
-        database_proxy.initialize(db)
-
-        if not cls.table_exists():
-            cls.create_table()
-            
         try:
             settings = Settings.get_by_id(1)
             for k in cls._data:
@@ -197,6 +196,13 @@ class Settings(PWModel):
             return None
 
         return os.path.join(dependency_dir, "./templates")
+    
+    def get_page_dir(self, dependency_name: str) -> str:
+        dependency_dir = self.get_dependency_dir(dependency_name)
+        if dependency_dir is None:
+            return None
+
+        return os.path.join(dependency_dir, "./web/pages")
 
     # -- I --
 

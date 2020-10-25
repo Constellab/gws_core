@@ -27,7 +27,7 @@ def get_templates():
     return Jinja2Templates(directory=template_dir), settings
 
 @requires("authenticated")
-async def loginpage(request):
+async def login_page(request):
     if request.user.is_authenticated:
         response = RedirectResponse(url='/')
         return response
@@ -35,7 +35,7 @@ async def loginpage(request):
         raise AuthenticationError('Not allowed')
 
 @requires("authenticated")
-async def logoutpage(request):
+async def logout_page(request):
     templates, settings = get_templates()
     if request.user.is_authenticated:
         request.session['token'] = None
@@ -44,16 +44,6 @@ async def logoutpage(request):
         'request': request, 
         'settings': settings,
     })
-
-
-@requires("authenticated")
-async def profilepage(request):
-    templates, settings = get_templates()
-    return templates.TemplateResponse("auth/profile.html", {
-        'request': request, 
-        'settings': settings,
-    })
-
 
 class AuthBackend(AuthenticationBackend):
 
