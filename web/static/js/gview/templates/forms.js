@@ -1,4 +1,21 @@
 new GViewTemplate({
+    class: "gview:button",
+    render: function (data) {
+        function _btn(container, data){
+            data.id = data.id || uuidv4()
+            data.text = data.text || ""
+            container.innerHTML = `
+                <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect" id="`+ data.id +`">
+                    `+ data.text +`
+                </button>
+            `;
+            componentHandler.upgradeDom();
+        }
+        return _btn
+    }
+})
+
+new GViewTemplate({
     class: "gview:form",
     render: function (data) {
 

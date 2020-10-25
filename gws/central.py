@@ -8,58 +8,50 @@ from gws.settings import Settings
 from gws.logger import Logger
 from gws.model import Report
 from gws.lab import Lab
+from gws.model import Experiment, User
 
 class Central:
     
+    # -- A --
+
+    @classmethod
+    def activate_user(cls, uri):
+        user = User.get_by_uri(uri)
+        if user is None:
+            raise Exception("User not found")
+        else:
+            user.is_active = True
+            user.save()
+            return True
+            
     # -- C --
 
     @classmethod
-    def create_user(cls, uri, data):
-        from gws.model import User
-        if User.get_by_uri(uri) is None:
-            u = User(
-                uri = uri,
-                firstname=data["firstname"], 
-                sirname=data["sirname"], 
-                organization=data["organization"], 
-                email=data["email"], 
-                token=data["token"]
-            )
-            return u.save()
+    def create_user(cls, data):
+        user = User.get_by_uri(data["uri"])
+        if user is None:
+            user = User(uri=data["uri"],token=data["token"])
+            return user.save()
         else:
             raise Exception("The user already exists")
     
     @classmethod
-    def create_project(cls, uri, data):
-        from gws.model import Project
-        if Project.get_by_uri(uri) is None:
-            p = Project(
-                uri = uri,
-                name=data["name"], 
-                organization=data["organization"], 
-            )
-            return p.save()
-        else:
-            raise Exception("The project already exists")
-    
-    @classmethod
-    def create_experiment(cls, uri, data):
-        from gws.model import Experiment, User, Project
-        if Experiment.get_by_uri(uri) is None:
-            try:
-                user = User.get_by_uri(data["user_uri"])
-                project = Project.get_by_uri(data["project_uri"])
-            except Exception as err:
-                raise Exception(f"User or project not found. Error: {err}")
+    def close_experiment(cls, uri):
+        pass
 
-            e = Experiment(
-                uri = uri,
-                user = user,
-                project = project,
-            )
-            return e.save()
+    # -- D --
+
+    @classmethod
+    def deactivate_user(cls, uri):
+        user = User.get_by_uri(uri)
+        if user is None:
+            raise Exception("User not found")
         else:
-            raise Exception("The experiment already exists")
+            user.is_active = False
+            user.save()
+            return True
+
+    # -- G --
 
     @classmethod
     def get_api_url(cls, action):
@@ -71,6 +63,37 @@ class Central:
                 .replace("{action}",action)
 
         return url
+
+    # -- O -- 
+
+    # @classmethod
+    # def open_project(cls, data):
+    #     from gws.model import Project
+    #     uri = data["uri"]
+    #     if Project.get_by_uri(uri) is None:
+    #         p = Project(
+    #             uri=uri,
+    #             name=data["name"], 
+    #             organization=data["organization"], 
+    #         )
+    #         return p.save()
+    #     else:
+    #         raise Exception("The project already exists")
+    
+    @classmethod
+    def open_experiment(cls, data):
+        user = User.get_by_uri(data["user_uri"])
+        if user is None:
+            raise Exception(f"User not found")
+
+        exp = Experiment.get_by_uri(data["uri"])
+        if exp is None:
+            e = Experiment(uri = data["uri"])
+            return e.save()
+        else:
+            return True
+
+    # -- S --
 
     @classmethod
     def send(cls, url, message={}):
@@ -97,6 +120,8 @@ class Central:
         url = cls.get_api_url("add-report")
         cls.send(url, message={"report_uri": report.uri})
     
+    # -- T --
+
     @classmethod
     def tell_is_running(cls):
         url = cls.get_api_url("update-status")

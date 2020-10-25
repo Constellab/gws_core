@@ -47,7 +47,8 @@
             "/static/dist/mdl/material.min.js",
 
             "/static/dist/uuidv4/8.1.0/uuidv4.js",
-            
+            "/static/dist/jquery/3.5.1/jquery.min.js",
+
             "/static/dist/d3/d3-dispatch/1.0.6/d3-dispatch.min.js",
             "/static/dist/d3/d3-timer/1.0.10/d3-timer.min.js",
             "/static/dist/d3/d3-quadtree/1.0.7/d3-quadtree.min.js",

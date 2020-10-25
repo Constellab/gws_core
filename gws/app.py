@@ -38,11 +38,17 @@ brick = "gws"
 def get_templates(brick=brick):
     settings = Settings.retrieve()
     template_dir = settings.get_page_dir(brick)
-    return Jinja2Templates(directory=template_dir), settings
+    if not template_dir is None:
+        return Jinja2Templates(directory=template_dir), settings
+    else:
+        return None
 
 def page_exists(page,brick=brick):
     template_dir = settings.get_page_dir(brick)
-    return os.path.exists(os.path.join(template_dir,page+".html"))
+    if not template_dir is None:
+        return os.path.exists(os.path.join(template_dir,page+".html"))
+    else:
+        return False
 
 async def not_found_page(request, exc):
     templates, settings = get_templates()
@@ -75,16 +81,19 @@ async def page(request):
         brick_app = importlib.import_module(f"{brick}.app")
         async_func = getattr(brick_app, page, None)
         if not async_func is None:
-            data = await async_func(request)
+            response = await async_func(request)
         else:
-            data = None
+            response = None
 
-        templates, settings = get_templates(brick)
-        return templates.TemplateResponse(f"{page}.html", {
-            'data': data,
-            'request': request, 
-            'settings': settings
-        })
+        if isinstance(response, Response):
+            return response
+        else:
+            templates, settings = get_templates(brick)
+            return templates.TemplateResponse(f"{page}.html", {
+                'data': response,
+                'request': request, 
+                'settings': settings
+            })
     else:
         if not page_exists(page,brick):
             # redirect to 404 error
@@ -187,10 +196,14 @@ class App(BaseApp):
 
         # api
         cls.routes.append(Route("/api/lab", api.lab_status_page))
-        cls.routes.append(Route("/api/user/{user_id}/activate", api.lab_status_page))
-        cls.routes.append(Route("/api/user/{user_id}/deactivate", api.lab_status_page))
-        cls.routes.append(Route("/api/experiment/create", api.create_experiment_page))
-        cls.routes.append(Route("/api/experiment/{experiment_uri}", api.get_experiment_page))
+        
+        cls.routes.append(Route("/api/user/create", api.create_user_page, methods=["POST"]))
+        cls.routes.append(Route("/api/user/{uri}/activate", api.activate_user_page))
+        cls.routes.append(Route("/api/user/{uri}/deactivate", api.deactivate_user_page))
+
+        cls.routes.append(Route("/api/experiment/open", api.open_experiment_page, methods=["POST"]))
+        cls.routes.append(Route("/api/experiment/{uri}/close", api.close_experiment_page))
+
         cls.routes.append(Route("/api/", not_found_page))
 
         # pages

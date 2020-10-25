@@ -983,33 +983,33 @@ class Process(Viewable, SystemTrackable):
         pass
 
 
-# ####################################################################
-#
-# Project class
-#
-# ####################################################################
+# # ####################################################################
+# #
+# # Project class
+# #
+# # ####################################################################
 
-class Project(Model):
+# class Project(Model):
 
-    name = CharField(index=True)
-    organization = CharField(index=True)
-    is_active =  BooleanField(default=False, index=True)
+#     name = CharField(index=True)
+#     organization = CharField(index=True)
+#     is_active =  BooleanField(default=False, index=True)
 
-    _table_name = 'project'
+#     _table_name = 'project'
     
-    @property
-    def description(self):
-        return self.data.get("description","")
+#     @property
+#     def description(self):
+#         return self.data.get("description","")
 
-    @description.setter
-    def description(self, text):
-        self.data["description"] = text
+#     @description.setter
+#     def description(self, text):
+#         self.data["description"] = text
 
-    class Meta:
-        indexes = (
-            # create a unique on name,organization
-            (('name', 'organization'), True),
-        )
+#     class Meta:
+#         indexes = (
+#             # create a unique on name,organization
+#             (('name', 'organization'), True),
+#         )
 
 # ####################################################################
 #
@@ -1019,10 +1019,10 @@ class Project(Model):
 
 class User(Model, BaseUser):
 
-    firstname = CharField(index=True)
-    sirname = CharField(index=True)
-    organization = CharField(index=True)
-    email = CharField(index=True)
+    #firstname = CharField(index=True)
+    #sirname = CharField(index=True)
+    #organization = CharField(index=True)
+    #email = CharField(index=True)
     #password = CharField()
     token = CharField()
     is_admin = BooleanField(default=False, index=True)
@@ -1034,9 +1034,8 @@ class User(Model, BaseUser):
     # -- G --
     
     def __generate_token(self):
-        settings = Settings.retrieve()
         hash_object = hashlib.sha512(
-            (self.email + self.organization + str(self.creation_datetime) + settings.name).encode()
+            (self.uri + str(self.creation_datetime)).encode()
         )
         self.token = hash_object.hexdigest()
     
@@ -1076,18 +1075,18 @@ class User(Model, BaseUser):
     #         return False
 
     @classmethod
-    def verify_user_token(cls, email: str, token: str) -> ('User', bool,):
+    def verify_user_token(cls, uri: str, token: str) -> ('User', bool,):
         """ 
-        Verify the email and password and returns the corresponding user 
-        :param email: The email to check
-        :type email: str
+        Verify the uri and token and returns the corresponding user 
+        :param uri: The user uri
+        :type uri: str
         :param token: The token to check
         :type token: str
         :return: The user if successfully verified, False otherwise
         :rtype: User, False
         """
         try:
-            return User.get(User.email==email, User.token==token)
+            return User.get(User.uri==uri, User.token==token)
         except:
             return False
 
@@ -1120,8 +1119,9 @@ class UserLogin(Model, BaseUser):
 
 class Experiment(Model):
     
-    user = ForeignKeyField(User, backref="experiments")
-    project = ForeignKeyField(Project, backref="experiments")
+    #user = ForeignKeyField(User, backref="experiments")
+    #project = ForeignKeyField(Project, backref="experiments")
+    is_active = BooleanField(default=True, index=True)
 
     _table_name = 'experiment'
 

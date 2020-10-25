@@ -150,7 +150,6 @@ window.addEventListener("load", function () {
         if(loadDelayed == null){
             loadDelayed = false
         }
-
         var isLazyScript = typeof element.tagName == "string" && element.tagName.toLowerCase() == "script"
         if (isLazyScript) {
             if (element.hasAttribute("lazy")) {
