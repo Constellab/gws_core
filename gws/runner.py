@@ -58,22 +58,21 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, \
         Logger.error(Exception("manage", "Cannot save the settings in the database"))
  
     if runserver:
-        ips = ip.split(",")
-        ports = port.split(",")
+        #ips = ip.split(",")
+        #ports = port.split(",")
+        # ip_type = _ip_type(ips[0])
+        # is_local = (ip_type == "IPv4" or ip_type == "IPv6" or ip == "localhost")
+        # if is_local:
+        #     jlab_ip = ips[0]
+        #     jlab_port = "8888"
+        # else:
+        #     jlab_ip = "jlab." + ips[0]
+        #     jlab_port = ports[0]
 
-        ip_type = _ip_type(ips[0])
-        is_local = (ip_type == "IPv4" or ip_type == "IPv6" or ip == "localhost")
-        if is_local:
-            jlab_ip = ips[0]
-            jlab_port = "8888"
-        else:
-            jlab_ip = "jlab." + ips[0]
-            jlab_port = ports[0]
-
-        settings.set_data("app_host", ips[0])
-        settings.set_data("app_port", ports[0])
-        settings.set_data("jlab_host", jlab_ip)
-        settings.set_data("jlab_port", jlab_port)
+        settings.set_data("app_host", ip)
+        settings.set_data("app_port", port)
+        #settings.set_data("jlab_host", jlab_ip)
+        #settings.set_data("jlab_port", jlab_port)
 
         if not settings.save():
             Logger.error(Exception("manage", "Cannot save the settings in the database"))

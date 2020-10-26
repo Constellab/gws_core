@@ -6,7 +6,7 @@
     "app_dir"       : "./",
     "app_host"      : "0.0.0.0",
     "app_port"      : 3000,
-    "log_dir"        : "../../logs/",
+    "log_dir"       : "../../logs/",
     "db_dir"        : "../../data/db/",
     "db_name"       : "db.sqlite3",
     "is_test"       : false,
