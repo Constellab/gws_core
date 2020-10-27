@@ -263,6 +263,8 @@ class App(BaseApp):
             exception_handlers=exception_handlers
         )
 
+        settings.set_data("app_host","0.0.0.1")
+        settings.save()
         uvicorn.run(cls.app, host=settings.get_data("app_host"), port=int(settings.get_data("app_port")))
         cls.is_running = True
 
