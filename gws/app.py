@@ -79,9 +79,12 @@ async def page(request):
     if only == "true":
         #run user staff
         brick_app = importlib.import_module(f"{brick}.app")
-        async_func = getattr(brick_app, page, None)
+        async_func = getattr(brick_app, page.lower() + "_page", None)
         if not async_func is None:
-            response = await async_func(request)
+            try:
+                response = await async_func(request)
+            except:
+                response = None
         else:
             response = None
 
@@ -148,7 +151,7 @@ class BaseApp:
         pass
     
 
-settings = Settings.retrieve()
+_settings = Settings.retrieve()
 class App(BaseApp):
     """
     Base App
@@ -159,7 +162,7 @@ class App(BaseApp):
     middleware = [
         Middleware( 
             SessionMiddleware, 
-            secret_key=settings.get_data("session_key"), 
+            secret_key=_settings.get_data("session_key"), 
             session_cookie="gws_lab",
             max_age=60*60*24
         ),
@@ -168,7 +171,7 @@ class App(BaseApp):
             backend = auth.AuthBackend()
         )
     ]
-    debug = settings.get_data("is_test") or settings.get_data("is_demo")
+    debug = _settings.get_data("is_test") or _settings.get_data("is_demo")
     is_running = False
 
     @classmethod
@@ -190,7 +193,7 @@ class App(BaseApp):
         cls.routes.append(Route('/logout', endpoint=auth.logout_page, name="auth"))
 
         # static dirs
-        statics = settings.get_static_dirs()
+        statics = _settings.get_static_dirs()
         for k in statics:
             cls.routes.append(Mount(k, StaticFiles(directory=statics[k]), name=k))
 

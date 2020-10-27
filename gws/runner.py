@@ -14,30 +14,30 @@ import re
 from gws.settings import Settings
 from gws.logger import Logger
 
-def _ip_type(IP):
-    """
-    :type IP: str
-    :rtype: str
-    """
-    def is_ip_v4(s):
-        try: return str(int(s)) == s and 0 <= int(s) <= 255
-        except: return False
-    def is_ip_v6(s):
-        if len(s) > 4:
-            return False
+# def _ip_type(IP):
+#     """
+#     :type IP: str
+#     :rtype: str
+#     """
+#     def is_ip_v4(s):
+#         try: return str(int(s)) == s and 0 <= int(s) <= 255
+#         except: return False
+#     def is_ip_v6(s):
+#         if len(s) > 4:
+#             return False
 
-        try : 
-            return int(s, 16) >= 0 and s[0] != '-'
-        except:
-            return False
+#         try : 
+#             return int(s, 16) >= 0 and s[0] != '-'
+#         except:
+#             return False
     
-    if IP.count(".") == 3 and all(is_ip_v4(i) for i in IP.split(".")):
-        return "IPv4"
+#     if IP.count(".") == 3 and all(is_ip_v4(i) for i in IP.split(".")):
+#         return "IPv4"
 
-    if IP.count(":") == 7 and all(is_ip_v6(i) for i in IP.split(":")):
-        return "IPv6"
+#     if IP.count(":") == 7 and all(is_ip_v6(i) for i in IP.split(":")):
+#         return "IPv6"
 
-    return "Neither"
+#     return "Neither"
 
 def _run(   ctx=None, uri=False, token=False, test=False, db=False, \
             cli=False, runserver=False, ip="0.0.0.0", port="3000", docgen=False, \
@@ -58,22 +58,24 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, \
         Logger.error(Exception("manage", "Cannot save the settings in the database"))
  
     if runserver:
-        ips = ip.split(",")
-        ports = port.split(",")
+        # ips = ip.split(",")
+        # ports = port.split(",")
+        # ip_type = _ip_type(ips[0])
+        # is_local = (ip_type == "IPv4" or ip_type == "IPv6" or ip == "localhost")
+        # if is_local:
+        #     jlab_ip = ips[0]
+        #     jlab_port = "8888"
+        # else:
+        #     jlab_ip = "jlab." + ips[0]
+        #     jlab_port = ports[0]
 
-        ip_type = _ip_type(ips[0])
-        is_local = (ip_type == "IPv4" or ip_type == "IPv6" or ip == "localhost")
-        if is_local:
-            jlab_ip = ips[0]
-            jlab_port = "8888"
-        else:
-            jlab_ip = "jlab." + ips[0]
-            jlab_port = ports[0]
+        # settings.set_data("app_host", ips[0])
+        # settings.set_data("app_port", ports[0])
+        # settings.set_data("jlab_host", jlab_ip)
+        # settings.set_data("jlab_port", jlab_port)
 
-        settings.set_data("app_host", ips[0])
-        settings.set_data("app_port", ports[0])
-        settings.set_data("jlab_host", jlab_ip)
-        settings.set_data("jlab_port", jlab_port)
+        settings.set_data("app_host", ip)
+        settings.set_data("app_port", port)
 
         if not settings.save():
             Logger.error(Exception("manage", "Cannot save the settings in the database"))
