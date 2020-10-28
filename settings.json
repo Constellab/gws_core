@@ -60,6 +60,7 @@
 
             "/static/gws/js/gview/gview.js",
             "/static/gws/js/gview/templates/cards.js",
+            "/static/gws/js/gview/templates/buttons.js",
             "/static/gws/js/gview/templates/forms.js",
             "/static/gws/js/gview/templates/tables.js",
             "/static/gws/js/gview/templates/ui.js",
