@@ -44,6 +44,7 @@ def get_templates(brick=brick):
         return None
 
 def page_exists(page,brick=brick):
+    settings = Settings.retrieve()
     template_dir = settings.get_page_dir(brick)
     if not template_dir is None:
         return os.path.exists(os.path.join(template_dir,page+".html"))
