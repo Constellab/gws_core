@@ -6,26 +6,26 @@
 import os
 import uvicorn
 import importlib
+import inspect 
 
-from starlette.applications import Starlette
-from starlette.responses import Response, JSONResponse, PlainTextResponse,  FileResponse,  HTMLResponse, RedirectResponse
-from starlette.routing import Route, Mount, WebSocketRoute
-from starlette.templating import Jinja2Templates
-from starlette.staticfiles import StaticFiles
-from starlette.requests import Request
-from starlette.endpoints import HTTPEndpoint, WebSocketEndpoint
-from starlette.authentication import requires
-from starlette.middleware import Middleware
-from starlette.middleware.sessions import SessionMiddleware
-from starlette.middleware.authentication import AuthenticationMiddleware
+from typing import Optional
+
+from fastapi import Depends, Form, HTTPException, Request, FastAPI
+from fastapi.routing import APIRoute as Route, Mount
+from fastapi.responses import Response, JSONResponse, PlainTextResponse,  FileResponse,  HTMLResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi.requests import Request
+from fastapi.middleware import Middleware
+from pydantic import BaseModel
+
+from fastapi.security import OAuth2PasswordBearer
 
 from gws.settings import Settings
 from gws.view import HTMLViewTemplate, JSONViewTemplate, PlainTextViewTemplate
 from gws.model import Resource, HTMLViewModel, JSONViewModel, User
 from gws.controller import Controller
 from gws.central import Central
-from gws._app import auth, api
-
 
 ####################################################################################
 #
@@ -34,6 +34,19 @@ from gws._app import auth, api
 ####################################################################################
 
 brick = "gws"
+app = FastAPI()
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+def decode_token(token):
+    settings = Settings.retrieve()
+    if settings.get_data("token") == token:
+        pass
+    else:
+        pass
+
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    user = decode_token(token)
+    return user
 
 def get_templates(brick=brick):
     settings = Settings.retrieve()
@@ -51,37 +64,18 @@ def page_exists(page,brick=brick):
     else:
         return False
 
-async def not_found_page(request, exc):
-    templates, settings = get_templates()
-    return templates.TemplateResponse("error/404.html", {
-        'request': request, 
-        'settings': settings,
-        'exception': exc
-    }, status_code=404)
-
-async def server_error_page(request, exc):
-    templates, settings = get_templates()
-    return templates.TemplateResponse("error/500.html", {
-        'request': request, 
-        'settings': settings,
-        'exception': exc
-    }, status_code=500)
-
-@requires("authenticated")
-async def home_page(request):
+@app.get("/")
+async def display_html_home_page():
     return RedirectResponse(url=f'/page/{brick}')
 
-@requires("authenticated")
-async def page(request):
-    brick = request.path_params["brick"]
-    page = request.path_params.get("page","index")
-    only = request.query_params.get("only_inner_html",False)
-
-    if only == "true":
-        #run user staff
+@app.get("/page/{brick}/", response_class=HTMLResponse)
+@app.get("/page/{brick}/{page}", response_class=HTMLResponse)
+async def display_html_brick_page(request: Request, brick, page: Optional[str] = 'index', only_inner_html: Optional[str] = None) :
+    if only_inner_html == "true":
+        #run brick endpoints
         brick_app = importlib.import_module(f"{brick}.app")
-        async_func = getattr(brick_app, page.lower() + "_page", None)
-        if not async_func is None:
+        async_func = getattr(brick_app, page.lower(), None)
+        if inspect.iscoroutinefunction(async_func):
             try:
                 response = await async_func(request)
             except:
@@ -95,46 +89,152 @@ async def page(request):
             templates, settings = get_templates(brick)
             return templates.TemplateResponse(f"{page}.html", {
                 'data': response,
-                'request': request, 
-                'settings': settings
+                'settings': settings,
+                'request': request,
             })
     else:
         if not page_exists(page,brick):
-            # redirect to 404 error
-            return await not_found_page(request, Exception(f"Page '{page}' is not found"))
+            raise HTTPException(
+                status_code=404,
+                detail="Page not found",
+                headers={"X-Error": "Page not found"},
+            )
         else:
             templates, settings = get_templates()
             return templates.TemplateResponse("index/index.html", {
-                'request': request, 
                 'settings': settings,
                 'page': page,
                 'brick': brick,
+                'request': request,
             })
 
-@requires("authenticated")
-async def demo(request):
-    return { "title": "Welcome to the demo!" }
+# PRISM action
 
-class HTTPApp(HTTPEndpoint):
-    async def get(self, request):
-        return await App.action(request)
+class _ViewModel(BaseModel):
+    uri: str
+    data: dict
+
+@app.get("/api/prism/{uri}")
+async def get_vmodel(uri: str) -> (dict, str,):
+    """
+    Get and render a ViewModel
+    """
+
+    try:
+        vmodel = Controller.action("get", uri)
+    except Exception as err:
+        return {"status": False, "reponse": f"{err}"}
+
+    return { "status": True, "reponse": vmodel.render() }
+
+@app.post("/api/prism/")
+async def post_vmodel(vmodel: _ViewModel) -> (dict, str,):
+    """
+    Post an render a ViewModel
+    """
+
+    try:
+        vmodel = Controller.action("post", uri=vmodel.uri, data=vmodel.data)
+    except Exception as err:
+        return {"status": False, "reponse": f"{err}"}
+
+    return { "status": True, "reponse": vmodel.render() }
+
+@app.put("/api/prism/")
+async def put_vmodel(vmodel: _ViewModel) -> (dict, str,):
+    """
+    Post and render a ViewModel
+    """
+
+    try:
+        vmodel = Controller.action("put", uri=vmodel.uri, data=vmodel.data)
+    except Exception as err:
+        return {"status": False, "reponse": f"{err}"}
+
+    return { "status": True, "reponse": vmodel.render() }
+
+@app.delete("/api/prism/{uri}/")
+async def delete_vmodel(uri: str) -> (dict, str,):
+    """
+    Post a ViewModel and render its
+    """
+
+    try:
+        vmodel = Controller.action("delete", uri)
+    except Exception as err:
+        return {"status": False, "reponse": f"{err}"}
+
+    return { "status": True, "reponse": vmodel.render() }
+
+
+# API
+
+# Lab instance
+
+@app.get("/api/lab-instance/")
+async def get_lab_instance_status():
+    from gws.lab import Lab
+    return { "status": True, "response" : Lab.get_status() }
+
+# User
+
+class _User(BaseModel):
+    uri: str
+    token: str
+
+@app.post("/api/user/create")
+async def create_user(user: _User):
+    try:
+        tf = Central.create_user(user.dict())
+        return { "status": tf, "response" : "" }
+    except Exception as err:
+        return { "status": False, "response": str(err) }
+
+@app.get("/api/user/{user_uri}")
+async def get_user(user_uri : str):
+    try:
+        user_dict = Central.get_user_status(user_uri)
+        return { "status": True, "response" : user_dict }
+    except Exception as err:
+        return { "status": False, "response" : str(err) }
+
+@app.get("/api/user/{user_uri}/activate")
+async def activate_user(user_uri : str):
+    try:
+        tf = Central.activate_user(user_uri)
+        return { "status": tf, "response" : "" }
+    except Exception as err:
+        return { "status": False, "response" : str(err) }
+
+@app.get("/api/user/{user_uri}/deactivate")
+async def deactivate_user(user_uri : str):
+    try:
+        tf = Central.deactivate_user(user_uri)
+        return { "status": tf, "response" : "" }
+    except Exception as err:
+        return { "status": False, "response" : str(err) }
+
+
+# Experiment
+class _Experiment(BaseModel):
+    uri: str
+    protocol: str
     
-    async def post(self, request):
-        return await App.action(request)
+@app.put("/api/experiment/open")
+async def open_experiment_or_create_if_not_exists(exp: _Experiment):
+    try:
+        tf = Central.create_experiment(exp.dict())
+        return { "status": tf, "response" : "" }
+    except Exception as err:
+        return { "status": False, "response": str(err) }
 
-# class WebSocketApp(WebSocketEndpoint):
-#     encoding = 'bytes'
+@app.put("/api/experiment/{experiment_uri}/close")
+async def close_experiment(request):
+    return { "status": True, "response" : ""}
 
-#     async def on_connect(self, websocket):
-#         await websocket.accept()
-
-#     async def on_receive(self, websocket, data):
-#         vmodel = await App.action(websocket)
-#         html = vmodel.render(request=websocket)
-#         await websocket.send_bytes(b""+html)
-
-#     async def on_disconnect(self, websocket, close_code):
-#         pass
+@app.delete("/api/experiment/{experiment_uri}")
+async def delete_experiment(request):
+    return { "status": True, "response" : ""}
 
 ####################################################################################
 #
@@ -158,20 +258,8 @@ class App(BaseApp):
     Base App
     """
 
-    app: Starlette = None
+    app: FastAPI = app
     ctrl = Controller
-    middleware = [
-        Middleware( 
-            SessionMiddleware, 
-            secret_key=_settings.get_data("session_key"), 
-            session_cookie="gws_lab",
-            max_age=60*60*24
-        ),
-        Middleware( 
-            AuthenticationMiddleware, 
-            backend = auth.AuthBackend()
-        )
-    ]
     debug = _settings.get_data("is_test") or _settings.get_data("is_demo")
     is_running = False
 
@@ -189,83 +277,22 @@ class App(BaseApp):
         * /<brick name>/settings/   -> setting page route
         """
 
-        # auth
-        cls.routes.append(Route('/login', endpoint=auth.login_page, name="auth"))
-        cls.routes.append(Route('/logout', endpoint=auth.logout_page, name="auth"))
-
         # static dirs
         statics = _settings.get_static_dirs()
         for k in statics:
-            cls.routes.append(Mount(k, StaticFiles(directory=statics[k]), name=k))
-
-        # api
-        cls.routes.append(Route("/api/lab", api.lab_status_page))
-        
-        cls.routes.append(Route("/api/user/create", api.create_user_page, methods=["POST"]))
-        cls.routes.append(Route("/api/user/{uri}/activate", api.activate_user_page))
-        cls.routes.append(Route("/api/user/{uri}/deactivate", api.deactivate_user_page))
-
-        cls.routes.append(Route("/api/experiment/open", api.open_experiment_page, methods=["POST"]))
-        cls.routes.append(Route("/api/experiment/{uri}/close", api.close_experiment_page))
-
-        cls.routes.append(Route("/api/", not_found_page))
-
-        # pages
-        cls.routes.append(Route("/page/{brick}/", page))
-        cls.routes.append(Route("/page/{brick}/{page}", page))
-
-        # process and resource routes
-        cls.routes.append(Route('/{action}/{uri}/{data}/', HTTPApp))
-        cls.routes.append(Route('/{action}/{uri}/', HTTPApp))
-
-        # home
-        cls.routes.append(Route("/", home_page))
+            app.mount(k, StaticFiles(directory=statics[k]), name=k)
 
         #misc
         cls.on_startup.append(cls._on_startup)
         cls.on_shutdown.append(cls._on_shutdown)
     
-    @classmethod
-    async def action(cls, request) -> Response:
-        """
-        Deals a user action and returns a response
-        :return: The response
-        :rtype: `starlette.responses.Response`
-        """
-        vmodel = await Controller.action(request)
-        rendering = vmodel.render(request=request)
-
-        if isinstance(rendering, Response):
-            return rendering
-        else:
-            if vmodel.template.is_html():
-                return HTMLResponse(rendering)
-            elif vmodel.template.is_json():
-                return JSONResponse(rendering)
-            else:
-                return PlainTextResponse(rendering)
-
     @classmethod 
     def start(cls):
         """
-        Starts the starlette uvicorn web application
+        Starts FastAPI uvicorn
         """
-
+        
         settings = Settings.retrieve()
-        exception_handlers = {
-            404: not_found_page,
-            500: server_error_page
-        }
-
-        # starlette
-        cls.app = Starlette(
-            debug=cls.debug, 
-            routes=cls.routes, 
-            middleware=cls.middleware, 
-            on_startup=cls.on_startup,
-            on_shutdown=cls.on_shutdown,
-            exception_handlers=exception_handlers
-        )
 
         settings.set_data("app_host","0.0.0.0")
         settings.save()
@@ -278,7 +305,7 @@ class App(BaseApp):
         Called on application startup to create test objects
         """
 
-        Central.tell_is_running()
+        Central.put_status(is_running=True)
         
         settings = Settings.retrieve()
         from gws.robot import Robot, HTMLRobotViewModel, JSONRobotViewModel
@@ -316,19 +343,5 @@ class App(BaseApp):
 
     @classmethod 
     def _on_shutdown(cls):
-        Central.tell_is_stopped()
-
-    @classmethod 
-    def test(cls, url: str) -> Response:
-        """
-        Returns a response in test mode
-        :param url: The test url
-        :type url: str
-        :return: The response
-        :rtype: `starlette.responses.Response`
-        """
-        from starlette.testclient import TestClient
-        client = TestClient(cls.app)
-        response = client.get(url)
-        return response
+        Central.put_status(is_running=False)
 

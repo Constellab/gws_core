@@ -8,138 +8,89 @@ import json
 from gws.base import Base
 from gws.base import slugify
 from gws.logger import Logger
-from gws.session import Session
 
 class Controller(Base):
     """
     Controller class
     """
 
-    is_query_params = False
     _model_specs = dict() 
 
     @classmethod
-    async def action(cls, request: 'Request') -> 'ViewModel':
+    def action(cls, action, uri, data = None) -> 'ViewModel':
         """
         Process user actions
 
-        :param request: Starlette request
-        :type request: `starlette.requests.Request`
+        :param action: The action
+        :type action: str
+        :param uri: The uri of the view model
+        :type uri: str
+        :param data: The data
+        :type data: dict
         :return: A view model corresponding to the action
         :rtype: `gws.prims.model.ViewModel`
         """
 
         #cls._session = request.session
         cls.__inspects()
-
-        if Controller.is_query_params:
-            action = request.query_params.get('action','')
-            uri = request.query_params.get('uri','')
-            data = request.query_params.get('data','{}')
-        else:
-            action = request.path_params.get('action','')
-            uri = request.path_params.get('uri','')
-            data = request.path_params.get('data','{}')
-
         try:
-            if len(data) == 0:
-                data = {}
-            else:
-                data = json.loads(data)
+            if isinstance(data, str):
+                if len(data) == 0:
+                    data = {}
+                else:
+                    data = json.loads(data)
         except:
             Logger.error(Exception("Controller", "action", "The data is not a valid JSON text"))
 
         # CRUD (& Run) actions
-        if action == "create":
-            return cls.__create(uri, data)
+        if action == "post":
+            return cls.__post(uri, data)
 
-        elif action == "read":
-            return cls.__read(uri, data)
+        elif action == "get":
+            return cls.__get(uri)
 
-        elif action == "update":
-            return cls.__update(uri, data)
+        elif action == "put":
+            return cls.__put(uri, data)
 
         elif action == "delete":
-            return cls.__delete(uri, data)
+            return cls.__delete(uri)
 
         elif action == "run":
             return cls.__run(uri, data)
-        
-    @classmethod
-    def __create(cls, uri, data):
-        obj = cls.fetch_model(uri)
-        from gws.model import SystemTrackable
-
-        if isinstance(obj, SystemTrackable):
-            Logger.error(Exception("Controller", "__create", f"Object {type(obj)} is SystemTrackable. It can only be created by the PRISM system"))
-
-        from gws.model import ViewModel
-        if isinstance(obj, ViewModel):
-            vmodel = cls.__create_new_vmodel(obj, data)
-            return vmodel
-        else:
-            model = cls.__create_new_model(uri, data)
-            return model
-
-    @classmethod
-    def __create_new_vmodel(cls, vmodel, data):
-        if data["target"] == "self":
-            vmodel_t = type(vmodel)
-        else:
-            vmodel_t = cls.__get_model_type_from_uri(data["target"])
-
-        new_vmodel = vmodel_t(model_instance=vmodel.model)
-        vdata = data.get("vdata", {})
-        new_vmodel.set_data(vdata)
-        new_vmodel.save()
-        return new_vmodel
-
-    @classmethod
-    def __create_new_model(cls, uri, data):
-        model_t = cls.__get_model_type_from_uri(uri)
-        model = model_t()
-
-        from gws.model import Model
-        if not isinstance(model, Model):
-            Logger.error(Exception("Controller", "action", "The action uri must refer to a Model"))
-
-        mdata = data.get("mdata", {})
-        model.hydrate_with(mdata)
-
-        vmodel = model.create_default_vmodel()
-        vdata = data.get("vdata", {})
-        vmodel.hydrate_with(vdata)
-        vmodel.save()
-
-        return vmodel
 
     # -- B --
 
-    @classmethod
-    def build_url(cls, action: str = None, uri: str = None, data: dict = None) -> str:
-        """
-        Build the url of action using the action name, the target model uri and request parameters
-        
-        :param action: User action
-        :type action: str
-        :param uri: The uri of the target model
-        :type uri: str
-        :param data: Action parameters
-        :type data: dict
-        :return: A view model corresponding to the action
-        :rtype: `gws.prims.model.ViewModel`
-        """  
-        #import urllib.parse     
-        if Controller.is_query_params:
-            return f"/?action={action}&uri={uri}&data={str(data)}"
-        else:
-            return f"/{action}/{uri}/{str(data)}"
+    # @classmethod
+    # def build_url(cls, action: str = None, uri: str = None, data: dict = None) -> str:
+    #     """
+    #     Build the url of action using the action name, the target model uri and request parameters
+    #     :param action: User action
+    #     :type action: str
+    #     :param uri: The uri of the target model
+    #     :type uri: str
+    #     :param data: Action parameters
+    #     :type data: dict
+    #     :return: A view model corresponding to the action
+    #     :rtype: `gws.prims.model.ViewModel`
+    #     """  
+    #     #import urllib.parse     
+    #     if Controller.is_query_params:
+    #         return f"/?action={action}&uri={uri}&data={str(data)}"
+    #     else:
+    #         return f"/{action}/{uri}/{str(data)}"
 
     # -- D --
 
     @classmethod
-    def __delete(cls, uri, data):
-        pass
+    def __delete(cls, uri) -> 'ViewModel':
+        from gws.model import Model, ViewModel
+        obj = cls.fetch_model(uri)
+        if isinstance(obj, ViewModel):
+            vmodel = obj
+            vmodel.delete()
+            return vmodel
+        else:
+            Logger.error(Exception("Controller", f"__delete", "No ViewModel match with the uri."))
 
     # -- F --
 
@@ -190,6 +141,18 @@ class Controller(Base):
                 Logger.error(Exception("Controller", f"action", "Db integrity error. Several models match with the request: (uri_name={uri_name}, uri_id={uri_id})"))
         
     # -- G --
+
+    @classmethod
+    def __get(cls, uri) -> 'ViewModel':
+        obj = cls.fetch_model(uri)
+
+        from gws.model import ViewModel
+        if isinstance(obj, ViewModel):
+            vmodel = obj
+        else:
+            Logger.error(Exception("Controller", "__get", f"No ViewModel found for the uri {uri}"))
+
+        return vmodel
 
     @classmethod
     def __get_model_type_from_uri(cls, uri) -> type:
@@ -243,7 +206,6 @@ class Controller(Base):
             return
 
         for subname, obj in inspect.getmembers(sys.modules[name]):
-            #print(subname)
             if inspect.isclass(obj):
                 if issubclass(obj, Model):
                     cls._register_model_specs([ obj ])
@@ -254,22 +216,90 @@ class Controller(Base):
             elif inspect.ismodule(obj):
                 cls.__inspects_module(name+"."+subname)
 
-    # -- R --
+    # -- P --
 
     @classmethod
-    def __read(cls, uri, data):
+    def __post(cls, uri, data) -> 'ViewModel':
         obj = cls.fetch_model(uri)
+        from gws.model import SystemTrackable
+
+        if isinstance(obj, SystemTrackable):
+            Logger.error(Exception("Controller", "__post", f"Object {type(obj)} is SystemTrackable. It can only be created by the PRISM system"))
+
+        from gws.model import ViewModel
+        if isinstance(obj, ViewModel):
+            vmodel = cls.__post_new_vmodel(obj, data)
+        else:
+            Logger.error(Exception("Controller", "__post", f"Object {type(obj)} is not a ViewModel"))
+            #vmodel = cls.__post_new_model_and_return_vmodel(uri, data)
+        
+        return vmodel
+    
+    @classmethod
+    def __post_new_vmodel(cls, vmodel, data):
+        if data["type"] == "self":
+            vmodel_t = type(vmodel)
+        else:
+            vmodel_t = cls.__get_model_type_from_uri(data["type"])
+
+        new_vmodel = vmodel_t(model=vmodel.model)
+        vdata = data.get("vdata", {})
+        new_vmodel.hydrate_with(vdata)
+        new_vmodel.save()
+        return new_vmodel
+
+    @classmethod
+    def __post_new_model_and_return_vmodel(cls, uri, data):
+        model_t = cls.__get_model_type_from_uri(uri)
+        model = model_t()
+
+        from gws.model import Model
+        if not isinstance(model, Model):
+            Logger.error(Exception("Controller", "action", "The action uri must refer to a Model"))
+
+        mdata = data.get("mdata", {})
+        model.hydrate_with(mdata)
+
+        vmodel = model.create_default_vmodel()
+        vdata = data.get("vdata", {})
+        vmodel.hydrate_with(vdata)
+        vmodel.save()
+
+        return vmodel
+
+    @classmethod
+    def __put(cls, uri, data) -> 'ViewModel':
+        obj = cls.fetch_model(uri)
+
+        from gws.model import SystemTrackable
+        if isinstance(obj, SystemTrackable):
+            Logger.error(Exception("Controller", "__post", f"Object {type(obj)} is SystemTrackable. It can only be updated by the PRISM system"))
 
         from gws.model import ViewModel
         if isinstance(obj, ViewModel):
             vmodel = obj
-        else:
-            vmodel = obj.create_default_vmodel()
 
-        vdata = data.get("vdata", {})
-        obj.hydrate_with(vdata)
+            model = vmodel.model
+            mdata = data.get("mdata", {})
+            model.hydrate_with(mdata)
+
+            vdata = data.get("vdata", {})
+            vmodel.hydrate_with(vdata)
+            vmodel.save()
+        else:
+            # it is a model
+            model = obj
+            mdata = data.get("mdata", {})
+            model.hydrate_with(mdata)
+
+            vmodel = model.create_default_vmodel()
+            vdata = data.get("vdata", {})
+            vmodel.hydrate_with(vdata)
+            vmodel.save()
+
         return vmodel
 
+    # -- R --
 
     @classmethod
     def _register_model_specs(cls, model_specs: list):
@@ -292,7 +322,7 @@ class Controller(Base):
 
     @classmethod
     def __run(cls, uri, data):
-        obj = cls.__read(uri, data)
+        obj = cls.__get(uri, data)
         from gws.model import Process
         import asyncio 
         if isinstance(obj, Process):
@@ -338,20 +368,3 @@ class Controller(Base):
                 return False
 
         return True
-
-    # -- R --
-
-    @classmethod
-    def __update(cls, uri, data):
-        obj = cls.__read(uri, data)
-
-        from gws.model import SystemTrackable
-        if isinstance(obj, SystemTrackable):
-            Logger.error(Exception("Controller", "__create", f"Object {type(obj)} is SystemTrackable. It can only be updated by the PRISM system"))
-
-        from gws.model import ViewModel
-        if isinstance(obj, ViewModel):
-            vdata = data.get("vdata", {})
-            obj.hydrate_with(vdata)
-            obj.save()
-            return obj

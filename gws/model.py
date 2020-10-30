@@ -10,23 +10,19 @@ import uuid
 import inspect
 import hashlib
 import urllib.parse
+import json
 
 from datetime import datetime
 from peewee import SqliteDatabase, Model as PWModel
-from peewee import  Field, IntegerField, DateField, \
+from peewee import  Field, IntegerField, FloatField, DateField, \
                     DateTimeField, CharField, BooleanField, \
                     ForeignKeyField, IPField      
 from playhouse.sqlite_ext import JSONField
 
-from starlette.requests import Request
-from starlette.responses import Response, HTMLResponse, \
-                                JSONResponse, PlainTextResponse
-from starlette.authentication import BaseUser
-
 from gws.logger import Logger
 from gws.settings import Settings
 from gws.store import KVStore
-from gws.session import Session
+#from gws.session import Session
 
 from gws.base import slugify, BaseModel, DbManager
 from gws.base import format_table_name
@@ -76,10 +72,12 @@ class Model(BaseModel):
     creation_datetime = DateTimeField(default=datetime.now)
     save_datetine = DateTimeField()
     data = JSONField(null=True)
+    is_deleted = BooleanField(default=False, index=True)
 
     _kv_store: KVStore = None
     _uuid = None
     _uri_delimiter = "$"
+    _is_deletable = True
 
     _table_name = 'model'
 
@@ -98,6 +96,8 @@ class Model(BaseModel):
             pass
 
         self._init_store()
+
+        #Controller._register_model_specs(type(self))
 
     def cast(self) -> 'Model':
         """
@@ -130,6 +130,15 @@ class Model(BaseModel):
         self.data = {}
         if save:
             self.save()
+
+    # -- D --
+
+    def delete(self) -> bool:
+        if not self._is_deletable:
+            return False
+
+        self.is_deleted = True
+        return self.save()
 
     # -- E --
 
@@ -386,7 +395,6 @@ class Viewable(Model):
         :return: The JSON dictionary 
         :rtype: dict
         """
-        import json
         return json.dumps({
             "id" : self.id,
             "data" : self.data,
@@ -403,14 +411,16 @@ class Viewable(Model):
         """
         return "<x-gws class='gws-model' id='{}' data-id='{}' data-uri='{}'></x-gws>".format(self._uuid, self.id, self.uri)
 
+    # -- C --
+
     def create_default_vmodel(self):
         if "default" in self._vmodel_specs:
-            model_t = self._vmodel_specs["default"]
-            return model_t(model_instance=self)
+            vmodel_t = self._vmodel_specs["default"]
+            return vmodel_t(model=self)
         else:   
             for k in self._vmodel_specs:
-                model_t = self._vmodel_specs[k]
-                return model_t(model_instance=self) #return the 1st vmodel
+                vmodel_t = self._vmodel_specs[k]
+                return vmodel_t(model=self) #return the 1st vmodel
 
         return None
 
@@ -436,10 +446,35 @@ class Viewable(Model):
             vmodel_t = self._vmodel_specs.get(type_name, None)
 
         if isinstance(vmodel_t, type):
-            vmodel = vmodel_t(model_instance=self)
+            vmodel = vmodel_t(model=self)
             return vmodel
         else:
             Logger.error(Exception(self.classname(), "create_vmodel_by_name", f"The vmodel '{vmodel_t}' is not found"))
+
+    # -- D --
+
+    def delete(self):
+        if self.is_deleted:
+            return True
+
+        with DbManager.db.atomic() as transaction:
+            try:
+                Q = ViewModel.select().where( ViewModel.model_id == self.id )
+                for vm in Q:
+                    if not vm.delete():
+                        transaction.rollback()
+                        return False
+                
+                if super().delete():
+                    return True
+                else:
+                    transaction.rollback()
+                    return False
+            except:
+                transaction.rollback()
+                return False
+
+    # -- R -- 
 
     @classmethod
     def register_vmodel_specs(cls, specs: list):
@@ -470,8 +505,8 @@ class Config(Viewable):
 
     _table_name = 'config'
 
-    def __init__(self, specs: dict = None, *args, **kwargs):
-        super().__init__(specs, *args, **kwargs)
+    def __init__(self, *args, specs: dict = None, **kwargs):
+        super().__init__(*args, **kwargs)
 
         if self.id is None:
             self.data = {
@@ -500,8 +535,30 @@ class Config(Viewable):
                         Logger.error(Exception(self.classname(), "__init__", f"Invalid default config value. Error message: {err}"))
 
             self.set_specs( specs )
-        
-        
+
+    # -- D --
+
+    def delete(self):
+        if self.is_deleted:
+            return True
+            
+        with DbManager.db.atomic() as transaction:
+            try:
+                Q = Job.select().where( Job.process_id == self.id )
+                for job in Q:
+                    if not job.delete():
+                        transaction.rollback()
+                        return False
+                
+                if super().delete():
+                    return True
+                else:
+                    transaction.rollback()
+                    return False
+                    
+            except:
+                transaction.rollback()
+                return False
 
     # -- G --
 
@@ -520,7 +577,7 @@ class Config(Viewable):
         default = self.specs[name].get("default", None)
         return self.data["params"].get(name,default)
 
-    # -- P 
+    # -- P --
 
     @property
     def params(self) -> dict:
@@ -609,33 +666,32 @@ class Process(Viewable, SystemTrackable):
     hash = CharField(index=True, unique=True)
     is_running: bool = False 
     is_finished: bool = False 
-    #pid = IntegerField()
 
     input_specs: dict = {}
     output_specs: dict = {}
     config_specs: dict = {}
 
     _event_listener: EventListener = None
-
+    _unique_hash = "code"
     _input: Input
     _output: Output
     _table_name = 'process'
+    _is_deletable = False
 
     _job: 'Job' = None  #ref to the current job
 
-    def __init__(self, name: str=None, *args, **kwargs):
+    def __init__(self, *args, name: str=None,  **kwargs):
         super().__init__(*args, **kwargs)
         
         if self.id is None:
             self.hash = self.__create_hash()
-
-            C = type(self)
+            cls = type(self)
             try:
-                proc = C.get(C.hash == self.hash)
+                proc = cls.get(cls.hash == self.hash)
                 self.id = proc.id
             except:
                 self.save()
-                proc = C.get(C.hash == self.hash)
+                proc = cls.get(cls.hash == self.hash)
                 self.id = proc.id
         else:
             self.__check_hash()
@@ -704,9 +760,8 @@ class Process(Viewable, SystemTrackable):
         type_str = slugify(self.type)
         model_t = Controller.get_model_type(type_str)
         source = inspect.getsource(model_t)
-        hash_object = hashlib.sha512((self.type+source).encode())
-        return hash_object.hexdigest()
-
+        return self._unique_hash + ":" + self._hash_encode(source)
+    
     # -- G --
 
     def get_param(self, name: str) -> [str, int, float, bool]:
@@ -731,6 +786,15 @@ class Process(Viewable, SystemTrackable):
             self._job = Job(process=self, config=config)
 
         return self._job
+
+    # -- H --
+
+    @classmethod
+    def _hash_encode(cls, data: str):
+        hash_object = hashlib.sha512(data.encode())
+        return hash_object.hexdigest()
+
+    # -- I --
 
     @property
     def input(self) -> 'Input':
@@ -864,6 +928,7 @@ class Process(Viewable, SystemTrackable):
         """ 
         Runs the process and save its state in the database.
         """
+
         try:
             self._run_before_task()
             self.task()
@@ -982,53 +1047,21 @@ class Process(Viewable, SystemTrackable):
     def task(self):
         pass
 
-
-# # ####################################################################
-# #
-# # Project class
-# #
-# # ####################################################################
-
-# class Project(Model):
-
-#     name = CharField(index=True)
-#     organization = CharField(index=True)
-#     is_active =  BooleanField(default=False, index=True)
-
-#     _table_name = 'project'
-    
-#     @property
-#     def description(self):
-#         return self.data.get("description","")
-
-#     @description.setter
-#     def description(self, text):
-#         self.data["description"] = text
-
-#     class Meta:
-#         indexes = (
-#             # create a unique on name,organization
-#             (('name', 'organization'), True),
-#         )
-
 # ####################################################################
 #
 # User class
 #
 # ####################################################################
 
-class User(Model, BaseUser):
+class User(Model):
 
-    #firstname = CharField(index=True)
-    #sirname = CharField(index=True)
-    #organization = CharField(index=True)
-    #email = CharField(index=True)
-    #password = CharField()
     token = CharField()
     is_admin = BooleanField(default=False, index=True)
     is_active = BooleanField(default=True, index=True)
     is_locked = BooleanField(default=False, index=True)
     is_authenticated = False
+
+    _is_deletable = False
     _table_name = 'user'
 
     # -- G --
@@ -1039,40 +1072,14 @@ class User(Model, BaseUser):
         )
         self.token = hash_object.hexdigest()
     
-    # @classmethod
-    # def __generate_password_hash(self, email, password):
-    #     if email is None or password is None:
-    #         Logger.error(Exception("User", "__generate_password_hash", "The user email and password are required"))
-    #     hash_object = hashlib.sha512((email + password).encode())
-    #     return hash_object.hexdigest()
-
     # -- S --
 
     def save(self, *arg, **kwargs):
         if self.id is None:
             if self.token is None:
                 self.__generate_token()
-            #self.password = self.__generate_password_hash(self.email, self.password)
 
         return super().save(*arg, **kwargs)
-
-    # -- V --
-
-    # @classmethod
-    # def verify_user_password(cls, email: str, password: str) -> ('User', bool,):
-    #     """ 
-    #     Verify the email and password and returns the corresponding user 
-    #     :param email: The email to check
-    #     :type email: str
-    #     :param password: The password to check
-    #     :type password: str
-    #     :return: The user if successfully verified, False otherwise
-    #     :rtype: User, False
-    #     """
-    #     try:
-    #         return User.get(User.email==email, User.email==cls.__generate_password_hash(email,password))
-    #     except:
-    #         return False
 
     @classmethod
     def verify_user_token(cls, uri: str, token: str) -> ('User', bool,):
@@ -1102,11 +1109,12 @@ class User(Model, BaseUser):
 #
 # ####################################################################
 
-class UserLogin(Model, BaseUser):
+class UserLogin(Model):
     user = ForeignKeyField(User)
     status = BooleanField(index=True)
     ip_address = IPField()
     login_date = DateTimeField()
+    _is_deletable = False
 
     def last_login(self, user):
         pass
@@ -1119,11 +1127,36 @@ class UserLogin(Model, BaseUser):
 
 class Experiment(Model):
     
-    #user = ForeignKeyField(User, backref="experiments")
-    #project = ForeignKeyField(Project, backref="experiments")
-    is_active = BooleanField(default=True, index=True)
-
+    protocol_id = IntegerField(null=False, index=True)       # store id ref as it may represent different classes
+    score = FloatField(null=True, index=True)
+    is_in_progress = BooleanField(default=True, index=True)
     _table_name = 'experiment'
+
+    # -- D --
+
+    def delete(self):
+        if self.is_deleted:
+            return True
+            
+        with DbManager.db.atomic() as transaction:
+            try:
+                Q = Job.select().where( Job.process_id == self.id )
+                for job in Q:
+                    if not job.delete():
+                        transaction.rollback()
+                        return False
+                
+                if super().delete():
+                    return True
+                else:
+                    transaction.rollback()
+                    return False
+                    
+            except:
+                transaction.rollback()
+                return False
+
+    # -- I --
 
     @property
     def is_finished(self):
@@ -1140,6 +1173,17 @@ class Experiment(Model):
                 return True
 
         return False
+
+    # -- P --
+
+    @property 
+    def protocol(self):
+        return Protocol.get_by_id(self.protocol_id)
+
+    # -- R --
+
+    def run(self):
+        self.protocol.run()
 
 # ####################################################################
 #
@@ -1161,17 +1205,14 @@ class Job(Model, SystemTrackable):
     
     process_id = IntegerField(null=False, index=True)       # store id ref as it may represent different classes
     config_id = IntegerField(null=False, index=True)        # store id ref as it may represent config classes
-    experiment = ForeignKeyField(Experiment, null=False, backref='jobs') 
-
+    experiment = ForeignKeyField(Experiment, null=True, backref='jobs')     #only valid for protocol
     is_running: bool = BooleanField(default=False, index=True)
     is_finished: bool = BooleanField(default=False, index=True)
-    
     _process = None
     _config = None
-
     _table_name = 'job'
 
-    def __init__(self, process: Process = None, config: Config = None, *args, **kwargs):
+    def __init__(self, *args, process: Process = None, config: Config = None, **kwargs):
         super().__init__(*args, **kwargs)
 
         if self.id is None:
@@ -1183,7 +1224,6 @@ class Job(Model, SystemTrackable):
             
             self._config = config
             self._process = process
-            self.experiment = Session.get_experiment()
             self.update_state()
 
     # -- C --
@@ -1206,6 +1246,14 @@ class Job(Model, SystemTrackable):
             return self._config
         else:
             return None
+
+    # -- D --
+
+    def delete(self):
+        if self.is_deleted:
+            return True
+
+        return super().delete()
 
     # -- P --
 
@@ -1237,6 +1285,15 @@ class Job(Model, SystemTrackable):
 
         self.is_running = self.process.is_running
         self.is_finished = self.process.is_finished
+
+    def set_experiment(self, experiment: 'Experiment'):
+        if not isinstance(experiment, Experiment):
+            raise Exception("The experiment must be an instance of Experiment")
+
+        if self.experiment is None:
+            self.experiment = experiment
+        else:
+            raise Exception("An experiment is already defined")
 
     def save(self, *args, **kwargs):
         """ 
@@ -1306,52 +1363,50 @@ class Protocol(Process, SystemTrackable):
     _connectors = []
     _interfaces = {}
     _outerfaces = {}
+    _unique_hash = "graph"
+    _table_name = 'protocol'
 
     #/!\ Write protocols in the 'process' table
     #_table_name = 'process'
 
-    def __init__(self, name: str = None, processes: dict = None, connectors: list = None, \
-                interfaces: dict = None, outerfaces: dict = None, \
-                *args, **kwargs):
-        super().__init__(name = name, *args, **kwargs)
+    def __init__(self, *args, name: str = None, processes: dict = None, connectors: list = None, \
+                interfaces: dict = None, outerfaces: dict = None, graph: (str, dict)=None,\
+                **kwargs):
 
-        if not processes is None:
+        super().__init__(*args, name = name, **kwargs)
+
+        if processes is None:
+            if not self.data.get("graph", None) is None:
+                self.__loads( self.data["graph"] )
+            elif isinstance(graph, str):
+                self.__loads( json.loads(graph) )
+            elif isinstance(graph, dict):
+                self.__loads( graph )
+            self.save()
+        else:
             if not isinstance(processes, dict):
                 Logger.error(Exception("Protocol", "__init__", "A dictionnary of processes is expected"))
             
+            if not isinstance(connectors, list):
+                Logger.error(Exception("Protocol", "__init__", "A list of connectors is expected"))
+
+            # process
             for name in processes:
                 proc = processes[name]
                 proc.name = name    #set context name
                 if not isinstance(proc, Process):
                     Logger.error(Exception("Protocol", "__init__", "The dictionnary of processes must contain instances of Process"))
-            
             self._processes = processes
 
-            if not connectors is None:
-                if not isinstance(connectors, list):
-                    Logger.error(Exception("Protocol", "__init__", "A list of connectors is expected"))
+            # connectors
+            for conn in connectors:
+                if not isinstance(conn, Connector):
+                    Logger.error(Exception("Protocol", "__init__", "The list of connector must contain instances of Connectors"))
+            self._connectors = connectors
 
-                for conn in connectors:
-                    if not isinstance(conn, Connector):
-                        Logger.error(Exception("Protocol", "__init__", "The list of connector must contain instances of Connectors"))
-            
-                self._connectors = connectors
-
-        if not interfaces is None:
-            input_specs = { }
-            for k in interfaces:
-                input_specs[k] = interfaces[k]._resource_type
-
-            self.__set_input_specs(input_specs)
-            self._interfaces = interfaces
-
-        if not outerfaces is None:
-            output_specs = { }
-            for k in outerfaces:
-                output_specs[k] = outerfaces[k]._resource_type
-
-            self.__set_output_specs(output_specs)
-            self._outerfaces = outerfaces
+            # interfaces
+            self.__set_interfaces(interfaces)
+            self.__set_outerfaces(outerfaces)
 
         self.__set_pre_start_event()
         self.__set_on_end_event()
@@ -1402,6 +1457,10 @@ class Protocol(Process, SystemTrackable):
 
     # -- C --
 
+    def __create_hash(self):
+        graph = self.dumps()
+        return self._unique_hash + ":" + self._hash_encode(graph)
+
     @classmethod
     def create_table(cls, *args, **kwargs):
         if not Experiment.table_exists():
@@ -1412,7 +1471,69 @@ class Protocol(Process, SystemTrackable):
 
         super().create_table(*args, **kwargs)
 
+    # -- D -- 
+
+    def dumps( self, as_dict = False, prettify = False ) -> str:
+        """ 
+        Returns the protocol graph
+        """
+
+        graph = dict(
+            name = self.name,
+            nodes = {},
+            links = [],
+            interfaces = {},
+            outerfaces = {},
+        )
+
+        for conn in self._connectors:
+            link = conn.to_json()
+            is_left_node_found = False
+            is_right_node_found = False
+            for k in self._processes:
+                if link["from"]["node"] is self._processes[k]:
+                    link["from"]["node"] = k
+                    is_left_node_found = True
+
+                if link["to"]["node"] is self._processes[k]:
+                    link["to"]["node"] = k
+                    is_right_node_found = True
+                
+                if is_left_node_found and is_right_node_found:
+                    graph['links'].append(link)
+                    break
+
+        for k in self._processes:
+            graph["nodes"][k] = self._processes[k].full_classname()
+
+        for k in self._interfaces:
+            port = self._interfaces[k]
+            proc = port.parent.parent
+            for name in self._processes:
+                if proc is self._processes[name]:
+                    graph['interfaces'][k] = {"proc": name, "port": port.name}
+                    break
+        
+        for k in self._outerfaces:
+            port = self._outerfaces[k]
+            proc = port.parent.parent
+            for name in self._processes:
+                if proc is self._processes[name]:
+                    graph['outerfaces'][k] = {"proc": name, "port": port.name}
+                    break
+        
+        if as_dict:
+            return graph
+        else:
+            if prettify:
+                return json.dumps(graph, indent=4)
+            else:
+                return json.dumps(graph)
+
     # -- G --
+
+    def get_active_experiment(self):
+        return self.get_active_job().experiment
 
     def get_process(self, name: str) -> Process:
         """ 
@@ -1459,6 +1580,70 @@ class Protocol(Process, SystemTrackable):
 
         return False
 
+    # -- L --
+
+    def __loads( self, graph: (str, dict) ) -> 'Protocol':
+        """ 
+        Construct a Protocol instance using a setting dump.
+
+        :return: The protocol
+        :rtype: Protocol
+        """
+
+        if isinstance(graph, str):
+            graph = json.loads(graph)
+
+        processes = {}
+        connectors = []
+        interfaces = {}
+        outerfaces = {}
+
+        self.name = graph.get("name", "")
+
+        for k in graph["nodes"]:
+            type_str = graph["nodes"][k]
+            try:
+                t = Controller.get_model_type(type_str)
+            except Exception as err:
+                raise Exception(f"The process {type_str} is not defined. The class module is probably not imported. Error: {err}")
+            
+            processes[k] = t()
+
+        for link in graph["links"]:
+            proc_name = link["from"]["node"]
+            lhs_port_name = link["from"]["port"]
+            lhs_proc = processes[proc_name]
+
+            proc_name = link["to"]["node"]
+            rhs_port_name = link["to"]["port"]
+            rhs_proc = processes[proc_name]
+
+            connector = (lhs_proc>>lhs_port_name | rhs_proc<<rhs_port_name)
+            connectors.append(connector)
+
+        for k in graph["interfaces"]:
+            proc_name = graph["interfaces"][k]["proc"]
+            port_name = graph["interfaces"][k]["port"]
+            proc = processes[proc_name]
+            port = proc.input.ports[port_name]
+            interfaces[k] = port
+
+        for k in graph["outerfaces"]:
+            proc_name = graph["outerfaces"][k]["proc"]
+            port_name = graph["outerfaces"][k]["port"]
+            proc = processes[proc_name]
+            port = proc.input.ports[port_name]
+            outerfaces[k] = port
+
+        self._processes = processes
+        self._connectors = connectors
+
+        self.__set_interfaces(interfaces)
+        self.__set_outerfaces(outerfaces)
+
+        self.data["graph"] = graph
+        self.__create_hash()
+
     # -- R --
     
     async def run(self):
@@ -1466,6 +1651,10 @@ class Protocol(Process, SystemTrackable):
         Runs the process and save its state in the database.
         Override mother class method.
         """
+
+        if self.get_active_experiment() is None:
+            raise Exception("No experiment defined for the active job of the protocol")
+
         self._run_before_task()
 
         # self.task()
@@ -1494,6 +1683,10 @@ class Protocol(Process, SystemTrackable):
         super()._run_after_task()
 
     # -- S --
+
+    def set_active_experiment(self, experiment: Experiment):
+        job = self.get_active_job()
+        job.set_experiment(experiment)
 
     def _set_inputs(self, *args, **kwargs):
         for k in self._interfaces:
@@ -1536,110 +1729,24 @@ class Protocol(Process, SystemTrackable):
         for k in output_specs:
             output_specs[k] = output_specs[k].__name__
         self.data['output_specs'] = output_specs
-    
-    def dumps_settings( self ) -> str:
-        """ 
-        Returns protocol settings
-        """
-        settings = dict(
-            name = self.name,
-            nodes = {},
-            links = [],
-            interfaces = {},
-            outerfaces = {},
-        )
 
-        for conn in self._connectors:
-            link = conn.to_json()
-            is_left_node_found = False
-            is_right_node_found = False
-            for k in self._processes:
-                if link["from"]["node"] is self._processes[k]:
-                    link["from"]["node"] = k
-                    is_left_node_found = True
+    def __set_interfaces(self, interfaces):
+        if not interfaces is None:
+            input_specs = { }
+            for k in interfaces:
+                input_specs[k] = interfaces[k]._resource_type
 
-                if link["to"]["node"] is self._processes[k]:
-                    link["to"]["node"] = k
-                    is_right_node_found = True
-                
-                if is_left_node_found and is_right_node_found:
-                    settings['links'].append(link)
-                    break
+            self.__set_input_specs(input_specs)
+            self._interfaces = interfaces
 
-        for k in self._processes:
-            settings["nodes"][k] = self._processes[k].full_classname()
+    def __set_outerfaces(self, outerfaces):
+        if not outerfaces is None:
+            output_specs = { }
+            for k in outerfaces:
+                output_specs[k] = outerfaces[k]._resource_type
 
-        for k in self._interfaces:
-            port = self._interfaces[k]
-            proc = port.parent.parent
-            for name in self._processes:
-                if proc is self._processes[name]:
-                    settings['interfaces'][k] = {"proc": name, "port": port.name}
-                    break
-        
-        for k in self._outerfaces:
-            port = self._outerfaces[k]
-            proc = port.parent.parent
-            for name in self._processes:
-                if proc is self._processes[name]:
-                    settings['outerfaces'][k] = {"proc": name, "port": port.name}
-                    break
-
-        import json
-        return json.dumps(settings)
-
-    @staticmethod
-    def from_settings( settings ) -> 'Protocol':
-        """ 
-        Construct a Protocol instance using a setting dump.
-
-        :return: The protocol
-        :rtype: Protocol
-        """
-
-        processes = {}
-        connectors = []
-        interfaces = {}
-        outerfaces = {}
-
-        for k in settings["nodes"]:
-            type_str = settings["nodes"][k]
-            t = Controller.get_model_type(type_str)
-            processes[k] = t()
-
-        for link in settings["links"]:
-            proc_name = link["from"]["node"]
-            lhs_port_name = link["from"]["port"]
-            lhs_proc = processes[proc_name]
-
-            proc_name = link["to"]["node"]
-            rhs_port_name = link["to"]["port"]
-            rhs_proc = processes[proc_name]
-
-            connector = (lhs_proc>>lhs_port_name | rhs_proc<<rhs_port_name)
-            connectors.append(connector)
-
-        for k in settings["interfaces"]:
-            proc_name = settings["interfaces"][k]["proc"]
-            port_name = settings["interfaces"][k]["port"]
-            proc = processes[proc_name]
-            port = proc.input.ports[port_name]
-            interfaces[k] =  port
-
-        for k in settings["outerfaces"]:
-            proc_name = settings["outerfaces"][k]["proc"]
-            port_name = settings["outerfaces"][k]["port"]
-            proc = processes[proc_name]
-            port = proc.input.ports[port_name]
-            outerfaces[k] =  port
-
-        return Protocol(
-            name = settings["name"],
-            processes = processes,
-            connectors = connectors,
-            interfaces = interfaces,
-            outerfaces = outerfaces
-        )
+            self.__set_output_specs(output_specs)
+            self._outerfaces = outerfaces
 
 # ####################################################################
 #
@@ -1657,6 +1764,28 @@ class Resource(Viewable, SystemTrackable):
 
     job = ForeignKeyField(Job, null=True, backref='resources')
     _table_name = 'resource'
+
+    # -- D --
+
+    def delete(self):
+        if self.is_deleted:
+            return True
+
+        with DbManager.db.atomic() as transaction:
+            try:
+                tf = self.job.delete and super().delete()
+                if not tf:
+                    transaction.rollback()
+                    return False
+                else:
+                    return True
+            except:
+                transaction.rollback()
+                return False
+
+        
+
+    # -- S --
 
     def _set_job(self, job: 'Job'):
         """ 
@@ -1772,11 +1901,11 @@ class ViewModel(Model):
     _model = None
     _table_name = 'vmodel'
 
-    def __init__(self, model_instance: Model = None, *args, **kwargs):
+    def __init__(self, *args, model: Model = None, **kwargs):
         super().__init__(*args, **kwargs)
         
-        if isinstance(model_instance, Model):
-            self._model = model_instance
+        if isinstance(model, Model):
+            self._model = model
             self._model.register_vmodel_specs( [type(self)] )
 
         if not self.id is None:
@@ -1841,7 +1970,7 @@ class ViewModel(Model):
     def model(self):
         if not self._model is None:
             return self._model
-        
+
         model_t = Controller.get_model_type(self.model_type)
         model = model_t.get(model_t.id == self.model_id)
         self._model = model.cast()
@@ -1854,19 +1983,19 @@ class ViewModel(Model):
         for model_t in cls.model_specs:
             model_t.register_vmodel_specs( [cls] )
 
-    def render(self, params: dict = None, request: 'Request' = None) -> (str, 'Response'):
+    def render(self, data: dict = None) -> str:
         """
         Renders the view of the view model.
 
-        :param params: Rendering parameters
-        :type params: dict
+        :param data: Rendering parameters
+        :type data: dict
         :return: The rendering
         :rtype: str
         """
-        if isinstance(params, dict):
-            self.set_data(params)
-
-        return self.template.render(self, request = request)
+        if isinstance(data, dict):
+            self.set_data(data)
+  
+        return self.template.render(self)
     
     # -- S --
 
@@ -1894,7 +2023,7 @@ class ViewModel(Model):
     
     def save(self, *args, **kwargs):
         """
-        Saves the view model in database
+        Saves the view model
         """
         if self._model is None:
             Logger.error(Exception(self.classname(),"save","The ViewModel has no model"))
@@ -1913,8 +2042,6 @@ class ViewModel(Model):
                 except Exception as err:
                     transaction.rollback()
                     Logger.error(Exception("ViewModel", "save", f"Error message: {err}"))
-
-    # -- U --
 
 # ####################################################################
 #

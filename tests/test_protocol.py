@@ -104,12 +104,12 @@ class TestProtocol(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        # Config.drop_table()
-        # Process.drop_table()
-        # Protocol.drop_table()
-        # Experiment.drop_table()
-        # Job.drop_table()
-        # Person.drop_table()
+        Config.drop_table()
+        Process.drop_table()
+        Protocol.drop_table()
+        Experiment.drop_table()
+        Job.drop_table()
+        Person.drop_table()
         pass
     
     def test_protocol(self):
@@ -121,6 +121,8 @@ class TestProtocol(unittest.TestCase):
         p5 = Eat()
         p_wait = Wait()
         
+        e = Experiment()
+
         # create a chain
         proto = Protocol(
             processes = {
@@ -143,6 +145,8 @@ class TestProtocol(unittest.TestCase):
             interfaces = {},
             outerfaces = {}
         )
+        
+        proto.set_active_experiment(Experiment())
 
         async def _run():
             await proto.run()
@@ -151,8 +155,7 @@ class TestProtocol(unittest.TestCase):
             await asyncio.sleep(1)
 
         def _check_exp():
-            from gws.session import Session
-            e = Session.get_experiment()
+            e = proto.experiment
             self.assertEqual(e.jobs.count(), 8)
             self.assertEqual(e.is_finished, False)
             self.assertEqual(e.is_running, False)
@@ -190,6 +193,8 @@ class TestProtocol(unittest.TestCase):
             outerfaces = { 'person' : p2.out_port('person') }
         )
 
+        proto.set_active_experiment(Experiment())
+        
         p0>>'person'        | proto<<'person'
         proto>>'person'     | p5<<'person'
 
@@ -198,10 +203,10 @@ class TestProtocol(unittest.TestCase):
         p2 = proto.get_process("p2")
         proto.is_outerfaced_with(p2)
 
-        with open(os.path.join(testdata_dir, "protocol_settings.json"), "r") as f:
+        with open(os.path.join(testdata_dir, "protocol_graph.json"), "r") as f:
             import json
             s1 = json.load(f)
-            s2 = json.loads(proto.dumps_settings())
+            s2 = json.loads(proto.dumps())
             self.assertEqual(s1,s2)
 
         async def _run():
@@ -212,16 +217,13 @@ class TestProtocol(unittest.TestCase):
 
         asyncio.run( _run() )
 
-    def test_setting_load(self):
-        with open(os.path.join(testdata_dir, "protocol_settings.json"), "r") as f:
+    def test_graph_load(self):
+        with open(os.path.join(testdata_dir, "protocol_graph.json"), "r") as f:
             import json
             s1 = json.load(f)
+            proto = Protocol(graph=s1)
 
-            proto = Protocol.from_settings(s1)
-            
-            import json
-            s2 = json.loads(proto.dumps_settings())
-
+            s2 = json.loads(proto.dumps())
             self.assertEqual(s1,s2)
 
         p1 = proto.get_process("p1")
@@ -236,6 +238,7 @@ class TestProtocol(unittest.TestCase):
         p0>>'person'        | proto<<'person'
         proto>>'person'     | p5<<'person'
 
+        proto.set_active_experiment(Experiment())
         async def _run():
             await p0.run()
 

@@ -8,10 +8,15 @@ from gws.settings import Settings
 from gws.logger import Logger
 from gws.model import Report
 from gws.lab import Lab
-from gws.model import Experiment, User
+from gws.model import Experiment, User, Protocol
 
 class Central:
     
+    api = {
+        "put-status"   : "/external-labs/lab-instance/status/{status}",
+        "post-report"   : "/external-labs/{experiment_id}/report"
+    }
+
     # -- A --
 
     @classmethod
@@ -27,17 +32,70 @@ class Central:
     # -- C --
 
     @classmethod
-    def create_user(cls, data):
-        user = User.get_by_uri(data["uri"])
+    def create_user(cls, data: dict):
+        user = User.get_by_uri(data['uri'])
         if user is None:
-            user = User(uri=data["uri"],token=data["token"])
+            user = User(uri=data['uri'], token=data['token'])
             return user.save()
         else:
             raise Exception("The user already exists")
     
     @classmethod
+    def create_experiment(cls, data):
+        exp = Experiment.get_by_uri(data["uri"])
+        if exp is None:
+            
+            if 'protocol' in data:
+                import json
+                proto_dict = json.loads(data["protocol"])
+                proto = Protocol.get_by_uri(proto_dict["uri"])
+                if proto is None:
+                
+                    graph = proto_dict.get("graph", None)
+                    if graph is None:
+                        raise Exception(f"No protocol graph provided")
+                    else:
+                        try:
+                            protocol = Protocol(graph=graph)
+                            protocol.save()
+                        except:
+                            raise Exception(f"Protocol graph settings is not valid")
+
+            else:
+                raise Exception(f"Protocol not defined")
+                
+            exp = Experiment(uri = data["uri"], protocol_id=protocol.id)
+            return exp.save()
+        else:
+            raise Exception(f"The experiment already exists")
+
+    @classmethod
+    def create_url(cls, action, **kwargs):
+        settings = Settings.retrieve()
+        url = settings.data["central"]["api_url"] . cls.api[action]
+
+        for k in kwargs:
+            url = url.replace("{"+k+"}", kwargs[k])
+
+        return url
+
+    @classmethod
     def close_experiment(cls, uri):
-        pass
+        exp = Experiment.get_by_uri(uri)
+        if exp is None:
+            raise Exception("Experiment not found")
+        else:
+            exp.is_in_process = False
+            return exp.save()
+
+    @classmethod
+    def delete_experiment(cls, uri):
+        exp = Experiment.get_by_uri(uri)
+        if exp is None:
+            raise Exception("Experiment not found")
+        else:
+            exp.delete = True
+            return exp.save()
 
     # -- D --
 
@@ -48,86 +106,59 @@ class Central:
             raise Exception("User not found")
         else:
             user.is_active = False
-            user.save()
-            return True
+            return user.save()
 
     # -- G --
 
     @classmethod
-    def get_api_url(cls, action):
-        settings = Settings.retrieve()
-        url = settings.data["central"]["api_url"]
-        url = url \
-                .replace("{resource}", "lab") \
-                .replace("{uri}", Lab.get_uri()) \
-                .replace("{action}",action)
-
-        return url
-
-    # -- O -- 
-
-    # @classmethod
-    # def open_project(cls, data):
-    #     from gws.model import Project
-    #     uri = data["uri"]
-    #     if Project.get_by_uri(uri) is None:
-    #         p = Project(
-    #             uri=uri,
-    #             name=data["name"], 
-    #             organization=data["organization"], 
-    #         )
-    #         return p.save()
-    #     else:
-    #         raise Exception("The project already exists")
-    
-    @classmethod
-    def open_experiment(cls, data):
-        user = User.get_by_uri(data["user_uri"])
+    def get_user_status(cls, uri):
+        user = User.get_by_uri(uri)
         if user is None:
-            raise Exception(f"User not found")
-
-        exp = Experiment.get_by_uri(data["uri"])
-        if exp is None:
-            e = Experiment(uri = data["uri"])
-            return e.save()
+            raise Exception("User not found")
         else:
-            return True
+            return {
+                "uri": user.uri,
+                "is_admin": user.is_admin,
+                "is_active": user.is_active,
+                "is_locked": user.is_locked
+            }
 
     # -- S --
 
     @classmethod
-    def send(cls, url, message={}):
-        if Lab.get_uri() == "":
+    def send(cls, url, method='GET', data={}):
+        is_online = Lab.get_uri() == ""
+        if not is_online:
             return False
-    
-        data = {
-            "lab" : Lab.get_status(),
-            "message": message
-        }
+
+        header = {"GWS-Lab-Token": Lab.get_token()}
         try:
-            response = requests.post(url, data=data)
+            if method.upper() == "POST":
+                response = requests.post(url, data=data, headers=header)
+            elif method.upper() == "PUT":
+                response = requests.put(url, data=data, headers=header)
+            elif method.upper() == "DELETE":
+                response = requests.delete(url, headers=header)
+            else:
+                response = requests.get(url, headers=header)
+
             return response.status_code == 200
         except:
             return False
 
     @classmethod
-    def send_status(cls, data={}):
-        url = cls.get_api_url("update-status")
-        cls.send(url)
+    def put_status(cls, is_running: bool = True):
+        if is_running:
+            status = "running"
+        else:
+            status = "stopped"
+
+        url = cls.create_url("put-status", status=status)
+        cls.send(url, method="PUT")
 
     @classmethod
-    def send_report(cls, report):
-        url = cls.get_api_url("add-report")
-        cls.send(url, message={"report_uri": report.uri})
+    def post_report(cls, report):
+        url = cls.create_url("post-report", experiment_id=report.experiment.id)
+        cls.send(url, method="POST", data={"report_uri": report.uri})
     
     # -- T --
-
-    @classmethod
-    def tell_is_running(cls):
-        url = cls.get_api_url("update-status")
-        return cls.send(url, message={"status": "on"})
-            
-    @classmethod
-    def tell_is_stopped(cls):
-        url = cls.get_api_url("update-status")
-        return cls.send(url, message={"status": "off"})

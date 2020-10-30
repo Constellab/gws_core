@@ -1,7 +1,7 @@
 
 import asyncio
 import unittest
-from gws.model import Job, Config, Process, Resource, Model, ViewModel
+from gws.model import Job, Config, Process, Resource, Model, ViewModel, Experiment
 from gws.controller import Controller
 
 class Person(Resource):
@@ -86,6 +86,10 @@ class TestProcess(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
+        Job.drop_table()
+        Config.drop_table()
+        Create.drop_table()
+        Person.drop_table()
         pass
 
     @classmethod

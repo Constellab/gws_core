@@ -7,8 +7,7 @@ import asyncio
 import json
 import os
 
-from starlette.templating import Jinja2Templates
-from starlette.responses import Response, HTMLResponse, JSONResponse, PlainTextResponse
+from fastapi.templating import Jinja2Templates
 from jinja2 import Template
 
 from gws.base import Base
@@ -58,14 +57,12 @@ class ViewTemplate(Base):
         """
         return self.type == 'application/json'
 
-    def render(self, vmodel: 'ViewModel' = None, request = None) -> str: 
+    def render(self, vmodel: 'ViewModel' = None) -> str: 
         """
         Returns the rendering of the view template.
 
         :param vmodel: The view model to render
         :type vmodel: ViewModel
-        :param request: The HTTP request
-        :type request: starlette.requests.Request 
         :return: The rendering string
         :rtype: str
         """
@@ -75,7 +72,6 @@ class ViewTemplate(Base):
             "vdata": vmodel.data,
             "mdata": vmodel.model.data,
             "settings": Settings.retrieve(),
-            "request": request
         })
 
     @staticmethod
@@ -213,16 +209,14 @@ class ViewJinja2TemplateFiles(ViewTemplate):
         self.directory = directory
         self.file_path = file_path
 
-    def render(self, vmodel: 'ViewModel' = None, request = None) -> Response: 
+    def render(self, vmodel: 'ViewModel' = None) -> str: 
         """
         Returns the rendering of the view template.
 
         :param vmodel: The view model to render
         :type vmodel: ViewModel
-        :param request: The HTTP request
-        :type request: starlette.requests.Response 
-        :return: The Starlette response
-        :rtype: starlette.requests.Response 
+        :return: The response
+        :rtype: str
         """
 
         templates = Jinja2Templates(directory=self.directory)
@@ -231,6 +225,5 @@ class ViewJinja2TemplateFiles(ViewTemplate):
             "vmodel": vmodel,
             "mdata" : vmodel.data,
             "vdata" : vmodel.model.data,
-            "request": request, 
             "settings": Settings.retrieve()
         })

@@ -54,7 +54,7 @@ class TestHTMLView(unittest.TestCase):
     
     def test_view(self):
         elon = Person()
-        vmodel = HTMLPersonViewModel(elon)
+        vmodel = HTMLPersonViewModel(model=elon)
         self.assertEqual(vmodel.data, {})
 
         elon.set_name('Elon Musk')
@@ -94,7 +94,7 @@ class TestJSONView(unittest.TestCase):
     
     def test_view(self):
         elon = Person()
-        vmodel = JSONPersonViewModel(elon)
+        vmodel = JSONPersonViewModel(model=elon)
         elon.set_name('Elon Musk')
 
         params = {"job" : "engineer"}
@@ -135,7 +135,7 @@ class TestFunnyView(unittest.TestCase):
     
     def test_view_file(self):
         elon = Person()
-        vmodel = FunnyViewModel(elon)
+        vmodel = FunnyViewModel(model=elon)
         elon.set_name('Elon')
 
         text = vmodel.render({})
@@ -151,7 +151,7 @@ class TestFunnyView(unittest.TestCase):
 
     def test_default_view_file(self):
         elon = Person()
-        vmodel = HTMLViewModel(elon)
+        vmodel = HTMLViewModel(model=elon)
         elon.set_name('Elon Musk')
         
         vmodel.save()

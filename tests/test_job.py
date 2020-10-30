@@ -2,7 +2,7 @@
 
 import asyncio
 import unittest
-from gws.model import Job, Process, Config
+from gws.model import Job, Process, Config, Experiment
 from gws.controller import Controller
 
 class TestJob(unittest.TestCase):
@@ -19,8 +19,10 @@ class TestJob(unittest.TestCase):
         pass
 
     def test_experiment(self):
+        e = Experiment()
         proc = Process()
         proc.save()
+
         e = Job(process=proc, config=Config())
         is_saved = e.save()
 

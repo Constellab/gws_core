@@ -14,31 +14,6 @@ import re
 from gws.settings import Settings
 from gws.logger import Logger
 
-# def _ip_type(IP):
-#     """
-#     :type IP: str
-#     :rtype: str
-#     """
-#     def is_ip_v4(s):
-#         try: return str(int(s)) == s and 0 <= int(s) <= 255
-#         except: return False
-#     def is_ip_v6(s):
-#         if len(s) > 4:
-#             return False
-
-#         try : 
-#             return int(s, 16) >= 0 and s[0] != '-'
-#         except:
-#             return False
-    
-#     if IP.count(".") == 3 and all(is_ip_v4(i) for i in IP.split(".")):
-#         return "IPv4"
-
-#     if IP.count(":") == 7 and all(is_ip_v6(i) for i in IP.split(":")):
-#         return "IPv6"
-
-#     return "Neither"
-
 def _run(   ctx=None, uri=False, token=False, test=False, db=False, \
             cli=False, runserver=False, ip="0.0.0.0", port="3000", docgen=False, \
             force=False, show=False, jlab=False, demo=False):
@@ -58,49 +33,54 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, \
         Logger.error(Exception("manage", "Cannot save the settings in the database"))
  
     if runserver:
-        # ips = ip.split(",")
-        # ports = port.split(",")
-        # ip_type = _ip_type(ips[0])
-        # is_local = (ip_type == "IPv4" or ip_type == "IPv6" or ip == "localhost")
-        # if is_local:
-        #     jlab_ip = ips[0]
-        #     jlab_port = "8888"
-        # else:
-        #     jlab_ip = "jlab." + ips[0]
-        #     jlab_port = ports[0]
-
-        # settings.set_data("app_host", ips[0])
-        # settings.set_data("app_port", ports[0])
-        # settings.set_data("jlab_host", jlab_ip)
-        # settings.set_data("jlab_port", jlab_port)
-
         settings.set_data("app_host", ip)
         settings.set_data("app_port", port)
 
         if not settings.save():
             Logger.error(Exception("manage", "Cannot save the settings in the database"))
 
-        # gathers all App information
-        dep_module_names = settings.get_dependency_names()    
-        apps_t = tuple()
-        for name in dep_module_names:
+        # start app
+        from gws.app import App
+        from fastapi import FastAPI
+
+        app = App()
+        brick_names = settings.get_dependency_names()   
+        for name in brick_names:
+            if name == "gws":
+                continue
+
             try:
                 module = importlib.import_module(name+".app")
-                t = getattr(module, "App", None)
-                if (not t is None) and (not t in apps_t):
-                    apps_t = apps_t + (t,)
+                subapp = getattr(module, "app", None)
+                if isinstance(subapp, FastAPI):
+                    Logger.info(f"Loading {name} app")
+                    app.app.mount("/{name}", subapp)
             except Exception as err:
                 Logger.error(Exception(f"Cannot run server. It seems that your App module '{name}' is not well implemented.\n Error message: {err}"))
         
-        for app_t in apps_t:
-            app_t.init()
- 
-        # creates and initialize the final App
-        current_app_t = type("App", apps_t, {})
-
-        # instantiates and starts the final App
-        app = current_app_t()
         app.start()
+
+        # # gathers all App information
+        # brick_names = settings.get_dependency_names()    
+        # apps_t = tuple()
+        # for name in brick_names:
+        #     try:
+        #         module = importlib.import_module(name+".app")
+        #         t = getattr(module, "App", None)
+        #         if (not t is None) and (not t in apps_t):
+        #             apps_t = apps_t + (t,)
+        #     except Exception as err:
+        #         Logger.error(Exception(f"Cannot run server. It seems that your App module '{name}' is not well implemented.\n Error message: {err}"))
+        
+        # for app_t in apps_t:
+        #     app_t.init()
+ 
+        # # creates and initialize the final App
+        # current_app_t = type("App", apps_t, {})
+
+        # # instantiates and starts the final App
+        # app = current_app_t()
+        # app.start()
         
     elif test:
         if test == "*":

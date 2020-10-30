@@ -18,6 +18,11 @@ class Lab:
         return settings.name
 
     @classmethod
+    def get_token(cls):
+        settings = Settings.retrieve()
+        return settings.get_data("token")
+
+    @classmethod
     def get_status(cls):
         settings = Settings.retrieve()
         return {

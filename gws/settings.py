@@ -119,8 +119,7 @@ class Settings(PWModel):
 
     def get_data(self, k:str) -> str:
         if k == "session_key":
-            from starlette.datastructures import Secret
-            return Secret(self.data[k])
+            return self.data[k]
         else:
             return self.data.get(k, None)
 
