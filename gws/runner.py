@@ -58,6 +58,7 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, \
             except Exception as err:
                 Logger.error(Exception(f"Cannot run server. It seems that your App module '{name}' is not well implemented.\n Error message: {err}"))
         
+        app.init()
         app.start()
 
         # # gathers all App information

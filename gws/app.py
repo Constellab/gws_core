@@ -279,6 +279,7 @@ class App(BaseApp):
 
         # static dirs
         statics = _settings.get_static_dirs()
+        print(statics)
         for k in statics:
             app.mount(k, StaticFiles(directory=statics[k]), name=k)
 
