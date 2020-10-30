@@ -74,7 +74,7 @@ async def display_html_brick_page(request: Request, brick, page: Optional[str] =
     if only_inner_html == "true":
         #run brick endpoints
         brick_app = importlib.import_module(f"{brick}.app")
-        async_func = getattr(brick_app, page.lower(), None)
+        async_func = getattr(brick_app, page.lower() + "_page", None)
         if inspect.iscoroutinefunction(async_func):
             try:
                 response = await async_func(request)
@@ -279,6 +279,7 @@ class App(BaseApp):
 
         # static dirs
         statics = _settings.get_static_dirs()
+        print(statics)
         for k in statics:
             app.mount(k, StaticFiles(directory=statics[k]), name=k)
 

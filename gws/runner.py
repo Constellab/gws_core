@@ -41,47 +41,9 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, \
 
         # start app
         from gws.app import App
-        from fastapi import FastAPI
-
         app = App()
-        brick_names = settings.get_dependency_names()   
-        for name in brick_names:
-            if name == "gws":
-                continue
-
-            try:
-                module = importlib.import_module(name+".app")
-                subapp = getattr(module, "app", None)
-                if isinstance(subapp, FastAPI):
-                    Logger.info(f"Loading {name} app")
-                    app.app.mount("/{name}", subapp)
-            except Exception as err:
-                Logger.error(Exception(f"Cannot run server. It seems that your App module '{name}' is not well implemented.\n Error message: {err}"))
-        
         app.init()
         app.start()
-
-        # # gathers all App information
-        # brick_names = settings.get_dependency_names()    
-        # apps_t = tuple()
-        # for name in brick_names:
-        #     try:
-        #         module = importlib.import_module(name+".app")
-        #         t = getattr(module, "App", None)
-        #         if (not t is None) and (not t in apps_t):
-        #             apps_t = apps_t + (t,)
-        #     except Exception as err:
-        #         Logger.error(Exception(f"Cannot run server. It seems that your App module '{name}' is not well implemented.\n Error message: {err}"))
-        
-        # for app_t in apps_t:
-        #     app_t.init()
- 
-        # # creates and initialize the final App
-        # current_app_t = type("App", apps_t, {})
-
-        # # instantiates and starts the final App
-        # app = current_app_t()
-        # app.start()
         
     elif test:
         if test == "*":
