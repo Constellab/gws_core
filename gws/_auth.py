@@ -22,11 +22,12 @@ SECRET_KEY = settings.data.get("secret_key")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="handshake")
 
 class _User(BaseModel):
     uri: str
     token: str
+    is_active: bool
 
 class _Token(BaseModel):
     access_token: str
@@ -37,11 +38,11 @@ class _TokenData(BaseModel):
 
 def get_user(uri: str):
     db_user = User.get(User.uri == uri)
-    return _User(uri=db_user.uri, token=db_user.token)
+    return _User(uri=db_user.uri, token=db_user.token, is_active=db_user.is_active)
 
 def authenticate_user(uri: str, token: str):
     db_user = User.authenticate(uri, token)
-    return _User(uri=db_user.uri, token=db_user.token)
+    return _User(uri=db_user.uri, token=db_user.token, is_active=db_user.is_active)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
@@ -71,6 +72,11 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     if user is None:
         raise credentials_exception
     return user
+
+async def get_current_active_user(current_user: _User = Depends(get_current_user)):
+    if not current_user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
 
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
     user = authenticate_user(form_data.username, form_data.password)

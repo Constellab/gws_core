@@ -1,11 +1,11 @@
 {
     "name": "proto",
     "nodes": {
-        "p1": "tests.test_protocol.Move",
-        "p2": "tests.test_protocol.Eat",
-        "p3": "tests.test_protocol.Move",
-        "p4": "tests.test_protocol.Move",
-        "p_wait": "tests.test_protocol.Wait"
+        "p1": "gws.hello.Move",
+        "p2": "gws.hello.Eat",
+        "p3": "gws.hello.Move",
+        "p4": "gws.hello.Move",
+        "p_wait": "gws.hello.Wait"
     },
     "links": [
         {

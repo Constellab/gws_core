@@ -42,9 +42,9 @@ app = FastAPI()
 
 from gws._auth import _Token
 from gws._auth import    login_for_access_token as auth_login_for_access_token, \
-                        get_current_user as auth_get_current_user
+                        get_current_active_user as auth_get_current_active_user
 
-@app.post("/login", response_model=_Token)
+@app.post("/handshake", response_model=_Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
     return await auth_login_for_access_token(form_data)
 
@@ -54,7 +54,7 @@ class _User(BaseModel):
     token: str
 
 @app.get("/me/", response_model=_User)
-async def read_users_me(current_user: _User = Depends(auth_get_current_user)):
+async def read_users_me(current_user: _User = Depends(auth_get_current_active_user)):
     return current_user
 
 ####################################################################################
