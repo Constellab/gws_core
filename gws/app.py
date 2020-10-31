@@ -40,7 +40,6 @@ app = FastAPI()
 #
 ####################################################################################
 
-
 from gws._auth import _Token
 from gws._auth import    login_for_access_token as auth_login_for_access_token, \
                         get_current_user as auth_get_current_user
