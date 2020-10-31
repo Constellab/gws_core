@@ -1054,7 +1054,7 @@ class Process(Viewable, SystemTrackable):
 # ####################################################################
 
 class User(Model):
-
+    
     token = CharField()
     is_admin = BooleanField(default=False, index=True)
     is_active = BooleanField(default=True, index=True)
@@ -1082,7 +1082,7 @@ class User(Model):
         return super().save(*arg, **kwargs)
 
     @classmethod
-    def verify_user_token(cls, uri: str, token: str) -> ('User', bool,):
+    def authenticate(cls, uri: str, token: str) -> ('User', bool,):
         """ 
         Verify the uri and token and returns the corresponding user 
         :param uri: The user uri

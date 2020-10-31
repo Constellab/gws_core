@@ -213,7 +213,6 @@ def parse_settings(brick_cwd: str = None):
     }
 
     settings = _update_json(default_settings, _parse_settings(brick_cwd=brick_cwd, brick_name=brick_name, brick_settings_file_path=brick_settings_file_path))
-
     if not os.path.exists(settings.get("db_dir")):
         os.mkdir(settings.get("db_dir"))
 

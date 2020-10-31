@@ -36,13 +36,14 @@ class Settings(PWModel):
 
     @classmethod
     def init( cls, settings_json: dict = None ):
-        db = SqliteDatabase( os.path.join(cls._data["db_dir"], "db_settings.sqlite3") )
-        database_proxy.initialize(db)
-        if not cls.table_exists():
-            cls.create_table()
-        
         for k in settings_json:
             cls._data[k] = settings_json[k]
+
+        db = SqliteDatabase( os.path.join(cls._data["db_dir"], "db_settings.sqlite3") )
+        database_proxy.initialize(db)
+
+        if not cls.table_exists():
+            cls.create_table()
 
         try:
             settings = Settings.get_by_id(1)
@@ -54,16 +55,16 @@ class Settings(PWModel):
         except:
             settings = Settings()
 
-            #session_key
+            import jwt
+            from secrets import token_bytes
             from base64 import b64encode
-            random_bytes = os.urandom(64)
-            session_key = b64encode(random_bytes).decode('utf-8')
-            settings.set_data("session_key", session_key)
+
+            #secret_key
+            secret_key = b64encode(token_bytes(32)).decode()
+            settings.set_data("secret_key", secret_key)
 
             #random token by default (security)
-            from base64 import b64encode
-            random_bytes = os.urandom(64)
-            token = b64encode(random_bytes).decode('utf-8')
+            token = b64encode(token_bytes(32)).decode()
             settings.set_data("token", token)
 
             #no uri by default
