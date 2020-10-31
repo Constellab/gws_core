@@ -131,6 +131,7 @@ window.addEventListener("load", function () {
     const targetNode = document.body
     const config = { childList: true, subtree: true };
     var delayedElements = []
+    var delayedSripts = []
 
     createCurrentElements()
 
@@ -150,47 +151,45 @@ window.addEventListener("load", function () {
         if(loadDelayed == null){
             loadDelayed = false
         }
-        var isLazyScript = typeof element.tagName == "string" && element.tagName.toLowerCase() == "script"
-        if (isLazyScript) {
-            if (element.hasAttribute("lazy")) {
-                eval(element.innerText)
-            }
-        } else {
-            if (GView.isGView(element)) {       
-                var data = {}
-                if(element.hasAttribute("json")){
-                    data = JSON.parse(element.innerText)
-                } else{
 
-                    //read HTML field
-                    for(var i = 0; i<element.childNodes.length; i++){
-                        child = element.childNodes[i]
-                        if (typeof child.tagName == "string" && child.tagName.toLowerCase() == "div"){
+        if (GView.isGView(element)) {       
+            var data = {}
+            if(element.hasAttribute("json")){
+                data = JSON.parse(element.innerText)
+            } else{
+                //read HTML field
+                for(var i = 0; i<element.childNodes.length; i++){
+                    child = element.childNodes[i]
+                    if (typeof child.tagName == "string"){
+                        if (child.tagName.toLowerCase() == "div"){
                             var attr = child.attributes[0].name
                             data[attr] = child.innerHTML
                             child.innerHTML = ""    //remove template HTML content to prevent id collisions
+                        } else if(child.tagName.toLowerCase() == "script"){
+                            delayedSripts.push(child.innerHTML)
                         }
-                    }
-                    
-                    //read TEXT field
-                    for(i in element.dataset){
-                        data[i] = element.dataset[i]
                     }
                 }
                 
-                if(element.hasAttribute("target")){
-                    if(loadDelayed){
-                        var view = new GView(element)
-                        view.render(data)
-                    } else{
-                        delayedElements.push(element)
-                    }
-                } else{
-                    var view = new GView(element)
-                    view.render(data)
+                //read TEXT field
+                for(i in element.dataset){
+                    data[i] = element.dataset[i]
                 }
             }
+            
+            if(element.hasAttribute("target")){
+                if(loadDelayed){
+                    var view = new GView(element)
+                    view.render(data)
+                } else{
+                    delayedElements.push(element)
+                }
+            } else{
+                var view = new GView(element)
+                view.render(data)
+            }
         }
+
     }
 
     function createCurrentElements(){
@@ -206,6 +205,15 @@ window.addEventListener("load", function () {
             createGView(delayedElements[i], true)
         }
         delayedElements = []
+        executeDelayedScripts()
+    }
+
+    function executeDelayedScripts(){
+        for (let i in delayedSripts) {
+            
+            eval(delayedSripts[i])
+        }
+        delayedSripts = []
     }
 })
 

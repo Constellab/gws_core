@@ -5,9 +5,10 @@ new GViewTemplate({
             data.id = data.id || uuidv4()
             data.text = data.text || ""
             data.href = data.href || ""
+            data.target = data.target || ""
             if(data.href != ""){
                 container.innerHTML = `
-                    <a class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect" id="`+ data.id +`" href="`+ data.id +`">
+                    <a class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect" id="`+ data.id +`" href="`+ data.href +`" target="`+ data.target +`">
                         `+ data.text +`
                     </a>
                 `;
