@@ -1,64 +1,64 @@
 {
     "name": "proto",
     "nodes": {
-        "p1": "gws.hello.Move",
-        "p2": "gws.hello.Eat",
-        "p3": "gws.hello.Move",
-        "p4": "gws.hello.Move",
-        "p_wait": "gws.hello.Wait"
+        "p1": "gws.robot.Move",
+        "p2": "gws.robot.Eat",
+        "p3": "gws.robot.Move",
+        "p4": "gws.robot.Move",
+        "p_wait": "gws.robot.Wait"
     },
     "links": [
         {
             "from": {
                 "node": "p1",
-                "port": "person"
+                "port": "robot"
             },
             "to": {
                 "node": "p2",
-                "port": "person"
+                "port": "robot"
             }
         },
         {
             "from": {
                 "node": "p2",
-                "port": "person"
+                "port": "robot"
             },
             "to": {
                 "node": "p_wait",
-                "port": "person"
+                "port": "robot"
             }
         },
         {
             "from": {
                 "node": "p_wait",
-                "port": "person"
+                "port": "robot"
             },
             "to": {
                 "node": "p3",
-                "port": "person"
+                "port": "robot"
             }
         },
         {
             "from": {
                 "node": "p2",
-                "port": "person"
+                "port": "robot"
             },
             "to": {
                 "node": "p4",
-                "port": "person"
+                "port": "robot"
             }
         }
     ],
     "interfaces": {
-        "person": {
+        "robot": {
             "proc": "p1",
-            "port": "person"
+            "port": "robot"
         }
     },
     "outerfaces": {
-        "person": {
+        "robot": {
             "proc": "p2",
-            "port": "person"
+            "port": "robot"
         }
     }
 }

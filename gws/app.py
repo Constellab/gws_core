@@ -7,6 +7,7 @@ import os
 import uvicorn
 import importlib
 import inspect 
+import urllib
 
 from datetime import datetime, timedelta
 from typing import Optional
@@ -249,6 +250,34 @@ async def close_experiment(request):
 async def delete_experiment(request):
     return { "status": True, "response" : ""}
 
+
+####################################################################################
+#
+# Startup & Shutdown Events
+#
+####################################################################################
+
+@app.on_event("startup")
+async def startup_event():
+    Central.put_status(is_running=True)
+     
+    settings = Settings.retrieve()
+    print("GWS application started!")
+    print("* Server: {}:{}".format(settings.get_data("app_host"), settings.get_data("app_port")))
+
+    print("* HTTP connection: http://{}:{}/demo".format(
+        settings.get_data("app_host"), 
+        settings.get_data("app_port")
+    ))
+
+    print("* Lab token: {}".format(
+        urllib.parse.quote(settings.get_data("token"), safe='')
+    ))
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    Central.put_status(is_running=False)
+
 ####################################################################################
 #
 # App class
@@ -270,7 +299,6 @@ class App(BaseApp):
     """
     Base App
     """
-
     app: FastAPI = app
     ctrl = Controller
     debug = _settings.get_data("is_test") or _settings.get_data("is_demo")
@@ -279,83 +307,21 @@ class App(BaseApp):
     @classmethod
     def init(cls):
         """
-        Defines the web routes of the brick.
-
-        Routing coventions: 
-        
-        To prevent route collisions, it is highly recommended to 
-        prefix route names of the name of the current brick.
-        For example: 
-        * /<brick name>/home/       -> home page route
-        * /<brick name>/settings/   -> setting page route
+        Intialize static routes
         """
-
         # static dirs
         statics = _settings.get_static_dirs()
-        print(statics)
         for k in statics:
             app.mount(k, StaticFiles(directory=statics[k]), name=k)
 
-        #misc
-        cls.on_startup.append(cls._on_startup)
-        cls.on_shutdown.append(cls._on_shutdown)
-    
     @classmethod 
     def start(cls):
         """
         Starts FastAPI uvicorn
         """
-        
         settings = Settings.retrieve()
-
         settings.set_data("app_host","0.0.0.0")
         settings.save()
         uvicorn.run(cls.app, host=settings.get_data("app_host"), port=int(settings.get_data("app_port")))
         cls.is_running = True
-
-    @classmethod 
-    def _on_startup(cls):
-        """
-        Called on application startup to create test objects
-        """
-
-        Central.put_status(is_running=True)
-        
-        settings = Settings.retrieve()
-        from gws.robot import Robot, HTMLRobotViewModel, JSONRobotViewModel
-
-        try:
-            robot = Robot.get( Robot.id==1 )
-            html_vmodel = HTMLRobotViewModel.get( HTMLRobotViewModel.id == 1 )
-        except:
-            robot = Robot()
-            robot.data["name"] = "R. Giskard Reventlov"
-            robot.save()
-            html_vmodel = HTMLRobotViewModel(robot)
-            html_vmodel.save()
-            json_vmodel = JSONRobotViewModel(robot)
-            json_vmodel.save()
-        
-        import urllib
-        print("GWS application started!")
-        print("* Server: {}:{}".format(settings.get_data("app_host"), settings.get_data("app_port")))
-
-        if settings.get_data("is_demo"):
-            print("* HTTP connection: http://{}:{}/demo".format(
-                settings.get_data("app_host"), 
-                settings.get_data("app_port")
-            ))
-        else:
-            print("* HTTP connection: http://{}:{}/login?token={}".format(
-                settings.get_data("app_host"), 
-                settings.get_data("app_port"), 
-                urllib.parse.quote(settings.get_data("token"), safe='')
-            ))
-            print("* Token: {}".format(
-                urllib.parse.quote(settings.get_data("token"), safe='')
-            ))
-
-    @classmethod 
-    def _on_shutdown(cls):
-        Central.put_status(is_running=False)
 

@@ -7,7 +7,7 @@ import json
 from gws.settings import Settings
 from gws.model import Config, Process, Resource, Model, ViewModel, Protocol, Job, Experiment
 from gws.controller import Controller
-from gws.hello import Person, Create, Move, Eat, Wait
+from gws.robot import Robot, Create, Move, Eat, Wait
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
@@ -21,7 +21,7 @@ class TestProtocol(unittest.TestCase):
         Protocol.drop_table()
         Experiment.drop_table()
         Job.drop_table()
-        Person.drop_table()
+        Robot.drop_table()
         pass
 
     @classmethod
@@ -31,7 +31,7 @@ class TestProtocol(unittest.TestCase):
         Protocol.drop_table()
         Experiment.drop_table()
         Job.drop_table()
-        Person.drop_table()
+        Robot.drop_table()
         pass
     
     def test_protocol(self):
@@ -55,12 +55,12 @@ class TestProtocol(unittest.TestCase):
                 'p_wait' : p_wait
             },
             connectors=[
-                p0>>'person'        | p1<<'person',
-                p1>>'person'        | p2<<'person',
-                p2>>'person'        | p_wait<<'person',
-                p_wait>>'person'    | p3<<'person',
-                p3>>'person'        | p4<<'person',
-                p2>>'person'        | p5<<'person'
+                p0>>'robot'        | p1<<'robot',
+                p1>>'robot'        | p2<<'robot',
+                p2>>'robot'        | p_wait<<'robot',
+                p_wait>>'robot'    | p3<<'robot',
+                p3>>'robot'        | p4<<'robot',
+                p2>>'robot'        | p5<<'robot'
             ],
             interfaces = {},
             outerfaces = {}
@@ -104,19 +104,19 @@ class TestProtocol(unittest.TestCase):
                 'p_wait' : p_wait
             },
             connectors=[
-                p1>>'person'        | p2<<'person',
-                p2>>'person'        | p_wait<<'person',
-                p_wait>>'person'    | p3<<'person',
-                p2>>'person'        | p4<<'person'
+                p1>>'robot'        | p2<<'robot',
+                p2>>'robot'        | p_wait<<'robot',
+                p_wait>>'robot'    | p3<<'robot',
+                p2>>'robot'        | p4<<'robot'
             ],
-            interfaces = { 'person' : p1.in_port('person') },
-            outerfaces = { 'person' : p2.out_port('person') }
+            interfaces = { 'robot' : p1.in_port('robot') },
+            outerfaces = { 'robot' : p2.out_port('robot') }
         )
 
         proto.set_active_experiment(Experiment())
         
-        p0>>'person'        | proto<<'person'
-        proto>>'person'     | p5<<'person'
+        p0>>'robot'        | proto<<'robot'
+        proto>>'robot'     | p5<<'robot'
 
         p1 = proto.get_process("p1")
         proto.is_interfaced_with(p1)
@@ -155,8 +155,8 @@ class TestProtocol(unittest.TestCase):
         p0 = Create(name="p0")
         p5 = Eat(name="p5")
 
-        p0>>'person'        | proto<<'person'
-        proto>>'person'     | p5<<'person'
+        p0>>'robot'        | proto<<'robot'
+        proto>>'robot'     | p5<<'robot'
 
         proto.set_active_experiment(Experiment())
         async def _run():
