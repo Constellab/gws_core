@@ -8,18 +8,21 @@ import uvicorn
 import importlib
 import inspect 
 
+from datetime import datetime, timedelta
 from typing import Optional
 
-from fastapi import Depends, Form, HTTPException, Request, FastAPI
+from fastapi import Depends, Form, HTTPException, Request, FastAPI, status
 from fastapi.routing import APIRoute as Route, Mount
 from fastapi.responses import Response, JSONResponse, PlainTextResponse,  FileResponse,  HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.requests import Request
 from fastapi.middleware import Middleware
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+
 from pydantic import BaseModel
 
-from fastapi.security import OAuth2PasswordBearer
+from passlib.context import CryptContext
 
 from gws.settings import Settings
 from gws.view import HTMLViewTemplate, JSONViewTemplate, PlainTextViewTemplate
@@ -27,26 +30,39 @@ from gws.model import Resource, HTMLViewModel, JSONViewModel, User
 from gws.controller import Controller
 from gws.central import Central
 
+brick = "gws"
+app = FastAPI()
+
+
+####################################################################################
+#
+# Login
+#
+####################################################################################
+
+
+from gws._auth import _Token
+from gws._auth import    login_for_access_token as auth_login_for_access_token, \
+                        get_current_user as auth_get_current_user
+
+@app.post("/token", response_model=_Token)
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    return await auth_login_for_access_token(form_data)
+
+# User
+class _User(BaseModel):
+    uri: str
+    token: str
+
+@app.get("/me/", response_model=_User)
+async def read_users_me(current_user: _User = Depends(auth_get_current_user)):
+    return current_user
+
 ####################################################################################
 #
 # Endpoints
 #
 ####################################################################################
-
-brick = "gws"
-app = FastAPI()
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-def decode_token(token):
-    settings = Settings.retrieve()
-    if settings.get_data("token") == token:
-        pass
-    else:
-        pass
-
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    user = decode_token(token)
-    return user
 
 def get_templates(brick=brick):
     settings = Settings.retrieve()
@@ -176,12 +192,6 @@ async def get_lab_instance_status():
     from gws.lab import Lab
     return { "status": True, "response" : Lab.get_status() }
 
-# User
-
-class _User(BaseModel):
-    uri: str
-    token: str
-
 @app.post("/api/user/create")
 async def create_user(user: _User):
     try:
@@ -216,12 +226,16 @@ async def deactivate_user(user_uri : str):
 
 
 # Experiment
+class _Protocol(BaseModel):
+    uri: str
+    graph: Optional[dict] = None
+
 class _Experiment(BaseModel):
     uri: str
-    protocol: str
+    protocol: _Protocol
     
-@app.put("/api/experiment/open")
-async def open_experiment_or_create_if_not_exists(exp: _Experiment):
+@app.post("/api/experiment/create")
+async def create_experiment(exp: _Experiment):
     try:
         tf = Central.create_experiment(exp.dict())
         return { "status": tf, "response" : "" }
