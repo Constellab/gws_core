@@ -40,12 +40,11 @@ app = FastAPI()
 #
 ####################################################################################
 
-
 from gws._auth import _Token
 from gws._auth import    login_for_access_token as auth_login_for_access_token, \
                         get_current_user as auth_get_current_user
 
-@app.post("/token", response_model=_Token)
+@app.post("/login", response_model=_Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
     return await auth_login_for_access_token(form_data)
 
