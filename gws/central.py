@@ -46,12 +46,9 @@ class Central:
         if exp is None:
             
             if 'protocol' in data:
-                import json
-                proto_dict = json.loads(data["protocol"])
-                proto = Protocol.get_by_uri(proto_dict["uri"])
+                proto = Protocol.get_by_uri(data["protocol"]["uri"])
                 if proto is None:
-                
-                    graph = proto_dict.get("graph", None)
+                    graph = data["protocol"].get("graph", None)
                     if graph is None:
                         raise Exception(f"No protocol graph provided")
                     else:
