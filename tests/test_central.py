@@ -31,9 +31,9 @@ class TestCentral(unittest.TestCase):
     def test_create_experiment_execption(self):
         data = {
             "uri": "123456abcd",
-            "protocol": json.dumps({
+            "protocol": {
                 "uri": "1234ERTY",
-            })
+            }
         }
         self.assertRaises(Exception, Central.create_experiment, data)
 
@@ -48,10 +48,10 @@ class TestCentral(unittest.TestCase):
         # test execption
         data = {
             "uri": "123456abcd",
-            "protocol": json.dumps({
+            "protocol": {
                 "uri": "1234ERTY",
                 "graph": graph
-            })
+            }
         }
         tf = Central.create_experiment(data)
         self.assertTrue(tf)

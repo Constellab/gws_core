@@ -130,53 +130,53 @@ class _ViewModel(BaseModel):
     uri: str
     data: dict
 
-@app.get("/api/prism/{uri}")
-async def get_vmodel(uri: str) -> (dict, str,):
+@app.get("/api/prism/{rtype}/{uri}")
+async def get_vmodel(rtype: str, uri: str) -> (dict, str,):
     """
     Get and render a ViewModel
     """
 
     try:
-        vmodel = Controller.action("get", uri)
+        vmodel = Controller.action(action="get", rtype=rtype, uri=uri)
     except Exception as err:
         return {"status": False, "reponse": f"{err}"}
 
     return { "status": True, "reponse": vmodel.render() }
 
 @app.post("/api/prism/")
-async def post_vmodel(vmodel: _ViewModel) -> (dict, str,):
+async def post_vmodel(rtype: str, vmodel: _ViewModel) -> (dict, str,):
     """
     Post an render a ViewModel
     """
 
     try:
-        vmodel = Controller.action("post", uri=vmodel.uri, data=vmodel.data)
+        vmodel = Controller.action(action="post", rtype=rtype, uri=vmodel.uri, data=vmodel.data)
     except Exception as err:
         return {"status": False, "reponse": f"{err}"}
 
     return { "status": True, "reponse": vmodel.render() }
 
-@app.put("/api/prism/")
-async def put_vmodel(vmodel: _ViewModel) -> (dict, str,):
+@app.put("/api/prism/{rtype}/")
+async def put_vmodel(rtype: str, vmodel: _ViewModel) -> (dict, str,):
     """
     Post and render a ViewModel
     """
 
     try:
-        vmodel = Controller.action("put", uri=vmodel.uri, data=vmodel.data)
+        vmodel = Controller.action(action="put", rtype=rtype, uri=vmodel.uri, data=vmodel.data)
     except Exception as err:
         return {"status": False, "reponse": f"{err}"}
 
     return { "status": True, "reponse": vmodel.render() }
 
-@app.delete("/api/prism/{uri}/")
-async def delete_vmodel(uri: str) -> (dict, str,):
+@app.delete("/api/prism/{rtype}/{uri}/")
+async def delete_vmodel(rtype: str, uri: str) -> (dict, str,):
     """
     Post a ViewModel and render its
     """
 
     try:
-        vmodel = Controller.action("delete", uri)
+        vmodel = Controller.action(action="delete", rtype=rtype, uri=uri)
     except Exception as err:
         return {"status": False, "reponse": f"{err}"}
 
@@ -195,8 +195,8 @@ async def get_lab_instance_status():
 @app.post("/api/user/create")
 async def create_user(user: _User):
     try:
-        tf = Central.create_user(user.dict())
-        return { "status": tf, "response" : "" }
+        user_dict = Central.create_user(user.dict())
+        return { "status": True, "response" : user_dict }
     except Exception as err:
         return { "status": False, "response": str(err) }
 
@@ -237,8 +237,18 @@ class _Experiment(BaseModel):
 @app.post("/api/experiment/create")
 async def create_experiment(exp: _Experiment):
     try:
-        tf = Central.create_experiment(exp.dict())
-        return { "status": tf, "response" : "" }
+        exp = Central.create_experiment(exp.dict())
+        return { 
+            "status": True, 
+            "response" : {
+                "experiment": {
+                    "uri": exp.uri
+                },
+                "protocol": {
+                    "uri": exp.protocol.uri
+                }
+            }
+        }
     except Exception as err:
         return { "status": False, "response": str(err) }
 
@@ -250,6 +260,15 @@ async def close_experiment(request):
 async def delete_experiment(request):
     return { "status": True, "response" : ""}
 
+# Protocol
+
+@app.get("/api/protocol/{protocol_uri}")
+async def get_protocol(protocol_uri: str):
+    try:
+        proto_dict = Central.get_protocol(protocol_uri)
+        return { "status": True, "response" : proto_dict }
+    except Exception as err:
+        return { "status": False, "response" : str(err) }
 
 ####################################################################################
 #

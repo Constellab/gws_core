@@ -3,8 +3,6 @@ from fastapi_mail import FastMail
 from gws.logger import Logger
 from gws.settings import Settings
 
-
-
 class Email:
     
     @staticmethod

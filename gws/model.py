@@ -12,6 +12,10 @@ import hashlib
 import urllib.parse
 import json
 
+import jwt
+from base64 import b64encode, b64decode
+from secrets import token_bytes
+
 from datetime import datetime
 from peewee import SqliteDatabase, Model as PWModel
 from peewee import  Field, IntegerField, FloatField, DateField, \
@@ -22,7 +26,6 @@ from playhouse.sqlite_ext import JSONField
 from gws.logger import Logger
 from gws.settings import Settings
 from gws.store import KVStore
-#from gws.session import Session
 
 from gws.base import slugify, BaseModel, DbManager
 from gws.base import format_table_name
@@ -42,6 +45,19 @@ class SystemTrackable:
     SystemTrackable class representing elements that can only be create by the system.
     """
     pass
+
+class URIResolver(BaseModel):
+    uri = CharField(null=True, index=True)
+    type = CharField(null=True, index=True)
+    _table_name = 'uri_resolver'
+
+    @classmethod
+    def get_table(cls, uri: str) -> str:
+        try:
+            return cls.get(cls.uri == uri).type
+        except:
+            return None
+
 
 # ####################################################################
 #
@@ -76,7 +92,7 @@ class Model(BaseModel):
 
     _kv_store: KVStore = None
     _uuid = None
-    _uri_delimiter = "$"
+    #_uri_delimiter = "$"
     _is_deletable = True
 
     _table_name = 'model'
@@ -97,8 +113,6 @@ class Model(BaseModel):
 
         self._init_store()
 
-        #Controller._register_model_specs(type(self))
-
     def cast(self) -> 'Model':
         """
         Casts a model instance to its `type` in database
@@ -106,8 +120,9 @@ class Model(BaseModel):
         :return: The model
         :rtype: `Model` instance
         """
-        type_str = slugify(self.type)
-        new_model_t = Controller.get_model_type(type_str)
+
+        #type_str = slugify(self.type)
+        new_model_t = Controller.get_model_type(self.type)
 
         if type(self) == new_model_t:
             return self
@@ -140,8 +155,6 @@ class Model(BaseModel):
         self.is_deleted = True
         return self.save()
 
-    # -- E --
-
     def __eq__(self, other: 'Model') -> bool:
         """ 
         Compares the model with another model. The models are equal if they are 
@@ -156,7 +169,7 @@ class Model(BaseModel):
             return False
 
         return (self is other) or ((self.id != None) and (self.id == other.id))
-   
+    
     # -- G --
 
     @classmethod
@@ -166,17 +179,6 @@ class Model(BaseModel):
         except:
             return None
 
-    @classmethod
-    def get_uri_name(cls) -> str:
-        """ 
-        Returns the uri_name of the model
-
-        :return: The uri_name
-        :rtype: str
-        """
-        return cls.full_classname(slugify=True)
-
-
     def __generate_uri(self) -> str:
         """ 
         Generates the uri of the model
@@ -184,7 +186,7 @@ class Model(BaseModel):
         :return: The uri
         :rtype: str
         """
-        return self.get_uri_name() + Model._uri_delimiter + str(self.id)
+        return self._uuid 
 
     # -- H --
 
@@ -226,24 +228,6 @@ class Model(BaseModel):
     def store(self):
         return self._kv_store
 
-    # -- P --
-
-    @classmethod
-    def parse_uri(cls, uri: str) -> list:
-        """ 
-        Parses the uri of a model and returns the corresponding `uri_name` an `uri_id`
-
-        :param uri: The uri to parse
-        :type uri: str
-        :return: A list containing the uri_name and uri_id
-        :rtype: list
-        """
-
-        tab = uri.split(cls._uri_delimiter)
-        if len(tab) == 1:
-            tab.append(0)
-        return tab
-
     # -- S --
 
     @classmethod
@@ -262,7 +246,7 @@ class Model(BaseModel):
 
     # -- T --
 
-    def fetch_type_by_id(self, id) -> type:
+    def fetch_type_by_id(self, id) -> 'type':
         """ 
         Fecth the model type (string) by its `id` from the database and return the corresponding python type.
         Use the proper table even if the table name has changed.
@@ -396,9 +380,9 @@ class Viewable(Model):
         :rtype: dict
         """
         return json.dumps({
-            "id" : self.id,
-            "data" : self.data,
             "uri": self.uri,
+            "type": self.type,
+            "data" : self.data,
             "creation_datetime" : str(self.creation_datetime),
         })
 
@@ -409,8 +393,8 @@ class Viewable(Model):
         :return: The HTML text
         :rtype: str
         """
-        return "<x-gws class='gws-model' id='{}' data-id='{}' data-uri='{}'></x-gws>".format(self._uuid, self.id, self.uri)
-
+        return f"<div class='gview:model' json='true'>{self.as_json()}</div>"
+    
     # -- C --
 
     def create_default_vmodel(self):
@@ -423,33 +407,6 @@ class Viewable(Model):
                 return vmodel_t(model=self) #return the 1st vmodel
 
         return None
-
-    def create_vmodel_by_name(self, type_name: str):
-        """
-        Creates an instance of a registered ViewModel
-
-        :param type_name: The slugified type name of the view model to create
-        :type type_name: str
-        :return: The created view model
-        :rtype: ViewModel
-        :raises Exception: If the view model cannot be created
-        """
-
-        if not isinstance(type_name, str):
-            Logger.error(Exception(self.classname(), "create_vmodel_by_name", "The view name must be a string"))
-        
-        if type_name == HTMLViewModel.get_uri_name():
-            vmodel_t = HTMLViewModel
-        elif type_name == JSONViewModel.get_uri_name():
-            vmodel_t = HTMLViewModel
-        else:
-            vmodel_t = self._vmodel_specs.get(type_name, None)
-
-        if isinstance(vmodel_t, type):
-            vmodel = vmodel_t(model=self)
-            return vmodel
-        else:
-            Logger.error(Exception(self.classname(), "create_vmodel_by_name", f"The vmodel '{vmodel_t}' is not found"))
 
     # -- D --
 
@@ -488,7 +445,7 @@ class Viewable(Model):
             if not isinstance(t, type) or not issubclass(t, ViewModel):
                 Logger.error(Exception("Model", "register_vmodel_specs", "Invalid specs. A list of ViewModel types is expected"))
             
-            name = t.full_classname(slugify=True)
+            name = t.full_classname()
             cls._vmodel_specs[name] = t
 
 # ####################################################################
@@ -757,8 +714,7 @@ class Process(Viewable, SystemTrackable):
             Logger.error(Exception("Process", "__set_hash", "Invalid process hash. The code source of the current process has changed."))
 
     def __create_hash(self):
-        type_str = slugify(self.type)
-        model_t = Controller.get_model_type(type_str)
+        model_t = Controller.get_model_type(self.type)
         source = inspect.getsource(model_t)
         return self._unique_hash + ":" + self._hash_encode(source)
     
@@ -981,7 +937,6 @@ class Process(Viewable, SystemTrackable):
         
         if not self._output.is_ready:
             return
-            #Logger.error(Exception(self.classname(), "run", "The output was not set after the task ended."))
         
         if self._event_listener.exists('end'):
             self._event_listener.call('end', self)
@@ -1590,6 +1545,8 @@ class Protocol(Process, SystemTrackable):
         :rtype: Protocol
         """
 
+        import importlib
+
         if isinstance(graph, str):
             graph = json.loads(graph)
 
@@ -1603,11 +1560,21 @@ class Protocol(Process, SystemTrackable):
         for k in graph["nodes"]:
             type_str = graph["nodes"][k]
             try:
-                t = Controller.get_model_type(type_str)
+
+                tab = type_str.split(".")
+                n = len(tab)
+                module_name = ".".join(tab[0:n-1])
+                function_name = tab[n-1]
+                module = importlib.import_module(module_name)
+                t = getattr(module, function_name, None)
+
+                if t is None:
+                    Logger.error(Exception(f"Process {type_str} is not defined. Please ensure that the corresponding brick is loaded."))
+                else:
+                    processes[k] = t()
+
             except Exception as err:
-                raise Exception(f"The process {type_str} is not defined. The class module is probably not imported. Error: {err}")
-            
-            processes[k] = t()
+                Logger.error(Exception(f"An error occured. Error: {err}"))
 
         for link in graph["links"]:
             proc_name = link["from"]["node"]
@@ -1783,8 +1750,6 @@ class Resource(Viewable, SystemTrackable):
                 transaction.rollback()
                 return False
 
-        
-
     # -- S --
 
     def _set_job(self, job: 'Job'):
@@ -1846,8 +1811,11 @@ class ResourceSet(Resource):
                 for k in self._set:
                     if not (self._set[k].is_saved() or self._set[k].save()):
                         raise Exception("ResourceSet", "save", f"Cannot save the resource '{k}' of the resource set")
-                        
-                    self.data["set"][k] = self._set[k].uri
+
+                    self.data["set"][k] = {
+                        "uri": self._set[k].uri,
+                        "type": self._set[k].full_classname()
+                    }    
 
                 return super().save(*args, **kwrags)
 
@@ -1859,8 +1827,9 @@ class ResourceSet(Resource):
     def set(self):
         if self.is_saved() and len(self._set) == 0:
             for k in self.data["set"]:
-                uri = self.data["set"][k]
-                self._set[k] = Controller.fetch_model(uri)
+                uri = self.data["set"][k]["uri"]
+                rtype = self.data["set"][k]["type"]
+                self._set[k] = Controller.fetch_model(rtype, uri)
         
         return self._set
 
@@ -1921,9 +1890,9 @@ class ViewModel(Model):
         :rtype: dict
         """
         return {
-            "id" : self.id,
-            "data" : self.data,
             "uri": self.uri,
+            "type": self.type,
+            "data" : self.data,
             "model": self.model.as_json(),
             "creation_datetime" : str(self.creation_datetime),
         }
@@ -1936,33 +1905,12 @@ class ViewModel(Model):
         :rtype: str
         """
 
-        type_ = 'model'
-        for model_t in self.model_specs:
-            if self.get_uri_name() == model_t.get_uri_name():
-                if issubclass(model_t, Process):
-                    type_ = 'process'
-                    break
+        return f"<div class='gview:model' json='true'>{self.as_json()}</div>"
 
-        return f"<div class='gview:{self.get_uri_name()}' data-type='{type_}'>{self.as_json()}</div>"
 
     # -- C --
 
     # -- G --
-
-    def get_view_url(self, params: dict={}) -> str:
-        """
-        Returns the uri of the view (alias of the uri of the view model).
-
-        :param params: The uri parameters
-        :type params: dict
-        :return: The uri
-        :rtype: str
-        """
-        if len(params) == 0:
-            params = ""
-        else:
-            params = urllib.parse.quote(str(params))
-        return '/read/' + self.uri + '/' + params
 
     # -- M --
 

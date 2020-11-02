@@ -5,8 +5,9 @@
 
 import asyncio
 import json
+import importlib
+
 from gws.base import Base
-from gws.base import slugify
 from gws.logger import Logger
 
 class Controller(Base):
@@ -17,22 +18,20 @@ class Controller(Base):
     _model_specs = dict() 
 
     @classmethod
-    def action(cls, action, uri, data = None) -> 'ViewModel':
+    def action(cls, action=None, rtype=None, uri=None, data=None) -> 'ViewModel':
         """
         Process user actions
 
         :param action: The action
         :type action: str
-        :param uri: The uri of the view model
-        :type uri: str
+        :param encoded_uri: The uri of the view model
+        :type encoded_uri: str
         :param data: The data
         :type data: dict
         :return: A view model corresponding to the action
         :rtype: `gws.prims.model.ViewModel`
         """
 
-        #cls._session = request.session
-        cls.__inspects()
         try:
             if isinstance(data, str):
                 if len(data) == 0:
@@ -41,126 +40,66 @@ class Controller(Base):
                     data = json.loads(data)
         except:
             Logger.error(Exception("Controller", "action", "The data is not a valid JSON text"))
-
+        
         # CRUD (& Run) actions
         if action == "post":
-            return cls.__post(uri, data)
+            return cls.__post(rtype, uri, data)
 
         elif action == "get":
-            return cls.__get(uri)
+            return cls.__get(rtype, uri)
 
         elif action == "put":
-            return cls.__put(uri, data)
+            return cls.__put(rtype, uri, data)
 
         elif action == "delete":
-            return cls.__delete(uri)
+            return cls.__delete(rtype, uri)
 
         elif action == "run":
-            return cls.__run(uri, data)
+            return cls.__run(rtype, uri, data)
 
-    # -- B --
-
-    # @classmethod
-    # def build_url(cls, action: str = None, uri: str = None, data: dict = None) -> str:
-    #     """
-    #     Build the url of action using the action name, the target model uri and request parameters
-    #     :param action: User action
-    #     :type action: str
-    #     :param uri: The uri of the target model
-    #     :type uri: str
-    #     :param data: Action parameters
-    #     :type data: dict
-    #     :return: A view model corresponding to the action
-    #     :rtype: `gws.prims.model.ViewModel`
-    #     """  
-    #     #import urllib.parse     
-    #     if Controller.is_query_params:
-    #         return f"/?action={action}&uri={uri}&data={str(data)}"
-    #     else:
-    #         return f"/{action}/{uri}/{str(data)}"
+    # -- C --
 
     # -- D --
 
     @classmethod
-    def __delete(cls, uri) -> 'ViewModel':
+    def __delete(cls, rtype: str, uri: str) -> 'ViewModel':
         from gws.model import Model, ViewModel
-        obj = cls.fetch_model(uri)
-        if isinstance(obj, ViewModel):
-            vmodel = obj
-            vmodel.delete()
-            return vmodel
+        o = cls.fetch_model(rtype, uri)
+        if isinstance(o, ViewModel):
+            o.delete()
+            return o
         else:
             Logger.error(Exception("Controller", f"__delete", "No ViewModel match with the uri."))
 
     # -- F --
 
     @classmethod
-    def fetch_model(cls, uri: str) -> 'Model':
+    def fetch_model(cls, rtype: str, uri: str) -> 'Model':
         """
-        Fetch a model using its uri
+        Fetch a model using the encoded_uri
 
-        :param uri: The uri of the target model
-        :type uri: str
+        :param encoded_uri: The uri of the target model
+        :type encoded_uri: str
         :return: A model
-        :rtype: `gws.prims.model.Model`
-        """
-        from gws.model import Model
-        tab = Model.parse_uri(uri)
-        return cls.fetch_model_by_uri_name_id(tab[0], tab[1])
-
-    @classmethod
-    def fetch_model_by_uri_name_id(cls, uri_name: str, uri_id: str) -> 'Model':
-        """
-        Fetch a model from db using its uri_name and uri_id
-
-        :param uri_name: The uri_name of the target model
-        :type uri_name: str
-        :param uri_id: The uri_id of the target model
-        :type uri_id: str
-        :return: A model
-        :rtype: `gws.prims.model.Model`
+        :rtype: Model
         """
 
-        if int(uri_id) == 0:
-            # create a new instance
-            model_t = cls.get_model_type(uri_name)
-            return model_t()    
-        else:
-            # retrieve from db
-            model_t = cls.get_model_type(uri_name)
-            Q = model_t.select().where(
-                model_t.id == uri_id, 
-                model_t.type == model_t.full_classname()
-            )
-            
-            if len(Q) == 1:
-                return Q[0]
-            elif len(Q) == 0:
-                Logger.error(Exception("Controller", "action", "No model matchs with the request: (uri_name={uri_name}, uri_id={uri_id})"))
-            else:
-                Logger.error(Exception("Controller", f"action", "Db integrity error. Several models match with the request: (uri_name={uri_name}, uri_id={uri_id})"))
-        
+        t = cls.get_model_type(rtype)
+        try:
+            return t.get(t.uri == uri)
+        except:
+            return None        
     # -- G --
 
     @classmethod
-    def __get(cls, uri) -> 'ViewModel':
-        obj = cls.fetch_model(uri)
-
+    def __get(cls, rtype: str, uri: str) -> 'ViewModel':
+        obj = cls.fetch_model(rtype, uri)
         from gws.model import ViewModel
         if isinstance(obj, ViewModel):
             vmodel = obj
         else:
-            Logger.error(Exception("Controller", "__get", f"No ViewModel found for the uri {uri}"))
-
+            Logger.error(Exception("Controller", "__get", f"No ViewModel found for the encoded uri {encoded_uri}"))
         return vmodel
-
-    @classmethod
-    def __get_model_type_from_uri(cls, uri) -> type:
-        from gws.model import Model
-        tab = Model.parse_uri(uri)
-        uri_name = tab[0]
-        model_t = cls.get_model_type(uri_name)
-        return model_t
 
     @classmethod
     def get_model_type(cls, type_str: str) -> type:
@@ -173,65 +112,36 @@ class Controller(Base):
         :rtype: type
         :Logger.error(Exception: No registered model matchs with the given `type_str`)
         """
-        cls.__inspects()
-
-        type_str = slugify(type_str)
-        if type_str in cls._model_specs:
-            return cls._model_specs[type_str]
-        else:
-            Logger.error(Exception("Controller", "get_model_type", f"No registered model matchs with '{type_str}'"))
+   
+        if type_str is None:
+            return None
+            
+        tab = type_str.split(".")
+        n = len(tab)
+        module_name = ".".join(tab[0:n-1])
+        function_name = tab[n-1]
+        module = importlib.import_module(module_name)
+        t = getattr(module, function_name, None)
+        if t is None:
+            Logger.error(Exception(f"Cannot import {type_str}"))
+        return t
 
     # -- I --
-
-    @classmethod
-    def __inspects(cls):
-        if len(cls._model_specs):
-            return
-
-        from gws.settings import Settings
-        settings = Settings.retrieve()
-        module_names = settings.get_dependency_names()
- 
-        for k in module_names:
-            cls.__inspects_module(k)
-        
-        cls.__inspects_module('tests')  #for testing
-
-    @classmethod
-    def __inspects_module(cls, name):
-        import inspect
-        import sys
-        from gws.model import Model, ViewModel, HTMLViewModel, JSONViewModel
-        if not name in sys.modules:
-            return
-
-        for subname, obj in inspect.getmembers(sys.modules[name]):
-            if inspect.isclass(obj):
-                if issubclass(obj, Model):
-                    cls._register_model_specs([ obj ])
-                    # register the ViewModel to the default Model
-                    if issubclass(obj, ViewModel):
-                        obj.register_to_models()
-
-            elif inspect.ismodule(obj):
-                cls.__inspects_module(name+"."+subname)
 
     # -- P --
 
     @classmethod
-    def __post(cls, uri, data) -> 'ViewModel':
-        obj = cls.fetch_model(uri)
-        from gws.model import SystemTrackable
+    def __post(cls, rtype: str, uri: str, data: dict) -> 'ViewModel':
+        from gws.model import SystemTrackable, ViewModel
+        obj = cls.fetch_model(rtype, uri)
 
         if isinstance(obj, SystemTrackable):
             Logger.error(Exception("Controller", "__post", f"Object {type(obj)} is SystemTrackable. It can only be created by the PRISM system"))
 
-        from gws.model import ViewModel
         if isinstance(obj, ViewModel):
             vmodel = cls.__post_new_vmodel(obj, data)
         else:
             Logger.error(Exception("Controller", "__post", f"Object {type(obj)} is not a ViewModel"))
-            #vmodel = cls.__post_new_model_and_return_vmodel(uri, data)
         
         return vmodel
     
@@ -240,7 +150,7 @@ class Controller(Base):
         if data["type"] == "self":
             vmodel_t = type(vmodel)
         else:
-            vmodel_t = cls.__get_model_type_from_uri(data["type"])
+            vmodel_t = cls.get_model_type(data["type"])
 
         new_vmodel = vmodel_t(model=vmodel.model)
         vdata = data.get("vdata", {})
@@ -249,8 +159,8 @@ class Controller(Base):
         return new_vmodel
 
     @classmethod
-    def __post_new_model_and_return_vmodel(cls, uri, data):
-        model_t = cls.__get_model_type_from_uri(uri)
+    def __post_new_model_and_return_vmodel(cls, rtype: str, uri: str, data: dict):
+        model_t = cls.get_model_type(rtype)
         model = model_t()
 
         from gws.model import Model
@@ -268,14 +178,18 @@ class Controller(Base):
         return vmodel
 
     @classmethod
-    def __put(cls, uri, data) -> 'ViewModel':
-        obj = cls.fetch_model(uri)
+    def __put(cls, rtype: str, uri: str, data: dict) -> 'ViewModel':
+        from gws.model import SystemTrackable, ViewModel
+        t = cls.get_model_type(rtype)
+        
+        try:
+            obj = t.get(t.uri == uri)
+        except:
+            Logger.error(Exception("Controller", "__post", f"Object {type(obj)} is not found with uri {uri}"))
 
-        from gws.model import SystemTrackable
         if isinstance(obj, SystemTrackable):
             Logger.error(Exception("Controller", "__post", f"Object {type(obj)} is SystemTrackable. It can only be updated by the PRISM system"))
 
-        from gws.model import ViewModel
         if isinstance(obj, ViewModel):
             vmodel = obj
 
@@ -302,27 +216,11 @@ class Controller(Base):
     # -- R --
 
     @classmethod
-    def _register_model_specs(cls, model_specs: list):
-        """
-        Register Models. 
-        
-        Only Models of which types are registered will be actionable.
-        Override the names of the model tables.
+    def __run(cls, rtype: str, uri: str, data: dict):
+        t = cls.get_model_type(rtype)
+        obj = t()
+        obj.data = data
 
-        :param model_specs: List of Model types to regiters
-        :type model_specs: list
-        """
-        for model_type in model_specs:
-            if isinstance(model_type, type):
-                full_cname = model_type.full_classname(slugify=True)
-                cls._model_specs[full_cname] = model_type
-                #model_type._meta.table_name = model_type._table_name
-            else:
-                Logger.error(Exception("Controller", "_register_model_specs", "Invalid model type"))
-
-    @classmethod
-    def __run(cls, uri, data):
-        obj = cls.__get(uri, data)
         from gws.model import Process
         import asyncio 
         if isinstance(obj, Process):

@@ -36,7 +36,13 @@ class Central:
         user = User.get_by_uri(data['uri'])
         if user is None:
             user = User(uri=data['uri'], token=data['token'])
-            return user.save()
+            if user.save():
+                return {
+                    "uri": user.uri,
+                    "token": user.token
+                }
+            else:
+                raise Exception("Cannot save the user")
         else:
             raise Exception("The user already exists")
     
@@ -44,7 +50,6 @@ class Central:
     def create_experiment(cls, data):
         exp = Experiment.get_by_uri(data["uri"])
         if exp is None:
-            
             if 'protocol' in data:
                 proto = Protocol.get_by_uri(data["protocol"]["uri"])
                 if proto is None:
@@ -55,14 +60,17 @@ class Central:
                         try:
                             protocol = Protocol(graph=graph)
                             protocol.save()
-                        except:
-                            raise Exception(f"Protocol graph settings is not valid")
+                        except Exception as err:
+                            raise Exception(f"Protocol graph is not valid. Error: {err}")
 
             else:
                 raise Exception(f"Protocol not defined")
                 
             exp = Experiment(uri = data["uri"], protocol_id=protocol.id)
-            return exp.save()
+            if exp.save():
+                return exp
+            else:
+                raise Exception(f"Cannot save the experiment")
         else:
             raise Exception(f"The experiment already exists")
 
@@ -119,6 +127,18 @@ class Central:
                 "is_active": user.is_active,
                 "is_locked": user.is_locked
             }
+
+    @classmethod
+    def get_protocol(csl, uri):
+        proto = Protocol.get_by_uri(uri)
+        if proto is None:
+            raise Exception("Protocol not found")
+        else:
+            return {
+                "uri": proto.uri,
+                "graph": proto.dumps(as_dict = True)
+            }
+    
 
     # -- S --
 

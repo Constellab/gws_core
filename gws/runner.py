@@ -71,7 +71,11 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, \
         module_name = ".".join(tab[0:n-1])
         function_name = tab[n-1]
         module = importlib.import_module(module_name)
-        getattr(module, function_name)()
+        t = getattr(module, function_name, None)
+        if t is None:
+            Logger.error(Exception("manage", "CLI not found. Please ensure that method {cli} is defined"))
+        else:
+            t()
 
     elif docgen:
         settings.data["db_name"] = ':memory:'

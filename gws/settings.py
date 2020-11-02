@@ -55,7 +55,6 @@ class Settings(PWModel):
         except:
             settings = Settings()
 
-            import jwt
             from secrets import token_bytes
             from base64 import b64encode
 
