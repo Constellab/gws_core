@@ -15,7 +15,7 @@ from gws.central import Central
 from gws.controller import Controller
 from gws.model import Model, ViewModel, Experiment
 
-prism_app = FastAPI()
+prism_app = FastAPI(docs_url="/apidocs")
 
 class _ViewModel(BaseModel):
     uri: str

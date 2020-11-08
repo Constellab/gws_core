@@ -20,7 +20,7 @@ from gws._auth.user import (    OAuth2UserTokenRequestForm, _Token,
                                 login, logout, _User,
                                 get_current_active_user
                             )
-central_app = FastAPI()
+central_app = FastAPI(docs_url="/apidocs")
 
 @central_app.get("/login/{user_access_token}")
 async def login_user(request: Request, user_access_token: str, redicrect_url: str = "/"):

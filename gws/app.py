@@ -29,7 +29,7 @@ from gws.central import Central
 from gws._auth.user import check_authenticate_user
 
 brick = "gws"
-app = FastAPI(docs_url="/api-docs")
+app = FastAPI(docs_url="/apidocs")
 
 ####################################################################################
 #
@@ -163,8 +163,8 @@ class App(BaseApp):
 
         from gws._app.central import central_app
         from gws._app.prism import prism_app
-        app.mount("/central/api", central_app)
-        app.mount("/prism/api", prism_app)
+        app.mount("/api/central/", central_app)
+        app.mount("/api/prism/", prism_app)
 
     @classmethod 
     def start(cls):
