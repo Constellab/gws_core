@@ -53,16 +53,12 @@ class TestControllerHTTP(unittest.TestCase):
         HTMLPersonViewModel.drop_table()
         JSONPersonViewModel.drop_table()
         Viewable.drop_table()
-        
-        # Person.create_table()
-        # HTMLPersonViewModel.create_table()
-        # JSONPersonViewModel.create_table()
 
     @classmethod
     def tearDownClass(cls):
-        # Person.drop_table()
-        # HTMLPersonViewModel.drop_table()
-        # JSONPersonViewModel.drop_table()    
+        Person.drop_table()
+        HTMLPersonViewModel.drop_table()
+        JSONPersonViewModel.drop_table()    
         pass
 
     def test_get_model(self):

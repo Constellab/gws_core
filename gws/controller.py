@@ -3,12 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import asyncio
 import json
 import importlib
 
 from gws.base import Base
 from gws.logger import Logger
+
+NUMBER_OF_ITEMS_PER_PAGE = 20
 
 class Controller(Base):
     """
@@ -18,14 +19,14 @@ class Controller(Base):
     _model_specs = dict() 
 
     @classmethod
-    def action(cls, action=None, rtype=None, uri=None, data=None) -> 'ViewModel':
+    def action(cls, action=None, rtype=None, uri=None, data=None, return_format="", page=1, filters=[]) -> 'ViewModel':
         """
         Process user actions
 
         :param action: The action
         :type action: str
-        :param encoded_uri: The uri of the view model
-        :type encoded_uri: str
+        :param uri: The uri of the view model
+        :type uri: str
         :param data: The data
         :type data: dict
         :return: A view model corresponding to the action
@@ -42,20 +43,25 @@ class Controller(Base):
             Logger.error(Exception("Controller", "action", "The data is not a valid JSON text"))
         
         # CRUD (& Run) actions
-        if action == "post":
-            return cls.__post(rtype, uri, data)
-
-        elif action == "get":
-            return cls.__get(rtype, uri)
-
-        elif action == "put":
-            return cls.__put(rtype, uri, data)
-
-        elif action == "delete":
-            return cls.__delete(rtype, uri)
-
-        elif action == "run":
-            return cls.__run(rtype, uri, data)
+        if action == "list":
+            Q = cls.fetch_list(rtype, page, filters=filters)
+            return cls.__get_query_as_list(Q, return_format=return_format)
+        else:
+            if action == "post":
+                model = cls.__post(rtype, uri, data)
+            elif action == "get":
+                model = cls.__get(rtype, uri)
+            elif action == "put":
+                model = cls.__put(rtype, uri, data)
+            elif action == "delete":
+                model = cls.__delete(rtype, uri)
+            elif action == "run":
+                model = cls.__run(data)
+            
+            if return_format.lower() == "json":
+                return model.as_json()
+            else:
+                return model
 
     # -- C --
 
@@ -74,12 +80,115 @@ class Controller(Base):
     # -- F --
 
     @classmethod
+    def fetch_experiment_list(cls, return_format="", page=1, filters=[]):
+        from gws.model import Experiment
+        Q = Experiment.select().paginate(page, NUMBER_OF_ITEMS_PER_PAGE)
+        return cls.__get_query_as_list(Q, return_format=return_format)
+    
+    @classmethod
+    def fetch_job_list(cls, experiment_uri=None, return_format="", page=1, filters=[]):
+        from gws.model import Job, Experiment, Process, DbManager
+        Q = Job.select() \
+                    .paginate(page, NUMBER_OF_ITEMS_PER_PAGE)
+
+        if not experiment_uri is None :
+            Q = Q.join(Experiment).where(Experiment.uri == experiment_uri)
+
+        # if not process_uri is None :
+        #     # cursor = DbManager.db.execute_sql('SELECT id FROM process WHERE uri = ?', (process_uri,))
+        #     # row = cursor.fetchone()
+        #     # if len(row) == 0:
+        #     #     return None
+
+        #     # _id = row[0]
+        #     # Q = Q.where(Job.process_id == _id)
+            
+        return cls.__get_query_as_list(Q, return_format=return_format)
+
+    @classmethod
+    def fetch_protocol_list(cls, job_uri=None, return_format="", page=1, filters=[]):
+        from gws.model import Protocol, Job
+
+        if job_uri is None:
+            Q = Protocol.select_me().paginate(page, NUMBER_OF_ITEMS_PER_PAGE)
+        else:
+            try:
+                job = Job.get(Job.uri == job_uri)
+                Q = [ job.process ]
+            except:
+                return None
+
+        return cls.__get_query_as_list(Q, return_format=return_format)
+
+    @classmethod
+    def fetch_process_list(cls, job_uri=None, return_format="", page=1, filters=[]):
+        from gws.model import Process, Job
+
+        if job_uri is None:
+            Q = Process.select().paginate(page, NUMBER_OF_ITEMS_PER_PAGE)
+        else:
+            try:
+                job = Job.get(Job.uri == job_uri)
+                Q = [ job.process ]
+            except:
+                return None
+
+        return cls.__get_query_as_list(Q, return_format=return_format)
+
+    @classmethod
+    def fetch_config_list(cls, job_uri=None, return_format="", page=1, filters=[]):
+        from gws.model import Config, Job
+
+        if job_uri is None:
+            Q = Config.select().paginate(page, NUMBER_OF_ITEMS_PER_PAGE)
+        else:
+            try:
+                job = Job.get(Job.uri == job_uri)
+                Q = [ job.config ]
+            except:
+                return None
+
+        return cls.__get_query_as_list(Q, return_format=return_format)
+
+    @classmethod
+    def fetch_resource_list(cls, experiment_uri=None, job_uri=None, return_format="", page=1, filters=[]):
+        from gws.model import Resource, Job, Experiment
+        
+        if not experiment_uri is None: 
+            Q = Resource.select() \
+                        .join(Job) \
+                        .join(Experiment) \
+                        .where(Experiment.uri == experiment_uri)
+        elif not job_uri is None:
+            try:
+                job = Job.get(Job.uri == job_uri)
+                Q = job.resources
+            except:
+                Q = []
+        else:
+            Q = Resource.select().paginate(page, NUMBER_OF_ITEMS_PER_PAGE)
+
+        return cls.__get_query_as_list(Q, return_format=return_format)
+
+
+    @classmethod
+    def fetch_list(cls, rtype: str, page: int, filters=[]) -> 'Model':
+        t = cls.get_model_type(rtype)
+        try:
+            Q = t.select().paginate(page, NUMBER_OF_ITEMS_PER_PAGE)
+            if len(filters) > 0:
+                pass
+            return Q
+        except:
+            return None
+
+    @classmethod
     def fetch_model(cls, rtype: str, uri: str) -> 'Model':
         """
-        Fetch a model using the encoded_uri
+        Fetch a model using the uri
 
-        :param encoded_uri: The uri of the target model
-        :type encoded_uri: str
+        :param uri: The uri of the target model
+        :type uri: str
         :return: A model
         :rtype: Model
         """
@@ -92,14 +201,28 @@ class Controller(Base):
     # -- G --
 
     @classmethod
+    def __get_query_as_list(cls, Q, return_format=""):
+        _list = []
+        if return_format.lower() == "json":
+            for o in Q:
+                _list.append(o.as_json())
+        else:
+            for o in Q:
+                _list.append(o)
+        
+        return _list
+
+    @classmethod
     def __get(cls, rtype: str, uri: str) -> 'ViewModel':
         obj = cls.fetch_model(rtype, uri)
-        from gws.model import ViewModel
+        from gws.model import Model, ViewModel
         if isinstance(obj, ViewModel):
-            vmodel = obj
+            return obj
+        elif isinstance(obj, Model):
+            return obj
         else:
-            Logger.error(Exception("Controller", "__get", f"No ViewModel found for the encoded uri {encoded_uri}"))
-        return vmodel
+            Logger.error(Exception("Controller", "__get", f"No ViewModel or Model found for the encoded uri {uri}"))
+        
 
     @classmethod
     def get_model_type(cls, type_str: str) -> type:
@@ -115,7 +238,21 @@ class Controller(Base):
    
         if type_str is None:
             return None
-            
+        
+        from gws.model import Experiment, Protocol, Process, Resource, Config, Job
+        if type_str.lower() == "experiment":
+            return Experiment
+        elif type_str.lower() == "protocol":
+            return Protocol
+        elif type_str.lower() == "process":
+            return Process
+        elif type_str.lower() == "resource":
+            return Resource
+        elif type_str.lower() == "config":
+            return Config
+        elif type_str.lower() == "job":
+            return Job
+
         tab = type_str.split(".")
         n = len(tab)
         module_name = ".".join(tab[0:n-1])
@@ -216,17 +353,34 @@ class Controller(Base):
     # -- R --
 
     @classmethod
-    def __run(cls, rtype: str, uri: str, data: dict):
-        t = cls.get_model_type(rtype)
-        obj = t()
-        obj.data = data
-
+    async def _run_robot(cls):
+        from gws.robot import create_protocol
+        from gws.model import Experiment
+        e = Experiment()
+        p = create_protocol()
+        p.set_active_experiment(e)
+        e.save()
+        await p.run()
+        return p.save()
+        
+    @classmethod
+    async def __run(cls, process_type: str, process_uri: str, config_params: dict):
         from gws.model import Process
-        import asyncio 
-        if isinstance(obj, Process):
-            asyncio.run( obj.run() )
+        if not process_uri is None:
+            try:
+                proc = Process.get(Process.uri == process_uri)
+            except:
+                proc = None
+        elif not process_type is None:
+            t = cls.get_model_type(process_type)
+            proc = t()
+
+        if isinstance(proc, Process):
+            job = proc.get_active_job()
+            job.config.set_params(config_params)
+            await proc.run()
         else:
-            Logger.error(Exception("Controller", "__run", "Only processes can be run"))
+            Logger.error(Exception("Controller", "__run", "Process not found"))
 
     @classmethod
     def save_all(cls, model_list: list = None) -> bool:

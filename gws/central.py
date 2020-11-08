@@ -6,7 +6,7 @@
 import requests
 from gws.settings import Settings
 from gws.logger import Logger
-from gws.model import Report
+from gws.report import Report
 from gws.lab import Lab
 from gws.model import Experiment, User, Protocol
 
@@ -178,4 +178,9 @@ class Central:
         url = cls.create_url("post-report", experiment_id=report.experiment.id)
         cls.send(url, method="POST", data={"report_uri": report.uri})
     
-    # -- T --
+    # -- V --
+
+    @classmethod
+    def verify_api_key(cls, central_api_key: str):
+        settings = Settings.retrieve()
+        return settings.get_data("central_api_key") == central_api_key

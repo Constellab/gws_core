@@ -9,6 +9,7 @@ class TestConfig(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
+        Config.drop_table()
         pass
 
     @classmethod

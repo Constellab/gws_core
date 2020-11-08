@@ -11,8 +11,8 @@ import inspect
 import hashlib
 import urllib.parse
 import json
-
 import jwt
+
 from base64 import b64encode, b64decode
 from secrets import token_bytes
 
@@ -109,9 +109,15 @@ class Model(BaseModel):
             self.type = self.full_classname()
         elif self.type != self.full_classname():
             # allow object cast after ...
+
             pass
 
         self._init_store()
+
+
+    # -- A --
+
+    # -- C --
 
     def cast(self) -> 'Model':
         """
@@ -257,7 +263,7 @@ class Model(BaseModel):
         :rtype: type
         :Logger.error(Exception: If no model is found)
         """
-        cursor = DbManager.db.execute_sql(f'SELECT type FROM {self._table_name} WHERE id = ?', str(id))
+        cursor = DbManager.db.execute_sql(f'SELECT type FROM {self._table_name} WHERE id = ?', (str(id),))
         row = cursor.fetchone()
         if len(row) == 0:
             Logger.error(Exception("Model", "fetch_type_by_id", "The model is not found."))
@@ -379,12 +385,12 @@ class Viewable(Model):
         :return: The JSON dictionary 
         :rtype: dict
         """
-        return json.dumps({
+        return {
             "uri": self.uri,
             "type": self.type,
             "data" : self.data,
             "creation_datetime" : str(self.creation_datetime),
-        })
+        }
 
     def as_html(self) -> str:
         """
@@ -493,6 +499,8 @@ class Config(Viewable):
 
             self.set_specs( specs )
 
+    # -- A --
+
     # -- D --
 
     def delete(self):
@@ -570,6 +578,10 @@ class Config(Viewable):
 
         self.data["params"][name] = value
 
+    def set_params(self, params: dict):
+        for k in params:
+            self.set_param(k, params[k])
+
     @property
     def specs(self) -> dict:
         """ 
@@ -629,7 +641,6 @@ class Process(Viewable, SystemTrackable):
     config_specs: dict = {}
 
     _event_listener: EventListener = None
-    _unique_hash = "code"
     _input: Input
     _output: Output
     _table_name = 'process'
@@ -639,7 +650,7 @@ class Process(Viewable, SystemTrackable):
 
     def __init__(self, *args, name: str=None,  **kwargs):
         super().__init__(*args, **kwargs)
-        
+
         if self.id is None:
             self.hash = self.__create_hash()
             cls = type(self)
@@ -651,7 +662,7 @@ class Process(Viewable, SystemTrackable):
                 proc = cls.get(cls.hash == self.hash)
                 self.id = proc.id
         else:
-            self.__check_hash()
+           self.__check_hash()
 
         if not name is None:
             self.data['name'] = name
@@ -710,13 +721,15 @@ class Process(Viewable, SystemTrackable):
 
     def __check_hash(self):
         actual_hash = self.__create_hash()
-        if self.hash and self.hash != actual_hash:
+        #print(f"hash => {self.hash}")
+        #print(f"actual_hash => {actual_hash}")
+        if not self.hash is None and self.hash != actual_hash:
             Logger.error(Exception("Process", "__set_hash", "Invalid process hash. The code source of the current process has changed."))
 
     def __create_hash(self):
-        model_t = Controller.get_model_type(self.type)
+        model_t = Controller.get_model_type(self.type) #/:\ Use the true object type (self.type)
         source = inspect.getsource(model_t)
-        return self._unique_hash + ":" + self._hash_encode(source)
+        return self.type + ":" + self._hash_encode(source)
     
     # -- G --
 
@@ -915,11 +928,10 @@ class Process(Viewable, SystemTrackable):
 
     def _run_after_task( self, *args, **kwargs ):
 
-        logger = Logger()
         if self.name:
-            logger.info(f"Task of {self.full_classname()} '{self.name}' successfully finished!")
+            Logger.info(f"Task of {self.full_classname()} '{self.name}' successfully finished!")
         else:
-            logger.info(f"Task of {self.full_classname()} successfully finished!")
+            Logger.info(f"Task of {self.full_classname()} successfully finished!")
 
         self.is_running = False
         self.is_finished = True
@@ -927,7 +939,7 @@ class Process(Viewable, SystemTrackable):
         job = self.get_active_job()
         job.update_state()
         if not job.save():
-            logger.error(Exception(self.classname(), "_run_after_task", f"Cannot save the job"))
+            Logger.error(Exception(self.classname(), "_run_after_task", f"Cannot save the job"))
 
         res = self.output.get_resources()
         for k in res:
@@ -944,6 +956,12 @@ class Process(Viewable, SystemTrackable):
         self._output.propagate()
         
         for proc in self._output.get_next_procs():
+            # ensure that the next process is held by this experiment
+            proc_job = proc.get_active_job()
+            proc_job.experiment = job.experiment
+            proc_job.save()
+
+            # run next
             asyncio.create_task( proc.run() )
 
     def __rshift__(self, name: str) -> OutPort:
@@ -1022,17 +1040,18 @@ class User(Model):
     # -- G --
     
     def __generate_token(self):
-        hash_object = hashlib.sha512(
-            (self.uri + str(self.creation_datetime)).encode()
-        )
-        self.token = hash_object.hexdigest()
+        return b64encode(token_bytes(32)).decode()
     
+    def generate_access_token(self):
+        self.token = self.__generate_token()
+        self.save()
+
     # -- S --
 
     def save(self, *arg, **kwargs):
         if self.id is None:
             if self.token is None:
-                self.__generate_token()
+                self.token = self.__generate_token()
 
         return super().save(*arg, **kwargs)
 
@@ -1080,12 +1099,32 @@ class UserLogin(Model):
 #
 # ####################################################################
 
-class Experiment(Model):
+class Experiment(Viewable):
     
     protocol_id = IntegerField(null=False, index=True)       # store id ref as it may represent different classes
     score = FloatField(null=True, index=True)
     is_in_progress = BooleanField(default=True, index=True)
     _table_name = 'experiment'
+    
+    # -- A --
+
+    def add_report(self, report: 'Report'):
+        report.experiment = self
+
+    def as_json(self) -> str:
+        """
+        Returns JSON (a dictionnary) representation of the model.
+
+        :return: The JSON dictionary 
+        :rtype: dict
+        """
+        _json = super().as_json()
+        _json.update({
+            "protocol_uri": self.protocol.uri,
+            "score": self.score,
+            "is_in_progress": self.is_in_progress,
+        })
+        return _json
 
     # -- D --
 
@@ -1133,12 +1172,14 @@ class Experiment(Model):
 
     @property 
     def protocol(self):
-        return Protocol.get_by_id(self.protocol_id)
+        proto = Protocol.get_by_id(self.protocol_id)
+        return proto.cast()
 
     # -- R --
 
     def run(self):
         self.protocol.run()
+
 
 # ####################################################################
 #
@@ -1146,7 +1187,7 @@ class Experiment(Model):
 #
 # ####################################################################
 
-class Job(Model, SystemTrackable):
+class Job(Viewable, SystemTrackable):
     """
     Job class.
 
@@ -1158,9 +1199,9 @@ class Job(Model, SystemTrackable):
     :type user: User
     """
     
-    process_id = IntegerField(null=False, index=True)       # store id ref as it may represent different classes
-    config_id = IntegerField(null=False, index=True)        # store id ref as it may represent config classes
-    experiment = ForeignKeyField(Experiment, null=True, backref='jobs')     #only valid for protocol
+    process_id = IntegerField(null=False, index=True)                       # store id ref as it may represent different classes
+    config_id = IntegerField(null=False, index=True)                        # store id ref as it may represent config classes
+    experiment = ForeignKeyField(Experiment, null=True, backref='jobs')     # only valid for protocol
     is_running: bool = BooleanField(default=False, index=True)
     is_finished: bool = BooleanField(default=False, index=True)
     _process = None
@@ -1169,17 +1210,42 @@ class Job(Model, SystemTrackable):
 
     def __init__(self, *args, process: Process = None, config: Config = None, **kwargs):
         super().__init__(*args, **kwargs)
-
+        
         if self.id is None:
-            if not isinstance(config, Config):
+            if (not config is None) and (not isinstance(config, Config)):
                 Logger.error(Exception("Job", "__init__", "The config must be an instance of Config"))
  
-            if not isinstance(process, Process):
+            if (not process is None) and (not isinstance(process, Process)):
                 Logger.error(Exception("Job", "__init__", "The process must be an instance of Process"))
             
             self._config = config
             self._process = process
             self.update_state()
+
+    # -- A --
+
+    def as_json(self) -> str:
+        """
+        Returns JSON (a dictionnary) representation of the model.
+
+        :return: The JSON dictionary 
+        :rtype: dict
+        """
+        _json = super().as_json()
+        _json.update({
+            "process": {
+                "uri": self.process.uri,
+                "type": self.process.type,
+            },
+            "config": {
+                "uri": self.config.uri,
+                "type": self.config.type,
+            },
+            "experiment": {"uri": self.experiment.uri},
+            "is_running": self.is_running,
+            "is_finished": self.is_finished
+        })
+        return _json
 
     # -- C --
 
@@ -1238,8 +1304,9 @@ class Job(Model, SystemTrackable):
         Update the state of the job
         """
 
-        self.is_running = self.process.is_running
-        self.is_finished = self.process.is_finished
+        if not self.process is None:
+            self.is_running = self.process.is_running
+            self.is_finished = self.process.is_finished
 
     def set_experiment(self, experiment: 'Experiment'):
         if not isinstance(experiment, Experiment):
@@ -1318,8 +1385,7 @@ class Protocol(Process, SystemTrackable):
     _connectors = []
     _interfaces = {}
     _outerfaces = {}
-    _unique_hash = "graph"
-    _table_name = 'protocol'
+    _table_name = 'process'
 
     #/!\ Write protocols in the 'process' table
     #_table_name = 'process'
@@ -1414,7 +1480,7 @@ class Protocol(Process, SystemTrackable):
 
     def __create_hash(self):
         graph = self.dumps()
-        return self._unique_hash + ":" + self._hash_encode(graph)
+        return self.full_classname() + ":" + self._hash_encode(graph)
 
     @classmethod
     def create_table(cls, *args, **kwargs):
@@ -1433,50 +1499,53 @@ class Protocol(Process, SystemTrackable):
         Returns the protocol graph
         """
 
-        graph = dict(
-            name = self.name,
-            nodes = {},
-            links = [],
-            interfaces = {},
-            outerfaces = {},
-        )
+        if self.data.get("graph") is None:
+            graph = dict(
+                name = self.name,
+                nodes = {},
+                links = [],
+                interfaces = {},
+                outerfaces = {},
+            )
 
-        for conn in self._connectors:
-            link = conn.to_json()
-            is_left_node_found = False
-            is_right_node_found = False
+            for conn in self._connectors:
+                link = conn.to_json()
+                is_left_node_found = False
+                is_right_node_found = False
+                for k in self._processes:
+                    if link["from"]["node"] is self._processes[k]:
+                        link["from"]["node"] = k
+                        is_left_node_found = True
+
+                    if link["to"]["node"] is self._processes[k]:
+                        link["to"]["node"] = k
+                        is_right_node_found = True
+                    
+                    if is_left_node_found and is_right_node_found:
+                        graph['links'].append(link)
+                        break
+
             for k in self._processes:
-                if link["from"]["node"] is self._processes[k]:
-                    link["from"]["node"] = k
-                    is_left_node_found = True
+                graph["nodes"][k] = self._processes[k].full_classname()
 
-                if link["to"]["node"] is self._processes[k]:
-                    link["to"]["node"] = k
-                    is_right_node_found = True
-                
-                if is_left_node_found and is_right_node_found:
-                    graph['links'].append(link)
-                    break
+            for k in self._interfaces:
+                port = self._interfaces[k]
+                proc = port.parent.parent
+                for name in self._processes:
+                    if proc is self._processes[name]:
+                        graph['interfaces'][k] = {"proc": name, "port": port.name}
+                        break
+            
+            for k in self._outerfaces:
+                port = self._outerfaces[k]
+                proc = port.parent.parent
+                for name in self._processes:
+                    if proc is self._processes[name]:
+                        graph['outerfaces'][k] = {"proc": name, "port": port.name}
+                        break
+        else:
+            graph = self.data.get("graph")
 
-        for k in self._processes:
-            graph["nodes"][k] = self._processes[k].full_classname()
-
-        for k in self._interfaces:
-            port = self._interfaces[k]
-            proc = port.parent.parent
-            for name in self._processes:
-                if proc is self._processes[name]:
-                    graph['interfaces'][k] = {"proc": name, "port": port.name}
-                    break
-        
-        for k in self._outerfaces:
-            port = self._outerfaces[k]
-            proc = port.parent.parent
-            for name in self._processes:
-                if proc is self._processes[name]:
-                    graph['outerfaces'][k] = {"proc": name, "port": port.name}
-                    break
-        
         if as_dict:
             return graph
         else:
@@ -1619,8 +1688,15 @@ class Protocol(Process, SystemTrackable):
         Override mother class method.
         """
 
-        if self.get_active_experiment() is None:
+        e = self.get_active_experiment()
+        e.save()
+        if e is None:
             raise Exception("No experiment defined for the active job of the protocol")
+        
+        for k in self._processes:
+            job = self._processes[k].get_active_job()
+            job.experiment = e
+            job.save()
 
         self._run_before_task()
 
@@ -1654,6 +1730,7 @@ class Protocol(Process, SystemTrackable):
     def set_active_experiment(self, experiment: Experiment):
         job = self.get_active_job()
         job.set_experiment(experiment)
+        experiment.protocol_id = self.id
 
     def _set_inputs(self, *args, **kwargs):
         for k in self._interfaces:
@@ -1730,7 +1807,27 @@ class Resource(Viewable, SystemTrackable):
     """
 
     job = ForeignKeyField(Job, null=True, backref='resources')
+    #experiment = ForeignKeyField(Experiment, null=True, backref='experiment')
     _table_name = 'resource'
+
+    # -- A --
+
+    def as_json(self) -> dict:
+        """
+        Returns JSON (a dictionnary) representation of the model.
+
+        :return: The JSON dictionary 
+        :rtype: dict
+        """
+        _json = super().as_json()
+
+        if not self.job is None:
+            _json.update({
+                "job_uri": self.job.uri,
+                "experiment_uri": self.job.experiment.uri,
+            })
+  
+        return _json
 
     # -- D --
 
@@ -1832,15 +1929,6 @@ class ResourceSet(Resource):
                 self._set[k] = Controller.fetch_model(rtype, uri)
         
         return self._set
-
-# ####################################################################
-#
-# Report class
-#
-# ####################################################################
-
-class Report(Resource):
-    pass
 
 # ####################################################################
 #

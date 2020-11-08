@@ -112,8 +112,8 @@ class TestProcess(unittest.TestCase):
             res = Robot.get_by_id( p3.output['robot'].id )
             self.assertTrue( isinstance(res, Robot) )
 
-            e = res.job
-            saved_proc = e.process
+            j = res.job
+            saved_proc = j.process
             self.assertEqual( saved_proc, p3 )
             self.assertTrue( saved_proc.input['robot'] is None )
 

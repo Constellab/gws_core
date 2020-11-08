@@ -16,14 +16,19 @@ class TestJob(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        Process.drop_table()
+        Config.drop_table()
+        Job.drop_table()
         pass
 
-    def test_experiment(self):
-        e = Experiment()
+    def test_job(self):
+        #e = Experiment()
         proc = Process()
         proc.save()
 
-        e = Job(process=proc, config=Config())
-        is_saved = e.save()
-
+        j1 = Job(process=proc, config=Config())
+        is_saved = j1.save()
         self.assertTrue(is_saved)
+
+        j2 = Job.get(Job.id == j1.id)
+        self.assertEqual(j1, j2)

@@ -66,6 +66,11 @@ class Settings(PWModel):
             token = b64encode(token_bytes(32)).decode()
             settings.set_data("token", token)
 
+            #random central_api_key by default (security)
+            if settings.data.get("central_api_key", None) is None:
+                central_api_key = b64encode(token_bytes(32)).decode()
+                settings.set_data("central_api_key", central_api_key)
+
             #no uri by default
             settings.set_data("uri", "")
 

@@ -16,7 +16,9 @@ class TestCentral(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        pass
+        User.drop_table()
+        Experiment.drop_table()
+        Protocol.drop_table()
 
     def test_create_user(self):
         data = {
