@@ -58,8 +58,8 @@ def page_exists(page,brick=brick):
 async def display_html_home_page():
     return RedirectResponse(url=f'/page/{brick}')
 
-@app.get("/page/{brick}/", response_class=HTMLResponse)
-@app.get("/page/{brick}/{page}", response_class=HTMLResponse)
+@app.api_route("/page/{brick}", response_class=HTMLResponse, methods=["GET", "POST"])
+@app.api_route("/page/{brick}/{page}", response_class=HTMLResponse, methods=["GET", "POST"])
 async def display_html_brick_page(request: Request, brick, page: Optional[str] = 'index', only_inner_html: Optional[str] = None) :
     if only_inner_html == "true":
         #run brick endpoints
