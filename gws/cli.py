@@ -13,6 +13,6 @@ from gws.logger import Logger
 ))
 @click.pass_context
 @click.option('--user', '-u', help='User name')
-def hello(ctx,name):
+def hello(ctx,user):
     print("Hello", user)
     print("Welcome in the CLI!")

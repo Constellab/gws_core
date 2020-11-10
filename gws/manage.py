@@ -10,7 +10,12 @@ import json
 __cdir__ = os.path.dirname(os.path.abspath(__file__))
 
 ROOT_DIR = os.path.join(__cdir__, "../../../../")
-BASE_WORKSPACE_DIR = os.path.join(ROOT_DIR, "./gws")
+
+if os.path.exists(os.path.join(ROOT_DIR, "./.gws")):
+    BASE_WORKSPACE_DIR = os.path.join(ROOT_DIR, "./.gws")
+else:
+    BASE_WORKSPACE_DIR = os.path.join(ROOT_DIR, "./gws")
+
 BASE_BRICK_DIR = os.path.join(BASE_WORKSPACE_DIR, "./bricks")
 BASE_LAB_DIR = os.path.join(BASE_WORKSPACE_DIR, "./labs")
 BASE_EXTERN_DIR = os.path.join(BASE_WORKSPACE_DIR, "./externs")
