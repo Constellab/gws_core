@@ -39,10 +39,6 @@ class OAuth2CentralAPIKeyHeader(OAuth2):
         header_scheme, header_param = get_authorization_scheme_param(
             header_authorization
         )
-
-        print("xxxx")
-        print(header_scheme)
-        print(header_param)
         
         if header_scheme.lower() == "api-key":
             authorization = True

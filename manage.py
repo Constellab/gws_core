@@ -7,17 +7,16 @@ import sys
 import os
 
 __cdir__ = os.path.dirname(os.path.abspath(__file__))
-rel_gws_path = "./gws/bricks/gws"
-is_found  = False
-for k in range(0,10):
-    rel_gws_path = os.path.join("../", rel_gws_path)
-    abs_gws_path = os.path.join(__cdir__, rel_gws_path)
-    if os.path.exists(abs_gws_path):
-        sys.path.append(abs_gws_path)
-        is_found  = True
-        break
+def set_path(rel_gws_path):
+    for _ in range(0,10):
+        rel_gws_path = os.path.join("../", rel_gws_path)
+        abs_gws_path = os.path.join(__cdir__, rel_gws_path)
+        if os.path.exists(abs_gws_path):
+            sys.path.append(abs_gws_path)
+            return True
 
-if not is_found:
+is_set = set_path("./gws/bricks/gws") or set_path("./.gws/bricks/gws")
+if not is_set:
     raise Exception("Cannot find the base gws brick")
 
 from gws import runner

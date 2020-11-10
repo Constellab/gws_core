@@ -9,7 +9,7 @@ new GViewTemplate({
             data.titleImg = data.titleImg || ""
             data.titleHeight = data.titleHeight || "150px"
             container.innerHTML = `
-                <div class="demo-card-wide mdl-card mdl-shadow--2dp" style="`+data.style+`">
+                <div class="mdl-card mdl-shadow--2dp" style="`+data.style+`">
                     <div class="mdl-card__title" style="background: url('`+data.titleImg+`'); height: `+data.titleHeight+`">
                         <h2 class="mdl-card__title-text">`+data.title+`</h2>
                     </div>

@@ -133,8 +133,6 @@ window.addEventListener("load", function () {
     var delayedElements = []
     var delayedSripts = []
 
-    createCurrentElements()
-
     const observer = new MutationObserver(function (mutationsList, observer) {
         for (let mutation of mutationsList) {
             if (mutation.type === 'childList') {
@@ -147,6 +145,8 @@ window.addEventListener("load", function () {
     });
     observer.observe(targetNode, config);
 
+    createCurrentElements()
+    
     function createGView(element, loadDelayed) {
         if(loadDelayed == null){
             loadDelayed = false

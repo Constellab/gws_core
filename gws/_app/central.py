@@ -32,6 +32,10 @@ async def login_user(request: Request, user_access_token: str, redicrect_url: st
 async def logout_user(request: Request, current_user: _User = Depends(get_current_active_user)):
     return await logout(current_user, redicrect_url="/page/gws/logout")
 
+@central_app.get("/open-jupyter-lab", response_model=_User)
+async def open_jupyter_lab(current_user: _User = Depends(get_current_active_user)):
+    return current_user
+
 # User
 class _User(BaseModel):
     uri: str

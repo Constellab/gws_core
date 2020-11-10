@@ -23,7 +23,7 @@ from gws._auth.central_api_key_header import oauth2_header_scheme
 settings = Settings.retrieve()
 SECRET_KEY = settings.data.get("secret_key")
 ALGORITHM = "HS256"
-CENTRAL_ACCESS_TOKEN_EXPIRE_MINUTES = 30
+CENTRAL_ACCESS_TOKEN_EXPIRE_MINUTES = 3
 
 class _User(BaseModel):
     uri: str
