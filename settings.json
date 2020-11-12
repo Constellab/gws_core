@@ -44,7 +44,7 @@
         },
         "themes" : [ ],
         "scripts": [
-            "/static/dist/mdl/material.min.js",
+            "/static/dist/mdc/material-web-components.min.js",
 
             "/static/dist/uuidv4/8.1.0/uuidv4.js",
             "/static/dist/jquery/3.5.1/jquery.min.js",
@@ -69,7 +69,7 @@
         ],
         "modules": ["/static/gws/js/g3/g3.js"],
         "styles": [
-            "/static/dist/mdl/material.min.css",
+            "/static/dist/mdc/material-web-components.min.css",
             "https://fonts.googleapis.com/icon?family=Material+Icons",
             
             "/static/dist/fontawesome/5.14.0/css/all.min.css",

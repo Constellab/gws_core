@@ -6,41 +6,45 @@
  * About us: https://gencovery.com
  */
 
-class GWS{
+class gws{
 
     static send(request) {   
-        request.type = request.type || "application/json"
+        var contentType = "text/html"
+        if(request.type == "json")
+            var contentType = "application/json"
+            
         request.method = request.method || "GET"
-        var xobj = new XMLHttpRequest();
-        xobj.overrideMimeType(request.type);
-        xobj.open(request.method, request.url, true);
-        xobj.onreadystatechange = function () {
-            if (xobj.readyState == XMLHttpRequest.DONE){
-                if(xobj.status == 200) {
-                    if(request.type == "application/json"){
-                        request.success(JSON.parse(xobj.responseText));
-                    } else{
-                        request.success(xobj.responseText);
-                    }
-                } else{
-                    console.log(xobj)
-                    request.failure(xobj.response);
-                }
+        fetch('?only_inner_html=true', { 
+            method: request.method,
+            headers: new Headers({
+                "Content-Type": contentType,
+            })
+        }).then(function(response) {
+            if(request.type == "json"){
+                return response.json()
+            } else{
+                return response.text()
             }
-        };
-        xobj.send(null);  
+        }).then(function(data) {
+            request.success(data);
+        }).catch(function(error) {
+            request.failure(error.message);
+        });
     }
 
-    static openPage(){
-        GWS.send({
+    static loadPage(onload){
+        gws.send({
             "url": "?only_inner_html=true",
             "type": "application/html",
             "method": "GET",
             "success":function(html){
                 document.querySelector(".page-content").innerHTML = html
+                GView.upgradeAll()
+                onload()
             },
             "failure":function(html){
                 document.querySelector(".page-content").innerHTML = html
+                onload()
             }
         })
     }

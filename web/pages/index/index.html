@@ -4,31 +4,63 @@
 
 {% block body %}
 
-<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
-
-    {% include 'index/header.html' %}
-
     {% include 'index/sidebar.html' %}
 
-    <main class="mdl-layout__content">
-        <div class="page-content gws-page-content">
-            {% block content %}
-                <div class="mdl-grid" style="margin-top: 100px">
-                    <div class="mdl-layout-spacer"></div>
-                    <div class="mdl-cell mdl-cell--4-col">
-                        <div class="mdl-progress mdl-js-progress mdl-progress__indeterminate"></div>
-                    </div>
-                    <div class="mdl-layout-spacer"></div>
-                </div>
-                <script>
-                    GWS.openPage()
-                </script>
-            {% endblock %}
+    <div class="mdc-drawer-scrim"></div>
+
+
+    <div class="mdc-drawer-app-content"></div>
+
+        {% include 'index/header.html' %}
+        <div role="progressbar" class="mdc-linear-progress mdc-linear-progress--indeterminate" aria-label="Waiting..." aria-valuemin="0" aria-valuemax="1" aria-valuenow="0">
+            <div class="mdc-linear-progress__buffer">
+              <div class="mdc-linear-progress__buffer-bar"></div>
+              <div class="mdc-linear-progress__buffer-dots"></div>
+            </div>
+            <div class="mdc-linear-progress__bar mdc-linear-progress__primary-bar">
+              <span class="mdc-linear-progress__bar-inner"></span>
+            </div>
+            <div class="mdc-linear-progress__bar mdc-linear-progress__secondary-bar">
+              <span class="mdc-linear-progress__bar-inner"></span>
+            </div>
         </div>
-    </main>
-    
+
+        <div class="mdc-layout-grid">
+            <div class="mdc-layout-grid__inner">
+                <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12 page-content"></div>
+            </div>
+        </div>
+
+    </div>
+
     {% include 'index/footer.html' %}
 
-</div>
+    <script>
+        window.addEventListener("DOMContentLoaded", function () {
+            const drawer = mdc.drawer.MDCDrawer.attachTo(document.querySelector('.mdc-drawer'));
+            const progressBar = mdc.linearProgress.MDCLinearProgress.attachTo(document.querySelector('.mdc-linear-progress'));
+            progressBar.open()
+
+            const listEl = document.querySelector('.mdc-drawer .mdc-list');
+            const mainContentEl = document.querySelector('.main-content');
+
+            listEl.addEventListener('click', (event) => {
+                drawer.open = false;
+            });
+
+            document.body.addEventListener('MDCDrawer:closed', () => {
+                //mainContentEl.querySelector('input, button').focus();
+            });
+
+            const btn = document.querySelector('.mdc-icon-button');
+            btn.addEventListener('click', (event) => {
+                drawer.open = true;
+            });
+            
+            gws.loadPage(function(){
+                progressBar.close()
+            })
+        })
+    </script>
 
 {% endblock %}

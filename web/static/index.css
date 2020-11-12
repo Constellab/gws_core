@@ -35,6 +35,5 @@ div[class^='gview:']{
     display: none
 }
 
-.gws-page-content{
-    padding: 18px
+.page-content{
 }

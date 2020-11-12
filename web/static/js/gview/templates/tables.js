@@ -6,36 +6,41 @@ new GViewTemplate({
             data.coltypes = data.coltypes || []
 
             for(var i in data.colnames){
-                cls = "mdl-data-table__cell--non-numeric"
+                cls = ""
                 if(i < data.coltypes.length && data.coltypes[i] == "num" ){
-                    cls = ""
+                    cls = "mdc-data-table__header-cell--numeric"
                 }
-                header += '<th class="'+cls+'">'+data.colnames[i]+'</th>'
+                header += '<th class="mdc-data-table__header-cell role="columnheader" scope="col" '+cls+'">'+data.colnames[i]+'</th>'
             }
 
             var body = ''
             for(var row of data.data){
                 var rowText = ""
                 for(var val of row){
-                    rowText += '<td>'+val+'</td>'
+                    rowText += '<td class="mdc-data-table__cell mdc-data-table__cell--numeric">'+val+'</td>'
                 }
-                body += '<tr>'+rowText+'</tr>'
+                body += '<tr class="mdc-data-table__row">'+rowText+'</tr>'
             }
             
             data.style = data.style || ""
             container.innerHTML = `
-                <table class="mdl-data-table mdl-js-data-table mdl-data-table--selectable mdl-shadow--2dp">
-                    <thead>
-                    <tr>
-                        `+header+`
-                    </tr>
-                    </thead>
-                    <tbody>
-                        `+body+`
-                    </tbody>
-                </table>
+                <div class="mdc-data-table">
+                    <div class="mdc-data-table__table-container">
+
+                        <table class="mdc-data-table__table">
+                            <thead>
+                            <tr class="mdc-data-table__header-row">
+                                `+header+`
+                            </tr>
+                            </thead>
+                            <tbody class="mdc-data-table__content">
+                                `+body+`
+                            </tbody>
+                        </table>
+
+                    </div>
+                </div>
             `;
-            componentHandler.upgradeDom();
         }
         
         return _table

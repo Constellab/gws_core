@@ -6,20 +6,26 @@ new GViewTemplate({
             data.text = data.text || ""
             data.href = data.href || ""
             data.target = data.target || ""
+            data.variant = data.variant || "raised"
+
+            if(! ["text", "raised", "outlined", "unelevated"].includes(data.variant) ){
+                data.variant = "raised"
+            }
             if(data.href != ""){
                 container.innerHTML = `
-                    <a class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect" id="`+ data.id +`" href="`+ data.href +`" target="`+ data.target +`">
+                    <a id="`+ data.id +`" class="mdc-button mdc-button--`+data.variant+`" href="`+ data.href +`" target="`+ data.target +`"> 
+                        <span class="mdc-button__ripple"></span>
                         `+ data.text +`
                     </a>
                 `;
             } else{
                 container.innerHTML = `
-                    <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect" id="`+ data.id +`">
+                    <button id="`+ data.id +`" class="mdc-button mdc-button--`+data.variant+`"> 
+                        <span class="mdc-button__ripple"></span>
                         `+ data.text +`
                     </button>
                 `;
             }
-            componentHandler.upgradeDom();
         }
         return _btn
     }

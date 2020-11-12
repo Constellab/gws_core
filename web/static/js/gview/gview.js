@@ -40,12 +40,6 @@ class GView{
         GViewCollector.views[elem.id] = elem
     }
 
-    // static submit(request){
-    //     data = GView.send(request)
-    //     view = GViewCollector.views[data.id]
-    //     view.render(data)
-    // }
-
     //-- C --
 
     static className(elem){
@@ -109,8 +103,6 @@ class GView{
             }
             this._dom.userData["gview"] = this
         }   
-
-        //componentHandler.upgradeAllRegistered();
     }
 
     //-- S --
@@ -119,103 +111,75 @@ class GView{
         return document.querySelectorAll("div[class^='"+GView.classPrefix+"']")
     }
 
+    //-- U --
+
+    static upgradeAll(force) {
+        force = force || false;
+        var elements = GView.selectAll()
+        elements.forEach(elem => {
+            GView.upgrade(elem, force)
+        });
+    }
+
+    static upgrade(element, force) {
+        force = force || false;
+        if(typeof(element) == "string"){
+            element = document.querySelector(element)
+            if(element == null) return;
+        }
+        
+        if(!GView.isGView(element)) return;
+        if(element.dataset.isLoaded && !force) return;
+        var data = {}
+        if(element.hasAttribute("json")){
+            data = JSON.parse(element.innerText)
+        } else{
+            //read HTML fields
+            for(var i = 0; i<element.childNodes.length; i++){
+                var child = element.childNodes[i]
+                if (typeof child.tagName == "string"){
+                    if (child.tagName.toLowerCase() == "div"){
+                        var attr = child.attributes[0].name
+                        data[attr] = child.innerHTML
+                        child.innerHTML = ""    //remove template HTML content to prevent id collisions
+                    } else if(child.tagName.toLowerCase() == "script"){
+                        eval(child.innerHTML)
+                    }
+                }
+            }
+            
+            //read TEXT fields
+            for(i in element.dataset){
+                data[i] = element.dataset[i]
+            }
+        }
+        
+        if(element.hasAttribute("target")){
+            if(loadDelayed){
+                var view = new GView(element)
+                view.render(data)
+            } else{
+                delayedElements.push(element)
+            }
+        } else{
+            var view = new GView(element)
+            view.render(data)
+        }
+
+        element.dataset.isLoaded = true
+    }
 }
 
 GView.classPrefix = "gview:";
+
+// window.addEventListener("DOMContentLoaded", function () {
+//     GView.upgradeAll()
+// })
 
 /**
  * Global Observer
  */
 
-window.addEventListener("load", function () {
-    const targetNode = document.body
-    const config = { childList: true, subtree: true };
-    var delayedElements = []
-    var delayedSripts = []
-
-    const observer = new MutationObserver(function (mutationsList, observer) {
-        for (let mutation of mutationsList) {
-            if (mutation.type === 'childList') {
-                mutation.addedNodes.forEach(e => {
-                    createGView(e)
-                })
-            }
-        }
-        createDelayedElements()
-    });
-    observer.observe(targetNode, config);
-
-    createCurrentElements()
-    
-    function createGView(element, loadDelayed) {
-        if(loadDelayed == null){
-            loadDelayed = false
-        }
-
-        if (GView.isGView(element)) {       
-            var data = {}
-            if(element.hasAttribute("json")){
-                data = JSON.parse(element.innerText)
-            } else{
-                //read HTML field
-                for(var i = 0; i<element.childNodes.length; i++){
-                    child = element.childNodes[i]
-                    if (typeof child.tagName == "string"){
-                        if (child.tagName.toLowerCase() == "div"){
-                            var attr = child.attributes[0].name
-                            data[attr] = child.innerHTML
-                            child.innerHTML = ""    //remove template HTML content to prevent id collisions
-                        } else if(child.tagName.toLowerCase() == "script"){
-                            delayedSripts.push(child.innerHTML)
-                        }
-                    }
-                }
-                
-                //read TEXT field
-                for(i in element.dataset){
-                    data[i] = element.dataset[i]
-                }
-            }
-            
-            if(element.hasAttribute("target")){
-                if(loadDelayed){
-                    var view = new GView(element)
-                    view.render(data)
-                } else{
-                    delayedElements.push(element)
-                }
-            } else{
-                var view = new GView(element)
-                view.render(data)
-            }
-        }
-
-    }
-
-    function createCurrentElements(){
-        var elements = GView.selectAll()
-        elements.forEach(elem => {
-            createGView(elem)
-        });
-        createDelayedElements()
-    }
-
-    function createDelayedElements(){
-        for (let i in delayedElements) {
-            createGView(delayedElements[i], true)
-        }
-        delayedElements = []
-        executeDelayedScripts()
-    }
-
-    function executeDelayedScripts(){
-        for (let i in delayedSripts) {
-            
-            eval(delayedSripts[i])
-        }
-        delayedSripts = []
-    }
-})
 
 document.addEventListener('click',function(e){
     isSubmitButtonClicked = 
@@ -231,12 +195,4 @@ document.addEventListener('click',function(e){
             "type": "html"
         })
     }
- });
-
-//  function createElementFromHTML(htmlString) {
-//     var div = document.createElement('div');
-//     div.innerHTML = htmlString.trim();
-  
-//     // Change this to div.childNodes to support multiple top-level nodes
-//     return div.firstChild; 
-//   }
+});

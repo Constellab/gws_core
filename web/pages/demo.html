@@ -1,4 +1,4 @@
-<h4>{{ data.title }}</h4>
+<h4 class="mdc-typography--headline4">Table</h4>
 
 <div class="gview:table" json="true">
     {
@@ -19,7 +19,7 @@
     }
 </div>
 
-<br>
+<h4 class="mdc-typography--headline4">Cards</h4>
 
 <div class="gview:card">
     <div title>Test card</div>
@@ -41,7 +41,29 @@
     </div>
 </div>
 
-<br>
+<h4 class="mdc-typography--headline4">Button</h4>
+
+<div class="gview:button">
+    <div text>Button</div>
+</div>
+
+<div class="gview:button" data-href="https://google.com" data-target='_blank'>
+    <div text>Google.com</div>
+</div>
+
+<div class="gview:button" data-variant="outlined">
+    <div text>Outlined</div>
+</div>
+
+<div class="gview:button" data-variant="unelevated">
+    <div text>Unelavated</div>
+</div>
+
+<div class="gview:button" data-variant="text">
+    <div text>Text</div>
+</div>
+
+<h4 class="mdc-typography--headline4">Form</h4>
 
 <div class="gview:form" json="true" id="my-form">
     {
@@ -49,13 +71,15 @@
         "fields":[
             {"type": "text", "value": "", "disabled": false, "label": "Sirname", "name": "sirname"},
             {"type": "text", "value": "", "disabled": false, "label": "Firstname", "name": "firstname"},
+            {"type": "select", "options": {"paris": "Paris", "lyon": "Lyon", "lille": "Lille"}, "selected": "lyon", "label": "School", "name": "school"},
+            {"type": "textarea", "value": "Ceci est une description", "label": "Description", "name": "description", "newline": "true"},
             {"type": "text", "value": "", "valuetype": "numeric", "disabled": false, "label": "Age", "name": "age"}
         ],
-        "submit": {"value": "Submit", "url": "./"}
+        "submit": {"url": "./", "value": "Submit"}
     }
 </div>
 
-<br>
+<h4 class="mdc-typography--headline4">Graph</h4>
 
 <div class="gview:cell-g3" json="true">
     {
