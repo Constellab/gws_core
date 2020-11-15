@@ -35,11 +35,10 @@ class Central:
     def create_user(cls, data: dict):
         user = User.get_by_uri(data['uri'])
         if user is None:
-            user = User(uri=data['uri'], token=data['token'])
+            user = User(uri=data['uri'])
             if user.save():
                 return {
                     "uri": user.uri,
-                    "token": user.token
                 }
             else:
                 raise Exception("Cannot save the user")

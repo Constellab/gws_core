@@ -30,11 +30,21 @@ class _User(BaseModel):
     token: str
     is_active: bool
 
+
+
 def check_api_key(api_key: str = Depends(oauth2_header_scheme)):
     if not Central.verify_api_key(api_key):
         raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized"
             )
+
+# def central_origin(func):
+#     def wrapper(*args, **kwargs):
+#         print("xxxx")
+#         print(kwargs)
+#         check_api_key(*args, **kwargs)
+#         return func(*args, **kwargs)
+#     return wrapper
 
 def get_user(user_uri:str):
     try:
@@ -54,10 +64,8 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-async def generate_user_access_token(user_uri: str):
-    print("yyyyy")
-    print(user_uri)
-    user = get_user(user_uri)
+async def generate_user_access_token(uri: str):
+    user = get_user(uri)
     if not user or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

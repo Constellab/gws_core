@@ -17,10 +17,14 @@ from gws._auth.central import   (   check_api_key,
                                 )
 
 from gws._auth.user import (    OAuth2UserTokenRequestForm, _Token, 
-                                login, logout, _User,
+                                login, logout,
                                 get_current_active_user
                             )
 central_app = FastAPI(docs_url="/apidocs")
+
+# User
+class _User(BaseModel):
+    uri: str
 
 @central_app.get("/login/{user_access_token}")
 async def login_user(request: Request, user_access_token: str, redicrect_url: str = "/"):
@@ -36,11 +40,6 @@ async def logout_user(request: Request, current_user: _User = Depends(get_curren
 async def open_jupyter_lab(current_user: _User = Depends(get_current_active_user)):
     return current_user
 
-# User
-class _User(BaseModel):
-    uri: str
-    token: str
-
 @central_app.get("/me/", response_model=_User)
 async def read_users_me(current_user: _User = Depends(get_current_active_user)):
     return current_user
@@ -55,6 +54,7 @@ async def add_user_to_the_lab(user: _User):
 
 class _UserUri(BaseModel):
     uri: str
+
 
 @central_app.post("/user/generate-access-token", response_model=_Token)
 async def generate_user_access_token(user_uri: _UserUri, _ = Depends(check_api_key)):
