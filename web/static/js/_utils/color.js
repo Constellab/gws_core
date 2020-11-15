@@ -5,7 +5,7 @@
  * About us: https://gencovery.com
  */
 
-import { palette } from '/static/dist/palette-js/palette.js'
+import { palette } from '/static-dist/palette-js/palette.js'
 
 export class Color {
 

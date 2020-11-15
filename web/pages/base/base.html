@@ -10,15 +10,28 @@
     <link rel="icon" type="{{ settings.app.favicon.type }}" href="{{ settings.app.favicon.src }}" />
     
     {% for url in settings.app.styles %}
-    <link rel="stylesheet" type="text/css" href="{{ url }}"></link>
+        <link rel="stylesheet" type="text/css" href="{{ url }}"></link>
+    {% endfor %}
+
+    {% for url in scripts.css %}
+        <link rel="stylesheet" type="text/css" href="{{ url }}"></link>
     {% endfor %}
 
     {% for url in settings.app.scripts %}
-    <script src="{{ url }}"></script>
+        <script src="{{ url }}"></script>
     {% endfor %}
 
+    {% for url in scripts.js %}
+        <script src="{{ url }}"></script>
+    {% endfor %}
+
+
     {% for url in settings.app.modules %}
-    <script src="{{ url }}" type="module"></script>
+        <script src="{{ url }}" type="module"></script>
+    {% endfor %}
+
+    {% for url in scripts.module_js %}
+        <script src="{{ url }}" type="module"></script>
     {% endfor %}
 
     <title>{% block title %}{% endblock %}</title>

@@ -5,7 +5,10 @@
 
 import inspect
 import re
+
 from peewee import SqliteDatabase, Model
+from playhouse.sqlite_ext import JSONField, RowIDField, SearchField, FTS5Model
+
 from slugify import slugify as convert_to_slug
 
 from gws.settings import Settings
@@ -127,62 +130,16 @@ def format_table_name(cls):
     model_name = cls._table_name
     return model_name.lower()
 
+def format_fts_table_name(cls):
+    model_name = cls._related_model._table_name + "_fts"
+    return model_name.lower()
+
 class DbManager:
     """
     DbManager class. Provides backend feature for managing databases. 
     """
     settings = Settings.retrieve()
     db = SqliteDatabase(settings.db_path)
-    
-    # @staticmethod
-    # def create_tables(models: list, **options):
-    #     """
-    #     Creates the tables of a list of models. Wrapper of :meth:`DbManager.db.create_tables`
-    #     :param models: List of model instances
-    #     :type models: list
-    #     :param options: Extra parameters passed to :meth:`DbManager.db.create_tables`
-    #     :type options: dict, optional
-    #     """
-    #     DbManager.db.create_tables(models, **options)
-
-    # @staticmethod
-    # def drop_tables(models: list, **options):
-    #     """
-    #     Drops the tables of a list of models. Wrapper of :meth:`DbManager.db.drop_tables`
-    #     :param models: List of model instances
-    #     :type models: list
-    #     :param options: Extra parameters passed to :meth:`DbManager.db.create_tables`
-    #     :type options: dict, optional
-    #     """
-    #     DbManager.db.drop_tables(models, **options)
-
-    # @staticmethod
-    # def connect_db() -> bool:
-    #     """
-    #     Open a connection to the database. Reuse existing open connection if any. 
-    #     Wrapper of :meth:`DbManager.db.connect`
-    #     :return: True if the connection successfully opened, False otherwise
-    #     :rtype: bool
-    #     """
-    #     return DbManager.db.connect(reuse_if_open=True)
-    
-    # @staticmethod
-    # def close_db() -> bool:
-    #     """
-    #     Close the connection to the database. Wrapper of :meth:`DbManager.db.close`
-    #     :return: True if the connection successfully closed, False otherwise
-    #     :rtype: bool
-    #     """
-    #     return DbManager.db.close()
-
-    # @staticmethod
-    # def get_tables(schema=None) -> list:
-    #     """
-    #     Get the list of tables. Wrapper of :meth:`DbManager.db.get_tables`
-    #     :return: The list of the tables
-    #     :rtype: list
-    #     """
-    #     return DbManager.db.get_tables(schema)
 
 # ####################################################################
 #
@@ -200,3 +157,29 @@ class BaseModel(Base, Model):
     class Meta:
         database = DbManager.db
         table_function = format_table_name
+
+# ####################################################################
+#
+# BaseModel class
+#
+# ####################################################################
+
+class BaseFTSModel(Base, FTS5Model):
+    """
+    Base class
+    """
+
+    _related_model = BaseModel
+    rowid = RowIDField()
+    title = SearchField()
+    content = SearchField()
+
+    def get_related(self):
+        return self._related_model.get_by_id(self.rowid)
+
+    class Meta:
+        database = DbManager.db
+        table_function = format_fts_table_name
+        # Use the porter stemming algorithm to tokenize content.
+        #options = {'tokenize': 'porter'}
+        #options = {'content': Base.data}

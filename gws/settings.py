@@ -177,8 +177,7 @@ class Settings(PWModel):
         statics = {}
         static_dir = self.data["app"]["statics"]
         for k in static_dir:
-            if ("/"+k.strip('/')+"/").startswith("/static/"):
-                statics["/"+k.strip('/')] = os.path.join(self.get_cwd(),static_dir[k])
+            statics["/"+k.strip('/')] = os.path.join(self.get_cwd(),static_dir[k])
         
         return statics
 
@@ -210,6 +209,46 @@ class Settings(PWModel):
             return None
 
         return os.path.join(dependency_dir, "./web/pages")
+
+
+    def __get_recursive_css_js_files(self,static_dir, abs_dir):
+        js = []
+        css = []
+        module_js = []
+        for f in os.listdir(abs_dir):
+            if os.path.isdir(os.path.join(abs_dir,f)):
+                if f.startswith("_"):
+                    continue
+    
+                _css, _js, _module_js = self.__get_recursive_css_js_files(os.path.join(static_dir,f), os.path.join(abs_dir,f))
+                js = js + _js
+                css = css + _css
+                module_js = module_js + _module_js
+            else:
+                if f.endswith(".css"):
+                    css.append(os.path.join(static_dir,f))
+                elif f.endswith(".module.js"):
+                    module_js.append(os.path.join(static_dir,f))
+                elif f.endswith(".js"):
+                    js.append(os.path.join(static_dir,f))
+
+        return css, js, module_js
+
+    def get_local_static_css_js(self):
+        js = []
+        css = []
+        module_js = []
+        dirs = self.get_dependency_dirs()
+        for name in dirs:
+            k = f"/static-{name}"
+            abs_static_dir = os.path.join(dirs[name],"./web/static/")
+            _css, _js, _module_js = self.__get_recursive_css_js_files(k, abs_static_dir)
+            
+            js = js + _js
+            css = css + _css
+            module_js = module_js + _module_js
+            
+        return css, js, module_js
 
     # -- I --
 

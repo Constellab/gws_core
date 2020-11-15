@@ -20,14 +20,14 @@ from datetime import datetime
 from peewee import SqliteDatabase, Model as PWModel
 from peewee import  Field, IntegerField, FloatField, DateField, \
                     DateTimeField, CharField, BooleanField, \
-                    ForeignKeyField, IPField      
-from playhouse.sqlite_ext import JSONField
+                    ForeignKeyField, IPField, TextField
+from playhouse.sqlite_ext import JSONField, SearchField, RowIDField
 
 from gws.logger import Logger
 from gws.settings import Settings
 from gws.store import KVStore
 
-from gws.base import slugify, BaseModel, DbManager
+from gws.base import slugify, BaseModel, BaseFTSModel, DbManager
 from gws.base import format_table_name
 from gws.controller import Controller
 from gws.view import ViewTemplate, HTMLViewTemplate, JSONViewTemplate
@@ -45,19 +45,6 @@ class SystemTrackable:
     SystemTrackable class representing elements that can only be create by the system.
     """
     pass
-
-class URIResolver(BaseModel):
-    uri = CharField(null=True, index=True)
-    type = CharField(null=True, index=True)
-    _table_name = 'uri_resolver'
-
-    @classmethod
-    def get_table(cls, uri: str) -> str:
-        try:
-            return cls.get(cls.uri == uri).type
-        except:
-            return None
-
 
 # ####################################################################
 #
@@ -86,20 +73,23 @@ class Model(BaseModel):
     uri = CharField(null=True, index=True)
     type = CharField(null=True, index=True)
     creation_datetime = DateTimeField(default=datetime.now)
-    save_datetine = DateTimeField()
+    save_datetine = DateTimeField()    
     data = JSONField(null=True)
+    
     is_deleted = BooleanField(default=False, index=True)
 
     _kv_store: KVStore = None
-    _uuid = None
-    #_uri_delimiter = "$"
     _is_deletable = True
 
+    _fts_model = None
+    _fts_fields = {}
     _table_name = 'model'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._uuid = str(uuid.uuid4())
+
+        if self.uri is None:
+            self.uri = str(uuid.uuid4())
 
         if self.data is None:
             self.data = {}
@@ -112,7 +102,7 @@ class Model(BaseModel):
 
             pass
 
-        self._init_store()
+        self._kv_store = KVStore(self.kv_store_path)
 
 
     # -- A --
@@ -152,6 +142,16 @@ class Model(BaseModel):
         if save:
             self.save()
 
+    @classmethod
+    def create_table(cls, *args, **kwargs):
+        if cls.table_exists():
+            return
+
+        if not cls._fts_model is None:
+            cls.fts_model().create_table()
+
+        super().create_table(*args, **kwargs)
+
     # -- D --
 
     def delete(self) -> bool:
@@ -160,6 +160,15 @@ class Model(BaseModel):
 
         self.is_deleted = True
         return self.save()
+
+    @classmethod
+    def drop_table(cls):
+        if not cls._fts_model is None:
+            cls.fts_model().drop_table()
+        
+        super().drop_table()
+
+    # -- E --
 
     def __eq__(self, other: 'Model') -> bool:
         """ 
@@ -176,7 +185,39 @@ class Model(BaseModel):
 
         return (self is other) or ((self.id != None) and (self.id == other.id))
     
+    # -- F --
+
+    def fetch_type_by_id(self, id) -> 'type':
+        """ 
+        Fecth the model type (string) by its `id` from the database and return the corresponding python type.
+        Use the proper table even if the table name has changed.
+
+        :param id: The id of the model
+        :type id: int
+        :return: The model type
+        :rtype: type
+        :Logger.error(Exception: If no model is found)
+        """
+        cursor = DbManager.db.execute_sql(f'SELECT type FROM {self._table_name} WHERE id = ?', (str(id),))
+        row = cursor.fetchone()
+        if len(row) == 0:
+            Logger.error(Exception("Model", "fetch_type_by_id", "The model is not found."))
+        type_str = row[0]
+        model_t = Controller.get_model_type(type_str)
+        return model_t
+
     # -- G --
+
+    @classmethod
+    def fts_model(cls):
+        if cls._fts_model is None:
+            return None
+        
+        _FTSModel = type(cls._fts_model, (BaseFTSModel, ), {
+            "_related_model" : cls
+        })
+
+        return _FTSModel
 
     @classmethod
     def get_by_uri(cls, uri: str) -> str:
@@ -184,15 +225,6 @@ class Model(BaseModel):
             return cls.get(cls.uri == uri)
         except:
             return None
-
-    def __generate_uri(self) -> str:
-        """ 
-        Generates the uri of the model
-
-        :return: The uri
-        :rtype: str
-        """
-        return self._uuid 
 
     # -- H --
 
@@ -222,17 +254,25 @@ class Model(BaseModel):
         """
         return not self.id is None
 
-    def _init_store(self):
-        """ 
-        Sets the object storage interface
-        """
-        self._kv_store = KVStore(self.store_path)
+    # -- N -- 
 
     # -- K --
 
     @property
-    def store(self):
+    def kv_store(self):
         return self._kv_store
+
+    @property
+    def kv_store_path(self) -> str:
+        """ 
+        Returns the path of the KVStore of the model
+
+        :return: The path of the KVStore
+        :rtype: str
+        """
+        settings = Settings.retrieve()
+        db_dir = settings.get_data("db_dir")
+        return os.path.join(db_dir, 'kv_store', self._table_name, self.uri)
 
     # -- S --
 
@@ -250,56 +290,19 @@ class Model(BaseModel):
 
         return cls.select().where(cls.type == cls.full_classname())
 
-    # -- T --
+    @classmethod
+    def search(cls, phrase):
+        _FTSModel = cls.fts_model()
 
-    def fetch_type_by_id(self, id) -> 'type':
-        """ 
-        Fecth the model type (string) by its `id` from the database and return the corresponding python type.
-        Use the proper table even if the table name has changed.
-
-        :param id: The id of the model
-        :type id: int
-        :return: The model type
-        :rtype: type
-        :Logger.error(Exception: If no model is found)
-        """
-        cursor = DbManager.db.execute_sql(f'SELECT type FROM {self._table_name} WHERE id = ?', (str(id),))
-        row = cursor.fetchone()
-        if len(row) == 0:
-            Logger.error(Exception("Model", "fetch_type_by_id", "The model is not found."))
-        type_str = row[0]
-        model_t = Controller.get_model_type(type_str)
-        return model_t
-
-    # -- U --
-
-    @property
-    def uri_id(self) -> str:
-        """ 
-        Returns the uri_id of the model
-
-        :return: The uri_id
-        :rtype: str
-        """
-        return self.id
-
-    # -- S --
-
-    @property
-    def store_path(self) -> str:
-        """ 
-        Returns the path of the KVStore of the model
-
-        :return: The path of the KVStore
-        :rtype: str
-        """
-        settings = Settings.retrieve()
-        db_dir = settings.get_data("db_dir")
-
-        if self.uri is None:
-            return None
-        else:
-            return os.path.join(db_dir, 'store', self.uri)
+        if _FTSModel is None:
+            raise Logger.error(Exception(cls.full_classname(), "search", "No FTSModel model defined"))
+        
+        return _FTSModel.search_bm25(
+            phrase, 
+            weights={'title': 2.0, 'content': 1.0},
+            with_score=True,
+            score_alias='search_score'
+        )
 
     def set_data(self, data: dict):
         """ 
@@ -314,6 +317,37 @@ class Model(BaseModel):
         else:
             Logger.error(Exception(self.classname(),"set_data","The data must be a JSONable dictionary")  )
     
+    def _save_fts_document(self):
+        _FTSModel = self.fts_model()
+
+        if _FTSModel is None:
+            return False
+        
+        try:
+            doc = _FTSModel.get_by_id(self.id)  
+        except:
+            doc = _FTSModel(rowid=self.id)
+
+        title = []
+        content = []
+
+        for field in self._fts_fields:
+            score = self._fts_fields[field]
+            if field in self.data:
+                if score > 1:
+                    if isinstance(self.data[field], list):
+                        title.append( "\n".join([str(k) for k in self.data[field]]) )
+                    else:
+                        title.append(str(self.data[field]))
+                else:
+                    content.append(str(self.data[field]))
+
+        doc.title = '\n'.join(title)
+        doc.content = '\n'.join(content)
+
+        return doc.save()
+
+
     def save(self, *args, **kwargs) -> bool:
         """ 
         Sets the `data`
@@ -325,16 +359,24 @@ class Model(BaseModel):
         if not self.table_exists():
             self.create_table()
 
-        self.save_datetine = datetime.now()
-        tf = super().save(*args, **kwargs)
+        _FTSModel = self.fts_model()
 
-        if self.uri is None:
-            self.uri = self.__generate_uri()
-            self._kv_store.connect(self.store_path)
-            tf = self.save()
-            
+        with DbManager.db.atomic() as transaction:
+            try:
+                if not _FTSModel is None:
+                    if not self._save_fts_document():
+                        Logger.error(Exception(self.full_classname(), "save", "Cannot save related FTS document"))
+
+                #self.kv_store.save()
+                self.save_datetine = datetime.now()
+                tf = super().save(*args, **kwargs)
+            except Exception as err:
+                transaction.rollback()
+                Logger.error(Exception(self.full_classname(), "save", f"Error message: {err}"))
+
         return tf
-    
+
+
     @classmethod
     def save_all(cls, model_list: list = None) -> bool:
         """
@@ -360,8 +402,15 @@ class Model(BaseModel):
 
         return True
 
-    # -- W --
+    # -- U --
 
+    # @classmethod
+    # def update_fts_fields(cls, new_fields):
+    #     fields = cls._fts_fields.copy()
+    #     fields.update(new_fields)
+    #     return fields
+
+     
 # ####################################################################
 #
 # Viewable class
@@ -414,6 +463,14 @@ class Viewable(Model):
 
         return None
 
+    # -- G --
+
+    def get_title(self) -> str:
+        """ 
+        Get the title
+        """
+        return self.data.get("title", "")
+
     # -- D --
 
     def delete(self):
@@ -454,6 +511,17 @@ class Viewable(Model):
             name = t.full_classname()
             cls._vmodel_specs[name] = t
 
+    # -- S --
+
+    def set_title(self, title: str):
+        """ 
+        Set the title
+
+        :param title: The title
+        :type title: str
+        """
+        self.data["title"] = title
+        
 # ####################################################################
 #
 # Config class
@@ -467,6 +535,7 @@ class Config(Viewable):
     """
 
     _table_name = 'config'
+    _fts_model = 'ConfigFTSDocument'
 
     def __init__(self, *args, specs: dict = None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -643,12 +712,15 @@ class Process(Viewable, SystemTrackable):
     _event_listener: EventListener = None
     _input: Input
     _output: Output
+    
     _table_name = 'process'
+    _fts_model = 'ProcessFTSDocument'
+    _fts_fields = {'title': 2.0, 'data': 1.0}
+    
     _is_deletable = False
-
     _job: 'Job' = None  #ref to the current job
 
-    def __init__(self, *args, name: str=None,  **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         if self.id is None:
@@ -664,8 +736,9 @@ class Process(Viewable, SystemTrackable):
         else:
            self.__check_hash()
 
-        if not name is None:
-            self.data['name'] = name
+        if 'title' in kwargs:
+            self.set_title(kwargs['title'])
+            self.save()
 
         self._input = Input(self)
         self._output = Output(self)
@@ -721,8 +794,6 @@ class Process(Viewable, SystemTrackable):
 
     def __check_hash(self):
         actual_hash = self.__create_hash()
-        #print(f"hash => {self.hash}")
-        #print(f"actual_hash => {actual_hash}")
         if not self.hash is None and self.hash != actual_hash:
             Logger.error(Exception("Process", "__set_hash", "Invalid process hash. The code source of the current process has changed."))
 
@@ -731,6 +802,8 @@ class Process(Viewable, SystemTrackable):
         source = inspect.getsource(model_t)
         return self.type + ":" + self._hash_encode(source)
     
+    # -- F --
+
     # -- G --
 
     def get_param(self, name: str) -> [str, int, float, bool]:
@@ -755,6 +828,15 @@ class Process(Viewable, SystemTrackable):
             self._job = Job(process=self, config=config)
 
         return self._job
+
+    def get_next_procs(self) -> list:
+        """ 
+        Returns the list of (right-hand side) processes connected to the IO ports.
+
+        :return: List of processes
+        :rtype: list
+        """
+        return self._output.get_next_procs()
 
     # -- H --
 
@@ -814,37 +896,6 @@ class Process(Viewable, SystemTrackable):
         :rtype: InPort
         """
         return self.in_port(name)
-
-    # -- N --
-
-    @property
-    def name(self) -> str:
-        """ 
-        Returns the context name of the process.
-
-        :return: The name
-        :rtype: str
-        """
-        return self.data.get("name","")
-
-    @name.setter
-    def name(self, name: str) -> str:
-        """ 
-        Returns the context name of the process.
-
-        :return: The name
-        :rtype: str
-        """
-        self.data["name"] = name
-
-    def get_next_procs(self) -> list:
-        """ 
-        Returns the list of (right-hand side) processes connected to the IO ports.
-
-        :return: List of processes
-        :rtype: list
-        """
-        return self._output.get_next_procs()
 
     # -- O --
 
@@ -911,8 +962,8 @@ class Process(Viewable, SystemTrackable):
 
         self.is_running = True
         logger = Logger()
-        if self.name:
-            logger.info(f"Running {self.full_classname()} '{self.name}' ...")
+        if self.get_title():
+            logger.info(f"Running {self.full_classname()} '{self.get_title()}' ...")
         else:
             logger.info(f"Running {self.full_classname()} ...")
         
@@ -928,8 +979,8 @@ class Process(Viewable, SystemTrackable):
 
     def _run_after_task( self, *args, **kwargs ):
 
-        if self.name:
-            Logger.info(f"Task of {self.full_classname()} '{self.name}' successfully finished!")
+        if self.get_title():
+            Logger.info(f"Task of {self.full_classname()} '{self.get_title()}' successfully finished!")
         else:
             Logger.info(f"Task of {self.full_classname()} successfully finished!")
 
@@ -1017,6 +1068,8 @@ class Process(Viewable, SystemTrackable):
         """
         self.config.set_param(name, value)
 
+    # -- T --
+
     def task(self):
         pass
 
@@ -1028,32 +1081,19 @@ class Process(Viewable, SystemTrackable):
 
 class User(Model):
     
-    token = CharField()
+    token = CharField(null=False)
     is_admin = BooleanField(default=False, index=True)
     is_active = BooleanField(default=True, index=True)
     is_locked = BooleanField(default=False, index=True)
+
     is_authenticated = False
-
     _is_deletable = False
+
     _table_name = 'user'
+    _fts_model = 'UserFTSDocument'
+    _fts_fields = {'fullname': 2.0, 'data': 1.0}
 
-    # -- G --
-    
-    def __generate_token(self):
-        return b64encode(token_bytes(32)).decode()
-    
-    def generate_access_token(self):
-        self.token = self.__generate_token()
-        self.save()
-
-    # -- S --
-
-    def save(self, *arg, **kwargs):
-        if self.id is None:
-            if self.token is None:
-                self.token = self.__generate_token()
-
-        return super().save(*arg, **kwargs)
+    # -- A --
 
     @classmethod
     def authenticate(cls, uri: str, token: str) -> ('User', bool,):
@@ -1070,6 +1110,31 @@ class User(Model):
             return User.get(User.uri==uri, User.token==token)
         except:
             return False
+
+    # -- G --
+    
+    def get_fullname(self):
+        return self.data.get("fullname", "")
+
+    def __generate_token(self):
+        return b64encode(token_bytes(32)).decode()
+    
+    def generate_access_token(self):
+        self.token = self.__generate_token()
+        self.save()
+
+    # -- S --
+
+    def save(self, *arg, **kwargs):
+        if self.id is None:
+            if self.token is None:
+                self.token = self.__generate_token()
+
+        return super().save(*arg, **kwargs)
+
+    def set_fullname(self, fullname):
+        self.data["fullname"] = fullname
+
 
     class Meta:
         indexes = (
@@ -1101,11 +1166,15 @@ class UserLogin(Model):
 
 class Experiment(Viewable):
     
-    protocol_id = IntegerField(null=False, index=True)       # store id ref as it may represent different classes
+    protocol_id = IntegerField(null=False, index=True)       # save id ref as it may represent different classes
     score = FloatField(null=True, index=True)
     is_in_progress = BooleanField(default=True, index=True)
-    _table_name = 'experiment'
     
+    _table_name = 'experiment'
+
+    _fts_model = 'ExperimentFTSDocument'
+    _fts_fields = {'title': 2.0, 'data': 1.0}
+
     # -- A --
 
     def add_report(self, report: 'Report'):
@@ -1199,8 +1268,8 @@ class Job(Viewable, SystemTrackable):
     :type user: User
     """
     
-    process_id = IntegerField(null=False, index=True)                       # store id ref as it may represent different classes
-    config_id = IntegerField(null=False, index=True)                        # store id ref as it may represent config classes
+    process_id = IntegerField(null=False, index=True)                       # save id ref as it may represent different classes
+    config_id = IntegerField(null=False, index=True)                        # save id ref as it may represent config classes
     experiment = ForeignKeyField(Experiment, null=True, backref='jobs')     # only valid for protocol
     is_running: bool = BooleanField(default=False, index=True)
     is_finished: bool = BooleanField(default=False, index=True)
@@ -1385,16 +1454,14 @@ class Protocol(Process, SystemTrackable):
     _connectors = []
     _interfaces = {}
     _outerfaces = {}
-    _table_name = 'process'
 
-    #/!\ Write protocols in the 'process' table
-    #_table_name = 'process'
+    _table_name = 'process'     #/!\ use same table as Process
 
-    def __init__(self, *args, name: str = None, processes: dict = None, connectors: list = None, \
+    def __init__(self, *args, processes: dict = None, connectors: list = None, \
                 interfaces: dict = None, outerfaces: dict = None, graph: (str, dict)=None,\
                 **kwargs):
 
-        super().__init__(*args, name = name, **kwargs)
+        super().__init__(*args, **kwargs)
 
         if processes is None:
             if not self.data.get("graph", None) is None:
@@ -1412,9 +1479,9 @@ class Protocol(Process, SystemTrackable):
                 Logger.error(Exception("Protocol", "__init__", "A list of connectors is expected"))
 
             # process
-            for name in processes:
-                proc = processes[name]
-                proc.name = name    #set context name
+            for title in processes:
+                proc = processes[title]
+                proc.set_title(title)    #set context name
                 if not isinstance(proc, Process):
                     Logger.error(Exception("Protocol", "__init__", "The dictionnary of processes must contain instances of Process"))
             self._processes = processes
@@ -1501,7 +1568,7 @@ class Protocol(Process, SystemTrackable):
 
         if self.data.get("graph") is None:
             graph = dict(
-                name = self.name,
+                title = self.get_title(),
                 nodes = {},
                 links = [],
                 interfaces = {},
@@ -1623,8 +1690,6 @@ class Protocol(Process, SystemTrackable):
         connectors = []
         interfaces = {}
         outerfaces = {}
-
-        self.name = graph.get("name", "")
 
         for k in graph["nodes"]:
             type_str = graph["nodes"][k]
@@ -1807,8 +1872,10 @@ class Resource(Viewable, SystemTrackable):
     """
 
     job = ForeignKeyField(Job, null=True, backref='resources')
-    #experiment = ForeignKeyField(Experiment, null=True, backref='experiment')
+
     _table_name = 'resource'
+    _fts_model = 'ResourceFTSDocument'
+    #_fts_fields = {'title': 2.0, 'data': 1.0}
 
     # -- A --
 
@@ -1956,7 +2023,10 @@ class ViewModel(Model):
     template: ViewTemplate = None
 
     _model = None
+
     _table_name = 'vmodel'
+    _fts_model = 'ViewModelFTSDocument'
+    _fts_fields = {'title': 2.0, 'data': 1.0}
 
     def __init__(self, *args, model: Model = None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1999,6 +2069,12 @@ class ViewModel(Model):
     # -- C --
 
     # -- G --
+
+    def get_title(self) -> str:
+        """ 
+        Get the title
+        """
+        return self.data.get("title", "")
 
     # -- M --
 
@@ -2057,6 +2133,16 @@ class ViewModel(Model):
 
         self.template = template
     
+    def set_title(self, title: str):
+        """ 
+        Set the title
+
+        :param title: The title
+        :type title: str
+        """
+        self.data["title"] = title
+    
+
     def save(self, *args, **kwargs):
         """
         Saves the view model

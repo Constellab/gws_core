@@ -33,10 +33,9 @@ class TestKVStore(unittest.TestCase):
         settings = Settings.retrieve()
         dir_path = settings.get_data("db_dir")
         file_path = os.path.join(dir_path,'./store_test/s2/')
-        s1 = KVStore() 
+        s1 = KVStore(path=file_path)
         s1['city'] = 'Tokyo'
         s1['name'] = 'Elon'
-        s1.connect(file_path)
 
         # connect s2 to s1 file
         s2 = KVStore(file_path)

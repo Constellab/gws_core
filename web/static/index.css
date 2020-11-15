@@ -36,4 +36,32 @@ div[class^='gview:']{
 }
 
 .page-content{
+    margin-top: 45px;
+}
+
+.gws-page-title{
+    font-size: 16px;
+    margin-bottom: 22px;
+}
+
+.gws-section-title{
+    font-size: 14px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #dcdcdc;
+}
+
+.gws-card{
+    width:33%
+}
+
+.gws-breadcrumb{
+    display: inline-block;
+    background-color: #f0f0f0;
+    border-radius: 24px;
+    padding: 6px 18px;
+    margin-bottom: 18px;
+}
+
+.gws-breadcrumb > a{
+    text-decoration: none;
 }

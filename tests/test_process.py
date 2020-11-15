@@ -27,6 +27,10 @@ class TestProcess(unittest.TestCase):
         p0 = Create()
         p1 = Create()
 
+        p0.title = "First 'Create' process"
+        p0.description = "This is the description of the process"
+        p0.save()
+
         self.assertTrue(p0.id == p1.id) 
         self.assertTrue(not p0 is p1)
         self.assertTrue(not p0.id is None)

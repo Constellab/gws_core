@@ -1,0 +1,16 @@
+:root {
+    --mdc-theme-on-surface: #000;
+    
+    --mdc-theme-primary: #6200ee;
+    --mdc-theme-on-primary: #fff;
+
+    --mdc-theme-secondary: #018786;
+    --mdc-theme-on-secondary: #fff;
+
+    --mdc-theme-error: #b00020;
+
+    --mdc-checkbox-unchecked-color: rgba(0, 0, 0, 0.54);
+    --mdc-checkbox-checked-color: #018786;
+    --mdc-checkbox-disabled-color: rgba(0, 0, 0, 0.38);
+    --mdc-checkbox-ink-color: #fff;
+}

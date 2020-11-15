@@ -7,7 +7,7 @@
 
 import { Element } from './element.js'
 import { Node } from './node.js'
-import * as THREE from '/static/dist/three-js/build/three.module.js';
+import * as THREE from '/static-dist/three-js/build/three.module.js';
 
 export class Line extends Element{
     

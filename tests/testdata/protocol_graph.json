@@ -1,5 +1,5 @@
 {
-    "name": "proto",
+    "title": "proto",
     "nodes": {
         "p1": "gws.robot.Move",
         "p2": "gws.robot.Eat",

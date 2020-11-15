@@ -14,7 +14,7 @@ class gws{
             var contentType = "application/json"
             
         request.method = request.method || "GET"
-        fetch('?only_inner_html=true', { 
+        fetch('?inner_html_content_only=true', { 
             method: request.method,
             headers: new Headers({
                 "Content-Type": contentType,
@@ -34,7 +34,7 @@ class gws{
 
     static loadPage(onload){
         gws.send({
-            "url": "?only_inner_html=true",
+            "url": "?inner_html_content_only=true",
             "type": "application/html",
             "method": "GET",
             "success":function(html){

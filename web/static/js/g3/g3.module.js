@@ -5,8 +5,8 @@
  * About us: https://gencovery.com
  */
 
-import * as G3 from '/static/gws/js/g3/all.js'
-import { Color } from "/static/gws/js/utils/color.js";
+import * as G3 from './_g3/all.js'
+import { Color } from "../_utils/color.js";
 
 window.g3 = {}
 window.g3.render = function( canvas, data, width ){

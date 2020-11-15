@@ -19,16 +19,12 @@ class KVStore:
     _path = None
     _file_name = 'data'
 
-    # internal data for lazy storage
-    __lazy_kv_data: dict = None
-
     # @todo
     # allow use of external object storage providers AWS S3, OVH cloud (OpenIO), MinIO, etc.
     _provider = None
 
     def __init__(self, path:str = None):
         self._path = path 
-        self.__lazy_kv_data = {}
                 
     # -- A --
 
@@ -44,54 +40,15 @@ class KVStore:
         if not isinstance(key, str):
             Logger.error(Exception(f"The key must be a string. The actual value is {key}"))
 
-        if self.file_path is None:
-            self.__lazy_kv_data[key] = value
-        else:
-            dir_path = os.path.dirname(self.file_path)
-            if not os.path.exists(dir_path):
-                os.makedirs(dir_path)
+        dir_path = os.path.dirname(self.file_path)
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
 
-            self._kv_data = shelve.open(self.file_path)
-            
-            if bool(self.__lazy_kv_data):
-                for k in self.__lazy_kv_data:
-                    self._kv_data[k] = self.__lazy_kv_data[k]
-                self.__lazy_kv_data = {}
+        self._kv_data = shelve.open(self.file_path)
+        self._kv_data[key] = value
+        self._kv_data.close()
 
-            self._kv_data[key] = value
-
-            self._kv_data.close()
-
-    # -- C --
-
-    def connect(self, path: str = None):
-        """ 
-        Connects the KVStore to a file
-
-        :param path: The connection path
-        :type path: str
-        """
-        if not isinstance(path, str) or path == "":
-            Logger.error(Exception("The path must be a non-empty string."))
-
-        self._path = path
-
-        if bool(self.__lazy_kv_data):
-            dir_path = os.path.dirname(self.file_path)
-            if not os.path.exists(dir_path):
-                os.makedirs(dir_path)
-
-            self._kv_data = shelve.open(self.file_path)
-
-            for k in self.__lazy_kv_data:
-                self._kv_data[k] = self.__lazy_kv_data[k]
-            self.__lazy_kv_data = {}
-
-            self._kv_data.close()
-
-        return True
-
-    
+    # -- S --
     
     # -- F --
 
@@ -115,36 +72,23 @@ class KVStore:
         if not isinstance(key, str):
             Logger.error(Exception(f"The key must be a string. The actual value is {key}"))
 
-        if self.file_path is None:
-            return self.__lazy_kv_data.get(key, None)
-        else:
-            self._kv_data = shelve.open(self.file_path)
-            val = self._kv_data.get(key, None)
-            self._kv_data.close()
-            return val
+        self._kv_data = shelve.open(self.file_path)
+        val = self._kv_data.get(key, None)
+        self._kv_data.close()
+        return val
 
     # -- E --
-
-    def is_connected(self):
-        """ 
-        Returns True if the KVStore is connected
-        """
-        return not (self.file_path is None)
 
     # -- P --
 
     def pop(self, key):
-        if self.file_path is None:
-            if key in self.__lazy_kv_data:
-                val = self.__lazy_kv_data[key]
-                del self.__lazy_kv_data[key]
-        else:
-            self._kv_data = shelve.open(self.file_path)
-            if key in self._kv_data:
-                val = self._kv_data[key]
-                del self._kv_data[key]
-            self._kv_data.close()
-        
+
+        self._kv_data = shelve.open(self.file_path)
+        if key in self._kv_data:
+            val = self._kv_data[key]
+            del self._kv_data[key]
+
+        self._kv_data.close()
         return val
     
     # -- R --

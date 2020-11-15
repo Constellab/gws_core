@@ -8,6 +8,7 @@ import importlib
 
 from gws.base import Base
 from gws.logger import Logger
+from gws.query import Query
 
 NUMBER_OF_ITEMS_PER_PAGE = 20
 
@@ -45,7 +46,7 @@ class Controller(Base):
         # CRUD (& Run) actions
         if action == "list":
             Q = cls.fetch_list(rtype, page, filters=filters)
-            return cls.__get_query_as_list(Q, return_format=return_format)
+            return Query.select_query_to_list(Q, return_format=return_format)
         else:
             if action == "post":
                 model = cls.__post(rtype, uri, data)
@@ -83,7 +84,7 @@ class Controller(Base):
     def fetch_experiment_list(cls, return_format="", page=1, filters=[]):
         from gws.model import Experiment
         Q = Experiment.select().paginate(page, NUMBER_OF_ITEMS_PER_PAGE)
-        return cls.__get_query_as_list(Q, return_format=return_format)
+        return Query.select_query_to_list(Q, return_format=return_format)
     
     @classmethod
     def fetch_job_list(cls, experiment_uri=None, return_format="", page=1, filters=[]):
@@ -103,7 +104,7 @@ class Controller(Base):
         #     # _id = row[0]
         #     # Q = Q.where(Job.process_id == _id)
             
-        return cls.__get_query_as_list(Q, return_format=return_format)
+        return Query.select_query_to_list(Q, return_format=return_format)
 
     @classmethod
     def fetch_protocol_list(cls, job_uri=None, return_format="", page=1, filters=[]):
@@ -118,7 +119,7 @@ class Controller(Base):
             except:
                 return None
 
-        return cls.__get_query_as_list(Q, return_format=return_format)
+        return Query.select_query_to_list(Q, return_format=return_format)
 
     @classmethod
     def fetch_process_list(cls, job_uri=None, return_format="", page=1, filters=[]):
@@ -133,7 +134,7 @@ class Controller(Base):
             except:
                 return None
 
-        return cls.__get_query_as_list(Q, return_format=return_format)
+        return Query.select_query_to_list(Q, return_format=return_format)
 
     @classmethod
     def fetch_config_list(cls, job_uri=None, return_format="", page=1, filters=[]):
@@ -148,7 +149,7 @@ class Controller(Base):
             except:
                 return None
 
-        return cls.__get_query_as_list(Q, return_format=return_format)
+        return Query.select_query_to_list(Q, return_format=return_format)
 
     @classmethod
     def fetch_resource_list(cls, experiment_uri=None, job_uri=None, return_format="", page=1, filters=[]):
@@ -168,7 +169,7 @@ class Controller(Base):
         else:
             Q = Resource.select().paginate(page, NUMBER_OF_ITEMS_PER_PAGE)
 
-        return cls.__get_query_as_list(Q, return_format=return_format)
+        return Query.select_query_to_list(Q, return_format=return_format)
 
 
     @classmethod
@@ -199,18 +200,6 @@ class Controller(Base):
         except:
             return None        
     # -- G --
-
-    @classmethod
-    def __get_query_as_list(cls, Q, return_format=""):
-        _list = []
-        if return_format.lower() == "json":
-            for o in Q:
-                _list.append(o.as_json())
-        else:
-            for o in Q:
-                _list.append(o)
-        
-        return _list
 
     @classmethod
     def __get(cls, rtype: str, uri: str) -> 'ViewModel':

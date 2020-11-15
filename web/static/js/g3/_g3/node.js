@@ -6,7 +6,7 @@
  */
 
 import { Element } from './element.js'
-import * as THREE from '/static/dist/three-js/build/three.module.js';
+import * as THREE from '/static-dist/three-js/build/three.module.js';
 
 export class Node extends Element{
 

@@ -57,6 +57,9 @@ class GView{
         GWS.send(request)
     }
 
+    static defautTagData(){
+        return {"innerHTML": ""}
+    }
     //-- I --
 
     static isGView(element){
@@ -140,7 +143,13 @@ class GView{
                 if (typeof child.tagName == "string"){
                     if (child.tagName.toLowerCase() == "div"){
                         var attr = child.attributes[0].name
-                        data[attr] = child.innerHTML
+                        data[attr] = {"innerHTML": child.innerHTML}
+                        
+                        for(let k=1; k<child.attributes.length; k++){
+                            let subattr = child.attributes[k].name
+                            data[attr][subattr] = child.attributes[k].value
+                        }
+                        
                         child.innerHTML = ""    //remove template HTML content to prevent id collisions
                     } else if(child.tagName.toLowerCase() == "script"){
                         eval(child.innerHTML)

@@ -85,17 +85,17 @@ class TestProtocol(unittest.TestCase):
         asyncio.run( _run() )
 
     def test_setting_dump(self):
-        p0 = Create(name="p0")
+        p0 = Create(title="p0")
         p1 = Move()
         p2 = Eat()
         p3 = Move()
         p4 = Move()
-        p5 = Eat(name="p5")
+        p5 = Eat(title="p5")
         p_wait = Wait()
         
         # create a chain
         proto = Protocol(
-            name = "proto",
+            title = "proto",
             processes = {
                 'p1' : p1, 
                 'p2' : p2, 

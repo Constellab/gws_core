@@ -13,7 +13,7 @@ from datetime import datetime
 from typing import Optional
 
 from fastapi import Depends, HTTPException, FastAPI, status
-from fastapi.responses import Response, HTMLResponse, RedirectResponse
+from fastapi.responses import Response, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.requests import Request
@@ -55,19 +55,19 @@ def page_exists(page,brick=brick):
 
 @app.get("/")
 #async def display_html_home_page(_: bool = Depends(check_authenticate_user)):
-async def display_html_home_page():
+async def show_home_page():
     return RedirectResponse(url=f'/page/{brick}')
 
-@app.api_route("/page/{brick}", response_class=HTMLResponse, methods=["GET", "POST"])
-@app.api_route("/page/{brick}/{page}", response_class=HTMLResponse, methods=["GET", "POST"])
-async def display_html_brick_page(request: Request, brick, page: Optional[str] = 'index', only_inner_html: Optional[str] = None) :
-    if only_inner_html == "true":
+@app.api_route("/page/{brick_name}", response_class=HTMLResponse, methods=["GET", "POST"])
+@app.api_route("/page/{brick_name}/{page_name}", response_class=HTMLResponse, methods=["GET", "POST"])
+async def show_brick_page(request: Request, brick_name: Optional[str] = "gws", page_name: Optional[str] = 'index', inner_html_content_only: Optional[bool] = False, q: Optional[str] = None, data: Optional[dict] = None) :
+    if inner_html_content_only:
         #run brick endpoints
-        brick_app = importlib.import_module(f"{brick}.app")
-        async_func = getattr(brick_app, page.lower() + "_page", None)
+        brick_app_module = importlib.import_module(f"{brick_name}.app")
+        async_func = getattr(brick_app_module, page_name.replace("-","_").lower() + "_page", None)
         if inspect.iscoroutinefunction(async_func):
             try:
-                response = await async_func(request)
+                response = await async_func(request, q, data)
             except:
                 response = None
         else:
@@ -76,14 +76,20 @@ async def display_html_brick_page(request: Request, brick, page: Optional[str] =
         if isinstance(response, Response):
             return response
         else:
-            templates, settings = get_templates(brick)
-            return templates.TemplateResponse(f"{page}.html", {
+            templates, settings = get_templates(brick_name)
+            css, js, module_js = settings.get_local_static_css_js()
+            return templates.TemplateResponse(f"{page_name}.html", {
                 'data': response,
                 'settings': settings,
                 'request': request,
+                'scripts':{
+                    "css": css,
+                    "js": js,
+                    "module_js": module_js
+                }
             })
     else:
-        if not page_exists(page,brick):
+        if not page_exists(page_name, brick_name):
             raise HTTPException(
                 status_code=404,
                 detail="Page not found",
@@ -91,12 +97,32 @@ async def display_html_brick_page(request: Request, brick, page: Optional[str] =
             )
         else:
             templates, settings = get_templates()
+            css, js, module_js = settings.get_local_static_css_js()
             return templates.TemplateResponse("index/index.html", {
                 'settings': settings,
-                'page': page,
-                'brick': brick,
+                'page_name': page_name,
+                'brick_name': brick_name,
                 'request': request,
+                'scripts':{
+                    "css": css,
+                    "js": js,
+                    "module_js": module_js
+                }
             })
+
+@app.api_route("/api/{brick_name}/{api_func}", response_class=JSONResponse, methods=["GET", "POST"])
+async def call_brick_api(request: Request, brick_name: Optional[str] = "gws", api_func: Optional[str] = None, q: Optional[str] = None, data: Optional[dict] = None) :
+    brick_app_module = importlib.import_module(f"{brick_name}.app")
+    async_func = getattr(brick_app_module, api_func.replace("-","_").lower() + "_api", None)
+    if inspect.iscoroutinefunction(async_func):
+        #try:
+            response = await async_func(request, q, data)
+        #except:
+        #    response = {}
+    else:
+        response = {}
+
+    return response
 
 ####################################################################################
 #
@@ -156,15 +182,22 @@ class App(BaseApp):
         """
         Intialize static routes
         """
-        # static dirs
+
+        # automatic static dirs
+        dirs = _settings.get_dependency_dirs()
+        for name in dirs:
+            k = f"/static-{name}"
+            app.mount(k, StaticFiles(directory=os.path.join(dirs[name],"./web/static")), name=k)
+
+        # manual static dirs
         statics = _settings.get_static_dirs()
         for k in statics:
             app.mount(k, StaticFiles(directory=statics[k]), name=k)
 
         from gws._app.central import central_app
         from gws._app.prism import prism_app
-        app.mount("/api/central/", central_app)
-        app.mount("/api/prism/", prism_app)
+        app.mount("/central-api/", central_app)
+        app.mount("/prism-api/", prism_app)
 
     @classmethod 
     def start(cls):
