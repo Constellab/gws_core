@@ -32,20 +32,20 @@ class gws{
         });
     }
 
-    static loadPage(onload){
-        gws.send({
-            "url": "?inner_html_content_only=true",
-            "type": "application/html",
-            "method": "GET",
-            "success":function(html){
-                document.querySelector(".page-content").innerHTML = html
-                GView.upgradeAll()
-                onload()
-            },
-            "failure":function(html){
-                document.querySelector(".page-content").innerHTML = html
-                onload()
-            }
-        })
-    }
+    // static loadPage(onload){
+    //     gws.send({
+    //         "url": "?inner_html_content_only=true",
+    //         "type": "application/html",
+    //         "method": "GET",
+    //         "success":function(html){
+    //             document.querySelector(".page-content").innerHTML = html
+    //             GView.upgradeAll()
+    //             onload()
+    //         },
+    //         "failure":function(html){
+    //             document.querySelector(".page-content").innerHTML = html
+    //             onload()
+    //         }
+    //     })
+    // }
 }

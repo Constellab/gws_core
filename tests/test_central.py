@@ -22,13 +22,12 @@ class TestCentral(unittest.TestCase):
 
     def test_create_user(self):
         data = {
-            "uri": "1234567890",
-            "token": 'my_token'
+            "uri": "1234567890"
         }
         tf = Central.create_user(data)
         self.assertTrue(tf)
         user = User.get_by_uri("1234567890")
-        self.assertEqual(user.token, "my_token")
+        self.assertEqual(user.uri, "1234567890")
 
     def test_create_experiment_execption(self):
         data = {

@@ -1,0 +1,31 @@
+<header class="mdc-top-app-bar mdc-top-app-bar--short mdc-top-app-bar--short-collapsed">
+    <div class="mdc-top-app-bar__row">
+        <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+            <button class="mdc-icon-button material-icons mdc-top-app-bar__navigation-icon--unbounded">menu</button><span class="mdc-top-app-bar__title">Menu</span> 
+        </section>
+    </div>
+</header>
+
+<div class="gws-top-right-bar">
+    <button class="mdc-icon-button material-icons mdc-top-app-bar__navigation-icon--unbounded gws-top-search-bar--open-btn">search</button> 
+</div>
+
+
+<div class="gws-top-search-bar">
+    <div class="gws-top-search-bar-inner">
+        <div class="gview:form" json="true" data-class="gws-top-search-bar-form">
+            {
+                "fields":[
+                    {   
+                        "type": "text", "value": "", "label": "Search", "name": "search", 
+                        "class": "gws-top-search-bar-input", 
+                        "leading-icon": "search", "leading-icon-click": "submit",
+                        "brick_name": "{{ brick_name }}", "page_name": "{{ page_name }}"
+                    }
+                ],
+                "submit": {"url": "", "value": "OK", "variant": "outlined", "style": "display: none"}
+            }
+        </div>
+    </div>
+</div>
+

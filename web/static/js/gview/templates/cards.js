@@ -2,23 +2,22 @@ new GViewTemplate({
     class: "gview:card",
     render: function (data) {
         function _card(container, data){
-            data.style = data.style || "width: 350px; height 350px;"
+            data.class = data.class || "mdc-card-md"
+            data.style = data.style || ""
             data.title = data.title || GView.defautTagData()
             data.subtitle = data.subtitle || GView.defautTagData()
             data.body = data.body || GView.defautTagData()
             data.titleImg = data.titleImg || GView.defautTagData()
             data.titleHeight = data.titleHeight || GView.defautTagData()
 
-            
-
             container.innerHTML = `
-                <div class="mdc-card" style="`+data.style+`" >
+                <div class="mdc-card `+data.class+`" style="`+data.style+`" >
                     <div class="mdc-card__primary-action" tabindex="0">
                         <div class="mdc-card__media" style="padding: 0px 16px;">
-                            <h2 class="mdc-typography mdc-typography--headline6">`+data.title.innerHTML+`</h2>
-                            <h3 class="mdc-typography mdc-typography--subtitle2">`+data.subtitle.innerHTML+`</h3>
+                            <h2 class="mdc-card-title mdc-typography mdc-typography--headline6">`+data.title.innerHTML+`</h2>
+                            <h3 class="mdc-card-subtitle mdc-typography mdc-typography--subtitle2">`+data.subtitle.innerHTML+`</h3>
                         </div>
-                        <div class="mdc-typography mdc-typography--body2" style="padding: 0px 16px;">
+                        <div class="mdc-card-body mdc-typography mdc-typography--body2" style="padding: 0px 16px;">
                             `+data.body.innerHTML+`
                         </div>
                     </div>

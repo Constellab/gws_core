@@ -20,7 +20,7 @@ new GViewTemplate({
                 `;
             } else{
                 container.innerHTML = `
-                    <button id="`+ data.id +`" class="mdc-button mdc-button--`+data.variant+`"> 
+                    <button id="`+ data.id +`" class="gws-mdc-button mdc-button mdc-button--`+data.variant+`"> 
                         <span class="mdc-button__ripple"></span>
                         `+ data.text.innerHTML +`
                     </button>

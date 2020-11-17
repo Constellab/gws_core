@@ -92,7 +92,7 @@ class TestProtocol(unittest.TestCase):
         p4 = Move()
         p5 = Eat(title="p5")
         p_wait = Wait()
-        
+    
         # create a chain
         proto = Protocol(
             title = "proto",

@@ -156,11 +156,11 @@ class GView{
                     }
                 }
             }
-            
-            //read TEXT fields
-            for(i in element.dataset){
-                data[i] = element.dataset[i]
-            }
+        }
+        
+        //read TEXT fields
+        for(i in element.dataset){
+            data[i] = element.dataset[i]
         }
         
         if(element.hasAttribute("target")){

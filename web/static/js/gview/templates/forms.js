@@ -5,12 +5,15 @@ new GViewTemplate({
 
         function _form(container, data){
             var rows = ''
+            var uuid = uuidv4()
+            data.class = data.class || ""
             data.style = data.style || ""
             data.title = data.title || ""
             data.valuetype = data.valuetype || "text"
             var fieldIds = [], fieldTypes = []
+
             for(var i in data.fields){   
-                var uuid = uuidv4()
+                var id = "mdc-field-"+uuidv4()
                 if(data.fields[i].type == "hidden"){
                     rows += `
                         <input type="hidden" value="`+data.fields[i].value+`" name="`+data.fields[i].name+`">
@@ -22,16 +25,16 @@ new GViewTemplate({
                     }
 
                     if(data.fields[i].type == "text"){
-                        rows += __gview_textField(uuid, data.fields[i]);
-                        fieldIds.push('#mdc-'+uuid)
+                        rows += __gview_textField(id, data.fields[i]);
+                        fieldIds.push('#'+id)
                         fieldTypes.push('text')
                     }else if(data.fields[i].type == "textarea"){
-                        rows += __gview_textArea(uuid, data.fields[i]);
-                        fieldIds.push('#mdc-'+uuid)
+                        rows += __gview_textArea(id, data.fields[i]);
+                        fieldIds.push('#'+id)
                         fieldTypes.push('textarea')
                     }else if(data.fields[i].type == "select"){
-                        rows += __gview_Select(uuid, data.fields[i], data.selected);
-                        fieldIds.push('#mdc-'+uuid)
+                        rows += __gview_Select(id, data.fields[i], data.selected);
+                        fieldIds.push('#'+id)
                         fieldTypes.push('select')
                     }
                 }
@@ -39,21 +42,22 @@ new GViewTemplate({
             
             var submit = ""
             if(data.submit != null){
-                var uuid = uuidv4()
-                data.submit.variant = data.submit.variant || "raised"
+                data.submit.variant = data.submit.style || "raised"
+                data.submit.style = data.submit.variant || ""
                 submit =  `
-                    <br>
-                    <button id="mdc-`+uuid+`" type="submit" class="mdc-button mdc-button--`+data.submit.variant+`" style="margin: 6px"> 
+                    <button id="mdc-submit-`+uuid+`" type="submit" class="gws-mdc-button mdc-button mdc-button--`+data.submit.variant+`" style="margin: 6px; `+data.submit.style+`"> 
                         <span class="mdc-button__ripple"></span>
                         `+ data.submit.value +`
                     </button>
                 `;
             }
-
+            
             container.innerHTML = `
-                <form action="`+data.submit.url+`" method="post">
-                    ` + rows + submit + `
-                </form>
+                <div class="`+data.class+`">
+                    <form id="form-`+uuid+`" action="`+data.submit.url+`" method="post">
+                        ` + rows + submit + `
+                    </form>
+                </div>
             `;
 
             for(let i in fieldIds){
@@ -73,41 +77,56 @@ new GViewTemplate({
     }
 })
 
-function __gview_textField(uuid, field){
+function __gview_textField(id, field){
+    field.class = field.class || ""
+    field.style = field.style || ""
     field.newline = field.newline || "false"
+
+    field['leading-icon'] = field['leading-icon'] || ""
+    field['leading-icon-click'] = field['leading-icon-click'] || ""
+
+    var leadingIconHtml = ""
+    if(field['leading-icon'] != ""){
+        leadingIconHtml = `
+            <div class="material-icons mdc-text-field__icon mdc-text-field__icon--leading" tabindex="0" role="button">`
+                +field['leading-icon']+
+            `</div>`;
+    }
+    
     return `
     `+(field.newline == "true" ? "<br>" : "")+`
-        <div id="mdc-`+uuid+`" class="mdc-text-field mdc-text-field--outlined" style="margin: 6px">
-            <input class="mdc-text-field__input" `+field.pattern+` id="`+uuid+`" name="`+field.name+`" value="`+field.value+`">
+        <div id="`+id+`" class="mdc-text-field mdc-text-field--outlined mdc-text-field--input">
+            <input id="`+id+`--input" class="mdc-text-field__input `+field.class+`" style="`+field.style+`" `+field.pattern+` name="`+field.name+`" value="`+field.value+`">
+            `+leadingIconHtml+`
             <div class="mdc-notched-outline">
                 <div class="mdc-notched-outline__leading"></div>
                 <div class="mdc-notched-outline__notch">
-                    <label for="`+uuid+`" class="mdc-floating-label">`+field.label+`</label>
+                    <label for="`+id+`--input" class="mdc-floating-label">`+field.label+`</label>
                 </div>
                 <div class="mdc-notched-outline__trailing"></div>
             </div>
         </div>`;
 }
 
-function __gview_textArea(uuid, field){
+function __gview_textArea(id, field){
     field.newline = field.newline || "false"
     return `
     `+(field.newline == "true" ? "<br>" : "")+`
-        <div id="mdc-`+uuid+`" class="mdc-text-field mdc-text-field--outlined mdc-text-field--textarea mdc-text-field--no-label" style="margin: 6px">
+        <div id="`+id+`" class="mdc-text-field mdc-text-field--outlined mdc-text-field--textarea mdc-text-field--no-label">
             <div class="mdc-text-field__resizer">
-                <textarea class="mdc-text-field__input" rows="8" cols="40" aria-label="`+field.name+`">`+field.value+`</textarea>
+                <textarea id="`+id+`--textarea" class="mdc-text-field__input" rows="8" cols="40" aria-label="`+field.name+`">`+field.value+`</textarea>
             </div>
             <div class="mdc-notched-outline">
                 <div class="mdc-notched-outline__leading"></div>
                 <div class="mdc-notched-outline__notch">
-                    <label for="`+uuid+`" class="mdc-floating-label">`+field.label+`</label>
+                    <label for="`+id+`--textarea" class="mdc-floating-label">`+field.label+`</label>
                 </div>
                 <div class="mdc-notched-outline__trailing"></div>
             </div>
         </div>`;
 }
 
-function __gview_Select(uuid, field){
+function __gview_Select(id, field){
     field.selected = field.selected || ""
     var items = ""
     for(k in field.options){
@@ -128,7 +147,7 @@ function __gview_Select(uuid, field){
     field.newline = field.newline || "false"
     return `
         `+(field.newline == "true" ? "<br>" : "")+`
-        <div id="mdc-`+uuid+`" class="mdc-select mdc-select--outlined" style="margin: 6px">
+        <div id="`+id+`" class="mdc-select mdc-select--outlined">
             <div class="mdc-select__anchor" aria-labelledby="outlined-select-label">
                 <span class="mdc-notched-outline">
                     <span class="mdc-notched-outline__leading"></span>

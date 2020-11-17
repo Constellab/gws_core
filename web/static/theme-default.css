@@ -1,7 +1,11 @@
 :root {
-    --mdc-theme-on-surface: #000;
+    --theme-color: #018786;
+    --theme-text-color: #222;
+    --theme-bg-color: #fff;
+
+    --mdc-theme-on-surface: var(--theme-text-color);
     
-    --mdc-theme-primary: #6200ee;
+    --mdc-theme-primary: var(--theme-color);
     --mdc-theme-on-primary: #fff;
 
     --mdc-theme-secondary: #018786;
@@ -13,4 +17,34 @@
     --mdc-checkbox-checked-color: #018786;
     --mdc-checkbox-disabled-color: rgba(0, 0, 0, 0.38);
     --mdc-checkbox-ink-color: #fff;
+
+    /*--mdc-layout-grid-gutter-desktop: 0px;
+    --mdc-layout-grid-gutter-tablet: 0px;
+    --mdc-layout-grid-gutter-phone: 0px;*/
+
+    --mdc-layout-grid-margin-desktop: 0px;
+    --mdc-layout-grid-margin-tablet: 0px;
+    --mdc-layout-grid-margin-phone: 0px;
+
+    
 }
+
+.mdc-text-field--focused:not(.mdc-text-field--disabled) .mdc-floating-label {
+    color: rgba(98, 0, 238, 0.87);
+    color: var(--theme-color);
+}
+
+.mdc-text-field--outlined, .mdc-select--outlined{ font-size: 13px; margin: 6px; }
+/*.mdc-text-field--outlined, .mdc-select--outlined{ height: 38px; }*/
+
+
+/*
+.mdc-text-field--outlined.mdc-notched-outline--upgraded .mdc-floating-label--float-above,
+.mdc-text-field--outlined .mdc-notched-outline--upgraded .mdc-floating-label--float-above {
+    -webkit-transform: translateY(-25px) scale(0.75);
+    transform: translateY(-25px) scale(0.75)
+}
+
+.mdc-button{ height: 38px }
+*/
+
