@@ -6,7 +6,7 @@
  * About us: https://gencovery.com
  */
 
-class gws{
+class _Request{
 
     static send(request) {   
         var contentType = "text/html"
@@ -32,20 +32,7 @@ class gws{
         });
     }
 
-    // static loadPage(onload){
-    //     gws.send({
-    //         "url": "?inner_html_content_only=true",
-    //         "type": "application/html",
-    //         "method": "GET",
-    //         "success":function(html){
-    //             document.querySelector(".page-content").innerHTML = html
-    //             GView.upgradeAll()
-    //             onload()
-    //         },
-    //         "failure":function(html){
-    //             document.querySelector(".page-content").innerHTML = html
-    //             onload()
-    //         }
-    //     })
-    // }
 }
+
+window.gws = window.gws || {}
+window.gws.Request = _Request

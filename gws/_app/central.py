@@ -48,9 +48,9 @@ async def read_users_me(current_user: _User = Depends(get_current_active_user)):
 async def add_user_to_the_lab(user: _User):
     try:
         user_dict = Central.create_user(user.dict())
-        return { "status": True, "response" : user_dict }
+        return { "status": True, "text" : user_dict }
     except Exception as err:
-        return { "status": False, "response": str(err) }
+        return { "status": False, "text": str(err) }
 
 class _UserUri(BaseModel):
     uri: str
@@ -64,30 +64,30 @@ async def generate_user_access_token(user_uri: _UserUri, _ = Depends(check_api_k
 async def get_user(user_uri : str):
     try:
         user_dict = Central.get_user_status(user_uri)
-        return { "status": True, "response" : user_dict }
+        return { "status": True, "text" : user_dict }
     except Exception as err:
-        return { "status": False, "response" : str(err) }
+        return { "status": False, "text" : str(err) }
 
 @central_app.get("/user/{user_uri}/activate")
 async def activate_user(user_uri : str):
     try:
         tf = Central.activate_user(user_uri)
-        return { "status": tf, "response" : "" }
+        return { "status": tf, "text" : "" }
     except Exception as err:
-        return { "status": False, "response" : str(err) }
+        return { "status": False, "text" : str(err) }
 
 @central_app.get("/user/{user_uri}/deactivate")
 async def deactivate_user(user_uri : str):
     try:
         tf = Central.deactivate_user(user_uri)
-        return { "status": tf, "response" : "" }
+        return { "status": tf, "text" : "" }
     except Exception as err:
-        return { "status": False, "response" : str(err) }
+        return { "status": False, "text" : str(err) }
 
 @central_app.get("/lab-instance")
 async def get_lab_instance_status():
     from gws.lab import Lab
-    return { "status": True, "response" : Lab.get_status() }
+    return { "status": True, "text" : Lab.get_status() }
 
 class _ApiKey(BaseModel):
     key: str
@@ -97,7 +97,7 @@ async def set_central_api_key(api_key: _ApiKey):
     settings = Settings.retrieve()
     settings.set_data("central_api_key", api_key.key)
     tf = settings.save()
-    return { "status": tf, "response" : "" }
+    return { "status": tf, "text" : "" }
 
 # #########################################################################@
 #
@@ -119,7 +119,7 @@ async def create_experiment(exp: _Experiment):
         exp = Central.create_experiment(exp.dict())
         return { 
             "status": True, 
-            "response" : {
+            "text" : {
                 "experiment": {
                     "uri": exp.uri
                 },
@@ -129,20 +129,20 @@ async def create_experiment(exp: _Experiment):
             }
         }
     except Exception as err:
-        return { "status": False, "response": str(err) }
+        return { "status": False, "text": str(err) }
 
 @central_app.put("/experiment/{experiment_uri}/close")
 async def close_experiment(request):
-    return { "status": True, "response" : ""}
+    return { "status": True, "text" : ""}
 
 @central_app.delete("/experiment/{experiment_uri}")
 async def delete_experiment(request):
-    return { "status": True, "response" : ""}
+    return { "status": True, "text" : ""}
 
 @central_app.get("/protocol/{protocol_uri}")
 async def get_protocol(protocol_uri: str):
     try:
         proto_dict = Central.get_protocol(protocol_uri)
-        return { "status": True, "response" : proto_dict }
+        return { "status": True, "text" : proto_dict }
     except Exception as err:
-        return { "status": False, "response" : str(err) }
+        return { "status": False, "text" : str(err) }

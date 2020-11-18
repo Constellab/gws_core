@@ -8,9 +8,12 @@ from pydantic import create_model
 class Query:
 
     @classmethod
-    def parse( cls, get_params: str = "", Model=None):
+    def parse( cls, q : str = None, Model=None):
+        if q == None:
+            return None
+            
         data = {}
-        tab = get_params.split(",")
+        tab = q.split(",")
         for d in tab:
             kv = d.split(":")
             data[kv[0]] = kv[1]

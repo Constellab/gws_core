@@ -14,11 +14,17 @@ window.addEventListener("load", function () {
         //mainContentEl.querySelector('input, button').focus();
     });
 
-    const btn = document.querySelector('.mdc-top-app-bar--short');
-    btn.addEventListener('click', (event) => {
+    const sidebarBtn = document.querySelector('.gws-top-bar--open-sidebar-btn');
+    sidebarBtn.addEventListener('click', (event) => {
         drawer.open = true;
     });
     
+    const menu = mdc.menu.MDCMenu.attachTo(document.querySelector('.mdc-menu'));
+    const menuBtn = document.querySelector('.gws-top-search-bar--show-menu-btn');
+    menuBtn.addEventListener('click', (event) => {
+        menu.open = true;
+    })
+
     GView.upgradeAll()
     progressBar.close()
 })

@@ -60,57 +60,45 @@ async def show_home_page():
 
 @app.api_route("/page/{brick_name}", response_class=HTMLResponse, methods=["GET", "POST"])
 @app.api_route("/page/{brick_name}/{page_name}", response_class=HTMLResponse, methods=["GET", "POST"])
-async def show_brick_page(request: Request, brick_name: Optional[str] = "gws", page_name: Optional[str] = 'index', q: Optional[str] = None, data: Optional[dict] = None) :
+async def show_brick_page(request: Request, brick_name: Optional[str] = "gws", page_name: Optional[str] = 'index') :
     brick_app_module = importlib.import_module(f"{brick_name}.app")
     page_t = getattr(brick_app_module, "Page", None)
-    if page_t is None:
-        return None
     
-    async_func = getattr(page_t, page_name.replace("-","_").lower(), None)
-    if inspect.iscoroutinefunction(async_func):
-        try:
-            response = await async_func(request, q, data)
-        except:
-            response = None
-    else:
+    try:
+        async_func = getattr(page_t, page_name.replace("-","_").lower(), None)
+        response = await async_func(request)
+    except:
         response = None
+    
+    settings = Settings.retrieve()
+    css, js, module_js = settings.get_local_static_css_js()
+    env = get_template_env(settings)
+    template = env.get_template("gws/index/index.html")
+    html = template.render({
+        'response': response,
+        'settings': settings,
+        'page_name': page_name,
+        'brick_name': brick_name,
+        'request': request,
+        'scripts':{
+            "css": css,
+            "js": js,
+            "module_js": module_js
+        }
+    })
 
-    if isinstance(response, Response):
-        return response
-    else:
-        settings = Settings.retrieve()
-        css, js, module_js = settings.get_local_static_css_js()
-        env = get_template_env(settings)
-        template = env.get_template("gws/index/index.html")
-        html = template.render({
-            'response': response,
-            'settings': settings,
-            'page_name': page_name,
-            'brick_name': brick_name,
-            'request': request,
-            'scripts':{
-                "css": css,
-                "js": js,
-                "module_js": module_js
-            }
-        })
-        return HTMLResponse(html)
+    return HTMLResponse(html)
 
 
 @app.api_route("/api/{brick_name}/{api_func}", response_class=JSONResponse, methods=["GET", "POST"])
-async def call_brick_api(request: Request, brick_name: Optional[str] = "gws", api_func: Optional[str] = None, q: Optional[str] = None, data: Optional[dict] = None) :
+async def call_brick_api(request: Request, brick_name: Optional[str] = "gws", api_func: Optional[str] = None) :
     brick_app_module = importlib.import_module(f"{brick_name}.app")
     api_t = getattr(brick_app_module, "API", None)
-    if api_t is None:
-        return {}
 
-    async_func = getattr(api_t, api_func.replace("-","_").lower(), None)
-    if inspect.iscoroutinefunction(async_func):
-        try:
-            response = await async_func(request, q, data)
-        except:
-            response = {}
-    else:
+    try:
+        async_func = getattr(api_t, api_func.replace("-","_").lower(), None)
+        response = await async_func(request)
+    except:
         response = {}
 
     return response

@@ -6,10 +6,11 @@
  */
 
 import * as G3 from './_g3/all.js'
-import { Color } from "../_utils/color.js";
 
-window.g3 = {}
-window.g3.render = function( canvas, data, width ){
+window.gws = window.gws || {}
+window.gws.G3Map = window.gws.G3Map || {}
+
+window.gws.G3Map.render = function( canvas, data, width ){
     if(width == null){
         var w = window.innerWidth;
         width = Math.min(w,450)
@@ -70,5 +71,4 @@ window.g3.render = function( canvas, data, width ){
     }
 
     map.view()
-
 }
