@@ -1487,6 +1487,9 @@ class Protocol(Process, SystemTrackable):
             self.__set_interfaces(interfaces)
             self.__set_outerfaces(outerfaces)
 
+            if self.data.get("graph", None) is None:
+                self.data["data"] = self.dumps(as_dict=True)
+
         self.__set_pre_start_event()
         self.__set_on_end_event()
 
@@ -1533,6 +1536,22 @@ class Protocol(Process, SystemTrackable):
             Logger.error(Exception("Protocol", "add_connector", "Duplciated connector"))
 
         self._connectors.append(connector)
+
+
+    # def as_json(self) -> str:
+    #     """
+    #     Returns JSON (a dictionnary) representation of the model.
+
+    #     :return: The JSON dictionary 
+    #     :rtype: dict
+    #     """
+
+    #     _json = super().as_json()
+
+    #     if _json["data"].get("graph", None) is None:
+    #         _json["data"]['graph'] = self.dumps(as_dict=True)
+
+    #     return _json
 
     # -- C --
 

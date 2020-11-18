@@ -76,11 +76,9 @@ class TestControllerHTTP(unittest.TestCase):
         html_vmodel.set_data(data)
         html_vmodel.save()
         self.assertEqual(Controller.fetch_model(html_vmodel.full_classname(), html_vmodel.uri), html_vmodel)
-        #self.assertEqual(html_vmodel.render(), "Model="+str(elon.id)+" & View URI="+html_vmodel.uri+": I am <b>Elon Musk</b>! My job is engineer.")
 
-        vm = Controller.action(action="get", rtype=html_vmodel.full_classname(), uri=html_vmodel.uri)
-        #self.assertEqual(vm, html_vmodel)
-        #self.assertEqual(vm.render(), "Model="+str(elon.id)+" & View URI="+html_vmodel.uri+": I am <b>Elon Musk</b>! My job is engineer.")
+        response = Controller.action(action="get", rtype=html_vmodel.full_classname(), uri=html_vmodel.uri)
+        self.assertEqual(response["uri"], html_vmodel.uri)
 
     def test_put_model(self):
         elon = Person()
@@ -96,11 +94,11 @@ class TestControllerHTTP(unittest.TestCase):
         json_vmodel.set_data(data)
         json_vmodel.save()
         self.assertEqual(Controller.fetch_model(html_vmodel.full_classname(), html_vmodel.uri), html_vmodel)
-        #self.assertEqual(json_vmodel.render(), '{"model_id":"'+str(elon.id)+'", "view_uri":"'+json_vmodel.uri+'", "name": "Elon Musk!", "job":"engineer"}')
 
         data = {"vdata" : { "job" : "Tesla Maker" } }
-        vm = Controller.action(action="put", rtype=json_vmodel.full_classname(), uri=json_vmodel.uri, data=data)
-        #self.assertEqual(vm.render(), '{"model_id":"'+str(elon.id)+'", "view_uri":"'+json_vmodel.uri+'", "name": "Elon Musk!", "job":"Tesla Maker"}')
+        response = Controller.action(action="put", rtype=json_vmodel.full_classname(), uri=json_vmodel.uri, data=data)
+        self.assertEqual(response["uri"], json_vmodel.uri)
+        self.assertEqual(response["data"], {'job': 'Tesla Maker'})
 
     def test_post_model(self):
         elon = Person()
@@ -117,18 +115,14 @@ class TestControllerHTTP(unittest.TestCase):
             "vdata" : { "job" : "SpaceX CEO" }, 
             "type" : "tests.test_controller.JSONPersonViewModel"
         }
-        new_json_view = Controller.action(action="post", rtype=html_vmodel.full_classname(), uri=html_vmodel.uri, data=data)
-        #self.assertNotEqual(new_json_view.render(), '{"model_id":"'+str(elon.id)+'", "view_uri":"'+json_vmodel.uri+'", "name": "Elon Musk!", "job":"SpaceX CEO"}')
-
-        #self.assertEqual(type(new_json_view), JSONPersonViewModel)
-        #self.assertFalse(new_json_view is json_vmodel)
-        #self.assertEqual(new_json_view.model, elon)
+        response = Controller.action(action="post", rtype=html_vmodel.full_classname(), uri=html_vmodel.uri, data=data)
+        self.assertNotEqual(response["uri"], html_vmodel.uri)
+        self.assertEqual(response["data"], { "job" : "SpaceX CEO" })
 
         # Check that the vmodels are registered to their conrresponding models
         k = HTMLPersonViewModel.full_classname()
         self.assertEquals(Person._vmodel_specs[k], HTMLPersonViewModel)
 
-    #def test_post_system_trackable_model_raise_error(self):
     def test_post_model_raise_error(self):
         bill = Person()
         bill.set_name('Bill Gate')
@@ -148,5 +142,6 @@ class TestControllerHTTP(unittest.TestCase):
         json_vmodel.save()
 
         self.assertRaises(Exception, Controller.action, action="delete", rtype=type(elon), uri=elon.uri)
-        vmodel = Controller.action(action="delete", rtype=html_vmodel.full_classname(), uri=html_vmodel.uri)
-        #self.assertTrue(vmodel.is_deleted)
+        Controller.action(action="delete", rtype=html_vmodel.full_classname(), uri=html_vmodel.uri)
+        delete_vm = HTMLPersonViewModel.get_by_id(html_vmodel.id)
+        self.assertTrue(delete_vm.is_deleted)

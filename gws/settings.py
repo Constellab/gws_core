@@ -217,7 +217,7 @@ class Settings(PWModel):
         module_js = []
         for f in os.listdir(abs_dir):
             if os.path.isdir(os.path.join(abs_dir,f)):
-                if f.startswith("_"):
+                if f.startswith("_") or f.startswith("."):
                     continue
     
                 _css, _js, _module_js = self.__get_recursive_css_js_files(os.path.join(static_dir,f), os.path.join(abs_dir,f))
