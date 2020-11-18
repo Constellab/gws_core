@@ -26,20 +26,34 @@
                 <button
                     class="material-icons mdc-top-app-bar__action-item mdc-icon-button gws-top-search-bar--show-menu-btn"
                     aria-label="Options">more_vert</button>
-                <div class="mdc-menu mdc-menu-surface" style="width: 350px;">
+                <div class="mdc-menu mdc-menu-surface" style="width: 350px; position:absolute; top:100px">
                     <ul class="mdc-list" role="menu" aria-hidden="true" aria-orientation="vertical" tabindex="-1">
                         <li class="mdc-list-item" role="menuitem">
                             <span class="mdc-list-item__ripple"></span>
-                            <span class="material-icons" aria-label="Search">search</span> &nbsp;
+                            <i class="fas fa-database"></i> &nbsp;&nbsp;
+                            <a class="mdc-list-item__text" href="/page/biota">Databases</a>
+                        </li>
+                        <li class="mdc-list-divider" role="separator"></li>
+                        <li class="mdc-list-item" role="menuitem">
+                            <span class="mdc-list-item__ripple"></span>
+                            <i class="fas fa-vials"></i>&nbsp;&nbsp;
                             <a class="mdc-list-item__text" href="/page/biox">Experiments</a>
                         </li>
                         <li class="mdc-list-item" role="menuitem">
                             <span class="mdc-list-item__ripple"></span>
-                            <a class="mdc-list-item__text" href="#">Resources</a>
+                            <i class="fas fa-microchip"></i>&nbsp;&nbsp;
+                            <a class="mdc-list-item__text" href="#">Processes</a>
                         </li>
                         <li class="mdc-list-item" role="menuitem">
                             <span class="mdc-list-item__ripple"></span>
-                            <a class="mdc-list-item__text" href="/page/biota">Databases</a>
+                            <i class="fas fa-table"></i>&nbsp;&nbsp;
+                            <a class="mdc-list-item__text" href="#">Resources</a>
+                        </li>
+                        <li class="mdc-list-divider" role="separator"></li>
+                        <li class="mdc-list-item" role="menuitem">
+                            <span class="mdc-list-item__ripple"></span>
+                            <i class="fas fa-sliders-h"></i>&nbsp;&nbsp;
+                            <a class="mdc-list-item__text" href="/page/gws/settings">Setting</a>
                         </li>
                     </ul>
                 </div>

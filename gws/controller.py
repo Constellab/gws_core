@@ -8,7 +8,7 @@ import importlib
 
 from gws.base import Base
 from gws.logger import Logger
-from gws.query import Query
+from gws.query import Query, Paginator
 
 NUMBER_OF_ITEMS_PER_PAGE = 20
 
@@ -20,7 +20,7 @@ class Controller(Base):
     _model_specs = dict() 
 
     @classmethod
-    def action(cls, action=None, rtype=None, uri=None, data=None, return_format="", page=1, filters=[]) -> 'ViewModel':
+    def action(cls, action=None, rtype=None, uri=None, data=None, page=1, filters=[]) -> 'ViewModel':
         """
         Process user actions
 
@@ -46,7 +46,7 @@ class Controller(Base):
         # CRUD (& Run) actions
         if action == "list":
             Q = cls.fetch_list(rtype, page, filters=filters)
-            return Query.select_query_to_list(Q, return_format=return_format)
+            return Paginator(Q, page=page).as_json()
         else:
             if action == "post":
                 model = cls.__post(rtype, uri, data)
@@ -59,10 +59,7 @@ class Controller(Base):
             elif action == "run":
                 model = cls.__run(data)
             
-            if return_format.lower() == "json":
-                return model.as_json()
-            else:
-                return model
+            return model.as_json()
 
     # -- C --
 
@@ -81,37 +78,28 @@ class Controller(Base):
     # -- F --
 
     @classmethod
-    def fetch_experiment_list(cls, return_format="", page=1, filters=[]):
+    def fetch_experiment_list(cls, page=1, filters=[]):
         from gws.model import Experiment
-        Q = Experiment.select().paginate(page, NUMBER_OF_ITEMS_PER_PAGE)
-        return Query.select_query_to_list(Q, return_format=return_format)
+        Q = Experiment.select()
+        return Paginator(Q, page=page).as_json()
     
     @classmethod
-    def fetch_job_list(cls, experiment_uri=None, return_format="", page=1, filters=[]):
+    def fetch_job_list(cls, experiment_uri=None, page=1, filters=[]):
         from gws.model import Job, Experiment, Process, DbManager
         Q = Job.select() \
-                    .paginate(page, NUMBER_OF_ITEMS_PER_PAGE)
+                    
 
         if not experiment_uri is None :
             Q = Q.join(Experiment).where(Experiment.uri == experiment_uri)
 
-        # if not process_uri is None :
-        #     # cursor = DbManager.db.execute_sql('SELECT id FROM process WHERE uri = ?', (process_uri,))
-        #     # row = cursor.fetchone()
-        #     # if len(row) == 0:
-        #     #     return None
-
-        #     # _id = row[0]
-        #     # Q = Q.where(Job.process_id == _id)
-            
-        return Query.select_query_to_list(Q, return_format=return_format)
+        return Paginator(Q, page=page).as_json()
 
     @classmethod
-    def fetch_protocol_list(cls, job_uri=None, return_format="", page=1, filters=[]):
+    def fetch_protocol_list(cls, job_uri=None, page=1, filters=[]):
         from gws.model import Protocol, Job
 
         if job_uri is None:
-            Q = Protocol.select_me().paginate(page, NUMBER_OF_ITEMS_PER_PAGE)
+            Q = Protocol.select_me()
         else:
             try:
                 job = Job.get(Job.uri == job_uri)
@@ -119,14 +107,14 @@ class Controller(Base):
             except:
                 return None
 
-        return Query.select_query_to_list(Q, return_format=return_format)
+        return Paginator(Q, page=page).as_json()
 
     @classmethod
-    def fetch_process_list(cls, job_uri=None, return_format="", page=1, filters=[]):
+    def fetch_process_list(cls, job_uri=None, page=1, filters=[]):
         from gws.model import Process, Job
 
         if job_uri is None:
-            Q = Process.select().paginate(page, NUMBER_OF_ITEMS_PER_PAGE)
+            Q = Process.select()
         else:
             try:
                 job = Job.get(Job.uri == job_uri)
@@ -134,14 +122,14 @@ class Controller(Base):
             except:
                 return None
 
-        return Query.select_query_to_list(Q, return_format=return_format)
+        return Paginator(Q, page=page).as_json()
 
     @classmethod
-    def fetch_config_list(cls, job_uri=None, return_format="", page=1, filters=[]):
+    def fetch_config_list(cls, job_uri=None, page=1, filters=[]):
         from gws.model import Config, Job
 
         if job_uri is None:
-            Q = Config.select().paginate(page, NUMBER_OF_ITEMS_PER_PAGE)
+            Q = Config.select()
         else:
             try:
                 job = Job.get(Job.uri == job_uri)
@@ -149,10 +137,10 @@ class Controller(Base):
             except:
                 return None
 
-        return Query.select_query_to_list(Q, return_format=return_format)
+        return Paginator(Q, page=page).as_json()
 
     @classmethod
-    def fetch_resource_list(cls, experiment_uri=None, job_uri=None, return_format="", page=1, filters=[]):
+    def fetch_resource_list(cls, experiment_uri=None, job_uri=None, page=1, filters=[]):
         from gws.model import Resource, Job, Experiment
         
         if not experiment_uri is None: 
@@ -167,19 +155,20 @@ class Controller(Base):
             except:
                 Q = []
         else:
-            Q = Resource.select().paginate(page, NUMBER_OF_ITEMS_PER_PAGE)
+            Q = Resource.select()
 
-        return Query.select_query_to_list(Q, return_format=return_format)
+        return Paginator(Q, page=page).as_json()
 
 
     @classmethod
     def fetch_list(cls, rtype: str, page: int, filters=[]) -> 'Model':
         t = cls.get_model_type(rtype)
         try:
-            Q = t.select().paginate(page, NUMBER_OF_ITEMS_PER_PAGE)
+            Q = t.select()
             if len(filters) > 0:
                 pass
-            return Q
+
+            return Paginator(Q, page=page).as_json()
         except:
             return None
 

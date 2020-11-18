@@ -20,6 +20,8 @@ window.addEventListener("load", function () {
     });
     
     const menu = mdc.menu.MDCMenu.attachTo(document.querySelector('.mdc-menu'));
+    menu.setAbsolutePosition(200, 100);
+
     const menuBtn = document.querySelector('.gws-top-search-bar--show-menu-btn');
     menuBtn.addEventListener('click', (event) => {
         menu.open = true;

@@ -12,6 +12,7 @@ import hashlib
 import urllib.parse
 import json
 import jwt
+import zlib
 
 from base64 import b64encode, b64decode
 from secrets import token_bytes
@@ -20,7 +21,7 @@ from datetime import datetime
 from peewee import SqliteDatabase, Model as PWModel
 from peewee import  Field, IntegerField, FloatField, DateField, \
                     DateTimeField, CharField, BooleanField, \
-                    ForeignKeyField, IPField, TextField
+                    ForeignKeyField, IPField, TextField, BlobField
 from playhouse.sqlite_ext import JSONField, SearchField, RowIDField
 
 from gws.logger import Logger
@@ -701,7 +702,8 @@ class Process(Viewable, SystemTrackable):
     :type config_specs: dict
     """
 
-    hash = CharField(index=True, unique=True)
+    type = CharField(null=True, index=True, unique=True)
+
     is_running: bool = False 
     is_finished: bool = False 
 
@@ -724,21 +726,12 @@ class Process(Viewable, SystemTrackable):
         super().__init__(*args, **kwargs)
 
         if self.id is None:
-            self.hash = self.__create_hash()
-            cls = type(self)
             try:
-                proc = cls.get(cls.hash == self.hash)
+                cls = type(self)
+                proc = cls.get(cls.type == self.full_classname())
                 self.id = proc.id
             except:
-                self.save()
-                proc = cls.get(cls.hash == self.hash)
-                self.id = proc.id
-        else:
-           self.__check_hash()
-
-        if 'title' in kwargs:
-            self.set_title(kwargs['title'])
-            self.save()
+                pass
 
         self._input = Input(self)
         self._output = Output(self)
@@ -750,6 +743,11 @@ class Process(Viewable, SystemTrackable):
             self._output.create_port(k,self.output_specs[k])
 
         self._event_listener = EventListener()
+
+        if 'title' in kwargs:
+            self.set_title(kwargs['title'])
+
+        self.save()
 
     # -- A --
 
@@ -792,15 +790,10 @@ class Process(Viewable, SystemTrackable):
         """
         return self.get_active_job().config
 
-    def __check_hash(self):
-        actual_hash = self.__create_hash()
-        if not self.hash is None and self.hash != actual_hash:
-            Logger.error(Exception("Process", "__set_hash", "Invalid process hash. The code source of the current process has changed."))
-
-    def __create_hash(self):
+    def create_source_zip(self):
         model_t = Controller.get_model_type(self.type) #/:\ Use the true object type (self.type)
         source = inspect.getsource(model_t)
-        return self.type + ":" + self._hash_encode(source)
+        return zlib.compress(source.encode())
     
     # -- F --
 
@@ -840,10 +833,6 @@ class Process(Viewable, SystemTrackable):
 
     # -- H --
 
-    @classmethod
-    def _hash_encode(cls, data: str):
-        hash_object = hashlib.sha512(data.encode())
-        return hash_object.hexdigest()
 
     # -- I --
 
@@ -1269,6 +1258,7 @@ class Job(Viewable, SystemTrackable):
     """
     
     process_id = IntegerField(null=False, index=True)                       # save id ref as it may represent different classes
+    process_source = BlobField(null=True)                       
     config_id = IntegerField(null=False, index=True)                        # save id ref as it may represent config classes
     experiment = ForeignKeyField(Experiment, null=True, backref='jobs')     # only valid for protocol
     is_running: bool = BooleanField(default=False, index=True)
@@ -1400,6 +1390,7 @@ class Job(Viewable, SystemTrackable):
                     Logger.error(Exception("Job", "save", "Cannot save the job. The config cannnot be saved."))
                 
                 self.process_id = self._process.id
+                self.process_source = self._process.create_source_zip()
                 self.config_id = self._config.id
 
                 self.__track_input_uri()
@@ -1545,9 +1536,9 @@ class Protocol(Process, SystemTrackable):
 
     # -- C --
 
-    def __create_hash(self):
+    def create_source_zip(self):
         graph = self.dumps()
-        return self.full_classname() + ":" + self._hash_encode(graph)
+        return zlib.compress(graph.encode())
 
     @classmethod
     def create_table(cls, *args, **kwargs):
@@ -1743,7 +1734,6 @@ class Protocol(Process, SystemTrackable):
         self.__set_outerfaces(outerfaces)
 
         self.data["graph"] = graph
-        self.__create_hash()
 
     # -- R --
     
@@ -1787,6 +1777,10 @@ class Protocol(Process, SystemTrackable):
                 return
 
         # Good! The protocol task is finished!
+        e = self.get_active_experiment()
+        e.is_in_progress = False
+        e.save()
+
         self._set_outputs()
         super()._run_after_task()
 

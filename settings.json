@@ -62,7 +62,7 @@
         ],
         "buttons":{
             "settings": {
-                "label": "Settings", "icon": "settings", "url": "/page/gws/settings", "position": 0
+                "label": "Settings", "icon": "fas fa-sliders-h", "url": "/page/gws/settings", "position": 0
             }
         }
     },

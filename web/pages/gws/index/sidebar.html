@@ -3,13 +3,17 @@
         <nav class="mdc-list">
             <a class="mdc-list-item mdc-list-item--activated" href="/" aria-current="page" tabindex="0">
                 <span class="mdc-list-item__ripple"></span>
-                <i class="material-icons mdc-list-item__graphic" aria-hidden="true">home</i>
+                <i class="material-icons mdc-list-item__graphic" aria-hidden="true"><i class="fas fa-home"></i></i>
                 <span class="mdc-list-item__text">Home</span>
             </a>
             {% for name, btn in settings.buttons.items() %}
             <a class="mdc-list-item" href="{{ btn.url }}">
                 <span class="mdc-list-item__ripple"></span>
-                <i class="material-icons mdc-list-item__graphic" aria-hidden="true">{{ btn.icon }}</i>
+                {% if btn.icon.startswith('fas ') or btn.icon.startswith('far ') %}
+                    <i class="material-icons mdc-list-item__graphic" aria-hidden="true"><i class="{{ btn.icon }}"></i></i>
+                {% else %}
+                    <i class="material-icons mdc-list-item__graphic" aria-hidden="true">{{ btn.icon }}</i>
+                {% endif %}
                 <span class="mdc-list-item__text">{{ btn.label }}</span>
             </a>
             {% endfor %}

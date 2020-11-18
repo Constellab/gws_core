@@ -1,0 +1,26 @@
+{% set paginator = response.data.paginator %}
+<div class="mdc-data-table__pagination">
+    <div class="mdc-data-table__pagination-trailing">
+        <div class="mdc-data-table__pagination-navigation">
+            <div class="mdc-data-table__pagination-total">
+                Page {{ paginator.page }} of {{ paginator.total_number_of_pages }}
+            </div>
+            <button class="mdc-icon-button material-icons mdc-data-table__pagination-button" data-first-page="true" 
+                {% if paginator.is_first_page %} {{ 'disabled' }} {% endif %} >
+                <a class="mdc-button__icon" href="?page={{ paginator.first_page }}">first_page</a>
+            </button>
+            <button class="mdc-icon-button material-icons mdc-data-table__pagination-button" data-prev-page="true" 
+                {% if paginator.is_first_page %} {{ 'disabled' }} {% endif %}>
+                <a class="mdc-button__icon" href="?page={{ paginator.prev_page }}">chevron_left</a>
+            </button>
+            <button class="mdc-icon-button material-icons mdc-data-table__pagination-button" data-next-page="true" 
+                {% if paginator.is_last_page %} {{ 'disabled' }} {% endif %}>
+                <a class="mdc-button__icon" href="?page={{ paginator.next_page }}">chevron_right</a>
+            </button>
+            <button class="mdc-icon-button material-icons mdc-data-table__pagination-button" data-last-page="true" 
+                {% if paginator.is_last_page %} {{ 'disabled' }} {% endif %}>
+                <a class="mdc-button__icon" href="?page={{ paginator.last_page }}">last_page</a>
+            </button>
+        </div>
+    </div>
+</div>

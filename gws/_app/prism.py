@@ -34,10 +34,10 @@ async def get_list_of_experiments(page: int = 1) -> (dict, str,):
     """
 
     try:
-        response = Controller.fetch_experiment_list(page=page, return_format="json")
-        return { "status": True, "text": response }
+        response = Controller.fetch_experiment_list(page=page)
+        return { "status": True, "data": response }
     except Exception as err:
-        return {"status": False, "text": f"{err}"}
+        return {"status": False, "data": f"{err}"}
 
 @prism_app.get("/job/list")
 async def get_list_of_jobs(experiment_uri: str = None, page: int = 1) -> (dict, str,):
@@ -46,10 +46,10 @@ async def get_list_of_jobs(experiment_uri: str = None, page: int = 1) -> (dict, 
     """
 
     try:
-        response = Controller.fetch_job_list(page=page, experiment_uri=experiment_uri, return_format="json")
-        return { "status": True, "text": response }
+        response = Controller.fetch_job_list(page=page, experiment_uri=experiment_uri)
+        return { "status": True, "data": response }
     except Exception as err:
-        return {"status": False, "text": f"{err}"}
+        return {"status": False, "data": f"{err}"}
 
 @prism_app.get("/protocol/list")
 async def get_list_of_protocols(job_uri: str = None, page: int = 1) -> (dict, str,):
@@ -58,10 +58,10 @@ async def get_list_of_protocols(job_uri: str = None, page: int = 1) -> (dict, st
     """
 
     try:
-        response = Controller.fetch_protocol_list(page=page, job_uri=job_uri, return_format="json")
-        return { "status": True, "text": response }
+        response = Controller.fetch_protocol_list(page=page, job_uri=job_uri)
+        return { "status": True, "data": response }
     except Exception as err:
-        return {"status": False, "text": f"{err}"}
+        return {"status": False, "data": f"{err}"}
 
 @prism_app.get("/process/list")
 async def get_list_of_process(job_uri: str = None, page: int = 1) -> (dict, str,):
@@ -70,10 +70,10 @@ async def get_list_of_process(job_uri: str = None, page: int = 1) -> (dict, str,
     """
 
     try:
-        response = Controller.fetch_process_list(page=page, job_uri=job_uri, return_format="json")
-        return { "status": True, "text": response }
+        response = Controller.fetch_process_list(page=page, job_uri=job_uri)
+        return { "status": True, "data": response }
     except Exception as err:
-        return {"status": False, "text": f"{err}"}
+        return {"status": False, "data": f"{err}"}
 
 @prism_app.get("/config/list")
 async def get_list_of_configs(job_uri: str = None, page: int = 1) -> (dict, str,):
@@ -82,10 +82,10 @@ async def get_list_of_configs(job_uri: str = None, page: int = 1) -> (dict, str,
     """
 
     try:
-        response = Controller.fetch_config_list(page=page, job_uri=job_uri, return_format="json")
-        return { "status": True, "text": response }
+        response = Controller.fetch_config_list(page=page, job_uri=job_uri)
+        return { "status": True, "data": response }
     except Exception as err:
-        return {"status": False, "text": f"{err}"}
+        return {"status": False, "data": f"{err}"}
 
 @prism_app.get("/resource/list")
 async def get_list_of_resources(job_uri: str = None, experiment_uri: str = None, page: int = 1) -> (dict, str,):
@@ -94,10 +94,10 @@ async def get_list_of_resources(job_uri: str = None, experiment_uri: str = None,
     """
 
     try:
-        response = Controller.fetch_resource_list(page=page, experiment_uri=experiment_uri, job_uri=job_uri, return_format="json")
-        return { "status": True, "text": response }
+        response = Controller.fetch_resource_list(page=page, experiment_uri=experiment_uri, job_uri=job_uri)
+        return { "status": True, "data": response }
     except Exception as err:
-        return {"status": False, "text": f"{err}"}
+        return {"status": False, "data": f"{err}"}
 
 class _RunData(BaseModel):
     process_uri: str
@@ -112,9 +112,9 @@ async def run_process( run_data: _RunData ) -> (dict, str,):
 
     try:
         tf = await Controller.action(action="run", )
-        return { "status": tf, "text": "" }
+        return { "status": tf, "data": "" }
     except Exception as err:
-        return {"status": False, "text": f"{err}"}
+        return {"status": False, "data": f"{err}"}
 
 @prism_app.post("/run-robot")
 async def run_robot_experiment() -> (dict, str,):
@@ -124,9 +124,9 @@ async def run_robot_experiment() -> (dict, str,):
 
     try:
         tf = await Controller._run_robot()
-        return { "status": tf, "text": "" }
+        return { "status": tf, "data": "" }
     except Exception as err:
-        return {"status": False, "text": f"{err}"}
+        return {"status": False, "data": f"{err}"}
 
 # ##################################################################
 #
@@ -141,10 +141,10 @@ async def get_model_or_view_model(rtype: str, uri: str) -> (dict, str,):
     """
 
     try:
-        response = Controller.action(action="get", rtype=rtype, uri=uri, return_format="json")
-        return { "status": True, "text": response }
+        response = Controller.action(action="get", rtype=rtype, uri=uri)
+        return { "status": True, "data": response }
     except Exception as err:
-        return {"status": False, "text": f"{err}"}
+        return {"status": False, "data": f"{err}"}
 
 @prism_app.post("/")
 async def post_view_model(rtype: str, vmodel: _ViewModel) -> (dict, str,):
@@ -153,10 +153,10 @@ async def post_view_model(rtype: str, vmodel: _ViewModel) -> (dict, str,):
     """
 
     try:
-        response = Controller.action(action="post", rtype=rtype, uri=vmodel.uri, data=vmodel.data, return_format="json")
-        return { "status": True, "text": response }
+        response = Controller.action(action="post", rtype=rtype, uri=vmodel.uri, data=vmodel.data)
+        return { "status": True, "data": response }
     except Exception as err:
-        return {"status": False, "text": f"{err}"}
+        return {"status": False, "data": f"{err}"}
 
 @prism_app.put("/{rtype}/")
 async def put_view_model(rtype: str, vmodel: _ViewModel) -> (dict, str,):
@@ -165,10 +165,10 @@ async def put_view_model(rtype: str, vmodel: _ViewModel) -> (dict, str,):
     """
 
     try:
-        response = Controller.action(action="put", rtype=rtype, uri=vmodel.uri, data=vmodel.data, return_format="json")
-        return { "status": True, "text": response }
+        response = Controller.action(action="put", rtype=rtype, uri=vmodel.uri, data=vmodel.data)
+        return { "status": True, "data": response }
     except Exception as err:
-        return {"status": False, "text": f"{err}"}
+        return {"status": False, "data": f"{err}"}
 
 @prism_app.delete("/{rtype}/{uri}/")
 async def delete_view_model(rtype: str, uri: str) -> (dict, str,):
@@ -177,8 +177,8 @@ async def delete_view_model(rtype: str, uri: str) -> (dict, str,):
     """
 
     try:
-        response = Controller.action(action="delete", rtype=rtype, uri=uri, return_format="json")
-        return { "status": True, "text": response }
+        response = Controller.action(action="delete", rtype=rtype, uri=uri)
+        return { "status": True, "data": response }
     except Exception as err:
-        return {"status": False, "text": f"{err}"}
+        return {"status": False, "data": f"{err}"}
 
