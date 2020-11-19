@@ -27,6 +27,7 @@ from playhouse.sqlite_ext import JSONField, SearchField, RowIDField
 from gws.logger import Logger
 from gws.store import KVStore
 
+from gws.settings import Settings
 from gws.base import slugify, BaseModel, BaseFTSModel, DbManager
 from gws.base import format_table_name
 from gws.controller import Controller
@@ -372,6 +373,7 @@ class Model(BaseModel):
         with DbManager.db.atomic() as transaction:
             try:
                 if Controller.get_settings().is_fts_active:
+                    Logger.info("FTS is activated")
                     if not _FTSModel is None:
                         if not self._save_fts_document():
                             Logger.error(Exception(self.full_classname(), "save", "Cannot save related FTS document"))

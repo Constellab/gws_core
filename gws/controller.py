@@ -10,8 +10,6 @@ from gws.base import Base
 from gws.logger import Logger
 from gws.query import Query, Paginator
 
-NUMBER_OF_ITEMS_PER_PAGE = 20
-
 class Controller(Base):
     """
     Controller class
