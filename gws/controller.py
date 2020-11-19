@@ -143,11 +143,10 @@ class Controller(Base):
         if job_uri is None:
             Q = Config.select().order_by(Config.creation_datetime.desc())
         else:
-            try:
-                job = Job.get(Job.uri == job_uri)
-                Q = [ job.config ]
-            except:
-                return None
+            Q = Config.select()\
+                            .join(Job, on=(Job.config_id == Config.id))\
+                            .where(Job.uri == job_uri) \
+                            .order_by(Config.creation_datetime.desc())
 
         if return_format == "json":
             return Paginator(Q, page=page).as_json()
@@ -158,20 +157,21 @@ class Controller(Base):
     def fetch_resource_list(cls, experiment_uri=None, job_uri=None, page=1, filters=[], return_format=""):
         from gws.model import Resource, Job, Experiment
         
-        if not experiment_uri is None: 
+        
+        if not job_uri is None:
+            Q = Resource.select() \
+                        .join(Job) \
+                        .join(Experiment) \
+                        .where(Job.uri == job_uri) \
+                        .order_by(Resource.creation_datetime.desc())
+        elif not experiment_uri is None: 
             Q = Resource.select() \
                         .join(Job) \
                         .join(Experiment) \
                         .where(Experiment.uri == experiment_uri) \
                         .order_by(Resource.creation_datetime.desc())
-        elif not job_uri is None:
-            try:
-                job = Job.get(Job.uri == job_uri)
-                Q = job.resources
-            except:
-                Q = []
         else:
-            Q = Resource.select()
+            Q = Resource.select().order_by(Resource.creation_datetime.desc())
 
         if return_format == "json":
             return Paginator(Q, page=page).as_json()
