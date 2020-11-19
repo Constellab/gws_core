@@ -121,9 +121,6 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, \
                 f.write("import os\n")
                 f.write("import sys\n")
 
-                print("xxx")
-                print(brick_dir)
-
                 dep_dirs = settings.get_dependency_dirs()
                 for k in dep_dirs:
                     f.write(f"sys.path.insert(0, '{dep_dirs[k]}')\n")
