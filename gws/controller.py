@@ -93,7 +93,6 @@ class Controller(Base):
         from gws.model import Job, Experiment, Process, DbManager
         Q = Job.select().order_by(Job.creation_datetime.desc())
                     
-
         if not experiment_uri is None :
             Q = Q.join(Experiment).where(Experiment.uri == experiment_uri)
 
@@ -127,11 +126,10 @@ class Controller(Base):
         if job_uri is None:
             Q = Process.select().order_by(Process.creation_datetime.desc())
         else:
-            try:
-                job = Job.get(Job.uri == job_uri)
-                Q = [ job.process ]
-            except:
-                return None
+            Q = Process.select()\
+                            .join(Job, on=(Job.process_id == Process.id))\
+                            .where(Job.uri == job_uri) \
+                            .order_by(Process.creation_datetime.desc())
 
         if return_format == "json":
             return Paginator(Q, page=page).as_json()
