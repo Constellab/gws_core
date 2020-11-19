@@ -19,7 +19,7 @@ class Controller(Base):
     _settings = None
 
     @classmethod
-    def action(cls, action=None, rtype=None, uri=None, data=None, page=1, filters=[]) -> 'ViewModel':
+    def action(cls, action=None, model_type=None, uri=None, data=None, page=1, filters=[], return_format=None) -> 'ViewModel':
         """
         Process user actions
 
@@ -30,7 +30,7 @@ class Controller(Base):
         :param data: The data
         :type data: dict
         :return: A view model corresponding to the action
-        :rtype: `gws.prims.model.ViewModel`
+        :model_type: `gws.prims.model.ViewModel`
         """
 
         try:
@@ -44,30 +44,38 @@ class Controller(Base):
         
         # CRUD (& Run) actions
         if action == "list":
-            Q = cls.fetch_list(rtype, page, filters=filters)
-            return Paginator(Q, page=page).as_json()
+            Q = cls.fetch_list(model_type, page, filters=filters)
+
+            if return_format == "json":
+                return Paginator(Q, page=page).as_json()
+            else:
+                return Paginator(Q, page=page).as_model_list()
+
         else:
             if action == "post":
-                model = cls.__post(rtype, uri, data)
+                model = cls.__post(model_type, uri, data)
             elif action == "get":
-                model = cls.__get(rtype, uri)
+                model = cls.__get(model_type, uri)
             elif action == "put":
-                model = cls.__put(rtype, uri, data)
+                model = cls.__put(model_type, uri, data)
             elif action == "delete":
-                model = cls.__delete(rtype, uri)
+                model = cls.__delete(model_type, uri)
             elif action == "run":
                 model = cls.__run(data)
             
-            return model.as_json()
+            if return_format == "json":
+                return model.as_json()
+            else:
+                return model
 
     # -- C --
 
     # -- D --
 
     @classmethod
-    def __delete(cls, rtype: str, uri: str) -> 'ViewModel':
+    def __delete(cls, model_type: str, uri: str) -> 'ViewModel':
         from gws.model import Model, ViewModel
-        o = cls.fetch_model(rtype, uri)
+        o = cls.fetch_model(model_type, uri)
         if isinstance(o, ViewModel):
             o.delete()
             return o
@@ -178,8 +186,8 @@ class Controller(Base):
 
 
     @classmethod
-    def fetch_list(cls, rtype: str, page: int, filters=[], return_format="") -> 'Model':
-        t = cls.get_model_type(rtype)
+    def fetch_list(cls, model_type: str, page: int, filters=[], return_format="") -> 'Model':
+        t = cls.get_model_type(model_type)
         try:
             Q = t.select().order_by(t.creation_datetime.desc())
             if len(filters) > 0:
@@ -193,17 +201,17 @@ class Controller(Base):
             return None
 
     @classmethod
-    def fetch_model(cls, rtype: str, uri: str) -> 'Model':
+    def fetch_model(cls, model_type: str, uri: str) -> 'Model':
         """
         Fetch a model using the uri
 
         :param uri: The uri of the target model
         :type uri: str
         :return: A model
-        :rtype: Model
+        :model_type: Model
         """
 
-        t = cls.get_model_type(rtype)
+        t = cls.get_model_type(model_type)
         try:
             return t.get(t.uri == uri)
         except:
@@ -219,8 +227,8 @@ class Controller(Base):
         return Controller._settings
         
     @classmethod
-    def __get(cls, rtype: str, uri: str) -> 'ViewModel':
-        obj = cls.fetch_model(rtype, uri)
+    def __get(cls, model_type: str, uri: str) -> 'ViewModel':
+        obj = cls.fetch_model(model_type, uri)
         from gws.model import Model, ViewModel
         if isinstance(obj, ViewModel):
             return obj
@@ -238,7 +246,7 @@ class Controller(Base):
         :param type_str: Litteral type (can be a slugyfied string)
         :type type_str: str
         :return: The type if the model is registered, None otherwise
-        :rtype: type
+        :model_type: type
         :Logger.error(Exception: No registered model matchs with the given `type_str`)
         """
    
@@ -274,9 +282,9 @@ class Controller(Base):
     # -- P --
 
     @classmethod
-    def __post(cls, rtype: str, uri: str, data: dict) -> 'ViewModel':
+    def __post(cls, model_type: str, uri: str, data: dict) -> 'ViewModel':
         from gws.model import SystemTrackable, ViewModel
-        obj = cls.fetch_model(rtype, uri)
+        obj = cls.fetch_model(model_type, uri)
 
         if isinstance(obj, SystemTrackable):
             Logger.error(Exception("Controller", "__post", f"Object {type(obj)} is SystemTrackable. It can only be created by the PRISM system"))
@@ -302,8 +310,8 @@ class Controller(Base):
         return new_vmodel
 
     @classmethod
-    def __post_new_model_and_return_vmodel(cls, rtype: str, uri: str, data: dict):
-        model_t = cls.get_model_type(rtype)
+    def __post_new_model_and_return_vmodel(cls, model_type: str, uri: str, data: dict):
+        model_t = cls.get_model_type(model_type)
         model = model_t()
 
         from gws.model import Model
@@ -321,9 +329,9 @@ class Controller(Base):
         return vmodel
 
     @classmethod
-    def __put(cls, rtype: str, uri: str, data: dict) -> 'ViewModel':
+    def __put(cls, model_type: str, uri: str, data: dict) -> 'ViewModel':
         from gws.model import SystemTrackable, ViewModel
-        t = cls.get_model_type(rtype)
+        t = cls.get_model_type(model_type)
         
         try:
             obj = t.get(t.uri == uri)
@@ -399,7 +407,7 @@ class Controller(Base):
         :param model_list: List of models
         :type model_list: list
         :return: True if all the model are successfully saved, False otherwise. 
-        :rtype: bool
+        :model_type: bool
         """
         from gws.base import DbManager
         from gws.model import Process, Resource, ViewModel

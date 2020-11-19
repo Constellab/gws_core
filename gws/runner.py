@@ -120,9 +120,9 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, \
                 f.write('\n')
                 f.write("import os\n")
                 f.write("import sys\n")
-                f.write("__cdir__ = os.path.dirname(os.path.abspath(__file__))\n")
-                f.write("wd = os.path.join(__cdir__,'../../../')\n")
-                f.write("sys.path.insert(0, wd)\n")
+
+                wd = settings.get_dependency_dir("gws")
+                f.write(f"sys.path.insert(0, '{wd}')\n")
                 f.write("from gws import sphynx_conf\n\n\n")
                 f.write(content + '\n')
                 f.write("extensions = extensions + sphynx_conf.extensions\n")
@@ -169,7 +169,7 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, \
 
             with open(os.path.join(brick_dir, gen_folder, "./source/index.rst"), "w") as f:
                 f.write(content)
-            
+
             subprocess.check_call([
                 "sphinx-build",
                 "-b",

@@ -134,14 +134,14 @@ async def run_robot_experiment() -> (dict, str,):
 #
 # ##################################################################
 
-@prism_app.get("/{rtype}/{uri}")
-async def get_model_or_view_model(rtype: str, uri: str) -> (dict, str,):
+@prism_app.get("/{model_type}/{uri}")
+async def get_model_or_viewmodel(model_type: str, uri: str) -> (dict, str,):
     """
     Get and render a ViewModel
     """
 
     try:
-        response = Controller.action(action="get", rtype=rtype, uri=uri)
+        response = Controller.action(action="get", model_type=model_type, uri=uri)
         return { "status": True, "data": response }
     except Exception as err:
         return {"status": False, "data": f"{err}"}
