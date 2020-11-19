@@ -19,7 +19,7 @@ class Controller(Base):
     _settings = None
 
     @classmethod
-    def action(cls, action=None, model_type=None, uri=None, data=None, page=1, filters=[], return_format=None) -> 'ViewModel':
+    def action(cls, action=None, model_type=None, uri=None, data=None, page=1, filters=[], return_format="json") -> 'ViewModel':
         """
         Process user actions
 
