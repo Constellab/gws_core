@@ -87,6 +87,10 @@ class Settings(PWModel):
     def authors(self):
         return self.data.get("authors", None)
 
+    def activate_fts( self, tf:bool ):
+        self.data["is_fts_active"] = tf
+        self.save()
+
     # -- B --
 
     @property

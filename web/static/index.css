@@ -21,7 +21,8 @@ div[class^='gview:']{ display: none }
 .gws-page-title{ font-size: 1.2rem; margin-bottom: 22px; }
 .gws-section-title{ margin: 24px 0px; padding: 8px 0px; border-bottom: 1px solid #dcdcdc; }
 .gws-multiline{ display: block; }
-.gws-multiline--primary{ display: block; font-size: 1.15rem; margin-top: 16px; margin-bottom: 8px; color: var(--theme-color); font-weight: bold; }
+.gws-multiline--primary{ display: block; font-size: 1rem; margin-top: 16px; margin-bottom: 8px; color: var(--theme-color); font-weight: bold; text-decoration: none }
+.gws-multiline--primary:hover{ color: var(--theme-color); }
 .gws-multiline--secondary{ display: block; color: #777; margin: 8px 0px; }
 
 .gws-top-right-bar{
