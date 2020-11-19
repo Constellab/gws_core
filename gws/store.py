@@ -11,7 +11,6 @@ from gws.logger import Logger
 class KVStore:
     """ 
     KVStore class representing a key-value object storage.
-
     This class allows serializing/deserializing huge objects on store.
     """
 
@@ -55,7 +54,7 @@ class KVStore:
     @property
     def file_path(self) -> str:
         """ 
-        PAth of the KVStore
+        Path of the KVStore
 
         :return: The connection path
         :rtype: str

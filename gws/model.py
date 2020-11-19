@@ -25,7 +25,6 @@ from peewee import  Field, IntegerField, FloatField, DateField, \
 from playhouse.sqlite_ext import JSONField, SearchField, RowIDField
 
 from gws.logger import Logger
-from gws.settings import Settings
 from gws.store import KVStore
 
 from gws.base import slugify, BaseModel, BaseFTSModel, DbManager
@@ -100,11 +99,9 @@ class Model(BaseModel):
             self.type = self.full_classname()
         elif self.type != self.full_classname():
             # allow object cast after ...
-
             pass
 
         self._kv_store = KVStore(self.kv_store_path)
-
 
     # -- A --
 
@@ -271,8 +268,7 @@ class Model(BaseModel):
         :return: The path of the KVStore
         :rtype: str
         """
-        settings = Settings.retrieve()
-        db_dir = settings.get_data("db_dir")
+        db_dir = Controller.get_settings().get_data("db_dir")
         return os.path.join(db_dir, 'kv_store', self._table_name, self.uri)
 
     # -- S --
@@ -318,6 +314,17 @@ class Model(BaseModel):
         else:
             Logger.error(Exception(self.classname(),"set_data","The data must be a JSONable dictionary")  )
     
+    def set_data_value(self, key: str, value: str):
+        """ 
+        Sets the a given `data`
+
+        :param key: The key
+        :type key: srt
+        :param value: The value
+        :type value: any
+        """
+        self.data[key] = value
+
     def _save_fts_document(self):
         _FTSModel = self.fts_model()
 
@@ -364,9 +371,10 @@ class Model(BaseModel):
 
         with DbManager.db.atomic() as transaction:
             try:
-                if not _FTSModel is None:
-                    if not self._save_fts_document():
-                        Logger.error(Exception(self.full_classname(), "save", "Cannot save related FTS document"))
+                if Controller.get_settings().is_fts_active:
+                    if not _FTSModel is None:
+                        if not self._save_fts_document():
+                            Logger.error(Exception(self.full_classname(), "save", "Cannot save related FTS document"))
 
                 #self.kv_store.save()
                 self.save_datetine = datetime.now()
@@ -435,6 +443,7 @@ class Viewable(Model):
         :return: The JSON dictionary 
         :rtype: dict
         """
+
         return {
             "uri": self.uri,
             "type": self.type,
@@ -879,8 +888,8 @@ class Process(Viewable, SystemTrackable):
     def __lshift__(self, name: str) -> InPort:
         """
         Alias of :meth:`in_port`.
-
         Returns the port of the input by its name
+
         :return: The port
         :rtype: InPort
         """
@@ -1088,6 +1097,7 @@ class User(Model):
     def authenticate(cls, uri: str, token: str) -> ('User', bool,):
         """ 
         Verify the uri and token and returns the corresponding user 
+
         :param uri: The user uri
         :type uri: str
         :param token: The token to check
@@ -1537,22 +1547,6 @@ class Protocol(Process, SystemTrackable):
 
         self._connectors.append(connector)
 
-
-    # def as_json(self) -> str:
-    #     """
-    #     Returns JSON (a dictionnary) representation of the model.
-
-    #     :return: The JSON dictionary 
-    #     :rtype: dict
-    #     """
-
-    #     _json = super().as_json()
-
-    #     if _json["data"].get("graph", None) is None:
-    #         _json["data"]['graph'] = self.dumps(as_dict=True)
-
-    #     return _json
-
     # -- C --
 
     def create_source_zip(self):
@@ -1888,7 +1882,6 @@ class Resource(Viewable, SystemTrackable):
 
     _table_name = 'resource'
     _fts_model = 'ResourceFTSDocument'
-    #_fts_fields = {'title': 2.0, 'data': 1.0}
 
     # -- A --
 

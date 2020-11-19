@@ -16,6 +16,7 @@ from gws.settings import Settings
 def slugify(text, snakefy = False) -> str:
     """
     Returns the slugified text
+
     :param snakefy: Snakefy the text if True (i.e. uses undescores instead of dashes to separate text words), defaults to False
     :type snakefy: bool, optional
     :return: The slugified name
@@ -37,9 +38,10 @@ def slugify(text, snakefy = False) -> str:
 class Base:
 
     @classmethod
-    def classname(cls, slugify = False, snakefy = False, replace_uppercase = False) -> str:
+    def classname(cls, slugify: bool = False, snakefy: bool = False, replace_uppercase: bool = False) -> str:
         """
-        Returns the name the class
+        Returns the name of the class
+
         :param slugify: Slugify the returned class name if True, defaults to False
         :type slugify: bool, optional
         :param snakefy: Snakefy the returned class name if True, defaults to False
@@ -64,6 +66,7 @@ class Base:
     def full_classname(cls, slugify = False, snakefy = False):
         """
         Returns the full name of the class
+
         :param slugify: Slugify the returned class name if True, defaults to False
         :type slugify: bool, optional
         :param snakefy: Snakefy the returned class name if True, defaults to False
@@ -86,6 +89,7 @@ class Base:
     def module(cls) -> str:
         """
         Returns the module of the class
+
         :return: The module
         :rtype: str
         """
@@ -96,6 +100,7 @@ class Base:
     def property_names(cls, instance = None) -> list:
         """
         Returns the property names
+
         :return: The list of the properties
         :rtype: list
         """

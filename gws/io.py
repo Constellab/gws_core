@@ -316,7 +316,7 @@ class Connector:
         """
         Returns the right-hand side process
 
-         :return: The right-hand side process
+        :return: The right-hand side process
         :rtype: Process
         """
         return self.in_port.parent.parent

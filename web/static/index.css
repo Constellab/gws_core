@@ -6,8 +6,8 @@
     --theme-bg-color-highlight: #f0f0f0;
 }
 
-.html{ color: var(--gws-text-color); width:100%; height: 100% }
-.body{ background-color: var(--theme-bg-color); }
+.html{ color: var(--gws-text-color); }
+.body{ background-color: var(--theme-bg-color); font-size: 0.875rem }
 
 a { color: var(--gws-text-color); text-decoration: none; }
 a:visited { color: var(--gws-text-color); }
@@ -18,8 +18,11 @@ div[class^='gview:']{ display: none }
 .d-none{ display: none }
 
 .gws-page-content{ padding: 18px; margin-top: 50px}
-.gws-page-title{ font-size: 16px; margin-bottom: 22px; }
-.gws-section-title{ font-size: 14px; margin: 16px 0px; padding: 8px 0px; border-bottom: 1px solid #dcdcdc; }
+.gws-page-title{ font-size: 1.2rem; margin-bottom: 22px; }
+.gws-section-title{ margin: 24px 0px; padding: 8px 0px; border-bottom: 1px solid #dcdcdc; }
+.gws-multiline{ display: block; }
+.gws-multiline--primary{ display: block; font-size: 1.15rem; margin-top: 16px; margin-bottom: 8px; color: var(--theme-color); font-weight: bold; }
+.gws-multiline--secondary{ display: block; color: #777; margin: 8px 0px; }
 
 .gws-top-right-bar{
     position: absolute;

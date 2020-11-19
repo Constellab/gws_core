@@ -8,7 +8,7 @@ from pydantic import create_model
 class Query:
 
     @classmethod
-    def to_list(cls, Q, return_format="json"):
+    def format(cls, Q, return_format=""):
         _list = []
         if return_format.lower() == "json":
             for o in Q:
@@ -35,11 +35,9 @@ class Paginator:
         self.prev_page = min(self.page - 1, 1)
         self.last_page = self.total_number_of_pages
         self.first_page = 1
-
-    def as_json( self ):
+    
+    def _paginator_dict(self):
         return {
-            'results' : Query.to_list( self.Q ),
-            'paginator': {
                 'page': self.page,
                 'prev_page': self.prev_page,
                 'next_page': self.next_page,
@@ -50,4 +48,15 @@ class Paginator:
                 'is_first_page': self.page == self.first_page,
                 'is_last_page': self.page == self.total_number_of_pages
             }
+
+    def as_model_list( self ):
+        return {
+            'results' : Query.format( self.Q ),
+            'paginator': self._paginator_dict()
+        }
+
+    def as_json( self ):
+        return {
+            'results' : Query.format( self.Q, return_format="json" ),
+            'paginator': self._paginator_dict()
         }

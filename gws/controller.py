@@ -18,6 +18,7 @@ class Controller(Base):
     """
 
     _model_specs = dict() 
+    _settings = None
 
     @classmethod
     def action(cls, action=None, rtype=None, uri=None, data=None, page=1, filters=[]) -> 'ViewModel':
@@ -78,28 +79,35 @@ class Controller(Base):
     # -- F --
 
     @classmethod
-    def fetch_experiment_list(cls, page=1, filters=[]):
+    def fetch_experiment_list(cls, page=1, filters=[], return_format=""):
         from gws.model import Experiment
-        Q = Experiment.select()
-        return Paginator(Q, page=page).as_json()
+        Q = Experiment.select().order_by(Experiment.creation_datetime.desc())
+
+        if return_format == "json":
+            return Paginator(Q, page=page).as_json()
+        else:
+            return Paginator(Q, page=page).as_model_list()
     
     @classmethod
-    def fetch_job_list(cls, experiment_uri=None, page=1, filters=[]):
+    def fetch_job_list(cls, experiment_uri=None, page=1, filters=[], return_format=""):
         from gws.model import Job, Experiment, Process, DbManager
-        Q = Job.select() \
+        Q = Job.select().order_by(Job.creation_datetime.desc())
                     
 
         if not experiment_uri is None :
             Q = Q.join(Experiment).where(Experiment.uri == experiment_uri)
 
-        return Paginator(Q, page=page).as_json()
+        if return_format == "json":
+            return Paginator(Q, page=page).as_json()
+        else:
+            return Paginator(Q, page=page).as_model_list()
 
     @classmethod
-    def fetch_protocol_list(cls, job_uri=None, page=1, filters=[]):
+    def fetch_protocol_list(cls, job_uri=None, page=1, filters=[], return_format=""):
         from gws.model import Protocol, Job
 
         if job_uri is None:
-            Q = Protocol.select_me()
+            Q = Protocol.select_me().order_by(Protocol.creation_datetime.desc())
         else:
             try:
                 job = Job.get(Job.uri == job_uri)
@@ -107,14 +115,17 @@ class Controller(Base):
             except:
                 return None
 
-        return Paginator(Q, page=page).as_json()
+        if return_format == "json":
+            return Paginator(Q, page=page).as_json()
+        else:
+            return Paginator(Q, page=page).as_model_list()
 
     @classmethod
-    def fetch_process_list(cls, job_uri=None, page=1, filters=[]):
+    def fetch_process_list(cls, job_uri=None, page=1, filters=[], return_format=""):
         from gws.model import Process, Job
 
         if job_uri is None:
-            Q = Process.select()
+            Q = Process.select().order_by(Process.creation_datetime.desc())
         else:
             try:
                 job = Job.get(Job.uri == job_uri)
@@ -122,14 +133,17 @@ class Controller(Base):
             except:
                 return None
 
-        return Paginator(Q, page=page).as_json()
+        if return_format == "json":
+            return Paginator(Q, page=page).as_json()
+        else:
+            return Paginator(Q, page=page).as_model_list()
 
     @classmethod
-    def fetch_config_list(cls, job_uri=None, page=1, filters=[]):
+    def fetch_config_list(cls, job_uri=None, page=1, filters=[], return_format=""):
         from gws.model import Config, Job
 
         if job_uri is None:
-            Q = Config.select()
+            Q = Config.select().order_by(Config.creation_datetime.desc())
         else:
             try:
                 job = Job.get(Job.uri == job_uri)
@@ -137,17 +151,21 @@ class Controller(Base):
             except:
                 return None
 
-        return Paginator(Q, page=page).as_json()
+        if return_format == "json":
+            return Paginator(Q, page=page).as_json()
+        else:
+            return Paginator(Q, page=page).as_model_list()
 
     @classmethod
-    def fetch_resource_list(cls, experiment_uri=None, job_uri=None, page=1, filters=[]):
+    def fetch_resource_list(cls, experiment_uri=None, job_uri=None, page=1, filters=[], return_format=""):
         from gws.model import Resource, Job, Experiment
         
         if not experiment_uri is None: 
             Q = Resource.select() \
                         .join(Job) \
                         .join(Experiment) \
-                        .where(Experiment.uri == experiment_uri)
+                        .where(Experiment.uri == experiment_uri) \
+                        .order_by(Resource.creation_datetime.desc())
         elif not job_uri is None:
             try:
                 job = Job.get(Job.uri == job_uri)
@@ -157,18 +175,24 @@ class Controller(Base):
         else:
             Q = Resource.select()
 
-        return Paginator(Q, page=page).as_json()
+        if return_format == "json":
+            return Paginator(Q, page=page).as_json()
+        else:
+            return Paginator(Q, page=page).as_model_list()
 
 
     @classmethod
-    def fetch_list(cls, rtype: str, page: int, filters=[]) -> 'Model':
+    def fetch_list(cls, rtype: str, page: int, filters=[], return_format="") -> 'Model':
         t = cls.get_model_type(rtype)
         try:
-            Q = t.select()
+            Q = t.select().order_by(t.creation_datetime.desc())
             if len(filters) > 0:
                 pass
 
-            return Paginator(Q, page=page).as_json()
+            if return_format == "json":
+                return Paginator(Q, page=page).as_json()
+            else:
+                return Paginator(Q, page=page).as_model_list()
         except:
             return None
 
@@ -190,6 +214,14 @@ class Controller(Base):
             return None        
     # -- G --
 
+    @classmethod
+    def get_settings(cls):
+        if Controller._settings is None:
+            from gws.settings import Settings
+            Controller._settings = Settings.retrieve()
+        
+        return Controller._settings
+        
     @classmethod
     def __get(cls, rtype: str, uri: str) -> 'ViewModel':
         obj = cls.fetch_model(rtype, uri)
@@ -335,6 +367,8 @@ class Controller(Base):
         from gws.robot import create_protocol
         from gws.model import Experiment
         e = Experiment()
+        e.set_title("A unexpected journey of Astro Boy")
+        e.set_data_value("description", "This is a unexpected journey of Astro.")
         p = create_protocol()
         p.set_active_experiment(e)
         e.save()

@@ -11,25 +11,24 @@ from gws.logger import Logger
 class Validator:
     """
     Base validator class
-
     Base validator allows validating serialized (or deserialized) parameter values according to a
     `type`.
-
-    :property default: The default value returned by method :meth:`validate`
-    :type default: any
-    :property type: The expected type of the value
-    :type type: type
 
     Usage: This class should not be used as it, but rather use to implement validator subclasses. 
     It provides the construction :meth:`from_type` to create usable basic validators. 
     
     For example:
-        * `Validator.from_type(int, default=5) -> IntegerValidator(default=5)`
-        * `Validator.from_type(bool, default=True) -> BooleanValidator(default=True)`
-        * `Validator.from_type(float, default=5.5) -> FloatValidator(default=5.5)`
-        * `Validator.from_type(str, default='foo') -> CharValidator(default='foo')`
-        * `Validator.from_type(list, default=[1,"foo"]) -> ArrayValidator(default=[1,"foo"])`
-        * `Validator.from_type(dict, default={"foo":1}) -> JSONValidator(default={"foo":1})`
+        * ```Validator.from_type(int, default=5) -> IntegerValidator(default=5)```
+        * ```Validator.from_type(bool, default=True) -> BooleanValidator(default=True)```
+        * ```Validator.from_type(float, default=5.5) -> FloatValidator(default=5.5)```
+        * ```Validator.from_type(str, default='foo') -> CharValidator(default='foo')```
+        * ```Validator.from_type(list, default=[1,"foo"]) -> ArrayValidator(default=[1,"foo"])```
+        * ```Validator.from_type(dict, default={"foo":1}) -> JSONValidator(default={"foo":1})```
+
+    :property default: The default value returned by method :meth:`validate`
+    :type default: any
+    :property type: The expected type of the value
+    :type type: type
     """
 
     _type = None
@@ -70,19 +69,19 @@ class Validator:
         Checks if the type of :param:`value` is a valid subtype of :property:`type` and that
         :param:`value` is serializable/deserilizable (using built-in Python methods :meth:`json.dumps`/:meth:`json.loads`).
 
+        Usage:
+            * ```Validator.from_type(int, default=5) -> IntegerValidator(default=5)```
+            * ```Validator.from_type(bool, default=True) -> BooleanValidator(default=True)```
+            * ```Validator.from_type(float, default=5.5) -> FloatValidator(default=5.5)```
+            * ```Validator.from_type(str, default='foo') -> CharValidator(default='foo')```
+            * ```Validator.from_type(list, default=[1,"foo"]) -> ArrayValidator(default=[1,"foo"])```
+            * ```Validator.from_type(dict, default={"foo":1}) -> JSONValidator(default={"foo":1})```
+            
         :param value: The value to validate
         :type value: An instance of `bool`, `int`, `float`, `str` or serilaizable `list`, `dict`
         :return: The validated value
         :rtype: An instance of `bool`, `int`, `float`, `str` or serilaizable `list`, `dict`
         :Logger.error(`Exception`: If the :param:`value` is not valid)
-
-        Usage:
-            * `Validator.from_type(int, default=5) -> IntegerValidator(default=5)`
-            * `Validator.from_type(bool, default=True) -> BooleanValidator(default=True)`
-            * `Validator.from_type(float, default=5.5) -> FloatValidator(default=5.5)`
-            * `Validator.from_type(str, default='foo') -> CharValidator(default='foo')`
-            * `Validator.from_type(list, default=[1,"foo"]) -> ArrayValidator(default=[1,"foo"])`
-            * `Validator.from_type(dict, default={"foo":1}) -> JSONValidator(default={"foo":1})`
         """
         if value is None:
             value = self._default
@@ -144,6 +143,16 @@ class Validator:
         """
         Constructs usable basic validators.
 
+        Usage:
+            * ```Validator.from_type('int', default=5) -> IntegerValidator(default=5)```
+            * ```Validator.from_type(int, default=5) -> IntegerValidator(default=5)```
+            * ```Validator.from_type('bool', default=True) -> BooleanValidator(default=True)```
+            * ```Validator.from_type(bool, default=True) -> BooleanValidator(default=True)```
+            * ```Validator.from_type('float', default=5.5) -> FloatValidator(default=5.5)```
+            * ```Validator.from_type('str', default='foo') -> CharValidator(default='foo')```
+            * ```Validator.from_type('list', default=[1,"foo"]) -> ArrayValidator(default=[1,"foo"])```
+            * ```Validator.from_type('dict', default={"foo":1}) -> JSONValidator(default={"foo":1})```
+
         :param type: The type used for validation
         :type type: `type` or `str` in built-in types `bool`, `int`, `float`, `str`, `list`, `dict`
         :param default: The default value to return, Defaults to `None`
@@ -151,16 +160,6 @@ class Validator:
         :return: The Validator corresponding to the :param:`type`
         :rtype: subclass of `Validator`
         :Logger.error(`Exception`: If the :param:`type` is not valid or the the type if :param:`default` is not equal to :param:`type`)
-
-        Usage:
-            * `Validator.from_type('int', default=5) -> IntegerValidator(default=5)`
-            * `Validator.from_type(int, default=5) -> IntegerValidator(default=5)`
-            * `Validator.from_type('bool', default=True) -> BooleanValidator(default=True)`
-            * `Validator.from_type(bool, default=True) -> BooleanValidator(default=True)`
-            * `Validator.from_type('float', default=5.5) -> FloatValidator(default=5.5)`
-            * `Validator.from_type('str', default='foo') -> CharValidator(default='foo')`
-            * `Validator.from_type('list', default=[1,"foo"]) -> ArrayValidator(default=[1,"foo"])`
-            * `Validator.from_type('dict', default={"foo":1}) -> JSONValidator(default={"foo":1})`
         """
 
         if type == bool or type == 'bool':

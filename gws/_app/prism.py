@@ -34,7 +34,7 @@ async def get_list_of_experiments(page: int = 1) -> (dict, str,):
     """
 
     try:
-        response = Controller.fetch_experiment_list(page=page)
+        response = Controller.fetch_experiment_list(page=page, return_format="json")
         return { "status": True, "data": response }
     except Exception as err:
         return {"status": False, "data": f"{err}"}
@@ -46,7 +46,7 @@ async def get_list_of_jobs(experiment_uri: str = None, page: int = 1) -> (dict, 
     """
 
     try:
-        response = Controller.fetch_job_list(page=page, experiment_uri=experiment_uri)
+        response = Controller.fetch_job_list(page=page, experiment_uri=experiment_uri, return_format="json")
         return { "status": True, "data": response }
     except Exception as err:
         return {"status": False, "data": f"{err}"}
@@ -58,7 +58,7 @@ async def get_list_of_protocols(job_uri: str = None, page: int = 1) -> (dict, st
     """
 
     try:
-        response = Controller.fetch_protocol_list(page=page, job_uri=job_uri)
+        response = Controller.fetch_protocol_list(page=page, job_uri=job_uri, return_format="json")
         return { "status": True, "data": response }
     except Exception as err:
         return {"status": False, "data": f"{err}"}
@@ -70,7 +70,7 @@ async def get_list_of_process(job_uri: str = None, page: int = 1) -> (dict, str,
     """
 
     try:
-        response = Controller.fetch_process_list(page=page, job_uri=job_uri)
+        response = Controller.fetch_process_list(page=page, job_uri=job_uri, return_format="json")
         return { "status": True, "data": response }
     except Exception as err:
         return {"status": False, "data": f"{err}"}
@@ -82,7 +82,7 @@ async def get_list_of_configs(job_uri: str = None, page: int = 1) -> (dict, str,
     """
 
     try:
-        response = Controller.fetch_config_list(page=page, job_uri=job_uri)
+        response = Controller.fetch_config_list(page=page, job_uri=job_uri, return_format="json")
         return { "status": True, "data": response }
     except Exception as err:
         return {"status": False, "data": f"{err}"}
@@ -94,7 +94,7 @@ async def get_list_of_resources(job_uri: str = None, experiment_uri: str = None,
     """
 
     try:
-        response = Controller.fetch_resource_list(page=page, experiment_uri=experiment_uri, job_uri=job_uri)
+        response = Controller.fetch_resource_list(page=page, experiment_uri=experiment_uri, job_uri=job_uri, return_format="json")
         return { "status": True, "data": response }
     except Exception as err:
         return {"status": False, "data": f"{err}"}

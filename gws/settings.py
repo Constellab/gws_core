@@ -171,6 +171,7 @@ class Settings(PWModel):
     def get_static_dirs(self) -> dict:
         """
         Returns the absolute paths of the static directories
+        
         :return: The absolute paths of the static directories
         :rtype: dict
         """
@@ -263,6 +264,10 @@ class Settings(PWModel):
     @property
     def is_debug(self):
         return self.data.get("is_debug", False)
+
+    @property
+    def is_fts_active(self):
+        return self.data.get("is_fts_active", True)
 
     # -- N --
 
