@@ -1,31 +1,17 @@
-<!--
-<header class="mdc-top-app-bar mdc-top-app-bar--short mdc-top-app-bar--short-collapsed">
-    <div class="mdc-top-app-bar__row">
-        <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
-            <button class="mdc-icon-button material-icons mdc-top-app-bar__navigation-icon--unbounded">menu</button><span class="mdc-top-app-bar__title">Menu</span> 
-        </section>
-    </div>
-</header>
-<div class="gws-top-right-bar">
-    <button class="mdc-icon-button material-icons mdc-top-app-bar__navigation-icon--unbounded gws-top-search-bar--open-btn">search</button> 
-</div>
--->
-
 <header class="mdc-top-app-bar">
     <div class="mdc-top-app-bar__row">
-        <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
-            <button
-                class="material-icons mdc-top-app-bar__navigation-icon mdc-icon-button gws-top-bar--open-sidebar-btn"
+        <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start" role="toolbar">
+            <button class="material-icons mdc-top-app-bar__navigation-icon mdc-icon-button gws-top-bar--open-sidebar-btn"
                 aria-label="Open navigation menu">menu</button>
-            <span class="mdc-top-app-bar__title">{{ brick_name }} </span>
+            <span class="mdc-top-app-bar__title">{{ brick_name }}</span>
         </section>
         <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end" role="toolbar">
             <button class="material-icons mdc-top-app-bar__action-item mdc-icon-button gws-top-search-bar--open-btn"
                 aria-label="Search">search</button>
+            <button class="material-icons mdc-top-app-bar__action-item mdc-icon-button gws-top-search-bar--show-menu-btn"
+                aria-label="Options">more_vert</button>
             <div id="toolbar" class="toolbar mdc-menu-surface--anchor">
-                <button
-                    class="material-icons mdc-top-app-bar__action-item mdc-icon-button gws-top-search-bar--show-menu-btn"
-                    aria-label="Options">more_vert</button>
+                
                 <div class="mdc-menu mdc-menu-surface" style="width: 350px; position:absolute; top:100px">
                     <ul class="mdc-list" role="menu" aria-hidden="true" aria-orientation="vertical" tabindex="-1">
                         <a class="mdc-list-item" href="/page/biota" role="menuitem">

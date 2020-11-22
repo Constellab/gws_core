@@ -1,37 +1,52 @@
 
 :root {
-    --theme-color: #018786;
+    --theme-color: #018989;
     --theme-text-color: #222;
     --theme-bg-color: #fff;
     --theme-bg-color-highlight: #f0f0f0;
+
+    --theme-font-family: Roboto, sans-serif;
+    
+    --mdc-theme-on-surface: var(--theme-text-color);
+    --mdc-theme-primary: var(--theme-color);
+    --mdc-theme-on-primary: #fff;
+    --mdc-theme-secondary: #018786;
+    --mdc-theme-on-secondary: #fff;
+
+    --mdc-layout-grid-margin-desktop: 0px;
+    --mdc-layout-grid-margin-tablet: 0px;
+    --mdc-layout-grid-margin-phone: 0px;
 }
+
+/**
+ * Common
+ */
 
 .html{ color: var(--gws-text-color); }
 .body{ background-color: var(--theme-bg-color); font-size: 0.875rem }
-
 a { color: var(--gws-text-color); text-decoration: none; }
 a:visited { color: var(--gws-text-color); }
 a:hover { color: var(--gws-text-color); }
-
-div[class^='gview:']{ display: none }
 .d-block{ display: block }
 .d-none{ display: none }
 
+/**
+ * GWS
+ */
+
 .gws-page-content{ padding: 18px; margin-top: 50px}
-.gws-page-title{ font-size: 1.2rem; margin-bottom: 22px; }
-.gws-section-title{ margin: 24px 0px; padding: 8px 0px; border-bottom: 1px solid #dcdcdc; }
+.gws-headline{ color: var(--theme-color); border-bottom: 1px solid rgb(1, 137, 137, 0.3); margin-bottom: 24px; }
+.gws-section-title{ margin: 24px 0px; padding: 8px 0px; border-bottom: 1px solid #dcdcdc; color: var(--theme-color) }
 .gws-multiline{ display: block; }
 .gws-multiline--primary{ display: block; font-size: 1rem; margin-top: 16px; margin-bottom: 8px; color: var(--theme-color); font-weight: bold; text-decoration: none }
 .gws-multiline--primary:hover{ color: var(--theme-color); }
-.gws-multiline--secondary{ display: block; color: #777; margin: 8px 0px; }
-
+.gws-multiline--secondary{ display: block; color: #777; margin: 0px 0px; }
 .gws-top-right-bar{
     position: absolute;
     top: 8px;
     right: 8px;
     z-index:9999
 }
-
 .gws-top-search-bar{ position: absolute; left: 50%; top: -70px; z-index:9998; transition: all 0.25s ease-out; }
 .gws-top-search-bar-inner{ position: relative; left: -50%; background-color: #f0f0f0; border-radius: 4px; white-space: nowrap; }
 .gws-top-search-bar-input{ width: 300px; }
@@ -42,21 +57,18 @@ div[class^='gview:']{ display: none }
  * MDC Override
  */
 
-.mdc-card{ width: 100%; font-size: 12px; }
-.mdc-card-sm{ max-width:172px; }
+.mdc-card{ width: 100%; font-size: 12px; 
+    border: 1px solid #ddd;
+    box-shadow: 1px 1px 4px 1px rgba(0, 0, 0, 0.05)}
+.mdc-card-sm{ max-width: 172px; }
 .mdc-card-md{  max-width:350px; }
 .mdc-card-lg{  max-width:500px; }
 .mdc-card-title{ font-size: 16px; }
 .mdc-card-subtitle{ font-size: 14px; }
 .mdc-card-body{ font-size: 14px; }
- 
 .mdc-breadcrump{ font-size: 12px; margin: 18px 0px; }
-
 .mdc-button{ font-size: 12px }
 .mdc-text-field__input{ font-size: 14px; }
-
 .mdc-layout-grid{ margin: 0px 0px; padding: 0px }
 .mdc-layout-grid__inner, .mdc-layout-grid__cell{ margin: 0px; padding: 0px }
-
 .mdc-top-app-bar--short{ left: -45px; cursor: pointer}
-/*.mdc-top-app-bar--short:hover{ left: 0px }*/

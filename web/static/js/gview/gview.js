@@ -163,17 +163,8 @@ class GView{
             data[i] = element.dataset[i]
         }
         
-        if(element.hasAttribute("target")){
-            if(loadDelayed){
-                var view = new GView(element)
-                view.render(data)
-            } else{
-                delayedElements.push(element)
-            }
-        } else{
-            var view = new GView(element)
-            view.render(data)
-        }
+        var view = new GView(element)
+        view.render(data)
 
         element.dataset.isLoaded = true
     }

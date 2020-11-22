@@ -1246,6 +1246,10 @@ class Experiment(Viewable):
 
     # -- R --
 
+    @property 
+    def rerouces(self):
+        return Controller.fetch_resource_list(experiment_uri=self.uri)
+
     def run(self):
         self.protocol.run()
 

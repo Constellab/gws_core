@@ -10,7 +10,7 @@ new GViewTemplate({
                         <div class="mdc-chip__ripple"></div>
                         <span role="gridcell">
                             <span role="button" tabindex="0" class="mdc-chip__primary-action">
-                                <a class="mdc-chip__text" href="/page/biota" style="text-decoration: none">`+data.set[k].text+`</a>
+                                <a class="mdc-chip__text" href="`+data.set[k].href+`" style="text-decoration: none">`+data.set[k].text+`</a>
                             </span>
                         </span>
                     </div>

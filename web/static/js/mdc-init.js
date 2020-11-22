@@ -16,12 +16,7 @@ window.addEventListener("load", function () {
 
     //components
     mdc.topAppBar.MDCTopAppBar.attachTo(document.querySelector('.mdc-top-app-bar'));
-    
-    [].map.call(document.querySelectorAll('.mdc-menu'), function(el) { mdc.menu.MDCMenu.attachTo(el); });
-    [].map.call(document.querySelectorAll('.mdc-fab'), function(el) { mdc.ripple.MDCRipple.attachTo(el); });
-    [].map.call(document.querySelectorAll('.mdc-data-table'), function(el) { mdc.dataTable.MDCDataTable.attachTo(el); });
-    const selector = '.mdc-button, .mdc-icon-button, .mdc-card__primary-action';
-    [].map.call(document.querySelectorAll(selector), function(el) { mdc.ripple.MDCRipple.attachTo(el); });
+    initAllMdcComponents()
 
     const sidebarBtn = document.querySelector('.gws-top-bar--open-sidebar-btn');
     sidebarBtn.addEventListener('click', (event) => {
@@ -37,3 +32,12 @@ window.addEventListener("load", function () {
     GView.upgradeAll()
     progressBar.close()
 })
+
+function initAllMdcComponents(){
+    [].map.call(document.querySelectorAll('.mdc-menu'), function(el) { mdc.menu.MDCMenu.attachTo(el); });
+    [].map.call(document.querySelectorAll('.mdc-fab'), function(el) { mdc.ripple.MDCRipple.attachTo(el); });
+    [].map.call(document.querySelectorAll('.mdc-data-table'), function(el) { mdc.dataTable.MDCDataTable.attachTo(el); });
+    const selector = '.mdc-button, .mdc-icon-button, .mdc-card__primary-action';
+    [].map.call(document.querySelectorAll(selector), function(el) { mdc.ripple.MDCRipple.attachTo(el); });
+    [].map.call(document.querySelectorAll('.mdc-tab-bar'), function(el) { mdc.tabBar.MDCTabBar.attachTo(el); });
+}

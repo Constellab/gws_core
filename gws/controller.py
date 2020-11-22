@@ -19,7 +19,7 @@ class Controller(Base):
     _settings = None
 
     @classmethod
-    def action(cls, action=None, model_type=None, uri=None, data=None, page=1, filters=[], return_format="json") -> 'ViewModel':
+    def action(cls, action=None, model_type=None, uri=None, data=None, page=1, filters=[], return_format="") -> 'ViewModel':
         """
         Process user actions
 
@@ -371,8 +371,8 @@ class Controller(Base):
         from gws.robot import create_protocol
         from gws.model import Experiment
         e = Experiment()
-        e.set_title("A unexpected journey of Astro Boy")
-        e.set_data_value("description", "This is a unexpected journey of Astro.")
+        e.set_title("The journey of Astro.")
+        e.set_data_value("description", "This is the journey of Astro.")
         p = create_protocol()
         p.set_active_experiment(e)
         e.save()

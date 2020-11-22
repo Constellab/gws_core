@@ -39,7 +39,7 @@ class Create(Process):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.set_title("Robot factory")
-        self.set_data_value("description", "This process creates the Robot. It is designed by Dr. Tenma.")
+        self.set_data_value("description", "This process creates the Robot.")
 
     def task(self):
         print("Create", flush=True)
@@ -60,7 +60,7 @@ class Move(Process):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.set_title("Move process")
-        self.set_data_value("description", "This process emulate a short moving step of the robot")
+        self.set_data_value("description", "This process emulates a short moving step of the robot")
 
     def task(self):
         print(f"Moving {self.get_param('moving_step')}", flush=True)

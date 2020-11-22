@@ -77,7 +77,7 @@ class TestControllerHTTP(unittest.TestCase):
         html_vmodel.save()
         self.assertEqual(Controller.fetch_model(html_vmodel.full_classname(), html_vmodel.uri), html_vmodel)
 
-        response = Controller.action(action="get", rtype=html_vmodel.full_classname(), uri=html_vmodel.uri)
+        response = Controller.action(action="get", model_type=html_vmodel.full_classname(), uri=html_vmodel.uri, return_format="json")
         self.assertEqual(response["uri"], html_vmodel.uri)
 
     def test_put_model(self):
@@ -96,7 +96,7 @@ class TestControllerHTTP(unittest.TestCase):
         self.assertEqual(Controller.fetch_model(html_vmodel.full_classname(), html_vmodel.uri), html_vmodel)
 
         data = {"vdata" : { "job" : "Tesla Maker" } }
-        response = Controller.action(action="put", rtype=json_vmodel.full_classname(), uri=json_vmodel.uri, data=data)
+        response = Controller.action(action="put", model_type=json_vmodel.full_classname(), uri=json_vmodel.uri, data=data, return_format="json")
         self.assertEqual(response["uri"], json_vmodel.uri)
         self.assertEqual(response["data"], {'job': 'Tesla Maker'})
 
@@ -115,7 +115,7 @@ class TestControllerHTTP(unittest.TestCase):
             "vdata" : { "job" : "SpaceX CEO" }, 
             "type" : "tests.test_controller.JSONPersonViewModel"
         }
-        response = Controller.action(action="post", rtype=html_vmodel.full_classname(), uri=html_vmodel.uri, data=data)
+        response = Controller.action(action="post", model_type=html_vmodel.full_classname(), uri=html_vmodel.uri, data=data, return_format="json")
         self.assertNotEqual(response["uri"], html_vmodel.uri)
         self.assertEqual(response["data"], { "job" : "SpaceX CEO" })
 
@@ -129,7 +129,7 @@ class TestControllerHTTP(unittest.TestCase):
         bill.save()
 
         data = { "mdata": {"name": "Bill Gate From Microsoft"} }
-        self.assertRaises(Exception, Controller.action, action="post", rtype=bill.full_classname(), uri=bill.uri, data=data)
+        self.assertRaises(Exception, Controller.action, action="post", model_type=bill.full_classname(), uri=bill.uri, data=data, return_format="json")
 
     def test_delete_model(self):
         elon = Person()
@@ -141,7 +141,7 @@ class TestControllerHTTP(unittest.TestCase):
         html_vmodel.save()
         json_vmodel.save()
 
-        self.assertRaises(Exception, Controller.action, action="delete", rtype=type(elon), uri=elon.uri)
-        Controller.action(action="delete", rtype=html_vmodel.full_classname(), uri=html_vmodel.uri)
+        self.assertRaises(Exception, Controller.action, action="delete", model_type=type(elon), uri=elon.uri, return_format="json")
+        Controller.action(action="delete", model_type=html_vmodel.full_classname(), uri=html_vmodel.uri)
         delete_vm = HTMLPersonViewModel.get_by_id(html_vmodel.id)
         self.assertTrue(delete_vm.is_deleted)

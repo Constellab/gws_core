@@ -13,11 +13,12 @@ class Query:
         if return_format.lower() == "json":
             for o in Q:
                 _list.append(o.as_json())
+            return _list
         else:
-            for o in Q:
-                _list.append(o)
+            return Q
+            #for o in Q:
+            #    _list.append(o)
         
-        return _list
 
 class Paginator:
     number_of_items_per_page = 20
@@ -31,8 +32,8 @@ class Paginator:
         self.number_of_items_per_page = number_of_items_per_page
         self.number_of_items = query.count()
         self.total_number_of_pages = int(self.number_of_items/self.number_of_items_per_page) + int(bool(self.number_of_items % self.number_of_items_per_page))
-        self.next_page = max(self.page + 1,self.total_number_of_pages)
-        self.prev_page = min(self.page - 1, 1)
+        self.next_page = min(self.page + 1,self.total_number_of_pages)
+        self.prev_page = max(self.page - 1, 1)
         self.last_page = self.total_number_of_pages
         self.first_page = 1
     

@@ -2,7 +2,7 @@ new GViewTemplate({
     class: "gview:card",
     render: function (data) {
         function _card(container, data){
-            data.class = data.class || "mdc-card-md"
+            data.class = (data.class != null) || "mdc-card-md"
             data.style = data.style || ""
             data.title = data.title || GView.defautTagData()
             data.subtitle = data.subtitle || GView.defautTagData()
@@ -33,21 +33,28 @@ new GViewTemplate({
 function __createAction(data){
     var actionButtonHTML = ""
     var actionNames = ["action_button_1", "action_button_2", "action_button_3"]
+
     for(k of actionNames){
         if(data[k] == null)
             continue
 
+        var attr = ""
+        for(s in data[k]){
+            attr = s + "=" + data[k][s] + " "
+        } 
+
         if( data[k].href != null ){
             data[k].target = data[k].target || ""
             actionButtonHTML += `
-                <a class="mdc-button mdc-card__action mdc-card__action--button" href="`+data[k].href+`" target="`+data[k].target+`">  <span class="mdc-button__ripple"></span>`+data[k].innerHTML+`</a>
+                <a `+attr+` class="mdc-button mdc-card__action mdc-card__action--button" href="`+data[k].href+`" target="`+data[k].target+`">  <span class="mdc-button__ripple"></span>`+data[k].innerHTML+`</a>
             `;
         } else{
             actionButtonHTML += `
-                <button class="mdc-button mdc-card__action mdc-card__action--button">  <span class="mdc-button__ripple"></span>`+data[k].innerHTML+`</button>
+                <button `+attr+` class="mdc-button mdc-card__action mdc-card__action--button">  <span class="mdc-button__ripple"></span>`+data[k].innerHTML+`</button>
             `;
         }
     }
+    
     if(actionButtonHTML != ""){
         actionButtonHTML = `
             <div class="mdc-card__action-buttons">
@@ -61,15 +68,20 @@ function __createAction(data){
     for(k of actionNames){
         if(data[k] == null)
             continue
-            
+        
+        var attr = ""
+        for(s in data[k]){
+            attr = s + "=" + data[k][s] + " "
+        } 
+
         if( data[k].href != null ){
             data[k].target = data[k].target || ""
             actionIconHTML += `
-                <a class="mdc-icon-button material-icons mdc-card__action mdc-card__action--icon--unbounded" href="`+data[k].href+`" target="`+data[k].target+`" title="`+data[k].innerHTML+`" data-mdc-ripple-is-unbounded="true">`+data[k].innerHTML+`</a>
+                <a `+attr+` class="mdc-icon-button material-icons mdc-card__action mdc-card__action--icon--unbounded" href="`+data[k].href+`" target="`+data[k].target+`" title="`+data[k].innerHTML+`" data-mdc-ripple-is-unbounded="true">`+data[k].innerHTML+`</a>
             `;
         }else{
             actionIconHTML += `
-                <button class="mdc-icon-button material-icons mdc-card__action mdc-card__action--icon--unbounded" title="`+data[k].innerHTML+`" data-mdc-ripple-is-unbounded="true">`+data[k].innerHTML+`</button>
+                <button `+attr+` class="mdc-icon-button material-icons mdc-card__action mdc-card__action--icon--unbounded" title="`+data[k].innerHTML+`" data-mdc-ripple-is-unbounded="true">`+data[k].innerHTML+`</button>
             `;
         }
     }

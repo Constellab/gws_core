@@ -11,6 +11,9 @@ new GViewTemplate({
             if(! ["text", "raised", "outlined", "unelevated"].includes(data.variant) ){
                 data.variant = "raised"
             }
+
+            console.log(data.href)
+
             if(data.href != ""){
                 container.innerHTML = `
                     <a id="`+ data.id +`" class="mdc-button mdc-button--`+data.variant+`" href="`+ data.href +`" target="`+ data.target +`"> 
