@@ -1,5 +1,3 @@
-
-
 /**
  * LICENSE
  * This software is the exclusive property of Gencovery SAS. 

@@ -220,22 +220,32 @@ class Settings(PWModel):
         js = []
         css = []
         module_js = []
+
+        # scan dir
+        _dirs = []
+        _files = []
         for f in os.listdir(abs_dir):
             if os.path.isdir(os.path.join(abs_dir,f)):
                 if f.startswith("_") or f.startswith("."):
                     continue
-    
-                _css, _js, _module_js = self.__get_recursive_css_js_files(os.path.join(static_dir,f), os.path.join(abs_dir,f))
-                js = js + _js
-                css = css + _css
-                module_js = module_js + _module_js
+                _dirs.append(f)
             else:
-                if f.endswith(".css"):
-                    css.append(os.path.join(static_dir,f))
-                elif f.endswith(".module.js"):
-                    module_js.append(os.path.join(static_dir,f))
-                elif f.endswith(".js"):
-                    js.append(os.path.join(static_dir,f))
+                _files.insert(0,f)
+
+        # load files
+        for f in _files:
+            if f.endswith(".css"):
+                css.append(os.path.join(static_dir,f))
+            elif f.endswith(".module.js"):
+                module_js.append(os.path.join(static_dir,f))
+            elif f.endswith(".js"):
+                js.append(os.path.join(static_dir,f))
+
+        for f in _dirs:
+            _css, _js, _module_js = self.__get_recursive_css_js_files(os.path.join(static_dir,f), os.path.join(abs_dir,f))
+            js = js + _js
+            css = css + _css
+            module_js = module_js + _module_js
 
         return css, js, module_js
 

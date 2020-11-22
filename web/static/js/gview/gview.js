@@ -6,7 +6,6 @@
  * About us: https://gencovery.com
  */
 
-
 var GViewCollector = {
     templates : {},
     views : {}
