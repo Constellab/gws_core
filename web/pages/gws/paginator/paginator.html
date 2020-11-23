@@ -6,8 +6,8 @@
                 Page {{ paginator.page }} of {{ paginator.total_number_of_pages }}
             </div>
             <button class="mdc-icon-button material-icons mdc-data-table__pagination-button" data-first-page="true" 
-                {% if paginator.is_first_page %} {{ 'disabled' }} {% endif %} >
-                <a class="mdc-button__icon" href="?page={{ paginator.first_page }}">first_page</a>
+                {% if paginator.page == 1 %} {{ 'disabled' }} {% endif %} >
+                <a class="mdc-button__icon" href="?page=1">first_page</a>
             </button>
             <button class="mdc-icon-button material-icons mdc-data-table__pagination-button" data-prev-page="true" 
                 {% if paginator.is_first_page %} {{ 'disabled' }} {% endif %}>

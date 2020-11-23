@@ -77,6 +77,7 @@ class Model(BaseModel):
     save_datetine = DateTimeField()    
     data = JSONField(null=True)
     
+    is_archived = BooleanField(default=False, index=True)
     is_deleted = BooleanField(default=False, index=True)
 
     _kv_store: KVStore = None
@@ -105,6 +106,13 @@ class Model(BaseModel):
         self._kv_store = KVStore(self.kv_store_path)
 
     # -- A --
+
+    def archive(self, status: bool) -> bool:
+        if self.is_archived == status:
+            return True
+            
+        self.is_archived = status
+        return self.save()
 
     # -- C --
 
@@ -156,6 +164,9 @@ class Model(BaseModel):
     def delete(self) -> bool:
         if not self._is_deletable:
             return False
+
+        if self.is_deleted:
+            return True
 
         self.is_deleted = True
         return self.save()
@@ -437,6 +448,29 @@ class Viewable(Model):
 
     _vmodel_specs: dict = {}
 
+    # -- A --
+
+    def archive(self, status: bool):
+        if self.is_archived == status:
+            return True
+
+        with DbManager.db.atomic() as transaction:
+            try:
+                Q = ViewModel.select().where( ViewModel.model_id == self.id )
+                for vm in Q:
+                    if not vm.archive(status):
+                        transaction.rollback()
+                        return False
+                
+                if super().archive(status):
+                    return True
+                else:
+                    transaction.rollback()
+                    return False
+            except:
+                transaction.rollback()
+                return False
+
     def as_json(self) -> str:
         """
         Returns JSON (a dictionnary) representation of the model.
@@ -581,6 +615,28 @@ class Config(Viewable):
 
     # -- A --
 
+    def archive(self, status: bool):
+        if self.is_archived == status:
+            return True
+            
+        with DbManager.db.atomic() as transaction:
+            try:
+                Q = Job.select().where( Job.config_id == self.id )
+                for job in Q:
+                    if not job.archive(status):
+                        transaction.rollback()
+                        return False
+                
+                if super().archive(status):
+                    return True
+                else:
+                    transaction.rollback()
+                    return False
+                    
+            except:
+                transaction.rollback()
+                return False
+
     # -- D --
 
     def delete(self):
@@ -589,7 +645,7 @@ class Config(Viewable):
             
         with DbManager.db.atomic() as transaction:
             try:
-                Q = Job.select().where( Job.process_id == self.id )
+                Q = Job.select().where( Job.config_id == self.id )
                 for job in Q:
                     if not job.delete():
                         transaction.rollback()
@@ -1180,6 +1236,28 @@ class Experiment(Viewable):
     def add_report(self, report: 'Report'):
         report.experiment = self
 
+    def archive(self, status:bool):
+        if self.is_archived == status:
+            return True
+            
+        with DbManager.db.atomic() as transaction:
+            try:
+                Q = Job.select().where( Job.experiment == self )
+                for job in Q:
+                    if not job.archive(status):
+                        transaction.rollback()
+                        return False
+                
+                if super().archive(status):
+                    return True
+                else:
+                    transaction.rollback()
+                    return False
+                    
+            except:
+                transaction.rollback()
+                return False
+
     def as_json(self) -> str:
         """
         Returns JSON (a dictionnary) representation of the model.
@@ -1203,7 +1281,7 @@ class Experiment(Viewable):
             
         with DbManager.db.atomic() as transaction:
             try:
-                Q = Job.select().where( Job.process_id == self.id )
+                Q = Job.select().where( Job.experiment == self )
                 for job in Q:
                     if not job.delete():
                         transaction.rollback()
@@ -1298,6 +1376,13 @@ class Job(Viewable, SystemTrackable):
 
     # -- A --
 
+    def archive(self, status: bool):
+        # /!\ Do not archive Config, Process and Experiment
+        if self.is_archived == status:
+            return True
+
+        return super().archive(status)
+
     def as_json(self) -> str:
         """
         Returns JSON (a dictionnary) representation of the model.
@@ -1345,6 +1430,7 @@ class Job(Viewable, SystemTrackable):
     # -- D --
 
     def delete(self):
+        # /!\ Do not archive Config, Process nor Experiment
         if self.is_deleted:
             return True
 
@@ -1890,6 +1976,22 @@ class Resource(Viewable, SystemTrackable):
 
     # -- A --
 
+    def archive(self, status: bool):
+        if self.is_archived == status:
+            return True
+
+        with DbManager.db.atomic() as transaction:
+            try:
+                tf = self.job.archive(status) and super().archive(status)
+                if not tf:
+                    transaction.rollback()
+                    return False
+                else:
+                    return True
+            except:
+                transaction.rollback()
+                return False
+
     def as_json(self) -> dict:
         """
         Returns JSON (a dictionnary) representation of the model.
@@ -1915,7 +2017,7 @@ class Resource(Viewable, SystemTrackable):
 
         with DbManager.db.atomic() as transaction:
             try:
-                tf = self.job.delete and super().delete()
+                tf = self.job.delete() and super().delete()
                 if not tf:
                     transaction.rollback()
                     return False
