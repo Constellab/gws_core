@@ -1,0 +1,42 @@
+{% extends "gws/_base/base.html" %}
+
+{% block title %}GWS{% endblock %}
+
+{% block body %}
+
+    {% include 'gws/_index/sidebar.html' %}
+    
+    <div class="mdc-drawer-scrim"></div>
+
+    <div class="mdc-drawer-app-content"></div>
+
+        {% include 'gws/_index/header.html' %}
+        
+        <div role="progressbar" class="mdc-linear-progress mdc-linear-progress--indeterminate" aria-label="Waiting..." aria-valuemin="0" aria-valuemax="1" aria-valuenow="0">
+            <div class="mdc-linear-progress__buffer">
+              <div class="mdc-linear-progress__buffer-bar"></div>
+              <div class="mdc-linear-progress__buffer-dots"></div>
+            </div>
+            <div class="mdc-linear-progress__bar mdc-linear-progress__primary-bar">
+              <span class="mdc-linear-progress__bar-inner"></span>
+            </div>
+            <div class="mdc-linear-progress__bar mdc-linear-progress__secondary-bar">
+              <span class="mdc-linear-progress__bar-inner"></span>
+            </div>
+        </div>
+
+        <div class="mdc-layout-grid">
+            <div class="mdc-layout-grid__inner">
+                <div class="gws-page-content-container mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
+                    <div class="gws-page-content">
+                        {% include brick_name+"/"+entry_name+"/"+action_name+'.html' %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    {% include 'gws/_index/footer.html' %}
+
+{% endblock %}

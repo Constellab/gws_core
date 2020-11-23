@@ -1,42 +1,21 @@
-{% extends "gws/base/base.html" %}
+<h1 class="mdc-typography--headline5">
+    Scalable digital labs for AI-Augmented R&D 
+</h1>
 
-{% block title %}GWS{% endblock %}
+<br><br>
 
-{% block body %}
+<div class="mdc-layout-grid">
+    <div class="mdc-layout-grid__inner">
 
-    {% include 'gws/index/sidebar.html' %}
-    
-    <div class="mdc-drawer-scrim"></div>
-
-    <div class="mdc-drawer-app-content"></div>
-
-        {% include 'gws/index/header.html' %}
-        
-        <div role="progressbar" class="mdc-linear-progress mdc-linear-progress--indeterminate" aria-label="Waiting..." aria-valuemin="0" aria-valuemax="1" aria-valuenow="0">
-            <div class="mdc-linear-progress__buffer">
-              <div class="mdc-linear-progress__buffer-bar"></div>
-              <div class="mdc-linear-progress__buffer-dots"></div>
-            </div>
-            <div class="mdc-linear-progress__bar mdc-linear-progress__primary-bar">
-              <span class="mdc-linear-progress__bar-inner"></span>
-            </div>
-            <div class="mdc-linear-progress__bar mdc-linear-progress__secondary-bar">
-              <span class="mdc-linear-progress__bar-inner"></span>
-            </div>
-        </div>
-
-        <div class="mdc-layout-grid">
-            <div class="mdc-layout-grid__inner">
-                <div class="gws-page-content-container mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
-                    <div class="gws-page-content">
-                        {% include brick_name+"/"+page_name+'.html' %}
-                    </div>
-                </div>
-            </div>
+        <div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12" style="text-align: center;">
+            <img style="max-width:800px; width:90%" src="/static-gws/img/laas.png">
         </div>
         
     </div>
+</div>
 
-    {% include 'gws/index/footer.html' %}
-
-{% endblock %}
+<div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12" style="text-align: center;">
+    <div class="gview:button" data-href="/page/biox">
+        <div text>Get started</div>
+    </div>
+</div>

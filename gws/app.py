@@ -20,6 +20,7 @@ from fastapi.requests import Request
 from pydantic import BaseModel
 import jinja2
 
+from gws.base import slugify
 from gws.settings import Settings
 from gws.model import User
 from gws.controller import Controller
@@ -59,13 +60,17 @@ async def show_home_page():
     return RedirectResponse(url=f'/page/{brick}')
 
 @app.api_route("/page/{brick_name}", response_class=HTMLResponse, methods=["GET", "POST"])
-@app.api_route("/page/{brick_name}/{page_name}", response_class=HTMLResponse, methods=["GET", "POST"])
-async def show_brick_page(request: Request, brick_name: Optional[str] = "gws", page_name: Optional[str] = 'index') :
+@app.api_route("/page/{brick_name}/{entry_name}", response_class=HTMLResponse, methods=["GET", "POST"])
+@app.api_route("/page/{brick_name}/{entry_name}/{action_name}", response_class=HTMLResponse, methods=["GET", "POST"])
+async def show_brick_page(request: Request, brick_name: Optional[str] = "gws", entry_name: Optional[str] = 'index', action_name: Optional[str] = 'index') :
     brick_app_module = importlib.import_module(f"{brick_name}.app")
     page_t = getattr(brick_app_module, "Page", None)
     
     try:
-        async_func = getattr(page_t, page_name.replace("-","_").lower(), None)
+        entry_name = slugify(entry_name,snakefy=True).strip("_")
+        action_name = slugify(action_name,snakefy=True).strip("_")
+        func_name = entry_name + "_" + action_name
+        async_func = getattr(page_t, func_name, None)
         response = await async_func(request)
     except:
         response = None
@@ -73,12 +78,13 @@ async def show_brick_page(request: Request, brick_name: Optional[str] = "gws", p
     settings = Settings.retrieve()
     css, js, module_js = settings.get_local_static_css_js()
     env = get_template_env(settings)
-    template = env.get_template("gws/index/index.html")
+    template = env.get_template("gws/_index/index.html")
     html = template.render({
         'response': response,
         'settings': settings,
-        'page_name': page_name,
         'brick_name': brick_name,
+        'entry_name': entry_name,
+        'action_name': action_name,
         'request': request,
         'scripts':{
             "css": css,

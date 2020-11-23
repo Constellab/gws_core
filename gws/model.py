@@ -77,7 +77,7 @@ class Model(BaseModel):
     save_datetine = DateTimeField()    
     data = JSONField(null=True)
     
-    is_archived = BooleanField(default=False, index=True)
+    #is_archived = BooleanField(default=False, index=True)
     is_deleted = BooleanField(default=False, index=True)
 
     _kv_store: KVStore = None
