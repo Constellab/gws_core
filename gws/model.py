@@ -711,7 +711,7 @@ class Config(Viewable):
             value = validator.validate(value)
         except Exception as err:
             Logger.error(Exception(self.classname(), "set_param", f"Invalid parameter value '{name}'. Error message: {err}"))
-
+        
         self.data["params"][name] = value
 
     def set_params(self, params: dict):
@@ -1116,7 +1116,9 @@ class Process(Viewable, SystemTrackable):
         """
 
         if isinstance(config, Config):
-            self.config = config
+            job = self.get_active_job()
+            job.set_config(config)
+            #self.config = config
         else:
             Logger.error(Exception(self.classname(), "set_config", "The config must be an instance of Config."))
 
@@ -1129,6 +1131,7 @@ class Process(Viewable, SystemTrackable):
         :param value: A value to assign
         :type value: [str, int, float, bool]
         """
+        
         self.config.set_param(name, value)
 
     # -- T --
@@ -1504,6 +1507,12 @@ class Job(Viewable, SystemTrackable):
             self.is_running = self.process.is_running
             self.is_finished = self.process.is_finished
 
+    def set_config(self, config: Config):
+        if not config.is_saved():
+            config.save()
+            self.config_id = config.id
+        self._config = config
+        
     def set_experiment(self, experiment: 'Experiment'):
         if not isinstance(experiment, Experiment):
             raise Exception("The experiment must be an instance of Experiment")
