@@ -71,16 +71,20 @@ async def show_brick_page(request: Request, brick_name: Optional[str] = "gws", e
         action_name = slugify(action_name,snakefy=True).strip("_")
         func_name = entry_name + "_" + action_name
         async_func = getattr(page_t, func_name, None)
-        response = await async_func(request)
-    except:
-        response = None
-    
+        results = await async_func(request)
+        status = True
+        message = ""
+    except Exception as err:
+        status = False
+        results = None
+        message = f"{err}"
+
     settings = Settings.retrieve()
     css, js, module_js = settings.get_local_static_css_js()
     env = get_template_env(settings)
     template = env.get_template("gws/_index/index.html")
     html = template.render({
-        'response': response,
+        'response': {"status": status, "results": results, "message": message},
         'settings': settings,
         'brick_name': brick_name,
         'entry_name': entry_name,
@@ -103,11 +107,11 @@ async def call_brick_api(request: Request, brick_name: Optional[str] = "gws", ap
 
     try:
         async_func = getattr(api_t, api_func.replace("-","_").lower(), None)
-        response = await async_func(request)
-    except:
-        response = {}
+        results = await async_func(request)
+        return {"status": True, "results": results, "message": ""}
+    except Exception as err:
+        return {"status": False, "results": {}, "message": f"{err}"}
 
-    return response
 
 ####################################################################################
 #

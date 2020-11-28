@@ -22,13 +22,16 @@
  * Common
  */
 
-.html{ color: var(--gws-text-color); }
-.body{ background-color: var(--theme-bg-color); font-size: 0.875rem }
+html{ color: var(--gws-text-color); }
+body{ background-color: var(--theme-bg-color); font-size: 0.875rem }
 a { color: var(--gws-text-color); text-decoration: none; }
 a:visited { color: var(--gws-text-color); }
 a:hover { color: var(--gws-text-color); }
+hr{ border: none; border-top: 1px solid #dcdcdc }
+
 .d-block{ display: block }
 .d-none{ display: none }
+
 
 /**
  * GWS
@@ -57,9 +60,9 @@ a:hover { color: var(--gws-text-color); }
  * MDC Override
  */
 
-.mdc-card{ width: 100%; font-size: 12px; 
+/*.mdc-card{ width: 100%; font-size: 12px; 
     border: 1px solid #ddd;
-    box-shadow: 1px 1px 4px 1px rgba(0, 0, 0, 0.05)}
+    box-shadow: 1px 1px 4px 1px rgba(0, 0, 0, 0.05)}*/
 .mdc-card-sm{ max-width: 172px; }
 .mdc-card-md{  max-width:350px; }
 .mdc-card-lg{  max-width:500px; }

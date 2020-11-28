@@ -77,7 +77,7 @@ class Model(BaseModel):
     save_datetine = DateTimeField()    
     data = JSONField(null=True)
     
-    #is_archived = BooleanField(default=False, index=True)
+    is_archived = BooleanField(default=False, index=True)
     is_deleted = BooleanField(default=False, index=True)
 
     _kv_store: KVStore = None
@@ -510,11 +510,11 @@ class Viewable(Model):
 
     # -- G --
 
-    def get_title(self) -> str:
+    def get_title(self, default="") -> str:
         """ 
         Get the title
         """
-        return self.data.get("title", "")
+        return self.data.get("title", default).capitalize()
 
     # -- D --
 
@@ -832,6 +832,14 @@ class Process(Viewable, SystemTrackable):
             Logger.error(Exception("Process", "add_event", f"Cannot add event. Error message: {err}"))
 
     # -- C --
+    def create_experiment(self, config: Config = None):
+        if isinstance(config, Config):
+            job = self.get_active_job()
+            job.set_config(config)
+
+        proto = Protocol(processes={ self.classname(): self })
+        e = Experiment(protocol=proto)
+        return e
 
     @classmethod
     def create_table(cls, *args, **kwargs):
@@ -999,7 +1007,7 @@ class Process(Viewable, SystemTrackable):
 
     # -- R -- 
 
-    async def run(self):
+    async def _run(self):
         """ 
         Runs the process and save its state in the database.
         """
@@ -1068,7 +1076,7 @@ class Process(Viewable, SystemTrackable):
             proc_job.save()
 
             # run next
-            asyncio.create_task( proc.run() )
+            asyncio.create_task( proc._run() )
 
     def __rshift__(self, name: str) -> OutPort:
         """ 
@@ -1230,9 +1238,24 @@ class Experiment(Viewable):
 
     _fts_model = 'ExperimentFTSDocument'
     _fts_fields = {'title': 2.0, 'data': 1.0}
+    _protocol = None
+
+    def __init__(self, *args, protocol=None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if isinstance(protocol, Protocol):
+            if not protocol.is_saved():
+                protocol.save()
+            else:
+                if not protocol.get_active_experiment() is None:
+                    Logger.error(Exception("Experiment", "__init__", "An experiment is already associated with the protocol"))
+
+            self.protocol_id = protocol.id
+            self._protocol = protocol
+            self._protocol.set_active_experiment(self)
 
     # -- A --
-
+    
     def add_report(self, report: 'Report'):
         report.experiment = self
 
@@ -1319,17 +1342,25 @@ class Experiment(Viewable):
 
     @property 
     def protocol(self):
-        proto = Protocol.get_by_id(self.protocol_id)
-        return proto.cast()
+        if self._protocol is None:
+            try:
+                proto = Protocol.get_by_id(self.protocol_id)
+            except:
+                return None
+            
+            self._protocol = proto.cast()
+            return self._protocol
+        else:
+            return self._protocol
 
     # -- R --
 
     @property 
-    def rerouces(self):
+    def resources(self):
         return Controller.fetch_resource_list(experiment_uri=self.uri)
 
-    def run(self):
-        self.protocol.run()
+    async def run(self):
+        await self.protocol._run()
 
 
 # ####################################################################
@@ -1457,6 +1488,11 @@ class Job(Viewable, SystemTrackable):
         else:
             return None
 
+    # -- R --
+
+    async def _run( self ):
+        await self.process._run()
+
     # -- S --
 
     def update_state(self):
@@ -1549,7 +1585,7 @@ class Protocol(Process, SystemTrackable):
 
     _table_name = 'process'     #/!\ use same table as Process
 
-    def __init__(self, *args, processes: dict = None, connectors: list = None, \
+    def __init__(self, *args, processes: dict = None, connectors: list = [], \
                 interfaces: dict = None, outerfaces: dict = None, graph: (str, dict)=None,\
                 **kwargs):
 
@@ -1639,6 +1675,15 @@ class Protocol(Process, SystemTrackable):
         self._connectors.append(connector)
 
     # -- C --
+
+     # -- C --
+    def create_experiment(self, config: Config = None):
+        if isinstance(config, Config):
+            job = self.get_active_job()
+            job.set_config(config)
+
+        e = Experiment(protocol=self)
+        return e
 
     def create_source_zip(self):
         graph = self.dumps()
@@ -1841,17 +1886,18 @@ class Protocol(Process, SystemTrackable):
 
     # -- R --
     
-    async def run(self):
+    async def _run(self):
         """ 
         Runs the process and save its state in the database.
         Override mother class method.
         """
 
         e = self.get_active_experiment()
-        e.save()
         if e is None:
-            raise Exception("No experiment defined for the active job of the protocol")
-        
+            Logger.error(Exception("Protocol", "_run", "No experiment defined"))
+
+        e.save()
+
         for k in self._processes:
             job = self._processes[k].get_active_job()
             job.experiment = e
@@ -1869,7 +1915,8 @@ class Protocol(Process, SystemTrackable):
                 sources.append(proc)
 
         for proc in sources:
-            await proc.run()
+            asyncio.create_task( proc._run() )
+            #await proc._run()
 
         #----------- END OF BUILT-IN PROTOCOL TASK ----------
 

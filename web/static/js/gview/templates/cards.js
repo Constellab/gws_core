@@ -11,8 +11,8 @@ new GViewTemplate({
             data.titleHeight = data.titleHeight || GView.defautTagData()
 
             container.innerHTML = `
-                <div class="mdc-card `+data.class+`" style="`+data.style+`" >
-                    <div class="mdc-card__primary-action" tabindex="0">
+                <div class="mdc-card mdc-card--outlined `+data.class+`" style="`+data.style+`">
+                    <div class="mdc-card__content" style="padding-bottom: 5px">
                         <div class="mdc-card__media" style="padding: 0px 16px;">
                             <h2 class="mdc-card-title mdc-typography mdc-typography--headline6">`+data.title.innerHTML+`</h2>
                             <h3 class="mdc-card-subtitle mdc-typography mdc-typography--subtitle2">`+data.subtitle.innerHTML+`</h3>

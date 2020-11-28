@@ -75,7 +75,8 @@ class TestProcess(unittest.TestCase):
             p5.on_end(_on_p5_end)
 
             # start
-            await p0.run()
+            e = p0.create_experiment()
+            await e.run()
             
             print("Sleeping 1 sec for waiting all tasks to finish ...")
             await asyncio.sleep(1)

@@ -6,13 +6,11 @@ new GViewTemplate({
             data.text = data.text || GView.defautTagData()
             data.href = data.href || ""
             data.target = data.target || ""
-            data.variant = data.variant || "raised"
+            data.variant = data.variant || "outlined"
 
             if(! ["text", "raised", "outlined", "unelevated"].includes(data.variant) ){
                 data.variant = "raised"
             }
-
-            console.log(data.href)
 
             if(data.href != ""){
                 container.innerHTML = `
@@ -23,7 +21,7 @@ new GViewTemplate({
                 `;
             } else{
                 container.innerHTML = `
-                    <button id="`+ data.id +`" class="gws-mdc-button mdc-button mdc-button--`+data.variant+`"> 
+                    <button id="`+ data.id +`" class="mdc-button mdc-button--`+data.variant+`"> 
                         <span class="mdc-button__ripple"></span>
                         `+ data.text.innerHTML +`
                     </button>

@@ -52,12 +52,12 @@ class Paginator:
 
     def as_model_list( self ):
         return {
-            'results' : Query.format( self.Q ),
+            'data' : Query.format( self.Q ),
             'paginator': self._paginator_dict()
         }
 
     def as_json( self ):
         return {
-            'results' : Query.format( self.Q, return_format="json" ),
+            'data' : Query.format( self.Q, return_format="json" ),
             'paginator': self._paginator_dict()
         }

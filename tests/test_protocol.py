@@ -66,10 +66,9 @@ class TestProtocol(unittest.TestCase):
             outerfaces = {}
         )
         
-        proto.set_active_experiment(Experiment())
-
         async def _run():
-            await proto.run()
+            e = Experiment(protocol=proto)
+            await e.run()
 
             print("Sleeping 1 sec for waiting all tasks to finish ...")
             await asyncio.sleep(1)
@@ -113,10 +112,20 @@ class TestProtocol(unittest.TestCase):
             outerfaces = { 'robot' : p2.out_port('robot') }
         )
 
-        proto.set_active_experiment(Experiment())
-        
-        p0>>'robot'        | proto<<'robot'
-        proto>>'robot'     | p5<<'robot'
+        super_proto = Protocol(
+            processes={
+                "p0": p0,
+                "p5": p5,
+                "proto": proto
+            },
+            connectors=[
+                p0>>'robot'        | proto<<'robot',
+                proto>>'robot'     | p5<<'robot'
+            ]
+        )
+
+        #p0>>'robot'        | proto<<'robot'
+        #proto>>'robot'     | p5<<'robot'
 
         p1 = proto.get_process("p1")
         proto.is_interfaced_with(p1)
@@ -128,9 +137,10 @@ class TestProtocol(unittest.TestCase):
             s1 = json.load(f)
             s2 = json.loads(proto.dumps())
             self.assertEqual(s1,s2)
-
+        
         async def _run():
-            await p0.run()
+            e = super_proto.create_experiment()
+            await e.run()
 
             print("Sleeping 1 sec for waiting all tasks to finish ...")
             await asyncio.sleep(1)
@@ -147,20 +157,29 @@ class TestProtocol(unittest.TestCase):
             self.assertEqual(s1,s2)
 
         p1 = proto.get_process("p1")
-        proto.is_interfaced_with(p1)
+        self.assertTrue(proto.is_interfaced_with(p1))
 
         p2 = proto.get_process("p2")
-        proto.is_outerfaced_with(p2)
+        self.assertTrue(proto.is_outerfaced_with(p2))
 
         p0 = Create(name="p0")
         p5 = Eat(name="p5")
 
-        p0>>'robot'        | proto<<'robot'
-        proto>>'robot'     | p5<<'robot'
-
-        proto.set_active_experiment(Experiment())
+        super_proto = Protocol(
+            processes={
+                "p0": p0,
+                "p5": p5,
+                "proto": proto
+            },
+            connectors=[
+                p0>>'robot'        | proto<<'robot',
+                proto>>'robot'     | p5<<'robot'
+            ]
+        )
+        
         async def _run():
-            await p0.run()
+            e = super_proto.create_experiment()
+            await e.run()
 
             print("Sleeping 1 sec for waiting all tasks to finish ...")
             await asyncio.sleep(1)
