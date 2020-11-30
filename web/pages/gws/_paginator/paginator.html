@@ -1,4 +1,6 @@
-{% set paginator = response.results.paginator %}
+{% set paginator = results.paginator %}
+
+{%  if paginator %}
 <div class="mdc-data-table__pagination">
     <div class="mdc-data-table__pagination-trailing">
         <div class="mdc-data-table__pagination-navigation">
@@ -24,3 +26,4 @@
         </div>
     </div>
 </div>
+{%  endif %}
