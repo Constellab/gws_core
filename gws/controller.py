@@ -5,6 +5,7 @@
 
 import json
 import importlib
+import asyncio
 
 from gws.base import Base
 from gws.logger import Logger
@@ -61,7 +62,7 @@ class Controller(Base):
             elif action == "delete":
                 model = cls.__delete(model_type, uri)
             elif action == "run":
-                model = cls.__run(data)
+                model = asyncio.run( cls.__run(data) )
             
             if return_format == "json":
                 return model.as_json()
@@ -370,14 +371,14 @@ class Controller(Base):
     async def _run_robot(cls):
         from gws.robot import create_protocol
         from gws.model import Experiment
-        e = Experiment()
+        p = create_protocol()
+        p.save()
+        e = p.create_experiment()
         e.set_title("The journey of Astro.")
         e.set_data_value("description", "This is the journey of Astro.")
-        p = create_protocol()
-        p.set_active_experiment(e)
+        e.run()
         e.save()
-        await p.run()
-        return p.save()
+        return True
         
     @classmethod
     async def __run(cls, process_type: str, process_uri: str, config_params: dict):
@@ -394,7 +395,9 @@ class Controller(Base):
         if isinstance(proc, Process):
             job = proc.get_active_job()
             job.config.set_params(config_params)
-            await proc.run()
+            e = proc.create_experiment()
+            e.run()
+            e.save()
         else:
             Logger.error(Exception("Controller", "__run", "Process not found"))
 

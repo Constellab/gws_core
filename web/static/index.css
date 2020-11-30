@@ -24,8 +24,9 @@
 
 html{ color: var(--gws-text-color); }
 body{ background-color: var(--theme-bg-color); font-size: 0.875rem }
-a { color: var(--gws-text-color); text-decoration: none; }
-a:visited { color: var(--gws-text-color); }
+a { color: var(--theme-color); text-decoration: none; }
+a:disabled{ color: #dcdcdc }
+a:visited { color: var(--theme-color); }
 a:hover { color: var(--gws-text-color); }
 hr{ border: none; border-top: 1px solid #dcdcdc }
 
@@ -41,7 +42,7 @@ hr{ border: none; border-top: 1px solid #dcdcdc }
 .gws-headline{ color: var(--theme-color); border-bottom: 1px solid rgb(1, 137, 137, 0.3); margin-bottom: 24px; }
 .gws-section-title{ margin: 24px 0px; padding: 8px 0px; border-bottom: 1px solid #dcdcdc; color: var(--theme-color) }
 .gws-multiline{ display: block; }
-.gws-multiline--primary{ display: block; font-size: 1rem; margin-top: 16px; margin-bottom: 8px; color: var(--theme-color); font-weight: bold; text-decoration: none }
+.gws-multiline--primary{ display: block; font-size: 1rem; margin-top: 16px; margin-bottom: 8px; color: var(--theme-color); text-decoration: none }
 .gws-multiline--primary:hover{ color: var(--theme-color); }
 .gws-multiline--secondary{ display: block; color: #777; margin: 0px 0px; }
 .gws-top-right-bar{
@@ -75,3 +76,4 @@ hr{ border: none; border-top: 1px solid #dcdcdc }
 .mdc-layout-grid{ margin: 0px 0px; padding: 0px }
 .mdc-layout-grid__inner, .mdc-layout-grid__cell{ margin: 0px; padding: 0px }
 .mdc-top-app-bar--short{ left: -45px; cursor: pointer}
+.mdc-chip__text{ color: var(--theme-text-color); }
