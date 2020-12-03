@@ -14,7 +14,7 @@ class _Request{
             var contentType = "application/json"
             
         request.method = request.method || "GET"
-        fetch('?inner_html_content_only=true', { 
+        fetch(request.url, { 
             method: request.method,
             headers: new Headers({
                 "Content-Type": contentType,

@@ -5,6 +5,7 @@
 
 import json
 import importlib
+import inspect
 import asyncio
 
 from gws.base import Base
@@ -279,7 +280,7 @@ class Controller(Base):
         return t
 
     # -- I --
-
+    
     # -- P --
 
     @classmethod
@@ -367,6 +368,28 @@ class Controller(Base):
 
     # -- R --
 
+    # @classmethod
+    # def register_models(cls):
+    #     settings = cls.get_settings()
+    #     bricks = settings.get_dependency_names()
+
+    #     print("xxxxx")
+    #     print(bricks)
+
+    #     from gws.model import Process 
+    #     for brick_name in bricks:
+    #         print(brick_name)
+    #         module = importlib.import_module(brick_name)
+    #         for module_name, _ in inspect.getmembers(module, inspect.ismodule):
+    #             submodule = importlib.import_module(brick_name+"."+module_name)
+    #             for class_name, _ in inspect.getmembers(submodule, inspect.isclass):
+    #                 t = getattr(submodule, class_name, None)
+    #                 print(t)
+    #                 if issubclass(t, Process):
+    #                     print("yyyy")
+    #                     print(t)
+    #                     pass
+
     @classmethod
     async def _run_robot(cls):
         from gws.robot import create_protocol
@@ -376,7 +399,7 @@ class Controller(Base):
         e = p.create_experiment()
         e.set_title("The journey of Astro.")
         e.set_data_value("description", "This is the journey of Astro.")
-        e.run()
+        await e.run()
         e.save()
         return True
         

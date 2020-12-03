@@ -161,7 +161,7 @@ class Model(BaseModel):
 
     # -- D --
 
-    def delete(self) -> bool:
+    def remove(self) -> bool:
         if not self._is_deletable:
             return False
 
@@ -518,7 +518,7 @@ class Viewable(Model):
 
     # -- D --
 
-    def delete(self):
+    def remove(self):
         if self.is_deleted:
             return True
 
@@ -526,11 +526,11 @@ class Viewable(Model):
             try:
                 Q = ViewModel.select().where( ViewModel.model_id == self.id )
                 for vm in Q:
-                    if not vm.delete():
+                    if not vm.remove():
                         transaction.rollback()
                         return False
                 
-                if super().delete():
+                if super().remove():
                     return True
                 else:
                     transaction.rollback()
@@ -639,7 +639,7 @@ class Config(Viewable):
 
     # -- D --
 
-    def delete(self):
+    def remove(self):
         if self.is_deleted:
             return True
             
@@ -647,11 +647,11 @@ class Config(Viewable):
             try:
                 Q = Job.select().where( Job.config_id == self.id )
                 for job in Q:
-                    if not job.delete():
+                    if not job.remove():
                         transaction.rollback()
                         return False
                 
-                if super().delete():
+                if super().remove():
                     return True
                 else:
                     transaction.rollback()
@@ -1301,7 +1301,7 @@ class Experiment(Viewable):
 
     # -- D --
 
-    def delete(self):
+    def remove(self):
         if self.is_deleted:
             return True
             
@@ -1309,11 +1309,11 @@ class Experiment(Viewable):
             try:
                 Q = Job.select().where( Job.experiment == self )
                 for job in Q:
-                    if not job.delete():
+                    if not job.remove():
                         transaction.rollback()
                         return False
                 
-                if super().delete():
+                if super().remove():
                     return True
                 else:
                     transaction.rollback()
@@ -1463,12 +1463,12 @@ class Job(Viewable, SystemTrackable):
 
     # -- D --
 
-    def delete(self):
+    def remove(self):
         # /!\ Do not archive Config, Process nor Experiment
         if self.is_deleted:
             return True
 
-        return super().delete()
+        return super().remove()
 
     # -- P --
 
@@ -2067,13 +2067,13 @@ class Resource(Viewable, SystemTrackable):
 
     # -- D --
 
-    def delete(self):
+    def remove(self):
         if self.is_deleted:
             return True
 
         with DbManager.db.atomic() as transaction:
             try:
-                tf = self.job.delete() and super().delete()
+                tf = self.job.remove() and super().remove()
                 if not tf:
                     transaction.rollback()
                     return False

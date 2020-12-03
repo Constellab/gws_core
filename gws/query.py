@@ -61,3 +61,9 @@ class Paginator:
             'data' : Query.format( self.Q, return_format="json" ),
             'paginator': self._paginator_dict()
         }
+
+    def next(self):
+        if self.is_last_page:
+            return False
+        else:
+            return Paginator(self.Q, page=self.next_page)
