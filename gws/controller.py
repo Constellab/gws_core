@@ -21,18 +21,19 @@ class Controller(Base):
     _settings = None
 
     @classmethod
-    def action(cls, action=None, model_type=None, uri=None, data=None, page=1, filters=[], return_format="") -> 'ViewModel':
+    def action(cls, action=None, object_type=None, object_uri=None, data=None, page=1, filters=[], return_format="") -> 'ViewModel':
         """
         Process user actions
 
         :param action: The action
         :type action: str
-        :param uri: The uri of the view model
-        :type uri: str
+        :param object_type: The type of the view model
+        :type object_type: str
+        :param object_uri: The uri of the view model
+        :type object_uri: str
         :param data: The data
         :type data: dict
         :return: A view model corresponding to the action
-        :model_type: `gws.prims.model.ViewModel`
         """
 
         try:
@@ -46,7 +47,7 @@ class Controller(Base):
         
         # CRUD (& Run) actions
         if action == "list":
-            Q = cls.fetch_list(model_type, page, filters=filters)
+            Q = cls.fetch_list(object_type, page, filters=filters)
 
             if return_format == "json":
                 return Paginator(Q, page=page).as_json()
@@ -55,13 +56,13 @@ class Controller(Base):
 
         else:
             if action == "post":
-                model = cls.__post(model_type, uri, data)
+                model = cls.__post(object_type, object_uri, data)
             elif action == "get":
-                model = cls.__get(model_type, uri)
+                model = cls.__get(object_type, object_uri)
             elif action == "put":
-                model = cls.__put(model_type, uri, data)
+                model = cls.__put(object_type, object_uri, data)
             elif action == "delete":
-                model = cls.__delete(model_type, uri)
+                model = cls.__delete(object_type, object_uri)
             elif action == "run":
                 model = asyncio.run( cls.__run(data) )
             
@@ -75,14 +76,14 @@ class Controller(Base):
     # -- D --
 
     @classmethod
-    def __delete(cls, model_type: str, uri: str) -> 'ViewModel':
+    def __delete(cls, object_type: str, object_uri: str) -> 'ViewModel':
         from gws.model import Model, ViewModel
-        o = cls.fetch_model(model_type, uri)
+        o = cls.fetch_model(object_type, object_uri)
         if isinstance(o, ViewModel):
             o.delete()
             return o
         else:
-            Logger.error(Exception("Controller", f"__delete", "No ViewModel match with the uri."))
+            Logger.error(Exception("Controller", f"__delete", "No ViewModel match with uri {object_uri}."))
 
     # -- F --
 
@@ -188,8 +189,8 @@ class Controller(Base):
 
 
     @classmethod
-    def fetch_list(cls, model_type: str, page: int, filters=[], return_format="") -> 'Model':
-        t = cls.get_model_type(model_type)
+    def fetch_list(cls, object_type: str, page: int, filters=[], return_format="") -> 'Model':
+        t = cls.get_model_type(object_type)
         try:
             Q = t.select().order_by(t.creation_datetime.desc())
             if len(filters) > 0:
@@ -203,19 +204,19 @@ class Controller(Base):
             return None
 
     @classmethod
-    def fetch_model(cls, model_type: str, uri: str) -> 'Model':
+    def fetch_model(cls, object_type: str, object_uri: str) -> 'Model':
         """
-        Fetch a model using the uri
+        Fetch a model using the object_uri
 
-        :param uri: The uri of the target model
-        :type uri: str
+        :param object_uri: The uri of the target model
+        :type object_uri: str
         :return: A model
-        :model_type: Model
+        :object_type: Model
         """
 
-        t = cls.get_model_type(model_type)
+        t = cls.get_model_type(object_type)
         try:
-            return t.get(t.uri == uri)
+            return t.get(t.uri == object_uri)
         except:
             return None        
     # -- G --
@@ -229,15 +230,15 @@ class Controller(Base):
         return Controller._settings
         
     @classmethod
-    def __get(cls, model_type: str, uri: str) -> 'ViewModel':
-        obj = cls.fetch_model(model_type, uri)
+    def __get(cls, object_type: str, object_uri: str) -> 'ViewModel':
+        obj = cls.fetch_model(object_type, object_uri)
         from gws.model import Model, ViewModel
         if isinstance(obj, ViewModel):
             return obj
         elif isinstance(obj, Model):
             return obj
         else:
-            Logger.error(Exception("Controller", "__get", f"No ViewModel or Model found for the encoded uri {uri}"))
+            Logger.error(Exception("Controller", "__get", f"No ViewModel or Model found for the encoded uri {object_uri}"))
         
 
     @classmethod
@@ -248,7 +249,7 @@ class Controller(Base):
         :param type_str: Litteral type (can be a slugyfied string)
         :type type_str: str
         :return: The type if the model is registered, None otherwise
-        :model_type: type
+        :object_type: type
         :Logger.error(Exception: No registered model matchs with the given `type_str`)
         """
    
@@ -284,9 +285,9 @@ class Controller(Base):
     # -- P --
 
     @classmethod
-    def __post(cls, model_type: str, uri: str, data: dict) -> 'ViewModel':
+    def __post(cls, object_type: str, object_uri: str, data: dict) -> 'ViewModel':
         from gws.model import SystemTrackable, ViewModel
-        obj = cls.fetch_model(model_type, uri)
+        obj = cls.fetch_model(object_type, object_uri)
 
         if isinstance(obj, SystemTrackable):
             Logger.error(Exception("Controller", "__post", f"Object {type(obj)} is SystemTrackable. It can only be created by the PRISM system"))
@@ -312,13 +313,13 @@ class Controller(Base):
         return new_vmodel
 
     @classmethod
-    def __post_new_model_and_return_vmodel(cls, model_type: str, uri: str, data: dict):
-        model_t = cls.get_model_type(model_type)
+    def __post_new_model_and_return_vmodel(cls, object_type: str, object_uri: str, data: dict):
+        model_t = cls.get_model_type(object_type)
         model = model_t()
 
         from gws.model import Model
         if not isinstance(model, Model):
-            Logger.error(Exception("Controller", "action", "The action uri must refer to a Model"))
+            Logger.error(Exception("Controller", "action", f"Object uri {object_uri} must refer to a Model"))
 
         mdata = data.get("mdata", {})
         model.hydrate_with(mdata)
@@ -331,14 +332,14 @@ class Controller(Base):
         return vmodel
 
     @classmethod
-    def __put(cls, model_type: str, uri: str, data: dict) -> 'ViewModel':
+    def __put(cls, object_type: str, object_uri: str, data: dict) -> 'ViewModel':
         from gws.model import SystemTrackable, ViewModel
-        t = cls.get_model_type(model_type)
+        t = cls.get_model_type(object_type)
         
         try:
-            obj = t.get(t.uri == uri)
+            obj = t.get(t.uri == object_uri)
         except:
-            Logger.error(Exception("Controller", "__post", f"Object {type(obj)} is not found with uri {uri}"))
+            Logger.error(Exception("Controller", "__post", f"Object {type(obj)} is not found with uri {object_uri}"))
 
         if isinstance(obj, SystemTrackable):
             Logger.error(Exception("Controller", "__post", f"Object {type(obj)} is SystemTrackable. It can only be updated by the PRISM system"))
@@ -433,7 +434,7 @@ class Controller(Base):
         :param model_list: List of models
         :type model_list: list
         :return: True if all the model are successfully saved, False otherwise. 
-        :model_type: bool
+        :object_type: bool
         """
         from gws.base import DbManager
         from gws.model import Process, Resource, ViewModel

@@ -27,10 +27,12 @@ class _ViewModel(BaseModel):
 #
 # ##################################################################
 
-@prism_app.get("/experiment/list")
+@prism_app.get("/experiment/list", tags=["object list"], summary="Get the mist of experiments")
 async def get_list_of_experiments(page: int = 1) -> (dict, str,):
     """
-    Retrieve a list of Model or ViewMpdel
+    Retrieve a list of experiments. The list is paginated.
+
+    - **page**: the page number 
     """
 
     return Controller.fetch_experiment_list(page=page, return_format="json")
@@ -38,7 +40,10 @@ async def get_list_of_experiments(page: int = 1) -> (dict, str,):
 @prism_app.get("/job/list")
 async def get_list_of_jobs(experiment_uri: str = None, page: int = 1) -> (dict, str,):
     """
-    Retrieve a list of Model or ViewMpdel
+    Retrieve a list of jobs. The list is paginated.
+
+    - **experiment_uri**: the uri of the experiment in which the jobs were run
+    - **page**: the page number 
     """
 
     return Controller.fetch_job_list(page=page, experiment_uri=experiment_uri, return_format="json")
@@ -46,7 +51,7 @@ async def get_list_of_jobs(experiment_uri: str = None, page: int = 1) -> (dict, 
 @prism_app.get("/protocol/list")
 async def get_list_of_protocols(job_uri: str = None, page: int = 1) -> (dict, str,):
     """
-    Retrieve a list of Model or ViewMpdel
+    Retrieve a list of protocols
     """
 
     return Controller.fetch_protocol_list(page=page, job_uri=job_uri, return_format="json")
@@ -54,7 +59,7 @@ async def get_list_of_protocols(job_uri: str = None, page: int = 1) -> (dict, st
 @prism_app.get("/process/list")
 async def get_list_of_process(job_uri: str = None, page: int = 1) -> (dict, str,):
     """
-    Retrieve a list of Model or ViewMpdel
+    Retrieve a list of processes
     """
 
     return Controller.fetch_process_list(page=page, job_uri=job_uri, return_format="json")
@@ -80,7 +85,7 @@ class _RunData(BaseModel):
     process_type: str
     params: dict
 
-@prism_app.post("/run")
+@prism_app.post("/run", tags=["run"])
 async def run_process( run_data: _RunData ) -> (dict, str,):
     """
     Run robot experiments
@@ -102,35 +107,35 @@ async def run_robot_experiment() -> (dict, str,):
 #
 # ##################################################################
 
-@prism_app.get("/{model_type}/{uri}")
-async def get_model_or_viewmodel(model_type: str, uri: str) -> (dict, str,):
-    """
-    Get and render a ViewModel
-    """
-
-    return Controller.action(action="get", model_type=model_type, uri=uri, return_format="json")
-
-@prism_app.post("/")
-async def post_view_model(model_type: str, vmodel: _ViewModel) -> (dict, str,):
+@prism_app.post("/", tags=["object crud operations"])
+async def post_view_model(object_type: str, vmodel: _ViewModel) -> (dict, str,):
     """
     Post an render a ViewModel
     """
 
-    return Controller.action(action="post", model_type=model_type, uri=vmodel.uri, data=vmodel.data, return_format="json")
+    return Controller.action(action="post", object_type=object_type, object_uri=vmodel.uri, data=vmodel.data, return_format="json")
 
-
-@prism_app.put("/{model_type}/")
-async def put_view_model(model_type: str, vmodel: _ViewModel) -> (dict, str,):
+@prism_app.put("/{object_type}/")
+async def put_view_model(object_type: str, vmodel: _ViewModel) -> (dict, str,):
     """
     Post and render a ViewModel
     """
 
-    return Controller.action(action="put", model_type=model_type, uri=vmodel.uri, data=vmodel.data, return_format="json")
+    return Controller.action(action="put", object_type=object_type, object_uri=vmodel.uri, data=vmodel.data, return_format="json")
 
-@prism_app.delete("/{model_type}/{uri}/")
-async def delete_view_model(model_type: str, uri: str) -> (dict, str,):
+
+@prism_app.get("/{object_type}/{object_uri}")
+async def get_model_or_viewmodel(object_type: str, object_uri: str) -> (dict, str,):
+    """
+    Get and render a ViewModel
+    """
+
+    return Controller.action(action="get", object_type=object_type, object_uri=object_uri, return_format="json")
+
+@prism_app.delete("/{object_type}/{object_uri}/")
+async def delete_view_model(object_type: str, object_uri: str) -> (dict, str,):
     """
     Post a ViewModel and render its
     """
 
-    return Controller.action(action="delete", model_type=model_type, uri=uri)
+    return Controller.action(action="delete", object_type=object_type, object_uri=object_uri)

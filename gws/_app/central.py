@@ -26,25 +26,25 @@ central_app = FastAPI(docs_url="/apidocs")
 class _User(BaseModel):
     uri: str
 
-@central_app.get("/login/{user_access_token}")
-async def login_user(request: Request, user_access_token: str, redicrect_url: str = "/"):
+@central_app.get("/login/{user_access_token}", tags=["login"])
+async def login_user(request: Request, user_access_token: str, redirect_url: str = "/", object_type: str=None, object_uri: str=None):
     form_data: OAuth2UserTokenRequestForm = Depends()
     form_data.user_access_token = user_access_token
-    return await login(form_data=form_data, redicrect_url=redicrect_url)
 
-@central_app.get("/logout", response_model=_User)
+    if (not object_type is None) and (not object_uri is None):
+        redirect_url = f"/biox/{object_type}/entity/?uri={object_uri}"
+
+    return await login(form_data=form_data, redicrect_url=redirect_url)
+
+@central_app.get("/logout", response_model=_User, tags=["logout"])
 async def logout_user(request: Request, current_user: _User = Depends(get_current_active_user)):
     return await logout(current_user, redicrect_url="/page/gws/logout")
-
-@central_app.get("/open-jupyter-lab", response_model=_User)
-async def open_jupyter_lab(current_user: _User = Depends(get_current_active_user)):
-    return current_user
 
 @central_app.get("/me/", response_model=_User)
 async def read_users_me(current_user: _User = Depends(get_current_active_user)):
     return current_user
 
-@central_app.post("/user/add")
+@central_app.post("/user/add", tags=["user"])
 async def add_user_to_the_lab(user: _User):
     try:
         user_dict = Central.create_user(user.dict())

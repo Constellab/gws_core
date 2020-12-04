@@ -13,6 +13,7 @@ import urllib.parse
 import json
 import jwt
 import zlib
+import importlib
 
 from base64 import b64encode, b64decode
 from secrets import token_bytes
@@ -795,7 +796,13 @@ class Process(Viewable, SystemTrackable):
             try:
                 cls = type(self)
                 proc = cls.get(cls.type == self.full_classname())
-                self.id = proc.id
+                
+                # /!\ Shallow copy all properties (<=> object cast) 
+                # Prevent creating duplicates of processes that already have a representation in DB
+                for prop in proc.property_names(Field):
+                    val = getattr(proc, prop)
+                    setattr(self, prop, val)
+
             except:
                 pass
 
@@ -1634,7 +1641,7 @@ class Protocol(Process, SystemTrackable):
             self.__set_outerfaces(outerfaces)
 
             if self.data.get("graph", None) is None:
-                self.data["data"] = self.dumps(as_dict=True)
+                self.data["graph"] = self.dumps(as_dict=True)
 
         self.__set_pre_start_event()
         self.__set_on_end_event()
@@ -1829,8 +1836,6 @@ class Protocol(Process, SystemTrackable):
         :return: The protocol
         :rtype: Protocol
         """
-
-        import importlib
 
         if isinstance(graph, str):
             graph = json.loads(graph)
