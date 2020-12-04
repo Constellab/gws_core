@@ -19,9 +19,10 @@ class Controller(Base):
 
     _model_specs = dict() 
     _settings = None
+    _number_of_items_per_page = 50
 
     @classmethod
-    def action(cls, action=None, object_type=None, object_uri=None, data=None, page=1, filters=[], return_format="") -> 'ViewModel':
+    def action(cls, action=None, object_type=None, object_uri=None, data=None, page=1, number_of_items_per_page=20, filters=[], return_format="") -> 'ViewModel':
         """
         Process user actions
 
@@ -64,7 +65,7 @@ class Controller(Base):
             elif action == "delete":
                 model = cls.__delete(object_type, object_uri)
             elif action == "run":
-                model = asyncio.run( cls.__run(data) )
+                model = asyncio.run( cls.__run(experiment_uri = object_uri) )
             
             if return_format == "json":
                 return model.as_json()
@@ -88,51 +89,56 @@ class Controller(Base):
     # -- F --
 
     @classmethod
-    def fetch_experiment_list(cls, page=1, filters=[], return_format=""):
+    def fetch_experiment_list(cls, page=1, number_of_items_per_page=20, filters=[], return_format=""):
         from gws.model import Experiment
         Q = Experiment.select().order_by(Experiment.creation_datetime.desc())
 
+        number_of_items_per_page = max(number_of_items_per_page, cls._number_of_items_per_page)
+
         if return_format == "json":
-            return Paginator(Q, page=page).as_json()
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
         else:
-            return Paginator(Q, page=page).as_model_list()
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
     
     @classmethod
-    def fetch_job_list(cls, experiment_uri=None, page=1, filters=[], return_format=""):
+    def fetch_job_list(cls, experiment_uri=None, page=1, number_of_items_per_page=20, filters=[], return_format=""):
         from gws.model import Job, Experiment, Process, DbManager
         Q = Job.select().order_by(Job.creation_datetime.desc())
-                    
+
+        number_of_items_per_page = max(number_of_items_per_page, cls._number_of_items_per_page)
+
         if not experiment_uri is None :
             Q = Q.join(Experiment).where(Experiment.uri == experiment_uri)
 
         if return_format == "json":
-            return Paginator(Q, page=page).as_json()
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
         else:
-            return Paginator(Q, page=page).as_model_list()
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
 
     @classmethod
-    def fetch_protocol_list(cls, job_uri=None, page=1, filters=[], return_format=""):
+    def fetch_protocol_list(cls, job_uri=None, page=1, number_of_items_per_page=20, filters=[], return_format=""):
         from gws.model import Protocol, Job
 
         if job_uri is None:
+            number_of_items_per_page = max(number_of_items_per_page, cls._number_of_items_per_page)
             Q = Protocol.select_me().order_by(Protocol.creation_datetime.desc())
         else:
-            try:
-                job = Job.get(Job.uri == job_uri)
-                Q = [ job.process ]
-            except:
-                return None
+            Q = Protocol.select_me()\
+                            .join(Job, on=(Job.process_id == Protocol.id))\
+                            .where(Job.uri == job_uri) \
+                            .order_by(Protocol.creation_datetime.desc())
 
         if return_format == "json":
-            return Paginator(Q, page=page).as_json()
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
         else:
-            return Paginator(Q, page=page).as_model_list()
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
 
     @classmethod
-    def fetch_process_list(cls, job_uri=None, page=1, filters=[], return_format=""):
+    def fetch_process_list(cls, job_uri=None, page=1, number_of_items_per_page=20, filters=[], return_format=""):
         from gws.model import Process, Job
 
         if job_uri is None:
+            number_of_items_per_page = max(number_of_items_per_page, cls._number_of_items_per_page)
             Q = Process.select().order_by(Process.creation_datetime.desc())
         else:
             Q = Process.select()\
@@ -141,15 +147,16 @@ class Controller(Base):
                             .order_by(Process.creation_datetime.desc())
 
         if return_format == "json":
-            return Paginator(Q, page=page).as_json()
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
         else:
-            return Paginator(Q, page=page).as_model_list()
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
 
     @classmethod
-    def fetch_config_list(cls, job_uri=None, page=1, filters=[], return_format=""):
+    def fetch_config_list(cls, job_uri=None, page=1, number_of_items_per_page=20, filters=[], return_format=""):
         from gws.model import Config, Job
 
         if job_uri is None:
+            number_of_items_per_page = max(number_of_items_per_page, cls._number_of_items_per_page)
             Q = Config.select().order_by(Config.creation_datetime.desc())
         else:
             Q = Config.select()\
@@ -158,12 +165,12 @@ class Controller(Base):
                             .order_by(Config.creation_datetime.desc())
 
         if return_format == "json":
-            return Paginator(Q, page=page).as_json()
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
         else:
-            return Paginator(Q, page=page).as_model_list()
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
 
     @classmethod
-    def fetch_resource_list(cls, experiment_uri=None, job_uri=None, page=1, filters=[], return_format=""):
+    def fetch_resource_list(cls, experiment_uri=None, job_uri=None, page=1, number_of_items_per_page=20, filters=[], return_format=""):
         from gws.model import Resource, Job, Experiment
         
         
@@ -180,26 +187,29 @@ class Controller(Base):
                         .where(Experiment.uri == experiment_uri) \
                         .order_by(Resource.creation_datetime.desc())
         else:
+            number_of_items_per_page = max(number_of_items_per_page, cls._number_of_items_per_page)
             Q = Resource.select().order_by(Resource.creation_datetime.desc())
 
         if return_format == "json":
-            return Paginator(Q, page=page).as_json()
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
         else:
-            return Paginator(Q, page=page).as_model_list()
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
 
 
     @classmethod
-    def fetch_list(cls, object_type: str, page: int, filters=[], return_format="") -> 'Model':
+    def fetch_list(cls, object_type: str, page: int=1, number_of_items_per_page: int=20, filters=[], return_format="") -> 'Model':
         t = cls.get_model_type(object_type)
+
+        number_of_items_per_page = max(number_of_items_per_page, cls._number_of_items_per_page)
         try:
             Q = t.select().order_by(t.creation_datetime.desc())
             if len(filters) > 0:
                 pass
 
             if return_format == "json":
-                return Paginator(Q, page=page).as_json()
+                return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
             else:
-                return Paginator(Q, page=page).as_model_list()
+                return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
         except:
             return None
 
@@ -404,27 +414,36 @@ class Controller(Base):
         e.save()
         return True
         
+    # @classmethod
+    # async def __run(cls, process_type: str, process_uri: str, config_params: dict):
+    #     from gws.model import Process
+    #     if not process_uri is None:
+    #         try:
+    #             proc = Process.get(Process.uri == process_uri)
+    #         except:
+    #             proc = None
+    #     elif not process_type is None:
+    #         t = cls.get_model_type(process_type)
+    #         proc = t()
+
+    #     if isinstance(proc, Process):
+    #         job = proc.get_active_job()
+    #         job.config.set_params(config_params)
+    #         e = proc.create_experiment()
+    #         e.run()
+    #         e.save()
+    #     else:
+    #         Logger.error(Exception("Controller", "__run", "Process not found"))
+
     @classmethod
-    async def __run(cls, process_type: str, process_uri: str, config_params: dict):
-        from gws.model import Process
-        if not process_uri is None:
-            try:
-                proc = Process.get(Process.uri == process_uri)
-            except:
-                proc = None
-        elif not process_type is None:
-            t = cls.get_model_type(process_type)
-            proc = t()
-
-        if isinstance(proc, Process):
-            job = proc.get_active_job()
-            job.config.set_params(config_params)
-            e = proc.create_experiment()
-            e.run()
-            e.save()
-        else:
-            Logger.error(Exception("Controller", "__run", "Process not found"))
-
+    async def __run(cls, experiment_uri: str = None):
+        from gws.model import Experiment
+        try:
+            e = Experiment.get(Experiment.uri == experiment_uri)
+            await e.run()
+        except Exception as err:
+            Logger.error(Exception("Controller", "__run", f"An error occured. {err}"))
+        
     @classmethod
     def save_all(cls, model_list: list = None) -> bool:
         """
