@@ -174,11 +174,12 @@ class BaseFTSModel(Base, FTS5Model):
     Base class
     """
 
-    _related_model = BaseModel
     rowid = RowIDField()
     title = SearchField()
     content = SearchField()
 
+    _related_model = BaseModel
+    
     def get_related(self):
         return self._related_model.get_by_id(self.rowid)
 

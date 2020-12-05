@@ -15,15 +15,15 @@ class Validator:
     `type`.
 
     Usage: This class should not be used as it, but rather use to implement validator subclasses. 
-    It provides the construction :meth:`from_type` to create usable basic validators. 
+    It provides the construction :meth:`from_specs` to create usable basic validators. 
     
     For example:
-        * ```Validator.from_type(int, default=5) -> IntegerValidator(default=5)```
-        * ```Validator.from_type(bool, default=True) -> BooleanValidator(default=True)```
-        * ```Validator.from_type(float, default=5.5) -> FloatValidator(default=5.5)```
-        * ```Validator.from_type(str, default='foo') -> CharValidator(default='foo')```
-        * ```Validator.from_type(list, default=[1,"foo"]) -> ArrayValidator(default=[1,"foo"])```
-        * ```Validator.from_type(dict, default={"foo":1}) -> JSONValidator(default={"foo":1})```
+        * ```Validator.from_specs(type=int, default=5) -> IntegerValidator(default=5)```
+        * ```Validator.from_specs(type=bool, default=True) -> BooleanValidator(default=True)```
+        * ```Validator.from_specs(type=float, default=5.5) -> FloatValidator(default=5.5)```
+        * ```Validator.from_specs(type=str, default='foo') -> CharValidator(default='foo')```
+        * ```Validator.from_specs(type=list, default=[1,"foo"]) -> ArrayValidator(default=[1,"foo"])```
+        * ```Validator.from_specs(type=dict, default={"foo":1}) -> JSONValidator(default={"foo":1})```
 
     :property default: The default value returned by method :meth:`validate`
     :type default: any
@@ -33,12 +33,20 @@ class Validator:
 
     _type = None
     _default = None
+    _allowed_values: list = None
+
     _valid_types = ['bool', 'int', 'float', 'str', 'list', 'dict']
 
-    def __init__(self, default=None, type=None):
+    def __init__(self, default=None, type=None, allowed_values: list=None):
         if not type is None:
             self._type = type
         
+        if not allowed_values is None:
+            if isinstance(allowed_values, list):
+                self._allowed_values = allowed_values
+            else:
+                Logger.error(Exception(f"The parameter allowed_values must be a list"))
+
         if not default is None:
             try:
                 self._default = self._validate(default)
@@ -70,12 +78,12 @@ class Validator:
         :param:`value` is serializable/deserilizable (using built-in Python methods :meth:`json.dumps`/:meth:`json.loads`).
 
         Usage:
-            * ```Validator.from_type(int, default=5) -> IntegerValidator(default=5)```
-            * ```Validator.from_type(bool, default=True) -> BooleanValidator(default=True)```
-            * ```Validator.from_type(float, default=5.5) -> FloatValidator(default=5.5)```
-            * ```Validator.from_type(str, default='foo') -> CharValidator(default='foo')```
-            * ```Validator.from_type(list, default=[1,"foo"]) -> ArrayValidator(default=[1,"foo"])```
-            * ```Validator.from_type(dict, default={"foo":1}) -> JSONValidator(default={"foo":1})```
+            * ```Validator.from_specs(type=int, default=5) -> IntegerValidator(default=5)```
+            * ```Validator.from_specs(type=bool, default=True) -> BooleanValidator(default=True)```
+            * ```Validator.from_specs(type=float, default=5.5) -> FloatValidator(default=5.5)```
+            * ```Validator.from_specs(type=str, default='foo') -> CharValidator(default='foo')```
+            * ```Validator.from_specs(type=list, default=[1,"foo"]) -> ArrayValidator(default=[1,"foo"])```
+            * ```Validator.from_specs(type=dict, default={"foo":1}) -> JSONValidator(default={"foo":1})```
             
         :param value: The value to validate
         :type value: An instance of `bool`, `int`, `float`, `str` or serilaizable `list`, `dict`
@@ -89,10 +97,17 @@ class Validator:
         if value is None:
             return value
 
-        return self._validate(value)
-    
+        value = self._validate(value)
+
+        if (not self._allowed_values is None) and len(self._allowed_values):
+            if value in self._allowed_values:
+                return value
+            else:
+                Logger.error(ValueError(f"Invalid value '{value}'. Allowed values are {self._allowed_values}"))
+        else:
+            return value
+
     def _validate(self, value):
-        
         if not isinstance(self.type, type):
             Logger.error(ValueError(f"The validator is not well configured. Invalid type {self.type}."))
         
@@ -139,24 +154,30 @@ class Validator:
             Logger.error(ValueError(f"Invalid value {value}"))
 
     @staticmethod
-    def from_type(type, default = None, **kwargs) -> 'Validator':
+    def from_specs(type=None, default=None, **kwargs) -> 'Validator':
         """
         Constructs usable basic validators.
 
         Usage:
-            * ```Validator.from_type('int', default=5) -> IntegerValidator(default=5)```
-            * ```Validator.from_type(int, default=5) -> IntegerValidator(default=5)```
-            * ```Validator.from_type('bool', default=True) -> BooleanValidator(default=True)```
-            * ```Validator.from_type(bool, default=True) -> BooleanValidator(default=True)```
-            * ```Validator.from_type('float', default=5.5) -> FloatValidator(default=5.5)```
-            * ```Validator.from_type('str', default='foo') -> CharValidator(default='foo')```
-            * ```Validator.from_type('list', default=[1,"foo"]) -> ArrayValidator(default=[1,"foo"])```
-            * ```Validator.from_type('dict', default={"foo":1}) -> JSONValidator(default={"foo":1})```
+            * ```Validator.from_specs(type='int', default=5) -> IntegerValidator(default=5)```
+            * ```Validator.from_specs(type=int, default=5) -> IntegerValidator(default=5)```
+            * ```Validator.from_specs(type='bool', default=True) -> BooleanValidator(default=True)```
+            * ```Validator.from_specs(type=bool, default=True) -> BooleanValidator(default=True)```
+            * ```Validator.from_specs(type='float', default=5.5) -> FloatValidator(default=5.5)```
+            * ```Validator.from_specs(type='str', default='foo') -> CharValidator(default='foo')```
+            * ```Validator.from_specs(type='list', default=[1,"foo"]) -> ArrayValidator(default=[1,"foo"])```
+            * ```Validator.from_specs(type='dict', default={"foo":1}) -> JSONValidator(default={"foo":1})```
 
         :param type: The type used for validation
         :type type: `type` or `str` in built-in types `bool`, `int`, `float`, `str`, `list`, `dict`
         :param default: The default value to return, Defaults to `None`
         :type default: any, An instance of :param:`type`
+        :param min: The minimum value allowed (for numeric only)
+        :type min: defaults to -inf
+        :param max: The maximum value allowed (for numeric only)
+        :type max: defaults to +inf
+        :param allowed_values: Allowed values
+        :type allowed_values: defaults to None
         :return: The Validator corresponding to the :param:`type`
         :rtype: subclass of `Validator`
         :Logger.error(`Exception`: If the :param:`type` is not valid or the the type if :param:`default` is not equal to :param:`type`)
@@ -197,8 +218,8 @@ class BooleanValidator(Validator):
     """
     _type = bool
 
-    def __init__(self, default=None):
-        super().__init__(default=default, type=bool)
+    def __init__(self, default=None, allowed_values=None):
+        super().__init__(default=default, type=bool, allowed_values=allowed_values)
 
 class NumericValidator(Validator):
     """
@@ -227,7 +248,7 @@ class NumericValidator(Validator):
     _include_min = True
     _include_max = True
 
-    def __init__(self, default=None, type=float, min=-math.inf, max=math.inf, include_min=False, include_max=False):
+    def __init__(self, default=None, type=float, min=-math.inf, max=math.inf, include_min=False, include_max=False, allowed_values=None):
         self._min = min
         self._max = max
         self._include_min = include_min
@@ -238,11 +259,10 @@ class NumericValidator(Validator):
         if math.isfinite(self._max):
             self._include_max = True
 
-        super().__init__(default=default, type=type)
+        super().__init__(default=default, type=type, allowed_values=allowed_values)
  
     def _validate(self, value):
         value = super()._validate(value)
-
         if value < self._min or (value == self._min and not self._include_min):
             Logger.error(ValueError(f"The value must be greater than {self._min}. The actual value is {value}"))
 
@@ -271,8 +291,8 @@ class IntegerValidator(NumericValidator):
     """
     _type = int
     
-    def __init__(self, default=None, min=-math.inf, max=math.inf, include_min=True, include_max=True):
-        super().__init__(default=default, type=int, min=min, max=max, include_min=include_min, include_max=include_max)
+    def __init__(self, default=None, min=-math.inf, max=math.inf, include_min=True, include_max=True, allowed_values=None):
+        super().__init__(default=default, type=int, min=min, max=max, include_min=include_min, include_max=include_max, allowed_values=allowed_values)
         self._type = int
 
 class FloatValidator(NumericValidator):
@@ -302,8 +322,8 @@ class FloatValidator(NumericValidator):
     """
     _type = float
     
-    def __init__(self, default=None, min=-math.inf, max=math.inf, include_min=True, include_max=True):
-        super().__init__(default=default, type=float, min=min, max=max, include_min=include_min, include_max=include_max)
+    def __init__(self, default=None, min=-math.inf, max=math.inf, include_min=True, include_max=True, allowed_values=None):
+        super().__init__(default=default, type=float, min=min, max=max, include_min=include_min, include_max=include_max, allowed_values=allowed_values)
         self._type = float
 
 class CharValidator(Validator):
@@ -327,8 +347,8 @@ class CharValidator(Validator):
     """
     _type = str
     
-    def __init__(self, default = None):
-        super().__init__(default=default, type=str)
+    def __init__(self, default = None, allowed_values=None):
+        super().__init__(default=default, type=str, allowed_values=allowed_values)
 
 class ArrayValidator(Validator):
     """

@@ -241,6 +241,12 @@ class OutPort(Port):
             if input._ports[name] is self:
                 return name
 
+class Interface(InPort):
+    pass
+
+class Outerface(OutPort):
+    pass
+
 # ####################################################################
 #
 # Connector class

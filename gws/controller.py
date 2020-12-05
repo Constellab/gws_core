@@ -81,7 +81,7 @@ class Controller(Base):
         from gws.model import Model, ViewModel
         o = cls.fetch_model(object_type, object_uri)
         if isinstance(o, ViewModel):
-            o.delete()
+            o.remove()
             return o
         else:
             Logger.error(Exception("Controller", f"__delete", "No ViewModel match with uri {object_uri}."))
@@ -102,7 +102,7 @@ class Controller(Base):
     
     @classmethod
     def fetch_job_list(cls, experiment_uri=None, page=1, number_of_items_per_page=20, filters=[], return_format=""):
-        from gws.model import Job, Experiment, Process, DbManager
+        from gws.model import Job, Experiment
         Q = Job.select().order_by(Job.creation_datetime.desc())
 
         number_of_items_per_page = max(number_of_items_per_page, cls._number_of_items_per_page)

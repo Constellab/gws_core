@@ -2,11 +2,10 @@ import sys
 import os
 import unittest
 
-from gws.model import Model, Resource, DbManager
-from gws.controller import Controller
-
 from peewee import CharField
 
+from gws.model import Model, Resource, DbManager
+from gws.controller import Controller
 
 ############################################################################################
 #
@@ -28,7 +27,6 @@ class PersonKVStore(Model):
 class FTSPerson(Model):
     _fts_model = "PersonFTSDocument"
     _fts_fields = { **Model._fts_fields, 'name': 1.0, 'city': 2.0 }
-
     _table_name = "ftsmodel"
 
 class TestModel(unittest.TestCase):

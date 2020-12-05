@@ -54,7 +54,8 @@ class Move(Process):
     input_specs = {'robot' : Robot}
     output_specs = {'robot' : Robot}
     config_specs = {
-        'moving_step': {"type": float, "default": 0.1}
+        'moving_step': {"type": float, "default": 0.1, 'description': "The moving step of the robot"},
+        'direction': {"type": str, "default": "north", "valid_values":["north", "south", "east", "west"], 'description': "The moving direction"}
     }
 
     def __init__(self, *args, **kwargs):

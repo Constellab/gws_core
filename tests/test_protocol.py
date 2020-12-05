@@ -113,6 +113,7 @@ class TestProtocol(unittest.TestCase):
         )
 
         super_proto = Protocol(
+            title = "super_proto",
             processes={
                 "p0": p0,
                 "p5": p5,
@@ -123,9 +124,6 @@ class TestProtocol(unittest.TestCase):
                 proto>>'robot'     | p5<<'robot'
             ]
         )
-
-        #p0>>'robot'        | proto<<'robot'
-        #proto>>'robot'     | p5<<'robot'
 
         p1 = proto.get_process("p1")
         proto.is_interfaced_with(p1)

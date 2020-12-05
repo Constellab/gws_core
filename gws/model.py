@@ -77,19 +77,33 @@ class Model(BaseModel):
     creation_datetime = DateTimeField(default=datetime.now)
     save_datetine = DateTimeField()    
     data = JSONField(null=True)
-    
     is_archived = BooleanField(default=False, index=True)
     is_deleted = BooleanField(default=False, index=True)
 
     _kv_store: KVStore = None
-    _is_deletable = True
 
+    _is_singleton = False
+    _is_deletable = True
     _fts_model = None
     _fts_fields = {}
+
     _table_name = 'model'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
+        if (self.id is None) and self._is_singleton:
+            try:
+                cls = type(self)
+                model = cls.get(cls.type == self.full_classname())
+                
+                # /!\ Shallow copy all properties (<=> object cast) 
+                # Prevent creating duplicates of processes that already have a representation in DB
+                for prop in model.property_names(Field):
+                    val = getattr(model, prop)
+                    setattr(self, prop, val)
+            except:
+                pass
 
         if self.uri is None:
             self.uri = str(uuid.uuid4())
@@ -440,12 +454,6 @@ class Model(BaseModel):
 # ####################################################################
  
 class Viewable(Model):
-    """
-    Viewable class.
-
-    :property _vmodel_specs: The list of registered view model types.
-    :type specs: dict
-    """
 
     _vmodel_specs: dict = {}
 
@@ -604,9 +612,9 @@ class Config(Viewable):
 
                 default = specs[k].get("default", None)
                 if not default is None:
-                    param_t = specs[k]["type"]
+                    #param_t = specs[k]["type"]
                     try:
-                        validator = Validator.from_type(param_t)
+                        validator = Validator.from_specs(**specs[k])
                         default = validator.validate(default)
                         specs[k]["default"] = default
                     except Exception as err:
@@ -705,10 +713,10 @@ class Config(Viewable):
         if not name in self.specs:
             Logger.error(Exception(self.classname(), "set_param", f"Parameter '{name}' does not exist."))
         
-        param_t = self.specs[name]["type"]
+        #param_t = self.specs[name]["type"]
 
         try:
-            validator = Validator.from_type(param_t)
+            validator = Validator.from_specs(**self.specs[name])
             value = validator.validate(value)
         except Exception as err:
             Logger.error(Exception(self.classname(), "set_param", f"Invalid parameter value '{name}'. Error message: {err}"))
@@ -773,41 +781,36 @@ class Process(Viewable, SystemTrackable):
 
     is_running: bool = False 
     is_finished: bool = False 
-
+    
     input_specs: dict = {}
     output_specs: dict = {}
     config_specs: dict = {}
-
-    _event_listener: EventListener = None
-    _input: Input
-    _output: Output
     
-    _table_name = 'process'
+    _parent_protocol: 'Protocol' = None
+    _event_listener: EventListener = None
+    _input: Input = None
+    _output: Output = None
+    _job: 'Job' = None  #ref to the current job
+
+    _is_singleton = True
     _fts_model = 'ProcessFTSDocument'
     _fts_fields = {'title': 2.0, 'data': 1.0}
-    
     _is_deletable = False
-    _job: 'Job' = None  #ref to the current job
+    _table_name = 'process'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        if self.id is None:
-            try:
-                cls = type(self)
-                proc = cls.get(cls.type == self.full_classname())
-                
-                # /!\ Shallow copy all properties (<=> object cast) 
-                # Prevent creating duplicates of processes that already have a representation in DB
-                for prop in proc.property_names(Field):
-                    val = getattr(proc, prop)
-                    setattr(self, prop, val)
-
-            except:
-                pass
-
         self._input = Input(self)
         self._output = Output(self)
+
+        if self.input_specs is None:
+            self.input_specs = {}
+        
+        if self.output_specs is None:
+            self.output_specs = {}
+        
+        if self.config_specs is None:
+            self.config_specs = {}
 
         for k in self.input_specs:
             self._input.create_port(k,self.input_specs[k])
@@ -913,7 +916,6 @@ class Process(Viewable, SystemTrackable):
         return self._output.get_next_procs()
 
     # -- H --
-
 
     # -- I --
 
@@ -1027,6 +1029,9 @@ class Process(Viewable, SystemTrackable):
             Logger.error(err)
 
     def _run_before_task( self, *args, **kwargs ):
+        if not self.is_ready:
+            Logger.error(Exception(self.classname(), "run", "The process is not ready. Please ensure that the process receives valid input resources and has not already been run"))
+
         if self._event_listener.exists('pre_start'):
             self._event_listener.call('pre_start', self)
 
@@ -1037,9 +1042,6 @@ class Process(Viewable, SystemTrackable):
         else:
             logger.info(f"Running {self.full_classname()} ...")
         
-        if not self.is_ready:
-            Logger.error(Exception(self.classname(), "run", "The process is not ready. Please ensure that the process receives valid input resources and has not already been run"))
-
         job = self.get_active_job()
         if not job.save():
             Logger.error(Exception(self.classname(), "run", "Cannot save the job"))
@@ -1160,8 +1162,8 @@ class User(Model):
     is_locked = BooleanField(default=False, index=True)
 
     is_authenticated = False
-    _is_deletable = False
 
+    _is_deletable = False
     _table_name = 'user'
     _fts_model = 'UserFTSDocument'
     _fts_fields = {'fullname': 2.0, 'data': 1.0}
@@ -1245,9 +1247,9 @@ class Experiment(Viewable):
     is_in_progress = BooleanField(default=True, index=True)
     
     _table_name = 'experiment'
-
     _fts_model = 'ExperimentFTSDocument'
     _fts_fields = {'title': 2.0, 'data': 1.0}
+
     _protocol = None
 
     def __init__(self, *args, protocol=None, **kwargs):
@@ -1391,14 +1393,17 @@ class Job(Viewable, SystemTrackable):
     :type user: User
     """
     
+    parent_job = ForeignKeyField('self', null=True, backref='children')
+    
     process_id = IntegerField(null=False, index=True)                       # save id ref as it may represent different classes
     process_source = BlobField(null=True)                       
     config_id = IntegerField(null=False, index=True)                        # save id ref as it may represent config classes
     experiment = ForeignKeyField(Experiment, null=True, backref='jobs')     # only valid for protocol
     is_running: bool = BooleanField(default=False, index=True)
     is_finished: bool = BooleanField(default=False, index=True)
-    _process = None
-    _config = None
+    
+    _process: Process = None
+    _config: Config = None
     _table_name = 'job'
 
     def __init__(self, *args, process: Process = None, config: Config = None, **kwargs):
@@ -1431,6 +1436,12 @@ class Job(Viewable, SystemTrackable):
         :return: The JSON dictionary 
         :rtype: dict
         """
+
+        if not self.parent_job is None:
+            parent_job_uri = self.parent_job.uri
+        else:
+            parent_job_uri = None
+
         _json = super().as_json()
         _json.update({
             "process": {
@@ -1441,6 +1452,7 @@ class Job(Viewable, SystemTrackable):
                 "uri": self.config.uri,
                 "type": self.config.type,
             },
+            "parent_job": {"uri": parent_job_uri},
             "experiment": {"uri": self.experiment.uri},
             "is_running": self.is_running,
             "is_finished": self.is_finished
@@ -1478,7 +1490,7 @@ class Job(Viewable, SystemTrackable):
         return super().remove()
 
     # -- P --
-
+    
     @property
     def process(self):
         """
@@ -1546,6 +1558,9 @@ class Job(Viewable, SystemTrackable):
                 self.process_source = self._process.create_source_zip()
                 self.config_id = self._config.id
 
+                if not self._process._parent_protocol is None:
+                    self.parent_job = self._process._parent_protocol.get_active_job()
+                
                 self.__track_input_uri()
                 if not super().save(*args, **kwargs):
                     Logger.error(Exception("Job", "save", "Cannot save the job."))
@@ -1594,18 +1609,25 @@ class Protocol(Process, SystemTrackable):
     :type connectors: list
     """
 
-    _processes = {}
-    _connectors = []
-    _interfaces = {}
-    _outerfaces = {}
+    type = CharField(null=True, index=True, unique=False)
+    _is_singleton = False
 
-    _table_name = 'process'     #/!\ use same table as Process
+    _processes: dict = None
+    _connectors: list = []
+    _interfaces: dict = None
+    _outerfaces: dict = None
+    _table_name = 'protocol'     #/!\ use same table as Process
 
     def __init__(self, *args, processes: dict = None, connectors: list = [], \
                 interfaces: dict = None, outerfaces: dict = None, graph: (str, dict)=None,\
                 **kwargs):
 
         super().__init__(*args, **kwargs)
+
+        self._processes = {}
+        self._connectors = []
+        self._interfaces = {}
+        self._outerfaces = {}
 
         if processes is None:
             if not self.data.get("graph", None) is None:
@@ -1622,21 +1644,23 @@ class Protocol(Process, SystemTrackable):
             if not isinstance(connectors, list):
                 Logger.error(Exception("Protocol", "__init__", "A list of connectors is expected"))
 
-            # process
-            for title in processes:
-                proc = processes[title]
-                proc.set_title(title)    #set context name
+            # set process
+            for name in processes:
+                proc = processes[name]
+                proc.set_title(name)    #set context name
                 if not isinstance(proc, Process):
                     Logger.error(Exception("Protocol", "__init__", "The dictionnary of processes must contain instances of Process"))
-            self._processes = processes
+            
+                self.add_process(name, proc)
 
-            # connectors
+            # set connectors
             for conn in connectors:
                 if not isinstance(conn, Connector):
                     Logger.error(Exception("Protocol", "__init__", "The list of connector must contain instances of Connectors"))
-            self._connectors = connectors
+                
+                self.add_connector(conn)
 
-            # interfaces
+            # set interfaces
             self.__set_interfaces(interfaces)
             self.__set_outerfaces(outerfaces)
 
@@ -1664,6 +1688,10 @@ class Protocol(Process, SystemTrackable):
         if not isinstance(process, Process):
             Logger.error(Exception("Protocol", "add_process", "The process must be an instance of Process"))
 
+        if not process._parent_protocol is None:
+            Logger.error(Exception("Protocol", "add_process", "The process alread belongs to a protocol"))
+
+        process._parent_protocol = self
         self._processes[name] = process
 
     def add_connector(self, connector: Connector):
@@ -1848,18 +1876,18 @@ class Protocol(Process, SystemTrackable):
         for k in graph["nodes"]:
             type_str = graph["nodes"][k]
             try:
-
                 tab = type_str.split(".")
                 n = len(tab)
                 module_name = ".".join(tab[0:n-1])
                 function_name = tab[n-1]
                 module = importlib.import_module(module_name)
-                t = getattr(module, function_name, None)
+                process_t = getattr(module, function_name, None)
 
-                if t is None:
+                if process_t is None:
                     Logger.error(Exception(f"Process {type_str} is not defined. Please ensure that the corresponding brick is loaded."))
                 else:
-                    processes[k] = t()
+                    processes[k] = process_t()
+                    self.add_process( k, processes[k] )
 
             except Exception as err:
                 Logger.error(Exception(f"An error occured. Error: {err}"))
@@ -1875,6 +1903,7 @@ class Protocol(Process, SystemTrackable):
 
             connector = (lhs_proc>>lhs_port_name | rhs_proc<<rhs_port_name)
             connectors.append(connector)
+            self.add_connector(connector)
 
         for k in graph["interfaces"]:
             proc_name = graph["interfaces"][k]["proc"]
@@ -1889,10 +1918,7 @@ class Protocol(Process, SystemTrackable):
             proc = processes[proc_name]
             port = proc.input.ports[port_name]
             outerfaces[k] = port
-
-        self._processes = processes
-        self._connectors = connectors
-
+            
         self.__set_interfaces(interfaces)
         self.__set_outerfaces(outerfaces)
 
@@ -2111,14 +2137,17 @@ class Resource(Viewable, SystemTrackable):
 
 class ResourceSet(Resource):
     
-    _set = {}
+    _set: dict = None
+
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
+
         if self.id is None:
             self.data["set"] = {}
             self._set = {}
-        else:
-            self._is_lazy = True
+        
+        if self._set is None:
+            self._set = {}
     
     def exists( self, resource ) -> bool:
         return resource in self._set
