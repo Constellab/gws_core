@@ -41,7 +41,7 @@ def get_template_env(settings):
     paths = []
     for k in settings.get_dependency_names():
         p = settings.get_page_dir(k)
-        if not p is None:
+        if p is None:
             Logger.error(Exception(f"The page dir of the brick '{k}' is None"))
 
         paths.append(p)
