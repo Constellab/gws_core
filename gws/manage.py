@@ -17,14 +17,14 @@ else:
     BASE_WORKSPACE_DIR = os.path.join(ROOT_DIR, "./gws")
 
 BASE_BRICK_DIR = os.path.join(BASE_WORKSPACE_DIR, "./bricks")
-BASE_LAB_DIR = os.path.join(BASE_WORKSPACE_DIR, "./labs")
+# BASE_LAB_DIR = os.path.join(BASE_WORKSPACE_DIR, "./labs")
 BASE_EXTERN_DIR = os.path.join(BASE_WORKSPACE_DIR, "./externs")
 BASE_LOG_DIR = os.path.join(BASE_WORKSPACE_DIR, "./logs")
 BASE_DATA_DIR = os.path.join(BASE_WORKSPACE_DIR, "./data")
 
 USER_WORKSPACE_DIR = os.path.join(ROOT_DIR, "./user")
 USER_BRICK_DIR = os.path.join(USER_WORKSPACE_DIR, "./bricks/")
-USER_LAB_DIR = os.path.join(USER_WORKSPACE_DIR, "./labs/")
+USER_LAB_DIR = os.path.join(USER_WORKSPACE_DIR, "./main/")
 USER_EXTERN_DIR = os.path.join(USER_WORKSPACE_DIR, "./externs")
 USER_LOG_DIR = os.path.join(USER_WORKSPACE_DIR, "./logs")
 USER_DATA_DIR = os.path.join(USER_WORKSPACE_DIR, "./data")
@@ -116,9 +116,9 @@ def _find_brick(name):
     return None
 
 def _find_lab(name):
-    dep_cwd = os.path.join(BASE_LAB_DIR, name)
-    if os.path.exists(dep_cwd):
-        return dep_cwd
+    # dep_cwd = os.path.join(BASE_LAB_DIR, name)
+    # if os.path.exists(dep_cwd):
+    #     return dep_cwd
 
     dep_cwd = os.path.join(USER_LAB_DIR, name)
     if os.path.exists(dep_cwd):
