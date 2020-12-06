@@ -39,8 +39,12 @@ def get_template_env(settings):
     Get Jinj2 template environment
     """
     paths = []
+    print("yyyy")
     for k in settings.get_dependency_names():
-        paths.append(settings.get_page_dir(k))
+        print(k)
+        p = settings.get_page_dir(k)
+        #if not p is None:
+        paths.append(p)
 
     print("xxxx")
     print(paths)
