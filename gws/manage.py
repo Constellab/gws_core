@@ -189,7 +189,7 @@ def _parse_settings(brick_cwd: str = None, brick_name:str = None, brick_settings
             dep_settings = _parse_settings(brick_cwd=dep_cwd, brick_name=dep, brick_settings_file_path=dep_setting_file)
             if len(dep_settings) > 0:
                 dep_settings = _update_relative_static_paths(dep_cwd,dep_settings)
-                settings = _update_json(dep_settings, settings)
+                settings = _update_json(settings, dep_settings)
         else:
             if len(settings) > 0:
                 settings = _update_relative_static_paths(dep_cwd,settings)
