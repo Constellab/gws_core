@@ -41,6 +41,10 @@ def get_template_env(settings):
     paths = []
     for k in settings.get_dependency_names():
         paths.append(settings.get_page_dir(k))
+
+    print("xxxx")
+    print(paths)
+
     return jinja2.Environment(loader=jinja2.FileSystemLoader(paths))
 
 def page_exists(page,brick=brick):
