@@ -25,7 +25,7 @@ from gws.settings import Settings
 from gws.model import User
 from gws.controller import Controller
 from gws.central import Central
-
+from gws.logger import Logger
 
 from gws._auth.user import check_authenticate_user
 
@@ -39,15 +39,12 @@ def get_template_env(settings):
     Get Jinj2 template environment
     """
     paths = []
-    print("yyyy")
     for k in settings.get_dependency_names():
-        print(k)
         p = settings.get_page_dir(k)
-        #if not p is None:
-        paths.append(p)
+        if not p is None:
+            Logger.error(Exception(f"The page dir of the brick '{k}' is None"))
 
-    print("xxxx")
-    print(paths)
+        paths.append(p)
 
     return jinja2.Environment(loader=jinja2.FileSystemLoader(paths))
 
