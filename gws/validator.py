@@ -37,7 +37,7 @@ class Validator:
 
     _valid_types = ['bool', 'int', 'float', 'str', 'list', 'dict']
 
-    def __init__(self, default=None, type=None, allowed_values: list=None):
+    def __init__(self, default=None, type=None, allowed_values: list=None, **kwargs):
         if not type is None:
             self._type = type
         
@@ -218,8 +218,8 @@ class BooleanValidator(Validator):
     """
     _type = bool
 
-    def __init__(self, default=None, allowed_values=None):
-        super().__init__(default=default, type=bool, allowed_values=allowed_values)
+    def __init__(self, default=None, allowed_values=None, **kwargs):
+        super().__init__(default=default, type=bool, allowed_values=allowed_values, **kwargs)
 
 class NumericValidator(Validator):
     """
@@ -248,7 +248,7 @@ class NumericValidator(Validator):
     _include_min = True
     _include_max = True
 
-    def __init__(self, default=None, type=float, min=-math.inf, max=math.inf, include_min=False, include_max=False, allowed_values=None):
+    def __init__(self, default=None, type=float, min=-math.inf, max=math.inf, include_min=False, include_max=False, allowed_values=None, **kwargs):
         self._min = min
         self._max = max
         self._include_min = include_min
@@ -259,7 +259,7 @@ class NumericValidator(Validator):
         if math.isfinite(self._max):
             self._include_max = True
 
-        super().__init__(default=default, type=type, allowed_values=allowed_values)
+        super().__init__(default=default, type=type, allowed_values=allowed_values, **kwargs)
  
     def _validate(self, value):
         value = super()._validate(value)
@@ -291,8 +291,8 @@ class IntegerValidator(NumericValidator):
     """
     _type = int
     
-    def __init__(self, default=None, min=-math.inf, max=math.inf, include_min=True, include_max=True, allowed_values=None):
-        super().__init__(default=default, type=int, min=min, max=max, include_min=include_min, include_max=include_max, allowed_values=allowed_values)
+    def __init__(self, default=None, min=-math.inf, max=math.inf, include_min=True, include_max=True, allowed_values=None, **kwargs):
+        super().__init__(default=default, type=int, min=min, max=max, include_min=include_min, include_max=include_max, allowed_values=allowed_values, **kwargs)
         self._type = int
 
 class FloatValidator(NumericValidator):
@@ -322,8 +322,8 @@ class FloatValidator(NumericValidator):
     """
     _type = float
     
-    def __init__(self, default=None, min=-math.inf, max=math.inf, include_min=True, include_max=True, allowed_values=None):
-        super().__init__(default=default, type=float, min=min, max=max, include_min=include_min, include_max=include_max, allowed_values=allowed_values)
+    def __init__(self, default=None, min=-math.inf, max=math.inf, include_min=True, include_max=True, allowed_values=None, **kwargs):
+        super().__init__(default=default, type=float, min=min, max=max, include_min=include_min, include_max=include_max, allowed_values=allowed_values, **kwargs)
         self._type = float
 
 class CharValidator(Validator):
@@ -347,8 +347,8 @@ class CharValidator(Validator):
     """
     _type = str
     
-    def __init__(self, default = None, allowed_values=None):
-        super().__init__(default=default, type=str, allowed_values=allowed_values)
+    def __init__(self, default = None, allowed_values=None, **kwargs):
+        super().__init__(default=default, type=str, allowed_values=allowed_values, **kwargs)
 
 class ArrayValidator(Validator):
     """
@@ -374,8 +374,8 @@ class ArrayValidator(Validator):
     """
     _type = list
     
-    def __init__(self, default=None):
-        super().__init__(default=default, type=list)
+    def __init__(self, default=None, **kwargs):
+        super().__init__(default=default, type=list, **kwargs)
 
 class JSONValidator(Validator):
     """
@@ -400,5 +400,5 @@ class JSONValidator(Validator):
     """
     _type = dict
     
-    def __init__(self, default=None):
-        super().__init__(default=default, type=dict)
+    def __init__(self, default=None, **kwargs):
+        super().__init__(default=default, type=dict, **kwargs)
