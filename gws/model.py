@@ -630,7 +630,7 @@ class Config(Viewable):
             
         with DbManager.db.atomic() as transaction:
             try:
-                Q = Job.select().where( Job.config_id == self.id )
+                Q = Job.select().where( Job.config_uri == self.uri )
                 for job in Q:
                     if not job.archive(status):
                         transaction.rollback()
@@ -654,7 +654,7 @@ class Config(Viewable):
             
         with DbManager.db.atomic() as transaction:
             try:
-                Q = Job.select().where( Job.config_id == self.id )
+                Q = Job.select().where( Job.config_uri == self.uri )
                 for job in Q:
                     if not job.remove():
                         transaction.rollback()
@@ -763,8 +763,6 @@ class Process(Viewable, SystemTrackable):
     """
     Process class.
     
-    :property config_id: The id of the process config
-    :type config_id: bool
     :property is_running: State of the process, True if the process is running, False otherwise
     :type is_running: bool
     :property is_finished: State of the process, True if the process has finished to run, Flase otherwise
@@ -1395,9 +1393,12 @@ class Job(Viewable, SystemTrackable):
     
     parent_job = ForeignKeyField('self', null=True, backref='children')
     
-    process_id = IntegerField(null=False, index=True)                       # save id ref as it may represent different classes
-    process_source = BlobField(null=True)                       
-    config_id = IntegerField(null=False, index=True)                        # save id ref as it may represent config classes
+    process_uri = CharField(null=False, index=True)                       # save id as it may represent different type of process
+    process_type = CharField(null=False, index=True)                        
+    process_source = BlobField(null=True)                  
+
+    config_uri = CharField(null=False, index=True)                        # save id ref as it may represent config classes
+    
     experiment = ForeignKeyField(Experiment, null=True, backref='jobs')     # only valid for protocol
     is_running: bool = BooleanField(default=False, index=True)
     is_finished: bool = BooleanField(default=False, index=True)
@@ -1473,8 +1474,8 @@ class Job(Viewable, SystemTrackable):
         if not self._config is None:
             return self._config
 
-        if self.config_id:
-            config = Config.get(Config.id == self.config_id)
+        if self.config_uri:
+            config = Config.get(Config.uri == self.config_uri)
             self._config = config.cast()
             return self._config
         else:
@@ -1503,8 +1504,9 @@ class Job(Viewable, SystemTrackable):
         if not self._process is None:
             return self._process
 
-        if self.process_id:
-            proc = Process.get(Process.id == self.process_id)
+        if self.process_uri:
+            process_t = Controller.get_model_type(self.process_type)
+            proc = process_t.get(process_t.uri == self.process_uri)
             self._process = proc.cast()
             return self._process
         else:
@@ -1529,7 +1531,7 @@ class Job(Viewable, SystemTrackable):
     def set_config(self, config: Config):
         if not config.is_saved():
             config.save()
-            self.config_id = config.id
+            self.config_uri = config.uri
         self._config = config
         
     def set_experiment(self, experiment: 'Experiment'):
@@ -1554,9 +1556,10 @@ class Job(Viewable, SystemTrackable):
                 if not self.config.save():
                     Logger.error(Exception("Job", "save", "Cannot save the job. The config cannnot be saved."))
                 
-                self.process_id = self._process.id
+                self.process_uri = self._process.uri
+                self.process_type = self._process.type
                 self.process_source = self._process.create_source_zip()
-                self.config_id = self._config.id
+                self.config_uri = self._config.uri
 
                 if not self._process._parent_protocol is None:
                     self.parent_job = self._process._parent_protocol.get_active_job()
