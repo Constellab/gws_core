@@ -1394,7 +1394,7 @@ class Job(Viewable, SystemTrackable):
     parent_job = ForeignKeyField('self', null=True, backref='children')
     
     process_uri = CharField(null=False, index=True)                       # save id as it may represent different type of process
-    process_type = CharField(null=False, index=True)                        
+    process_type = CharField(null=False)                        
     process_source = BlobField(null=True)                  
 
     config_uri = CharField(null=False, index=True)                        # save id ref as it may represent config classes

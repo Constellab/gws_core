@@ -124,7 +124,7 @@ class Controller(Base):
             Q = Protocol.select_me().order_by(Protocol.creation_datetime.desc())
         else:
             Q = Protocol.select_me()\
-                            .join(Job, on=(Job.process_id == Protocol.id))\
+                            .join(Job, on=(Job.process_uri == Protocol.uri))\
                             .where(Job.uri == job_uri) \
                             .order_by(Protocol.creation_datetime.desc())
 
@@ -142,7 +142,7 @@ class Controller(Base):
             Q = Process.select().order_by(Process.creation_datetime.desc())
         else:
             Q = Process.select()\
-                            .join(Job, on=(Job.process_id == Process.id))\
+                            .join(Job, on=(Job.process_uri == Process.uri))\
                             .where(Job.uri == job_uri) \
                             .order_by(Process.creation_datetime.desc())
 
@@ -160,7 +160,7 @@ class Controller(Base):
             Q = Config.select().order_by(Config.creation_datetime.desc())
         else:
             Q = Config.select()\
-                            .join(Job, on=(Job.config_id == Config.id))\
+                            .join(Job, on=(Job.config_uri == Config.uri))\
                             .where(Job.uri == job_uri) \
                             .order_by(Config.creation_datetime.desc())
 
