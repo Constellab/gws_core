@@ -13,10 +13,15 @@ class Robot(Resource):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.data = { 
-            "position": 0,
+            "age": 9,
+            "position": [0,0],
             "weight": 70
         }
     
+    @property
+    def age(self):
+        return self.data['age']
+
     @property
     def position(self):
         return self.data['position']
@@ -66,7 +71,19 @@ class Move(Process):
     def task(self):
         print(f"Moving {self.get_param('moving_step')}", flush=True)
         p = Robot()
-        p.set_position(self._input['robot'].position + self.get_param('moving_step'))
+
+        pos = self._input['robot'].position
+        direction = self.get_param('direction')
+        if direction == "north":
+            pos[0] += self.get_param('moving_step')
+        elif direction == "south":
+            pos[0] -= self.get_param('moving_step')
+        elif direction == "west":
+            pos[1] -= self.get_param('moving_step')
+        elif direction == "east":
+            pos[1] += self.get_param('moving_step')
+
+        p.set_position(pos)
         p.set_weight(self._input['robot'].weight)
         self.output['robot'] = p
 
@@ -112,7 +129,8 @@ class Wait(Process):
 
 class Fly(Move):
     config_specs = {
-        'moving_step': {"type": float, "default": 1E9}
+        'moving_step': {"type": float, "default": 1000, "unit": "km"},
+        'direction': {"type": str, "default": "west", "allowed_values":["north", "south", "east", "west"], 'description': "The flying direction"}
     }
 
     def __init__(self, *args, **kwargs):
@@ -158,5 +176,57 @@ def create_protocol():
         outerfaces = {}
     )
 
-    proto.title = "Specification of the journey of Astro Boy"
+    proto.title = "The travel of Astro"
     return proto
+
+
+def create_nested_protocol():
+    p1 = Move()
+    p2 = Eat()
+    p3 = Move()
+    p4 = Move()
+    p5 = Eat()
+    p_wait = Wait()
+
+    sub_travel = Protocol(
+        processes = {
+            'p1' : p1, 
+            'p2' : p2, 
+            'p3' : p3,  
+            'p4' : p4,  
+            'p5' : p5, 
+            'p_wait' : p_wait,
+        },
+        connectors=[
+            p1>>'robot'        | p2<<'robot',
+            p2>>'robot'        | p_wait<<'robot',
+            p_wait>>'robot'    | p3<<'robot',
+            p3>>'robot'        | p4<<'robot',
+            p2>>'robot'        | p5<<'robot',
+        ],
+        interfaces = { 'robot' : p1.in_port('robot') },
+        outerfaces = { 'robot' : p5.out_port('robot') }
+    )
+
+    p0 = Create()
+    p6 = Fly()
+    p7 = Wait()
+    super_travel = Protocol(
+        processes = {
+            'p0' : p0, 
+            'p6' : p6, 
+            'sub_travel': sub_travel,
+            'p7' : p7, 
+        },
+        connectors=[
+            p0>>'robot'             | sub_travel<<'robot',
+            sub_travel>>'robot'     | p6<<'robot',
+            p6>>'robot'             | p7<<'robot'
+        ],
+        interfaces = { },
+        outerfaces = { }
+    )
+
+    sub_travel.title = 'The mini travel of Astro'
+    super_travel.title = "The super travel of Astro"
+    return super_travel
