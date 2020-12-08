@@ -175,9 +175,6 @@ class Settings(PWModel):
     def get_static_dirs(self) -> dict:
         """
         Returns the absolute paths of the static directories
-        
-        :return: The absolute paths of the static directories
-        :rtype: dict
         """
         statics = {}
         static_dir = self.data["app"]["statics"]

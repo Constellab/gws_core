@@ -141,8 +141,8 @@ def _parse_settings(brick_cwd: str = None, brick_name:str = None, brick_settings
     with open(brick_settings_file_path) as f:
         try:
             settings = json.load(f)
-            if not settings["type"] in ["brick", "lab"]:
-                raise Exception(f"The type of the brick '{brick_name}' is invalid. Please check file '{brick_settings_file_path}'")
+            if not settings.get("name", None) is None:
+                raise Exception(f"The name of the brick is not found. Please check file '{brick_settings_file_path}'")
         except:
             raise Exception(f"Error while parsing the setting JSON file. Please check file '{brick_settings_file_path}'")
     
