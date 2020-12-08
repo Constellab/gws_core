@@ -182,7 +182,7 @@ async def delete_view_model(object_type: str, object_uri: str) -> (dict, str,):
 #
 # ##################################################################
 
-@core_app.post("/run-robot", tags=["Astro boy travels"])
+@core_app.post("/run-robot-travel-experiment", tags=["Astro boy travels"])
 async def run_robot_travel_experiment() -> (dict, str,):
     """
     Run robot experiments
@@ -190,6 +190,7 @@ async def run_robot_travel_experiment() -> (dict, str,):
 
     return await Controller._run_robot_travel()
 
+@core_app.post("/run-robot-super-travel-experiment", tags=["Astro boy travels"])
 async def run_robot_super_travel_experiment() -> (dict, str,):
     """
     Run robot experiments
