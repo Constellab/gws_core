@@ -405,7 +405,6 @@ class Controller(Base):
     async def _run_robot_travel(cls):
         from gws.robot import create_protocol
         p = create_protocol()
-        p.save()
         e = p.create_experiment()
         e.set_title("The journey of Astro.")
         e.set_data_value("description", "This is the journey of Astro.")
@@ -417,7 +416,6 @@ class Controller(Base):
     async def _run_robot_super_travel(cls):
         from gws.robot import create_nested_protocol
         p = create_nested_protocol()
-        p.save()
         e = p.create_experiment()
         e.set_title("The super journey of Astro.")
         e.set_data_value("description", "This is the super journey of Astro.")

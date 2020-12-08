@@ -176,7 +176,7 @@ def create_protocol():
         outerfaces = {}
     )
 
-    proto.title = "The travel of Astro"
+    proto.set_title("The travel of Astro")
     return proto
 
 
@@ -227,6 +227,7 @@ def create_nested_protocol():
         outerfaces = { }
     )
 
-    sub_travel.title = 'The mini travel of Astro'
-    super_travel.title = "The super travel of Astro"
+    sub_travel.set_title('The mini travel of Astro')
+    super_travel.set_title("The super travel of Astro")
+    
     return super_travel

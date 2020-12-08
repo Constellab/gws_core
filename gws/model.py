@@ -1240,7 +1240,7 @@ class UserLogin(Model):
 
 class Experiment(Viewable):
     
-    protocol_id = IntegerField(null=False, index=True)       # save id ref as it may represent different classes
+    protocol_uri = CharField(null=False, index=True)       # save uri ref as it may represent different classes
     score = FloatField(null=True, index=True)
     is_in_progress = BooleanField(default=True, index=True)
     
@@ -1260,7 +1260,7 @@ class Experiment(Viewable):
                 if not protocol.get_active_experiment() is None:
                     Logger.error(Exception("Experiment", "__init__", "An experiment is already associated with the protocol"))
 
-            self.protocol_id = protocol.id
+            self.protocol_uri = protocol.uri
             self._protocol = protocol
             self._protocol.set_active_experiment(self)
 
@@ -1300,7 +1300,7 @@ class Experiment(Viewable):
         """
         _json = super().as_json()
         _json.update({
-            "protocol_uri": self.protocol.uri,
+            "protocol_uri": self.protocol_uri,
             "score": self.score,
             "is_in_progress": self.is_in_progress,
         })
@@ -1354,9 +1354,9 @@ class Experiment(Viewable):
     def protocol(self):
         if self._protocol is None:
             try:
-                proto = Protocol.get_by_id(self.protocol_id)
+                proto = Protocol.get(Protocol.uri == self.protocol_uri)
             except:
-                return None
+                Logger.error(Exception("Experiment", "__init__", "The experiment has no protocol"))
             
             self._protocol = proto.cast()
             return self._protocol
@@ -1983,7 +1983,7 @@ class Protocol(Process, SystemTrackable):
     def set_active_experiment(self, experiment: Experiment):
         job = self.get_active_job()
         job.set_experiment(experiment)
-        experiment.protocol_id = self.id
+        experiment.protocol_uri = self.uri
 
     def _set_inputs(self, *args, **kwargs):
         for k in self._interfaces:
