@@ -415,7 +415,7 @@ class Controller(Base):
     
     @classmethod
     async def _run_robot_super_travel(cls):
-        from gws.robot import create_experiment
+        from gws.robot import create_nested_protocol
         p = create_nested_protocol()
         p.save()
         e = p.create_experiment()
