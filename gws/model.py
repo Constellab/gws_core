@@ -1636,7 +1636,11 @@ class Protocol(Process, SystemTrackable):
             if not self.data.get("graph", None) is None:
                 self.__loads( self.data["graph"] )
             elif isinstance(graph, str):
-                self.__loads( json.loads(graph) )
+                try:
+                    _js = json.loads(graph)
+                    self.__loads( _js )
+                except Exception as err:
+                    Logger.error(Exception("Protocol", "__init__", f"Invalid graph. {err}"))
             elif isinstance(graph, dict):
                 self.__loads( graph )
             self.save()
@@ -1666,8 +1670,9 @@ class Protocol(Process, SystemTrackable):
             # set interfaces
             self.__set_interfaces(interfaces)
             self.__set_outerfaces(outerfaces)
-
-            if self.data.get("graph", None) is None:
+            
+            graph = self.data.get("graph", None)
+            if graph is None or len(graph) == 0:
                 self.data["graph"] = self.dumps(as_dict=True)
 
         self.__set_pre_start_event()
