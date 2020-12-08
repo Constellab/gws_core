@@ -44,7 +44,7 @@ from gws.event import EventListener
  
 class SystemTrackable:
     """
-    SystemTrackable class representing elements that can only be create by the system.
+    SystemTrackable class representing elements that can only be created by the core system.
     """
     pass
 

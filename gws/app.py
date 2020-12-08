@@ -189,9 +189,9 @@ class App(BaseApp):
             app.mount(k, StaticFiles(directory=statics[k]), name=k)
 
         from gws._app.central import central_app
-        from gws._app.prism import prism_app
+        from gws._app.core import core_app
         app.mount("/central-api/", central_app)
-        app.mount("/prism-api/", prism_app)
+        app.mount("/core-api/", core_app)
 
     @classmethod 
     def start(cls):

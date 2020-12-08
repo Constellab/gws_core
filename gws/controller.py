@@ -300,7 +300,7 @@ class Controller(Base):
         obj = cls.fetch_model(object_type, object_uri)
 
         if isinstance(obj, SystemTrackable):
-            Logger.error(Exception("Controller", "__post", f"Object {type(obj)} is SystemTrackable. It can only be created by the PRISM system"))
+            Logger.error(Exception("Controller", "__post", f"Object {type(obj)} is SystemTrackable. It can only be created by the  core system"))
 
         if isinstance(obj, ViewModel):
             vmodel = cls.__post_new_vmodel(obj, data)
@@ -352,7 +352,7 @@ class Controller(Base):
             Logger.error(Exception("Controller", "__post", f"Object {type(obj)} is not found with uri {object_uri}"))
 
         if isinstance(obj, SystemTrackable):
-            Logger.error(Exception("Controller", "__post", f"Object {type(obj)} is SystemTrackable. It can only be updated by the PRISM system"))
+            Logger.error(Exception("Controller", "__post", f"Object {type(obj)} is SystemTrackable. It can only be updated by the  core system"))
 
         if isinstance(obj, ViewModel):
             vmodel = obj
@@ -402,14 +402,25 @@ class Controller(Base):
     #                     pass
 
     @classmethod
-    async def _run_robot(cls):
+    async def _run_robot_travel(cls):
         from gws.robot import create_protocol
-        from gws.model import Experiment
         p = create_protocol()
         p.save()
         e = p.create_experiment()
         e.set_title("The journey of Astro.")
         e.set_data_value("description", "This is the journey of Astro.")
+        await e.run()
+        e.save()
+        return True
+    
+    @classmethod
+    async def _run_robot_super_travel(cls):
+        from gws.robot import create_experiment
+        p = create_nested_protocol()
+        p.save()
+        e = p.create_experiment()
+        e.set_title("The super journey of Astro.")
+        e.set_data_value("description", "This is the super journey of Astro.")
         await e.run()
         e.save()
         return True

@@ -15,7 +15,7 @@ from gws.central import Central
 from gws.controller import Controller
 from gws.model import Model, ViewModel, Experiment
 
-prism_app = FastAPI(docs_url="/apidocs")
+core_app = FastAPI(docs_url="/apidocs")
 
 class _ViewModel(BaseModel):
     uri: str
@@ -27,7 +27,7 @@ class _ViewModel(BaseModel):
 #
 # ##################################################################
 
-@prism_app.get("/experiment/list", tags=["Object list"], summary="Get the list of experiments")
+@core_app.get("/experiment/list", tags=["Object list"], summary="Get the list of experiments")
 async def get_list_of_experiments(page: int = 1, number_of_items_per_page: int = 20) -> (dict, str,):
     """
     Retrieve a list of experiments. The list is paginated.
@@ -42,7 +42,7 @@ async def get_list_of_experiments(page: int = 1, number_of_items_per_page: int =
         return_format="json"
     )
 
-@prism_app.get("/job/list", tags=["Object list"], summary="Get the list of jobs")
+@core_app.get("/job/list", tags=["Object list"], summary="Get the list of jobs")
 async def get_list_of_jobs(experiment_uri: str = None, page: int = 1, number_of_items_per_page: int = 20) -> (dict, str,):
     """
     Retrieve a list of jobs. The list is paginated.
@@ -59,7 +59,7 @@ async def get_list_of_jobs(experiment_uri: str = None, page: int = 1, number_of_
         return_format="json"
     )
 
-@prism_app.get("/protocol/list", tags=["Object list"], summary="Get the list of protocols")
+@core_app.get("/protocol/list", tags=["Object list"], summary="Get the list of protocols")
 async def get_list_of_protocols(job_uri: str = None, page: int = 1, number_of_items_per_page: int = 20) -> (dict, str,):
     """
     Retrieve a list of protocols. The list is paginated.
@@ -76,7 +76,7 @@ async def get_list_of_protocols(job_uri: str = None, page: int = 1, number_of_it
         return_format="json"
     )
 
-@prism_app.get("/process/list", tags=["Object list"], summary="Get the list of processes")
+@core_app.get("/process/list", tags=["Object list"], summary="Get the list of processes")
 async def get_list_of_process(job_uri: str = None, page: int = 1, number_of_items_per_page: int = 20) -> (dict, str,):
     """
     Retrieve a list of processes. The list is paginated.
@@ -93,7 +93,7 @@ async def get_list_of_process(job_uri: str = None, page: int = 1, number_of_item
         return_format="json"
     )
 
-@prism_app.get("/config/list", tags=["Object list"], summary="Get the list of configs")
+@core_app.get("/config/list", tags=["Object list"], summary="Get the list of configs")
 async def get_list_of_configs(job_uri: str = None, page: int = 1, number_of_items_per_page: int = 20) -> (dict, str,):
     """
     Retrieve a list of configs. The list is paginated.
@@ -110,7 +110,7 @@ async def get_list_of_configs(job_uri: str = None, page: int = 1, number_of_item
         return_format="json"
     )
 
-@prism_app.get("/resource/list", tags=["Object list"], summary="Get the list of resources")
+@core_app.get("/resource/list", tags=["Object list"], summary="Get the list of resources")
 async def get_list_of_resources(job_uri: str = None, experiment_uri: str = None, page: int = 1, number_of_items_per_page: int = 20) -> (dict, str,):
     """
     Retrieve a list of resources. The list is paginated.
@@ -129,7 +129,7 @@ async def get_list_of_resources(job_uri: str = None, experiment_uri: str = None,
     )
 
 
-@prism_app.post("/run/{experiment_uri}", tags=["Run"])
+@core_app.post("/run/{experiment_uri}", tags=["Run"])
 async def run_experiment(experiment_uri: str) -> (dict, str,):
     """
     Run an experiment
@@ -137,21 +137,13 @@ async def run_experiment(experiment_uri: str) -> (dict, str,):
 
     return await Controller.action(action="run", object_uri=experiment_uri)
 
-@prism_app.post("/run-robot", tags=["Run"])
-async def run_robot_experiment() -> (dict, str,):
-    """
-    Run robot experiments
-    """
-
-    return await Controller._run_robot()
-
 # ##################################################################
 #
 # Get, Post, Put, Delete
 #
 # ##################################################################
 
-@prism_app.post("/", tags=["Generic CRUD operations on objects"])
+@core_app.post("/", tags=["Generic CRUD operations on objects"])
 async def post_view_model(object_type: str, vmodel: _ViewModel) -> (dict, str,):
     """
     Post an render a ViewModel
@@ -159,7 +151,7 @@ async def post_view_model(object_type: str, vmodel: _ViewModel) -> (dict, str,):
 
     return Controller.action(action="post", object_type=object_type, object_uri=vmodel.uri, data=vmodel.data, return_format="json")
 
-@prism_app.put("/{object_type}/", tags=["Generic CRUD operations on objects"])
+@core_app.put("/{object_type}/", tags=["Generic CRUD operations on objects"])
 async def put_view_model(object_type: str, vmodel: _ViewModel) -> (dict, str,):
     """
     Post and render a ViewModel
@@ -168,7 +160,7 @@ async def put_view_model(object_type: str, vmodel: _ViewModel) -> (dict, str,):
     return Controller.action(action="put", object_type=object_type, object_uri=vmodel.uri, data=vmodel.data, return_format="json")
 
 
-@prism_app.get("/{object_type}/{object_uri}", tags=["Generic CRUD operations on objects"])
+@core_app.get("/{object_type}/{object_uri}", tags=["Generic CRUD operations on objects"])
 async def get_model_or_viewmodel(object_type: str, object_uri: str) -> (dict, str,):
     """
     Get and render a ViewModel
@@ -176,10 +168,31 @@ async def get_model_or_viewmodel(object_type: str, object_uri: str) -> (dict, st
 
     return Controller.action(action="get", object_type=object_type, object_uri=object_uri, return_format="json")
 
-@prism_app.delete("/{object_type}/{object_uri}/", tags=["Generic CRUD operations on objects"])
+@core_app.delete("/{object_type}/{object_uri}/", tags=["Generic CRUD operations on objects"])
 async def delete_view_model(object_type: str, object_uri: str) -> (dict, str,):
     """
     Post a ViewModel and render its
     """
 
     return Controller.action(action="delete", object_type=object_type, object_uri=object_uri)
+
+# ##################################################################
+#
+# Robot
+#
+# ##################################################################
+
+@core_app.post("/run-robot", tags=["Astro boy travels"])
+async def run_robot_travel_experiment() -> (dict, str,):
+    """
+    Run robot experiments
+    """
+
+    return await Controller._run_robot_travel()
+
+async def run_robot_super_travel_experiment() -> (dict, str,):
+    """
+    Run robot experiments
+    """
+
+    return await Controller._run_robot_super_travel()
