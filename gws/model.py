@@ -1347,7 +1347,15 @@ class Experiment(Viewable):
                 return True
 
         return False
+    
+    # -- O --
 
+    def on_end(self, call_back):
+        self.protocol.on_end(call_back)
+         
+    def on_start(self, call_back):
+        self.protocol.on_start(call_back)
+        
     # -- P --
 
     @property 
@@ -1613,8 +1621,8 @@ class Protocol(Process, SystemTrackable):
     """
 
     type = CharField(null=True, index=True, unique=False)
+    
     _is_singleton = False
-
     _processes: dict = None
     _connectors: list = []
     _interfaces: dict = None
@@ -1674,6 +1682,7 @@ class Protocol(Process, SystemTrackable):
             graph = self.data.get("graph", None)
             if graph is None or len(graph) == 0:
                 self.data["graph"] = self.dumps(as_dict=True)
+                self.save()
 
         self.__set_pre_start_event()
         self.__set_on_end_event()
@@ -1758,52 +1767,49 @@ class Protocol(Process, SystemTrackable):
         Returns the protocol graph
         """
 
-        if self.data.get("graph") is None:
-            graph = dict(
-                title = self.get_title(),
-                nodes = {},
-                links = [],
-                interfaces = {},
-                outerfaces = {},
-            )
+        graph = dict(
+            title = self.get_title(),
+            nodes = {},
+            links = [],
+            interfaces = {},
+            outerfaces = {},
+        )
 
-            for conn in self._connectors:
-                link = conn.to_json()
-                is_left_node_found = False
-                is_right_node_found = False
-                for k in self._processes:
-                    if link["from"]["node"] is self._processes[k]:
-                        link["from"]["node"] = k
-                        is_left_node_found = True
-
-                    if link["to"]["node"] is self._processes[k]:
-                        link["to"]["node"] = k
-                        is_right_node_found = True
-                    
-                    if is_left_node_found and is_right_node_found:
-                        graph['links'].append(link)
-                        break
-
+        for conn in self._connectors:
+            link = conn.to_json()
+            is_left_node_found = False
+            is_right_node_found = False
             for k in self._processes:
-                graph["nodes"][k] = self._processes[k].full_classname()
+                if link["from"]["node"] is self._processes[k]:
+                    link["from"]["node"] = k
+                    is_left_node_found = True
 
-            for k in self._interfaces:
-                port = self._interfaces[k]
-                proc = port.parent.parent
-                for name in self._processes:
-                    if proc is self._processes[name]:
-                        graph['interfaces'][k] = {"proc": name, "port": port.name}
-                        break
-            
-            for k in self._outerfaces:
-                port = self._outerfaces[k]
-                proc = port.parent.parent
-                for name in self._processes:
-                    if proc is self._processes[name]:
-                        graph['outerfaces'][k] = {"proc": name, "port": port.name}
-                        break
-        else:
-            graph = self.data.get("graph")
+                if link["to"]["node"] is self._processes[k]:
+                    link["to"]["node"] = k
+                    is_right_node_found = True
+
+                if is_left_node_found and is_right_node_found:
+                    graph['links'].append(link)
+                    break
+
+        for k in self._processes:
+            graph["nodes"][k] = self._processes[k].full_classname()
+
+        for k in self._interfaces:
+            port = self._interfaces[k]
+            proc = port.parent.parent
+            for name in self._processes:
+                if proc is self._processes[name]:
+                    graph['interfaces'][k] = {"proc": name, "port": port.name}
+                    break
+
+        for k in self._outerfaces:
+            port = self._outerfaces[k]
+            proc = port.parent.parent
+            for name in self._processes:
+                if proc is self._processes[name]:
+                    graph['outerfaces'][k] = {"proc": name, "port": port.name}
+                    break
 
         if as_dict:
             return graph
@@ -1875,12 +1881,17 @@ class Protocol(Process, SystemTrackable):
 
         if isinstance(graph, str):
             graph = json.loads(graph)
-
+        
+        if len(graph) == 0:
+            return
+        
+        self.set_title(graph.get("title",""))
+        
         processes = {}
         connectors = []
         interfaces = {}
         outerfaces = {}
-
+        
         for k in graph["nodes"]:
             type_str = graph["nodes"][k]
             try:

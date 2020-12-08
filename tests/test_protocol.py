@@ -135,9 +135,19 @@ class TestProtocol(unittest.TestCase):
             s1 = json.load(f)
             s2 = json.loads(proto.dumps())
             self.assertEqual(s1,s2)
+            
+        
+        def _on_end(*args, **kwargs):
+            saved_proto = Protocol.get(Protocol.id == proto.id)
+            self.assertEqual(s1,saved_proto.data["graph"])
+            s3 = json.loads(proto.dumps())
+            self.assertEqual(s1,s3)
+            
+            print(proto.as_json())
         
         async def _run():
             e = super_proto.create_experiment()
+            e.on_end(_on_end)
             await e.run()
 
             print("Sleeping 1 sec for waiting all tasks to finish ...")
