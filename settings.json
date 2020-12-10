@@ -16,7 +16,9 @@
     },
     
     "externs" : [
-        "distrib-js"
+        "distrib-js",
+        "three-js",
+        "palette-js"
     ],
     
     "dependencies" : [],
@@ -38,7 +40,9 @@
         "title"         : "Wecome to GWS",
         "description"   : "This application provides core functionalities for GWS-based modules",
         "statics"       : {
-            "/static-dist"  : "${BASE_EXTERN_DIR}/distrib-js"
+            "/dirstib-js"  : "${BASE_EXTERN_DIR}/distrib-js",
+            "/three-js"    : "${BASE_EXTERN_DIR}/three-js",
+            "/palette-js"  : "${BASE_EXTERN_DIR}/palette-js"
         },
         "themes" : [ ],
         "scripts": [
