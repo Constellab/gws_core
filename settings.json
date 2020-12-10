@@ -61,7 +61,7 @@
         "styles": [
             "/distrib-js/fontawesome/5.14.0/css/all.min.css",
             "/distrib-js/mdc/material-web-components.min.css",
-            "/static-dist/mdc/material-icons.css"
+            "/distrib-js/mdc/material-icons.css"
         ],
         "buttons":{
             "settings": {
