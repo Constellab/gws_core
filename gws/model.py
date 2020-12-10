@@ -1630,8 +1630,7 @@ class Protocol(Process, SystemTrackable):
     _table_name = 'protocol'     #/!\ use same table as Process
 
     def __init__(self, *args, processes: dict = None, connectors: list = [], \
-                interfaces: dict = None, outerfaces: dict = None, graph: (str, dict)=None,\
-                **kwargs):
+                interfaces: dict = None, outerfaces: dict = None, **kwargs):
 
         super().__init__(*args, **kwargs)
 
@@ -1641,17 +1640,17 @@ class Protocol(Process, SystemTrackable):
         self._outerfaces = {}
 
         if processes is None:
-            if not self.data.get("graph", None) is None:
-                self.__loads( self.data["graph"] )
-            elif isinstance(graph, str):
-                try:
-                    _js = json.loads(graph)
-                    self.__loads( _js )
-                except Exception as err:
-                    Logger.error(Exception("Protocol", "__init__", f"Invalid graph. {err}"))
-            elif isinstance(graph, dict):
-                self.__loads( graph )
-            self.save()
+            if self and self.data.get("graph", None):
+                self.__build_from_dump( self.data["graph"] )
+            #elif isinstance(graph, str):
+            #    try:
+            #        _js = json.loads(graph)
+            #        self.__build_from_dump( _js )
+            #    except Exception as err:
+            #        Logger.error(Exception("Protocol", "__init__", f"Invalid graph. {err}"))
+            #elif isinstance(graph, dict):
+            #    self.__build_from_dump( graph )
+            #self.save()
         else:
             if not isinstance(processes, dict):
                 Logger.error(Exception("Protocol", "__init__", "A dictionnary of processes is expected"))
@@ -1737,7 +1736,6 @@ class Protocol(Process, SystemTrackable):
 
     # -- C --
 
-     # -- C --
     def create_experiment(self, config: Config = None):
         if isinstance(config, Config):
             job = self.get_active_job()
@@ -1761,20 +1759,32 @@ class Protocol(Process, SystemTrackable):
         super().create_table(*args, **kwargs)
 
     # -- D -- 
-
-    def dumps( self, as_dict = False, prettify = False ) -> str:
+        
+    def dumps( self, as_dict = False, prettify = False, bare = False ) -> str:
         """ 
-        Returns the protocol graph
+        Dumps the JSON graph representing the protocol
+        
+        :param as_dict: If True, returns a dictionnary. A JSON string is returns otherwise
+        :type as_dict: bool
+        :param prettify: If True, the JSON string is indented.
+        :type prettify: bool
+        :param bare: If True, returns a bare dump i.e. the uris of the processes (and sub-protocols) of not returned. 
+        Bare dumps allow creating a new protocols from scratch.
+        :type bare: bool
         """
 
         graph = dict(
             title = self.get_title(),
+            uri = self.uri,
             nodes = {},
             links = [],
             interfaces = {},
             outerfaces = {},
         )
-
+        
+        if bare:
+            graph["uri"] = ""
+                
         for conn in self._connectors:
             link = conn.to_json()
             is_left_node_found = False
@@ -1793,7 +1803,12 @@ class Protocol(Process, SystemTrackable):
                     break
 
         for k in self._processes:
-            graph["nodes"][k] = self._processes[k].full_classname()
+            graph["nodes"][k]  = {
+                "uri": self._processes[k].uri,
+                "type": self._processes[k].full_classname()
+            }
+            if bare:
+                graph["nodes"][k]["uri"] = ""
 
         for k in self._interfaces:
             port = self._interfaces[k]
@@ -1818,9 +1833,28 @@ class Protocol(Process, SystemTrackable):
                 return json.dumps(graph, indent=4)
             else:
                 return json.dumps(graph)
+    
+    @classmethod
+    def from_graph( cls, graph: dict ) -> 'Protocol':
+        """ 
+        Create a new instance from a existing graph
 
+        :return: The protocol
+        :rtype": Protocol
+        """
+        
+        proto = Protocol()
+        proto.__build_from_dump(graph)
+        proto.data["graph"] = proto.dumps(as_dict=True)
+        proto.save()
+        return proto
+        
     # -- G --
-
+    
+    @property
+    def graph(self):
+        return self.data["graph"]
+    
     def get_active_experiment(self):
         return self.get_active_job().experiment
 
@@ -1871,7 +1905,7 @@ class Protocol(Process, SystemTrackable):
 
     # -- L --
 
-    def __loads( self, graph: (str, dict) ) -> 'Protocol':
+    def __build_from_dump( self, graph: (str, dict) ) -> 'Protocol':
         """ 
         Construct a Protocol instance using a setting dump.
 
@@ -1892,10 +1926,13 @@ class Protocol(Process, SystemTrackable):
         interfaces = {}
         outerfaces = {}
         
+        # create nodes
+        
         for k in graph["nodes"]:
-            type_str = graph["nodes"][k]
+            node_uri = graph["nodes"][k].get("uri",None)
+            node_type_str = graph["nodes"][k]["type"]
             try:
-                tab = type_str.split(".")
+                tab = node_type_str.split(".")
                 n = len(tab)
                 module_name = ".".join(tab[0:n-1])
                 function_name = tab[n-1]
@@ -1903,27 +1940,19 @@ class Protocol(Process, SystemTrackable):
                 process_t = getattr(module, function_name, None)
 
                 if process_t is None:
-                    Logger.error(Exception(f"Process {type_str} is not defined. Please ensure that the corresponding brick is loaded."))
+                    Logger.error(Exception(f"Process {node_type_str} is not defined. Please ensure that the corresponding brick is loaded."))
                 else:
-                    processes[k] = process_t()
+                    if node_uri:
+                        processes[k] = process_t.get(process_t.uri == node_uri)
+                    else:
+                        processes[k] = process_t()
                     self.add_process( k, processes[k] )
 
             except Exception as err:
                 Logger.error(Exception(f"An error occured. Error: {err}"))
-
-        for link in graph["links"]:
-            proc_name = link["from"]["node"]
-            lhs_port_name = link["from"]["port"]
-            lhs_proc = processes[proc_name]
-
-            proc_name = link["to"]["node"]
-            rhs_port_name = link["to"]["port"]
-            rhs_proc = processes[proc_name]
-
-            connector = (lhs_proc>>lhs_port_name | rhs_proc<<rhs_port_name)
-            connectors.append(connector)
-            self.add_connector(connector)
-
+        
+        # create interfaces and outerfaces
+        
         for k in graph["interfaces"]:
             proc_name = graph["interfaces"][k]["proc"]
             port_name = graph["interfaces"][k]["port"]
@@ -1940,8 +1969,21 @@ class Protocol(Process, SystemTrackable):
             
         self.__set_interfaces(interfaces)
         self.__set_outerfaces(outerfaces)
+        
+        # create links
+        
+        for link in graph["links"]:
+            proc_name = link["from"]["node"]
+            lhs_port_name = link["from"]["port"]
+            lhs_proc = processes[proc_name]
 
-        self.data["graph"] = graph
+            proc_name = link["to"]["node"]
+            rhs_port_name = link["to"]["port"]
+            rhs_proc = processes[proc_name]
+
+            connector = (lhs_proc>>lhs_port_name | rhs_proc<<rhs_port_name)
+            connectors.append(connector)
+            self.add_connector(connector)
 
     # -- R --
     
