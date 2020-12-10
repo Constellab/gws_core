@@ -40,27 +40,27 @@
         "title"         : "Wecome to GWS",
         "description"   : "This application provides core functionalities for GWS-based modules",
         "statics"       : {
-            "/dirstib-js"  : "${BASE_EXTERN_DIR}/distrib-js",
+            "/distrib-js"  : "${BASE_EXTERN_DIR}/distrib-js",
             "/three-js"    : "${BASE_EXTERN_DIR}/three-js",
             "/palette-js"  : "${BASE_EXTERN_DIR}/palette-js"
         },
         "themes" : [ ],
         "scripts": [
-            "/static-dist/mdc/material-web-components.min.js",
-            "/static-dist/uuidv4/8.1.0/uuidv4.js",
-            "/static-dist/jquery/3.5.1/jquery.min.js",
-            "/static-dist/d3/d3-dispatch/1.0.6/d3-dispatch.min.js",
-            "/static-dist/d3/d3-timer/1.0.10/d3-timer.min.js",
-            "/static-dist/d3/d3-quadtree/1.0.7/d3-quadtree.min.js",
-            "/static-dist/d3/d3-binarytree/0.1.8/d3-binarytree.min.js",
-            "/static-dist/d3/d3-octree/0.1.8/d3-octree.min.js",
-            "/static-dist/d3/d3-force-3d/2.1.0/d3-force-3d.min.js",
-            "/static-dist/plotly/plotly.min.js"
+            "/distrib-js/mdc/material-web-components.min.js",
+            "/distrib-js/uuidv4/8.1.0/uuidv4.js",
+            "/distrib-js/jquery/3.5.1/jquery.min.js",
+            "/distrib-js/d3/d3-dispatch/1.0.6/d3-dispatch.min.js",
+            "/distrib-js/d3/d3-timer/1.0.10/d3-timer.min.js",
+            "/distrib-js/d3/d3-quadtree/1.0.7/d3-quadtree.min.js",
+            "/distrib-js/d3/d3-binarytree/0.1.8/d3-binarytree.min.js",
+            "/distrib-js/d3/d3-octree/0.1.8/d3-octree.min.js",
+            "/distrib-js/d3/d3-force-3d/2.1.0/d3-force-3d.min.js",
+            "/distrib-js/plotly/plotly.min.js"
         ],
         "modules": [ ],
         "styles": [
-            "/static-dist/fontawesome/5.14.0/css/all.min.css",
-            "/static-dist/mdc/material-web-components.min.css",
+            "/distrib-js/fontawesome/5.14.0/css/all.min.css",
+            "/distrib-js/mdc/material-web-components.min.css",
             "/static-dist/mdc/material-icons.css"
         ],
         "buttons":{
