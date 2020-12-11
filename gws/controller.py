@@ -97,20 +97,20 @@ class Controller(Base):
         except:
             return {}
             
-        _json = e.to_json()
+        _json = e.as_json()
 
         # protocol
-        _json["protocol"] = e.protocol.to_json()
+        _json["protocol"] = e.protocol.as_json()
 
         # jobs
         _json["jobs"] = []
         for j in e.jobs:
-            _json["jobs"].append( j.to_json() )
+            _json["jobs"].append( j.as_json() )
 
         # resources
         _json["resources"] = []
         for r in e.resources:
-            _json["resources"].append( r.to_json() )
+            _json["resources"].append( r.as_json() )
 
         return _json
 

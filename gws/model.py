@@ -1377,7 +1377,12 @@ class Experiment(Viewable):
 
     @property 
     def resources(self):
-        return Controller.fetch_resource_list(experiment_uri=self.uri)
+        Q = Resource.select() \
+                    .join(Job) \
+                    .join(Experiment) \
+                    .where(Experiment.uri == self.uri) \
+                    .order_by(Resource.creation_datetime.desc())
+        return Q
 
     async def run(self):
         await self.protocol._run()
