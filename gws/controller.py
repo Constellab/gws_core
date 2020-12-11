@@ -89,32 +89,31 @@ class Controller(Base):
     # -- F --
 
     @classmethod
-    def fetch_experiment(cls, experiment_uri, return_format=""):
+    def fetch_experiment_details(cls, uri):
         from gws.model import Experiment
         
         try:
-            e = Experiment.get(Experiment.uri == experiment_uri)
-            _json = e.to_json()
-            
-            # protocol
-            _json["protocol"] = e.protocol.to_json()
-            
-            # jobs
-            _json["jobs"] = []
-            for j in e.jobs:
-                _json["jobs"].append( j.to_json() )
-            
-            # resources
-            _json["resources"] = []
-            for r in e.resources:
-                _json["resources"].append( r.to_json() )
-                
-            return _json
+            e = Experiment.get(Experiment.uri == uri)
         except:
-            return None
-        
-    
-    
+            return {}
+            
+        _json = e.to_json()
+
+        # protocol
+        _json["protocol"] = e.protocol.to_json()
+
+        # jobs
+        _json["jobs"] = []
+        for j in e.jobs:
+            _json["jobs"].append( j.to_json() )
+
+        # resources
+        _json["resources"] = []
+        for r in e.resources:
+            _json["resources"].append( r.to_json() )
+
+        return _json
+
     @classmethod
     def fetch_experiment_list(cls, page=1, number_of_items_per_page=20, filters=[], return_format=""):
         from gws.model import Experiment

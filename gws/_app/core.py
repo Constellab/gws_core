@@ -27,16 +27,16 @@ class _ViewModel(BaseModel):
 #
 # ##################################################################
 
-@core_app.get("/experiment", tags=["Object list"], summary="Get an experiment")
-async def get_experiment(experiment_uri: str = None) -> (dict, str,):
+@core_app.get("/experiment-details/{uri}", tags=["Object list"], summary="Get an experiment")
+async def get_experiment() -> (dict, str,):
     """
-    Retrieve an experiments.
+    Retrieve that details of an experiment.
     
-    - **experiment_uri**: the uri of experiment related to the protocol (an experiment is related to one protocol).
+    - **uri**: the uri of experiment
     """
 
-    return Controller.fetch_experiment(
-        experiment_uri=experiment_uri,
+    return Controller.fetch_experiment_details(
+        uri=uri,
         return_format="json"
     )
 
