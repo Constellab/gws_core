@@ -35,8 +35,8 @@ async def get_experiment(experiment_uri: str = None) -> (dict, str,):
     - **experiment_uri**: the uri of experiment related to the protocol (an experiment is related to one protocol).
     """
 
-    return Controller.fetch_experiments(
-        experiment_uri=experiment_uri
+    return Controller.fetch_experiment(
+        experiment_uri=experiment_uri,
         return_format="json"
     )
 
