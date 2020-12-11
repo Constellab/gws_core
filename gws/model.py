@@ -1240,7 +1240,9 @@ class UserLogin(Model):
 
 class Experiment(Viewable):
     
+    #@todo= change => main_protocol_uri
     protocol_uri = CharField(null=False, index=True)       # save uri ref as it may represent different classes
+    
     score = FloatField(null=True, index=True)
     is_in_progress = BooleanField(default=True, index=True)
     
@@ -1370,7 +1372,7 @@ class Experiment(Viewable):
             return self._protocol
         else:
             return self._protocol
-
+    
     # -- R --
 
     @property 

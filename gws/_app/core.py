@@ -27,6 +27,19 @@ class _ViewModel(BaseModel):
 #
 # ##################################################################
 
+@core_app.get("/experiment", tags=["Object list"], summary="Get an experiment")
+async def get_experiment(experiment_uri: str = None) -> (dict, str,):
+    """
+    Retrieve an experiments.
+    
+    - **experiment_uri**: the uri of experiment related to the protocol (an experiment is related to one protocol).
+    """
+
+    return Controller.fetch_experiments(
+        experiment_uri=experiment_uri
+        return_format="json"
+    )
+
 @core_app.get("/experiment/list", tags=["Object list"], summary="Get the list of experiments")
 async def get_list_of_experiments(page: int = 1, number_of_items_per_page: int = 20) -> (dict, str,):
     """
@@ -64,8 +77,8 @@ async def get_list_of_protocols(experiment_uri: str = None, job_uri: str = None,
     """
     Retrieve a list of protocols. The list is paginated.
     
-    - **experiment_uri**: the uri of experiment related to the protocol (there is a 1:1 mapping between a Protocol and an Experiment). If given, the job_uri is not used.
-    - **job_uri**: the uri of job related to the protocol (there is a 1:1 mapping between a Protocol and an Experiment)
+    - **experiment_uri**: the uri of experiment related to the protocol (an experiment is related to one protocol). If given, the job_uri is not used.
+    - **job_uri**: the uri of job related to the protocol (a job is related to one protocol)
     - **page**: the page number 
     - **number_of_items_per_page**: the number of items per page (limited to 50 if job_uri nor experiment_uri are not given) 
     """
@@ -73,6 +86,7 @@ async def get_list_of_protocols(experiment_uri: str = None, job_uri: str = None,
     return Controller.fetch_protocol_list(
         page=page, 
         number_of_items_per_page=number_of_items_per_page,
+        experiment_uri=experiment_uri,
         job_uri=job_uri, 
         return_format="json"
     )
