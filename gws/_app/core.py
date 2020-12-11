@@ -60,13 +60,14 @@ async def get_list_of_jobs(experiment_uri: str = None, page: int = 1, number_of_
     )
 
 @core_app.get("/protocol/list", tags=["Object list"], summary="Get the list of protocols")
-async def get_list_of_protocols(job_uri: str = None, page: int = 1, number_of_items_per_page: int = 20) -> (dict, str,):
+async def get_list_of_protocols(experiment_uri: str = None, job_uri: str = None, page: int = 1, number_of_items_per_page: int = 20) -> (dict, str,):
     """
     Retrieve a list of protocols. The list is paginated.
-
-    - **job_uri**: the uri of job related the protocol (only one procotol is related to given job)
+    
+    - **experiment_uri**: the uri of experiment related to the protocol (there is a 1:1 mapping between a Protocol and an Experiment). If given, the job_uri is not used.
+    - **job_uri**: the uri of job related to the protocol (there is a 1:1 mapping between a Protocol and an Experiment)
     - **page**: the page number 
-    - **number_of_items_per_page**: the number of items per page (limited to 50 if job_uri is not given) 
+    - **number_of_items_per_page**: the number of items per page (limited to 50 if job_uri nor experiment_uri are not given) 
     """
 
     return Controller.fetch_protocol_list(

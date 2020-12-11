@@ -116,17 +116,20 @@ class Controller(Base):
             return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
 
     @classmethod
-    def fetch_protocol_list(cls, job_uri=None, page=1, number_of_items_per_page=20, filters=[], return_format=""):
-        from gws.model import Protocol, Job
-
-        if job_uri is None:
-            number_of_items_per_page = max(number_of_items_per_page, cls._number_of_items_per_page)
-            Q = Protocol.select_me().order_by(Protocol.creation_datetime.desc())
-        else:
+    def fetch_protocol_list(cls, experiment_uri=None, job_uri=None, page=1, number_of_items_per_page=20, filters=[], return_format=""):
+        from gws.model import Protocol, Job, Experiment
+        
+        if experiment_uri:
+            Q = Protocol.select_me()\
+                            .join(Experiment, on=(Experiment.protocol_uri == Protocol.uri))\
+                            .where(Experiment.uri == experiment_uri)
+        elif job_uri:
             Q = Protocol.select_me()\
                             .join(Job, on=(Job.process_uri == Protocol.uri))\
-                            .where(Job.uri == job_uri) \
-                            .order_by(Protocol.creation_datetime.desc())
+                            .where(Job.uri == job_uri)
+        else:
+            number_of_items_per_page = max(number_of_items_per_page, cls._number_of_items_per_page)
+            Q = Protocol.select_me().order_by(Protocol.creation_datetime.desc())
 
         if return_format == "json":
             return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
