@@ -42,6 +42,7 @@ class TestProtocol(unittest.TestCase):
             await e.run()
             print("Sleeping 1 sec for waiting all tasks to finish ...")
             await asyncio.sleep(1)
+        
         asyncio.run( _run() )
         
         print(e.protocol)

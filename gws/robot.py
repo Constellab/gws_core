@@ -72,16 +72,16 @@ class Move(Process):
         print(f"Moving {self.get_param('moving_step')}", flush=True)
         p = Robot()
 
-        pos = self._input['robot'].position
+        pos = self._input['robot'].position.copy()
         direction = self.get_param('direction')
         if direction == "north":
-            pos[0] += self.get_param('moving_step')
-        elif direction == "south":
-            pos[0] -= self.get_param('moving_step')
-        elif direction == "west":
-            pos[1] -= self.get_param('moving_step')
-        elif direction == "east":
             pos[1] += self.get_param('moving_step')
+        elif direction == "south":
+            pos[1] -= self.get_param('moving_step')
+        elif direction == "west":
+            pos[0] -= self.get_param('moving_step')
+        elif direction == "east":
+            pos[0] += self.get_param('moving_step')
 
         p.set_position(pos)
         p.set_weight(self._input['robot'].weight)
@@ -103,7 +103,7 @@ class Eat(Process):
     def task(self):
         print(f"Eating {self.get_param('food_weight')}", flush=True)
         p = Robot()
-        p.set_position(self.input['robot'].position)
+        p.set_position(self.input['robot'].position.copy())
         p.set_weight(self.input['robot'].weight + self.get_param('food_weight'))
         self.output['robot'] = p
 
@@ -122,7 +122,7 @@ class Wait(Process):
     def task(self):
         print(f"Waiting {self.get_param('waiting_time')}", flush=True)
         p = Robot()
-        p.set_position(self.input['robot'].position)
+        p.set_position(self.input['robot'].position.copy())
         p.set_weight(self.input['robot'].weight)
         self.output['robot'] = p  
         time.sleep(self.get_param('waiting_time'))

@@ -27,16 +27,6 @@ class _ViewModel(BaseModel):
 #
 # ##################################################################
 
-@core_app.get("/experiment-details/{uri}", tags=["Object list"], summary="Get an experiment")
-async def get_experiment(uri :str) -> (dict, str,):
-    """
-    Retrieve that details of an experiment.
-    
-    - **uri**: the uri of experiment
-    """
-
-    return Controller.fetch_experiment_details(uri=uri)
-
 @core_app.get("/experiment/list", tags=["Object list"], summary="Get the list of experiments")
 async def get_list_of_experiments(page: int = 1, number_of_items_per_page: int = 20) -> (dict, str,):
     """
@@ -51,6 +41,17 @@ async def get_list_of_experiments(page: int = 1, number_of_items_per_page: int =
         number_of_items_per_page=number_of_items_per_page,
         return_format="json"
     )
+
+@core_app.get("/job-flow", tags=["Object list"], summary="Get a jobs' flow")
+async def get_jobs_flow(protocol_job_uri: str = None, experiment_uri: str = None) -> (dict, str,):
+    """
+    Retrieve the jobs' flow of an experiment or a protocol job
+    
+    - **protocol_job_uri**: the uri of the job (must be a job of a protocol)
+    - **experiment_uri**: the uri of an experiment (is not used if job_uri is given)
+    """
+
+    return Controller.fetch_job_flow(protocol_job_uri=protocol_job_uri, experiment_uri=experiment_uri)
 
 @core_app.get("/job/list", tags=["Object list"], summary="Get the list of jobs")
 async def get_list_of_jobs(experiment_uri: str = None, page: int = 1, number_of_items_per_page: int = 20) -> (dict, str,):

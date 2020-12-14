@@ -19,13 +19,11 @@ class Port(Base):
     _resource: 'Resource'
     _prev: 'Port' = None
     _next: list = []
-    _is_left_connected : bool = False
     _parent: 'IO'
 
     def __init__(self, parent: 'IO'):
         self._resource = None
         self._next = []
-        self._is_left_connected = False
         self._parent = parent
 
         from gws.model import Resource
@@ -96,18 +94,38 @@ class Port(Base):
             io = port._parent
             next_proc.append(io._parent)
         return next_proc
-
+    
+    # -- N --
+    
+    @property
+    def next(self) -> 'Port':
+        return self._next
+    
     # -- P --
-
+    
+    @property
+    def prev(self) -> 'Port':
+        return self._prev
+    
     @property
     def parent(self) -> 'IO':
         """ 
-        Returns the parent of the Port, i.e. the IO (Input or Output) that holds this Port.
+        Returns the parent IO of the Port, i.e. the IO (Input or Output) that holds this Port.
 
         :return: The parent IO
         :rtype: IO
         """
         return self._parent
+    
+    @property
+    def process(self) -> 'Process':
+        """ 
+        Returns the parent Process of the Port.
+
+        :return: The parent Process
+        :rtype: Process
+        """
+        return self.parent.parent
 
     def propagate(self):
         """
@@ -241,11 +259,37 @@ class OutPort(Port):
             if input._ports[name] is self:
                 return name
 
-class Interface(InPort):
-    pass
-
-class Outerface(OutPort):
-    pass
+class Interface:
+    name:name = None
+    source_port:InPort = None
+    target_port:InPort = None
+    
+    def __init__(self, name: str, source_port : InPort, target_port: InPort):
+        if not isinstance(source_port, InPort):
+            Logger.error(Exception("Interface", "__init__", "The source port must be an input port"))
+            
+        if not isinstance(target_port, InPort):
+            Logger.error(Exception("Interface", "__init__", "The target port must be an input port"))
+            
+        self.name = name 
+        self.source_port = source_port
+        self.target_port = target_port
+        
+class Outerface:
+    name:str = None
+    source_port:OutPort = None
+    target_port:OutPort = None
+    
+    def __init__(self, name: str, source_port : OutPort, target_port : OutPort):
+        if not isinstance(source_port, OutPort):
+            Logger.error(Exception("Outerface", "__init__", "The source port must be an output port"))
+        
+        if not isinstance(target_port, OutPort):
+            Logger.error(Exception("Outerface", "__init__", "The target port must be an output port"))
+            
+        self.name = name
+        self.source_port = source_port
+        self.target_port = target_port
 
 # ####################################################################
 #

@@ -66,7 +66,7 @@ class TestProcess(unittest.TestCase):
 
         def _on_p5_end( proc ):
             self.assertEqual( proc, p5 )
-
+        
         async def _run():
             
             # set events
@@ -79,26 +79,16 @@ class TestProcess(unittest.TestCase):
             await e.run()
             
             print("Sleeping 1 sec for waiting all tasks to finish ...")
-            await asyncio.sleep(1)
+            await asyncio.sleep(2)
 
             elon = p0.output['robot']
-            alan = elon
-            self.assertEqual( elon, alan )
-            self.assertTrue( elon is alan )
-
-            self.assertEqual( elon.position, 0 )
+ 
             self.assertEqual( elon.weight, 70 )
             self.assertEqual( elon, p1.input['robot'] )
             self.assertTrue( elon is p1.input['robot'] )
 
-            # for e in p1.jobs:
-            #     self.assertEqual( e.data, {'inputs': {'robot': p1.input['robot'].uri}} )
-            
-            # for e in p_wait.jobs:
-            #     self.assertEqual( e.data, {'inputs': {'robot': p_wait.input['robot'].uri}} )
-            
             # check p1
-            self.assertEqual( p1.output['robot'].position, elon.position + p1.get_param('moving_step') )
+            self.assertEqual( p1.output['robot'].position[1], elon.position[1] + p1.get_param('moving_step') )
             self.assertEqual( p1.output['robot'].weight, elon.weight )
 
             # check p2
@@ -108,12 +98,9 @@ class TestProcess(unittest.TestCase):
 
             # check p3
             self.assertEqual( p_wait.output['robot'], p3.input['robot'])
-            self.assertEqual( p3.output['robot'].position, p3.input['robot'].position + p3.get_param('moving_step'))
+            self.assertEqual( p3.output['robot'].position[1], p3.input['robot'].position[1] + p3.get_param('moving_step'))
             self.assertEqual( p3.output['robot'].weight, p3.input['robot'].weight)
             
-            #elon.save()
-            #p0.save()
-
             res = Robot.get_by_id( p3.output['robot'].id )
             self.assertTrue( isinstance(res, Robot) )
 

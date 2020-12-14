@@ -33,7 +33,7 @@ from gws.base import slugify, BaseModel, BaseFTSModel, DbManager
 from gws.base import format_table_name
 from gws.controller import Controller
 from gws.view import ViewTemplate, HTMLViewTemplate, JSONViewTemplate
-from gws.io import Input, Output, InPort, OutPort, Connector
+from gws.io import Input, Output, InPort, OutPort, Connector, Interface, Outerface
 from gws.event import EventListener
 
 # ####################################################################
@@ -1058,7 +1058,7 @@ class Process(Viewable, SystemTrackable):
         self.is_finished = True
 
         job = self.get_active_job()
-        job.update_state()
+        job.update_status()
         if not job.save():
             Logger.error(Exception(self.classname(), "_run_after_task", f"Cannot save the job"))
 
@@ -1239,10 +1239,21 @@ class UserLogin(Model):
 # ####################################################################
 
 class Experiment(Viewable):
+    """
+    Experiment class.
+
+    :property protocol_job: The job of the protocol of the experiment
+    :type job: Job
+    :property protocol_uri: The uri of the protocol of the experiment
+    :type protocol_uri: str
+    :property score: The score of the experiment
+    :type score: `float`
+    :property is_in_progress: True if the exepriment is in progress, False otherwiser
+    :type is_in_progress: `bool`
+    """
     
-    #@todo= change => main_protocol_uri
-    protocol_uri = CharField(null=False, index=True)       # save uri ref as it may represent different classes
-    
+    protocol_uri = CharField(null=False, index=True)
+    protocol_job_uri = CharField(null=False, index=True)
     score = FloatField(null=True, index=True)
     is_in_progress = BooleanField(default=True, index=True)
     
@@ -1250,11 +1261,13 @@ class Experiment(Viewable):
     _fts_model = 'ExperimentFTSDocument'
     _fts_fields = {'title': 2.0, 'data': 1.0}
 
+    
     _protocol = None
+    _protocol_job = None
 
     def __init__(self, *args, protocol=None, **kwargs):
         super().__init__(*args, **kwargs)
-
+        
         if isinstance(protocol, Protocol):
             if not protocol.is_saved():
                 protocol.save()
@@ -1302,7 +1315,7 @@ class Experiment(Viewable):
         """
         _json = super().as_json()
         _json.update({
-            "protocol_uri": self.protocol_uri,
+            "protocol_job_uri": self.protocol_job_uri,
             "score": self.score,
             "is_in_progress": self.is_in_progress,
         })
@@ -1359,20 +1372,29 @@ class Experiment(Viewable):
         self.protocol.on_start(call_back)
         
     # -- P --
-
+    
     @property 
     def protocol(self):
-        if self._protocol is None:
+        if not self._protocol:
             try:
                 proto = Protocol.get(Protocol.uri == self.protocol_uri)
             except:
-                Logger.error(Exception("Experiment", "__init__", "The experiment has no protocol"))
+                Logger.error(Exception("Experiment", "protocol", "The experiment has no protocol"))
             
             self._protocol = proto.cast()
-            return self._protocol
-        else:
-            return self._protocol
+
+        return self._protocol
     
+    @property 
+    def protocol_job(self):
+        if not self._protocol_job:
+            try:
+                self._protocol_job = Job.get(Job.uri == self.protocol_job_uri)
+            except:
+                Logger.error(Exception("Experiment", "protocol_job", "The experiment has no job"))
+            
+        return self._protocol_job
+            
     # -- R --
 
     @property 
@@ -1385,6 +1407,8 @@ class Experiment(Viewable):
         return Q
 
     async def run(self):
+        self.job = self.protocol.get_active_job()
+        self.save()
         await self.protocol._run()
 
 
@@ -1398,26 +1422,28 @@ class Job(Viewable, SystemTrackable):
     """
     Job class.
 
-    :property process: The process of the job
-    :type process: Process
-    :property config: The config of the job's process
-    :type config: Config
-    :property user: The user
-    :type user: User
+    :property process_uri: The uri of the job's process
+    :type process_uri: str
+    :property process_type: The type if the job's process
+    :type process_type: str
+    :property process_source: The source code of the job's process
+    :type process_source: binary
+    :property config_uri: The uri of config of the job's process
+    :type config_uri: str
+    :property experiment: The experiment of the job
+    :type experiment: Experiment
+    :property status: The status of experiment, 1 = is_running, 2 = is_finished, 0 otherwise
+    :type status: integer 
     """
     
     parent_job = ForeignKeyField('self', null=True, backref='children')
-    
     process_uri = CharField(null=False, index=True)                         # save id as it may represent different type of process
     process_type = CharField(null=False)                        
     process_source = BlobField(null=True)                  
-
     config_uri = CharField(null=False, index=True)                          # save id ref as it may represent config classes
-    
     experiment = ForeignKeyField(Experiment, null=True, backref='jobs')     # only valid for protocol
-    is_running: bool = BooleanField(default=False, index=True)
-    is_finished: bool = BooleanField(default=False, index=True)
-    
+    status = IntegerField(default=0, index=True)
+
     _process: Process = None
     _config: Config = None
     _table_name = 'job'
@@ -1434,7 +1460,7 @@ class Job(Viewable, SystemTrackable):
             
             self._config = config
             self._process = process
-            self.update_state()
+            self.update_status()
 
     # -- A --
 
@@ -1468,8 +1494,8 @@ class Job(Viewable, SystemTrackable):
                 "uri": self.config.uri,
                 "type": self.config.type,
             },
-            "parent_job": {"uri": parent_job_uri},
-            "experiment": {"uri": self.experiment.uri},
+            "parent_job_uri": parent_job_uri,
+            "experiment_uri": self.experiment.uri,
             "is_running": self.is_running,
             "is_finished": self.is_finished
         })
@@ -1504,7 +1530,58 @@ class Job(Viewable, SystemTrackable):
             return True
 
         return super().remove()
+    
+    # -- F -- 
+    
+    @property
+    def flow(self):
+        if not self.is_finished:
+            return {}
 
+        if len(self.children):
+            flow = {
+                "jobs": {},
+                "flows": [],
+            }
+            
+            for job in self.children:
+                flow["jobs"][job.uri] = job.as_json()
+
+                for k in job.data["input"]:
+                    _input = job.data["input"][k]
+                    flow["flows"].append({
+                        "to": {
+                            "job_uri": job.uri,
+                            "process_port": k,
+                        },
+                        "from": _input["previous"],
+                        "resource_uri": _input["resource_uri"]
+                    })
+        
+            return flow
+        else:
+            return {}
+        
+    # -- I --
+    
+    @property
+    def is_running(self):
+        return self.status == 1
+    
+    @is_running.setter
+    def is_running(self, tf):
+        if tf:
+            self.status = 1
+    
+    @property
+    def is_finished(self):
+        return self.status == 2
+    
+    @is_finished.setter
+    def is_finished(self, tf):
+        if tf:
+            self.status = 2
+    
     # -- P --
     
     @property
@@ -1516,7 +1593,7 @@ class Job(Viewable, SystemTrackable):
         :rtype: Config
         """
 
-        if not self._process is None:
+        if self._process:
             return self._process
 
         if self.process_uri:
@@ -1534,12 +1611,12 @@ class Job(Viewable, SystemTrackable):
 
     # -- S --
 
-    def update_state(self):
+    def update_status(self):
         """ 
         Update the state of the job
         """
 
-        if not self.process is None:
+        if self.process:
             self.is_running = self.process.is_running
             self.is_finished = self.process.is_finished
 
@@ -1552,7 +1629,10 @@ class Job(Viewable, SystemTrackable):
     def set_experiment(self, experiment: 'Experiment'):
         if not isinstance(experiment, Experiment):
             raise Exception("The experiment must be an instance of Experiment")
-
+        
+        if self.experiment is experiment:
+            return
+        
         if self.experiment is None:
             self.experiment = experiment
         else:
@@ -1579,10 +1659,6 @@ class Job(Viewable, SystemTrackable):
                 if not self._process._parent_protocol is None:
                     self.parent_job = self._process._parent_protocol.get_active_job()
                 
-                self.__track_input_uri()
-                if not super().save(*args, **kwargs):
-                    Logger.error(Exception("Job", "save", "Cannot save the job."))
-                
                 res = self.process.output.get_resources()
                 for k in res:
                     if res[k] is None:
@@ -1592,24 +1668,62 @@ class Job(Viewable, SystemTrackable):
                         if not res[k].save(*args, **kwargs):
                             Logger.error(Exception("Job", "save", f"Cannot save the resource output '{k}' of the job"))
 
+                self.__track_input_uri()
+                if not super().save(*args, **kwargs):
+                    Logger.error(Exception("Job", "save", "Cannot save the job."))
+                
                 return True
             except Exception as err:
                 transaction.rollback()
                 Logger.error(Exception("Job", "save", f"Error message: {err}"))
 
     # -- T --
-
+     
     def __track_input_uri(self):
-        res = self.process.input.get_resources()
-        self.data["inputs"] = {}
-        for k in res:
-            if res[k] is None:
+        _input = self.process.input
+        self.data["input"] = {}
+        for k in _input.ports:
+            port = _input.ports[k]
+            res = port.resource
+
+            if res is None:
                 continue
             
-            if not res[k].is_saved():
-                Logger.error(Exception("Process", "__track_input_uri", "Cannot track input '{k}' uri. Please save the input resource before."))
-
-            self.data["inputs"][k] = res[k].uri
+            if not res.is_saved():
+                Logger.error(Exception("Process", "__track_input_uris", f"Cannot track input '{k}' uri. Please save the input resource before."))
+  
+            is_interfaced = not port.is_left_connected
+            
+            if not is_interfaced:
+                left_port_name = port.prev.name
+                self.data["input"][k] = {
+                    "resource_uri": res.uri,
+                    "previous": {
+                        "job_uri": res.job.uri,
+                        "process_port": left_port_name
+                    }
+                } 
+            else:
+                parent_job = self.parent_job
+                parent_protocol = self.process._parent_protocol
+                
+                interface = parent_protocol.get_interface_of_target_port( port )
+                source_port = interface.source_port
+                
+                if source_port.is_left_connected:
+                    left_port_name = source_port.prev.name
+                else:
+                    left_port_name = ""      
+            
+                self.data["input"][k] = {
+                    "resource_uri": res.uri,
+                    "previous": {
+                        "job_uri": res.job.uri,
+                        "process_port": left_port_name,
+                        "protocol_interface": interface.name,
+                    }
+                }                    
+        
 
 # ####################################################################
 #
@@ -1649,15 +1763,6 @@ class Protocol(Process, SystemTrackable):
         if processes is None:
             if self and self.data.get("graph", None):
                 self.__build_from_dump( self.data["graph"] )
-            #elif isinstance(graph, str):
-            #    try:
-            #        _js = json.loads(graph)
-            #        self.__build_from_dump( _js )
-            #    except Exception as err:
-            #        Logger.error(Exception("Protocol", "__init__", f"Invalid graph. {err}"))
-            #elif isinstance(graph, dict):
-            #    self.__build_from_dump( graph )
-            #self.save()
         else:
             if not isinstance(processes, dict):
                 Logger.error(Exception("Protocol", "__init__", "A dictionnary of processes is expected"))
@@ -1668,7 +1773,7 @@ class Protocol(Process, SystemTrackable):
             # set process
             for name in processes:
                 proc = processes[name]
-                proc.set_title(name)    #set context name
+                #proc.set_title(name)    #set context name
                 if not isinstance(proc, Process):
                     Logger.error(Exception("Protocol", "__init__", "The dictionnary of processes must contain instances of Process"))
             
@@ -1712,8 +1817,11 @@ class Protocol(Process, SystemTrackable):
             Logger.error(Exception("Protocol", "add_process", "The process must be an instance of Process"))
 
         if not process._parent_protocol is None:
-            Logger.error(Exception("Protocol", "add_process", "The process alread belongs to a protocol"))
-
+            Logger.error(Exception("Protocol", "add_process", "The process instance already belongs to another protocol"))
+        
+        if name in self._processes:
+            Logger.error(Exception("Protocol", "add_process", "The process name already exists"))
+            
         process._parent_protocol = self
         self._processes[name] = process
 
@@ -1818,7 +1926,7 @@ class Protocol(Process, SystemTrackable):
                 graph["nodes"][k]["uri"] = ""
 
         for k in self._interfaces:
-            port = self._interfaces[k]
+            port = self._interfaces[k].target_port
             proc = port.parent.parent
             for name in self._processes:
                 if proc is self._processes[name]:
@@ -1826,7 +1934,7 @@ class Protocol(Process, SystemTrackable):
                     break
 
         for k in self._outerfaces:
-            port = self._outerfaces[k]
+            port = self._outerfaces[k].target_port
             proc = port.parent.parent
             for name in self._processes:
                 if proc is self._processes[name]:
@@ -1873,7 +1981,41 @@ class Protocol(Process, SystemTrackable):
         :rtype": Process
         """
         return self._processes[name]
+    
+    def get_interface_of_target_port(self, target_port: InPort) -> Interface:
+        """ 
+        Returns interface with a given target input port
+        
+        :param target_port: The InPort
+        :type target_port: InPort
+        :return: The interface, None otherwise
+        :rtype": Interface
+        """
+        
+        for k in self._interfaces:
+            port = self._interfaces[k].target_port
+            if port is target_port:
+                return self._interfaces[k]
 
+        return None
+    
+    def get_outerface_of_target_port(self, target_port: OutPort) -> Outerface:
+        """ 
+        Returns interface with a given target output port
+        
+        :param target_port: The InPort
+        :type target_port: OutPort
+        :return: The outerface, None otherwise
+        :rtype": Outerface
+        """
+        
+        for k in self._outerfaces:
+            port = self._outerfacess[k].target_port
+            if port is target_port:
+                return self._outerfacess[k]
+
+        return None
+    
     # -- I --
 
     def is_child(self, process: Process) -> bool:
@@ -1893,7 +2035,7 @@ class Protocol(Process, SystemTrackable):
         """
         
         for k in self._interfaces:
-            port = self._interfaces[k] 
+            port = self._interfaces[k].target_port
             if process is port.parent.parent:
                 return True
 
@@ -1904,7 +2046,7 @@ class Protocol(Process, SystemTrackable):
         Returns True if the input poort the process is an outerface of the protocol
         """
         for k in self._outerfaces:
-            port = self._outerfaces[k] 
+            port = self._outerfaces[k].target_port
             if process is port.parent.parent:
                 return True
 
@@ -1971,7 +2113,7 @@ class Protocol(Process, SystemTrackable):
             proc_name = graph["outerfaces"][k]["proc"]
             port_name = graph["outerfaces"][k]["port"]
             proc = processes[proc_name]
-            port = proc.input.ports[port_name]
+            port = proc.output.ports[port_name]
             outerfaces[k] = port
             
         self.__set_interfaces(interfaces)
@@ -2048,16 +2190,16 @@ class Protocol(Process, SystemTrackable):
     def set_active_experiment(self, experiment: Experiment):
         job = self.get_active_job()
         job.set_experiment(experiment)
-        experiment.protocol_uri = self.uri
+        experiment.protocol_job_uri = job.uri
 
     def _set_inputs(self, *args, **kwargs):
         for k in self._interfaces:
-            port = self._interfaces[k]
+            port = self._interfaces[k].target_port
             port.resource = self.input[k]
 
     def _set_outputs(self, *args, **kwargs):
         for k in self._outerfaces:
-            port = self._outerfaces[k]
+            port = self._outerfaces[k].target_port
             self.output[k] = port.resource
 
     def __set_pre_start_event(self):
@@ -2099,7 +2241,10 @@ class Protocol(Process, SystemTrackable):
                 input_specs[k] = interfaces[k]._resource_type
 
             self.__set_input_specs(input_specs)
-            self._interfaces = interfaces
+            
+            for k in interfaces:
+                source_port = self.input.ports[k]
+                self._interfaces[k] = Interface(name=k, source_port=source_port, target_port=interfaces[k])
 
     def __set_outerfaces(self, outerfaces):
         if not outerfaces is None:
@@ -2108,7 +2253,12 @@ class Protocol(Process, SystemTrackable):
                 output_specs[k] = outerfaces[k]._resource_type
 
             self.__set_output_specs(output_specs)
-            self._outerfaces = outerfaces
+                                        
+            for k in outerfaces:
+                source_port = self.output.ports[k]
+                self._outerfaces[k] = Outerface(name=k, source_port=source_port, target_port=outerfaces[k])
+                                        
+            #self._outerfaces = outerfaces
 
 # ####################################################################
 #

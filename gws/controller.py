@@ -140,7 +140,23 @@ class Controller(Base):
             return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
         else:
             return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
-
+    
+    @classmethod
+    def fetch_job_flow(cls, protocol_job_uri=None, experiment_uri=None):
+        from gws.model import Experiment, Job
+        
+        try:
+            if protocol_job_uri:
+                job = Job.get(Job.uri == protocol_job_uri)
+            elif experiment_uri:
+                e = Experiment.get(Experiment.uri == experiment_uri)
+                job = e.protocol_job
+            
+            return job.flow
+        except:
+            return {}
+            
+    
     @classmethod
     def fetch_protocol_list(cls, experiment_uri=None, job_uri=None, page=1, number_of_items_per_page=20, filters=[], return_format=""):
         from gws.model import Protocol, Job, Experiment
