@@ -56,6 +56,9 @@ hr{ border: none; border-top: 1px solid #dcdcdc }
 .gws-top-search-bar-input{ width: 300px; }
 .gws-top-search-bar--open-btn{ display: none }
 
+.gws-ease-transition{
+    transition: all 1s ease-out;
+}
 
 /**
  * MDC Override

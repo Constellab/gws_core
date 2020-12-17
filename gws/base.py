@@ -9,11 +9,11 @@ import re
 from peewee import SqliteDatabase, Model
 from playhouse.sqlite_ext import JSONField, RowIDField, SearchField, FTS5Model
 
-from slugify import slugify as convert_to_slug
+from slugify import slugify as _slugify
 
 from gws.settings import Settings
 
-def slugify(text, snakefy = False) -> str:
+def slugify(text: str, snakefy: bool = False) -> str:
     """
     Returns the slugified text
 
@@ -22,10 +22,12 @@ def slugify(text, snakefy = False) -> str:
     :return: The slugified name
     :rtype: str
     """
-    if slugify:
-        text = convert_to_slug(text, to_lower=True, separator='-')
-    elif snakefy:
-        text = convert_to_slug(text, to_lower=True, separator='_')
+    
+    if snakefy:
+        text = _slugify(text, to_lower=True, separator='_')
+    else:
+        text = _slugify(text, to_lower=True, separator='-')
+        
     return text
 
 # ####################################################################
@@ -157,7 +159,7 @@ class BaseModel(Base, Model):
     Base class
     """
 
-    _table_name = 'base'
+    _table_name = 'gws_base'
 
     class Meta:
         database = DbManager.db

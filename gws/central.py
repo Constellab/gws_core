@@ -23,7 +23,7 @@ class Central:
     def activate_user(cls, uri):
         user = User.get_by_uri(uri)
         if user is None:
-            raise Exception("User not found")
+            Logger.error(Exception("Central", "activate_user", "User not found"))
         else:
             user.is_active = True
             user.save()
@@ -41,37 +41,46 @@ class Central:
                     "uri": user.uri,
                 }
             else:
-                raise Exception("Cannot save the user")
+                Logger.error(Exception("Central", "create_user", "Cannot save the user"))
         else:
-            raise Exception("The user already exists")
+            Logger.error(Exception("Central", "create_user", "The user already exists"))
     
     @classmethod
     def create_experiment(cls, data):
-        exp = Experiment.get_by_uri(data["uri"])
-        if exp is None:
+        if data.get("uri", None):
+            e = Experiment.get_by_uri(data["uri"])
+        else:
+            e = None
+            
+        if not e:
             if 'protocol' in data:
+                
+                if not data["protocol"].get("uri", None):
+                    Logger.error(Exception("Central", "create_experiment", f"No protocol uri found"))
+                    
                 proto = Protocol.get_by_uri(data["protocol"]["uri"])
                 if proto is None:
                     graph = data["protocol"].get("graph", None)
                     if graph is None:
-                        raise Exception(f"No protocol graph provided")
+                        Logger.error(Exception("Central", "create_experiment", f"No protocol graph found"))
                     else:
                         try:
-                            protocol = Protocol(graph=graph)
-                            protocol.save()
+                            proto = Protocol.from_graph(graph)
+                            proto.save()
                         except Exception as err:
-                            raise Exception(f"Protocol graph is not valid. Error: {err}")
+                            Logger.error(Exception("Central", "create_experiment", f"Protocol graph is not valid. Error: {err}"))
 
             else:
-                raise Exception(f"Protocol not defined")
+                Logger.error(Exception("Central", "create_experiment", f"Protocol not defined"))
                 
-            exp = Experiment(uri = data["uri"], protocol_id=protocol.id)
-            if exp.save():
-                return exp
+            e = proto.create_experiment()
+            e.uri = data["uri"]
+            if e.save():
+                return e
             else:
-                raise Exception(f"Cannot save the experiment")
+                Logger.error(Exception("Central", "create_experiment", f"Cannot save the experiment"))
         else:
-            raise Exception(f"The experiment already exists")
+            Logger.error(Exception("Central", "create_experiment", f"The experiment already exists"))
 
     @classmethod
     def create_url(cls, action, **kwargs):
@@ -87,7 +96,7 @@ class Central:
     def close_experiment(cls, uri):
         exp = Experiment.get_by_uri(uri)
         if exp is None:
-            raise Exception("Experiment not found")
+            Logger.error(Exception("Central", "close_experiment", "Experiment not found"))
         else:
             exp.is_in_process = False
             return exp.save()
@@ -96,7 +105,7 @@ class Central:
     def delete_experiment(cls, uri):
         exp = Experiment.get_by_uri(uri)
         if exp is None:
-            raise Exception("Experiment not found")
+            Logger.error(Exception("Central", "delete_experiment", "Experiment not found"))
         else:
             exp.delete = True
             return exp.save()
@@ -107,7 +116,7 @@ class Central:
     def deactivate_user(cls, uri):
         user = User.get_by_uri(uri)
         if user is None:
-            raise Exception("User not found")
+            Logger.error(Exception("Central", "deactivate_user", "User not found"))
         else:
             user.is_active = False
             return user.save()
@@ -118,7 +127,7 @@ class Central:
     def get_user_status(cls, uri):
         user = User.get_by_uri(uri)
         if user is None:
-            raise Exception("User not found")
+            Logger.error(Exception("Central", "get_user_status", "User not found"))
         else:
             return {
                 "uri": user.uri,
@@ -131,7 +140,7 @@ class Central:
     def get_protocol(csl, uri):
         proto = Protocol.get_by_uri(uri)
         if proto is None:
-            raise Exception("Protocol not found")
+            Logger.error(Exception("Central", "get_protocol", "Protocol not found"))
         else:
             return {
                 "uri": proto.uri,

@@ -71,6 +71,7 @@ class Model(BaseModel):
     :property data: The data of the model
     :type data: dict, `peewee.model.JSONField`
     """
+    
     id = IntegerField(primary_key=True)
     uri = CharField(null=True, index=True)
     type = CharField(null=True, index=True)
@@ -87,23 +88,25 @@ class Model(BaseModel):
     _fts_model = None
     _fts_fields = {}
 
-    _table_name = 'model'
+    _table_name = 'gws_model'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        if (self.id is None) and self._is_singleton:
+        if not self.id and self._is_singleton:
+ 
             try:
                 cls = type(self)
                 model = cls.get(cls.type == self.full_classname())
-                
-                # /!\ Shallow copy all properties (<=> object cast) 
-                # Prevent creating duplicates of processes that already have a representation in DB
+            except:
+                model = None
+            
+            if model:
+                # /!\ Shallow copy all properties (i.e. object cast) 
+                # Prevent creating duplicates of processes having a representation in the db.
                 for prop in model.property_names(Field):
                     val = getattr(model, prop)
-                    setattr(self, prop, val)
-            except:
-                pass
+                    setattr(self, prop, val) 
 
         if self.uri is None:
             self.uri = str(uuid.uuid4())
@@ -175,7 +178,12 @@ class Model(BaseModel):
         super().create_table(*args, **kwargs)
 
     # -- D --
-
+    
+    
+    #def delete_instance(self, *args, **kwargs) -> bool:
+    #    self.kv_store.remove()
+    #    super.delete_instance(*args, **kwargs)
+        
     def remove(self) -> bool:
         if not self._is_deletable:
             return False
@@ -284,7 +292,13 @@ class Model(BaseModel):
     # -- K --
 
     @property
-    def kv_store(self):
+    def kv_store(self) -> KVStore:
+        """ 
+        Returns the path of the KVStore of the model
+
+        :return: The path of the KVStore
+        :rtype: str
+        """
         return self._kv_store
 
     @property
@@ -295,8 +309,7 @@ class Model(BaseModel):
         :return: The path of the KVStore
         :rtype: str
         """
-        db_dir = Controller.get_settings().get_data("db_dir")
-        return os.path.join(db_dir, 'kv_store', self._table_name, self.uri)
+        return os.path.join(self._table_name, self.uri)
 
     # -- S --
 
@@ -588,7 +601,7 @@ class Config(Viewable):
     a collection of parameters
     """
 
-    _table_name = 'config'
+    _table_name = 'gws_config'
     _fts_model = 'ConfigFTSDocument'
 
     def __init__(self, *args, specs: dict = None, **kwargs):
@@ -794,7 +807,7 @@ class Process(Viewable, SystemTrackable):
     _fts_model = 'ProcessFTSDocument'
     _fts_fields = {'title': 2.0, 'data': 1.0}
     _is_deletable = False
-    _table_name = 'process'
+    _table_name = 'gws_process'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1162,7 +1175,7 @@ class User(Model):
     is_authenticated = False
 
     _is_deletable = False
-    _table_name = 'user'
+    _table_name = 'gws_user'
     _fts_model = 'UserFTSDocument'
     _fts_fields = {'fullname': 2.0, 'data': 1.0}
 
@@ -1257,7 +1270,7 @@ class Experiment(Viewable):
     score = FloatField(null=True, index=True)
     is_in_progress = BooleanField(default=True, index=True)
     
-    _table_name = 'experiment'
+    _table_name = 'gws_experiment'
     _fts_model = 'ExperimentFTSDocument'
     _fts_fields = {'title': 2.0, 'data': 1.0}
 
@@ -1344,6 +1357,7 @@ class Experiment(Viewable):
             except:
                 transaction.rollback()
                 return False
+    # -- J --
 
     # -- I --
 
@@ -1446,7 +1460,7 @@ class Job(Viewable, SystemTrackable):
 
     _process: Process = None
     _config: Config = None
-    _table_name = 'job'
+    _table_name = 'gws_job'
 
     def __init__(self, *args, process: Process = None, config: Config = None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1748,7 +1762,7 @@ class Protocol(Process, SystemTrackable):
     _connectors: list = []
     _interfaces: dict = None
     _outerfaces: dict = None
-    _table_name = 'protocol'     #/!\ use same table as Process
+    _table_name = 'gws_protocol'     #/!\ use same table as Process
 
     def __init__(self, *args, processes: dict = None, connectors: list = [], \
                 interfaces: dict = None, outerfaces: dict = None, **kwargs):
@@ -1920,7 +1934,8 @@ class Protocol(Process, SystemTrackable):
         for k in self._processes:
             graph["nodes"][k]  = {
                 "uri": self._processes[k].uri,
-                "type": self._processes[k].full_classname()
+                "type": self._processes[k].full_classname(),
+                "position": [],
             }
             if bare:
                 graph["nodes"][k]["uri"] = ""
@@ -2276,7 +2291,7 @@ class Resource(Viewable, SystemTrackable):
 
     job = ForeignKeyField(Job, null=True, backref='resources')
 
-    _table_name = 'resource'
+    _table_name = 'gws_resource'
     _fts_model = 'ResourceFTSDocument'
 
     # -- A --
@@ -2313,7 +2328,7 @@ class Resource(Viewable, SystemTrackable):
             })
   
         return _json
-
+    
     # -- D --
 
     def remove(self):
@@ -2331,7 +2346,34 @@ class Resource(Viewable, SystemTrackable):
             except:
                 transaction.rollback()
                 return False
+    
+    def _export(self, dest_file: 'File', file_format:str = None):
+        """ 
+        Export to a give repository
 
+        :param dest_file: The destination file
+        :type dest_file: File
+        """
+        
+        #@ToDo: ensure that this method is only called by an Importer
+        
+        pass
+    
+    # -- P --
+    
+    def _import(self, source_file: 'File', file_format:str = None) -> any:
+        """ 
+        Import a give from repository
+
+        :param source_file: The source file
+        :type source_file: File
+        :returns: the parsed data
+        :rtype any
+        """
+        
+        #@ToDo: ensure that this method is only called by an Importer 
+        pass
+    
     # -- S --
 
     def _set_job(self, job: 'Job'):
@@ -2356,7 +2398,8 @@ class Resource(Viewable, SystemTrackable):
 class ResourceSet(Resource):
     
     _set: dict = None
-
+    _resource_types = (Resource, )
+    
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
 
@@ -2383,8 +2426,8 @@ class ResourceSet(Resource):
         del self._set[key]
 
     def __setitem__(self, key, val):
-        if not isinstance(val, Resource):
-            Logger.error(Exception("ResourceSet", "__setitem__", f"The value must be an instance of Resource. The actual value is a {type(val)}."))
+        if not isinstance(val, self._resource_types):
+            Logger.error(Exception("ResourceSet", "__setitem__", f"The value must be an instance of {self._resource_types}. The actual value is a {type(val)}."))
         
         self.set[key] = val
 
@@ -2445,7 +2488,7 @@ class ViewModel(Model):
 
     _model = None
 
-    _table_name = 'vmodel'
+    _table_name = 'gws_view_model'
     _fts_model = 'ViewModelFTSDocument'
     _fts_fields = {'title': 2.0, 'data': 1.0}
 
@@ -2600,7 +2643,6 @@ class HTMLViewModel(ViewModel):
     :type model: Process
     """
 
-    _table_name = 'vmodel'
     template = HTMLViewTemplate("{{ vmodel.as_html() }}")
 
 # ####################################################################
@@ -2617,6 +2659,5 @@ class JSONViewModel(ViewModel):
     :type model: Resource
     """
 
-    _table_name = 'vmodel'
     template = JSONViewTemplate("{{ vmodel.as_json() }}")
 

@@ -60,4 +60,4 @@ class TestCentral(unittest.TestCase):
         self.assertEqual(e.uri, "123456abcd")
 
         proto = Protocol.get_by_id(e.protocol.id)
-        self.assertEqual(proto.dumps(as_dict=True), graph)
+        self.assertEqual(proto.dumps(as_dict=True, bare=True), graph)

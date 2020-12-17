@@ -8,7 +8,7 @@ from gws.model import ViewModel, Experiment, Viewable
 
 class Report(Viewable):
     experiment = ForeignKeyField(Experiment, backref="reports")
-    _table_name = "report"
+    _table_name = "gws_report"
 
     def add_title(self, title: str):
         self.data["title"] = title

@@ -55,13 +55,15 @@
             "/distrib-js/d3/d3-binarytree/0.1.8/d3-binarytree.min.js",
             "/distrib-js/d3/d3-octree/0.1.8/d3-octree.min.js",
             "/distrib-js/d3/d3-force-3d/2.1.0/d3-force-3d.min.js",
-            "/distrib-js/plotly/plotly.min.js"
+            "/distrib-js/plotly/plotly.min.js",
+            "/distrib-js/dropzone/5.7.0/dist/min/dropzone.min.js"
         ],
         "modules": [ ],
         "styles": [
             "/distrib-js/fontawesome/5.14.0/css/all.min.css",
             "/distrib-js/mdc/material-web-components.min.css",
-            "/distrib-js/mdc/material-icons.css"
+            "/distrib-js/mdc/material-icons.css",
+            "/distrib-js/dropzone/5.7.0/dist/min/dropzone.min.css"
         ],
         "buttons":{
             "settings": {

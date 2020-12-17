@@ -4,16 +4,18 @@
 # About us: https://gencovery.com
 
 
-from typing import Optional
+from typing import Optional, List
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, UploadFile, File as FastAPIFile
 from fastapi.responses import Response, RedirectResponse
+
 from pydantic import BaseModel
 
 from gws.settings import Settings
 from gws.central import Central
 from gws.controller import Controller
 from gws.model import Model, ViewModel, Experiment
+from gws.file import File, FileStore, Uploader
 
 core_app = FastAPI(docs_url="/apidocs")
 
@@ -188,6 +190,26 @@ async def delete_view_model(object_type: str, object_uri: str) -> (dict, str,):
     """
 
     return Controller.action(action="delete", object_type=object_type, object_uri=object_uri)
+
+# ##################################################################
+#
+# IO File
+#
+# ##################################################################
+
+
+@core_app.post("/upload-files", tags=["Upload and download files"])
+async def upload_files(files: List[UploadFile] = FastAPIFile(...)):
+    """
+    Upload files
+    """
+    
+    u = Uploader(files=files)
+    e = u.create_experiment()
+    await e.run()
+    
+    return { "status": True }
+        
 
 # ##################################################################
 #

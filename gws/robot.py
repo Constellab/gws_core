@@ -10,6 +10,8 @@ from gws.model import Config, Process, Resource, Model, Protocol
 from gws.controller import Controller
 
 class Robot(Resource):
+    _table_name = "gws_robot"
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.data = { 
