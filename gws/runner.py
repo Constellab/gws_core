@@ -31,20 +31,28 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, \
 
     if not settings.save():
         Logger.error(Exception("manage", "Cannot save the settings in the database"))
- 
+    
+    #from gws.controller import Controller
+    #Controller.register_all_processes()
+        
     if runserver:
         settings.set_data("app_host", ip)
         settings.set_data("app_port", port)
 
         if not settings.save():
             Logger.error(Exception("manage", "Cannot save the settings in the database"))
-
+        
+        from gws.controller import Controller
+        Controller.register_all_processes()
+        
         # start app
         from gws.app import App
         app = App()
         app.init()
         app.start()
         
+        
+    
     elif test:
         if test == "*":
             test = "test*"

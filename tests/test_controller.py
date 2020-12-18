@@ -145,3 +145,14 @@ class TestControllerHTTP(unittest.TestCase):
         Controller.action(action="delete", object_type=html_vmodel.full_classname(), object_uri=html_vmodel.uri)
         delete_vm = HTMLPersonViewModel.get_by_id(html_vmodel.id)
         self.assertTrue(delete_vm.is_deleted)
+        
+        
+    def test_register_model(self):
+        Controller.register_all_processes()
+        
+        from gws.model import Process
+        
+        count = Process.select().count()
+        print(f"Process counts = {count}")
+        for Q in Process.select():
+            print(Q.type)

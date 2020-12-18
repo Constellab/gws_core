@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import os
 import json
 import importlib
 import inspect
@@ -53,7 +54,7 @@ class Controller(Base):
             if return_format == "json":
                 return Paginator(Q, page=page).as_json()
             else:
-                return Paginator(Q, page=page).as_model_list()
+                return Paginator(Q, page=page).as_process_type_list()
 
         else:
             if action == "post":
@@ -124,7 +125,7 @@ class Controller(Base):
         if return_format == "json":
             return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
         else:
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_process_type_list()
     
     @classmethod
     def fetch_job_list(cls, experiment_uri=None, page=1, number_of_items_per_page=20, filters=[], return_format=""):
@@ -139,7 +140,7 @@ class Controller(Base):
         if return_format == "json":
             return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
         else:
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_process_type_list()
     
     @classmethod
     def fetch_job_flow(cls, protocol_job_uri=None, experiment_uri=None):
@@ -176,7 +177,7 @@ class Controller(Base):
         if return_format == "json":
             return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
         else:
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_process_type_list()
 
     @classmethod
     def fetch_process_list(cls, job_uri=None, page=1, number_of_items_per_page=20, filters=[], return_format=""):
@@ -194,7 +195,7 @@ class Controller(Base):
         if return_format == "json":
             return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
         else:
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_process_type_list()
 
     @classmethod
     def fetch_config_list(cls, job_uri=None, page=1, number_of_items_per_page=20, filters=[], return_format=""):
@@ -212,7 +213,7 @@ class Controller(Base):
         if return_format == "json":
             return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
         else:
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_process_type_list()
 
     @classmethod
     def fetch_resource_list(cls, experiment_uri=None, job_uri=None, page=1, number_of_items_per_page=20, filters=[], return_format=""):
@@ -238,7 +239,7 @@ class Controller(Base):
         if return_format == "json":
             return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
         else:
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_process_type_list()
 
 
     @classmethod
@@ -254,7 +255,7 @@ class Controller(Base):
             if return_format == "json":
                 return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
             else:
-                return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
+                return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_process_type_list()
         except:
             return None
 
@@ -423,28 +424,48 @@ class Controller(Base):
         return vmodel
 
     # -- R --
+    
+    @classmethod
+    def __list_sub_module(cls, cdir):
+        import glob
+        modules = glob.glob(os.path.join(cdir, "*.py"))
+        return [ os.path.basename(f)[:-3] for f in modules if os.path.isfile(f) and not f.endswith('__init__.py')]
+        
+    @classmethod
+    def register_all_processes(cls):
+        settings = cls.get_settings()
+        dep_dirs = settings.get_dependency_dirs()
 
-    # @classmethod
-    # def register_models(cls):
-    #     settings = cls.get_settings()
-    #     bricks = settings.get_dependency_names()
+        from gws.model import Process
+        process_type_list = []
+        
+        for brick_name in dep_dirs:
+            
+            cdir = dep_dirs[brick_name]
+            module_names = cls.__list_sub_module( os.path.join(cdir, brick_name) )
+            
+            for module_name in module_names:
+                
+                try:
+                    submodule = importlib.import_module(brick_name+"."+module_name)
 
-    #     print("xxxxx")
-    #     print(bricks)
+                    for class_name, _ in inspect.getmembers(submodule, inspect.isclass):
+                        t = getattr(submodule, class_name, None)
+                        if issubclass(t, Process):
+                            process_type_list.append(t)
+                        #elif issubclass(t, Resource):
+                        #    process_type_list.append(t)
+                except:
+                    pass
 
-    #     from gws.model import Process 
-    #     for brick_name in bricks:
-    #         print(brick_name)
-    #         module = importlib.import_module(brick_name)
-    #         for module_name, _ in inspect.getmembers(module, inspect.ismodule):
-    #             submodule = importlib.import_module(brick_name+"."+module_name)
-    #             for class_name, _ in inspect.getmembers(submodule, inspect.isclass):
-    #                 t = getattr(submodule, class_name, None)
-    #                 print(t)
-    #                 if issubclass(t, Process):
-    #                     print("yyyy")
-    #                     print(t)
-    #                     pass
+        for proc_t in process_type_list:
+            try:
+                proc_t.get(proc_t.type == proc_t.full_classname())
+            except:
+                proc = proc_t()
+                proc.save()
+        
+        Logger.info(f"All processes registered in db. Process list: {process_type_list}")
 
     @classmethod
     async def _run_robot_travel(cls):
@@ -499,13 +520,13 @@ class Controller(Base):
             Logger.error(Exception("Controller", "__run", f"An error occured. {err}"))
         
     @classmethod
-    def save_all(cls, model_list: list = None) -> bool:
+    def save_all(cls, process_type_list: list = None) -> bool:
         """
         Atomically and safely save a list of models in the database. If an error occurs
         during the operation, the whole transactions is rolled back.
         
-        :param model_list: List of models
-        :type model_list: list
+        :param process_type_list: List of models
+        :type process_type_list: list
         :return: True if all the model are successfully saved, False otherwise. 
         :object_type: bool
         """
@@ -513,22 +534,22 @@ class Controller(Base):
         from gws.model import Process, Resource, ViewModel
         with DbManager.db.atomic() as transaction:
             try:
-                if model_list is None:
+                if process_type_list is None:
                     return
-                    #model_list = cls.models.values()
+                    #process_type_list = cls.models.values()
                 
                 # 1) save processes
-                for m in model_list:
+                for m in process_type_list:
                     if isinstance(m, Process):
                         m.save()
                 
                 # 2) save resources
-                for m in model_list:
+                for m in process_type_list:
                     if isinstance(m, Resource):
                         m.save()
 
                 # 3) save vmodels
-                for m in model_list:
+                for m in process_type_list:
                     if isinstance(m, ViewModel):
                         m.save()
             except:
