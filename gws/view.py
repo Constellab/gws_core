@@ -11,7 +11,7 @@ from fastapi.templating import Jinja2Templates
 from jinja2 import Template
 
 from gws.base import Base
-from gws.logger import Logger
+from gws.logger import Error
 from gws.settings import Settings
 
 class ViewTemplate(Base):
@@ -175,14 +175,14 @@ class ViewTemplateFile(ViewTemplate):
         
         content = ""
         if file_path == "":
-            Logger.error(Exception("ViewTemplateFile", "__init__", "A valid file path is required"))
+            raise Error("ViewTemplateFile", "__init__", "A valid file path is required")
         else:
             if os.path.exists(file_path):
                 fl = open(file_path, "r")
                 content = fl.read()
                 fl.close()
             else:
-                Logger.error(Exception("ViewTemplateFile", "__init__", "The template file is not found"))
+                raise Error("ViewTemplateFile", "__init__", "The template file is not found")
 
         super().__init__(content, type=type, *args, **kwargs)
 

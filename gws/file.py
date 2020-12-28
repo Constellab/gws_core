@@ -18,6 +18,7 @@ from gws.model import Config, Process, Resource, ResourceSet
 from gws.controller import Controller
 from gws.store import FileStore
 from gws.utils import slugify, generate_random_chars
+from gws.logger import Error
 
 class File(Resource):
     path = CharField(null=False, index=True)
@@ -46,7 +47,7 @@ class Uploader(Process):
         super().__init__(self, *args, **kwargs)
         
         if not isinstance(files, list):
-            Logger.error(Exception("Uploader", "__init__", "A list of file-like objects is expected"))
+            raise Error("Uploader", "__init__", "A list of file-like objects is expected")
         
         self._files = files
         
@@ -84,7 +85,7 @@ class Importer(Process):
             try:
                 resource = model_t._import(source_path)
             except Exception as err:
-                Logger.error(Exception("Importer", "task", f"Could not import the resource. Error: {err}"))
+                raise Error("Importer", "task", f"Could not import the resource. Error: {err}")
 
 
 class Exporter(Process):
@@ -101,4 +102,4 @@ class Exporter(Process):
         try:
             resource._export(destination_path, output_type=resource_type)
         except Exception as err:
-            Logger.error(Exception("Exporter", "task", f"Could not export the resource. Error: {err}"))
+            raise Error("Exporter", "task", f"Could not export the resource. Error: {err}")

@@ -10,7 +10,7 @@ import inspect
 import asyncio
 
 from gws.base import Base
-from gws.logger import Logger
+from gws.logger import Error, Info
 from gws.query import Query, Paginator
 
 class Controller(Base):
@@ -45,7 +45,7 @@ class Controller(Base):
                 else:
                     data = json.loads(data)
         except:
-            Logger.error(Exception("Controller", "action", "The data is not a valid JSON text"))
+            raise Error("Controller", "action", "The data is not a valid JSON text")
         
         # CRUD (& Run) actions
         if action == "list":
@@ -54,7 +54,7 @@ class Controller(Base):
             if return_format == "json":
                 return Paginator(Q, page=page).as_json()
             else:
-                return Paginator(Q, page=page).as_process_type_list()
+                return Paginator(Q, page=page).as_model_list()
 
         else:
             if action == "post":
@@ -85,36 +85,21 @@ class Controller(Base):
             o.remove()
             return o
         else:
-            Logger.error(Exception("Controller", f"__delete", "No ViewModel match with uri {object_uri}."))
+            raise Error("Controller", f"__delete", "No ViewModel match with uri {object_uri}.")
 
     # -- F --
 
-    @classmethod
-    def fetch_experiment_details(cls, uri):
-        from gws.model import Experiment
+    #@classmethod
+    #def fetch_experiment_flow(cls, experiment_uri):
+    #    from gws.model import Experiment
+    #    
+    #    try:
+    #        e = Experiment.get(Experiment.uri == experiment_uri)
+    #    except:
+    #        return {}
+    #    
+    #    return e.flow
         
-        try:
-            e = Experiment.get(Experiment.uri == uri)
-        except:
-            return {}
-            
-        _json = e.as_json()
-
-        # protocol
-        _json["protocol"] = e.protocol.as_json()
-
-        # jobs
-        _json["jobs"] = []
-        for j in e.jobs:
-            _json["jobs"].append( j.as_json() )
-
-        # resources
-        _json["resources"] = []
-        for r in e.resources:
-            _json["resources"].append( r.as_json() )
-
-        return _json
-
     @classmethod
     def fetch_experiment_list(cls, page=1, number_of_items_per_page=20, filters=[], return_format=""):
         from gws.model import Experiment
@@ -125,7 +110,7 @@ class Controller(Base):
         if return_format == "json":
             return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
         else:
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_process_type_list()
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
     
     @classmethod
     def fetch_job_list(cls, experiment_uri=None, page=1, number_of_items_per_page=20, filters=[], return_format=""):
@@ -140,7 +125,7 @@ class Controller(Base):
         if return_format == "json":
             return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
         else:
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_process_type_list()
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
     
     @classmethod
     def fetch_job_flow(cls, protocol_job_uri=None, experiment_uri=None):
@@ -177,8 +162,8 @@ class Controller(Base):
         if return_format == "json":
             return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
         else:
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_process_type_list()
-
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
+    
     @classmethod
     def fetch_process_list(cls, job_uri=None, page=1, number_of_items_per_page=20, filters=[], return_format=""):
         from gws.model import Process, Job
@@ -195,7 +180,7 @@ class Controller(Base):
         if return_format == "json":
             return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
         else:
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_process_type_list()
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
 
     @classmethod
     def fetch_config_list(cls, job_uri=None, page=1, number_of_items_per_page=20, filters=[], return_format=""):
@@ -213,20 +198,19 @@ class Controller(Base):
         if return_format == "json":
             return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
         else:
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_process_type_list()
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
 
     @classmethod
     def fetch_resource_list(cls, experiment_uri=None, job_uri=None, page=1, number_of_items_per_page=20, filters=[], return_format=""):
         from gws.model import Resource, Job, Experiment
         
-        
-        if not job_uri is None:
+        if job_uri:
             Q = Resource.select() \
                         .join(Job) \
                         .join(Experiment) \
                         .where(Job.uri == job_uri) \
                         .order_by(Resource.creation_datetime.desc())
-        elif not experiment_uri is None: 
+        elif experiment_uri: 
             Q = Resource.select() \
                         .join(Job) \
                         .join(Experiment) \
@@ -239,7 +223,7 @@ class Controller(Base):
         if return_format == "json":
             return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
         else:
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_process_type_list()
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
 
 
     @classmethod
@@ -255,7 +239,7 @@ class Controller(Base):
             if return_format == "json":
                 return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
             else:
-                return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_process_type_list()
+                return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
         except:
             return None
 
@@ -294,7 +278,7 @@ class Controller(Base):
         elif isinstance(obj, Model):
             return obj
         else:
-            Logger.error(Exception("Controller", "__get", f"No ViewModel or Model found for the encoded uri {object_uri}"))
+            raise Error("Controller", "__get", f"No ViewModel or Model found for the encoded uri {object_uri}")
         
 
     @classmethod
@@ -306,7 +290,6 @@ class Controller(Base):
         :type type_str: str
         :return: The type if the model is registered, None otherwise
         :object_type: type
-        :Logger.error(Exception: No registered model matchs with the given `type_str`)
         """
    
         if type_str is None:
@@ -333,7 +316,7 @@ class Controller(Base):
         module = importlib.import_module(module_name)
         t = getattr(module, function_name, None)
         if t is None:
-            Logger.error(Exception(f"Cannot import {type_str}"))
+            raise Error("Controller", "get_model_type", f"Cannot import {type_str}")
         return t
 
     # -- I --
@@ -346,12 +329,12 @@ class Controller(Base):
         obj = cls.fetch_model(object_type, object_uri)
 
         if isinstance(obj, SystemTrackable):
-            Logger.error(Exception("Controller", "__post", f"Object {type(obj)} is SystemTrackable. It can only be created by the  core system"))
+            raise Error("Controller", "__post", f"Object {type(obj)} is SystemTrackable. It can only be created by the  core system")
 
         if isinstance(obj, ViewModel):
             vmodel = cls.__post_new_vmodel(obj, data)
         else:
-            Logger.error(Exception("Controller", "__post", f"Object {type(obj)} is not a ViewModel"))
+            raise Error("Controller", "__post", f"Object {type(obj)} is not a ViewModel")
         
         return vmodel
     
@@ -375,7 +358,7 @@ class Controller(Base):
 
         from gws.model import Model
         if not isinstance(model, Model):
-            Logger.error(Exception("Controller", "action", f"Object uri {object_uri} must refer to a Model"))
+            raise Error("Controller", "action", f"Object uri {object_uri} must refer to a Model")
 
         mdata = data.get("mdata", {})
         model.hydrate_with(mdata)
@@ -395,10 +378,10 @@ class Controller(Base):
         try:
             obj = t.get(t.uri == object_uri)
         except:
-            Logger.error(Exception("Controller", "__post", f"Object {type(obj)} is not found with uri {object_uri}"))
+            raise Error("Controller", "__post", f"Object {type(obj)} is not found with uri {object_uri}")
 
         if isinstance(obj, SystemTrackable):
-            Logger.error(Exception("Controller", "__post", f"Object {type(obj)} is SystemTrackable. It can only be updated by the  core system"))
+            raise Error("Controller", "__post", f"Object {type(obj)} is SystemTrackable. It can only be updated by the  core system")
 
         if isinstance(obj, ViewModel):
             vmodel = obj
@@ -444,14 +427,20 @@ class Controller(Base):
             cdir = dep_dirs[brick_name]
             module_names = cls.__list_sub_module( os.path.join(cdir, brick_name) )
             
+            if brick_name == "gws":
+                _black_list = ["settings", "runner", "manage", "logger"]
+                for k in _black_list:
+                    try:
+                        module_names.remove(k)
+                    except:
+                        pass
+
             for module_name in module_names:
-                
                 try:
                     submodule = importlib.import_module(brick_name+"."+module_name)
-
                     for class_name, _ in inspect.getmembers(submodule, inspect.isclass):
                         t = getattr(submodule, class_name, None)
-                        if issubclass(t, Process):
+                        if issubclass(t, Process) and not issubclass(t, Protocol):
                             process_type_list.append(t)
                         #elif issubclass(t, Resource):
                         #    process_type_list.append(t)
@@ -465,7 +454,7 @@ class Controller(Base):
                 proc = proc_t()
                 proc.save()
         
-        Logger.info(f"All processes registered in db. Process list: {process_type_list}")
+        Info(f"All processes registered in db. Process list: {process_type_list}")
 
     @classmethod
     async def _run_robot_travel(cls):
@@ -508,7 +497,7 @@ class Controller(Base):
     #         e.run()
     #         e.save()
     #     else:
-    #         Logger.error(Exception("Controller", "__run", "Process not found"))
+    #         raise Error("Controller", "__run", "Process not found"))
 
     @classmethod
     async def __run(cls, experiment_uri: str = None):
@@ -517,7 +506,7 @@ class Controller(Base):
             e = Experiment.get(Experiment.uri == experiment_uri)
             await e.run()
         except Exception as err:
-            Logger.error(Exception("Controller", "__run", f"An error occured. {err}"))
+            raise Error("Controller", "__run", f"An error occured. {err}")
         
     @classmethod
     def save_all(cls, process_type_list: list = None) -> bool:

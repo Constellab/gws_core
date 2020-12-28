@@ -11,7 +11,7 @@ import shelve
 import shutil
 
 from gws.controller import Controller
-from gws.logger import Logger
+from gws.logger import Error
 
 class KVStore:
     """ 
@@ -49,7 +49,7 @@ class KVStore:
         :type value: any
         """
         if not isinstance(key, str):
-            Logger.error(Exception(f"The key must be a string. The actual value is {key}"))
+            raise Error(f"The key must be a string. The actual value is {key}")
 
         dir_path = os.path.dirname(self.file_path)
         if not os.path.exists(dir_path):
@@ -76,7 +76,7 @@ class KVStore:
 
     def __getitem__(self, key):
         if not isinstance(key, str):
-            Logger.error(Exception(f"The key must be a string. The actual value is {key}"))
+            raise Error(f"The key must be a string. The actual value is {key}")
 
         self._kv_data = shelve.open(self.file_path)
         val = self._kv_data.get(key, None)
@@ -101,7 +101,7 @@ class KVStore:
             shutil.rmtree(self.file_path)
         except Exception as err:
             if not ignore_errors:
-                Logger.error(Exception("KVStore", "remove", f"Cannot remove the kv_store {self.file_path}"))
+                raise Error("KVStore", "remove", f"Cannot remove the kv_store {self.file_path}")
 
 class FileStore:
     _base_dir = None
@@ -143,13 +143,13 @@ class FileStore:
         dest_file_path = self.__build_abs_file_path(dest_file_path) 
         
         if os.path.exists(dest_file_path) and not force:
-            Logger.error(Exception("FileStore", "move", f"The destination file already exists"))
+            raise Error("FileStore", "move", f"The destination file already exists")
         
         dest_dir = Path(dest_file_path).parent
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
             if not os.path.exists(dest_dir):
-                Logger.error(Exception("FileStore", "move", f"Cannot create directory {dest_dir}"))
+                raise Error("FileStore", "move", f"Cannot create directory {dest_dir}")
 
         shutil.move(source_file_path, dest_file_path)
         
@@ -176,11 +176,11 @@ class FileStore:
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
             if not os.path.exists(dest_dir):
-                Logger.error(Exception("FileStore", "add", f"Cannot create directory {dest_dir}"))
+                raise Error("FileStore", "add", f"Cannot create directory {dest_dir}")
 
         dest_file_path = os.path.join(dest_dir, dest_file_name)
         if os.path.exists(dest_file_path) and not force:
-            Logger.error(Exception("FileStore", "add", f"The file already exists"))
+            raise Error("FileStore", "add", f"The file already exists")
         
         if isinstance(source_file, str):
             shutil.copy2(source_file, dest_file_path)
@@ -200,12 +200,12 @@ class FileStore:
             shutil.rmtree(dest_file_path)
         except Exception as err:
             if not ignore_errors:
-                Logger.error(Exception("FileStore", "remove", f"Cannot remove file {file_path}. Error: {err}"))
+                raise Error("FileStore", "remove", f"Cannot remove file {file_path}. Error: {err}")
         
     def _remove_all_files(self, ignore_errors:bool = False):
         try:
             shutil.rmtree(self._base_dir)
         except Exception as err:
             if not ignore_errors:
-                Logger.error(Exception("FileStore", "remove_all_files", f"Cannot remove the store"))
+                raise Error("FileStore", "remove_all_files", f"Cannot remove the store")
     

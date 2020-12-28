@@ -12,7 +12,7 @@ import subprocess
 import shutil
 import re
 from gws.settings import Settings
-from gws.logger import Logger
+from gws.logger import Logger, Error
 
 def _run(   ctx=None, uri=False, token=False, test=False, db=False, \
             cli=False, runserver=False, ip="0.0.0.0", port="3000", docgen=False, \
@@ -30,7 +30,7 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, \
     settings.set_data("is_demo", demo)
 
     if not settings.save():
-        Logger.error(Exception("manage", "Cannot save the settings in the database"))
+        raise Error("manage", "Cannot save the settings in the database")
     
     #from gws.controller import Controller
     #Controller.register_all_processes()
@@ -40,7 +40,7 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, \
         settings.set_data("app_port", port)
 
         if not settings.save():
-            Logger.error(Exception("manage", "Cannot save the settings in the database"))
+            raise Error("manage", "Cannot save the settings in the database")
         
         from gws.controller import Controller
         Controller.register_all_processes()
@@ -50,9 +50,7 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, \
         app = App()
         app.init()
         app.start()
-        
-        
-    
+
     elif test:
         if test == "*":
             test = "test*"
@@ -66,7 +64,7 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, \
             settings.data["db_name"] = db
 
         if not settings.save():
-            Logger.error(Exception("manage", "Cannot save the settings in the database"))
+            raise Error("manage", "Cannot save the settings in the database")
         
         loader = unittest.TestLoader()
         test_suite = loader.discover(".", pattern=test+".py")
@@ -81,7 +79,7 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, \
         module = importlib.import_module(module_name)
         t = getattr(module, function_name, None)
         if t is None:
-            Logger.error(Exception("manage", "CLI not found. Please ensure that method {cli} is defined"))
+            raise Error("manage", "CLI not found. Please ensure that method {cli} is defined")
         else:
             t()
 
@@ -89,7 +87,7 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, \
         settings.data["db_name"] = ':memory:'
 
         if not settings.save():
-            Logger.error(Exception("manage", "Cannot save the settings in the database"))
+            raise Error("manage", "Cannot save the settings in the database")
         
         brick_dir = settings.get_cwd()
         doc_folder = "./docs/"
@@ -133,10 +131,10 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, \
                 for k in dep_dirs:
                     f.write(f"sys.path.insert(0, '{dep_dirs[k]}')\n")
 
-                f.write("from gws import sphynx_conf\n\n\n")
+                f.write("from gws._sphynx import conf\n\n\n")
                 f.write(content + '\n')
-                f.write("extensions = extensions + sphynx_conf.extensions\n")
-                f.write("exclude_patterns = exclude_patterns + sphynx_conf.exclude_patterns\n")
+                f.write("extensions = extensions + conf.extensions\n")
+                f.write("exclude_patterns = exclude_patterns + conf.exclude_patterns\n")
                 f.write("html_theme = 'sphinx_rtd_theme'")
 
             subprocess.check_call([
@@ -196,7 +194,7 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, \
                 webbrowser.open(f"file://{url}", new=2)
                 
         except Exception as err:
-            Logger.error(Exception(f"An error occurred. Error message: {err}"))
+            raise Error(f"An error occurred. Error message: {err}")
     elif jlab:
         if jlab == ".":
             lab_dir = settings.get_dependency_dir(settings.name)

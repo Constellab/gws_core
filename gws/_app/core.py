@@ -44,7 +44,15 @@ async def get_list_of_experiments(page: int = 1, number_of_items_per_page: int =
         return_format="json"
     )
 
-@core_app.get("/job-flow", tags=["Object list"], summary="Get a jobs' flow")
+#@core_app.get("/experiment/{experiment_uri}/flow", tags=["Object list"], summary="Get the job flow of a experiment")
+#async def get_experiment_flow(experiment_uri: str) -> (dict, str,):
+#    """
+#    Retrieve a job flow of an experiment.
+#    - **experiment_uri**: the uri of the experiment
+#    """
+#    return Controller.fetch_experiment_flow(experiment_uri=experiment_uri)
+
+@core_app.get("/flow", tags=["Object list"], summary="Get jobs' flows")
 async def get_jobs_flow(protocol_job_uri: str = None, experiment_uri: str = None) -> (dict, str,):
     """
     Retrieve the jobs' flow of an experiment or a protocol job
@@ -140,7 +148,8 @@ async def get_list_of_resources(job_uri: str = None, experiment_uri: str = None,
         page=page, 
         number_of_items_per_page=number_of_items_per_page, 
         experiment_uri=experiment_uri, 
-        job_uri=job_uri, return_format="json"
+        job_uri=job_uri, 
+        return_format="json"
     )
 
 

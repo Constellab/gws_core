@@ -25,7 +25,7 @@ from peewee import  Field, IntegerField, FloatField, DateField, \
                     ForeignKeyField, IPField, TextField, BlobField
 from playhouse.sqlite_ext import JSONField, SearchField, RowIDField
 
-from gws.logger import Logger
+from gws.logger import Error, Info
 from gws.store import KVStore
 
 from gws.settings import Settings
@@ -229,12 +229,11 @@ class Model(BaseModel):
         :type id: int
         :return: The model type
         :rtype: type
-        :Logger.error(Exception: If no model is found)
         """
         cursor = DbManager.db.execute_sql(f'SELECT type FROM {self._table_name} WHERE id = ?', (str(id),))
         row = cursor.fetchone()
         if len(row) == 0:
-            Logger.error(Exception("Model", "fetch_type_by_id", "The model is not found."))
+            raise Error("Model", "fetch_type_by_id", "The model is not found.")
         type_str = row[0]
         model_t = Controller.get_model_type(type_str)
         return model_t
@@ -332,7 +331,7 @@ class Model(BaseModel):
         _FTSModel = cls.fts_model()
 
         if _FTSModel is None:
-            raise Logger.error(Exception(cls.full_classname(), "search", "No FTSModel model defined"))
+            raise Error(cls.full_classname(), "search", "No FTSModel model defined")
         
         return _FTSModel.search_bm25(
             phrase, 
@@ -352,7 +351,7 @@ class Model(BaseModel):
         if isinstance(data,dict):
             self.data = data
         else:
-            Logger.error(Exception(self.classname(),"set_data","The data must be a JSONable dictionary")  )
+            raise Error(self.classname(),"set_data","The data must be a JSONable dictionary")
     
     def set_data_value(self, key: str, value: str):
         """ 
@@ -414,16 +413,15 @@ class Model(BaseModel):
                 if Controller.get_settings().is_fts_active:
                     if not _FTSModel is None:
                         if not self._save_fts_document():
-                            Logger.error(Exception(self.full_classname(), "save", "Cannot save related FTS document"))
+                            raise Error(self.full_classname(), "save", "Cannot save related FTS document")
 
                 #self.kv_store.save()
                 self.save_datetine = datetime.now()
-                tf = super().save(*args, **kwargs)
+                return super().save(*args, **kwargs)
             except Exception as err:
                 transaction.rollback()
-                Logger.error(Exception(self.full_classname(), "save", f"Error message: {err}"))
+                raise Error(self.full_classname(), "save", f"Error message: {err}")
 
-        return tf
 
 
     @classmethod
@@ -447,7 +445,7 @@ class Model(BaseModel):
                         m.save()
             except Exception as err:
                 transaction.rollback()
-                Logger.error(Exception("Model", "save_all", f"Error message: {err}"))
+                raise Error("Model", "save_all", f"Error message: {err}")
 
         return True
 
@@ -536,7 +534,7 @@ class Viewable(Model):
         """ 
         Get the title
         """
-        return self.data.get("title", default).capitalize()
+        return self.data.get("title", default) #.capitalize()
 
     # -- D --
 
@@ -573,7 +571,7 @@ class Viewable(Model):
         """
         for t in specs:
             if not isinstance(t, type) or not issubclass(t, ViewModel):
-                Logger.error(Exception("Model", "register_vmodel_specs", "Invalid specs. A list of ViewModel types is expected"))
+                raise Error("Model", "register_vmodel_specs", "Invalid specs. A list of ViewModel types is expected")
             
             name = t.full_classname()
             cls._vmodel_specs[name] = t
@@ -607,7 +605,7 @@ class Config(Viewable):
     def __init__(self, *args, specs: dict = None, **kwargs):
         super().__init__(*args, **kwargs)
 
-        if self.id is None:
+        if not self.id:
             self.data = {
                 "specs": {},
                 "params": {}
@@ -615,7 +613,7 @@ class Config(Viewable):
             
         if not specs is None:
             if not isinstance(specs, dict):
-                Logger.error(Exception(self.classname(), "__init__", f"The specs must be a dictionnary"))
+                raise Error(self.classname(), "__init__", f"The specs must be a dictionnary")
             
             #convert type to str
             from gws.validator import Validator
@@ -631,7 +629,7 @@ class Config(Viewable):
                         default = validator.validate(default)
                         specs[k]["default"] = default
                     except Exception as err:
-                        Logger.error(Exception(self.classname(), "__init__", f"Invalid default config value. Error message: {err}"))
+                        raise Error(self.classname(), "__init__", f"Invalid default config value. Error message: {err}")
 
             self.set_specs( specs )
 
@@ -695,7 +693,7 @@ class Config(Viewable):
         :rtype: [str, int, float, bool]
         """
         if not name in self.specs:
-            Logger.error(Exception(self.classname(), "get_param", f"Parameter {name} does not exist'"))
+            raise Error(self.classname(), "get_param", f"Parameter {name} does not exist'")
         
         default = self.specs[name].get("default", None)
         return self.data["params"].get(name,default)
@@ -724,7 +722,7 @@ class Config(Viewable):
         from gws.validator import Validator
 
         if not name in self.specs:
-            Logger.error(Exception(self.classname(), "set_param", f"Parameter '{name}' does not exist."))
+            raise Error(self.classname(), "set_param", f"Parameter '{name}' does not exist.")
         
         #param_t = self.specs[name]["type"]
 
@@ -732,7 +730,7 @@ class Config(Viewable):
             validator = Validator.from_specs(**self.specs[name])
             value = validator.validate(value)
         except Exception as err:
-            Logger.error(Exception(self.classname(), "set_param", f"Invalid parameter value '{name}'. Error message: {err}"))
+            raise Error(self.classname(), "set_param", f"Invalid parameter value '{name}'. Error message: {err}")
         
         self.data["params"][name] = value
 
@@ -753,13 +751,12 @@ class Config(Viewable):
 
         :param specs: The config specs
         :type: dict
-        :Logger.error(Exception: If the config is already saved)
         """
         if not isinstance(specs, dict):
-            Logger.error(Exception(self.classname(), "set_specs", f"The specs must be a dictionary."))
+            raise Error(self.classname(), "set_specs", f"The specs must be a dictionary.")
         
         if not self.id is None:
-            Logger.error(Exception(self.classname(), "set_specs", f"Cannot alter the specs of a saved config"))
+            raise Error(self.classname(), "set_specs", f"Cannot alter the specs of a saved config")
         
         self.data = {
             "specs" : specs,
@@ -789,7 +786,7 @@ class Process(Viewable, SystemTrackable):
     """
 
     type = CharField(null=True, index=True, unique=True)
-
+    
     is_running: bool = False 
     is_finished: bool = False 
     
@@ -798,6 +795,7 @@ class Process(Viewable, SystemTrackable):
     config_specs: dict = {}
     
     _parent_protocol: 'Protocol' = None
+    _active_name: str = None
     _event_listener: EventListener = None
     _input: Input = None
     _output: Output = None
@@ -809,7 +807,7 @@ class Process(Viewable, SystemTrackable):
     _is_deletable = False
     _table_name = 'gws_process'
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, active_name: str=None, **kwargs):
         super().__init__(*args, **kwargs)
         self._input = Input(self)
         self._output = Output(self)
@@ -833,12 +831,15 @@ class Process(Viewable, SystemTrackable):
 
         if 'title' in kwargs:
             self.set_title(kwargs['title'])
-
+        
+        if active_name:
+            self.set_active_name(active_name)
+            
         self.save()
 
     # -- A --
 
-    def add_event(self, name, callback):
+    def add_event(self, name, callback: callable):
         """
         Adds an event the event listener
 
@@ -850,9 +851,38 @@ class Process(Viewable, SystemTrackable):
         try:
             self._event_listener.add( name, callback )
         except Exception as err:
-            Logger.error(Exception("Process", "add_event", f"Cannot add event. Error message: {err}"))
+            raise Error("Process", "add_event", f"Cannot add event. Error message: {err}")
+    
+    @property
+    def active_name(self):
+        """
+        The active name of the process in the context of a protocol
 
+        :return: The active name
+        :rtype: `str`
+        """
+        return self._active_name
+    
+    def as_json(self, bare: bool=False):
+        _json = super().as_json()
+        _json["input"] = self.input.as_json(bare=bare)
+        _json["output"] = self.input.as_json(bare=bare)
+        _json["config"] = self.config_specs
+        
+        if bare:
+            _json["uri"] = ""
+            _json["creation_datetime"] = ""
+        
+        for k in _json["config"]:
+            spec = _json["config"][k]
+            if "type" in spec and isinstance(spec["type"], type):
+                t_str = spec["type"].__name__ 
+                _json["config"][k]["type"] = t_str
+        
+        return _json
+    
     # -- C --
+    
     def create_experiment(self, config: Config = None):
         if isinstance(config, Config):
             job = self.get_active_job()
@@ -961,10 +991,10 @@ class Process(Viewable, SystemTrackable):
         :rtype: InPort
         """
         if not isinstance(name, str):
-            Logger.error(Exception(self.classname(), "in_port", "The name of the input port must be a string"))
+            raise Error(self.classname(), "in_port", "The name of the input port must be a string")
         
         if not name in self._input._ports:
-            Logger.error(Exception(self.classname(), "in_port", f"The input port '{name}' is not found"))
+            raise Error(self.classname(), "in_port", f"The input port '{name}' is not found")
 
         return self._input._ports[name]
 
@@ -1000,14 +1030,14 @@ class Process(Viewable, SystemTrackable):
         :rtype: OutPort
         """
         if not isinstance(name, str):
-            Logger.error(Exception(self.classname(), "out_port", "The name of the output port must be a string"))
+            raise Error(self.classname(), "out_port", "The name of the output port must be a string")
         
         if not name in self._output._ports:
-            Logger.error(Exception(self.classname(), "out_port", f"The output port '{name}' is not found"))
+            raise Error(self.classname(), "out_port", f"The output port '{name}' is not found")
 
         return self._output._ports[name]
 
-    def on_end(self, callback):
+    def on_end(self, callback: callable):
         """
         Adds an event to execute after the process ends running. 
 
@@ -1016,7 +1046,7 @@ class Process(Viewable, SystemTrackable):
         """
         self.add_event('end', callback)
 
-    def on_start(self, callback):
+    def on_start(self, callback: callable):
         """
         Adds an event to execute before the process starts running. 
 
@@ -1037,25 +1067,24 @@ class Process(Viewable, SystemTrackable):
             self.task()
             self._run_after_task()
         except Exception as err:
-            Logger.error(err)
+            raise Error("Process", "_run", f"Error: {err}")
 
     def _run_before_task( self, *args, **kwargs ):
         if not self.is_ready:
-            Logger.error(Exception(self.classname(), "run", "The process is not ready. Please ensure that the process receives valid input resources and has not already been run"))
+            raise Error(self.classname(), "run", "The process is not ready. Please ensure that the process receives valid input resources and has not already been run")
 
         if self._event_listener.exists('pre_start'):
             self._event_listener.call('pre_start', self)
 
         self.is_running = True
-        logger = Logger()
         if self.get_title():
-            logger.info(f"Running {self.full_classname()} '{self.get_title()}' ...")
+            Info(f"Running {self.full_classname()} '{self.get_title()}' ...")
         else:
-            logger.info(f"Running {self.full_classname()} ...")
+            Info(f"Running {self.full_classname()} ...")
         
         job = self.get_active_job()
         if not job.save():
-            Logger.error(Exception(self.classname(), "run", "Cannot save the job"))
+            raise Error(self.classname(), "run", "Cannot save the job")
         
         if self._event_listener.exists('start'):
             self._event_listener.call('start', self)
@@ -1063,9 +1092,9 @@ class Process(Viewable, SystemTrackable):
     def _run_after_task( self, *args, **kwargs ):
 
         if self.get_title():
-            Logger.info(f"Task of {self.full_classname()} '{self.get_title()}' successfully finished!")
+            Info(f"Task of {self.full_classname()} '{self.get_title()}' successfully finished!")
         else:
-            Logger.info(f"Task of {self.full_classname()} successfully finished!")
+            Info(f"Task of {self.full_classname()} successfully finished!")
 
         self.is_running = False
         self.is_finished = True
@@ -1073,7 +1102,7 @@ class Process(Viewable, SystemTrackable):
         job = self.get_active_job()
         job.update_status()
         if not job.save():
-            Logger.error(Exception(self.classname(), "_run_after_task", f"Cannot save the job"))
+            raise Error(self.classname(), "_run_after_task", f"Cannot save the job")
 
         res = self.output.get_resources()
         for k in res:
@@ -1109,7 +1138,14 @@ class Process(Viewable, SystemTrackable):
         return self.out_port(name)     
         
     # -- S --
-
+    
+    def set_active_name(self, name:str ):
+        if self._active_name is None:
+            self._active_name = name
+        
+        if self._active_name != name:
+            raise Error(self.classname(), "set_active_name", "Try to set a different active name")
+            
     def set_input(self, name: str, resource: 'Resource'):
         """ 
         Sets the resource of an input port by its name.
@@ -1120,10 +1156,10 @@ class Process(Viewable, SystemTrackable):
         :type resource: Resource
         """
         if not isinstance(name, str):
-            Logger.error(Exception(self.classname(), "set_input", "The name must be a string."))
+            raise Error(self.classname(), "set_input", "The name must be a string.")
         
         if not isinstance(resource, Resource):
-            Logger.error(Exception(self.classname(), "set_input", "The resource must be an instance of Resource."))
+            raise Error(self.classname(), "set_input", "The resource must be an instance of Resource.")
 
         self._input[name] = resource
         
@@ -1140,7 +1176,7 @@ class Process(Viewable, SystemTrackable):
             job.set_config(config)
             #self.config = config
         else:
-            Logger.error(Exception(self.classname(), "set_config", "The config must be an instance of Config."))
+            raise Error(self.classname(), "set_config", "The config must be an instance of Config.")
 
     def set_param(self, name: str, value: [str, int, float, bool]):
         """ 
@@ -1282,11 +1318,16 @@ class Experiment(Viewable):
         super().__init__(*args, **kwargs)
         
         if isinstance(protocol, Protocol):
+            if protocol.get_title():
+                protocol.set_active_name(protocol.get_title())
+            else:
+                protocol.set_active_name(protocol.full_classname())
+            
             if not protocol.is_saved():
                 protocol.save()
             else:
                 if not protocol.get_active_experiment() is None:
-                    Logger.error(Exception("Experiment", "__init__", "An experiment is already associated with the protocol"))
+                    raise Error("Experiment", "__init__", "An experiment is already associated with the protocol")
 
             self.protocol_uri = protocol.uri
             self._protocol = protocol
@@ -1357,6 +1398,13 @@ class Experiment(Viewable):
             except:
                 transaction.rollback()
                 return False
+    # -- F --
+    
+    @property
+    def flow(self):
+        job = self.protocol_job
+        return job.flow
+    
     # -- J --
 
     # -- I --
@@ -1379,10 +1427,10 @@ class Experiment(Viewable):
     
     # -- O --
 
-    def on_end(self, call_back):
+    def on_end(self, call_back: callable):
         self.protocol.on_end(call_back)
          
-    def on_start(self, call_back):
+    def on_start(self, call_back: callable):
         self.protocol.on_start(call_back)
         
     # -- P --
@@ -1393,7 +1441,7 @@ class Experiment(Viewable):
             try:
                 proto = Protocol.get(Protocol.uri == self.protocol_uri)
             except:
-                Logger.error(Exception("Experiment", "protocol", "The experiment has no protocol"))
+                raise Error("Experiment", "protocol", "The experiment has no protocol")
             
             self._protocol = proto.cast()
 
@@ -1405,7 +1453,7 @@ class Experiment(Viewable):
             try:
                 self._protocol_job = Job.get(Job.uri == self.protocol_job_uri)
             except:
-                Logger.error(Exception("Experiment", "protocol_job", "The experiment has no job"))
+                raise Error("Experiment", "protocol_job", "The experiment has no job")
             
         return self._protocol_job
             
@@ -1435,7 +1483,9 @@ class Experiment(Viewable):
 class Job(Viewable, SystemTrackable):
     """
     Job class.
-
+    
+    :property parent_job: The parent job (i.e. the job of the parent protocol)
+    :type parent_job: Job
     :property process_uri: The uri of the job's process
     :type process_uri: str
     :property process_type: The type if the job's process
@@ -1467,15 +1517,20 @@ class Job(Viewable, SystemTrackable):
         
         if self.id is None:
             if (not config is None) and (not isinstance(config, Config)):
-                Logger.error(Exception("Job", "__init__", "The config must be an instance of Config"))
+                raise Error("Job", "__init__", "The config must be an instance of Config")
  
             if (not process is None) and (not isinstance(process, Process)):
-                Logger.error(Exception("Job", "__init__", "The process must be an instance of Process"))
+                raise Error("Job", "__init__", "The process must be an instance of Process")
             
             self._config = config
             self._process = process
             self.update_status()
-
+            
+            if not process.active_name:
+                raise Error("Job", "__init__", "The process has no active name")
+                
+            self.data["active_name"] = process.active_name
+            
     # -- A --
 
     def archive(self, status: bool):
@@ -1484,35 +1539,65 @@ class Job(Viewable, SystemTrackable):
             return True
 
         return super().archive(status)
+    
+    @property
+    def active_name(self) -> str:
+        """
+        Returns the active name of the job (i.e. of the process) in the context of the current protocol.
 
+        :return: The active name
+        :rtype: `str`
+        """
+        
+        return self.data["active_name"]
+    
     def as_json(self) -> str:
         """
-        Returns JSON (a dictionnary) representation of the model.
+        Returns a JSON representation of the model.
 
-        :return: The JSON dictionary 
+        :return: The JSON representation 
         :rtype: dict
         """
-
+        
+        _json = super().as_json()
+        
         if not self.parent_job is None:
             parent_job_uri = self.parent_job.uri
         else:
             parent_job_uri = None
-
-        _json = super().as_json()
+            protocol = self.process
+            if isinstance(protocol, Protocol):
+                _json["layout"] = protocol.get_layout()
+        
+        if "data" in _json:
+            del _json["data"]
+        
+        config_specs = self.process.config_specs
+        for k in config_specs:
+            spec = config_specs[k]
+            if isinstance(spec.get("type",None), type):
+                config_specs[k]["type"] = spec["type"].__name__ 
+        
         _json.update({
             "process": {
                 "uri": self.process.uri,
                 "type": self.process.type,
+                "active_name": self.active_name, #do not use self.process.active_name as it is not saved on db
+                "input": self.process.input.as_json(),
+                "output": self.process.output.as_json(),
+                "config_specs": config_specs
             },
             "config": {
                 "uri": self.config.uri,
                 "type": self.config.type,
+                "params": self.config.params,
             },
             "parent_job_uri": parent_job_uri,
             "experiment_uri": self.experiment.uri,
             "is_running": self.is_running,
             "is_finished": self.is_finished
         })
+  
         return _json
 
     # -- C --
@@ -1526,7 +1611,7 @@ class Job(Viewable, SystemTrackable):
         :rtype: Config
         """
 
-        if not self._config is None:
+        if self._config:
             return self._config
 
         if self.config_uri:
@@ -1536,45 +1621,117 @@ class Job(Viewable, SystemTrackable):
         else:
             return None
 
-    # -- D --
-
-    def remove(self):
-        # /!\ Do not archive Config, Process nor Experiment
-        if self.is_deleted:
-            return True
-
-        return super().remove()
-    
     # -- F -- 
     
     @property
     def flow(self):
         if not self.is_finished:
             return {}
-
-        if len(self.children):
-            flow = {
-                "jobs": {},
-                "flows": [],
-            }
-            
-            for job in self.children:
-                flow["jobs"][job.uri] = job.as_json()
-
-                for k in job.data["input"]:
-                    _input = job.data["input"][k]
-                    flow["flows"].append({
-                        "to": {
-                            "job_uri": job.uri,
-                            "process_port": k,
-                        },
-                        "from": _input["previous"],
-                        "resource_uri": _input["resource_uri"]
-                    })
         
-            return flow
-        else:
+        if not len(self.children):
             return {}
+        
+        protocol = self.process
+        
+        if not isinstance(protocol, Protocol):
+            raise Error("Job", "dumps_flow", "The job must be related ot a protocol")     
+        
+        flow = self.as_json()
+        if "data" in flow:
+            del flow["data"]
+            
+        flow.update({
+            "jobs": {},
+            "flows": []
+        })
+    
+        flow["layout"] = protocol.get_layout()
+        flow["interfaces"] = {}
+        flow["outerfaces"] = {}
+        
+        for k in protocol._interfaces:
+            flow["interfaces"][k] = protocol._interfaces[k].as_json()
+            
+        for k in protocol._outerfaces:
+            flow["outerfaces"][k] = protocol._outerfaces[k].as_json()
+
+        for job in self.children:
+            active_name = job.active_name
+            flow["jobs"][active_name] = job.as_json()
+
+            for k in job.data["input"]:
+                _input = job.data["input"][k]
+                flow["flows"].append({
+                    "from": _input["previous"],
+                    
+                    "to": {
+                        "job_uri": job.uri,
+                        "process": {
+                            "uri": job.process.uri,
+                            "active_name": job.process.active_name,
+                            "port": k,
+                        }
+                    },
+                    
+                    "resource_uri": _input["resource_uri"]
+                })
+
+        return flow
+    
+    @property
+    def flow_old(self):
+        if not self.is_finished:
+            return {}
+        
+        if not len(self.children):
+            return {}
+        
+        protocol = self.process
+        
+        if not isinstance(protocol, Protocol):
+            raise Error("Job", "dumps_flow", "The job must be related ot a protocol")     
+        
+        flow = self.as_json()
+        if "data" in flow:
+            del flow["data"]
+            
+        flow.update({
+            "jobs": {},
+            "flows": []
+        })
+    
+        flow["layout"] = protocol.get_layout()
+        flow["interfaces"] = {}
+        flow["outerfaces"] = {}
+        
+        for k in protocol._interfaces:
+            flow["interfaces"][k] = protocol._interfaces[k].as_json()
+            
+        for k in protocol._outerfaces:
+            flow["outerfaces"][k] = protocol._outerfaces[k].as_json()
+
+        for job in self.children:
+            flow["jobs"][job.uri] = job.as_json()
+
+            for k in job.data["input"]:
+                _input = job.data["input"][k]
+                flow["flows"].append({
+                    "to": {
+                        "job_uri": job.uri,
+                        "process": {
+                            "uri": job.process.uri,
+                            "active_name": job.process.active_name,
+                            "port": k,
+                        }
+                    },
+                    "from": _input["previous"],
+                    "resource_uri": _input["resource_uri"]
+                })
+
+        return flow
+    
+    # -- G --
+
         
     # -- I --
     
@@ -1614,12 +1771,20 @@ class Job(Viewable, SystemTrackable):
             process_t = Controller.get_model_type(self.process_type)
             proc = process_t.get(process_t.uri == self.process_uri)
             self._process = proc.cast()
+            self._process.set_active_name(self.active_name)
             return self._process
         else:
             return None
 
     # -- R --
+    
+    def remove(self):
+        # /!\ Do not archive Config, Process nor Experiment
+        if self.is_deleted:
+            return True
 
+        return super().remove()
+    
     async def _run( self ):
         await self.process._run()
 
@@ -1642,7 +1807,7 @@ class Job(Viewable, SystemTrackable):
         
     def set_experiment(self, experiment: 'Experiment'):
         if not isinstance(experiment, Experiment):
-            raise Exception("The experiment must be an instance of Experiment")
+            raise Error("The experiment must be an instance of Experiment")
         
         if self.experiment is experiment:
             return
@@ -1650,7 +1815,7 @@ class Job(Viewable, SystemTrackable):
         if self.experiment is None:
             self.experiment = experiment
         else:
-            raise Exception("An experiment is already defined")
+            raise Error("An experiment is already defined")
 
     def save(self, *args, **kwargs):
         """ 
@@ -1660,10 +1825,10 @@ class Job(Viewable, SystemTrackable):
         with DbManager.db.atomic() as transaction:
             try:
                 if self.process is None:
-                    Logger.error(Exception("Job", "save", "Cannot save the job. The process is not saved."))
+                    raise Error("Job", "save", "Cannot save the job. The process is not saved.")
                 
                 if not self.config.save():
-                    Logger.error(Exception("Job", "save", "Cannot save the job. The config cannnot be saved."))
+                    raise Error("Job", "save", "Cannot save the job. The config cannnot be saved.")
                 
                 self.process_uri = self._process.uri
                 self.process_type = self._process.type
@@ -1680,16 +1845,17 @@ class Job(Viewable, SystemTrackable):
 
                     if not res[k].is_saved():
                         if not res[k].save(*args, **kwargs):
-                            Logger.error(Exception("Job", "save", f"Cannot save the resource output '{k}' of the job"))
+                            raise Error("Job", "save", f"Cannot save the resource output '{k}' of the job")
 
                 self.__track_input_uri()
+                #self.__track_ouput_uri()
                 if not super().save(*args, **kwargs):
-                    Logger.error(Exception("Job", "save", "Cannot save the job."))
+                    raise Error("Job", "save", "Cannot save the job.")
                 
                 return True
             except Exception as err:
                 transaction.rollback()
-                Logger.error(Exception("Job", "save", f"Error message: {err}"))
+                raise Error("Job", "save", f"Error message: {err}")
 
     # -- T --
      
@@ -1701,44 +1867,74 @@ class Job(Viewable, SystemTrackable):
             res = port.resource
 
             if res is None:
-                continue
-            
-            if not res.is_saved():
-                Logger.error(Exception("Process", "__track_input_uris", f"Cannot track input '{k}' uri. Please save the input resource before."))
-  
-            is_interfaced = not port.is_left_connected
-            
-            if not is_interfaced:
-                left_port_name = port.prev.name
                 self.data["input"][k] = {
-                    "resource_uri": res.uri,
-                    "previous": {
-                        "job_uri": res.job.uri,
-                        "process_port": left_port_name
-                    }
-                } 
+                    "resource_uri": ""
+                }
             else:
-                parent_job = self.parent_job
-                parent_protocol = self.process._parent_protocol
-                
-                interface = parent_protocol.get_interface_of_target_port( port )
-                source_port = interface.source_port
-                
-                if source_port.is_left_connected:
-                    left_port_name = source_port.prev.name
-                else:
-                    left_port_name = ""      
-            
-                self.data["input"][k] = {
-                    "resource_uri": res.uri,
-                    "previous": {
-                        "job_uri": res.job.uri,
-                        "process_port": left_port_name,
-                        "protocol_interface": interface.name,
-                    }
-                }                    
-        
+                if not res.is_saved():
+                    raise Error("Process", "__track_input_uris", f"Cannot track input '{k}' uri. Please save the input resource before.")
+  
+                is_interfaced = not port.is_left_connected
 
+                if not is_interfaced:
+                    left_port_name = port.prev.name
+                    self.data["input"][k] = {
+                        "resource_uri": res.uri,
+                        "previous": {
+                            "job_uri": res.job.uri,
+                            "process": {
+                                "uri": res.job.process.uri,
+                                "active_name": res.job.process.active_name,
+                                "port": left_port_name
+                            }
+                        }
+                    } 
+                else:
+                    parent_job = self.parent_job
+                    parent_protocol = self.process._parent_protocol
+
+                    interface = parent_protocol.get_interface_of_target_port( port )
+                    source_port = interface.source_port
+  
+                    if source_port.is_left_connected:
+                        left_port_name = source_port.prev.name
+                    else:
+                        left_port_name = ""      
+
+                    self.data["input"][k] = {
+                        "resource_uri": res.uri,
+                        "previous": {
+                            "job_uri": res.job.uri,
+                            "process": {
+                                "uri": res.job.process.uri,
+                                "active_name": res.job.process.active_name,
+                                "port": left_port_name,
+                            },
+                            "interface": {
+                                "port" : interface.name,
+                            }
+                        }
+                    }                    
+        
+    def __track_ouput_uri(self):
+        _output = self.process.output
+        self.data["output"] = {}
+        for k in _output.ports:
+            port = _output.ports[k]
+            res = port.resource
+
+            if res is None:
+                self.data["output"][k] = {
+                    "resource_uri": ""
+                }
+            else:
+                if not res.is_saved():
+                    raise Error("Process", "__track_ouput_uri", f"Cannot track output '{k}' uri. Please save the output resource before.")
+
+                self.data["output"][k] = {
+                    "resource_uri": res.uri
+                }
+        
 # ####################################################################
 #
 # Protocol class
@@ -1756,16 +1952,18 @@ class Protocol(Process, SystemTrackable):
     """
 
     type = CharField(null=True, index=True, unique=False)
-    
+
     _is_singleton = False
     _processes: dict = None
     _connectors: list = []
     _interfaces: dict = None
     _outerfaces: dict = None
+    _defaultPosition: list = [0, 0]
+    
     _table_name = 'gws_protocol'     #/!\ use same table as Process
 
-    def __init__(self, *args, processes: dict = None, connectors: list = [], \
-                interfaces: dict = None, outerfaces: dict = None, **kwargs):
+    def __init__(self, *args, processes: dict = None, \
+                 connectors: list = [], interfaces: dict = {}, outerfaces: dict = {}, **kwargs):
 
         super().__init__(*args, **kwargs)
 
@@ -1773,44 +1971,42 @@ class Protocol(Process, SystemTrackable):
         self._connectors = []
         self._interfaces = {}
         self._outerfaces = {}
+        self._defaultPosition = [0, 0]
 
         if processes is None:
-            if self and self.data.get("graph", None):
+            if self and self.data.get("graph", None):  #the protocol was saved in the super classe
                 self.__build_from_dump( self.data["graph"] )
         else:
             if not isinstance(processes, dict):
-                Logger.error(Exception("Protocol", "__init__", "A dictionnary of processes is expected"))
+                raise Error("Protocol", "__init__", "A dictionnary of processes is expected")
             
             if not isinstance(connectors, list):
-                Logger.error(Exception("Protocol", "__init__", "A list of connectors is expected"))
+                raise Error("Protocol", "__init__", "A list of connectors is expected")
 
             # set process
             for name in processes:
                 proc = processes[name]
-                #proc.set_title(name)    #set context name
                 if not isinstance(proc, Process):
-                    Logger.error(Exception("Protocol", "__init__", "The dictionnary of processes must contain instances of Process"))
+                    raise Error("Protocol", "__init__", "The dictionnary of processes must contain instances of Process")
             
                 self.add_process(name, proc)
 
             # set connectors
             for conn in connectors:
                 if not isinstance(conn, Connector):
-                    Logger.error(Exception("Protocol", "__init__", "The list of connector must contain instances of Connectors"))
+                    raise Error("Protocol", "__init__", "The list of connector must contain instances of Connectors")
                 
                 self.add_connector(conn)
-
+ 
             # set interfaces
             self.__set_interfaces(interfaces)
             self.__set_outerfaces(outerfaces)
             
-            graph = self.data.get("graph", None)
-            if graph is None or len(graph) == 0:
-                self.data["graph"] = self.dumps(as_dict=True)
-                self.save()
+            self.data["graph"] = self.dumps(as_dict=True)
+            self.save()
 
-        self.__set_pre_start_event()
-        self.__set_on_end_event()
+        self.__init_pre_start_event()
+        self.__init_on_end_event()
 
     # -- A --
 
@@ -1825,19 +2021,23 @@ class Protocol(Process, SystemTrackable):
         """
 
         if self.is_finished or self.is_running:
-            Logger.error(Exception("Protocol", "add_process", "The protocol has already been run"))
+            raise Error("Protocol", "add_process", "The protocol has already been run")
        
         if not isinstance(process, Process):
-            Logger.error(Exception("Protocol", "add_process", "The process must be an instance of Process"))
+            raise Error("Protocol", "add_process", f"The process '{name}' must be an instance of Process")
 
         if not process._parent_protocol is None:
-            Logger.error(Exception("Protocol", "add_process", "The process instance already belongs to another protocol"))
+            raise Error("Protocol", "add_process", f"The process instance '{name}' already belongs to another protocol")
         
         if name in self._processes:
-            Logger.error(Exception("Protocol", "add_process", "The process name already exists"))
+            raise Error("Protocol", "add_process", f"Process name '{name}' already exists")
+        
+        if process in self._processes.items():
+            raise Error("Protocol", "add_process", f"Process '{name}' duplicate")
             
         process._parent_protocol = self
         self._processes[name] = process
+        process.set_active_name(name)
 
     def add_connector(self, connector: Connector):
         """ 
@@ -1845,32 +2045,40 @@ class Protocol(Process, SystemTrackable):
 
         :param connector: The connector
         :type connector: Connector
-        :Logger.error(Exception: It the processes of the connection do not belong to the protocol)
         """
 
         if self.is_finished or self.is_running:
-            Logger.error(Exception("Protocol", "add_connector", "The protocol has already been run"))
+            raise Error("Protocol", "add_connector", "The protocol has already been run")
         
         if not isinstance(connector, Connector):
-            Logger.error(Exception("Protocol", "add_connector", "The connector must be an instance of Connector"))
+            raise Error("Protocol", "add_connector", "The connector must be an instance of Connector")
         
         if  not connector.left_process in self._processes.values() or \
             not connector.right_process in self._processes.values():
-            Logger.error(Exception("Protocol", "add_connector", "The connector processes must be belong to the protocol"))
+            raise Error("Protocol", "add_connector", "The connector processes must be belong to the protocol")
         
         if connector in self._connectors:
-            Logger.error(Exception("Protocol", "add_connector", "Duplciated connector"))
+            raise Error("Protocol", "add_connector", "Duplciated connector")
 
         self._connectors.append(connector)
 
     # -- C --
 
-    def create_experiment(self, config: Config = None):
+    def create_experiment(self, uri: str = None, config: Config = None):
+        if self.get_title():
+            self.set_active_name(self.get_title())
+        else:
+            self.set_active_name(self.full_classname())
+        
         if isinstance(config, Config):
             job = self.get_active_job()
             job.set_config(config)
-
-        e = Experiment(protocol=self)
+        
+        if uri:
+            e = Experiment(uri=uri, protocol=self)
+        else:
+            e = Experiment(protocol=self)
+            
         return e
 
     def create_source_zip(self):
@@ -1889,7 +2097,7 @@ class Protocol(Process, SystemTrackable):
 
     # -- D -- 
         
-    def dumps( self, as_dict = False, prettify = False, bare = False ) -> str:
+    def dumps( self, as_dict: bool = False, prettify: bool = False, bare: bool = False ) -> str:
         """ 
         Dumps the JSON graph representing the protocol
         
@@ -1904,58 +2112,29 @@ class Protocol(Process, SystemTrackable):
 
         graph = dict(
             title = self.get_title(),
-            uri = self.uri,
+            uri = ("" if bare else self.uri),
             nodes = {},
             links = [],
             interfaces = {},
             outerfaces = {},
         )
-        
-        if bare:
-            graph["uri"] = ""
-                
+
         for conn in self._connectors:
-            link = conn.to_json()
-            is_left_node_found = False
-            is_right_node_found = False
-            for k in self._processes:
-                if link["from"]["node"] is self._processes[k]:
-                    link["from"]["node"] = k
-                    is_left_node_found = True
-
-                if link["to"]["node"] is self._processes[k]:
-                    link["to"]["node"] = k
-                    is_right_node_found = True
-
-                if is_left_node_found and is_right_node_found:
-                    graph['links'].append(link)
-                    break
-
+            link = conn.as_json()
+            graph['links'].append(link)
+        
         for k in self._processes:
-            graph["nodes"][k]  = {
-                "uri": self._processes[k].uri,
-                "type": self._processes[k].full_classname(),
-                "position": [],
-            }
-            if bare:
-                graph["nodes"][k]["uri"] = ""
+            proc = self._processes[k]
+            graph["nodes"][k] = proc.as_json(bare=bare)
 
         for k in self._interfaces:
-            port = self._interfaces[k].target_port
-            proc = port.parent.parent
-            for name in self._processes:
-                if proc is self._processes[name]:
-                    graph['interfaces'][k] = {"proc": name, "port": port.name}
-                    break
+            graph['interfaces'][k] = self._interfaces[k].as_json()
 
         for k in self._outerfaces:
-            port = self._outerfaces[k].target_port
-            proc = port.parent.parent
-            for name in self._processes:
-                if proc is self._processes[name]:
-                    graph['outerfaces'][k] = {"proc": name, "port": port.name}
-                    break
+            graph['outerfaces'][k] = self._outerfaces[k].as_json()
 
+        graph["layout"] = self.get_layout()
+        
         if as_dict:
             return graph
         else:
@@ -1997,6 +2176,13 @@ class Protocol(Process, SystemTrackable):
         """
         return self._processes[name]
     
+    def get_layout(self):
+        return self.data.get("layout", {})
+    
+    def get_process_position(self, name: str):
+        positions = self.get_layout()
+        return positions.get(name, self._defaultPosition)
+
     def get_interface_of_target_port(self, target_port: InPort) -> Interface:
         """ 
         Returns interface with a given target input port
@@ -2104,7 +2290,7 @@ class Protocol(Process, SystemTrackable):
                 process_t = getattr(module, function_name, None)
 
                 if process_t is None:
-                    Logger.error(Exception(f"Process {node_type_str} is not defined. Please ensure that the corresponding brick is loaded."))
+                    raise Error(f"Process {node_type_str} is not defined. Please ensure that the corresponding brick is loaded.")
                 else:
                     if node_uri:
                         processes[k] = process_t.get(process_t.uri == node_uri)
@@ -2113,20 +2299,22 @@ class Protocol(Process, SystemTrackable):
                     self.add_process( k, processes[k] )
 
             except Exception as err:
-                Logger.error(Exception(f"An error occured. Error: {err}"))
+                raise Error(f"An error occured. Error: {err}")
         
         # create interfaces and outerfaces
-        
+
         for k in graph["interfaces"]:
-            proc_name = graph["interfaces"][k]["proc"]
-            port_name = graph["interfaces"][k]["port"]
+            _to = graph["interfaces"][k]["to"]  #destination port of the interface
+            proc_name = _to["node"]
+            port_name = _to["port"]
             proc = processes[proc_name]
             port = proc.input.ports[port_name]
             interfaces[k] = port
 
         for k in graph["outerfaces"]:
-            proc_name = graph["outerfaces"][k]["proc"]
-            port_name = graph["outerfaces"][k]["port"]
+            _to = graph["outerfaces"][k]["to"]  #destination port of the outerface
+            proc_name = _to["node"]
+            port_name = _to["port"]
             proc = processes[proc_name]
             port = proc.output.ports[port_name]
             outerfaces[k] = port
@@ -2148,7 +2336,9 @@ class Protocol(Process, SystemTrackable):
             connector = (lhs_proc>>lhs_port_name | rhs_proc<<rhs_port_name)
             connectors.append(connector)
             self.add_connector(connector)
-
+    
+    # -- P --
+    
     # -- R --
     
     async def _run(self):
@@ -2159,7 +2349,7 @@ class Protocol(Process, SystemTrackable):
 
         e = self.get_active_experiment()
         if e is None:
-            Logger.error(Exception("Protocol", "_run", "No experiment defined"))
+            raise Error("Protocol", "_run", "No experiment defined")
 
         e.save()
 
@@ -2217,10 +2407,10 @@ class Protocol(Process, SystemTrackable):
             port = self._outerfaces[k].target_port
             self.output[k] = port.resource
 
-    def __set_pre_start_event(self):
+    def __init_pre_start_event(self):
         self._event_listener.add('pre_start', self._set_inputs)
 
-    def __set_on_end_event(self):
+    def __init_on_end_event(self):
         sinks = []
         for k in self._processes:
             proc = self._processes[k]
@@ -2249,31 +2439,29 @@ class Protocol(Process, SystemTrackable):
             output_specs[k] = output_specs[k].__name__
         self.data['output_specs'] = output_specs
 
-    def __set_interfaces(self, interfaces):
-        if not interfaces is None:
-            input_specs = { }
-            for k in interfaces:
-                input_specs[k] = interfaces[k]._resource_type
+    def __set_interfaces(self, interfaces: dict):
+        input_specs = {}
+        for k in interfaces:
+            input_specs[k] = interfaces[k]._resource_type
 
-            self.__set_input_specs(input_specs)
-            
-            for k in interfaces:
-                source_port = self.input.ports[k]
-                self._interfaces[k] = Interface(name=k, source_port=source_port, target_port=interfaces[k])
+        self.__set_input_specs(input_specs)
 
-    def __set_outerfaces(self, outerfaces):
-        if not outerfaces is None:
-            output_specs = { }
-            for k in outerfaces:
-                output_specs[k] = outerfaces[k]._resource_type
+        for k in interfaces:
+            source_port = self.input.ports[k]
+            self._interfaces[k] = Interface(name=k, source_port=source_port, target_port=interfaces[k])
 
-            self.__set_output_specs(output_specs)
-                                        
-            for k in outerfaces:
-                source_port = self.output.ports[k]
-                self._outerfaces[k] = Outerface(name=k, source_port=source_port, target_port=outerfaces[k])
-                                        
-            #self._outerfaces = outerfaces
+    def __set_outerfaces(self, outerfaces: dict):
+        output_specs = {}
+        for k in outerfaces:
+            output_specs[k] = outerfaces[k]._resource_type
+
+        self.__set_output_specs(output_specs)
+
+        for k in outerfaces:
+            source_port = self.output.ports[k]
+            self._outerfaces[k] = Outerface(name=k, source_port=source_port, target_port=outerfaces[k])
+
+        #self._outerfaces = outerfaces
 
 # ####################################################################
 #
@@ -2385,7 +2573,7 @@ class Resource(Viewable, SystemTrackable):
         """
 
         if not isinstance(job, Job):
-            Logger.error(Exception("Resource", "_set_job", "The job must be an instance of Job."))
+            raise Error("Resource", "_set_job", "The job must be an instance of Job.")
 
         self.job = job
 
@@ -2401,7 +2589,7 @@ class ResourceSet(Resource):
     _resource_types = (Resource, )
     
     def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         if self.id is None:
             self.data["set"] = {}
@@ -2427,7 +2615,7 @@ class ResourceSet(Resource):
 
     def __setitem__(self, key, val):
         if not isinstance(val, self._resource_types):
-            Logger.error(Exception("ResourceSet", "__setitem__", f"The value must be an instance of {self._resource_types}. The actual value is a {type(val)}."))
+            raise Error("ResourceSet", "__setitem__", f"The value must be an instance of {self._resource_types}. The actual value is a {type(val)}.")
         
         self.set[key] = val
 
@@ -2438,7 +2626,7 @@ class ResourceSet(Resource):
                 self.data["set"] = {}
                 for k in self._set:
                     if not (self._set[k].is_saved() or self._set[k].save()):
-                        raise Exception("ResourceSet", "save", f"Cannot save the resource '{k}' of the resource set")
+                        raise Error("ResourceSet", "save", f"Cannot save the resource '{k}' of the resource set")
 
                     self.data["set"][k] = {
                         "uri": self._set[k].uri,
@@ -2449,7 +2637,7 @@ class ResourceSet(Resource):
 
             except Exception as err:
                 transaction.rollback()
-                Logger.error(err)
+                raise Error("ResourceSet", "save", f"Error: {err}")
 
     @property
     def set(self):
@@ -2577,7 +2765,7 @@ class ViewModel(Model):
 
     def set_model(self, model: None):
         if not self.model_id is None:
-            Logger.error(Exception(self.classname(),"save","A model already exists"))
+            raise Error(self.classname(),"save","A model already exists")
         
         self._model = model
 
@@ -2593,7 +2781,7 @@ class ViewModel(Model):
         :type template: ViewTemplate
         """
         if not isinstance(template, ViewTemplate):
-            Logger.error(Exception(self.classname(),"set_template","The template must be an instance of ViewTemplate"))
+            raise Error(self.classname(),"set_template","The template must be an instance of ViewTemplate")
 
         self.template = template
     
@@ -2612,10 +2800,10 @@ class ViewModel(Model):
         Saves the view model
         """
         if self._model is None:
-            Logger.error(Exception(self.classname(),"save","The ViewModel has no model"))
+            raise Error(self.classname(),"save","The ViewModel has no model")
         else:
             if not self.model_id is None and self._model.id != self.model_id:
-                Logger.error(Exception(self.classname(),"save","It is not allowed to change model of the ViewModel that is already saved"))
+                raise Error(self.classname(),"save","It is not allowed to change model of the ViewModel that is already saved")
                 
             with DbManager.db.atomic() as transaction:
                 try:
@@ -2624,10 +2812,10 @@ class ViewModel(Model):
                         self.model_type = self._model.full_classname()
                         return super().save(*args, **kwargs)
                     else:
-                        Logger.error(Exception(self.classname(),"save","Cannot save the vmodel. Please ensure that the model of the vmodel is saved before"))
+                        raise Error(self.classname(),"save","Cannot save the vmodel. Please ensure that the model of the vmodel is saved before")
                 except Exception as err:
                     transaction.rollback()
-                    Logger.error(Exception("ViewModel", "save", f"Error message: {err}"))
+                    raise Error("ViewModel", "save", f"Error message: {err}")
 
 # ####################################################################
 #

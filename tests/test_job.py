@@ -28,6 +28,7 @@ class TestJob(unittest.TestCase):
 
     def test_job(self):
         proc = Process()
+        proc.set_active_name("proc")
         proc.save()
 
         j1 = Job(process=proc, config=Config())
@@ -47,9 +48,8 @@ class TestJob(unittest.TestCase):
             
             job_list = Job.select().where(Job.process_type == "gws.model.Protocol")
             for job in job_list:
-                print("--------------------------------")
+                print("-------------------------------- flow")
                 print( job.flow )
-
         
         
         async def _run():

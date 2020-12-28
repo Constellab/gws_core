@@ -35,7 +35,6 @@ class TestProtocol(unittest.TestCase):
         pass
     
     def test_protocol(self):
-        return
         p0 = Create()
         p1 = Move()
         p2 = Eat()
@@ -94,8 +93,8 @@ class TestProtocol(unittest.TestCase):
         p_wait = Wait()
     
         # create a chain
-        proto = Protocol(
-            title = "proto",
+        mini_proto = Protocol(
+            title = "Mini travel",
             processes = {
                 'p1' : p1, 
                 'p2' : p2, 
@@ -114,40 +113,42 @@ class TestProtocol(unittest.TestCase):
         )
 
         super_proto = Protocol(
-            title = "super_proto",
+            title = "Super travel",
             processes={
                 "p0": p0,
                 "p5": p5,
-                "proto": proto
+                "mini_proto": mini_proto
             },
             connectors=[
-                p0>>'robot'        | proto<<'robot',
-                proto>>'robot'     | p5<<'robot'
+                p0>>'robot'        | mini_proto<<'robot',
+                mini_proto>>'robot'     | p5<<'robot'
             ]
         )
         
-        print(proto.dumps(bare=True))
+        print("--- mini travel --- ")
+        print(mini_proto.dumps(bare=True))
+        print("--- super travel --- ")
+        print(super_proto.dumps(bare=True))
         
-        p1 = proto.get_process("p1")
-        proto.is_interfaced_with(p1)
-        p2 = proto.get_process("p2")
-        proto.is_outerfaced_with(p2)
+        p1 = mini_proto.get_process("p1")
+        mini_proto.is_interfaced_with(p1)
+        p2 = mini_proto.get_process("p2")
+        mini_proto.is_outerfaced_with(p2)
 
-        with open(os.path.join(testdata_dir, "protocol_graph.json"), "r") as f:
+        with open(os.path.join(testdata_dir, "mini_travel_graph.json"), "r") as f:
             import json
             s1 = json.load(f)
-            s2 = json.loads(proto.dumps(bare=True))
+            s2 = json.loads(mini_proto.dumps(bare=True))
             self.assertEqual(s1,s2)
             
-        
         def _on_end(*args, **kwargs):
-            saved_proto = Protocol.get(Protocol.id == proto.id)
-            s3 = json.loads(proto.dumps(bare=True))
+            saved_mini_proto = Protocol.get(Protocol.id == mini_proto.id)
+            s3 = json.loads(mini_proto.dumps(bare=True))
             self.assertEqual(s1,s3)
             
-            # load none bare
-            proto2 = Protocol.from_graph(saved_proto.graph)
-            self.assertTrue(proto.graph, proto2.graph)
+            # load non-bare
+            mini_proto2 = Protocol.from_graph(saved_mini_proto.graph)
+            self.assertTrue(mini_proto.graph, mini_proto2.graph)
         
         async def _run():
             e = super_proto.create_experiment()
@@ -160,19 +161,19 @@ class TestProtocol(unittest.TestCase):
         asyncio.run( _run() )
 
     def test_graph_load(self):
-        with open(os.path.join(testdata_dir, "protocol_graph.json"), "r") as f:
+        return
+        with open(os.path.join(testdata_dir, "mini_travel_graph.json"), "r") as f:
             import json
             s1 = json.load(f)
-            proto = Protocol.from_graph(s1)
-
-            s2 = json.loads(proto.dumps(bare=True))
+            mini_proto = Protocol.from_graph(s1)
+            s2 = json.loads(mini_proto.dumps(bare=True))
             self.assertEqual(s1,s2)
 
-        p1 = proto.get_process("p1")
-        self.assertTrue(proto.is_interfaced_with(p1))
+        p1 = mini_proto.get_process("p1")
+        self.assertTrue(mini_proto.is_interfaced_with(p1))
 
-        p2 = proto.get_process("p2")
-        self.assertTrue(proto.is_outerfaced_with(p2))
+        p2 = mini_proto.get_process("p2")
+        self.assertTrue(mini_proto.is_outerfaced_with(p2))
 
         p0 = Create(name="p0")
         p5 = Eat(name="p5")
@@ -181,21 +182,21 @@ class TestProtocol(unittest.TestCase):
             processes={
                 "p0": p0,
                 "p5": p5,
-                "proto": proto
+                "mini_proto": mini_proto
             },
             connectors=[
-                p0>>'robot'        | proto<<'robot',
-                proto>>'robot'     | p5<<'robot'
+                p0>>'robot'        | mini_proto<<'robot',
+                mini_proto>>'robot'     | p5<<'robot'
             ]
         )
 
         def _on_end(*args, **kwargs):
-            saved_proto = Protocol.get(Protocol.id == super_proto.id)
-            print(saved_proto.as_json())
+            saved_mini_proto = Protocol.get(Protocol.id == super_mini_proto.id)
+            print(saved_mini_proto.as_json())
             
             # load none bare
-            proto2 = Protocol(graph=saved_proto.graph)
-            self.assertTrue(proto.graph, proto2.graph)
+            mini_proto2 = Protocol(graph=saved_mini_proto.graph)
+            self.assertTrue(mini_proto.graph, mini_proto2.graph)
             
             
         async def _run():

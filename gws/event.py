@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws.logger import Logger
+from gws.logger import Error
 
 class EventListener:
     """
@@ -16,7 +16,7 @@ class EventListener:
 
         self._events = {}
 
-    def call(self, name, *args, **kwargs):
+    def call(self, name: str, *args, **kwargs):
         """
         Calls an event by its name 
 
@@ -26,7 +26,7 @@ class EventListener:
         for func in self._events.get(name,[]):
             func(*args, **kwargs)
 
-    def add(self, name, callback):
+    def add(self, name: str, callback: callable):
         """
         Adds an event (i.e. callback function) to the listener 
 
@@ -39,18 +39,18 @@ class EventListener:
         # @TODO
         # Also check that callback is awaitable
         # if not inspect.iscoroutinefunction(callback):
-        #     Logger.error(Exception("Process", "on_start", "The callback must be an awaitable function"))
+        #     raise Error("Process", "on_start", "The callback must be an awaitable function"))
 
 
         if not hasattr(callback, '__call__'):
-            Logger.error(Exception("Process", "on_start", "The callback function is not callable"))
+            raise Error("Process", "on_start", "The callback function is not callable")
         
         if self.exists(name):
             self._events[name].append( callback )
         else:
             self._events[name] = [ callback ]
     
-    def exists(self, name) -> bool:
+    def exists(self, name: str) -> bool:
         """
         Returns True if an event exists, False otherwise
         

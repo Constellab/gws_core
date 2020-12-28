@@ -36,12 +36,9 @@ class Logger:
     # -- E --
 
     @classmethod
-    def error(cls, message, *args, **kwargs):
+    def error(cls, message):
         Logger()
-        cls._logger.error(f"ERROR: {datetime.datetime.now().time()}: {message}", *args, **kwargs)
-        if isinstance(message, Exception):
-            raise message
-        
+        cls._logger.error(f"ERROR: {datetime.datetime.now().time()}: {message}")
 
     # -- F --
 
@@ -53,9 +50,9 @@ class Logger:
     # -- I --
 
     @classmethod
-    def info(cls, message, *args, **kwargs):
+    def info(cls, message):
         Logger()
-        cls._logger.info(f"INFO: {datetime.datetime.now().time()}: {message}", *args, **kwargs)
+        cls._logger.info(f"INFO: {datetime.datetime.now().time()}: {message}")
         if cls._is_test:
             print(message)
 
@@ -63,8 +60,37 @@ class Logger:
     # -- W --
 
     @classmethod
-    def warning(cls,message, *args, **kwargs):
+    def warning(cls, message):
         Logger()
-        cls._logger.warning(f"WARNING: {datetime.datetime.now().time()}: {message}", *args, **kwargs)
+        cls._logger.warning(f"WARNING: {datetime.datetime.now().time()}: {message}")
         if cls._is_test:
             print(message)
+            
+
+class Error(Exception):
+    def __init__(self, message, *args):
+        if len(args):
+            exc_message = f"{message}. {' '.join(args)}"
+        else:
+            exc_message = message
+            
+        super().__init__(exc_message)
+        Logger.error(exc_message)
+
+class Warning():
+    def __init__(self, message, *args):
+        if len(args):
+            exc_message = f"{message}. {' '.join(args)}"
+        else:
+            exc_message = message
+            
+        Logger.warning(exc_message)
+        
+class Info():
+    def __init__(self, message, *args):
+        if len(args):
+            exc_message = f"{message}. {' '.join(args)}"
+        else:
+            exc_message = message
+            
+        Logger.info(exc_message)

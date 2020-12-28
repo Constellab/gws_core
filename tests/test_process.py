@@ -1,7 +1,7 @@
 
 import asyncio
 import unittest
-from gws.model import Job, Config, Process, Resource, Model, ViewModel, Experiment
+from gws.model import Job, Config, Process, Resource, Model, ViewModel, Experiment, Protocol
 from gws.controller import Controller
 from gws.robot import Robot, Create, Move, Eat, Wait
 
@@ -44,14 +44,28 @@ class TestProcess(unittest.TestCase):
         p4 = Move()
         p5 = Eat()
         p_wait = Wait()
-        
-        # create a chain
-        p0.out_port('robot')   | p1.in_port('robot')
-        p1.out_port('robot')   | p2<<'robot'
-        p2>>'robot'            | p_wait<<'robot'
-        p_wait>>'robot'        | p3<<'robot'
-        p3>>'robot'            | p4<<'robot'
-        p2>>'robot'            | p5<<'robot'
+    
+        proto = Protocol(
+            processes = {
+                'p0' : p0,  
+                'p1' : p1, 
+                'p2' : p2, 
+                'p3' : p3,  
+                'p4' : p4,  
+                'p5' : p5, 
+                'p_wait' : p_wait
+            },
+            connectors=[
+                p0.out_port('robot')   | p1.in_port('robot'),
+                p1.out_port('robot')   | p2<<'robot',
+                p2>>'robot'            | p_wait<<'robot',
+                p_wait>>'robot'        | p3<<'robot',
+                p3>>'robot'            | p4<<'robot',
+                p2>>'robot'            | p5<<'robot'
+            ],
+            interfaces = {},
+            outerfaces = {}
+        )
 
         self.assertEqual( len(p1.get_next_procs()), 1 )
         self.assertEqual( len(p2.get_next_procs()), 2 )
@@ -75,7 +89,7 @@ class TestProcess(unittest.TestCase):
             p5.on_end(_on_p5_end)
 
             # start
-            e = p0.create_experiment()
+            e = proto.create_experiment()
             await e.run()
             
             print("Sleeping 1 sec for waiting all tasks to finish ...")

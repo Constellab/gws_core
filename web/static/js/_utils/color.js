@@ -5,8 +5,6 @@
  * About us: https://gencovery.com
  */
 
-import { palette } from '/palette-js/palette.js'
-
 export class Color {
 
     static randomColor() {

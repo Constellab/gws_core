@@ -5,7 +5,7 @@
 
 
 from gws.base import Base
-from gws.logger import Logger
+from gws.logger import Error
 
 class Port(Base):
     """
@@ -135,7 +135,7 @@ class Port(Base):
             port._resource = self._resource
 
     def __or__(self, other: 'Port'):
-        Logger.error(Exception(self.classname(), "|", f"Port cannot be . Use InPort or OutPort class"))
+        raise Error(self.classname(), "|", f"Port cannot be . Use InPort or OutPort class")
     
     # -- R -- 
 
@@ -157,12 +157,11 @@ class Port(Base):
 
         :param resource: The input resource
         :type resource: Resource
-        :Logger.error(Exception: If reource is not compatible with port)
         """
 
         from gws.model import Resource
         if not isinstance(resource, Resource):
-            Logger.error(Exception(self.classname(), "resource", "The resource must be an instance of Resource"))
+            raise Error(self.classname(), "resource", "The resource must be an instance of Resource")
 
         self._resource = resource
     
@@ -197,7 +196,7 @@ class InPort(Port):
                 return name
 
     def __or__(self, other: 'Port'):
-        Logger.error(Exception(self.classname(), "|", f"The input port cannot be connected on the right"))
+        raise Error(self.classname(), "|", f"The input port cannot be connected on the right")
 
 
 # ####################################################################
@@ -218,19 +217,18 @@ class OutPort(Port):
         Connect the output port to another (right-hand side) input port.
         :return: The right-hand sode port
         :rtype: Port
-        :Logger.error(Exception: If the connection is not possible)
         """
         if not isinstance(other, InPort):
-            Logger.error(Exception(self.classname(), "|", "The output port can only be connected to an input port"))
+            raise Error(self.classname(), "|", "The output port can only be connected to an input port")
 
         if other.is_left_connected:
-            Logger.error(Exception(self.classname(), "|", f"The right-hand side port is already connected"))
+            raise Error(self.classname(), "|", f"The right-hand side port is already connected")
 
         if self == other:
-            Logger.error(Exception(self.classname(), "|", "Self connection not allowed"))
+            raise Error(self.classname(), "|", "Self connection not allowed")
         
         if not issubclass(self._resource_type, other._resource_type):
-            Logger.error(Exception(self.classname(), "|", f"Invalid connection. {self._resource_type} is not a subclass of {other._resource_type}"))
+            raise Error(self.classname(), "|", f"Invalid connection. {self._resource_type} is not a subclass of {other._resource_type}")
 
         self._next.append(other)
         other._prev = self
@@ -259,37 +257,64 @@ class OutPort(Port):
             if input._ports[name] is self:
                 return name
 
-class Interface:
-    name:name = None
-    source_port:InPort = None
-    target_port:InPort = None
+class IOface:
+    name:str = None
+    source_port:Port = None
+    target_port:Port = None
     
-    def __init__(self, name: str, source_port : InPort, target_port: InPort):
-        if not isinstance(source_port, InPort):
-            Logger.error(Exception("Interface", "__init__", "The source port must be an input port"))
+    def __init__(self, name: str, source_port : Port, target_port: Port):
+        if not isinstance(source_port, Port):
+            raise Error("Interface", "__init__", "The source port must be a port")
             
-        if not isinstance(target_port, InPort):
-            Logger.error(Exception("Interface", "__init__", "The target port must be an input port"))
+        if not isinstance(target_port, Port):
+            raise Error("Interface", "__init__", "The target port must be a port")
             
         self.name = name 
         self.source_port = source_port
         self.target_port = target_port
         
-class Outerface:
-    name:str = None
+    def as_json(self):
+        return {
+            "name": self.name,
+            "from": {
+                "node": self.source_port.process.active_name,
+                "port": self.source_port.name,
+            },
+            
+            "to": {
+                "node": self.target_port.process.active_name,
+                "port": self.target_port.name,
+            }
+        }
+    
+class Interface(IOface):
+    source_port:InPort = None
+    target_port:InPort = None
+        
+    def __init__(self, name: str, source_port : InPort, target_port: InPort):
+        
+        if not isinstance(source_port, InPort):
+            raise Error("Interface", "__init__", "The source port must be an input port")
+            
+        if not isinstance(target_port, InPort):
+            raise Error("Interface", "__init__", "The target port must be an input port")
+            
+        super().__init__(name, source_port, target_port)
+    
+        
+class Outerface(IOface):
     source_port:OutPort = None
     target_port:OutPort = None
-    
+        
     def __init__(self, name: str, source_port : OutPort, target_port : OutPort):
+        
         if not isinstance(source_port, OutPort):
-            Logger.error(Exception("Outerface", "__init__", "The source port must be an output port"))
+            raise Error("Outerface", "__init__", "The source port must be an output port")
         
         if not isinstance(target_port, OutPort):
-            Logger.error(Exception("Outerface", "__init__", "The target port must be an output port"))
+            raise Error("Outerface", "__init__", "The target port must be an output port")
             
-        self.name = name
-        self.source_port = source_port
-        self.target_port = target_port
+        super().__init__(name, source_port, target_port)
 
 # ####################################################################
 #
@@ -312,21 +337,54 @@ class Connector:
 
     def __init__(self, out_port: OutPort = None, in_port : InPort = None):
         if not isinstance(in_port, InPort):
-            Logger.error(Exception("Connector", "__init__", "The input port must be an instance of InPort"))
+            raise Error("Connector", "__init__", "The input port must be an instance of InPort")
         
         if not isinstance(out_port, OutPort):
-            Logger.error(Exception("Connector", "__init__", "The output port must be an instance of OutPort"))
+            raise Error("Connector", "__init__", "The output port must be an instance of OutPort")
         
-        if in_port.parent is None or in_port.parent.parent is None:
-            Logger.error(Exception("Connector", "__init__", "The input port is not associated with a process"))
+        source_process = out_port.parent.parent
+        target_process = in_port.parent.parent
         
-        if out_port.parent is None or out_port.parent.parent is None:
-            Logger.error(Exception("Connector", "__init__", "The output port is not associated with a process"))
+        if in_port.parent is None or target_process is None:
+            raise Error("Connector", "__init__", "The input port is not associated with a process")
+        
+        if out_port.parent is None or source_process is None:
+            raise Error("Connector", "__init__", "The output port is not associated with a process")
+        
+        #if not target_process.active_name:
+        #    raise Error("Connector", "__init__", "The target process has no active name")
+        #    
+        #if not source_process.active_name:
+        #    raise Error("Connector", "__init__", "The soruce process has no active name")
         
         self.in_port = in_port
         self.out_port = out_port
+    
+    # -- A --
+    
+    def as_json(self) -> dict:
+        """
+        Returns a dictionnary describing the Connector.
 
-    # -- I --
+        :return: A dictionnary describing the Connector
+        :rtype: dict
+        """
+
+        link = {
+            "from": {
+                "node": self.left_process.active_name,
+                "port": self.out_port.name, 
+            },
+            "to": {
+                "node": self.right_process.active_name,  
+                "port": self.in_port.name, 
+            }
+        }
+
+        return link
+    
+    # -- L --
+    
     @property
     def left_process(self) -> 'Process':
         """
@@ -339,26 +397,7 @@ class Connector:
 
     # -- L --
 
-    def to_json(self, serialize: bool=False) -> dict:
-        """
-        Returns a dictionnary describing the Connector.
-
-        :param serialize: If True, the returned link is serialized
-        :type serialize: bool
-        :return: A dictionnary describing the Connector
-        :rtype: dict
-        """
-
-        link = {
-            "from": {"node": self.left_process,  "port": self.out_port.name},
-            "to": {"node": self.right_process,  "port": self.in_port.name}
-        }
-
-        if serialize:
-            link["from"]["node"] = link["from"]["node"].full_classname()
-            link["to"]["node"] = link["to"]["node"].full_classname()
-        
-        return link
+    
 
     # -- O --
     @property
@@ -389,7 +428,21 @@ class IO(Base):
     def __init__(self, parent: 'Process'):
         self._parent = parent
         self._ports = dict()
-
+    
+    # -- A --
+    
+    def as_json(self, bare=False):
+        _json = {}
+        for k in self._ports:
+            port = self._ports[k]
+            _json[k] = port._resource_type.full_classname()
+            #_json[k] = {
+            #    "uri": ("" if (bare or not port._resource) else port._resource.uri),
+            #    "type": port._resource_type.full_classname()
+            #}
+            
+        return _json
+    
     # -- C --
 
     def create_port(self, name: str, resource_type: type):
@@ -403,16 +456,16 @@ class IO(Base):
         """
         from gws.model import Resource
         if not isinstance(name, str):
-            Logger.error(Exception(self.classname(), "create_port", "Invalid port specs. The port name must be a string"))
+            raise Error(self.classname(), "create_port", "Invalid port specs. The port name must be a string")
 
         if not isinstance(resource_type, type):
-            Logger.error(Exception(self.classname(), "create_port", "Invalid port specs. The resource_type must be type. Maybe you provided an object instead of object type."))
+            raise Error(self.classname(), "create_port", "Invalid port specs. The resource_type must be type. Maybe you provided an object instead of object type.")
         
         if not issubclass(resource_type, Resource):
-            Logger.error(Exception(self.classname(), "create_port", "Invalid port specs. The resource_type must refer to subclass of Resource"))
+            raise Error(self.classname(), "create_port", "Invalid port specs. The resource_type must refer to subclass of Resource")
         
         if self._parent.is_running or self._parent.is_finished:
-            Logger.error(Exception(self.classname(), "__setitem__", "Cannot alter inputs/outputs of processes during or after running"))
+            raise Error(self.classname(), "__setitem__", "Cannot alter inputs/outputs of processes during or after running")
         
         if type(self) == Output:
             port = OutPort(self)
@@ -432,13 +485,12 @@ class IO(Base):
         :type name: str
         :return: The resource of the port
         :rtype: Resource
-        :Logger.error(Exception: If the port is not found)
         """
         if not isinstance(name, str):
-            Logger.error(Exception(self.classname(), "__getitem__", "The port name must be a string"))
+            raise Error(self.classname(), "__getitem__", "The port name must be a string")
 
         if self._ports.get(name, None) is None:
-            Logger.error(Exception(self.classname(), "__getitem__", self.classname() +" port '"+name+"' not found"))
+            raise Error(self.classname(), "__getitem__", self.classname() +" port '"+name+"' not found")
 
         return self._ports[name].resource
 
@@ -525,13 +577,12 @@ class IO(Base):
         :type name: str
         :param resource: The input resource
         :type resource: Resource
-        :Logger.error(Exception: If the port is not found)
         """
         if not isinstance(name, str):
-            Logger.error(Exception(self.classname(), "__setitem__", "The port name must be a string"))
+            raise Error(self.classname(), "__setitem__", "The port name must be a string")
 
         if self._ports.get(name, None) is None:
-            Logger.error(Exception(self.classname(), "__setitem__", self.classname() +" port '"+name+"' not found"))
+            raise Error(self.classname(), "__setitem__", self.classname() +" port '"+name+"' not found")
         
         self._ports[name].resource = resource
     
@@ -569,10 +620,9 @@ class Input(IO):
         :type name: str
         :param resource: The input resource
         :type resource: Resource
-        :Logger.error(Exception: If the port is not found)
         """
         if self._parent.is_running:
-            Logger.error(Exception(self.classname(), "__setitem__", "Cannot alter the input of process while running"))
+            raise Error(self.classname(), "__setitem__", "Cannot alter the input of process while running")
 
         super().__setitem__(name,resource)
 
@@ -616,10 +666,9 @@ class Output(IO):
         :type name: str
         :param resource: The input resource
         :type resource: Resource
-        :Logger.error(Exception: If the port is not found)
         """
         if self._parent.is_finished:
-            Logger.error(Exception(self.classname(), "__setitem__", "Cannot alter the output of a process after running"))
+            raise Error(self.classname(), "__setitem__", "Cannot alter the output of a process after running")
 
         super().__setitem__(name,resource)
         

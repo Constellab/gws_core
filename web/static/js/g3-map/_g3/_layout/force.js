@@ -53,7 +53,6 @@ export function forceLayout( map ){
             map.nodes[id].data.position.y = node.y;
             map.nodes[id].data.position.z = node.z;
             map.nodes[id].updatePosition();
-            //map._camera.updateMatrixWorld();
         })
     }
 }

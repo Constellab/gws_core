@@ -6,7 +6,7 @@
 
 import json
 import math
-from gws.logger import Logger
+from gws.logger import Error
 
 class Validator:
     """
@@ -45,13 +45,13 @@ class Validator:
             if isinstance(allowed_values, list):
                 self._allowed_values = allowed_values
             else:
-                Logger.error(Exception(f"The parameter allowed_values must be a list"))
+                raise Error(f"The parameter allowed_values must be a list")
 
         if not default is None:
             try:
                 self._default = self._validate(default)
             except Exception as err:
-                Logger.error(Exception(f"The default value is not valid. Error message: {err}"))
+                raise Error(f"The default value is not valid. Error message: {err}")
     
     @property
     def type(self) -> type:
@@ -68,7 +68,7 @@ class Validator:
         elif self._type == dict or self._type == 'dict':
             return dict
         else:
-            Logger.error(Exception(f"Invalid type"))
+            raise Error(f"Invalid type")
 
     def validate(self, value: (bool, int, float, str, list, dict)) -> (bool, int, float, str, list, dict):
         """
@@ -89,7 +89,6 @@ class Validator:
         :type value: An instance of `bool`, `int`, `float`, `str` or serilaizable `list`, `dict`
         :return: The validated value
         :rtype: An instance of `bool`, `int`, `float`, `str` or serilaizable `list`, `dict`
-        :Logger.error(`Exception`: If the :param:`value` is not valid)
         """
         if value is None:
             value = self._default
@@ -103,13 +102,13 @@ class Validator:
             if value in self._allowed_values:
                 return value
             else:
-                Logger.error(ValueError(f"Invalid value '{value}'. Allowed values are {self._allowed_values}"))
+                raise Error(f"Invalid value '{value}'. Allowed values are {self._allowed_values}")
         else:
             return value
 
     def _validate(self, value):
         if not isinstance(self.type, type):
-            Logger.error(ValueError(f"The validator is not well configured. Invalid type {self.type}."))
+            raise Error(f"The validator is not well configured. Invalid type {self.type}.")
         
         if type(value) == self.type:
             if isinstance(value, (list,dict,)):
@@ -119,7 +118,7 @@ class Validator:
                     is_serilizable = False
                 
                 if not is_serilizable:
-                    Logger.error(ValueError(f"The value {value} is not serializable."))
+                    raise Error(f"The value {value} is not serializable.")
 
             return value
         else:
@@ -128,7 +127,7 @@ class Validator:
             if is_maybe_convertible_without_floating_error:
                 is_valid = (self.type(value) == value)
                 if not is_valid:
-                    Logger.error(ValueError(f"The value {value} cannot be casted to the class {self.type} with floating point alteration."))
+                    raise Error(f"The value {value} cannot be casted to the class {self.type} with floating point alteration.")
                 
                 return self.type(value)
 
@@ -140,18 +139,18 @@ class Validator:
                 if is_maybe_convertible_without_floating_error:
                     is_valid = math.isnan(value) or (self.type(value) == value)
                     if not is_valid:
-                        Logger.error(ValueError(f"The value {value} cannot be casted to the class {self.type} with floating point alteration."))
+                        raise Error(f"The value {value} cannot be casted to the class {self.type} with floating point alteration.")
                     
                     return self.type(value)
                 elif type(value) != self.type:
-                    Logger.error(ValueError(f"The deserialized value must be an instance of {self.type}. The actual deserialized value is {value}."))
+                    raise Error(f"The deserialized value must be an instance of {self.type}. The actual deserialized value is {value}.")
 
             except Exception as err:
-                Logger.error(ValueError(f"The value cannot be deserialized. Please give a valid serialized string value. Error message: {err}"))
+                raise Error(f"The value cannot be deserialized. Please give a valid serialized string value. Error message: {err}")
 
             return value
         else:
-            Logger.error(ValueError(f"Invalid value {value}"))
+            raise Error(f"Invalid value {value}")
 
     @staticmethod
     def from_specs(type=None, default=None, **kwargs) -> 'Validator':
@@ -180,7 +179,6 @@ class Validator:
         :type allowed_values: defaults to None
         :return: The Validator corresponding to the :param:`type`
         :rtype: subclass of `Validator`
-        :Logger.error(`Exception`: If the :param:`type` is not valid or the the type if :param:`default` is not equal to :param:`type`)
         """
 
         if type == bool or type == 'bool':
@@ -196,7 +194,7 @@ class Validator:
         elif type == dict or type == 'dict':
             return JSONValidator(default=default, **kwargs)
         else:
-            Logger.error(Exception("Invalid type. Valid types are (bool, int, float, str, list, dict)."))
+            raise Error("Invalid type. Valid types are (bool, int, float, str, list, dict).")
 
 class BooleanValidator(Validator):
     """
@@ -264,10 +262,10 @@ class NumericValidator(Validator):
     def _validate(self, value):
         value = super()._validate(value)
         if value < self._min or (value == self._min and not self._include_min):
-            Logger.error(ValueError(f"The value must be greater than {self._min}. The actual value is {value}"))
+            raise Error(f"The value must be greater than {self._min}. The actual value is {value}")
 
         if value > self._max or (value == self._max and not self._include_max):
-            Logger.error(ValueError(f"The value must be less than {self._max}. The actual value is {value}"))
+            raise Error(f"The value must be less than {self._max}. The actual value is {value}")
         
         return value
 

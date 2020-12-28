@@ -116,10 +116,6 @@ def _find_brick(name):
     return None
 
 def _find_lab(name):
-    # dep_cwd = os.path.join(BASE_LAB_DIR, name)
-    # if os.path.exists(dep_cwd):
-    #     return dep_cwd
-
     dep_cwd = os.path.join(USER_LAB_DIR, name)
     if os.path.exists(dep_cwd):
         return dep_cwd
@@ -226,5 +222,4 @@ def parse_settings(brick_cwd: str = None):
 def load_settings(brick_cwd: str = None):
     from gws.settings import Settings
     settings = parse_settings(brick_cwd)
-    Settings.init(settings)        
-    return settings
+    Settings.init(settings)

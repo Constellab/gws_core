@@ -53,7 +53,7 @@ class TestFileStore(unittest.TestCase):
     
     def test_file_store(self):
         testdata_dir = settings.get_dir("gws:testdata_dir")
-        file_path = os.path.join(testdata_dir, "protocol_graph.json")
+        file_path = os.path.join(testdata_dir, "mini_travel_graph.json")
         rel_file_path = fs.push(file_path)
         
         self.assertTrue(fs.exists(rel_file_path))        
@@ -78,7 +78,7 @@ class TestFileStore(unittest.TestCase):
     
     def test_file_upload(self):
         testdata_dir = settings.get_dir("gws:testdata_dir")
-        file_path = os.path.join(testdata_dir, "protocol_graph.json")
+        file_path = os.path.join(testdata_dir, "mini_travel_graph.json")
         
         with open(file_path, "rb") as fp:
             fs.push(fp, dest_file_name="leon.json", slot="uploads")
