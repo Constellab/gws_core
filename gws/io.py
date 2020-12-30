@@ -668,7 +668,7 @@ class Output(IO):
         :type resource: Resource
         """
         if self._parent.is_finished:
-            raise Error(self.classname(), "__setitem__", "Cannot alter the output of a process after running")
+            raise Error(self.classname(), "__setitem__", f"Cannot alter the output of process '{self._parent.active_name}' after running")
 
         super().__setitem__(name,resource)
         

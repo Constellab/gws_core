@@ -117,7 +117,7 @@ class TestProtocol(unittest.TestCase):
             processes={
                 "p0": p0,
                 "p5": p5,
-                "mini_proto": mini_proto
+                "Mini travel": mini_proto
             },
             connectors=[
                 p0>>'robot'        | mini_proto<<'robot',
@@ -161,7 +161,6 @@ class TestProtocol(unittest.TestCase):
         asyncio.run( _run() )
 
     def test_graph_load(self):
-        return
         with open(os.path.join(testdata_dir, "mini_travel_graph.json"), "r") as f:
             import json
             s1 = json.load(f)
@@ -182,7 +181,7 @@ class TestProtocol(unittest.TestCase):
             processes={
                 "p0": p0,
                 "p5": p5,
-                "mini_proto": mini_proto
+                "Mini travel": mini_proto
             },
             connectors=[
                 p0>>'robot'        | mini_proto<<'robot',
@@ -191,11 +190,11 @@ class TestProtocol(unittest.TestCase):
         )
 
         def _on_end(*args, **kwargs):
-            saved_mini_proto = Protocol.get(Protocol.id == super_mini_proto.id)
+            saved_mini_proto = Protocol.get(Protocol.id == mini_proto.id)
             print(saved_mini_proto.as_json())
             
             # load none bare
-            mini_proto2 = Protocol(graph=saved_mini_proto.graph)
+            mini_proto2 = Protocol.from_graph(saved_mini_proto.graph)
             self.assertTrue(mini_proto.graph, mini_proto2.graph)
             
             

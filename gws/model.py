@@ -831,10 +831,8 @@ class Process(Viewable, SystemTrackable):
 
         if 'title' in kwargs:
             self.set_title(kwargs['title'])
-        
-        if active_name:
-            self.set_active_name(active_name)
-            
+            self.set_active_name(kwargs['title'])
+          
         self.save()
 
     # -- A --
@@ -979,9 +977,7 @@ class Process(Viewable, SystemTrackable):
         :return: True if the process is ready, False otherwise.
         :rtype: bool
         """
-        return  (not self.is_running or \
-                not self.is_finished) and \
-                self._input.is_ready 
+        return  (not self.is_running and not self.is_finished) and self._input.is_ready 
 
     def in_port(self, name: str) -> InPort:
         """
@@ -1061,22 +1057,39 @@ class Process(Viewable, SystemTrackable):
         """ 
         Runs the process and save its state in the database.
         """
-
+        
+        if not self.is_ready:
+            return
+        
         try:
-            self._run_before_task()
-            self.task()
-            self._run_after_task()
+            await self._run_before_task()
+            await self.task()
+            await self._run_after_task()
+
         except Exception as err:
             raise Error("Process", "_run", f"Error: {err}")
+    
+    async def _run_next_processes(self):
+        self._output.propagate()
+        aws  = []
+        job = self.get_active_job()
+        for proc in self._output.get_next_procs():
+            # ensure that the next process is held by this experiment
+            proc_job = proc.get_active_job()
+            proc_job.experiment = job.experiment
+            proc_job.save()
 
-    def _run_before_task( self, *args, **kwargs ):
-        if not self.is_ready:
-            raise Error(self.classname(), "run", "The process is not ready. Please ensure that the process receives valid input resources and has not already been run")
+            # run next
+            aws.append( proc._run() )
+            #await proc._run() 
 
-        if self._event_listener.exists('pre_start'):
-            self._event_listener.call('pre_start', self)
+        if len(aws):
+            await asyncio.gather( *aws )
+                
+    async def _run_before_task( self, *args, **kwargs ):
 
         self.is_running = True
+        
         if self.get_title():
             Info(f"Running {self.full_classname()} '{self.get_title()}' ...")
         else:
@@ -1087,10 +1100,10 @@ class Process(Viewable, SystemTrackable):
             raise Error(self.classname(), "run", "Cannot save the job")
         
         if self._event_listener.exists('start'):
-            self._event_listener.call('start', self)
+            self._event_listener.sync_call('start', self)
+            await self._event_listener.async_call('start', self)
 
-    def _run_after_task( self, *args, **kwargs ):
-
+    async def _run_after_task( self, *args, **kwargs ):
         if self.get_title():
             Info(f"Task of {self.full_classname()} '{self.get_title()}' successfully finished!")
         else:
@@ -1114,19 +1127,11 @@ class Process(Viewable, SystemTrackable):
             return
         
         if self._event_listener.exists('end'):
-            self._event_listener.call('end', self)
-
-        self._output.propagate()
+            self._event_listener.sync_call('end', self)
+            await self._event_listener.async_call('end', self)
         
-        for proc in self._output.get_next_procs():
-            # ensure that the next process is held by this experiment
-            proc_job = proc.get_active_job()
-            proc_job.experiment = job.experiment
-            proc_job.save()
-
-            # run next
-            asyncio.create_task( proc._run() )
-
+        await self._run_next_processes()
+        
     def __rshift__(self, name: str) -> OutPort:
         """ 
         Alias of :meth:`out_port`.
@@ -1527,7 +1532,7 @@ class Job(Viewable, SystemTrackable):
             self.update_status()
             
             if not process.active_name:
-                raise Error("Job", "__init__", "The process has no active name")
+                raise Error("Job", "__init__", "The process has no active name.")
                 
             self.data["active_name"] = process.active_name
             
@@ -2005,7 +2010,7 @@ class Protocol(Process, SystemTrackable):
             self.data["graph"] = self.dumps(as_dict=True)
             self.save()
 
-        self.__init_pre_start_event()
+        #self.__init_pre_start_event()
         self.__init_on_end_event()
 
     # -- A --
@@ -2270,7 +2275,7 @@ class Protocol(Process, SystemTrackable):
             return
         
         self.set_title(graph.get("title",""))
-        
+        self.set_active_name(graph.get("title",""))
         processes = {}
         connectors = []
         interfaces = {}
@@ -2341,12 +2346,12 @@ class Protocol(Process, SystemTrackable):
     
     # -- R --
     
-    async def _run(self):
-        """ 
-        Runs the process and save its state in the database.
-        Override mother class method.
-        """
-
+    async def _run_before_task(self, *args, **kwargs):
+        if self.is_running or self.is_finished:
+            return
+        
+        self._set_inputs()
+        
         e = self.get_active_experiment()
         if e is None:
             raise Error("Protocol", "_run", "No experiment defined")
@@ -2357,26 +2362,34 @@ class Protocol(Process, SystemTrackable):
             job = self._processes[k].get_active_job()
             job.experiment = e
             job.save()
-
-        self._run_before_task()
-
-        # self.task()
-        #---------- START OF BUILT-IN PROTOCOL TASK ---------
-
+        
+        await super()._run_before_task(*args, **kwargs)
+        
+    async def task(self):
+        """ 
+        BUILT-IN PROTOCOL TASK
+        
+        Runs the process and save its state in the database.
+        Override mother class method.
+        """
+        
         sources = []
         for k in self._processes:
             proc = self._processes[k]
             if proc.is_ready or self.is_interfaced_with(proc):
                 sources.append(proc)
-
+        
+        aws = []
         for proc in sources:
-            asyncio.create_task( proc._run() )
-            #await proc._run()
+            aws.append( proc._run() )
+        
+        if len(aws):
+            await asyncio.gather(*aws)
 
-        #----------- END OF BUILT-IN PROTOCOL TASK ----------
-
-
-    def _run_after_task(self, *args, **kwargs):
+    async def _run_after_task(self, *args, **kwargs):
+        if self.is_finished:
+            return
+        
         # Exit the function if an inner process has not yet finished!
         for k in self._processes:
             if not self._processes[k].is_finished:
@@ -2388,7 +2401,7 @@ class Protocol(Process, SystemTrackable):
         e.save()
 
         self._set_outputs()
-        super()._run_after_task()
+        await super()._run_after_task()
 
     # -- S --
 
@@ -2398,19 +2411,32 @@ class Protocol(Process, SystemTrackable):
         experiment.protocol_job_uri = job.uri
 
     def _set_inputs(self, *args, **kwargs):
+        """
+        Propagate resources through interfaces
+        """
+        
         for k in self._interfaces:
             port = self._interfaces[k].target_port
             port.resource = self.input[k]
 
     def _set_outputs(self, *args, **kwargs):
+        """
+        Propagate resources through outerfaces
+        """
+        
         for k in self._outerfaces:
             port = self._outerfaces[k].target_port
             self.output[k] = port.resource
 
-    def __init_pre_start_event(self):
-        self._event_listener.add('pre_start', self._set_inputs)
+    #def __init_pre_start_event(self):
+    #    self._event_listener.add('pre_start', self._set_inputs)
 
     def __init_on_end_event(self):
+        """
+        Attach method `_run_after_task` to all sink processes to ensure that this method is called after
+        all inner processes have finished.
+        """
+        
         sinks = []
         for k in self._processes:
             proc = self._processes[k]

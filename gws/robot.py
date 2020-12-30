@@ -46,7 +46,7 @@ class Create(Process):
         self.set_title("Robot factory")
         self.set_data_value("description", "This process creates the Robot.")
 
-    def task(self):
+    async def task(self):
         print("Create", flush=True)
         p = Robot()
         p.set_title("Astro Boy")
@@ -68,7 +68,7 @@ class Move(Process):
         self.set_title("Move process")
         self.set_data_value("description", "This process emulates a short moving step of the robot")
 
-    def task(self):
+    async def task(self):
         print(f"Moving {self.get_param('moving_step')}", flush=True)
         p = Robot()
 
@@ -100,7 +100,7 @@ class Eat(Process):
         self.set_data_value("description", "This process emulates the meal of the robot before its flight!")
 
 
-    def task(self):
+    async def task(self):
         print(f"Eating {self.get_param('food_weight')}", flush=True)
         p = Robot()
         p.set_position(self.input['robot'].position.copy())
@@ -119,7 +119,7 @@ class Wait(Process):
         self.set_title("Wait process")
         self.set_data_value("description", "This process emulates the resting time of the robot before its flight!")
 
-    def task(self):
+    async def task(self):
         print(f"Waiting {self.get_param('waiting_time')}", flush=True)
         p = Robot()
         p.set_position(self.input['robot'].position.copy())
@@ -138,7 +138,7 @@ class Fly(Move):
         self.set_title("Fly process")
         self.set_data_value("description", "This process emulates the fly of the robot. It inherites the Move process.")
 
-    def task(self):
+    async def task(self):
         print(f"Start flying ...")
         super().task()
 

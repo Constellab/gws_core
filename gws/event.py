@@ -3,6 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import inspect
+import asyncio
+
 from gws.logger import Error
 
 class EventListener:
@@ -15,17 +18,24 @@ class EventListener:
     def __init__(self):
 
         self._events = {}
-
-    def call(self, name: str, *args, **kwargs):
+    
+    def sync_call(self, name: str, *args, **kwargs):
         """
         Calls an event by its name 
 
         :param name: Name of the event
         :type name: `str`
         """
+        
         for func in self._events.get(name,[]):
-            func(*args, **kwargs)
-
+            if not inspect.iscoroutinefunction(func):
+                func(*args, **kwargs)
+    
+    async def async_call(self, name: str, *args, **kwargs):
+        for func in self._events.get(name,[]):
+            if inspect.iscoroutinefunction(func):
+                await func(*args, **kwargs)
+        
     def add(self, name: str, callback: callable):
         """
         Adds an event (i.e. callback function) to the listener 
