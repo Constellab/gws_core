@@ -491,20 +491,32 @@ class Viewable(Model):
                 transaction.rollback()
                 return False
 
-    def as_json(self) -> str:
+    def as_json(self, stringify: bool=False, prettify: bool=False) -> (str, dict, ):
         """
-        Returns JSON (a dictionnary) representation of the model.
-
-        :return: The JSON dictionary 
-        :rtype: dict
+        Returns JSON string or dictionnary representation of the model.
+        
+        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
+        :type stringify: bool
+        :param prettify: If True, indent the JSON string. Defaults to False.
+        :type prettify: bool
+        :return: The representation
+        :rtype: dict, str
         """
 
-        return {
+        _json = {
             "uri": self.uri,
             "type": self.type,
             "data" : self.data,
             "creation_datetime" : str(self.creation_datetime),
         }
+        
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
 
     def as_html(self) -> str:
         """
@@ -871,7 +883,18 @@ class Process(Viewable, SystemTrackable):
         """
         return self._instance_name
     
-    def as_json(self, bare: bool=False):
+    def as_json(self, bare: bool=False, stringify: bool=False, prettify: bool=False) -> (str, dict, ):
+        """
+        Returns JSON string or dictionnary representation of the model.
+        
+        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
+        :type stringify: bool
+        :param prettify: If True, indent the JSON string. Defaults to False.
+        :type prettify: bool
+        :return: The representation
+        :rtype: dict, str
+        """
+        
         _json = super().as_json()
         _json["input"] = self.input.as_json(bare=bare)
         _json["output"] = self.input.as_json(bare=bare)
@@ -887,7 +910,13 @@ class Process(Viewable, SystemTrackable):
                 t_str = spec["type"].__name__ 
                 _json["config"][k]["type"] = t_str
         
-        return _json
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
     
     # -- C --
     
@@ -1381,20 +1410,32 @@ class Experiment(Viewable):
                 transaction.rollback()
                 return False
 
-    def as_json(self) -> str:
+    def as_json(self, stringify: bool=False, prettify: bool=False) -> (str, dict, ):
         """
-        Returns JSON (a dictionnary) representation of the model.
-
-        :return: The JSON dictionary 
-        :rtype: dict
+        Returns JSON string or dictionnary representation of the model.
+        
+        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
+        :type stringify: bool
+        :param prettify: If True, indent the JSON string. Defaults to False.
+        :type prettify: bool
+        :return: The representation
+        :rtype: dict, str
         """
+        
         _json = super().as_json()
         _json.update({
             "protocol_job_uri": self.protocol_job_uri,
             "score": self.score,
             "is_in_progress": self.is_in_progress,
         })
-        return _json
+        
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
 
     # -- D --
 
@@ -1572,12 +1613,16 @@ class Job(Viewable, SystemTrackable):
         
         return self.data["instance_name"]
     
-    def as_json(self) -> str:
+    def as_json(self, stringify: bool=False, prettify: bool=False) -> (str, dict, ):
         """
-        Returns a JSON representation of the model.
-
-        :return: The JSON representation 
-        :rtype: dict
+        Returns JSON string or dictionnary representation of the model.
+        
+        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
+        :type stringify: bool
+        :param prettify: If True, indent the JSON string. Defaults to False.
+        :type prettify: bool
+        :return: The representation
+        :rtype: dict, str
         """
         
         _json = super().as_json()
@@ -1619,7 +1664,13 @@ class Job(Viewable, SystemTrackable):
             "is_finished": self.is_finished
         })
   
-        return _json
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
 
     # -- C --
 
@@ -2542,13 +2593,18 @@ class Resource(Viewable, SystemTrackable):
                 transaction.rollback()
                 return False
 
-    def as_json(self) -> dict:
+    def as_json(self, stringify: bool=False, prettify: bool=False) -> (str, dict, ):
         """
-        Returns JSON (a dictionnary) representation of the model.
-
-        :return: The JSON dictionary 
-        :rtype: dict
+        Returns JSON string or dictionnary representation of the model.
+        
+        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
+        :type stringify: bool
+        :param prettify: If True, indent the JSON string. Defaults to False.
+        :type prettify: bool
+        :return: The representation
+        :rtype: dict, str
         """
+        
         _json = super().as_json()
 
         if not self.job is None:
@@ -2557,7 +2613,13 @@ class Resource(Viewable, SystemTrackable):
                 "experiment_uri": self.job.experiment.uri,
             })
   
-        return _json
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
     
     # -- D --
 
@@ -2734,21 +2796,34 @@ class ViewModel(Model):
 
     # -- A --
 
-    def as_json(self):
+    def as_json(self, stringify: bool=False, prettify: bool=False) -> (str, dict, ):
         """
-        Returns a JSON (a dictionnary) representation of the view mode.
-
-        :return: A JSON (dictionary)
-        :rtype: dict
+        Returns JSON string or dictionnary representation of the model.
+        
+        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
+        :type stringify: bool
+        :param prettify: If True, indent the JSON string. Defaults to False.
+        :type prettify: bool
+        :return: The representation
+        :rtype: dict, str
         """
-        return {
+        
+        _json = {
             "uri": self.uri,
             "type": self.type,
             "data" : self.data,
             "model": self.model.as_json(),
             "creation_datetime" : str(self.creation_datetime),
         }
-
+        
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
+        
     def as_html(self):
         """
         Returns HTML representation of the view model.

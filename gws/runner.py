@@ -79,7 +79,7 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, \
         module = importlib.import_module(module_name)
         t = getattr(module, function_name, None)
         if t is None:
-            raise Error("manage", "CLI not found. Please ensure that method {cli} is defined")
+            raise Error("manage", f"CLI not found. Please check that method {cli} is defined")
         else:
             t()
 
