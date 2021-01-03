@@ -3,7 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import io
+import os
+import pathlib
 from typing import List
 from datetime import datetime
 from pathlib import Path
@@ -78,14 +79,19 @@ class Importer(Process):
         'resource_type': {"type": str, "default": None, 'description': "Expected resource type"},
     }
     
-    def task(self):
+    async def task(self):
         t_str = self.get_param("resource_type")
+        source_path = self.get_param("source_path")
+        file_format = self.get_param("file_format")
+        
         model_t = Controller.get_model_type(t_str)
         if model_t:
             try:
-                resource = model_t._import(source_path)
+                resource = model_t._import(source_path, file_format=file_format)
             except Exception as err:
                 raise Error("Importer", "task", f"Could not import the resource. Error: {err}")
+                
+        self.output["resource"] = resource
 
 
 class Exporter(Process):
@@ -94,12 +100,19 @@ class Exporter(Process):
     config_specs = {
         'destination_path': {"type": str, "default": None, 'description': "Destination of the exported file"},
         'file_format': {"type": str, "default": None, 'description': "File format"},
-        'resource_type': {"type": str, "default": None, 'description': "Expected resource type"},
     }
     
-    def task(self):
+    async def task(self):
+        destination_path = self.get_param("destination_path")
+        file_format = self.get_param("file_format")
         resource = self.input['resource']
+        
         try:
-            resource._export(destination_path, output_type=resource_type)
+            p = Path(destination_path)
+            parent_dir = p.parent
+            if not os.path.exists(parent_dir):
+                os.makedirs(parent_dir)
+                
+            resource._export(destination_path, file_format=file_format)
         except Exception as err:
             raise Error("Exporter", "task", f"Could not export the resource. Error: {err}")

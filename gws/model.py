@@ -2639,7 +2639,7 @@ class Resource(Viewable, SystemTrackable):
                 transaction.rollback()
                 return False
     
-    def _export(self, dest_file: 'File', file_format:str = None):
+    def _export(self, dest_file: str, file_format:str = None):
         """ 
         Export to a give repository
 
@@ -2653,7 +2653,7 @@ class Resource(Viewable, SystemTrackable):
     
     # -- P --
     
-    def _import(self, source_file: 'File', file_format:str = None) -> any:
+    def _import(self, source_file: str, file_format:str = None) -> any:
         """ 
         Import a give from repository
 
