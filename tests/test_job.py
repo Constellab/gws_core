@@ -10,25 +10,30 @@ class TestJob(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        Experiment.drop_table()
         Protocol.drop_table()
         Process.drop_table()
         Config.drop_table()
         Job.drop_table()
+        Experiment.drop_table()
+        
+        Experiment.create_table()
+        Protocol.create_table()
+        Process.create_table()
+        Config.create_table()
+        Job.create_table()
         pass
 
     @classmethod
     def tearDownClass(cls):
-        Experiment.drop_table()
         Protocol.drop_table()
         Process.drop_table()
         Config.drop_table()
         Job.drop_table()
+        Experiment.drop_table()
         pass
 
     def test_job(self):
-        proc = Process()
-        proc.set_active_name("proc")
+        proc = Process(instance_name="proc")
         proc.save()
 
         j1 = Job(process=proc, config=Config())
@@ -44,21 +49,11 @@ class TestJob(unittest.TestCase):
         e = proto.create_experiment()
         
         def _on_end(*args, **kwargs):
-            
-            
             job_list = Job.select().where(Job.process_type == "gws.model.Protocol")
             for job in job_list:
                 print("-------------------------------- flow")
                 print( job.flow )
         
-        
-        async def _run():
-            await e.run()
-            print("Sleeping 1 sec for waiting all tasks to finish ...")
-            await asyncio.sleep(1)
-        
         e.on_end( _on_end )
-        asyncio.run( _run() )
-        
-        print(e.protocol)
+        asyncio.run( e.run() )
         

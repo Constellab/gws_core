@@ -795,7 +795,7 @@ class Process(Viewable, SystemTrackable):
     config_specs: dict = {}
     
     _parent_protocol: 'Protocol' = None
-    _active_name: str = None
+    _instance_name: str = None
     _event_listener: EventListener = None
     _input: Input = None
     _output: Output = None
@@ -807,7 +807,15 @@ class Process(Viewable, SystemTrackable):
     _is_deletable = False
     _table_name = 'gws_process'
 
-    def __init__(self, *args, active_name: str=None, **kwargs):
+    def __init__(self, *args, instance_name: str=None, **kwargs):
+        """
+        Constructor
+
+        :property instance_name: The canonical name of the process instance (in the context of the protocol it belongs to). 
+        It is related to the current in-memory instance. It is therefore not saved in db.
+        :type instance_name: `str`        
+        """
+        
         super().__init__(*args, **kwargs)
         self._input = Input(self)
         self._output = Output(self)
@@ -831,7 +839,9 @@ class Process(Viewable, SystemTrackable):
 
         if 'title' in kwargs:
             self.set_title(kwargs['title'])
-            self.set_active_name(kwargs['title'])
+        
+        if instance_name:
+            self.set_instance_name(instance_name)
           
         self.save()
 
@@ -852,14 +862,14 @@ class Process(Viewable, SystemTrackable):
             raise Error("Process", "add_event", f"Cannot add event. Error message: {err}")
     
     @property
-    def active_name(self):
+    def instance_name(self):
         """
         The active name of the process in the context of a protocol
 
         :return: The active name
         :rtype: `str`
         """
-        return self._active_name
+        return self._instance_name
     
     def as_json(self, bare: bool=False):
         _json = super().as_json()
@@ -883,10 +893,13 @@ class Process(Viewable, SystemTrackable):
     
     def create_experiment(self, config: Config = None):
         if isinstance(config, Config):
-            job = self.get_active_job()
+            job = self.job
             job.set_config(config)
-
-        proto = Protocol(processes={ self.classname(): self })
+        
+        instance_name = self.instance_name if self.instance_name else self.classname()
+        proto = Protocol(processes={ 
+            instance_name: self 
+        })
         e = Experiment(protocol=proto)
         return e
 
@@ -911,7 +924,7 @@ class Process(Viewable, SystemTrackable):
         :return: The config
         :rtype: Config
         """
-        return self.get_active_job().config
+        return self.job.config
 
     def create_source_zip(self):
         model_t = Controller.get_model_type(self.type) #/:\ Use the true object type (self.type)
@@ -930,20 +943,6 @@ class Process(Viewable, SystemTrackable):
         :rtype: [str, int, float, bool]
         """
         return self.config.get_param(name)
-
-    def get_active_job(self):
-        """
-        Initialize an job for the process.
-
-        :return: The job
-        :rtype: Job
-        """
-
-        if self._job is None:
-            config = Config(specs = self.config_specs)
-            self._job = Job(process=self, config=config)
-
-        return self._job
 
     def get_next_procs(self) -> list:
         """ 
@@ -993,7 +992,24 @@ class Process(Viewable, SystemTrackable):
             raise Error(self.classname(), "in_port", f"The input port '{name}' is not found")
 
         return self._input._ports[name]
+    
+    # -- J --
+    
+    @property
+    def job(self):
+        """
+        Initialize an job for the process.
 
+        :return: The job
+        :rtype: Job
+        """
+
+        if self._job is None:
+            config = Config(specs = self.config_specs)
+            self._job = Job(process=self, config=config)
+
+        return self._job
+    
     # -- L --
 
     def __lshift__(self, name: str) -> InPort:
@@ -1072,10 +1088,10 @@ class Process(Viewable, SystemTrackable):
     async def _run_next_processes(self):
         self._output.propagate()
         aws  = []
-        job = self.get_active_job()
+        job = self.job
         for proc in self._output.get_next_procs():
             # ensure that the next process is held by this experiment
-            proc_job = proc.get_active_job()
+            proc_job = proc.job
             proc_job.experiment = job.experiment
             proc_job.save()
 
@@ -1095,7 +1111,7 @@ class Process(Viewable, SystemTrackable):
         else:
             Info(f"Running {self.full_classname()} ...")
         
-        job = self.get_active_job()
+        job = self.job
         if not job.save():
             raise Error(self.classname(), "run", "Cannot save the job")
         
@@ -1112,7 +1128,7 @@ class Process(Viewable, SystemTrackable):
         self.is_running = False
         self.is_finished = True
 
-        job = self.get_active_job()
+        job = self.job
         job.update_status()
         if not job.save():
             raise Error(self.classname(), "_run_after_task", f"Cannot save the job")
@@ -1144,12 +1160,12 @@ class Process(Viewable, SystemTrackable):
         
     # -- S --
     
-    def set_active_name(self, name:str ):
-        if self._active_name is None:
-            self._active_name = name
+    def set_instance_name(self, name:str ):
+        if not self._instance_name:
+            self._instance_name = name
         
-        if self._active_name != name:
-            raise Error(self.classname(), "set_active_name", "Try to set a different active name")
+        if self._instance_name != name:
+            raise Error(self.classname(), "set_instance_name", "Try to set a different active name")
             
     def set_input(self, name: str, resource: 'Resource'):
         """ 
@@ -1177,7 +1193,7 @@ class Process(Viewable, SystemTrackable):
         """
 
         if isinstance(config, Config):
-            job = self.get_active_job()
+            job = self.job
             job.set_config(config)
             #self.config = config
         else:
@@ -1324,9 +1340,9 @@ class Experiment(Viewable):
         
         if isinstance(protocol, Protocol):
             if protocol.get_title():
-                protocol.set_active_name(protocol.get_title())
+                protocol.set_instance_name(protocol.get_title())
             else:
-                protocol.set_active_name(protocol.full_classname())
+                protocol.set_instance_name(protocol.full_classname())
             
             if not protocol.is_saved():
                 protocol.save()
@@ -1474,7 +1490,7 @@ class Experiment(Viewable):
         return Q
 
     async def run(self):
-        self.job = self.protocol.get_active_job()
+        self.job = self.protocol.job
         self.save()
         await self.protocol._run()
 
@@ -1531,10 +1547,10 @@ class Job(Viewable, SystemTrackable):
             self._process = process
             self.update_status()
             
-            if not process.active_name:
+            if not process.instance_name:
                 raise Error("Job", "__init__", "The process has no active name.")
                 
-            self.data["active_name"] = process.active_name
+            self.data["instance_name"] = process.instance_name
             
     # -- A --
 
@@ -1546,7 +1562,7 @@ class Job(Viewable, SystemTrackable):
         return super().archive(status)
     
     @property
-    def active_name(self) -> str:
+    def instance_name(self) -> str:
         """
         Returns the active name of the job (i.e. of the process) in the context of the current protocol.
 
@@ -1554,7 +1570,7 @@ class Job(Viewable, SystemTrackable):
         :rtype: `str`
         """
         
-        return self.data["active_name"]
+        return self.data["instance_name"]
     
     def as_json(self) -> str:
         """
@@ -1587,7 +1603,7 @@ class Job(Viewable, SystemTrackable):
             "process": {
                 "uri": self.process.uri,
                 "type": self.process.type,
-                "active_name": self.active_name, #do not use self.process.active_name as it is not saved on db
+                "instance_name": self.instance_name, #do not use self.process.instance_name as it is not saved on db
                 "input": self.process.input.as_json(),
                 "output": self.process.output.as_json(),
                 "config_specs": config_specs
@@ -1661,8 +1677,8 @@ class Job(Viewable, SystemTrackable):
             flow["outerfaces"][k] = protocol._outerfaces[k].as_json()
 
         for job in self.children:
-            active_name = job.active_name
-            flow["jobs"][active_name] = job.as_json()
+            instance_name = job.instance_name
+            flow["jobs"][instance_name] = job.as_json()
 
             for k in job.data["input"]:
                 _input = job.data["input"][k]
@@ -1673,7 +1689,7 @@ class Job(Viewable, SystemTrackable):
                         "job_uri": job.uri,
                         "process": {
                             "uri": job.process.uri,
-                            "active_name": job.process.active_name,
+                            "instance_name": job.process.instance_name,
                             "port": k,
                         }
                     },
@@ -1725,7 +1741,7 @@ class Job(Viewable, SystemTrackable):
                         "job_uri": job.uri,
                         "process": {
                             "uri": job.process.uri,
-                            "active_name": job.process.active_name,
+                            "instance_name": job.process.instance_name,
                             "port": k,
                         }
                     },
@@ -1776,7 +1792,7 @@ class Job(Viewable, SystemTrackable):
             process_t = Controller.get_model_type(self.process_type)
             proc = process_t.get(process_t.uri == self.process_uri)
             self._process = proc.cast()
-            self._process.set_active_name(self.active_name)
+            self._process.set_instance_name(self.instance_name)
             return self._process
         else:
             return None
@@ -1841,7 +1857,7 @@ class Job(Viewable, SystemTrackable):
                 self.config_uri = self._config.uri
 
                 if not self._process._parent_protocol is None:
-                    self.parent_job = self._process._parent_protocol.get_active_job()
+                    self.parent_job = self._process._parent_protocol.job
                 
                 res = self.process.output.get_resources()
                 for k in res:
@@ -1889,7 +1905,7 @@ class Job(Viewable, SystemTrackable):
                             "job_uri": res.job.uri,
                             "process": {
                                 "uri": res.job.process.uri,
-                                "active_name": res.job.process.active_name,
+                                "instance_name": res.job.process.instance_name,
                                 "port": left_port_name
                             }
                         }
@@ -1912,7 +1928,7 @@ class Job(Viewable, SystemTrackable):
                             "job_uri": res.job.uri,
                             "process": {
                                 "uri": res.job.process.uri,
-                                "active_name": res.job.process.active_name,
+                                "instance_name": res.job.process.instance_name,
                                 "port": left_port_name,
                             },
                             "interface": {
@@ -2042,7 +2058,7 @@ class Protocol(Process, SystemTrackable):
             
         process._parent_protocol = self
         self._processes[name] = process
-        process.set_active_name(name)
+        process.set_instance_name(name)
 
     def add_connector(self, connector: Connector):
         """ 
@@ -2071,12 +2087,12 @@ class Protocol(Process, SystemTrackable):
 
     def create_experiment(self, uri: str = None, config: Config = None):
         if self.get_title():
-            self.set_active_name(self.get_title())
+            self.set_instance_name(self.get_title())
         else:
-            self.set_active_name(self.full_classname())
+            self.set_instance_name(self.full_classname())
         
         if isinstance(config, Config):
-            job = self.get_active_job()
+            job = self.job
             job.set_config(config)
         
         if uri:
@@ -2170,7 +2186,7 @@ class Protocol(Process, SystemTrackable):
         return self.data["graph"]
     
     def get_active_experiment(self):
-        return self.get_active_job().experiment
+        return self.job.experiment
 
     def get_process(self, name: str) -> Process:
         """ 
@@ -2275,7 +2291,7 @@ class Protocol(Process, SystemTrackable):
             return
         
         self.set_title(graph.get("title",""))
-        self.set_active_name(graph.get("title",""))
+        self.set_instance_name(graph.get("title",""))
         processes = {}
         connectors = []
         interfaces = {}
@@ -2359,7 +2375,7 @@ class Protocol(Process, SystemTrackable):
         e.save()
 
         for k in self._processes:
-            job = self._processes[k].get_active_job()
+            job = self._processes[k].job
             job.experiment = e
             job.save()
         
@@ -2406,7 +2422,7 @@ class Protocol(Process, SystemTrackable):
     # -- S --
 
     def set_active_experiment(self, experiment: Experiment):
-        job = self.get_active_job()
+        job = self.job
         job.set_experiment(experiment)
         experiment.protocol_job_uri = job.uri
 

@@ -35,9 +35,9 @@ class Drive(Process):
 class TestIO(unittest.TestCase):
     
     def test_connect(self):
-        p0 = Create(active_name="p0")
-        p1 = Move(active_name="p1")
-        p2 = Move(active_name="p2")
+        p0 = Create(instance_name="p0")
+        p1 = Move(instance_name="p1")
+        p2 = Move(instance_name="p2")
         
         # create a chain
         port_connect = p0.out_port('create_person_out')   | p1.in_port('move_person_in')
@@ -52,7 +52,7 @@ class TestIO(unittest.TestCase):
         self.assertIsInstance(port_connect, Connector)
         
         # assert error
-        p3 = Drive(active_name="p3")
+        p3 = Drive(instance_name="p3")
         self.assertRaises(Exception, p2.out_port('move_person_out').pipe,  p3.in_port('move_drive_in'))
 
         self.assertEquals(port_connect.as_json(), {

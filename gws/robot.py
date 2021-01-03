@@ -140,7 +140,7 @@ class Fly(Move):
 
     async def task(self):
         print(f"Start flying ...")
-        super().task()
+        await super().task()
 
 def create_protocol():
     p0 = Create()

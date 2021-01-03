@@ -277,12 +277,12 @@ class IOface:
         return {
             "name": self.name,
             "from": {
-                "node": self.source_port.process.active_name,
+                "node": self.source_port.process.instance_name,
                 "port": self.source_port.name,
             },
             
             "to": {
-                "node": self.target_port.process.active_name,
+                "node": self.target_port.process.instance_name,
                 "port": self.target_port.name,
             }
         }
@@ -351,10 +351,10 @@ class Connector:
         if out_port.parent is None or source_process is None:
             raise Error("Connector", "__init__", "The output port is not associated with a process")
         
-        #if not target_process.active_name:
+        #if not target_process.instance_name:
         #    raise Error("Connector", "__init__", "The target process has no active name")
         #    
-        #if not source_process.active_name:
+        #if not source_process.instance_name:
         #    raise Error("Connector", "__init__", "The soruce process has no active name")
         
         self.in_port = in_port
@@ -372,11 +372,11 @@ class Connector:
 
         link = {
             "from": {
-                "node": self.left_process.active_name,
+                "node": self.left_process.instance_name,
                 "port": self.out_port.name, 
             },
             "to": {
-                "node": self.right_process.active_name,  
+                "node": self.right_process.instance_name,  
                 "port": self.in_port.name, 
             }
         }
@@ -668,7 +668,7 @@ class Output(IO):
         :type resource: Resource
         """
         if self._parent.is_finished:
-            raise Error(self.classname(), "__setitem__", f"Cannot alter the output of process '{self._parent.active_name}' after running")
+            raise Error(self.classname(), "__setitem__", f"Cannot alter the output of process '{self._parent.instance_name}' after running")
 
         super().__setitem__(name,resource)
         
