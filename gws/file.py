@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 import os
+import copy
 import pathlib
 from typing import List
 from datetime import datetime
@@ -82,12 +83,14 @@ class Importer(Process):
     async def task(self):
         t_str = self.get_param("resource_type")
         source_path = self.get_param("source_path")
-        file_format = self.get_param("file_format")
+        #file_format = self.get_param("file_format")
         
         model_t = Controller.get_model_type(t_str)
         if model_t:
             try:
-                resource = model_t._import(source_path, file_format=file_format)
+                params = copy.deepcopy(self.config.params)
+                del params["source_path"]
+                resource = model_t._import(source_path, **params)
             except Exception as err:
                 raise Error("Importer", "task", f"Could not import the resource. Error: {err}")
                 
@@ -104,7 +107,7 @@ class Exporter(Process):
     
     async def task(self):
         destination_path = self.get_param("destination_path")
-        file_format = self.get_param("file_format")
+        #file_format = self.get_param("file_format")
         resource = self.input['resource']
         
         try:
@@ -112,7 +115,9 @@ class Exporter(Process):
             parent_dir = p.parent
             if not os.path.exists(parent_dir):
                 os.makedirs(parent_dir)
-                
-            resource._export(destination_path, file_format=file_format)
+            
+            params = copy.deepcopy(self.config.params)
+            del params["source_path"]
+            resource._export(destination_path, **params)
         except Exception as err:
             raise Error("Exporter", "task", f"Could not export the resource. Error: {err}")

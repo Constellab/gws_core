@@ -876,9 +876,9 @@ class Process(Viewable, SystemTrackable):
     @property
     def instance_name(self):
         """
-        The active name of the process in the context of a protocol
+        The instance name of the process in the context of a protocol
 
-        :return: The active name
+        :return: The instance name
         :rtype: `str`
         """
         return self._instance_name
@@ -1095,7 +1095,9 @@ class Process(Viewable, SystemTrackable):
         :callback: `function`
         """
         self.add_event('start', callback)
-
+    
+    #-- P --
+    
     # -- R -- 
 
     async def _run(self):
@@ -1194,7 +1196,7 @@ class Process(Viewable, SystemTrackable):
             self._instance_name = name
         
         if self._instance_name != name:
-            raise Error(self.classname(), "set_instance_name", "Try to set a different active name")
+            raise Error(self.classname(), "set_instance_name", "Try to set a different instance name")
             
     def set_input(self, name: str, resource: 'Resource'):
         """ 
@@ -1589,7 +1591,7 @@ class Job(Viewable, SystemTrackable):
             self.update_status()
             
             if not process.instance_name:
-                raise Error("Job", "__init__", "The process has no active name.")
+                raise Error("Job", "__init__", "The process has no instance name.")
                 
             self.data["instance_name"] = process.instance_name
             
@@ -1605,9 +1607,9 @@ class Job(Viewable, SystemTrackable):
     @property
     def instance_name(self) -> str:
         """
-        Returns the active name of the job (i.e. of the process) in the context of the current protocol.
+        Returns the instance name of the job (i.e. of the process) in the context of the current protocol.
 
-        :return: The active name
+        :return: The instance name
         :rtype: `str`
         """
         
@@ -2639,26 +2641,29 @@ class Resource(Viewable, SystemTrackable):
                 transaction.rollback()
                 return False
     
-    def _export(self, dest_file: str, file_format:str = None):
+    # -- E --
+    
+    def _export(self, dest_path: str, file_format:str = None):
         """ 
         Export to a give repository
 
-        :param dest_file: The destination file
-        :type dest_file: File
+        :param dest_path: The destination file path
+        :type dest_path: str
         """
         
         #@ToDo: ensure that this method is only called by an Importer
         
         pass
     
-    # -- P --
+    # -- I --
     
-    def _import(self, source_file: str, file_format:str = None) -> any:
+    @classmethod
+    def _import(cls, source_path: str, file_format:str = None) -> any:
         """ 
         Import a give from repository
 
-        :param source_file: The source file
-        :type source_file: File
+        :param source_path: The source file path
+        :type source_path: str
         :returns: the parsed data
         :rtype any
         """
@@ -2666,6 +2671,8 @@ class Resource(Viewable, SystemTrackable):
         #@ToDo: ensure that this method is only called by an Importer 
         pass
     
+    # -- P --
+
     # -- S --
 
     def _set_job(self, job: 'Job'):
@@ -2707,7 +2714,10 @@ class ResourceSet(Resource):
 
     def len(self):
         return self.len()
-
+    
+    def __contains__(self, val):
+        return val in self.set
+    
     def __len__(self):
         return len(self.set)
 
@@ -2841,7 +2851,7 @@ class ViewModel(Model):
 
     def get_title(self) -> str:
         """ 
-        Get the title
+        Get the title.
         """
         return self.data.get("title", "")
 
@@ -2856,7 +2866,7 @@ class ViewModel(Model):
         model = model_t.get(model_t.id == self.model_id)
         self._model = model.cast()
         return self._model
-
+    
     # -- R --
 
     @classmethod
@@ -2933,7 +2943,17 @@ class ViewModel(Model):
                 except Exception as err:
                     transaction.rollback()
                     raise Error("ViewModel", "save", f"Error message: {err}")
-
+    
+    # -- T --
+    
+    @property
+    def title(self):
+        """ 
+        Get the title.
+        """
+        return self.data.get("title", "")
+    
+    
 # ####################################################################
 #
 # HTMLViewModel class
