@@ -8,17 +8,18 @@ from gws.model import Resource
 
 class JSONData(Resource):
     
+
     # -- E --
     
-    def _export(self, dest_file: str, file_format:str = None):
+    def _export(self, file_path: str, file_format:str = None):
         """ 
         Export to a give repository
 
-        :param dest_file: The destination file
-        :type dest_file: File
+        :param file_path: The destination file path
+        :type file_path: File
         """
         
-        with open(dest_file, "w") as f:
+        with open(file_path, "w") as f:
             json.dump(self.kv_data, f, indent=4)
             
     # -- G --
@@ -31,20 +32,22 @@ class JSONData(Resource):
     
     # -- I --
     
-    def _import(self, source_file: str, file_format:str = None) -> any:
+    @classmethod
+    def _import(cls, file_path: str, file_format:str = None) -> any:
         """ 
         Import a give from repository
 
-        :param source_file: The source file
-        :type source_file: File
+        :param file_path: The source file path
+        :type file_path: File
         :returns: the parsed data
         :rtype any
         """
         
-        with open(source_file, "r") as f:
-            self.data = {}
-            self.kv_data = json.load(f)
-    
+        with open(file_path, "r") as f:
+            json_data = cls()
+            json_data.kv_data = json.load(f)
+        
+        return json_data
     # -- K --
     
     @property
@@ -62,3 +65,4 @@ class JSONData(Resource):
     
     def __setitem__(self, key, val):
         self.data[key] = val
+

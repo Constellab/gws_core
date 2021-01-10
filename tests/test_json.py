@@ -13,8 +13,7 @@ class TestJson(unittest.TestCase):
     def test_json_data(self):
         
         file = os.path.join(testdata_dir, "mini_travel_graph.json")
-        d = JSONData()
-        d._import(file)
+        d = JSONData._import(file)
         
         _json = {}
         with open(file) as f:

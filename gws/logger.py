@@ -32,13 +32,13 @@ class Logger:
 
             if is_new_session:
                 cls._logger.info("\nSession: " + str(datetime.datetime.now()) + "\n")
-
+    
     # -- E --
 
     @classmethod
     def error(cls, message):
         Logger()
-        cls._logger.error(f"ERROR: {datetime.datetime.now().time()}: {message}")
+        cls._logger.error(f"ERROR: {datetime.datetime.now().time()} -- {message}")
 
     # -- F --
 
@@ -52,17 +52,21 @@ class Logger:
     @classmethod
     def info(cls, message):
         Logger()
-        cls._logger.info(f"INFO: {datetime.datetime.now().time()}: {message}")
+        cls._logger.info(f"INFO: {datetime.datetime.now().time()} -- {message}")
         if cls._is_test:
             print(message)
-
+    
+    # -- S --
+    
+    def __str__(self):
+        return 
     
     # -- W --
 
     @classmethod
     def warning(cls, message):
         Logger()
-        cls._logger.warning(f"WARNING: {datetime.datetime.now().time()}: {message}")
+        cls._logger.warning(f"WARNING: {datetime.datetime.now().time()} # {message}")
         if cls._is_test:
             print(message)
             
@@ -70,7 +74,7 @@ class Logger:
 class Error(Exception):
     def __init__(self, message, *args):
         if len(args):
-            exc_message = f"{message}. {' '.join(args)}"
+            exc_message = f"({message}, {', '.join(args)})"
         else:
             exc_message = message
             
@@ -80,7 +84,7 @@ class Error(Exception):
 class Warning():
     def __init__(self, message, *args):
         if len(args):
-            exc_message = f"{message}. {' '.join(args)}"
+            exc_message = f"({message}, {', '.join(args)})"
         else:
             exc_message = message
             
@@ -89,7 +93,7 @@ class Warning():
 class Info():
     def __init__(self, message, *args):
         if len(args):
-            exc_message = f"{message}. {' '.join(args)}"
+            exc_message = f"({message}, {', '.join(args)})"
         else:
             exc_message = message
             

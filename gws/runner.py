@@ -57,7 +57,7 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, biota_prod_d
         if test == "all":
             test = "test*"
 
-        settings.data["db_name"] = settings.data.get("test_db_name", "db_test.sqlite3")
+        settings.data["db_name"] = "test_db.sqlite3"
         settings.data["is_test"] = True        
         settings.data["biota_prod_db"] = biota_prod_db
         

@@ -23,21 +23,160 @@ from gws.utils import slugify, generate_random_chars
 from gws.logger import Error
 
 class File(Resource):
-    path = CharField(null=False, index=True)
-    _file_store: FileStore = FileStore()
+    path = CharField(null=True, index=True, unique=True)
+    
+    _fp = None
+    _mode = "a+t"
     _table_name = "gws_file"
     
-    def move(self, dest_path: str):
-        self._file_store.move(self.path, dest_path)
-        self.path = dest_path
-        self.save()
+    # -- C --
     
-    def exists():
-        return self._file_store.exists(dest_path)
+    def clear(self):
+        """ 
+        Clear file content 
+        """
+        
+        if self._fp:
+            self.close()
+            
+        open(self.path, 'w').close()
+    
+    def close(self):
+        """ 
+        Close the file 
+        """
+        
+        if not self.is_in_file_store():
+            Error("File", "clear", "The file path is outside th store")
+            
+        if self._fp:
+            self._fp.close()
+            self._fp = None
+    
+    # -- D --
+    def delete_instance(self, *args, **kwargs):
+        if self.is_in_file_store():
+            FileStore.remove(self)
+            
+        return super().delete_instance(*args, **kwargs)
+        
+    # -- E --
+    
+    @property
+    def extension(self):
+        return Path(self.path).suffix
+    
+    def exists(self):
+        return os.path.exists(self.path)
+    
+    # -- I --
+    
+    def is_in_file_store( self ):
+        fs = FileStore()
+        return fs.contains(self)
+        
+    # -- N --
+    
+    @property
+    def name(self):
+        return Path(self.path).name
+    
+    # -- O --
+    
+    def open(self, mode: str=None):
+        """ 
+        Open the file 
+        """
+        
+        if not self.is_in_file_store():
+            Error("File", "clear", "The file path is outside th store")
+            
+        if not mode:
+            mode = self._mode
+        
+        if not os.path.exists(self.dir):
+            os.makedirs(self.dir)
+            if not os.path.exists(self.dir):
+                raise Error("FileStore", "move", f"Cannot create directory {self.dir}")
+            
+        self._fp = open(self.path, mode)
+        return self._fp
+    
+    # -- P --
+    
+    @property
+    def dir(self):
+        return Path(self.path).parent
+    
+    # -- R --
+    
+    def reopen(self, mode: str=None):
+        self.close()
+        self.open(mode)
+        
+    def read(self):
+        if not self._fp:
+            self.open()  
+        
+        self._fp.seek(0)
+        return self._fp.read()
+    
+    def readline(self):
+        if not self._fp:
+            self.open()  
+            
+        return self._fp.readline()
+    
+    def readlines(self, n=-1):
+        if not self._fp:
+            self.open()  
+            
+        return self._fp.readlines(n)
+    
+    # -- W --
+    
+    def write(self, data: str = None):
+        """ 
+        Write in the file 
+        """
+        
+        if not self._fp:
+            self.open()   
+            
+        self._fp.write(data)
+
+# ####################################################################
+#
+# TextFile class
+#
+# ####################################################################
+
+class TextFile(File):
+    pass
+
+# ####################################################################
+#
+# BinaryFile class
+#
+# ####################################################################
+
+class BinaryFile(File):
+    _mode = "a+b"
+    
+# ####################################################################
+#
+# FileSet class
+#
+# ####################################################################
 
 class FileSet(ResourceSet):
     _resource_types = (File, )
     
+# ####################################################################
+#
+# Uploader class
+#
+# ####################################################################
 
 class Uploader(Process):
     input_specs = {}
@@ -55,13 +194,11 @@ class Uploader(Process):
         
     def task(self):
         file_set = FileSet()
-        for file in self._files:
+        for ufile in self._files:
             fs = FileStore()
-            file_name = self.uniquify(file.filename)
-            file_path = fs.push(file.file, dest_file_name=file_name, slot="uploads")
-            f = File(path=file_path)
-            f.save()
-            file_set[file_name] = f
+            filename = self.uniquify(ufile.filename)
+            file = fs.push(file.file, dest_file_name=filename, location_dir="uploads")
+            file_set[filename] = file
         
         self.output["file_set"] = file_set
     
@@ -70,54 +207,140 @@ class Uploader(Process):
         p = Path(file_name) 
         file_name = p.stem + "_" + generate_random_chars() + p.suffix
         return file_name
-                
+
+# ####################################################################
+#
+# Importer class
+#
+# ####################################################################
+
 class Importer(Process):
     input_specs = {'file' : File}
     output_specs = {'resource' : Resource}
     config_specs = {
-        'source_path': {"type": str, "default": None, 'description': "Location of the file to import"},
         'file_format': {"type": str, "default": None, 'description': "File format"},
-        'resource_type': {"type": str, "default": None, 'description': "Expected resource type"},
     }
     
     async def task(self):
-        t_str = self.get_param("resource_type")
-        source_path = self.get_param("source_path")
-        #file_format = self.get_param("file_format")
-        
-        model_t = Controller.get_model_type(t_str)
-        if model_t:
-            try:
-                params = copy.deepcopy(self.config.params)
-                del params["source_path"]
-                resource = model_t._import(source_path, **params)
-            except Exception as err:
-                raise Error("Importer", "task", f"Could not import the resource. Error: {err}")
+        file = self.input["file"]
+        model_t = self.output_specs['resource']
+        try:
+            params = copy.deepcopy(self.config.params)
+            resource = model_t._import(file.path, **params)
+            self.output["resource"] = resource
+            
+        except Exception as err:
+            raise Error("Importer", "task", f"Could not import the resource. Error: {err}")
                 
-        self.output["resource"] = resource
-
+        
+        
+# ####################################################################
+#
+# Exporter class
+#
+# ####################################################################
 
 class Exporter(Process):
+    """
+    File exporter. The file is writen in the file store
+    """
+    
+    input_specs = {'resource' : Resource}
+    output_specs = {'file' : File}
+    config_specs = {
+        'file_name': {"type": str, "default": 'file', 'description': "Destination file name in the store"},
+        'file_format': {"type": str, "default": None, 'description': "File format"},
+    }
+    
+    async def task(self):
+        filename = self.get_param("file_name")
+        t = self.output_specs["file"]
+        file = FileStore.create_file(name=filename)
+        try:
+            if not os.path.exists(file.dir):
+                os.makedirs(file.dir)
+            
+            if "file_name" in self.config.params:
+                params = copy.deepcopy(self.config.params)
+                del params["file_name"]
+            else:
+                params = self.config.params
+                
+            resource = self.input['resource']
+            resource._export(file.path, **params)
+            self.output["file"] = file
+            
+        except Exception as err:
+            raise Error("Exporter", "task", f"Could not export the resource. Error: {err}")
+        
+        
+
+# ####################################################################
+#
+# Loader class
+#
+# ####################################################################
+
+class Loader(Process):
+    input_specs = {}
+    output_specs = {'resource' : Resource}
+    config_specs = {
+        'file_path': {"type": str, "default": None, 'description': "Location of the file to import"},
+        'file_format': {"type": str, "default": None, 'description': "File format"},
+    }
+    
+    async def task(self):
+        file_path = self.get_param("file_path")
+        model_t = self.output_specs['resource']
+        try:
+            if "file_path" in self.config.params:
+                params = copy.deepcopy(self.config.params)
+                del params["file_path"]
+            else:
+                params = self.config.params
+                
+            resource = model_t._import(file_path, **params)
+            self.output["resource"] = resource
+            
+        except Exception as err:
+            raise Error("Importer", "task", f"Could not import the resource. Error: {err}")
+
+
+# ####################################################################
+#
+# Dumper class
+#
+# ####################################################################
+
+class Dumper(Process):
+    """
+    Generic data exporter
+    """
+    
     input_specs = {'resource' : Resource}
     output_specs = {}
     config_specs = {
-        'destination_path': {"type": str, "default": None, 'description': "Destination of the exported file"},
+        'file_path': {"type": str, "default": None, 'description': "Destination of the exported file"},
         'file_format': {"type": str, "default": None, 'description': "File format"},
     }
     
     async def task(self):
-        destination_path = self.get_param("destination_path")
-        #file_format = self.get_param("file_format")
+        file_path = self.get_param("file_path")
         resource = self.input['resource']
         
         try:
-            p = Path(destination_path)
+            p = Path(file_path)
             parent_dir = p.parent
             if not os.path.exists(parent_dir):
                 os.makedirs(parent_dir)
             
-            params = copy.deepcopy(self.config.params)
-            del params["source_path"]
-            resource._export(destination_path, **params)
+            if "file_path" in self.config.params:
+                params = copy.deepcopy(self.config.params)
+                del params["file_path"]
+            else:
+                params = self.config.params
+                
+            resource._export(file_path, **params)
         except Exception as err:
             raise Error("Exporter", "task", f"Could not export the resource. Error: {err}")
+            

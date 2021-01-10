@@ -413,7 +413,7 @@ class Model(BaseModel):
                 if Controller.get_settings().is_fts_active:
                     if not _FTSModel is None:
                         if not self._save_fts_document():
-                            raise Error(self.full_classname(), "save", "Cannot save related FTS document")
+                            raise Exception(self.full_classname(), "save", "Cannot save related FTS document")
 
                 #self.kv_store.save()
                 self.save_datetine = datetime.now()
@@ -806,6 +806,7 @@ class Process(Viewable, SystemTrackable):
     output_specs: dict = {}
     config_specs: dict = {}
     
+    _file_store: 'FileStore' = None
     _parent_protocol: 'Protocol' = None
     _instance_name: str = None
     _event_listener: EventListener = None
@@ -1899,10 +1900,10 @@ class Job(Viewable, SystemTrackable):
         with DbManager.db.atomic() as transaction:
             try:
                 if self.process is None:
-                    raise Error("Job", "save", "Cannot save the job. The process is not saved.")
+                    raise Exception("Job", "save", "Cannot save the job. The process is not saved.")
                 
                 if not self.config.save():
-                    raise Error("Job", "save", "Cannot save the job. The config cannnot be saved.")
+                    raise Exception("Job", "save", "Cannot save the job. The config cannnot be saved.")
                 
                 self.process_uri = self._process.uri
                 self.process_type = self._process.type
@@ -1919,17 +1920,17 @@ class Job(Viewable, SystemTrackable):
 
                     if not res[k].is_saved():
                         if not res[k].save(*args, **kwargs):
-                            raise Error("Job", "save", f"Cannot save the resource output '{k}' of the job")
+                            raise Exception("Job", "save", f"Cannot save the resource output '{k}' of the job")
 
                 self.__track_input_uri()
                 #self.__track_ouput_uri()
                 if not super().save(*args, **kwargs):
-                    raise Error("Job", "save", "Cannot save the job.")
+                    raise Exception("Job", "save", "Cannot save the job.")
                 
                 return True
             except Exception as err:
                 transaction.rollback()
-                raise Error("Job", "save", f"Error message: {err}")
+                raise Error("Job", "save", f"An error occuured. Error: {err}")
 
     # -- T --
      
@@ -2364,7 +2365,7 @@ class Protocol(Process, SystemTrackable):
                 process_t = getattr(module, function_name, None)
 
                 if process_t is None:
-                    raise Error(f"Process {node_type_str} is not defined. Please ensure that the corresponding brick is loaded.")
+                    raise Exception(f"Process {node_type_str} is not defined. Please ensure that the corresponding brick is loaded.")
                 else:
                     if node_uri:
                         processes[k] = process_t.get(process_t.uri == node_uri)
@@ -2643,12 +2644,12 @@ class Resource(Viewable, SystemTrackable):
     
     # -- E --
     
-    def _export(self, dest_path: str, file_format:str = None):
+    def _export(self, file_path: str, file_format:str = None):
         """ 
         Export to a give repository
 
-        :param dest_path: The destination file path
-        :type dest_path: str
+        :param file_path: The destination file path
+        :type file_path: str
         """
         
         #@ToDo: ensure that this method is only called by an Importer
@@ -2658,12 +2659,12 @@ class Resource(Viewable, SystemTrackable):
     # -- I --
     
     @classmethod
-    def _import(cls, source_path: str, file_format:str = None) -> any:
+    def _import(cls, file_path: str, file_format:str = None) -> any:
         """ 
         Import a give from repository
 
-        :param source_path: The source file path
-        :type source_path: str
+        :param file_path: The source file path
+        :type file_path: str
         :returns: the parsed data
         :rtype any
         """
@@ -2740,7 +2741,7 @@ class ResourceSet(Resource):
                 self.data["set"] = {}
                 for k in self._set:
                     if not (self._set[k].is_saved() or self._set[k].save()):
-                        raise Error("ResourceSet", "save", f"Cannot save the resource '{k}' of the resource set")
+                        raise Exception("ResourceSet", "save", f"Cannot save the resource '{k}' of the resource set")
 
                     self.data["set"][k] = {
                         "uri": self._set[k].uri,
@@ -2939,7 +2940,7 @@ class ViewModel(Model):
                         self.model_type = self._model.full_classname()
                         return super().save(*args, **kwargs)
                     else:
-                        raise Error(self.classname(),"save","Cannot save the vmodel. Please ensure that the model of the vmodel is saved before")
+                        raise Exception(self.classname(),"save","Cannot save the vmodel. Please ensure that the model of the vmodel is saved before")
                 except Exception as err:
                     transaction.rollback()
                     raise Error("ViewModel", "save", f"Error message: {err}")

@@ -4,8 +4,8 @@ import unittest
 import os
 
 from gws.settings import Settings
-from gws.store import KVStore
-from gws.store import FileStore
+from gws.store import KVStore, FileStore
+from gws.file import File
 
 class TestKVStore(unittest.TestCase):
 
@@ -33,17 +33,12 @@ class TestKVStore(unittest.TestCase):
         self.assertEquals(s1['name'], 'Elon')
 
 
-        
-settings = Settings.retrieve()
-dir_path = settings.get_data("db_dir")
-file_store_path = os.path.join(dir_path,'./file_test/s1')
-fs = FileStore(file_store_path)
-
 class TestFileStore(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        fs._remove_all_files(ignore_errors=True)
+        File.drop_table()
+        FileStore.remove_all_files(ignore_errors=True)
         pass
 
     @classmethod
@@ -52,35 +47,15 @@ class TestFileStore(unittest.TestCase):
         pass
     
     def test_file_store(self):
+        fs = FileStore()
+        
+        settings = Settings.retrieve()
         testdata_dir = settings.get_dir("gws:testdata_dir")
         file_path = os.path.join(testdata_dir, "mini_travel_graph.json")
-        rel_file_path = fs.push(file_path)
         
-        self.assertTrue(fs.exists(rel_file_path))        
-        self.assertRaises(Exception, fs.push, file_path)
+        file = fs.push(file_path)        
+        self.assertTrue(file.exists())        
 
-        rel_file_path = fs.push(file_path, slot="./new_dir")
-        self.assertTrue(fs.exists(rel_file_path))
-        
-        rel_file_path = fs.push(file_path, slot="./new_dir", force=True)
-        self.assertTrue(fs.exists(rel_file_path))
-        
-        
-        fs.move(rel_file_path, "/oui/non/rien/ce-fichier.json")
-        self.assertFalse(fs.exists(rel_file_path))
-        self.assertTrue(fs.exists("/oui/non/rien/ce-fichier.json"))
-        
-        
-        fs.move("/oui/non/rien/ce-fichier.json", "/paris/eiffel.json")
-        self.assertFalse(fs.exists("/oui/non/rien/ce-fichier.json"))
-        self.assertTrue(fs.exists("/paris/eiffel.json"))
-        
-    
-    def test_file_upload(self):
-        testdata_dir = settings.get_dir("gws:testdata_dir")
-        file_path = os.path.join(testdata_dir, "mini_travel_graph.json")
-        
-        with open(file_path, "rb") as fp:
-            fs.push(fp, dest_file_name="leon.json", slot="uploads")
-            self.assertTrue(fs.exists("/uploads/leon.json"))
+        file = fs.push(file_path)
+        self.assertTrue(file.exists())
 
