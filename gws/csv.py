@@ -15,19 +15,20 @@ import numpy as np
 from gws.model import Process, Config
 from gws.model import Resource
 from gws.controller import Controller
-from gws.logger import Logger
+from gws.logger import Error
 from gws.file import File, Dumper as BaseDumper, Loader as BaseLoader, \
                     Importer as BaseImporter, Exporter as BaseExporter
 
 class CSVData(Resource):
-    def __init__(self, *args, table: (DataFrame, np.array,) = None, **kwargs):
+    def __init__(self, *args, table: (DataFrame, np.ndarray,) = None, **kwargs):
         super().__init__(*args, **kwargs)
-        if isinstance(table, DataFrame):
-            self.kv_store['table'] = table
-        elif isinstance(table, np.array):
-            self.kv_store['table'] = DataFrame(table)
-        else:
-            raise Error("CSVData", "__init__", "The table mus be an instance of DataFrame or Numpy array")
+        if not table is None:
+            if isinstance(table, DataFrame):
+                self.kv_store['table'] = table
+            elif isinstance(table, np.ndarray):
+                self.kv_store['table'] = DataFrame(table)
+            else:
+                raise Error("CSVData", "__init__", "The table mus be an instance of DataFrame or Numpy array")
         
     # -- C --
 
@@ -90,6 +91,13 @@ class CSVData(Resource):
         else:
             raise Error("CSV", "CSVData", "Cannot detect the file type using file extension. Valid file extensions are [.xls, .xlsx, .csv, .tsv, .txt, .tab].")
     
+    # -- F --
+    
+    @classmethod
+    def from_dict( cls, table: dict, orient='columns', dtype=None, columns=None ) -> 'CSVData':
+        df = DataFrame.from_dict(table, orient, dtype, columns)
+        return cls(table=df)
+        
     # -- H --
 
     def head(self, n=5) -> DataFrame:
