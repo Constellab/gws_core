@@ -14,6 +14,7 @@ import json
 import jwt
 import zlib
 import importlib
+import shutil
 
 from base64 import b64encode, b64decode
 from secrets import token_bytes
@@ -178,26 +179,19 @@ class Model(BaseModel):
         super().create_table(*args, **kwargs)
 
     # -- D --
-    
-    
-    #def delete_instance(self, *args, **kwargs) -> bool:
-    #    self.kv_store.remove()
-    #    super.delete_instance(*args, **kwargs)
+
+    def delete_instance(self, *args, **kwargs):
+        self.kv_store.remove()
+        super.delete_instance(*args, **kwargs)
         
-    def remove(self) -> bool:
-        if not self._is_deletable:
-            return False
-
-        if self.is_deleted:
-            return True
-
-        self.is_deleted = True
-        return self.save()
+    
 
     @classmethod
     def drop_table(cls):
         if not cls._fts_model is None:
             cls.fts_model().drop_table()
+
+        KVStore.remove_all(folder=cls._table_name)
         
         super().drop_table()
 
@@ -299,7 +293,7 @@ class Model(BaseModel):
         :rtype: str
         """
         return self._kv_store
-
+    
     @property
     def kv_store_path(self) -> str:
         """ 
@@ -309,7 +303,19 @@ class Model(BaseModel):
         :rtype: str
         """
         return os.path.join(self._table_name, self.uri)
+    
+    # -- R --
+    
+    def remove(self) -> bool:
+        if not self._is_deletable:
+            return False
 
+        if self.is_deleted:
+            return True
+
+        self.is_deleted = True
+        return self.save()
+    
     # -- S --
 
     @classmethod
@@ -816,7 +822,7 @@ class Process(Viewable, SystemTrackable):
 
     _is_singleton = True
     _fts_model = 'ProcessFTSDocument'
-    _fts_fields = {'title': 2.0, 'data': 1.0}
+    _fts_fields = {'title': 2.0, 'content': 1.0}
     _is_deletable = False
     _table_name = 'gws_process'
 
@@ -996,6 +1002,7 @@ class Process(Viewable, SystemTrackable):
         :rtype: Input
         """
         return self._input
+
 
     @property
     def is_ready(self) -> bool:
@@ -1333,7 +1340,7 @@ class UserLogin(Model):
 
     def last_login(self, user):
         pass
- 
+
 # ####################################################################
 #
 # Experiment class
@@ -1361,7 +1368,7 @@ class Experiment(Viewable):
     
     _table_name = 'gws_experiment'
     _fts_model = 'ExperimentFTSDocument'
-    _fts_fields = {'title': 2.0, 'data': 1.0}
+    _fts_fields = {'title': 2.0, 'content': 1.0}
 
     
     _protocol = None
@@ -2356,14 +2363,10 @@ class Protocol(Process, SystemTrackable):
         for k in graph["nodes"]:
             node_uri = graph["nodes"][k].get("uri",None)
             node_type_str = graph["nodes"][k]["type"]
+            
             try:
-                tab = node_type_str.split(".")
-                n = len(tab)
-                module_name = ".".join(tab[0:n-1])
-                function_name = tab[n-1]
-                module = importlib.import_module(module_name)
-                process_t = getattr(module, function_name, None)
-
+                process_t = Controller.get_model_type(node_type_str)
+                
                 if process_t is None:
                     raise Exception(f"Process {node_type_str} is not defined. Please ensure that the corresponding brick is loaded.")
                 else:
@@ -2522,7 +2525,11 @@ class Protocol(Process, SystemTrackable):
             self._input.create_port(k,self.input_specs[k])
 
         for k in input_specs:
-            input_specs[k] = input_specs[k].__name__
+            for t in input_specs[k]:
+                if t is None:
+                    input_specs[k] = None
+                else:
+                    input_specs[k] = t.__name__
 
         self.data['input_specs'] = input_specs
 
@@ -2532,13 +2539,18 @@ class Protocol(Process, SystemTrackable):
             self._output.create_port(k,self.output_specs[k])
 
         for k in output_specs:
-            output_specs[k] = output_specs[k].__name__
+            for t in output_specs[k]:
+                if t is None:
+                    output_specs[k] = None
+                else:
+                    output_specs[k] = t.__name__
+            
         self.data['output_specs'] = output_specs
 
     def __set_interfaces(self, interfaces: dict):
         input_specs = {}
         for k in interfaces:
-            input_specs[k] = interfaces[k]._resource_type
+            input_specs[k] = interfaces[k]._resource_types
 
         self.__set_input_specs(input_specs)
 
@@ -2549,7 +2561,7 @@ class Protocol(Process, SystemTrackable):
     def __set_outerfaces(self, outerfaces: dict):
         output_specs = {}
         for k in outerfaces:
-            output_specs[k] = outerfaces[k]._resource_type
+            output_specs[k] = outerfaces[k]._resource_types
 
         self.__set_output_specs(output_specs)
 
@@ -2793,7 +2805,7 @@ class ViewModel(Model):
 
     _table_name = 'gws_view_model'
     _fts_model = 'ViewModelFTSDocument'
-    _fts_fields = {'title': 2.0, 'data': 1.0}
+    _fts_fields = {'title': 2.0, 'content': 1.0}
 
     def __init__(self, *args, model: Model = None, **kwargs):
         super().__init__(*args, **kwargs)

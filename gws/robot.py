@@ -37,7 +37,7 @@ class Robot(Resource):
         self.data['weight'] = val
 
 class Create(Process):
-    input_specs = {}
+    input_specs = {}  #no required input
     output_specs = {'robot' : Robot}
     config_specs = {}
 
@@ -56,7 +56,7 @@ class Create(Process):
         self.output['robot'] = p
 
 class Move(Process):
-    input_specs = {'robot' : Robot}
+    input_specs = {'robot' : Robot}  #just for testing
     output_specs = {'robot' : Robot}
     config_specs = {
         'moving_step': {"type": float, "default": 0.1, 'description': "The moving step of the robot"},

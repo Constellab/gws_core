@@ -3,7 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-
 from gws.base import Base
 from gws.logger import Error
 
@@ -14,9 +13,9 @@ class Port(Base):
     A port contains a resource and allows connecting processes.
     Example: [Left Process]-<output port> ---> <input port>-[Right Process]. 
     """
-
-    _resource_type: 'Resource'
-    _resource: 'Resource'
+    
+    _resource: 'Resource' = None
+    _resource_types: tuple = ()
     _prev: 'Port' = None
     _next: list = []
     _parent: 'IO'
@@ -27,11 +26,26 @@ class Port(Base):
         self._parent = parent
 
         from gws.model import Resource
-        self._resource_type = Resource
-
+        self._resource_types = (Resource, )
+        
+    # -- G --
+    
+    def get_default_resource_type(self):
+        return self._resource_types[0]
     
     # -- I -- 
+    
+    @property
+    def is_connected(self) -> bool:
+        """
+        Returns True if the port is left-connected or right-connected to a another port.
 
+        :return: True if the port is left-connected or right-connected, False otherwise.
+        :rtype: bool
+        """
+        
+        return self.is_left_connected or self.is_right_connected
+    
     @property
     def is_left_connected(self) -> bool:
         """
@@ -78,8 +92,23 @@ class Port(Base):
         :return: True if the port is ready, False otherwise.
         :rtype: bool
         """
-        return isinstance(self._resource, self._resource_type) and self._resource.is_saved()
+        
+        if self._resource is None:
+            return self.is_optional and (not self.is_connected)
+        
+        return isinstance(self._resource, self._resource_types) and self._resource.is_saved()
+    
+    @property
+    def is_optional(self)->bool:
+        """
+        Returns True if the resource in this port is optional, False otherwise
 
+        :return: True if the resource is optional, False otherwise.
+        :rtype: bool
+        """
+        
+        return (None in self._resource_types)
+    
     # -- G --
 
     def get_next_procs(self):
@@ -209,7 +238,17 @@ class OutPort(Port):
     """ 
     OutPort class representing output port
     """
-
+    
+    def _are_compatible_types(self, left_types, right_types):
+        OK = False
+        for t in left_types:          
+            if issubclass(t, right_types):
+                OK = True
+                break
+                
+        return OK
+                
+                
     def pipe(self, other: 'InPort'):
         """ 
         Connection operator.
@@ -227,9 +266,9 @@ class OutPort(Port):
         if self == other:
             raise Error(self.classname(), "|", "Self connection not allowed")
         
-        if not issubclass(self._resource_type, other._resource_type):
-            raise Error(self.classname(), "|", f"Invalid connection. {self._resource_type} is not a subclass of {other._resource_type}")
-
+        if not self._are_compatible_types(self._resource_types, other._resource_types):
+            raise Error(self.classname(), "|", f"Invalid connection. {self._resource_types} is not a subclass of {other._resource_types}")
+                
         self._next.append(other)
         other._prev = self
         return Connector(out_port=self, in_port=other)
@@ -435,35 +474,46 @@ class IO(Base):
         _json = {}
         for k in self._ports:
             port = self._ports[k]
-            _json[k] = port._resource_type.full_classname()
+            _json[k] = ()
+            for t in port._resource_types:
+                if t is None:
+                    _json[k] += (None, )
+                else:
+                    classname = t.full_classname()
+                    _json[k] += (classname, )
             #_json[k] = {
             #    "uri": ("" if (bare or not port._resource) else port._resource.uri),
-            #    "type": port._resource_type.full_classname()
+            #    "type": port._resource_types.full_classname()
             #}
             
         return _json
     
     # -- C --
 
-    def create_port(self, name: str, resource_type: type):
+    def create_port(self, name: str, resource_types: type):
         """ 
         Creates a port.
 
         :param name: Name of the port
         :type name: str
-        :param resource_type: The expected type of the resoruce of the port
-        :type resource_type: type
+        :param resource_types: The expected type of the resource of the port
+        :type resource_types: type
         """
+  
         from gws.model import Resource
         if not isinstance(name, str):
             raise Error(self.classname(), "create_port", "Invalid port specs. The port name must be a string")
-
-        if not isinstance(resource_type, type):
-            raise Error(self.classname(), "create_port", "Invalid port specs. The resource_type must be type. Maybe you provided an object instead of object type.")
         
-        if not issubclass(resource_type, Resource):
-            raise Error(self.classname(), "create_port", "Invalid port specs. The resource_type must refer to subclass of Resource")
-        
+        if isinstance(resource_types, tuple):
+            for res_t in resource_types:
+                if (not res_t is None) and not issubclass(res_t, Resource):
+                    raise Error(self.classname(), "create_port", f"Invalid port specs. The resource_types must refer to subclass of Resource")
+        else:
+            if not issubclass(resource_types, Resource):
+                raise Error(self.classname(), "create_port", "Invalid port specs. The resource_types must refer to subclass of Resource")
+            
+            resource_types = (resource_types, )
+            
         if self._parent.is_running or self._parent.is_finished:
             raise Error(self.classname(), "__setitem__", "Cannot alter inputs/outputs of processes during or after running")
         
@@ -472,7 +522,7 @@ class IO(Base):
         else:
             port = InPort(self)
 
-        port._resource_type = resource_type
+        port._resource_types = resource_types
         self._ports[name] = port
 
     # -- G --
@@ -528,6 +578,7 @@ class IO(Base):
         for k in self._ports:
             if not self._ports[k].is_ready:
                 return False
+            
         return True
 
     # -- N --

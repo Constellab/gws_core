@@ -223,7 +223,7 @@ class Importer(Process):
     
     async def task(self):
         file = self.input["file"]
-        model_t = self.output_specs['resource']
+        model_t = self.out_port("resource").get_default_resource_type()
         try:
             params = copy.deepcopy(self.config.params)
             resource = model_t._import(file.path, **params)
@@ -254,7 +254,8 @@ class Exporter(Process):
     
     async def task(self):
         filename = self.get_param("file_name")
-        t = self.output_specs["file"]
+        t = self.out_port("file").get_default_resource_type()
+        
         file = FileStore.create_file(name=filename)
         try:
             if not os.path.exists(file.dir):
@@ -291,7 +292,8 @@ class Loader(Process):
     
     async def task(self):
         file_path = self.get_param("file_path")
-        model_t = self.output_specs['resource']
+        model_t = self.out_port('resource').get_default_resource_type()
+        
         try:
             if "file_path" in self.config.params:
                 params = copy.deepcopy(self.config.params)

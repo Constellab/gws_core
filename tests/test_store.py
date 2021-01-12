@@ -22,8 +22,9 @@ class TestKVStore(unittest.TestCase):
         self.assertEquals(s1['name'], 'Musk')
 
         s2.delete('name')
-        self.assertEquals(s2['name'], None)
-        self.assertEquals(s1['name'], None)
+        self.assertEquals(s2.get('name'), None)
+        self.assertEquals(s1.get('name'), None)
+    
         s2['name'] = 'Elon'
         
         # connect s2 to another file

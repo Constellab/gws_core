@@ -181,6 +181,12 @@ class CSVData(Resource):
     def __str__(self):
         return self.table.__str__()
 
+# ####################################################################
+#
+# Importer class
+#
+# ####################################################################
+    
 class Importer(BaseImporter):
     input_specs = {'file' : File}
     output_specs = {'resource': CSVData}
@@ -191,7 +197,11 @@ class Importer(BaseImporter):
         'index' : {"type": 'int', "default": None, "description": "Column number to use as the row names. Use None to prevent parsing row names. Only for parsing CSV files"},
     }
 
-
+# ####################################################################
+#
+# Exporter class
+#
+# ####################################################################
 
 class Exporter(BaseExporter):
     input_specs = {'resource': CSVData}
@@ -204,6 +214,12 @@ class Exporter(BaseExporter):
         'index': {"type": bool, "default": True, 'description': "Write row names (index)"},
     }
 
+# ####################################################################
+#
+# Loader class
+#
+# ####################################################################
+
 class Loader(BaseLoader):
     input_specs = {}
     output_specs = {'resource' : CSVData}
@@ -214,6 +230,12 @@ class Loader(BaseLoader):
         'header': {"type": 'int', "default": None, "description": "Row number to use as the column names. Use None to prevent parsing column names. Only for parsing CSV files"},
         'index' : {"type": 'int', "default": None, "description": "Column number to use as the row names. Use None to prevent parsing row names. Only for parsing CSV files"},
     }
+
+# ####################################################################
+#
+# Dumper class
+#
+# ####################################################################
 
 class Dumper(BaseDumper):
     input_specs = {'resource' : CSVData}

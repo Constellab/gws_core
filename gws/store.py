@@ -40,7 +40,7 @@ class KVStore:
             folder_path = folder_path.strip(".").strip("/")
             
         self._folder_path = folder_path
-                
+ 
     # -- A --
     
     # -- D --
@@ -54,40 +54,90 @@ class KVStore:
 
         self._kv_data.close()
         return val
+    
+    @property
+    def dir_path(self) -> str:
+        """ 
+        Path of director the KVStore object
 
+        :return: The connection path
+        :rtype: str
+        """
+
+        return os.path.join(self._base_dir, self._folder_path)
+    
     # -- F --
 
     @property
     def file_path(self) -> str:
         """ 
-        Path of the KVStore object
+        Path of DB file the KVStore object
 
         :return: The connection path
         :rtype: str
         """
 
         return os.path.join(self._base_dir, self._folder_path, self._file_name)
+    
+    
 
+    
     # -- G --
+    
+    def get(self, key, default=None):
+        if not isinstance(key, str):
+            raise Error(f"The key must be a string. The actual value is {key}")
+        
+        if not os.path.exists(self.dir_path):
+            return default
+        
+        self._kv_data = shelve.open(self.file_path)
+        val = self._kv_data.get(key, default)
+        self._kv_data.close()
+        return val
 
+    
     def __getitem__(self, key):
         if not isinstance(key, str):
             raise Error(f"The key must be a string. The actual value is {key}")
-
+        
+        if not os.path.exists(self.dir_path):
+            raise Error("KVStore", "__getitem__", f"Key {key} does not exist")
+        
         self._kv_data = shelve.open(self.file_path)
-        val = self._kv_data.get(key, None)
+        val = self._kv_data[key]
         self._kv_data.close()
         return val
 
     # -- R --
 
-    def remove(self):  
-        """ Remove the store """
+    def remove(self):
+        """ 
+        Remove the store 
+        """
+        
         try:
-            shutil.rmtree(self.file_path)
+            shutil.rmtree(self.dir_path)
         except Exception as err:
             if not ignore_errors:
-                raise Error("KVStore", "remove", f"Cannot remove the kv_store {self.file_path}")
+                raise Error("KVStore", "remove", f"Cannot remove the kv_store {self.dir_path}")
+    
+    @classmethod
+    def remove_all(cls, folder:str = "", ignore_errors=False):
+        """ 
+        Remove the all stores in the base_dir 
+        """
+        
+        _path = os.path.join(cls._base_dir,folder)
+        if not os.path.exists(_path):
+            return
+        
+        try:
+            shutil.rmtree(_path)
+        except Exception as err:
+            if not ignore_errors:
+                raise Error("KVStore", "remove", f"Cannot remove the kv_store {_path}")
+    
     
     # -- S --
     
@@ -103,9 +153,8 @@ class KVStore:
         if not isinstance(key, str):
             raise Error(f"The key must be a string. The actual value is {key}")
 
-        dir_path = os.path.dirname(self.file_path)
-        if not os.path.exists(dir_path):
-            os.makedirs(dir_path)
+        if not os.path.exists(self.dir_path):
+            os.makedirs(self.dir_path)
 
         self._kv_data = shelve.open(self.file_path)
         self._kv_data[key] = value
@@ -220,6 +269,10 @@ class FileStore:
     
     @classmethod
     def remove_all_files(self, ignore_errors:bool = False):
+        
+        if not os.path.exists(self._base_dir):
+            return
+        
         try:
             shutil.rmtree(self._base_dir)
         except Exception as err:
