@@ -162,6 +162,22 @@ class Settings(PWModel):
     def get_log_dir(self) -> dict:
         default = os.path.join(self.get_cwd(),"logs/")
         return self.data.get("log_dir", default)
+    
+    def get_tmp_dir(self) -> dict:
+        default = os.path.join(self.get_cwd(),"tmp/")
+        return self.data.get("tmp_dir", default)
+    
+    def get_data_dir(self) -> dict:
+        default = os.path.join(self.get_cwd(),"data/")
+        return self.data.get("data_dir", default)
+    
+    def get_venv_dir(self) -> dict:
+        default = os.path.join(self.get_cwd(),"venv/")
+        return self.data.get("venv_dir", default)
+    
+    def get_bin_dir(self) -> dict:
+        default = os.path.join(self.get_cwd(),"bin/")
+        return self.data.get("bin_dir", default)
 
     def get_public_dir(self, name:str = None) -> dict:
         if name is None:

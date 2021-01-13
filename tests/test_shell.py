@@ -19,9 +19,4 @@ class TestShell(unittest.TestCase):
         pass
     
     def test_shell(self):
-        
-        proc = ShellProcess()
-        
-        f_t = proc.input_specs['file']
-        
-        print(f_t)
+        pass
