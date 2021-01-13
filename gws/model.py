@@ -28,7 +28,6 @@ from playhouse.sqlite_ext import JSONField, SearchField, RowIDField
 
 from gws.logger import Error, Info
 from gws.store import KVStore
-
 from gws.settings import Settings
 from gws.base import slugify, BaseModel, BaseFTSModel, DbManager
 from gws.base import format_table_name
@@ -36,6 +35,7 @@ from gws.controller import Controller
 from gws.view import ViewTemplate, HTMLViewTemplate, JSONViewTemplate
 from gws.io import Input, Output, InPort, OutPort, Connector, Interface, Outerface
 from gws.event import EventListener
+from gws.utils import to_camel_case
 
 # ####################################################################
 #
@@ -86,7 +86,6 @@ class Model(BaseModel):
 
     _is_singleton = False
     _is_deletable = True
-    _fts_model = None
     _fts_fields = {}
 
     _table_name = 'gws_model'
@@ -173,7 +172,7 @@ class Model(BaseModel):
         if cls.table_exists():
             return
 
-        if not cls._fts_model is None:
+        if cls.fts_model():
             cls.fts_model().create_table()
 
         super().create_table(*args, **kwargs)
@@ -188,7 +187,7 @@ class Model(BaseModel):
 
     @classmethod
     def drop_table(cls):
-        if not cls._fts_model is None:
+        if cls.fts_model():
             cls.fts_model().drop_table()
 
         KVStore.remove_all(folder=cls._table_name)
@@ -236,10 +235,12 @@ class Model(BaseModel):
 
     @classmethod
     def fts_model(cls):
-        if cls._fts_model is None:
+        if not cls._fts_fields:
             return None
         
-        _FTSModel = type(cls._fts_model, (BaseFTSModel, ), {
+        fts_class_name = to_camel_case(cls._table_name, capitalize_first=True) + "FTSModel"
+        
+        _FTSModel = type(fts_class_name, (BaseFTSModel, ), {
             "_related_model" : cls
         })
 
@@ -416,7 +417,7 @@ class Model(BaseModel):
 
         with DbManager.db.atomic() as transaction:
             try:
-                if Controller.get_settings().is_fts_active:
+                if Settings.retrieve().is_fts_active:
                     if not _FTSModel is None:
                         if not self._save_fts_document():
                             raise Exception(self.full_classname(), "save", "Cannot save related FTS document")
@@ -457,12 +458,6 @@ class Model(BaseModel):
 
     # -- U --
 
-    # @classmethod
-    # def update_fts_fields(cls, new_fields):
-    #     fields = cls._fts_fields.copy()
-    #     fields.update(new_fields)
-    #     return fields
-
      
 # ####################################################################
 #
@@ -473,7 +468,8 @@ class Model(BaseModel):
 class Viewable(Model):
 
     _vmodel_specs: dict = {}
-
+    _fts_field = {'title': 2.0, 'description': 1.0}
+    
     # -- A --
 
     def archive(self, status: bool):
@@ -545,16 +541,54 @@ class Viewable(Model):
                 return vmodel_t(model=self) #return the 1st vmodel
 
         return None
+    
+    # -- D --
+    
+    @property
+    def description(self) -> str:
+        """
+        Returns the description. Alias of :meth:`get_description`
+        
+        :return: The description
+        :rtype: str
+        """
+        
+        return self.data.get("description","")
+    
+    @description.setter
+    def description(self, text:str):
+        """
+        Returns the description. Alias of :meth:`set_description`
+        
+        :param text: The description test
+        :type text: str
+        """
+        
+        if self.data is None:
+            self.data = {}
+            
+        self.data["description"] = text
 
     # -- G --
+    
+    def get_description(self, default="") -> str:
+        """
+        Returns the description
+        
+        :return: The description
+        :rtype: str
+        """
+        
+        return self.data.get("description", default)
 
     def get_title(self, default="") -> str:
         """ 
         Get the title
         """
+        
         return self.data.get("title", default) #.capitalize()
 
-    # -- D --
+    # -- R -- 
 
     def remove(self):
         if self.is_deleted:
@@ -576,8 +610,6 @@ class Viewable(Model):
             except:
                 transaction.rollback()
                 return False
-
-    # -- R -- 
 
     @classmethod
     def register_vmodel_specs(cls, specs: list):
@@ -603,8 +635,40 @@ class Viewable(Model):
         :param title: The title
         :type title: str
         """
+        
         self.data["title"] = title
         
+    def set_description(self, text: str):
+        """ 
+        Set the description
+
+        :param text: The description text
+        :type text: str
+        """
+        
+        self.data["description"] = text
+    
+    # -- T --
+    
+    @property
+    def title(self):
+        """ 
+        Get the title. Alias of :meth:`get_title`
+        """
+        
+        return self.data.get("title", "")
+    
+    @title.setter
+    def title(self, text:str):
+        """ 
+        Set the title. Alias of :meth:`set_title`
+        """
+        
+        if self.data is None:
+            self.data = {}
+            
+        self.data["title"] = text
+    
 # ####################################################################
 #
 # Config class
@@ -618,7 +682,6 @@ class Config(Viewable):
     """
 
     _table_name = 'gws_config'
-    _fts_model = 'ConfigFTSDocument'
 
     def __init__(self, *args, specs: dict = None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -821,8 +884,6 @@ class Process(Viewable, SystemTrackable):
     _job: 'Job' = None  #ref to the current job
 
     _is_singleton = True
-    _fts_model = 'ProcessFTSDocument'
-    _fts_fields = {'title': 2.0, 'content': 1.0}
     _is_deletable = False
     _table_name = 'gws_process'
 
@@ -879,16 +940,6 @@ class Process(Viewable, SystemTrackable):
             self._event_listener.add( name, callback )
         except Exception as err:
             raise Error("Process", "add_event", f"Cannot add event. Error message: {err}")
-    
-    @property
-    def instance_name(self):
-        """
-        The instance name of the process in the context of a protocol
-
-        :return: The instance name
-        :rtype: `str`
-        """
-        return self._instance_name
     
     def as_json(self, bare: bool=False, stringify: bool=False, prettify: bool=False) -> (str, dict, ):
         """
@@ -953,6 +1004,7 @@ class Process(Viewable, SystemTrackable):
     def config(self) -> Config:
         """
         Returns the config. 
+        
         Note that the config is actually related to the job of the process. 
         The config is therefore retrieved 
         through the job instance.
@@ -960,6 +1012,7 @@ class Process(Viewable, SystemTrackable):
         :return: The config
         :rtype: Config
         """
+        
         return self.job.config
 
     def create_source_zip(self):
@@ -967,10 +1020,6 @@ class Process(Viewable, SystemTrackable):
         source = inspect.getsource(model_t)
         return zlib.compress(source.encode())
     
-    # -- F --
-
-    # -- G --
-
     def get_param(self, name: str) -> [str, int, float, bool]:
         """
         Returns the value of a parameter of the process config by its name.
@@ -978,6 +1027,7 @@ class Process(Viewable, SystemTrackable):
         :return: The paremter value
         :rtype: [str, int, float, bool]
         """
+        
         return self.config.get_param(name)
 
     def get_next_procs(self) -> list:
@@ -987,12 +1037,23 @@ class Process(Viewable, SystemTrackable):
         :return: List of processes
         :rtype: list
         """
+        
         return self._output.get_next_procs()
 
     # -- H --
 
     # -- I --
+    
+    @property
+    def instance_name(self):
+        """
+        The instance name of the process in the context of a protocol
 
+        :return: The instance name
+        :rtype: `str`
+        """
+        return self._instance_name
+    
     @property
     def input(self) -> 'Input':
         """
@@ -1272,8 +1333,7 @@ class User(Model):
 
     _is_deletable = False
     _table_name = 'gws_user'
-    _fts_model = 'UserFTSDocument'
-    _fts_fields = {'fullname': 2.0, 'data': 1.0}
+    _fts_fields = {'fullname': 2.0}
 
     # -- A --
 
@@ -1367,9 +1427,6 @@ class Experiment(Viewable):
     is_in_progress = BooleanField(default=True, index=True)
     
     _table_name = 'gws_experiment'
-    _fts_model = 'ExperimentFTSDocument'
-    _fts_fields = {'title': 2.0, 'content': 1.0}
-
     
     _protocol = None
     _protocol_job = None
@@ -1445,31 +1502,8 @@ class Experiment(Viewable):
             else:
                 return json.dumps(_json)
         else:
-            return _json
-
-    # -- D --
-
-    def remove(self):
-        if self.is_deleted:
-            return True
-            
-        with DbManager.db.atomic() as transaction:
-            try:
-                Q = Job.select().where( Job.experiment == self )
-                for job in Q:
-                    if not job.remove():
-                        transaction.rollback()
-                        return False
-                
-                if super().remove():
-                    return True
-                else:
-                    transaction.rollback()
-                    return False
-                    
-            except:
-                transaction.rollback()
-                return False
+            return _json   
+  
     # -- F --
     
     @property
@@ -1530,7 +1564,29 @@ class Experiment(Viewable):
         return self._protocol_job
             
     # -- R --
-
+    
+    def remove(self):
+        if self.is_deleted:
+            return True
+            
+        with DbManager.db.atomic() as transaction:
+            try:
+                Q = Job.select().where( Job.experiment == self )
+                for job in Q:
+                    if not job.remove():
+                        transaction.rollback()
+                        return False
+                
+                if super().remove():
+                    return True
+                else:
+                    transaction.rollback()
+                    return False
+                    
+            except:
+                transaction.rollback()
+                return False
+            
     @property 
     def resources(self):
         Q = Resource.select() \
@@ -1544,8 +1600,7 @@ class Experiment(Viewable):
         self.job = self.protocol.job
         self.save()
         await self.protocol._run()
-
-
+    
 # ####################################################################
 #
 # Job class
@@ -1583,7 +1638,8 @@ class Job(Viewable, SystemTrackable):
     _process: Process = None
     _config: Config = None
     _table_name = 'gws_job'
-
+    _fts_fields = {}
+    
     def __init__(self, *args, process: Process = None, config: Config = None, **kwargs):
         super().__init__(*args, **kwargs)
         
@@ -2042,7 +2098,7 @@ class Protocol(Process, SystemTrackable):
     _outerfaces: dict = None
     _defaultPosition: list = [0, 0]
     
-    _table_name = 'gws_protocol'     #/!\ use same table as Process
+    _table_name = 'gws_protocol'
 
     def __init__(self, *args, processes: dict = None, \
                  connectors: list = [], interfaces: dict = {}, outerfaces: dict = {}, **kwargs):
@@ -2588,7 +2644,6 @@ class Resource(Viewable, SystemTrackable):
     job = ForeignKeyField(Job, null=True, backref='resources')
 
     _table_name = 'gws_resource'
-    _fts_model = 'ResourceFTSDocument'
 
     # -- A --
 
@@ -2804,8 +2859,7 @@ class ViewModel(Model):
     _model = None
 
     _table_name = 'gws_view_model'
-    _fts_model = 'ViewModelFTSDocument'
-    _fts_fields = {'title': 2.0, 'content': 1.0}
+    _fts_fields = {'title': 2.0, 'description': 1.0}
 
     def __init__(self, *args, model: Model = None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -2860,12 +2914,38 @@ class ViewModel(Model):
 
     # -- C --
 
-    # -- G --
+    # -- D --
+    
+    @property
+    def description(self) -> str:
+        """
+        Returns the description. Alias of :meth:`get_description`
+        
+        :return: The description
+        :rtype: str
+        """
+        
+        return self.get_description()
 
+    # -- F --
+
+    # -- G --
+    
+    def get_description(self) -> str:
+        """
+        Returns the description
+        
+        :return: The description
+        :rtype: str
+        """
+        
+        return self.data.get("description", "")
+    
     def get_title(self) -> str:
         """ 
         Get the title.
         """
+        
         return self.data.get("title", "")
 
     # -- M --
@@ -2902,7 +2982,17 @@ class ViewModel(Model):
         return self.template.render(self)
     
     # -- S --
-
+    
+    def set_description(self, text: str):
+        """
+        Returns the description.
+        
+        :param text: The description text
+        :type text: `str`
+        """
+        
+        self.data["description"] = text
+    
     def set_model(self, model: None):
         if not self.model_id is None:
             raise Error(self.classname(),"save","A model already exists")
@@ -2964,9 +3054,21 @@ class ViewModel(Model):
         """ 
         Get the title.
         """
+        
         return self.data.get("title", "")
     
+    @title.setter
+    def title(self, text:str):
+        """ 
+        Set the title.
+        """
+        
+        if self.data is None:
+            self.data = {}
+            
+        self.data["title"] = text
     
+
 # ####################################################################
 #
 # HTMLViewModel class

@@ -25,5 +25,10 @@ def slugify(text: str, snakefy: bool = False) -> str:
         
     return text
 
+def to_camel_case(snake_str: str, capitalize_first:bool = False):
+    components = snake_str.split('_')
+    c0 = components[0].title() if capitalize_first else components[0]
+    return c0 + ''.join(x.title() for x in components[1:])
+
 def generate_random_chars(size=6, chars=string.ascii_uppercase + string.ascii_lowercase + string.digits) -> str:
     return ''.join(random.choice(chars) for _ in range(size))
