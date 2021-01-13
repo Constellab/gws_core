@@ -333,7 +333,7 @@ class Model(BaseModel):
         return cls.select().where(cls.type == cls.full_classname())
 
     @classmethod
-    def search(cls, phrase):
+    def search(cls, phrase, page:int = 1, number_of_items_per_page: int=20):
         _FTSModel = cls.fts_model()
 
         if _FTSModel is None:

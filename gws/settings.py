@@ -322,7 +322,13 @@ class Settings(PWModel):
     @property
     def title(self):
         return self.app.get("title", None)
-
+    
+    # -- U --
+    
+    def use_prod_biota_db( self, tf: bool ):
+        self.data["prod_biota_db"] = tf
+        self.save()
+        
     # -- V --
 
     @property
