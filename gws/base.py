@@ -179,7 +179,7 @@ class BaseFTSModel(Base, FTS5Model):
     rowid = RowIDField()
     title = SearchField()
     content = SearchField()
-
+    
     _related_model = BaseModel
     
     def get_related(self):
