@@ -138,7 +138,7 @@ class CSVData(Resource):
                 index_col = index_col,
             )
         else:
-            raise Error("CSV", "CSVData", "Cannot detect the file type using file extension. Valid file extensions are [.xls, .xlsx, .csv, .tsv, .txt, .tab].")
+            raise Error("CSVData", "_import", "Cannot detect the file type using file extension. Valid file extensions are [.xls, .xlsx, .csv, .tsv, .txt, .tab].")
         
         return cls(table=df)
     

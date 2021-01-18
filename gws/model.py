@@ -954,19 +954,19 @@ class Process(Viewable, SystemTrackable):
         """
         
         _json = super().as_json()
-        _json["input"] = self.input.as_json(bare=bare)
-        _json["output"] = self.input.as_json(bare=bare)
-        _json["config"] = self.config_specs
+        _json["input_specs"] = self.input.as_json(bare=bare)
+        _json["output_specs"] = self.input.as_json(bare=bare)
+        _json["config_specs"] = self.config_specs
         
         if bare:
             _json["uri"] = ""
             _json["creation_datetime"] = ""
         
-        for k in _json["config"]:
-            spec = _json["config"][k]
+        for k in _json["config_specs"]:
+            spec = _json["config_specs"][k]
             if "type" in spec and isinstance(spec["type"], type):
                 t_str = spec["type"].__name__ 
-                _json["config"][k]["type"] = t_str
+                _json["config_specs"][k]["type"] = t_str
         
         if stringify:
             if prettify:
@@ -1715,8 +1715,8 @@ class Job(Viewable, SystemTrackable):
                 "uri": self.process.uri,
                 "type": self.process.type,
                 "instance_name": self.instance_name, #do not use self.process.instance_name as it is not saved on db
-                "input": self.process.input.as_json(),
-                "output": self.process.output.as_json(),
+                "input_specs": self.process.input.as_json(),
+                "output_specs": self.process.output.as_json(),
                 "config_specs": config_specs
             },
             "config": {
