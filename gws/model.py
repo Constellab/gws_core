@@ -2591,28 +2591,14 @@ class Protocol(Process, SystemTrackable):
         for k in self.input_specs:
             self._input.create_port(k,self.input_specs[k])
 
-        for k in input_specs:
-            for t in input_specs[k]:
-                if t is None:
-                    input_specs[k] = None
-                else:
-                    input_specs[k] = t.__name__
-
-        self.data['input_specs'] = input_specs
+        self.data['input_specs'] = self._input.as_json()
 
     def __set_output_specs(self, output_specs):
         self.output_specs = output_specs
         for k in self.output_specs:
             self._output.create_port(k,self.output_specs[k])
 
-        for k in output_specs:
-            for t in output_specs[k]:
-                if t is None:
-                    output_specs[k] = None
-                else:
-                    output_specs[k] = t.__name__
-            
-        self.data['output_specs'] = output_specs
+        self.data['output_specs'] = self._output.as_json()
 
     def __set_interfaces(self, interfaces: dict):
         input_specs = {}
