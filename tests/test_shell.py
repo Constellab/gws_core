@@ -19,4 +19,7 @@ class TestShell(unittest.TestCase):
         pass
     
     def test_shell(self):
+        
+        proc = ShellProcess()
+        
         pass

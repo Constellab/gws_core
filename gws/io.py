@@ -470,7 +470,7 @@ class IO(Base):
     
     # -- A --
     
-    def as_json(self, bare=False):
+    def as_json(self):
         _json = {}
         for k in self._ports:
             port = self._ports[k]
@@ -481,10 +481,6 @@ class IO(Base):
                 else:
                     classname = t.full_classname()
                     _json[k] += (classname, )
-            #_json[k] = {
-            #    "uri": ("" if (bare or not port._resource) else port._resource.uri),
-            #    "type": port._resource_types.full_classname()
-            #}
             
         return _json
     

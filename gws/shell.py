@@ -18,7 +18,7 @@ class ShellProcess(Process):
     output_specs = {'file' : (File, None,)}
     config_specs = {
         'bin': {"type": str, "default": None, 'description': "Binary file to call (eg. scp, cp, ...)"},
-        'save_output_text': {"type": str, "default": False, 'description': "True to save the command output text. False otherwise"},
+        'save_stdout': {"type": str, "default": False, 'description': "True to save the command output text. False otherwise"},
     }
     
     def build_command(self) -> list:
@@ -43,12 +43,15 @@ class ShellProcess(Process):
                 cwd=output_dir
             )
             
-            if self.get_param('save_output_text'):
-                self.data['output_text'] = output_text
+            if self.get_param('save_stdout'):
+                self.data['stdout'] = output_text
                 
             self.after_command(output_dir)
             #... 
-    
+
+class CppProcess(Process):
+    pass
+
 class CondaProcess(ShellProcess):
     
     def __init__(self, *args, **kwargs):

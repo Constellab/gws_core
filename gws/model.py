@@ -142,13 +142,15 @@ class Model(BaseModel):
         :rtype: `Model` instance
         """
 
-        #type_str = slugify(self.type)
-        new_model_t = Controller.get_model_type(self.type)
-
-        if type(self) == new_model_t:
+        #new_model_t = Controller.get_model_type(self.type)
+        #if type(self) == new_model_t:
+        #    return self
+        
+        if self.type == self.full_classname():
             return self
-   
+        
         # instanciate the class and shallow copy data
+        new_model_t = Controller.get_model_type(self.type)
         model = new_model_t()
         for prop in self.property_names(Field):
             val = getattr(self, prop)
@@ -954,9 +956,18 @@ class Process(Viewable, SystemTrackable):
         """
         
         _json = super().as_json()
-        _json["input_specs"] = self.input.as_json(bare=bare)
-        _json["output_specs"] = self.input.as_json(bare=bare)
+        _json["input_specs"] = self.input.as_json()
+        _json["output_specs"] = self.output.as_json()
         _json["config_specs"] = self.config_specs
+        
+        
+        print( type(self) )
+        print( self.title )
+        print( self.input )
+        print( self.input._ports )
+        print( self.input_specs )
+        print( self.input.as_json() )
+        print("--------")
         
         if bare:
             _json["uri"] = ""

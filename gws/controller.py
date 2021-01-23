@@ -105,7 +105,7 @@ class Controller(Base):
         from gws.model import Experiment
         Q = Experiment.select().order_by(Experiment.creation_datetime.desc())
 
-        number_of_items_per_page = max(number_of_items_per_page, cls._number_of_items_per_page)
+        number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
 
         if return_format == "json":
             return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
@@ -117,7 +117,7 @@ class Controller(Base):
         from gws.model import Job, Experiment
         Q = Job.select().order_by(Job.creation_datetime.desc())
 
-        number_of_items_per_page = max(number_of_items_per_page, cls._number_of_items_per_page)
+        number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
 
         if not experiment_uri is None :
             Q = Q.join(Experiment).where(Experiment.uri == experiment_uri)
@@ -156,7 +156,7 @@ class Controller(Base):
                             .join(Job, on=(Job.process_uri == Protocol.uri))\
                             .where(Job.uri == job_uri)
         else:
-            number_of_items_per_page = max(number_of_items_per_page, cls._number_of_items_per_page)
+            number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
             Q = Protocol.select_me().order_by(Protocol.creation_datetime.desc())
 
         if return_format == "json":
@@ -169,7 +169,7 @@ class Controller(Base):
         from gws.model import Process, Job
 
         if job_uri is None:
-            number_of_items_per_page = max(number_of_items_per_page, cls._number_of_items_per_page)
+            number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
             Q = Process.select().order_by(Process.creation_datetime.desc())
         else:
             Q = Process.select()\
@@ -187,7 +187,7 @@ class Controller(Base):
         from gws.model import Config, Job
 
         if job_uri is None:
-            number_of_items_per_page = max(number_of_items_per_page, cls._number_of_items_per_page)
+            number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
             Q = Config.select().order_by(Config.creation_datetime.desc())
         else:
             Q = Config.select()\
@@ -217,7 +217,7 @@ class Controller(Base):
                         .where(Experiment.uri == experiment_uri) \
                         .order_by(Resource.creation_datetime.desc())
         else:
-            number_of_items_per_page = max(number_of_items_per_page, cls._number_of_items_per_page)
+            number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
             Q = Resource.select().order_by(Resource.creation_datetime.desc())
 
         if return_format == "json":
@@ -230,7 +230,7 @@ class Controller(Base):
     def fetch_list(cls, object_type: str, page: int=1, number_of_items_per_page: int=20, filters=[], return_format="") -> 'Model':
         t = cls.get_model_type(object_type)
 
-        number_of_items_per_page = max(number_of_items_per_page, cls._number_of_items_per_page)
+        number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
         try:
             Q = t.select().order_by(t.creation_datetime.desc())
             if len(filters) > 0:

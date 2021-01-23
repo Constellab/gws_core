@@ -12,6 +12,7 @@ class Query:
         _list = []
         if return_format.lower() == "json":
             for o in Q:
+                o = o.cast()
                 _list.append(o.as_json())
             return _list
         else:
