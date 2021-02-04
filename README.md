@@ -1,4 +1,4 @@
-# GWS core architecture 
+# Core GWS architecture 
 
 This library provides an implementation of the PRISM architecture as published in [1].
 

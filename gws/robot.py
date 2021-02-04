@@ -35,6 +35,15 @@ class Robot(Resource):
 
     def set_weight(self, val):
         self.data['weight'] = val
+        
+    def set_age(self, val):
+        self.data['age'] = val
+
+class RobotAddOn(Resource):
+    pass
+
+class MegaRobot(Robot):
+    pass
 
 class Create(Process):
     input_specs = {}  #no required input
@@ -43,17 +52,17 @@ class Create(Process):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.set_title("Robot factory")
+        self.set_title("Robot create")
         self.set_data_value("description", "This process creates the Robot.")
 
     async def task(self):
         print("Create", flush=True)
-        p = Robot()
-        p.set_title("Astro Boy")
-        p.set_data_value("description", "Astro Boy, known in Japan by its original name Mighty Atom (Japanese: 鉄腕アトム, Hepburn: Tetsuwan Atomu), is a Japanese manga series written and illustrated by Osamu Tezuka.")
-        p.set_data_value("more", "https://en.wikipedia.org/wiki/Astro_Boy")
+        r = Robot()
+        r.set_title("Astro Boy")
+        r.set_data_value("description", "Astro Boy, known in Japan by its original name Mighty Atom (Japanese: 鉄腕アトム, Hepburn: Tetsuwan Atomu), is a Japanese manga series written and illustrated by Osamu Tezuka.")
+        r.set_data_value("more", "https://en.wikipedia.org/wiki/Astro_Boy")
 
-        self.output['robot'] = p
+        self.output['robot'] = r
 
 class Move(Process):
     input_specs = {'robot' : Robot}  #just for testing
@@ -70,7 +79,7 @@ class Move(Process):
 
     async def task(self):
         print(f"Moving {self.get_param('moving_step')}", flush=True)
-        p = Robot()
+        r = Robot()
 
         pos = self._input['robot'].position.copy()
         direction = self.get_param('direction')
@@ -83,9 +92,9 @@ class Move(Process):
         elif direction == "east":
             pos[0] += self.get_param('moving_step')
 
-        p.set_position(pos)
-        p.set_weight(self._input['robot'].weight)
-        self.output['robot'] = p
+        r.set_position(pos)
+        r.set_weight(self._input['robot'].weight)
+        self.output['robot'] = r
 
 class Eat(Process):
     input_specs = {'robot' : Robot}
@@ -102,10 +111,10 @@ class Eat(Process):
 
     async def task(self):
         print(f"Eating {self.get_param('food_weight')}", flush=True)
-        p = Robot()
-        p.set_position(self.input['robot'].position.copy())
-        p.set_weight(self.input['robot'].weight + self.get_param('food_weight'))
-        self.output['robot'] = p
+        r = Robot()
+        r.set_position(self.input['robot'].position.copy())
+        r.set_weight(self.input['robot'].weight + self.get_param('food_weight'))
+        self.output['robot'] = r
 
 class Wait(Process):
     input_specs = {'robot' : Robot}
@@ -121,10 +130,11 @@ class Wait(Process):
 
     async def task(self):
         print(f"Waiting {self.get_param('waiting_time')}", flush=True)
-        p = Robot()
-        p.set_position(self.input['robot'].position.copy())
-        p.set_weight(self.input['robot'].weight)
-        self.output['robot'] = p  
+        r = Robot()
+        r.set_position(self.input['robot'].position.copy())
+        r.set_weight(self.input['robot'].weight)
+        r.set_age(self.input['robot'].age)
+        self.output['robot'] = r
         time.sleep(self.get_param('waiting_time'))
 
 class Fly(Move):
@@ -142,35 +152,57 @@ class Fly(Move):
         print(f"Start flying ...")
         await super().task()
 
+class Add(Process):
+    input_specs = {'robot' : Robot, 'addon' : RobotAddOn}
+    output_specs = {'mega_robot' : MegaRobot}
+    config_specs = {}
+    
+    async def task(self):
+        print(f"Add robot addon...")
+        mega = MegaRobot()
+        mega.set_position(self.input['robot'].position.copy())
+        mega.set_weight(self.input['robot'].weight)
+        mega.data["addon_uri"] = self.input['addon'].uri
+        self.output['mega_robot'] = mega  
+
+class AddOnCreate(Process):
+    input_specs = {}
+    output_specs = {'addon' : RobotAddOn}
+    config_specs = {}
+    
+    async def task(self):
+        print("AddOn Create", flush=True)
+        self.output['addon'] = RobotAddOn()
+        
 def create_protocol():
-    p0 = Create()
-    p1 = Move()
-    p2 = Eat()
-    p3 = Move()
-    p4 = Move()
-    p5 = Eat()
-    p_wait = Wait()
-    p6 = Fly()
+    facto   = Create()
+    move_1  = Move()
+    eat_1   = Eat()
+    move_2  = Move()
+    move_3  = Move()
+    eat_2   = Eat()
+    wait_1  = Wait()
+    fly_1   = Fly()
 
     proto = Protocol(
         processes = {
-            'p0' : p0,  
-            'p1' : p1, 
-            'p2' : p2, 
-            'p3' : p3,  
-            'p4' : p4,  
-            'p5' : p5, 
-            'Fly' : p6, 
-            'p_wait' : p_wait
+            'facto' : facto,  
+            'move_1' : move_1, 
+            'eat_1' : eat_1, 
+            'move_2' : move_2,  
+            'move_3' : move_3,  
+            'eat_2' : eat_2, 
+            'fly_1' : fly_1, 
+            'wait_1' : wait_1
         },
         connectors=[
-            p0>>'robot'        | p1<<'robot',
-            p1>>'robot'        | p2<<'robot',
-            p2>>'robot'        | p_wait<<'robot',
-            p_wait>>'robot'    | p3<<'robot',
-            p3>>'robot'        | p4<<'robot',
-            p2>>'robot'        | p5<<'robot',
-            p5>>'robot'        | p6<<'robot'
+            facto>>'robot'     | move_1<<'robot',
+            move_1>>'robot'    | eat_1<<'robot',
+            eat_1>>'robot'     | wait_1<<'robot',
+            wait_1>>'robot'    | move_2<<'robot',
+            move_2>>'robot'    | move_3<<'robot',
+            eat_1>>'robot'     | eat_2<<'robot',
+            eat_2>>'robot'     | fly_1<<'robot'
         ],
         interfaces = {},
         outerfaces = {}
@@ -181,47 +213,57 @@ def create_protocol():
 
 
 def create_nested_protocol():
-    p1 = Move()
-    p2 = Eat()
-    p3 = Move()
-    p4 = Move()
-    p5 = Eat()
-    p_wait = Wait()
+    move_1  = Move()
+    eat_1   = Eat()
+    move_2  = Move()
+    move_3  = Move()
+    eat_2   = Eat()
+    wait_1  = Wait()
 
+    add_1 = Add()
+    addon_create_1 = AddOnCreate()
+
+    
     sub_travel = Protocol(
         processes = {
-            'p1' : p1, 
-            'p2' : p2, 
-            'p3' : p3,  
-            'p4' : p4,  
-            'p5' : p5, 
-            'p_wait' : p_wait,
+            'move_1' : move_1, 
+            'eat_1' : eat_1, 
+            'move_2' : move_2,  
+            'move_3' : move_3,  
+            'eat_2' : eat_2, 
+            'wait_1' : wait_1,
+            'add_1' : add_1,
+            'addon_create_1' : addon_create_1,
         },
         connectors=[
-            p1>>'robot'        | p2<<'robot',
-            p2>>'robot'        | p_wait<<'robot',
-            p_wait>>'robot'    | p3<<'robot',
-            p3>>'robot'        | p4<<'robot',
-            p2>>'robot'        | p5<<'robot',
+            move_1>>'robot'    | eat_1<<'robot',
+            eat_1>>'robot'     | wait_1<<'robot',
+            
+            addon_create_1>>'addon'  | add_1<<'addon',
+            wait_1>>'robot'          | add_1<<'robot',
+            add_1>>'mega_robot'      | move_2<<'robot',
+            
+            move_2>>'robot'    | move_3<<'robot',
+            eat_1>>'robot'     | eat_2<<'robot',
         ],
-        interfaces = { 'robot' : p1.in_port('robot') },
-        outerfaces = { 'robot' : p5.out_port('robot') }
+        interfaces = { 'robot' : move_1.in_port('robot') },
+        outerfaces = { 'robot' : eat_2.out_port('robot') }
     )
 
-    p0 = Create()
-    p6 = Fly()
-    p7 = Wait()
+    facto  = Create()
+    fly_1  = Fly()
+    wait_2 = Wait()
     super_travel = Protocol(
         processes = {
-            'p0' : p0, 
-            'p6' : p6, 
+            'facto' : facto, 
+            'fly_1' : fly_1, 
             'sub_travel': sub_travel,
-            'p7' : p7, 
+            'wait_2' : wait_2, 
         },
         connectors=[
-            p0>>'robot'             | sub_travel<<'robot',
-            sub_travel>>'robot'     | p6<<'robot',
-            p6>>'robot'             | p7<<'robot'
+            facto>>'robot'       | sub_travel<<'robot',
+            sub_travel>>'robot'  | fly_1<<'robot',
+            fly_1>>'robot'       | wait_2<<'robot'
         ],
         interfaces = { },
         outerfaces = { }

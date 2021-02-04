@@ -89,7 +89,9 @@ class Model(BaseModel):
     _fts_fields = {}
 
     _table_name = 'gws_model'
-
+    
+    __lab_uri = ""
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
@@ -107,9 +109,12 @@ class Model(BaseModel):
                 for prop in model.property_names(Field):
                     val = getattr(model, prop)
                     setattr(self, prop, val) 
-
+        
+        if not Model.__lab_uri:
+            Model.__lab_uri = Settings.retrieve().get_data("uri", default="")
+        
         if self.uri is None:
-            self.uri = str(uuid.uuid4())
+            self.uri = Model.__lab_uri + "-" + str(uuid.uuid4())
 
         if self.data is None:
             self.data = {}
@@ -228,7 +233,7 @@ class Model(BaseModel):
         cursor = DbManager.db.execute_sql(f'SELECT type FROM {self._table_name} WHERE id = ?', (str(id),))
         row = cursor.fetchone()
         if len(row) == 0:
-            raise Error("Model", "fetch_type_by_id", "The model is not found.")
+            raise Error("gws.model.Model", "fetch_type_by_id", "The model is not found.")
         type_str = row[0]
         model_t = Controller.get_model_type(type_str)
         return model_t
@@ -340,7 +345,7 @@ class Model(BaseModel):
         _FTSModel = cls.fts_model()
 
         if _FTSModel is None:
-            raise Error(cls.full_classname(), "search", "No FTSModel model defined")
+            raise Error("gws.model.Model", "search", "No FTSModel model defined")
         
         return _FTSModel.search_bm25(
             phrase, 
@@ -360,7 +365,7 @@ class Model(BaseModel):
         if isinstance(data,dict):
             self.data = data
         else:
-            raise Error(self.classname(),"set_data","The data must be a JSONable dictionary")
+            raise Error("gws.model.Model", "set_data","The data must be a JSONable dictionary")
     
     def set_data_value(self, key: str, value: str):
         """ 
@@ -422,14 +427,14 @@ class Model(BaseModel):
                 if Settings.retrieve().is_fts_active:
                     if not _FTSModel is None:
                         if not self._save_fts_document():
-                            raise Exception(self.full_classname(), "save", "Cannot save related FTS document")
+                            raise Error("gws.model.Model", "save", "Cannot save related FTS document")
 
                 #self.kv_store.save()
                 self.save_datetine = datetime.now()
                 return super().save(*args, **kwargs)
             except Exception as err:
                 transaction.rollback()
-                raise Error(self.full_classname(), "save", f"Error message: {err}")
+                raise Error("gws.model.Model", "save", f"Error message: {err}")
 
 
 
@@ -454,7 +459,7 @@ class Model(BaseModel):
                         m.save()
             except Exception as err:
                 transaction.rollback()
-                raise Error("Model", "save_all", f"Error message: {err}")
+                raise Error("gws.model.Model", "save_all", f"Error message: {err}")
 
         return True
 
@@ -623,7 +628,7 @@ class Viewable(Model):
         """
         for t in specs:
             if not isinstance(t, type) or not issubclass(t, ViewModel):
-                raise Error("Model", "register_vmodel_specs", "Invalid specs. A list of ViewModel types is expected")
+                raise Error("gws.model.Model", "register_vmodel_specs", "Invalid specs. A list of ViewModel types is expected")
             
             name = t.full_classname()
             cls._vmodel_specs[name] = t
@@ -696,7 +701,7 @@ class Config(Viewable):
             
         if not specs is None:
             if not isinstance(specs, dict):
-                raise Error(self.classname(), "__init__", f"The specs must be a dictionnary")
+                raise Error("gws.model.Config", "__init__", f"The specs must be a dictionnary")
             
             #convert type to str
             from gws.validator import Validator
@@ -712,7 +717,7 @@ class Config(Viewable):
                         default = validator.validate(default)
                         specs[k]["default"] = default
                     except Exception as err:
-                        raise Error(self.classname(), "__init__", f"Invalid default config value. Error message: {err}")
+                        raise Error("gws.model.Config", "__init__", f"Invalid default config value. Error message: {err}")
 
             self.set_specs( specs )
 
@@ -776,7 +781,7 @@ class Config(Viewable):
         :rtype: [str, int, float, bool]
         """
         if not name in self.specs:
-            raise Error(self.classname(), "get_param", f"Parameter {name} does not exist'")
+            raise Error("gws.model.Config", "get_param", f"Parameter {name} does not exist'")
         
         default = self.specs[name].get("default", None)
         return self.data["params"].get(name,default)
@@ -805,7 +810,7 @@ class Config(Viewable):
         from gws.validator import Validator
 
         if not name in self.specs:
-            raise Error(self.classname(), "set_param", f"Parameter '{name}' does not exist.")
+            raise Error("gws.model.Config", "set_param", f"Parameter '{name}' does not exist.")
         
         #param_t = self.specs[name]["type"]
 
@@ -813,7 +818,7 @@ class Config(Viewable):
             validator = Validator.from_specs(**self.specs[name])
             value = validator.validate(value)
         except Exception as err:
-            raise Error(self.classname(), "set_param", f"Invalid parameter value '{name}'. Error message: {err}")
+            raise Error("gws.model.Config", "set_param", f"Invalid parameter value '{name}'. Error message: {err}")
         
         self.data["params"][name] = value
 
@@ -836,10 +841,10 @@ class Config(Viewable):
         :type: dict
         """
         if not isinstance(specs, dict):
-            raise Error(self.classname(), "set_specs", f"The specs must be a dictionary.")
+            raise Error("gws.model.Config", "set_specs", f"The specs must be a dictionary.")
         
         if not self.id is None:
-            raise Error(self.classname(), "set_specs", f"Cannot alter the specs of a saved config")
+            raise Error("gws.model.Config", "set_specs", f"Cannot alter the specs of a saved config")
         
         self.data = {
             "specs" : specs,
@@ -941,7 +946,7 @@ class Process(Viewable, SystemTrackable):
         try:
             self._event_listener.add( name, callback )
         except Exception as err:
-            raise Error("Process", "add_event", f"Cannot add event. Error message: {err}")
+            raise Error("gws.model.Process", "add_event", f"Cannot add event. Error message: {err}")
     
     def as_json(self, bare: bool=False, stringify: bool=False, prettify: bool=False) -> (str, dict, ):
         """
@@ -959,15 +964,6 @@ class Process(Viewable, SystemTrackable):
         _json["input_specs"] = self.input.as_json()
         _json["output_specs"] = self.output.as_json()
         _json["config_specs"] = self.config_specs
-        
-        
-        print( type(self) )
-        print( self.title )
-        print( self.input )
-        print( self.input._ports )
-        print( self.input_specs )
-        print( self.input.as_json() )
-        print("--------")
         
         if bare:
             _json["uri"] = ""
@@ -1095,10 +1091,10 @@ class Process(Viewable, SystemTrackable):
         :rtype: InPort
         """
         if not isinstance(name, str):
-            raise Error(self.classname(), "in_port", "The name of the input port must be a string")
+            raise Error("gws.model.Process", "in_port", "The name of the input port must be a string")
         
         if not name in self._input._ports:
-            raise Error(self.classname(), "in_port", f"The input port '{name}' is not found")
+            raise Error("gws.model.Process", "in_port", f"The input port '{name}' is not found")
 
         return self._input._ports[name]
     
@@ -1151,10 +1147,10 @@ class Process(Viewable, SystemTrackable):
         :rtype: OutPort
         """
         if not isinstance(name, str):
-            raise Error(self.classname(), "out_port", "The name of the output port must be a string")
+            raise Error("gws.model.Process", "out_port", "The name of the output port must be a string")
         
         if not name in self._output._ports:
-            raise Error(self.classname(), "out_port", f"The output port '{name}' is not found")
+            raise Error("gws.model.Process", "out_port", f"The output port '{name}' is not found")
 
         return self._output._ports[name]
 
@@ -1194,7 +1190,7 @@ class Process(Viewable, SystemTrackable):
             await self._run_after_task()
 
         except Exception as err:
-            raise Error("Process", "_run", f"Error: {err}")
+            raise Error("gws.model.Process", "_run", f"Error: {err}")
     
     async def _run_next_processes(self):
         self._output.propagate()
@@ -1224,7 +1220,7 @@ class Process(Viewable, SystemTrackable):
         
         job = self.job
         if not job.save():
-            raise Error(self.classname(), "run", "Cannot save the job")
+            raise Error("gws.model.Process", "_run_before_task", "Cannot save the job")
         
         if self._event_listener.exists('start'):
             self._event_listener.sync_call('start', self)
@@ -1242,7 +1238,7 @@ class Process(Viewable, SystemTrackable):
         job = self.job
         job.update_status()
         if not job.save():
-            raise Error(self.classname(), "_run_after_task", f"Cannot save the job")
+            raise Error("gws.model.Process", "_run_after_task", f"Cannot save the job")
 
         res = self.output.get_resources()
         for k in res:
@@ -1276,7 +1272,7 @@ class Process(Viewable, SystemTrackable):
             self._instance_name = name
         
         if self._instance_name != name:
-            raise Error(self.classname(), "set_instance_name", "Try to set a different instance name")
+            raise Error("gws.model.Process", "set_instance_name", "Try to set a different instance name")
             
     def set_input(self, name: str, resource: 'Resource'):
         """ 
@@ -1288,10 +1284,10 @@ class Process(Viewable, SystemTrackable):
         :type resource: Resource
         """
         if not isinstance(name, str):
-            raise Error(self.classname(), "set_input", "The name must be a string.")
+            raise Error("gws.model.Process", "set_input", "The name must be a string.")
         
         if not isinstance(resource, Resource):
-            raise Error(self.classname(), "set_input", "The resource must be an instance of Resource.")
+            raise Error("gws.model.Process", "set_input", "The resource must be an instance of Resource.")
 
         self._input[name] = resource
         
@@ -1308,7 +1304,7 @@ class Process(Viewable, SystemTrackable):
             job.set_config(config)
             #self.config = config
         else:
-            raise Error(self.classname(), "set_config", "The config must be an instance of Config.")
+            raise Error("gws.model.Process", "set_config", "The config must be an instance of Config.")
 
     def set_param(self, name: str, value: [str, int, float, bool]):
         """ 
@@ -1324,7 +1320,7 @@ class Process(Viewable, SystemTrackable):
 
     # -- T --
 
-    def task(self):
+    async def task(self):
         pass
 
 # ####################################################################
@@ -1455,7 +1451,7 @@ class Experiment(Viewable):
                 protocol.save()
             else:
                 if not protocol.get_active_experiment() is None:
-                    raise Error("Experiment", "__init__", "An experiment is already associated with the protocol")
+                    raise Error("gws.model.Experiment", "__init__", "An experiment is already associated with the protocol")
 
             self.protocol_uri = protocol.uri
             self._protocol = protocol
@@ -1558,7 +1554,7 @@ class Experiment(Viewable):
             try:
                 proto = Protocol.get(Protocol.uri == self.protocol_uri)
             except:
-                raise Error("Experiment", "protocol", "The experiment has no protocol")
+                raise Error("gws.model.Experiment", "protocol", "The experiment has no protocol")
             
             self._protocol = proto.cast()
 
@@ -1570,7 +1566,7 @@ class Experiment(Viewable):
             try:
                 self._protocol_job = Job.get(Job.uri == self.protocol_job_uri)
             except:
-                raise Error("Experiment", "protocol_job", "The experiment has no job")
+                raise Error("gws.model.Experiment", "protocol_job", "The experiment has no job")
             
         return self._protocol_job
             
@@ -1656,17 +1652,17 @@ class Job(Viewable, SystemTrackable):
         
         if self.id is None:
             if (not config is None) and (not isinstance(config, Config)):
-                raise Error("Job", "__init__", "The config must be an instance of Config")
+                raise Error("gws.model.Job", "__init__", "The config must be an instance of Config")
  
             if (not process is None) and (not isinstance(process, Process)):
-                raise Error("Job", "__init__", "The process must be an instance of Process")
+                raise Error("gws.model.Job", "__init__", "The process must be an instance of Process")
             
             self._config = config
             self._process = process
             self.update_status()
             
             if not process.instance_name:
-                raise Error("Job", "__init__", "The process has no instance name.")
+                raise Error("gws.model.Job", "__init__", "The process has no instance name.")
                 
             self.data["instance_name"] = process.instance_name
             
@@ -1783,7 +1779,7 @@ class Job(Viewable, SystemTrackable):
         protocol = self.process
         
         if not isinstance(protocol, Protocol):
-            raise Error("Job", "dumps_flow", "The job must be related ot a protocol")     
+            raise Error("gws.model.Job", "flow", "The job must be related ot a protocol")     
         
         flow = self.as_json()
         if "data" in flow:
@@ -1827,57 +1823,6 @@ class Job(Viewable, SystemTrackable):
 
         return flow
     
-    @property
-    def flow_old(self):
-        if not self.is_finished:
-            return {}
-        
-        if not len(self.children):
-            return {}
-        
-        protocol = self.process
-        
-        if not isinstance(protocol, Protocol):
-            raise Error("Job", "dumps_flow", "The job must be related ot a protocol")     
-        
-        flow = self.as_json()
-        if "data" in flow:
-            del flow["data"]
-            
-        flow.update({
-            "jobs": {},
-            "flows": []
-        })
-    
-        flow["layout"] = protocol.get_layout()
-        flow["interfaces"] = {}
-        flow["outerfaces"] = {}
-        
-        for k in protocol._interfaces:
-            flow["interfaces"][k] = protocol._interfaces[k].as_json()
-            
-        for k in protocol._outerfaces:
-            flow["outerfaces"][k] = protocol._outerfaces[k].as_json()
-
-        for job in self.children:
-            flow["jobs"][job.uri] = job.as_json()
-
-            for k in job.data["input"]:
-                _input = job.data["input"][k]
-                flow["flows"].append({
-                    "to": {
-                        "job_uri": job.uri,
-                        "process": {
-                            "uri": job.process.uri,
-                            "instance_name": job.process.instance_name,
-                            "port": k,
-                        }
-                    },
-                    "from": _input["previous"],
-                    "resource_uri": _input["resource_uri"]
-                })
-
-        return flow
     
     # -- G --
 
@@ -1956,7 +1901,7 @@ class Job(Viewable, SystemTrackable):
         
     def set_experiment(self, experiment: 'Experiment'):
         if not isinstance(experiment, Experiment):
-            raise Error("The experiment must be an instance of Experiment")
+            raise Error("gws.model.Job", "set_experiment", "The experiment must be an instance of Experiment")
         
         if self.experiment is experiment:
             return
@@ -1964,7 +1909,7 @@ class Job(Viewable, SystemTrackable):
         if self.experiment is None:
             self.experiment = experiment
         else:
-            raise Error("An experiment is already defined")
+            raise Error("gws.model.Job", "set_experiment", "An experiment is already defined")
 
     def save(self, *args, **kwargs):
         """ 
@@ -1974,10 +1919,10 @@ class Job(Viewable, SystemTrackable):
         with DbManager.db.atomic() as transaction:
             try:
                 if self.process is None:
-                    raise Exception("Job", "save", "Cannot save the job. The process is not saved.")
+                    raise Error("gws.model.Job", "save", "Cannot save the job. The process is not saved.")
                 
                 if not self.config.save():
-                    raise Exception("Job", "save", "Cannot save the job. The config cannnot be saved.")
+                    raise Error("gws.model.Job", "save", "Cannot save the job. The config cannnot be saved.")
                 
                 self.process_uri = self._process.uri
                 self.process_type = self._process.type
@@ -1994,17 +1939,17 @@ class Job(Viewable, SystemTrackable):
 
                     if not res[k].is_saved():
                         if not res[k].save(*args, **kwargs):
-                            raise Exception("Job", "save", f"Cannot save the resource output '{k}' of the job")
+                            raise Error("gws.model.Job", "save", f"Cannot save the resource output '{k}' of the job")
 
                 self.__track_input_uri()
                 #self.__track_ouput_uri()
                 if not super().save(*args, **kwargs):
-                    raise Exception("Job", "save", "Cannot save the job.")
+                    raise Error("gws.model.Job", "save", "Cannot save the job.")
                 
                 return True
             except Exception as err:
                 transaction.rollback()
-                raise Error("Job", "save", f"An error occuured. Error: {err}")
+                raise Error("gws.model.Job", "save", f"An error occuured. Error: {err}")
 
     # -- T --
      
@@ -2021,7 +1966,7 @@ class Job(Viewable, SystemTrackable):
                 }
             else:
                 if not res.is_saved():
-                    raise Error("Process", "__track_input_uris", f"Cannot track input '{k}' uri. Please save the input resource before.")
+                    raise Error("gws.model.Process", "__track_input_uris", f"Cannot track input '{k}' uri. Please save the input resource before.")
   
                 is_interfaced = not port.is_left_connected
 
@@ -2042,7 +1987,7 @@ class Job(Viewable, SystemTrackable):
                     parent_job = self.parent_job
                     parent_protocol = self.process._parent_protocol
 
-                    interface = parent_protocol.get_interface_of_target_port( port )
+                    interface = parent_protocol.get_interface_of_inport( port )
                     source_port = interface.source_port
   
                     if source_port.is_left_connected:
@@ -2078,7 +2023,7 @@ class Job(Viewable, SystemTrackable):
                 }
             else:
                 if not res.is_saved():
-                    raise Error("Process", "__track_ouput_uri", f"Cannot track output '{k}' uri. Please save the output resource before.")
+                    raise Error("gws.model.Process", "__track_ouput_uri", f"Cannot track output '{k}' uri. Please save the output resource before.")
 
                 self.data["output"][k] = {
                     "resource_uri": res.uri
@@ -2127,23 +2072,23 @@ class Protocol(Process, SystemTrackable):
                 self.__build_from_dump( self.data["graph"] )
         else:
             if not isinstance(processes, dict):
-                raise Error("Protocol", "__init__", "A dictionnary of processes is expected")
+                raise Error("gws.model.Protocol", "__init__", "A dictionnary of processes is expected")
             
             if not isinstance(connectors, list):
-                raise Error("Protocol", "__init__", "A list of connectors is expected")
+                raise Error("gws.model.Protocol", "__init__", "A list of connectors is expected")
 
             # set process
             for name in processes:
                 proc = processes[name]
                 if not isinstance(proc, Process):
-                    raise Error("Protocol", "__init__", "The dictionnary of processes must contain instances of Process")
+                    raise Error("gws.model.Protocol", "__init__", "The dictionnary of processes must contain instances of Process")
             
                 self.add_process(name, proc)
 
             # set connectors
             for conn in connectors:
                 if not isinstance(conn, Connector):
-                    raise Error("Protocol", "__init__", "The list of connector must contain instances of Connectors")
+                    raise Error("gws.model.Protocol", "__init__", "The list of connector must contain instances of Connectors")
                 
                 self.add_connector(conn)
  
@@ -2170,19 +2115,19 @@ class Protocol(Process, SystemTrackable):
         """
 
         if self.is_finished or self.is_running:
-            raise Error("Protocol", "add_process", "The protocol has already been run")
+            raise Error("gws.model.Protocol", "add_process", "The protocol has already been run")
        
         if not isinstance(process, Process):
-            raise Error("Protocol", "add_process", f"The process '{name}' must be an instance of Process")
+            raise Error("gws.model.Protocol", "add_process", f"The process '{name}' must be an instance of Process")
 
         if not process._parent_protocol is None:
-            raise Error("Protocol", "add_process", f"The process instance '{name}' already belongs to another protocol")
+            raise Error("gws.model.Protocol", "add_process", f"The process instance '{name}' already belongs to another protocol")
         
         if name in self._processes:
-            raise Error("Protocol", "add_process", f"Process name '{name}' already exists")
+            raise Error("gws.model.Protocol", "add_process", f"Process name '{name}' already exists")
         
         if process in self._processes.items():
-            raise Error("Protocol", "add_process", f"Process '{name}' duplicate")
+            raise Error("gws.model.Protocol", "add_process", f"Process '{name}' duplicate")
             
         process._parent_protocol = self
         self._processes[name] = process
@@ -2197,17 +2142,17 @@ class Protocol(Process, SystemTrackable):
         """
 
         if self.is_finished or self.is_running:
-            raise Error("Protocol", "add_connector", "The protocol has already been run")
+            raise Error("gws.model.Protocol", "add_connector", "The protocol has already been run")
         
         if not isinstance(connector, Connector):
-            raise Error("Protocol", "add_connector", "The connector must be an instance of Connector")
+            raise Error("gws.model.Protocol", "add_connector", "The connector must be an instance of Connector")
         
         if  not connector.left_process in self._processes.values() or \
             not connector.right_process in self._processes.values():
-            raise Error("Protocol", "add_connector", "The connector processes must be belong to the protocol")
+            raise Error("gws.model.Protocol", "add_connector", "The connector processes must be belong to the protocol")
         
         if connector in self._connectors:
-            raise Error("Protocol", "add_connector", "Duplciated connector")
+            raise Error("gws.model.Protocol", "add_connector", "Duplciated connector")
 
         self._connectors.append(connector)
 
@@ -2332,36 +2277,36 @@ class Protocol(Process, SystemTrackable):
         positions = self.get_layout()
         return positions.get(name, self._defaultPosition)
 
-    def get_interface_of_target_port(self, target_port: InPort) -> Interface:
+    def get_interface_of_inport(self, inport: InPort) -> Interface:
         """ 
         Returns interface with a given target input port
         
-        :param target_port: The InPort
-        :type target_port: InPort
+        :param inport: The InPort
+        :type inport: InPort
         :return: The interface, None otherwise
         :rtype": Interface
         """
         
         for k in self._interfaces:
             port = self._interfaces[k].target_port
-            if port is target_port:
+            if port is inport:
                 return self._interfaces[k]
 
         return None
     
-    def get_outerface_of_target_port(self, target_port: OutPort) -> Outerface:
+    def get_outerface_of_outport(self, outport: OutPort) -> Outerface:
         """ 
         Returns interface with a given target output port
         
-        :param target_port: The InPort
-        :type target_port: OutPort
+        :param outport: The InPort
+        :type outport: OutPort
         :return: The outerface, None otherwise
         :rtype": Outerface
         """
         
         for k in self._outerfaces:
-            port = self._outerfacess[k].target_port
-            if port is target_port:
+            port = self._outerfacess[k].source_port
+            if port is outport:
                 return self._outerfacess[k]
 
         return None
@@ -2396,7 +2341,7 @@ class Protocol(Process, SystemTrackable):
         Returns True if the input poort the process is an outerface of the protocol
         """
         for k in self._outerfaces:
-            port = self._outerfaces[k].target_port
+            port = self._outerfaces[k].source_port
             if process is port.parent.parent:
                 return True
 
@@ -2444,7 +2389,7 @@ class Protocol(Process, SystemTrackable):
                     self.add_process( k, processes[k] )
 
             except Exception as err:
-                raise Error(f"An error occured. Error: {err}")
+                raise Error("gws.model.Protocol", "__build_from_dump", f"An error occured. Error: {err}")
         
         # create interfaces and outerfaces
 
@@ -2457,9 +2402,9 @@ class Protocol(Process, SystemTrackable):
             interfaces[k] = port
 
         for k in graph["outerfaces"]:
-            _to = graph["outerfaces"][k]["to"]  #destination port of the outerface
-            proc_name = _to["node"]
-            port_name = _to["port"]
+            _from = graph["outerfaces"][k]["from"]  #source port of the outerface
+            proc_name = _from["node"]
+            port_name = _from["port"]
             proc = processes[proc_name]
             port = proc.output.ports[port_name]
             outerfaces[k] = port
@@ -2494,7 +2439,7 @@ class Protocol(Process, SystemTrackable):
         
         e = self.get_active_experiment()
         if e is None:
-            raise Error("Protocol", "_run", "No experiment defined")
+            raise Error("gws.model.Protocol", "_run_before_task", "No experiment defined")
 
         e.save()
 
@@ -2565,7 +2510,7 @@ class Protocol(Process, SystemTrackable):
         """
         
         for k in self._outerfaces:
-            port = self._outerfaces[k].target_port
+            port = self._outerfaces[k].source_port
             self.output[k] = port.resource
 
     #def __init_pre_start_event(self):
@@ -2619,8 +2564,8 @@ class Protocol(Process, SystemTrackable):
         self.__set_output_specs(output_specs)
 
         for k in outerfaces:
-            source_port = self.output.ports[k]
-            self._outerfaces[k] = Outerface(name=k, source_port=source_port, target_port=outerfaces[k])
+            target_port = self.output.ports[k]
+            self._outerfaces[k] = Outerface(name=k, target_port=target_port, source_port=outerfaces[k])
 
         #self._outerfaces = outerfaces
 
@@ -2749,7 +2694,7 @@ class Resource(Viewable, SystemTrackable):
         """
 
         if not isinstance(job, Job):
-            raise Error("Resource", "_set_job", "The job must be an instance of Job.")
+            raise Error("gws.model.Resource", "_set_job", "The job must be an instance of Job.")
 
         self.job = job
 
@@ -2794,7 +2739,7 @@ class ResourceSet(Resource):
 
     def __setitem__(self, key, val):
         if not isinstance(val, self._resource_types):
-            raise Error("ResourceSet", "__setitem__", f"The value must be an instance of {self._resource_types}. The actual value is a {type(val)}.")
+            raise Error("gws.model.ResourceSet", "__setitem__", f"The value must be an instance of {self._resource_types}. The actual value is a {type(val)}.")
         
         self.set[key] = val
 
@@ -2805,7 +2750,7 @@ class ResourceSet(Resource):
                 self.data["set"] = {}
                 for k in self._set:
                     if not (self._set[k].is_saved() or self._set[k].save()):
-                        raise Exception("ResourceSet", "save", f"Cannot save the resource '{k}' of the resource set")
+                        raise Error("gws.model.ResourceSet", "save", f"Cannot save the resource '{k}' of the resource set")
 
                     self.data["set"][k] = {
                         "uri": self._set[k].uri,
@@ -2816,7 +2761,7 @@ class ResourceSet(Resource):
 
             except Exception as err:
                 transaction.rollback()
-                raise Error("ResourceSet", "save", f"Error: {err}")
+                raise Error("gws.model.ResourceSet", "save", f"Error: {err}")
 
     @property
     def set(self):
@@ -2992,7 +2937,7 @@ class ViewModel(Model):
     
     def set_model(self, model: None):
         if not self.model_id is None:
-            raise Error(self.classname(),"save","A model already exists")
+            raise Error("gws.model.ViewModel", "set_model", "A model already exists")
         
         self._model = model
 
@@ -3008,7 +2953,7 @@ class ViewModel(Model):
         :type template: ViewTemplate
         """
         if not isinstance(template, ViewTemplate):
-            raise Error(self.classname(),"set_template","The template must be an instance of ViewTemplate")
+            raise Error("gws.model.ViewModel", "set_template", "The template must be an instance of ViewTemplate")
 
         self.template = template
     
@@ -3027,10 +2972,10 @@ class ViewModel(Model):
         Saves the view model
         """
         if self._model is None:
-            raise Error(self.classname(),"save","The ViewModel has no model")
+            raise Error("gws.model.ViewModel", "save", "The ViewModel has no model")
         else:
             if not self.model_id is None and self._model.id != self.model_id:
-                raise Error(self.classname(),"save","It is not allowed to change model of the ViewModel that is already saved")
+                raise Error("gws.model.ViewModel", "save", "It is not allowed to change model of the ViewModel that is already saved")
                 
             with DbManager.db.atomic() as transaction:
                 try:
@@ -3039,10 +2984,10 @@ class ViewModel(Model):
                         self.model_type = self._model.full_classname()
                         return super().save(*args, **kwargs)
                     else:
-                        raise Exception(self.classname(),"save","Cannot save the vmodel. Please ensure that the model of the vmodel is saved before")
+                        raise Error("gws.model.ViewModel", "save", "Cannot save the vmodel. Please ensure that the model of the vmodel is saved before")
                 except Exception as err:
                     transaction.rollback()
-                    raise Error("ViewModel", "save", f"Error message: {err}")
+                    raise Error("gws.model.ViewModel", "save", f"Error message: {err}")
     
     # -- T --
     

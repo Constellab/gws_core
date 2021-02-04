@@ -5,6 +5,8 @@
 
 import os
 import tempfile
+import re
+import subprocess
 
 from typing import Optional
 from gws.model import Process
@@ -13,60 +15,58 @@ from gws.settings import Settings
 from gws.file import FileStore
 from gws.controller import Controller
 
-class ShellProcess(Process):
-    input_specs = {'file' : (File, None,)}
-    output_specs = {'file' : (File, None,)}
-    config_specs = {
-        'bin': {"type": str, "default": None, 'description': "Binary file to call (eg. scp, cp, ...)"},
-        'save_stdout': {"type": str, "default": False, 'description': "True to save the command output text. False otherwise"},
-    }
+class Shell(Process):
+    input_specs = {}
+    output_specs = {}
+    config_specs = {}
     
-    def build_command(self) -> list:
-        cmd = self.get_param('command')
-        param = []
-        for k in self.config.params:
-            param.append( k + " " + str(self.config.params[k]) )
-        return [ cmd ] + param
+    _out_type = "text"
     
-    
-    def after_command(self, output_dir):
+    def build_command(self) -> str:
+        return ""
+
+    def after_command(self, stdout: str=None, tmp_dir: str=None):
         pass
     
     async def task(self):
         
-        with tempfile.TemporaryDirectory() as output_dir:
+        with tempfile.TemporaryDirectory() as tmp_dir:
             cmd = self.build_command()
-            
-            output_text = subprocess.check_output( 
-                *cmd,
-                stderr=subprocess.STDOUT,
-                cwd=output_dir
+
+            stdout = subprocess.check_output( 
+                cmd,
+                text = True if self._out_type == "text" else False,
+                cwd=tmp_dir
             )
             
-            if self.get_param('save_stdout'):
-                self.data['stdout'] = output_text
-                
-            self.after_command(output_dir)
-            #... 
-
-class CppProcess(Process):
-    pass
-
-class CondaProcess(ShellProcess):
+            self.data['cmd'] = cmd 
+            self.after_command(stdout=stdout, tmp_dir=tmp_dir)
+            
+            for k in self.output:
+                f = self.output[k]
+                if isinstance(f, File):
+                    f.move_to_store()
+            
+class EasyShell(Shell):
     
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.__install_venv()
+    _cmd: list = None
     
-    def venv_dir(cls):
-        settings = Controller.get_settings()
-        venv_dir = settings.get_venv_dir()
-        return os.path.join(venv_dir, cls.fclassname(slugify=True))
+    def build_command(self) -> str:
         
-    @classmethod
-    def __install_venv(cls):
-        venv_dir = cls.venv_dir()
-        if os.path.exists(venv_dir):
-            os.makedirs(venv_dir)
-         
+        cmd = self._cmd
         
+        for i in range(0, len(self._cmd)):
+            
+            cmd_part = cmd[i]
+            for k in self.config.params:
+                param = self.get_param(k)
+                if isinstance(param, str):
+                    cmd_part = cmd_part.replace(f"{{param:{k}}}", param)
+
+            for k in self.input:
+                file = self.input[k]
+                cmd_part = cmd_part.replace(f"{{in:{k}}}", file.path)
+
+            cmd[i] = cmd_part
+            
+        return cmd

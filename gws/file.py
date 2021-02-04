@@ -74,6 +74,13 @@ class File(Resource):
     def is_in_file_store( self ):
         fs = FileStore()
         return fs.contains(self)
+    
+    # -- M --
+    
+    def move_to_store(self):
+        if not self.is_in_store():
+            fs = FileStore()
+            fs.add(file)
         
     # -- N --
     
@@ -144,7 +151,10 @@ class File(Resource):
             self.open()   
             
         self._fp.write(data)
-
+    
+    # -- S --
+    
+    
 # ####################################################################
 #
 # TextFile class
@@ -197,7 +207,7 @@ class Uploader(Process):
         for ufile in self._files:
             fs = FileStore()
             filename = self.uniquify(ufile.filename)
-            file = fs.push(file.file, dest_file_name=filename, location_dir="uploads")
+            file = fs.add(file.file, dest_file_name=filename, location_dir="uploads")
             file_set[filename] = file
         
         self.output["file_set"] = file_set

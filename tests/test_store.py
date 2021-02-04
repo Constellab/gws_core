@@ -54,9 +54,9 @@ class TestFileStore(unittest.TestCase):
         testdata_dir = settings.get_dir("gws:testdata_dir")
         file_path = os.path.join(testdata_dir, "mini_travel_graph.json")
         
-        file = fs.push(file_path)        
+        file = fs.add(file_path)        
         self.assertTrue(file.exists())        
 
-        file = fs.push(file_path)
+        file = fs.add(file_path)
         self.assertTrue(file.exists())
 

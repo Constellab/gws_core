@@ -15,7 +15,7 @@ __cdir__ = os.path.dirname(os.path.abspath(__file__))
 # app settings
 class Settings(PWModel):
     data = JSONField(null = True, default={})
-
+    
     _data = dict(
         app_dir         = __cdir__,
         app_host        = '0.0.0.0',
@@ -126,11 +126,11 @@ class Settings(PWModel):
     def get_cwd(self) -> dict:
         return self.data["__cwd__"]
 
-    def get_data(self, k:str) -> str:
+    def get_data(self, k:str, default=None) -> str:
         if k == "session_key":
             return self.data[k]
         else:
-            return self.data.get(k, None)
+            return self.data.get(k, default)
 
     def get_root_dir(self) -> dict:
         d = self.get_dependency_dir("gws")

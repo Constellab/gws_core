@@ -41,7 +41,7 @@ def get_template_env(settings):
     for k in settings.get_dependency_names():
         p = settings.get_page_dir(k)
         if p is None:
-            raise Error(f"The page dir of the brick '{k}' is None")
+            raise Error("gws.app", "get_template_env", f"The page dir of the brick '{k}' is None")
 
         paths.append(p)
 
@@ -81,7 +81,7 @@ async def show_brick_page(request: Request, brick_name: Optional[str] = "gws", e
     except Exception as err:
         status = False
         results = None
-        message = f"{err}"
+        raise Error("gws.app", "show_brick_page", f"{err}")
 
     settings = Settings.retrieve()
     css, js, module_js = settings.get_local_static_css_js()
@@ -114,7 +114,8 @@ async def call_brick_api(request: Request, brick_name: Optional[str] = "gws", ap
         results = await async_func(request)
         return {"status": True, "results": results, "message": ""}
     except Exception as err:
-        return {"status": False, "results": {}, "message": f"{err}"}
+        raise Error("gws.app", "call_brick_api", f"{err}")
+        #return {"status": False, "results": {}, "message": f"{err}"}
 
 
 ####################################################################################

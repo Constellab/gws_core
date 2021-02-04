@@ -463,7 +463,8 @@ class IO(Base):
 
     _ports: dict = {}
     _parent: 'Process'
-
+    _counter = 0;
+    
     def __init__(self, parent: 'Process'):
         self._parent = parent
         self._ports = dict()
@@ -562,7 +563,12 @@ class IO(Base):
         return resources
 
     # -- I --
-
+    
+    # Creates iterator object
+    # Called when iteration is initialized
+    def __iter__(self):
+        return self._ports.__iter__()
+    
     @property
     def is_ready(self)->bool:
         """
@@ -579,6 +585,9 @@ class IO(Base):
 
     # -- N --
 
+    def __next__(self):
+        return self._ports.__next__()
+    
     def get_next_procs(self) -> list:
         """ 
         Returns the list of (right-hand side) processes connected to the IO ports.
