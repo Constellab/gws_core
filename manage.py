@@ -15,7 +15,7 @@ def set_path(rel_gws_path):
             sys.path.append(abs_gws_path)
             return True
 
-is_set = set_path("./gws/bricks/gws") or set_path("./.gws/bricks/gws")
+is_set =  set_path("./.gws/bricks/gws") or set_path("./gws/bricks/gws")
 if not is_set:
     raise Exception("Cannot find the base gws brick")
 
