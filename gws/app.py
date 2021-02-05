@@ -69,7 +69,7 @@ async def show_home_page():
 async def show_brick_page(request: Request, brick_name: Optional[str] = "gws", entry_name: Optional[str] = 'index', action_name: Optional[str] = 'index') :
     brick_app_module = importlib.import_module(f"{brick_name}.app")
     page_t = getattr(brick_app_module, "Page", None)
-    
+
     try:
         entry_name = slugify(entry_name,snakefy=True).strip("_")
         action_name = slugify(action_name,snakefy=True).strip("_")
@@ -79,9 +79,10 @@ async def show_brick_page(request: Request, brick_name: Optional[str] = "gws", e
         status = True
         message = ""
     except Exception as err:
+        # the entry point does not exists... on display the corresponding page with default the Response
         status = False
         results = None
-        raise Error("gws.app", "show_brick_page", f"{err}")
+        message = f"{err}"
 
     settings = Settings.retrieve()
     css, js, module_js = settings.get_local_static_css_js()
