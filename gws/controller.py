@@ -391,7 +391,7 @@ class Controller(Base):
         p = create_protocol()
         e = p.create_experiment()
         e.set_title("The journey of Astro.")
-        e.set_data_value("description", "This is the journey of Astro.")
+        e.data["description"] = "This is the journey of Astro."
         await e.run()
         e.save()
         return True
@@ -402,7 +402,7 @@ class Controller(Base):
         p = create_nested_protocol()
         e = p.create_experiment()
         e.set_title("The super journey of Astro.")
-        e.set_data_value("description", "This is the super journey of Astro.")
+        e.data["description"] = "This is the super journey of Astro."
         await e.run()
         e.save()
         return True

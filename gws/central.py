@@ -14,7 +14,7 @@ class Central:
     
     api = {
         "put-status"    : "https://api.gws.gencovery.com/lab-instance/status/{status}",
-        "post-report"   : "/external-labs/{experiment_id}/report"
+        "post-report"   : "https://api.gws.gencovery.com/external-labs/{experiment_id}/report"
     }
 
     # -- A --
@@ -100,10 +100,9 @@ class Central:
     @classmethod
     def format_url(cls, action, **kwargs):
         settings = Settings.retrieve()
-        url = settings.data["central"]["api_url"] + cls.api[action]
 
         for k in kwargs:
-            url = url.replace("{"+k+"}", kwargs[k])
+            url = cls.api[action].replace("{"+k+"}", kwargs[k])
 
         return url
     
