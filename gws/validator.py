@@ -6,7 +6,9 @@
 
 import json
 import math
+
 from gws.logger import Error
+from gws.typing import Path, URL
 
 class Validator:
     """
@@ -74,8 +76,8 @@ class Validator:
         """
         Valitates a value.
         
-        Checks if the type of :param:`value` is a valid subtype of :property:`type` and that
-        :param:`value` is serializable/deserilizable (using built-in Python methods :meth:`json.dumps`/:meth:`json.loads`).
+        Checks if the type of :param:value is a valid subtype of :property:type and that
+        :param:value is serializable/deserilizable (using built-in Python methods :meth:`json.dumps`/:meth:`json.loads`).
 
         Usage:
             * ```Validator.from_specs(type=int, default=5) -> IntegerValidator(default=5)```
@@ -157,7 +159,7 @@ class Validator:
         """
         Constructs usable basic validators.
 
-        Usage:
+        Usage
             * ```Validator.from_specs(type='int', default=5) -> IntegerValidator(default=5)```
             * ```Validator.from_specs(type=int, default=5) -> IntegerValidator(default=5)```
             * ```Validator.from_specs(type='bool', default=True) -> BooleanValidator(default=True)```
@@ -166,18 +168,18 @@ class Validator:
             * ```Validator.from_specs(type='str', default='foo') -> CharValidator(default='foo')```
             * ```Validator.from_specs(type='list', default=[1,"foo"]) -> ArrayValidator(default=[1,"foo"])```
             * ```Validator.from_specs(type='dict', default={"foo":1}) -> JSONValidator(default={"foo":1})```
-
+            
         :param type: The type used for validation
         :type type: `type` or `str` in built-in types `bool`, `int`, `float`, `str`, `list`, `dict`
         :param default: The default value to return, Defaults to `None`
-        :type default: any, An instance of :param:`type`
+        :type default: any, An instance of :param:type
         :param min: The minimum value allowed (for numeric only)
         :type min: defaults to -inf
         :param max: The maximum value allowed (for numeric only)
         :type max: defaults to +inf
         :param allowed_values: Allowed values
         :type allowed_values: defaults to None
-        :return: The Validator corresponding to the :param:`type`
+        :return: The Validator corresponding to the :param:type
         :rtype: subclass of `Validator`
         """
 
@@ -198,7 +200,7 @@ class Validator:
 
 class BooleanValidator(Validator):
     """
-    Validator class
+    Validator class.
 
     This validator allows validating serialized (or deserialized) boolean parameter values.
 
@@ -214,6 +216,7 @@ class BooleanValidator(Validator):
         * `validator.validate('foo') -> ValueError`
         * `validator.validate(4) -> ValueError`
     """
+    
     _type = bool
 
     def __init__(self, default=None, allowed_values=None, **kwargs):
@@ -241,6 +244,7 @@ class NumericValidator(Validator):
         * `validator.validate('true') -> ValueError`
         * `validator.validate('foo') -> ValueError`
     """
+    
     _min = None
     _max = None
     _include_min = True
@@ -287,6 +291,7 @@ class IntegerValidator(NumericValidator):
         * `validator.validate('true') -> ValueError`
         * `validator.validate('foo') -> ValueError`
     """
+    
     _type = int
     
     def __init__(self, default=None, min=-math.inf, max=math.inf, include_min=True, include_max=True, allowed_values=None, **kwargs):
@@ -318,6 +323,7 @@ class FloatValidator(NumericValidator):
         * `validator.validate('infinity') -> ValueError`
         * `validator.validate('nan') -> ValueError`
     """
+    
     _type = float
     
     def __init__(self, default=None, min=-math.inf, max=math.inf, include_min=True, include_max=True, allowed_values=None, **kwargs):
@@ -343,6 +349,7 @@ class CharValidator(Validator):
         * Let `validator = CharValidator(default='8')` then
             * `validator.validate(None) -> '8'`
     """
+    
     _type = str
     
     def __init__(self, default = None, allowed_values=None, **kwargs):
@@ -370,6 +377,7 @@ class ArrayValidator(Validator):
         * `validator.validate('5.5') -> ValueError`
         * `validator.validate('{"foo":1.2}') -> ValueError`
     """
+    
     _type = list
     
     def __init__(self, default=None, **kwargs):
@@ -396,7 +404,36 @@ class JSONValidator(Validator):
         * `validator.validate('[5.5,3]') -> ValueError`
         * `validator.validate([5.5,3]) -> ValueError`
     """
+    
     _type = dict
     
     def __init__(self, default=None, **kwargs):
         super().__init__(default=default, type=dict, **kwargs)
+
+class URLValidator(CharValidator):
+    _type = URL
+    
+    def _validate(self, value):
+        value = super()._validate(value)
+        
+        import re
+        regex = re.compile(
+                r'^(?:http|ftp)s?://' # http:// or https://
+                r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|' #domain...
+                r'localhost|' #localhost...
+                r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})' # ...or ip
+                r'(?::\d+)?' # optional port
+                r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+        
+        valid = (re.match(regex, value) is not None)
+        if valid==True:
+            return value
+        else:
+            raise Error("gws.validator.URLValidator", "__init__", f"The URL {value} is not valid") 
+            
+class PathValidator(CharValidator):
+    _type = Path
+    
+    
+    
+        

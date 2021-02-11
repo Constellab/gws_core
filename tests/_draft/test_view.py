@@ -8,8 +8,8 @@ from starlette.responses import JSONResponse, HTMLResponse
 from starlette.testclient import TestClient
 
 from gws.app import App
-from gws.model import Model, Resource, HTMLViewModel, JSONViewModel
-from gws.view import HTMLViewTemplate, JSONViewTemplate, ViewTemplateFile
+from gws.model import Model, Resource
+from gws.view import HTMLViewTemplate
 from gws.controller import Controller
 from gws.settings import Settings
 
@@ -36,45 +36,6 @@ class FunnyViewModel(HTMLViewModel):
     model_specs = [Person]
     template = ViewTemplateFile(os.path.join(testdata_dir, './funny-view.html'), type="html")
 
-class TestHTMLView(unittest.TestCase):
-    
-    @classmethod
-    def setUpClass(cls):
-        Person.drop_table()
-        HTMLPersonViewModel.drop_table()
-        JSONPersonViewModel.drop_table()
-        pass
-
-    @classmethod
-    def tearDownClass(cls):
-        HTMLPersonViewModel.drop_table()
-        JSONPersonViewModel.drop_table()
-        Person.drop_table()
-        pass
-    
-    def test_view(self):
-        elon = Person()
-        vmodel = HTMLPersonViewModel(model=elon)
-        self.assertEqual(vmodel.data, {})
-
-        elon.set_name('Elon Musk')
-        params = {"job" : "engineer"}
-        html = vmodel.render(params)
-        print(html)
-
-        self.assertEqual(html, "I am <b>Elon Musk</b>! My job is engineer.")
-        self.assertEqual(vmodel.data, params)
-        self.assertEqual(vmodel.data, params)
-
-        self.assertTrue( vmodel.model is elon )
-        self.assertTrue( vmodel.id is None )
-        self.assertTrue( elon.id is None )
-
-        Controller.save_all([elon, vmodel])
-
-        vm = HTMLPersonViewModel.get_by_id(vmodel.id)
-        self.assertEqual(vm, vmodel)
-        self.assertEqual(vm.model, elon)
 
 class TestJSONView(unittest.TestCase):
     
@@ -148,14 +109,3 @@ class TestFunnyView(unittest.TestCase):
         </div>
         """
         self.assertEqual(expected_text.replace("\n", "").replace(" ", ""), text.replace("\n", "").replace(" ", ""))
-
-    def test_default_view_file(self):
-        elon = Person()
-        vmodel = HTMLViewModel(model=elon)
-        elon.set_name('Elon Musk')
-        
-        vmodel.save()
-        text = vmodel.render({})
-
-        expected_text = vmodel.as_html()
-        self.assertEqual(expected_text, text)

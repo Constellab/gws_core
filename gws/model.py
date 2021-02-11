@@ -32,7 +32,6 @@ from gws.settings import Settings
 from gws.base import slugify, BaseModel, BaseFTSModel, DbManager
 from gws.base import format_table_name
 from gws.controller import Controller
-from gws.view import ViewTemplate, HTMLViewTemplate, JSONViewTemplate
 from gws.io import Input, Output, InPort, OutPort, Connector, Interface, Outerface
 from gws.event import EventListener
 from gws.utils import to_camel_case
@@ -165,7 +164,7 @@ class Model(BaseModel):
 
     def clear_data(self, save: bool = False):
         """
-        Clears the :property:`data`
+        Clears the :property:data
 
         :param save: If True, save the model the `data` is cleared
         :type save: bool
@@ -202,7 +201,7 @@ class Model(BaseModel):
         super().drop_table()
 
     # -- E --
-
+        
     def __eq__(self, other: 'Model') -> bool:
         """ 
         Compares the model with another model. The models are equal if they are 
@@ -320,7 +319,7 @@ class Model(BaseModel):
 
         if self.is_deleted:
             return True
-
+ 
         self.is_deleted = True
         return self.save()
     
@@ -367,16 +366,16 @@ class Model(BaseModel):
         else:
             raise Error("gws.model.Model", "set_data","The data must be a JSONable dictionary")
     
-    def set_data_value(self, key: str, value: str):
-        """ 
-        Sets the a given `data`
-
-        :param key: The key
-        :type key: srt
-        :param value: The value
-        :type value: any
-        """
-        self.data[key] = value
+    #def set_data_value(self, key: str, value: str):
+    #    """ 
+    #    Sets the a given `data`
+    #
+    #    :param key: The key
+    #    :type key: srt
+    #    :param value: The value
+    #    :type value: any
+    #    """
+    #    self.data[key] = value
 
     def _save_fts_document(self):
         _FTSModel = self.fts_model()
@@ -462,9 +461,6 @@ class Model(BaseModel):
                 raise Error("gws.model.Model", "save_all", f"Error message: {err}")
 
         return True
-
-    # -- U --
-
      
 # ####################################################################
 #
@@ -474,7 +470,6 @@ class Model(BaseModel):
  
 class Viewable(Model):
 
-    _vmodel_specs: dict = {}
     _fts_field = {'title': 2.0, 'description': 1.0}
     
     # -- A --
@@ -500,7 +495,7 @@ class Viewable(Model):
                 transaction.rollback()
                 return False
 
-    def as_json(self, stringify: bool=False, prettify: bool=False) -> (str, dict, ):
+    def as_json(self, view_params: dict=None, stringify: bool=False, prettify: bool=False) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the model.
         
@@ -516,6 +511,7 @@ class Viewable(Model):
             "uri": self.uri,
             "type": self.type,
             "data" : self.data,
+            "is_deleted": self.is_deleted,
             "creation_datetime" : str(self.creation_datetime),
         }
         
@@ -527,28 +523,8 @@ class Viewable(Model):
         else:
             return _json
 
-    def as_html(self) -> str:
-        """
-        Returns HTML representation of the model
-
-        :return: The HTML text
-        :rtype: str
-        """
-        return f"<div class='gview:model' json='true'>{self.as_json()}</div>"
-    
     # -- C --
 
-    def create_default_vmodel(self):
-        if "default" in self._vmodel_specs:
-            vmodel_t = self._vmodel_specs["default"]
-            return vmodel_t(model=self)
-        else:   
-            for k in self._vmodel_specs:
-                vmodel_t = self._vmodel_specs[k]
-                return vmodel_t(model=self) #return the 1st vmodel
-
-        return None
-    
     # -- D --
     
     @property
@@ -618,21 +594,6 @@ class Viewable(Model):
                 transaction.rollback()
                 return False
 
-    @classmethod
-    def register_vmodel_specs(cls, specs: list):
-        """
-        Registers a list of view model types
-
-        :param specs: List of view model types
-        :type specs: list
-        """
-        for t in specs:
-            if not isinstance(t, type) or not issubclass(t, ViewModel):
-                raise Error("gws.model.Model", "register_vmodel_specs", "Invalid specs. A list of ViewModel types is expected")
-            
-            name = t.full_classname()
-            cls._vmodel_specs[name] = t
-
     # -- S --
 
     def set_title(self, title: str):
@@ -675,6 +636,14 @@ class Viewable(Model):
             self.data = {}
             
         self.data["title"] = text
+    
+    # -- V --
+
+    def view(self, *args, format="json", params:dict = {}) -> dict:
+        view_model = ViewModel(model=self)
+        view_model.set_params(params)
+        view_model.save()
+        return view_model
     
 # ####################################################################
 #
@@ -948,7 +917,7 @@ class Process(Viewable, SystemTrackable):
         except Exception as err:
             raise Error("gws.model.Process", "add_event", f"Cannot add event. Error message: {err}")
     
-    def as_json(self, bare: bool=False, stringify: bool=False, prettify: bool=False) -> (str, dict, ):
+    def as_json(self, view_params: dict=None, bare: bool=False, stringify: bool=False, prettify: bool=False) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the model.
         
@@ -1484,7 +1453,7 @@ class Experiment(Viewable):
                 transaction.rollback()
                 return False
 
-    def as_json(self, stringify: bool=False, prettify: bool=False) -> (str, dict, ):
+    def as_json(self, view_params: dict=None, stringify: bool=False, prettify: bool=False) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the model.
         
@@ -1496,7 +1465,7 @@ class Experiment(Viewable):
         :rtype: dict, str
         """
         
-        _json = super().as_json()
+        _json = super().as_json(view_params=view_params)
         _json.update({
             "protocol_job_uri": self.protocol_job_uri,
             "score": self.score,
@@ -1686,7 +1655,7 @@ class Job(Viewable, SystemTrackable):
         
         return self.data["instance_name"]
     
-    def as_json(self, stringify: bool=False, prettify: bool=False) -> (str, dict, ):
+    def as_json(self, view_params: dict=None, stringify: bool=False, prettify: bool=False) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the model.
         
@@ -1698,7 +1667,7 @@ class Job(Viewable, SystemTrackable):
         :rtype: dict, str
         """
         
-        _json = super().as_json()
+        _json = super().as_json(view_params=view_params)
         
         if not self.parent_job is None:
             parent_job_uri = self.parent_job.uri
@@ -1984,31 +1953,31 @@ class Job(Viewable, SystemTrackable):
                         }
                     } 
                 else:
-                    parent_job = self.parent_job
-                    parent_protocol = self.process._parent_protocol
-
-                    interface = parent_protocol.get_interface_of_inport( port )
-                    source_port = interface.source_port
+                    pass
+                    #parent_job = self.parent_job
+                    #parent_protocol = self.process._parent_protocol
+                    #interface = parent_protocol.get_interface_of_inport( port )
+                    #source_port = interface.source_port
   
-                    if source_port.is_left_connected:
-                        left_port_name = source_port.prev.name
-                    else:
-                        left_port_name = ""      
+                    #if source_port.is_left_connected:
+                    #    left_port_name = source_port.prev.name
+                    #else:
+                    #    left_port_name = ""      
 
-                    self.data["input"][k] = {
-                        "resource_uri": res.uri,
-                        "previous": {
-                            "job_uri": res.job.uri,
-                            "process": {
-                                "uri": res.job.process.uri,
-                                "instance_name": res.job.process.instance_name,
-                                "port": left_port_name,
-                            },
-                            "interface": {
-                                "port" : interface.name,
-                            }
-                        }
-                    }                    
+                    #self.data["input"][k] = {
+                    #    "resource_uri": res.uri,
+                    #    "previous": {
+                    #        "job_uri": res.job.uri,
+                    #        "process": {
+                    #            "uri": res.job.process.uri,
+                    #            "instance_name": res.job.process.instance_name,
+                    #            "port": left_port_name,
+                    #        },
+                    #        "interface": {
+                    #            "port" : interface.name,
+                    #        }
+                    #    }
+                    #}                    
         
     def __track_ouput_uri(self):
         _output = self.process.output
@@ -2039,9 +2008,9 @@ class Protocol(Process, SystemTrackable):
     """ 
     Protocol class.
 
-    :param processes: Dictionnary of processes
+    :property processes: Dictionnary of processes
     :type processes: dict
-    :param connectors: List of connectors represinting process connection
+    :property connectors: List of connectors represinting process connection
     :type connectors: list
     """
 
@@ -2193,14 +2162,13 @@ class Protocol(Process, SystemTrackable):
         
     def dumps( self, as_dict: bool = False, prettify: bool = False, bare: bool = False ) -> str:
         """ 
-        Dumps the JSON graph representing the protocol
+        Dumps the JSON graph representing the protocol.
         
-        :param as_dict: If True, returns a dictionnary. A JSON string is returns otherwise
+        :param as_dict: If True, returns a dictionnary. A JSON string is returns otherwise.
         :type as_dict: bool
         :param prettify: If True, the JSON string is indented.
         :type prettify: bool
-        :param bare: If True, returns a bare dump i.e. the uris of the processes (and sub-protocols) of not returned. 
-        Bare dumps allow creating a new protocols from scratch.
+        :param bare: If True, returns a bare dump i.e. the uris of the processes (and sub-protocols) of not returned. Bare dumps allow creating a new protocols from scratch.
         :type bare: bool
         """
 
@@ -2605,7 +2573,7 @@ class Resource(Viewable, SystemTrackable):
                 transaction.rollback()
                 return False
 
-    def as_json(self, stringify: bool=False, prettify: bool=False) -> (str, dict, ):
+    def as_json(self, view_params: dict=None, stringify: bool=False, prettify: bool=False) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the model.
         
@@ -2617,7 +2585,7 @@ class Resource(Viewable, SystemTrackable):
         :rtype: dict, str
         """
         
-        _json = super().as_json()
+        _json = super().as_json(view_params=view_params)
 
         if not self.job is None:
             _json.update({
@@ -2661,7 +2629,19 @@ class Resource(Viewable, SystemTrackable):
         :type file_path: str
         """
         
-        #@ToDo: ensure that this method is only called by an Importer
+        #@ToDo: ensure that this method is only called by an Exporter
+        
+        pass
+    
+    def _extract(self, **params) -> 'Model':
+        """ 
+        Extract a subpart of the resource
+
+        :param params: Extraction parameters
+        :type params: dict
+        """
+        
+        #@ToDo: ensure that this method is only called by an Extractor
         
         pass
     
@@ -2679,6 +2659,7 @@ class Resource(Viewable, SystemTrackable):
         """
         
         #@ToDo: ensure that this method is only called by an Importer 
+        
         pass
     
     # -- P --
@@ -2781,14 +2762,13 @@ class ResourceSet(Resource):
 
 class ViewModel(Model):
     """ 
-    ViewModel class.
+    ViewModel class. A view model is parametrized representation of the orginal data
 
     :property model_id: Id of the Model of the ViewModel
     :type model: int
     :property model_type: Type of the Model of the ViewModel
     :type model_type: str
     :property template: The view template
-    :type template: ViewTemplate
     :property model_specs: List containing the type of the default Models associated with the ViewModel.
     :type model_specs: list
     """
@@ -2796,7 +2776,6 @@ class ViewModel(Model):
     model_id: int = IntegerField(index=True)
     model_type :str = CharField(index=True)
     model_specs: list = []
-    template: ViewTemplate = None
 
     _model = None
 
@@ -2808,11 +2787,13 @@ class ViewModel(Model):
         
         if isinstance(model, Model):
             self._model = model
-            self._model.register_vmodel_specs( [type(self)] )
 
         if not self.id is None:
             self._model = self.model
-
+        
+        if not "params" in self.data:
+            self.data["params"] = {}
+        
     # -- A --
 
     def as_json(self, stringify: bool=False, prettify: bool=False) -> (str, dict, ):
@@ -2831,7 +2812,7 @@ class ViewModel(Model):
             "uri": self.uri,
             "type": self.type,
             "data" : self.data,
-            "model": self.model.as_json(),
+            "model": self.model.as_json( view_params=self.params ),
             "creation_datetime" : str(self.creation_datetime),
         }
         
@@ -2842,17 +2823,6 @@ class ViewModel(Model):
                 return json.dumps(_json)
         else:
             return _json
-        
-    def as_html(self):
-        """
-        Returns HTML representation of the view model.
-
-        :return: The HTML text
-        :rtype: str
-        """
-
-        return f"<div class='gview:model' json='true'>{self.as_json()}</div>"
-
 
     # -- C --
 
@@ -2872,6 +2842,9 @@ class ViewModel(Model):
     # -- F --
 
     # -- G --
+    
+    def get_param(self, key: str, default=None) -> str:
+        return self.data["params"].get(key, default)
     
     def get_description(self) -> str:
         """
@@ -2902,29 +2875,22 @@ class ViewModel(Model):
         self._model = model.cast()
         return self._model
     
+    # -- P -- 
+    
+    @property
+    def params(self):
+        return self.data["params"]
+    
     # -- R --
 
-    @classmethod
-    def register_to_models(cls):
-        for model_t in cls.model_specs:
-            model_t.register_vmodel_specs( [cls] )
-
-    def render(self, data: dict = None) -> str:
-        """
-        Renders the view of the view model.
-
-        :param data: Rendering parameters
-        :type data: dict
-        :return: The rendering
-        :rtype: str
-        """
-        if isinstance(data, dict):
-            self.set_data(data)
-  
-        return self.template.render(self)
-    
     # -- S --
     
+    def set_param(self, key, value):  
+        self.data["params"][key] = value
+        
+    def set_params(self, params: dict={}):  
+        self.data["params"] = params
+        
     def set_description(self, text: str):
         """
         Returns the description.
@@ -2944,19 +2910,6 @@ class ViewModel(Model):
         if model.is_saved():
             self.model_id = model.id
 
-
-    def set_template(self, template: ViewTemplate):
-        """
-        Sets the view template.
-
-        :param template: The view template
-        :type template: ViewTemplate
-        """
-        if not isinstance(template, ViewTemplate):
-            raise Error("gws.model.ViewModel", "set_template", "The template must be an instance of ViewTemplate")
-
-        self.template = template
-    
     def set_title(self, title: str):
         """ 
         Set the title
@@ -3009,37 +2962,4 @@ class ViewModel(Model):
             self.data = {}
             
         self.data["title"] = text
-    
-
-# ####################################################################
-#
-# HTMLViewModel class
-#
-# ####################################################################
-
-class HTMLViewModel(ViewModel):
-    """ 
-    HTMLViewModel class.
-
-    :property model: The model of the view model
-    :type model: Process
-    """
-
-    template = HTMLViewTemplate("{{ vmodel.as_html() }}")
-
-# ####################################################################
-#
-# JSONViewModel class
-#
-# ####################################################################
-
-class JSONViewModel(ViewModel):
-    """ 
-    JSONViewModel class.
-
-    :property model: The model of the view model
-    :type model: Resource
-    """
-
-    template = JSONViewTemplate("{{ vmodel.as_json() }}")
 

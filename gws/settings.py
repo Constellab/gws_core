@@ -71,8 +71,8 @@ class Settings(PWModel):
                 central_api_key = b64encode(token_bytes(32)).decode()
                 settings.set_data("central_api_key", central_api_key)
 
-            #no uri by default
-            settings.set_data("uri", "")
+            #default uri
+            settings.set_data("uri", "00000000-0000-0000-0000-000000000000")
 
             settings.set_data("demo", False)
             settings.save()
@@ -92,15 +92,6 @@ class Settings(PWModel):
         self.save()
 
     # -- B --
-
-    @property
-    def buttons(self) -> dict:
-        sortedList = sorted(self.app["buttons"].items(),  key=lambda x: x[1].get("position",0), reverse=True)
-        btns = {}
-        for btn in sortedList:
-            btns[ btn[0] ] = btn[1]
-
-        return btns
 
     # -- C --
 
@@ -179,104 +170,24 @@ class Settings(PWModel):
         default = os.path.join(self.get_cwd(),"bin/")
         return self.data.get("bin_dir", default)
 
-    def get_public_dir(self, name:str = None) -> dict:
-        if name is None:
-            return os.path.join(self.get_cwd(),"./public")
-        else:
-            if self.get_dependency_dir(name) is None:
-                return None
-
-            return os.path.join(self.get_dependency_dir(name),"./public")
-
-    def get_static_dirs(self) -> dict:
-        """
-        Returns the absolute paths of the static directories
-        """
-        statics = {}
-        static_dir = self.data["app"]["statics"]
-        for k in static_dir:
-            statics["/"+k.strip('/')] = os.path.join(self.get_cwd(),static_dir[k])
-        
-        return statics
-
     def get_dependency_dir(self, dependency_name: str) -> str:
         return self.data["dependency_dirs"].get(dependency_name, None)
 
     def get_dependency_dirs(self) -> dict:
-        dirs = {}
-        for dep_name in self.data["dependency_dirs"]:
-            dirs[dep_name] = self.data["dependency_dirs"][dep_name]
-        return dirs
+        #dirs = {}
+        #for dep_name in self.data["dependency_dirs"]:
+        #    dirs[dep_name] = self.data["dependency_dirs"][dep_name]
+        return self.data["dependency_dirs"]
     
     def get_dependency_names(self) -> list:
         return self.data["dependencies"]
-
-    # def get_dependency_paths(self) -> dict:
-    #     return self.data["dependency_paths"]
-
-    def get_template_dir(self, dependency_name: str) -> str:
-        dependency_dir = self.get_dependency_dir(dependency_name)
-        if dependency_dir is None:
-            return None
-
-        return os.path.join(dependency_dir, "./templates")
     
-    def get_page_dir(self, dependency_name: str) -> str:
-        dependency_dir = self.get_dependency_dir(dependency_name)
-        if dependency_dir is None:
-            return None
+    def get_extern_dir(self, dependency_name: str) -> str:
+        return self.data["extern_dirs"].get(dependency_name, None)
 
-        return os.path.join(dependency_dir, "./web/pages")
-
-
-    def __get_recursive_css_js_files(self,static_dir, abs_dir):
-        js = []
-        css = []
-        module_js = []
-
-        # scan dir
-        _dirs = []
-        _files = []
-        for f in os.listdir(abs_dir):
-            if os.path.isdir(os.path.join(abs_dir,f)):
-                if f.startswith("_") or f.startswith("."):
-                    continue
-                _dirs.append(f)
-            else:
-                _files.insert(0,f)
-
-        # load files
-        for f in _files:
-            if f.endswith(".css"):
-                css.append(os.path.join(static_dir,f))
-            elif f.endswith(".module.js"):
-                module_js.append(os.path.join(static_dir,f))
-            elif f.endswith(".js"):
-                js.append(os.path.join(static_dir,f))
-
-        for f in _dirs:
-            _css, _js, _module_js = self.__get_recursive_css_js_files(os.path.join(static_dir,f), os.path.join(abs_dir,f))
-            js = js + _js
-            css = css + _css
-            module_js = module_js + _module_js
-
-        return css, js, module_js
-
-    def get_local_static_css_js(self):
-        js = []
-        css = []
-        module_js = []
-        dirs = self.get_dependency_dirs()
-        for name in dirs:
-            k = f"/static-{name}"
-            abs_static_dir = os.path.join(dirs[name],"./web/static/")
-            _css, _js, _module_js = self.__get_recursive_css_js_files(k, abs_static_dir)
-            
-            js = js + _js
-            css = css + _css
-            module_js = module_js + _module_js
-            
-        return css, js, module_js
+    
+    def get_extern_dirs(self) -> dict:
+        return self.data["extern_dirs"]
 
     # -- I --
 

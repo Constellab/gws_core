@@ -21,18 +21,25 @@ class Shell(Process):
     config_specs = {}
     
     _out_type = "text"
+    _tmp_dir = None
     
-    def build_command(self) -> str:
-        return ""
+    def build_command(self) -> (list):
+        return [""]
 
     def after_command(self, stdout: str=None, tmp_dir: str=None):
         pass
     
+    @property
+    def cwd(self):
+        if self._tmp_dir is None:
+            self._tmp_dir = tempfile.TemporaryDirectory()
+        
+        return self._tmp_dir
+    
     async def task(self):
         
-        with tempfile.TemporaryDirectory() as tmp_dir:
+        with self.cwd as tmp_dir:
             cmd = self.build_command()
-
             stdout = subprocess.check_output( 
                 cmd,
                 text = True if self._out_type == "text" else False,
@@ -47,11 +54,13 @@ class Shell(Process):
                 if isinstance(f, File):
                     f.move_to_store()
             
+            self._tmp_dir = None
+            
 class EasyShell(Shell):
     
     _cmd: list = None
     
-    def build_command(self) -> str:
+    def build_command(self) -> list:
         
         cmd = self._cmd
         

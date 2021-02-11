@@ -8,6 +8,7 @@ from gws.model import Resource
 
 class JSONData(Resource):
     
+    # -- A -- 
 
     # -- E --
     

@@ -13,7 +13,7 @@ from gws.model import Experiment, User, Protocol
 class Central:
     
     api = {
-        "put-status"    : "/external-labs/lab-instance/status/{status}",
+        "put-status"    : "https://api.gws.gencovery.com/lab-instance/status/{status}",
         "post-report"   : "/external-labs/{experiment_id}/report"
     }
 
@@ -67,16 +67,6 @@ class Central:
             
 
     @classmethod
-    def create_url(cls, action, **kwargs):
-        settings = Settings.retrieve()
-        url = settings.data["central"]["api_url"] + cls.api[action]
-
-        for k in kwargs:
-            url = url.replace("{"+k+"}", kwargs[k])
-
-        return url
-
-    @classmethod
     def close_experiment(cls, uri):
         exp = Experiment.get_by_uri(uri)
         if exp is None:
@@ -104,7 +94,19 @@ class Central:
         else:
             user.is_active = False
             return user.save()
+    
+    # -- F --
+    
+    @classmethod
+    def format_url(cls, action, **kwargs):
+        settings = Settings.retrieve()
+        url = settings.data["central"]["api_url"] + cls.api[action]
 
+        for k in kwargs:
+            url = url.replace("{"+k+"}", kwargs[k])
+
+        return url
+    
     # -- G --
 
     @classmethod
@@ -162,12 +164,12 @@ class Central:
         else:
             status = "stopped"
 
-        url = cls.create_url("put-status", status=status)
+        url = cls.format_url("put-status", status=status)
         cls.send(url, method="PUT")
 
     @classmethod
     def post_report(cls, report):
-        url = cls.create_url("post-report", experiment_id=report.experiment.id)
+        url = cls.format_url("post-report", experiment_id=report.experiment.id)
         cls.send(url, method="POST", data={"report_uri": report.uri})
     
     # -- V --

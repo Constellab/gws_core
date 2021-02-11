@@ -53,14 +53,14 @@ class Create(Process):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.set_title("Robot create")
-        self.set_data_value("description", "This process creates the Robot.")
+        self.data["description"] =  "This process creates the Robot."
 
     async def task(self):
         print("Create", flush=True)
         r = Robot()
         r.set_title("Astro Boy")
-        r.set_data_value("description", "Astro Boy, known in Japan by its original name Mighty Atom (Japanese: 鉄腕アトム, Hepburn: Tetsuwan Atomu), is a Japanese manga series written and illustrated by Osamu Tezuka.")
-        r.set_data_value("more", "https://en.wikipedia.org/wiki/Astro_Boy")
+        r.data["description"] = "Astro Boy, known in Japan by its original name Mighty Atom (Japanese: 鉄腕アトム, Hepburn: Tetsuwan Atomu), is a Japanese manga series written and illustrated by Osamu Tezuka."
+        r.data["more"] = "https://en.wikipedia.org/wiki/Astro_Boy"
 
         self.output['robot'] = r
 
@@ -75,7 +75,7 @@ class Move(Process):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.set_title("Move process")
-        self.set_data_value("description", "This process emulates a short moving step of the robot")
+        self.data["description"] =  "This process emulates a short moving step of the robot"
 
     async def task(self):
         print(f"Moving {self.get_param('moving_step')}", flush=True)
@@ -106,7 +106,7 @@ class Eat(Process):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.set_title("Eat process")
-        self.set_data_value("description", "This process emulates the meal of the robot before its flight!")
+        self.data["description"] = "This process emulates the meal of the robot before its flight!"
 
 
     async def task(self):
@@ -126,7 +126,7 @@ class Wait(Process):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.set_title("Wait process")
-        self.set_data_value("description", "This process emulates the resting time of the robot before its flight!")
+        self.data["description"] =  "This process emulates the resting time of the robot before its flight!"
 
     async def task(self):
         print(f"Waiting {self.get_param('waiting_time')}", flush=True)
@@ -146,7 +146,7 @@ class Fly(Move):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.set_title("Fly process")
-        self.set_data_value("description", "This process emulates the fly of the robot. It inherites the Move process.")
+        self.data["description"] = "This process emulates the fly of the robot. It inherites the Move process."
 
     async def task(self):
         print(f"Start flying ...")

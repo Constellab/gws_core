@@ -13,6 +13,10 @@ from gws.base import Base
 from gws.logger import Error, Info
 from gws.query import Query, Paginator
 
+from typing import List
+from fastapi import UploadFile, File as FastAPIFile
+
+
 class Controller(Base):
     """
     Controller class
@@ -57,14 +61,14 @@ class Controller(Base):
                 return Paginator(Q, page=page).as_model_list()
 
         else:
-            if action == "post":
-                model = cls.__post(object_type, object_uri, data)
-            elif action == "get":
-                model = cls.__get(object_type, object_uri)
-            elif action == "put":
-                model = cls.__put(object_type, object_uri, data)
+            if action == "get":
+                model = cls.__get(object_type, object_uri, data)
+            elif action == "update":
+                model = cls.__update(object_type, object_uri, data)
             elif action == "delete":
                 model = cls.__delete(object_type, object_uri)
+            elif action == "upload":
+                model = cls.__upload(files)
             elif action == "run":
                 model = asyncio.run( cls.__run(experiment_uri = object_uri) )
             
@@ -80,25 +84,18 @@ class Controller(Base):
     @classmethod
     def __delete(cls, object_type: str, object_uri: str) -> 'ViewModel':
         from gws.model import Model, ViewModel
-        o = cls.fetch_model(object_type, object_uri)
-        if isinstance(o, ViewModel):
-            o.remove()
-            return o
+        obj = cls.fetch_model(object_type, object_uri)
+        if isinstance(obj, ViewModel):
+            obj.remove()
+            return obj
         else:
-            raise Error("Controller", f"__delete", "No ViewModel match with uri {object_uri}.")
+            raise Error("Controller", f"__delete", f"No ViewModel found with uri {object_uri}")
 
+    # -- E --
+    
+  
     # -- F --
 
-    #@classmethod
-    #def fetch_experiment_flow(cls, experiment_uri):
-    #    from gws.model import Experiment
-    #    
-    #    try:
-    #        e = Experiment.get(Experiment.uri == experiment_uri)
-    #    except:
-    #        return {}
-    #    
-    #    return e.flow
         
     @classmethod
     def fetch_experiment_list(cls, page=1, number_of_items_per_page=20, filters=[], return_format=""):
@@ -270,15 +267,16 @@ class Controller(Base):
         return Controller._settings
         
     @classmethod
-    def __get(cls, object_type: str, object_uri: str) -> 'ViewModel':
+    def __get(cls, object_type: str, object_uri: str, data:dict=None) -> 'ViewModel':
         obj = cls.fetch_model(object_type, object_uri)
+    
         from gws.model import Model, ViewModel
         if isinstance(obj, ViewModel):
             return obj
         elif isinstance(obj, Model):
-            return obj
+            return obj.view(params=data)
         else:
-            raise Error("Controller", "__get", f"No ViewModel or Model found for the encoded uri {object_uri}")
+            raise Error("Controller", "__get", f"No ViewModel found with uri {object_uri}")
         
 
     @classmethod
@@ -324,87 +322,18 @@ class Controller(Base):
     # -- P --
 
     @classmethod
-    def __post(cls, object_type: str, object_uri: str, data: dict) -> 'ViewModel':
-        from gws.model import SystemTrackable, ViewModel
+    def __update(cls, object_type: str, object_uri: str, data: dict) -> 'ViewModel':
+        from gws.model import SystemTrackable, ViewModel        
         obj = cls.fetch_model(object_type, object_uri)
-
-        if isinstance(obj, SystemTrackable):
-            raise Error("Controller", "__post", f"Object {type(obj)} is SystemTrackable. It can only be created by the  core system")
-
-        if isinstance(obj, ViewModel):
-            vmodel = cls.__post_new_vmodel(obj, data)
-        else:
-            raise Error("Controller", "__post", f"Object {type(obj)} is not a ViewModel")
         
-        return vmodel
-    
-    @classmethod
-    def __post_new_vmodel(cls, vmodel, data):
-        if data["type"] == "self":
-            vmodel_t = type(vmodel)
-        else:
-            vmodel_t = cls.get_model_type(data["type"])
-
-        new_vmodel = vmodel_t(model=vmodel.model)
-        vdata = data.get("vdata", {})
-        new_vmodel.hydrate_with(vdata)
-        new_vmodel.save()
-        return new_vmodel
-
-    @classmethod
-    def __post_new_model_and_return_vmodel(cls, object_type: str, object_uri: str, data: dict):
-        model_t = cls.get_model_type(object_type)
-        model = model_t()
-
-        from gws.model import Model
-        if not isinstance(model, Model):
-            raise Error("Controller", "action", f"Object uri {object_uri} must refer to a Model")
-
-        mdata = data.get("mdata", {})
-        model.hydrate_with(mdata)
-
-        vmodel = model.create_default_vmodel()
-        vdata = data.get("vdata", {})
-        vmodel.hydrate_with(vdata)
-        vmodel.save()
-
-        return vmodel
-
-    @classmethod
-    def __put(cls, object_type: str, object_uri: str, data: dict) -> 'ViewModel':
-        from gws.model import SystemTrackable, ViewModel
-        t = cls.get_model_type(object_type)
-        
-        try:
-            obj = t.get(t.uri == object_uri)
-        except:
-            raise Error("Controller", "__post", f"Object {type(obj)} is not found with uri {object_uri}")
-
-        if isinstance(obj, SystemTrackable):
-            raise Error("Controller", "__post", f"Object {type(obj)} is SystemTrackable. It can only be updated by the  core system")
-
         if isinstance(obj, ViewModel):
-            vmodel = obj
-
-            model = vmodel.model
-            mdata = data.get("mdata", {})
-            model.hydrate_with(mdata)
-
-            vdata = data.get("vdata", {})
-            vmodel.hydrate_with(vdata)
-            vmodel.save()
+            view_model = obj
+            view_model.set_params(data)
+            view_model.save()
         else:
-            # it is a model
-            model = obj
-            mdata = data.get("mdata", {})
-            model.hydrate_with(mdata)
+            raise Error("Controller", "__update", f"No ViewModel found with uri {object_uri}")
 
-            vmodel = model.create_default_vmodel()
-            vdata = data.get("vdata", {})
-            vmodel.hydrate_with(vdata)
-            vmodel.save()
-
-        return vmodel
+        return view_model
 
     # -- R --
     
@@ -507,7 +436,23 @@ class Controller(Base):
             await e.run()
         except Exception as err:
             raise Error("Controller", "__run", f"An error occured. {err}")
+    
+    @classmethod
+    async def __upload(cls, files: List[UploadFile] = FastAPIFile(...)):
+        try:
+            u = Uploader(files=files)
+            e = u.create_experiment()
+            await e.run()
+            
+            file_set = u.output["file_set"]
+            return {
+                "status": False,
+                "files": file_set.as_json()
+            }
         
+        except Exception as err:
+            return { "status": False, "message": f"Upload failed. Error: {err}" }
+            
     @classmethod
     def save_all(cls, process_type_list: list = None) -> bool:
         """

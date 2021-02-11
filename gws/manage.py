@@ -76,7 +76,7 @@ def _replace_dir_tokens(path):
 
     return path
 
-def _update_relative_static_paths(dep_cwd, dep_settings):
+def _update_relative_paths(dep_cwd, dep_settings):
 
     for k in dep_settings:
         if k.endswith("_dir"):
@@ -94,13 +94,6 @@ def _update_relative_static_paths(dep_cwd, dep_settings):
         dep_settings["dirs"][k] = _replace_dir_tokens(dep_settings["dirs"][k])
         if dep_settings["dirs"][k].startswith("."):
             dep_settings["dirs"][k] = os.path.abspath(os.path.join(dep_cwd,dep_settings["dirs"][k]))
-
-    for k in dep_settings.get("app",{}).get("statics",{}):
-        dep_settings["app"]["statics"][k] = _replace_dir_tokens(dep_settings["app"]["statics"][k])
-
-        if dep_settings["app"]["statics"][k].startswith("."):
-            dep_settings["app"]["statics"][k] = os.path.abspath(os.path.join(dep_cwd,dep_settings["app"]["statics"][k]))
-
 
     return dep_settings
 
@@ -181,14 +174,16 @@ def _parse_settings(brick_cwd: str = None, brick_name:str = None, brick_settings
         dep_setting_file = os.path.join(dep_cwd,"./settings.json")
                                          
         dep_exist = (dep != brick_name)
+        
         if dep_exist:
             dep_settings = _parse_settings(brick_cwd=dep_cwd, brick_name=dep, brick_settings_file_path=dep_setting_file)
             if len(dep_settings) > 0:
-                dep_settings = _update_relative_static_paths(dep_cwd,dep_settings)
+                dep_settings = _update_relative_paths(dep_cwd,dep_settings)
                 settings = _update_json(dep_settings, settings)
         else:
             if len(settings) > 0:
-                settings = _update_relative_static_paths(dep_cwd,settings)
+                settings = _update_relative_paths(dep_cwd,settings)
+                
 
     # uniquefy dependencies
     settings["dependencies"] = list(set(settings["dependencies"]))
@@ -209,7 +204,6 @@ def parse_settings(brick_cwd: str = None):
         "is_test"       : False,
         "externs"       : [],
         "dependencies"  : [],
-        "static_dirs"   : {},
         "__cwd__"       : brick_cwd
     }
 
