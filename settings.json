@@ -15,10 +15,7 @@
         "gws:testdata_dir" : "./tests/testdata"
     },
     
-    "externs" : [
-        "distrib-js",
-        "three-js"
-    ],
+    "externs" : [],
     
     "dependencies" : [],
     
