@@ -14,6 +14,7 @@ from gws.file import File
 from gws.settings import Settings
 from gws.file import FileStore
 from gws.controller import Controller
+from gws.logger import Error
 
 class Shell(Process):
     input_specs = {}
@@ -26,36 +27,44 @@ class Shell(Process):
     def build_command(self) -> (list):
         return [""]
 
-    def after_command(self, stdout: str=None, tmp_dir: str=None):
+    def after_command(self, stdout: str=None):
         pass
     
     @property
     def cwd(self):
         if self._tmp_dir is None:
             self._tmp_dir = tempfile.TemporaryDirectory()
-        
+ 
         return self._tmp_dir
     
     async def task(self):
-        
-        with self.cwd as tmp_dir:
+        try:
             cmd = self.build_command()
+
             stdout = subprocess.check_output( 
                 cmd,
                 text = True if self._out_type == "text" else False,
-                cwd=tmp_dir
+                cwd=self.cwd.name
             )
-            
+ 
             self.data['cmd'] = cmd 
-            self.after_command(stdout=stdout, tmp_dir=tmp_dir)
-            
+            self.after_command(stdout=stdout)
+  
             for k in self.output:
                 f = self.output[k]
                 if isinstance(f, File):
                     f.move_to_store()
             
+            self._tmp_dir.cleanup()
             self._tmp_dir = None
-            
+        except subprocess.CalledProcessError as err:
+            self._tmp_dir.cleanup()
+            self._tmp_dir = None
+            Error("Shell","task", f"An error occured while running the binary in shell process. Error: {err}")
+        
+        except Exception as err:
+            Error("Shell","task", f"An error occured while running shell process. Error: {err}")
+        
 class EasyShell(Shell):
     
     _cmd: list = None

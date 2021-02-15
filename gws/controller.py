@@ -27,7 +27,7 @@ class Controller(Base):
     _number_of_items_per_page = 50
 
     @classmethod
-    def action(cls, action=None, object_type=None, object_uri=None, data=None, page=1, number_of_items_per_page=20, filters=[], return_format="") -> 'ViewModel':
+    async def action(cls, action=None, object_type=None, object_uri=None, data=None, page=1, number_of_items_per_page=20, filters=[], return_format="") -> 'ViewModel':
         """
         Process user actions
 
@@ -68,7 +68,7 @@ class Controller(Base):
             elif action == "delete":
                 model = cls.__delete(object_type, object_uri)
             elif action == "upload":
-                model = cls.__upload(files)
+                model = await cls.__upload(data)
             elif action == "run":
                 model = asyncio.run( cls.__run(experiment_uri = object_uri) )
             
@@ -437,22 +437,24 @@ class Controller(Base):
         except Exception as err:
             raise Error("Controller", "__run", f"An error occured. {err}")
     
+    # -- U --
+    
     @classmethod
     async def __upload(cls, files: List[UploadFile] = FastAPIFile(...)):
         try:
+            from gws.file import Uploader
             u = Uploader(files=files)
             e = u.create_experiment()
             await e.run()
-            
+
             file_set = u.output["file_set"]
-            return {
-                "status": False,
-                "files": file_set.as_json()
-            }
+            return { "status": True, "file_set": file_set.as_json() }
         
         except Exception as err:
             return { "status": False, "message": f"Upload failed. Error: {err}" }
-            
+        
+    # -- S --
+    
     @classmethod
     def save_all(cls, process_type_list: list = None) -> bool:
         """

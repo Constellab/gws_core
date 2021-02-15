@@ -59,4 +59,14 @@ class TestFileStore(unittest.TestCase):
 
         file = fs.add(file_path)
         self.assertTrue(file.exists())
-
+        self.assertTrue(file.is_in_file_store())
+        
+        file2= File()
+        file2.path = file_path
+        print(file2.path)
+        
+        self.assertFalse(file2.is_in_file_store())
+        file2.move_to_store()
+        self.assertTrue(file2.is_in_file_store())
+        print(file2.path)
+        

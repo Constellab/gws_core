@@ -17,7 +17,6 @@ else:
     BASE_WORKSPACE_DIR = os.path.join(ROOT_DIR, "./gws")
 
 BASE_BRICK_DIR = os.path.join(BASE_WORKSPACE_DIR, "./bricks")
-# BASE_LAB_DIR = os.path.join(BASE_WORKSPACE_DIR, "./labs")
 BASE_EXTERN_DIR = os.path.join(BASE_WORKSPACE_DIR, "./externs")
 BASE_LOG_DIR = os.path.join(BASE_WORKSPACE_DIR, "./logs")
 BASE_DATA_DIR = os.path.join(BASE_WORKSPACE_DIR, "./data")

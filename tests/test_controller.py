@@ -2,6 +2,7 @@
 import unittest
 import copy
 import json
+import asyncio
 
 from gws.model import Model, Resource, Viewable
 from gws.controller import Controller
@@ -50,41 +51,53 @@ class TestControllerHTTP(unittest.TestCase):
         pass
 
     def test_get_model(self):
-        elon = Person()
-        elon.set_name('Elon Musk')
-        elon.save()
+        
+        async def action():
+            elon = Person()
+            elon.set_name('Elon Musk')
+            elon.save()
 
-        response = Controller.action(action="get", object_type=elon.full_classname(), object_uri=elon.uri, return_format="json")
-        print(response)
-        self.assertEqual(response["model"]["uri"], elon.uri)
-
+            response = await Controller.action(action="get", object_type=elon.full_classname(), object_uri=elon.uri, return_format="json")
+            print(response)
+            self.assertEqual(response["model"]["uri"], elon.uri)
+        
+        asyncio.run( action() )
+        
     def test_update_view_model(self):
-        elon = Person()
-        elon.set_name('Elon Musk')
-        elon.save()
+        
+        async def action():
+            elon = Person()
+            elon.set_name('Elon Musk')
+            elon.save()
 
-        view_model = elon.view()
-        view_model.save()
-        data = {"job" : "Tesla Maker"}
+            view_model = elon.view()
+            view_model.save()
+            data = {"job" : "Tesla Maker"}
 
-        response = Controller.action(action="update", object_type=view_model.full_classname(), object_uri=view_model.uri, data=data, return_format="json")
-        self.assertEqual(response["uri"], view_model.uri)
-        self.assertEqual(response["data"]["params"], {'job': 'Tesla Maker'})
-
+            response = await Controller.action(action="update", object_type=view_model.full_classname(), object_uri=view_model.uri, data=data, return_format="json")
+            self.assertEqual(response["uri"], view_model.uri)
+            self.assertEqual(response["data"]["params"], {'job': 'Tesla Maker'})
+        
+        asyncio.run( action() )
+        
     def test_delete_view_model(self):
-        elon = Person()
-        elon.set_name('Elon Musk')
-        elon.save()
+        
+        async def action():
+            elon = Person()
+            elon.set_name('Elon Musk')
+            elon.save()
 
-        view_model = elon.view()
-        view_model.save()
-        self.assertFalse(view_model.is_deleted)
+            view_model = elon.view()
+            view_model.save()
+            self.assertFalse(view_model.is_deleted)
         
-        self.assertRaises(Exception, Controller.action, action="delete", object_type=elon.full_classname(), object_uri=elon.uri, return_format="json")
+            with self.assertRaises(Exception):
+                await Controller.action(action="delete", object_type=elon.full_classname(), object_uri=elon.uri, return_format="json")
+
+            view_model = await Controller.action(action="delete", object_type=view_model.full_classname(), object_uri=view_model.uri)
+            self.assertTrue(view_model.is_deleted)
         
-        view_model = Controller.action(action="delete", object_type=view_model.full_classname(), object_uri=view_model.uri)
-        self.assertTrue(view_model.is_deleted)
-        
+        asyncio.run( action() )
         
     def test_register_model(self):
         Controller.register_all_processes()

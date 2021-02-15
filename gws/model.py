@@ -113,7 +113,8 @@ class Model(BaseModel):
             Model.__lab_uri = Settings.retrieve().get_data("uri", default="")
         
         if self.uri is None:
-            self.uri = Model.__lab_uri + "-" + str(uuid.uuid4())
+            #self.uri = Model.__lab_uri + "-" + str(uuid.uuid4())
+            self.uri = str(uuid.uuid4())
 
         if self.data is None:
             self.data = {}
@@ -495,7 +496,7 @@ class Viewable(Model):
                 transaction.rollback()
                 return False
 
-    def as_json(self, view_params: dict=None, stringify: bool=False, prettify: bool=False) -> (str, dict, ):
+    def as_json(self, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the model.
         
@@ -641,6 +642,10 @@ class Viewable(Model):
 
     def view(self, *args, format="json", params:dict = {}) -> dict:
         view_model = ViewModel(model=self)
+        
+        if not isinstance(params, dict):
+            params = {}
+            
         view_model.set_params(params)
         view_model.save()
         return view_model
@@ -917,7 +922,7 @@ class Process(Viewable, SystemTrackable):
         except Exception as err:
             raise Error("gws.model.Process", "add_event", f"Cannot add event. Error message: {err}")
     
-    def as_json(self, view_params: dict=None, bare: bool=False, stringify: bool=False, prettify: bool=False) -> (str, dict, ):
+    def as_json(self, bare: bool=False, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the model.
         
@@ -929,7 +934,7 @@ class Process(Viewable, SystemTrackable):
         :rtype: dict, str
         """
         
-        _json = super().as_json()
+        _json = super().as_json(**kwargs)
         _json["input_specs"] = self.input.as_json()
         _json["output_specs"] = self.output.as_json()
         _json["config_specs"] = self.config_specs
@@ -1153,13 +1158,9 @@ class Process(Viewable, SystemTrackable):
         if not self.is_ready:
             return
         
-        try:
-            await self._run_before_task()
-            await self.task()
-            await self._run_after_task()
-
-        except Exception as err:
-            raise Error("gws.model.Process", "_run", f"Error: {err}")
+        await self._run_before_task()
+        await self.task()
+        await self._run_after_task()
     
     async def _run_next_processes(self):
         self._output.propagate()
@@ -1453,7 +1454,7 @@ class Experiment(Viewable):
                 transaction.rollback()
                 return False
 
-    def as_json(self, view_params: dict=None, stringify: bool=False, prettify: bool=False) -> (str, dict, ):
+    def as_json(self, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the model.
         
@@ -1465,7 +1466,7 @@ class Experiment(Viewable):
         :rtype: dict, str
         """
         
-        _json = super().as_json(view_params=view_params)
+        _json = super().as_json(**kwargs)
         _json.update({
             "protocol_job_uri": self.protocol_job_uri,
             "score": self.score,
@@ -1655,7 +1656,7 @@ class Job(Viewable, SystemTrackable):
         
         return self.data["instance_name"]
     
-    def as_json(self, view_params: dict=None, stringify: bool=False, prettify: bool=False) -> (str, dict, ):
+    def as_json(self, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the model.
         
@@ -1667,7 +1668,7 @@ class Job(Viewable, SystemTrackable):
         :rtype: dict, str
         """
         
-        _json = super().as_json(view_params=view_params)
+        _json = super().as_json(**kwargs)
         
         if not self.parent_job is None:
             parent_job_uri = self.parent_job.uri
@@ -1918,7 +1919,7 @@ class Job(Viewable, SystemTrackable):
                 return True
             except Exception as err:
                 transaction.rollback()
-                raise Error("gws.model.Job", "save", f"An error occuured. Error: {err}")
+                raise Error("gws.model.Job", "save", f"An error occured. Error: {err}")
 
     # -- T --
      
@@ -2573,7 +2574,7 @@ class Resource(Viewable, SystemTrackable):
                 transaction.rollback()
                 return False
 
-    def as_json(self, view_params: dict=None, stringify: bool=False, prettify: bool=False) -> (str, dict, ):
+    def as_json(self, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the model.
         
@@ -2585,7 +2586,7 @@ class Resource(Viewable, SystemTrackable):
         :rtype: dict, str
         """
         
-        _json = super().as_json(view_params=view_params)
+        _json = super().as_json(**kwargs)
 
         if not self.job is None:
             _json.update({
@@ -2633,18 +2634,6 @@ class Resource(Viewable, SystemTrackable):
         
         pass
     
-    def _extract(self, **params) -> 'Model':
-        """ 
-        Extract a subpart of the resource
-
-        :param params: Extraction parameters
-        :type params: dict
-        """
-        
-        #@ToDo: ensure that this method is only called by an Extractor
-        
-        pass
-    
     # -- I --
     
     @classmethod
@@ -2662,10 +2651,35 @@ class Resource(Viewable, SystemTrackable):
         
         pass
     
-    # -- P --
+    # -- J --
+    
+    @classmethod
+    def _join(cls, *args, **params) -> 'Model':
+        """ 
+        Join several resources
 
+        :param params: Joining parameters
+        :type params: dict
+        """
+        
+        #@ToDo: ensure that this method is only called by an Joiner
+        
+        pass
+    
     # -- S --
+    
+    def _select(self, **params) -> 'Model':
+        """ 
+        Select a part of the resource
 
+        :param params: Extraction parameters
+        :type params: dict
+        """
+        
+        #@ToDo: ensure that this method is only called by an Selector
+        
+        pass
+    
     def _set_job(self, job: 'Job'):
         """ 
         Sets the process of the resource.
@@ -2700,24 +2714,58 @@ class ResourceSet(Resource):
         if self._set is None:
             self._set = {}
     
-    def exists( self, resource ) -> bool:
-        return resource in self._set
+    # -- A --
+    
+    def add(self, val):
+        if not isinstance(val, self._resource_types):
+            raise Error("gws.model.ResourceSet", "__setitem__", f"The value must be an instance of {self._resource_types}. The actual value is a {type(val)}.")
+        
+        if not val.is_saved():
+            val.save()
+            
+        self.set[val.uri] = val
+            
 
-    def len(self):
-        return self.len()
+    # -- C --
     
     def __contains__(self, val):
         return val in self.set
     
-    def __len__(self):
-        return len(self.set)
-
+    # -- E --
+    
+    def exists( self, resource ) -> bool:
+        return resource in self._set
+    
+    # -- G --
+    
     def __getitem__(self, key):
         return self.set[key]
+    
+    # -- I --
 
+    def __iter__(self):
+        return self.set.__iter__()
+    
+    # -- L --
+    
+    def len(self):
+        return self.len()
+    
+    def __len__(self):
+        return len(self.set)
+    
+    # -- N --
+    
+    def __next__(self):
+        return self.set.__next__()
+    
+    # -- R --
+    
     def remove(self, key):
         del self._set[key]
 
+    # -- S --
+    
     def __setitem__(self, key, val):
         if not isinstance(val, self._resource_types):
             raise Error("gws.model.ResourceSet", "__setitem__", f"The value must be an instance of {self._resource_types}. The actual value is a {type(val)}.")
@@ -2753,7 +2801,12 @@ class ResourceSet(Resource):
                 self._set[k] = Controller.fetch_model(rtype, uri)
         
         return self._set
-
+    
+    # -- V --
+    
+    def values(self):
+        return self.set.values()
+    
 # ####################################################################
 #
 # ViewModel class
@@ -2807,12 +2860,12 @@ class ViewModel(Model):
         :return: The representation
         :rtype: dict, str
         """
-        
+
         _json = {
             "uri": self.uri,
             "type": self.type,
             "data" : self.data,
-            "model": self.model.as_json( view_params=self.params ),
+            "model": self.model.as_json( **self.params ),
             "creation_datetime" : str(self.creation_datetime),
         }
         

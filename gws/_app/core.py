@@ -3,10 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-
+import json
 from typing import Optional, List
 
-from fastapi import Depends, FastAPI, UploadFile, File as FastAPIFile
+from fastapi import Depends, FastAPI, UploadFile, Request, File as FastAPIFile
 from fastapi.responses import Response, RedirectResponse
 
 from pydantic import BaseModel
@@ -173,16 +173,22 @@ async def update_view_model(object_type: str, view_model: _ViewModel) -> (dict, 
     Update a view model
     """
 
-    return Controller.action(action="put", object_type=object_type, object_uri=view_model.uri, data=view_model.data, return_format="json")
+    return await Controller.action(action="put", object_type=object_type, object_uri=view_model.uri, data=view_model.data, return_format="json")
 
 
 @core_app.get("/view/{object_type}/{object_uri}/", tags=["Generic CRUD operations on objects"])
-async def get_view_model(object_type: str, object_uri: str) -> (dict, str,):
+async def get_view_model(object_type: str, object_uri: str, view_params: Optional[str] = "{}") -> (dict, str,):
     """
-    Get a view model
+    Get a view model.
+    
+    Custom query params depending on the queryied model. 
     """
-
-    return Controller.action(action="get", object_type=object_type, object_uri=object_uri, return_format="json")
+    try:
+        params = json.loads(view_params)
+    except:
+        params = {}
+        
+    return await Controller.action(action="get", object_type=object_type, object_uri=object_uri, data=params, return_format="json")
 
 @core_app.delete("/view/{object_type}/{object_uri}/", tags=["Generic CRUD operations on objects"])
 async def delete_view_model(object_type: str, object_uri: str) -> (dict, str,):
@@ -190,7 +196,7 @@ async def delete_view_model(object_type: str, object_uri: str) -> (dict, str,):
     Delete a view model
     """
 
-    return Controller.action(action="delete", object_type=object_type, object_uri=object_uri)
+    return await Controller.action(action="delete", object_type=object_type, object_uri=object_uri)
 
 # ##################################################################
 #
@@ -204,9 +210,17 @@ async def upload(files: List[UploadFile] = FastAPIFile(...)):
     """
     Upload files
     """
-    
-    return Controller.action(action="upload", files=files)
-        
+          
+    return await Controller.action(action="upload", data=files)
+
+@core_app.post("/download/{file_uri}", tags=["Upload and download files"])
+async def download(file_uri: str):
+    """
+    Download file
+    """
+          
+    return {"status": False, "message": "Not yet available"}
+      
 
 # ##################################################################
 #

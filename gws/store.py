@@ -9,6 +9,7 @@ from pathlib import Path
 import uuid
 import shelve
 import shutil
+import tempfile
 
 from gws.controller import Controller
 from gws.logger import Error
@@ -165,7 +166,7 @@ class FileStore:
     
     # -- A --
     
-    def add(self, source_file: (str, io.IOBase, 'File', ), dest_file_name: str="", force: bool=False):
+    def add(self, source_file: (str, io.IOBase, tempfile.SpooledTemporaryFile, 'File', ), dest_file_name: str="", force: bool=False):
         """ Add a file from an external repository to the store """
         
         from gws.file import File
@@ -192,9 +193,9 @@ class FileStore:
             if not os.path.exists(f.dir):
                 os.makedirs(f.dir)
                 if not os.path.exists(f.dir):
-                    raise Exception("FileStore", "push", f"Cannot create directory {f.dir}")
+                    raise Exception("FileStore", "add", f"Cannot create directory {f.dir}")
 
-            if isinstance(source_file, io.IOBase):
+            if isinstance(source_file, (io.IOBase, tempfile.SpooledTemporaryFile, )):
                 with open(f.path, "wb") as buffer:
                     shutil.copyfileobj(source_file, buffer)
             else:
@@ -205,10 +206,10 @@ class FileStore:
         
         except Exception as err:
             
-            if isinstance(source_file, (str, io.IOBase,) ):
+            if isinstance(source_file, (str, io.IOBase, tempfile.SpooledTemporaryFile,) ):
                 f.delete_instance()
                           
-            raise Error("FileStore", "push", f"An error occured. Error: {err}")
+            raise Error("FileStore", "add", f"An error occured. Error: {err}")
 
     # -- B --
     
