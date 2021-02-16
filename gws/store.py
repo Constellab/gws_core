@@ -9,6 +9,7 @@ from pathlib import Path
 import uuid
 import shelve
 import shutil
+import tempfile
 
 from gws.controller import Controller
 from gws.logger import Error
@@ -20,6 +21,7 @@ db_dir = Controller.get_settings().get_data("db_dir")
 kv_store_path = 'test_kv_store' if settings.is_test else 'prod_kv_store'
 file_store_path = 'test_file_store' if settings.is_test else 'prod_file_store'
     
+
 class KVStore:
     """ 
     KVStore class representing a key-value object storage engine.
@@ -79,9 +81,7 @@ class KVStore:
 
         return os.path.join(self._base_dir, self._folder_path, self._file_name)
     
-    
-
-    
+  
     # -- G --
     
     def get(self, key, default=None):
@@ -161,25 +161,75 @@ class KVStore:
         self._kv_data.close()
         
 class FileStore:
+    
     _base_dir = os.path.join(db_dir, file_store_path)
     
     # -- A --
     
+    def add(self, source_file: (str, io.IOBase, tempfile.SpooledTemporaryFile, 'File', ), dest_file_name: str="", force: bool=False):
+        """ Add a file from an external repository to the store """
+        
+        from gws.file import File
+        
+        if isinstance(source_file, File):
+            f = source_file
+            source_file_path = f.path
+            
+            if not dest_file_name:
+                dest_file_name = Path(source_file_path).name
+                
+            f.path = self.__create_valid_file_path(f, name=dest_file_name)
+        else:
+            if not dest_file_name:
+                if isinstance(source_file, str):
+                    dest_file_name = Path(source_file).name
+                else:
+                    dest_file_name = "file"
+            
+            f = self.create_file( name=dest_file_name )
+            source_file_path = source_file
+            
+        try:
+            if not os.path.exists(f.dir):
+                os.makedirs(f.dir)
+                if not os.path.exists(f.dir):
+                    raise Exception("FileStore", "add", f"Cannot create directory {f.dir}")
+
+            if isinstance(source_file, (io.IOBase, tempfile.SpooledTemporaryFile, )):
+                with open(f.path, "wb") as buffer:
+                    shutil.copyfileobj(source_file, buffer)
+            else:
+                shutil.copy2(source_file_path, f.path)
+            
+            f.save()
+            return f
+        
+        except Exception as err:
+            
+            if isinstance(source_file, (str, io.IOBase, tempfile.SpooledTemporaryFile,) ):
+                f.delete_instance()
+                          
+            raise Error("FileStore", "add", f"An error occured. Error: {err}")
+
     # -- B --
     
     # -- C --
     
     @classmethod
+    def __create_valid_file_path( cls, file: 'File', name: str  = ""):
+        if not file.uri:
+            file.save()
+        
+        return os.path.join(cls._base_dir, file._table_name, file.uri, name)
+
+    @classmethod
     def create_file( cls, name: str ):
         from gws.file import File
-        f = File()
-        f.save()
-        
-        f.path = os.path.join(cls._base_dir, f._table_name, f.uri, name)
-        f.save()
-        
-        return f
-    
+        file = File()
+        file.path = cls.__create_valid_file_path(file, name) 
+        file.save()
+        return file
+     
     def contains(self, file: 'File') -> bool:
         return self._base_dir in file.path
     
@@ -226,33 +276,7 @@ class FileStore:
     
     # -- P --
 
-    def push(self, source_file: (str, io.IOBase, ), dest_file_name: str="", force: bool=False):
-        """ Push a file from an external repository to the store """
-        
-        if isinstance(source_file, str):
-            if not dest_file_name:
-                dest_file_name = Path(source_file).name
-                    
-        f = self.create_file( name=dest_file_name )
-
-        try:
-            if not os.path.exists(f.dir):
-                os.makedirs(f.dir)
-                if not os.path.exists(f.dir):
-                    raise Exception("FileStore", "push", f"Cannot create directory {f.dir}")
-
-            if isinstance(source_file, str):
-                shutil.copy2(source_file, f.path)
-            else:
-                with open(f.path, "wb") as buffer:
-                    shutil.copyfileobj(source_file, buffer)
-
-            return f
-        
-        except Exception as err:
-            f.delete_instance()
-            raise Error("FileStore", "push", f"An error occured. Error: {err}")
-
+    
     
     # -- R --
     

@@ -3,10 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-
+import json
 from typing import Optional, List
 
-from fastapi import Depends, FastAPI, UploadFile, File as FastAPIFile
+from fastapi import Depends, FastAPI, UploadFile, Request, File as FastAPIFile
 from fastapi.responses import Response, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -17,7 +17,6 @@ from gws.settings import Settings
 from gws.central import Central
 from gws.controller import Controller
 from gws.model import Model, ViewModel, Experiment
-from gws.file import File, FileStore, Uploader
 
 core_app = FastAPI(docs_url="/apidocs")
 
@@ -178,38 +177,37 @@ async def run_experiment(experiment_uri: str) -> (dict, str,):
 #
 # ##################################################################
 
-@core_app.post("/", tags=["Generic CRUD operations on objects"])
-async def post_view_model(object_type: str, vmodel: _ViewModel) -> (dict, str,):
-    """
-    Post an render a ViewModel
-    """
 
-    return Controller.action(action="post", object_type=object_type, object_uri=vmodel.uri, data=vmodel.data, return_format="json")
-
-@core_app.put("/{object_type}/", tags=["Generic CRUD operations on objects"])
-async def put_view_model(object_type: str, vmodel: _ViewModel) -> (dict, str,):
+@core_app.put("/view/{object_type}/", tags=["Generic CRUD operations on objects"])
+async def update_view_model(object_type: str, view_model: _ViewModel) -> (dict, str,):
     """
-    Post and render a ViewModel
+    Update a view model
     """
 
-    return Controller.action(action="put", object_type=object_type, object_uri=vmodel.uri, data=vmodel.data, return_format="json")
+    return await Controller.action(action="put", object_type=object_type, object_uri=view_model.uri, data=view_model.data, return_format="json")
 
 
-@core_app.get("/{object_type}/{object_uri}", tags=["Generic CRUD operations on objects"])
-async def get_model_or_viewmodel(object_type: str, object_uri: str) -> (dict, str,):
+@core_app.get("/view/{object_type}/{object_uri}/", tags=["Generic CRUD operations on objects"])
+async def get_view_model(object_type: str, object_uri: str, view_params: Optional[str] = "{}") -> (dict, str,):
     """
-    Get and render a ViewModel
+    Get a view model.
+    
+    Custom query params depending on the queryied model. 
     """
+    try:
+        params = json.loads(view_params)
+    except:
+        params = {}
+        
+    return await Controller.action(action="get", object_type=object_type, object_uri=object_uri, data=params, return_format="json")
 
-    return Controller.action(action="get", object_type=object_type, object_uri=object_uri, return_format="json")
-
-@core_app.delete("/{object_type}/{object_uri}/", tags=["Generic CRUD operations on objects"])
+@core_app.delete("/view/{object_type}/{object_uri}/", tags=["Generic CRUD operations on objects"])
 async def delete_view_model(object_type: str, object_uri: str) -> (dict, str,):
     """
-    Post a ViewModel and render its
+    Delete a view model
     """
 
-    return Controller.action(action="delete", object_type=object_type, object_uri=object_uri)
+    return await Controller.action(action="delete", object_type=object_type, object_uri=object_uri)
 
 # ##################################################################
 #
@@ -218,18 +216,22 @@ async def delete_view_model(object_type: str, object_uri: str) -> (dict, str,):
 # ##################################################################
 
 
-@core_app.post("/upload-files", tags=["Upload and download files"])
-async def upload_files(files: List[UploadFile] = FastAPIFile(...)):
+@core_app.post("/upload", tags=["Upload and download files"])
+async def upload(files: List[UploadFile] = FastAPIFile(...)):
     """
     Upload files
     """
-    
-    u = Uploader(files=files)
-    e = u.create_experiment()
-    await e.run()
-    
-    return { "status": True }
-        
+          
+    return await Controller.action(action="upload", data=files)
+
+@core_app.post("/download/{file_uri}", tags=["Upload and download files"])
+async def download(file_uri: str):
+    """
+    Download file
+    """
+          
+    return {"status": False, "message": "Not yet available"}
+      
 
 # ##################################################################
 #

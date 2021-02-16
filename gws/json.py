@@ -8,6 +8,7 @@ from gws.model import Resource
 
 class JSONData(Resource):
     
+    # -- A -- 
 
     # -- E --
     
@@ -48,6 +49,22 @@ class JSONData(Resource):
             json_data.kv_data = json.load(f)
         
         return json_data
+    
+    # -- J --
+    
+    @classmethod
+    def _join(cls, *args, **params) -> 'Model':
+        """ 
+        Join several resources
+
+        :param params: Joining parameters
+        :type params: dict
+        """
+        
+        #@ToDo: ensure that this method is only called by an Joiner
+        
+        pass
+    
     # -- K --
     
     @property
@@ -63,6 +80,19 @@ class JSONData(Resource):
     
     # -- S --
     
+    # -- S --
+    
+    def _select(self, **params) -> 'Model':
+        """ 
+        Select a part of the resource
+
+        :param params: Extraction parameters
+        :type params: dict
+        """
+        
+        #@ToDo: ensure that this method is only called by an Selector
+        
+        pass
+    
     def __setitem__(self, key, val):
         self.data[key] = val
-

@@ -142,6 +142,22 @@ class CSVData(Resource):
         
         return cls(table=df)
     
+    # -- J --
+    
+    @classmethod
+    def _join(cls, *args, **params) -> 'Model':
+        """ 
+        Join several resources
+
+        :param params: Joining parameters
+        :type params: dict
+        """
+        
+        #@ToDo: ensure that this method is only called by an Joiner
+        
+        pass
+
+    
     # -- N --
 
     @property
@@ -177,7 +193,21 @@ class CSVData(Resource):
         return self.table.index.values.tolist()
     
     # -- S --
+    
+    # -- S --
+    
+    def _select(self, **params) -> 'Model':
+        """ 
+        Select a part of the resource
 
+        :param params: Extraction parameters
+        :type params: dict
+        """
+        
+        #@ToDo: ensure that this method is only called by an Selector
+        
+        pass
+    
     def __str__(self):
         return self.table.__str__()
 

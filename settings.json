@@ -15,10 +15,7 @@
         "gws:testdata_dir" : "./tests/testdata"
     },
     
-    "externs" : [
-        "distrib-js",
-        "three-js"
-    ],
+    "externs" : [],
     
     "dependencies" : [],
     
@@ -28,49 +25,6 @@
         "ssl" : true,
         "login" : "no-reply@gencovery.com",
         "password" : "Genc0ver1-N0-Reply"
-    },
-
-    "central": {
-        "api_url" : "https://api.gws.gencovery.com/{resource}/{uri}/{action}"
-    },
-
-    "app":{
-        "favicon"       : {"src":"/static-gws/favicon.png", "type":"image/png"},
-        "title"         : "Wecome to GWS",
-        "description"   : "This application provides core functionalities for GWS-based modules",
-        "statics"       : {
-            "/distrib-js"  : "${BASE_EXTERN_DIR}/distrib-js",
-            "/three-js"    : "${BASE_EXTERN_DIR}/three-js"
-        },
-        "themes" : [ ],
-        "scripts": [
-            "/distrib-js/mdc/material-web-components.min.js",
-            "/distrib-js/uuidv4/8.1.0/uuidv4.js",
-            "/distrib-js/jquery/3.5.1/jquery.min.js",
-            "/distrib-js/d3/d3-dispatch/1.0.6/d3-dispatch.min.js",
-            "/distrib-js/d3/d3-timer/1.0.10/d3-timer.min.js",
-            "/distrib-js/d3/d3-quadtree/1.0.7/d3-quadtree.min.js",
-            "/distrib-js/d3/d3-binarytree/0.1.8/d3-binarytree.min.js",
-            "/distrib-js/d3/d3-octree/0.1.8/d3-octree.min.js",
-            "/distrib-js/d3/d3-force-3d/2.1.0/d3-force-3d.min.js",
-            "/distrib-js/plotly/1.57.1/plotly.min.js",
-            "/distrib-js/dropzone/5.7.0/dist/min/dropzone.min.js",
-            "/distrib-js/palette/palette.js",
-            "/distrib-js/drawflow/0.0.16/drawflow.min.js"
-        ],
-        "modules": [ ],
-        "styles": [
-            "/distrib-js/fontawesome/5.14.0/css/all.min.css",
-            "/distrib-js/mdc/material-web-components.min.css",
-            "/distrib-js/mdc/material-icons.css",
-            "/distrib-js/dropzone/5.7.0/dist/min/dropzone.min.css",
-            "/distrib-js/drawflow/0.0.16/drawflow.min.css"
-        ],
-        "buttons":{
-            "settings": {
-                "label": "Settings", "icon": "fas fa-sliders-h", "url": "/page/gws/settings", "position": 0
-            }
-        }
     },
     "verbose": false
 }

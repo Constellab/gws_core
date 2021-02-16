@@ -13,8 +13,8 @@ from gws.model import Experiment, User, Protocol
 class Central:
     
     api = {
-        "put-status"    : "/external-labs/lab-instance/status/{status}",
-        "post-report"   : "/external-labs/{experiment_id}/report"
+        "put-status"    : "https://api.gws.gencovery.com/lab-instance/status/{status}",
+        "post-report"   : "https://api.gws.gencovery.com/external-labs/{experiment_id}/report"
     }
 
     # -- A --
@@ -23,7 +23,7 @@ class Central:
     def activate_user(cls, uri):
         user = User.get_by_uri(uri)
         if user is None:
-            raise Error("Central", "activate_user", "User not found")
+            raise Error("gws.central.Central", "activate_user", "User not found")
         else:
             user.is_active = True
             user.save()
@@ -41,46 +41,36 @@ class Central:
                     "uri": user.uri,
                 }
             else:
-                raise Error("Central", "create_user", "Cannot save the user")
+                raise Error("gws.central.Central", "create_user", "Cannot save the user")
         else:
-            raise Error("Central", "create_user", "The user already exists")
+            raise Error("gws.central.Central", "create_user", "The user already exists")
     
     @classmethod
     def create_experiment(cls, data):
         experiment_uri = data.get("uri", None)
         if not experiment_uri:
-            raise Error("Central", "create_experiment", f"The experiment uri is required")
+            raise Error("gws.central.Central", "create_experiment", f"The experiment uri is required")
             
         if Experiment.get_by_uri(experiment_uri):
-            raise Error("Central", "create_experiment", f"An experiment already exists with the uri {experiment_uri}")
+            raise Error("gws.central.Central", "create_experiment", f"An experiment already exists with the uri {experiment_uri}")
 
         protocol_uri = data.get("protocol",{}).get("uri", None)
         proto = Protocol.get_by_uri(protocol_uri)
         if proto is None:
-            raise Error("Central", "create_experiment", f"No protocol found with uri {protocol_uri}")
+            raise Error("gws.central.Central", "create_experiment", f"No protocol found with uri {protocol_uri}")
             
         e = proto.create_experiment(uri = experiment_uri)
         if e.save():
             return e
         else:
-            raise Error("Central", "create_experiment", f"Cannot save the experiment")
+            raise Error("gws.central.Central", "create_experiment", f"Cannot save the experiment")
             
-
-    @classmethod
-    def create_url(cls, action, **kwargs):
-        settings = Settings.retrieve()
-        url = settings.data["central"]["api_url"] + cls.api[action]
-
-        for k in kwargs:
-            url = url.replace("{"+k+"}", kwargs[k])
-
-        return url
 
     @classmethod
     def close_experiment(cls, uri):
         exp = Experiment.get_by_uri(uri)
         if exp is None:
-            raise Error("Central", "close_experiment", "Experiment not found")
+            raise Error("gws.central.Central", "close_experiment", "Experiment not found")
         else:
             exp.is_in_process = False
             return exp.save()
@@ -89,7 +79,7 @@ class Central:
     def delete_experiment(cls, uri):
         exp = Experiment.get_by_uri(uri)
         if exp is None:
-            raise Error("Central", "delete_experiment", "Experiment not found")
+            raise Error("gws.central.Central", "delete_experiment", "Experiment not found")
         else:
             exp.delete = True
             return exp.save()
@@ -100,18 +90,29 @@ class Central:
     def deactivate_user(cls, uri):
         user = User.get_by_uri(uri)
         if user is None:
-            raise Error("Central", "deactivate_user", "User not found")
+            raise Error("gws.central.Central", "deactivate_user", "User not found")
         else:
             user.is_active = False
             return user.save()
+    
+    # -- F --
+    
+    @classmethod
+    def format_url(cls, action, **kwargs):
+        settings = Settings.retrieve()
 
+        for k in kwargs:
+            url = cls.api[action].replace("{"+k+"}", kwargs[k])
+
+        return url
+    
     # -- G --
 
     @classmethod
     def get_user_status(cls, uri):
         user = User.get_by_uri(uri)
         if user is None:
-            raise Error("Central", "get_user_status", "User not found")
+            raise Error("gws.central.Central", "get_user_status", "User not found")
         else:
             return {
                 "uri": user.uri,
@@ -124,7 +125,7 @@ class Central:
     def get_protocol(csl, uri):
         proto = Protocol.get_by_uri(uri)
         if proto is None:
-            raise Error("Central", "get_protocol", "Protocol not found")
+            raise Error("gws.central.Central", "get_protocol", "Protocol not found")
         else:
             return {
                 "uri": proto.uri,
@@ -162,12 +163,12 @@ class Central:
         else:
             status = "stopped"
 
-        url = cls.create_url("put-status", status=status)
+        url = cls.format_url("put-status", status=status)
         cls.send(url, method="PUT")
 
     @classmethod
     def post_report(cls, report):
-        url = cls.create_url("post-report", experiment_id=report.experiment.id)
+        url = cls.format_url("post-report", experiment_id=report.experiment.id)
         cls.send(url, method="POST", data={"report_uri": report.uri})
     
     # -- V --

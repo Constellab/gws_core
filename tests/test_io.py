@@ -31,7 +31,13 @@ class Drive(Process):
     async def task(self):
         return
 
-
+class Jump(Process):
+    input_specs = {'jump_person_in_1' : Person, 'jump_person_in_2' : Person, 'jump_person_in_2' : Person}
+    output_specs = {'jump_person_out' : Person}
+    config_specs = {}
+    async def task(self):
+        return
+    
 class TestIO(unittest.TestCase):
     
     def test_connect(self):
@@ -59,3 +65,12 @@ class TestIO(unittest.TestCase):
             "from": {"node": "p0",  "port": "create_person_out"},
             "to": {"node": "p1",  "port": "move_person_in"}
         })
+    
+    def test_iterator(self):
+        
+        jump = Jump(instance_name="p3")
+        
+        for k in jump.input:
+            print(k)
+            print(jump.input[k])
+            #self.assertEquals( jump.input[k] )

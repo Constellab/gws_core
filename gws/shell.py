@@ -5,6 +5,8 @@
 
 import os
 import tempfile
+import re
+import subprocess
 
 from typing import Optional
 from gws.model import Process
@@ -12,61 +14,77 @@ from gws.file import File
 from gws.settings import Settings
 from gws.file import FileStore
 from gws.controller import Controller
+from gws.logger import Error
 
-class ShellProcess(Process):
-    input_specs = {'file' : (File, None,)}
-    output_specs = {'file' : (File, None,)}
-    config_specs = {
-        'bin': {"type": str, "default": None, 'description': "Binary file to call (eg. scp, cp, ...)"},
-        'save_stdout': {"type": str, "default": False, 'description': "True to save the command output text. False otherwise"},
-    }
+class Shell(Process):
+    input_specs = {}
+    output_specs = {}
+    config_specs = {}
     
-    def build_command(self) -> list:
-        cmd = self.get_param('command')
-        param = []
-        for k in self.config.params:
-            param.append( k + " " + str(self.config.params[k]) )
-        return [ cmd ] + param
+    _out_type = "text"
+    _tmp_dir = None
     
-    
-    def after_command(self, output_dir):
+    def build_command(self) -> (list):
+        return [""]
+
+    def after_command(self, stdout: str=None):
         pass
     
+    @property
+    def cwd(self):
+        if self._tmp_dir is None:
+            self._tmp_dir = tempfile.TemporaryDirectory()
+ 
+        return self._tmp_dir
+    
     async def task(self):
-        
-        with tempfile.TemporaryDirectory() as output_dir:
+        try:
             cmd = self.build_command()
-            
-            output_text = subprocess.check_output( 
-                *cmd,
-                stderr=subprocess.STDOUT,
-                cwd=output_dir
+
+            stdout = subprocess.check_output( 
+                cmd,
+                text = True if self._out_type == "text" else False,
+                cwd=self.cwd.name
             )
+ 
+            self.data['cmd'] = cmd 
+            self.after_command(stdout=stdout)
+  
+            for k in self.output:
+                f = self.output[k]
+                if isinstance(f, File):
+                    f.move_to_store()
             
-            if self.get_param('save_stdout'):
-                self.data['stdout'] = output_text
-                
-            self.after_command(output_dir)
-            #... 
-
-class CppProcess(Process):
-    pass
-
-class CondaProcess(ShellProcess):
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.__install_venv()
-    
-    def venv_dir(cls):
-        settings = Controller.get_settings()
-        venv_dir = settings.get_venv_dir()
-        return os.path.join(venv_dir, cls.fclassname(slugify=True))
+            self._tmp_dir.cleanup()
+            self._tmp_dir = None
+        except subprocess.CalledProcessError as err:
+            self._tmp_dir.cleanup()
+            self._tmp_dir = None
+            Error("Shell","task", f"An error occured while running the binary in shell process. Error: {err}")
         
-    @classmethod
-    def __install_venv(cls):
-        venv_dir = cls.venv_dir()
-        if os.path.exists(venv_dir):
-            os.makedirs(venv_dir)
-         
+        except Exception as err:
+            Error("Shell","task", f"An error occured while running shell process. Error: {err}")
         
+class EasyShell(Shell):
+    
+    _cmd: list = None
+    
+    def build_command(self) -> list:
+        
+        cmd = self._cmd
+        
+        for i in range(0, len(self._cmd)):
+            
+            cmd_part = cmd[i]
+            for k in self.config.params:
+                param = self.get_param(k)
+                if isinstance(param, str):
+                    cmd_part = cmd_part.replace(f"{{param:{k}}}", param)
+
+            for k in self.input:
+                file = self.input[k]
+                cmd_part = cmd_part.replace(f"{{in:{k}}}", file.path)
+
+            cmd[i] = cmd_part
+            
+        return cmd
