@@ -8,6 +8,8 @@ from typing import Optional, List
 
 from fastapi import Depends, FastAPI, UploadFile, File as FastAPIFile
 from fastapi.responses import Response, RedirectResponse
+from fastapi.middleware.cors import CORSMiddleware
+
 
 from pydantic import BaseModel
 
@@ -18,6 +20,15 @@ from gws.model import Model, ViewModel, Experiment
 from gws.file import File, FileStore, Uploader
 
 core_app = FastAPI(docs_url="/apidocs")
+
+# Enable core for the API
+core_app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["GET,HEAD,PUT,PATCH,POST,DELETE"],
+    allow_headers=["Origin,X-Requested-With,Content-Type,Accept,Authorization,authorization,X-Forwarded-for,lang"],
+)
 
 class _ViewModel(BaseModel):
     uri: str
