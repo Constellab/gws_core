@@ -52,7 +52,7 @@ class Settings(PWModel):
             
             settings.set_data("demo", False)
             settings.save()
-        except:
+        except:            
             settings = Settings()
 
             from secrets import token_bytes
@@ -162,21 +162,10 @@ class Settings(PWModel):
         default = os.path.join(self.get_cwd(),"data/")
         return self.data.get("data_dir", default)
     
-    def get_venv_dir(self) -> dict:
-        default = os.path.join(self.get_cwd(),"venv/")
-        return self.data.get("venv_dir", default)
-    
-    def get_bin_dir(self) -> dict:
-        default = os.path.join(self.get_cwd(),"bin/")
-        return self.data.get("bin_dir", default)
-
     def get_dependency_dir(self, dependency_name: str) -> str:
         return self.data["dependency_dirs"].get(dependency_name, None)
 
     def get_dependency_dirs(self) -> dict:
-        #dirs = {}
-        #for dep_name in self.data["dependency_dirs"]:
-        #    dirs[dep_name] = self.data["dependency_dirs"][dep_name]
         return self.data["dependency_dirs"]
     
     def get_dependency_names(self) -> list:

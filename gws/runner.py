@@ -16,7 +16,7 @@ from gws.logger import Logger, Error
 
 def _run(   ctx=None, uri=False, token=False, test=False, db=False, prod_biota_db=False, \
             cli=False, runserver=False, ip="0.0.0.0", port="3000", docgen=False, \
-            force=False, show=False, jlab=False, demo=False):
+            force=False, jlab=False, demo=False):
     
     Logger(is_new_session=True, is_test=test)
     settings = Settings.retrieve()
@@ -85,117 +85,10 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, prod_biota_d
             t()
 
     elif docgen:
-        settings.data["db_name"] = ':memory:'
-
-        if not settings.save():
-            raise Error("manage", "Cannot save the settings in the database")
-        
         brick_dir = settings.get_cwd()
-        doc_folder = "./docs/"
-        gen_folder = "./docs/html/"
-        rst_folder = "./rst/"
-
-        try:
-            if force:
-                try:
-                    shutil.rmtree(os.path.join(brick_dir, doc_folder), ignore_errors=True)
-                except:
-                    pass
-            
-            if not os.path.exists(os.path.join(brick_dir, gen_folder)):             
-                os.makedirs(os.path.join(brick_dir, gen_folder))
-
-            subprocess.check_call([
-                "sphinx-quickstart", "-q",
-                f"-p{settings.title}",
-                f"-a{settings.authors}",
-                f"-v{settings.version}",
-                f"-l en",
-                "--sep",
-                "--ext-autodoc",
-                "--ext-todo",
-                "--ext-coverage",
-                "--ext-mathjax",
-                "--ext-ifconfig",
-                "--ext-viewcode",
-                "--ext-githubpages",
-                ], cwd=os.path.join(brick_dir, gen_folder))
-
-            with open(os.path.join(brick_dir, gen_folder, "./source/conf.py"), "r+") as f:
-                content = f.read()
-                f.seek(0, 0)
-                f.write('\n')
-                f.write("import os\n")
-                f.write("import sys\n")
-
-                dep_dirs = settings.get_dependency_dirs()
-                for k in dep_dirs:
-                    f.write(f"sys.path.insert(0, '{dep_dirs[k]}')\n")
-
-                f.write("from gws._sphynx import conf\n\n\n")
-                f.write(content + '\n')
-                f.write("extensions = extensions + conf.extensions\n")
-                f.write("exclude_patterns = exclude_patterns + conf.exclude_patterns\n")
-                f.write("html_theme = 'sphinx_rtd_theme'")
-
-            subprocess.check_call([
-                "sphinx-apidoc",
-                "-M",
-                f"-H{settings.title}",
-                f"-A{settings.authors}",
-                f"-V{settings.version}",
-                "-f",
-                "-o", "./source",
-                os.path.join("../../",settings.name)
-                ], cwd=os.path.join(brick_dir, gen_folder))
-
-            for f in ['intro.rst', 'usage.rst', 'contrib.rst', 'changes.rst']:
-                if os.path.exists(os.path.join(brick_dir, rst_folder, f)):
-                    shutil.copyfile(
-                        os.path.join(brick_dir, rst_folder, f), 
-                        os.path.join(brick_dir,gen_folder,"./source/"+f))
-
-            # insert modules in index
-            with open(os.path.join(brick_dir, gen_folder, "./source/index.rst"), "r") as f:
-                content = f.read()
-                content = content.replace(
-                    ":caption: Contents:",
-                    ":caption: API documentation:\n\n   modules\n\n")
-
-                content = content.replace(
-                    ".. toctree::",
-
-                    (settings.description or "") + "\n\n" +
-                    ".. toctree::\n"+
-                    "   :hidden:\n\n"+
-                    "   self\n\n"+
-                    ".. toctree::\n\n"+
-                    "   intro\n"+
-                    "   usage\n"+
-                    "   contrib\n"+
-                    "   changes\n\n\n"+
-                    ".. toctree::")
-
-            with open(os.path.join(brick_dir, gen_folder, "./source/index.rst"), "w") as f:
-                f.write(content)
-
-            subprocess.check_call([
-                "sphinx-build",
-                "-b",
-                "html",
-                "./source",
-                "./build",
-                ], cwd=os.path.join(brick_dir, gen_folder))
-
-            if show:
-                import webbrowser
-                location = settings.get_dependency_dir(show)
-                url = os.path.join(location, gen_folder, "./build/index.html")
-                print(url)
-                webbrowser.open(f"file://{url}", new=2)
-                
-        except Exception as err:
-            raise Error(f"An error occurred. Error message: {err}")
+        from ._sphynx.docgen import docgen
+        docgen(settings.name, brick_dir, settings, force=force)
+        
     elif jlab:
         if jlab == ".":
             lab_dir = settings.get_dependency_dir(settings.name)
@@ -228,9 +121,8 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, prod_biota_d
 @click.option('--port', default="3000", help='Server port', show_default=True)
 @click.option('--docgen', is_flag=True, help='Generates documentation')
 @click.option('--force', is_flag=True, help='Forces documentation generation by removing any existing documentation (used if --docgen is given)')
-@click.option('--show', help='Forces documentation generation by removing any existing documentation (used if --docgen is given)')
 @click.option('--jlab', help='Runs Jupiter lab', show_default=True)
 @click.option('--demo', is_flag=True, help='Run in demo mode [to only use for demonstration tests]')
-def run(ctx, uri, token, test, db, prod_biota_db, cli, runserver, ip, port, docgen, force, show, jlab, demo):       
-    _run(ctx, uri, token, test, db, prod_biota_db, cli, runserver, ip, port, docgen, force, show, jlab, demo)
+def run(ctx, uri, token, test, db, prod_biota_db, cli, runserver, ip, port, docgen, force, jlab, demo):       
+    _run(ctx, uri, token, test, db, prod_biota_db, cli, runserver, ip, port, docgen, force, jlab, demo)
 

@@ -102,9 +102,21 @@ class App(BaseApp):
         """
         Intialize static routes
         """
+        
+        from ._sphynx.docgen import docgen
+        from ._app.central import central_app
+        from ._app.core import core_app
+        
+        # docs routes
+        dirs = _settings.get_dependency_dirs()
+        for name in dirs:
+            docgen(name, dirs[name], _settings, force=True)
+            k = f"/docs/{name}/"
+            htmldir = os.path.join(dirs[name],"./docs/html/build")
+            if os.path.exists(os.path.join(htmldir,"index.html")):
+                app.mount(k, StaticFiles(directory=htmldir), name=k)
 
-        from gws._app.central import central_app
-        from gws._app.core import core_app
+        # api routes
         app.mount("/central-api/", central_app)
         app.mount("/core-api/", core_app)
 
