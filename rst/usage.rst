@@ -2,8 +2,8 @@ Usage
 =====
 
 
-Get stated
-----------
+Get started
+-----------
 
 
 Advanced usage

@@ -99,7 +99,7 @@ class Base:
         return module
 
     @classmethod
-    def property_names(cls, instance = None) -> list:
+    def property_names(cls, instance=None, exclude=None) -> list:
         """
         Returns the property names
 
@@ -110,8 +110,13 @@ class Base:
         m = inspect.getmembers(cls)
         for i in m:
             if not instance is None:
-                if isinstance(i[1], instance):
-                    property_names.append(i[0])
+                if not exclude is None:
+                    if isinstance(i[1], instance) and not isinstance(i[1], exclude):
+                        property_names.append(i[0])
+                else:
+                    if isinstance(i[1], instance):
+                        property_names.append(i[0])
+                        
             elif not i[0].startswith('_') and not inspect.isfunction(i[1]) and not inspect.ismethod(i[1]) and not inspect.isclass(i[1]):
                 property_names.append(i[0])
 

@@ -23,7 +23,8 @@ from datetime import datetime
 from peewee import SqliteDatabase, Model as PWModel
 from peewee import  Field, IntegerField, FloatField, DateField, \
                     DateTimeField, CharField, BooleanField, \
-                    ForeignKeyField, IPField, TextField, BlobField
+                    ForeignKeyField, ManyToManyField, IPField, TextField, BlobField, \
+                    AutoField, BigAutoField
 from playhouse.sqlite_ext import JSONField, SearchField, RowIDField
 
 from gws.logger import Error, Info
@@ -165,7 +166,7 @@ class Model(BaseModel):
 
     def clear_data(self, save: bool = False):
         """
-        Clears the :property:data
+        Clears the `data`
 
         :param save: If True, save the model the `data` is cleared
         :type save: bool
@@ -472,7 +473,7 @@ class Model(BaseModel):
 class Viewable(Model):
 
     _fts_field = {'title': 2.0, 'description': 1.0}
-    
+
     # -- A --
 
     def archive(self, status: bool):
@@ -496,7 +497,7 @@ class Viewable(Model):
                 transaction.rollback()
                 return False
 
-    def as_json(self, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+    def as_json(self, stringify: bool=False, prettify: bool=False, jsonifiable_data_keys: list=[], **kwargs) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the model.
         
@@ -504,17 +505,38 @@ class Viewable(Model):
         :type stringify: bool
         :param prettify: If True, indent the JSON string. Defaults to False.
         :type prettify: bool
+        :param jsonifiable_data_keys: If is empty, `data` is fully jsonified, otherwise only specified keys are jsonified
+        :param jsonifiable_data_keys: `list` of str
+        :type jsonify_full_data: bool
         :return: The representation
         :rtype: dict, str
         """
-
-        _json = {
-            "uri": self.uri,
-            "type": self.type,
-            "data" : self.data,
-            "is_deleted": self.is_deleted,
-            "creation_datetime" : str(self.creation_datetime),
-        }
+      
+        _json = {}
+        
+        
+        if not isinstance(jsonifiable_data_keys, list):
+            jsonifiable_data_keys = []
+            
+        exclusion_list = (ForeignKeyField, ManyToManyField, BlobField, AutoField, BigAutoField, )
+        
+        for prop in self.property_names(Field, exclude=exclusion_list) :
+            if prop in ["id"]:
+                continue
+                
+            val = getattr(self, prop)
+            
+            if prop == "data":
+                _json[prop] = {}
+                
+                if len(jsonifiable_data_keys) == 0:
+                    _json[prop] = val
+                else:
+                    for k in jsonifiable_data_keys:
+                        if k in val:
+                            _json[prop][k] = val[k]
+            else:
+                _json[prop] = str(val)
         
         if stringify:
             if prettify:
@@ -642,12 +664,11 @@ class Viewable(Model):
 
     def view(self, *args, format="json", params:dict = {}) -> dict:
         view_model = ViewModel(model=self)
-        
         if not isinstance(params, dict):
             params = {}
             
         view_model.set_params(params)
-        view_model.save()
+        #view_model.save()
         return view_model
     
 # ####################################################################
@@ -2844,7 +2865,7 @@ class ViewModel(Model):
         if not self.id is None:
             self._model = self.model
         
-        if not "params" in self.data:
+        if not "params" in self.data or self.data["params"] is None:
             self.data["params"] = {}
         
     # -- A --
@@ -2860,15 +2881,28 @@ class ViewModel(Model):
         :return: The representation
         :rtype: dict, str
         """
-
-        _json = {
-            "uri": self.uri,
+        
+        is_saved = self.id is not None
+        
+        #SOLUTION 1: clean and rigorous solution
+        #_json = {
+        #    "uri": self.uri if is_saved else None,
+        #    "type": self.type,
+        #    "data" : self.data,
+        #    "model": self.model.as_json( **self.params ),
+        #    "creation_datetime" : str(self.creation_datetime),
+        #}
+        
+        
+        #SOLUTION 2: easy usage, but less rigorous
+        _json = self.model.as_json( **self.params )
+        _json["view_model"] = {
+            "uri": self.uri if is_saved else None,
             "type": self.type,
             "data" : self.data,
-            "model": self.model.as_json( **self.params ),
             "creation_datetime" : str(self.creation_datetime),
         }
-        
+
         if stringify:
             if prettify:
                 return json.dumps(_json, indent=4)
@@ -2894,6 +2928,10 @@ class ViewModel(Model):
 
     # -- F --
 
+    #@classmethod
+    #def from_params(model: 'Model', params: dict=None) -> 'ViewModel'
+    #    view_model = ViewModel.select().where(ViewModel.model_id==model.id)
+        
     # -- G --
     
     def get_param(self, key: str, default=None) -> str:
@@ -2942,6 +2980,12 @@ class ViewModel(Model):
         self.data["params"][key] = value
         
     def set_params(self, params: dict={}):  
+        if params is None:
+            params = {}
+        
+        if not isinstance(params, dict):
+            raise Error("gws.model.ViewModel", "set_params", "Parameter must be a dictionnary")
+            
         self.data["params"] = params
         
     def set_description(self, text: str):

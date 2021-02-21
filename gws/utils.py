@@ -32,3 +32,7 @@ def to_camel_case(snake_str: str, capitalize_first:bool = False):
 
 def generate_random_chars(size=6, chars=string.ascii_uppercase + string.ascii_lowercase + string.digits) -> str:
     return ''.join(random.choice(chars) for _ in range(size))
+
+def dict_to_pandas():
+    pass
+    

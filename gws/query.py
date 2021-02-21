@@ -8,26 +8,30 @@ from pydantic import create_model
 class Query:
 
     @classmethod
-    def format(cls, Q, return_format=""):
+    def format(cls, Q, view_params: dict={}):
         _list = []
-        if return_format.lower() == "json":
-            for o in Q:
-                o = o.cast()
+        from gws.model import ViewModel
+        
+        for o in Q:
+            if isinstance(o, ViewModel):
                 _list.append(o.as_json())
-            return _list
-        else:
-            return Q
-            #for o in Q:
-            #    _list.append(o)
+            else:
+                o = o.cast()
+                view_model = o.view(params=view_params)
+                _list.append(view_model.as_json())
+
+        return _list
         
 
 class Paginator:
     number_of_items_per_page = 20
     Q = None
-    def __init__(self, query, page: int = 1, number_of_items_per_page: int = 20):
+    def __init__(self, query, page: int = 1, number_of_items_per_page: int = 20, view_params: dict = {}):
         page = int(page)
         number_of_items_per_page = int(number_of_items_per_page)
-
+        
+        self.view_params = view_params
+        
         self.Q = query.paginate(page, number_of_items_per_page)
         self.page = page
         self.number_of_items_per_page = number_of_items_per_page
@@ -59,7 +63,7 @@ class Paginator:
 
     def as_json( self ):
         return {
-            'data' : Query.format( self.Q, return_format="json" ),
+            'data' : Query.format( self.Q, view_params=self.view_params ),
             'paginator': self._paginator_dict()
         }
 

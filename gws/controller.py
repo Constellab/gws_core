@@ -21,13 +21,20 @@ class Controller(Base):
     """
     Controller class
     """
-
+    
+    UNEXPECTED_ERROR = "UNEXPECTED_ERROR"
+    NOT_FOUND = "NOT_FOUND"
+    NOT_VIEWMODEL = "NOT_VIEWMODEL"
+    UPLOAD_FAILED = "UPLOAD_FAILED"
+    IS_RUNNING = "IS_RUNNING"
+    IS_FINISHED = "IS_FINISHED"
+    
     _model_specs = dict() 
     _settings = None
     _number_of_items_per_page = 50
 
     @classmethod
-    async def action(cls, action=None, object_type=None, object_uri=None, data=None, page=1, number_of_items_per_page=20, filters=[], return_format="") -> 'ViewModel':
+    async def action(cls, action=None, object_type=None, object_uri=None, data=None, page=1, number_of_items_per_page=20, filters="") -> 'ViewModel':
         """
         Process user actions
 
@@ -51,78 +58,152 @@ class Controller(Base):
         except:
             raise Error("Controller", "action", "The data is not a valid JSON text")
         
-        # CRUD (& Run) actions
-        if action == "list":
-            Q = cls.fetch_list(object_type, page, filters=filters)
-
-            if return_format == "json":
-                return Paginator(Q, page=page).as_json()
+        if action == "get":
+            object_uris = object_uri.split(",")
+            if len(object_uris) == 1 and not "all" in object_uris:
+                model = cls.__action_get(object_type, object_uri, data)
             else:
-                return Paginator(Q, page=page).as_model_list()
-
-        else:
-            if action == "get":
-                model = cls.__get(object_type, object_uri, data)
-            elif action == "update":
-                model = cls.__update(object_type, object_uri, data)
-            elif action == "delete":
-                model = cls.__delete(object_type, object_uri)
-            elif action == "upload":
-                model = await cls.__upload(data)
-            elif action == "run":
-                model = asyncio.run( cls.__run(experiment_uri = object_uri) )
+                model = cls.__action_list(
+                    object_type, object_uris, data=data, 
+                    page=page, number_of_items_per_page=number_of_items_per_page
+                )
+        elif action == "update":
+            # update objects
+            model = cls.__action_update(object_type, object_uri, data)
+        elif action == "delete":
+            model = cls.__action_delete(object_type, object_uri)
+        elif action == "upload":
+            model = await cls.__action_upload(data)
+        elif action == "count":
+            model = cls.__action_count(object_type)
             
-            if return_format == "json":
-                return model.as_json()
-            else:
-                return model
+        return model
+    
+    @classmethod
+    def __action_count(cls, object_type: str) -> int:
+        t = cls.get_model_type(object_type)
+        if t is None:
+            return {"exception": {"id": cls.NOT_FOUND, "message": f"Invalid Model type"}}
 
-    # -- C --
-
-    # -- D --
+        return t.select().count()
+    
+    @classmethod
+    def __action_get(cls, object_type: str, object_uri: str, data:dict=None) -> 'ViewModel':
+        obj = cls.fetch_model(object_type, object_uri)
+        if obj is None:
+            return {"exception": {"id": cls.NOT_FOUND, "message": f"Invalid Model type or uri not found"}}
+        
+        from gws.model import Model, ViewModel
+        if isinstance(obj, ViewModel):
+            # Ok!
+            pass
+        elif isinstance(obj, Model):
+            obj = obj.view(params=data)
+        else:
+            return {"exception": {"id": cls.NOT_FOUND, "message": f"No Model found with uri {object_uri}"}}
+            #raise Error("Controller", "__action_get", f"No ViewModel found with uri {object_uri}")
+        
+        return obj.as_json()
 
     @classmethod
-    def __delete(cls, object_type: str, object_uri: str) -> 'ViewModel':
+    def __action_delete(cls, object_type: str, object_uri: str) -> 'ViewModel':
         from gws.model import Model, ViewModel
         obj = cls.fetch_model(object_type, object_uri)
+        
+        if obj is None:
+            return {"exception": {"id": cls.NOT_FOUND, "message": f"Invalid Model type or uri not found"}}
+        
         if isinstance(obj, ViewModel):
             obj.remove()
-            return obj
+            return obj.as_json()
         else:
-            raise Error("Controller", f"__delete", f"No ViewModel found with uri {object_uri}")
-
-    # -- E --
+            return {"exception": {"id": cls.NOT_FOUND, "message": f"No ViewModel found with uri {object_uri}"}}
+            #raise Error("Controller", f"__action_delete", f"No ViewModel found with uri {object_uri}")
     
-  
+    @classmethod
+    def __action_list(cls, object_type: str, object_uris: list,  data:dict=None, page=1, number_of_items_per_page=20) -> list:
+        t = cls.get_model_type(object_type)
+        
+        if t is None:
+            return {"exception": {"id": cls.NOT_FOUND, "message": f"Invalid Model type"}}
+        
+        number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
+        
+        if "all" in object_uris:
+            q = data.get("filter","")
+            if q:
+                Q = t.search(**q)
+
+                p = Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page, view_params=data)
+                result = []
+                for o in p:
+                    if return_format=="json":
+                        result.append( o.get_related().as_json() )
+                    else:
+                        result.append(o)
+
+                return {
+                    'data' : result,
+                    'paginator': p._paginator_dict()
+                }
+            else:
+                Q = t.select() #.order_by(t.creation_datetime.desc())
+                return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page, view_params=data).as_json()
+        else:
+            Q = t.select(t.uri.in_(object_uris)) #.order_by(t.creation_datetime.desc())
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page, view_params=data).as_json()
+
+    @classmethod
+    def __action_update(cls, object_type: str, object_uri: str, data: dict) -> 'ViewModel':
+        from gws.model import SystemTrackable, ViewModel        
+        obj = cls.fetch_model(object_type, object_uri)
+        if obj is None:
+            return {"exception": {"id": cls.NOT_FOUND, "message": f"Invalid Model type or uri not found"}}
+        
+        if isinstance(obj, ViewModel):
+            view_model = obj
+            view_model.set_params(data)
+            view_model.save()
+        else:
+            return {"exception": {"id": cls.NOT_VIEWMODEL, "message": f"No ViewModel found with uri {object_uri}"}}
+            #raise Error("Controller", "__action_update", f"No ViewModel found with uri {object_uri}")
+
+        return view_model.as_json()
+
+    @classmethod
+    async def __action_upload(cls, files: List[UploadFile] = FastAPIFile(...)):
+        try:
+            from gws.file import Uploader
+            u = Uploader(files=files)
+            e = u.create_experiment()
+            await e.run()
+
+            file_set = u.output["file_set"]
+            return file_set.as_json()
+        
+        except Exception as err:
+            return { "exception": {"id": cls.UPLOAD_FAILED, "message": f"Upload failed. Error: {err}"}}
+
+    
     # -- F --
 
         
     @classmethod
-    def fetch_experiment_list(cls, page=1, number_of_items_per_page=20, filters=[], return_format=""):
+    def fetch_experiment_list(cls, page=1, number_of_items_per_page=20, filters=[]):
         from gws.model import Experiment
         Q = Experiment.select().order_by(Experiment.creation_datetime.desc())
-
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
-
-        if return_format == "json":
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
-        else:
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
+        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
     
     @classmethod
-    def fetch_job_list(cls, experiment_uri=None, page=1, number_of_items_per_page=20, filters=[], return_format=""):
+    def fetch_job_list(cls, experiment_uri=None, page=1, number_of_items_per_page=20, filters=[]):
         from gws.model import Job, Experiment
         Q = Job.select().order_by(Job.creation_datetime.desc())
-
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
-
         if not experiment_uri is None :
             Q = Q.join(Experiment).where(Experiment.uri == experiment_uri)
 
-        if return_format == "json":
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
-        else:
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
+        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
     
     @classmethod
     def fetch_job_flow(cls, protocol_job_uri=None, experiment_uri=None):
@@ -141,9 +222,8 @@ class Controller(Base):
             
     
     @classmethod
-    def fetch_protocol_list(cls, experiment_uri=None, job_uri=None, page=1, number_of_items_per_page=20, filters=[], return_format=""):
+    def fetch_protocol_list(cls, experiment_uri=None, job_uri=None, page=1, number_of_items_per_page=20):
         from gws.model import Protocol, Job, Experiment
-        
         if experiment_uri:
             Q = Protocol.select_me()\
                             .join(Experiment, on=(Experiment.protocol_uri == Protocol.uri))\
@@ -156,13 +236,10 @@ class Controller(Base):
             number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
             Q = Protocol.select_me().order_by(Protocol.creation_datetime.desc())
 
-        if return_format == "json":
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
-        else:
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
+        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
     
     @classmethod
-    def fetch_process_list(cls, job_uri=None, page=1, number_of_items_per_page=20, filters=[], return_format=""):
+    def fetch_process_list(cls, job_uri=None, page=1, number_of_items_per_page=20):
         from gws.model import Process, Job
 
         if job_uri is None:
@@ -174,13 +251,10 @@ class Controller(Base):
                             .where(Job.uri == job_uri) \
                             .order_by(Process.creation_datetime.desc())
 
-        if return_format == "json":
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
-        else:
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
+        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
 
     @classmethod
-    def fetch_config_list(cls, job_uri=None, page=1, number_of_items_per_page=20, filters=[], return_format=""):
+    def fetch_config_list(cls, job_uri=None, page=1, number_of_items_per_page=20):
         from gws.model import Config, Job
 
         if job_uri is None:
@@ -192,13 +266,10 @@ class Controller(Base):
                             .where(Job.uri == job_uri) \
                             .order_by(Config.creation_datetime.desc())
 
-        if return_format == "json":
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
-        else:
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
+        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
 
     @classmethod
-    def fetch_resource_list(cls, experiment_uri=None, job_uri=None, page=1, number_of_items_per_page=20, filters=[], return_format=""):
+    def fetch_resource_list(cls, experiment_uri=None, job_uri=None, page=1, number_of_items_per_page=20):
         from gws.model import Resource, Job, Experiment
         
         if job_uri:
@@ -217,29 +288,8 @@ class Controller(Base):
             number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
             Q = Resource.select().order_by(Resource.creation_datetime.desc())
 
-        if return_format == "json":
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
-        else:
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
-
-
-    @classmethod
-    def fetch_list(cls, object_type: str, page: int=1, number_of_items_per_page: int=20, filters=[], return_format="") -> 'Model':
-        t = cls.get_model_type(object_type)
-
-        number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
-        try:
-            Q = t.select().order_by(t.creation_datetime.desc())
-            if len(filters) > 0:
-                pass
-
-            if return_format == "json":
-                return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
-            else:
-                return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_model_list()
-        except:
-            return None
-
+        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
+    
     @classmethod
     def fetch_model(cls, object_type: str, object_uri: str) -> 'Model':
         """
@@ -252,6 +302,10 @@ class Controller(Base):
         """
 
         t = cls.get_model_type(object_type)
+        
+        if t is None:
+            return None
+        
         try:
             return t.get(t.uri == object_uri)
         except:
@@ -265,20 +319,7 @@ class Controller(Base):
             Controller._settings = Settings.retrieve()
         
         return Controller._settings
-        
-    @classmethod
-    def __get(cls, object_type: str, object_uri: str, data:dict=None) -> 'ViewModel':
-        obj = cls.fetch_model(object_type, object_uri)
-    
-        from gws.model import Model, ViewModel
-        if isinstance(obj, ViewModel):
-            return obj
-        elif isinstance(obj, Model):
-            return obj.view(params=data)
-        else:
-            raise Error("Controller", "__get", f"No ViewModel found with uri {object_uri}")
-        
-
+               
     @classmethod
     def get_model_type(cls, type_str: str) -> type:
         """
@@ -306,34 +347,23 @@ class Controller(Base):
             return Config
         elif type_str.lower() == "job":
             return Job
-
+    
         tab = type_str.split(".")
         n = len(tab)
         module_name = ".".join(tab[0:n-1])
         function_name = tab[n-1]
-        module = importlib.import_module(module_name)
-        t = getattr(module, function_name, None)
-        if t is None:
-            raise Error("Controller", "get_model_type", f"Cannot import {type_str}")
+        
+        try:
+            module = importlib.import_module(module_name)
+            t = getattr(module, function_name, None)
+        except:
+            t = None
+ 
         return t
 
-    # -- I --
-    
+    # -- L --
+
     # -- P --
-
-    @classmethod
-    def __update(cls, object_type: str, object_uri: str, data: dict) -> 'ViewModel':
-        from gws.model import SystemTrackable, ViewModel        
-        obj = cls.fetch_model(object_type, object_uri)
-        
-        if isinstance(obj, ViewModel):
-            view_model = obj
-            view_model.set_params(data)
-            view_model.save()
-        else:
-            raise Error("Controller", "__update", f"No ViewModel found with uri {object_uri}")
-
-        return view_model
 
     # -- R --
     
@@ -394,7 +424,7 @@ class Controller(Base):
         e.data["description"] = "This is the journey of Astro."
         await e.run()
         e.save()
-        return True
+        return e.view().as_json()
     
     @classmethod
     async def _run_robot_super_travel(cls):
@@ -405,56 +435,33 @@ class Controller(Base):
         e.data["description"] = "This is the super journey of Astro."
         await e.run()
         e.save()
-        return True
-        
-    # @classmethod
-    # async def __run(cls, process_type: str, process_uri: str, config_params: dict):
-    #     from gws.model import Process
-    #     if not process_uri is None:
-    #         try:
-    #             proc = Process.get(Process.uri == process_uri)
-    #         except:
-    #             proc = None
-    #     elif not process_type is None:
-    #         t = cls.get_model_type(process_type)
-    #         proc = t()
-
-    #     if isinstance(proc, Process):
-    #         job = proc.get_active_job()
-    #         job.config.set_params(config_params)
-    #         e = proc.create_experiment()
-    #         e.run()
-    #         e.save()
-    #     else:
-    #         raise Error("Controller", "__run", "Process not found"))
+        return e.view().as_json()
 
     @classmethod
-    async def __run(cls, experiment_uri: str = None):
+    async def run_experiment(cls, experiment_uri: str = None):
         from gws.model import Experiment
         try:
             e = Experiment.get(Experiment.uri == experiment_uri)
-            await e.run()
+            if e.is_runnnig:
+                return { "exception": {"id": cls.IS_RUNNING, "message": f"Experiment is running"}}
+            elif e.is_finished:
+                return { "exception": {"id": cls.IS_FINISHED, "message": f"Experiment has already run"}}
+            else:
+                await e.run()
+                return e.view().as_json()
         except Exception as err:
-            raise Error("Controller", "__run", f"An error occured. {err}")
+            return { "exception": {"id": cls.UNEXPECTED_ERROR, "message": f"An error occured. Error: {err}"}}
+            #raise Error("Controller", "__run", f"An error occured. {err}")
     
     # -- U --
-    
-    @classmethod
-    async def __upload(cls, files: List[UploadFile] = FastAPIFile(...)):
-        try:
-            from gws.file import Uploader
-            u = Uploader(files=files)
-            e = u.create_experiment()
-            await e.run()
-
-            file_set = u.output["file_set"]
-            return { "status": True, "file_set": file_set.as_json() }
-        
-        except Exception as err:
-            return { "status": False, "message": f"Upload failed. Error: {err}" }
-        
+          
     # -- S --
     
+    @classmethod
+    def save_experiment(cls, experiment_uri: str = None, data=None):
+        from gws.model import Experiment
+        
+            
     @classmethod
     def save_all(cls, process_type_list: list = None) -> bool:
         """

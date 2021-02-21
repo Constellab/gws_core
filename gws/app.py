@@ -43,7 +43,6 @@ async def call_brick_api(request: Request, brick_name: Optional[str] = "gws", ap
         raise Error("gws.app", "call_brick_api", f"{err}")
         #return {"status": False, "results": {}, "message": f"{err}"}
 
-
 ####################################################################################
 #
 # Startup & Shutdown Events
@@ -107,14 +106,17 @@ class App(BaseApp):
         from ._app.central import central_app
         from ._app.core import core_app
         
-        # docs routes
+        # static dirs and docs
         dirs = _settings.get_dependency_dirs()
         for name in dirs:
-            docgen(name, dirs[name], _settings, force=True)
-            k = f"/docs/{name}/"
-            htmldir = os.path.join(dirs[name],"./docs/html/build")
-            if os.path.exists(os.path.join(htmldir,"index.html")):
-                app.mount(k, StaticFiles(directory=htmldir), name=k)
+            static_dir = os.path.join(dirs["gws"], "index/static/")
+            if os.path.exists(os.path.join(static_dir)):
+                app.mount(f"/static/{name}/", StaticFiles(directory=static_dir), name=f"/static/{name}")
+        
+            html_dir = os.path.join(dirs[name],"./docs/html/build")
+            if not os.path.exists(os.path.join(html_dir,"index.html")):
+                docgen(name, dirs[name], _settings, force=True)
+            app.mount(f"/docs/{name}/", StaticFiles(directory=html_dir), name=f"/docs/{name}/")
 
         # api routes
         app.mount("/central-api/", central_app)

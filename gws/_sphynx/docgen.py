@@ -40,7 +40,7 @@ def docgen(brick_name, brick_dir, settings, force=False):
             "--ext-coverage",
             "--ext-mathjax",
             "--ext-ifconfig",
-            "--ext-viewcode",
+            #"--ext-viewcode",
             "--ext-githubpages",
             ], cwd=os.path.join(brick_dir, gen_folder))
 
