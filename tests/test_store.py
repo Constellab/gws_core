@@ -4,8 +4,13 @@ import unittest
 import os
 
 from gws.settings import Settings
-from gws.store import KVStore, FileStore
+from gws.store import KVStore, LocalFileStore, RemoteFileStore
 from gws.file import File
+
+# OVHRemoteFileStore class
+class OVHRemoteFileStore(RemoteFileStore):
+    _default_container_url = "https://storage.sbg.cloud.ovh.net/v1/AUTH_a0286631d7b24afba3f3cdebed2992aa/public_test"
+    pass
 
 class TestKVStore(unittest.TestCase):
 
@@ -34,12 +39,12 @@ class TestKVStore(unittest.TestCase):
         self.assertEquals(s1['name'], 'Elon')
 
 
-class TestFileStore(unittest.TestCase):
+class TestLocalFileStore(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
         File.drop_table()
-        FileStore.remove_all_files(ignore_errors=True)
+        LocalFileStore.remove_all_files(ignore_errors=True)
         pass
 
     @classmethod
@@ -48,7 +53,7 @@ class TestFileStore(unittest.TestCase):
         pass
     
     def test_file_store(self):
-        fs = FileStore()
+        fs = LocalFileStore()
         
         settings = Settings.retrieve()
         testdata_dir = settings.get_dir("gws:testdata_dir")
@@ -59,14 +64,25 @@ class TestFileStore(unittest.TestCase):
 
         file = fs.add(file_path)
         self.assertTrue(file.exists())
-        self.assertTrue(file.is_in_file_store())
+        self.assertTrue(fs.contains(file))
         
         file2= File()
         file2.path = file_path
         print(file2.path)
         
-        self.assertFalse(file2.is_in_file_store())
-        file2.move_to_store()
-        self.assertTrue(file2.is_in_file_store())
+        self.assertFalse(fs.contains(file2))
+        file2.move_to_store(fs)
+        self.assertTrue(fs.contains(file2))
         print(file2.path)
-        
+
+class TestRemoteFileStore(unittest.TestCase):
+    
+    def test_file_store(self):
+        return
+        settings = Settings.retrieve()
+        testdata_dir = settings.get_dir("gws:testdata_dir")
+        file_path = os.path.join(testdata_dir, "mini_travel_graph.json")
+        fs = OVHRemoteFileStore(path = "https://storage.sbg.cloud.ovh.net/v1/AUTH_a0286631d7b24afba3f3cdebed2992aa/public_test")
+        f = fs.add(file_path)
+        print(f.path)
+

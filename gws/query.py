@@ -24,15 +24,15 @@ class Query:
         
 
 class Paginator:
-    number_of_items_per_page = 20
-    Q = None
+    number_of_items_per_page = 20    
     def __init__(self, query, page: int = 1, number_of_items_per_page: int = 20, view_params: dict = {}):
         page = int(page)
         number_of_items_per_page = int(number_of_items_per_page)
         
         self.view_params = view_params
         
-        self.Q = query.paginate(page, number_of_items_per_page)
+        self.query = query
+        self.paginated_query = query.paginate(page, number_of_items_per_page)        
         self.page = page
         self.number_of_items_per_page = number_of_items_per_page
         self.number_of_items = query.count()
@@ -57,18 +57,18 @@ class Paginator:
 
     def as_model_list( self ):
         return {
-            'data' : Query.format( self.Q ),
+            'data' : Query.format( self.paginated_query ),
             'paginator': self._paginator_dict()
         }
 
     def as_json( self ):
         return {
-            'data' : Query.format( self.Q, view_params=self.view_params ),
+            'data' : Query.format( self.paginated_query, view_params=self.view_params ),
             'paginator': self._paginator_dict()
         }
-
-    def next(self):
-        if self.is_last_page:
-            return False
-        else:
-            return Paginator(self.Q, page=self.next_page)
+    
+    def current_items(self):
+        """
+        Returns the current items in the paginators
+        """
+        return self.paginated_query

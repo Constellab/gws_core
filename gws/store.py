@@ -11,37 +11,39 @@ import shelve
 import shutil
 import tempfile
 
+from gws.base import DbManager
+from gws.model import Model
 from gws.controller import Controller
 from gws.logger import Error
 from gws.settings import Settings
 
 settings = Settings.retrieve()
-
 db_dir = Controller.get_settings().get_data("db_dir")
-kv_store_path = 'test_kv_store' if settings.is_test else 'prod_kv_store'
-file_store_path = 'test_file_store' if settings.is_test else 'prod_file_store'
-    
 
+# ####################################################################
+#
+# KVStore class
+#
+# ####################################################################
+_default_kv_store_path = 'test_kv_store' if settings.is_test else 'prod_kv_store'
 class KVStore:
     """ 
     KVStore class representing a key-value object storage engine.
     This class allows serializing/deserializing huge objects on store.
     """
-
+    
     _kv_data = None
-    _base_dir = os.path.join(db_dir, kv_store_path)
-    _folder_path = None    
+    _base_dir = os.path.join(db_dir, _default_kv_store_path)
+    _slot_path = None    
     _file_name = 'data'
 
-    # @todo
-    # allow use of external object storage providers AWS S3, OVHcloud (OpenIO), MinIO, etc.
-    _provider = None
-
-    def __init__(self, folder_path:str):
-        while folder_path.startswith(".") or folder_path.startswith("/"):
-            folder_path = folder_path.strip(".").strip("/")
+    def __init__(self, slot_path:str):
+        super().__init__()
+        
+        while slot_path.startswith(".") or slot_path.startswith("/"):
+            slot_path = slot_path.strip(".").strip("/")
             
-        self._folder_path = folder_path
+        self._slot_path = slot_path
  
     # -- A --
     
@@ -60,13 +62,13 @@ class KVStore:
     @property
     def dir_path(self) -> str:
         """ 
-        Path of director the KVStore object
+        Path of directory the KVStore object
 
         :return: The connection path
         :rtype: str
         """
 
-        return os.path.join(self._base_dir, self._folder_path)
+        return os.path.join(self._base_dir, self._slot_path)
     
     # -- F --
 
@@ -77,9 +79,10 @@ class KVStore:
 
         :return: The connection path
         :rtype: str
+        :rtype: strf
         """
 
-        return os.path.join(self._base_dir, self._folder_path, self._file_name)
+        return os.path.join(self.dir_path, self._file_name)
     
   
     # -- G --
@@ -92,10 +95,9 @@ class KVStore:
             return default
         
         self._kv_data = shelve.open(self.file_path)
-        val = self._kv_data.get(key, default)
+        val = self._kv_data.get(key)
         self._kv_data.close()
         return val
-
     
     def __getitem__(self, key):
         if not isinstance(key, str):
@@ -138,7 +140,6 @@ class KVStore:
             if not ignore_errors:
                 raise Error("KVStore", "remove", f"Cannot remove the kv_store {_path}")
     
-    
     # -- S --
     
     def __setitem__(self, key, value):
@@ -159,147 +160,335 @@ class KVStore:
         self._kv_data = shelve.open(self.file_path)
         self._kv_data[key] = value
         self._kv_data.close()
+
+# ####################################################################
+#
+# FileStore class
+#
+# ####################################################################
+
+class FileStore(Model):
+    _table_name = "gws_file_store"
+    
+    def __init__(self, path=""):
+        super().__init__()
         
-class FileStore:
-    
-    _base_dir = os.path.join(db_dir, file_store_path)
-    
+        if not self.path:
+            if path:
+                self.path=path
+        
     # -- A --
     
-    def add(self, source_file: (str, io.IOBase, tempfile.SpooledTemporaryFile, 'File', ), dest_file_name: str="", force: bool=False):
-        """ Add a file from an external repository to the store """
+    def add(self, source_file: (str, io.IOBase, tempfile.SpooledTemporaryFile, 'File', )):
+        """ 
+        Add a file from an external repository to a local store. Must be implemented by the child class.
         
+        :param source_file: The source file
+        :type source_file: `str` (file path), `gws.file.File`, `io.IOBase` or `tempfile.SpooledTemporaryFile`
+        :param dest_file_name: The destination file name
+        :type dest_file_name: `str`
+        :return: The file object 
+        :rtype: gws.file.File.
+        """
+        
+        raise Error('FileStore','add', 'Not implemented')
+
+    # -- O --
+    
+    @classmethod
+    def open(cls, file, mode):
+        """
+        Open a file. Must be implemented by the child class.
+        
+        :param file: The file to open
+        :type file: `gws.file.File`
+        :param mode: Mode (see native Python `open` function)
+        :type mode: `str`
+        :return: The file object 
+        :rtype: Python `file-like-object` or `stream`.
+        """
+        
+        raise Error('FileStore','add', 'Not implemented')
+    
+    # -- P --
+    
+    @property
+    def path(self) -> str:
+        """ 
+        Get path (or url) of the store
+        """
+
+        return self.data.get("path","")
+    
+    # -- F --
+
+    @path.setter
+    def path(self, path: str) -> str:
+        """ 
+        Set the path (or url) of the store
+        """
+
+        self.data["path"] = path
+        
+# ####################################################################
+#
+# RemoteFileStore class
+#
+# ####################################################################
+
+class RemoteFileStore(FileStore):
+    
+    _default_container_url = ""
+    
+    def __init__(self, path=""):
+        super().__init__(path=path)
+            
+    def add(self, source_file: (str, io.IOBase, tempfile.SpooledTemporaryFile, 'File', )):
+        import requests
+        from gws.file import File
+        f = File()
+        f.path = ""
+        f.save()
+        
+        if isinstance(source_file, str):
+            source_file = open(source_file ,'rb')
+                
+        files = {'file': source_file}
+        response = requests.post(self.path, files = files)
+        
+        print(self.path)
+        print(files)
+        print(response)
+        print(response.text)
+        
+        return f
+    
+    
+# ####################################################################
+#
+# LocalFileStore class
+#
+# ####################################################################
+
+class LocalFileStore(FileStore):
+    
+    _base_dir = 'test_file_store' if settings.is_test else 'prod_file_store'
+    
+    def __init__(selfs):
+        super().__init__()
+
+    # -- A --
+
+    def add(self, source_file: (str, io.IOBase, tempfile.SpooledTemporaryFile, 'File', ), \
+                   dest_file_name: str=""):
+        """ 
+        Add a file from an external repository to a local store 
+        
+        :param source_file: The source file
+        :type source_file: `str` (file path), `gws.file.File`, `io.IOBase` or `tempfile.SpooledTemporaryFile`
+        :param dest_file_name: The destination file name
+        :type dest_file_name: `str`
+        :return: The file object 
+        :rtype: gws.file.File.
+        """
+        
+        if not  self.is_saved():
+            self.save()
+            
         from gws.file import File
         
-        if isinstance(source_file, File):
-            f = source_file
-            source_file_path = f.path
+        with DbManager.db.atomic() as transaction:
             
-            if not dest_file_name:
-                dest_file_name = Path(source_file_path).name
-                
-            f.path = self.__create_valid_file_path(f, name=dest_file_name)
-        else:
-            if not dest_file_name:
-                if isinstance(source_file, str):
-                    dest_file_name = Path(source_file).name
-                else:
-                    dest_file_name = "file"
-            
-            f = self.create_file( name=dest_file_name )
-            source_file_path = source_file
-            
-        try:
-            if not os.path.exists(f.dir):
-                os.makedirs(f.dir)
-                if not os.path.exists(f.dir):
-                    raise Exception("FileStore", "add", f"Cannot create directory {f.dir}")
+            try:
+                # create DB file object
+                if isinstance(source_file, File):
+                    f = source_file
+                    source_file_path = f.path
 
-            if isinstance(source_file, (io.IOBase, tempfile.SpooledTemporaryFile, )):
-                with open(f.path, "wb") as buffer:
-                    shutil.copyfileobj(source_file, buffer)
-            else:
-                shutil.copy2(source_file_path, f.path)
-            
-            f.save()
-            return f
-        
-        except Exception as err:
-            
-            if isinstance(source_file, (str, io.IOBase, tempfile.SpooledTemporaryFile,) ):
-                f.delete_instance()
-                          
-            raise Error("FileStore", "add", f"An error occured. Error: {err}")
+                    if not dest_file_name:
+                        dest_file_name = Path(source_file_path).name
+
+                    f.path = self.__create_valid_file_path(f, name=dest_file_name)
+                else:
+                    if not dest_file_name:
+                        if isinstance(source_file, str):
+                            dest_file_name = Path(source_file).name
+                        else:
+                            dest_file_name = "file"
+
+                    f = self.create_file( name=dest_file_name )
+                    source_file_path = source_file
+
+                
+                # copy disk file
+                if not os.path.exists(f.dir):
+                    os.makedirs(f.dir)
+                    if not os.path.exists(f.dir):
+                        raise Exception("FileStore", "add", f"Cannot create directory '{f.dir}'")
+
+                if isinstance(source_file, (io.IOBase, tempfile.SpooledTemporaryFile, )):
+                    with open(f.path, "wb") as buffer:
+                        shutil.copyfileobj(source_file, buffer)
+                else:
+                    shutil.copy2(source_file_path, f.path)
+                
+                # save DB file object
+                f.file_store_uri = self.uri
+                f.save()
+                return f
+
+            except Exception as err:
+                transaction.rollback()
+                raise Error("FileStore", "add", f"An error occured. Error: {err}")
 
     # -- B --
     
     # -- C --
     
-    @classmethod
-    def __create_valid_file_path( cls, file: 'File', name: str  = ""):
+    def __create_valid_file_path( self, file: 'File', name: str  = ""):
         if not file.uri:
             file.save()
         
-        return os.path.join(cls._base_dir, file._table_name, file.uri, name)
+        return os.path.join(self.path, file.uri, name)
 
-    @classmethod
-    def create_file( cls, name: str ):
+    def create_file( self, name: str ):
         from gws.file import File
         file = File()
-        file.path = cls.__create_valid_file_path(file, name) 
+        file.path = self.__create_valid_file_path(file, name) 
         file.save()
         return file
      
     def contains(self, file: 'File') -> bool:
-        return self._base_dir in file.path
+        return self.path in file.path
     
     # -- E --
-    
-    def exists(self, location: str):
-        file_path = self.get_real_path(location)       
-        return os.path.exists(file_path)
-    
+  
     # -- G --
     
-    def get_real_path(self, location: str):
-        location = self.__clean_file_path(location)
-        return os.path.join(self._base_dir, location)
+    #def get_real_path(self, location: str):
+    #    location = self.__clean_file_path(location)
+    #    return os.path.join(self.path, location)
     
+    # -- I --
+  
     # -- M --
-    
-    def move(self, source_location: str, dest_location: str, force: bool=False):
-        """ Move a file in the store """
-        
-        source_file_path = self.get_real_path(source_location) 
-        dest_file_path = self.get_real_path(dest_location) 
-        
-        if os.path.exists(dest_file_path) and not force:
-            raise Error("FileStore", "move", f"The destination file already exists")
-        
-        dest_dir = Path(dest_file_path).parent
-        if not os.path.exists(dest_dir):
-            os.makedirs(dest_dir)
-            if not os.path.exists(dest_dir):
-                raise Error("FileStore", "move", f"Cannot create directory {dest_dir}")
 
-        shutil.move(source_file_path, dest_file_path)
+    #def move(self, source_file: str, dest_location: str, force: bool=False):
+    #    """ 
+    #    Move a file in the store 
+    #    """
+    #    
+    #    source_file_path = self.get_real_path(source_location) 
+    #    dest_file_path = self.get_real_path(dest_location) 
+    #    
+    #    if os.path.exists(dest_file_path) and not force:
+    #        raise Error("FileStore", "move", f"The destination file already exists")
+    #    
+    #    dest_dir = Path(dest_file_path).parent
+    #    if not os.path.exists(dest_dir):
+    #        os.makedirs(dest_dir)
+    #        if not os.path.exists(dest_dir):
+    #            raise Error("FileStore", "move", f"Cannot create directory {dest_dir}")
+
+    #    shutil.move(source_file_path, dest_file_path)
         
-        source_dir = Path(source_file_path).parent
-        while True:
-            if len(os.listdir(source_dir)) == 0:
-                shutil.rmtree(source_dir)
-                source_dir = Path(source_dir).parent
-                if source_dir == self._base_dir:
-                    break
-            else:
-                break
+    #    source_dir = Path(source_file_path).parent
+    #    while True:
+    #        if len(os.listdir(source_dir)) == 0:
+    #            shutil.rmtree(source_dir)
+    #            source_dir = Path(source_dir).parent
+    #            if source_dir == self._base_dir:
+    #                break
+    #        else:
+    #            break
+    
+    # -- O --
+    
+    @classmethod
+    def open(cls, file, mode):
+        """
+        Open a file
+        
+        :param file: The file to open
+        :type file: `gws.file.File`
+        :param mode: Mode (see native Python `open` function)
+        :type mode: `str`
+        :return: The file object 
+        :rtype: Python `file-like-object` or `stream`.
+        """
+        if not os.path.exists(file.dir):
+            os.makedirs(file.dir)
+            if not os.path.exists(file.dir):
+                raise Error("File", "open", f"Cannot create directory {file.dir}")
+            
+        return open(file.path, mode)
     
     # -- P --
-
     
+    @property
+    def path(self) -> str:
+        """ 
+        Get path of the local file store
+        """
+        
+        path = self.data.get("path")
+        if path:
+            return path
+        
+        if not self.is_saved():
+            self.save()
+            
+        path =  os.path.join(db_dir, self._base_dir, self.uri)
+        self.data["path"] = path
+        
+        return path
+    
+    # -- F --
+
+    @path.setter
+    def path(self, path: str) -> str:
+        """ 
+        Locked method.
+        The path of a LocalFileStore is automatically computed and cannot be manually altered.
+        """
+
+        raise Error("LocalFileStore", "path", "Cannot manually set LocalFileStore path")
+
     
     # -- R --
     
-    @classmethod
-    def remove(cls, file: 'File', ignore_errors:bool = False):
-        try:
-            if cls.contains(file):
-                shutil.rmtree(file.path)
-            else:
-                raise Exception("FileStore", "remove", f"The file path is outside the store")
-        except Exception as err:
-            if not ignore_errors:
-                raise Error("FileStore", "remove", f"Cannot remove file {file.path} in file store. Error: {err}")
+    def remove(self, file: 'File', ignore_errors:bool = False):
+        with DbManager.db.atomic() as transaction:
+            try:
+                if self.contains(file):
+                    file.remove()
+                    shutil.rmtree(file.path)
+                else:
+                    raise Exception("FileStore", "remove", f"The file is not in the store")
+            except Exception as err:
+                transaction.rollback()
+                if not ignore_errors:
+                    raise Error("FileStore", "remove", f"Cannot remove file {file.path} in file store. Error: {err}")
     
     @classmethod
-    def remove_all_files(self, ignore_errors:bool = False):
-        
-        if not os.path.exists(self._base_dir):
-            return
-        
-        try:
-            shutil.rmtree(self._base_dir)
-        except Exception as err:
-            if not ignore_errors:
-                raise Error("FileStore", "remove_all_files", f"Cannot remove the store")
-    
+    def remove_all_files(cls, ignore_errors:bool = False):
+        from gws.query import Paginator
+        with DbManager.db.atomic() as transaction:
+            try:
+                page = 1
+                paginator = Paginator( cls.select(), page=page, number_of_items_per_page=500 )
+                while len(paginator.current_items()):
+                    for fs in paginator.current_items():
+                        Q2 = File.select().where( File.file_store_uri == fs.uri )
+                        for f in Q2:
+                            f.remove()
+
+                        shutil.rmtree(fs.path)
+                    
+                    page = page + 1
+                    paginator = Paginator( cls.select(), page=page, number_of_items_per_page=500 )
+                    
+            except Exception as err:
+                transaction.rollback()
+                if not ignore_errors:
+                    raise Error("FileStore", "remove_all_files", f"Cannot remove the store")
