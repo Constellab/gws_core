@@ -38,7 +38,7 @@ async def call_brick_api(request: Request, brick_name: Optional[str] = "gws", ap
     try:
         async_func = getattr(api_t, api_func.replace("-","_").lower(), None)
         results = await async_func(request)
-        return {"status": True, "results": results, "message": ""}
+        return results
     except Exception as err:
         raise Error("gws.app", "call_brick_api", f"{err}")
         #return {"status": False, "results": {}, "message": f"{err}"}

@@ -15,6 +15,7 @@ import jwt
 import zlib
 import importlib
 import shutil
+from datetime import datetime
 
 from base64 import b64encode, b64decode
 from secrets import token_bytes
@@ -514,7 +515,6 @@ class Viewable(Model):
       
         _json = {}
         
-        
         if not isinstance(jsonifiable_data_keys, list):
             jsonifiable_data_keys = []
             
@@ -536,7 +536,10 @@ class Viewable(Model):
                         if k in val:
                             _json[prop][k] = val[k]
             else:
-                _json[prop] = str(val)
+                if isinstance(val, (datetime, DateTimeField, DateField)):
+                    _json[prop] = str(val)
+                else:
+                    _json[prop] = val
         
         if stringify:
             if prettify:
@@ -564,16 +567,13 @@ class Viewable(Model):
     @description.setter
     def description(self, text:str):
         """
-        Returns the description. Alias of :meth:`set_description`
+        Set the description. Alias of :meth:`set_description`
         
         :param text: The description test
         :type text: str
         """
         
-        if self.data is None:
-            self.data = {}
-            
-        self.data["description"] = text
+        self.set_description(text)
 
     # -- G --
     
@@ -627,6 +627,9 @@ class Viewable(Model):
         :type title: str
         """
         
+        if self.data is None:
+            self.data = {}
+            
         self.data["title"] = title
         
     def set_description(self, text: str):
@@ -637,6 +640,9 @@ class Viewable(Model):
         :type text: str
         """
         
+        if self.data is None:
+            self.data = {}
+            
         self.data["description"] = text
     
     # -- T --
@@ -655,10 +661,7 @@ class Viewable(Model):
         Set the title. Alias of :meth:`set_title`
         """
         
-        if self.data is None:
-            self.data = {}
-            
-        self.data["title"] = text
+        self.set_title(text)
     
     # -- V --
 
@@ -922,6 +925,9 @@ class Process(Viewable, SystemTrackable):
         if 'title' in kwargs:
             self.set_title(kwargs['title'])
         
+        if not self.title:
+            self.set_title( self.full_classname() )
+            
         if instance_name:
             self.set_instance_name(instance_name)
           
@@ -1259,7 +1265,8 @@ class Process(Viewable, SystemTrackable):
     # -- S --
     
     def set_instance_name(self, name:str ):
-        if not self._instance_name:
+        is_default_name = self._instance_name == self.full_classname()
+        if not self._instance_name or is_default_name:
             self._instance_name = name
         
         if self._instance_name != name:
@@ -1494,6 +1501,12 @@ class Experiment(Viewable):
             "is_in_progress": self.is_in_progress,
         })
         
+        if not _json["data"].get("title"):
+            _json["data"]["title"] = self.protocol.title
+        
+        if not _json["data"].get("description"):
+            _json["data"]["description"] = self.protocol.description
+            
         if stringify:
             if prettify:
                 return json.dumps(_json, indent=4)
