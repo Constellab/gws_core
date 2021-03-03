@@ -79,7 +79,7 @@ class KVStore:
 
         :return: The connection path
         :rtype: str
-        :rtype: strf
+        :rtype: str
         """
 
         return os.path.join(self.dir_path, self._file_name)
@@ -170,13 +170,7 @@ class KVStore:
 class FileStore(Model):
     _table_name = "gws_file_store"
     
-    def __init__(self, path=""):
-        super().__init__()
-        
-        if not self.path:
-            if path:
-                self.path=path
-        
+
     # -- A --
     
     def add(self, source_file: (str, io.IOBase, tempfile.SpooledTemporaryFile, 'File', )):
@@ -274,9 +268,18 @@ class LocalFileStore(FileStore):
     
     _base_dir = 'test_file_store' if settings.is_test else 'prod_file_store'
     
-    def __init__(selfs):
+    def __init__(self):
         super().__init__()
+ 
+        if not self.is_saved():
+            self.save()
+        
+        if not self.path:
+            path =  os.path.join(db_dir, self._base_dir, self.uri)
+            self.data["path"] = path
+            self.save()
 
+                
     # -- A --
 
     def add(self, source_file: (str, io.IOBase, tempfile.SpooledTemporaryFile, 'File', ), \
@@ -349,12 +352,16 @@ class LocalFileStore(FileStore):
         if not file.uri:
             file.save()
         
-        return os.path.join(self.path, file.uri, name)
+        file.path = os.path.join(self.path, file.uri, name)
+        file.save()
+        
+        return file.path
 
     def create_file( self, name: str ):
         from gws.file import File
+        
         file = File()
-        file.path = self.__create_valid_file_path(file, name) 
+        self.__create_valid_file_path(file, name) 
         file.save()
         return file
      
@@ -404,24 +411,29 @@ class LocalFileStore(FileStore):
     
     # -- O --
     
-    @classmethod
-    def open(cls, file, mode):
-        """
-        Open a file
-        
-        :param file: The file to open
-        :type file: `gws.file.File`
-        :param mode: Mode (see native Python `open` function)
-        :type mode: `str`
-        :return: The file object 
-        :rtype: Python `file-like-object` or `stream`.
-        """
-        if not os.path.exists(file.dir):
-            os.makedirs(file.dir)
-            if not os.path.exists(file.dir):
-                raise Error("File", "open", f"Cannot create directory {file.dir}")
+    #@classmethod
+    #def open(cls, file, mode="r+t"):
+    #    """
+    #    Open a file
+    #    
+    #    :param file: The file to open
+    #    :type file: `gws.file.File`
+    #    :param mode: Mode (see native Python `open` function)
+    #    :type mode: `str`
+    #    :return: The file object 
+    #    :rtype: Python `file-like-object` or `stream`.
+    #    """
+    #    
+    #    if file.exists():
+    #        return open(file.path, mode)
+    #    else:
+    #        if not os.path.exists(file.dir):
+    #            os.makedirs(file.dir)
+    #            if not os.path.exists(file.dir):
+    #                raise Error("File", "open", f"Cannot create directory {file.dir}")
+    #        return open(file.path, mode="w+")
+
             
-        return open(file.path, mode)
     
     # -- P --
     
@@ -431,17 +443,7 @@ class LocalFileStore(FileStore):
         Get path of the local file store
         """
         
-        path = self.data.get("path")
-        if path:
-            return path
-        
-        if not self.is_saved():
-            self.save()
-            
-        path =  os.path.join(db_dir, self._base_dir, self.uri)
-        self.data["path"] = path
-        
-        return path
+        return super().path
     
     # -- F --
 

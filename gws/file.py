@@ -8,6 +8,7 @@ import copy
 import pathlib
 import json
 import tempfile
+import mimetypes
 
 from typing import List
 from datetime import datetime
@@ -26,12 +27,11 @@ from gws.utils import slugify, generate_random_chars
 from gws.logger import Error
 
 class File(Resource):
+    
     file_store_uri = CharField(null=True, index=True)
     path = CharField(null=True, index=True, unique=True)
-    #file_store = LocalFileStore()
     
-    _fp = None
-    _mode = "a+t"
+    _mode = "t"
     _table_name = "gws_file"
     
     # -- A --
@@ -41,14 +41,6 @@ class File(Resource):
         if read_content:
             if self.is_json():
                 _json["data"]["content"] = json.loads(self.read())
-            #elif self.is_csv():
-            #    df = pandas.read_table(
-            #        self.path, 
-            #        sep = kwargs.get("delimiter", "\t"),
-            #        header = kwargs.get("header ", 0),
-            #        index_col = kwargs.get("index_col ", None),
-            #    )
-            #    _json["data"]["content"] = json.loads(self.read())
             else:
                 _json["data"]["content"] = self.read()
         
@@ -61,26 +53,7 @@ class File(Resource):
             return _json
         
     # -- C --
-    
-    def clear(self):
-        """ 
-        Clear file content 
-        """
-        
-        if self._fp:
-            self.close()
-            
-        open(self.path, 'w').close()
-    
-    def close(self):
-        """ 
-        Close the file 
-        """
-  
-        if self._fp:
-            self._fp.close()
-            self._fp = None
-    
+
     # -- D --
     
     def delete_instance(self, *args, **kwargs):
@@ -102,6 +75,7 @@ class File(Resource):
     
     # -- F --
     
+    @property
     def file_store(self):
         if self.file_store_uri:
             fs = FileStore.get( FileStore.uri==self.file_store_uri ).cast()
@@ -117,7 +91,7 @@ class File(Resource):
             self.save()
             
         return fs
-        
+    
     # -- I --
     
     def is_json( self ):
@@ -137,6 +111,14 @@ class File(Resource):
         
     # -- M --
     
+    @property
+    def mime(self):
+        ext = self.extension
+        if ext:
+            return mimetypes.types_map[self.extension]
+        else:
+            return None
+    
     def move_to_store(self, fs: 'FileStore'):
         if not fs.contains(self):
             fs.add(self)
@@ -149,59 +131,59 @@ class File(Resource):
     
     # -- O --
     
-    def open(self, mode: str=None):
+    def open(self, mode: str):
         """ 
         Open the file 
         
         """
- 
-        if not mode:
-            mode = self._mode
-        
-        fs = self.file_store
-        self._fp = fs.open(self)
-        return self._fp
+
+        if self.exists():
+            return open(self.path, mode)
+        else:
+            if not os.path.exists(self.dir):
+                os.makedirs(self.dir)
+                if not os.path.exists(self.dir):
+                    raise Error("File", "open", f"Cannot create directory {self.dir}")
+            
+            return open(self.path, mode="w+")
     
     # -- P --
     
     
     
     # -- R --
-    
-    def reopen(self, mode: str=None):
-        self.close()
-        return self.open(mode)
-        
+ 
     def read(self):
-        if not self._fp:
-            self.open()  
+        m = "r+"+self._mode
+        with self.open(m) as fp:
+            data = fp.read()
         
-        self._fp.seek(0)
-        return self._fp.read()
+        return data
     
     def readline(self):
-        if not self._fp:
-            self.open()  
-            
-        return self._fp.readline()
+        m = "r+"+self._mode
+        with self.open(m) as fp:
+            data = fp.readline()
+        
+        return data
     
     def readlines(self, n=-1):
-        if not self._fp:
-            self.open()  
-            
-        return self._fp.readlines(n)
+        m = "r+"+self._mode
+        with self.open(m) as fp: 
+            data = fp.readlines(n)
+        
+        return data
     
     # -- W --
     
-    def write(self, data: str = None):
+    def write(self, data: str, discard=False):
         """ 
         Write in the file 
         """
-        
-        if not self._fp:
-            self.open()   
-            
-        self._fp.write(data)
+        m = "a+"+self._mode  
+        with self.open(m) as fp: 
+            fp.write(data)
+         
     
     # -- S --
     
@@ -213,8 +195,11 @@ class File(Resource):
 # ####################################################################
 
 class TextFile(File):
-    pass
+    _mode = "t"
 
+    def is_txt( self ):
+        return True
+    
 # ####################################################################
 #
 # BinaryFile class
@@ -222,7 +207,7 @@ class TextFile(File):
 # ####################################################################
 
 class BinaryFile(File):
-    _mode = "a+b"
+    _mode = "b"
     
 # ####################################################################
 #

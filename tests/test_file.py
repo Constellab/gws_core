@@ -5,14 +5,14 @@ import os
 
 from gws.settings import Settings
 from gws.file import File
-from gws.store import FileStore
+from gws.store import LocalFileStore
 
   
 class TestFile(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        FileStore.remove_all_files(ignore_errors=True)
+        LocalFileStore.remove_all_files(ignore_errors=True)
         File.drop_table()
         pass
 
@@ -21,7 +21,8 @@ class TestFile(unittest.TestCase):
         pass
     
     def test_file(self):
-        f = FileStore.create_file(name="my_file.txt")
+        fs = LocalFileStore()
+        f = fs.create_file(name="my_file.txt")
         f.save()
         self.assertTrue(f.is_saved())
         
