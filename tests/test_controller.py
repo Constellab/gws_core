@@ -57,7 +57,7 @@ class TestControllerHTTP(unittest.TestCase):
             elon.set_name('Elon Musk')
             elon.save()
 
-            response = await Controller.action(action="get", object_type=elon.full_classname(), object_uri=elon.uri, return_format="json")
+            response = await Controller.action(action="get", object_type=elon.full_classname(), object_uri=elon.uri)
             print(response)
             self.assertEqual(response["model"]["uri"], elon.uri)
         
@@ -74,7 +74,7 @@ class TestControllerHTTP(unittest.TestCase):
             view_model.save()
             data = {"job" : "Tesla Maker"}
 
-            response = await Controller.action(action="update", object_type=view_model.full_classname(), object_uri=view_model.uri, data=data, return_format="json")
+            response = await Controller.action(action="update", object_type=view_model.full_classname(), object_uri=view_model.uri, data=data)
             self.assertEqual(response["uri"], view_model.uri)
             self.assertEqual(response["data"]["params"], {'job': 'Tesla Maker'})
         
@@ -92,7 +92,7 @@ class TestControllerHTTP(unittest.TestCase):
             self.assertFalse(view_model.is_deleted)
         
             with self.assertRaises(Exception):
-                await Controller.action(action="delete", object_type=elon.full_classname(), object_uri=elon.uri, return_format="json")
+                await Controller.action(action="delete", object_type=elon.full_classname(), object_uri=elon.uri)
 
             view_model = await Controller.action(action="delete", object_type=view_model.full_classname(), object_uri=view_model.uri)
             self.assertTrue(view_model.is_deleted)

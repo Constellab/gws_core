@@ -29,10 +29,9 @@ from peewee import  Field, IntegerField, FloatField, DateField, \
 from playhouse.sqlite_ext import JSONField, SearchField, RowIDField
 
 from gws.logger import Error, Info
-from gws.store import KVStore
+#from gws.store import KVStore
 from gws.settings import Settings
-from gws.base import slugify, BaseModel, BaseFTSModel, DbManager
-from gws.base import format_table_name
+from gws.base import format_table_name, slugify, BaseModel, BaseFTSModel, DbManager
 from gws.controller import Controller
 from gws.io import Input, Output, InPort, OutPort, Connector, Interface, Outerface
 from gws.event import EventListener
@@ -83,7 +82,7 @@ class Model(BaseModel):
     is_archived = BooleanField(default=False, index=True)
     is_deleted = BooleanField(default=False, index=True)
 
-    _kv_store: KVStore = None
+    _kv_store: 'KVStore' = None
 
     _is_singleton = False
     _is_deletable = True
@@ -127,7 +126,8 @@ class Model(BaseModel):
         elif self.type != self.full_classname():
             # allow object cast after ...
             pass
-
+        
+        from gws.store import KVStore
         self._kv_store = KVStore(self.kv_store_path)
 
     # -- A --
@@ -198,7 +198,8 @@ class Model(BaseModel):
     def drop_table(cls):
         if cls.fts_model():
             cls.fts_model().drop_table()
-
+        
+        from gws.store import KVStore
         KVStore.remove_all(folder=cls._table_name)
         
         super().drop_table()
@@ -295,7 +296,7 @@ class Model(BaseModel):
     # -- K --
 
     @property
-    def kv_store(self) -> KVStore:
+    def kv_store(self) -> 'KVStore':
         """ 
         Returns the path of the KVStore of the model
 
@@ -341,7 +342,7 @@ class Model(BaseModel):
             cls.create_table()
 
         return cls.select().where(cls.type == cls.full_classname())
-
+    
     @classmethod
     def search(cls, phrase, page:int = 1, number_of_items_per_page: int=20):
         _FTSModel = cls.fts_model()
@@ -453,12 +454,12 @@ class Model(BaseModel):
         """
         with DbManager.db.atomic() as transaction:
             try:
-                if model_list is None:
-                    return
+                #if model_list is None:
+                #    return
                 
                 for m in model_list:
-                    if isinstance(m, cls):
-                        m.save()
+                    #if isinstance(m, cls):
+                    m.save()
             except Exception as err:
                 transaction.rollback()
                 raise Error("gws.model.Model", "save_all", f"Error message: {err}")

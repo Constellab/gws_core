@@ -56,7 +56,8 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, prod_biota_d
             test = "test*"
         if test == "all":
             test = "test*"
-
+        
+        settings.activate_fts(True)
         settings.data["db_name"] = "test_db.sqlite3"
         settings.data["is_test"] = True        
         settings.data["prod_biota_db"] = prod_biota_db

@@ -21,12 +21,14 @@ from peewee import  Field, IntegerField, FloatField, DateField, \
 from gws.settings import Settings
 from gws.model import Config, Process, Resource, ResourceSet
 from gws.controller import Controller
-from gws.store import FileStore
+from gws.store import FileStore, LocalFileStore
 from gws.utils import slugify, generate_random_chars
 from gws.logger import Error
 
 class File(Resource):
+    file_store_uri = CharField(null=True, index=True)
     path = CharField(null=True, index=True, unique=True)
+    #file_store = LocalFileStore()
     
     _fp = None
     _mode = "a+t"
@@ -74,21 +76,21 @@ class File(Resource):
         """ 
         Close the file 
         """
-        
-        if not self.is_in_file_store():
-            Error("File", "clear", "The file path is outside th store")
-            
+  
         if self._fp:
             self._fp.close()
             self._fp = None
     
     # -- D --
+    
     def delete_instance(self, *args, **kwargs):
-        if self.is_in_file_store():
-            FileStore.remove(self)
-            
+        self.file_store.remove(self)            
         return super().delete_instance(*args, **kwargs)
-        
+    
+    @property
+    def dir(self):
+        return Path(self.path).parent
+    
     # -- E --
     
     @property
@@ -98,6 +100,24 @@ class File(Resource):
     def exists(self):
         return os.path.exists(self.path)
     
+    # -- F --
+    
+    def file_store(self):
+        if self.file_store_uri:
+            fs = FileStore.get( FileStore.uri==self.file_store_uri ).cast()
+        else:
+            try:
+                fs = LocalFileStore.get_by_id(0)
+            except:
+                #create a default LocalFileStore
+                fs = LocalFileStore()
+                fs.save()
+                
+            self.file_store_uri = fs.uri
+            self.save()
+            
+        return fs
+        
     # -- I --
     
     def is_json( self ):
@@ -115,15 +135,10 @@ class File(Resource):
     def is_png( self ):
         return self.extension in [".png"]
         
-    def is_in_file_store( self ):
-        fs = FileStore()
-        return fs.contains(self)
-    
     # -- M --
     
-    def move_to_store(self):
-        if not self.is_in_file_store():
-            fs = FileStore()
+    def move_to_store(self, fs: 'FileStore'):
+        if not fs.contains(self):
             fs.add(self)
         
     # -- N --
@@ -137,33 +152,25 @@ class File(Resource):
     def open(self, mode: str=None):
         """ 
         Open the file 
-        """
         
-        if not self.is_in_file_store():
-            Error("File", "clear", "The file path is outside th store")
-            
+        """
+ 
         if not mode:
             mode = self._mode
         
-        if not os.path.exists(self.dir):
-            os.makedirs(self.dir)
-            if not os.path.exists(self.dir):
-                raise Error("FileStore", "move", f"Cannot create directory {self.dir}")
-            
-        self._fp = open(self.path, mode)
+        fs = self.file_store
+        self._fp = fs.open(self)
         return self._fp
     
     # -- P --
     
-    @property
-    def dir(self):
-        return Path(self.path).parent
+    
     
     # -- R --
     
     def reopen(self, mode: str=None):
         self.close()
-        self.open(mode)
+        return self.open(mode)
         
     def read(self):
         if not self._fp:
@@ -235,7 +242,9 @@ class FileSet(ResourceSet):
 class Uploader(Process):
     input_specs = {}
     output_specs = {'file_set' : FileSet}
-    config_specs = {}
+    config_specs = {
+        'file_store_uri': {"type": str, "default": None, 'description': "URI of the file_store where the file must be downloaded"},
+    }
     _files: list = None
     
     def __init__(self, *args, files: List[UploadFile] = [], **kwargs):
@@ -247,10 +256,24 @@ class Uploader(Process):
         self._files = files
         
     async def task(self):
-
-        file_set = FileSet()
+        
+        fs_uri = self.get_param("file_store_uri")
+        if fs_uri:
+            try:
+                fs = FileStore.get(FileStore.uri == fs_uri).cast()
+            except:
+                raise Error("Uploader", "task", f"No FileStore object found with uri '{file_store_uri}'")
+        else:
+            try:
+                fs = LocalFileStore.get_by_id(0)
+            except:
+                fs = LocalFileStore()
+                fs.save()
+            
+            
+        t = self.out_port("file_set").get_default_resource_type()
+        file_set = t()
         for file in self._files:
-            fs = FileStore()
             f = fs.add(file.file, dest_file_name=file.filename)
             file_set.add(f)
 
@@ -293,7 +316,7 @@ class Exporter(Process):
     """
     File exporter. The file is writen in the file store
     """
-    
+
     input_specs = {'resource' : Resource}
     output_specs = {'file' : File}
     config_specs = {
@@ -304,8 +327,7 @@ class Exporter(Process):
     async def task(self):
         filename = self.get_param("file_name")
         t = self.out_port("file").get_default_resource_type()
-        
-        file = FileStore.create_file(name=filename)
+        file = t.file_store.create_file(name=filename)
         
         if not os.path.exists(file.dir):
             os.makedirs(file.dir)
