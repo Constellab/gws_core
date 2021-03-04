@@ -192,8 +192,6 @@ class Model(BaseModel):
         self.kv_store.remove()
         super.delete_instance(*args, **kwargs)
         
-    
-
     @classmethod
     def drop_table(cls):
         if cls.fts_model():
@@ -243,6 +241,11 @@ class Model(BaseModel):
 
     # -- G --
 
+    @staticmethod
+    def get_brick_dir(brick_name: str):
+        settings = Settings.retrieve()
+        return settings.get_dependency_dir(brick_name)
+        
     @classmethod
     def fts_model(cls):
         if not cls._fts_fields:
