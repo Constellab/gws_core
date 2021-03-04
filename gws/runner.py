@@ -14,7 +14,7 @@ import re
 from gws.settings import Settings
 from gws.logger import Logger, Error
 
-def _run(   ctx=None, uri=False, token=False, test=False, db=False, prod_biota_db=False, \
+def _run(   ctx=None, uri=False, token=False, test=False, use_prod_biota_db=False, \
             cli=False, runserver=False, ip="0.0.0.0", port="3000", docgen=False, \
             force=False, jlab=False, demo=False):
     
@@ -58,13 +58,10 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, prod_biota_d
             test = "test*"
         
         settings.activate_fts(True)
-        settings.data["db_name"] = "test_db.sqlite3"
+        #settings.data["db_name"] = "test_db.sqlite3"
         settings.data["is_test"] = True        
-        settings.data["prod_biota_db"] = prod_biota_db
+        settings.data["use_prod_biota_db"] = use_prod_biota_db
         
-        if db:
-            settings.data["db_name"] = db
-
         if not settings.save():
             raise Error("manage", "Cannot save the settings in the database")
         
@@ -114,8 +111,7 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, prod_biota_d
 @click.option('--uri', help='Lab URI', show_default=True)
 @click.option('--token', help='Lab token', show_default=True)
 @click.option('--test', help='The name test file to launch (regular expression). Enter "all" to launch all')
-@click.option('--db', help="The name of the database to use")
-@click.option('--prod-biota-db', is_flag=True, help='Use the biota production db')
+@click.option('--use-prod-biota-db', is_flag=True, help='Use the biota production db')
 @click.option('--cli', help='Command to run using the command line interface')
 @click.option('--runserver', is_flag=True, help='Starts the server')
 @click.option('--ip', default="0.0.0.0", help='Server ip', show_default=True)
@@ -124,6 +120,6 @@ def _run(   ctx=None, uri=False, token=False, test=False, db=False, prod_biota_d
 @click.option('--force', is_flag=True, help='Forces documentation generation by removing any existing documentation (used if --docgen is given)')
 @click.option('--jlab', help='Runs Jupiter lab', show_default=True)
 @click.option('--demo', is_flag=True, help='Run in demo mode [to only use for demonstration tests]')
-def run(ctx, uri, token, test, db, prod_biota_db, cli, runserver, ip, port, docgen, force, jlab, demo):       
-    _run(ctx, uri, token, test, db, prod_biota_db, cli, runserver, ip, port, docgen, force, jlab, demo)
+def run(ctx, uri, token, test, use_prod_biota_db, cli, runserver, ip, port, docgen, force, jlab, demo):       
+    _run(ctx, uri, token, test, use_prod_biota_db, cli, runserver, ip, port, docgen, force, jlab, demo)
 

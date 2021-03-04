@@ -107,11 +107,25 @@ class Settings(PWModel):
     
     @property
     def db_path(self):
+        return self.build_db_path()
+    
+    def build_db_path(self, db_dir = None, force_production_db = False):
         if self.data["db_name"] == ':memory:':
             return self.data["db_name"]
         else:
-            return os.path.join(self.data["db_dir"], self.data["db_name"])
-
+            if not db_dir:
+                db_dir = self.data["db_dir"]
+              
+            if self.is_test and not force_production_db:
+                _db_dir = os.path.join(db_dir, "tests")
+            else:
+                _db_dir = db_dir
+            
+            if not os.path.exists(_db_dir):
+                os.makedirs(_db_dir)
+                    
+            return os.path.join(_db_dir, self.data["db_name"])
+            
     # -- G --
 
     def get_cwd(self) -> dict:
@@ -143,6 +157,26 @@ class Settings(PWModel):
 
     def get_dir(self, name) -> str:
         return self.data.get("dirs",{}).get(name,None)
+    
+    def get_file_store_dir(self) -> str:
+        _folder = self.data.get("file_store_name","file_store")
+        
+        if self.is_test:
+            _dir = os.path.join(self.data["db_dir"], "tests", _folder)
+        else:
+            _dir = os.path.join(self.data["db_dir"], _folder)
+        
+        return _dir 
+    
+    def get_kv_store_dir(self) -> str:
+        _folder = self.data.get("kv_store_name","kv_store")
+        
+        if self.is_test:
+            _dir = os.path.join(self.data["db_dir"], "tests", _folder)
+        else:
+            _dir = os.path.join(self.data["db_dir"], _folder)
+        
+        return _dir 
 
     def get_urls(self) -> dict:
         return self.data.get("urls",{})
@@ -226,7 +260,7 @@ class Settings(PWModel):
     # -- U --
     
     def use_prod_biota_db( self, tf: bool ):
-        self.data["prod_biota_db"] = tf
+        self.data["use_prod_biota_db"] = tf
         self.save()
         
     # -- V --

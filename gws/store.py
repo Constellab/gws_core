@@ -18,14 +18,13 @@ from gws.logger import Error
 from gws.settings import Settings
 
 settings = Settings.retrieve()
-db_dir = Controller.get_settings().get_data("db_dir")
 
 # ####################################################################
 #
 # KVStore class
 #
 # ####################################################################
-_default_kv_store_path = 'test_kv_store' if settings.is_test else 'prod_kv_store'
+
 class KVStore:
     """ 
     KVStore class representing a key-value object storage engine.
@@ -33,7 +32,7 @@ class KVStore:
     """
     
     _kv_data = None
-    _base_dir = os.path.join(db_dir, _default_kv_store_path)
+    _base_dir = settings.get_kv_store_dir()
     _slot_path = None    
     _file_name = 'data'
 
@@ -266,7 +265,7 @@ class RemoteFileStore(FileStore):
 
 class LocalFileStore(FileStore):
     
-    _base_dir = 'test_file_store' if settings.is_test else 'prod_file_store'
+    _base_dir = settings.get_file_store_dir()
     
     def __init__(self):
         super().__init__()
@@ -275,7 +274,7 @@ class LocalFileStore(FileStore):
             self.save()
         
         if not self.path:
-            path =  os.path.join(db_dir, self._base_dir, self.uri)
+            path =  os.path.join(self._base_dir, self.uri)
             self.data["path"] = path
             self.save()
 
