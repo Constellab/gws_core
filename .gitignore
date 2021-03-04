@@ -216,3 +216,6 @@ dmypy.json
 
 #vscode settings
 .vscode/settings.json
+
+#bin
+bin/
