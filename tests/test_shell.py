@@ -6,7 +6,7 @@ import os
 from gws.settings import Settings
 from gws.file import File
 from gws.model import Resource
-from gws.shell import EasyShell
+from gws.shell import EasyShell, CondaShell
 
 class Echo(EasyShell):
     input_specs = {}
@@ -22,7 +22,21 @@ class Echo(EasyShell):
         res = Resource()
         res.data["out"] = stdout
         self.output["stdout"] = res
+
+class Echo(CondaShell):
+    input_specs = {}
+    output_specs = {'stdout': (Resource, )}
+    config_specs = {
+        'name': {"type": str, "default": None, 'description': "The name to echo"},
+        'save_stdout': {"type": bool, "default": False, 'description': "True to save the command output text. False otherwise"},
+    }
     
+    _cmd: list = ['echo', '{param:name}']
+    
+    def after_command(self, stdout: str=None, tmp_dir: str=None):
+        res = Resource()
+        res.data["out"] = stdout
+        self.output["stdout"] = res
 
 class TestShell(unittest.TestCase):
     

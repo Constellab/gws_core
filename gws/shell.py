@@ -24,6 +24,8 @@ class Shell(Process):
     _out_type = "text"
     _tmp_dir = None
     
+    __activate_env_command = []
+    
     def build_command(self) -> (list):
         return [""]
 
@@ -39,14 +41,17 @@ class Shell(Process):
     
     async def task(self):
         try:
-            cmd = self.build_command()
+            cmd = [
+                *self.__activate_env_command,
+                *self.build_command()
+            ]
 
             stdout = subprocess.check_output( 
                 cmd,
                 text = True if self._out_type == "text" else False,
                 cwd=self.cwd.name
             )
- 
+                
             self.data['cmd'] = cmd 
             self.after_command(stdout=stdout)
   
@@ -64,7 +69,12 @@ class Shell(Process):
         
         except Exception as err:
             Error("Shell","task", f"An error occured while running shell process. Error: {err}")
-        
+
+            
+class CondaShell(Process):
+    __activate_env_command = [ "bash", "-c",  "conda activate", "&&" ]
+
+
 class EasyShell(Shell):
     
     _cmd: list = None
