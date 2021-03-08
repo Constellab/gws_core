@@ -6,10 +6,11 @@
 import json
 from typing import Optional, List
 
-from fastapi import Depends, FastAPI, UploadFile, Request, File as FastAPIFile
-from fastapi.responses import Response, RedirectResponse
+from fastapi import Depends, FastAPI, \
+                    UploadFile, Request, \
+                    HTTPException, File as FastAPIFile
+from fastapi.responses import Response, RedirectResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-
 
 from pydantic import BaseModel
 
@@ -247,9 +248,15 @@ async def download(file_uri: str):
     """
     Download file
     """
-          
-    return {"status": False, "message": "Not yet available"}
-      
+    
+    
+    from gws.file import File
+    
+    try:
+        file = File.get(File.uri == file_uri)
+        return FileResponse(file.path, media_type='application/octet-stream', filename=file.name)
+    except:
+        raise HTTPException(status_code=404, detail="Item not found")
 
 # ##################################################################
 #

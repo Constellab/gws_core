@@ -178,8 +178,8 @@ class Controller(Base):
             e = u.create_experiment()
             await e.run()
 
-            file_set = u.output["file_set"]
-            return file_set.as_json()
+            result = u.output["result"]
+            return result.as_json()
         
         except Exception as err:
             return { "exception": {"id": cls.UPLOAD_FAILED, "message": f"Upload failed. Error: {err}"}}
@@ -458,9 +458,11 @@ class Controller(Base):
     # -- S --
     
     @classmethod
-    def save_experiment(cls, experiment_uri: str = None, data=None):
+    def save_experiment(cls, experiment_uri: str=None, data=None):
         from gws.model import Experiment
-        
+        e = Experiment.from_flow(experiment_uri=experiment_uri, data=data)
+        e.save()
+        return e.as_json()
             
     @classmethod
     def save_all(cls, process_type_list: list = None) -> bool:

@@ -33,11 +33,18 @@ class File(Resource):
     
     _mode = "t"
     _table_name = "gws_file"
+    __download_url = "{}/download/{}"
     
     # -- A --
     
     def as_json(self, stringify: bool=False, prettify: bool=False, read_content: bool=False, **kwargs):
         _json = super().as_json(**kwargs)
+        
+        settings = Settings.retrieve()
+        host = settings.data.get("host", "0.0.0.0")
+        vhost = settings.data.get("virtual_host", host)
+        
+        _json["url"] = File.__download_url.format(vhost, self.uri)
         if read_content:
             if self.is_json():
                 _json["data"]["content"] = json.loads(self.read())
@@ -187,28 +194,6 @@ class File(Resource):
     
     # -- S --
     
-    
-# ####################################################################
-#
-# TextFile class
-#
-# ####################################################################
-
-class TextFile(File):
-    _mode = "t"
-
-    def is_txt( self ):
-        return True
-    
-# ####################################################################
-#
-# BinaryFile class
-#
-# ####################################################################
-
-class BinaryFile(File):
-    _mode = "b"
-    
 # ####################################################################
 #
 # FileSet class
@@ -226,7 +211,7 @@ class FileSet(ResourceSet):
 
 class Uploader(Process):
     input_specs = {}
-    output_specs = {'file_set' : FileSet}
+    output_specs = {'result' : (FileSet, File,)}
     config_specs = {
         'file_store_uri': {"type": str, "default": None, 'description': "URI of the file_store where the file must be downloaded"},
     }
@@ -255,14 +240,19 @@ class Uploader(Process):
                 fs = LocalFileStore()
                 fs.save()
             
-            
-        t = self.out_port("file_set").get_default_resource_type()
-        file_set = t()
-        for file in self._files:
+        if len(self._files) == 1:
+            file = self._files[0]
             f = fs.add(file.file, dest_file_name=file.filename)
-            file_set.add(f)
+            result = f
+        else:
+            result = FileSet() 
+            #t = self.out_port("file_set").get_default_resource_type()
+            #file_set = t()
+            for file in self._files:
+                f = fs.add(file.file, dest_file_name=file.filename)
+                result.add(f)
 
-        self.output["file_set"] = file_set
+        self.output["result"] = result
     
     @staticmethod
     def uniquify(file_name:str):

@@ -117,7 +117,12 @@ class App(BaseApp):
             if not os.path.exists(os.path.join(html_dir,"index.html")):
                 docgen(name, dirs[name], _settings, force=True)
             app.mount(f"/docs/{name}/", StaticFiles(directory=html_dir), name=f"/docs/{name}/")
-
+        
+        # public file store
+        is_public_fs = _settings.get_data("is_public_file_store")
+        if is_public_fs:
+            pass
+        
         # api routes
         app.mount("/central-api/", central_app)
         app.mount("/core-api/", core_app)

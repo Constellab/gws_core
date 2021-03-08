@@ -197,13 +197,7 @@ class TestProtocol(unittest.TestCase):
             mini_proto2 = Protocol.from_graph(saved_mini_proto.graph)
             self.assertTrue(mini_proto.graph, mini_proto2.graph)
             
-            
-        async def _run():
-            e = super_proto.create_experiment()
-            e.on_end(_on_end)
-            await e.run()
-
-            print("Sleeping 1 sec for waiting all tasks to finish ...")
-            await asyncio.sleep(1)
-            
-        asyncio.run( _run() )
+    
+        e = super_proto.create_experiment()
+        e.on_end(_on_end)            
+        asyncio.run( e.run() )

@@ -212,7 +212,7 @@ def create_protocol():
     return proto
 
 
-def create_nested_protocol():
+def _create_super_travel_protocol():
     move_1  = Move()
     eat_1   = Eat()
     move_2  = Move()
@@ -249,27 +249,57 @@ def create_nested_protocol():
         interfaces = { 'robot' : move_1.in_port('robot') },
         outerfaces = { 'robot' : eat_2.out_port('robot') }
     )
-
-    facto  = Create()
+    
+    move_4  = Move()
     fly_1  = Fly()
     wait_2 = Wait()
+    eat_3 = Eat()
     super_travel = Protocol(
         processes = {
-            'facto' : facto, 
+            'move_4' : move_4, 
             'fly_1' : fly_1, 
             'sub_travel': sub_travel,
+            'eat_3'  : eat_3,
             'wait_2' : wait_2, 
         },
         connectors=[
-            facto>>'robot'       | sub_travel<<'robot',
+            move_4>>'robot'       | sub_travel<<'robot',
             sub_travel>>'robot'  | fly_1<<'robot',
+            sub_travel>>'robot'  | eat_3<<'robot',
             fly_1>>'robot'       | wait_2<<'robot'
         ],
-        interfaces = { },
-        outerfaces = { }
+        interfaces = { 'robot' : move_4.in_port('robot') },
+        outerfaces = { 'robot' : eat_3.out_port('robot') },
     )
 
     sub_travel.set_title('The mini travel of Astro')
     super_travel.set_title("The super travel of Astro")
     
     return super_travel
+
+def create_nested_protocol():
+    
+    super_travel = _create_super_travel_protocol()
+    
+    facto  = Create()
+    fly_1  = Fly()
+    wait_1 = Wait()
+    
+    world_trip = Protocol(
+        processes = {
+            'facto' : facto, 
+            'fly_1' : fly_1, 
+            'super_travel': super_travel,
+            'wait_2' : wait_1, 
+        },
+        connectors=[
+            facto>>'robot'       | super_travel<<'robot',
+            super_travel>>'robot'  | fly_1<<'robot',
+            fly_1>>'robot'       | wait_1<<'robot'
+        ],
+        interfaces = { },
+        outerfaces = { }
+    )
+    world_trip.set_title("The world trip of Astro")
+    
+    return world_trip

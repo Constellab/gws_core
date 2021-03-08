@@ -81,20 +81,9 @@ class TestProcess(unittest.TestCase):
         def _on_p5_end( proc ):
             self.assertEqual( proc, p5 )
         
-        async def _run():
             
-            # set events
-            p3.on_start(_on_p3_start)
-            p5.on_start(_on_p5_start)
-            p5.on_end(_on_p5_end)
-
-            # start
-            e = proto.create_experiment()
-            await e.run()
+        def _on_end(*args, **kwargs):
             
-            print("Sleeping 1 sec for waiting all tasks to finish ...")
-            await asyncio.sleep(2)
-
             elon = p0.output['robot']
  
             self.assertEqual( elon.weight, 70 )
@@ -122,8 +111,15 @@ class TestProcess(unittest.TestCase):
             saved_proc = j.process
             self.assertEqual( saved_proc, p3 )
             self.assertTrue( saved_proc.input['robot'] is None )
+        
+        # set events
+        p3.on_start(_on_p3_start)
+        p5.on_start(_on_p5_start)
+        p5.on_end(_on_p5_end)
 
-        asyncio.run( _run() )
+        e = proto.create_experiment()
+        e.on_end(_on_end)        
+        asyncio.run( e.run() )
 
     
         

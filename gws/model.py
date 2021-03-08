@@ -972,6 +972,7 @@ class Process(Viewable, SystemTrackable):
         
         if bare:
             _json["uri"] = ""
+            _json["save_datetine"] = ""
             _json["creation_datetime"] = ""
         
         for k in _json["config_specs"]:
@@ -1644,7 +1645,7 @@ class Job(Viewable, SystemTrackable):
     
     parent_job = ForeignKeyField('self', null=True, backref='children')
     process_uri = CharField(null=False, index=True)                         # save id as it may represent different type of process
-    process_type = CharField(null=False)                        
+    process_type = CharField(null=False) 
     process_source = BlobField(null=True)                  
     config_uri = CharField(null=False, index=True)                          # save id ref as it may represent config classes
     experiment = ForeignKeyField(Experiment, null=True, backref='jobs')     # only valid for protocol
@@ -2163,7 +2164,92 @@ class Protocol(Process, SystemTrackable):
             raise Error("gws.model.Protocol", "add_connector", "Duplciated connector")
 
         self._connectors.append(connector)
+    
+    # -- B --
+    
+    def __build_from_dump( self, graph: (str, dict) ) -> 'Protocol':
+        """ 
+        Construct a Protocol instance using a setting dump.
 
+        :return: The protocol
+        :rtype: Protocol
+        """
+
+        if isinstance(graph, str):
+            graph = json.loads(graph)
+        
+        if len(graph) == 0:
+            return
+        
+        self.set_title(graph.get("title",""))
+        self.set_instance_name(graph.get("title",""))
+        processes = {}
+        connectors = []
+        interfaces = {}
+        outerfaces = {}
+        
+        # create nodes
+        
+        for k in graph["nodes"]:
+            node_uri = graph["nodes"][k].get("uri",None)
+            node_type_str = graph["nodes"][k]["type"]
+            
+            try:
+                process_t = Controller.get_model_type(node_type_str)
+                
+                if process_t is None:
+                    raise Exception(f"Process {node_type_str} is not defined. Please ensure that the corresponding brick is loaded.")
+                else:
+                    if issubclass(process_t, Protocol):
+                        print("xxxx")
+                        processes[k] = Protocol.from_graph( graph["nodes"][k] )
+                    else:
+                        if node_uri:
+                            processes[k] = process_t.get(process_t.uri == node_uri)
+                        else:
+                            processes[k] = process_t()
+                            
+                    self.add_process( k, processes[k] )
+
+            except Exception as err:
+                raise Error("gws.model.Protocol", "__build_from_dump", f"An error occured. Error: {err}")
+        
+        # create interfaces and outerfaces
+
+        for k in graph["interfaces"]:
+            _to = graph["interfaces"][k]["to"]  #destination port of the interface
+            proc_name = _to["node"]
+            port_name = _to["port"]
+            proc = processes[proc_name]
+            port = proc.input.ports[port_name]
+            interfaces[k] = port
+
+        for k in graph["outerfaces"]:
+            _from = graph["outerfaces"][k]["from"]  #source port of the outerface
+            proc_name = _from["node"]
+            port_name = _from["port"]
+            proc = processes[proc_name]
+            port = proc.output.ports[port_name]
+            outerfaces[k] = port
+            
+        self.__set_interfaces(interfaces)
+        self.__set_outerfaces(outerfaces)
+        
+        # create links
+        
+        for link in graph["links"]:
+            proc_name = link["from"]["node"]
+            lhs_port_name = link["from"]["port"]
+            lhs_proc = processes[proc_name]
+
+            proc_name = link["to"]["node"]
+            rhs_port_name = link["to"]["port"]
+            rhs_proc = processes[proc_name]
+
+            connector = (lhs_proc>>lhs_port_name | rhs_proc<<rhs_port_name)
+            connectors.append(connector)
+            self.add_connector(connector)
+            
     # -- C --
 
     def create_experiment(self, uri: str = None, config: Config = None):
@@ -2258,6 +2344,59 @@ class Protocol(Process, SystemTrackable):
         proto.data["graph"] = proto.dumps(as_dict=True)
         proto.save()
         return proto
+    
+    @classmethod
+    def from_flow( cls, flow: dict ) -> 'Protocol':
+        """ 
+        Create a new instance from a existing graph
+
+        :return: The protocol
+        :rtype": Protocol
+        """
+        
+        proto = Protocol()
+        
+        # add process
+        
+        for instance_name in flow["flows"]:
+            p_dict = flow["flows"][instance_name]
+            t_str = p_dict["process_type"]
+            t = Controller.get_process_type(t_str)
+            proc = t(instance_name=instance_name)
+            
+            params = p_dict["config"]["params"]
+            proc.config.set_params(params)
+            proto.add_process(proto)
+        
+        # create interfaces and outerfaces
+
+        for k in graph["interfaces"]:
+            _to = graph["interfaces"][k]["to"]  #destination port of the interface
+            proc_name = _to["node"]
+            port_name = _to["port"]
+            proc = processes[proc_name]
+            port = proc.input.ports[port_name]
+            interfaces[k] = port
+
+        for k in graph["outerfaces"]:
+            _from = graph["outerfaces"][k]["from"]  #source port of the outerface
+            proc_name = _from["node"]
+            port_name = _from["port"]
+            proc = processes[proc_name]
+            port = proc.output.ports[port_name]
+            outerfaces[k] = port
+            
+        self.__set_interfaces(interfaces)
+        self.__set_outerfaces(outerfaces)
+        
+        # add connector
+        
+        for instance_name in flow["flows"]:
+            p_dict = flow["flows"][instance_name]
+            
+        return proto
+    
+
         
     # -- G --
     
@@ -2355,84 +2494,6 @@ class Protocol(Process, SystemTrackable):
         return False
 
     # -- L --
-
-    def __build_from_dump( self, graph: (str, dict) ) -> 'Protocol':
-        """ 
-        Construct a Protocol instance using a setting dump.
-
-        :return: The protocol
-        :rtype: Protocol
-        """
-
-        if isinstance(graph, str):
-            graph = json.loads(graph)
-        
-        if len(graph) == 0:
-            return
-        
-        self.set_title(graph.get("title",""))
-        self.set_instance_name(graph.get("title",""))
-        processes = {}
-        connectors = []
-        interfaces = {}
-        outerfaces = {}
-        
-        # create nodes
-        
-        for k in graph["nodes"]:
-            node_uri = graph["nodes"][k].get("uri",None)
-            node_type_str = graph["nodes"][k]["type"]
-            
-            try:
-                process_t = Controller.get_model_type(node_type_str)
-                
-                if process_t is None:
-                    raise Exception(f"Process {node_type_str} is not defined. Please ensure that the corresponding brick is loaded.")
-                else:
-                    if node_uri:
-                        processes[k] = process_t.get(process_t.uri == node_uri)
-                    else:
-                        processes[k] = process_t()
-                    self.add_process( k, processes[k] )
-
-            except Exception as err:
-                raise Error("gws.model.Protocol", "__build_from_dump", f"An error occured. Error: {err}")
-        
-        # create interfaces and outerfaces
-
-        for k in graph["interfaces"]:
-            _to = graph["interfaces"][k]["to"]  #destination port of the interface
-            proc_name = _to["node"]
-            port_name = _to["port"]
-            proc = processes[proc_name]
-            port = proc.input.ports[port_name]
-            interfaces[k] = port
-
-        for k in graph["outerfaces"]:
-            _from = graph["outerfaces"][k]["from"]  #source port of the outerface
-            proc_name = _from["node"]
-            port_name = _from["port"]
-            proc = processes[proc_name]
-            port = proc.output.ports[port_name]
-            outerfaces[k] = port
-            
-        self.__set_interfaces(interfaces)
-        self.__set_outerfaces(outerfaces)
-        
-        # create links
-        
-        for link in graph["links"]:
-            proc_name = link["from"]["node"]
-            lhs_port_name = link["from"]["port"]
-            lhs_proc = processes[proc_name]
-
-            proc_name = link["to"]["node"]
-            rhs_port_name = link["to"]["port"]
-            rhs_proc = processes[proc_name]
-
-            connector = (lhs_proc>>lhs_port_name | rhs_proc<<rhs_port_name)
-            connectors.append(connector)
-            self.add_connector(connector)
     
     # -- P --
     
@@ -2902,23 +2963,23 @@ class ViewModel(Model):
         is_saved = self.id is not None
         
         #SOLUTION 1: clean and rigorous solution
-        #_json = {
-        #    "uri": self.uri if is_saved else None,
-        #    "type": self.type,
-        #    "data" : self.data,
-        #    "model": self.model.as_json( **self.params ),
-        #    "creation_datetime" : str(self.creation_datetime),
-        #}
-        
-        
-        #SOLUTION 2: easy usage, but less rigorous
-        _json = self.model.as_json( **self.params )
-        _json["view_model"] = {
+        _json = {
             "uri": self.uri if is_saved else None,
             "type": self.type,
             "data" : self.data,
+            "model": self.model.as_json( **self.params ),
             "creation_datetime" : str(self.creation_datetime),
         }
+        
+        
+        #SOLUTION 2: easy usage, but less rigorous
+        #_json = self.model.as_json( **self.params )
+        #_json["view_model"] = {
+        #    "uri": self.uri if is_saved else None,
+        #    "type": self.type,
+        #    "data" : self.data,
+        #    "creation_datetime" : str(self.creation_datetime),
+        #}
 
         if stringify:
             if prettify:

@@ -45,5 +45,12 @@ class TestProtocol(unittest.TestCase):
         
         asyncio.run( _run() )
         
-        print(e.protocol)
-  
+        graph = proto.as_json(bare=True)
+        
+        print(json.dumps(graph))
+
+        
+        loaded_proto = Protocol.from_graph(graph)
+        graph2 = loaded_proto.dumps(bare=True)
+        
+        self.assertEqual(graph, graph2)

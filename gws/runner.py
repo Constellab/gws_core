@@ -16,7 +16,7 @@ from gws.logger import Logger, Error
 
 def _run(   ctx=None, uri=False, token=False, test=False, use_prod_biota_db=False, \
             cli=False, runserver=False, ip="0.0.0.0", port="3000", docgen=False, \
-            force=False, jlab=False, demo=False):
+            force=False, demo=False):
     
     Logger(is_new_session=True, is_test=test)
     settings = Settings.retrieve()
@@ -28,7 +28,7 @@ def _run(   ctx=None, uri=False, token=False, test=False, use_prod_biota_db=Fals
         settings.set_data("uri", uri)
     
     settings.set_data("is_demo", demo)
-
+    
     if not settings.save():
         raise Error("manage", "Cannot save the settings in the database")
     
@@ -86,17 +86,7 @@ def _run(   ctx=None, uri=False, token=False, test=False, use_prod_biota_db=Fals
         brick_dir = settings.get_cwd()
         from ._sphynx.docgen import docgen
         docgen(settings.name, brick_dir, settings, force=force)
-        
-    elif jlab:
-        if jlab == ".":
-            lab_dir = settings.get_dependency_dir(settings.name)
-        else:
-            lab_dir = settings.get_dependency_dir(jlab)
 
-        subprocess.check_call([
-            "jupyter", 
-            "lab"
-            ], cwd=os.path.join(lab_dir))
     else:
         # only load gws environmenet
         pass
@@ -118,8 +108,7 @@ def _run(   ctx=None, uri=False, token=False, test=False, use_prod_biota_db=Fals
 @click.option('--port', default="3000", help='Server port', show_default=True)
 @click.option('--docgen', is_flag=True, help='Generates documentation')
 @click.option('--force', is_flag=True, help='Forces documentation generation by removing any existing documentation (used if --docgen is given)')
-@click.option('--jlab', help='Runs Jupiter lab', show_default=True)
 @click.option('--demo', is_flag=True, help='Run in demo mode [to only use for demonstration tests]')
-def run(ctx, uri, token, test, use_prod_biota_db, cli, runserver, ip, port, docgen, force, jlab, demo):       
-    _run(ctx, uri, token, test, use_prod_biota_db, cli, runserver, ip, port, docgen, force, jlab, demo)
+def run(ctx, uri, token, test, use_prod_biota_db, cli, runserver, ip, port, docgen, force, demo):       
+    _run(ctx, uri, token, test, use_prod_biota_db, cli, runserver, ip, port, docgen, force, demo)
 
