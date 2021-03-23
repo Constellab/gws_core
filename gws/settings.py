@@ -111,14 +111,19 @@ class Settings(PWModel):
     def db_path(self):
         return self.build_db_path()
     
-    def build_db_path(self, brick = "gws", force_production_db = False):
+    def build_db_path(self, brick = "gws", brick_data_dir="", force_production_db = False):
         if self.data["db_name"] == ':memory:':
             return self.data["db_name"]
         else:
-            if self.is_test and not force_production_db:
-                db_dir = os.path.join(self.data["data_dir"], "tests", brick, "db")
+            if brick_data_dir:
+                data_dir = brick_data_dir
             else:
-                db_dir = os.path.join(self.data["data_dir"], "prod", brick, "db")
+                data_dir = self.data["data_dir"]
+                
+            if self.is_test and not force_production_db:
+                db_dir = os.path.join(data_dir, "tests", brick, "db")
+            else:
+                db_dir = os.path.join(data_dir, "prod", brick, "db")
             
             if not os.path.exists(db_dir):
                 os.makedirs(db_dir)
