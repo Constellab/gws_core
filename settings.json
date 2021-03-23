@@ -6,26 +6,28 @@
     "app_host"      : "0.0.0.0",
     "app_port"      : 3000,
     "log_dir"       : "../../logs/",
-    "db_dir"        : "../../data/db/",
+    "data_dir"      : "../../data/",
     "db_name"       : "db.sqlite3",
     "kv_store_name"    : "kv_store",
     "file_store_name"  : "file_store",
     "is_test"       : false,
     "is_debug"      : true,
+    
+    "admin": {
+        "email"     : "admin@gencovery.com",
+        "full_name" : "Admin"
+    },
+    
+    "owner": {
+        "uri"       : "",
+        "email"     : "admin@gencovery.com",
+        "full_name" : "Owner"
+    },
 
     "dirs" : {
         "gws:testdata_dir" : "./tests/testdata"
     },
-    
-    "externs" : [],
-    
-    "dependencies" : [],
 
-    "smtp" : {
-        "url" : "ssl0.ovh.net",
-        "port" : "465",
-        "ssl" : true,
-        "login" : "",
-        "password" : ""
-    }
+    "externs" : [],
+    "dependencies" : []
 }
