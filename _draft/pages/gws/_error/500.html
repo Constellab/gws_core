@@ -1,9 +1,0 @@
-{% extends "index/index.html" %}
-
-{% block content %}
-    <h4>500 ERROR</h4>
-    Server error!
-    {% if settings.is_debug %}
-        {{ exception }}
-    {% endif %}
-{% endblock %}

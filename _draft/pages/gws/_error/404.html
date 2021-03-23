@@ -1,9 +1,0 @@
-{% extends "index/index.html" %}
-
-{% block content %}
-    <h4>404 ERROR</h4>
-    File not found!
-    {% if settings.is_debug %}
-        {{ exception }}
-    {% endif %}
-{% endblock %}

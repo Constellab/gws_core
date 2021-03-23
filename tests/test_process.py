@@ -1,7 +1,9 @@
 
 import asyncio
 import unittest
-from gws.model import Job, Config, Process, Resource, Model, ViewModel, Experiment, Protocol
+from gws.model import   Job, Config, Process, Resource, \
+                        Model, ViewModel, Experiment, Protocol, Study
+
 from gws.controller import Controller
 from gws.robot import Robot, Create, Move, Eat, Wait
 
@@ -13,6 +15,15 @@ class TestProcess(unittest.TestCase):
         Config.drop_table()
         Create.drop_table()
         Robot.drop_table()
+        Process.drop_table()
+        Protocol.drop_table()
+        Experiment.drop_table()
+        ViewModel.drop_table()
+        Study.drop_table()
+        
+        study = Study(data={"title": "Default study", "Description": ""})
+        study.save()
+        
         pass
 
     @classmethod
@@ -21,6 +32,7 @@ class TestProcess(unittest.TestCase):
         Config.drop_table()
         Create.drop_table()
         Robot.drop_table()
+        Study.drop_table()
         pass
 
     def test_process_singleton(self):
@@ -37,6 +49,8 @@ class TestProcess(unittest.TestCase):
         self.assertTrue(not p1.id is None)
 
     def test_process(self):
+        study = Study.get_by_id(1)
+        
         p0 = Create()
         p1 = Move()
         p2 = Eat()
@@ -81,9 +95,8 @@ class TestProcess(unittest.TestCase):
         def _on_p5_end( proc ):
             self.assertEqual( proc, p5 )
         
-            
+        
         def _on_end(*args, **kwargs):
-            
             elon = p0.output['robot']
  
             self.assertEqual( elon.weight, 70 )
@@ -117,7 +130,7 @@ class TestProcess(unittest.TestCase):
         p5.on_start(_on_p5_start)
         p5.on_end(_on_p5_end)
 
-        e = proto.create_experiment()
+        e = proto.create_experiment(study=study)
         e.on_end(_on_end)        
         asyncio.run( e.run() )
 

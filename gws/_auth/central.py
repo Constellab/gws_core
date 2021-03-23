@@ -15,7 +15,7 @@ from fastapi.param_functions import Form
 from passlib.context import CryptContext
 from pydantic import BaseModel
 
-from gws.model import User
+from gws.user import User
 from gws.settings import Settings
 from gws.central import Central
 from gws._auth.central_api_key_header import oauth2_header_scheme
@@ -37,14 +37,6 @@ def check_api_key(api_key: str = Depends(oauth2_header_scheme)):
         raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized"
             )
-
-# def central_origin(func):
-#     def wrapper(*args, **kwargs):
-#         print("xxxx")
-#         print(kwargs)
-#         check_api_key(*args, **kwargs)
-#         return func(*args, **kwargs)
-#     return wrapper
 
 def get_user(user_uri:str):
     try:

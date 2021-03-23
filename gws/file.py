@@ -33,7 +33,7 @@ class File(Resource):
     
     _mode = "t"
     _table_name = "gws_file"
-    __download_url = "{}/download/{}"
+    __download_url = "https://lab.{}/core-api/download/{}"
     
     # -- A --
     
@@ -129,7 +129,11 @@ class File(Resource):
     def move_to_store(self, fs: 'FileStore'):
         if not fs.contains(self):
             fs.add(self)
-        
+    
+    def move_to_default_store(self):
+        fs =  LocalFileStore.get_default_instance()
+        fs.move_to_store(fs)
+            
     # -- N --
     
     @property
@@ -234,11 +238,7 @@ class Uploader(Process):
             except:
                 raise Error("Uploader", "task", f"No FileStore object found with uri '{file_store_uri}'")
         else:
-            try:
-                fs = LocalFileStore.get_by_id(0)
-            except:
-                fs = LocalFileStore()
-                fs.save()
+            fs = LocalFileStore.get_default_instance()
             
         if len(self._files) == 1:
             file = self._files[0]
@@ -289,7 +289,7 @@ class Importer(Process):
 
 class Exporter(Process):
     """
-    File exporter. The file is writen in the file store
+    File exporter. The file is writen in a file store
     """
 
     input_specs = {'resource' : Resource}
@@ -297,12 +297,23 @@ class Exporter(Process):
     config_specs = {
         'file_name': {"type": str, "default": 'file', 'description': "Destination file name in the store"},
         'file_format': {"type": str, "default": None, 'description': "File format"},
+        'file_store_uri': {"type": str, "default": None, 'description': "URI of the file_store where the file must be exported"},
     }
     
     async def task(self):
+        
+        fs_uri = self.get_param("file_store_uri")
+        if fs_uri:
+            try:
+                fs = FileStore.get(FileStore.uri == fs_uri).cast()
+            except:
+                raise Error("Uploader", "task", f"No FileStore object found with uri '{file_store_uri}'")
+        else:
+            fs = LocalFileStore.get_default_instance()
+                
         filename = self.get_param("file_name")
         t = self.out_port("file").get_default_resource_type()
-        file = t.file_store.create_file(name=filename)
+        file = fs.create_file(name=filename, file_type = t)
         
         if not os.path.exists(file.dir):
             os.makedirs(file.dir)

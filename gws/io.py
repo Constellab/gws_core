@@ -340,6 +340,10 @@ class Interface(IOface):
             
         super().__init__(name, source_port, target_port)
     
+    def as_json(self):
+        _json = super().as_json()
+        _json["from"]["node"] = ":parent:"
+        return _json
         
 class Outerface(IOface):
     source_port:OutPort = None
@@ -354,7 +358,12 @@ class Outerface(IOface):
             raise Error("Outerface", "__init__", "The target port must be an output port")
             
         super().__init__(name, source_port, target_port)
-
+    
+    def as_json(self):
+        _json = super().as_json()
+        _json["to"]["node"] = ":parent:"
+        return _json
+        
 # ####################################################################
 #
 # Connector class

@@ -2,7 +2,8 @@ import os
 import unittest
 import json
 
-from gws.model import User, Experiment, Protocol
+from gws.model import Experiment, Protocol
+from gws.user import User
 from gws.central import Central
 from gws.settings import Settings
 from gws.logger import Error
@@ -23,21 +24,12 @@ class TestCentral(unittest.TestCase):
 
     def test_create_user(self):
         data = {
-            "uri": "1234567890"
+            "uri": "1234567890",
+            "email": "test@gencovery.com",
+            "token": "test",
+            "group": "user"
         }
         tf = Central.create_user(data)
         self.assertTrue(tf)
         user = User.get_by_uri("1234567890")
         self.assertEqual(user.uri, "1234567890")
-
-    def test_create_experiment_exception(self):
-        data = {
-            "uri": "123456abcd",
-            "protocol": {
-                "uri": "1234ERTY",
-            }
-        }
-        self.assertRaises(Exception, Central.create_experiment, data)
-
-    def test_create_experiment_ok(self):
-        pass

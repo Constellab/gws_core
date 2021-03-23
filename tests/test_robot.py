@@ -36,21 +36,9 @@ class TestProtocol(unittest.TestCase):
     
     def test_robot(self):
         proto = create_nested_protocol()
-        e = proto.create_experiment()
-        
-        async def _run():
-            await e.run()
-            print("Sleeping 1 sec for waiting all tasks to finish ...")
-            await asyncio.sleep(1)
-        
-        asyncio.run( _run() )
-        
-        graph = proto.as_json(bare=True)
-        
-        print(json.dumps(graph))
 
-        
+        graph = proto.dumps(bare=True)
         loaded_proto = Protocol.from_graph(graph)
         graph2 = loaded_proto.dumps(bare=True)
-        
-        self.assertEqual(graph, graph2)
+
+        self.assertEqual(Protocol.barefy(graph), Protocol.barefy(graph2))

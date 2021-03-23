@@ -20,9 +20,10 @@ from pydantic import BaseModel
 
 from gws.base import slugify
 from gws.settings import Settings
-from gws.model import User
+from gws.model import Study
+from gws.user import User
 from gws.controller import Controller
-from gws.central import Central
+#from gws.central import Central
 from gws.logger import Error
 
 from gws._auth.user import check_authenticate_user
@@ -51,7 +52,9 @@ async def call_brick_api(request: Request, brick_name: Optional[str] = "gws", ap
 
 @app.on_event("startup")
 async def startup_event():
-    Central.put_status(is_running=True)
+    Study.create_default_instance()
+    User.create_owner()
+    #Central.put_status(is_running=True)
 
     settings = Settings.retrieve()
     print("GWS application started!")
@@ -68,7 +71,8 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    Central.put_status(is_running=False)
+    #Central.put_status(is_running=False)
+    pass
 
 ####################################################################################
 #
@@ -84,7 +88,6 @@ class BaseApp:
     @classmethod
     def init(cls):
         pass
-    
 
 _settings = Settings.retrieve()
 class App(BaseApp):
@@ -117,12 +120,7 @@ class App(BaseApp):
             if not os.path.exists(os.path.join(html_dir,"index.html")):
                 docgen(name, dirs[name], _settings, force=True)
             app.mount(f"/docs/{name}/", StaticFiles(directory=html_dir), name=f"/docs/{name}/")
-        
-        # public file store
-        is_public_fs = _settings.get_data("is_public_file_store")
-        if is_public_fs:
-            pass
-        
+
         # api routes
         app.mount("/central-api/", central_app)
         app.mount("/core-api/", core_app)

@@ -22,127 +22,89 @@ from gws._auth.user import (    OAuth2UserTokenRequestForm, _Token,
                             )
 central_app = FastAPI(docs_url="/apidocs")
 
+# ##################################################################
+#
 # User
+#
+# ##################################################################
+
 class _User(BaseModel):
     uri: str
+    token: str
+    email: str
+    group: str = "user"
+    is_active: bool = True
+    is_locked: bool = False
 
-@central_app.get("/login/{user_access_token}", tags=["login"])
+class _UserUri(BaseModel):
+    uri: str
+        
+@central_app.get("/login/{user_access_token}", tags=["User api"])
 async def login_user(request: Request, user_access_token: str, redirect_url: str = "/", object_type: str=None, object_uri: str=None):
     form_data: OAuth2UserTokenRequestForm = Depends()
     form_data.user_access_token = user_access_token
 
-    if (not object_type is None) and (not object_uri is None):
-        redirect_url = f"/biox/{object_type}/entity/?uri={object_uri}"
+    return await login(form_data=form_data)
 
-    return await login(form_data=form_data, redicrect_url=redirect_url)
-
-@central_app.get("/logout", response_model=_User, tags=["logout"])
+@central_app.get("/logout", response_model=_User, tags=["User api"])
 async def logout_user(request: Request, current_user: _User = Depends(get_current_active_user)):
-    return await logout(current_user, redicrect_url="/page/gws/logout")
+    return await logout(current_user)
 
-@central_app.get("/me/", response_model=_User)
+@central_app.get("/me/", response_model=_User, tags=["User api"])
 async def read_users_me(current_user: _User = Depends(get_current_active_user)):
     return current_user
 
-@central_app.post("/user/add", tags=["user"])
-async def add_user_to_the_lab(user: _User):
-    try:
-        user_dict = Central.create_user(user.dict())
-        return { "status": True, "data" : user_dict }
-    except Exception as err:
-        return { "status": False, "data": str(err) }
+@central_app.post("/user/create", tags=["User api"])
+async def create_user(user: _User):
+    return Central.create_user(user.dict())
 
-class _UserUri(BaseModel):
-    uri: str
-
-
-@central_app.post("/user/generate-access-token", response_model=_Token)
+@central_app.post("/user/generate-access-token", response_model=_Token, tags=["User api"])
 async def generate_user_access_token(user_uri: _UserUri, _ = Depends(check_api_key)):
     return await _generate_user_access_token(user_uri.uri)
 
-@central_app.get("/user/{user_uri}")
+@central_app.get("/user/{user_uri}", tags=["User api"])
 async def get_user(user_uri : str):
-    try:
-        user_dict = Central.get_user_status(user_uri)
-        return { "status": True, "data" : user_dict }
-    except Exception as err:
-        return { "status": False, "data" : str(err) }
+    return Central.get_user_status(user_uri)
 
-@central_app.get("/user/{user_uri}/activate")
+@central_app.get("/user/{user_uri}/activate", tags=["User api"])
 async def activate_user(user_uri : str):
-    try:
-        tf = Central.activate_user(user_uri)
-        return { "status": tf, "data" : "" }
-    except Exception as err:
-        return { "status": False, "data" : str(err) }
+    return Central.activate_user(user_uri)
 
-@central_app.get("/user/{user_uri}/deactivate")
+@central_app.get("/user/{user_uri}/deactivate", tags=["User api"])
 async def deactivate_user(user_uri : str):
-    try:
-        tf = Central.deactivate_user(user_uri)
-        return { "status": tf, "data" : "" }
-    except Exception as err:
-        return { "status": False, "data" : str(err) }
+    return  Central.deactivate_user(user_uri)
 
-@central_app.get("/lab-instance")
+@central_app.get("/user/{user_uri}/lock", tags=["User api"])
+async def lock_user(user_uri : str):
+    return  Central.lock_user(user_uri)
+
+@central_app.get("/user/{user_uri}/unlock", tags=["User api"])
+async def unlock_user(user_uri : str):
+    return  Central.unlock_user(user_uri)
+
+# ##################################################################
+#
+# Lab
+#
+# ##################################################################
+
+@central_app.get("/lab-instance", tags=["Lab api"])
 async def get_lab_instance_status():
     from gws.lab import Lab
-    return { "status": True, "data" : Lab.get_status() }
+    return Lab.get_status()
 
-class _ApiKey(BaseModel):
+# ##################################################################
+#
+# Central
+#
+# ##################################################################
+
+class _CentralApiKey(BaseModel):
     key: str
-
-@central_app.put("/api-key")
-async def set_central_api_key(api_key: _ApiKey):
+        
+@central_app.put("/central-api-key", tags=["Lab api"])
+async def set_central_api_key(api_key: _CentralApiKey):
     settings = Settings.retrieve()
     settings.set_data("central_api_key", api_key.key)
     tf = settings.save()
-    return { "status": tf, "data" : "" }
-
-# #########################################################################@
-#
-# Experiment & Protocol Routes
-#
-# #########################################################################@
-
-class _Protocol(BaseModel):
-    uri: str
-    graph: Optional[dict] = None
-
-class _Experiment(BaseModel):
-    uri: str
-    protocol: _Protocol
-    
-@central_app.post("/experiment/create")
-async def create_experiment(exp: _Experiment):
-    try:
-        exp = Central.create_experiment(exp.dict())
-        return { 
-            "status": True, 
-            "data" : {
-                "experiment": {
-                    "uri": exp.uri
-                },
-                "protocol": {
-                    "uri": exp.protocol.uri
-                }
-            }
-        }
-    except Exception as err:
-        return { "status": False, "data": str(err) }
-
-@central_app.put("/experiment/{experiment_uri}/close")
-async def close_experiment(request):
-    return { "status": True, "data" : ""}
-
-@central_app.delete("/experiment/{experiment_uri}")
-async def delete_experiment(request):
-    return { "status": True, "data" : ""}
-
-@central_app.get("/protocol/{protocol_uri}")
-async def get_protocol(protocol_uri: str):
-    try:
-        proto_dict = Central.get_protocol(protocol_uri)
-        return { "status": True, "data" : proto_dict }
-    except Exception as err:
-        return { "status": False, "data" : str(err) }
+    return { "status": tf }

@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import Depends, FastAPI, HTTPException, status
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import Response
 from fastapi.security import OAuth2PasswordRequestForm
@@ -17,7 +17,7 @@ from fastapi.param_functions import Form
 from passlib.context import CryptContext
 from pydantic import BaseModel
 
-from gws.model import User
+from gws.user import User
 from gws.settings import Settings
 from gws._auth.user_token_cookie import oauth2_cookie_scheme
 
@@ -43,6 +43,7 @@ class OAuth2UserTokenRequestForm:
         self.client_secret = client_secret
 
 class _User(BaseModel):
+    c_key: str
     uri: str
     token: str
     is_active: bool
@@ -50,6 +51,8 @@ class _User(BaseModel):
 class _Token(BaseModel):
     access_token: str
     token_type: str
+
+# -- A --
 
 def authenticate_user(user_access_token: str):
     credentials_exception = HTTPException(
@@ -68,10 +71,12 @@ def authenticate_user(user_access_token: str):
     
     # check uri and token in db
     try:
-        db_user = User.get(User.uri == uri, User.token == token)
+        db_user = User.authenticate(uri == uri, token == token)
         return _User(uri=db_user.uri, token=db_user.token, is_active=db_user.is_active)
     except:
         return False
+
+# -- C --
 
 def create_cookie_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
@@ -82,6 +87,8 @@ def create_cookie_access_token(data: dict, expires_delta: Optional[timedelta] = 
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+# -- G --
 
 async def get_current_user(token: str = Depends(oauth2_cookie_scheme)):
     credentials_exception = HTTPException(
@@ -103,16 +110,17 @@ async def get_current_user(token: str = Depends(oauth2_cookie_scheme)):
     except:
         raise credentials_exception
 
-async def get_current_active_user(current_user: _User = Depends(get_current_user)):
-    if not current_user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
-    return current_user
-
 async def check_authenticate_user(current_user: _User = Depends(get_current_user)):
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return True
 
+async def get_current_active_user(current_user: _User = Depends(get_current_user)):
+    if not current_user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+
+# -- L --
 
 async def login(form_data: OAuth2UserTokenRequestForm = Depends(), redicrect_url: str = "/"):
     
@@ -133,8 +141,8 @@ async def login(form_data: OAuth2UserTokenRequestForm = Depends(), redicrect_url
     )
     
     token = jsonable_encoder(access_token)
-
-    response = RedirectResponse(url=redicrect_url)
+    
+    response = JSONResponse()
     response.set_cookie(
         "Authorization",
         value=f"Bearer {token}",
@@ -152,12 +160,9 @@ async def logout(current_user: _User, redicrect_url: str = "/"):
     )
 
     try:
-        db_user = User.get(User.uri == current_user.uri)
-        db_user.generate_access_token()     #remove previous token
-        
-        response = RedirectResponse(url=redicrect_url)
+        User.unauthenticate(uri = current_user.uri)
+        response = JSONResponse()
         response.delete_cookie("Authorization")
         return response
     except:
         raise credentials_exception
-  

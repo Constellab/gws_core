@@ -32,9 +32,43 @@ core_app.add_middleware(
 
 class _ViewModel(BaseModel):
     uri: str
-    data: dict
+    params: dict
 
-        
+class Process(BaseModel):
+    uri:str
+    type:str = "gws.model.Process"
+    title:str = None
+    instance_name: str
+    config_specs: dict = {}
+    input_specs: dict = {}
+    output_specs: dict = {}
+
+class Config(BaseModel):
+    uri:str = None
+    type:str = "gws.model.Config"
+    params: dict = {}
+    
+class Protocol(Process):
+    type: str = "gws.model.Protocol"
+    interfaces: dict = {}
+    outerfaces: dict = {}
+    
+class Flow(BaseModel):
+    uri: Optional[str]
+    type: Optional[str] = "gws.model.Job"
+    #is_archived: Optional[bool] = False
+    #is_deleted: Optional[bool] = False
+    #creation_datetime: Optional[str]
+    #save_datetime: Optional[str]
+    #progress: Optional[float] = 0.0
+    process: Optional[Protocol]
+    config: Optional[Config]
+    parent_job_uri: Optional[str]
+    experiment_uri: Optional[str]
+    layout: Optional[dict] = {}
+    jobs: dict
+    flows: dict
+    
 # ##################################################################
 #
 # List
@@ -55,27 +89,30 @@ async def get_list_of_experiments(page: int = 1, number_of_items_per_page: int =
         number_of_items_per_page=number_of_items_per_page
     )
 
-@core_app.post("/experiment/save/", tags=["CRUD operations on experiments"], summary="Save an experiment")
-async def save_experiment(experiment_uri: str, flow: Optional[dict]) -> (dict, str,):
+@core_app.post("/experiment/save", tags=["CRUD operations on experiments"], summary="Save an experiment using a existing (or new) job flow")
+async def save_experiment(flow: Optional[dict]) -> (dict, str,):
     """
-    Save an experiment
+    Save a protocol.
+    
+    - **flow**: the flow object 
     """
 
-    return await Controller.save_experiment(object_uri=experiment_uri, data=flow)
+    return Controller.save_experiment(data=flow)
 
-
-@core_app.post("/experiment/run/", tags=["CRUD operations on experiments"], summary="Run and experiment")
-async def run_experiment(experiment_uri: str) -> (dict, str,):
+@core_app.post("/experiment/run/", tags=["CRUD operations on experiments"], summary="Run an experiment")
+async def run_experiment(flow: Optional[dict]) -> (dict, str,):
     """
     Run an experiment
+    
+    - **flow**: the flow object 
     """
 
-    return await Controller.run_experiment(object_uri=experiment_uri)
+    return await Controller.run_experiment(data=flow)
 
-@core_app.get("/job/flow", tags=["CRUD operations on experiments"], summary="Get jobs' flows")
-async def get_jobs_flow(protocol_job_uri: str = None, experiment_uri: str = None) -> (dict, str,):
+@core_app.get("/job/flow", tags=["CRUD operations on experiments"], summary="Get job flow")
+async def get_job_flow(protocol_job_uri: str = None, experiment_uri: str = None) -> (dict, str,):
     """
-    Retrieve the jobs' flow of an experiment or a protocol job
+    Retrieve the job flow of an experiment or a protocol job
     
     - **protocol_job_uri**: the uri of the job (must be a job of a protocol)
     - **experiment_uri**: the uri of an experiment (is not used if job_uri is given)
@@ -116,6 +153,17 @@ async def get_list_of_protocols(experiment_uri: str = None, job_uri: str = None,
         experiment_uri=experiment_uri,
         job_uri=job_uri
     )
+
+@core_app.post("/protocol/save", tags=["CRUD operations on experiments"], summary="Save a protocol using a existing (or new) job flow")
+async def save_protocol(flow: Optional[dict]) -> (dict, str,):
+    """
+    Save a protocol
+    
+    - **flow**: the flow object 
+    """
+
+    return await Controller.save_protocol(data=flow)
+
 
 @core_app.get("/process/list", tags=["CRUD operations on experiments"], summary="Get the list of processes")
 async def get_list_of_process(job_uri: str = None, page: int = 1, number_of_items_per_page: int = 20) -> (dict, str,):
@@ -176,7 +224,9 @@ async def get_list_of_resources(job_uri: str = None, experiment_uri: str = None,
 @core_app.get("/count/{object_type}/", tags=["Generic CRUD operations on object views"])
 async def count(object_type: str) -> (dict, str,):
     """
-    Update a view model
+    Get the count of objects of a given type
+    
+    - **object_type**: the object type
     """
 
     return await Controller.action(action="count", object_type=object_type)
@@ -186,16 +236,16 @@ async def get_view_model(object_type: str, object_uris: Optional[str] = "all", \
                         page: int = 1, number_of_items_per_page: int = 20, \
                         filters: Optional[str] = "{}", view_params: Optional[str] = "{}") -> (dict, str,):
     """
-    Get a view model.
+    Get a ViewModel
     
     Custom query params depending on the queryied model. 
     
-    - **object_type**: the type of the object to fetch
+    - **object_type**: the type of the object to fetch. Can be an existing ViewModel or a Viewable object with no ViewModel. In this case, default ViewModel is created and returned.
     - **object_uris**: the uris of the object to fetch. Use comma-separated values to fecth several uris or 'all' to fetch all the entries. When all entries are retrieve, the **filter** parameter can be used.
     - **page**: the page number 
     - **number_of_items_per_page**: the number of items per page (limited to 50 if **job_uri** or **experiment_uri** are not given) 
     - **filters**: filter to use to select data (**object_uris** must be equal to 'all'). The filter is matches using full-text search against to the `title` and the `description`. The format is `filter={"title": "Searched title*", "description": "This is a description for full-text search"}`
-    - **view_params**: key,value parameters of the view model. The key,value specifications are given by the method `as_json()` of the corresponding object class. See class documentation.
+    - **view_params**: key,value parameters of the ViewModel. The key,value specifications are given by the method `as_json()` of the corresponding object class. See class documentation.
     """
     
     try:
@@ -212,18 +262,21 @@ async def get_view_model(object_type: str, object_uris: Optional[str] = "all", \
 @core_app.put("/view/{object_type}/", tags=["Generic CRUD operations on object views"])
 async def update_view_model(object_type: str, view_model: _ViewModel) -> (dict, str,):
     """
-    Update a view model
+    Update a ViewModel
+    
+    - **object_type**: the type of object of which the ViewModel is attached
+    - **view_model**: data of the ViewModel `{uri: "uri_of_the_view_model", data: "parameters_of_the_view_model"}`
     """
 
-    return await Controller.action(action="put", object_type=object_type, object_uri=view_model.uri, data=view_model.data)
+    return await Controller.action(action="update", object_type=object_type, object_uri=view_model.uri, data=view_model.params)
 
 @core_app.delete("/view/{object_type}/{object_uri}/", tags=["Generic CRUD operations on object views"])
 async def delete_view_model(object_type: str, object_uri: str) -> (dict, str,):
     """
-    Delete a view model
+    Delete a ViewModel
     
-    - **object_type**: the type of the object to fetch
-    - **object_uri**: the uri of the objects to fetch
+    - **object_type**: the type of the object to delete.
+    - **object_uri**: the uri of the object to delete
     """
 
     return await Controller.action(action="delete", object_type=object_type, object_uri=object_uri)
@@ -236,24 +289,24 @@ async def delete_view_model(object_type: str, object_uri: str) -> (dict, str,):
 
 
 @core_app.post("/upload", tags=["Upload and download files"])
-async def upload(files: List[UploadFile] = FastAPIFile(...)):
+async def upload(files: List[UploadFile] = FastAPIFile(...), study_uri:Optional[str] = None):
     """
     Upload files
+    
+    - **study_uri**: the uri of the current study. If not given, the default study is used
     """
           
-    return await Controller.action(action="upload", data=files)
+    return await Controller.action(action="upload", data=files, study_uri=study_uri)
 
-@core_app.post("/download/{file_uri}", tags=["Upload and download files"])
-async def download(file_uri: str):
+@core_app.post("/download/{uri}", tags=["Upload and download files"])
+async def download(uri: str):
     """
     Download file
     """
     
-    
     from gws.file import File
-    
     try:
-        file = File.get(File.uri == file_uri)
+        file = File.get(File.uri == uri)
         return FileResponse(file.path, media_type='application/octet-stream', filename=file.name)
     except:
         raise HTTPException(status_code=404, detail="Item not found")
@@ -267,7 +320,7 @@ async def download(file_uri: str):
 @core_app.post("/run-robot-travel-experiment", tags=["Astro boy travels"])
 async def run_robot_travel_experiment() -> (dict, str,):
     """
-    Run robot experiments
+    Run robot experiments. The default study is used
     """
 
     return await Controller._run_robot_travel()
@@ -275,7 +328,7 @@ async def run_robot_travel_experiment() -> (dict, str,):
 @core_app.post("/run-robot-super-travel-experiment", tags=["Astro boy travels"])
 async def run_robot_super_travel_experiment() -> (dict, str,):
     """
-    Run robot experiments
+    Run robot experiments. The default study is used
     """
 
     return await Controller._run_robot_super_travel()

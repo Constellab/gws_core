@@ -15,6 +15,10 @@ import jwt
 import zlib
 import importlib
 import shutil
+import re
+import collections
+
+import time
 from datetime import datetime
 
 from base64 import b64encode, b64decode
@@ -35,19 +39,7 @@ from gws.base import format_table_name, slugify, BaseModel, BaseFTSModel, DbMana
 from gws.controller import Controller
 from gws.io import Input, Output, InPort, OutPort, Connector, Interface, Outerface
 from gws.event import EventListener
-from gws.utils import to_camel_case
-
-# ####################################################################
-#
-# SystemTrackable class
-#
-# ####################################################################
- 
-class SystemTrackable:
-    """
-    SystemTrackable class representing elements that can only be created by the core system.
-    """
-    pass
+from gws.utils import to_camel_case, sort_dict_by_key
 
 # ####################################################################
 #
@@ -67,8 +59,8 @@ class Model(BaseModel):
     :type type: str, `peewee.model.CharField`
     :property creation_datetime: The creation datetime of the model (on the server)
     :type creation_datetime: datetime, `peewee.model.DateTimeField`
-    :property save_datetine: The last save datetime in database
-    :type save_datetine: datetime, `peewee.model.DateTimeField`
+    :property save_datetime: The last save datetime in database
+    :type save_datetime: datetime, `peewee.model.DateTimeField`
     :property data: The data of the model
     :type data: dict, `peewee.model.JSONField`
     """
@@ -77,7 +69,7 @@ class Model(BaseModel):
     uri = CharField(null=True, index=True)
     type = CharField(null=True, index=True)
     creation_datetime = DateTimeField(default=datetime.now)
-    save_datetine = DateTimeField()    
+    save_datetime = DateTimeField()  
     data = JSONField(null=True)
     is_archived = BooleanField(default=False, index=True)
     is_deleted = BooleanField(default=False, index=True)
@@ -96,7 +88,6 @@ class Model(BaseModel):
         super().__init__(*args, **kwargs)
         
         if not self.id and self._is_singleton:
- 
             try:
                 cls = type(self)
                 model = cls.get(cls.type == self.full_classname())
@@ -110,10 +101,9 @@ class Model(BaseModel):
                     val = getattr(model, prop)
                     setattr(self, prop, val) 
         
-        if not Model.__lab_uri:
-            Model.__lab_uri = Settings.retrieve().get_data("uri", default="")
-        
         if self.uri is None:
+            #if not Model.__lab_uri:
+            #    Model.__lab_uri = Settings.retrieve().get_data("uri", default="")
             #self.uri = Model.__lab_uri + "-" + str(uuid.uuid4())
             self.uri = str(uuid.uuid4())
 
@@ -131,14 +121,75 @@ class Model(BaseModel):
         self._kv_store = KVStore(self.kv_store_path)
 
     # -- A --
-
-    def archive(self, status: bool) -> bool:
-        if self.is_archived == status:
+    
+    def archive(self, tf: bool) -> bool:
+        if self.is_archived == tf:
             return True
             
-        self.is_archived = status
+        self.is_archived = tf
         return self.save()
-
+    
+    def as_json(self, stringify: bool=False, prettify: bool=False, jsonifiable_data_keys: list=[], **kwargs) -> (str, dict, ):
+        """
+        Returns JSON string or dictionnary representation of the model.
+        
+        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
+        :type stringify: bool
+        :param prettify: If True, indent the JSON string. Defaults to False.
+        :type prettify: bool
+        :param jsonifiable_data_keys: If is empty, `data` is fully jsonified, otherwise only specified keys are jsonified
+        :param jsonifiable_data_keys: `list` of str
+        :type jsonify_full_data: bool
+        :return: The representation
+        :rtype: dict, str
+        """
+      
+        _json = {}
+        
+        if not isinstance(jsonifiable_data_keys, list):
+            jsonifiable_data_keys = []
+            
+        exclusion_list = (ForeignKeyField, ManyToManyField, BlobField, AutoField, BigAutoField, )
+        
+        for prop in self.property_names(Field, exclude=exclusion_list) :
+            if prop in ["id"]:
+                continue
+                
+            val = getattr(self, prop)
+            
+            if prop == "data":
+                _json[prop] = {}
+                
+                if len(jsonifiable_data_keys) == 0:
+                    _json[prop] = val
+                else:
+                    for k in jsonifiable_data_keys:
+                        if k in val:
+                            _json[prop][k] = val[k]
+            else:
+                if isinstance(val, (datetime, DateTimeField, DateField)):
+                    _json[prop] = str(val)
+                else:
+                    _json[prop] = val
+        
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
+        
+    # -- B --
+    
+    @staticmethod
+    def barefy( data: dict ):
+        if isinstance(data, dict):
+            data = json.dumps(data)
+        
+        data = re.sub(r"\"(([^\"]*_)?uri|save_datetime|creation_datetime)\"\s*\:\s*\"([^\"]*)\"", r'"\1": ""', data)
+        return json.loads(data)
+    
     # -- C --
 
     def cast(self) -> 'Model':
@@ -372,17 +423,6 @@ class Model(BaseModel):
             self.data = data
         else:
             raise Error("gws.model.Model", "set_data","The data must be a JSONable dictionary")
-    
-    #def set_data_value(self, key: str, value: str):
-    #    """ 
-    #    Sets the a given `data`
-    #
-    #    :param key: The key
-    #    :type key: srt
-    #    :param value: The value
-    #    :type value: any
-    #    """
-    #    self.data[key] = value
 
     def _save_fts_document(self):
         _FTSModel = self.fts_model()
@@ -436,7 +476,7 @@ class Model(BaseModel):
                             raise Error("gws.model.Model", "save", "Cannot save related FTS document")
 
                 #self.kv_store.save()
-                self.save_datetine = datetime.now()
+                self.save_datetime = datetime.now()
                 return super().save(*args, **kwargs)
             except Exception as err:
                 transaction.rollback()
@@ -481,19 +521,19 @@ class Viewable(Model):
 
     # -- A --
 
-    def archive(self, status: bool):
-        if self.is_archived == status:
+    def archive(self, tf: bool):
+        if self.is_archived == tf:
             return True
 
         with DbManager.db.atomic() as transaction:
             try:
                 Q = ViewModel.select().where( ViewModel.model_id == self.id )
                 for vm in Q:
-                    if not vm.archive(status):
+                    if not vm.archive(tf):
                         transaction.rollback()
                         return False
                 
-                if super().archive(status):
+                if super().archive(tf):
                     return True
                 else:
                     transaction.rollback()
@@ -501,57 +541,6 @@ class Viewable(Model):
             except:
                 transaction.rollback()
                 return False
-
-    def as_json(self, stringify: bool=False, prettify: bool=False, jsonifiable_data_keys: list=[], **kwargs) -> (str, dict, ):
-        """
-        Returns JSON string or dictionnary representation of the model.
-        
-        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
-        :type stringify: bool
-        :param prettify: If True, indent the JSON string. Defaults to False.
-        :type prettify: bool
-        :param jsonifiable_data_keys: If is empty, `data` is fully jsonified, otherwise only specified keys are jsonified
-        :param jsonifiable_data_keys: `list` of str
-        :type jsonify_full_data: bool
-        :return: The representation
-        :rtype: dict, str
-        """
-      
-        _json = {}
-        
-        if not isinstance(jsonifiable_data_keys, list):
-            jsonifiable_data_keys = []
-            
-        exclusion_list = (ForeignKeyField, ManyToManyField, BlobField, AutoField, BigAutoField, )
-        
-        for prop in self.property_names(Field, exclude=exclusion_list) :
-            if prop in ["id"]:
-                continue
-                
-            val = getattr(self, prop)
-            
-            if prop == "data":
-                _json[prop] = {}
-                
-                if len(jsonifiable_data_keys) == 0:
-                    _json[prop] = val
-                else:
-                    for k in jsonifiable_data_keys:
-                        if k in val:
-                            _json[prop][k] = val[k]
-            else:
-                if isinstance(val, (datetime, DateTimeField, DateField)):
-                    _json[prop] = str(val)
-                else:
-                    _json[prop] = val
-        
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
 
     # -- C --
 
@@ -670,13 +659,20 @@ class Viewable(Model):
     # -- V --
 
     def view(self, *args, format="json", params:dict = {}) -> dict:
-        view_model = ViewModel(model=self)
         if not isinstance(params, dict):
             params = {}
-            
-        view_model.set_params(params)
+        
+        #if not params:
+        #    view_model = ViewModel(model=self)
+        #else
+        #    view_model = ViewModel(model=self)
+        
+        view_model = ViewModel.get_instance(self, params)
+        
+        #view_model.set_params(params)
         #view_model.save()
         return view_model
+
     
 # ####################################################################
 #
@@ -725,19 +721,19 @@ class Config(Viewable):
 
     # -- A --
 
-    def archive(self, status: bool):
-        if self.is_archived == status:
+    def archive(self, tf: bool):
+        if self.is_archived == tf:
             return True
             
         with DbManager.db.atomic() as transaction:
             try:
                 Q = Job.select().where( Job.config_uri == self.uri )
                 for job in Q:
-                    if not job.archive(status):
+                    if not job.archive(tf):
                         transaction.rollback()
                         return False
                 
-                if super().archive(status):
+                if super().archive(tf):
                     return True
                 else:
                     transaction.rollback()
@@ -859,7 +855,7 @@ class Config(Viewable):
 #
 # ####################################################################
 
-class Process(Viewable, SystemTrackable):
+class Process(Viewable):
     """
     Process class.
     
@@ -926,15 +922,13 @@ class Process(Viewable, SystemTrackable):
 
         self._event_listener = EventListener()
 
-        if 'title' in kwargs:
-            self.set_title(kwargs['title'])
+        if not self.title:
+            self.data["title"] = kwargs.get('title', self.full_classname())
         
         if not self.title:
-            self.set_title( self.full_classname() )
+            self.data["title"] = kwargs.get('title', self.full_classname())
             
-        if instance_name:
-            self.set_instance_name(instance_name)
-          
+        self.set_instance_name(instance_name)
         self.save()
 
     # -- A --
@@ -972,7 +966,7 @@ class Process(Viewable, SystemTrackable):
         
         if bare:
             _json["uri"] = ""
-            _json["save_datetine"] = ""
+            _json["save_datetime"] = ""
             _json["creation_datetime"] = ""
         
         for k in _json["config_specs"]:
@@ -989,20 +983,41 @@ class Process(Viewable, SystemTrackable):
         else:
             return _json
     
+    # -- B --
+    
+    @staticmethod
+    def barefy( data: dict ):
+        if isinstance(data, dict):
+            data = json.dumps(data)
+        
+        data = re.sub(r"\"(([^\"]*_)?uri|save_datetime|creation_datetime)\"\s*\:\s*\"([^\"]*)\"", r'"\1": ""', data)
+        data = re.sub(r"\"is_draft\"\s*\:\s*\"False", r'"is_draft": "True"', data)
+        return json.loads(data)
+    
     # -- C --
     
-    def create_experiment(self, config: Config = None):
-        if isinstance(config, Config):
-            job = self.job
-            job.set_config(config)
+    def create_experiment(self, study: 'Study'):
+        """
+        Create an experiment using a protocol composed of this process
         
-        instance_name = self.instance_name if self.instance_name else self.classname()
-        proto = Protocol(processes={ 
-            instance_name: self 
-        })
-        e = Experiment(protocol=proto)
+        :param study: The study in which the experiment is realized
+        :type study: `gws.model.Study`
+        :param study: The configuration of protocol
+        :type study: `gws.model.Config`
+        :return: The experiment
+        :rtype: `gws.model.Experiment`
+        """
+        
+        #if isinstance(config, Config):
+        #    job = self.job
+        #    job.set_config(config)
+        
+        instance_name = self.instance_name if self.instance_name else self.full_classname()
+        proto = Protocol(processes={ instance_name: self })
+        e = Experiment(study=study, protocol=proto)
+        e.save()
         return e
-
+    
     @classmethod
     def create_table(cls, *args, **kwargs):
         if not Job.table_exists():
@@ -1056,7 +1071,7 @@ class Process(Viewable, SystemTrackable):
     # -- H --
 
     # -- I --
-    
+
     @property
     def instance_name(self):
         """
@@ -1087,7 +1102,7 @@ class Process(Viewable, SystemTrackable):
         :return: True if the process is ready, False otherwise.
         :rtype: bool
         """
-        return  (not self.is_running and not self.is_finished) and self._input.is_ready 
+        return (not self.is_running and not self.is_finished) and self._input.is_ready 
 
     def in_port(self, name: str) -> InPort:
         """
@@ -1178,10 +1193,10 @@ class Process(Viewable, SystemTrackable):
         """
         self.add_event('start', callback)
     
-    #-- P --
-    
-    # -- R -- 
+    # -- P --
 
+    # -- R -- 
+    
     async def _run(self):
         """ 
         Runs the process and save its state in the database.
@@ -1200,9 +1215,9 @@ class Process(Viewable, SystemTrackable):
         job = self.job
         for proc in self._output.get_next_procs():
             # ensure that the next process is held by this experiment
-            proc_job = proc.job
-            proc_job.experiment = job.experiment
-            proc_job.save()
+            #proc_job = proc.job
+            #proc_job.experiment = job.experiment
+            #proc_job.save()
 
             # run next
             aws.append( proc._run() )
@@ -1221,6 +1236,9 @@ class Process(Viewable, SystemTrackable):
             Info(f"Running {self.full_classname()} ...")
         
         job = self.job
+        if not job.progress_bar.is_started:
+            job.progress_bar.start()
+            
         if not job.save():
             raise Error("gws.model.Process", "_run_before_task", "Cannot save the job")
         
@@ -1238,7 +1256,7 @@ class Process(Viewable, SystemTrackable):
         self.is_finished = True
 
         job = self.job
-        job.update_status()
+        job.progress_bar.stop()
         if not job.save():
             raise Error("gws.model.Process", "_run_after_task", f"Cannot save the job")
 
@@ -1269,9 +1287,15 @@ class Process(Viewable, SystemTrackable):
         
     # -- S --
     
-    def set_instance_name(self, name:str ):
-        is_default_name = self._instance_name == self.full_classname()
-        if not self._instance_name or is_default_name:
+    def set_instance_name(self, name:str = None ):
+        default_name = self.full_classname()
+        if name is None:
+            name = default_name
+        
+        if self._instance_name:
+            if self._instance_name.startswith(default_name):
+                self._instance_name = name
+        else:            
             self._instance_name = name
         
         if self._instance_name != name:
@@ -1305,7 +1329,6 @@ class Process(Viewable, SystemTrackable):
         if isinstance(config, Config):
             job = self.job
             job.set_config(config)
-            #self.config = config
         else:
             raise Error("gws.model.Process", "set_config", "The config must be an instance of Config.")
 
@@ -1326,91 +1349,47 @@ class Process(Viewable, SystemTrackable):
     async def task(self):
         pass
 
+
 # ####################################################################
 #
-# User class
+# Study class
 #
 # ####################################################################
 
-class User(Model):
+class Study(Viewable):
+    """
+    Study class.
+    """
     
-    token = CharField(null=False)
-    is_admin = BooleanField(default=False, index=True)
-    is_active = BooleanField(default=True, index=True)
-    is_locked = BooleanField(default=False, index=True)
-
-    is_authenticated = False
-
-    _is_deletable = False
-    _table_name = 'gws_user'
-    _fts_fields = {'fullname': 2.0}
-
-    # -- A --
-
+    _table_name = 'gws_study'
+    
     @classmethod
-    def authenticate(cls, uri: str, token: str) -> ('User', bool,):
-        """ 
-        Verify the uri and token and returns the corresponding user 
-
-        :param uri: The user uri
-        :type uri: str
-        :param token: The token to check
-        :type token: str
-        :return: The user if successfully verified, False otherwise
-        :rtype: User, False
+    def create_default_instance( cls ):
         """
+        Create the default study of the lab
+        """
+        
+        cls.get_default_instance()
+    
+    @classmethod
+    def get_default_instance( cls ):
+        """
+        Get the default study of the lab
+        """
+        
         try:
-            return User.get(User.uri==uri, User.token==token)
+            study = Study.get_by_id(1)
         except:
-            return False
-
-    # -- G --
-    
-    def get_fullname(self):
-        return self.data.get("fullname", "")
-
-    def __generate_token(self):
-        return b64encode(token_bytes(32)).decode()
-    
-    def generate_access_token(self):
-        self.token = self.__generate_token()
-        self.save()
-
-    # -- S --
-
-    def save(self, *arg, **kwargs):
-        if self.id is None:
-            if self.token is None:
-                self.token = self.__generate_token()
-
-        return super().save(*arg, **kwargs)
-
-    def set_fullname(self, fullname):
-        self.data["fullname"] = fullname
-
-
-    class Meta:
-        indexes = (
-            # create a unique on email,organization
-            (('email', 'organization'), True),
-        )
-
-# ####################################################################
-#
-# UserLogin class
-#
-# ####################################################################
-
-class UserLogin(Model):
-    user = ForeignKeyField(User)
-    status = BooleanField(index=True)
-    ip_address = IPField()
-    login_date = DateTimeField()
-    _is_deletable = False
-
-    def last_login(self, user):
-        pass
-
+            study = Study(
+                data = {
+                    "title": "Default study",
+                    "description": "The default study of the lab"
+                }
+            )
+            study.save()
+        
+        return study
+        
 # ####################################################################
 #
 # Experiment class
@@ -1427,57 +1406,54 @@ class Experiment(Viewable):
     :type protocol_uri: str
     :property score: The score of the experiment
     :type score: `float`
-    :property is_in_progress: True if the exepriment is in progress, False otherwiser
-    :type is_in_progress: `bool`
     """
     
-    protocol_uri = CharField(null=False, index=True)
-    protocol_job_uri = CharField(null=False, index=True)
+    study = ForeignKeyField(Study, null=True, backref='experiments')
     score = FloatField(null=True, index=True)
-    is_in_progress = BooleanField(default=True, index=True)
+    is_draft = BooleanField(default=True, index=True)
     
-    _table_name = 'gws_experiment'
-    
+    _job = None
     _protocol = None
-    _protocol_job = None
+    _table_name = 'gws_experiment'
 
     def __init__(self, *args, protocol=None, **kwargs):
         super().__init__(*args, **kwargs)
         
-        if isinstance(protocol, Protocol):
-            if protocol.get_title():
-                protocol.set_instance_name(protocol.get_title())
+        if not self.id:
+            if protocol is None:
+                protocol = Protocol()
+                
+            if isinstance(protocol, Protocol):
+                if not protocol.instance_name:
+                    protocol.set_instance_name()
             else:
-                protocol.set_instance_name(protocol.full_classname())
+                raise Error("gws.model.Experiment", "__init__", "The protocol must be an instance of Protocol")
+  
+            self.save()
             
-            if not protocol.is_saved():
-                protocol.save()
-            else:
-                if not protocol.get_active_experiment() is None:
-                    raise Error("gws.model.Experiment", "__init__", "An experiment is already associated with the protocol")
-
-            self.protocol_uri = protocol.uri
-            self._protocol = protocol
-            self._protocol.set_active_experiment(self)
-
+            # bind a job
+            protocol.save()
+            self._job = protocol.job
+            self._job.set_experiment(self)        
+        
     # -- A --
     
     def add_report(self, report: 'Report'):
         report.experiment = self
 
-    def archive(self, status:bool):
-        if self.is_archived == status:
+    def archive(self, tf:bool):
+        if self.is_archived == tf:
             return True
             
         with DbManager.db.atomic() as transaction:
             try:
                 Q = Job.select().where( Job.experiment == self )
                 for job in Q:
-                    if not job.archive(status):
+                    if not job.archive(tf):
                         transaction.rollback()
                         return False
                 
-                if super().archive(status):
+                if super().archive(tf):
                     return True
                 else:
                     transaction.rollback()
@@ -1501,9 +1477,8 @@ class Experiment(Viewable):
         
         _json = super().as_json(**kwargs)
         _json.update({
-            "protocol_job_uri": self.protocol_job_uri,
-            "score": self.score,
-            "is_in_progress": self.is_in_progress,
+            "is_running": self.is_running,
+            "is_finished": self.is_finished,
         })
         
         if not _json["data"].get("title"):
@@ -1524,11 +1499,42 @@ class Experiment(Viewable):
     
     @property
     def flow(self):
-        job = self.protocol_job
-        return job.flow
+        #job = self.protocol.job
+        return self.job.flow
     
-    # -- J --
+    @classmethod
+    def from_flow( cls, flow: dict ) -> 'Experiment':
+        """ 
+        Create a new instance from a existing frow
 
+        :return: The experiment
+        :rtype": `gws.model.Experiment`
+        """
+        if isinstance(flow, str):
+            flow = json.loads(flow)
+        
+        if len(flow) == 0:
+            return None
+        
+        
+        if flow.get("experiment_uri"):
+            e = Experiment.get(Experiment.uri == flow["experiment_uri"])
+        else:
+            if not flow.get("study_uri"):
+                raise Error("Experiment", "Experiment", "A study is required")
+            
+            try:
+                study = Study.get(Study.uri == flow.get("study_uri"))
+            except:
+                raise Error("Experiment", "Experiment", f"No study matchs against the uri {study_uri}")
+      
+            protocol = Protocol.from_flow(flow)
+            e = protocol.create_experiment(study=study)
+            e.save()
+
+        return e
+        
+        
     # -- I --
 
     @property
@@ -1547,6 +1553,15 @@ class Experiment(Viewable):
 
         return False
     
+    # -- J --
+    
+    @property
+    def job(self):
+        if not self._job:
+            self._job = Job.get(Job.experiment == self)
+        
+        return self._job
+    
     # -- O --
 
     def on_end(self, call_back: callable):
@@ -1559,26 +1574,8 @@ class Experiment(Viewable):
     
     @property 
     def protocol(self):
-        if not self._protocol:
-            try:
-                proto = Protocol.get(Protocol.uri == self.protocol_uri)
-            except:
-                raise Error("gws.model.Experiment", "protocol", "The experiment has no protocol")
-            
-            self._protocol = proto.cast()
-
-        return self._protocol
-    
-    @property 
-    def protocol_job(self):
-        if not self._protocol_job:
-            try:
-                self._protocol_job = Job.get(Job.uri == self.protocol_job_uri)
-            except:
-                raise Error("gws.model.Experiment", "protocol_job", "The experiment has no job")
-            
-        return self._protocol_job
-            
+        return self.job.process
+     
     # -- R --
     
     def remove(self):
@@ -1613,9 +1610,103 @@ class Experiment(Viewable):
         return Q
 
     async def run(self):
-        self.job = self.protocol.job
+        #self.job = self.protocol.job
+        self.is_draft = False
         self.save()
         await self.protocol._run()
+    
+    # -- S --
+
+# ####################################################################
+#
+# ProgressBar class
+#
+# ####################################################################
+
+class ProgressBar(Model):
+    _min_allowed_delta_time = 1.0
+    _min_value = 0.0
+    
+    _is_deletable = False
+    _table_name = "gws_job_progress_bar"
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        if not self.id:
+            self.data = {
+                "value": 0.0,
+                "max_value": 0.0,
+                "average_speed": 0.0,
+                "start_time": 0.0,
+                "current_time": 0.0,
+                "elapsed_time": 0.0,
+                "remaining_time": 0.0,
+            }
+            self.save()
+        
+    @property
+    def is_started(self):
+        return self.data["start_time"] > 0.0
+    
+    @property
+    def is_stopped(self):
+        return self.data["value"] >= self.data["max_value"]
+    
+    def start(self, max_value: float = 100.0):
+        if max_value <= 0.0:
+            raise Error("ProgressBar", "start", "Invalid max value")
+    
+        if self.data["start_time"] > 0.0:
+            raise Error("ProgressBar", "start", "The progress bar has already started")
+        
+        self.data["max_value"] = max_value
+        self.data["start_time"] = time.perf_counter()
+        self.save()
+    
+    def stop(self):
+        _max = self.data["max_value"]
+        
+        if self.data["value"] < _max:
+            self.change(_max)
+
+        self.data["remaining_time"] = 0.0
+        self.save()
+        
+    def change(self, value: float):
+        """Increment the progress-bar value"""
+        
+        _max = self.data["max_value"]        
+        if _max == 0.0:
+            raise Error("ProgressBar", "start", "The progress bar has not started")
+            
+        if value > _max:
+            value = _max
+        
+        if value < self._min_value:
+            value = self._min_value
+        
+        current_time = time.perf_counter()
+        delta_time = current_time - self.data["current_time"]
+        ignore_update = delta_time < self._min_allowed_delta_time and value < _max
+        if ignore_update:
+            return
+        
+        self.data["value"] = value
+        self.data["current_time"] = current_time
+        self.data["elapsed_time"] = current_time - self.data["start_time"]
+        self.data["average_speed"] = self.data["value"] / self.data["elapsed_time"]
+        self.data["remaining_time"] = self._compute_remaining_seconds()
+        
+        if self.data["value"] == _max:
+            self.stop()
+        else:
+            self.save()
+        
+    def _compute_remaining_seconds(self):
+        nb_remaining_steps = self.data["max_value"] - self.data["value"]
+        nb_remaining_seconds = nb_remaining_steps / self.data["average_speed"]
+        return nb_remaining_seconds
     
 # ####################################################################
 #
@@ -1623,7 +1714,7 @@ class Experiment(Viewable):
 #
 # ####################################################################
 
-class Job(Viewable, SystemTrackable):
+class Job(Viewable):
     """
     Job class.
     
@@ -1639,18 +1730,18 @@ class Job(Viewable, SystemTrackable):
     :type config_uri: str
     :property experiment: The experiment of the job
     :type experiment: Experiment
-    :property status: The status of experiment, 1 = is_running, 2 = is_finished, 0 otherwise
-    :type status: integer 
+    :property progress: The progress of the experiment. Between 0 (not started) and 100 (fininshed).
+    :type progress: integer 
     """
     
     parent_job = ForeignKeyField('self', null=True, backref='children')
-    process_uri = CharField(null=False, index=True)                         # save id as it may represent different type of process
+    process_uri = CharField(null=False, index=True)                         # save uri it may represent different type of process
     process_type = CharField(null=False) 
     process_source = BlobField(null=True)                  
-    config_uri = CharField(null=False, index=True)                          # save id ref as it may represent config classes
+    config_uri = CharField(null=False, index=True)                          # save uri as it may represent different config classes
     experiment = ForeignKeyField(Experiment, null=True, backref='jobs')     # only valid for protocol
-    status = IntegerField(default=0, index=True)
-
+    progress_bar = ForeignKeyField(ProgressBar, null=True, backref='job')
+    
     _process: Process = None
     _config: Config = None
     _table_name = 'gws_job'
@@ -1659,30 +1750,35 @@ class Job(Viewable, SystemTrackable):
     def __init__(self, *args, process: Process = None, config: Config = None, **kwargs):
         super().__init__(*args, **kwargs)
         
-        if self.id is None:
+        if not self.id:
             if (not config is None) and (not isinstance(config, Config)):
                 raise Error("gws.model.Job", "__init__", "The config must be an instance of Config")
  
             if (not process is None) and (not isinstance(process, Process)):
                 raise Error("gws.model.Job", "__init__", "The process must be an instance of Process")
             
-            self._config = config
+            self._config = config            
             self._process = process
-            self.update_status()
             
-            if not process.instance_name:
-                raise Error("gws.model.Job", "__init__", "The process has no instance name.")
-                
+            #if not process.instance_name:
+            #    raise Error("gws.model.Job", "__init__", "The process has no instance name.")
+            
+            self.progress_bar = ProgressBar()
             self.data["instance_name"] = process.instance_name
             
+            self.save()
+        
+        # set active process job
+        self.process._job = self
+     
     # -- A --
 
-    def archive(self, status: bool):
+    def archive(self, tf: bool):
         # /!\ Do not archive Config, Process and Experiment
-        if self.is_archived == status:
+        if self.is_archived == tf:
             return True
 
-        return super().archive(status)
+        return super().archive(tf)
     
     @property
     def instance_name(self) -> str:
@@ -1708,14 +1804,11 @@ class Job(Viewable, SystemTrackable):
         """
         
         _json = super().as_json(**kwargs)
-        
+
         if not self.parent_job is None:
             parent_job_uri = self.parent_job.uri
         else:
             parent_job_uri = None
-            protocol = self.process
-            if isinstance(protocol, Protocol):
-                _json["layout"] = protocol.get_layout()
         
         if "data" in _json:
             del _json["data"]
@@ -1730,22 +1823,45 @@ class Job(Viewable, SystemTrackable):
             "process": {
                 "uri": self.process.uri,
                 "type": self.process.type,
+                "title": self.process.title,
                 "instance_name": self.instance_name, #do not use self.process.instance_name as it is not saved on db
+                "config_specs": config_specs,
                 "input_specs": self.process.input.as_json(),
-                "output_specs": self.process.output.as_json(),
-                "config_specs": config_specs
+                "output_specs": self.process.output.as_json()
             },
             "config": {
                 "uri": self.config.uri,
                 "type": self.config.type,
                 "params": self.config.params,
             },
-            "parent_job_uri": parent_job_uri,
+            "study_uri": self.experiment.study.uri,
             "experiment_uri": self.experiment.uri,
+            "progress_bar": self.progress_bar.as_json(),
+            "parent_job_uri": parent_job_uri,
             "is_running": self.is_running,
             "is_finished": self.is_finished
         })
-  
+        
+        if isinstance(self.process, Protocol):
+            inter = {}
+            outer = {}
+            for k in self.process._interfaces:
+                inter[k] = self.process._interfaces[k].as_json()
+
+            for k in self.process._outerfaces:
+                outer[k] = self.process._outerfaces[k].as_json()
+            
+            _json["layout"] = self.process.get_layout()
+            _json["process"].update({
+                "interfaces" : inter,
+                "outerfaces" : outer
+            })
+                
+        # clean redundant information
+        del _json["process_type"]
+        del _json["process_uri"]
+        del _json["config_uri"]
+        
         if stringify:
             if prettify:
                 return json.dumps(_json, indent=4)
@@ -1791,6 +1907,7 @@ class Job(Viewable, SystemTrackable):
             raise Error("gws.model.Job", "flow", "The job must be related ot a protocol")     
         
         flow = self.as_json()
+    
         if "data" in flow:
             del flow["data"]
             
@@ -1800,15 +1917,7 @@ class Job(Viewable, SystemTrackable):
         })
     
         flow["layout"] = protocol.get_layout()
-        flow["interfaces"] = {}
-        flow["outerfaces"] = {}
-        
-        for k in protocol._interfaces:
-            flow["interfaces"][k] = protocol._interfaces[k].as_json()
-            
-        for k in protocol._outerfaces:
-            flow["outerfaces"][k] = protocol._outerfaces[k].as_json()
-
+    
         for job in self.children:
             instance_name = job.instance_name
             flow["jobs"][instance_name] = job.as_json()
@@ -1817,7 +1926,6 @@ class Job(Viewable, SystemTrackable):
                 _input = job.data["input"][k]
                 flow["flows"].append({
                     "from": _input["previous"],
-                    
                     "to": {
                         "job_uri": job.uri,
                         "process": {
@@ -1826,7 +1934,6 @@ class Job(Viewable, SystemTrackable):
                             "port": k,
                         }
                     },
-                    
                     "resource_uri": _input["resource_uri"]
                 })
 
@@ -1840,24 +1947,22 @@ class Job(Viewable, SystemTrackable):
     
     @property
     def is_running(self):
-        return self.status == 1
+        return self.progress_bar.is_started
     
-    @is_running.setter
-    def is_running(self, tf):
-        if tf:
-            self.status = 1
-    
+
     @property
     def is_finished(self):
-        return self.status == 2
-    
-    @is_finished.setter
-    def is_finished(self, tf):
-        if tf:
-            self.status = 2
+        return self.progress_bar.is_stopped
     
     # -- P --
     
+    def _propagate_experiment(self, experiment):
+        if isinstance(self.process, Protocol):
+            proto = self.process
+            for k in proto._processes:
+                subjob = proto._processes[k].job
+                subjob.set_experiment(experiment)
+            
     @property
     def process(self):
         """
@@ -1893,15 +1998,6 @@ class Job(Viewable, SystemTrackable):
 
     # -- S --
 
-    def update_status(self):
-        """ 
-        Update the state of the job
-        """
-
-        if self.process:
-            self.is_running = self.process.is_running
-            self.is_finished = self.process.is_finished
-
     def set_config(self, config: Config):
         if not config.is_saved():
             config.save()
@@ -1912,27 +2008,34 @@ class Job(Viewable, SystemTrackable):
         if not isinstance(experiment, Experiment):
             raise Error("gws.model.Job", "set_experiment", "The experiment must be an instance of Experiment")
         
-        if self.experiment is experiment:
+        if self.experiment == experiment:
             return
         
         if self.experiment is None:
             self.experiment = experiment
         else:
-            raise Error("gws.model.Job", "set_experiment", "An experiment is already defined")
-
+            raise Error("gws.model.Job", "set_experiment", "An experiment is already defined") 
+        
+        self.save()
+        
+        self._propagate_experiment(experiment)
+        
     def save(self, *args, **kwargs):
         """ 
         Save the job 
         """
-
+        
         with DbManager.db.atomic() as transaction:
             try:
                 if self.process is None:
                     raise Error("gws.model.Job", "save", "Cannot save the job. The process is not saved.")
-                
+
                 if not self.config.save():
                     raise Error("gws.model.Job", "save", "Cannot save the job. The config cannnot be saved.")
                 
+                if not self.progress_bar.save():
+                    raise Error("gws.model.Job", "save", "Cannot save the job. The progress_bar cannnot be saved.")
+
                 self.process_uri = self._process.uri
                 self.process_type = self._process.type
                 self.process_source = self._process.create_source_zip()
@@ -1940,7 +2043,7 @@ class Job(Viewable, SystemTrackable):
 
                 if not self._process._parent_protocol is None:
                     self.parent_job = self._process._parent_protocol.job
-                
+
                 res = self.process.output.get_resources()
                 for k in res:
                     if res[k] is None:
@@ -1952,9 +2055,10 @@ class Job(Viewable, SystemTrackable):
 
                 self.__track_input_uri()
                 #self.__track_ouput_uri()
+
                 if not super().save(*args, **kwargs):
                     raise Error("gws.model.Job", "save", "Cannot save the job.")
-                
+
                 return True
             except Exception as err:
                 transaction.rollback()
@@ -1968,56 +2072,35 @@ class Job(Viewable, SystemTrackable):
         for k in _input.ports:
             port = _input.ports[k]
             res = port.resource
-
+            
+            is_interfaced = not port.is_left_connected
+            
             if res is None:
                 self.data["input"][k] = {
-                    "resource_uri": ""
+                    "resource_uri": "",
                 }
             else:
                 if not res.is_saved():
                     raise Error("gws.model.Process", "__track_input_uris", f"Cannot track input '{k}' uri. Please save the input resource before.")
-  
-                is_interfaced = not port.is_left_connected
+                    
+                self.data["input"][k] = {
+                    "resource_uri": res.uri,
+                }
 
-                if not is_interfaced:
-                    left_port_name = port.prev.name
-                    self.data["input"][k] = {
-                        "resource_uri": res.uri,
-                        "previous": {
-                            "job_uri": res.job.uri,
-                            "process": {
-                                "uri": res.job.process.uri,
-                                "instance_name": res.job.process.instance_name,
-                                "port": left_port_name
-                            }
+            if not is_interfaced:
+                left_port_name = port.prev.name
+                prev_proc = port.prev.process
+                
+                self.data["input"][k].update({
+                    "previous": {
+                        "job_uri": prev_proc.job.uri,
+                        "process": {
+                            "uri": prev_proc.uri,
+                            "instance_name": prev_proc.instance_name,
+                            "port": left_port_name
                         }
-                    } 
-                else:
-                    pass
-                    #parent_job = self.parent_job
-                    #parent_protocol = self.process._parent_protocol
-                    #interface = parent_protocol.get_interface_of_inport( port )
-                    #source_port = interface.source_port
-  
-                    #if source_port.is_left_connected:
-                    #    left_port_name = source_port.prev.name
-                    #else:
-                    #    left_port_name = ""      
-
-                    #self.data["input"][k] = {
-                    #    "resource_uri": res.uri,
-                    #    "previous": {
-                    #        "job_uri": res.job.uri,
-                    #        "process": {
-                    #            "uri": res.job.process.uri,
-                    #            "instance_name": res.job.process.instance_name,
-                    #            "port": left_port_name,
-                    #        },
-                    #        "interface": {
-                    #            "port" : interface.name,
-                    #        }
-                    #    }
-                    #}                    
+                    }
+                })
         
     def __track_ouput_uri(self):
         _output = self.process.output
@@ -2044,7 +2127,7 @@ class Job(Viewable, SystemTrackable):
 #
 # ####################################################################
 
-class Protocol(Process, SystemTrackable):
+class Protocol(Process):
     """ 
     Protocol class.
 
@@ -2055,17 +2138,18 @@ class Protocol(Process, SystemTrackable):
     """
 
     type = CharField(null=True, index=True, unique=False)
-
+    is_draft = BooleanField(default=True, index=True)
+    
     _is_singleton = False
-    _processes: dict = None
+    _processes: dict = {}
     _connectors: list = []
-    _interfaces: dict = None
-    _outerfaces: dict = None
-    _defaultPosition: list = [0, 0]
+    _interfaces: dict = {}
+    _outerfaces: dict = {}
+    _defaultPosition: list = [0.0, 0.0]
     
     _table_name = 'gws_protocol'
 
-    def __init__(self, *args, processes: dict = None, \
+    def __init__(self, *args, processes: dict = {}, \
                  connectors: list = [], interfaces: dict = {}, outerfaces: dict = {}, **kwargs):
 
         super().__init__(*args, **kwargs)
@@ -2074,11 +2158,10 @@ class Protocol(Process, SystemTrackable):
         self._connectors = []
         self._interfaces = {}
         self._outerfaces = {}
-        self._defaultPosition = [0, 0]
-
-        if processes is None:
-            if self and self.data.get("graph", None):  #the protocol was saved in the super classe
-                self.__build_from_dump( self.data["graph"] )
+        self._defaultPosition = [0.0, 0.0]
+        
+        if self.uri and self.data.get("graph"):          #the protocol was saved in the super-class
+            self.__build_from_dump( self.data["graph"], title=self.title )
         else:
             if not isinstance(processes, dict):
                 raise Error("gws.model.Protocol", "__init__", "A dictionnary of processes is expected")
@@ -2091,7 +2174,7 @@ class Protocol(Process, SystemTrackable):
                 proc = processes[name]
                 if not isinstance(proc, Process):
                     raise Error("gws.model.Protocol", "__init__", "The dictionnary of processes must contain instances of Process")
-            
+
                 self.add_process(name, proc)
 
             # set connectors
@@ -2106,7 +2189,7 @@ class Protocol(Process, SystemTrackable):
             self.__set_outerfaces(outerfaces)
             
             self.data["graph"] = self.dumps(as_dict=True)
-            self.save()
+            self.save()   # will save the graph
 
         #self.__init_pre_start_event()
         self.__init_on_end_event()
@@ -2167,7 +2250,7 @@ class Protocol(Process, SystemTrackable):
     
     # -- B --
     
-    def __build_from_dump( self, graph: (str, dict) ) -> 'Protocol':
+    def __build_from_dump( self, graph: (str, dict), title=None ) -> 'Protocol':
         """ 
         Construct a Protocol instance using a setting dump.
 
@@ -2179,20 +2262,20 @@ class Protocol(Process, SystemTrackable):
             graph = json.loads(graph)
         
         if len(graph) == 0:
-            return
+            return None
         
-        self.set_title(graph.get("title",""))
-        self.set_instance_name(graph.get("title",""))
-        processes = {}
-        connectors = []
-        interfaces = {}
-        outerfaces = {}
+        if not title:
+            title = graph.get("title", self.full_classname())
+
+        if not self.title or self.title == self.full_classname():
+            self.set_title(title)
         
         # create nodes
         
         for k in graph["nodes"]:
-            node_uri = graph["nodes"][k].get("uri",None)
-            node_type_str = graph["nodes"][k]["type"]
+            node_json = graph["nodes"][k]
+            node_uri = node_json.get("uri",None)
+            node_type_str = node_json["type"]
             
             try:
                 process_t = Controller.get_model_type(node_type_str)
@@ -2201,26 +2284,26 @@ class Protocol(Process, SystemTrackable):
                     raise Exception(f"Process {node_type_str} is not defined. Please ensure that the corresponding brick is loaded.")
                 else:
                     if issubclass(process_t, Protocol):
-                        print("xxxx")
-                        processes[k] = Protocol.from_graph( graph["nodes"][k] )
+                        proc = Protocol.from_graph( node_json["data"]["graph"] )
                     else:
                         if node_uri:
-                            processes[k] = process_t.get(process_t.uri == node_uri)
+                            proc = process_t.get(process_t.uri == node_uri)
                         else:
-                            processes[k] = process_t()
-                            
-                    self.add_process( k, processes[k] )
+                            proc = process_t()
+
+                    self.add_process( k, proc )
 
             except Exception as err:
                 raise Error("gws.model.Protocol", "__build_from_dump", f"An error occured. Error: {err}")
         
         # create interfaces and outerfaces
-
+        interfaces = {}
+        outerfaces = {}
         for k in graph["interfaces"]:
             _to = graph["interfaces"][k]["to"]  #destination port of the interface
             proc_name = _to["node"]
             port_name = _to["port"]
-            proc = processes[proc_name]
+            proc = self._processes[proc_name]
             port = proc.input.ports[port_name]
             interfaces[k] = port
 
@@ -2228,7 +2311,7 @@ class Protocol(Process, SystemTrackable):
             _from = graph["outerfaces"][k]["from"]  #source port of the outerface
             proc_name = _from["node"]
             port_name = _from["port"]
-            proc = processes[proc_name]
+            proc = self._processes[proc_name]
             port = proc.output.ports[port_name]
             outerfaces[k] = port
             
@@ -2240,33 +2323,35 @@ class Protocol(Process, SystemTrackable):
         for link in graph["links"]:
             proc_name = link["from"]["node"]
             lhs_port_name = link["from"]["port"]
-            lhs_proc = processes[proc_name]
+            lhs_proc = self._processes[proc_name]
 
             proc_name = link["to"]["node"]
             rhs_port_name = link["to"]["port"]
-            rhs_proc = processes[proc_name]
+            rhs_proc = self._processes[proc_name]
 
             connector = (lhs_proc>>lhs_port_name | rhs_proc<<rhs_port_name)
-            connectors.append(connector)
             self.add_connector(connector)
             
     # -- C --
 
-    def create_experiment(self, uri: str = None, config: Config = None):
-        if self.get_title():
-            self.set_instance_name(self.get_title())
-        else:
-            self.set_instance_name(self.full_classname())
+    def create_experiment(self, study: 'Study'):
+        """
+        Realize a protocol by creating a experiment
         
-        if isinstance(config, Config):
-            job = self.job
-            job.set_config(config)
+        :param study: The study in which the protocol is realized
+        :type study: `gws.model.Study`
+        :param config: The configuration of protocol
+        :type config: `gws.model.Config`
+        :return: The experiment
+        :rtype: `gws.model.Experiment`
+        """
         
-        if uri:
-            e = Experiment(uri=uri, protocol=self)
-        else:
-            e = Experiment(protocol=self)
-            
+        if not self.instance_name:
+            self.set_instance_name()
+        
+        e = Experiment(study=study, protocol=self) 
+        e.save()
+        
         return e
 
     def create_source_zip(self):
@@ -2339,73 +2424,122 @@ class Protocol(Process, SystemTrackable):
         :rtype": Protocol
         """
         
-        proto = Protocol()
-        proto.__build_from_dump(graph)
-        proto.data["graph"] = proto.dumps(as_dict=True)
-        proto.save()
+        if isinstance(graph, str):
+            graph = json.loads(graph)
+            
+        if graph.get("uri"):
+            proto = Protocol.get(Protocol.uri == graph.get("uri"))
+        else:
+            proto = Protocol()
+            proto.__build_from_dump(graph)
+            proto.data["graph"] = proto.dumps(as_dict=True)
+            proto.save()
+            
         return proto
     
     @classmethod
     def from_flow( cls, flow: dict ) -> 'Protocol':
         """ 
-        Create a new instance from a existing graph
+        Create a new instance from a existing flow
 
         :return: The protocol
-        :rtype": Protocol
+        :rtype": `gws.model.Protocol`
         """
         
-        proto = Protocol()
+        if isinstance(flow, str):
+            flow = json.loads(flow)
         
-        # add process
-        
-        for instance_name in flow["flows"]:
-            p_dict = flow["flows"][instance_name]
-            t_str = p_dict["process_type"]
-            t = Controller.get_process_type(t_str)
-            proc = t(instance_name=instance_name)
+        if len(flow) == 0:
+            return None
+         
+        if flow["process"].get("uri"):
+            proto = Protocol.get(Protocol.uri == flow["process"].get("uri"))
+        else:
+            instance_name = flow["process"]["instance_name"] 
+            proto = Protocol(instance_name=instance_name)
+            proto.set_title(flow["process"]["title"])
+            proto.set_layout(flow.get("layout",{}))
+         
+        if proto.is_draft:
             
-            params = p_dict["config"]["params"]
-            proc.config.set_params(params)
-            proto.add_process(proto)
-        
-        # create interfaces and outerfaces
+            # add process
+            # -------------------------------------------
+            for instance_name in flow["jobs"]:
+                if instance_name in proto._processes:
+                    proc = proto._processes[instance_name] 
+                else:
+                    current_job = flow["jobs"][instance_name]
+                    t_str = current_job["process"]["type"]
+                    t = Controller.get_model_type(t_str)
 
-        for k in graph["interfaces"]:
-            _to = graph["interfaces"][k]["to"]  #destination port of the interface
-            proc_name = _to["node"]
-            port_name = _to["port"]
-            proc = processes[proc_name]
-            port = proc.input.ports[port_name]
-            interfaces[k] = port
-
-        for k in graph["outerfaces"]:
-            _from = graph["outerfaces"][k]["from"]  #source port of the outerface
-            proc_name = _from["node"]
-            port_name = _from["port"]
-            proc = processes[proc_name]
-            port = proc.output.ports[port_name]
-            outerfaces[k] = port
+                    # sub-process uri always exists
+                    if current_job["process"].get("uri"):
+                        proc = t.get(t.uri == current_job["process"]["uri"])
+                        proto.add_process(instance_name, proc)  # add to protocol and set instance_name before
+                        proc.set_title(current_job["process"]["title"])
+                    else:
+                        raise Error("Protocol","from_flow", "The sub-protocol or sub-process uri is not found")
+                
+                # update config
+                proc.config.set_params( current_job["config"]["params"] )
             
-        self.__set_interfaces(interfaces)
-        self.__set_outerfaces(outerfaces)
-        
-        # add connector
-        
-        for instance_name in flow["flows"]:
-            p_dict = flow["flows"][instance_name]
+            # create interfaces and outerfaces
+            # -------------------------------------------
+            interfaces = {}
+            outerfaces = {}
+            for k in flow["process"]["interfaces"]:
+                _to = graph["interfaces"][k]["to"]  #destination port of the interface
+                proc_name = _to["node"]
+                port_name = _to["port"]
+                proc = proto._processes[proc_name]
+                port = proc.input.ports[port_name]
+                interfaces[k] = port
+
+            for k in flow["process"]["outerfaces"]:
+                _from = graph["outerfaces"][k]["from"]  #source port of the outerface
+                proc_name = _from["node"]
+                port_name = _from["port"]
+                proc = proto._processes[proc_name]
+                port = proc.output.ports[port_name]
+                outerfaces[k] = port
+
+            if interfaces:
+                proto.__set_interfaces(interfaces)
+
+            if outerfaces:
+                proto.__set_outerfaces(outerfaces)
+
+            # add connectors
+            # -------------------------------------------
+            for flw in flow["flows"]:
+                proc_name = flw["from"]["process"]["instance_name"]
+                lhs_port_name = flw["from"]["process"]["port"]
+                lhs_proc = proto._processes[proc_name]
+                
+                proc_name = flw["to"]["process"]["instance_name"]
+                rhs_port_name = flw["to"]["process"]["port"]
+                rhs_proc = proto._processes[proc_name]
+                
+                lhs_port = lhs_proc>>lhs_port_name
+                rhs_port = rhs_proc<<rhs_port_name
+                
+                if not lhs_port.is_left_connected_to(rhs_port):
+                    connector = (lhs_port | rhs_port)
+                    proto.add_connector(connector)
             
         return proto
     
-
-        
     # -- G --
     
     @property
     def graph(self):
-        return self.data["graph"]
+        #if not "graph" in self.data:
+        #    self.data["graph"] = {}
+            
+        return self.data.get("graph",{})
     
-    def get_active_experiment(self):
-        return self.job.experiment
+    #def get_active_experiment(self):
+    #    return self.job.experiment
 
     def get_process(self, name: str) -> Process:
         """ 
@@ -2492,7 +2626,25 @@ class Protocol(Process, SystemTrackable):
                 return True
 
         return False
+    
+    #def __init_pre_start_event(self):
+    #    self._event_listener.add('pre_start', self._set_inputs)
 
+    def __init_on_end_event(self):
+        """
+        Attach method `_run_after_task` to all sink processes to ensure that this method is called after
+        all inner processes have finished.
+        """
+        
+        sinks = []
+        for k in self._processes:
+            proc = self._processes[k]
+            if self.is_outerfaced_with(proc) or not proc.output.is_connected:
+                sinks.append(proc)
+
+        for proc in sinks:
+            proc.on_end( self._run_after_task )
+            
     # -- L --
     
     # -- P --
@@ -2500,22 +2652,17 @@ class Protocol(Process, SystemTrackable):
     # -- R --
     
     async def _run_before_task(self, *args, **kwargs):
+        self.is_draft = False
+        self.save()
+        
         if self.is_running or self.is_finished:
             return
         
         self._set_inputs()
-        
-        e = self.get_active_experiment()
-        if e is None:
+
+        if self.job.experiment is None:
             raise Error("gws.model.Protocol", "_run_before_task", "No experiment defined")
 
-        e.save()
-
-        for k in self._processes:
-            job = self._processes[k].job
-            job.experiment = e
-            job.save()
-        
         await super()._run_before_task(*args, **kwargs)
         
     async def task(self):
@@ -2549,19 +2696,28 @@ class Protocol(Process, SystemTrackable):
                 return
 
         # Good! The protocol task is finished!
-        e = self.get_active_experiment()
-        e.is_in_progress = False
-        e.save()
-
         self._set_outputs()
-        await super()._run_after_task()
+        await super()._run_after_task(*args, **kwargs)
 
     # -- S --
-
-    def set_active_experiment(self, experiment: Experiment):
-        job = self.job
-        job.set_experiment(experiment)
-        experiment.protocol_job_uri = job.uri
+    
+    def save(self, *args, **kwargs):
+        for k in self._processes:
+            self._processes[k].save()
+            
+        return super().save(*args, **kwargs)
+        
+    def set_title(self, title):
+        super().set_title(title)
+        self.graph["title"] = title
+    
+    def set_layout(self, layout: dict):
+        self.data["layout"] = layout
+    
+    #def set_active_experiment(self, experiment: Experiment):
+    #    job = self.job
+    #    job.set_experiment(experiment)
+    #    #experiment.protocol_uri = self.uri
 
     def _set_inputs(self, *args, **kwargs):
         """
@@ -2580,24 +2736,6 @@ class Protocol(Process, SystemTrackable):
         for k in self._outerfaces:
             port = self._outerfaces[k].source_port
             self.output[k] = port.resource
-
-    #def __init_pre_start_event(self):
-    #    self._event_listener.add('pre_start', self._set_inputs)
-
-    def __init_on_end_event(self):
-        """
-        Attach method `_run_after_task` to all sink processes to ensure that this method is called after
-        all inner processes have finished.
-        """
-        
-        sinks = []
-        for k in self._processes:
-            proc = self._processes[k]
-            if self.is_outerfaced_with(proc) or not proc.output.is_connected:
-                sinks.append(proc)
-
-        for proc in sinks:
-            proc.on_end( self._run_after_task )
 
     def __set_input_specs(self, input_specs):
         self.input_specs = input_specs
@@ -2619,7 +2757,8 @@ class Protocol(Process, SystemTrackable):
             input_specs[k] = interfaces[k]._resource_types
 
         self.__set_input_specs(input_specs)
-
+        
+        self._interfaces = {}
         for k in interfaces:
             source_port = self.input.ports[k]
             self._interfaces[k] = Interface(name=k, source_port=source_port, target_port=interfaces[k])
@@ -2630,7 +2769,8 @@ class Protocol(Process, SystemTrackable):
             output_specs[k] = outerfaces[k]._resource_types
 
         self.__set_output_specs(output_specs)
-
+        
+        self._outerfaces = {}
         for k in outerfaces:
             target_port = self.output.ports[k]
             self._outerfaces[k] = Outerface(name=k, target_port=target_port, source_port=outerfaces[k])
@@ -2643,7 +2783,7 @@ class Protocol(Process, SystemTrackable):
 #
 # ####################################################################
 
-class Resource(Viewable, SystemTrackable):
+class Resource(Viewable):
     """
     Resource class.
     
@@ -2657,13 +2797,13 @@ class Resource(Viewable, SystemTrackable):
 
     # -- A --
 
-    def archive(self, status: bool):
-        if self.is_archived == status:
+    def archive(self, tf: bool):
+        if self.is_archived == tf:
             return True
 
         with DbManager.db.atomic() as transaction:
             try:
-                tf = self.job.archive(status) and super().archive(status)
+                tf = self.job.archive(tf) and super().archive(tf)
                 if not tf:
                     transaction.rollback()
                     return False
@@ -2925,12 +3065,13 @@ class ViewModel(Model):
     :type model_specs: list
     """
 
-    model_id: int = IntegerField(index=True)
-    model_type :str = CharField(index=True)
+    model_uri: str = CharField(index=True)
+    model_type: str = CharField(index=True)
+    param_hash: str = CharField(index=True)
     model_specs: list = []
-
+        
     _model = None
-
+    _is_transient = False    # transient view are use to temprarily view part of a model (e.g. stream view)
     _table_name = 'gws_view_model'
     _fts_fields = {'title': 2.0, 'description': 1.0}
 
@@ -2959,18 +3100,26 @@ class ViewModel(Model):
         :return: The representation
         :rtype: dict, str
         """
+
+        _json = super().as_json()
+        _json["model"] = self.model.as_json( **self.params )
         
-        is_saved = self.id is not None
+        del _json["model_uri"]
+        del _json["model_type"]
+        del _json["param_hash"]
         
+        if not self.is_saved():
+            _json["uri"] = ""
+            _json["save_datetime"] = ""
+            
         #SOLUTION 1: clean and rigorous solution
-        _json = {
-            "uri": self.uri if is_saved else None,
-            "type": self.type,
-            "data" : self.data,
-            "model": self.model.as_json( **self.params ),
-            "creation_datetime" : str(self.creation_datetime),
-        }
-        
+        #_json = {
+        #    "uri": self.uri if is_saved else None,
+        #    "type": self.type,
+        #    "data" : self.data,
+        #    "model": self.model.as_json( **self.params ),
+        #    "creation_datetime" : str(self.creation_datetime),
+        #}
         
         #SOLUTION 2: easy usage, but less rigorous
         #_json = self.model.as_json( **self.params )
@@ -3006,11 +3155,18 @@ class ViewModel(Model):
 
     # -- F --
 
-    #@classmethod
-    #def from_params(model: 'Model', params: dict=None) -> 'ViewModel'
-    #    view_model = ViewModel.select().where(ViewModel.model_id==model.id)
-        
     # -- G --
+    
+    def get_instance( model, params ):
+        
+        try:
+            h = self.__create_param_hash(params)
+            vm = ViewModel.get( (ViewModel.mode_uri==model.uri) & (ViewModel.mode_type==model.type) & (ViewModel.param_hash==h) )
+        except:
+            vm = ViewModel(model=model)
+            vm.set_params(params)
+            
+        return vm
     
     def get_param(self, key: str, default=None) -> str:
         return self.data["params"].get(key, default)
@@ -3031,7 +3187,16 @@ class ViewModel(Model):
         """
         
         return self.data.get("title", "")
-
+    
+    # -- H --
+    
+    @staticmethod
+    def __create_param_hash(params):
+        params = sort_dict_by_key(params)
+        h = hashlib.md5()
+        h.update( json.dumps(params).encode() )
+        return h.hexdigest()
+            
     # -- M --
 
     @property
@@ -3040,7 +3205,7 @@ class ViewModel(Model):
             return self._model
 
         model_t = Controller.get_model_type(self.model_type)
-        model = model_t.get(model_t.id == self.model_id)
+        model = model_t.get(model_t.uri == self.model_uri)
         self._model = model.cast()
         return self._model
     
@@ -3063,8 +3228,8 @@ class ViewModel(Model):
         
         if not isinstance(params, dict):
             raise Error("gws.model.ViewModel", "set_params", "Parameter must be a dictionnary")
-            
-        self.data["params"] = params
+
+        self.data["params"] = sort_dict_by_key(params)
         
     def set_description(self, text: str):
         """
@@ -3077,13 +3242,13 @@ class ViewModel(Model):
         self.data["description"] = text
     
     def set_model(self, model: None):
-        if not self.model_id is None:
+        if not self.model_uri is None:
             raise Error("gws.model.ViewModel", "set_model", "A model already exists")
         
         self._model = model
 
         if model.is_saved():
-            self.model_id = model.id
+            self.model_uri = model.uri
 
     def set_title(self, title: str):
         """ 
@@ -3099,17 +3264,27 @@ class ViewModel(Model):
         """
         Saves the view model
         """
+        
+        if self._is_transient:
+            return True
+        
         if self._model is None:
             raise Error("gws.model.ViewModel", "save", "The ViewModel has no model")
         else:
-            if not self.model_id is None and self._model.id != self.model_id:
+            if not self.model_uri is None and self._model.uri != self.model_uri:
                 raise Error("gws.model.ViewModel", "save", "It is not allowed to change model of the ViewModel that is already saved")
                 
             with DbManager.db.atomic() as transaction:
                 try:
                     if self._model.save(*args, **kwargs):
-                        self.model_id = self._model.id
+                        self.model_uri = self._model.uri
                         self.model_type = self._model.full_classname()
+                        
+                        # hash params
+                        params = sort_dict_by_key(self.params)
+                        self.set_params(params)
+                        self.param_hash = self.__create_param_hash( params )
+                        
                         return super().save(*args, **kwargs)
                     else:
                         raise Error("gws.model.ViewModel", "save", "Cannot save the vmodel. Please ensure that the model of the vmodel is saved before")
@@ -3138,3 +3313,26 @@ class ViewModel(Model):
             
         self.data["title"] = text
 
+    
+    class Meta:
+        indexes = (
+            # create a unique on model_uri,model_type,param_hash
+            (('model_uri', 'model_type', 'param_hash'), True),
+        )
+        
+# ####################################################################
+#
+# StreamViewModel class
+#
+# ####################################################################
+
+class StreamViewModel(ViewModel):
+    _is_transient = True
+    
+    
+    # -- G --
+    
+    def get_instance( model, params ):
+        vm = ViewModel(model=model)
+        vm.set_params(params)
+        return vm

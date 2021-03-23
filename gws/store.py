@@ -169,7 +169,6 @@ class KVStore:
 class FileStore(Model):
     _table_name = "gws_file_store"
     
-
     # -- A --
     
     def add(self, source_file: (str, io.IOBase, tempfile.SpooledTemporaryFile, 'File', )):
@@ -248,12 +247,7 @@ class RemoteFileStore(FileStore):
                 
         files = {'file': source_file}
         response = requests.post(self.path, files = files)
-        
-        print(self.path)
-        print(files)
-        print(response)
-        print(response.text)
-        
+
         return f
     
     
@@ -272,13 +266,15 @@ class LocalFileStore(FileStore):
  
         if not self.is_saved():
             self.save()
+            if self.id == 1:
+                self.data["title"] = "Default store"
+                self.save()
         
         if not self.path:
             path =  os.path.join(self._base_dir, self.uri)
             self.data["path"] = path
             self.save()
-
-                
+      
     # -- A --
 
     def add(self, source_file: (str, io.IOBase, tempfile.SpooledTemporaryFile, 'File', ), \
@@ -294,16 +290,18 @@ class LocalFileStore(FileStore):
         :rtype: gws.file.File.
         """
         
-        if not  self.is_saved():
+        if not self.is_saved():
             self.save()
             
-        from gws.file import File
-        
+        from gws.file import File     
         with DbManager.db.atomic() as transaction:
             
             try:
                 # create DB file object
                 if isinstance(source_file, File):
+                    if self.contains(source_file):
+                        return source_file
+                
                     f = source_file
                     source_file_path = f.path
 
@@ -356,10 +354,14 @@ class LocalFileStore(FileStore):
         
         return file.path
 
-    def create_file( self, name: str ):
+    def create_file( self, name: str, file_type: type = None ):
         from gws.file import File
         
-        file = File()
+        if isinstance(file_type, type):
+            file = file_type()
+        else:
+            file = File()
+            
         self.__create_valid_file_path(file, name) 
         file.save()
         return file
@@ -371,68 +373,23 @@ class LocalFileStore(FileStore):
   
     # -- G --
     
+    @classmethod
+    def get_default_instance(cls):
+        try:
+            fs = cls.get_by_id(1)
+        except:
+            fs = cls()
+            fs.save()
+            
+        return fs
+                
     #def get_real_path(self, location: str):
     #    location = self.__clean_file_path(location)
     #    return os.path.join(self.path, location)
     
     # -- I --
   
-    # -- M --
-
-    #def move(self, source_file: str, dest_location: str, force: bool=False):
-    #    """ 
-    #    Move a file in the store 
-    #    """
-    #    
-    #    source_file_path = self.get_real_path(source_location) 
-    #    dest_file_path = self.get_real_path(dest_location) 
-    #    
-    #    if os.path.exists(dest_file_path) and not force:
-    #        raise Error("FileStore", "move", f"The destination file already exists")
-    #    
-    #    dest_dir = Path(dest_file_path).parent
-    #    if not os.path.exists(dest_dir):
-    #        os.makedirs(dest_dir)
-    #        if not os.path.exists(dest_dir):
-    #            raise Error("FileStore", "move", f"Cannot create directory {dest_dir}")
-
-    #    shutil.move(source_file_path, dest_file_path)
-        
-    #    source_dir = Path(source_file_path).parent
-    #    while True:
-    #        if len(os.listdir(source_dir)) == 0:
-    #            shutil.rmtree(source_dir)
-    #            source_dir = Path(source_dir).parent
-    #            if source_dir == self._base_dir:
-    #                break
-    #        else:
-    #            break
-    
-    # -- O --
-    
-    #@classmethod
-    #def open(cls, file, mode="r+t"):
-    #    """
-    #    Open a file
-    #    
-    #    :param file: The file to open
-    #    :type file: `gws.file.File`
-    #    :param mode: Mode (see native Python `open` function)
-    #    :type mode: `str`
-    #    :return: The file object 
-    #    :rtype: Python `file-like-object` or `stream`.
-    #    """
-    #    
-    #    if file.exists():
-    #        return open(file.path, mode)
-    #    else:
-    #        if not os.path.exists(file.dir):
-    #            os.makedirs(file.dir)
-    #            if not os.path.exists(file.dir):
-    #                raise Error("File", "open", f"Cannot create directory {file.dir}")
-    #        return open(file.path, mode="w+")
-
-            
+    # -- M --     
     
     # -- P --
     

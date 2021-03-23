@@ -12,7 +12,7 @@ from typing import Optional
 from gws.model import Process
 from gws.file import File
 from gws.settings import Settings
-from gws.file import FileStore
+from gws.file import FileStore, LocalFileStore
 from gws.controller import Controller
 from gws.logger import Error
 
@@ -54,11 +54,11 @@ class Shell(Process):
                 
             self.data['cmd'] = cmd 
             self.after_command(stdout=stdout)
-  
+            
             for k in self.output:
                 f = self.output[k]
                 if isinstance(f, File):
-                    f.move_to_store()
+                    f.move_to_default_store()
             
             self._tmp_dir.cleanup()
             self._tmp_dir = None

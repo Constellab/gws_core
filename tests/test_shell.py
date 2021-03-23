@@ -5,7 +5,7 @@ import os
 
 from gws.settings import Settings
 from gws.file import File
-from gws.model import Resource
+from gws.model import Resource, Study
 from gws.shell import EasyShell, CondaShell
 
 class Echo(EasyShell):
@@ -23,25 +23,20 @@ class Echo(EasyShell):
         res.data["out"] = stdout
         self.output["stdout"] = res
 
-class Echo(CondaShell):
-    input_specs = {}
-    output_specs = {'stdout': (Resource, )}
-    config_specs = {
-        'name': {"type": str, "default": None, 'description': "The name to echo"},
-        'save_stdout': {"type": bool, "default": False, 'description': "True to save the command output text. False otherwise"},
-    }
-    
-    _cmd: list = ['echo', '{param:name}']
-    
-    def after_command(self, stdout: str=None, tmp_dir: str=None):
-        res = Resource()
-        res.data["out"] = stdout
-        self.output["stdout"] = res
+class CondaEcho(CondaShell):
+    pass
+
 
 class TestShell(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
+        Echo.drop_table()
+        Study.drop_table()
+        
+        study = Study(data={"title": "Default study", "Description": ""})
+        study.save()
+        
         pass
 
     @classmethod
@@ -49,10 +44,11 @@ class TestShell(unittest.TestCase):
         pass
     
     def test_shell(self):
+        study = Study.get_by_id(1)
         
         proc = Echo(instance_name="shell")
         proc.set_param("name", "Jhon Doe")
-        e = proc.create_experiment()
+        e = proc.create_experiment(study=study)
         
         def _on_end(*args, **kwargs):
             res = proc.output['stdout']
@@ -62,4 +58,3 @@ class TestShell(unittest.TestCase):
         e.on_end(_on_end)
         
         asyncio.run( e.run() )
-        pass

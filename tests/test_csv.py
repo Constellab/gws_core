@@ -7,10 +7,10 @@ import pandas
 from pandas import DataFrame
 
 from gws.settings import Settings
-from gws.model import Protocol
+from gws.model import Protocol, Study
 from gws.csv import CSVData, Loader, Dumper, Importer, Exporter
 from gws.file import File
-from gws.store import FileStore
+from gws.store import LocalFileStore
 
 
 settings = Settings.retrieve()
@@ -20,16 +20,32 @@ class TestCSV(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        FileStore.remove_all_files(ignore_errors=True)
+        LocalFileStore.remove_all_files(ignore_errors=True)
         File.drop_table()
+        Dumper.drop_table()
+        Loader.drop_table()
+        Importer.drop_table()
+        Exporter.drop_table()
+        Study.drop_table()
+        
         pass
 
     @classmethod
     def tearDownClass(cls):
+        LocalFileStore.remove_all_files(ignore_errors=True)
+        File.drop_table()
+        Dumper.drop_table()
+        Loader.drop_table()
+        Importer.drop_table()
+        Exporter.drop_table()
+        Study.drop_table()
+        
         pass
 
     
     def test_csv_data(self):
+        study = Study(data={"title": "Default study", "Description": ""})
+        study.save()
         
         file = os.path.join(testdata_dir, "data.csv")
         csv_data = CSVData._import(file)
@@ -45,6 +61,9 @@ class TestCSV(unittest.TestCase):
         
         
     def test_loader_dumper(self):
+        study = Study(data={"title": "Default study", "Description": ""})
+        study.save()
+        
         i_file_path = os.path.join(testdata_dir, "data.csv")
         o_file_path = os.path.join(testdata_dir, "data_out.csv")
         
@@ -74,7 +93,7 @@ class TestCSV(unittest.TestCase):
         dumper.set_param("index", False)
         exporter.set_param("index", False)
         
-        e = proto.create_experiment()
+        e = proto.create_experiment(study=study)
         
         def _on_end(*args, **kwargs):
             print("Test CSV import/export")

@@ -242,6 +242,7 @@ class Exporter(BaseExporter):
         'delimiter': {"type": 'str', "default": "\t", "description": "Delimiter character. Only for parsing CSV files"},
         'header': {"type": bool, "default": True, "description":  "Write column names (header)"},
         'index': {"type": bool, "default": True, 'description': "Write row names (index)"},
+        'file_store_uri': {"type": str, "default": None, 'description': "URI of the file_store where the file must be exported"},
     }
 
 # ####################################################################

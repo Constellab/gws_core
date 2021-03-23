@@ -5,6 +5,9 @@
 
 import os
 import tempfile
+from secrets import token_bytes
+from base64 import b64encode
+    
 from playhouse.sqlite_ext import JSONField
 from peewee import Model as PWModel
 from peewee import SqliteDatabase, Proxy
@@ -20,7 +23,8 @@ class Settings(PWModel):
         app_dir         = __cdir__,
         app_host        = '0.0.0.0',
         app_port        = 3000,
-        db_dir          = os.path.join(__cdir__, '../../'),
+        log_dir          = os.path.join(__cdir__, '../../logs'),
+        data_dir          = os.path.join(__cdir__, '../../data'),
         db_name         = 'db.sqlite3',     # ':memory:'
         is_test         = False,
         dependencies    = {}
@@ -38,8 +42,11 @@ class Settings(PWModel):
     def init( cls, settings_json: dict = None ):
         for k in settings_json:
             cls._data[k] = settings_json[k]
-
-        db = SqliteDatabase( os.path.join(cls._data["db_dir"], "db_settings.sqlite3") )
+        
+        db_dir = os.path.join(cls._data["data_dir"], "settings")
+        if not os.path.exists(db_dir):
+            os.makedirs(db_dir)
+        db = SqliteDatabase( os.path.join(db_dir, "db_settings.sqlite3") )
         database_proxy.initialize(db)
 
         if not cls.table_exists():
@@ -54,10 +61,6 @@ class Settings(PWModel):
             settings.save()
         except:            
             settings = Settings()
-
-            from secrets import token_bytes
-            from base64 import b64encode
-
             #secret_key
             secret_key = b64encode(token_bytes(32)).decode()
             settings.set_data("secret_key", secret_key)
@@ -67,9 +70,8 @@ class Settings(PWModel):
             settings.set_data("token", token)
 
             #random central_api_key by default (security)
-            if not settings.data.get("central_api_key", None):
-                central_api_key = b64encode(token_bytes(32)).decode()
-                settings.set_data("central_api_key", central_api_key)
+            #if not settings.data.get("central",{}).get("api_key"):
+            #    settings.data["central"]["api_key"] = b64encode(token_bytes(32)).decode()
 
             #default uri
             settings.set_data("uri", "00000000-0000-0000-0000-000000000000")
@@ -109,22 +111,19 @@ class Settings(PWModel):
     def db_path(self):
         return self.build_db_path()
     
-    def build_db_path(self, db_dir = None, force_production_db = False):
+    def build_db_path(self, brick = "gws", force_production_db = False):
         if self.data["db_name"] == ':memory:':
             return self.data["db_name"]
         else:
-            if not db_dir:
-                db_dir = self.data["db_dir"]
-              
             if self.is_test and not force_production_db:
-                _db_dir = os.path.join(db_dir, "tests")
+                db_dir = os.path.join(self.data["data_dir"], "tests", brick, "db")
             else:
-                _db_dir = db_dir
+                db_dir = os.path.join(self.data["data_dir"], "prod", brick, "db")
             
-            if not os.path.exists(_db_dir):
-                os.makedirs(_db_dir)
+            if not os.path.exists(db_dir):
+                os.makedirs(db_dir)
                     
-            return os.path.join(_db_dir, self.data["db_name"])
+            return os.path.join(db_dir, self.data["db_name"])
             
     # -- G --
 
@@ -162,9 +161,9 @@ class Settings(PWModel):
         _folder = self.data.get("file_store_name","file_store")
         
         if self.is_test:
-            _dir = os.path.join(self.data["db_dir"], "tests", _folder)
+            _dir = os.path.join(self.data["data_dir"], "tests", "gws", _folder)
         else:
-            _dir = os.path.join(self.data["db_dir"], _folder)
+            _dir = os.path.join(self.data["data_dir"], "prod", "gws", _folder)
         
         return _dir 
     
@@ -172,9 +171,9 @@ class Settings(PWModel):
         _folder = self.data.get("kv_store_name","kv_store")
         
         if self.is_test:
-            _dir = os.path.join(self.data["db_dir"], "tests", _folder)
+            _dir = os.path.join(self.data["data_dir"], "tests", "gws", _folder)
         else:
-            _dir = os.path.join(self.data["db_dir"], _folder)
+            _dir = os.path.join(self.data["data_dir"], "prod", "gws", _folder)
         
         return _dir 
 

@@ -139,7 +139,7 @@ class Wait(Process):
 
 class Fly(Move):
     config_specs = {
-        'moving_step': {"type": float, "default": 1000, "unit": "km"},
+        'moving_step': {"type": float, "default": 1000.0, "unit": "km"},
         'direction': {"type": str, "default": "west", "allowed_values":["north", "south", "east", "west"], 'description': "The flying direction"}
     }
 
@@ -209,6 +209,8 @@ def create_protocol():
     )
 
     proto.set_title("The travel of Astro")
+    proto.save()
+    
     return proto
 
 
@@ -223,7 +225,6 @@ def _create_super_travel_protocol():
     add_1 = Add()
     addon_create_1 = AddOnCreate()
 
-    
     sub_travel = Protocol(
         processes = {
             'move_1' : move_1, 
@@ -275,10 +276,12 @@ def _create_super_travel_protocol():
     sub_travel.set_title('The mini travel of Astro')
     super_travel.set_title("The super travel of Astro")
     
+    sub_travel.save()
+    super_travel.save()
+    
     return super_travel
 
 def create_nested_protocol():
-    
     super_travel = _create_super_travel_protocol()
     
     facto  = Create()
@@ -300,6 +303,8 @@ def create_nested_protocol():
         interfaces = { },
         outerfaces = { }
     )
+    
     world_trip.set_title("The world trip of Astro")
+    world_trip.save()
     
     return world_trip

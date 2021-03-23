@@ -16,7 +16,6 @@ from gws.query import Query, Paginator
 from typing import List
 from fastapi import UploadFile, File as FastAPIFile
 
-
 class Controller(Base):
     """
     Controller class
@@ -34,7 +33,7 @@ class Controller(Base):
     _number_of_items_per_page = 50
 
     @classmethod
-    async def action(cls, action=None, object_type=None, object_uri=None, data=None, page=1, number_of_items_per_page=20, filters="") -> 'ViewModel':
+    async def action(cls, action=None, object_type=None, object_uri=None, study_uri=None, data=None, page=1, number_of_items_per_page=20, filters="") -> 'ViewModel':
         """
         Process user actions
 
@@ -73,7 +72,7 @@ class Controller(Base):
         elif action == "delete":
             model = cls.__action_delete(object_type, object_uri)
         elif action == "upload":
-            model = await cls.__action_upload(data)
+            model = await cls.__action_upload(data, study_uri=study_uri)
         elif action == "count":
             model = cls.__action_count(object_type)
             
@@ -112,7 +111,7 @@ class Controller(Base):
         
         if obj is None:
             return {"exception": {"id": cls.NOT_FOUND, "message": f"Invalid Model type or uri not found"}}
-        
+
         if isinstance(obj, ViewModel):
             obj.remove()
             return obj.as_json()
@@ -155,7 +154,7 @@ class Controller(Base):
 
     @classmethod
     def __action_update(cls, object_type: str, object_uri: str, data: dict) -> 'ViewModel':
-        from gws.model import SystemTrackable, ViewModel        
+        from gws.model import ViewModel        
         obj = cls.fetch_model(object_type, object_uri)
         if obj is None:
             return {"exception": {"id": cls.NOT_FOUND, "message": f"Invalid Model type or uri not found"}}
@@ -171,11 +170,22 @@ class Controller(Base):
         return view_model.as_json()
 
     @classmethod
-    async def __action_upload(cls, files: List[UploadFile] = FastAPIFile(...)):
+    async def __action_upload(cls, files: List[UploadFile] = FastAPIFile(...), study_uri=None):
         try:
+            from gws.model import Study
             from gws.file import Uploader
             u = Uploader(files=files)
-            e = u.create_experiment()
+            
+            if study_uri is None:
+                e = u.create_experiment(study = Study.get_default_instance())
+            else:
+                try:
+                    study = Study.get(Study.uri == study_uri)
+                except:
+                    return {"exception": {"id": cls.NOT_FOUND, "message": f"Study not found"}}
+                
+                e = u.create_experiment(study = Study.get_default_instance())
+                
             await e.run()
 
             result = u.output["result"]
@@ -310,8 +320,18 @@ class Controller(Base):
             return t.get(t.uri == object_uri)
         except:
             return None        
+    
     # -- G --
-
+    
+    @classmethod
+    def get_current_active_user():
+        from gws._auth.user import get_current_active_user
+        try:
+            _user = get_current_active_user()
+            return User.get(User.uri == _user.uri)
+        except:
+            return None
+    
     @classmethod
     def get_settings(cls):
         if Controller._settings is None:
@@ -417,9 +437,10 @@ class Controller(Base):
 
     @classmethod
     async def _run_robot_travel(cls):
+        from gws.model import Study
         from gws.robot import create_protocol
         p = create_protocol()
-        e = p.create_experiment()
+        e = p.create_experiment(study = Study.get_default_instance())
         e.set_title("The journey of Astro.")
         e.data["description"] = "This is the journey of Astro."
         await e.run()
@@ -428,9 +449,10 @@ class Controller(Base):
     
     @classmethod
     async def _run_robot_super_travel(cls):
+        from gws.model import Study
         from gws.robot import create_nested_protocol
         p = create_nested_protocol()
-        e = p.create_experiment()
+        e = p.create_experiment(study = Study.get_default_instance())
         e.set_title("The super journey of Astro.")
         e.data["description"] = "This is the super journey of Astro."
         await e.run()
@@ -438,10 +460,11 @@ class Controller(Base):
         return e.view().as_json()
 
     @classmethod
-    async def run_experiment(cls, experiment_uri: str = None):
+    async def run_experiment(cls, data: dict=None):
         from gws.model import Experiment
         try:
-            e = Experiment.get(Experiment.uri == experiment_uri)
+            e = Experiment.from_flow(data)
+            #e = Experiment.get(Experiment.uri == experiment_uri)
             if e.is_runnnig:
                 return { "exception": {"id": cls.IS_RUNNING, "message": f"Experiment is running"}}
             elif e.is_finished:
@@ -458,11 +481,16 @@ class Controller(Base):
     # -- S --
     
     @classmethod
-    def save_experiment(cls, experiment_uri: str=None, data=None):
+    def save_protocol(cls, data: dict=None):
         from gws.model import Experiment
-        e = Experiment.from_flow(experiment_uri=experiment_uri, data=data)
-        e.save()
-        return e.as_json()
+        proto = Protocol.from_flow(data)
+        return proto.view().as_json()
+    
+    @classmethod
+    def save_experiment(cls, data=None):
+        from gws.model import Experiment
+        e = Experiment.from_flow(data)
+        return e.view().as_json()
             
     @classmethod
     def save_all(cls, process_type_list: list = None) -> bool:

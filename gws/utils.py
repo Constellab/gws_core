@@ -36,3 +36,6 @@ def generate_random_chars(size=6, chars=string.ascii_uppercase + string.ascii_lo
 def dict_to_pandas():
     pass
     
+
+def sort_dict_by_key( d ):
+    return dict( sorted(d.items(), key=lambda x: x[0].lower()) )

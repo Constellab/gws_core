@@ -10,10 +10,37 @@ from gws.file import File
 # OVHRemoteFileStore class
 class OVHRemoteFileStore(RemoteFileStore):
     _default_container_url = "https://storage.sbg.cloud.ovh.net/v1/AUTH_a0286631d7b24afba3f3cdebed2992aa/public_test"
+    
+    @classmethod
+    def setUpClass(cls):
+        LocalFileStore.drop_table()
+        RemoteFileStore.drop_table()
+        File.drop_table()
+        pass
+
+    @classmethod
+    def tearDownClass(cls):
+        LocalFileStore.drop_table()
+        RemoteFileStore.drop_table()
+        File.drop_table()
+        pass
+    
     pass
 
 class TestKVStore(unittest.TestCase):
+    
+    @classmethod
+    def setUpClass(cls):
+        LocalFileStore.drop_table()
+        RemoteFileStore.drop_table()
+        pass
 
+    @classmethod
+    def tearDownClass(cls):
+        LocalFileStore.drop_table()
+        RemoteFileStore.drop_table()
+        pass
+    
     def test_store(self):
         s1 = KVStore('./store_test/s1')
         s1['city'] = 'Tokyo'

@@ -4,7 +4,7 @@ import copy
 import json
 import asyncio
 
-from gws.model import Model, Resource, Viewable
+from gws.model import Model, Resource, Viewable, ViewModel
 from gws.controller import Controller
 
 # ##############################################################################
@@ -42,11 +42,13 @@ class TestControllerHTTP(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
+        ViewModel.drop_table()
         Home.drop_table()
         Person.drop_table()
 
     @classmethod
     def tearDownClass(cls):
+        ViewModel.drop_table()
         Person.drop_table()
         pass
 
@@ -58,7 +60,6 @@ class TestControllerHTTP(unittest.TestCase):
             elon.save()
 
             response = await Controller.action(action="get", object_type=elon.full_classname(), object_uri=elon.uri)
-            print(response)
             self.assertEqual(response["model"]["uri"], elon.uri)
         
         asyncio.run( action() )
@@ -91,12 +92,16 @@ class TestControllerHTTP(unittest.TestCase):
             view_model.save()
             self.assertFalse(view_model.is_deleted)
         
-            with self.assertRaises(Exception):
-                await Controller.action(action="delete", object_type=elon.full_classname(), object_uri=elon.uri)
-
-            view_model = await Controller.action(action="delete", object_type=view_model.full_classname(), object_uri=view_model.uri)
-            self.assertTrue(view_model.is_deleted)
-        
+            response = await Controller.action(action="delete", object_type=elon.full_classname(), object_uri=elon.uri)
+            self.assertTrue(
+                response,
+                {"exception": {"id": Controller.NOT_FOUND, "message": f"No ViewModel found with uri {elon.uri}"}}
+            )
+            
+            response = await Controller.action(action="delete", object_type=view_model.full_classname(), object_uri=view_model.uri)
+            self.assertEqual(response["uri"], view_model.uri)
+            self.assertEqual(response["is_deleted"], True)
+            
         asyncio.run( action() )
         
     def test_register_model(self):
