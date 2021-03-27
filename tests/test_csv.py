@@ -44,6 +44,13 @@ class TestCSV(unittest.TestCase):
 
     
     def test_csv_data(self):
+        d = CSVData(table=[ [1, 2, 3] ], column_names=["a","b","c"])
+        print(d.table)
+        
+        d = CSVData(table=[1, 2, 3], column_names=["data"], row_names=["a","b","c"])
+        print(d.table)
+        
+    def test_csv_data_load(self):
         study = Study(data={"title": "Default study", "Description": ""})
         study.save()
         

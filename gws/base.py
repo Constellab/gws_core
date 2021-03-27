@@ -10,7 +10,6 @@ from peewee import SqliteDatabase, Model
 from playhouse.sqlite_ext import JSONField, RowIDField, SearchField, FTS5Model
 
 from slugify import slugify as _slugify
-
 from gws.settings import Settings
 
 def slugify(text: str, snakefy: bool = False) -> str:

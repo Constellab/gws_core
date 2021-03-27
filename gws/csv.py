@@ -20,16 +20,27 @@ from gws.file import File, Dumper as BaseDumper, Loader as BaseLoader, \
                     Importer as BaseImporter, Exporter as BaseExporter
 
 class CSVData(Resource):
-    def __init__(self, *args, table: (DataFrame, np.ndarray,) = None, **kwargs):
+    def __init__(self, *args, table: (DataFrame, np.ndarray,) = None, \
+                 column_names=None, row_names=None, **kwargs):
+        
         super().__init__(*args, **kwargs)
+        
         if not table is None:
             if isinstance(table, DataFrame):
                 self.kv_store['table'] = table
-            elif isinstance(table, np.ndarray):
-                self.kv_store['table'] = DataFrame(table)
+            elif isinstance(table, (np.ndarray,list)):
+                df = DataFrame(table)
+                if column_names:
+                    df.columns = column_names
+                if row_names:
+                    df.index = row_names
+
+                self.kv_store['table'] = df
             else:
                 raise Error("CSVData", "__init__", "The table mus be an instance of DataFrame or Numpy array")
-        
+    
+    # -- A --
+ 
     # -- C --
 
     @property

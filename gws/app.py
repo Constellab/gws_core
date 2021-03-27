@@ -15,7 +15,6 @@ from typing import Optional
 from fastapi import Depends, HTTPException, FastAPI, status
 from fastapi.responses import Response, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.requests import Request
 from pydantic import BaseModel
 
 from gws.base import slugify
@@ -26,23 +25,8 @@ from gws.controller import Controller
 #from gws.central import Central
 from gws.logger import Error
 
-from gws._auth.user import check_authenticate_user
-
 brick = "gws"
-app = FastAPI(docs_url="/apidocs")
-
-@app.api_route("/brick-api/{brick_name}/{api_func}", response_class=JSONResponse, methods=["GET", "POST"])
-async def call_brick_api(request: Request, brick_name: Optional[str] = "gws", api_func: Optional[str] = None) :
-    brick_app_module = importlib.import_module(f"{brick_name}.app")
-    api_t = getattr(brick_app_module, "API", None)
-
-    try:
-        async_func = getattr(api_t, api_func.replace("-","_").lower(), None)
-        results = await async_func(request)
-        return results
-    except Exception as err:
-        raise Error("gws.app", "call_brick_api", f"{err}")
-        #return {"status": False, "results": {}, "message": f"{err}"}
+app = FastAPI(docs_url=None)
 
 ####################################################################################
 #
@@ -54,7 +38,6 @@ async def call_brick_api(request: Request, brick_name: Optional[str] = "gws", ap
 async def startup_event():
     Study.create_default_instance()
     User.create_owner()
-    #Central.put_status(is_running=True)
 
     settings = Settings.retrieve()
     print("GWS application started!")
@@ -71,7 +54,6 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    #Central.put_status(is_running=False)
     pass
 
 ####################################################################################
@@ -106,8 +88,7 @@ class App(BaseApp):
         """
         
         from ._sphynx.docgen import docgen
-        from ._app.central import central_app
-        from ._app.core import core_app
+        from ._api.api import app as core_app
         
         # static dirs and docs
         dirs = _settings.get_dependency_dirs()
@@ -118,12 +99,12 @@ class App(BaseApp):
         
             html_dir = os.path.join(dirs[name],"./docs/html/build")
             if not os.path.exists(os.path.join(html_dir,"index.html")):
+                #os.makedirs(html_dir)
                 docgen(name, dirs[name], _settings, force=True)
             app.mount(f"/docs/{name}/", StaticFiles(directory=html_dir), name=f"/docs/{name}/")
 
         # api routes
-        app.mount("/central-api/", central_app)
-        app.mount("/core-api/", core_app)
+        app.mount("/api/", core_app)
 
     @classmethod 
     def start(cls):

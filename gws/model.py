@@ -131,15 +131,14 @@ class Model(BaseModel):
     
     def as_json(self, stringify: bool=False, prettify: bool=False, jsonifiable_data_keys: list=[], **kwargs) -> (str, dict, ):
         """
-        Returns JSON string or dictionnary representation of the model.
+        Returns a JSON string or dictionnary representation of the model.
         
         :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
         :type stringify: bool
         :param prettify: If True, indent the JSON string. Defaults to False.
         :type prettify: bool
         :param jsonifiable_data_keys: If is empty, `data` is fully jsonified, otherwise only specified keys are jsonified
-        :param jsonifiable_data_keys: `list` of str
-        :type jsonify_full_data: bool
+        :type jsonifiable_data_keys: `list` of str        
         :return: The representation
         :rtype: dict, str
         """
@@ -1516,12 +1515,15 @@ class Experiment(Viewable):
         if len(flow) == 0:
             return None
         
-        
         if flow.get("experiment_uri"):
-            e = Experiment.get(Experiment.uri == flow["experiment_uri"])
+            e_uri = flow["experiment_uri"]
+            try:
+                e = Experiment.get(Experiment.uri == e_uri)
+            except:
+                raise Error("Experiment", "Experiment", f"No experiment matchs against the uri {e_uri}")
         else:
             if not flow.get("study_uri"):
-                raise Error("Experiment", "Experiment", "A study is required")
+                raise Error("Experiment", "Experiment", "A study uri is required")
             
             try:
                 study = Study.get(Study.uri == flow.get("study_uri"))

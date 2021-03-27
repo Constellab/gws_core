@@ -18,9 +18,6 @@ from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
 from fastapi.openapi.utils import get_openapi
 from fastapi.requests import Request
 
-from gws.central import Central
-
-
 class OAuth2UserTokenBearerCookie(OAuth2):
     def __init__(
         self,
@@ -61,11 +58,12 @@ class OAuth2UserTokenBearerCookie(OAuth2):
         if not authorization or scheme.lower() != "bearer":
             if self.auto_error:
                 raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN, detail="Not authenticated"
+                    status_code=status.HTTP_403_FORBIDDEN, 
+                    detail="Not authenticated"
                 )
             else:
                 return None
         return param
 
-oauth2_cookie_scheme = OAuth2UserTokenBearerCookie(tokenUrl="/login/{user_access_token}")
+oauth2_cookie_scheme = OAuth2UserTokenBearerCookie(tokenUrl="/user/login/{uri}/{token}")
 

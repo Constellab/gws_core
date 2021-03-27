@@ -12,21 +12,15 @@ import asyncio
 from gws.base import Base
 from gws.logger import Error, Info
 from gws.query import Query, Paginator
+from gws.http import *
 
 from typing import List
 from fastapi import UploadFile, File as FastAPIFile
-
+         
 class Controller(Base):
     """
     Controller class
     """
-    
-    UNEXPECTED_ERROR = "UNEXPECTED_ERROR"
-    NOT_FOUND = "NOT_FOUND"
-    NOT_VIEWMODEL = "NOT_VIEWMODEL"
-    UPLOAD_FAILED = "UPLOAD_FAILED"
-    IS_RUNNING = "IS_RUNNING"
-    IS_FINISHED = "IS_FINISHED"
     
     _model_specs = dict() 
     _settings = None
@@ -82,7 +76,7 @@ class Controller(Base):
     def __action_count(cls, object_type: str) -> int:
         t = cls.get_model_type(object_type)
         if t is None:
-            return {"exception": {"id": cls.NOT_FOUND, "message": f"Invalid Model type"}}
+            raise HTTPNotFound(detail=f"Invalid Model type")
 
         return t.select().count()
     
@@ -90,7 +84,7 @@ class Controller(Base):
     def __action_get(cls, object_type: str, object_uri: str, data:dict=None) -> 'ViewModel':
         obj = cls.fetch_model(object_type, object_uri)
         if obj is None:
-            return {"exception": {"id": cls.NOT_FOUND, "message": f"Invalid Model type or uri not found"}}
+            raise HTTPNotFound(detail=f"Invalid Model type or uri not found")
         
         from gws.model import Model, ViewModel
         if isinstance(obj, ViewModel):
@@ -99,8 +93,7 @@ class Controller(Base):
         elif isinstance(obj, Model):
             obj = obj.view(params=data)
         else:
-            return {"exception": {"id": cls.NOT_FOUND, "message": f"No Model found with uri {object_uri}"}}
-            #raise Error("Controller", "__action_get", f"No ViewModel found with uri {object_uri}")
+            raise HTTPNotFound(detail=f"No Model found with uri {object_uri}")
         
         return obj.as_json()
 
@@ -110,21 +103,20 @@ class Controller(Base):
         obj = cls.fetch_model(object_type, object_uri)
         
         if obj is None:
-            return {"exception": {"id": cls.NOT_FOUND, "message": f"Invalid Model type or uri not found"}}
+            raise HTTPNotFound(detail=f"Invalid Model type or uri not found")
 
         if isinstance(obj, ViewModel):
             obj.remove()
             return obj.as_json()
         else:
-            return {"exception": {"id": cls.NOT_FOUND, "message": f"No ViewModel found with uri {object_uri}"}}
-            #raise Error("Controller", f"__action_delete", f"No ViewModel found with uri {object_uri}")
+            raise HTTPNotFound(detail=f"No ViewModel found with uri {object_uri}")
     
     @classmethod
     def __action_list(cls, object_type: str, object_uris: list,  data:dict=None, page=1, number_of_items_per_page=20) -> list:
         t = cls.get_model_type(object_type)
         
         if t is None:
-            return {"exception": {"id": cls.NOT_FOUND, "message": f"Invalid Model type"}}
+            raise HTTPNotFound(detail=f"Invalid Model type")
         
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
         
@@ -157,42 +149,38 @@ class Controller(Base):
         from gws.model import ViewModel        
         obj = cls.fetch_model(object_type, object_uri)
         if obj is None:
-            return {"exception": {"id": cls.NOT_FOUND, "message": f"Invalid Model type or uri not found"}}
+            raise HTTPNotFound(detail=f"Invalid Model type or uri not found")
         
         if isinstance(obj, ViewModel):
             view_model = obj
             view_model.set_params(data)
             view_model.save()
         else:
-            return {"exception": {"id": cls.NOT_VIEWMODEL, "message": f"No ViewModel found with uri {object_uri}"}}
-            #raise Error("Controller", "__action_update", f"No ViewModel found with uri {object_uri}")
+            raise HTTPNotFound(detail=f"No ViewModel found with uri {object_uri}")
 
         return view_model.as_json()
 
     @classmethod
     async def __action_upload(cls, files: List[UploadFile] = FastAPIFile(...), study_uri=None):
-        try:
-            from gws.model import Study
-            from gws.file import Uploader
-            u = Uploader(files=files)
-            
-            if study_uri is None:
-                e = u.create_experiment(study = Study.get_default_instance())
-            else:
-                try:
-                    study = Study.get(Study.uri == study_uri)
-                except:
-                    return {"exception": {"id": cls.NOT_FOUND, "message": f"Study not found"}}
-                
-                e = u.create_experiment(study = Study.get_default_instance())
-                
-            await e.run()
+        from gws.model import Study
+        from gws.file import Uploader
+        u = Uploader(files=files)
 
+        if study_uri is None:
+            e = u.create_experiment(study = Study.get_default_instance())
+        else:
+            try:
+                study = Study.get(Study.uri == study_uri)
+                e = u.create_experiment(study = study)
+            except:
+                raise HTTPNotFound(detail=f"Study not found")
+
+        try:
+            await e.run()
             result = u.output["result"]
             return result.as_json()
-        
         except Exception as err:
-            return { "exception": {"id": cls.UPLOAD_FAILED, "message": f"Upload failed. Error: {err}"}}
+            raise HTTPInternalServerError(detail=f"Upload failed. Error: {err}")
 
     
     # -- F --
@@ -443,10 +431,13 @@ class Controller(Base):
         e = p.create_experiment(study = Study.get_default_instance())
         e.set_title("The journey of Astro.")
         e.data["description"] = "This is the journey of Astro."
-        await e.run()
-        e.save()
-        return e.view().as_json()
-    
+        
+        try:
+            await e.run()
+            return e.view().as_json()
+        except Exception as err:
+            raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
+            
     @classmethod
     async def _run_robot_super_travel(cls):
         from gws.model import Study
@@ -455,26 +446,35 @@ class Controller(Base):
         e = p.create_experiment(study = Study.get_default_instance())
         e.set_title("The super journey of Astro.")
         e.data["description"] = "This is the super journey of Astro."
-        await e.run()
-        e.save()
-        return e.view().as_json()
-
+        
+        try:
+            await e.run()
+            return e.view().as_json()
+        except Exception as err:
+            raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
+                
     @classmethod
     async def run_experiment(cls, data: dict=None):
         from gws.model import Experiment
+        
         try:
             e = Experiment.from_flow(data)
-            #e = Experiment.get(Experiment.uri == experiment_uri)
-            if e.is_runnnig:
-                return { "exception": {"id": cls.IS_RUNNING, "message": f"Experiment is running"}}
-            elif e.is_finished:
-                return { "exception": {"id": cls.IS_FINISHED, "message": f"Experiment has already run"}}
-            else:
+        except Exception as err:
+            raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
+        
+        if not e:
+            raise HTTPNotFound(detail=f"Experiment not found")
+            
+        if e.is_runnnig:
+            raise HTTPBusy(detail=f"The experiment is already running")
+        elif e.is_finished:
+            raise HTTPForbiden(detail=f"The experiment is finished")
+        else:
+            try:
                 await e.run()
                 return e.view().as_json()
-        except Exception as err:
-            return { "exception": {"id": cls.UNEXPECTED_ERROR, "message": f"An error occured. Error: {err}"}}
-            #raise Error("Controller", "__run", f"An error occured. {err}")
+            except Exception as err:
+                raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
     
     # -- U --
           
@@ -489,7 +489,15 @@ class Controller(Base):
     @classmethod
     def save_experiment(cls, data=None):
         from gws.model import Experiment
-        e = Experiment.from_flow(data)
+        
+        try:
+            e = Experiment.from_flow(data)
+        except Exception as err:
+            raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
+                
+        if not e:
+            raise HTTPNotFound(detail=f"Cannot save the experiment")
+       
         return e.view().as_json()
             
     @classmethod

@@ -30,8 +30,6 @@ class _User(BaseModel):
     token: str
     is_active: bool
 
-
-
 def check_api_key(api_key: str = Depends(oauth2_header_scheme)):
     if not Central.verify_api_key(api_key):
         raise HTTPException(
