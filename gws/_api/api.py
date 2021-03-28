@@ -23,10 +23,11 @@ from ._auth_user import OAuth2UserTokenRequestForm, get_current_authenticated_us
 from ._auth_user import UserData
 from gws.http import async_error_track
 
-from starlette_context.middleware import context, ContextMiddleware
-middleware = [Middleware(ContextMiddleware)]
+from starlette_context import context
+from starlette_context.middleware import ContextMiddleware
 
-app = FastAPI(docs_url="/docs", middleware=middleware)
+app = FastAPI(docs_url="/docs")
+#app = FastAPI(docs_url="/docs")
 
 # Enable core for the API
 app.add_middleware(
@@ -35,6 +36,10 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["GET,HEAD,PUT,PATCH,POST,DELETE"],
     allow_headers=["Origin,X-Requested-With,Content-Type,Accept,Authorization,authorization,X-Forwarded-for,lang"],
+)
+
+app.add_middleware(
+    ContextMiddleware
 )
 
 class ViewModelData(BaseModel):
@@ -92,6 +97,9 @@ async def get_list_of_experiments(page: int = 1, number_of_items_per_page: int =
     - **number_of_items_per_page**: the number of items per page (limited to 50) 
     """
 
+    print("xxxx")
+    print(Controller.get_current_user().data)
+    
     return Controller.fetch_experiment_list(
         page=page, 
         number_of_items_per_page=number_of_items_per_page
@@ -381,8 +389,6 @@ async def login_user(request: Request, uri: str, token: str, \
     form_data.uri = uri
     form_data.token = token
     
-    print("yyyyyyyy")
-    
     from ._auth_user import login
     return await login(form_data=form_data)
 
@@ -398,6 +404,24 @@ async def read_users_me(current_user: UserData = Depends(get_current_authenticat
 @app.post("/user/create", tags=["User management"])
 async def create_user(user: UserData, current_user: UserData = Depends(get_current_authenticated_admin_user)):
     return Central.create_user(user.dict())
+
+@app.get("/user/test", tags=["User management"])
+async def get_user_test():
+    from gws.model import User
+    o = User.get_owner()
+    s = User.get_sysuser()
+    return {
+        "owner": {
+            "uri": o.uri,
+            "token": o.token
+        },
+        "sys": {
+            "uri": s.uri,
+            "token": s.token
+        }
+    }
+
+    #return Central.get_user_status(user_uri)
 
 @app.get("/user/{user_uri}", tags=["User management"])
 async def get_user(user_uri : str):
