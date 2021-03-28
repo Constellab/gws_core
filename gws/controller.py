@@ -16,12 +16,14 @@ from gws.http import *
 
 from typing import List
 from fastapi import UploadFile, File as FastAPIFile
-         
+from starlette_context import context
+
 class Controller(Base):
     """
     Controller class
     """
-    
+
+    _session = None
     _model_specs = dict() 
     _settings = None
     _number_of_items_per_page = 50
@@ -182,6 +184,8 @@ class Controller(Base):
         except Exception as err:
             raise HTTPInternalServerError(detail=f"Upload failed. Error: {err}")
 
+    # -- C --
+    
     
     # -- F --
 
@@ -312,13 +316,8 @@ class Controller(Base):
     # -- G --
     
     @classmethod
-    def get_current_active_user():
-        from gws._auth.user import get_current_active_user
-        try:
-            _user = get_current_active_user()
-            return User.get(User.uri == _user.uri)
-        except:
-            return None
+    def get_current_user(cls):
+        return context.data.get("user", None)
     
     @classmethod
     def get_settings(cls):
@@ -380,7 +379,8 @@ class Controller(Base):
         import glob
         modules = glob.glob(os.path.join(cdir, "*.py"))
         return [ os.path.basename(f)[:-3] for f in modules if os.path.isfile(f) and not f.endswith('__init__.py')]
-        
+    
+    
     @classmethod
     def register_all_processes(cls):
         settings = cls.get_settings()
@@ -390,7 +390,6 @@ class Controller(Base):
         process_type_list = []
         
         for brick_name in dep_dirs:
-            
             cdir = dep_dirs[brick_name]
             module_names = cls.__list_sub_module( os.path.join(cdir, brick_name) )
             
@@ -409,8 +408,6 @@ class Controller(Base):
                         t = getattr(submodule, class_name, None)
                         if issubclass(t, Process) and not issubclass(t, Protocol):
                             process_type_list.append(t)
-                        #elif issubclass(t, Resource):
-                        #    process_type_list.append(t)
                 except:
                     pass
 
@@ -538,3 +535,22 @@ class Controller(Base):
                 return False
 
         return True
+    
+    @classmethod
+    def set_current_user(cls, user: ('User', 'UserData', )):
+        from gws.model import User
+        from gws._api._auth_user import UserData
+
+        if isinstance(user, UserData):
+            user = User.get(User.uri==user.uri)
+        
+        if not isinstance(user, User):
+            raise HTTPInternalServerError(detail=f"Invalid current user")
+
+        if not user.is_authenticated:
+            raise HTTPUnauthorized(detail=f"Not authenticated")
+            
+        if not user.is_active:
+            raise HTTPUnauthorized(detail=f"Not authorized")
+            
+        context.data["user"] = user

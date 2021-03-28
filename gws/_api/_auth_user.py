@@ -17,7 +17,8 @@ from fastapi.param_functions import Form
 from passlib.context import CryptContext
 from pydantic import BaseModel
 
-from gws.user import User
+from gws.model import User
+from gws.controller import Controller
 from gws.settings import Settings
 from ._user_token_cookie import oauth2_cookie_scheme
 
@@ -44,11 +45,12 @@ class OAuth2UserTokenRequestForm:
         self.client_id = client_id
         self.client_secret = client_secret
 
-class _User(BaseModel):
+class UserData(BaseModel):
     uri: str
     token: str
     is_active: bool
     is_admin: bool
+    is_authenticated: bool
 
 # -- A --
 
@@ -58,19 +60,17 @@ def authenticate_user(uri:str, token: str):
         detail="Could not authenticate user",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    
-    print("xxxxxx")
-    print(uri)
-    print(token)
-    
+
     # check uri and token in db
     db_user = User.authenticate(uri=uri, token=token)
+
     if db_user:
-        return _User(
+        return UserData(
             uri=db_user.uri, 
             token=db_user.token, 
             is_active=db_user.is_active,
-            is_admin=db_user.is_admin
+            is_admin=db_user.is_admin,
+            is_authenticated=db_user.is_authenticated
         )
     else:
         raise credentials_exception
@@ -105,27 +105,33 @@ async def get_current_user(token: str = Depends(oauth2_cookie_scheme)):
 
     try:
         db_user = User.get(User.uri == uri)
-        return _User(
+        if not db_user.is_active:
+            raise credentials_exception
+            
+        return UserData(
             uri=db_user.uri, 
             token=db_user.token, 
             is_active=db_user.is_active, 
-            is_admin=db_user.is_admin
+            is_admin=db_user.is_admin,
+            is_authenticated=db_user.is_authenticated
         )
     except:
         raise credentials_exception
 
-async def check_authenticate_user(current_user: _User = Depends(get_current_user)):
-    if not current_user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
+async def check_authenticate_user(current_user: UserData = Depends(get_current_user)):
+    if not current_user.is_authenticated:
+        raise HTTPException(status_code=400, detail="Not authenticated user")
     return True
 
-async def get_current_active_user(current_user: _User = Depends(get_current_user)):
-    if not current_user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
+async def get_current_authenticated_user(current_user: UserData = Depends(get_current_user)):
+    if not current_user.is_authenticated:
+        raise HTTPException(status_code=400, detail="Not authenticated  user")
+    
+    Controller.set_current_user(current_user)  #<- globally set current_user to the Controller 
     return current_user
 
-async def get_current_active_admin_user(token: str = Depends(oauth2_cookie_scheme)):
-    current_user = get_current_active_user(token)
+async def get_current_authenticated_admin_user(token: str = Depends(oauth2_cookie_scheme)):
+    current_user = get_current_authenticated_user(token)
     if not current_user.is_admin:
         raise HTTPException(status_code=400, detail="Non admin user")
     
@@ -133,8 +139,8 @@ async def get_current_active_admin_user(token: str = Depends(oauth2_cookie_schem
     
 # -- L --
 
-async def login(form_data: OAuth2UserTokenRequestForm = Depends(), redicrect_url: str = "/"):
-    
+async def login(form_data: OAuth2UserTokenRequestForm = Depends(), redirect_url: str = "/"):
+
     user = authenticate_user(uri=form_data.uri, token=form_data.token)
 
     if not user:
@@ -163,7 +169,7 @@ async def login(form_data: OAuth2UserTokenRequestForm = Depends(), redicrect_url
     )
     return response
 
-async def logout(current_user: _User, redicrect_url: str = "/"):
+async def logout(current_user: UserData, redirect_url: str = "/"):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",

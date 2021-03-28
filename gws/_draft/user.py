@@ -154,6 +154,7 @@ class Activity(Model):
     LOGIN = "LOGIN"
     LOGOUT = "LOGOUT"
     CREATE = "CREATE"
+    SAVE = "SAVE"
     START = "START"
     DELETE = "DELETE"
     ARCHIVE = "ARCHIVE"

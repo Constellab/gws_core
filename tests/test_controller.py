@@ -6,6 +6,7 @@ import asyncio
 
 from gws.model import Model, Resource, Viewable, ViewModel
 from gws.controller import Controller
+from gws.http import *
 
 # ##############################################################################
 #
@@ -92,11 +93,9 @@ class TestControllerHTTP(unittest.TestCase):
             view_model.save()
             self.assertFalse(view_model.is_deleted)
         
-            response = await Controller.action(action="delete", object_type=elon.full_classname(), object_uri=elon.uri)
-            self.assertTrue(
-                response,
-                {"exception": {"id": Controller.NOT_FOUND, "message": f"No ViewModel found with uri {elon.uri}"}}
-            )
+            with self.assertRaises(HTTPNotFound):
+                response = await Controller.action(action="delete", object_type=elon.full_classname(), object_uri=elon.uri)
+                #self.assertRaises(HTTPNotFound, Controller.action, action="delete", object_type=elon.full_classname(), object_uri=elon.uri)
             
             response = await Controller.action(action="delete", object_type=view_model.full_classname(), object_uri=view_model.uri)
             self.assertEqual(response["uri"], view_model.uri)

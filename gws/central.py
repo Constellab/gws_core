@@ -8,9 +8,7 @@ from gws.settings import Settings
 from gws.logger import Error
 from gws.report import Report
 from gws.lab import Lab
-from gws.model import Experiment, Protocol
-from gws.user import User
-from gws.http import *
+from gws.model import Experiment, Protocol, User
 
 class Central:
     
@@ -36,9 +34,9 @@ class Central:
             if user.save():
                 return cls.get_user_status(user.uri)
             else:
-                raise HTTPInternalServerError(detail=f"Cannot save the user")
+                raise Error("Central", "create_user", "Cannot save the user")
         else:
-            raise HTTPInternalServerError(detail=f"The user already exists")
+            raise Error("Central", "create_user", "The user already exists")
 
     # -- D --
     
@@ -54,7 +52,7 @@ class Central:
     def get_user_status(cls, uri):
         user = User.get_by_uri(uri)
         if user is None:
-            raise HTTPNotFound(detail=f"User not found")
+            raise Error("Central", "get_user_status", "User not found")
         else:
             return {
                 "uri": user.uri,
@@ -71,7 +69,7 @@ class Central:
     def set_user_status(cls, uri, data):
         user = User.get_by_uri(uri)
         if user is None:
-            raise HTTPNotFound(detail=f"User not found")
+            raise Error("Central", "set_user_status", "User not found")
         else:
             if data.get("is_active"):
                 user.is_active = data.get("is_active")
@@ -82,7 +80,7 @@ class Central:
             if user.save():
                 return cls.get_user_status(user.uri)
             else:
-                raise HTTPInternalServerError(detail=f"Cannot save the user")
+                raise Error("Central", "set_user_status", "Cannot save the user")
     
     # -- U --
     

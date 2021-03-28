@@ -9,6 +9,8 @@ from gws.model import   Config, Process, Resource, Model, ViewModel, \
                         Protocol, Job, Experiment, Study
 from gws.controller import Controller
 from gws.robot import Robot, Create, Move, Eat, Wait
+from gws.unittest import GTest
+
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
@@ -25,8 +27,7 @@ class TestProtocol(unittest.TestCase):
         Robot.drop_table()
         Study.drop_table()
         
-        study = Study(data={"title": "Default study", "Description": ""})
-        study.save()
+        GTest.init()
         pass
 
     @classmethod
@@ -81,7 +82,7 @@ class TestProtocol(unittest.TestCase):
         Q = Protocol.select()
         self.assertEqual(len(Q), count+1)
         
-        e = Experiment(protocol=proto, study=study)
+        e = Experiment(protocol=proto, study=GTest.study, user=GTest.user)
             
         def _check_exp():
             self.assertEqual(e.jobs.count(), 8)
@@ -188,7 +189,7 @@ class TestProtocol(unittest.TestCase):
             Q = Protocol.select()
             self.assertEqual(len(Q), count+2)
         
-        e = super_proto.create_experiment(study=study)
+        e = super_proto.create_experiment(study=GTest.study, user=GTest.user)
         e.on_end(_on_end)
         
         Q = Protocol.select()
@@ -236,6 +237,6 @@ class TestProtocol(unittest.TestCase):
             self.assertTrue(mini_proto.graph, mini_proto2.graph)
             
     
-        e = super_proto.create_experiment(study=study)
+        e = super_proto.create_experiment(study=GTest.study, user=GTest.user)
         e.on_end(_on_end)    
         asyncio.run( e.run() )

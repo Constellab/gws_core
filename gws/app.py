@@ -19,10 +19,8 @@ from pydantic import BaseModel
 
 from gws.base import slugify
 from gws.settings import Settings
-from gws.model import Study
-from gws.user import User
+from gws.model import Study, User
 from gws.controller import Controller
-#from gws.central import Central
 from gws.logger import Error
 
 brick = "gws"
@@ -36,9 +34,6 @@ app = FastAPI(docs_url=None)
 
 @app.on_event("startup")
 async def startup_event():
-    Study.create_default_instance()
-    User.create_owner()
-
     settings = Settings.retrieve()
     print("GWS application started!")
     print("* Server: {}:{}".format(settings.get_data("app_host"), settings.get_data("app_port")))
@@ -76,6 +71,7 @@ class App(BaseApp):
     """
     Base App
     """
+    
     app: FastAPI = app
     ctrl = Controller
     debug = _settings.get_data("is_test") or _settings.get_data("is_demo")
@@ -84,11 +80,18 @@ class App(BaseApp):
     @classmethod
     def init(cls):
         """
-        Intialize static routes
+        Initialize static routes
         """
         
         from ._sphynx.docgen import docgen
         from ._api.api import app as core_app
+        
+        # create default study and users
+        Study.create_default_instance()
+        User.create_owner_and_sysuser()
+
+        # register all processes before starting the HTTP server
+        Controller.register_all_processes()
         
         # static dirs and docs
         dirs = _settings.get_dependency_dirs()
@@ -114,5 +117,7 @@ class App(BaseApp):
         settings = Settings.retrieve()
         settings.set_data("app_host","0.0.0.0")
         settings.save()
+        
+        cls.init()
         uvicorn.run(cls.app, host=settings.get_data("app_host"), port=int(settings.get_data("app_port")))
         cls.is_running = True

@@ -32,9 +32,6 @@ def _run(   ctx=None, uri=False, token=False, test=False, use_prod_biota_db=Fals
     if not settings.save():
         raise Error("manage", "Cannot save the settings in the database")
     
-    #from gws.controller import Controller
-    #Controller.register_all_processes()
-        
     if runserver:
         settings.set_data("app_host", ip)
         settings.set_data("app_port", port)
@@ -42,13 +39,9 @@ def _run(   ctx=None, uri=False, token=False, test=False, use_prod_biota_db=Fals
         if not settings.save():
             raise Error("manage", "Cannot save the settings in the database")
         
-        from gws.controller import Controller
-        Controller.register_all_processes()
-        
         # start app
         from gws.app import App
         app = App()
-        app.init()
         app.start()
 
     elif test:

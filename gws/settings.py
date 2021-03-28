@@ -5,12 +5,14 @@
 
 import os
 import tempfile
-from secrets import token_bytes
-from base64 import b64encode
+#from secrets import token_bytes
+#from base64 import b64encode
     
 from playhouse.sqlite_ext import JSONField
 from peewee import Model as PWModel
 from peewee import SqliteDatabase, Proxy
+
+from gws.utils import generate_random_chars
 
 database_proxy = Proxy()  # create a proxy for our db.
 __cdir__ = os.path.dirname(os.path.abspath(__file__))
@@ -62,16 +64,12 @@ class Settings(PWModel):
         except:            
             settings = Settings()
             #secret_key
-            secret_key = b64encode(token_bytes(32)).decode()
+            secret_key = generate_random_chars(128) #b64encode(token_bytes(32)).decode()
             settings.set_data("secret_key", secret_key)
 
             #random token by default (security)
-            token = b64encode(token_bytes(32)).decode()
+            token = generate_random_chars(128) #b64encode(token_bytes(32)).decode()
             settings.set_data("token", token)
-
-            #random central_api_key by default (security)
-            #if not settings.data.get("central",{}).get("api_key"):
-            #    settings.data["central"]["api_key"] = b64encode(token_bytes(32)).decode()
 
             #default uri
             settings.set_data("uri", "00000000-0000-0000-0000-000000000000")

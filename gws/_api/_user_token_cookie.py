@@ -65,5 +65,5 @@ class OAuth2UserTokenBearerCookie(OAuth2):
                 return None
         return param
 
-oauth2_cookie_scheme = OAuth2UserTokenBearerCookie(tokenUrl="/user/login/{uri}/{token}")
+oauth2_cookie_scheme = OAuth2UserTokenBearerCookie(tokenUrl="/auth/login/{uri}/{token}")
 
