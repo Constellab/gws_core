@@ -508,7 +508,192 @@ class Model(BaseModel):
                 raise Error("gws.model.Model", "save_all", f"Error message: {err}")
 
         return True
-     
+
+# ####################################################################
+#
+# User class
+#
+# ####################################################################
+
+class User(Model):
+    
+    token = CharField(null=False)
+    email = CharField(default=False, index=True)
+    group = CharField(default="user", index=True)
+    is_active = BooleanField(default=True)
+    is_authenticated = BooleanField(default=False)
+
+    USER_GOUP = "user"
+    ADMIN_GROUP = "admin"
+    OWNER_GROUP = "owner"
+    SYSUSER_GROUP = "sysuser"
+    VALID_GROUPS = [USER_GOUP, ADMIN_GROUP, OWNER_GROUP, SYSUSER_GROUP]
+    
+    _is_deletable = False
+    _table_name = 'gws_user'
+    _fts_fields = {'full_name': 2.0}
+
+    # -- A --
+    
+    @classmethod
+    def authenticate(cls, uri: str, token: str) -> 'User':
+        """ 
+        Verify the uri and token, save the authentication status and returns the corresponding user
+
+        :param uri: The user uri
+        :type uri: str
+        :param token: The token to check
+        :type token: str
+        :return: The user if successfully verified, False otherwise
+        :rtype: User, False
+        """
+        
+        with DbManager.db.atomic() as transaction:
+            try:
+                user = User.get(User.uri==uri, User.token==token)
+                if not user.is_active:
+                    raise Error("User", "authenticate", f"Could not authenticate inactive user {uri}")
+                    
+                user.is_authenticated = True
+                user.save()
+                Activity.add(user, Activity.LOGIN)
+                return user
+            except:
+                transaction.rollback()
+                return False
+    
+    @classmethod
+    def create_owner_and_sysuser(cls):
+        settings = Settings.retrieve()
+
+        Q = User.select().where(User.group == cls.OWNER_GROUP)
+        if not Q:
+            uri = settings.data["owner"]["uri"]
+            email = settings.data["owner"]["email"]
+            full_name = settings.data["owner"]["full_name"]
+            u = User(
+                uri = uri if uri else None, 
+                email = email,
+                data = {"full_name": full_name},
+                is_active = True,
+                group = cls.OWNER_GROUP
+            )
+            u.save()
+            
+        Q = User.select().where(User.group == cls.SYSUSER_GROUP)
+        if not Q:
+            u = User(
+                email = "sys@local",
+                data = {"full_name": "sysuser"},
+                is_active = True,
+                is_authenticated = True,   #<- is always authenticated
+                group = cls.SYSUSER_GROUP
+            )
+            u.save()
+            
+    # -- G --
+    
+    @classmethod
+    def get_owner(cls):
+         return User.get(User.group == cls.OWNER_GROUP)
+    
+    @classmethod
+    def get_sysuser(cls):
+         return User.get(User.group == cls.SYSUSER_GROUP)
+    
+    @property
+    def full_name(self):
+        return self.data.get("full_name", "")
+
+    def __generate_token(self):
+        return generate_random_chars(128)
+    
+    def generate_access_token(self):
+        self.token =  self.__generate_token()
+        self.save()
+    
+    # -- I --
+    
+    @property
+    def is_admin(self):
+        return self.group == self.ADMIN_GROUP
+    
+    @property
+    def is_owner(self):
+        return self.group == self.OWNER_GROUP
+    
+    @property
+    def is_sysuser(self):
+        return self.group == self.SYSUSER_GROUP
+    
+    # -- S --
+
+    def save(self, *arg, **kwargs):
+        if not self.group in self.VALID_GROUPS:
+            raise Error("User", "save", "Invalid user group")
+        
+        if self.id is None:
+            if self.token is None:
+                self.token = self.__generate_token()
+        
+        if self.is_owner or self.is_admin or self.is_sysuser:
+            if not self.is_active:
+                raise Error("User", "save", "Cannot deactivate the {owner, admin, system} users")
+                
+        return super().save(*arg, **kwargs)
+    
+    # -- U --
+    
+    @classmethod
+    def unauthenticate(self, uri: str) -> 'User':
+        with DbManager.db.atomic() as transaction:
+            try:
+                user = User.get(User.uri==uri, User.token==token)
+                self.is_authenticated = False
+                self.token = self.__generate_token()     #/!\SECURITRY: cancel current token to prevent token hacking
+                self.save()
+                Activity.add(self, Activity.LOGOUT)
+            except:
+                transaction.rollback()
+                return False
+    
+# ####################################################################
+#
+# Activity class
+#
+# ####################################################################
+
+class Activity(Model):
+    user = ForeignKeyField(User, index=True)
+    activity_type = CharField(null=False, index=True)
+    object_type = CharField(null=False, index=True)
+    object_uri = CharField(null=False, index=True)
+    
+    _is_deletable = False
+    
+    _fts_fields = {}
+    _table_name = "gws_user_activity"
+    
+    LOGIN = "LOGIN"
+    LOGOUT = "LOGOUT"
+    CREATE = "CREATE"
+    SAVE = "SAVE"
+    START = "START"
+    STOP = "STOP"
+    DELETE = "DELETE"
+    ARCHIVE = "ARCHIVE"
+    VALIDATE = "VALIDATE"
+    
+    @classmethod
+    def add(self, user: User, activity_type: str, object_type=None, object_uri=None):
+        activity = Activity(
+            user = user, 
+            activity_type = activity_type,
+            object_type = object_type,
+            object_uri = object_uri
+        )
+        activity.save()
+        
 # ####################################################################
 #
 # Viewable class
@@ -864,6 +1049,7 @@ class Process(Viewable):
     """
 
     type = CharField(null=True, index=True, unique=True)
+    created_by = ForeignKeyField(User, null=False, index=True)
     
     is_running: bool = False 
     is_finished: bool = False 
@@ -884,7 +1070,7 @@ class Process(Viewable):
     _is_deletable = False
     _table_name = 'gws_process'
 
-    def __init__(self, *args, instance_name: str=None, **kwargs):
+    def __init__(self, *args, instance_name: str=None, user=None, **kwargs):
         """
         Constructor
 
@@ -920,6 +1106,15 @@ class Process(Viewable):
         if not self.title:
             self.data["title"] = kwargs.get('title', self.full_classname())
             
+        if not self.is_saved():
+            if not user:
+                user = User.get_sysuser()            
+            
+            if not isinstance(user, User):
+                raise Error("gws.model.Process", "__init__", "The user must be an instance of User")
+                
+            self.created_by = user
+
         self.set_instance_name(instance_name)
         self.save()
 
@@ -983,7 +1178,6 @@ class Process(Viewable):
             data = json.dumps(data)
         
         data = re.sub(r"\"(([^\"]*_)?uri|save_datetime|creation_datetime)\"\s*\:\s*\"([^\"]*)\"", r'"\1": ""', data)
-        data = re.sub(r"\"is_draft\"\s*\:\s*\"False", r'"is_draft": "True"', data)
         return json.loads(data)
     
     # -- C --
@@ -999,10 +1193,6 @@ class Process(Viewable):
         :return: The experiment
         :rtype: `gws.model.Experiment`
         """
-        
-        #if isinstance(config, Config):
-        #    job = self.job
-        #    job.set_config(config)
         
         instance_name = self.instance_name if self.instance_name else self.full_classname()
         proto = Protocol(processes={ instance_name: self })
@@ -1381,187 +1571,6 @@ class Study(Viewable):
             study.save()
         
         return study
-
-# ####################################################################
-#
-# User class
-#
-# ####################################################################
-
-class User(Model):
-    
-    token = CharField(null=False)
-    email = CharField(default=False, index=True)
-    group = CharField(default="user", index=True)
-    is_active = BooleanField(default=True)
-    is_authenticated = BooleanField(default=False)
-
-    USER_GOUP = "user"
-    ADMIN_GROUP = "admin"
-    OWNER_GROUP = "owner"
-    SYSUSER_GROUP = "sysuser"
-    VALID_GROUPS = [USER_GOUP, ADMIN_GROUP, OWNER_GROUP, SYSUSER_GROUP]
-    
-    _is_deletable = False
-    _table_name = 'gws_user'
-    _fts_fields = {'full_name': 2.0}
-
-    # -- A --
-    
-    @classmethod
-    def authenticate(cls, uri: str, token: str) -> 'User':
-        """ 
-        Verify the uri and token, save the authentication status and returns the corresponding user
-
-        :param uri: The user uri
-        :type uri: str
-        :param token: The token to check
-        :type token: str
-        :return: The user if successfully verified, False otherwise
-        :rtype: User, False
-        """
-        
-        with DbManager.db.atomic() as transaction:
-            try:
-                user = User.get(User.uri==uri, User.token==token)
-                if not user.is_active:
-                    raise Error("User", "authenticate", f"Could not authenticate inactive user {uri}")
-                    
-                user.is_authenticated = True
-                user.save()
-                Activity.add(user, Activity.LOGIN)
-                return user
-            except:
-                transaction.rollback()
-                return False
-    
-    @classmethod
-    def create_owner_and_sysuser(cls):
-        settings = Settings.retrieve()
-
-        Q = User.select().where(User.group == cls.OWNER_GROUP)
-        if not Q:
-            uri = settings.data["owner"]["uri"]
-            email = settings.data["owner"]["email"]
-            full_name = settings.data["owner"]["full_name"]
-            u = User(
-                uri = uri if uri else None, 
-                email = email,
-                data = {"full_name": full_name},
-                is_active = True,
-                group = cls.OWNER_GROUP
-            )
-            u.save()
-            
-        Q = User.select().where(User.group == cls.SYSUSER_GROUP)
-        if not Q:
-            u = User(
-                email = "sys@local",
-                data = {"full_name": "sysuser"},
-                is_active = True,
-                is_authenticated = True,   #<- is always authenticated
-                group = cls.SYSUSER_GROUP
-            )
-            u.save()
-            
-    # -- G --
-    
-    @classmethod
-    def get_owner(cls):
-         return User.get(User.group == cls.OWNER_GROUP)
-    
-    @classmethod
-    def get_sysuser(cls):
-         return User.get(User.group == cls.SYSUSER_GROUP)
-    
-    @property
-    def full_name(self):
-        return self.data.get("full_name", "")
-
-    def __generate_token(self):
-        return generate_random_chars(128)
-    
-    def generate_access_token(self):
-        self.token =  self.__generate_token()
-        self.save()
-    
-    # -- I --
-    
-    @property
-    def is_admin(self):
-        return self.group == self.ADMIN_GROUP
-    
-    @property
-    def is_owner(self):
-        return self.group == self.OWNER_GROUP
-    
-    @property
-    def is_system(self):
-        return self.group == self.SYSUSER_GROUP
-    
-    # -- S --
-
-    def save(self, *arg, **kwargs):
-        if not self.group in self.VALID_GROUPS:
-            raise Error("User", "save", "Invalid user group")
-        
-        if self.id is None:
-            if self.token is None:
-                self.token = self.__generate_token()
-        
-        if self.is_owner or self.is_admin or self.is_system:
-            if not self.is_active:
-                raise Error("User", "save", "Cannot deactivate the {owner, admin, system} users")
-                
-        return super().save(*arg, **kwargs)
-    
-    # -- U --
-    
-    @classmethod
-    def unauthenticate(self, uri: str) -> 'User':
-        with DbManager.db.atomic() as transaction:
-            try:
-                user = User.get(User.uri==uri, User.token==token)
-                self.is_authenticated = False
-                self.token = self.__generate_token()     #/!\SECURITRY: cancel current token to prevent token hacking
-                self.save()
-                Activity.add(self, Activity.LOGOUT)
-            except:
-                transaction.rollback()
-                return False
-    
-# ####################################################################
-#
-# Activity class
-#
-# ####################################################################
-
-class Activity(Model):
-    user = ForeignKeyField(User)
-    _is_deletable = False
-    
-    _fts_fields = {'activity_type': 2.0, "object_type": 2.0, "object_uri": 1.0}
-    _table_name = "gws_user_activity"
-    
-    LOGIN = "LOGIN"
-    LOGOUT = "LOGOUT"
-    CREATE = "CREATE"
-    SAVE = "SAVE"
-    START = "START"
-    DELETE = "DELETE"
-    ARCHIVE = "ARCHIVE"
-    
-    @classmethod
-    def add(self, user: User, activity_type: str, object_type=None, object_uri=None):
-        ac = Activity(
-            user=user, 
-            data = {
-                "activity_type": activity_type,
-                "object_type": object_type,
-                "object_uri": object_uri
-            }
-        )
-        ac.save()
         
 # ####################################################################
 #
@@ -1580,28 +1589,37 @@ class Experiment(Viewable):
     :property score: The score of the experiment
     :type score: `float`
     """
-    
+
     study = ForeignKeyField(Study, null=True, backref='experiments')
-    score = FloatField(null=True, index=True)
-    is_draft = BooleanField(default=True, index=True)
-    
+    created_by = ForeignKeyField(User, null=True, backref='created_experiments')
+    score = FloatField(null=True, index=True)    
+    is_validated = BooleanField(default=False, index=True)
+
     _job = None
     _protocol = None
     _table_name = 'gws_experiment'
 
-    def __init__(self, *args, protocol=None, **kwargs):
+    def __init__(self, *args, user=None, protocol=None, **kwargs):
         super().__init__(*args, **kwargs)
         
-        if not self.id:
+        if not self.is_saved():
+            if user is None:
+                user = User.get_sysuser()
+            
+            if isinstance(user, User):
+                self.created_by = user
+            else:
+                raise Error("gws.model.Experiment", "__init__", "The user must be an instance of User")
+                
             if protocol is None:
-                protocol = Protocol()
+                protocol = Protocol(user=user)
                 
             if isinstance(protocol, Protocol):
                 if not protocol.instance_name:
                     protocol.set_instance_name()
             else:
                 raise Error("gws.model.Experiment", "__init__", "The protocol must be an instance of Protocol")
-  
+                
             self.save()
             
             # bind a job
@@ -1620,6 +1638,13 @@ class Experiment(Viewable):
             
         with DbManager.db.atomic() as transaction:
             try:
+                Activity.add(
+                    user, 
+                    Activity.ARCHIVE,
+                    object_type = self.full_classname(),
+                    object_uri = self.uri
+                )
+                
                 Q = Job.select().where( Job.experiment == self )
                 for job in Q:
                     if not job.archive(tf):
@@ -1674,17 +1699,20 @@ class Experiment(Viewable):
     
     @property
     def flow(self):
-        #job = self.protocol.job
         return self.job.flow
     
     @classmethod
-    def from_flow(cls, flow: dict) -> 'Experiment':
+    def from_flow(cls, flow: dict, user=None) -> 'Experiment':
         """ 
         Create a new instance from a existing frow
 
         :return: The experiment
         :rtype": `gws.model.Experiment`
         """
+        
+        if not user:
+            user = User.get_sysuser()
+            
         if isinstance(flow, str):
             flow = json.loads(flow)
         
@@ -1706,7 +1734,9 @@ class Experiment(Viewable):
             except:
                 raise Error("Experiment", "Experiment", f"No study matchs against the uri {study_uri}")
       
-            protocol = Protocol.from_flow(flow)
+            protocol = Protocol.from_flow(flow, user=user)
+            protocol.save()
+            
             e = protocol.create_experiment(study=study, user=user)
             e.save()
 
@@ -1714,7 +1744,11 @@ class Experiment(Viewable):
         
         
     # -- I --
-
+    
+    @property
+    def is_draft(self):
+        return not self.is_running and not self.is_finished
+    
     @property
     def is_finished(self):
         for job in self.jobs:
@@ -1787,19 +1821,68 @@ class Experiment(Viewable):
                     .order_by(Resource.creation_datetime.desc())
         return Q
 
-    async def run(self):
+    async def run(self, user=None):
+        if not user:
+            user = User.get_sysuser()
+            
         if self.is_deleted:
             raise Error("gws.model.Experiment", "save", f"The experiment is deleted")
         
         if self.is_archived:
             raise Error("gws.model.Experiment", "save", f"The experiment is archived")
         
-        self.is_draft = False
+        if self.is_validated:
+            raise Error("gws.model.Experiment", "save", f"The experiment is validated")
+        
+        Activity.add(
+            user, 
+            Activity.START,
+            object_type = self.full_classname(),
+            object_uri = self.uri
+        )
+        
         self.save()
         await self.protocol._run()
     
     # -- S --
     
+    def save(self, *args, **kwargs):  
+        with DbManager.db.atomic() as transaction:
+            try:
+                if not self.is_saved():
+                    Activity.add(
+                        self.created_by,
+                        Activity.CREATE,
+                        object_type = self.full_classname(),
+                        object_uri = self.uri
+                    )
+                
+                return super().save(*args, **kwargs)
+            except:
+                transaction.rollback()
+                return False
+    
+    # -- V --
+    
+    def validate(self, user):
+        if self.is_validated:
+            raise Error("gws.model.Experiment", "save", f"The experiment is already validated")
+        
+        with DbManager.db.atomic() as transaction:
+            try:
+                self.is_validated = True
+                self.save()
+                
+                Activity.add(
+                    user,
+                    Activity.VALIDATE,
+                    object_type = self.full_classname(),
+                    object_uri = self.uri
+                )
+            except:
+                transaction.rollback()
+                raise Error("gws.model.Experiment", "save", f"Could not validate the experiment. Error: {err}")
+            
 # ####################################################################
 #
 # ProgressBar class
@@ -2054,7 +2137,11 @@ class Job(Viewable):
             return _json
 
     # -- C --
-
+    
+    @property
+    def created_by(self):
+        return self.experiment.created_by
+    
     @property
     def config(self):
         """
@@ -2180,7 +2267,11 @@ class Job(Viewable):
         await self.process._run()
 
     # -- S --
-
+    
+    @property
+    def study(self):
+        return self.experiment.study
+    
     def set_config(self, config: Config):
         if not config.is_saved():
             config.save()
@@ -2321,7 +2412,7 @@ class Protocol(Process):
     """
 
     type = CharField(null=True, index=True, unique=False)
-    is_draft = BooleanField(default=True, index=True)
+    is_validated = BooleanField(default=False, index=True)
     
     _is_singleton = False
     _processes: dict = {}
@@ -2333,9 +2424,10 @@ class Protocol(Process):
     _table_name = 'gws_protocol'
 
     def __init__(self, *args, processes: dict = {}, \
-                 connectors: list = [], interfaces: dict = {}, outerfaces: dict = {}, **kwargs):
+                 connectors: list = [], interfaces: dict = {}, outerfaces: dict = {}, \
+                 user = None, **kwargs):
 
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs, user = None)
 
         self._processes = {}
         self._connectors = []
@@ -2366,16 +2458,21 @@ class Protocol(Process):
                     raise Error("gws.model.Protocol", "__init__", "The list of connector must contain instances of Connectors")
                 
                 self.add_connector(conn)
- 
+             
+            if user:
+                if self.created_by.is_sysuser:
+                    self.create_by = user
+                
             # set interfaces
             self.__set_interfaces(interfaces)
             self.__set_outerfaces(outerfaces)
             
             self.data["graph"] = self.dumps(as_dict=True)
-            self.save()   # will save the graph
-
+            self.save()   #<- will save the graph
+            
         #self.__init_pre_start_event()
         self.__init_on_end_event()
+            
 
     # -- A --
 
@@ -2621,14 +2718,17 @@ class Protocol(Process):
         return proto
     
     @classmethod
-    def from_flow( cls, flow: dict ) -> 'Protocol':
+    def from_flow( cls, flow: dict, user=None ) -> 'Protocol':
         """ 
-        Create a new instance from a existing flow
+        Create a new instance from an existing flow
 
         :return: The protocol
         :rtype": `gws.model.Protocol`
         """
         
+        if not user:
+            user = User.get_sysuser()
+            
         if isinstance(flow, str):
             flow = json.loads(flow)
         
@@ -2639,29 +2739,35 @@ class Protocol(Process):
             proto = Protocol.get(Protocol.uri == flow["process"].get("uri"))
         else:
             instance_name = flow["process"]["instance_name"] 
-            proto = Protocol(instance_name=instance_name)
+            proto = Protocol(instance_name=instance_name, user=user)
             proto.set_title(flow["process"]["title"])
             proto.set_layout(flow.get("layout",{}))
          
-        if proto.is_draft:
+        if not proto.is_validated:
             
             # add process
             # -------------------------------------------
             for instance_name in flow["jobs"]:
+                current_job = flow["jobs"][instance_name]
+                
                 if instance_name in proto._processes:
-                    proc = proto._processes[instance_name] 
+                    proc = proto._processes[instance_name]
                 else:
-                    current_job = flow["jobs"][instance_name]
+                    # create and add a new process for this job
                     t_str = current_job["process"]["type"]
-                    t = Controller.get_model_type(t_str)
-
-                    # sub-process uri always exists
-                    if current_job["process"].get("uri"):
-                        proc = t.get(t.uri == current_job["process"]["uri"])
+                    try:
+                        t = Controller.get_model_type(t_str)
+                    except:
+                        raise Error("Protocol","from_flow", f"The subprotocol or subprocess type {t_str} is not found on the lab. Please ensure that the lab fullfil the requirements for this protocol.")
+                    
+                    proc_uri = current_job["process"].get("uri")
+                    if proc_uri:
+                        #-> the sub-process exists -> OK!
+                        proc = t.get(t.uri == proc_uri)
                         proto.add_process(instance_name, proc)  # add to protocol and set instance_name before
                         proc.set_title(current_job["process"]["title"])
                     else:
-                        raise Error("Protocol","from_flow", "The sub-protocol or sub-process uri is not found")
+                        raise Error("Protocol","from_flow", f"The subprotocol or subprocess uri {proc_uri} is not found")
                 
                 # update config
                 proc.config.set_params( current_job["config"]["params"] )
@@ -2706,7 +2812,7 @@ class Protocol(Process):
                 lhs_port = lhs_proc>>lhs_port_name
                 rhs_port = rhs_proc<<rhs_port_name
                 
-                if not lhs_port.is_left_connected_to(rhs_port):
+                if not lhs_port.is_right_connected_to(rhs_port):
                     connector = (lhs_port | rhs_port)
                     proto.add_connector(connector)
             
@@ -2716,14 +2822,8 @@ class Protocol(Process):
     
     @property
     def graph(self):
-        #if not "graph" in self.data:
-        #    self.data["graph"] = {}
-            
         return self.data.get("graph",{})
     
-    #def get_active_experiment(self):
-    #    return self.job.experiment
-
     def get_process(self, name: str) -> Process:
         """ 
         Returns a process by its name.
@@ -2809,9 +2909,6 @@ class Protocol(Process):
                 return True
 
         return False
-    
-    #def __init_pre_start_event(self):
-    #    self._event_listener.add('pre_start', self._set_inputs)
 
     def __init_on_end_event(self):
         """
@@ -2835,7 +2932,6 @@ class Protocol(Process):
     # -- R --
     
     async def _run_before_task(self, *args, **kwargs):
-        self.is_draft = False
         self.save()
         
         if self.is_running or self.is_finished:
@@ -2885,10 +2981,27 @@ class Protocol(Process):
     # -- S --
     
     def save(self, *args, **kwargs):
-        for k in self._processes:
-            self._processes[k].save()
+        if self.is_validated:
+            return True
+            #raise Error("gws.model.Protocol", "save", f"The protocol is already validated")
             
-        return super().save(*args, **kwargs)
+        with DbManager.db.atomic() as transaction:
+            try:
+                for k in self._processes:
+                    self._processes[k].save()
+
+                if not self.is_saved():
+                    Activity.add(
+                        self.created_by, 
+                        Activity.CREATE,
+                        object_type = self.full_classname(),
+                        object_uri = self.uri
+                    )
+
+                return super().save(*args, **kwargs)
+            except Exception as err:
+                transaction.rollback()
+                raise Error("gws.model.Protocol", "save", f"Could not save the protocol. Error: {err}")
         
     def set_title(self, title):
         super().set_title(title)
@@ -2897,11 +3010,6 @@ class Protocol(Process):
     def set_layout(self, layout: dict):
         self.data["layout"] = layout
     
-    #def set_active_experiment(self, experiment: Experiment):
-    #    job = self.job
-    #    job.set_experiment(experiment)
-    #    #experiment.protocol_uri = self.uri
-
     def _set_inputs(self, *args, **kwargs):
         """
         Propagate resources through interfaces
@@ -2959,6 +3067,28 @@ class Protocol(Process):
             self._outerfaces[k] = Outerface(name=k, target_port=target_port, source_port=outerfaces[k])
 
         #self._outerfaces = outerfaces
+    
+    # -- V --
+    
+    def validate(self, user):
+        if self.is_validated:
+            raise Error("gws.model.Protocol", "save", f"The Protocol is already validated")
+        
+        with DbManager.db.atomic() as transaction:
+            try:
+                Activity.add(
+                    user,
+                    Activity.VALIDATE,
+                    object_type = self.full_classname(),
+                    object_uri = self.uri
+                )
+
+                self.is_validated = True
+                self.save()
+            except:
+                transaction.rollback()
+                raise Error("gws.model.Protocol", "save", f"Could not validate the protocol. Error: {err}")
+            
 
 # ####################################################################
 #

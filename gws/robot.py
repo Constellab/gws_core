@@ -308,3 +308,26 @@ def create_nested_protocol():
     world_trip.save()
     
     return world_trip
+
+
+class MyRobotProtocol(Protocol):
+    super_travel = _create_super_travel_protocol()
+    facto  = Create()
+    fly_1  = Fly()
+    wait_1 = Wait()
+    
+    processes = {
+        'facto' : facto, 
+        'fly_1' : fly_1, 
+        'super_travel': super_travel,
+        'wait_2' : wait_1, 
+    }
+    
+    connectors=[
+        facto>>'robot'       | super_travel<<'robot',
+        super_travel>>'robot'  | fly_1<<'robot',
+        fly_1>>'robot'       | wait_1<<'robot'
+    ]
+    
+    interfaces = { }
+    outerfaces = { }

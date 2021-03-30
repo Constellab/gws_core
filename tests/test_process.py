@@ -3,11 +3,10 @@ import asyncio
 import unittest
 from gws.model import   Job, Config, Process, Resource, \
                         Model, ViewModel, Experiment, Protocol, \
-                        Study, User
+                        Study, User, Activity
 
 from gws.controller import Controller
 from gws.robot import Robot, Create, Move, Eat, Wait
-
 from gws.unittest import GTest
 
 class TestProcess(unittest.TestCase):
@@ -23,6 +22,7 @@ class TestProcess(unittest.TestCase):
         Experiment.drop_table()
         ViewModel.drop_table()
         Study.drop_table()
+        Activity.drop_table()
         GTest.init()
         pass
 
@@ -33,6 +33,7 @@ class TestProcess(unittest.TestCase):
         Create.drop_table()
         Robot.drop_table()
         Study.drop_table()
+        Activity.drop_table()
         pass
 
     def test_process_singleton(self):
@@ -58,6 +59,7 @@ class TestProcess(unittest.TestCase):
         p_wait = Wait()
     
         proto = Protocol(
+            user = GTest.user,
             processes = {
                 'p0' : p0,  
                 'p1' : p1, 
@@ -78,7 +80,10 @@ class TestProcess(unittest.TestCase):
             interfaces = {},
             outerfaces = {}
         )
-
+        
+        self.assertTrue( p0.created_by.is_sysuser )
+        self.assertEqual( proto.created_by, GTest.user )
+        
         self.assertEqual( len(p1.get_next_procs()), 1 )
         self.assertEqual( len(p2.get_next_procs()), 2 )
 
@@ -122,6 +127,10 @@ class TestProcess(unittest.TestCase):
             saved_proc = j.process
             self.assertEqual( saved_proc, p3 )
             self.assertTrue( saved_proc.input['robot'] is None )
+            
+            self.assertEqual( j.created_by, GTest.user )
+            self.assertEqual( j.study, GTest.study )
+            
         
         # set events
         p3.on_start(_on_p3_start)
@@ -129,6 +138,9 @@ class TestProcess(unittest.TestCase):
         p5.on_end(_on_p5_end)
 
         e = proto.create_experiment(user=GTest.user, study=GTest.study)
+        self.assertEqual( e.created_by, GTest.user )
+        self.assertEqual( e.study, GTest.study )
+        
         e.on_end(_on_end)        
         asyncio.run( e.run() )
 

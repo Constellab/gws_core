@@ -8,6 +8,7 @@ from gws.settings import Settings
 from gws.model import Config, Process, Resource, Model, ViewModel, Protocol, Job, Experiment, Study
 from gws.controller import Controller
 from gws.robot import Robot, Create, Move, Eat, Wait, create_nested_protocol
+from gws.unittest import GTest
 
 
 settings = Settings.retrieve()
@@ -24,9 +25,7 @@ class TestProtocol(unittest.TestCase):
         Job.drop_table()
         Robot.drop_table()
         Study.drop_table()
-        
-        study = Study(data={"title": "Default study", "Description": ""})
-        study.save()
+        GTest.init()
         pass
 
     @classmethod
@@ -42,7 +41,7 @@ class TestProtocol(unittest.TestCase):
     def test_experiment(self):
         study = Study.get_default_instance()
         proto = create_nested_protocol()    
-        e = proto.create_experiment(study=study)
+        e = proto.create_experiment(study=GTest.study,user=GTest.user)
         e.save()
         flow = e.flow
   

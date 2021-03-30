@@ -7,6 +7,7 @@ from gws.settings import Settings
 from gws.file import File
 from gws.model import Resource, Study
 from gws.shell import EasyShell, CondaShell
+from gws.unittest import GTest
 
 class Echo(EasyShell):
     input_specs = {}
@@ -33,22 +34,17 @@ class TestShell(unittest.TestCase):
     def setUpClass(cls):
         Echo.drop_table()
         Study.drop_table()
-        
-        study = Study(data={"title": "Default study", "Description": ""})
-        study.save()
-        
+        GTest.init()
         pass
 
     @classmethod
     def tearDownClass(cls):
         pass
     
-    def test_shell(self):
-        study = Study.get_by_id(1)
-        
+    def test_shell(self):        
         proc = Echo(instance_name="shell")
         proc.set_param("name", "Jhon Doe")
-        e = proc.create_experiment(study=study)
+        e = proc.create_experiment(study=GTest.study, user=GTest.user)
         
         def _on_end(*args, **kwargs):
             res = proc.output['stdout']

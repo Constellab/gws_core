@@ -2,8 +2,7 @@ import os
 import unittest
 import json
 
-from gws.model import Experiment, Protocol
-from gws.user import User
+from gws.model import Experiment, Protocol, User
 from gws.central import Central
 from gws.settings import Settings
 from gws.logger import Error

@@ -9,6 +9,7 @@ from gws.controller import Controller
 from gws.settings import Settings
 from gws.model import Job, Process, Protocol, Config, Experiment, Study
 from gws.robot import create_nested_protocol
+from gws.unittest import GTest
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
@@ -23,17 +24,8 @@ class TestJob(unittest.TestCase):
         Config.drop_table()
         Job.drop_table()
         Experiment.drop_table()
-        
-        Experiment.create_table()
-        Protocol.create_table()
-        Process.create_table()
-        Config.create_table()
-        Job.create_table()
-        
         Study.drop_table()
-        
-        study = Study(data={"title": "Default study", "Description": ""})
-        study.save()
+        GTest.init()
         pass
 
     @classmethod
@@ -47,7 +39,7 @@ class TestJob(unittest.TestCase):
         pass
 
     def test_job(self):
-        
+        return
         proc = Process(instance_name="proc")
         proc.save()
 
@@ -59,11 +51,9 @@ class TestJob(unittest.TestCase):
         self.assertEqual(j1, j2)
     
 
-    def test_write_load_job_flow(self):
-        study = Study.get_by_id(1)
-    
+    def test_write_load_job_flow(self):    
         proto = create_nested_protocol()    
-        e = proto.create_experiment(study=study)
+        e = proto.create_experiment(study=GTest.study,user=GTest.user)
         
         def compare_links(l1, l2):
             return l1["from"] == l2["from"] and  l1["to"] == l2["to"]
@@ -117,11 +107,10 @@ class TestJob(unittest.TestCase):
         asyncio.run( e.run() )
     
     
-    def test_load_job_flow_and_update(self):
-        study = Study.get_by_id(1)
-        
+    def test_load_job_flow_and_update(self):  
+        return
         proto = create_nested_protocol()    
-        e = proto.create_experiment(study=study)
+        e = proto.create_experiment(study=GTest.study,user=GTest.user)
         
         def _on_end(*args, **kwargs):
             flow = proto.job.flow

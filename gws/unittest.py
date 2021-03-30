@@ -24,20 +24,8 @@ class GTest:
             raise Error("unittests", "init", "The unit tests can only be initialized in test mode")
 
         study = Study.get_default_instance()
+        User.create_owner_and_sysuser()
+        user = User.get_sysuser()
 
-        try:
-            user = User.get(User.email=="test@gencovery.com")
-            user.is_authenticated = True
-        except:
-            user = User(
-                token="12345",
-                email="test@gencovery.com",
-                group="user",
-                is_active=True,
-                is_authenticated=True
-            )
-
-        user.save()
-        #Controller.set_current_user(user)
         cls.user = user
         cls.study = study

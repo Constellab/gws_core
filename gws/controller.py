@@ -317,7 +317,10 @@ class Controller(Base):
     
     @classmethod
     def get_current_user(cls):
-        return context.data.get("user", None)
+        if cls.get_settings().is_test:
+            return 
+        else:
+            return context.data.get("user", None)
     
     @classmethod
     def get_settings(cls):
@@ -386,13 +389,13 @@ class Controller(Base):
         settings = cls.get_settings()
         dep_dirs = settings.get_dependency_dirs()
 
-        from gws.model import Process
+        from gws.model import Process, Protocol
         process_type_list = []
         
         for brick_name in dep_dirs:
             cdir = dep_dirs[brick_name]
             module_names = cls.__list_sub_module( os.path.join(cdir, brick_name) )
-            
+  
             if brick_name == "gws":
                 _black_list = ["settings", "runner", "manage", "logger"]
                 for k in _black_list:
@@ -406,19 +409,22 @@ class Controller(Base):
                     submodule = importlib.import_module(brick_name+"."+module_name)
                     for class_name, _ in inspect.getmembers(submodule, inspect.isclass):
                         t = getattr(submodule, class_name, None)
-                        if issubclass(t, Process) and not issubclass(t, Protocol):
+                        is_process_and_not_protocol = issubclass(t, Process) and not issubclass(t, Protocol)
+                        if is_process_and_not_protocol:
                             process_type_list.append(t)
                 except:
                     pass
-
-        for proc_t in process_type_list:
+        
+        process_type_list = list(set(process_type_list))
+        for proc_t in set(process_type_list):
             try:
                 proc_t.get(proc_t.type == proc_t.full_classname())
             except:
-                proc = proc_t()
-                proc.save()
+                if not t == Protocol:
+                    proc = proc_t()
+                    proc.save()
         
-        Info(f"All processes registered in db. Process list: {process_type_list}")
+        Info(f"REGISTER_ALL_PROCESSES: A total of {len(process_type_list)} processes were registered in db.\n Process list:\n {process_type_list}")
 
     @classmethod
     async def _run_robot_travel(cls):
@@ -451,11 +457,11 @@ class Controller(Base):
             raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
                 
     @classmethod
-    async def run_experiment(cls, data: dict=None):
+    async def run_experiment(cls, user, data: dict=None):
         from gws.model import Experiment
         
         try:
-            e = Experiment.from_flow(data)
+            e = Experiment.from_flow(data, user=Controller.get_current_user())
         except Exception as err:
             raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
         
@@ -468,7 +474,7 @@ class Controller(Base):
             raise HTTPForbiden(detail=f"The experiment is finished")
         else:
             try:
-                await e.run()
+                await e.run(user=Controller.get_current_user())
                 return e.view().as_json()
             except Exception as err:
                 raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
@@ -480,7 +486,7 @@ class Controller(Base):
     @classmethod
     def save_protocol(cls, data: dict=None):
         from gws.model import Experiment
-        proto = Protocol.from_flow(data)
+        proto = Protocol.from_flow(data, user=Controller.get_current_user())
         return proto.view().as_json()
     
     @classmethod
@@ -488,7 +494,7 @@ class Controller(Base):
         from gws.model import Experiment
         
         try:
-            e = Experiment.from_flow(data)
+            e = Experiment.from_flow(data, user=Controller.get_current_user())
         except Exception as err:
             raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
                 
@@ -554,3 +560,24 @@ class Controller(Base):
             raise HTTPUnauthorized(detail=f"Not authorized")
             
         context.data["user"] = user
+    
+    # -- V --
+    
+    def validate_experiment(self, uri, user):
+        from gws.model import Experiment
+        
+        try:
+            e = Experiment.get(Experiment.uri == uri)
+            e.validate(user=self.get_current_user())
+        except Exception as err:
+            raise HTTPNotFound(detail=f"Experiment not found")
+        
+    def validate_protocol(self, uri, user):
+        from gws.model import Protocol
+        
+        try:
+            p = Protocol.get(Protocol.uri == uri)
+            p.validate(user=self.get_current_user())
+        except Exception as err:
+            raise HTTPNotFound(detail=f"Protocol not found")
+    

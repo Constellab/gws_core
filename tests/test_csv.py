@@ -11,6 +11,7 @@ from gws.model import Protocol, Study
 from gws.csv import CSVData, Loader, Dumper, Importer, Exporter
 from gws.file import File
 from gws.store import LocalFileStore
+from gws.unittest import GTest
 
 
 settings = Settings.retrieve()
@@ -27,7 +28,7 @@ class TestCSV(unittest.TestCase):
         Importer.drop_table()
         Exporter.drop_table()
         Study.drop_table()
-        
+        GTest.init()
         pass
 
     @classmethod
@@ -68,9 +69,6 @@ class TestCSV(unittest.TestCase):
         
         
     def test_loader_dumper(self):
-        study = Study(data={"title": "Default study", "Description": ""})
-        study.save()
-        
         i_file_path = os.path.join(testdata_dir, "data.csv")
         o_file_path = os.path.join(testdata_dir, "data_out.csv")
         
@@ -100,7 +98,7 @@ class TestCSV(unittest.TestCase):
         dumper.set_param("index", False)
         exporter.set_param("index", False)
         
-        e = proto.create_experiment(study=study)
+        e = proto.create_experiment(study=GTest.study,user=GTest.user)
         
         def _on_end(*args, **kwargs):
             print("Test CSV import/export")

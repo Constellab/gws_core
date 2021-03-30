@@ -127,6 +127,17 @@ async def run_experiment(flow: Optional[dict], \
 
     return await Controller.run_experiment(data=flow)
 
+@app.post("/experiment/validate/", tags=["Shortcut operations on experiments"], summary="Validate an experiment")
+async def validate_experiment(uri: str = None, \
+                              current_user: UserData = Depends(get_current_authenticated_user)) -> (dict, str,):
+    """
+    Validate an experiment
+    
+    - **uri**: the experiment uri
+    """
+
+    return Controller.validate_experiment(uri=uri)
+
 @app.get("/job/flow", tags=["Shortcut operations on experiments"], summary="Get job flow")
 async def get_job_flow(protocol_job_uri: str = None, experiment_uri: str = None, \
                        current_user: UserData = Depends(get_current_authenticated_user)) -> (dict, str,):
@@ -187,6 +198,16 @@ async def save_protocol(flow: Optional[dict], \
 
     return await Controller.save_protocol(data=flow)
 
+@app.post("/protocol/validate/", tags=["Shortcut operations on experiments"], summary="Validate an experiment")
+async def validate_experiment(uri: str = None, \
+                              current_user: UserData = Depends(get_current_authenticated_user)) -> (dict, str,):
+    """
+    Validate a protocol
+    
+    - **uri**: the protocol uri
+    """
+
+    return Controller.validate_protocol(uri=uri)
 
 @app.get("/process/list", tags=["Shortcut operations on experiments"], summary="Get the list of processes")
 async def get_list_of_process(job_uri: str = None, \

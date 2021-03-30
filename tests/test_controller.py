@@ -112,3 +112,7 @@ class TestControllerHTTP(unittest.TestCase):
         print(f"Process counts = {count}")
         for Q in Process.select():
             print(Q.type)
+        
+        # check that the number of process has not change
+        Controller.register_all_processes()
+        self.assertEqual(count, Process.select().count())
