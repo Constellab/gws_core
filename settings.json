@@ -27,7 +27,7 @@
     "dirs" : {
         "gws:testdata_dir" : "./tests/testdata"
     },
-
+    
     "externs" : [],
     "dependencies" : []
 }

@@ -317,10 +317,11 @@ class Controller(Base):
     
     @classmethod
     def get_current_user(cls):
-        if cls.get_settings().is_test:
-            return 
-        else:
-            return context.data.get("user", None)
+        try:
+            return context.data["user"]
+        except:
+            return None
+            
     
     @classmethod
     def get_settings(cls):
@@ -548,7 +549,10 @@ class Controller(Base):
         from gws._api._auth_user import UserData
 
         if isinstance(user, UserData):
-            user = User.get(User.uri==user.uri)
+            try:
+                user = User.get(User.uri==user.uri)
+            except:
+                raise HTTPInternalServerError(detail=f"Invalid current user")
         
         if not isinstance(user, User):
             raise HTTPInternalServerError(detail=f"Invalid current user")

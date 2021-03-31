@@ -9,13 +9,10 @@ from jwt import PyJWTError
 from pydantic import BaseModel
 
 from fastapi import Depends, FastAPI, HTTPException, status
-from fastapi.encoders import jsonable_encoder
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2
-from fastapi.security.base import SecurityBase
 from fastapi.security.utils import get_authorization_scheme_param
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
-from fastapi.openapi.utils import get_openapi
 from fastapi.requests import Request
 
 class OAuth2UserTokenBearerCookie(OAuth2):
@@ -46,16 +43,14 @@ class OAuth2UserTokenBearerCookie(OAuth2):
             authorization = True
             scheme = header_scheme
             param = header_param
-
         elif cookie_scheme.lower() == "bearer":
             authorization = True
             scheme = cookie_scheme
             param = cookie_param
-
         else:
             authorization = False
 
-        if not authorization or scheme.lower() != "bearer":
+        if not authorization:
             if self.auto_error:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN, 
@@ -63,7 +58,8 @@ class OAuth2UserTokenBearerCookie(OAuth2):
                 )
             else:
                 return None
+        
         return param
 
-oauth2_cookie_scheme = OAuth2UserTokenBearerCookie(tokenUrl="/auth/login/{uri}/{token}")
+oauth2_user_cookie_scheme = OAuth2UserTokenBearerCookie(tokenUrl="/user/login/{uri}/{token}")
 

@@ -84,7 +84,8 @@ class App(BaseApp):
         """
         
         from ._sphynx.docgen import docgen
-        from ._api.api import app as core_app
+        from ._api.core_api import app as core_app
+        from ._api.central_api import app as central_app
         
         # create default study and users
         Study.create_default_instance()
@@ -107,7 +108,8 @@ class App(BaseApp):
             app.mount(f"/docs/{name}/", StaticFiles(directory=html_dir), name=f"/docs/{name}/")
 
         # api routes
-        app.mount("/api/", core_app)
+        app.mount("/core-api/", core_app)
+        app.mount("/central-api/", central_app)
 
     @classmethod 
     def start(cls):

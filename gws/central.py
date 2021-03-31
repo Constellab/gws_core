@@ -19,7 +19,15 @@ class Central:
         return self.set_user_status(uri, {"is_active": True})
                 
     # -- C --
+    
+    @classmethod
+    def check_api_key(cls, api_key: str):
+        settings = Settings.retrieve()
+        if not settings.data.get("central"):
+            return False
+        return settings.data["central"].get("api_key") == api_key
 
+    
     @classmethod
     def create_user(cls, data: dict):
         Q = User.get_by_uri(data['uri'])
@@ -82,11 +90,16 @@ class Central:
             else:
                 raise Error("Central", "set_user_status", "Cannot save the user")
     
-    # -- U --
+    # -- S --
     
-    # -- V --
-
     @classmethod
-    def verify_api_key(cls, central_api_key: str):
+    def set_api_key(cls, api_key: str):
         settings = Settings.retrieve()
-        return settings.get_data("central_api_key") == central_api_key
+        if not settings.data.get("central"):
+            settings.data["central"] = {}
+            
+        settings.data["central"]["api_key"] = api_key
+        tf = settings.save()
+        return { "status": tf }
+
+    # -- V --

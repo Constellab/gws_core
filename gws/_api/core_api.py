@@ -11,6 +11,8 @@ from fastapi import Depends, FastAPI, \
                     HTTPException, File as FastAPIFile
 from fastapi.responses import Response, JSONResponse, RedirectResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from starlette_context import context
+from starlette_context.middleware import ContextMiddleware
 
 from pydantic import BaseModel
 
@@ -18,16 +20,16 @@ from gws.settings import Settings
 from gws.central import Central
 from gws.controller import Controller
 from gws.model import Model, ViewModel, Experiment
-
-from ._auth_user import OAuth2UserTokenRequestForm, get_current_authenticated_user, get_current_authenticated_admin_user
-from ._auth_user import UserData
 from gws.http import async_error_track
 
-from starlette_context import context
-from starlette_context.middleware import ContextMiddleware
+from ._auth_user import UserData, \
+                        OAuth2UserTokenRequestForm, \
+                        get_current_authenticated_user, \
+                        get_current_authenticated_admin_user
+
+from ._auth_central import check_central_api_key
 
 app = FastAPI(docs_url="/docs")
-#app = FastAPI(docs_url="/docs")
 
 # Enable core for the API
 app.add_middleware(
@@ -97,9 +99,6 @@ async def get_list_of_experiments(page: int = 1, number_of_items_per_page: int =
     - **number_of_items_per_page**: the number of items per page (limited to 50) 
     """
 
-    print("xxxx")
-    print(Controller.get_current_user().data)
-    
     return Controller.fetch_experiment_list(
         page=page, 
         number_of_items_per_page=number_of_items_per_page
@@ -398,66 +397,6 @@ async def download(uri: str, current_user: UserData = Depends(get_current_authen
 
 # ##################################################################
 #
-# User
-#
-# ##################################################################
-
-@app.get("/user/login/{uri}/{token}", tags=["User management"])
-async def login_user(request: Request, uri: str, token: str, \
-                     redirect_url: str = "/", object_type: str=None, object_uri: str=None):
-    
-    form_data: OAuth2UserTokenRequestForm = Depends()
-    form_data.uri = uri
-    form_data.token = token
-    
-    from ._auth_user import login
-    return await login(form_data=form_data)
-
-@app.get("/user/logout", response_model=UserData, tags=["User management"])
-async def logout_user(request: Request, current_user: UserData = Depends(get_current_authenticated_user)):
-    from ._auth_user import logout
-    return await logout(current_user)
-
-@app.get("/user/me/", response_model=UserData, tags=["User management"])
-async def read_users_me(current_user: UserData = Depends(get_current_authenticated_user)):
-    return current_user
-
-@app.post("/user/create", tags=["User management"])
-async def create_user(user: UserData, current_user: UserData = Depends(get_current_authenticated_admin_user)):
-    return Central.create_user(user.dict())
-
-@app.get("/user/test", tags=["User management"])
-async def get_user_test():
-    from gws.model import User
-    o = User.get_owner()
-    s = User.get_sysuser()
-    return {
-        "owner": {
-            "uri": o.uri,
-            "token": o.token
-        },
-        "sys": {
-            "uri": s.uri,
-            "token": s.token
-        }
-    }
-
-    #return Central.get_user_status(user_uri)
-
-@app.get("/user/{user_uri}", tags=["User management"])
-async def get_user(user_uri : str):
-    return Central.get_user_status(user_uri)
-
-@app.get("/user/{user_uri}/activate", tags=["User management"])
-async def activate_user(user_uri : str, current_user: UserData = Depends(get_current_authenticated_admin_user)):
-    return Central.activate_user(user_uri)
-
-@app.get("/user/{user_uri}/deactivate", tags=["User management"])
-async def deactivate_user(user_uri : str, current_user: UserData = Depends(get_current_authenticated_admin_user)):
-    return  Central.deactivate_user(user_uri)
-
-# ##################################################################
-#
 # Lab
 #
 # ##################################################################
@@ -466,7 +405,7 @@ async def deactivate_user(user_uri : str, current_user: UserData = Depends(get_c
 async def get_lab_instance_status(current_user: UserData = Depends(get_current_authenticated_user)):
     from gws.lab import Lab
     return Lab.get_status()
-
+  
 # ##################################################################
 #
 # Robot

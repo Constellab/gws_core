@@ -14,32 +14,31 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import Response
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.param_functions import Form
+
 from passlib.context import CryptContext
 from pydantic import BaseModel
 
 from gws.model import User
 from gws.controller import Controller
 from gws.settings import Settings
-from ._user_token_cookie import oauth2_cookie_scheme
+from ._oauth2_user_cookie_scheme import oauth2_user_cookie_scheme
 
 settings = Settings.retrieve()
 SECRET_KEY = settings.data.get("secret_key")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 3*60*60*24   #3 days
+COOKIE_ACCESS_TOKEN_EXPIRE_MINUTES = 60    #1 hour
 COOKIE_MAX_AGE_SECONDS = 3*60*60*24        #3 days 
 
 class OAuth2UserTokenRequestForm:
     def __init__(
         self,
         grant_type: str = Form(None, regex="password"),
-        uri: str = Form(...),
         token: str = Form(...),
         scope: str = Form(""),
         client_id: Optional[str] = Form(None),
         client_secret: Optional[str] = Form(None),
     ):
         self.grant_type = grant_type
-        self.uri = uri
         self.token = token
         self.scopes = scope.split()
         self.client_id = client_id
@@ -54,27 +53,36 @@ class UserData(BaseModel):
 
 # -- A --
 
-def authenticate_user(uri:str, token: str):
+def authenticate_user(access_token: str):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not authenticate user",
+        detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
 
+    try:
+        payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
+        uri: str = payload.get("sub")
+        token: str = payload.get("token")
+        if uri is None or token is None:
+            raise credentials_exception
+    except Exception:
+        raise credentials_exception
+    
     # check uri and token in db
     db_user = User.authenticate(uri=uri, token=token)
 
     if db_user:
         return UserData(
             uri=db_user.uri, 
-            token=db_user.token, 
+            token=db_user.uri,
             is_active=db_user.is_active,
             is_admin=db_user.is_admin,
             is_authenticated=db_user.is_authenticated
         )
     else:
         raise credentials_exception
-
+    
 # -- C --
 
 def create_cookie_access_token(data: dict, expires_delta: Optional[timedelta] = None):
@@ -89,7 +97,7 @@ def create_cookie_access_token(data: dict, expires_delta: Optional[timedelta] = 
 
 # -- G --
 
-async def get_current_user(token: str = Depends(oauth2_cookie_scheme)):
+async def get_current_user(token: str = Depends(oauth2_user_cookie_scheme)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -125,31 +133,31 @@ async def check_authenticate_user(current_user: UserData = Depends(get_current_u
 
 async def get_current_authenticated_user(current_user: UserData = Depends(get_current_user)):
     if not current_user.is_authenticated:
-        raise HTTPException(status_code=400, detail="Not authenticated  user")
+        raise HTTPException(status_code=400, detail="Not authenticated user")
     
     Controller.set_current_user(current_user)  #<- globally set current_user to the Controller 
     return current_user
 
-async def get_current_authenticated_admin_user(token: str = Depends(oauth2_cookie_scheme)):
+async def get_current_authenticated_admin_user(token: str = Depends(oauth2_user_cookie_scheme)):
     current_user = get_current_authenticated_user(token)
     if not current_user.is_admin:
         raise HTTPException(status_code=400, detail="Non admin user")
     
     return current_user
-    
+ 
 # -- L --
 
 async def login(form_data: OAuth2UserTokenRequestForm = Depends(), redirect_url: str = "/"):
 
-    user = authenticate_user(uri=form_data.uri, token=form_data.token)
-
+    user = authenticate_user(access_token=form_data.access_token)
+    
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid uri or token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token_expires = timedelta(minutes=COOKIE_ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_cookie_access_token(
         data={
             "sub": user.uri,

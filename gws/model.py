@@ -550,15 +550,13 @@ class User(Model):
         
         with DbManager.db.atomic() as transaction:
             try:
-                user = User.get(User.uri==uri, User.token==token)
-                if not user.is_active:
-                    raise Error("User", "authenticate", f"Could not authenticate inactive user {uri}")
-                    
+                user = User.get((User.uri==uri) & (User.token==token) & (User.is_active==True)) 
                 user.is_authenticated = True
                 user.save()
                 Activity.add(user, Activity.LOGIN)
                 return user
-            except:
+            except Exception as err:
+                print(f"AUTH ERROR ::: f{err}")
                 transaction.rollback()
                 return False
     
@@ -595,11 +593,19 @@ class User(Model):
     
     @classmethod
     def get_owner(cls):
-         return User.get(User.group == cls.OWNER_GROUP)
-    
+        try:
+            return User.get(User.group == cls.OWNER_GROUP)
+        except:
+            cls.create_owner_and_sysuser()
+            return User.get(User.group == cls.OWNER_GROUP)
+        
     @classmethod
     def get_sysuser(cls):
-         return User.get(User.group == cls.SYSUSER_GROUP)
+        try:
+            return User.get(User.group == cls.SYSUSER_GROUP)
+        except:
+            cls.create_owner_and_sysuser()
+            return User.get(User.group == cls.SYSUSER_GROUP)
     
     @property
     def full_name(self):
@@ -664,10 +670,10 @@ class User(Model):
 # ####################################################################
 
 class Activity(Model):
-    user = ForeignKeyField(User, index=True)
+    user = ForeignKeyField(User, null=False, index=True)
     activity_type = CharField(null=False, index=True)
-    object_type = CharField(null=False, index=True)
-    object_uri = CharField(null=False, index=True)
+    object_type = CharField(null=True, index=True)
+    object_uri = CharField(null=True, index=True)
     
     _is_deletable = False
     
@@ -1182,7 +1188,7 @@ class Process(Viewable):
     
     # -- C --
     
-    def create_experiment(self, user: 'User', study: 'Study'):
+    def create_experiment(self, study: 'Study', user: 'User' = None):
         """
         Create an experiment using a protocol composed of this process
         
@@ -1196,7 +1202,13 @@ class Process(Viewable):
         
         instance_name = self.instance_name if self.instance_name else self.full_classname()
         proto = Protocol(processes={ instance_name: self })
-        e = Experiment(user=user, study=study, protocol=proto)
+        
+        if user is None:
+            user = Controller.get_current_user()
+            if user is None:
+                raise Error("Process", "create_experiment", "A user is required")
+            
+        e = Experiment(protocol=proto, study=study, user=user)
         e.save()
         return e
     
@@ -1599,7 +1611,7 @@ class Experiment(Viewable):
     _protocol = None
     _table_name = 'gws_experiment'
 
-    def __init__(self, *args, user=None, protocol=None, **kwargs):
+    def __init__(self, *args, protocol=None, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         
         if not self.is_saved():
@@ -2614,7 +2626,7 @@ class Protocol(Process):
             
     # -- C --
 
-    def create_experiment(self, user: 'User', study: 'Study'):
+    def create_experiment(self, study: 'Study', user: 'User' = None):
         """
         Realize a protocol by creating a experiment
         
@@ -2629,6 +2641,11 @@ class Protocol(Process):
         if not self.instance_name:
             self.set_instance_name()
         
+        if user is None:
+            user = Controller.get_current_user()
+            if user is None:
+                raise Error("Process", "create_experiment", "A user is required")
+                
         e = Experiment(user=user, study=study, protocol=self) 
         e.save()
         
