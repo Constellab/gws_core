@@ -23,14 +23,12 @@ from gws.model import Model, ViewModel, Experiment
 from gws.http import async_error_track
 
 from ._auth_user import UserData, \
-                        OAuth2UserTokenRequestForm, \
-                        get_current_authenticated_user, \
-                        get_current_authenticated_admin_user, \
-                        login as _login, \
-                        logout as _logout
+                        check_user_access_token, \
+                        check_admin_access_token
 
 from ._auth_central import  check_central_api_key, \
                             generate_user_access_token as _generate_user_access_token
+
 app = FastAPI(docs_url="/docs")
 
 # Enable core for the API
@@ -60,86 +58,82 @@ class UserUriData(BaseModel):
 # ##################################################################
 
 @app.post("/user/generate-access-token", response_model=TokenData, tags=["User management"])
-async def generate_user_access_token(user_uri: UserUriData, _ = Depends(check_central_api_key)):
+async def generate_user_access_token(user_uri: UserUriData, \
+                                     _ = Depends(check_central_api_key)):
     """
     Generate a temporary access token for a user.
     
     - **user_uri**: the user uri
     
     For example:
+    
     `
     curl -X "POST" \
       "${LAB_URL}/central-api/user/generate-access-token" \
       -H "Accept: application/json" \
-      -H "Authorization: api-key ${CENTRAL_API_KEY}" \
+      -H "Authorization: api-key ${API_KEY}" \
       -H "Content-Type: application/json" \
-      -d "{\"uri\": \"${USER_URI}\"}"
+      -d "{\"uri\": \"${URI}\"}"
     `
     """
     
     return await _generate_user_access_token(user_uri.uri)
 
-@app.get("/user/login/{access_token}", tags=["User api"])
-async def login_user(request: Request, \
-                     access_token: str, redirect_url: str = "/", \
-                     object_type: str=None, object_uri: str=None):
-    
-    form_data: OAuth2UserTokenRequestForm = Depends()
-    form_data.access_token = access_token
-    return await _login(form_data=form_data)
-
-@app.get("/user/logout", response_model=UserData, tags=["User management"])
-async def logout_user(request: Request, current_user: UserData = Depends(get_current_authenticated_user)):
-    return await _logout(current_user)
-
 @app.get("/user/me/", response_model=UserData, tags=["User management"])
-async def read_users_me(current_user: UserData = Depends(get_current_authenticated_user)):
+async def read_user_me(current_user: UserData = Depends(check_user_access_token)):
+    """
+    Get current user details.
+    """
+    
     return current_user
 
 @app.post("/user/create", tags=["User management"])
-async def create_user(user: UserData, current_user: UserData = Depends(get_current_authenticated_admin_user)):
+async def create_user(user: UserData, _: UserData = Depends(check_admin_access_token)):
     return Central.create_user(user.dict())
 
 @app.get("/user/test", tags=["User management"])
 async def get_user_test():
+    """
+    Testing API user details 
+    """
+    
     from gws.model import User
-    o = User.get_owner()
-    s = User.get_sysuser()
     return {
         "owner": {
-            "uri": o.uri,
-            "token": o.token
+            "uri": User.get_owner().uri,
         },
         "sys": {
-            "uri": s.uri,
-            "token": s.token
+            "uri": User.get_sysuser().uri,
         }
     }
 
-    #return Central.get_user_status(user_uri)
-
 @app.get("/user/{user_uri}", tags=["User management"])
-async def get_user(user_uri : str):
+async def get_user(user_uri : str, _: UserData = Depends(check_admin_access_token)):
+    """
+    Get the details of a user. Require admin privilege.
+    
+    - **user_uri**: the user uri
+    """
+    
     return Central.get_user_status(user_uri)
 
 @app.get("/user/{user_uri}/activate", tags=["User management"])
-async def activate_user(user_uri : str, current_user: UserData = Depends(get_current_authenticated_admin_user)):
+async def activate_user(user_uri : str, _: UserData = Depends(check_admin_access_token)):
+    """
+    Activate a user. Require admin privilege.
+    
+    - **user_uri**: the user uri
+    """
+    
     return Central.activate_user(user_uri)
 
 @app.get("/user/{user_uri}/deactivate", tags=["User management"])
-async def deactivate_user(user_uri : str, current_user: UserData = Depends(get_current_authenticated_admin_user)):
+async def deactivate_user(user_uri : str, _: UserData = Depends(check_admin_access_token)):
+    """
+    Deactivate a user. Require admin privilege.
+    
+    - **user_uri**: the user uri
+    """
+    
     return  Central.deactivate_user(user_uri)
 
-
-# ##################################################################
-#
-# Central
-#
-# ##################################################################
- 
-class CentralApiKeyData(BaseModel):
-    key: str
-         
-@app.put("/central/apikey", tags=["API key"])
-async def set_central_api_key(api_key: CentralApiKeyData):
-    return  Central.set_api_key(api_key.key)

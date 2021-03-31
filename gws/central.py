@@ -34,7 +34,6 @@ class Central:
         if not Q:
             user = User(
                 uri = data['uri'],
-                token = data['token'],
                 email = data['email'],
                 group = data.get('group','user'),
                 is_active = data.get('is_active', True),
@@ -64,7 +63,6 @@ class Central:
         else:
             return {
                 "uri": user.uri,
-                "token": user.token,
                 "group": user.group,
                 "is_active": user.is_active,
             }

@@ -42,6 +42,8 @@ from gws.event import EventListener
 from gws.utils import to_camel_case, sort_dict_by_key, generate_random_chars
 from gws.http import *
 
+from fastapi.encoders import jsonable_encoder
+
 # ####################################################################
 #
 # Model class
@@ -161,16 +163,17 @@ class Model(BaseModel):
                 _json[prop] = {}
                 
                 if len(jsonifiable_data_keys) == 0:
-                    _json[prop] = val
+                    _json[prop] = jsonable_encoder(val)
                 else:
                     for k in jsonifiable_data_keys:
                         if k in val:
-                            _json[prop][k] = val[k]
+                            _json[prop][k] = jsonable_encoder(val[k])
             else:
-                if isinstance(val, (datetime, DateTimeField, DateField)):
-                    _json[prop] = str(val)
-                else:
-                    _json[prop] = val
+                _json[prop] = jsonable_encoder(val)
+                #if isinstance(val, (datetime, DateTimeField, DateField)):
+                #    _json[prop] = jsonable_encoder(val)
+                #else:
+                #    _json[prop] = val
         
         if stringify:
             if prettify:
@@ -517,11 +520,9 @@ class Model(BaseModel):
 
 class User(Model):
     
-    token = CharField(null=False)
     email = CharField(default=False, index=True)
     group = CharField(default="user", index=True)
     is_active = BooleanField(default=True)
-    is_authenticated = BooleanField(default=False)
 
     USER_GOUP = "user"
     ADMIN_GROUP = "admin"
@@ -534,32 +535,7 @@ class User(Model):
     _fts_fields = {'full_name': 2.0}
 
     # -- A --
-    
-    @classmethod
-    def authenticate(cls, uri: str, token: str) -> 'User':
-        """ 
-        Verify the uri and token, save the authentication status and returns the corresponding user
 
-        :param uri: The user uri
-        :type uri: str
-        :param token: The token to check
-        :type token: str
-        :return: The user if successfully verified, False otherwise
-        :rtype: User, False
-        """
-        
-        with DbManager.db.atomic() as transaction:
-            try:
-                user = User.get((User.uri==uri) & (User.token==token) & (User.is_active==True)) 
-                user.is_authenticated = True
-                user.save()
-                Activity.add(user, Activity.LOGIN)
-                return user
-            except Exception as err:
-                print(f"AUTH ERROR ::: f{err}")
-                transaction.rollback()
-                return False
-    
     @classmethod
     def create_owner_and_sysuser(cls):
         settings = Settings.retrieve()
@@ -584,7 +560,6 @@ class User(Model):
                 email = "sys@local",
                 data = {"full_name": "sysuser"},
                 is_active = True,
-                is_authenticated = True,   #<- is always authenticated
                 group = cls.SYSUSER_GROUP
             )
             u.save()
@@ -611,13 +586,6 @@ class User(Model):
     def full_name(self):
         return self.data.get("full_name", "")
 
-    def __generate_token(self):
-        return generate_random_chars(128)
-    
-    def generate_access_token(self):
-        self.token =  self.__generate_token()
-        self.save()
-    
     # -- I --
     
     @property
@@ -637,11 +605,7 @@ class User(Model):
     def save(self, *arg, **kwargs):
         if not self.group in self.VALID_GROUPS:
             raise Error("User", "save", "Invalid user group")
-        
-        if self.id is None:
-            if self.token is None:
-                self.token = self.__generate_token()
-        
+   
         if self.is_owner or self.is_admin or self.is_sysuser:
             if not self.is_active:
                 raise Error("User", "save", "Cannot deactivate the {owner, admin, system} users")
@@ -649,19 +613,6 @@ class User(Model):
         return super().save(*arg, **kwargs)
     
     # -- U --
-    
-    @classmethod
-    def unauthenticate(self, uri: str) -> 'User':
-        with DbManager.db.atomic() as transaction:
-            try:
-                user = User.get(User.uri==uri, User.token==token)
-                self.is_authenticated = False
-                self.token = self.__generate_token()     #/!\SECURITRY: cancel current token to prevent token hacking
-                self.save()
-                Activity.add(self, Activity.LOGOUT)
-            except:
-                transaction.rollback()
-                return False
     
 # ####################################################################
 #

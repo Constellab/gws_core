@@ -557,9 +557,6 @@ class Controller(Base):
         if not isinstance(user, User):
             raise HTTPInternalServerError(detail=f"Invalid current user")
 
-        if not user.is_authenticated:
-            raise HTTPUnauthorized(detail=f"Not authenticated")
-            
         if not user.is_active:
             raise HTTPUnauthorized(detail=f"Not authorized")
             

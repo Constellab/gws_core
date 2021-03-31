@@ -24,8 +24,7 @@ from gws.http import async_error_track
 
 from ._auth_user import UserData, \
                         OAuth2UserTokenRequestForm, \
-                        get_current_authenticated_user, \
-                        get_current_authenticated_admin_user
+                        check_user_access_token
 
 from ._auth_central import check_central_api_key
 
@@ -89,9 +88,9 @@ class FlowData(BaseModel):
 #
 # ##################################################################
 
-@app.get("/experiment/list", tags=["Shortcut operations on experiments"], summary="Get the list of experiments")
+@app.get("/experiment/list", tags=["Experiment"], summary="Get the list of experiments")
 async def get_list_of_experiments(page: int = 1, number_of_items_per_page: int = 20, \
-                                  current_user: UserData = Depends(get_current_authenticated_user)) -> (dict, str,):
+                                  _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Retrieve a list of experiments. The list is paginated.
 
@@ -104,9 +103,9 @@ async def get_list_of_experiments(page: int = 1, number_of_items_per_page: int =
         number_of_items_per_page=number_of_items_per_page
     )
 
-@app.post("/experiment/save", tags=["Shortcut operations on experiments"], summary="Save an experiment using a existing (or new) job flow")
+@app.post("/experiment/save", tags=["Experiment"], summary="Save an experiment using a existing (or new) job flow")
 async def save_experiment(flow: Optional[dict], \
-                          current_user: UserData = Depends(get_current_authenticated_user)) -> (dict, str,):
+                          _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Save a protocol.
     
@@ -115,9 +114,9 @@ async def save_experiment(flow: Optional[dict], \
     
     return Controller.save_experiment(data=flow)
 
-@app.post("/experiment/run/", tags=["Shortcut operations on experiments"], summary="Run an experiment")
+@app.post("/experiment/run/", tags=["Experiment"], summary="Run an experiment")
 async def run_experiment(flow: Optional[dict], \
-                         current_user: UserData = Depends(get_current_authenticated_user)) -> (dict, str,):
+                         _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Run an experiment
     
@@ -126,9 +125,9 @@ async def run_experiment(flow: Optional[dict], \
 
     return await Controller.run_experiment(data=flow)
 
-@app.post("/experiment/validate/", tags=["Shortcut operations on experiments"], summary="Validate an experiment")
+@app.post("/experiment/validate/", tags=["Experiment"], summary="Validate an experiment")
 async def validate_experiment(uri: str = None, \
-                              current_user: UserData = Depends(get_current_authenticated_user)) -> (dict, str,):
+                              _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Validate an experiment
     
@@ -137,9 +136,9 @@ async def validate_experiment(uri: str = None, \
 
     return Controller.validate_experiment(uri=uri)
 
-@app.get("/job/flow", tags=["Shortcut operations on experiments"], summary="Get job flow")
+@app.get("/job/flow", tags=["Experiment"], summary="Get job flow")
 async def get_job_flow(protocol_job_uri: str = None, experiment_uri: str = None, \
-                       current_user: UserData = Depends(get_current_authenticated_user)) -> (dict, str,):
+                       _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Retrieve the job flow of an experiment or a protocol job
     
@@ -149,9 +148,9 @@ async def get_job_flow(protocol_job_uri: str = None, experiment_uri: str = None,
 
     return Controller.fetch_job_flow(protocol_job_uri=protocol_job_uri, experiment_uri=experiment_uri)
 
-@app.get("/job/list", tags=["Shortcut operations on experiments"], summary="Get the list of jobs")
+@app.get("/job/list", tags=["Experiment"], summary="Get the list of jobs")
 async def get_list_of_jobs(experiment_uri: str = None, page: int = 1, number_of_items_per_page: int = 20, \
-                           current_user: UserData = Depends(get_current_authenticated_user)) -> (dict, str,):
+                           _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Retrieve a list of jobs. The list is paginated.
 
@@ -166,10 +165,10 @@ async def get_list_of_jobs(experiment_uri: str = None, page: int = 1, number_of_
         experiment_uri=experiment_uri
     )
 
-@app.get("/protocol/list", tags=["Shortcut operations on experiments"], summary="Get the list of protocols")
+@app.get("/protocol/list", tags=["Experiment"], summary="Get the list of protocols")
 async def get_list_of_protocols(experiment_uri: str = None, job_uri: str = None, \
                                 page: int = 1, number_of_items_per_page: int = 20, \
-                                current_user: UserData = Depends(get_current_authenticated_user)) -> (dict, str,):
+                                _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Retrieve a list of protocols. The list is paginated.
     
@@ -186,9 +185,9 @@ async def get_list_of_protocols(experiment_uri: str = None, job_uri: str = None,
         job_uri=job_uri
     )
 
-@app.post("/protocol/save", tags=["Shortcut operations on experiments"], summary="Save a protocol using a existing (or new) job flow")
+@app.post("/protocol/save", tags=["Experiment"], summary="Save a protocol using a existing (or new) job flow")
 async def save_protocol(flow: Optional[dict], \
-                        current_user: UserData = Depends(get_current_authenticated_user)) -> (dict, str,):
+                        _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Save a protocol
     
@@ -197,9 +196,9 @@ async def save_protocol(flow: Optional[dict], \
 
     return await Controller.save_protocol(data=flow)
 
-@app.post("/protocol/validate/", tags=["Shortcut operations on experiments"], summary="Validate an experiment")
+@app.post("/protocol/validate/", tags=["Experiment"], summary="Validate an experiment")
 async def validate_experiment(uri: str = None, \
-                              current_user: UserData = Depends(get_current_authenticated_user)) -> (dict, str,):
+                              _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Validate a protocol
     
@@ -208,10 +207,10 @@ async def validate_experiment(uri: str = None, \
 
     return Controller.validate_protocol(uri=uri)
 
-@app.get("/process/list", tags=["Shortcut operations on experiments"], summary="Get the list of processes")
+@app.get("/process/list", tags=["Experiment"], summary="Get the list of processes")
 async def get_list_of_process(job_uri: str = None, \
                               page: int = 1, number_of_items_per_page: int = 20, \
-                              current_user: UserData = Depends(get_current_authenticated_user)) -> (dict, str,):
+                              _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Retrieve a list of processes. The list is paginated.
 
@@ -226,10 +225,10 @@ async def get_list_of_process(job_uri: str = None, \
         job_uri=job_uri
     )
 
-@app.get("/config/list", tags=["Shortcut operations on experiments"], summary="Get the list of configs")
+@app.get("/config/list", tags=["Experiment"], summary="Get the list of configs")
 async def get_list_of_configs(job_uri: str = None, \
                               page: int = 1, number_of_items_per_page: int = 20, \
-                              current_user: UserData = Depends(get_current_authenticated_user)) -> (dict, str,):
+                              _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Retrieve a list of configs. The list is paginated.
 
@@ -244,10 +243,10 @@ async def get_list_of_configs(job_uri: str = None, \
         job_uri=job_uri
     )
 
-@app.get("/resource/list", tags=["Shortcut operations on experiments"], summary="Get the list of resources")
+@app.get("/resource/list", tags=["Experiment"], summary="Get the list of resources")
 async def get_list_of_resources(job_uri: str = None, \
                                 experiment_uri: str = None, page: int = 1, number_of_items_per_page: int = 20, \
-                                current_user: UserData = Depends(get_current_authenticated_user)) -> (dict, str,):
+                                _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Retrieve a list of resources. The list is paginated.
 
@@ -270,9 +269,9 @@ async def get_list_of_resources(job_uri: str = None, \
 #
 # ##################################################################
 
-@app.get("/count/{object_type}/", tags=["CRUD operations on view models"])
+@app.get("/count/{object_type}/", tags=["Generic models and view models"])
 async def count(object_type: str, \
-                current_user: UserData = Depends(get_current_authenticated_user)) -> (dict, str,):
+                _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Get the count of objects of a given type
     
@@ -281,11 +280,11 @@ async def count(object_type: str, \
 
     return await Controller.action(action="count", object_type=object_type)
 
-@app.get("/view/{object_type}/{object_uris}/", tags=["CRUD operations on view models"])
+@app.get("/view/{object_type}/{object_uris}/", tags=["Generic models and view models"])
 async def get_view_model(object_type: str, object_uris: Optional[str] = "all", \
                         page: int = 1, number_of_items_per_page: int = 20, \
                         filters: Optional[str] = "{}", view_params: Optional[str] = "{}", \
-                        current_user: UserData = Depends(get_current_authenticated_user)) -> (dict, str,):
+                        _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Get a ViewModel
     
@@ -310,9 +309,9 @@ async def get_view_model(object_type: str, object_uris: Optional[str] = "all", \
         filters=filters
     )
 
-@app.put("/view/{object_type}/", tags=["CRUD operations on view models"])
+@app.put("/view/{object_type}/", tags=["Generic models and view models"])
 async def update_view_model(object_type: str, view_model: ViewModelData, \
-                            current_user: UserData = Depends(get_current_authenticated_user)) -> (dict, str,):
+                            _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Update a ViewModel
     
@@ -322,9 +321,9 @@ async def update_view_model(object_type: str, view_model: ViewModelData, \
 
     return await Controller.action(action="update", object_type=object_type, object_uri=view_model.uri, data=view_model.params)
 
-@app.delete("/view/{object_type}/{object_uri}/", tags=["CRUD operations on view models"])
+@app.delete("/view/{object_type}/{object_uri}/", tags=["Generic models and view models"])
 async def delete_view_model(object_type: str, object_uri: str, \
-                            current_user: UserData = Depends(get_current_authenticated_user)) -> (dict, str,):
+                            _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Delete a ViewModel
     
@@ -340,10 +339,10 @@ async def delete_view_model(object_type: str, object_uri: str, \
 #
 # ##################################################################
 
-@app.api_route("/brick/{brick_name}/{api_func}", response_class=JSONResponse, methods=["GET", "POST"], tags=["Custom brick api"])
+@app.api_route("/brick/{brick_name}/{api_func}", response_class=JSONResponse, methods=["GET", "POST"], tags=["User bricks"])
 async def call_brick_api(request: Request, \
                          brick_name: Optional[str] = "gws", api_func: Optional[str] = None, \
-                         current_user: UserData = Depends(get_current_authenticated_user)) :
+                         _: UserData = Depends(check_user_access_token)) :
     """
     Call a custom api function of a brick
     
@@ -373,7 +372,7 @@ async def call_brick_api(request: Request, \
 
 @app.post("/upload", tags=["Upload and download files"])
 async def upload(files: List[UploadFile] = FastAPIFile(...), study_uri:Optional[str] = None, \
-                 current_user: UserData = Depends(get_current_authenticated_user)):
+                 _: UserData = Depends(check_user_access_token)):
     """
     Upload files
     
@@ -383,9 +382,11 @@ async def upload(files: List[UploadFile] = FastAPIFile(...), study_uri:Optional[
     return await Controller.action(action="upload", data=files, study_uri=study_uri)
 
 @app.post("/download/{uri}", tags=["Upload and download files"])
-async def download(uri: str, current_user: UserData = Depends(get_current_authenticated_user)):
+async def download(uri: str, _: UserData = Depends(check_user_access_token)):
     """
-    Download file
+    Download a file
+    
+    - **uri**: the uri of the file to download
     """
     
     from gws.file import File
@@ -401,8 +402,12 @@ async def download(uri: str, current_user: UserData = Depends(get_current_authen
 #
 # ##################################################################
 
-@app.get("/lab-instance", tags=["Lab api"])
-async def get_lab_instance_status(current_user: UserData = Depends(get_current_authenticated_user)):
+@app.get("/lab-instance", tags=["Lab instance"])
+async def get_lab_instance_status(_: UserData = Depends(check_user_access_token)):
+    """
+    Get the current status of the lab    
+    """
+    
     from gws.lab import Lab
     return Lab.get_status()
   
@@ -413,7 +418,7 @@ async def get_lab_instance_status(current_user: UserData = Depends(get_current_a
 # ##################################################################
 
 @app.post("/run-robot-travel-experiment", tags=["Astro boy travels"])
-async def run_robot_travel_experiment(current_user: UserData = Depends(get_current_authenticated_user)) -> (dict, str,):
+async def run_robot_travel_experiment(_: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Run robot experiments. The default study is used
     """
@@ -421,7 +426,7 @@ async def run_robot_travel_experiment(current_user: UserData = Depends(get_curre
     return await Controller._run_robot_travel()
 
 @app.post("/run-robot-super-travel-experiment", tags=["Astro boy travels"])
-async def run_robot_super_travel_experiment(current_user: UserData = Depends(get_current_authenticated_user)) -> (dict, str,):
+async def run_robot_super_travel_experiment(_: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Run robot experiments. The default study is used
     """
