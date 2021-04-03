@@ -60,7 +60,15 @@ class File(Resource):
             return _json
         
     # -- C --
-
+    
+    def __create_hash_object(self):
+        h = super().__create_hash_object()
+        if self.path:
+            with open(self.path, "rb") as fp:
+                h.update(fp.read())
+        
+        return h
+    
     # -- D --
     
     def delete_instance(self, *args, **kwargs):
@@ -145,7 +153,6 @@ class File(Resource):
     def open(self, mode: str):
         """ 
         Open the file 
-        
         """
 
         if self.exists():

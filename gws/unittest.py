@@ -12,6 +12,7 @@ from gws.logger import Error
 class GTest:
     user = None
     study = None
+    tables = None
     
     @classmethod
     def init(cls):
@@ -29,3 +30,12 @@ class GTest:
 
         cls.user = user
         cls.study = study
+        
+    @classmethod   
+    def drop_tables(cls, models):
+        """
+        Drops a list of table associatied to object classes
+        """
+        for t in models:
+            t.drop_table()
+            

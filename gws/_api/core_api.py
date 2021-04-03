@@ -186,7 +186,7 @@ async def get_list_of_protocols(experiment_uri: str = None, job_uri: str = None,
     )
 
 @app.post("/protocol/save", tags=["Experiment"], summary="Save a protocol using a existing (or new) job flow")
-async def save_protocol(flow: Optional[dict], \
+async def save_protocol(flow: Optional[FlowData], \
                         _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Save a protocol

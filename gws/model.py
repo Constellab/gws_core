@@ -55,37 +55,45 @@ class Model(BaseModel):
     Model class
 
     :property id: The id of the model (in database)
-    :type id: int, `peewee.model.IntegerField`
-    :property uri: The Unique Resource Identifier of the model
-    :type uri: str, `peewee.model.CharField`
-    :property type: The type of the model (the full Python class name)
-    :type type: str, `peewee.model.CharField`
-    :property creation_datetime: The creation datetime of the model (on the server)
-    :type creation_datetime: datetime, `peewee.model.DateTimeField`
+    :type id: `int`
+    :property uri: The unique resource identifier of the model
+    :type uri: `str`
+    :property type: The type of the model (the full class name)
+    :type type: `str`
+    :property creation_datetime: The creation datetime of the model
+    :type creation_datetime: `datetime`
     :property save_datetime: The last save datetime in database
-    :type save_datetime: datetime, `peewee.model.DateTimeField`
+    :type save_datetime: `datetime`
+    :property is_archived: True if the model is archived, False otherwise. Defaults to Fasle
+    :type is_archived: `bool`
+    :property is_deleted: True if the model is deleted, False otherwise. Defaults to Fasle
+    :type is_deleted: `bool`
     :property data: The data of the model
-    :type data: dict, `peewee.model.JSONField`
+    :type data: dict
+    :property hash: The hash of the model
+    :type hash: `str`
     """
     
     id = IntegerField(primary_key=True)
     uri = CharField(null=True, index=True)
     type = CharField(null=True, index=True)
-    creation_datetime = DateTimeField(default=datetime.now)
-    save_datetime = DateTimeField()  
-    data = JSONField(null=True)
+    creation_datetime = DateTimeField(default=datetime.now, index=True)
+    save_datetime = DateTimeField(index=True)  
     is_archived = BooleanField(default=False, index=True)
     is_deleted = BooleanField(default=False, index=True)
-
+    hash = CharField(null=True, index=True)
+    data = JSONField(null=True)
+    
     _kv_store: 'KVStore' = None
-
     _is_singleton = False
     _is_deletable = True
     _fts_fields = {}
 
     _table_name = 'gws_model'
     
-    __lab_uri = ""
+    settings = Settings.retrieve()
+    _LAB_URI = settings.get_data("uri")
+    
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -105,9 +113,6 @@ class Model(BaseModel):
                     setattr(self, prop, val) 
         
         if self.uri is None:
-            #if not Model.__lab_uri:
-            #    Model.__lab_uri = Settings.retrieve().get_data("uri", default="")
-            #self.uri = Model.__lab_uri + "-" + str(uuid.uuid4())
             self.uri = str(uuid.uuid4())
 
         if self.data is None:
@@ -132,7 +137,7 @@ class Model(BaseModel):
         self.is_archived = tf
         return self.save()
     
-    def as_json(self, stringify: bool=False, prettify: bool=False, jsonifiable_data_keys: list=[], **kwargs) -> (str, dict, ):
+    def as_json(self, bare: bool=False, stringify: bool=False, prettify: bool=False, jsonifiable_data_keys: list=[], **kwargs) -> (str, dict, ):
         """
         Returns a JSON string or dictionnary representation of the model.
         
@@ -170,11 +175,10 @@ class Model(BaseModel):
                             _json[prop][k] = jsonable_encoder(val[k])
             else:
                 _json[prop] = jsonable_encoder(val)
-                #if isinstance(val, (datetime, DateTimeField, DateField)):
-                #    _json[prop] = jsonable_encoder(val)
-                #else:
-                #    _json[prop] = val
-        
+                if bare:
+                    if prop == "uri" or prop == "hash" or isinstance(val, (datetime, DateTimeField, DateField)):
+                        _json[prop] = ""
+            
         if stringify:
             if prettify:
                 return json.dumps(_json, indent=4)
@@ -190,10 +194,46 @@ class Model(BaseModel):
         if isinstance(data, dict):
             data = json.dumps(data)
         
-        data = re.sub(r"\"(([^\"]*_)?uri|save_datetime|creation_datetime)\"\s*\:\s*\"([^\"]*)\"", r'"\1": ""', data)
+        data = re.sub(r"\"(([^\"]*_)?uri|save_datetime|creation_datetime|hash)\"\s*\:\s*\"([^\"]*)\"", r'"\1": ""', data)
         return json.loads(data)
     
     # -- C --
+    
+    def __create_hash_object(self):
+        h = hashlib.blake2b()
+        h.update(self._LAB_URI.encode())
+        
+        exclusion_list = (ForeignKeyField, JSONField, ManyToManyField, BlobField, AutoField, BigAutoField, )
+        for prop in self.property_names(Field, exclude=exclusion_list) :
+            if prop in ["id", "hash"]:
+                continue
+            val = getattr(self, prop)            
+            h.update( str(val).encode() )
+         
+        for prop in self.property_names(JSONField):
+            val = getattr(self, prop)
+            h.update( json.dumps(val, sort_keys=True).encode() )
+            
+        for prop in self.property_names(BlobField):
+            val = getattr(self, prop)
+            h.update( val )
+            
+        for prop in self.property_names(ForeignKeyField):
+            val = getattr(self, prop)
+            if isinstance(val, Model):
+                h.update( val.hash.encode() )
+                
+        #for prop in self.property_names(ManyToManyField):
+        #    vals = getattr(self, prop)
+        #    if len(vals) and isinstance(vals[0], Model):
+        #        for val in vals: 
+        #            h.update( val.hash.encode() )
+        
+        return h
+    
+    def __compute_hash(self):
+        ho = self.__create_hash_object()
+        return ho.hexdigest()
 
     def cast(self) -> 'Model':
         """
@@ -480,6 +520,7 @@ class Model(BaseModel):
 
                 #self.kv_store.save()
                 self.save_datetime = datetime.now()
+                self.hash = self.__compute_hash()
                 return super().save(*args, **kwargs)
             except Exception as err:
                 transaction.rollback()
@@ -490,7 +531,7 @@ class Model(BaseModel):
     @classmethod
     def save_all(cls, model_list: list = None) -> bool:
         """
-        Atomically and safely save a list of models in the database. If an error occurs
+        Automically and safely save a list of models in the database. If an error occurs
         during the operation, the whole transactions is rolled back.
 
         :param model_list: List of models
@@ -511,7 +552,18 @@ class Model(BaseModel):
                 raise Error("gws.model.Model", "save_all", f"Error message: {err}")
 
         return True
-
+    
+    
+    def verify_hash(self) -> bool:
+        """
+        Verify the current hash of the model
+        
+        :return: True if the hash is valid, False otherwise
+        :rtype: bool
+        """
+        
+        return self.hash == self.__compute_hash()
+    
 # ####################################################################
 #
 # User class
@@ -819,7 +871,7 @@ class Config(Viewable):
     Config class that represents the configuration of a process. A configuration is
     a collection of parameters
     """
-
+    
     _table_name = 'gws_config'
 
     def __init__(self, *args, specs: dict = None, **kwargs):
@@ -876,7 +928,9 @@ class Config(Viewable):
             except:
                 transaction.rollback()
                 return False
-
+    
+    # -- C --
+    
     # -- D --
 
     def remove(self):
@@ -1091,7 +1145,7 @@ class Process(Viewable):
         except Exception as err:
             raise Error("gws.model.Process", "add_event", f"Cannot add event. Error message: {err}")
     
-    def as_json(self, bare: bool=False, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+    def as_json(self, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the model.
         
@@ -1108,11 +1162,6 @@ class Process(Viewable):
         _json["output_specs"] = self.output.as_json()
         _json["config_specs"] = self.config_specs
         
-        if bare:
-            _json["uri"] = ""
-            _json["save_datetime"] = ""
-            _json["creation_datetime"] = ""
-        
         for k in _json["config_specs"]:
             spec = _json["config_specs"][k]
             if "type" in spec and isinstance(spec["type"], type):
@@ -1126,16 +1175,6 @@ class Process(Viewable):
                 return json.dumps(_json)
         else:
             return _json
-    
-    # -- B --
-    
-    @staticmethod
-    def barefy( data: dict ):
-        if isinstance(data, dict):
-            data = json.dumps(data)
-        
-        data = re.sub(r"\"(([^\"]*_)?uri|save_datetime|creation_datetime)\"\s*\:\s*\"([^\"]*)\"", r'"\1": ""', data)
-        return json.loads(data)
     
     # -- C --
     
@@ -1544,15 +1583,20 @@ class Study(Viewable):
 class Experiment(Viewable):
     """
     Experiment class.
-
-    :property protocol_job: The job of the protocol of the experiment
-    :type job: Job
-    :property protocol_uri: The uri of the protocol of the experiment
-    :type protocol_uri: str
+    
+    :property parent: The parent experiment used to create this experiment
+    :type parent: `gws.model.Expriment`
+    :property study: The study of the experiment
+    :type study: `gws.model.Study`
+    :property created_by: The user who created the experiment
+    :type created_by: `gws.model.User`
     :property score: The score of the experiment
     :type score: `float`
+    :property is_validated: True if the experiment is validated, False otherwise. Defaults to False.
+    :type is_validated: `float`
     """
-
+    
+    parent = ForeignKeyField('self', null=True, backref='children')
     study = ForeignKeyField(Study, null=True, backref='experiments')
     created_by = ForeignKeyField(User, null=True, backref='created_experiments')
     score = FloatField(null=True, index=True)    
@@ -1657,7 +1701,7 @@ class Experiment(Viewable):
             return _json   
       
     # -- C --
-  
+    
     # -- F --
     
     @property
@@ -1682,28 +1726,40 @@ class Experiment(Viewable):
         if len(flow) == 0:
             return None
         
-        if flow.get("experiment_uri"):
-            e_uri = flow["experiment_uri"]
-            try:
-                e = Experiment.get(Experiment.uri == e_uri)
-            except:
-                raise Error("Experiment", "Experiment", f"No experiment matchs against the uri {e_uri}")
-        else:
-            if not flow.get("study_uri"):
+        def check_study():
+            study_uri = flow.get("study",{}).get("uri")  
+            if not study_uri:
                 raise Error("Experiment", "Experiment", "A study uri is required")
-            
+
             try:
-                study = Study.get(Study.uri == flow.get("study_uri"))
+                study = Study.get(Study.uri == study_uri)
             except:
                 raise Error("Experiment", "Experiment", f"No study matchs against the uri {study_uri}")
-      
-            protocol = Protocol.from_flow(flow, user=user)
-            protocol.save()
             
-            e = protocol.create_experiment(study=study, user=user)
-            e.save()
-
-        return e
+            return study
+        
+        def check_experiment(): 
+            e = None
+            e_uri = flow.get("experiment",{}).get("uri")        
+            if e_uri:
+                try:
+                    e = Experiment.get(Experiment.uri == e_uri)
+                except:
+                    raise Error("Experiment", "Experiment", f"No experiment matchs against the uri {e_uri}")
+            
+            return e
+        
+        study = check_study()
+        e = check_experiment()
+        
+        # update protocol
+        protocol = Protocol.from_flow(flow, user=user)
+        protocol.save()
+        new_e = protocol.create_experiment(study=study, user=user)
+        new_e.save()
+        
+        new_e.parent = e
+        return new_e
         
         
     # -- I --
@@ -1873,14 +1929,18 @@ class ProgressBar(Model):
                 "remaining_time": 0.0,
             }
             self.save()
-        
+    
+    @property
+    def is_initialized(self):
+        return self.data["max_value"] > 0.0
+    
     @property
     def is_started(self):
-        return self.data["start_time"] > 0.0
+        return self.is_initialized and self.data["start_time"] > 0.0
     
     @property
     def is_stopped(self):
-        return self.data["value"] >= self.data["max_value"]
+        return self.is_initialized and self.data["value"] >= self.data["max_value"]
     
     def start(self, max_value: float = 100.0):
         if max_value <= 0.0:
@@ -2049,6 +2109,14 @@ class Job(Viewable):
                 config_specs[k]["type"] = spec["type"].__name__ 
         
         _json.update({
+            "study": {
+                "uri": self.experiment.study.uri,
+            },
+            "experiment": {
+                "uri": self.experiment.uri,
+                "type": self.experiment.type,
+                "title": self.experiment.title,
+            },
             "process": {
                 "uri": self.process.uri,
                 "type": self.process.type,
@@ -2063,8 +2131,6 @@ class Job(Viewable):
                 "type": self.config.type,
                 "params": self.config.params,
             },
-            "study_uri": self.experiment.study.uri,
-            "experiment_uri": self.experiment.uri,
             "progress_bar": self.progress_bar.as_json(),
             "parent_job_uri": parent_job_uri,
             "is_running": self.is_running,
@@ -2128,9 +2194,6 @@ class Job(Viewable):
     
     @property
     def flow(self):
-        if not self.is_finished:
-            return {}
-        
         if not len(self.children):
             return {}
         
@@ -3370,7 +3433,7 @@ class ViewModel(Model):
         
     # -- A --
 
-    def as_json(self, stringify: bool=False, prettify: bool=False) -> (str, dict, ):
+    def as_json(self, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the model.
         
@@ -3382,7 +3445,7 @@ class ViewModel(Model):
         :rtype: dict, str
         """
 
-        _json = super().as_json()
+        _json = super().as_json(**kwargs)
         _json["model"] = self.model.as_json( **self.params )
         
         del _json["model_uri"]
@@ -3392,24 +3455,6 @@ class ViewModel(Model):
         if not self.is_saved():
             _json["uri"] = ""
             _json["save_datetime"] = ""
-            
-        #SOLUTION 1: clean and rigorous solution
-        #_json = {
-        #    "uri": self.uri if is_saved else None,
-        #    "type": self.type,
-        #    "data" : self.data,
-        #    "model": self.model.as_json( **self.params ),
-        #    "creation_datetime" : str(self.creation_datetime),
-        #}
-        
-        #SOLUTION 2: easy usage, but less rigorous
-        #_json = self.model.as_json( **self.params )
-        #_json["view_model"] = {
-        #    "uri": self.uri if is_saved else None,
-        #    "type": self.type,
-        #    "data" : self.data,
-        #    "creation_datetime" : str(self.creation_datetime),
-        #}
 
         if stringify:
             if prettify:
@@ -3420,7 +3465,14 @@ class ViewModel(Model):
             return _json
 
     # -- C --
-
+    
+    @staticmethod
+    def __compute_param_hash(params):
+        params = sort_dict_by_key(params)
+        h = hashlib.md5()
+        h.update( json.dumps(params).encode() )
+        return h.hexdigest()
+    
     # -- D --
     
     @property
@@ -3438,10 +3490,20 @@ class ViewModel(Model):
 
     # -- G --
     
-    def get_instance( model, params ):
+    def get_instance( model: Model, params: dict ) -> 'ViewModel':
+        """
+        Retrieve for the db the view model corresponding to a model and a parameter configuration
+        
+        :param model: The model
+        :type model: `gws.model.Model`
+        :param params: The parameter dictionnary
+        :type params: `dict`
+        :return: The retrieved ViewModel
+        :rtype: `gws.model.ViewModel`
+        """
         
         try:
-            h = self.__create_param_hash(params)
+            h = self.__compute_param_hash(params)
             vm = ViewModel.get( (ViewModel.mode_uri==model.uri) & (ViewModel.mode_type==model.type) & (ViewModel.param_hash==h) )
         except:
             vm = ViewModel(model=model)
@@ -3450,6 +3512,17 @@ class ViewModel(Model):
         return vm
     
     def get_param(self, key: str, default=None) -> str:
+        """
+        Get a parameter using its key
+        
+        :param key: The key of the parameter
+        :type key: `str`
+        :param default: The default value to return if the key does not exist. Defaults to `None`.
+        :type default: `str`
+        :return: The value of the parameter
+        :rtype: `str`
+        """
+        
         return self.data["params"].get(key, default)
     
     def get_description(self) -> str:
@@ -3457,7 +3530,7 @@ class ViewModel(Model):
         Returns the description
         
         :return: The description
-        :rtype: str
+        :rtype: `str`
         """
         
         return self.data.get("description", "")
@@ -3465,23 +3538,28 @@ class ViewModel(Model):
     def get_title(self) -> str:
         """ 
         Get the title.
+        
+        :return: The title
+        :rtype: `str`
         """
         
         return self.data.get("title", "")
     
     # -- H --
     
-    @staticmethod
-    def __create_param_hash(params):
-        params = sort_dict_by_key(params)
-        h = hashlib.md5()
-        h.update( json.dumps(params).encode() )
-        return h.hexdigest()
+    
             
     # -- M --
 
     @property
-    def model(self):
+    def model(self) -> Model:
+        """ 
+        Get the Model of the ViewModel.
+        
+        :return: The model instance
+        :rtype: `gws.model.Moldel`
+        """
+        
         if not self._model is None:
             return self._model
 
@@ -3493,7 +3571,14 @@ class ViewModel(Model):
     # -- P -- 
     
     @property
-    def params(self):
+    def params(self) -> dict:
+        """ 
+        Get the parameter set
+        
+        :return: The parameter set
+        :rtype: `dict`
+        """
+        
         return self.data["params"]
     
     # -- R --
@@ -3564,7 +3649,7 @@ class ViewModel(Model):
                         # hash params
                         params = sort_dict_by_key(self.params)
                         self.set_params(params)
-                        self.param_hash = self.__create_param_hash( params )
+                        self.param_hash = self.__compute_param_hash( params )
                         
                         return super().save(*args, **kwargs)
                     else:

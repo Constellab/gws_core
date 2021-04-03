@@ -216,11 +216,11 @@ class Controller(Base):
                 job = Job.get(Job.uri == protocol_job_uri)
             elif experiment_uri:
                 e = Experiment.get(Experiment.uri == experiment_uri)
-                job = e.protocol_job
+                job = e.job
             
             return job.flow
-        except:
-            return {}
+        except Exception as err:
+            raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
             
     
     @classmethod
@@ -487,8 +487,12 @@ class Controller(Base):
     @classmethod
     def save_protocol(cls, data: dict=None):
         from gws.model import Experiment
-        proto = Protocol.from_flow(data, user=Controller.get_current_user())
-        return proto.view().as_json()
+        
+        try:
+            proto = Protocol.from_flow(data, user=Controller.get_current_user())
+            return proto.view().as_json()
+        except Exception as err:
+            raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
     
     @classmethod
     def save_experiment(cls, data=None):

@@ -80,6 +80,7 @@ class TestModel(unittest.TestCase):
         john.clear_data()
         john.save()
         self.assertEqual(john.data, {})
+        self.assertTrue(john.verify_hash())
 
     def test_fts_model(self):
         p = FTSPerson()
@@ -122,6 +123,4 @@ class TestModel(unittest.TestCase):
         p2 = PersonKVStore.get(PersonKVStore.name == 'Isaac Asimov')
         self.assertEqual(p2.name, 'Isaac Asimov')
         self.assertEqual(p2.get_age(), 30)
-
-        
-
+        self.assertTrue(p2.verify_hash())

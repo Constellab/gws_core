@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import inspect
 from fastapi import status, HTTPException
 from gws.logger import Logger, Error
 
@@ -40,10 +41,35 @@ class HTTPBusy(HTTPError):
     def __init__(self, **kwargs):
         super().__init__(status_code=status.HTTP_226_IM_USED, **kwargs)
 
+
+def error_track(func):
+    def wrapper(*args, **kwargs):
+        try:
+            if inspect.ismethod(func):
+                o = args.pop(0)
+                return o.func(*args, **kwargs)
+            else:
+                return func(*args, **kwargs)
+        except Error as err:
+            raise HTTPInternalServerError(detail=str(err))
+        except Exception as err:
+            Logger.error(str(err))
+            raise HTTPInternalServerError(detail=str(err))
+        except HTTPError as err:
+            message = f"HTTPError: status_code = {err.status_code}, detail = {err.detail}"
+            Logger.error(message)
+            raise err
+            
+    return wrapper
+
 async def async_error_track(func):
     async def wrapper(*args, **kwargs):
         try:
-            return await func(*args, **kwargs)
+            if inspect.ismethod(func):
+                o = args.pop(0)
+                return await o.func(*args, **kwargs)
+            else:
+                return await func(*args, **kwargs)
         except Error as err:
             raise HTTPInternalServerError(detail=err.message)
         except Exception as err:

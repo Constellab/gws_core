@@ -5,12 +5,10 @@ import unittest
 import json
 
 from gws.settings import Settings
-from gws.model import   Config, Process, Resource, Model, ViewModel, \
-                        Protocol, Job, Experiment, Study
+from gws.model import *
 from gws.controller import Controller
 from gws.robot import Robot, Create, Move, Eat, Wait
 from gws.unittest import GTest
-
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
@@ -19,26 +17,15 @@ class TestProtocol(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        Config.drop_table()
-        Process.drop_table()
-        Protocol.drop_table()
-        Experiment.drop_table()
-        Job.drop_table()
-        Robot.drop_table()
-        Study.drop_table()
-        
+        tables = ( Create, Config, Process, Protocol, Experiment, Job, Robot, Study, User, Activity, ProgressBar, )
+        GTest.drop_tables(tables)
         GTest.init()
         pass
 
     @classmethod
     def tearDownClass(cls):
-        Config.drop_table()
-        Process.drop_table()
-        Protocol.drop_table()
-        Experiment.drop_table()
-        Job.drop_table()
-        Robot.drop_table()
-        Study.drop_table()
+        tables = ( Create, Config, Process, Protocol, Experiment, Job, Robot, Study, User, Activity, ProgressBar, )
+        GTest.drop_tables(tables)
         pass
     
     def test_protocol(self):
