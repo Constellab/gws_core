@@ -8,7 +8,7 @@ import random
 
 from slugify import slugify as _slugify
 
-def slugify(text: str, snakefy: bool = False) -> str:
+def slugify(text: str, snakefy: bool = False, to_lower: bool = True) -> str:
     """
     Returns the slugified text
 
@@ -19,9 +19,9 @@ def slugify(text: str, snakefy: bool = False) -> str:
     """
     
     if snakefy:
-        text = _slugify(text, to_lower=True, separator='_')
+        text = _slugify(text, to_lower=to_lower, separator='_')
     else:
-        text = _slugify(text, to_lower=True, separator='-')
+        text = _slugify(text, to_lower=to_lower, separator='-')
         
     return text
 

@@ -77,10 +77,9 @@ class TestProtocol(unittest.TestCase):
             self.assertEqual(e.is_running, False)
 
         proto.on_end = _check_exp
-        
         e.save()
         
-        asyncio.run( e.run() )
+        asyncio.run( e.run(user=GTest.user) )
 
     def test_setting_dump(self):
         study = Study.get_by_id(1)
@@ -182,7 +181,7 @@ class TestProtocol(unittest.TestCase):
         Q = Protocol.select()
         self.assertEqual(Protocol.select().count(), count+2)
             
-        asyncio.run( e.run() )
+        asyncio.run( e.run(user=GTest.user) )
 
     def test_graph_load(self):
         study = Study.get_by_id(1)
@@ -226,4 +225,4 @@ class TestProtocol(unittest.TestCase):
     
         e = super_proto.create_experiment(study=GTest.study, user=GTest.user)
         e.on_end(_on_end)    
-        asyncio.run( e.run() )
+        asyncio.run( e.run(user=GTest.user) )

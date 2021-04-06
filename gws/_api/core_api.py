@@ -3,7 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import importlib
 import json
+
 from typing import Optional, List
 
 from fastapi import Depends, FastAPI, \
@@ -20,7 +22,7 @@ from gws.settings import Settings
 from gws.central import Central
 from gws.controller import Controller
 from gws.model import Model, ViewModel, Experiment
-from gws.http import async_error_track
+from gws.http import *
 
 from ._auth_user import UserData, \
                         OAuth2UserTokenRequestForm, \
@@ -265,7 +267,7 @@ async def get_list_of_resources(job_uri: str = None, \
 
 # ##################################################################
 #
-# Get, Post, Put, Delete
+# Get, Post, Put, Delete, Verify
 #
 # ##################################################################
 
@@ -333,6 +335,23 @@ async def delete_view_model(object_type: str, object_uri: str, \
 
     return await Controller.action(action="delete", object_type=object_type, object_uri=object_uri)
 
+@app.get("/verify/{object_type}/{object_uri}/", tags=["Generic models and view models"])
+async def verify(object_type: str, object_uri: str, \
+                _: UserData = Depends(check_user_access_token)) -> (dict, str,):
+    """
+    Block-chain like verification of object integrity.
+    
+    Verify the integrity of a given object in the db to check if that object has been altered by any unofficial mean
+    (e.g. manual changes of data in db, or partial changes without taking care of its dependency chain).
+    
+    Objects' integrity is based on an algorithm that compute hashes using objects' data and their dependency trees.
+    
+    - **object_type**: the type of the object to delete.
+    - **object_uri**: the uri of the object to delete
+    """
+
+    return await Controller.verify(action="verify", object_type=object_type, object_uri=object_uri)
+
 # ##################################################################
 #
 # IO File
@@ -349,19 +368,34 @@ async def call_brick_api(request: Request, \
     - **brick_name**: the name of the brick
     - **api_func**: the target api function. 
     
-    For example of **brick_name=foo** and **api_func=bar**, the method **foo.app.API.bar( request: fastapi.requests.Request )** with be called if it exists. The current **request** will be passed to the function.
+    For example of **brick_name=foo** and **api_func=do-thing**, the method **foo.app.API.do_thing( request: fastapi.requests.Request )** with be called if it exists. The current **request** will be passed to the function. The function
+    **do_thing** should return a JSON response as a dictionnary.
     """
     
-    brick_app_module = importlib.import_module(f"{brick_name}.app")
-    api_t = getattr(brick_app_module, "API", None)
-
     try:
-        async_func = getattr(api_t, api_func.replace("-","_").lower(), None)
-        results = await async_func(request)
-        return results
+        brick_app_module = importlib.import_module(f"{brick_name}.app")
+        api_t = getattr(brick_app_module, "API", None)
+        if api_t is None:
+            raise Error("call_brick_api", f"Class {brick_name}.app.API not found")
+            
+        api_func = api_func.replace("-","_").lower()
+        async_func = getattr(api_t, api_func, None)
+        if async_func is None:
+            raise Error("call_brick_api", f"Method {brick_name}.app.API.{api_func} not found")
+        else:
+            return await async_func(request)
+    
+    except Error as err:
+        raise HTTPInternalServerError(detail=str(err))
+        
     except Exception as err:
-        return {"exception": {"id": "UNEXPECTED_ERROR", "message": f"An unexpected error occured. Message: {err}"}}
-
+        Logger.error(f"{err}")
+        raise HTTPInternalServerError(detail=str(err))
+        
+    except HTTPError as err:
+        message = f"HTTPError: status_code = {err.status_code}, detail = {err.detail}"
+        Logger.error(message)
+        raise err
         
 # ##################################################################
 #

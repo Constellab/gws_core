@@ -66,15 +66,23 @@ async def check_user_access_token(token: str = Depends(oauth2_user_cookie_scheme
         if uri is None:
             raise credentials_exception
     except Exception:
+        # -> An excpetion occured
+        # -> Try to unauthenticate the current user
+        try:
+            user = Controller.get_current_user()
+            if user:
+                User.unauthenticate(uri=user.uri)
+                
+        except:
+            pass
+        
         raise credentials_exception
 
     try:
         db_user = User.get(User.uri == uri)
-        if not db_user.is_active:
+        if not User.authenticate(uri=db_user.uri):
             raise credentials_exception
-        
-        Controller.set_current_user(db_user)  #<- globally set current_user to the Controller 
-        
+            
         return UserData(
             uri=db_user.uri, 
             is_active=db_user.is_active, 

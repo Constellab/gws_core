@@ -91,8 +91,8 @@ class App(BaseApp):
         Study.create_default_instance()
         User.create_owner_and_sysuser()
 
-        # register all processes before starting the HTTP server
-        Controller.register_all_processes()
+        # intialize the controller
+        Controller.init()
         
         # static dirs and docs
         dirs = _settings.get_dependency_dirs()

@@ -64,7 +64,10 @@ class Central:
             return {
                 "uri": user.uri,
                 "group": user.group,
+                "console_token": user.console_token,
                 "is_active": user.is_active,
+                "is_http_authenticated": user.is_http_authenticated,
+                "is_console_authenticated": user.is_console_authenticated
             }
     
     # -- L -- 

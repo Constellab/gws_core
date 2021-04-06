@@ -25,8 +25,8 @@ class Settings(PWModel):
         app_dir         = __cdir__,
         app_host        = '0.0.0.0',
         app_port        = 3000,
-        log_dir          = os.path.join(__cdir__, '../../logs'),
-        data_dir          = os.path.join(__cdir__, '../../data'),
+        log_dir         = os.path.join(__cdir__, '../../logs'),
+        data_dir        = os.path.join(__cdir__, '../../data'),
         db_name         = 'db.sqlite3',     # ':memory:'
         is_test         = False,
         dependencies    = {}
@@ -59,7 +59,6 @@ class Settings(PWModel):
             for k in cls._data:
                 settings.data[k] = cls._data[k]
             
-            settings.set_data("demo", False)
             settings.save()
         except:            
             settings = Settings()
@@ -73,8 +72,6 @@ class Settings(PWModel):
 
             #default uri
             settings.set_data("uri", "00000000-0000-0000-0000-000000000000")
-
-            settings.set_data("demo", False)
             settings.save()
 
     # -- A --
@@ -86,10 +83,6 @@ class Settings(PWModel):
     @property
     def authors(self):
         return self.data.get("authors", None)
-
-    def activate_fts( self, tf:bool ):
-        self.data["is_fts_active"] = tf
-        self.save()
 
     # -- B --
 
@@ -219,18 +212,6 @@ class Settings(PWModel):
     @property
     def is_test(self):
         return self.data.get("is_test", False)
-    
-    @property
-    def is_demo(self):
-        return self.data.get("is_demo", False)
-
-    @property
-    def is_debug(self):
-        return self.data.get("is_debug", False)
-
-    @property
-    def is_fts_active(self):
-        return self.data.get("is_fts_active", True)
 
     # -- N --
 

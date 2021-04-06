@@ -64,12 +64,12 @@ class Model(BaseModel):
     :type creation_datetime: `datetime`
     :property save_datetime: The last save datetime in database
     :type save_datetime: `datetime`
-    :property is_archived: True if the model is archived, False otherwise. Defaults to Fasle
+    :property is_archived: True if the model is archived, False otherwise. Defaults to False
     :type is_archived: `bool`
-    :property is_deleted: True if the model is deleted, False otherwise. Defaults to Fasle
+    :property is_deleted: True if the model is deleted, False otherwise. Defaults to Falses
     :type is_deleted: `bool`
     :property data: The data of the model
-    :type data: dict
+    :type data: `dict`
     :property hash: The hash of the model
     :type hash: `str`
     """
@@ -78,7 +78,7 @@ class Model(BaseModel):
     uri = CharField(null=True, index=True)
     type = CharField(null=True, index=True)
     creation_datetime = DateTimeField(default=datetime.now, index=True)
-    save_datetime = DateTimeField(index=True)  
+    save_datetime = DateTimeField(index=True)
     is_archived = BooleanField(default=False, index=True)
     is_deleted = BooleanField(default=False, index=True)
     hash = CharField(null=True, index=True)
@@ -87,8 +87,10 @@ class Model(BaseModel):
     _kv_store: 'KVStore' = None
     _is_singleton = False
     _is_deletable = True
+    
     _fts_fields = {}
-
+    _is_fts_active = True
+    
     _table_name = 'gws_model'
     
     settings = Settings.retrieve()
@@ -137,18 +139,20 @@ class Model(BaseModel):
         self.is_archived = tf
         return self.save()
     
-    def as_json(self, bare: bool=False, stringify: bool=False, prettify: bool=False, jsonifiable_data_keys: list=[], **kwargs) -> (str, dict, ):
+    def as_json(self, *, show_hash=False, bare: bool=False, stringify: bool=False, prettify: bool=False, jsonifiable_data_keys: list=[], **kwargs) -> (str, dict, ):
         """
         Returns a JSON string or dictionnary representation of the model.
         
+        :param show_hash: If True, returns the hash. Defaults to False
+        :type show_hash: `bool`
         :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
-        :type stringify: bool
+        :type stringify: `bool`
         :param prettify: If True, indent the JSON string. Defaults to False.
-        :type prettify: bool
+        :type prettify: `bool`
         :param jsonifiable_data_keys: If is empty, `data` is fully jsonified, otherwise only specified keys are jsonified
-        :type jsonifiable_data_keys: `list` of str        
+        :type jsonifiable_data_keys: `list` of `str`        
         :return: The representation
-        :rtype: dict, str
+        :rtype: `dict`, `str`
         """
       
         _json = {}
@@ -178,6 +182,9 @@ class Model(BaseModel):
                 if bare:
                     if prop == "uri" or prop == "hash" or isinstance(val, (datetime, DateTimeField, DateField)):
                         _json[prop] = ""
+        
+        if not show_hash:
+            del _json["hash"]
             
         if stringify:
             if prettify:
@@ -471,7 +478,7 @@ class Model(BaseModel):
         _FTSModel = self.fts_model()
 
         if _FTSModel is None:
-            return False
+            return True  #-> no fts fields given -> nothing to do!
         
         try:
             doc = _FTSModel.get_by_id(self.id)  
@@ -506,6 +513,7 @@ class Model(BaseModel):
         :type data: dict
         :raises Exception: If the input data is not a `dict`
         """
+
         if not self.table_exists():
             self.create_table()
 
@@ -513,10 +521,9 @@ class Model(BaseModel):
 
         with DbManager.db.atomic() as transaction:
             try:
-                if Settings.retrieve().is_fts_active:
-                    if not _FTSModel is None:
-                        if not self._save_fts_document():
-                            raise Error("gws.model.Model", "save", "Cannot save related FTS document")
+                if self._is_fts_active:
+                    if not self._save_fts_document():
+                        raise Error("gws.model.Model", "save", "Cannot save related FTS document")
 
                 #self.kv_store.save()
                 self.save_datetime = datetime.now()
@@ -575,6 +582,9 @@ class User(Model):
     email = CharField(default=False, index=True)
     group = CharField(default="user", index=True)
     is_active = BooleanField(default=True)
+    console_token = CharField(default="")
+    is_http_authenticated = BooleanField(default=False)
+    is_console_authenticated = BooleanField(default=False)
 
     USER_GOUP = "user"
     ADMIN_GROUP = "admin"
@@ -585,9 +595,78 @@ class User(Model):
     _is_deletable = False
     _table_name = 'gws_user'
     _fts_fields = {'full_name': 2.0}
-
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.console_token:
+            self.console_token = generate_random_chars(128)
+            
     # -- A --
+    
+    @classmethod
+    def authenticate(cls, uri: str, console_token: str = "") -> bool: 
+        try:
+            user = User.get(User.uri == uri)
+        except:
+            raise Error("User", "authenticate", f"User not found with uri {uri}")
 
+        if not user.is_active:
+            return False
+
+        if Controller.is_http_context():
+            return cls.__authenticate_http(user)            
+        else:
+            return cls.__authenticate_console(user, console_token)
+        
+    @classmethod
+    def __authenticate_console(cls, user, console_token) -> bool:
+        if user.is_console_authenticated:       
+            Controller.set_current_user(user)
+            return True
+        is_valid_token = bool(console_token) and (user.console_token == console_token)
+        if not is_valid_token:
+            return False
+
+        with DbManager.db.atomic() as transaction:
+            try:
+                user.is_console_authenticated = True
+                Activity.add(
+                    user,
+                    Activity.CONSOLE_AUTHENTICATION
+                )
+                if user.save():
+                    Controller.set_current_user(user)
+                else:
+                    raise Error("User", "__console_authenticate", "Cannot save user status")
+                    
+                return True
+            except:
+                transaction.rollback()
+                return False
+    
+    @classmethod
+    def __authenticate_http(cls, user) -> bool:
+        if user.is_http_authenticated:
+            Controller.set_current_user(user)
+            return True
+
+        with DbManager.db.atomic() as transaction:
+            try:
+                user.is_http_authenticated = True
+                Activity.add(
+                    user,
+                    Activity.HTTP_AUTHENTICATION
+                )
+                if user.save():
+                    Controller.set_current_user(user)
+                else:
+                    raise Error("User", "__http_authenticate", "Cannot save user status")
+                    
+                return True
+            except Exception as err:
+                transaction.rollback()
+                return False
+            
     @classmethod
     def create_owner_and_sysuser(cls):
         settings = Settings.retrieve()
@@ -652,6 +731,19 @@ class User(Model):
     def is_sysuser(self):
         return self.group == self.SYSUSER_GROUP
     
+    @property
+    def is_authenticated(self):
+        # get fresh data from DB
+        user = User.get_by_id(self.id)
+        if Controller.is_http_context():
+            return user.is_http_authenticated
+        else:
+            return user.is_console_authenticated
+    
+    # -- F --
+    
+    # -- R --
+    
     # -- S --
 
     def save(self, *arg, **kwargs):
@@ -666,6 +758,67 @@ class User(Model):
     
     # -- U --
     
+    @classmethod
+    def unauthenticate(cls, uri: str) -> bool:
+        try:
+            user = User.get(User.uri == uri)
+        except:
+            raise Error("User", "unauthenticate", f"User not found with uri {uri}")
+            
+        if not user.is_active:
+            return False
+        
+        if Controller.is_http_context:
+            return cls.__unauthenticate_http(user)            
+        else:
+            return cls.__unauthenticate_console(user)
+    
+    @classmethod
+    def __unauthenticate_http(cls, user) -> bool:
+        if not user.is_http_authenticated:
+            Controller.set_current_user(None)
+            return True
+        
+        with DbManager.db.atomic() as transaction:
+            try:
+                user.is_http_authenticated = False
+                Activity.add(
+                    user,
+                    Activity.HTTP_UNAUTHENTICATION
+                )
+                if user.save():
+                    Controller.set_current_user(None)
+                else:
+                    raise Error("User", "__unauthenticate_http", "Cannot save user status")
+                
+                return True
+            except:
+                transaction.rollback()
+                return False
+            
+    @classmethod
+    def __unauthenticate_console(cls, user) -> bool:
+        if not user.is_console_authenticated:
+            Controller.set_current_user(None)
+            return True
+        
+        with DbManager.db.atomic() as transaction:
+            try:
+                user.is_console_authenticated = False
+                Activity.add(
+                    user,
+                    Activity.CONSOLE_UNAUTHENTICATION
+                )
+                if user.save():
+                    Controller.set_current_user(None)
+                else:
+                    raise Error("User", "__unauthenticate_console", "Cannot save user status")
+                
+                return True
+            except:
+                transaction.rollback()
+                return False
+            
 # ####################################################################
 #
 # Activity class
@@ -683,8 +836,7 @@ class Activity(Model):
     _fts_fields = {}
     _table_name = "gws_user_activity"
     
-    LOGIN = "LOGIN"
-    LOGOUT = "LOGOUT"
+    
     CREATE = "CREATE"
     SAVE = "SAVE"
     START = "START"
@@ -692,6 +844,10 @@ class Activity(Model):
     DELETE = "DELETE"
     ARCHIVE = "ARCHIVE"
     VALIDATE = "VALIDATE"
+    HTTP_AUTHENTICATION = "HTTP_AUTHENTICATION"
+    HTTP_UNAUTHENTICATION = "HTTP_UNAUTHENTICATION"
+    CONSOLE_AUTHENTICATION = "CONSOLE_AUTHENTICATION"
+    CONSOLE_UNAUTHENTICATION = "CONSOLE_UNAUTHENTICATION"
     
     @classmethod
     def add(self, user: User, activity_type: str, object_type=None, object_uri=None):
@@ -1145,7 +1301,7 @@ class Process(Viewable):
         except Exception as err:
             raise Error("gws.model.Process", "add_event", f"Cannot add event. Error message: {err}")
     
-    def as_json(self, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+    def as_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the model.
         
@@ -1398,14 +1554,7 @@ class Process(Viewable):
         aws  = []
         job = self.job
         for proc in self._output.get_next_procs():
-            # ensure that the next process is held by this experiment
-            #proc_job = proc.job
-            #proc_job.experiment = job.experiment
-            #proc_job.save()
-
-            # run next
             aws.append( proc._run() )
-            #await proc._run() 
 
         if len(aws):
             await asyncio.gather( *aws )
@@ -1606,14 +1755,21 @@ class Experiment(Viewable):
     _protocol = None
     _table_name = 'gws_experiment'
 
-    def __init__(self, *args, protocol=None, user=None, **kwargs):
+    def __init__(self, *args, protocol: 'Protocol'=None, user: 'User'=None, **kwargs):
         super().__init__(*args, **kwargs)
         
         if not self.is_saved():
-            if user is None:
-                user = User.get_sysuser()
             
+            if user is None:
+                try:
+                    user = Controller.get_current_user()
+                except:
+                    raise Error("gws.model.Experiment", "__init__", "An user is required")
+                    
             if isinstance(user, User):
+                if not user.is_authenticated:
+                    raise Error("gws.model.Experiment", "__init__", "An authenticated user is required")
+                
                 self.created_by = user
             else:
                 raise Error("gws.model.Experiment", "__init__", "The user must be an instance of User")
@@ -1668,7 +1824,7 @@ class Experiment(Viewable):
                 transaction.rollback()
                 return False
 
-    def as_json(self, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+    def as_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the model.
         
@@ -1709,17 +1865,14 @@ class Experiment(Viewable):
         return self.job.flow
     
     @classmethod
-    def from_flow(cls, flow: dict, user=None) -> 'Experiment':
+    def from_flow(cls, flow: dict) -> 'Experiment':
         """ 
         Create a new instance from a existing frow
 
         :return: The experiment
         :rtype": `gws.model.Experiment`
         """
-        
-        if not user:
-            user = User.get_sysuser()
-            
+    
         if isinstance(flow, str):
             flow = json.loads(flow)
         
@@ -1753,9 +1906,9 @@ class Experiment(Viewable):
         e = check_experiment()
         
         # update protocol
-        protocol = Protocol.from_flow(flow, user=user)
+        protocol = Protocol.from_flow(flow)
         protocol.save()
-        new_e = protocol.create_experiment(study=study, user=user)
+        new_e = protocol.create_experiment(study=study)
         new_e.save()
         
         new_e.parent = e
@@ -1839,11 +1992,23 @@ class Experiment(Viewable):
                     .where(Experiment.uri == self.uri) \
                     .order_by(Resource.creation_datetime.desc())
         return Q
-
+        
     async def run(self, user=None):
+        """ 
+        Run an experiment
+
+        :param user: The user who is running the experiment. If not provided, the system will try the get the currently authenticated user
+        :type user: `gws.model.User`
+        """
+        
         if not user:
-            user = User.get_sysuser()
-            
+            try:
+                user = Controller.get_current_user()
+                if not user.is_authenticated:
+                    raise Error("gws.model.Experiment", "__init__", "An authenticated user is required")
+            except:
+                raise Error("gws.model.Experiment", "__init__", "An user is required")
+                
         if self.is_deleted:
             raise Error("gws.model.Experiment", "save", f"The experiment is deleted")
         
@@ -1861,7 +2026,15 @@ class Experiment(Viewable):
         )
         
         self.save()
+        
+        
+        # run in a separate non-blocking loop
+        #loop = asyncio.new_event_loop()
+        #loop.call_soon_threadsafe(self.protocol._run)
+        #loop.run_forever()
+        
         await self.protocol._run()
+
     
     # -- S --
     
@@ -2080,7 +2253,7 @@ class Job(Viewable):
         
         return self.data["instance_name"]
     
-    def as_json(self, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+    def as_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the model.
         
@@ -2464,36 +2637,57 @@ class Protocol(Process):
         if self.uri and self.data.get("graph"):          #the protocol was saved in the super-class
             self.__build_from_dump( self.data["graph"], title=self.title )
         else:
-            if not isinstance(processes, dict):
-                raise Error("gws.model.Protocol", "__init__", "A dictionnary of processes is expected")
-            
-            if not isinstance(connectors, list):
-                raise Error("gws.model.Protocol", "__init__", "A list of connectors is expected")
+            try:
+                if not isinstance(processes, dict):
+                    raise Error("gws.model.Protocol", "__init__", "A dictionnary of processes is expected")
 
-            # set process
-            for name in processes:
-                proc = processes[name]
-                if not isinstance(proc, Process):
-                    raise Error("gws.model.Protocol", "__init__", "The dictionnary of processes must contain instances of Process")
+                if not isinstance(connectors, list):
+                    raise Error("gws.model.Protocol", "__init__", "A list of connectors is expected")
 
-                self.add_process(name, proc)
+                # set process
+                for name in processes:
+                    proc = processes[name]
+                    if not isinstance(proc, Process):
+                        raise Error("gws.model.Protocol", "__init__", "The dictionnary of processes must contain instances of Process")
 
-            # set connectors
-            for conn in connectors:
-                if not isinstance(conn, Connector):
-                    raise Error("gws.model.Protocol", "__init__", "The list of connector must contain instances of Connectors")
+                    self.add_process(name, proc)
+
+                # set connectors
+                for conn in connectors:
+                    if not isinstance(conn, Connector):
+                        raise Error("gws.model.Protocol", "__init__", "The list of connector must contain instances of Connectors")
+
+                    self.add_connector(conn)
                 
-                self.add_connector(conn)
-             
-            if user:
-                if self.created_by.is_sysuser:
-                    self.create_by = user
+                if user is None:
+                    try:
+                        user = Controller.get_current_user()
+                    except:
+                        raise Error("gws.model.Protocol", "__init__", "A user is required")
                 
-            # set interfaces
-            self.__set_interfaces(interfaces)
-            self.__set_outerfaces(outerfaces)
-            
-            self.data["graph"] = self.dumps(as_dict=True)
+                if isinstance(user, User):
+                    if self.created_by.is_sysuser:
+                        # The sysuser is used by default to create any Process
+                        # We therefore replace the syssuser by the currently authenticated user
+
+                        if user.is_authenticated:
+                            self.create_by = user 
+                        else:
+                            raise Error("gws.model.Protocol", "__init__", "The user must be authenticated")
+                else:
+                    raise Error("gws.model.Protocol", "__init__", "The user must be an instance of User")
+
+                # set interfaces
+                self.__set_interfaces(interfaces)
+                self.__set_outerfaces(outerfaces)
+
+                self.data["graph"] = self.dumps(as_dict=True)
+                
+            except Exception as err:
+                if self.is_saved():
+                    self.delete_instance()
+                raise err
+                  
             self.save()   #<- will save the graph
             
         #self.__init_pre_start_event()
@@ -2654,7 +2848,7 @@ class Protocol(Process):
         
         if not self.instance_name:
             self.set_instance_name()
-        
+
         if user is None:
             user = Controller.get_current_user()
             if user is None:
@@ -2749,17 +2943,14 @@ class Protocol(Process):
         return proto
     
     @classmethod
-    def from_flow( cls, flow: dict, user=None ) -> 'Protocol':
+    def from_flow( cls, flow: dict) -> 'Protocol':
         """ 
         Create a new instance from an existing flow
 
         :return: The protocol
         :rtype": `gws.model.Protocol`
         """
-        
-        if not user:
-            user = User.get_sysuser()
-            
+       
         if isinstance(flow, str):
             flow = json.loads(flow)
         
@@ -2770,7 +2961,7 @@ class Protocol(Process):
             proto = Protocol.get(Protocol.uri == flow["process"].get("uri"))
         else:
             instance_name = flow["process"]["instance_name"] 
-            proto = Protocol(instance_name=instance_name, user=user)
+            proto = Protocol(instance_name=instance_name)
             proto.set_title(flow["process"]["title"])
             proto.set_layout(flow.get("layout",{}))
          
@@ -3157,7 +3348,7 @@ class Resource(Viewable):
                 transaction.rollback()
                 return False
 
-    def as_json(self, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+    def as_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the model.
         
@@ -3433,7 +3624,7 @@ class ViewModel(Model):
         
     # -- A --
 
-    def as_json(self, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+    def as_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the model.
         

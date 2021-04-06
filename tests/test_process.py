@@ -23,6 +23,7 @@ class TestProcess(unittest.TestCase):
         ViewModel.drop_table()
         Study.drop_table()
         Activity.drop_table()
+        User.drop_table()
         GTest.init()
         pass
 
@@ -34,6 +35,7 @@ class TestProcess(unittest.TestCase):
         Robot.drop_table()
         Study.drop_table()
         Activity.drop_table()
+        User.drop_table()
         pass
 
     def test_process_singleton(self):
@@ -59,7 +61,6 @@ class TestProcess(unittest.TestCase):
         p_wait = Wait()
     
         proto = Protocol(
-            user = GTest.user,
             processes = {
                 'p0' : p0,  
                 'p1' : p1, 
@@ -142,7 +143,7 @@ class TestProcess(unittest.TestCase):
         self.assertEqual( e.study, GTest.study )
         
         e.on_end(_on_end)        
-        asyncio.run( e.run() )
+        asyncio.run( e.run(user=GTest.user) )
 
     
         

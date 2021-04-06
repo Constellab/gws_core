@@ -5,7 +5,7 @@ import os
 
 from gws.settings import Settings
 from gws.file import File
-from gws.model import Resource, Study
+from gws.model import Resource, Study, User
 from gws.shell import EasyShell, CondaShell
 from gws.unittest import GTest
 
@@ -34,11 +34,15 @@ class TestShell(unittest.TestCase):
     def setUpClass(cls):
         Echo.drop_table()
         Study.drop_table()
+        User.drop_table()
         GTest.init()
         pass
 
     @classmethod
     def tearDownClass(cls):
+        Echo.drop_table()
+        Study.drop_table()
+        User.drop_table()
         pass
     
     def test_shell(self):        
@@ -53,4 +57,4 @@ class TestShell(unittest.TestCase):
             
         e.on_end(_on_end)
         
-        asyncio.run( e.run() )
+        asyncio.run( e.run(user=GTest.user) )

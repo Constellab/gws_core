@@ -7,7 +7,6 @@ import time
 
 from gws.settings import Settings
 from gws.model import Config, Process, Resource, Model, Protocol
-from gws.controller import Controller
 
 class Robot(Resource):
     def __init__(self, *args, **kwargs):

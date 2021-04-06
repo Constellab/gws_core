@@ -22,12 +22,19 @@ class Controller(Base):
     """
     Controller class
     """
-
-    _session = None
+    
     _model_specs = dict() 
     _settings = None
     _number_of_items_per_page = 50
-
+    
+    _console_data = {
+        "user": None
+    }
+    
+    @classmethod
+    def init(cls):
+        cls.register_all_processes()
+        
     @classmethod
     async def action(cls, action=None, object_type=None, object_uri=None, study_uri=None, data=None, page=1, number_of_items_per_page=20, filters="") -> 'ViewModel':
         """
@@ -318,10 +325,18 @@ class Controller(Base):
     @classmethod
     def get_current_user(cls):
         try:
-            return context.data["user"]
+            user = context.data["user"]
         except:
-            return None
-            
+            # is console context
+            try:
+                user = cls._console_data["user"]
+            except:
+                raise Error("Controller", "No HTTP nor Console user authenticated")
+        
+        if user is None:
+            raise Error("Controller", "No HTTP nor Console user authenticated")
+        
+        return user
     
     @classmethod
     def get_settings(cls):
@@ -371,7 +386,17 @@ class Controller(Base):
             t = None
  
         return t
-
+    
+    # -- I --
+    
+    @classmethod
+    def is_http_context(cls):
+        try:
+            context.data["is_http_context"] = True  #-> if not exception -> return True
+            return True
+        except:
+            return False
+        
     # -- L --
 
     # -- P --
@@ -551,20 +576,33 @@ class Controller(Base):
     def set_current_user(cls, user: ('User', 'UserData', )):
         from gws.model import User
         from gws._api._auth_user import UserData
-
-        if isinstance(user, UserData):
-            try:
-                user = User.get(User.uri==user.uri)
-            except:
-                raise HTTPInternalServerError(detail=f"Invalid current user")
         
-        if not isinstance(user, User):
-            raise HTTPInternalServerError(detail=f"Invalid current user")
+        if user is None:
+            try:
+                # is http context
+                context.data["user"] = None
+            except:
+                # is console context
+                cls._console_data["user"] = None
+        else:  
+            if isinstance(user, UserData):
+                try:
+                    user = User.get(User.uri==user.uri)
+                except:
+                    raise HTTPInternalServerError(detail=f"Invalid current user")
 
-        if not user.is_active:
-            raise HTTPUnauthorized(detail=f"Not authorized")
-            
-        context.data["user"] = user
+            if not isinstance(user, User):
+                raise HTTPInternalServerError(detail=f"Invalid current user")
+
+            if not user.is_active:
+                raise HTTPUnauthorized(detail=f"Not authorized")
+
+            try:
+                # is http contexts
+                context.data["user"] = user
+            except:
+                # is console context
+                cls._console_data["user"] = user
     
     # -- V --
     
@@ -586,3 +624,9 @@ class Controller(Base):
         except Exception as err:
             raise HTTPNotFound(detail=f"Protocol not found")
     
+    def verify(self, object_type, object_uri):
+        obj = cls.fetch_model(object_type, object_uri)
+        if obj is None:
+            raise HTTPNotFound(detail=f"Invalid Model type or uri not found")
+        
+        return {"status": obj.verify_hash()}

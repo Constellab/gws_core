@@ -20,7 +20,6 @@ from gws.settings import Settings
 from gws.central import Central
 from gws.controller import Controller
 from gws.model import Model, ViewModel, Experiment
-from gws.http import async_error_track
 
 from ._auth_user import UserData, \
                         check_user_access_token, \

@@ -27,7 +27,8 @@ class GTest:
         study = Study.get_default_instance()
         User.create_owner_and_sysuser()
         user = User.get_sysuser()
-
+        User.authenticate(uri=user.uri, console_token=user.console_token) # refresh user information from DB
+        
         cls.user = user
         cls.study = study
         

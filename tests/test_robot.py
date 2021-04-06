@@ -5,9 +5,10 @@ import unittest
 import json
 
 from gws.settings import Settings
-from gws.model import Config, Process, Resource, Model, ViewModel, Protocol, Job, Experiment
+from gws.model import Config, Process, Resource, Model, ViewModel, Protocol, Job, Experiment, User
 from gws.controller import Controller
 from gws.robot import Robot, create_nested_protocol
+from gws.unittest import GTest
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
@@ -22,6 +23,8 @@ class TestProtocol(unittest.TestCase):
         Experiment.drop_table()
         Job.drop_table()
         Robot.drop_table()
+        User.drop_table()
+        GTest.init()
         pass
 
     @classmethod
@@ -32,6 +35,7 @@ class TestProtocol(unittest.TestCase):
         Experiment.drop_table()
         Job.drop_table()
         Robot.drop_table()
+        User.drop_table()
         pass
     
     def test_robot(self):

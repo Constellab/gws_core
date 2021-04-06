@@ -7,7 +7,7 @@ import pandas
 from pandas import DataFrame
 
 from gws.settings import Settings
-from gws.model import Protocol, Study
+from gws.model import Protocol, Study, User
 from gws.csv import CSVData, Loader, Dumper, Importer, Exporter
 from gws.file import File
 from gws.store import LocalFileStore
@@ -28,6 +28,7 @@ class TestCSV(unittest.TestCase):
         Importer.drop_table()
         Exporter.drop_table()
         Study.drop_table()
+        User.drop_table()
         GTest.init()
         pass
 
@@ -40,7 +41,7 @@ class TestCSV(unittest.TestCase):
         Importer.drop_table()
         Exporter.drop_table()
         Study.drop_table()
-        
+        User.drop_table()
         pass
 
     
@@ -128,4 +129,4 @@ class TestCSV(unittest.TestCase):
         self.assertFalse(os.path.exists(o_file_path))
         
         e.on_end( _on_end )
-        asyncio.run( e.run() )
+        asyncio.run( e.run(user=GTest.user) )

@@ -7,7 +7,7 @@ from collections import OrderedDict
 
 from gws.controller import Controller
 from gws.settings import Settings
-from gws.model import Job, Process, Protocol, Config, Experiment, Study
+from gws.model import Job, Process, Protocol, Config, Experiment, Study, User
 from gws.robot import create_nested_protocol
 from gws.unittest import GTest
 
@@ -25,6 +25,7 @@ class TestJob(unittest.TestCase):
         Job.drop_table()
         Experiment.drop_table()
         Study.drop_table()
+        User.drop_table()
         GTest.init()
         pass
 
@@ -36,6 +37,7 @@ class TestJob(unittest.TestCase):
         Job.drop_table()
         Experiment.drop_table()
         Study.drop_table()
+        User.drop_table()
         pass
 
     def test_job(self):
@@ -104,7 +106,7 @@ class TestJob(unittest.TestCase):
             self.assertTrue(all(OK))
             
         e.on_end( _on_end )
-        asyncio.run( e.run() )
+        asyncio.run( e.run(user=GTest.user) )
     
     
     def test_load_job_flow_and_update(self):  
@@ -132,5 +134,5 @@ class TestJob(unittest.TestCase):
             self.assertEqual(proto2, proto4)
             
         e.on_end( _on_end )
-        asyncio.run( e.run() )
+        asyncio.run( e.run(user=GTest.user) )
         
