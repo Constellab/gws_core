@@ -62,7 +62,7 @@ class TestJob(unittest.TestCase):
     
         def _on_end(*args, **kwargs):
             # load flow using protocol uri
-            flow = proto.job.flow
+            flow = proto.job.generate_flow()
             
             print(json.dumps(flow))
             
@@ -115,7 +115,7 @@ class TestJob(unittest.TestCase):
         e = proto.create_experiment(study=GTest.study,user=GTest.user)
         
         def _on_end(*args, **kwargs):
-            flow = proto.job.flow
+            flow = proto.job.generate_flow()
             f2 = flow.copy()
             
             # delete one link

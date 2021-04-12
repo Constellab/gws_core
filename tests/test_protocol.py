@@ -70,13 +70,16 @@ class TestProtocol(unittest.TestCase):
         self.assertEqual(len(Q), count+1)
         
         e = Experiment(protocol=proto, study=GTest.study, user=GTest.user)
-            
-        def _check_exp():
+        
+        # check data the flow is well saved in DB
+        # self.assertEqual(e.generate_flow(), e.data["flow"])
+        
+        def _check_exp(*args, **kwargs):
             self.assertEqual(e.jobs.count(), 8)
-            self.assertEqual(e.is_finished, False)
+            self.assertEqual(e.is_finished, True)
             self.assertEqual(e.is_running, False)
 
-        proto.on_end = _check_exp
+        proto.on_end(_check_exp)
         e.save()
         
         asyncio.run( e.run(user=GTest.user) )

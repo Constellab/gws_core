@@ -494,7 +494,7 @@ class Controller(Base):
         if not e:
             raise HTTPNotFound(detail=f"Experiment not found")
             
-        if e.is_runnnig:
+        if e.is_running:
             raise HTTPBusy(detail=f"The experiment is already running")
         elif e.is_finished:
             raise HTTPForbiden(detail=f"The experiment is finished")

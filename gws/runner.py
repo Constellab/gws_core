@@ -14,9 +14,10 @@ import re
 from gws.settings import Settings
 from gws.logger import Logger, Error
 
-def _run(   ctx=None, uri=False, token=False, test=False, use_prod_biota_db=False, \
-            cli=False, runserver=False, ip="0.0.0.0", port="3000", docgen=False, \
-            force=False, demo=False):
+def _run(ctx=None, uri=False, token=False, test=False, use_prod_biota_db=False, \
+         cli=False, cli_test=False, \
+         runserver=False, ip="0.0.0.0", port="3000", docgen=False, \
+         force=False):
     
     Logger(is_new_session=True, is_test=test)
     settings = Settings.retrieve()
@@ -26,9 +27,7 @@ def _run(   ctx=None, uri=False, token=False, test=False, use_prod_biota_db=Fals
     
     if uri:
         settings.set_data("uri", uri)
-    
-    settings.set_data("is_demo", demo)
-    
+        
     if not settings.save():
         raise Error("manage", "Cannot save the settings in the database")
     
@@ -61,7 +60,14 @@ def _run(   ctx=None, uri=False, token=False, test=False, use_prod_biota_db=Fals
         test_runner = unittest.TextTestRunner()
         test_runner.run(test_suite)
 
-    elif cli:
+    elif cli or cli_test:
+        if cli_test:
+            settings.data["is_test"] = True
+            settings.data["use_prod_biota_db"] = use_prod_biota_db
+        
+        if not settings.save():
+            raise Error("manage", "Cannot save the settings in the database")
+                
         tab = cli.split(".")
         n = len(tab)
         module_name = ".".join(tab[0:n-1])
@@ -94,12 +100,12 @@ def _run(   ctx=None, uri=False, token=False, test=False, use_prod_biota_db=Fals
 @click.option('--test', help='The name test file to launch (regular expression). Enter "all" to launch all')
 @click.option('--use-prod-biota-db', is_flag=True, help='Use the biota production db')
 @click.option('--cli', help='Command to run using the command line interface')
+@click.option('--cli_test', is_flag=True, help='Use command line interface in test mode')
 @click.option('--runserver', is_flag=True, help='Starts the server')
 @click.option('--ip', default="0.0.0.0", help='Server ip', show_default=True)
 @click.option('--port', default="3000", help='Server port', show_default=True)
 @click.option('--docgen', is_flag=True, help='Generates documentation')
 @click.option('--force', is_flag=True, help='Forces documentation generation by removing any existing documentation (used if --docgen is given)')
-@click.option('--demo', is_flag=True, help='Run in demo mode [to only use for demonstration tests]')
-def run(ctx, uri, token, test, use_prod_biota_db, cli, runserver, ip, port, docgen, force, demo):       
-    _run(ctx, uri, token, test, use_prod_biota_db, cli, runserver, ip, port, docgen, force, demo)
+def run(ctx, uri, token, test, use_prod_biota_db, cli, cli_test, runserver, ip, port, docgen, force):       
+    _run(ctx, uri, token, test, use_prod_biota_db, cli, cli_test, runserver, ip, port, docgen, force)
 

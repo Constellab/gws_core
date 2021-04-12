@@ -1,9 +1,7 @@
 
 import asyncio
 import unittest
-from gws.model import   Job, Config, Process, Resource, \
-                        Model, ViewModel, Experiment, Protocol, \
-                        Study, User, Activity
+from gws.model import   *
 
 from gws.controller import Controller
 from gws.robot import Robot, Create, Move, Eat, Wait
@@ -19,6 +17,7 @@ class TestProcess(unittest.TestCase):
         Robot.drop_table()
         Process.drop_table()
         Protocol.drop_table()
+        ProgressBar.drop_table()
         Experiment.drop_table()
         ViewModel.drop_table()
         Study.drop_table()
@@ -33,6 +32,11 @@ class TestProcess(unittest.TestCase):
         Config.drop_table()
         Create.drop_table()
         Robot.drop_table()
+        Process.drop_table()
+        Protocol.drop_table()
+        ProgressBar.drop_table()
+        Experiment.drop_table()
+        ViewModel.drop_table()
         Study.drop_table()
         Activity.drop_table()
         User.drop_table()

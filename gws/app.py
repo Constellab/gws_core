@@ -22,6 +22,7 @@ from gws.settings import Settings
 from gws.model import Study, User
 from gws.controller import Controller
 from gws.logger import Error
+from gws.system import Monitor
 
 brick = "gws"
 app = FastAPI(docs_url=None)
@@ -94,6 +95,9 @@ class App(BaseApp):
         # intialize the controller
         Controller.init()
         
+        # start system monitoring
+        Monitor.init()
+    
         # static dirs and docs
         dirs = _settings.get_dependency_dirs()
         for name in dirs:
