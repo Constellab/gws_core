@@ -16,7 +16,8 @@ TICK_INTERVAL_SECONDS = 60*5   # 5 min
 
 def _system_monitor_tick():
     Monitor._tick()
-    t = threading.Timer(TICK_INTERVAL_SECONDS, _system_monitor_tick, daemon=True)
+    t = threading.Timer(TICK_INTERVAL_SECONDS, _system_monitor_tick)
+    t.daemon=True
     t.start()
 
 class Monitor(Model):

@@ -27,7 +27,7 @@ def run_experiment(ctx, experiment_uri, user_uri):
         raise Error("gws.cli", "run_experiment", f"The user must be HTTP authenticated")
     
     try:
-        e = Experiment.get(Experiment.uri == experiment_uri).compile(user=user)
+        e = Experiment.get(Experiment.uri == experiment_uri)
     except Exception as err:
         raise Error("gws.cli", "run_experiment", f"No experiment found with uri {experiment_uri}. Error: {err}")
 

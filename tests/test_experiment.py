@@ -18,14 +18,14 @@ class TestProtocol(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        tables = ( Create, Config, Process, Protocol, Experiment, Job, Robot, Study, User, Activity, ProgressBar, )
+        tables = ( Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, )
         GTest.drop_tables(tables)
         GTest.init()
         pass
 
     @classmethod
     def tearDownClass(cls):
-        #tables = ( Create, Config, Process, Protocol, Experiment, Job, Robot, Study, User, Activity, ProgressBar, )
+        #tables = ( Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, )
         #GTest.drop_tables(tables)
         pass
     
@@ -36,23 +36,15 @@ class TestProtocol(unittest.TestCase):
         # -------------------------------
         print("Run experiment 1 ...")
         proto1 = create_nested_protocol()
-        e0 = Experiment(protocol=proto1, study=GTest.study, user=GTest.user)
-        e0.save()
-        
-        self.assertEqual(e0.jobs.count(), 18)
-        self.assertEqual(Job.select().count(), 18)
-        
-        # retrieve experiment and check that it is the same
-        e1 = Experiment.from_flow(e0.generate_flow())
-        #e1 = Experiment.get(Experiment.uri == e0.uri).compile()
-        #self.assertEqual(e1, e0)
-        #self.assertEqual(e1.job, e0.job)
-        
-        self.assertEqual(e1.jobs.count(), 18)
-        self.assertEqual(Job.select().count(), 36)
-        
+        e1 = Experiment(protocol=proto1, study=GTest.study, user=GTest.user)
+        e1.save()
+
+        e2 = Experiment.get(Experiment.uri == e1.uri)
+        self.assertEqual(e1.processes.count(), 18)
+        self.assertEqual(Process.select().count(), 18)
+   
         def _check_exp1(*args, **kwargs):
-            self.assertEqual(e1.jobs.count(), 18)
+            self.assertEqual(e1.processes.count(), 18)
             self.assertEqual(e1.is_finished, True)
             self.assertEqual(e1.is_running, False)
         
@@ -60,12 +52,12 @@ class TestProtocol(unittest.TestCase):
         e1.on_end(_check_exp1)
         asyncio.run( e1.run(user=GTest.user) )
         
-        #for job in e1.jobs:
-        #    self.assertEqual(job.experiment, e1)
-            
+        Q = e1.resources
+        self.assertEqual(len(Q),15)
+        
         time.sleep(2)
         self.assertEqual(e1.pid, 0)
-        self.assertEqual(e1.jobs.count(), 18)
+        self.assertEqual(e1.processes.count(), 18)
         self.assertEqual(e1.is_finished, True)
         self.assertEqual(e1.is_running, False)
         
@@ -78,21 +70,22 @@ class TestProtocol(unittest.TestCase):
         #    self.assertEqual(e2.jobs.count(), 18)
         #    self.assertEqual(e2.is_finished, True)
         #    self.assertEqual(e2.is_running, False)
-    
-        e2.save()
-        #e2.on_end(_check_exp2)
-        
+
+        e2.save()        
         e2.run_cli(user=GTest.user, is_test=True)
         self.assertTrue(e2.pid > 0)
         self.assertEqual(e2.is_finished, False)
         self.assertEqual(e2.is_running, False)
         print(f"Experiment pid = {e2.pid}", )
         
-        print("Waiting 2 secs for cli experiment to finish ...")
-        time.sleep(2)
+        print("Waiting 5 secs for cli experiment to finish ...")
+        time.sleep(5)
         e3 = Experiment.get(Experiment.id == e2.id)
         self.assertEqual(e3.is_finished, True)
         self.assertEqual(e3.is_running, False)
         self.assertEqual(e3.pid, 0)
         
+        
+        Q = e3.resources
+        self.assertEqual(len(Q),15)
         

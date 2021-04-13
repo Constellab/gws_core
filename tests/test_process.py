@@ -11,35 +11,15 @@ class TestProcess(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        Job.drop_table()
-        Config.drop_table()
-        Create.drop_table()
-        Robot.drop_table()
-        Process.drop_table()
-        Protocol.drop_table()
-        ProgressBar.drop_table()
-        Experiment.drop_table()
-        ViewModel.drop_table()
-        Study.drop_table()
-        Activity.drop_table()
-        User.drop_table()
+        tables = ( Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, )
+        GTest.drop_tables(tables)
         GTest.init()
         pass
 
     @classmethod
     def tearDownClass(cls):
-        Job.drop_table()
-        Config.drop_table()
-        Create.drop_table()
-        Robot.drop_table()
-        Process.drop_table()
-        Protocol.drop_table()
-        ProgressBar.drop_table()
-        Experiment.drop_table()
-        ViewModel.drop_table()
-        Study.drop_table()
-        Activity.drop_table()
-        User.drop_table()
+        tables = ( Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, )
+        GTest.drop_tables(tables)
         pass
 
     def test_process_singleton(self):
@@ -50,10 +30,7 @@ class TestProcess(unittest.TestCase):
         p0.description = "This is the description of the process"
         p0.save()
 
-        self.assertTrue(p0.id == p1.id) 
-        self.assertTrue(not p0 is p1)
-        self.assertTrue(not p0.id is None)
-        self.assertTrue(not p1.id is None)
+        self.assertTrue(p0.id != p1.id) 
 
     def test_process(self):
         p0 = Create()
@@ -63,7 +40,7 @@ class TestProcess(unittest.TestCase):
         p4 = Move()
         p5 = Eat()
         p_wait = Wait()
-    
+        
         proto = Protocol(
             processes = {
                 'p0' : p0,  
@@ -128,14 +105,6 @@ class TestProcess(unittest.TestCase):
             res = Robot.get_by_id( p3.output['robot'].id )
             self.assertTrue( isinstance(res, Robot) )
 
-            j = res.job
-            saved_proc = j.process
-            self.assertEqual( saved_proc, p3 )
-            self.assertTrue( saved_proc.input['robot'] is None )
-            
-            self.assertEqual( j.created_by, GTest.user )
-            self.assertEqual( j.study, GTest.study )
-            
         
         # set events
         p3.on_start(_on_p3_start)

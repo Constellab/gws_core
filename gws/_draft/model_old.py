@@ -1214,6 +1214,9 @@ class Config(Viewable):
 #
 # ####################################################################
 
+#class ProcessType(Viewable):
+#    type = CharField(null=True, index=True, unique=True)
+
 class Process(Viewable):
     """
     Process class.
@@ -1230,8 +1233,9 @@ class Process(Viewable):
     :type config_specs: dict
     """
 
-    type = CharField(null=True, index=True, unique=True)
+    #type = CharField(null=True, index=True, unique=True)
     created_by = ForeignKeyField(User, null=False, index=True)
+    #config =  ForeignKeyField(Config, null=False, index=True)
     
     is_running: bool = False 
     is_finished: bool = False 
@@ -1240,18 +1244,15 @@ class Process(Viewable):
     output_specs: dict = {}
     config_specs: dict = {}
     
-    
-        
     _file_store: 'FileStore' = None
     _parent_protocol: 'Protocol' = None
-    _config: 'Config' = {}  # in memory object
-            
     _instance_name: str = None
     _event_listener: EventListener = None
     _input: Input = None
     _output: Output = None
+    _job: 'Job' = None  #ref to the current job
 
-    _is_singleton = True
+    _is_singleton = False
     _is_deletable = False
     _table_name = 'gws_process'
 
@@ -1386,6 +1387,21 @@ class Process(Viewable):
 
         super().create_table(*args, **kwargs)
 
+    @property
+    def config(self) -> Config:
+        """
+        Returns the config. 
+        
+        Note that the config is actually related to the job of the process. 
+        The config is therefore retrieved 
+        through the job instance.
+
+        :return: The config
+        :rtype: Config
+        """
+        
+        return self.job.config
+
     def create_source_zip(self):
         model_t = Controller.get_model_type(self.type) #/:\ Use the true object type (self.type)
         source = inspect.getsource(model_t)
@@ -1464,6 +1480,26 @@ class Process(Viewable):
     
     # -- J --
     
+    @property
+    def job(self):
+        """
+        Initialize an job for the process.
+
+        :return: The job
+        :rtype: Job
+        """
+        
+        if self._job:
+            return self._job
+        
+        if self.job_uri is None:
+            config = Config(specs = self.config_specs)
+            self._job = Job(process=self, config=config)
+        else:
+            self._job = Job.get(Job.process_uri==self.uri)
+            
+        return self._job
+    
     # -- L --
 
     def __lshift__(self, name: str) -> InPort:
@@ -1540,6 +1576,7 @@ class Process(Viewable):
     async def _run_next_processes(self):
         self._output.propagate()
         aws  = []
+        job = self.job
         for proc in self._output.get_next_procs():
             aws.append( proc._run() )
 
@@ -1554,7 +1591,14 @@ class Process(Viewable):
             Info(f"Running {self.full_classname()} '{self.get_title()}' ...")
         else:
             Info(f"Running {self.full_classname()} ...")
-          
+        
+        job = self.job
+        if not job.progress_bar.is_running:
+            job.progress_bar.start()
+            
+        if not job.save():
+            raise Error("gws.model.Process", "_run_before_task", "Cannot save the job")
+        
         if self._event_listener.exists('start'):
             self._event_listener.sync_call('start', self)
             await self._event_listener.async_call('start', self)
@@ -1568,6 +1612,17 @@ class Process(Viewable):
         self.is_running = False
         self.is_finished = True
 
+        job = self.job
+        job.progress_bar.stop()
+        if not job.save():
+            raise Error("gws.model.Process", "_run_after_task", f"Cannot save the job")
+
+        res = self.output.get_resources()
+        for k in res:
+            if not res[k] is None:
+                res[k]._set_job(job)
+                res[k].save()
+        
         if not self._output.is_ready:
             return
         
@@ -1619,6 +1674,20 @@ class Process(Viewable):
             raise Error("gws.model.Process", "set_input", "The resource must be an instance of Resource.")
 
         self._input[name] = resource
+        
+    def set_config(self, config: 'Config'):
+        """ 
+        Sets the config of the process.
+
+        :param config: A config to assign
+        :type config: Config
+        """
+
+        if isinstance(config, Config):
+            job = self.job
+            job.set_config(config)
+        else:
+            raise Error("gws.model.Process", "set_config", "The config must be an instance of Config.")
 
     def set_param(self, name: str, value: [str, int, float, bool]):
         """ 
@@ -1678,15 +1747,7 @@ class Study(Viewable):
         
         return study
 
-# ####################################################################
-#
-# Flow class
-#
-# ####################################################################
-#class Flow(Viewable):
-#    job = ForeignKeyField(Job, null=True, backref=flow)
-#    _table_name = 'gws_flow'
-#    pass
+
     
 # ####################################################################
 #
@@ -1710,13 +1771,15 @@ class Experiment(Viewable):
     :type is_validated: `float`
     """
     parent = ForeignKeyField('self', null=True, backref='children')
+    
+    job_id = IntegerField(null=True, index=True)    # -> prevent cyclic dependencies
     study = ForeignKeyField(Study, null=True, backref='experiments')
     created_by = ForeignKeyField(User, null=True, backref='created_experiments')
     score = FloatField(null=True, index=True)    
     is_validated = BooleanField(default=False, index=True)
 
-    _job = None
-    _protocol = None
+    _job: 'Job' = None
+    _protocol: 'Protocol' = None
     _table_name = 'gws_experiment'
 
     def __init__(self, *args, protocol:'Protocol'=None, user:'User'=None, **kwargs):
@@ -1739,26 +1802,12 @@ class Experiment(Viewable):
                 self.created_by = user
             else:
                 raise Error("gws.model.Experiment", "__init__", "The user must be an instance of User")
-                
+            
+            
             if protocol is None:
                 protocol = Protocol(user=user)
-                
-            if isinstance(protocol, Protocol):
-                if not protocol.instance_name:
-                    protocol.set_instance_name()
-            else:
-                raise Error("gws.model.Experiment", "__init__", "The protocol must be an instance of Protocol")
             
-            # register in DB to bind job
-            self.save()
-   
-            # bind a job
-            protocol.save()
-            self._job = protocol.job
-            self._job.set_experiment(self)
-            
-            # save default flow
-            #self._save_flow()
+            self.set_protocol(protocol)
         
     # -- A --
     
@@ -1828,6 +1877,17 @@ class Experiment(Viewable):
       
     # -- C --
     
+    def compile(self, user=None):
+        if not self._protocol:
+            flow = self.data["flow"]
+            self._protocol = Protocol.from_flow(flow)
+  
+        new_e = self._protocol.create_experiment(study=self.study, user=user)
+        new_e.parent = self
+        new_e.save()
+        return new_e
+            
+        
     # -- F --
     
     @classmethod
@@ -1870,15 +1930,7 @@ class Experiment(Viewable):
         
         study = check_study()
         e = check_experiment()
-        
-        # update protocol
-        protocol = Protocol.from_flow(flow)
-        protocol.save()
-        new_e = protocol.create_experiment(study=study)
-        new_e.save()
-        
-        new_e.parent = e
-        return new_e
+        return e.compile()
         
     # -- G --
     
@@ -1890,7 +1942,8 @@ class Experiment(Viewable):
         :rtype": `dict`
         """
         
-        return self.job.generate_flow()
+        self.save_flow()   
+        return self.data["flow"]
     
     # -- I --
     
@@ -1945,14 +1998,12 @@ class Experiment(Viewable):
         :return: The job of the experiment
         :rtype: `gws.model.Job`
         """
-        
-        if not self._job:
-            if not self.is_saved():
-                self.save()
-                
-            self._job = Job.get(Job.experiment == self)
-        
-        return self._job
+
+        if self._job:
+            return self._job
+        else:
+            self._job = Job.get_by_id(self.job_id)
+            return self._job
     
     # -- K --
     
@@ -1992,7 +2043,11 @@ class Experiment(Viewable):
     
     @property 
     def protocol(self):
-        return self.job.process
+        if self._protocol:
+            return self._protocol
+        else:
+            self._protocol = self.job.process
+            return self._protocol
      
     # -- R --
     
@@ -2027,7 +2082,7 @@ class Experiment(Viewable):
                     .order_by(Resource.creation_datetime.desc())
         return Q
     
-    def run_cli(self, *, user=None, is_test=False):
+    def run_cli(self, user=None, is_test=False):
         """ 
         Run an experiment in a non-blocking way. Use a new process pool to run the experiment through the CLI.
 
@@ -2037,13 +2092,7 @@ class Experiment(Viewable):
         
         if Controller.is_http_context():
             raise Error("gws.model.Experiment", "run_cli", "Invalid context. Must be used in CLI or Console context")
-            
-        #def _reset_pid(*args, **kwargs):
-        #    self.data["pid"] = 0
-        #    self.save()
-        #    
-        #self.on_end(_reset_pid)
-        
+
         from gws.system import SysProc
         settings = Settings.retrieve()
         cwd_dir = settings.get_cwd()
@@ -2068,11 +2117,10 @@ class Experiment(Viewable):
         if is_test:
             cmd.append("--cli_test")
             
-        import subprocess
-        o = subprocess.check_output(cmd)
-        print(o)
-        
-        return
+        #import subprocess
+        #o = subprocess.check_output(cmd)
+        #print(o)
+        #return
     
         sproc = SysProc.popen(cmd, stderr=DEVNULL, stdout=DEVNULL)
         self.data["pid"] = sproc.pid
@@ -2094,7 +2142,7 @@ class Experiment(Viewable):
         :param user: The user who is running the experiment. If not provided, the system will try the get the currently authenticated user
         :type user: `gws.model.User`
         """
-        
+
         if not user:
             try:
                 user = Controller.get_current_user()
@@ -2118,13 +2166,35 @@ class Experiment(Viewable):
             object_type = self.full_classname(),
             object_uri = self.uri
         )
-
-        self.save()
+        
+        self.save_flow()        
         await self.protocol._run()
+        
+        # reset process id if required
+        if self.data.get("pid"):
+            self.data["pid"] = 0
+            self.save()
     
     # -- S --
     
-    def _save_flow(self):  
+    def set_protocol(self, protocol: 'Protocol'):
+        self._protocol = protocol
+        
+        if isinstance(protocol, Protocol):
+            if not self._protocol.instance_name:
+                self._protocol.set_instance_name()
+        else:
+            raise Error("gws.model.Experiment", "__init__", "The protocol must be an instance of Protocol")
+
+        self._protocol.save()
+        self.job_id = self._protocol.job.id
+        self.save()
+        self._protocol.job.set_experiment(self)
+        self._protocol.job.save()
+        self.save_flow()
+            
+            
+    def save_flow(self):  
         self.data["flow"] = self.job.generate_flow()
         self.save()
         
@@ -2315,16 +2385,16 @@ class Job(Viewable):
             self._config = config            
             self._process = process
             
-            #if not process.instance_name:
-            #    raise Error("gws.model.Job", "__init__", "The process has no instance name.")
-            
             self.progress_bar = ProgressBar()
             self.data["instance_name"] = process.instance_name
             
             self.save()
         
         # set active process job
-        self.process._job = self
+        self.process.job_uri = self.uri
+        self.process.save()
+        
+        #self.process._job = self
      
     # -- A --
 
@@ -2552,27 +2622,7 @@ class Job(Viewable):
         return super().remove()
     
     async def _run( self ):
-        
-        if self.progress_bar.is_running:
-            return
-        
-        # start progress bar
-        self.progress_bar.start()
-        self.save()
-        
         await self.process._run()
-        
-        # stop progress bar
-        self.progress_bar.stop()
-        self.save()
-        
-        # set resources' jobs
-        res = self.process.output.get_resources()
-        for k in res:
-            if not res[k] is None:
-                res[k]._set_job(self)
-                res[k].save()
-                
 
     # -- S --
     
@@ -3309,7 +3359,7 @@ class Protocol(Process):
         await super()._run_after_task(*args, **kwargs)
         
         # Save current job flow at the level of the experiment
-        self.job.experiment._save_flow()
+        self.job.experiment.save_flow()
 
     # -- S --
     

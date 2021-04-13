@@ -205,91 +205,34 @@ class Controller(Base):
         return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
     
     @classmethod
-    def fetch_job_list(cls, experiment_uri=None, page=1, number_of_items_per_page=20, filters=[]):
-        from gws.model import Job, Experiment
-        Q = Job.select().order_by(Job.creation_datetime.desc())
+    def fetch_process_list(cls, experiment_uri=None, page=1, number_of_items_per_page=20, filters=[]):
+        from gws.model import Experiment
+        Q = Process.select().order_by(Process.creation_datetime.desc())
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
         if not experiment_uri is None :
             Q = Q.join(Experiment).where(Experiment.uri == experiment_uri)
 
-        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
+        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()      
     
     @classmethod
-    def fetch_job_flow(cls, protocol_job_uri=None, experiment_uri=None):
-        from gws.model import Experiment, Job
-        
-        try:
-            if protocol_job_uri:
-                job = Job.get(Job.uri == protocol_job_uri)
-            elif experiment_uri:
-                e = Experiment.get(Experiment.uri == experiment_uri)
-                job = e.job
-            
-            return job.flow
-        except Exception as err:
-            raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
-            
-    
-    @classmethod
-    def fetch_protocol_list(cls, experiment_uri=None, job_uri=None, page=1, number_of_items_per_page=20):
-        from gws.model import Protocol, Job, Experiment
+    def fetch_protocol_list(cls, experiment_uri=None, page=1, number_of_items_per_page=20):
+        from gws.model import Protocol, Experiment
         if experiment_uri:
             Q = Protocol.select_me()\
                             .join(Experiment, on=(Experiment.protocol_uri == Protocol.uri))\
                             .where(Experiment.uri == experiment_uri)
-        elif job_uri:
-            Q = Protocol.select_me()\
-                            .join(Job, on=(Job.process_uri == Protocol.uri))\
-                            .where(Job.uri == job_uri)
         else:
             number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
             Q = Protocol.select_me().order_by(Protocol.creation_datetime.desc())
 
         return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
-    
-    @classmethod
-    def fetch_process_list(cls, job_uri=None, page=1, number_of_items_per_page=20):
-        from gws.model import Process, Job
-
-        if job_uri is None:
-            number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
-            Q = Process.select().order_by(Process.creation_datetime.desc())
-        else:
-            Q = Process.select()\
-                            .join(Job, on=(Job.process_uri == Process.uri))\
-                            .where(Job.uri == job_uri) \
-                            .order_by(Process.creation_datetime.desc())
-
-        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
 
     @classmethod
-    def fetch_config_list(cls, job_uri=None, page=1, number_of_items_per_page=20):
-        from gws.model import Config, Job
-
-        if job_uri is None:
-            number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
-            Q = Config.select().order_by(Config.creation_datetime.desc())
-        else:
-            Q = Config.select()\
-                            .join(Job, on=(Job.config_uri == Config.uri))\
-                            .where(Job.uri == job_uri) \
-                            .order_by(Config.creation_datetime.desc())
-
-        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
-
-    @classmethod
-    def fetch_resource_list(cls, experiment_uri=None, job_uri=None, page=1, number_of_items_per_page=20):
-        from gws.model import Resource, Job, Experiment
+    def fetch_resource_list(cls, experiment_uri=None, page=1, number_of_items_per_page=20):
+        from gws.model import Resource, Experiment
         
-        if job_uri:
+        if experiment_uri: 
             Q = Resource.select() \
-                        .join(Job) \
-                        .join(Experiment) \
-                        .where(Job.uri == job_uri) \
-                        .order_by(Resource.creation_datetime.desc())
-        elif experiment_uri: 
-            Q = Resource.select() \
-                        .join(Job) \
                         .join(Experiment) \
                         .where(Experiment.uri == experiment_uri) \
                         .order_by(Resource.creation_datetime.desc())
@@ -360,7 +303,7 @@ class Controller(Base):
         if type_str is None:
             return None
         
-        from gws.model import Experiment, Protocol, Process, Resource, Config, Job
+        from gws.model import Experiment, Protocol, Process, Resource, Config
         if type_str.lower() == "experiment":
             return Experiment
         elif type_str.lower() == "protocol":
@@ -371,9 +314,7 @@ class Controller(Base):
             return Resource
         elif type_str.lower() == "config":
             return Config
-        elif type_str.lower() == "job":
-            return Job
-    
+ 
         tab = type_str.split(".")
         n = len(tab)
         module_name = ".".join(tab[0:n-1])

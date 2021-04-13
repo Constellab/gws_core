@@ -312,17 +312,24 @@ class IOface:
         self.source_port = source_port
         self.target_port = target_port
         
-    def as_json(self):
+    def as_json(self, **kwargs):
+        bare = kwargs.get("bare")
+        r_uri = ""
+        if self.source_port.resource and not bare:
+            r_uri = self.source_port.resource.uri
+            
         return {
             "name": self.name,
             "from": {
                 "node": self.source_port.process.instance_name,
                 "port": self.source_port.name,
             },
-            
             "to": {
                 "node": self.target_port.process.instance_name,
                 "port": self.target_port.name,
+            },
+            "resource":{
+                "uri": r_uri
             }
         }
     
@@ -340,8 +347,8 @@ class Interface(IOface):
             
         super().__init__(name, source_port, target_port)
     
-    def as_json(self):
-        _json = super().as_json()
+    def as_json(self, **kwargs):
+        _json = super().as_json(**kwargs)
         _json["from"]["node"] = ":parent:"
         return _json
         
@@ -359,8 +366,8 @@ class Outerface(IOface):
             
         super().__init__(name, source_port, target_port)
     
-    def as_json(self):
-        _json = super().as_json()
+    def as_json(self, **kwargs):
+        _json = super().as_json(**kwargs)
         _json["to"]["node"] = ":parent:"
         return _json
         
@@ -410,14 +417,20 @@ class Connector:
     
     # -- A --
     
-    def as_json(self) -> dict:
+    def as_json(self, **kwargs) -> dict:
         """
         Returns a dictionnary describing the Connector.
 
         :return: A dictionnary describing the Connector
         :rtype: dict
         """
-
+        
+        bare = kwargs.get("bare")
+        
+        r_uri = ""
+        if self.out_port.resource and not bare:
+            r_uri = self.out_port.resource.uri
+        
         link = {
             "from": {
                 "node": self.left_process.instance_name,
@@ -426,6 +439,9 @@ class Connector:
             "to": {
                 "node": self.right_process.instance_name,  
                 "port": self.in_port.name, 
+            },
+            "resource":{
+                "uri": r_uri
             }
         }
 
@@ -480,19 +496,46 @@ class IO(Base):
     
     # -- A --
     
-    def as_json(self):
+    def as_json(self, **kwargs):
         _json = {}
+        bare = kwargs.get("bare")
+        
         for k in self._ports:
             port = self._ports[k]
-            _json[k] = ()
+            _json[k] = {}
+            
+            if port.resource and not bare:
+                _json[k]["resource"] = {
+                    "uri": port.resource.uri
+                }
+            else:
+                _json[k]["resource"] = {
+                    "uri": ""
+                }
+            
+            _json[k]["specs"] = ()
             for t in port._resource_types:
                 if t is None:
-                    _json[k] += (None, )
+                    _json[k]["specs"] += (None, )
                 else:
                     classname = t.full_classname()
-                    _json[k] += (classname, )
-            
+                    _json[k]["specs"] += (classname, )
+    
         return _json
+    
+    #def as_json(self):
+    #    _json = {}
+    #    for k in self._ports:
+    #        port = self._ports[k]
+    #        _json[k] = ()
+    #        for t in port._resource_types:
+    #            if t is None:
+    #                _json[k] += (None, )
+    #            else:
+    #                classname = t.full_classname()
+    #                _json[k] += (classname, )
+    #        
+    #    return _json
     
     # -- C --
 
@@ -520,7 +563,7 @@ class IO(Base):
             
             resource_types = (resource_types, )
             
-        if self._parent.is_running or self._parent.is_finished:
+        if self._parent.is_instance_running or self._parent.is_instance_finished:
             raise Error(self.classname(), "__setitem__", "Cannot alter inputs/outputs of processes during or after running")
         
         if type(self) == Output:
