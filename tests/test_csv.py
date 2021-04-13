@@ -93,8 +93,10 @@ class TestCSV(unittest.TestCase):
             ]
         )
         
-        loader.set_param("file_path", i_file_path)
+        print("xxxx")
+        print(i_file_path)
         
+        loader.set_param("file_path", i_file_path)
         dumper.set_param("file_path", o_file_path)
         dumper.set_param("index", False)
         exporter.set_param("index", False)

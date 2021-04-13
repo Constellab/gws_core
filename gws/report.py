@@ -4,10 +4,10 @@
 # About us: https://gencovery.com
 
 from peewee import ForeignKeyField
-from gws.model import ViewModel, Job, Viewable
+from gws.model import ViewModel, Viewable, Experiment
 
 class Report(Viewable):
-    job = ForeignKeyField(Job, backref="reports")
+    experiment = ForeignKeyField(Experiment, backref="reports")
     _table_name = "gws_report"
 
     def add_title(self, title: str):

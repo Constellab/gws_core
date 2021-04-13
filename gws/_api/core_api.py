@@ -68,21 +68,6 @@ class ProtocolData(ProcessData):
     interfaces: dict = {}
     outerfaces: dict = {}
     
-class FlowData(BaseModel):
-    uri: Optional[str]
-    type: Optional[str] = "gws.model.Job"
-    #is_archived: Optional[bool] = False
-    #is_deleted: Optional[bool] = False
-    #creation_datetime: Optional[str]
-    #save_datetime: Optional[str]
-    #progress: Optional[float] = 0.0
-    process: Optional[ProtocolData]
-    config: Optional[ConfigData]
-    parent_job_uri: Optional[str]
-    experiment_uri: Optional[str]
-    layout: Optional[dict] = {}
-    jobs: dict
-    flows: dict
     
 # ##################################################################
 #
@@ -105,7 +90,7 @@ async def get_list_of_experiments(page: int = 1, number_of_items_per_page: int =
         number_of_items_per_page=number_of_items_per_page
     )
 
-@app.post("/experiment/save", tags=["Experiment"], summary="Save an experiment using a existing (or new) job flow")
+@app.post("/experiment/save", tags=["Experiment"], summary="Save an experiment using a flow")
 async def save_experiment(flow: Optional[dict], \
                           _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
@@ -138,8 +123,8 @@ async def validate_experiment(uri: str = None, \
 
     return Controller.validate_experiment(uri=uri)
 
-@app.get("/job/flow", tags=["Experiment"], summary="Get job flow")
-async def get_job_flow(protocol_job_uri: str = None, experiment_uri: str = None, \
+@app.get("/experiment/", tags=["Experiment"], summary="Get experiment flow")
+async def get_experiment(experiment_uri: str = None, \
                        _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Retrieve the job flow of an experiment or a protocol job
@@ -148,24 +133,8 @@ async def get_job_flow(protocol_job_uri: str = None, experiment_uri: str = None,
     - **experiment_uri**: the uri of an experiment (is not used if job_uri is given)
     """
 
-    return Controller.fetch_job_flow(protocol_job_uri=protocol_job_uri, experiment_uri=experiment_uri)
+    return Controller.fetch_experiment(experiment_uri=experiment_uri)
 
-@app.get("/job/list", tags=["Experiment"], summary="Get the list of jobs")
-async def get_list_of_jobs(experiment_uri: str = None, page: int = 1, number_of_items_per_page: int = 20, \
-                           _: UserData = Depends(check_user_access_token)) -> (dict, str,):
-    """
-    Retrieve a list of jobs. The list is paginated.
-
-    - **experiment_uri**: the uri of the experiment in which the jobs were run
-    - **page**: the page number 
-    - **number_of_items_per_page**: the number of items per page (limited to 50) 
-    """
-
-    return Controller.fetch_job_list(
-        page=page, 
-        number_of_items_per_page=number_of_items_per_page,
-        experiment_uri=experiment_uri
-    )
 
 @app.get("/protocol/list", tags=["Experiment"], summary="Get the list of protocols")
 async def get_list_of_protocols(experiment_uri: str = None, job_uri: str = None, \
@@ -187,17 +156,6 @@ async def get_list_of_protocols(experiment_uri: str = None, job_uri: str = None,
         job_uri=job_uri
     )
 
-@app.post("/protocol/save", tags=["Experiment"], summary="Save a protocol using a existing (or new) job flow")
-async def save_protocol(flow: Optional[FlowData], \
-                        _: UserData = Depends(check_user_access_token)) -> (dict, str,):
-    """
-    Save a protocol
-    
-    - **flow**: the flow object 
-    """
-
-    return await Controller.save_protocol(data=flow)
-
 @app.post("/protocol/validate/", tags=["Experiment"], summary="Validate an experiment")
 async def validate_experiment(uri: str = None, \
                               _: UserData = Depends(check_user_access_token)) -> (dict, str,):
@@ -209,8 +167,25 @@ async def validate_experiment(uri: str = None, \
 
     return Controller.validate_protocol(uri=uri)
 
+@app.get("/process-type/list", tags=["Experiment"], summary="Get the list of process types")
+async def get_list_of_process_types(page: int = 1, number_of_items_per_page: int = 20, \
+                              _: UserData = Depends(check_user_access_token)) -> (dict, str,):
+    """
+    Retrieve a list of processes. The list is paginated.
+
+    - **job_uri**: the uri of job related the process (only one process is related to given job)
+    - **page**: the page number 
+    - **number_of_items_per_page**: the number of items per page (limited to 50 if job_uri is not given) 
+    """
+
+    return Controller.fetch_process_type_list(
+        page=page, 
+        number_of_items_per_page=number_of_items_per_page,
+        job_uri=job_uri
+    )
+
 @app.get("/process/list", tags=["Experiment"], summary="Get the list of processes")
-async def get_list_of_process(job_uri: str = None, \
+async def get_list_of_process(experiment_uri: str = None, \
                               page: int = 1, number_of_items_per_page: int = 20, \
                               _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
@@ -224,11 +199,11 @@ async def get_list_of_process(job_uri: str = None, \
     return Controller.fetch_process_list(
         page=page, 
         number_of_items_per_page=number_of_items_per_page,
-        job_uri=job_uri
+        experiment_uri=experiment_uri
     )
 
 @app.get("/config/list", tags=["Experiment"], summary="Get the list of configs")
-async def get_list_of_configs(job_uri: str = None, \
+async def get_list_of_configs(experiment_uri: str = None, \
                               page: int = 1, number_of_items_per_page: int = 20, \
                               _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
@@ -242,12 +217,11 @@ async def get_list_of_configs(job_uri: str = None, \
     return Controller.fetch_config_list(
         page=page, 
         number_of_items_per_page=number_of_items_per_page,
-        job_uri=job_uri
+        experiment_uri=experiment_uri
     )
 
 @app.get("/resource/list", tags=["Experiment"], summary="Get the list of resources")
-async def get_list_of_resources(job_uri: str = None, \
-                                experiment_uri: str = None, page: int = 1, number_of_items_per_page: int = 20, \
+async def get_list_of_resources(experiment_uri: str = None, page: int = 1, number_of_items_per_page: int = 20, \
                                 _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Retrieve a list of resources. The list is paginated.
@@ -261,8 +235,7 @@ async def get_list_of_resources(job_uri: str = None, \
     return Controller.fetch_resource_list(
         page=page, 
         number_of_items_per_page=number_of_items_per_page, 
-        experiment_uri=experiment_uri, 
-        job_uri=job_uri
+        experiment_uri=experiment_uri
     )
 
 # ##################################################################

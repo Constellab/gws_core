@@ -196,7 +196,6 @@ class Controller(Base):
     
     # -- F --
 
-        
     @classmethod
     def fetch_experiment_list(cls, page=1, number_of_items_per_page=20, filters=[]):
         from gws.model import Experiment
@@ -213,7 +212,13 @@ class Controller(Base):
             Q = Q.join(Experiment).where(Experiment.uri == experiment_uri)
 
         return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()      
-    
+ 
+    @classmethod
+    def fetch_process_type_list(cls, page=1, number_of_items_per_page=20, filters=[]):
+        Q = ProcessType.select().order_by(ProcessType.ptype.desc())
+        number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
+        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()      
+ 
     @classmethod
     def fetch_protocol_list(cls, experiment_uri=None, page=1, number_of_items_per_page=20):
         from gws.model import Protocol, Experiment
@@ -384,13 +389,8 @@ class Controller(Base):
         
         process_type_list = list(set(process_type_list))
         for proc_t in set(process_type_list):
-            try:
-                proc_t.get(proc_t.type == proc_t.full_classname())
-            except:
-                if not t == Protocol:
-                    proc = proc_t()
-                    proc.save()
-        
+            proc_t.create_process_type()
+
         Info(f"REGISTER_ALL_PROCESSES: A total of {len(process_type_list)} processes were registered in db.\n Process list:\n {process_type_list}")
 
     @classmethod

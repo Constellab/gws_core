@@ -1276,9 +1276,11 @@ class ProgressBar(Model):
 #
 # ####################################################################
 
-#class ProcessType(Viewable):
-#    type = CharField(null=True, index=True, unique=True)
-
+class ProcessType(Viewable):
+    ptype = CharField(null=True, index=True, unique=True)
+    _table_name = 'gws_process_type'
+    
+    
 class Process(Viewable):
     """
     Process class.
@@ -1449,6 +1451,13 @@ class Process(Viewable):
     
     # -- C --
     
+    @classmethod
+    def create_process_type(cls):
+        exist = ProcessType.select().where(ProcessType.ptype == cls.full_classname()).count()
+        if not exist:
+            pt = ProcessType(ptype = cls.full_classname())
+            pt.save()
+        
     def create_experiment(self, study: 'Study', user: 'User' = None):
         """
         Create an experiment using a protocol composed of this process
@@ -1559,12 +1568,6 @@ class Process(Viewable):
         
         return (not self.is_instance_running and not self.is_instance_finished) and self._input.is_ready 
     
-        #if not self.progress_bar:
-        #    return self._input.is_ready 
-        #else:
-        #    p = ProgressBar.get_by_id(self.progress_bar.id)
-        #    return (not p.is_running and not p.is_finished) and self._input.is_ready 
-
     @property
     def input(self) -> 'Input':
         """
@@ -1787,6 +1790,7 @@ class Process(Viewable):
         """
         
         self.config = config
+        self.save()
 
     def set_param(self, name: str, value: [str, int, float, bool]):
         """ 
@@ -1797,8 +1801,9 @@ class Process(Viewable):
         :param value: A value to assign
         :type value: [str, int, float, bool]
         """
-        
+
         self.config.set_param(name, value)
+        self.config.save()
 
     # -- T --
 
@@ -2738,12 +2743,7 @@ class Experiment(Viewable):
         ]
         if is_test:
             cmd.append("--cli_test")
-            
-        #import subprocess
-        #o = subprocess.check_output(cmd)
-        #print(o)
-        #return
-    
+
         sproc = SysProc.popen(cmd, stderr=DEVNULL, stdout=DEVNULL)
         self.data["pid"] = sproc.pid
         self.save()

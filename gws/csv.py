@@ -135,7 +135,6 @@ class CSVData(Resource):
         :returns: the parsed data
         :rtype any
         """
-        
 
         file_extension = Path(file_path).suffix
         
