@@ -1408,16 +1408,7 @@ class Process(Viewable):
         """
         
         _json = super().as_json(**kwargs)
-        #_json["input_specs"] = self.input.as_json(specs=True)
-        #_json["output_specs"] = self.output.as_json(specs=True)
-        #_json["config_specs"] = self.config_specs
-        #for k in _json["config_specs"]:
-        #    spec = _json["config_specs"][k]
-        #    if "type" in spec and isinstance(spec["type"], type):
-        #        t_str = spec["type"].__name__ 
-        #        _json["config_specs"][k]["type"] = t_str
-        
-        
+
         del _json["experiment_id"]
         del _json["protocol_id"]
         

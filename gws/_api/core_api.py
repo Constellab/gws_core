@@ -35,8 +35,8 @@ app = FastAPI(docs_url="/docs")
 # Enable core for the API
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex="^(.*)",
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -123,40 +123,42 @@ async def validate_experiment(uri: str = None, \
 
     return Controller.validate_experiment(uri=uri)
 
-@app.get("/experiment/", tags=["Experiment"], summary="Get experiment flow")
-async def get_experiment(experiment_uri: str = None, \
+
+@app.get("/protocol/", tags=["Protocol"], summary="Get a protocol")
+async def get_protocol(protocol_uri: str = None, \
+                       experiment_uri: str = None, \
                        _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
-    Retrieve the job flow of an experiment or a protocol job
+    Retrieve a protocol
     
-    - **protocol_job_uri**: the uri of the job (must be a job of a protocol)
-    - **experiment_uri**: the uri of an experiment (is not used if job_uri is given)
+    - **protocol_uri**: the uri of the job (must be a job of a protocol)
+    - **experiment_uri**: the uri of an experiment
     """
 
-    return Controller.fetch_experiment(experiment_uri=experiment_uri)
+    return Controller.fetch_protocol(
+        protocol_uri=protocol_uri,
+        experiment_uri=experiment_uri
+    )
 
-
-@app.get("/protocol/list", tags=["Experiment"], summary="Get the list of protocols")
-async def get_list_of_protocols(experiment_uri: str = None, job_uri: str = None, \
+@app.get("/protocol/list", tags=["Protocol"], summary="Get the list of protocols")
+async def get_list_of_protocols(experiment_uri: str = None, \
                                 page: int = 1, number_of_items_per_page: int = 20, \
                                 _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Retrieve a list of protocols. The list is paginated.
     
-    - **experiment_uri**: the uri of experiment related to the protocol (an experiment is related to one protocol). If given, the job_uri is not used.
-    - **job_uri**: the uri of job related to the protocol (a job is related to one protocol)
+    - **experiment_uri**: the uri of experiment related to the protocol (an experiment is related to one protocol).
     - **page**: the page number 
-    - **number_of_items_per_page**: the number of items per page (limited to 50 if job_uri nor experiment_uri are not given) 
+    - **number_of_items_per_page**: the number of items per page (limited to 50 if no experiment_uri is not given) 
     """
 
     return Controller.fetch_protocol_list(
         page=page, 
         number_of_items_per_page=number_of_items_per_page,
         experiment_uri=experiment_uri,
-        job_uri=job_uri
     )
 
-@app.post("/protocol/validate/", tags=["Experiment"], summary="Validate an experiment")
+@app.post("/protocol/validate/", tags=["Protocol"], summary="Validate an experiment")
 async def validate_experiment(uri: str = None, \
                               _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
@@ -167,33 +169,30 @@ async def validate_experiment(uri: str = None, \
 
     return Controller.validate_protocol(uri=uri)
 
-@app.get("/process-type/list", tags=["Experiment"], summary="Get the list of process types")
+@app.get("/process-type/list", tags=["Process"], summary="Get the list of process types")
 async def get_list_of_process_types(page: int = 1, number_of_items_per_page: int = 20, \
                               _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Retrieve a list of processes. The list is paginated.
 
-    - **job_uri**: the uri of job related the process (only one process is related to given job)
     - **page**: the page number 
-    - **number_of_items_per_page**: the number of items per page (limited to 50 if job_uri is not given) 
+    - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
     """
 
     return Controller.fetch_process_type_list(
         page=page, 
-        number_of_items_per_page=number_of_items_per_page,
-        job_uri=job_uri
+        number_of_items_per_page=number_of_items_per_page
     )
 
-@app.get("/process/list", tags=["Experiment"], summary="Get the list of processes")
+@app.get("/process/list", tags=["Protocol"], summary="Get the list of processes")
 async def get_list_of_process(experiment_uri: str = None, \
                               page: int = 1, number_of_items_per_page: int = 20, \
                               _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Retrieve a list of processes. The list is paginated.
 
-    - **job_uri**: the uri of job related the process (only one process is related to given job)
     - **page**: the page number 
-    - **number_of_items_per_page**: the number of items per page (limited to 50 if job_uri is not given) 
+    - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page. 
     """
 
     return Controller.fetch_process_list(
@@ -202,16 +201,15 @@ async def get_list_of_process(experiment_uri: str = None, \
         experiment_uri=experiment_uri
     )
 
-@app.get("/config/list", tags=["Experiment"], summary="Get the list of configs")
+@app.get("/config/list", tags=["Configuration"], summary="Get the list of configs")
 async def get_list_of_configs(experiment_uri: str = None, \
                               page: int = 1, number_of_items_per_page: int = 20, \
                               _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Retrieve a list of configs. The list is paginated.
 
-    - **job_uri**: the uri of job related the config (only one config is related to given job)
     - **page**: the page number 
-    - **number_of_items_per_page**: the number of items per page (limited to 50 if job_uri is not given) 
+    - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page. 
     """
 
     return Controller.fetch_config_list(
@@ -220,16 +218,15 @@ async def get_list_of_configs(experiment_uri: str = None, \
         experiment_uri=experiment_uri
     )
 
-@app.get("/resource/list", tags=["Experiment"], summary="Get the list of resources")
+@app.get("/resource/list", tags=["Resource"], summary="Get the list of resources")
 async def get_list_of_resources(experiment_uri: str = None, page: int = 1, number_of_items_per_page: int = 20, \
                                 _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Retrieve a list of resources. The list is paginated.
 
-    - **job_uri**: the uri of the job in which the resource was generated
-    - **experiment_uri**: the uri of the exepriment in which the resource was generated (will be ignored if job_uri is provided)
+    - **experiment_uri**: the uri of the exepriment in which the resource was generated
     - **page**: the page number 
-    - **number_of_items_per_page**: the number of items per page (limited to 50 if job_uri or experiment_uri are not given) 
+    - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
     """
 
     return Controller.fetch_resource_list(
@@ -268,7 +265,7 @@ async def get_view_model(object_type: str, object_uris: Optional[str] = "all", \
     - **object_type**: the type of the object to fetch. Can be an existing ViewModel or a Viewable object with no ViewModel. In this case, default ViewModel is created and returned.
     - **object_uris**: the uris of the object to fetch. Use comma-separated values to fecth several uris or 'all' to fetch all the entries. When all entries are retrieve, the **filter** parameter can be used.
     - **page**: the page number 
-    - **number_of_items_per_page**: the number of items per page (limited to 50 if **job_uri** or **experiment_uri** are not given) 
+    - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
     - **filters**: filter to use to select data (**object_uris** must be equal to 'all'). The filter is matches using full-text search against to the `title` and the `description`. The format is `filter={"title": "Searched title*", "description": "This is a description for full-text search"}`
     - **view_params**: key,value parameters of the ViewModel. The key,value specifications are given by the method `as_json()` of the corresponding object class. See class documentation.
     """

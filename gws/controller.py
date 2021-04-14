@@ -205,7 +205,7 @@ class Controller(Base):
     
     @classmethod
     def fetch_process_list(cls, experiment_uri=None, page=1, number_of_items_per_page=20, filters=[]):
-        from gws.model import Experiment
+        from gws.model import Experiment, Process
         Q = Process.select().order_by(Process.creation_datetime.desc())
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
         if not experiment_uri is None :
@@ -215,10 +215,29 @@ class Controller(Base):
  
     @classmethod
     def fetch_process_type_list(cls, page=1, number_of_items_per_page=20, filters=[]):
+        from gws.model import ProcessType
         Q = ProcessType.select().order_by(ProcessType.ptype.desc())
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
         return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()      
- 
+     
+    @classmethod
+    def fetch_protocol(cls, experiment_uri=None, protocol_uri=None):
+        from gws.model import Experiment, Protocol
+        if protocol_uri:
+            try:
+                p = Protocol.get(Protocol.uri == protocol_uri)
+            except Exception as err:
+                raise HTTPNotFound(detail=f"No protocol found with uri {protocol_uri}")
+        elif experiment_uri:
+            try:
+                e = Experiment.get(Experiment.uri == experiment_uri)
+            except Exception as err:
+                raise HTTPNotFound(detail=f"No experiment found with uri {experiment_uri}")
+            
+            p = e.protocol
+            
+        return p.as_json()
+    
     @classmethod
     def fetch_protocol_list(cls, experiment_uri=None, page=1, number_of_items_per_page=20):
         from gws.model import Protocol, Experiment
