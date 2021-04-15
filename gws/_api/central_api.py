@@ -78,16 +78,8 @@ async def generate_user_access_token(user_uri: UserUriData, \
     
     return await _generate_user_access_token(user_uri.uri)
 
-@app.get("/user/me/", response_model=UserData, tags=["User management"])
-async def read_user_me(current_user: UserData = Depends(check_user_access_token)):
-    """
-    Get current user details.
-    """
-    
-    return current_user
-
 @app.post("/user/create", tags=["User management"])
-async def create_user(user: UserData, _: UserData = Depends(check_admin_access_token)):
+async def create_user(user: UserData, _: UserData = Depends(check_central_api_key)):
     return Central.create_user(user.dict())
 
 @app.get("/user/test", tags=["User management"])
@@ -107,7 +99,7 @@ async def get_user_test():
     }
 
 @app.get("/user/{user_uri}", tags=["User management"])
-async def get_user(user_uri : str, _: UserData = Depends(check_admin_access_token)):
+async def get_user(user_uri : str, _: UserData = Depends(check_central_api_key)):
     """
     Get the details of a user. Require admin privilege.
     
@@ -117,7 +109,7 @@ async def get_user(user_uri : str, _: UserData = Depends(check_admin_access_toke
     return Central.get_user_status(user_uri)
 
 @app.get("/user/{user_uri}/activate", tags=["User management"])
-async def activate_user(user_uri : str, _: UserData = Depends(check_admin_access_token)):
+async def activate_user(user_uri : str, _: UserData = Depends(check_central_api_key)):
     """
     Activate a user. Require admin privilege.
     
@@ -127,7 +119,7 @@ async def activate_user(user_uri : str, _: UserData = Depends(check_admin_access
     return Central.activate_user(user_uri)
 
 @app.get("/user/{user_uri}/deactivate", tags=["User management"])
-async def deactivate_user(user_uri : str, _: UserData = Depends(check_admin_access_token)):
+async def deactivate_user(user_uri : str, _: UserData = Depends(check_central_api_key)):
     """
     Deactivate a user. Require admin privilege.
     

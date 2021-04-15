@@ -602,15 +602,16 @@ class User(Model):
     is_http_authenticated = BooleanField(default=False)
     is_console_authenticated = BooleanField(default=False)
 
-    USER_GOUP = "user"
-    ADMIN_GROUP = "admin"
-    OWNER_GROUP = "owner"
-    SYSUSER_GROUP = "sysuser"
+    SYSUSER_GROUP = "sysuser"  # privilege 0 (highest)
+    ADMIN_GROUP = "admin"      # privilege 1
+    OWNER_GROUP = "owner"      # privilege 2
+    USER_GOUP = "user"         # privilege 3
+
     VALID_GROUPS = [USER_GOUP, ADMIN_GROUP, OWNER_GROUP, SYSUSER_GROUP]
     
     _is_deletable = False
     _table_name = 'gws_user'
-    _fts_fields = {'full_name': 2.0}
+    _fts_fields = {'first_name': 2.0, 'last_name': 2.0}
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -729,9 +730,17 @@ class User(Model):
             cls.create_owner_and_sysuser()
             return User.get(User.group == cls.SYSUSER_GROUP)
     
+    # -- F --
+    
+    @property
+    def first_name(self):
+        return self.data.get("first_name", "")
+    
     @property
     def full_name(self):
-        return self.data.get("full_name", "")
+        fn = self.data.get("first_name", "")
+        ln = self.data.get("last_name", "")
+        return " ".join([fn, sn]).strip()
 
     # -- I --
     
@@ -755,13 +764,15 @@ class User(Model):
             return user.is_http_authenticated
         else:
             return user.is_console_authenticated
+
+    # -- L --
     
-    # -- F --
-    
-    # -- R --
+    @property
+    def last_name(self):
+        return self.data.get("last_name", "")
     
     # -- S --
-
+    
     def save(self, *arg, **kwargs):
         if not self.group in self.VALID_GROUPS:
             raise Error("User", "save", "Invalid user group")
@@ -1280,6 +1291,53 @@ class ProcessType(Viewable):
     ptype = CharField(null=True, index=True, unique=True)
     _table_name = 'gws_process_type'
     
+    def as_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+        _json = super().as_json(**kwargs)
+        
+        model_t = Controller.get_model_type(self.ptype)
+
+        specs = model_t.input_specs
+        _json["input_specs"] = {}
+        for name in specs:
+            _json["input_specs"][name] = []
+            t_list = specs[name]
+            if not isinstance(t_list, tuple):
+                t_list = (t_list, )
+            
+            for t in t_list:
+                if t is None:
+                    _json["input_specs"][name].append(None)
+                else:
+                    _json["input_specs"][name].append(t.full_classname())
+        
+        specs = model_t.output_specs
+        _json["output_specs"] = {}
+        for name in specs:
+            _json["output_specs"][name] = []
+            t_list = specs[name]
+            if not isinstance(t_list, tuple):
+                t_list = (t_list, )
+            
+            for t in t_list:
+                if t is None:
+                    _json["output_specs"][name].append(None)
+                else:
+                    _json["output_specs"][name].append(t.full_classname())
+                    
+        _json["config_specs"] = model_t.config_specs
+        for k in _json["config_specs"]:
+            spec = _json["config_specs"][k]
+            if "type" in spec and isinstance(spec["type"], type):
+                t_str = spec["type"].__name__ 
+                _json["config_specs"][k]["type"] = t_str
+        
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
     
 class Process(Viewable):
     """
@@ -1665,12 +1723,6 @@ class Process(Viewable):
         if not self.is_ready:
             return
 
-        is_mater_protocol = isinstance(self, Protocol) and self.protocol is None
-        if not is_mater_protocol:
-            self.set_experiment(self.protocol.experiment)
-            
-        self.save()
-        
         await self._run_before_task()
         await self.task()
         await self._run_after_task()
@@ -1725,6 +1777,9 @@ class Process(Viewable):
         if self._event_listener.exists('end'):
             self._event_listener.sync_call('end', self)
             await self._event_listener.async_call('end', self)
+        
+        if isinstance(self, Protocol):
+            self.save(update_graph=True)
         
         await self._run_next_processes()
         
@@ -2308,7 +2363,7 @@ class Protocol(Process):
  
     # -- S --
     
-    def save(self, *args, **kwargs):
+    def save(self, *args, update_graph=False, **kwargs):
         with DbManager.db.atomic() as transaction:
             try:
                 for k in self._processes:
@@ -2321,7 +2376,10 @@ class Protocol(Process):
                         object_type = self.full_classname(),
                         object_uri = self.uri
                     )
-
+                
+                if update_graph:
+                     self.data["graph"] = self.dumps(as_dict=True)
+                        
                 return super().save(*args, **kwargs)
             except Exception as err:
                 transaction.rollback()
@@ -2773,7 +2831,7 @@ class Experiment(Viewable):
         
         self.protocol.set_experiment(self)
         await self.protocol._run()
-        
+    
         # reset process id if required
         if self.data.get("pid"):
             self.data["pid"] = 0

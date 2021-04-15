@@ -366,7 +366,21 @@ async def call_brick_api(request: Request, \
         message = f"HTTPError: status_code = {err.status_code}, detail = {err.detail}"
         Logger.error(message)
         raise err
-        
+
+# ##################################################################
+#
+# User
+#
+# ##################################################################
+
+@app.get("/user/me/", response_model=UserData, tags=["User"])
+async def read_user_me(current_user: UserData = Depends(check_user_access_token)):
+    """
+    Get current user details.
+    """
+    
+    return current_user
+
 # ##################################################################
 #
 # IO File

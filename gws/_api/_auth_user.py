@@ -45,6 +45,10 @@ class OAuth2UserTokenRequestForm:
 
 class UserData(BaseModel):
     uri: str
+    email: str = ""
+    first_name: str = ""
+    last_name: str = ""
+    group: dict = "user"
     is_active: bool
     is_admin: bool
 

@@ -523,20 +523,6 @@ class IO(Base):
     
         return _json
     
-    #def as_json(self):
-    #    _json = {}
-    #    for k in self._ports:
-    #        port = self._ports[k]
-    #        _json[k] = ()
-    #        for t in port._resource_types:
-    #            if t is None:
-    #                _json[k] += (None, )
-    #            else:
-    #                classname = t.full_classname()
-    #                _json[k] += (classname, )
-    #        
-    #    return _json
-    
     # -- C --
 
     def create_port(self, name: str, resource_types: type):

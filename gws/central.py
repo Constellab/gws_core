@@ -30,18 +30,26 @@ class Central:
     
     @classmethod
     def create_user(cls, data: dict):
+        group = data.get('group','user')
+        if group == "sysuser":
+            raise Error("Central", "create_user", "Cannot create sysuser")
+            
         Q = User.get_by_uri(data['uri'])
         if not Q:
             user = User(
                 uri = data['uri'],
                 email = data['email'],
-                group = data.get('group','user'),
+                group = group,
                 is_active = data.get('is_active', True),
+                data = {
+                    "first_name": data['first_name'],
+                    "last_name": data['last_name'],
+                }
             )
             if user.save():
                 return cls.get_user_status(user.uri)
             else:
-                raise Error("Central", "create_user", "Cannot save the user")
+                raise Error("Central", "create_user", "Cannot create the user")
         else:
             raise Error("Central", "create_user", "The user already exists")
 
