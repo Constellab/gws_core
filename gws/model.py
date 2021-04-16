@@ -738,9 +738,9 @@ class User(Model):
     
     @property
     def full_name(self):
-        fn = self.data.get("first_name", "")
-        ln = self.data.get("last_name", "")
-        return " ".join([fn, sn]).strip()
+        first_name = self.data.get("first_name", "")
+        last_name = self.data.get("last_name", "")
+        return " ".join([first_name, last_name]).strip()
 
     # -- I --
     

@@ -25,6 +25,8 @@ class TestCentral(unittest.TestCase):
         data = {
             "uri": "1234567890",
             "email": "test@gencovery.com",
+            "first_name": "",
+            "last_name": "",
             "token": "test",
             "group": "user"
         }

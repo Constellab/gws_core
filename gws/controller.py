@@ -87,7 +87,7 @@ class Controller(Base):
         if t is None:
             raise HTTPNotFound(detail=f"Invalid Model type")
 
-        return t.select().count()
+        return t.select_me().count()
     
     @classmethod
     def __action_get(cls, object_type: str, object_uri: str, data:dict=None) -> 'ViewModel':
