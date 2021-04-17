@@ -132,9 +132,7 @@ class Queue(Model):
         
         if e.is_running:
             #-> we will test later!
-            print(f"Queue: experiment {e.id} is running. Pass!")
             return
         
-        print(f"Queue: run experiment {e.id}")
         e.run_through_cli(user=job.user)
         time.sleep(3)  #-> wait for 3 sec to prevent database lock!
