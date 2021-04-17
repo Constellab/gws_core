@@ -21,7 +21,7 @@ class EventListener:
     
     def sync_call(self, name: str, *args, **kwargs):
         """
-        Calls an event by its name 
+        Calls an event function by its name 
 
         :param name: Name of the event
         :type name: `str`
@@ -32,6 +32,13 @@ class EventListener:
                 func(*args, **kwargs)
     
     async def async_call(self, name: str, *args, **kwargs):
+        """
+        Calls an async event function by its name 
+
+        :param name: Name of the event
+        :type name: `str`
+        """
+        
         for func in self._events.get(name,[]):
             if inspect.iscoroutinefunction(func):
                 await func(*args, **kwargs)

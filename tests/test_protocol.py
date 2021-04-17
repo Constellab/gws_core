@@ -12,24 +12,22 @@ from gws.unittest import GTest
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
+tables = ( Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, )
 
 class TestProtocol(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        tables = ( Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, )
         GTest.drop_tables(tables)
         GTest.init()
         pass
 
     @classmethod
     def tearDownClass(cls):
-        tables = ( Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, )
-        GTest.drop_tables(tables)
+        #GTest.drop_tables(tables)
         pass
     
     def test_protocol(self):
-        return
         study = Study.get_by_id(1)
         
         p0 = Create()
@@ -80,7 +78,7 @@ class TestProtocol(unittest.TestCase):
             self.assertEqual(e.is_finished, True)
             self.assertEqual(e.is_running, False)
 
-        proto.on_end(_check_exp)
+        e.on_end(_check_exp)
         e.save()
         
         asyncio.run( e.run(user=GTest.user) )

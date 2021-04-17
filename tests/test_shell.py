@@ -56,5 +56,4 @@ class TestShell(unittest.TestCase):
             
             
         e.on_end(_on_end)
-        
         asyncio.run( e.run(user=GTest.user) )

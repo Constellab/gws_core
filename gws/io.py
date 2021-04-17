@@ -109,6 +109,10 @@ class Port(Base):
         
         return (None in self._resource_types)
     
+    @property
+    def is_empty(self) ->bool:
+        return self._resource is None
+    
     # -- G --
 
     def get_next_procs(self):
@@ -600,6 +604,22 @@ class IO(Base):
             resources[k] = self._ports[k].resource
         return resources
 
+    def get_specs(self):
+        specs = {}
+        
+        for k in self._ports:
+            port = self._ports[k]
+            specs[k] = ()
+
+            for t in port._resource_types:
+                if t is None:
+                    specs[k] += (None, )
+                else:
+                    classname = t.full_classname()
+                    specs[k] += (classname, )
+    
+        return specs
+    
     # -- I --
     
     # Creates iterator object
@@ -620,7 +640,13 @@ class IO(Base):
                 return False
             
         return True
-
+    
+    @property
+    def is_empty(self) ->bool:
+        for k in self._ports:
+            if not self._ports[k].is_empty:
+                return False
+    
     # -- N --
 
     def __next__(self):
@@ -662,7 +688,16 @@ class IO(Base):
         return self._parent
 
     # -- S --
+    
+    def __setitem_without_check__(self, name: str, resource: 'Resource'):
+        if not isinstance(name, str):
+            raise Error(self.classname(), "__setitem__", "The port name must be a string")
 
+        if self._ports.get(name, None) is None:
+            raise Error(self.classname(), "__setitem__", self.classname() +" port '"+name+"' not found")
+      
+        self._ports[name].resource = resource
+     
     def __setitem__(self, name: str, resource: 'Resource'):
         """ 
         Bracket (setter) operator. Sets the content of a port by its name.
@@ -672,14 +707,12 @@ class IO(Base):
         :param resource: The input resource
         :type resource: Resource
         """
-        if not isinstance(name, str):
-            raise Error(self.classname(), "__setitem__", "The port name must be a string")
+          
+        if self._parent.is_running:
+            raise Error(self.classname(), "__setitem__", "Cannot alter the input of process while running")
 
-        if self._ports.get(name, None) is None:
-            raise Error(self.classname(), "__setitem__", self.classname() +" port '"+name+"' not found")
-        
-        self._ports[name].resource = resource
-    
+        self.__setitem_without_check__(name, resource)
+
 
 # ####################################################################
 #
@@ -705,20 +738,6 @@ class Input(IO):
                 return False
         
         return True
-
-    def __setitem__(self, name: str, resource: 'Resource'):
-        """ 
-        Bracket (setter) operator. Sets the content of a port by its name.
-
-        :param name: Name of the port
-        :type name: str
-        :param resource: The input resource
-        :type resource: Resource
-        """
-        if self._parent.is_running:
-            raise Error(self.classname(), "__setitem__", "Cannot alter the input of process while running")
-
-        super().__setitem__(name,resource)
 
 # ####################################################################
 #
@@ -751,18 +770,3 @@ class Output(IO):
         """
         for k in self._ports:
             self._ports[k].propagate()
-
-    def __setitem__(self, name: str, resource: 'Resource'):
-        """ 
-        Bracket (setter) operator. Sets the content of a port by its name.
-
-        :param name: Name of the port
-        :type name: str
-        :param resource: The input resource
-        :type resource: Resource
-        """
-        if self._parent.is_finished:
-            raise Error(self.classname(), "__setitem__", f"Cannot alter the output of process '{self._parent.instance_name}' after running")
-
-        super().__setitem__(name,resource)
-        

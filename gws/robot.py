@@ -91,6 +91,9 @@ class Move(Process):
         elif direction == "east":
             pos[0] += self.get_param('moving_step')
 
+        for i in range(0,100):
+            self.progress_bar.set_value(i, message=f"Moving iteration {i}")
+            
         r.set_position(pos)
         r.set_weight(self._input['robot'].weight)
         self.output['robot'] = r

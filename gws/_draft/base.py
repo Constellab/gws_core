@@ -160,18 +160,19 @@ class PeeweeConnectionState(_PeeweeConnectionState):
     def __getattr__(self, name):
         return self._state.get()[name]
 
-#if setting.is_test: 
-#    #gws_db = SqliteDatabase(settings.db_path, check_same_thread=False)
-#    gws_db = MySQLDatabase('mariadb_test', user='gws', password='gws_password', host='db', port=3306)
-#else:
-#    gws_db = MySQLDatabase('mariadb', user='gws', password='gws_password', host='db', port=3306)
+
+if setting.is_test: 
+    #gws_db = SqliteDatabase(settings.db_path, check_same_thread=False)
+    gws_db = MySQLDatabase('mariadb', user='gws_test', password='gws_password', host='db', port=3306)
+else:
+    gws_db = MySQLDatabase('mariadb', user='gws', password='gws_password', host='db', port=3306)
 
 class DbManager:
     """
     DbManager class. Provides backend feature for managing databases. 
     """
     settings = Settings.retrieve()
-    db = SqliteDatabase(settings.db_path, check_same_thread=False)
+    db = gws_db
     db._state = PeeweeConnectionState()
     
 # ####################################################################

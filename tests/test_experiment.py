@@ -14,11 +14,11 @@ from gws.unittest import GTest
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
 
-class TestProtocol(unittest.TestCase):
+class TestExperiment(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        tables = ( Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, )
+        tables = ( Resource, Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, )
         GTest.drop_tables(tables)
         GTest.init()
         pass
@@ -30,57 +30,62 @@ class TestProtocol(unittest.TestCase):
         pass
     
     def test_run(self):
-        study = Study.get_by_id(1)
-          
-        # experiment 1
+        self.assertEqual(Experiment.count_of_experiments_in_progress(), 0)
+        
+        # Create experiment 1
         # -------------------------------
-        print("Run experiment 1 ...")
+        print("Create experiment 1")
         proto1 = create_nested_protocol()
         e1 = Experiment(protocol=proto1, study=GTest.study, user=GTest.user)
-        e1.save()
-
-        e2 = Experiment.get(Experiment.uri == e1.uri)
         self.assertEqual(e1.processes.count(), 18)
         self.assertEqual(Process.select().count(), 18)
-   
+        self.assertEqual(Resource.select().count(), 0)
+
+        # Create experiment 2 = experiment 2
+        # -------------------------------
+        print("Create experiment_2 = experiment_1 ...")
+        e2 = Experiment.get(Experiment.uri == e1.uri)
+        self.assertEqual(e2, e1)
+        
         def _check_exp1(*args, **kwargs):
-            self.assertEqual(e1.processes.count(), 18)
-            self.assertEqual(e1.is_finished, True)
-            self.assertEqual(e1.is_running, False)
+            self.assertEqual(e2.processes.count(), 18)
+            self.assertEqual(e2.is_finished, True)
+            self.assertEqual(e2.is_running, False)
         
-        e1.save()
-        e1.on_end(_check_exp1)
-        asyncio.run( e1.run(user=GTest.user) )
+        e2.on_end(_check_exp1)
+        print("Run experiment_2 ...")
+        asyncio.run( e2.run(user=GTest.user) )
         
-        Q = e1.resources
-        self.assertEqual(len(Q),15)
+        Q1 = e1.resources
+        Q2 = e2.resources
+        self.assertEqual(len(Q1),15)
+        self.assertEqual(len(Q2),15)
         
         time.sleep(2)
-        self.assertEqual(e1.pid, 0)
-        self.assertEqual(e1.processes.count(), 18)
-        self.assertEqual(e1.is_finished, True)
-        self.assertEqual(e1.is_running, False)
-        
-        # experiment 2
-        # -------------------------------
-        print("Run experiment 2 through cli ...")
-        proto2 = create_nested_protocol()
-        e2 = Experiment(protocol=proto2, study=GTest.study, user=GTest.user)
-        #def _check_exp2(*args, **kwargs):
-        #    self.assertEqual(e2.jobs.count(), 18)
-        #    self.assertEqual(e2.is_finished, True)
-        #    self.assertEqual(e2.is_running, False)
-
-        e2.save()        
-        e2.run_cli(user=GTest.user, is_test=True)
-        self.assertTrue(e2.pid > 0)
-        self.assertEqual(e2.is_finished, False)
+        self.assertEqual(e2.pid, 0)
+        self.assertEqual(e2.processes.count(), 18)
+        self.assertEqual(e2.is_finished, True)
         self.assertEqual(e2.is_running, False)
-        print(f"Experiment pid = {e2.pid}", )
+        
+        # experiment 3
+        # -------------------------------
+        print("Create experiment_3")
+        proto3 = create_nested_protocol()
+        e3 = Experiment(protocol=proto3, study=GTest.study, user=GTest.user)
+        e3.save()        
+        
+        print("Run experiment_3 through cli ...")
+        e3.run_through_cli(user=GTest.user)
+        self.assertTrue(e3.pid > 0)
+        self.assertEqual(e3.is_finished, False)
+        self.assertEqual(e3.is_running, False)
+        print(f"Experiment pid = {e3.pid}", )
         
         print("Waiting 5 secs for cli experiment to finish ...")
         time.sleep(5)
-        e3 = Experiment.get(Experiment.id == e2.id)
+        self.assertEqual(Experiment.count_of_experiments_in_progress(), 0)
+        e3 = Experiment.get(Experiment.id == e3.id)
+        self.assertEqual(e3._is_in_progress, False)
         self.assertEqual(e3.is_finished, True)
         self.assertEqual(e3.is_running, False)
         self.assertEqual(e3.pid, 0)

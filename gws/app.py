@@ -23,7 +23,17 @@ from gws.model import Study, User
 from gws.controller import Controller
 from gws.logger import Error
 from gws.system import Monitor
+from gws.queue import Queue
 
+from ._api._auth_user import check_user_access_token, check_admin_access_token 
+
+def check_authenticated_user():
+    check_user_access_token()
+    
+def check_authenticated_admin():
+    check_admin_access_token()
+    
+    
 brick = "gws"
 app = FastAPI(docs_url=None)
 
@@ -96,8 +106,9 @@ class App(BaseApp):
         Controller.init()
         
         # start system monitoring
-        Monitor.init()
-    
+        Monitor.init(daemon=False)
+        Queue.init(daemon=False)
+        
         # static dirs and docs
         dirs = _settings.get_dependency_dirs()
         for name in dirs:

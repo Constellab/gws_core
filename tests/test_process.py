@@ -71,15 +71,6 @@ class TestProcess(unittest.TestCase):
 
         p2.set_param('food_weight', '5.6')
         
-        def _on_p3_start( proc ):
-            self.assertEqual( proc, p3 )
-
-        def _on_p5_start( proc ):
-            self.assertEqual( proc, p5 )
-
-        def _on_p5_end( proc ):
-            self.assertEqual( proc, p5 )
-        
         
         def _on_end(*args, **kwargs):
             elon = p0.output['robot']
@@ -104,12 +95,10 @@ class TestProcess(unittest.TestCase):
             
             res = Robot.get_by_id( p3.output['robot'].id )
             self.assertTrue( isinstance(res, Robot) )
-
-        
-        # set events
-        p3.on_start(_on_p3_start)
-        p5.on_start(_on_p5_start)
-        p5.on_end(_on_p5_end)
+            
+            self.assertTrue( len(p0.progress_bar.data["messages"]) >= 2 )
+            print(p0.progress_bar.data)
+            
 
         e = proto.create_experiment(user=GTest.user, study=GTest.study)
         self.assertEqual( e.created_by, GTest.user )
@@ -118,7 +107,7 @@ class TestProcess(unittest.TestCase):
         e.on_end(_on_end)        
         asyncio.run( e.run(user=GTest.user) )
         
-        print(proto.as_json())
+        #print(proto.as_json())
 
     
         

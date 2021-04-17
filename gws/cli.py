@@ -34,7 +34,7 @@ def run_experiment(ctx, experiment_uri, user_uri):
     if e.is_running:
         raise Error("gws.cli", "run_experiment", f"The experiment is already running")
     elif e.is_finished:
-        raise Error("gws.cli", "run_experiment", f"The experiment is finished")
+        raise Error("gws.cli", "run_experiment", f"The experiment is already finished")
     else:
         try:
             asyncio.run( e.run(user=user) )

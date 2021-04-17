@@ -1,0 +1,77 @@
+
+import os
+import asyncio
+import unittest
+import json
+import time
+
+from gws.settings import Settings
+from gws.model import *
+from gws.queue import *
+from gws.controller import Controller
+from gws.robot import *
+from gws.unittest import GTest
+
+settings = Settings.retrieve()
+testdata_dir = settings.get_dir("gws:testdata_dir")
+
+class TestQueue(unittest.TestCase):
+    
+    @classmethod
+    def setUpClass(cls):
+        tables = ( Resource, Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, Queue, Job)
+        GTest.drop_tables(tables)
+        GTest.init()
+        pass
+
+    @classmethod
+    def tearDownClass(cls):
+        #tables = ( Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, )
+        #GTest.drop_tables(tables)
+        pass
+    
+    def test_queue_operation(self):
+        self.assertEqual(Experiment.count_of_experiments_in_progress(), 0)
+        self.assertEqual(Queue.length(),0)
+        
+        proto1 = create_nested_protocol()
+        e1 = Experiment(protocol=proto1, study=GTest.study, user=GTest.user)
+        e1.save()
+        job1 = Job(user=GTest.user, experiment=e1)
+        Queue.add(job1)
+        
+        self.assertEqual(Queue.next(),job1)
+        self.assertEqual(Queue.length(),1)
+        
+        proto2 = create_nested_protocol()
+        e2 = Experiment(protocol=proto2, study=GTest.study, user=GTest.user)
+        e2.save()
+        job2 = Job(user=GTest.user, experiment=e2)
+        Queue.add(job2)
+        
+        self.assertEqual(Queue.next(),job1)
+        self.assertEqual(Queue.length(),2)
+        
+
+        Queue.remove(job1)
+        self.assertEqual(Queue.next(),job2)
+        self.assertEqual(Queue.length(),1)
+        
+        proto3 = create_nested_protocol()
+        e3 = Experiment(protocol=proto3, study=GTest.study, user=GTest.user)
+        e3.save()
+        job3 = Job(user=GTest.user, experiment=e3)
+        Queue.add(job3)
+        self.assertEqual(Queue.next(),job2)
+        self.assertEqual(Queue.length(),2)
+        
+        Queue.init(tick_interval=1, verbose=True) # tick each second
+  
+        print("Waiting 10 sec for the queue to finish")
+        time.sleep(10)
+        Q = Experiment.select()
+        self.assertEqual(len(Q), 3)
+        for e in Q: 
+            print(f"e = {e.id}, pid = {e.pid}")
+            self.assertFalse(e._is_in_progress, False)
+            self.assertFalse(e.is_finished, True)

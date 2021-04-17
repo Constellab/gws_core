@@ -416,13 +416,20 @@ class Controller(Base):
     async def _run_robot_travel(cls):
         from gws.model import Study
         from gws.robot import create_protocol
+        from gws.queue import Queue, Job
+        
+        user = Controller.get_current_user()
+        study = Study.get_default_instance()
+        
         p = create_protocol()
-        e = p.create_experiment(study = Study.get_default_instance())
+        e = p.create_experiment(study = study)
         e.set_title("The journey of Astro.")
         e.data["description"] = "This is the journey of Astro."
         
         try:
-            await e.run()
+            job = Job(user=user, experiment=e)
+            Queue.add(job)
+            #await e.run()
             return e.view().as_json()
         except Exception as err:
             raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
@@ -431,13 +438,20 @@ class Controller(Base):
     async def _run_robot_super_travel(cls):
         from gws.model import Study
         from gws.robot import create_nested_protocol
+        from gws.queue import Queue, Job
+        
+        user = Controller.get_current_user()
+        study = Study.get_default_instance()
+        
         p = create_nested_protocol()
-        e = p.create_experiment(study = Study.get_default_instance())
+        e = p.create_experiment(study = study)
         e.set_title("The super journey of Astro.")
         e.data["description"] = "This is the super journey of Astro."
         
         try:
-            await e.run()
+            job = Job(user=user, experiment=e)
+            Queue.add(job)
+            #await e.run()
             return e.view().as_json()
         except Exception as err:
             raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
