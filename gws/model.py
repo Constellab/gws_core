@@ -1254,13 +1254,13 @@ class ProgressBar(Model):
     
     @property
     def is_running(self):
-        return self.is_initialized and \
+        return  self.is_initialized and \
                 self.data["value"] > 0.0 and \
                 self.data["value"] < self.data["max_value"]
     
     @property
     def is_finished(self):
-        return self.is_initialized and \
+        return  self.is_initialized and \
                 self.data["value"] >= self.data["max_value"]
     
     # -- S --
@@ -1380,11 +1380,7 @@ class ProcessType(Viewable):
 class Process(Viewable):
     """
     Process class.
-    
-    :property is_running: State of the process, True if the process is running, False otherwise
-    :type is_running: bool
-    :property is_finished: State of the process, True if the process has finished to run, Flase otherwise
-    :type is_finished: bool
+
     :property input_specs: The specs of the input
     :type input_specs: dict
     :property output_specs: The specs of the output
@@ -1451,11 +1447,9 @@ class Process(Viewable):
             self.config = Config(specs=self.config_specs)
             self.config.save()
         
-        if not self.id:
             self.progress_bar = ProgressBar()
             self.progress_bar.save()
-        
-        if not self.id:
+
             if not user:
                 user = User.get_sysuser()            
             
@@ -2574,8 +2568,9 @@ class Experiment(Viewable):
     created_by = ForeignKeyField(User, null=True, backref='created_experiments')
     score = FloatField(null=True, index=True)    
     is_validated = BooleanField(default=False, index=True)
-    _is_in_progress = BooleanField(default=False, index=True)
-
+    
+    _is_running = BooleanField(default=False, index=True)
+    _is_finished = BooleanField(default=False, index=True)
     
     _protocol = None
     _event_listener: EventListener = None
@@ -2696,12 +2691,28 @@ class Experiment(Viewable):
         :rtype: `int`
         """
         
-        return Experiment.select().where(Experiment._is_in_progress == True).count()
+        return Experiment.select().where(Experiment.is_running == True).count()
     
     # -- F --
 
     # -- I --
     
+    @property
+    def is_finished(self) -> bool:
+        if not self.id:
+            return False
+        
+        e = Experiment.get_by_id(self.id)
+        return e._is_finished
+    
+    @property
+    def is_running(self) -> bool:
+        if not self.id:
+            return False
+        
+        e = Experiment.get_by_id(self.id)
+        return e._is_running
+        
     @property
     def is_draft(self) -> bool:
         """ 
@@ -2712,37 +2723,8 @@ class Experiment(Viewable):
         """
         
         return (not self.is_running) and (not self.is_finished)
-    
-    @property
-    def is_finished(self):
-        """ 
-        Returns True if the experiment is finished. False otherwise
 
-        :return: True if the experiment is finished, i.e. all its processes are finished. False otherwise
-        :rtype: `bool`
-        """
-        
-        for p in self.processes:
-            if not p.is_finished:
-                return False
 
-        return True
-
-    @property
-    def is_running(self) -> bool:
-        """ 
-        Return True if the experiment is running. False otherwise
-
-        :return: True if the experiment is running, i.e. all its processes are running. False otherwise
-        :rtype: `bool`
-        """
-        
-        for p in self.processes:
-            if p.is_running:
-                return True
-
-        return False
-    
     # -- J --
 
     # -- K --
@@ -2858,15 +2840,8 @@ class Experiment(Viewable):
         if settings.is_test:
             cmd.append("--cli_test")
         
-        print(cmd)
-        
         sproc = SysProc.popen(cmd, stderr=DEVNULL, stdout=DEVNULL)
-        
-        #print("running ...")
-        #import subprocess
-        #out = subprocess.check_output(cmd)
-        #print("out = " + str(out))
-        
+
         self.data["pid"] = sproc.pid
         self.save()
         
@@ -2878,6 +2853,8 @@ class Experiment(Viewable):
         :type user: `gws.model.User`
         """
         
+        if self.is_running or self.is_finished:
+            return
                 
         if Controller.is_http_context():
             # run the experiment throug the cli to prevent blocking HTTP requests
@@ -2910,7 +2887,8 @@ class Experiment(Viewable):
 
             self.protocol.set_experiment(self)
             self.data["pid"] = 0
-            self._is_in_progress = True
+            self._is_running = True
+            self._is_finished = False
             self.save()
             
             if self._event_listener.exists("start"):
@@ -2924,7 +2902,8 @@ class Experiment(Viewable):
                 await self._event_listener.async_call("end", self)
                 
             self.data["pid"] = 0
-            self._is_in_progress = False
+            self._is_running = False
+            self._is_finished = True
             self.save()
     
     # -- S --

@@ -6,9 +6,9 @@
 from gws.model import Model, User, Experiment
 from peewee import IntegerField, ForeignKeyField
 import threading
+import time
 
-
-TICK_INTERVAL_SECONDS = 1   # 1 min -> tick each minute
+TICK_INTERVAL_SECONDS = 60   # 1 min
 
 def _queue_tick(tick_interval, verbose, daemon):    
     try:
@@ -118,12 +118,23 @@ class Queue(Model):
     
     @classmethod
     def _tick(cls, verbose=False):
+        if verbose:
+            print("Checking experiment queue ...")
+            
         job = Queue.next()
         if not job:
             return
 
-        is_busy = Experiment.count_of_experiments_in_progress()
-        if not is_busy:
-            e = job.experiment
-            e.run_through_cli(user=job.user)
+        e = job.experiment
+        if e.is_finished:
             Queue.__pop_first()
+            return
+        
+        if e.is_running:
+            #-> we will test later!
+            print(f"Queue: experiment {e.id} is running. Pass!")
+            return
+        
+        print(f"Queue: run experiment {e.id}")
+        e.run_through_cli(user=job.user)
+        time.sleep(3)  #-> wait for 3 secs to prevent database lock!

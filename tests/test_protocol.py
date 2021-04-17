@@ -75,8 +75,8 @@ class TestProtocol(unittest.TestCase):
         
         def _check_exp(*args, **kwargs):
             self.assertEqual(e.processes.count(), 8)
-            self.assertEqual(e.is_finished, True)
-            self.assertEqual(e.is_running, False)
+            self.assertEqual(e.is_finished, False)
+            self.assertEqual(e.is_running, True)
 
         e.on_end(_check_exp)
         e.save()

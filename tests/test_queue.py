@@ -52,7 +52,6 @@ class TestQueue(unittest.TestCase):
         self.assertEqual(Queue.next(),job1)
         self.assertEqual(Queue.length(),2)
         
-
         Queue.remove(job1)
         self.assertEqual(Queue.next(),job2)
         self.assertEqual(Queue.length(),1)
@@ -72,6 +71,9 @@ class TestQueue(unittest.TestCase):
         Q = Experiment.select()
         self.assertEqual(len(Q), 3)
         for e in Q: 
-            print(f"e = {e.id}, pid = {e.pid}")
-            self.assertFalse(e._is_in_progress, False)
-            self.assertFalse(e.is_finished, True)
+            if e.id == e1.id:
+                # check that e1 has never been run
+                self.assertEqual(e.is_finished, False)
+            else:
+                self.assertEqual(e.is_finished, True)
+            

@@ -49,8 +49,8 @@ class TestExperiment(unittest.TestCase):
         
         def _check_exp1(*args, **kwargs):
             self.assertEqual(e2.processes.count(), 18)
-            self.assertEqual(e2.is_finished, True)
-            self.assertEqual(e2.is_running, False)
+            self.assertEqual(e2.is_finished, False)
+            self.assertEqual(e2.is_running, True)
         
         e2.on_end(_check_exp1)
         print("Run experiment_2 ...")
@@ -85,7 +85,6 @@ class TestExperiment(unittest.TestCase):
         time.sleep(5)
         self.assertEqual(Experiment.count_of_experiments_in_progress(), 0)
         e3 = Experiment.get(Experiment.id == e3.id)
-        self.assertEqual(e3._is_in_progress, False)
         self.assertEqual(e3.is_finished, True)
         self.assertEqual(e3.is_running, False)
         self.assertEqual(e3.pid, 0)
