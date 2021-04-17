@@ -137,4 +137,4 @@ class Queue(Model):
         
         print(f"Queue: run experiment {e.id}")
         e.run_through_cli(user=job.user)
-        time.sleep(3)  #-> wait for 3 secs to prevent database lock!
+        time.sleep(3)  #-> wait for 3 sec to prevent database lock!
