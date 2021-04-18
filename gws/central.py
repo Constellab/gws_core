@@ -7,7 +7,6 @@ import requests
 from gws.settings import Settings
 from gws.logger import Error
 from gws.report import Report
-from gws.lab import Lab
 from gws.model import Experiment, Protocol, User
 
 class Central:

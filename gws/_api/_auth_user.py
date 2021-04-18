@@ -48,16 +48,17 @@ class UserData(BaseModel):
     email: str = ""
     first_name: str = ""
     last_name: str = ""
-    group: dict = "user"
+    group: str = "user"
     is_active: bool
     is_admin: bool
+    is_http_authenticated: bool = False
+    is_console_authenticated: bool = False
 
 # -- A --
 
 # -- C --
 
-
-async def check_user_access_token(token: str = Depends(oauth2_user_cookie_scheme)):
+async def check_user_access_token(token: str = Depends(oauth2_user_cookie_scheme))->UserData:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -75,8 +76,7 @@ async def check_user_access_token(token: str = Depends(oauth2_user_cookie_scheme
         try:
             user = Controller.get_current_user()
             if user:
-                User.unauthenticate(uri=user.uri)
-                
+                User.unauthenticate(uri=user.uri) 
         except:
             pass
         
@@ -89,16 +89,44 @@ async def check_user_access_token(token: str = Depends(oauth2_user_cookie_scheme
             
         return UserData(
             uri=db_user.uri, 
+            email = db_user.email,
+            first_name = db_user.first_name,
+            last_name = db_user.last_name,
+            group = db_user.group,
             is_active=db_user.is_active, 
             is_admin=db_user.is_admin,
+            is_http_authenticated=db_user.is_http_authenticated,
+            is_console_authenticated=db_user.is_console_authenticated
         )
-    except:
+    except Exception as err:
+        print(err)
         raise credentials_exception
 
 
-async def check_admin_access_token(current_user: UserData = Depends(check_user_access_token)):
-    if not current_user.is_admin:
-        raise HTTPException(status_code=400, detail="Require higher privilege")
-    
-    return current_user
+def check_is_sysuser():
+    try:
+        user = Controller.get_current_user()
+    except:
+        raise HTTPException(status_code=400, detail="Unauthorized: owner required")
+        
+    if not user.is_sysuser:
+        raise HTTPException(status_code=400, detail="Unauthorized: owner required")
+        
+def check_is_owner():
+    try:
+        user = Controller.get_current_user()
+    except:
+        raise HTTPException(status_code=400, detail="Unauthorized: owner required")
+        
+    if not user.is_owner:
+        raise HTTPException(status_code=400, detail="Unauthorized: owner required")
+        
+def check_is_admin():
+    try:
+        user = Controller.get_current_user()
+    except:
+        raise HTTPException(status_code=400, detail="Unauthorized: admin required")
+
+    if not user.is_admin:
+        raise HTTPException(status_code=400, detail="Unauthorized: admin required")
  

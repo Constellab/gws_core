@@ -29,6 +29,7 @@ from ._auth_user import UserData, \
                         check_user_access_token
 
 from ._auth_central import check_central_api_key
+from gws.app import check_is_admin
 
 app = FastAPI(docs_url="/docs")
 
@@ -67,11 +68,26 @@ class ProtocolData(ProcessData):
     type: str = "gws.model.Protocol"
     interfaces: dict = {}
     outerfaces: dict = {}
-    
+
+
+# ##################################################################
+#
+# Queue
+#
+# ##################################################################
+
+@app.get("/queue/", tags=["Queue"], summary="Get the queue")
+async def get_queue_details() -> (dict, str,):
+    """
+    Retrieve details of the queue
+    """
+
+    return Controller.get_queue()
+
     
 # ##################################################################
 #
-# List
+# Experiment
 #
 # ##################################################################
 
@@ -90,7 +106,7 @@ async def get_list_of_experiments(page: int = 1, number_of_items_per_page: int =
         number_of_items_per_page=number_of_items_per_page
     )
 
-@app.post("/experiment/save", tags=["Experiment"], summary="Save an experiment using a flow")
+@app.post("/experiment/save", tags=["Experiment"], summary="Save an experiment")
 async def save_experiment(flow: Optional[dict], \
                           _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
@@ -101,19 +117,30 @@ async def save_experiment(flow: Optional[dict], \
     
     return Controller.save_experiment(data=flow)
 
-@app.post("/experiment/run/", tags=["Experiment"], summary="Run an experiment")
-async def run_experiment(flow: Optional[dict], \
+@app.post("/experiment/start/", tags=["Experiment"], summary="Start an experiment")
+async def start_experiment(uri: str, \
                          _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
-    Run an experiment
+    Start an experiment
     
     - **flow**: the flow object 
     """
 
-    return await Controller.run_experiment(data=flow)
+    return await Controller.start_experiment(uri=uri)
+
+@app.post("/experiment/stop/", tags=["Experiment"], summary="Stop a running experiment")
+async def stop_experiment(uri: str, \
+                         _: UserData = Depends(check_user_access_token)) -> (dict, str,):
+    """
+    Stop an experiment
+    
+    - **experiment_uri**: the experiment uri
+    """
+
+    return await Controller.stop_experiment(uri=uri)
 
 @app.post("/experiment/validate/", tags=["Experiment"], summary="Validate an experiment")
-async def validate_experiment(uri: str = None, \
+async def validate_experiment(uri: str, \
                               _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Validate an experiment
@@ -123,22 +150,42 @@ async def validate_experiment(uri: str = None, \
 
     return Controller.validate_experiment(uri=uri)
 
-
-@app.get("/protocol/", tags=["Protocol"], summary="Get a protocol")
-async def get_protocol(protocol_uri: str = None, \
-                       experiment_uri: str = None, \
-                       _: UserData = Depends(check_user_access_token)) -> (dict, str,):
+@app.post("/experiment/archive", tags=["Experiment"])
+async def archive_experiment(uri:str, _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
-    Retrieve a protocol
+    Archive an experiment
     
-    - **protocol_uri**: the uri of the job (must be a job of a protocol)
-    - **experiment_uri**: the uri of an experiment
+    - **experiment_uri**: the uri of the experiment
     """
 
-    return Controller.fetch_protocol(
-        protocol_uri=protocol_uri,
-        experiment_uri=experiment_uri
-    )
+    return await Controller.action(action="archive", object_type="experiment", object_uri=uri)
+
+@app.post("/experiment/unarchive", tags=["Experiment"])
+async def unarchive_experiment(uri:str, _: UserData = Depends(check_user_access_token)) -> (dict, str,):
+    """
+    Unarchive an experiment
+    
+    - **experiment_uri**: the uri of the experiment
+    """
+
+    return await Controller.action(action="unarchive", object_type="experiment", object_uri=uri)
+
+@app.post("/protocol/validate/", tags=["Protocol"], summary="Validate an experiment")
+async def validate_experiment(uri: str, \
+                              _: UserData = Depends(check_user_access_token)) -> (dict, str,):
+    """
+    Validate a protocol
+    
+    - **uri**: the protocol uri
+    """
+
+    return Controller.validate_experiment(uri=uri)
+
+# ##################################################################
+#
+# Protocol
+#
+# ##################################################################
 
 @app.get("/protocol/list", tags=["Protocol"], summary="Get the list of protocols")
 async def get_list_of_protocols(experiment_uri: str = None, \
@@ -158,16 +205,27 @@ async def get_list_of_protocols(experiment_uri: str = None, \
         experiment_uri=experiment_uri,
     )
 
-@app.post("/protocol/validate/", tags=["Protocol"], summary="Validate an experiment")
-async def validate_experiment(uri: str = None, \
-                              _: UserData = Depends(check_user_access_token)) -> (dict, str,):
+@app.get("/protocol/{protocol_uri}/", tags=["Protocol"], summary="Get a protocol")
+async def get_protocol(protocol_uri: str = None, \
+                       experiment_uri: str = None, \
+                       _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
-    Validate a protocol
+    Retrieve a protocol
     
-    - **uri**: the protocol uri
+    - **protocol_uri**: the uri of the job (must be a job of a protocol)
+    - **experiment_uri**: the uri of an experiment
     """
 
-    return Controller.validate_protocol(uri=uri)
+    return Controller.fetch_protocol(
+        protocol_uri=protocol_uri,
+        experiment_uri=experiment_uri
+    )
+
+# ##################################################################
+#
+# Process
+#
+# ##################################################################
 
 @app.get("/process-type/list", tags=["Process"], summary="Get the list of process types")
 async def get_list_of_process_types(page: int = 1, number_of_items_per_page: int = 20, \
@@ -184,7 +242,7 @@ async def get_list_of_process_types(page: int = 1, number_of_items_per_page: int
         number_of_items_per_page=number_of_items_per_page
     )
 
-@app.get("/process/list", tags=["Protocol"], summary="Get the list of processes")
+@app.get("/process/list", tags=["Process"], summary="Get the list of processes")
 async def get_list_of_process(experiment_uri: str = None, \
                               page: int = 1, number_of_items_per_page: int = 20, \
                               _: UserData = Depends(check_user_access_token)) -> (dict, str,):
@@ -200,8 +258,13 @@ async def get_list_of_process(experiment_uri: str = None, \
         number_of_items_per_page=number_of_items_per_page,
         experiment_uri=experiment_uri
     )
+# ##################################################################
+#
+# Config
+#
+# ##################################################################
 
-@app.get("/config/list", tags=["Configuration"], summary="Get the list of configs")
+@app.get("/config/list", tags=["Configs"], summary="Get the list of configs")
 async def get_list_of_configs(experiment_uri: str = None, \
                               page: int = 1, number_of_items_per_page: int = 20, \
                               _: UserData = Depends(check_user_access_token)) -> (dict, str,):
@@ -217,6 +280,12 @@ async def get_list_of_configs(experiment_uri: str = None, \
         number_of_items_per_page=number_of_items_per_page,
         experiment_uri=experiment_uri
     )
+
+# ##################################################################
+#
+# Resource
+#
+# ##################################################################
 
 @app.get("/resource/list", tags=["Resource"], summary="Get the list of resources")
 async def get_list_of_resources(experiment_uri: str = None, page: int = 1, number_of_items_per_page: int = 20, \
@@ -241,7 +310,7 @@ async def get_list_of_resources(experiment_uri: str = None, page: int = 1, numbe
 #
 # ##################################################################
 
-@app.get("/count/{object_type}/", tags=["Generic models and view models"])
+@app.get("/count/{object_type}/", tags=["Models and ViewModels"])
 async def count(object_type: str, \
                 _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
@@ -252,7 +321,31 @@ async def count(object_type: str, \
 
     return await Controller.action(action="count", object_type=object_type)
 
-@app.get("/view/{object_type}/{object_uris}/", tags=["Generic models and view models"])
+@app.put("/view/{object_type}/{object_uri}/", tags=["Models and ViewModels"])
+async def archive_view_model(object_type: str, object_uri: str, \
+                            _: UserData = Depends(check_user_access_token)) -> (dict, str,):
+    """
+    Archive a ViewModel
+    
+    - **object_type**: the type of the object to archive.
+    - **object_uri**: the uri of the object to archive
+    """
+
+    return await Controller.action(action="archive", object_type=object_type, object_uri=object_uri)
+
+@app.put("/view/{object_type}/{object_uri}/", tags=["Models and ViewModels"])
+async def unarchive_view_model(object_type: str, object_uri: str, \
+                            _: UserData = Depends(check_user_access_token)) -> (dict, str,):
+    """
+    Archive a ViewModel
+    
+    - **object_type**: the type of the object to archive.
+    - **object_uri**: the uri of the object to archive
+    """
+
+    return await Controller.action(action="unarchive", object_type=object_type, object_uri=object_uri)
+
+@app.get("/view/{object_type}/{object_uris}/", tags=["Models and view models"])
 async def get_view_model(object_type: str, object_uris: Optional[str] = "all", \
                         page: int = 1, number_of_items_per_page: int = 20, \
                         filters: Optional[str] = "{}", view_params: Optional[str] = "{}", \
@@ -281,7 +374,7 @@ async def get_view_model(object_type: str, object_uris: Optional[str] = "all", \
         filters=filters
     )
 
-@app.put("/view/{object_type}/", tags=["Generic models and view models"])
+@app.put("/view/{object_type}/", tags=["Models and view models"])
 async def update_view_model(object_type: str, view_model: ViewModelData, \
                             _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
@@ -293,19 +386,7 @@ async def update_view_model(object_type: str, view_model: ViewModelData, \
 
     return await Controller.action(action="update", object_type=object_type, object_uri=view_model.uri, data=view_model.params)
 
-@app.delete("/view/{object_type}/{object_uri}/", tags=["Generic models and view models"])
-async def delete_view_model(object_type: str, object_uri: str, \
-                            _: UserData = Depends(check_user_access_token)) -> (dict, str,):
-    """
-    Delete a ViewModel
-    
-    - **object_type**: the type of the object to delete.
-    - **object_uri**: the uri of the object to delete
-    """
-
-    return await Controller.action(action="delete", object_type=object_type, object_uri=object_uri)
-
-@app.get("/verify/{object_type}/{object_uri}/", tags=["Generic models and view models"])
+@app.get("/verify/{object_type}/{object_uri}/", tags=["Models and view models"])
 async def verify(object_type: str, object_uri: str, \
                 _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
@@ -328,7 +409,7 @@ async def verify(object_type: str, object_uri: str, \
 #
 # ##################################################################
 
-@app.api_route("/brick/{brick_name}/{api_func}", response_class=JSONResponse, methods=["GET", "POST"], tags=["User bricks"])
+@app.api_route("/brick/{brick_name}/{api_func}", response_class=JSONResponse, methods=["GET", "POST"], tags=["Bricks APIs"])
 async def call_brick_api(request: Request, \
                          brick_name: Optional[str] = "gws", api_func: Optional[str] = None, \
                          _: UserData = Depends(check_user_access_token)) :
@@ -420,15 +501,23 @@ async def download(uri: str, _: UserData = Depends(check_user_access_token)):
 #
 # ##################################################################
 
-@app.get("/lab-instance", tags=["Lab instance"])
-async def get_lab_instance_status(_: UserData = Depends(check_user_access_token)):
+@app.get("/lab/instance", tags=["Lab"])
+async def get_lab_status(_: UserData = Depends(check_user_access_token)):
     """
-    Get the current status of the lab    
+    Get lab status
     """
     
-    from gws.lab import Lab
-    return Lab.get_status()
-  
+    return Controller.get_lab_status()
+
+@app.get("/lab/monitor", tags=["Lab"])
+async def get_lab_monitor(page: int = 1, number_of_items_per_page: int = 20,\
+                          _: UserData = Depends(check_user_access_token)):
+    """
+    Get lab monitor    
+    """
+    
+    return Controller.get_lab_monitor()
+
 # ##################################################################
 #
 # Robot

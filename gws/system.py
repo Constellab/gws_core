@@ -3,15 +3,33 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import os
 import psutil
-from gws.logger import Error
-from gws.model import Model
 import threading
 
-from peewee import FloatField
+from peewee import FloatField, SqliteDatabase
+
+from gws.base import DbManager as BaseDbManager
+from gws.logger import Error
+from gws.model import Model
+from gws.settings import Settings
 
 TICK_INTERVAL_SECONDS = 60*5   # 5 min
 
+settings = Settings.retrieve()
+db_dir = os.path.join(settings.data["data_dir"], "system")
+db_path = os.path.join(db_dir, "monitor.sqlite3")
+if not os.path.exists(db_dir):
+    os.makedirs(db_dir)
+
+class DbManager(BaseDbManager):
+    """
+    DbManager class. 
+    
+    Provides backend features for managing databases. 
+    """
+    db = SqliteDatabase(db_path)
+    
 def _system_monitor_tick(daemon):
     try:
         Monitor._tick()
@@ -21,6 +39,12 @@ def _system_monitor_tick(daemon):
     t = threading.Timer(TICK_INTERVAL_SECONDS, _system_monitor_tick, [ daemon ])
     t.daemon = daemon
     t.start()
+
+# ####################################################################
+#
+# Monitor
+#
+# ####################################################################
 
 class Monitor(Model):
     cpu_count = FloatField()
@@ -38,8 +62,7 @@ class Monitor(Model):
     
     _table_name = 'gws_monitor'
     __is_init = False
-    
- 
+        
     @classmethod
     def init(cls, daemon=True):
         if not cls.__is_init:
@@ -73,7 +96,16 @@ class Monitor(Model):
             monitor.save()
         except:
             pass
+    
+    class Meta:
+        database = DbManager.db
         
+# ####################################################################
+#
+# SysProc
+#
+# ####################################################################
+
 class SysProc:
     _ps = None
     

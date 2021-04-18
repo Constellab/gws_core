@@ -18,9 +18,10 @@ import importlib
 import shutil
 import re
 import collections
+import time
 from subprocess import DEVNULL
 
-import time
+
 from datetime import datetime
 
 from datetime import datetime
@@ -65,8 +66,6 @@ class Model(BaseModel):
     :type save_datetime: `datetime`
     :property is_archived: True if the model is archived, False otherwise. Defaults to False
     :type is_archived: `bool`
-    :property is_deleted: True if the model is deleted, False otherwise. Defaults to Falses
-    :type is_deleted: `bool`
     :property data: The data of the model
     :type data: `dict`
     :property hash: The hash of the model
@@ -79,13 +78,12 @@ class Model(BaseModel):
     creation_datetime = DateTimeField(default=datetime.now, index=True)
     save_datetime = DateTimeField(index=True)
     is_archived = BooleanField(default=False, index=True)
-    is_deleted = BooleanField(default=False, index=True)
     hash = CharField(null=True, index=True)
     data = JSONField(null=True)
     
     _kv_store: 'KVStore' = None
     _is_singleton = False
-    _is_deletable = True
+    _is_removable = True
     
     _fts_fields = {}
     _is_fts_active = True
@@ -132,11 +130,22 @@ class Model(BaseModel):
     # -- A --
     
     def archive(self, tf: bool) -> bool:
+        """
+        Archive of Unarchive the model
+        
+        :param tf: True to archive, False to unarchive
+        :type tf: `bool`
+        :return: True if sucessfully done, False otherwise
+        :rtype: `bool`
+        """
+        
         if self.is_archived == tf:
             return True
-            
+        
         self.is_archived = tf
-        return self.save()
+        cls = type(self)
+        return self.save(only=[cls.is_archived])
+    
     
     def as_json(self, *, show_hash=False, bare: bool=False, stringify: bool=False, prettify: bool=False, jsonifiable_data_keys: list=[], **kwargs) -> (str, dict, ):
         """
@@ -202,9 +211,7 @@ class Model(BaseModel):
     def barefy( data: dict, sort_keys=False ):
         if isinstance(data, dict):
             data = json.dumps(data, sort_keys=sort_keys)
-        
         data = re.sub(r"\"(([^\"]*_)?uri|save_datetime|creation_datetime|hash)\"\s*\:\s*\"([^\"]*)\"", r'"\1": ""', data)
-
         return json.loads(data)
     
     # -- C --
@@ -212,7 +219,6 @@ class Model(BaseModel):
     def __create_hash_object(self):
         h = hashlib.blake2b()
         h.update(self._LAB_URI.encode())
-        
         exclusion_list = (ForeignKeyField, JSONField, ManyToManyField, BlobField, AutoField, BigAutoField, )
         for prop in self.property_names(Field, exclude=exclusion_list) :
             if prop in ["id", "hash"]:
@@ -232,13 +238,7 @@ class Model(BaseModel):
             val = getattr(self, prop)
             if isinstance(val, Model):
                 h.update( val.hash.encode() )
-                
-        #for prop in self.property_names(ManyToManyField):
-        #    vals = getattr(self, prop)
-        #    if len(vals) and isinstance(vals[0], Model):
-        #        for val in vals: 
-        #            h.update( val.hash.encode() )
-        
+
         return h
     
     def __compute_hash(self):
@@ -268,7 +268,7 @@ class Model(BaseModel):
     def clear_data(self, save: bool = False):
         """
         Clears the `data`
-
+    
         :param save: If True, save the model the `data` is cleared
         :type save: bool
         """
@@ -392,7 +392,7 @@ class Model(BaseModel):
         :return: True if the model is saved in db, False otherwise
         :rtype: bool
         """
-        return not self.id is None
+        return bool(self.id)
 
     # -- N -- 
 
@@ -434,17 +434,7 @@ class Model(BaseModel):
             for prop in db_object.property_names(Field):
                 db_val = getattr(db_object, prop)
                 setattr(self, prop, db_val) 
-        
-    def remove(self) -> bool:
-        if not self._is_deletable:
-            return False
 
-        if self.is_deleted:
-            return True
- 
-        self.is_deleted = True
-        return self.save()
-    
     # -- S --
 
     @classmethod
@@ -624,7 +614,7 @@ class User(Model):
 
     VALID_GROUPS = [USER_GOUP, ADMIN_GROUP, OWNER_GROUP, SYSUSER_GROUP]
     
-    _is_deletable = False
+    _is_removable = False
     _table_name = 'gws_user'
     _fts_fields = {'first_name': 2.0, 'last_name': 2.0}
     
@@ -635,6 +625,26 @@ class User(Model):
             
     # -- A --
     
+    def archive(self, tf:bool)->bool:
+        """
+        Deactivated method. Always returns False.
+        """
+        
+        return False
+    
+    def as_json(self, *args, stringify: bool=False, prettify: bool=False, **kwargs):
+        _json = super().as_json(*args, **kwargs)
+        
+        del _json["console_token"]
+        
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
+        
     @classmethod
     def authenticate(cls, uri: str, console_token: str = "") -> bool: 
         try:
@@ -655,22 +665,25 @@ class User(Model):
         if user.is_console_authenticated:       
             Controller.set_current_user(user)
             return True
+        
         is_valid_token = bool(console_token) and (user.console_token == console_token)
         if not is_valid_token:
             return False
 
         with DbManager.db.atomic() as transaction:
             try:
+                # authenticate the user first
                 user.is_console_authenticated = True
-                Activity.add(
-                    user,
-                    Activity.CONSOLE_AUTHENTICATION
-                )
                 if user.save():
                     Controller.set_current_user(user)
                 else:
                     raise Error("User", "__console_authenticate", "Cannot save user status")
-                    
+                
+                # now save user activity
+                Activity.add(
+                    Activity.CONSOLE_AUTHENTICATION
+                )
+   
                 return True
             except:
                 transaction.rollback()
@@ -684,16 +697,18 @@ class User(Model):
 
         with DbManager.db.atomic() as transaction:
             try:
+                # authenticate the user first
                 user.is_http_authenticated = True
-                Activity.add(
-                    user,
-                    Activity.HTTP_AUTHENTICATION
-                )
                 if user.save():
                     Controller.set_current_user(user)
                 else:
                     raise Error("User", "__http_authenticate", "Cannot save user status")
                     
+                # now save user activity
+                Activity.add(
+                    Activity.HTTP_AUTHENTICATION
+                )
+                
                 return True
             except Exception as err:
                 transaction.rollback()
@@ -707,11 +722,12 @@ class User(Model):
         if not Q:
             uri = settings.data["owner"]["uri"]
             email = settings.data["owner"]["email"]
-            full_name = settings.data["owner"]["full_name"]
+            first_name = settings.data["owner"]["first_name"]
+            last_name = settings.data["owner"]["last_name"]
             u = User(
                 uri = uri if uri else None, 
                 email = email,
-                data = {"full_name": full_name},
+                data = {"first_name": first_name, "last_name": last_name},
                 is_active = True,
                 group = cls.OWNER_GROUP
             )
@@ -720,8 +736,8 @@ class User(Model):
         Q = User.select().where(User.group == cls.SYSUSER_GROUP)
         if not Q:
             u = User(
-                email = "sys@local",
-                data = {"full_name": "sysuser"},
+                email = "sysuser@local",
+                data = {"first_name": "sysuser", "last_name": ""},
                 is_active = True,
                 group = cls.SYSUSER_GROUP
             )
@@ -775,10 +791,7 @@ class User(Model):
     def is_authenticated(self):
         # get fresh data from DB
         user = User.get_by_id(self.id)
-        if Controller.is_http_context():
-            return user.is_http_authenticated
-        else:
-            return user.is_console_authenticated
+        return user.is_http_authenticated or user.is_console_authenticated
 
     # -- L --
     
@@ -825,7 +838,6 @@ class User(Model):
             try:
                 user.is_http_authenticated = False
                 Activity.add(
-                    user,
                     Activity.HTTP_UNAUTHENTICATION
                 )
                 if user.save():
@@ -848,7 +860,6 @@ class User(Model):
             try:
                 user.is_console_authenticated = False
                 Activity.add(
-                    user,
                     Activity.CONSOLE_UNAUTHENTICATION
                 )
                 if user.save():
@@ -873,7 +884,7 @@ class Activity(Model):
     object_type = CharField(null=True, index=True)
     object_uri = CharField(null=True, index=True)
     
-    _is_deletable = False
+    _is_removable = False
     
     _fts_fields = {}
     _table_name = "gws_user_activity"
@@ -891,8 +902,18 @@ class Activity(Model):
     CONSOLE_AUTHENTICATION = "CONSOLE_AUTHENTICATION"
     CONSOLE_UNAUTHENTICATION = "CONSOLE_UNAUTHENTICATION"
     
+    def archive(self, tf:bool)->bool:
+        """
+        Deactivated method. Allways returns False.
+        """
+        
+        return False
+    
     @classmethod
-    def add(self, user: User, activity_type: str, object_type=None, object_uri=None):
+    def add(self, activity_type: str, *, object_type=None, object_uri=None, user=None):
+        if not user:
+            user = Controller.get_current_user()
+            
         activity = Activity(
             user = user, 
             activity_type = activity_type,
@@ -913,13 +934,26 @@ class Viewable(Model):
 
     # -- A --
 
-    def archive(self, tf: bool):
+    def archive(self, tf: bool)->bool:
+        """
+        Archive of Unarchive Viewable and all its ViewModels
+        
+        :param tf: True to archive, False to unarchive
+        :type tf: `bool`
+        :return: True if sucessfully done, False otherwise
+        :rtype: `bool`
+        """
+        
         if self.is_archived == tf:
             return True
 
         with DbManager.db.atomic() as transaction:
             try:
-                Q = ViewModel.select().where( ViewModel.model_id == self.id )
+                Q = ViewModel.select().where( 
+                    (ViewModel.model_id == self.id) & 
+                    (ViewModel.is_archived == (not tf))
+                )
+                
                 for vm in Q:
                     if not vm.archive(tf):
                         transaction.rollback()
@@ -930,7 +964,8 @@ class Viewable(Model):
                 else:
                     transaction.rollback()
                     return False
-            except:
+            except Exception as err:
+                print(err)
                 transaction.rollback()
                 return False
 
@@ -981,27 +1016,6 @@ class Viewable(Model):
 
     # -- R -- 
 
-    def remove(self):
-        if self.is_deleted:
-            return True
-
-        with DbManager.db.atomic() as transaction:
-            try:
-                Q = ViewModel.select().where( ViewModel.model_id == self.id )
-                for vm in Q:
-                    if not vm.remove():
-                        transaction.rollback()
-                        return False
-                
-                if super().remove():
-                    return True
-                else:
-                    transaction.rollback()
-                    return False
-            except:
-                transaction.rollback()
-                return False
-
     # -- S --
 
     def set_title(self, title: str):
@@ -1050,13 +1064,24 @@ class Viewable(Model):
     
     # -- V --
 
-    def view(self, *args, format="json", params:dict = {}) -> dict:
+    def view(self, *args, format="json", params:dict = {}) -> 'ViewModel':
+        """ 
+        Build and return a ViewModel
+        """
+        
         if not isinstance(params, dict):
             params = {}
 
         view_model = ViewModel.get_instance(self, params)
         return view_model
                 
+    @property
+    def view_models(self):
+        """ 
+        Get all the ViewModels of the Viewable
+        """
+        
+        return ViewModel.select().where(ViewModel.model_id == self.id)
     
 # ####################################################################
 #
@@ -1105,15 +1130,28 @@ class Config(Viewable):
 
     # -- A --
 
-    def archive(self, tf: bool):
-        raise Error("gws.model.Config", "archive", f"Not allowed. The whole experiment must be archived")
+    def archive(self, tf: bool)->bool:
+        """ 
+        Archive the config
+
+        :param tf: True to archive, False to unarchive
+        :type: `bool`
+        :return: True if successfully archived, False otherwise
+        :rtype: `bool`
+        """
+        
+        some_processes_are_in_invalid_archive_state = Process.select().where( 
+            (Process.config == self) & (Process.is_archived == (not tf) ) 
+        ).count()
+        
+        if some_processes_are_in_invalid_archive_state:
+            return False
+ 
+        return super().archive(tf)
     
     # -- C --
     
     # -- D --
-
-    def remove(self):
-        raise Error("gws.model.Config", "archive", f"Not allowed. The whole experiment must be removed")
 
     # -- G --
 
@@ -1140,6 +1178,8 @@ class Config(Viewable):
         Returns specs
         """
         return self.data["params"]
+    
+    # -- R --
 
     # -- S --
 
@@ -1207,7 +1247,7 @@ class ProgressBar(Model):
     _min_allowed_delta_time = 1.0
     _min_value = 0.0
     
-    _is_deletable = False
+    _is_removable = False
     _table_name = "gws_progress_bar"
     _max_message_stack_length = 64
     
@@ -1277,11 +1317,11 @@ class ProgressBar(Model):
         self._add_message(message="Experiment started")
         self.save()
     
-    def stop(self):
+    def stop(self, message="End of experiment!"):
         _max = self.data["max_value"]
         
         if self.data["value"] < _max:
-            self.set_value(_max, "End of experiment!")
+            self.set_value(_max, message)
 
         self.data["remaining_time"] = 0.0
         self.save()
@@ -1394,7 +1434,7 @@ class Process(Viewable):
     instance_name = CharField(null=True, index=True)
         
     created_by = ForeignKeyField(User, null=False, index=True)
-    config =  ForeignKeyField(Config, null=False, index=True)    
+    config =  ForeignKeyField(Config, null=False, index=True, backref='processes')    
     progress_bar = ForeignKeyField(ProgressBar, null=True, backref='process')
 
     input_specs: dict = {}
@@ -1413,7 +1453,7 @@ class Process(Viewable):
     
     _max_progress_value = 100.0
     _is_singleton = False
-    _is_deletable = False
+    _is_removable = False
     _table_name = 'gws_process'
 
     def __init__(self, *args, user=None, **kwargs):
@@ -1493,7 +1533,36 @@ class Process(Viewable):
             self._output.__setitem_without_check__(k, Resource.get(Resource.uri == uri))
         
     # -- A --
+    
+    def archive(self, tf, archive_resources=True):
+        """
+        Archive the resource. Raise Error.
+        """
+        
+        if self.is_archived == tf:
+            return True
+        
+        with DbManager.db.atomic() as transaction:
+            try:
+                if not super().archive(tf):
+                    return False
 
+                self.config.archive(tf) #-> try to archive the config if possible!
+
+                if archive_resources:
+                    Q = Resource.select().where(Resource.process == self)
+                    for r in Q:
+                        if not r.archive(tf):
+                            transaction.rollback()
+                            return False
+            except Exception as err:
+                print(err)
+                transaction.rollback()
+                return False
+                    
+        return True
+            
+            
     def as_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the model.
@@ -1755,7 +1824,7 @@ class Process(Viewable):
         return self._protocol
     
     # -- R -- 
-    
+        
     async def _run(self):
         """ 
         Runs the process and save its state in the database.
@@ -2396,7 +2465,6 @@ class Protocol(Process):
 
                 if not self.is_saved():
                     Activity.add(
-                        self.created_by, 
                         Activity.CREATE,
                         object_type = self.full_classname(),
                         object_uri = self.uri
@@ -2471,7 +2539,7 @@ class Protocol(Process):
             source_port = self.input.ports[k]
             self._interfaces[k] = Interface(name=k, source_port=source_port, target_port=interfaces[k])
         
-        if self.data.get("inputs"):
+        if self.data.get("input"):
             for k in self.data.get("input"):
                 uri = self.data["input"][k]
                 self.input.__setitem_without_check__(k, Resource.get(Resource.uri == uri) )
@@ -2512,6 +2580,13 @@ class Study(Viewable):
     
     _table_name = 'gws_study'
     
+    def archive(self, tf:bool)->bool:
+        """
+        Deactivated method. Returns False.
+        """
+        
+        return False
+    
     @classmethod
     def create_default_instance( cls ):
         """
@@ -2539,8 +2614,6 @@ class Study(Viewable):
         
         return study
 
-
-    
 # ####################################################################
 #
 # Experiment class
@@ -2571,6 +2644,7 @@ class Experiment(Viewable):
     
     _is_running = BooleanField(default=False, index=True)
     _is_finished = BooleanField(default=False, index=True)
+    _is_success = BooleanField(default=False, index=True)
     
     _protocol = None
     _event_listener: EventListener = None
@@ -2618,32 +2692,35 @@ class Experiment(Viewable):
     def add_report(self, report: 'Report'):
         report.experiment = self
 
-    def archive(self, tf:bool):
+    def archive(self, tf:bool, archive_resources=True):
+        """
+        Archive the experiment
+        """
+        
         if self.is_archived == tf:
             return True
-            
+        
         with DbManager.db.atomic() as transaction:
             try:
                 Activity.add(
-                    user, 
                     Activity.ARCHIVE,
                     object_type = self.full_classname(),
                     object_uri = self.uri
                 )
                 
-                Q = Process.select().where( Process.experiment == self )
-                for p in Q:
-                    if not p.archive(tf):
+                for p in self.processes:
+                    if not p.archive(tf, archive_resources=archive_resources):
                         transaction.rollback()
                         return False
-                
+                    
                 if super().archive(tf):
                     return True
                 else:
                     transaction.rollback()
                     return False
                     
-            except:
+            except Exception as err:
+                print(err)
                 transaction.rollback()
                 return False
 
@@ -2664,6 +2741,7 @@ class Experiment(Viewable):
         _json.update({
             "is_running": self.is_running,
             "is_finished": self.is_finished,
+            "is_success": self._is_success
         })
         
         if not _json["data"].get("title"):
@@ -2683,7 +2761,7 @@ class Experiment(Viewable):
     # -- C --
         
     @classmethod
-    def count_of_experiments_in_progress(cls):
+    def count_of_running_experiments(cls):
         """ 
         Returns the count of experiment in progress
 
@@ -2712,7 +2790,7 @@ class Experiment(Viewable):
         
         e = Experiment.get_by_id(self.id)
         return e._is_running
-        
+    
     @property
     def is_draft(self) -> bool:
         """ 
@@ -2724,27 +2802,59 @@ class Experiment(Viewable):
         
         return (not self.is_running) and (not self.is_finished)
 
-
+    @property
+    def is_pid_alive(self) -> bool:
+        if not self.pid:
+            raise Error("Experiment", "is_pid_alive", f"No such process found")
+        
+        try:
+            sproc = SysProc.from_pip(self.pid)
+        except:
+            raise Error("Experiment", "is_pid_alive", f"No such process found or its access is denied (pid = {self.pid})")
+            
+        sproc = SysProc.from_pip(self.pid)
+        return sproc.is_alive()
+    
     # -- J --
 
     # -- K --
     
-    @property
-    def kill(self):
+    async def kill_pid(self):
         """ 
-        Kill the experiment if it is running. Only possible if the experiment has been launched through the cli. 
+        Kill the experiment if it is running. 
+        
+        This is only possible if the experiment has been started through the cli. 
         """
-
+        
+        if not Controller.is_http_context():
+            raise Error("Experiment", "kill_pid", f"The user must be in http context")
+            
         if self.pip:
             try:
                 sproc = SysProc.from_pip(self.pid)
             except:
-                raise Error("Experiment", "kill", "The subprocess pid ")
+                raise Error("Experiment", "is_pid_alive", f"No such process found or its access is denied (pid = {self.pid})")
+            
+        try:
             sproc.terminate()
             sproc.wait()
-        else:
-            raise Error("Experiment", "kill", "The experiment is not run using killable subprocess")
-            
+        except:
+            raise Error("Experiment", "kill", f"Cannot kill pid {self.pid}.")
+        
+        Activity.add(
+            Activity.STOP,
+            object_type = self.full_classname(),
+            object_uri = self.uri
+        )
+
+        # Gracefully stop the experiment and exit!
+        message = f"Experiment manullay stopped by a user."
+        self.protocol.progress_bar.stop(message)
+        self.data["pid"] = 0
+        self._is_running = False
+        self._is_finished = True
+        self._is_success = False
+        self.save()
             
     # -- O --
 
@@ -2766,7 +2876,7 @@ class Experiment(Viewable):
     @property
     def processes(self):
         if not self.id:
-            return None
+            return []
         
         return Process.select().where(Process.experiment_id == self.id)
     
@@ -2778,29 +2888,7 @@ class Experiment(Viewable):
         return self._protocol
     
     # -- R --
-    
-    def remove(self):
-        if self.is_deleted:
-            return True
-            
-        with DbManager.db.atomic() as transaction:
-            try:
-                Q = Process.select().where( Process.experiment == self )
-                for p in Q:
-                    if not p.remove():
-                        transaction.rollback()
-                        return False
-                
-                if super().remove():
-                    return True
-                else:
-                    transaction.rollback()
-                    return False
-                    
-            except:
-                transaction.rollback()
-                return False
-            
+
     @property 
     def resources(self):
         Q = Resource.select()\
@@ -2808,7 +2896,7 @@ class Experiment(Viewable):
                     .order_by(Resource.creation_datetime.desc())
         return Q
       
-    def run_through_cli(self, user=None):
+    def run_through_cli(self, *, user=None):
         """ 
         Run an experiment in a non-blocking way through the cli.
 
@@ -2823,11 +2911,12 @@ class Experiment(Viewable):
         if not user:
             try:
                 user = Controller.get_current_user()
-                if not user.is_authenticated:
-                    raise Error("gws.model.Experiment", "run_cli", "An authenticated user is required")
             except:
-                raise Error("gws.model.Experiment", "run_cli", "An user is required")
-        
+                raise Error("gws.model.Experiment", "run_through_cli", "A user is required")
+            
+            if not user.is_authenticated:
+                raise Error("gws.model.Experiment", "run_through_cli", "An authenticated user is required")
+                    
         cmd = [
             "python3", 
              os.path.join(cwd_dir, "manage.py"), 
@@ -2841,7 +2930,10 @@ class Experiment(Viewable):
             cmd.append("--cli_test")
         
         sproc = SysProc.popen(cmd, stderr=DEVNULL, stdout=DEVNULL)
-
+        #import subprocess
+        #out = subprocess.check_output(cmd)
+        #print(out)
+        
         self.data["pid"] = sproc.pid
         self.save()
         
@@ -2855,56 +2947,70 @@ class Experiment(Viewable):
         
         if self.is_running or self.is_finished:
             return
-                
+                    
         if Controller.is_http_context():
             # run the experiment throug the cli to prevent blocking HTTP requests
             self.run_through_cli(self, user=user)
-
         else:
             if not user:
                 try:
                     user = Controller.get_current_user()
-                    if not user.is_authenticated:
-                        raise Error("gws.model.Experiment", "__init__", "An authenticated user is required")
                 except:
-                    raise Error("gws.model.Experiment", "__init__", "An user is required")
-
-            if self.is_deleted:
-                raise Error("gws.model.Experiment", "save", f"The experiment is deleted")
-
+                    raise Error("gws.model.Experiment", "run", "A user is required")
+                
+                if not user.is_authenticated:
+                        raise Error("gws.model.Experiment", "run", "A authenticated user is required")
+                        
             if self.is_archived:
-                raise Error("gws.model.Experiment", "save", f"The experiment is archived")
+                raise Error("gws.model.Experiment", "run", f"The experiment is archived")
 
             if self.is_validated:
-                raise Error("gws.model.Experiment", "save", f"The experiment is validated")
-
+                raise Error("gws.model.Experiment", "run", f"The experiment is validated")
+            
             Activity.add(
-                user, 
                 Activity.START,
                 object_type = self.full_classname(),
-                object_uri = self.uri
+                object_uri = self.uri,
+                user=user
             )
-
-            self.protocol.set_experiment(self)
-            self.data["pid"] = 0
-            self._is_running = True
-            self._is_finished = False
-            self.save()
             
-            if self._event_listener.exists("start"):
-                self._event_listener.sync_call("start", self)
-                await self._event_listener.async_call("start", self)
+            try:
+                self.protocol.set_experiment(self)
+                self.data["pid"] = 0
+                self._is_running = True
+                self._is_finished = False
+                self.save()
             
-            await self.protocol._run()
-            
-            if self._event_listener.exists("end"):
-                self._event_listener.sync_call("end", self)
-                await self._event_listener.async_call("end", self)
+                if self._event_listener.exists("start"):
+                    self._event_listener.sync_call("start", self)
+                    await self._event_listener.async_call("start", self)
                 
-            self.data["pid"] = 0
-            self._is_running = False
-            self._is_finished = True
-            self.save()
+                await self.protocol._run()
+                
+                if self._event_listener.exists("end"):
+                    self._event_listener.sync_call("end", self)
+                    await self._event_listener.async_call("end", self)
+                
+                self.data["pid"] = 0
+                self._is_running = False
+                self._is_finished = True
+                self._is_success = True
+                self.save()
+            except Exception as err:
+                time.sleep(3)  #-> wait for 3 sec to prevent database lock!
+                
+                # Gracefully stop the experiment and exit!
+                message = f"An error occured. Exception: {err}"
+                self.protocol.progress_bar.stop(message)
+                self.data["pid"] = 0
+                self._is_running = False
+                self._is_finished = True
+                self._is_success = False
+                self.save()
+                
+                raise Error("gws.model.Experiment", "run", f"An error occured. Exception: {err}")
+                
+            
     
     # -- S --
 
@@ -2913,7 +3019,6 @@ class Experiment(Viewable):
             try:
                 if not self.is_saved():
                     Activity.add(
-                        self.created_by,
                         Activity.CREATE,
                         object_type = self.full_classname(),
                         object_uri = self.uri
@@ -2936,7 +3041,6 @@ class Experiment(Viewable):
                 self.save()
                 
                 Activity.add(
-                    user,
                     Activity.VALIDATE,
                     object_type = self.full_classname(),
                     object_uri = self.uri
@@ -2967,9 +3071,6 @@ class Resource(Viewable):
 
     # -- A --
 
-    def archive(self, tf: bool):
-        raise Error("gws.model.Resource", "archive", f"Not allowed. The whole experiment must be archived")
-
     def as_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the model.
@@ -2996,25 +3097,7 @@ class Resource(Viewable):
                 return json.dumps(_json)
         else:
             return _json
-    
-    # -- D --
 
-    def remove(self):
-        if self.is_deleted:
-            return True
-
-        with DbManager.db.atomic() as transaction:
-            try:
-                tf = self.experiment.remove() and super().remove()
-                if not tf:
-                    transaction.rollback()
-                    return False
-                else:
-                    return True
-            except:
-                transaction.rollback()
-                return False
-    
     # -- E --
     
     def _export(self, file_path: str, file_format:str = None):
@@ -3063,10 +3146,6 @@ class Resource(Viewable):
     
     # -- R --
     
-    
-    def remove(self):
-        raise Error("gws.model.Resource", "remove", f"Not allowed. The whole experiment must be removed")
-        
     # -- S --
     
     def _select(self, **params) -> 'Model':
@@ -3092,13 +3171,11 @@ class ResourceSet(Resource):
     _set: dict = None
     _resource_types = (Resource, )
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):        
         super().__init__(*args, **kwargs)
-
         if self.id is None:
             self.data["set"] = {}
             self._set = {}
-        
         if self._set is None:
             self._set = {}
     
@@ -3110,7 +3187,6 @@ class ResourceSet(Resource):
         
         if not val.is_saved():
             val.save()
-            
         self.set[val.uri] = val
             
 
@@ -3149,9 +3225,23 @@ class ResourceSet(Resource):
     
     # -- R --
     
-    def remove(self, key):
-        del self._set[key]
+    def remove(self):
+        with DbManager.db.atomic() as transaction:
+            try:
+                for k in self._set:
+                    if not self._set.remove():
+                        transaction.rollback()
+                        return False
 
+                if not super().remove():
+                    transaction.rollback()
+                    return False
+                else:
+                    return True
+            except:
+                transaction.rollback()
+                return False
+            
     # -- S --
     
     def __setitem__(self, key, val):
@@ -3161,7 +3251,6 @@ class ResourceSet(Resource):
         self.set[key] = val
 
     def save(self, *args, **kwrags):
-
         with DbManager.db.atomic() as transaction:
             try:
                 self.data["set"] = {}
@@ -3214,7 +3303,7 @@ class ViewModel(Model):
     :type model_specs: list
     """
 
-    model_uri: str = CharField(index=True)
+    model_id: str = IntegerField(index=True) #-> refrence to the model
     model_type: str = CharField(index=True)
     param_hash: str = CharField(index=True)
     model_specs: list = []
@@ -3253,7 +3342,7 @@ class ViewModel(Model):
         _json = super().as_json(**kwargs)
         _json["model"] = self.model.as_json( **self.params )
         
-        del _json["model_uri"]
+        del _json["model_id"]
         del _json["model_type"]
         del _json["param_hash"]
         
@@ -3309,7 +3398,11 @@ class ViewModel(Model):
         
         try:
             h = self.__compute_param_hash(params)
-            vm = ViewModel.get( (ViewModel.mode_uri==model.uri) & (ViewModel.mode_type==model.type) & (ViewModel.param_hash==h) )
+            vm = ViewModel.get( 
+                (ViewModel.mode_id==model.id) & 
+                (ViewModel.mode_type==model.type) & 
+                (ViewModel.param_hash==h) 
+            )
         except:
             vm = ViewModel(model=model)
             vm.set_params(params)
@@ -3369,7 +3462,7 @@ class ViewModel(Model):
             return self._model
 
         model_t = Controller.get_model_type(self.model_type)
-        model = model_t.get(model_t.uri == self.model_uri)
+        model = model_t.get(model_t.id == self.model_id)
         self._model = model.cast()
         return self._model
     
@@ -3413,13 +3506,13 @@ class ViewModel(Model):
         self.data["description"] = text
     
     def set_model(self, model: None):
-        if not self.model_uri is None:
+        if not self.model_id is None:
             raise Error("gws.model.ViewModel", "set_model", "A model already exists")
         
         self._model = model
 
         if model.is_saved():
-            self.model_uri = model.uri
+            self.model_id = model.id
 
     def set_title(self, title: str):
         """ 
@@ -3442,13 +3535,13 @@ class ViewModel(Model):
         if self._model is None:
             raise Error("gws.model.ViewModel", "save", "The ViewModel has no model")
         else:
-            if not self.model_uri is None and self._model.uri != self.model_uri:
+            if not self.model_id is None and self._model.id != self.model_id:
                 raise Error("gws.model.ViewModel", "save", "It is not allowed to change model of the ViewModel that is already saved")
                 
             with DbManager.db.atomic() as transaction:
                 try:
                     if self._model.save(*args, **kwargs):
-                        self.model_uri = self._model.uri
+                        self.model_id = self._model.id
                         self.model_type = self._model.full_classname()
                         
                         # hash params
@@ -3488,7 +3581,7 @@ class ViewModel(Model):
     class Meta:
         indexes = (
             # create a unique on model_uri,model_type,param_hash
-            (('model_uri', 'model_type', 'param_hash'), True),
+            (('model_id', 'model_type', 'param_hash'), True),
         )
         
 # ####################################################################

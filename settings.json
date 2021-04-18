@@ -15,13 +15,15 @@
     
     "admin": {
         "email"     : "admin@gencovery.com",
-        "full_name" : "Admin"
+        "first_name" : "Admin",
+        "last_name"  : ""
     },
     
     "owner": {
         "uri"       : "",
         "email"     : "admin@gencovery.com",
-        "full_name" : "Owner"
+        "first_name" : "Owner",
+        "last_name"  : ""
     },
 
     "dirs" : {

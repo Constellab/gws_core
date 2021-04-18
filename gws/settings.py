@@ -48,7 +48,7 @@ class Settings(PWModel):
         db_dir = os.path.join(cls._data["data_dir"], "settings")
         if not os.path.exists(db_dir):
             os.makedirs(db_dir)
-        db = SqliteDatabase( os.path.join(db_dir, "db_settings.sqlite3") )
+        db = SqliteDatabase( os.path.join(db_dir, "settings.sqlite3") )
         database_proxy.initialize(db)
 
         if not cls.table_exists():
@@ -102,7 +102,7 @@ class Settings(PWModel):
     def db_path(self):
         return self.build_db_path()
     
-    def build_db_path(self, brick = "gws", brick_data_dir="", force_production_db = False):
+    def build_db_path(self, brick = "gws", brick_data_dir=None, force_production_db = False):
         if self.data["db_name"] == ':memory:':
             return self.data["db_name"]
         else:

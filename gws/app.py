@@ -24,16 +24,8 @@ from gws.controller import Controller
 from gws.logger import Error
 from gws.system import Monitor
 from gws.queue import Queue
+from ._api._auth_user import check_is_admin, check_is_owner
 
-from ._api._auth_user import check_user_access_token, check_admin_access_token 
-
-def check_authenticated_user():
-    check_user_access_token()
-    
-def check_authenticated_admin():
-    check_admin_access_token()
-    
-    
 brick = "gws"
 app = FastAPI(docs_url=None)
 
@@ -60,7 +52,7 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    pass
+    Queue.deinit()
 
 ####################################################################################
 #

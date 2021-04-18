@@ -30,7 +30,7 @@ class TestExperiment(unittest.TestCase):
         pass
     
     def test_run(self):
-        self.assertEqual(Experiment.count_of_experiments_in_progress(), 0)
+        self.assertEqual(Experiment.count_of_running_experiments(), 0)
         
         # Create experiment 1
         # -------------------------------
@@ -83,7 +83,7 @@ class TestExperiment(unittest.TestCase):
         
         print("Waiting 5 secs for cli experiment to finish ...")
         time.sleep(5)
-        self.assertEqual(Experiment.count_of_experiments_in_progress(), 0)
+        self.assertEqual(Experiment.count_of_running_experiments(), 0)
         e3 = Experiment.get(Experiment.id == e3.id)
         self.assertEqual(e3.is_finished, True)
         self.assertEqual(e3.is_running, False)
@@ -93,3 +93,26 @@ class TestExperiment(unittest.TestCase):
         Q = e3.resources
         self.assertEqual(len(Q),15)
         
+        # archive experiment
+        def _test_archive(tf):
+            OK = e3.archive(tf)
+            self.assertTrue(OK)
+            Q = e3.resources
+            self.assertEqual( len(Q), 15)
+            for r in Q:
+                self.assertEqual(r.is_archived, tf)
+
+            Q = e3.processes
+            self.assertEqual( len(Q), 18)
+            for p in Q:
+                self.assertEqual(p.is_archived, tf)
+                self.assertEqual(p.config.is_archived, tf)
+            
+        print("Archive experiment ...")
+        _test_archive(True)
+        
+        print("Unarchive experiment ...")
+        _test_archive(False)
+        
+        print("Archive experiment again...")
+        _test_archive(True)

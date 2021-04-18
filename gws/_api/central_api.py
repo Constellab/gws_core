@@ -21,9 +21,7 @@ from gws.central import Central
 from gws.controller import Controller
 from gws.model import Model, ViewModel, Experiment
 
-from ._auth_user import UserData, \
-                        check_user_access_token, \
-                        check_admin_access_token
+from ._auth_user import UserData, check_user_access_token
 
 from ._auth_central import  check_central_api_key, \
                             generate_user_access_token as _generate_user_access_token
@@ -101,7 +99,7 @@ async def get_user_test():
 @app.get("/user/{user_uri}", tags=["User management"])
 async def get_user(user_uri : str, _: UserData = Depends(check_central_api_key)):
     """
-    Get the details of a user. Require admin privilege.
+    Get the details of a user. Require central privilege.
     
     - **user_uri**: the user uri
     """
@@ -111,7 +109,7 @@ async def get_user(user_uri : str, _: UserData = Depends(check_central_api_key))
 @app.get("/user/{user_uri}/activate", tags=["User management"])
 async def activate_user(user_uri : str, _: UserData = Depends(check_central_api_key)):
     """
-    Activate a user. Require admin privilege.
+    Activate a user. Require central privilege.
     
     - **user_uri**: the user uri
     """
@@ -121,7 +119,7 @@ async def activate_user(user_uri : str, _: UserData = Depends(check_central_api_
 @app.get("/user/{user_uri}/deactivate", tags=["User management"])
 async def deactivate_user(user_uri : str, _: UserData = Depends(check_central_api_key)):
     """
-    Deactivate a user. Require admin privilege.
+    Deactivate a user. Require central privilege.
     
     - **user_uri**: the user uri
     """

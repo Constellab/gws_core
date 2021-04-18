@@ -31,7 +31,7 @@ class TestQueue(unittest.TestCase):
         pass
     
     def test_queue_operation(self):
-        self.assertEqual(Experiment.count_of_experiments_in_progress(), 0)
+        self.assertEqual(Experiment.count_of_running_experiments(), 0)
         self.assertEqual(Queue.length(),0)
         
         proto1 = create_nested_protocol()

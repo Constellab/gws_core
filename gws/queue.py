@@ -4,11 +4,11 @@
 # About us: https://gencovery.com
 
 from gws.model import Model, User, Experiment
-from peewee import IntegerField, ForeignKeyField
+from peewee import IntegerField, ForeignKeyField, BooleanField
 import threading
 import time
 
-TICK_INTERVAL_SECONDS = 60   # 1 min
+TICK_INTERVAL_SECONDS = 60   # 60 sec
 
 def _queue_tick(tick_interval, verbose, daemon):    
     try:
@@ -26,7 +26,9 @@ class Job(Model):
     _table_name = "gws_queue_job"
     
 class Queue(Model):
-    max_number_of_jobs = IntegerField(default=10)
+    is_active = BooleanField(default=False)
+    max_length = IntegerField(default=10)
+    
     _queue_instance = None
     _is_singleton = True
     _table_name = "gws_queue"
@@ -34,21 +36,30 @@ class Queue(Model):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
         if not self.data.get("jobs"):
             self.data["jobs"] = []
             self.save()
     
     @classmethod
     def init(cls, tick_interval: int=TICK_INTERVAL_SECONDS, verbose=False, daemon=True):
-        if not cls.__is_init:
-            cls.__is_init = True
+        q = Queue()
+        if not cls.__is_init or not q.is_active:
+            q.is_active = True
+            q.save()
             _queue_tick(tick_interval, verbose, daemon)
         
+        cls.__is_init = True
+        
+    @classmethod
+    def deinit(cls):
+        q = Queue()
+        q.is_active = False
+        q.save()
+    
     # -- A --
     
     @classmethod
-    def add(cls, job: Job, start: bool=False):
+    def add(cls, job: Job, auto_start: bool=False):
         if not isinstance(job, Job):
             raise Error("Queue", "add", "Invalid argument. An instance of gws.queue.Jobs is required")
         
@@ -58,15 +69,39 @@ class Queue(Model):
         if job.uri in q.data["jobs"]:
             return
         
-        if len(q.data["jobs"]) > q.max_number_of_jobs:
+        if len(q.data["jobs"]) > q.max_length:
             raise Error("Queue", "add", "Max number of jobs is reached")
         
         q.data["jobs"].append(job.uri)
         q.save()
         
-        if start:
-            Queue().init()
+        if auto_start:
+            if q.is_active:
+                #> manally trigger to experiment if possible!
+                if not Experiment.count_of_running_experiments():
+                    cls._tick()                
+            else:
+                Queue().init()
+                
     
+    def as_json(self, *args, stringify: bool=False, prettify: bool=False, **kwargs):
+        _json = super().as_json(*args, **kwargs)
+        _json["jobs"] = []
+        for uri in self.data["jobs"]:
+            _json["jobs"].append(
+                Job.get_by_uri(uri).as_json()
+            )
+        
+        del _json["data"]
+        
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
+        
     # -- G --
     
     # -- R --
@@ -130,9 +165,21 @@ class Queue(Model):
             Queue.__pop_first()
             return
         
+        if verbose:
+            print(f"Experiment {e.uri}, is_running = {e.is_running}")
+                
         if e.is_running:
             #-> we will test later!
             return
         
+        if Experiment.count_of_running_experiments():
+            #-> busy: we will test later!
+            if verbose:
+                print("Lab is busy! Retry later")
+            return
+        
+        if verbose:
+            print(f"Start experiment {e.uri}, user={job.user.uri}")
+            
         e.run_through_cli(user=job.user)
         time.sleep(3)  #-> wait for 3 sec to prevent database lock!

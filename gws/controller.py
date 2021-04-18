@@ -72,8 +72,10 @@ class Controller(Base):
         elif action == "update":
             # update objects
             model = cls.__action_update(object_type, object_uri, data)
-        elif action == "delete":
-            model = cls.__action_delete(object_type, object_uri)
+        elif action == "archive":
+            model = cls.__action_archive(True, object_type, object_uri)
+        elif action == "unarchive":
+            model = cls.__action_archive(False, object_type, object_uri)
         elif action == "upload":
             model = await cls.__action_upload(data, study_uri=study_uri)
         elif action == "count":
@@ -107,7 +109,7 @@ class Controller(Base):
         return obj.as_json()
 
     @classmethod
-    def __action_delete(cls, object_type: str, object_uri: str) -> 'ViewModel':
+    def __action_archive(cls, tf:bool, object_type: str, object_uri: str) -> 'ViewModel':
         from gws.model import Model, ViewModel
         obj = cls.fetch_model(object_type, object_uri)
         
@@ -115,7 +117,7 @@ class Controller(Base):
             raise HTTPNotFound(detail=f"Invalid Model type or uri not found")
 
         if isinstance(obj, ViewModel):
-            obj.remove()
+            obj.archive(tf)
             return obj.as_json()
         else:
             raise HTTPNotFound(detail=f"No ViewModel found with uri {object_uri}")
@@ -193,7 +195,6 @@ class Controller(Base):
 
     # -- C --
     
-    
     # -- F --
 
     @classmethod
@@ -235,7 +236,6 @@ class Controller(Base):
                 raise HTTPNotFound(detail=f"No experiment found with uri {experiment_uri}")
             
             p = e.protocol
-            
         return p.as_json()
     
     @classmethod
@@ -254,7 +254,6 @@ class Controller(Base):
     @classmethod
     def fetch_resource_list(cls, experiment_uri=None, page=1, number_of_items_per_page=20):
         from gws.model import Resource, Experiment
-        
         if experiment_uri: 
             Q = Resource.select() \
                         .join(Experiment) \
@@ -289,6 +288,12 @@ class Controller(Base):
     
     # -- G --
     
+    @classmethod
+    def get_queue(cls):
+        from gws.queue import Queue
+        q = Queue()
+        return q.as_json()
+        
     @classmethod
     def get_current_user(cls):
         try:
@@ -352,6 +357,17 @@ class Controller(Base):
  
         return t
     
+    @classmethod
+    def get_lab_status(cls):
+        #settings = Settings.retrieve()
+        return {}
+    
+    @classmethod
+    def get_lab_monitor(cls, page=1, number_of_items_per_page=20):
+        from gws.system import Monitor
+        Q = Monitor.select()
+        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
+    
     # -- I --
     
     @classmethod
@@ -363,7 +379,10 @@ class Controller(Base):
             return False
         
     # -- L --
-
+    
+    
+    # -- M --
+    
     # -- P --
 
     # -- R --
@@ -457,28 +476,54 @@ class Controller(Base):
             raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
                 
     @classmethod
-    async def run_experiment(cls, user, data: dict=None):
+    async def start_experiment(cls, data: dict=None):
         from gws.model import Experiment
+        from gws.queue import Queue
         
         try:
-            e = Experiment.from_flow(data, user=Controller.get_current_user())
+            e = Experiment.get(Experiment.uri == experiment_uri)
         except Exception as err:
             raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
-        
-        if not e:
-            raise HTTPNotFound(detail=f"Experiment not found")
-            
+  
         if e.is_running:
             raise HTTPBusy(detail=f"The experiment is already running")
         elif e.is_finished:
             raise HTTPForbiden(detail=f"The experiment is finished")
         else:
             try:
-                await e.run(user=Controller.get_current_user())
+                q = Queue()
+                q.add(e, auto_start=True)
+                #await e.run(user=Controller.get_current_user())
                 return e.view().as_json()
             except Exception as err:
                 raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
     
+    @classmethod
+    async def stop_experiment(cls, experiment_uri):
+        from gws.model import Experiment
+        try:
+            e = Experiment.get(Experiment.uri == experiment_uri)
+        except Exception as err:
+            raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
+        
+        if not e:
+            raise HTTPNotFound(detail=f"Experiment not found")
+            
+        if not e.is_running:
+            raise HTTPBusy(detail=f"The experiment is not running")
+        elif e.is_finished:
+            raise HTTPForbiden(detail=f"The experiment is already finished")
+        else:
+            try:
+                try:
+                    await e._kill_pid()
+                except Exception as err:
+                    raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
+                    
+                return e.view().as_json()
+            except Exception as err:
+                raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
+                
     # -- U --
           
     # -- S --
@@ -494,18 +539,14 @@ class Controller(Base):
             raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
     
     @classmethod
-    def save_experiment(cls, data=None):
+    def save_experiment(cls, data: dict=None):
         from gws.model import Experiment
         
         try:
             e = Experiment.from_flow(data, user=Controller.get_current_user())
+            return e.view().as_json()
         except Exception as err:
             raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
-                
-        if not e:
-            raise HTTPNotFound(detail=f"Cannot save the experiment")
-       
-        return e.view().as_json()
             
     @classmethod
     def save_all(cls, process_type_list: list = None) -> bool:

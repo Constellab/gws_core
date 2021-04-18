@@ -5,6 +5,7 @@ from gws.app import App
 from gws.model import Process
 from gws.model import Resource, ResourceSet
 from gws.controller import Controller
+from gws.unittest import GTest
 
 class Car(Resource):
     @property
@@ -30,11 +31,15 @@ class TestResource(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        pass
+        tables = ( Resource, ResourceSet, )
+        GTest.drop_tables(tables)
+        GTest.init()
 
     @classmethod
     def tearDownClass(cls):
-        pass
+        tables = ( Resource, ResourceSet, )
+        GTest.drop_tables(tables)
+        GTest.init()
 
     def test_model(self):
 

@@ -10,15 +10,17 @@ class Query:
     @classmethod
     def format(cls, Q, view_params: dict={}):
         _list = []
-        from gws.model import ViewModel
+        from gws.model import ViewModel, Viewable
         
         for o in Q:
             if isinstance(o, ViewModel):
                 _list.append(o.as_json())
-            else:
+            elif isinstance(o, Viewable):
                 o = o.cast()
                 view_model = o.view(params=view_params)
                 _list.append(view_model.as_json())
+            else:
+                _list.append(o.as_json())
 
         return _list
         

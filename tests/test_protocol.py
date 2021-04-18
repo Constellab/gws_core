@@ -12,7 +12,7 @@ from gws.unittest import GTest
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
-tables = ( Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, )
+tables = ( Resource, Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, )
 
 class TestProtocol(unittest.TestCase):
     

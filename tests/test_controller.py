@@ -60,7 +60,12 @@ class TestControllerHTTP(unittest.TestCase):
             elon.set_name('Elon Musk')
             elon.save()
 
-            response = await Controller.action(action="get", object_type=elon.full_classname(), object_uri=elon.uri)
+            response = await Controller.action(
+                action="get", 
+                object_type=elon.full_classname(), 
+                object_uri=elon.uri
+            )
+            
             self.assertEqual(response["model"]["uri"], elon.uri)
         
         asyncio.run( action() )
@@ -76,13 +81,19 @@ class TestControllerHTTP(unittest.TestCase):
             view_model.save()
             data = {"job" : "Tesla Maker"}
 
-            response = await Controller.action(action="update", object_type=view_model.full_classname(), object_uri=view_model.uri, data=data)
+            response = await Controller.action(
+                action="update", 
+                object_type=view_model.full_classname(), 
+                object_uri=view_model.uri, 
+                data=data
+            )
+            
             self.assertEqual(response["uri"], view_model.uri)
             self.assertEqual(response["data"]["params"], {'job': 'Tesla Maker'})
         
         asyncio.run( action() )
         
-    def test_delete_view_model(self):
+    def test_archive_view_model(self):
         
         async def action():
             elon = Person()
@@ -91,15 +102,22 @@ class TestControllerHTTP(unittest.TestCase):
 
             view_model = elon.view()
             view_model.save()
-            self.assertFalse(view_model.is_deleted)
+            self.assertFalse(view_model.is_archived)
         
             with self.assertRaises(HTTPNotFound):
-                response = await Controller.action(action="delete", object_type=elon.full_classname(), object_uri=elon.uri)
-                #self.assertRaises(HTTPNotFound, Controller.action, action="delete", object_type=elon.full_classname(), object_uri=elon.uri)
+                response = await Controller.action(
+                    action="archive", 
+                    object_type=elon.full_classname(), 
+                    object_uri=elon.uri
+                )
             
-            response = await Controller.action(action="delete", object_type=view_model.full_classname(), object_uri=view_model.uri)
+            response = await Controller.action(
+                action="archive", 
+                object_type=view_model.full_classname(), 
+                object_uri=view_model.uri
+            )
             self.assertEqual(response["uri"], view_model.uri)
-            self.assertEqual(response["is_deleted"], True)
+            self.assertEqual(response["is_archived"], True)
             
         asyncio.run( action() )
         

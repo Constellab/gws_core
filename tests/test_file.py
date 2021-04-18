@@ -14,15 +14,14 @@ class TestFile(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         LocalFileStore.remove_all_files(ignore_errors=True)
-        File.drop_table()
-        tables = ( Config, Process, Protocol, Experiment, Study, User, Activity, ProgressBar, )
+        tables = ( LocalFileStore, File, Resource, Config, Process, Protocol, Experiment, Study, User, Activity, ProgressBar, )
         GTest.drop_tables(tables)
         GTest.init()
         pass
 
     @classmethod
     def tearDownClass(cls):
-        tables = ( Config, Process, Protocol, Experiment,  Study, User, Activity, ProgressBar, )
+        tables = ( LocalFileStore, File, Resource, Config, Process, Protocol, Experiment,  Study, User, Activity, ProgressBar, )
         GTest.drop_tables(tables)
         pass
     
