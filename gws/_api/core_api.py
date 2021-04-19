@@ -405,22 +405,23 @@ async def verify(object_type: str, object_uri: str, \
 
 # ##################################################################
 #
-# IO File
+# Brick
 #
 # ##################################################################
 
-@app.api_route("/brick/{brick_name}/{api_func}", response_class=JSONResponse, methods=["GET", "POST"], tags=["Bricks APIs"])
-async def call_brick_api(request: Request, \
-                         brick_name: Optional[str] = "gws", api_func: Optional[str] = None, \
+#@app.api_route("/brick/{brick_name}/{api_func}", response_class=JSONResponse, methods=["GET", "POST"], tags=["Bricks APIs"])
+@app.post("/brick/{brick_name}/{api_func}", response_class=JSONResponse, tags=["Bricks APIs"])
+async def call_brick_api(brick_name: Optional[str] = "gws", \
+                         api_func: Optional[str] = None, \
+                         data: Optional[dict] = {}, \
                          _: UserData = Depends(check_user_access_token)) :
     """
     Call a custom api function of a brick
     
     - **brick_name**: the name of the brick
     - **api_func**: the target api function. 
-    
-    For example of **brick_name=foo** and **api_func=do-thing**, the method **foo.app.API.do_thing( request: fastapi.requests.Request )** with be called if it exists. The current **request** will be passed to the function. The function
-    **do_thing** should return a JSON response as a dictionnary.
+    - **data**: custom json data
+    For example of **brick_name=foo** and **api_func=do-thing**, the method **foo.app.API.do_thing( data )** with be called if it exists. Function **do_thing** must return a JSON response as a dictionnary.
     """
     
     try:
@@ -434,7 +435,7 @@ async def call_brick_api(request: Request, \
         if async_func is None:
             raise Error("call_brick_api", f"Method {brick_name}.app.API.{api_func} not found")
         else:
-            return await async_func(request)
+            return await async_func(data)
     
     except Error as err:
         raise HTTPInternalServerError(detail=str(err))
