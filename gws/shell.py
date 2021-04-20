@@ -24,7 +24,7 @@ class Shell(Process):
     _out_type = "text"
     _tmp_dir = None
     
-    __activate_env_command = []
+    _activate_env_command = []
     
     def build_command(self) -> (list):
         return [""]
@@ -42,7 +42,7 @@ class Shell(Process):
     async def task(self):
         try:
             cmd = [
-                *self.__activate_env_command,
+                *self._activate_env_command,
                 *self.build_command()
             ]
 
@@ -72,7 +72,7 @@ class Shell(Process):
 
             
 class CondaShell(Process):
-    __activate_env_command = [ "bash", "-c",  "conda activate", "&&" ]
+    _activate_env_command = [ "bash", "-c",  "conda activate", "&&" ]
 
 
 class EasyShell(Shell):

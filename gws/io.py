@@ -194,7 +194,7 @@ class Port(Base):
 
         from gws.model import Resource
         if not isinstance(resource, Resource):
-            raise Error(self.classname(), "resource", "The resource must be an instance of Resource")
+            raise Error(self.classname(), "resource", f"The resource must be an instance of Resource. A {type(resource)} is given.")
 
         self._resource = resource
     

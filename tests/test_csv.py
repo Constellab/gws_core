@@ -87,14 +87,11 @@ class TestCSV(unittest.TestCase):
                 "importer" : importer,
             },
             connectors = [
-                loader>>"resource" | dumper<<"resource",
-                loader>>"resource" | exporter<<"resource",
+                loader>>"data" | dumper<<"data",
+                loader>>"data" | exporter<<"data",
                 exporter>>"file"   | importer<<"file",
             ]
         )
-        
-        print("xxxx")
-        print(i_file_path)
         
         loader.set_param("file_path", i_file_path)
         dumper.set_param("file_path", o_file_path)
@@ -106,7 +103,7 @@ class TestCSV(unittest.TestCase):
         def _on_end(*args, **kwargs):
             print("Test CSV import/export")
             
-            csv_data = loader.output["resource"]
+            csv_data = loader.output["data"]
             
             i_df = pandas.read_table(i_file_path)
             o_df = pandas.read_table(o_file_path)
@@ -121,7 +118,7 @@ class TestCSV(unittest.TestCase):
             file = exporter.output["file"]
             self.assertTrue(os.path.exists(file.path))
             
-            o_csv_data = importer.output["resource"]
+            o_csv_data = importer.output["data"]
             self.assertTrue(csv_data.table.equals(o_csv_data.table))
         
         

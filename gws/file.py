@@ -275,17 +275,17 @@ class Uploader(Process):
 
 class Importer(Process):
     input_specs = {'file' : File}
-    output_specs = {'resource' : Resource}
+    output_specs = {"data" : Resource}
     config_specs = {
         'file_format': {"type": str, "default": None, 'description': "File format"},
     }
     
     async def task(self):
         file = self.input["file"]
-        model_t = self.out_port("resource").get_default_resource_type()
+        model_t = self.out_port("data").get_default_resource_type()
         params = copy.deepcopy(self.config.params)
         resource = model_t._import(file.path, **params)
-        self.output["resource"] = resource
+        self.output["data"] = resource
         
         
 # ####################################################################
@@ -298,8 +298,8 @@ class Exporter(Process):
     """
     File exporter. The file is writen in a file store
     """
-
-    input_specs = {'resource' : Resource}
+    
+    input_specs = {"data" : Resource}
     output_specs = {'file' : File}
     config_specs = {
         'file_name': {"type": str, "default": 'file', 'description': "Destination file name in the store"},
@@ -308,7 +308,6 @@ class Exporter(Process):
     }
     
     async def task(self):
-        
         fs_uri = self.get_param("file_store_uri")
         if fs_uri:
             try:
@@ -331,7 +330,7 @@ class Exporter(Process):
         else:
             params = self.config.params
 
-        resource = self.input['resource']
+        resource = self.input["data"]
         resource._export(file.path, **params)
         self.output["file"] = file
 
@@ -343,7 +342,7 @@ class Exporter(Process):
 
 class Loader(Process):
     input_specs = {}
-    output_specs = {'resource' : Resource}
+    output_specs = {"data" : Resource}
     config_specs = {
         'file_path': {"type": str, "default": None, 'description': "Location of the file to import"},
         'file_format': {"type": str, "default": None, 'description': "File format"},
@@ -351,7 +350,7 @@ class Loader(Process):
     
     async def task(self):
         file_path = self.get_param("file_path")
-        model_t = self.out_port('resource').get_default_resource_type()
+        model_t = self.out_port("data").get_default_resource_type()
         
         if "file_path" in self.config.params:
             params = copy.deepcopy(self.config.params)
@@ -360,7 +359,7 @@ class Loader(Process):
             params = self.config.params
 
         resource = model_t._import(file_path, **params)
-        self.output["resource"] = resource
+        self.output["data"] = resource
 
 # ####################################################################
 #
@@ -373,7 +372,7 @@ class Dumper(Process):
     Generic data exporter
     """
     
-    input_specs = {'resource' : Resource}
+    input_specs = {"data" : Resource}
     output_specs = {}
     config_specs = {
         'file_path': {"type": str, "default": None, 'description': "Destination of the exported file"},
@@ -382,7 +381,7 @@ class Dumper(Process):
     
     async def task(self):
         file_path = self.get_param("file_path")
-        resource = self.input['resource']
+        resource = self.input["data"]
         
         p = Path(file_path)
         parent_dir = p.parent

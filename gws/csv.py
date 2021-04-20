@@ -56,8 +56,12 @@ class CSVData(Resource):
         except:
             return None
 
-    def column_exists(self, name) -> bool:
-        return name in self.column_names
+    def column_exists(self, name, case_sensitive=True) -> bool:
+        if case_sensitive:
+            return name in self.column_names
+        else:
+            lower_names = [ x.lower() for x in self.column_names ]
+            return name.lower() in lower_names
 
     # -- D --
     
@@ -81,7 +85,7 @@ class CSVData(Resource):
     
     # -- E --
     
-    def _export(self, file_path: str, delimiter: str="\t", index=True, file_format:str = None):
+    def _export(self, file_path: str, delimiter: str="\t", index=True, file_format:str = None, **kwargs):
         """ 
         Export to a repository
 
@@ -90,7 +94,6 @@ class CSVData(Resource):
         """
         
         file_extension = Path(file_path).suffix
-
         if file_extension in [".xls", ".xlsx"] or file_format in [".xls", ".xlsx"] :
             self.table.to_excel(file_path)
         elif file_extension in [".csv", ".tsv", ".txt", ".tab"] or file_format in [".csv", ".tsv", ".txt", ".tab"] :
@@ -109,6 +112,14 @@ class CSVData(Resource):
         df = DataFrame.from_dict(table, orient, dtype, columns)
         return cls(table=df)
         
+    # -- G --
+    
+    def get_column(self, column_name: str, rtype='list') -> ('DataFrame', list):
+        if rtype == 'list':
+            return list(self.table[column_name].values)
+        else:
+            return self.table[[column_name]]
+        
     # -- H --
 
     def head(self, n=5) -> DataFrame:
@@ -126,7 +137,7 @@ class CSVData(Resource):
     # -- I --
 
     @classmethod
-    def _import(cls, file_path: str, delimiter: str="\t", header=0, index_col=None, file_format:str = None) -> any:
+    def _import(cls, file_path: str, delimiter: str="\t", header=0, index_col=None, file_format:str = None, **kwargs) -> any:
         """ 
         Import from a repository
 
@@ -145,7 +156,7 @@ class CSVData(Resource):
                 file_path, 
                 sep = delimiter,
                 header = header,
-                index_col = index_col,
+                index_col = index_col
             )
         else:
             raise Error("CSVData", "_import", "Cannot detect the file type using file extension. Valid file extensions are [.xls, .xlsx, .csv, .tsv, .txt, .tab].")
@@ -229,7 +240,7 @@ class CSVData(Resource):
     
 class Importer(BaseImporter):
     input_specs = {'file' : File}
-    output_specs = {'resource': CSVData}
+    output_specs = {'data': CSVData}
     config_specs = {
         'file_format': {"type": str, "default": ".csv", 'description': "File format"},
         'delimiter': {"type": 'str', "default": '\t', "description": "Delimiter character. Only for parsing CSV files"},
@@ -244,7 +255,7 @@ class Importer(BaseImporter):
 # ####################################################################
 
 class Exporter(BaseExporter):
-    input_specs = {'resource': CSVData}
+    input_specs = {'data': CSVData}
     output_specs = {'file' : File}
     config_specs = {
         'file_name': {"type": str, "default": 'file.csv', 'description': "Destination file name in the store"},
@@ -263,7 +274,7 @@ class Exporter(BaseExporter):
 
 class Loader(BaseLoader):
     input_specs = {}
-    output_specs = {'resource' : CSVData}
+    output_specs = {'data' : CSVData}
     config_specs = {
         'file_path': {"type": str, "default": None, 'description': "Location of the file to import"},
         'file_format': {"type": str, "default": ".csv", 'description': "File format"},
@@ -279,7 +290,7 @@ class Loader(BaseLoader):
 # ####################################################################
 
 class Dumper(BaseDumper):
-    input_specs = {'resource' : CSVData}
+    input_specs = {'data' : CSVData}
     output_specs = {}
     config_specs = {
         'file_path': {"type": str, "default": None, 'description': "Destination of the exported file"},
