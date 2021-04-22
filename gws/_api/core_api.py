@@ -265,8 +265,7 @@ async def get_list_of_process(experiment_uri: str = None, \
 # ##################################################################
 
 @app.get("/config/list", tags=["Configs"], summary="Get the list of configs")
-async def get_list_of_configs(experiment_uri: str = None, \
-                              page: int = 1, number_of_items_per_page: int = 20, \
+async def get_list_of_configs(page: int = 1, number_of_items_per_page: int = 20, \
                               _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Retrieve a list of configs. The list is paginated.
@@ -278,7 +277,6 @@ async def get_list_of_configs(experiment_uri: str = None, \
     return Controller.fetch_config_list(
         page=page, 
         number_of_items_per_page=number_of_items_per_page,
-        experiment_uri=experiment_uri
     )
 
 # ##################################################################
@@ -345,7 +343,7 @@ async def unarchive_view_model(object_type: str, object_uri: str, \
 
     return await Controller.action(action="unarchive", object_type=object_type, object_uri=object_uri)
 
-@app.get("/view/{object_type}/{object_uris}/", tags=["Models and view models"])
+@app.get("/view/{object_type}/{object_uris}/", tags=["Models and ViewModels"])
 async def get_view_model(object_type: str, object_uris: Optional[str] = "all", \
                         page: int = 1, number_of_items_per_page: int = 20, \
                         filters: Optional[str] = "{}", view_params: Optional[str] = "{}", \
@@ -374,7 +372,7 @@ async def get_view_model(object_type: str, object_uris: Optional[str] = "all", \
         filters=filters
     )
 
-@app.put("/view/{object_type}/", tags=["Models and view models"])
+@app.put("/view/{object_type}/", tags=["Models and ViewModels"])
 async def update_view_model(object_type: str, view_model: ViewModelData, \
                             _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
@@ -386,7 +384,7 @@ async def update_view_model(object_type: str, view_model: ViewModelData, \
 
     return await Controller.action(action="update", object_type=object_type, object_uri=view_model.uri, data=view_model.params)
 
-@app.get("/verify/{object_type}/{object_uri}/", tags=["Models and view models"])
+@app.get("/verify/{object_type}/{object_uri}/", tags=["Models and ViewModels"])
 async def verify(object_type: str, object_uri: str, \
                 _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """

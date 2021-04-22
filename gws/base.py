@@ -202,8 +202,10 @@ class BaseFTSModel(Base, FTS5Model):
     
     _related_model = BaseModel
     
-    def get_related(self):
-        return self._related_model.get_by_id(self.rowid)
+    def get_related(self, *args, **kwargs):
+        t = self._related_model
+        Q = t.select( *args, **kwargs ).where(t.id == self.rowid)
+        return Q[0]
 
     class Meta:
         database = DbManager.db

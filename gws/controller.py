@@ -140,7 +140,7 @@ class Controller(Base):
                 result = []
                 for o in p:
                     if return_format=="json":
-                        result.append( o.get_related().to_json() )
+                        result.append( o.get_related(t.uri, t.type, t.save_datetime).to_json(shallow=True) )
                     else:
                         result.append(o)
 
@@ -149,11 +149,11 @@ class Controller(Base):
                     'paginator': p._paginator_dict()
                 }
             else:
-                Q = t.select() #.order_by(t.creation_datetime.desc())
-                return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page, view_params=data).to_json()
+                Q = t.select(t.uri, t.type, t.save_datetime).order_by(t.save_datetime.desc())
+                return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page, view_params=data).to_json(shallow=True)
         else:
-            Q = t.select(t.uri.in_(object_uris)) #.order_by(t.creation_datetime.desc())
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page, view_params=data).to_json()
+            Q = t.select(t.uri, t.type, t.save_datetime).where(t.uri.in_(object_uris)).order_by(t.save_datetime.desc())
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page, view_params=data).to_json(shallow=True)
 
     @classmethod
     def __action_update(cls, object_type: str, object_uri: str, data: dict) -> 'ViewModel':
@@ -196,30 +196,41 @@ class Controller(Base):
     # -- C --
     
     # -- F --
-
+    
+    @classmethod
+    def fetch_config_list(cls, page=1, number_of_items_per_page=20, filters=[]):
+        from gws.model import Config
+        Q = Config.select(Config.uri, Config.type, Config.save_datetime)\
+                        .order_by(Config.save_datetime.desc())
+        number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
+        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json(shallow=True)
+    
     @classmethod
     def fetch_experiment_list(cls, page=1, number_of_items_per_page=20, filters=[]):
         from gws.model import Experiment
-        Q = Experiment.select().order_by(Experiment.creation_datetime.desc())
+        Q = Experiment.select(Experiment.uri, Experiment.type, Experiment.save_datetime)\
+                        .order_by(Experiment.save_datetime.desc())
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
-        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json()
+        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json(shallow=True)
     
     @classmethod
     def fetch_process_list(cls, experiment_uri=None, page=1, number_of_items_per_page=20, filters=[]):
         from gws.model import Experiment, Process
-        Q = Process.select().order_by(Process.creation_datetime.desc())
+        Q = Process.select(Process.uri, Process.type, Process.save_datetime)\
+                    .order_by(Process.save_datetime.desc())
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
         if not experiment_uri is None :
             Q = Q.join(Experiment).where(Experiment.uri == experiment_uri)
 
-        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json()      
+        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json(shallow=True)      
  
     @classmethod
     def fetch_process_type_list(cls, page=1, number_of_items_per_page=20, filters=[]):
         from gws.model import ProcessType
-        Q = ProcessType.select().order_by(ProcessType.ptype.desc())
+        Q = ProcessType.select(ProcessType.uri, ProcessType.type, ProcessType.ptype, ProcessType.save_datetime)\
+                        .order_by(ProcessType.ptype.desc())
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
-        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json()      
+        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json(shallow=True)      
      
     @classmethod
     def fetch_protocol(cls, experiment_uri=None, protocol_uri=None):
@@ -242,28 +253,30 @@ class Controller(Base):
     def fetch_protocol_list(cls, experiment_uri=None, page=1, number_of_items_per_page=20):
         from gws.model import Protocol, Experiment
         if experiment_uri:
-            Q = Protocol.select_me()\
+            Q = Protocol.select_me(Protocol.uri, Protocol.type, Protocol.save_datetime)\
                             .join(Experiment, on=(Experiment.protocol_uri == Protocol.uri))\
                             .where(Experiment.uri == experiment_uri)
         else:
             number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
-            Q = Protocol.select_me().order_by(Protocol.creation_datetime.desc())
+            Q = Protocol.select_me(Protocol.uri, Protocol.type, Protocol.save_datetime)\
+                        .order_by(Protocol.save_datetime.desc())
 
-        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json()
+        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json(shallow=True)
 
     @classmethod
     def fetch_resource_list(cls, experiment_uri=None, page=1, number_of_items_per_page=20):
         from gws.model import Resource, Experiment
         if experiment_uri: 
-            Q = Resource.select() \
+            Q = Resource.select(Resource.uri, Resource.type, Resource.save_datetime) \
                         .join(Experiment) \
                         .where(Experiment.uri == experiment_uri) \
-                        .order_by(Resource.creation_datetime.desc())
+                        .order_by(Resource.save_datetime.desc())
         else:
             number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
-            Q = Resource.select().order_by(Resource.creation_datetime.desc())
+            Q = Resource.select(Resource.uri, Resource.type, Resource.save_datetime)\
+                        .order_by(Resource.save_datetime.desc())
 
-        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json()
+        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json(shallow=True)
     
     @classmethod
     def fetch_model(cls, object_type: str, object_uri: str) -> 'Model':

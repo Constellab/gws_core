@@ -379,18 +379,18 @@ class Model(BaseModel):
     # -- S --
 
     @classmethod
-    def select(cls):
+    def select(cls, *args, **kwargs):
         if not cls.table_exists():
             cls.create_table()
             
-        return super().select()
+        return super().select(*args, **kwargs)
 
     @classmethod
-    def select_me(cls):
+    def select_me(cls, *args, **kwargs):
         if not cls.table_exists():
             cls.create_table()
 
-        return cls.select().where(cls.type == cls.full_classname())
+        return cls.select( *args, **kwargs ).where(cls.type == cls.full_classname())
     
     @classmethod
     def search(cls, phrase, page:int = 1, number_of_items_per_page: int=20):
@@ -510,7 +510,7 @@ class Model(BaseModel):
     def to_json(self, *, show_hash=False, bare: bool=False, stringify: bool=False, prettify: bool=False, jsonifiable_data_keys: list=[], **kwargs) -> (str, dict, ):
         """
         Returns a JSON string or dictionnary representation of the model.
-        
+
         :param show_hash: If True, returns the hash. Defaults to False
         :type show_hash: `bool`
         :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
@@ -525,23 +525,24 @@ class Model(BaseModel):
       
         _json = {}
         
+        jsonifiable_data_keys
         if not isinstance(jsonifiable_data_keys, list):
             jsonifiable_data_keys = []
-            
+
         exclusion_list = (ForeignKeyField, ManyToManyField, BlobField, AutoField, BigAutoField, )
-        
+
         for prop in self.property_names(Field, exclude=exclusion_list) :
             if prop in ["id"]:
                 continue
-            
+
             if prop.startswith("_"):
                 continue  #-> private or protected property
-                
+
             val = getattr(self, prop)
-            
+
             if prop == "data":
                 _json[prop] = {}
-                
+
                 if len(jsonifiable_data_keys) == 0:
                     _json[prop] = jsonable_encoder(val)
                 else:
@@ -553,10 +554,10 @@ class Model(BaseModel):
                 if bare:
                     if prop == "uri" or prop == "hash" or isinstance(val, (datetime, DateTimeField, DateField)):
                         _json[prop] = ""
-        
+
         if not show_hash:
             del _json["hash"]
-            
+
         if stringify:
             if prettify:
                 return json.dumps(_json, indent=4)
@@ -564,7 +565,33 @@ class Model(BaseModel):
                 return json.dumps(_json)
         else:
             return _json
+    
+    def to_shallow_json(self, stringify: bool=False, prettify: bool=False):
+        """
+        Returns a shallow JSON string or dictionnary representation of the model.
+    
+        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
+        :type stringify: `bool`
+        :param prettify: If True, indent the JSON string. Defaults to False.
+        :type prettify: `bool`      
+        :return: The representation
+        :rtype: `dict`, `str`
+        """
         
+        _json = {
+            "uri": self.uri,
+            "type": self.type,
+            "save_datetime": self.save_datetime
+        }
+    
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
+    
     # -- U --
     
     @property
@@ -1067,7 +1094,7 @@ class Viewable(Model):
     
     # -- V --
 
-    def view(self, *args, format="json", params:dict = {}) -> 'ViewModel':
+    def view(self, *args, params:dict = {}) -> 'ViewModel':
         """ 
         Build and return a ViewModel
         """
@@ -1420,6 +1447,18 @@ class ProcessType(Viewable):
         else:
             return _json
     
+    def to_shallow_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+        _json = super().to_shallow_json()
+        _json["ptype"] = self.ptype
+        
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
+        
 class Process(Viewable):
     """
     Process class.
