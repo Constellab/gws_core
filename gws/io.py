@@ -316,7 +316,7 @@ class IOface:
         self.source_port = source_port
         self.target_port = target_port
         
-    def as_json(self, **kwargs):
+    def to_json(self, **kwargs):
         bare = kwargs.get("bare")
         r_uri = ""
         if self.source_port.resource and not bare:
@@ -351,8 +351,8 @@ class Interface(IOface):
             
         super().__init__(name, source_port, target_port)
     
-    def as_json(self, **kwargs):
-        _json = super().as_json(**kwargs)
+    def to_json(self, **kwargs):
+        _json = super().to_json(**kwargs)
         _json["from"]["node"] = ":parent:"
         return _json
         
@@ -370,8 +370,8 @@ class Outerface(IOface):
             
         super().__init__(name, source_port, target_port)
     
-    def as_json(self, **kwargs):
-        _json = super().as_json(**kwargs)
+    def to_json(self, **kwargs):
+        _json = super().to_json(**kwargs)
         _json["to"]["node"] = ":parent:"
         return _json
         
@@ -419,9 +419,9 @@ class Connector:
         self.in_port = in_port
         self.out_port = out_port
     
-    # -- A --
+    # -- T --
     
-    def as_json(self, **kwargs) -> dict:
+    def to_json(self, **kwargs) -> dict:
         """
         Returns a dictionnary describing the Connector.
 
@@ -498,9 +498,9 @@ class IO(Base):
         self._parent = parent
         self._ports = dict()
     
-    # -- A --
+    # -- Ts --
     
-    def as_json(self, **kwargs):
+    def to_json(self, **kwargs):
         _json = {}
         bare = kwargs.get("bare")
         

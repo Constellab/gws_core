@@ -360,7 +360,7 @@ async def get_view_model(object_type: str, object_uris: Optional[str] = "all", \
     - **page**: the page number 
     - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
     - **filters**: filter to use to select data (**object_uris** must be equal to 'all'). The filter is matches using full-text search against to the `title` and the `description`. The format is `filter={"title": "Searched title*", "description": "This is a description for full-text search"}`
-    - **view_params**: key,value parameters of the ViewModel. The key,value specifications are given by the method `as_json()` of the corresponding object class. See class documentation.
+    - **view_params**: key,value parameters of the ViewModel. The key,value specifications are given by the method `to_json()` of the corresponding object class. See class documentation.
     """
     
     try:

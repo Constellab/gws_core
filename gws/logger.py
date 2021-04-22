@@ -72,6 +72,7 @@ class Logger:
             
 
 class Error(Exception):
+    message = ""
     def __init__(self, message, *args):
         if len(args):
             exc_message = f"({message}, {', '.join(args)})"
@@ -79,22 +80,30 @@ class Error(Exception):
             exc_message = message
             
         super().__init__(exc_message)
+        
+        self.message = exc_message
         Logger.error(exc_message)
 
 class Warning():
+    message = ""
+    
     def __init__(self, message, *args):
         if len(args):
             exc_message = f"({message}, {', '.join(args)})"
         else:
             exc_message = message
-            
+        
+        self.message = exc_message
         Logger.warning(exc_message)
         
 class Info():
+    message = ""
+    
     def __init__(self, message, *args):
         if len(args):
             exc_message = f"({message}, {', '.join(args)})"
         else:
             exc_message = message
-            
+        
+        self.message = exc_message
         Logger.info(exc_message)

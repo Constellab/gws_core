@@ -61,7 +61,7 @@ class TestIO(unittest.TestCase):
         p3 = Drive(instance_name="p3")
         self.assertRaises(Exception, p2.out_port('move_person_out').pipe,  p3.in_port('move_drive_in'))
 
-        self.assertEquals(port_connect.as_json(), {
+        self.assertEquals(port_connect.to_json(), {
             "from": {"node": "p0",  "port": "create_person_out"},
             "to": {"node": "p1",  "port": "move_person_in"},
             'resource': {'uri': ''}

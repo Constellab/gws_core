@@ -107,7 +107,7 @@ class TestProcess(unittest.TestCase):
         e.on_end(_on_end)        
         asyncio.run( e.run(user=GTest.user) )
         
-        #print(proto.as_json())
+        #print(proto.to_json())
 
     
         

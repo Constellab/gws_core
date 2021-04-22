@@ -108,7 +108,7 @@ class CSVData(Resource):
     # -- F --
     
     @classmethod
-    def from_dict( cls, table: dict, orient='columns', dtype=None, columns=None ) -> 'CSVData':
+    def from_dict( cls, table: dict, orient='index', dtype=None, columns=None ) -> 'CSVData':
         df = DataFrame.from_dict(table, orient, dtype, columns)
         return cls(table=df)
         
@@ -214,9 +214,7 @@ class CSVData(Resource):
         return self.table.index.values.tolist()
     
     # -- S --
-    
-    # -- S --
-    
+ 
     def _select(self, **params) -> 'Model':
         """ 
         Select a part of the resource

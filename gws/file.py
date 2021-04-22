@@ -36,28 +36,6 @@ class File(Resource):
     __download_url = "https://lab.{}/core-api/download/{}"
     
     # -- A --
-    
-    def as_json(self, stringify: bool=False, prettify: bool=False, read_content: bool=False, **kwargs):
-        _json = super().as_json(**kwargs)
-        
-        settings = Settings.retrieve()
-        host = settings.data.get("host", "0.0.0.0")
-        vhost = settings.data.get("virtual_host", host)
-        
-        _json["url"] = File.__download_url.format(vhost, self.uri)
-        if read_content:
-            if self.is_json():
-                _json["data"]["content"] = json.loads(self.read())
-            else:
-                _json["data"]["content"] = self.read()
-        
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
         
     # -- C --
     
@@ -192,6 +170,30 @@ class File(Resource):
         
         return data
     
+    # -- T --
+    
+    def to_json(self, stringify: bool=False, prettify: bool=False, read_content: bool=False, **kwargs):
+        _json = super().to_json(**kwargs)
+        
+        settings = Settings.retrieve()
+        host = settings.data.get("host", "0.0.0.0")
+        vhost = settings.data.get("virtual_host", host)
+        
+        _json["url"] = File.__download_url.format(vhost, self.uri)
+        if read_content:
+            if self.is_json():
+                _json["data"]["content"] = json.loads(self.read())
+            else:
+                _json["data"]["content"] = self.read()
+        
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
+        
     # -- W --
     
     def write(self, data: str, discard=False):

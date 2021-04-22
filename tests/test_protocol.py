@@ -208,7 +208,7 @@ class TestProtocol(unittest.TestCase):
 
         def _on_end(*args, **kwargs):
             saved_mini_proto = Protocol.get(Protocol.id == mini_proto.id)
-            print(saved_mini_proto.as_json())
+            print(saved_mini_proto.to_json())
             
             # load none bare
             mini_proto2 = Protocol.from_graph(saved_mini_proto.graph)

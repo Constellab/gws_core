@@ -145,65 +145,6 @@ class Model(BaseModel):
         self.is_archived = tf
         cls = type(self)
         return self.save(only=[cls.is_archived])
-    
-    
-    def as_json(self, *, show_hash=False, bare: bool=False, stringify: bool=False, prettify: bool=False, jsonifiable_data_keys: list=[], **kwargs) -> (str, dict, ):
-        """
-        Returns a JSON string or dictionnary representation of the model.
-        
-        :param show_hash: If True, returns the hash. Defaults to False
-        :type show_hash: `bool`
-        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
-        :type stringify: `bool`
-        :param prettify: If True, indent the JSON string. Defaults to False.
-        :type prettify: `bool`
-        :param jsonifiable_data_keys: If is empty, `data` is fully jsonified, otherwise only specified keys are jsonified
-        :type jsonifiable_data_keys: `list` of `str`        
-        :return: The representation
-        :rtype: `dict`, `str`
-        """
-      
-        _json = {}
-        
-        if not isinstance(jsonifiable_data_keys, list):
-            jsonifiable_data_keys = []
-            
-        exclusion_list = (ForeignKeyField, ManyToManyField, BlobField, AutoField, BigAutoField, )
-        
-        for prop in self.property_names(Field, exclude=exclusion_list) :
-            if prop in ["id"]:
-                continue
-            
-            if prop.startswith("_"):
-                continue  #-> private or protected property
-                
-            val = getattr(self, prop)
-            
-            if prop == "data":
-                _json[prop] = {}
-                
-                if len(jsonifiable_data_keys) == 0:
-                    _json[prop] = jsonable_encoder(val)
-                else:
-                    for k in jsonifiable_data_keys:
-                        if k in val:
-                            _json[prop][k] = jsonable_encoder(val[k])
-            else:
-                _json[prop] = jsonable_encoder(val)
-                if bare:
-                    if prop == "uri" or prop == "hash" or isinstance(val, (datetime, DateTimeField, DateField)):
-                        _json[prop] = ""
-        
-        if not show_hash:
-            del _json["hash"]
-            
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
         
     # -- B --
     
@@ -564,6 +505,66 @@ class Model(BaseModel):
 
         return True
     
+    # -- T --
+    
+    def to_json(self, *, show_hash=False, bare: bool=False, stringify: bool=False, prettify: bool=False, jsonifiable_data_keys: list=[], **kwargs) -> (str, dict, ):
+        """
+        Returns a JSON string or dictionnary representation of the model.
+        
+        :param show_hash: If True, returns the hash. Defaults to False
+        :type show_hash: `bool`
+        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
+        :type stringify: `bool`
+        :param prettify: If True, indent the JSON string. Defaults to False.
+        :type prettify: `bool`
+        :param jsonifiable_data_keys: If is empty, `data` is fully jsonified, otherwise only specified keys are jsonified
+        :type jsonifiable_data_keys: `list` of `str`        
+        :return: The representation
+        :rtype: `dict`, `str`
+        """
+      
+        _json = {}
+        
+        if not isinstance(jsonifiable_data_keys, list):
+            jsonifiable_data_keys = []
+            
+        exclusion_list = (ForeignKeyField, ManyToManyField, BlobField, AutoField, BigAutoField, )
+        
+        for prop in self.property_names(Field, exclude=exclusion_list) :
+            if prop in ["id"]:
+                continue
+            
+            if prop.startswith("_"):
+                continue  #-> private or protected property
+                
+            val = getattr(self, prop)
+            
+            if prop == "data":
+                _json[prop] = {}
+                
+                if len(jsonifiable_data_keys) == 0:
+                    _json[prop] = jsonable_encoder(val)
+                else:
+                    for k in jsonifiable_data_keys:
+                        if k in val:
+                            _json[prop][k] = jsonable_encoder(val[k])
+            else:
+                _json[prop] = jsonable_encoder(val)
+                if bare:
+                    if prop == "uri" or prop == "hash" or isinstance(val, (datetime, DateTimeField, DateField)):
+                        _json[prop] = ""
+        
+        if not show_hash:
+            del _json["hash"]
+            
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
+        
     # -- U --
     
     @property
@@ -631,19 +632,6 @@ class User(Model):
         """
         
         return False
-    
-    def as_json(self, *args, stringify: bool=False, prettify: bool=False, **kwargs):
-        _json = super().as_json(*args, **kwargs)
-        
-        del _json["console_token"]
-        
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
         
     @classmethod
     def authenticate(cls, uri: str, console_token: str = "") -> bool: 
@@ -811,6 +799,21 @@ class User(Model):
                 
         return super().save(*arg, **kwargs)
     
+    # -- T --
+    
+    def to_json(self, *args, stringify: bool=False, prettify: bool=False, **kwargs):
+        _json = super().to_json(*args, **kwargs)
+        
+        del _json["console_token"]
+        
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
+        
     # -- U --
     
     @classmethod
@@ -1369,8 +1372,8 @@ class ProcessType(Viewable):
     ptype = CharField(null=True, index=True, unique=True)
     _table_name = 'gws_process_type'
     
-    def as_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
-        _json = super().as_json(**kwargs)
+    def to_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+        _json = super().to_json(**kwargs)
         
         model_t = Controller.get_model_type(self.ptype)
 
@@ -1561,58 +1564,6 @@ class Process(Viewable):
                 return False
                     
         return True
-            
-            
-    def as_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
-        """
-        Returns JSON string or dictionnary representation of the model.
-        
-        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
-        :type stringify: bool
-        :param prettify: If True, indent the JSON string. Defaults to False.
-        :type prettify: bool
-        :return: The representation
-        :rtype: dict, str
-        """
-        
-        _json = super().as_json(**kwargs)
-
-        del _json["experiment_id"]
-        del _json["protocol_id"]
-        
-        if "input" in _json["data"]:
-            del _json["data"]["input"]
-            
-        if "output" in _json["data"]:
-            del _json["data"]["output"]
-            
-        bare = kwargs.get("bare")
-        if bare:
-            _json["experiment"] = { "uri" : "" }
-            _json["protocol"] = { "uri" : "" }
-        else:
-            e_uri = None
-            if self.experiment_id:
-                e_uri = self.experiment.uri
-
-            p_uri = None
-            if self.protocol_id:
-                p_uri = self.protocol.uri
-
-            _json["experiment"] = { "uri" : e_uri }
-            _json["protocol"] = { "uri" : p_uri }
-            
-        _json["config"] = self.config.as_json(**kwargs)
-        _json["input"] = self.input.as_json(**kwargs)
-        _json["output"] = self.output.as_json(**kwargs)
-        
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
     
     # -- C --
     
@@ -1859,7 +1810,8 @@ class Process(Viewable):
         
         self.data["input"] = {}
         for k in self._input:
-            self.data["input"][k] = self._input[k].uri
+            if self._input[k]:  #-> check that an input exists
+                self.data["input"][k] = self._input[k].uri
             
         self.progress_bar.start(max_value=self._max_progress_value)
         self.save()
@@ -1966,7 +1918,58 @@ class Process(Viewable):
 
     async def task(self):
         pass
+    
+    def to_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+        """
+        Returns JSON string or dictionnary representation of the model.
+        
+        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
+        :type stringify: bool
+        :param prettify: If True, indent the JSON string. Defaults to False.
+        :type prettify: bool
+        :return: The representation
+        :rtype: dict, str
+        """
+        
+        _json = super().to_json(**kwargs)
 
+        del _json["experiment_id"]
+        del _json["protocol_id"]
+        
+        if "input" in _json["data"]:
+            del _json["data"]["input"]
+            
+        if "output" in _json["data"]:
+            del _json["data"]["output"]
+            
+        bare = kwargs.get("bare")
+        if bare:
+            _json["experiment"] = { "uri" : "" }
+            _json["protocol"] = { "uri" : "" }
+        else:
+            e_uri = None
+            if self.experiment_id:
+                e_uri = self.experiment.uri
+
+            p_uri = None
+            if self.protocol_id:
+                p_uri = self.protocol.uri
+
+            _json["experiment"] = { "uri" : e_uri }
+            _json["protocol"] = { "uri" : p_uri }
+            
+        _json["config"] = self.config.to_json(**kwargs)
+        _json["input"] = self.input.to_json(**kwargs)
+        _json["output"] = self.output.to_json(**kwargs)
+        
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
+        
 # ####################################################################
 #
 # Protocol class
@@ -2263,18 +2266,18 @@ class Protocol(Process):
         )
 
         for conn in self._connectors:
-            link = conn.as_json(bare=bare)
+            link = conn.to_json(bare=bare)
             graph['links'].append(link)
         
         for k in self._processes:
             proc = self._processes[k]
-            graph["nodes"][k] = proc.as_json(bare=bare)
+            graph["nodes"][k] = proc.to_json(bare=bare)
 
         for k in self._interfaces:
-            graph['interfaces'][k] = self._interfaces[k].as_json(bare=bare)
+            graph['interfaces'][k] = self._interfaces[k].to_json(bare=bare)
 
         for k in self._outerfaces:
-            graph['outerfaces'][k] = self._outerfaces[k].as_json(bare=bare)
+            graph['outerfaces'][k] = self._outerfaces[k].to_json(bare=bare)
 
         graph["layout"] = self.get_layout()
         
@@ -2724,39 +2727,6 @@ class Experiment(Viewable):
                 transaction.rollback()
                 return False
 
-    def as_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
-        """
-        Returns JSON string or dictionnary representation of the model.
-        
-        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
-        :type stringify: bool
-        :param prettify: If True, indent the JSON string. Defaults to False.
-        :type prettify: bool
-        :return: The representation
-        :rtype: dict, str
-        """
-        
-        _json = super().as_json(**kwargs)
-        
-        _json.update({
-            "is_running": self.is_running,
-            "is_finished": self.is_finished,
-            "is_success": self._is_success
-        })
-        
-        if not _json["data"].get("title"):
-            _json["data"]["title"] = self.protocol.title
-        
-        if not _json["data"].get("description"):
-            _json["data"]["description"] = self.protocol.description
-            
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json   
       
     # -- C --
         
@@ -3029,6 +2999,42 @@ class Experiment(Viewable):
                 transaction.rollback()
                 return False
     
+    # -- T --
+    
+    def to_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+        """
+        Returns JSON string or dictionnary representation of the model.
+        
+        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
+        :type stringify: bool
+        :param prettify: If True, indent the JSON string. Defaults to False.
+        :type prettify: bool
+        :return: The representation
+        :rtype: dict, str
+        """
+        
+        _json = super().to_json(**kwargs)
+        
+        _json.update({
+            "is_running": self.is_running,
+            "is_finished": self.is_finished,
+            "is_success": self._is_success
+        })
+        
+        if not _json["data"].get("title"):
+            _json["data"]["title"] = self.protocol.title
+        
+        if not _json["data"].get("description"):
+            _json["data"]["description"] = self.protocol.description
+            
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json   
+        
     # -- V --
     
     def validate(self, user):
@@ -3070,33 +3076,6 @@ class Resource(Viewable):
     _table_name = 'gws_resource'
 
     # -- A --
-
-    def as_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
-        """
-        Returns JSON string or dictionnary representation of the model.
-        
-        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
-        :type stringify: bool
-        :param prettify: If True, indent the JSON string. Defaults to False.
-        :type prettify: bool
-        :return: The representation
-        :rtype: dict, str
-        """
-        
-        _json = super().as_json(**kwargs)
-
-        if self.experiment:
-            _json.update({
-                "experiment_uri": self.experiment.uri,
-            })
-  
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
 
     # -- E --
     
@@ -3159,7 +3138,36 @@ class Resource(Viewable):
         #@ToDo: ensure that this method is only called by an Selector
         
         pass
+    
+    # -- T --
+    
+    def to_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+        """
+        Returns JSON string or dictionnary representation of the model.
+        
+        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
+        :type stringify: bool
+        :param prettify: If True, indent the JSON string. Defaults to False.
+        :type prettify: bool
+        :return: The representation
+        :rtype: dict, str
+        """
+        
+        _json = super().to_json(**kwargs)
 
+        if self.experiment:
+            _json.update({
+                "experiment_uri": self.experiment.uri,
+            })
+  
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
+        
 # ####################################################################
 #
 # ResourceSet class
@@ -3326,37 +3334,6 @@ class ViewModel(Model):
             self.data["params"] = {}
         
     # -- A --
-
-    def as_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
-        """
-        Returns JSON string or dictionnary representation of the model.
-        
-        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
-        :type stringify: bool
-        :param prettify: If True, indent the JSON string. Defaults to False.
-        :type prettify: bool
-        :return: The representation
-        :rtype: dict, str
-        """
-
-        _json = super().as_json(**kwargs)
-        _json["model"] = self.model.as_json( **self.params )
-        
-        del _json["model_id"]
-        del _json["model_type"]
-        del _json["param_hash"]
-        
-        if not self.is_saved():
-            _json["uri"] = ""
-            _json["save_datetime"] = ""
-
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
 
     # -- C --
     
@@ -3578,6 +3555,37 @@ class ViewModel(Model):
         self.data["title"] = text
 
     
+    def to_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+        """
+        Returns JSON string or dictionnary representation of the model.
+        
+        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
+        :type stringify: bool
+        :param prettify: If True, indent the JSON string. Defaults to False.
+        :type prettify: bool
+        :return: The representation
+        :rtype: dict, str
+        """
+
+        _json = super().to_json(**kwargs)
+        _json["model"] = self.model.to_json( **self.params )
+        
+        del _json["model_id"]
+        del _json["model_type"]
+        del _json["param_hash"]
+        
+        if not self.is_saved():
+            _json["uri"] = ""
+            _json["save_datetime"] = ""
+
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
+        
     class Meta:
         indexes = (
             # create a unique on model_uri,model_type,param_hash

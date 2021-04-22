@@ -14,13 +14,13 @@ class Query:
         
         for o in Q:
             if isinstance(o, ViewModel):
-                _list.append(o.as_json())
+                _list.append(o.to_json())
             elif isinstance(o, Viewable):
                 o = o.cast()
                 view_model = o.view(params=view_params)
-                _list.append(view_model.as_json())
+                _list.append(view_model.to_json())
             else:
-                _list.append(o.as_json())
+                _list.append(o.to_json())
 
         return _list
         
@@ -63,7 +63,7 @@ class Paginator:
             'paginator': self._paginator_dict()
         }
 
-    def as_json( self ):
+    def to_json( self ):
         return {
             'data' : Query.format( self.paginated_query, view_params=self.view_params ),
             'paginator': self._paginator_dict()

@@ -106,7 +106,7 @@ class Controller(Base):
         else:
             raise HTTPNotFound(detail=f"No Model found with uri {object_uri}")
         
-        return obj.as_json()
+        return obj.to_json()
 
     @classmethod
     def __action_archive(cls, tf:bool, object_type: str, object_uri: str) -> 'ViewModel':
@@ -118,7 +118,7 @@ class Controller(Base):
 
         if isinstance(obj, ViewModel):
             obj.archive(tf)
-            return obj.as_json()
+            return obj.to_json()
         else:
             raise HTTPNotFound(detail=f"No ViewModel found with uri {object_uri}")
     
@@ -140,7 +140,7 @@ class Controller(Base):
                 result = []
                 for o in p:
                     if return_format=="json":
-                        result.append( o.get_related().as_json() )
+                        result.append( o.get_related().to_json() )
                     else:
                         result.append(o)
 
@@ -150,10 +150,10 @@ class Controller(Base):
                 }
             else:
                 Q = t.select() #.order_by(t.creation_datetime.desc())
-                return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page, view_params=data).as_json()
+                return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page, view_params=data).to_json()
         else:
             Q = t.select(t.uri.in_(object_uris)) #.order_by(t.creation_datetime.desc())
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page, view_params=data).as_json()
+            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page, view_params=data).to_json()
 
     @classmethod
     def __action_update(cls, object_type: str, object_uri: str, data: dict) -> 'ViewModel':
@@ -169,7 +169,7 @@ class Controller(Base):
         else:
             raise HTTPNotFound(detail=f"No ViewModel found with uri {object_uri}")
 
-        return view_model.as_json()
+        return view_model.to_json()
 
     @classmethod
     async def __action_upload(cls, files: List[UploadFile] = FastAPIFile(...), study_uri=None):
@@ -189,7 +189,7 @@ class Controller(Base):
         try:
             await e.run()
             result = u.output["result"]
-            return result.as_json()
+            return result.to_json()
         except Exception as err:
             raise HTTPInternalServerError(detail=f"Upload failed. Error: {err}")
 
@@ -202,7 +202,7 @@ class Controller(Base):
         from gws.model import Experiment
         Q = Experiment.select().order_by(Experiment.creation_datetime.desc())
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
-        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
+        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json()
     
     @classmethod
     def fetch_process_list(cls, experiment_uri=None, page=1, number_of_items_per_page=20, filters=[]):
@@ -212,14 +212,14 @@ class Controller(Base):
         if not experiment_uri is None :
             Q = Q.join(Experiment).where(Experiment.uri == experiment_uri)
 
-        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()      
+        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json()      
  
     @classmethod
     def fetch_process_type_list(cls, page=1, number_of_items_per_page=20, filters=[]):
         from gws.model import ProcessType
         Q = ProcessType.select().order_by(ProcessType.ptype.desc())
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
-        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()      
+        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json()      
      
     @classmethod
     def fetch_protocol(cls, experiment_uri=None, protocol_uri=None):
@@ -236,7 +236,7 @@ class Controller(Base):
                 raise HTTPNotFound(detail=f"No experiment found with uri {experiment_uri}")
             
             p = e.protocol
-        return p.as_json()
+        return p.to_json()
     
     @classmethod
     def fetch_protocol_list(cls, experiment_uri=None, page=1, number_of_items_per_page=20):
@@ -249,7 +249,7 @@ class Controller(Base):
             number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
             Q = Protocol.select_me().order_by(Protocol.creation_datetime.desc())
 
-        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
+        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json()
 
     @classmethod
     def fetch_resource_list(cls, experiment_uri=None, page=1, number_of_items_per_page=20):
@@ -263,7 +263,7 @@ class Controller(Base):
             number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
             Q = Resource.select().order_by(Resource.creation_datetime.desc())
 
-        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
+        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json()
     
     @classmethod
     def fetch_model(cls, object_type: str, object_uri: str) -> 'Model':
@@ -292,7 +292,7 @@ class Controller(Base):
     def get_queue(cls):
         from gws.queue import Queue
         q = Queue()
-        return q.as_json()
+        return q.to_json()
         
     @classmethod
     def get_current_user(cls):
@@ -366,7 +366,7 @@ class Controller(Base):
     def get_lab_monitor(cls, page=1, number_of_items_per_page=20):
         from gws.system import Monitor
         Q = Monitor.select()
-        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).as_json()
+        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json()
     
     # -- I --
     
@@ -449,7 +449,7 @@ class Controller(Base):
             job = Job(user=user, experiment=e)
             Queue.add(job)
             #await e.run()
-            return e.view().as_json()
+            return e.view().to_json()
         except Exception as err:
             raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
             
@@ -471,7 +471,7 @@ class Controller(Base):
             job = Job(user=user, experiment=e)
             Queue.add(job)
             #await e.run()
-            return e.view().as_json()
+            return e.view().to_json()
         except Exception as err:
             raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
                 
@@ -494,7 +494,7 @@ class Controller(Base):
                 q = Queue()
                 q.add(e, auto_start=True)
                 #await e.run(user=Controller.get_current_user())
-                return e.view().as_json()
+                return e.view().to_json()
             except Exception as err:
                 raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
     
@@ -520,7 +520,7 @@ class Controller(Base):
                 except Exception as err:
                     raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
                     
-                return e.view().as_json()
+                return e.view().to_json()
             except Exception as err:
                 raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
                 
@@ -534,7 +534,7 @@ class Controller(Base):
         
         try:
             proto = Protocol.from_flow(data, user=Controller.get_current_user())
-            return proto.view().as_json()
+            return proto.view().to_json()
         except Exception as err:
             raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
     
@@ -544,7 +544,7 @@ class Controller(Base):
         
         try:
             e = Experiment.from_flow(data, user=Controller.get_current_user())
-            return e.view().as_json()
+            return e.view().to_json()
         except Exception as err:
             raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
             

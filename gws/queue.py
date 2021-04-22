@@ -83,24 +83,6 @@ class Queue(Model):
             else:
                 Queue().init()
                 
-    
-    def as_json(self, *args, stringify: bool=False, prettify: bool=False, **kwargs):
-        _json = super().as_json(*args, **kwargs)
-        _json["jobs"] = []
-        for uri in self.data["jobs"]:
-            _json["jobs"].append(
-                Job.get_by_uri(uri).as_json()
-            )
-        
-        del _json["data"]
-        
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
         
     # -- G --
     
@@ -183,3 +165,22 @@ class Queue(Model):
             
         e.run_through_cli(user=job.user)
         time.sleep(3)  #-> wait for 3 sec to prevent database lock!
+
+        
+    def to_json(self, *args, stringify: bool=False, prettify: bool=False, **kwargs):
+        _json = super().to_json(*args, **kwargs)
+        _json["jobs"] = []
+        for uri in self.data["jobs"]:
+            _json["jobs"].append(
+                Job.get_by_uri(uri).to_json()
+            )
+        
+        del _json["data"]
+        
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
