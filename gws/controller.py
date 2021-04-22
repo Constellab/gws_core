@@ -102,7 +102,7 @@ class Controller(Base):
             # Ok!
             pass
         elif isinstance(obj, Model):
-            obj = obj.view(params=data)
+            obj = obj.view(params=data)  
         else:
             raise HTTPNotFound(detail=f"No Model found with uri {object_uri}")
         
