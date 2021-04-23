@@ -317,7 +317,7 @@ class IOface:
         self.target_port = target_port
         
     def to_json(self, **kwargs):
-        bare = kwargs.get("bare")
+        bare = kwargs.get("bare", False)
         r_uri = ""
         if self.source_port.resource and not bare:
             r_uri = self.source_port.resource.uri
@@ -429,12 +429,12 @@ class Connector:
         :rtype: dict
         """
         
-        bare = kwargs.get("bare")
+        bare = kwargs.get("bare", False)
         
         r_uri = ""
         if self.out_port.resource and not bare:
             r_uri = self.out_port.resource.uri
-        
+
         link = {
             "from": {
                 "node": self.left_process.instance_name,

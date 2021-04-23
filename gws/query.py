@@ -20,9 +20,10 @@ class Query:
                 if isinstance(o, ViewModel):
                     _list.append(o.to_json())
                 elif isinstance(o, Viewable):
-                    #o = o.cast()
-                    #view_model = o.view(params=view_params)
-                    _list.append(o.to_json())
+                    o = o.cast()
+                    view_model = o.view(params=view_params)
+                    _list.append(view_model.to_json())   
+                    #_list.append(o.to_json())
                 else:
                     _list.append(o.to_json())
 

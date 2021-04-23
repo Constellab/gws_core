@@ -161,15 +161,15 @@ class TestProtocol(unittest.TestCase):
             s2 = json.loads(mini_proto.dumps(bare=True))
             self.assertEqual(s1,s2)
             
+        e = super_proto.create_experiment(study=GTest.study, user=GTest.user)
+        
         def _on_end(*args, **kwargs):
             s3 = json.loads(mini_proto.dumps(bare=True))
             self.assertEqual(s1,s3)
             Q = Protocol.select()
             self.assertEqual(len(Q), count+2)
-
-        e = super_proto.create_experiment(study=GTest.study, user=GTest.user)
+ 
         e.on_end(_on_end)
-        
         Q = Protocol.select()
         self.assertEqual(Protocol.select().count(), count+2)
             

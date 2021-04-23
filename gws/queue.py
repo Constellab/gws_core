@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 from gws.model import Model, User, Experiment
+from gws.logger import Error
 from peewee import IntegerField, ForeignKeyField, BooleanField
 import threading
 import time
@@ -164,7 +165,7 @@ class Queue(Model):
             print(f"Start experiment {e.uri}, user={job.user.uri}")
             
         e.run_through_cli(user=job.user)
-        time.sleep(3)  #-> wait for 3 sec to prevent database lock!
+        time.sleep(1)  #-> wait for 1 sec to prevent database lock!
 
         
     def to_json(self, *args, stringify: bool=False, prettify: bool=False, **kwargs):

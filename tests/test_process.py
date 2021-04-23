@@ -71,10 +71,14 @@ class TestProcess(unittest.TestCase):
 
         p2.set_param('food_weight', '5.6')
         
+        e = proto.create_experiment(user=GTest.user, study=GTest.study)
         
         def _on_end(*args, **kwargs):
             elon = p0.output['robot']
- 
+            
+            print(" \n------ Resource --------")
+            print(elon.to_json())
+    
             self.assertEqual( elon.weight, 70 )
             self.assertEqual( elon, p1.input['robot'] )
             self.assertTrue( elon is p1.input['robot'] )
@@ -99,8 +103,10 @@ class TestProcess(unittest.TestCase):
             self.assertTrue( len(p0.progress_bar.data["messages"]) >= 2 )
             print(p0.progress_bar.data)
             
-
-        e = proto.create_experiment(user=GTest.user, study=GTest.study)
+            print(" \n------ Experiment --------")
+            print(e.to_json())
+        
+        
         self.assertEqual( e.created_by, GTest.user )
         self.assertEqual( e.study, GTest.study )
         

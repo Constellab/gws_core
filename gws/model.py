@@ -1629,11 +1629,12 @@ class Process(Viewable):
             self.instance_name: self 
         })
         
+   
         if user is None:
             user = Controller.get_current_user()
             if user is None:
                 raise Error("Process", "create_experiment", "A user is required")
-            
+        
         e = Experiment(protocol=proto, study=study, user=user)
         e.save()
         return e
@@ -2047,7 +2048,7 @@ class Protocol(Process):
         self._defaultPosition = [0.0, 0.0]
         
         if self.uri and self.data.get("graph"):          #the protocol was saved in the super-class
-            self.__build_from_dump( self.data["graph"], title=self.title )
+            self.build_from_dump( self.data["graph"], title=self.title )
         else:
             if not isinstance(processes, dict):
                 raise Error("gws.model.Protocol", "__init__", "A dictionnary of processes is expected")
@@ -2163,14 +2164,14 @@ class Protocol(Process):
     
     # -- B --
     
-    def __build_from_dump( self, graph: (str, dict), title=None ) -> 'Protocol':
+    def build_from_dump( self, graph: (str, dict), title=None ) -> 'Protocol':
         """ 
         Construct a Protocol instance using a setting dump.
 
         :return: The protocol
         :rtype: Protocol
         """
-
+        
         if isinstance(graph, str):
             graph = json.loads(graph)
         
@@ -2206,7 +2207,7 @@ class Protocol(Process):
                     self.add_process( k, proc )
 
             except Exception as err:
-                raise Error("gws.model.Protocol", "__build_from_dump", f"An error occured. Error: {err}")
+                raise Error("gws.model.Protocol", "build_from_dump", f"An error occured. Error: {err}")
         
         # create interfaces and outerfaces
         interfaces = {}
@@ -2346,7 +2347,7 @@ class Protocol(Process):
             proto = Protocol.get(Protocol.uri == graph.get("uri"))
         else:
             proto = Protocol()
-            proto.__build_from_dump(graph)
+            proto.build_from_dump(graph)
             proto.data["graph"] = proto.dumps(as_dict=True)
             proto.save()
             
@@ -2803,13 +2804,13 @@ class Experiment(Viewable):
     @property
     def is_draft(self) -> bool:
         """ 
-        Returns True if the experiment is a draft, i.e. has nether been run. False otherwise
+        Returns True if the experiment is a draft, i.e. has nether been run and is not validated. False otherwise.
 
         :return: True if the experiment not running nor finished
         :rtype: `bool`
         """
         
-        return (not self.is_running) and (not self.is_finished)
+        return (not self.is_validated) and (not self.is_running) and (not self.is_finished)
 
     @property
     def is_pid_alive(self) -> bool:
@@ -3018,8 +3019,6 @@ class Experiment(Viewable):
                 self.save()
                 
                 raise Error("gws.model.Experiment", "run", f"An error occured. Exception: {err}")
-                
-            
     
     # -- S --
 
@@ -3053,8 +3052,10 @@ class Experiment(Viewable):
         """
         
         _json = super().to_json(**kwargs)
-        
         _json.update({
+            "study": {"uri": self.study.uri},
+            "protocol": {"uri": self.protocol.uri},
+            "is_draft": self.is_draft,
             "is_running": self.is_running,
             "is_finished": self.is_finished,
             "is_success": self._is_success
@@ -3065,7 +3066,7 @@ class Experiment(Viewable):
         
         if not _json["data"].get("description"):
             _json["data"]["description"] = self.protocol.description
-            
+        
         if stringify:
             if prettify:
                 return json.dumps(_json, indent=4)
@@ -3196,7 +3197,11 @@ class Resource(Viewable):
 
         if self.experiment:
             _json.update({
-                "experiment_uri": self.experiment.uri,
+                "experiment": {"uri": self.experiment.uri},
+                "process": {
+                    "uri": self.process.uri,
+                    "type": self.process.type,
+                },
             })
   
         if stringify:

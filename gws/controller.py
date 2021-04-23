@@ -140,7 +140,7 @@ class Controller(Base):
                 result = []
                 for o in p:
                     if return_format=="json":
-                        result.append( o.get_related(t.uri, t.type, t.save_datetime).to_json(shallow=True) )
+                        result.append( o.get_related().to_json(shallow=True) )
                     else:
                         result.append(o)
 
@@ -149,10 +149,10 @@ class Controller(Base):
                     'paginator': p._paginator_dict()
                 }
             else:
-                Q = t.select(t.uri, t.type, t.save_datetime).order_by(t.save_datetime.desc())
+                Q = t.select().order_by(t.creation_datetime.desc())
                 return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page, view_params=data).to_json(shallow=True)
         else:
-            Q = t.select(t.uri, t.type, t.save_datetime).where(t.uri.in_(object_uris)).order_by(t.save_datetime.desc())
+            Q = t.select().where(t.uri.in_(object_uris)).order_by(t.creation_datetime.desc())
             return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page, view_params=data).to_json(shallow=True)
 
     @classmethod
@@ -195,39 +195,65 @@ class Controller(Base):
 
     # -- C --
     
+    @classmethod
+    def create_experiment(cls, data: dict, study_uri:str):
+        from gws.model import Protocol, Study
+        
+        try:
+            study = Study.get(Study.uri==study_uri)
+            proto = Protocol.from_graph(data)
+            e = proto.create_experiment(user=Controller.get_current_user(), study=study)
+            return e.view().to_json()
+        except Exception as err:
+            raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
+   
     # -- F --
     
     @classmethod
     def fetch_config_list(cls, page=1, number_of_items_per_page=20, filters=[]):
         from gws.model import Config
-        Q = Config.select(Config.uri, Config.type, Config.save_datetime)\
-                        .order_by(Config.save_datetime.desc())
+        Q = Config.select()\
+                        .order_by(Config.creation_datetime.desc())
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
         return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json(shallow=True)
+    
+      
+    @classmethod
+    def fetch_experiment(cls, experiment_uri=None):
+        from gws.model import Experiment
+        try:
+            e = Experiment.get(Experiment.uri == experiment_uri)
+        except Exception as err:
+            raise HTTPNotFound(detail=f"No experiment found with uri {experiment_uri}")
+            
+        return e.to_json()
     
     @classmethod
     def fetch_experiment_list(cls, page=1, number_of_items_per_page=20, filters=[]):
         from gws.model import Experiment
-        Q = Experiment.select(Experiment.uri, Experiment.type, Experiment.save_datetime)\
-                        .order_by(Experiment.save_datetime.desc())
+        Q = Experiment.select()\
+                        .order_by(Experiment.creation_datetime.desc())
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
         return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json(shallow=True)
-    
+  
+
     @classmethod
     def fetch_process_list(cls, experiment_uri=None, page=1, number_of_items_per_page=20, filters=[]):
         from gws.model import Experiment, Process
-        Q = Process.select(Process.uri, Process.type, Process.save_datetime)\
-                    .order_by(Process.save_datetime.desc())
+        Q = Process.select()\
+                    .order_by(Process.creation_datetime.desc())
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
+        
         if not experiment_uri is None :
-            Q = Q.join(Experiment).where(Experiment.uri == experiment_uri)
+            Q = Q.join(Experiment, on=(Process.experiment_id == Experiment.id))\
+                    .where(Experiment.uri == experiment_uri)
 
         return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json(shallow=True)      
  
     @classmethod
     def fetch_process_type_list(cls, page=1, number_of_items_per_page=20, filters=[]):
         from gws.model import ProcessType
-        Q = ProcessType.select(ProcessType.uri, ProcessType.type, ProcessType.ptype, ProcessType.save_datetime)\
+        Q = ProcessType.select()\
                         .order_by(ProcessType.ptype.desc())
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
         return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json(shallow=True)      
@@ -253,13 +279,13 @@ class Controller(Base):
     def fetch_protocol_list(cls, experiment_uri=None, page=1, number_of_items_per_page=20):
         from gws.model import Protocol, Experiment
         if experiment_uri:
-            Q = Protocol.select_me(Protocol.uri, Protocol.type, Protocol.save_datetime)\
-                            .join(Experiment, on=(Experiment.protocol_uri == Protocol.uri))\
+            Q = Protocol.select_me()\
+                            .join(Experiment, on=(Protocol.id == Experiment.protocol_id))\
                             .where(Experiment.uri == experiment_uri)
         else:
             number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
-            Q = Protocol.select_me(Protocol.uri, Protocol.type, Protocol.save_datetime)\
-                        .order_by(Protocol.save_datetime.desc())
+            Q = Protocol.select_me()\
+                        .order_by(Protocol.creation_datetime.desc())
 
         return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json(shallow=True)
 
@@ -267,14 +293,14 @@ class Controller(Base):
     def fetch_resource_list(cls, experiment_uri=None, page=1, number_of_items_per_page=20):
         from gws.model import Resource, Experiment
         if experiment_uri: 
-            Q = Resource.select(Resource.uri, Resource.type, Resource.save_datetime) \
+            Q = Resource.select() \
                         .join(Experiment) \
                         .where(Experiment.uri == experiment_uri) \
-                        .order_by(Resource.save_datetime.desc())
+                        .order_by(Resource.creation_datetime.desc())
         else:
             number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
-            Q = Resource.select(Resource.uri, Resource.type, Resource.save_datetime)\
-                        .order_by(Resource.save_datetime.desc())
+            Q = Resource.select()\
+                        .order_by(Resource.creation_datetime.desc())
 
         return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json(shallow=True)
     
@@ -454,9 +480,10 @@ class Controller(Base):
         study = Study.get_default_instance()
         
         p = create_protocol()
-        e = p.create_experiment(study = study)
+        e = p.create_experiment(study=study, user=user)
         e.set_title("The journey of Astro.")
         e.data["description"] = "This is the journey of Astro."
+        e.save()
         
         try:
             job = Job(user=user, experiment=e)
@@ -476,9 +503,10 @@ class Controller(Base):
         study = Study.get_default_instance()
         
         p = create_nested_protocol()
-        e = p.create_experiment(study = study)
+        e = p.create_experiment(study=study, user=user)
         e.set_title("The super journey of Astro.")
         e.data["description"] = "This is the super journey of Astro."
+        e.save()
         
         try:
             job = Job(user=user, experiment=e)
@@ -489,23 +517,25 @@ class Controller(Base):
             raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
                 
     @classmethod
-    async def start_experiment(cls, data: dict=None):
+    async def start_experiment(cls, experiment_uri):
         from gws.model import Experiment
-        from gws.queue import Queue
+        from gws.queue import Queue, Job
         
         try:
             e = Experiment.get(Experiment.uri == experiment_uri)
         except Exception as err:
             raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
   
-        if e.is_running:
+        if e._is_running:
             raise HTTPBusy(detail=f"The experiment is already running")
-        elif e.is_finished:
+        elif e._is_finished:
             raise HTTPForbiden(detail=f"The experiment is finished")
         else:
             try:
                 q = Queue()
-                q.add(e, auto_start=True)
+                user = Controller.get_current_user()
+                job = Job(user=user, experiment=e)
+                q.add(job, auto_start=True)
                 #await e.run(user=Controller.get_current_user())
                 return e.view().to_json()
             except Exception as err:
@@ -522,45 +552,39 @@ class Controller(Base):
         if not e:
             raise HTTPNotFound(detail=f"Experiment not found")
             
-        if not e.is_running:
+        if not e._is_running:
             raise HTTPBusy(detail=f"The experiment is not running")
-        elif e.is_finished:
+        elif e._is_finished:
             raise HTTPForbiden(detail=f"The experiment is already finished")
         else:
             try:
-                try:
-                    await e._kill_pid()
-                except Exception as err:
-                    raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
-                    
+                await e.kill_pid()
                 return e.view().to_json()
             except Exception as err:
                 raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
                 
     # -- U --
-          
-    # -- S --
-    
+     
     @classmethod
-    def save_protocol(cls, data: dict=None):
+    def update_experiment(cls, experiment_uri, data: dict):
         from gws.model import Experiment
         
         try:
-            proto = Protocol.from_flow(data, user=Controller.get_current_user())
-            return proto.view().to_json()
-        except Exception as err:
-            raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
-    
-    @classmethod
-    def save_experiment(cls, data: dict=None):
-        from gws.model import Experiment
-        
-        try:
-            e = Experiment.from_flow(data, user=Controller.get_current_user())
+            e = Experiment.get(Experiment.uri == experiment_uri)
+            if not e.is_draft:
+                raise HTTPInternalServerError(detail=f"The experiment is already is not a draft")
+                
+            proto = e.protocol
+            proto.build_from_dump(data)
+            proto.save()
             return e.view().to_json()
         except Exception as err:
             raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
-            
+    
+              
+    # -- S --
+        
+        
     @classmethod
     def save_all(cls, process_type_list: list = None) -> bool:
         """
@@ -634,25 +658,16 @@ class Controller(Base):
     
     # -- V --
     
-    def validate_experiment(self, uri, user):
+    def validate_experiment(self, experiment_uri):
         from gws.model import Experiment
         
         try:
-            e = Experiment.get(Experiment.uri == uri)
+            e = Experiment.get(Experiment.uri == experiment_uri)
             e.validate(user=self.get_current_user())
         except Exception as err:
             raise HTTPNotFound(detail=f"Experiment not found")
-        
-    def validate_protocol(self, uri, user):
-        from gws.model import Protocol
-        
-        try:
-            p = Protocol.get(Protocol.uri == uri)
-            p.validate(user=self.get_current_user())
-        except Exception as err:
-            raise HTTPNotFound(detail=f"Protocol not found")
-    
-    def verify(self, object_type, object_uri):
+
+    def verify_hash(self, object_type, object_uri):
         obj = cls.fetch_model(object_type, object_uri)
         if obj is None:
             raise HTTPNotFound(detail=f"Invalid Model type or uri not found")

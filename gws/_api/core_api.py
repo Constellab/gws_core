@@ -91,6 +91,43 @@ async def get_queue_details() -> (dict, str,):
 #
 # ##################################################################
 
+@app.post("/experiment/archive", tags=["Experiment"])
+async def archive_experiment(experiment_uri:str, _: UserData = Depends(check_user_access_token)) -> (dict, str,):
+    """
+    Archive an experiment
+    
+    - **experiment_uri**: the uri of the experiment
+    """
+
+    return await Controller.action(action="archive", object_type="experiment", object_uri=experiment_uri)
+
+@app.post("/experiment/create", tags=["Experiment"], summary="Create an experiment")
+async def create_experiment(study_uri: str, \
+                            flow: dict, \
+                            _: UserData = Depends(check_user_access_token)) -> (dict, str,):
+    """
+    Create an experiment.
+    
+    - **study_uri**: the uri of the study
+    - **flow**: the workflow 
+    """
+    
+    return Controller.create_experiment(data=flow, study_uri=study_uri)
+
+@app.get("/experiment/{experiment_uri}/", tags=["Experiment"], summary="Get an experiment")
+async def get_experiment(experiment_uri: str = None, \
+                       _: UserData = Depends(check_user_access_token)) -> (dict, str,):
+    """
+    Retrieve an experiment
+    
+    - **experiment_uri**: the uri of an experiment
+    """
+
+    return Controller.fetch_experiment(
+        experiment_uri=experiment_uri
+    )
+
+
 @app.get("/experiment/list", tags=["Experiment"], summary="Get the list of experiments")
 async def get_list_of_experiments(page: int = 1, number_of_items_per_page: int = 20, \
                                   _: UserData = Depends(check_user_access_token)) -> (dict, str,):
@@ -106,19 +143,8 @@ async def get_list_of_experiments(page: int = 1, number_of_items_per_page: int =
         number_of_items_per_page=number_of_items_per_page
     )
 
-@app.post("/experiment/save", tags=["Experiment"], summary="Save an experiment")
-async def save_experiment(flow: Optional[dict], \
-                          _: UserData = Depends(check_user_access_token)) -> (dict, str,):
-    """
-    Save a protocol.
-    
-    - **flow**: the flow object 
-    """
-    
-    return Controller.save_experiment(data=flow)
-
 @app.post("/experiment/start/", tags=["Experiment"], summary="Start an experiment")
-async def start_experiment(uri: str, \
+async def start_experiment(experiment_uri: str, \
                          _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Start an experiment
@@ -126,10 +152,10 @@ async def start_experiment(uri: str, \
     - **flow**: the flow object 
     """
 
-    return await Controller.start_experiment(uri=uri)
+    return await Controller.start_experiment(experiment_uri=experiment_uri)
 
 @app.post("/experiment/stop/", tags=["Experiment"], summary="Stop a running experiment")
-async def stop_experiment(uri: str, \
+async def stop_experiment(experiment_uri: str, \
                          _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Stop an experiment
@@ -137,49 +163,42 @@ async def stop_experiment(uri: str, \
     - **experiment_uri**: the experiment uri
     """
 
-    return await Controller.stop_experiment(uri=uri)
+    return await Controller.stop_experiment(experiment_uri=experiment_uri)
 
-@app.post("/experiment/validate/", tags=["Experiment"], summary="Validate an experiment")
-async def validate_experiment(uri: str, \
-                              _: UserData = Depends(check_user_access_token)) -> (dict, str,):
-    """
-    Validate an experiment
-    
-    - **uri**: the experiment uri
-    """
 
-    return Controller.validate_experiment(uri=uri)
-
-@app.post("/experiment/archive", tags=["Experiment"])
-async def archive_experiment(uri:str, _: UserData = Depends(check_user_access_token)) -> (dict, str,):
+@app.post("/experiment/update", tags=["Experiment"], summary="Update an experiment")
+async def update_experiment(experiment_uri:str, \
+                            flow: dict, \
+                            _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
-    Archive an experiment
+    Update an experiment
     
     - **experiment_uri**: the uri of the experiment
+    - **flow**: the workflow 
     """
-
-    return await Controller.action(action="archive", object_type="experiment", object_uri=uri)
+    
+    return Controller.update_experiment(experiment_uri=experiment_uri, data=flow)
 
 @app.post("/experiment/unarchive", tags=["Experiment"])
-async def unarchive_experiment(uri:str, _: UserData = Depends(check_user_access_token)) -> (dict, str,):
+async def unarchive_experiment(experiment_uri:str, _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Unarchive an experiment
     
     - **experiment_uri**: the uri of the experiment
     """
 
-    return await Controller.action(action="unarchive", object_type="experiment", object_uri=uri)
+    return await Controller.action(action="unarchive", object_type="experiment", object_uri=experiment_uri)
 
 @app.post("/protocol/validate/", tags=["Protocol"], summary="Validate an experiment")
-async def validate_experiment(uri: str, \
+async def validate_experiment(experiment_uri: str, \
                               _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Validate a protocol
     
-    - **uri**: the protocol uri
+    - **experiment_uri**: the uri of the experiment
     """
 
-    return Controller.validate_experiment(uri=uri)
+    return Controller.validate_experiment(experiment_uri=experiment_uri)
 
 # ##################################################################
 #
@@ -384,8 +403,8 @@ async def update_view_model(object_type: str, view_model: ViewModelData, \
 
     return await Controller.action(action="update", object_type=object_type, object_uri=view_model.uri, data=view_model.params)
 
-@app.get("/verify/{object_type}/{object_uri}/", tags=["Models and ViewModels"])
-async def verify(object_type: str, object_uri: str, \
+@app.get("/verify_hash/{object_type}/{object_uri}/", tags=["Models and ViewModels"])
+async def verify_hash(object_type: str, object_uri: str, \
                 _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
     Block-chain like verification of object integrity.
@@ -399,7 +418,7 @@ async def verify(object_type: str, object_uri: str, \
     - **object_uri**: the uri of the object to delete
     """
 
-    return await Controller.verify(action="verify", object_type=object_type, object_uri=object_uri)
+    return await Controller.verify_hash(object_type=object_type, object_uri=object_uri)
 
 # ##################################################################
 #
