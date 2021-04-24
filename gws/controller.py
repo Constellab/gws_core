@@ -175,19 +175,21 @@ class Controller(Base):
     async def __action_upload(cls, files: List[UploadFile] = FastAPIFile(...), study_uri=None):
         from gws.model import Study
         from gws.file import Uploader
-        u = Uploader(files=files)
+        uploader = Uploader(files=files)
 
+        user=Controller.get_current_user()
+        
         if study_uri is None:
-            e = u.create_experiment(study = Study.get_default_instance())
+            e = uploader.create_experiment(study=Study.get_default_instance())
         else:
             try:
                 study = Study.get(Study.uri == study_uri)
-                e = u.create_experiment(study = study)
+                e = uploader.create_experiment(study=study, user=user)
             except:
                 raise HTTPNotFound(detail=f"Study not found")
 
         try:
-            await e.run()
+            await e.run(wait_response=True)
             result = u.output["result"]
             return result.to_json()
         except Exception as err:
@@ -196,13 +198,30 @@ class Controller(Base):
     # -- C --
     
     @classmethod
-    def create_experiment(cls, data: dict, study_uri:str):
+    def create_experiment(cls, study_uri:str, uri: str=None, title:str=None, decription:str=None, data: dict=None):
         from gws.model import Protocol, Study
         
         try:
             study = Study.get(Study.uri==study_uri)
-            proto = Protocol.from_graph(data)
-            e = proto.create_experiment(user=Controller.get_current_user(), study=study)
+            
+            if data:
+                proto = Protocol.from_graph(data)
+            else:
+                proto = Protocol()
+                
+            e = proto.create_experiment(
+                uri=uri,
+                user=Controller.get_current_user(), 
+                study=study
+            )
+            
+            if title:
+                e.set_title(title)
+                
+            if description:
+                e.set_description(decription)
+            
+            e.save()
             return e.view().to_json()
         except Exception as err:
             raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
@@ -219,12 +238,12 @@ class Controller(Base):
     
       
     @classmethod
-    def fetch_experiment(cls, experiment_uri=None):
+    def fetch_experiment(cls, uri=None):
         from gws.model import Experiment
         try:
-            e = Experiment.get(Experiment.uri == experiment_uri)
+            e = Experiment.get(Experiment.uri == uri)
         except Exception as err:
-            raise HTTPNotFound(detail=f"No experiment found with uri {experiment_uri}")
+            raise HTTPNotFound(detail=f"No experiment found with uri {uri}")
             
         return e.to_json()
     
@@ -259,20 +278,12 @@ class Controller(Base):
         return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json(shallow=True)      
      
     @classmethod
-    def fetch_protocol(cls, experiment_uri=None, protocol_uri=None):
-        from gws.model import Experiment, Protocol
-        if protocol_uri:
-            try:
-                p = Protocol.get(Protocol.uri == protocol_uri)
-            except Exception as err:
-                raise HTTPNotFound(detail=f"No protocol found with uri {protocol_uri}")
-        elif experiment_uri:
-            try:
-                e = Experiment.get(Experiment.uri == experiment_uri)
-            except Exception as err:
-                raise HTTPNotFound(detail=f"No experiment found with uri {experiment_uri}")
-            
-            p = e.protocol
+    def fetch_protocol(cls, uri=None):
+        from gws.model import Protocol
+        try:
+            p = Protocol.get(Protocol.uri == uri)
+        except Exception as err:
+            raise HTTPNotFound(detail=f"No protocol found with uri {uri}")
         return p.to_json()
     
     @classmethod
@@ -280,8 +291,8 @@ class Controller(Base):
         from gws.model import Protocol, Experiment
         if experiment_uri:
             Q = Protocol.select_me()\
-                            .join(Experiment, on=(Protocol.id == Experiment.protocol_id))\
-                            .where(Experiment.uri == experiment_uri)
+                        .join(Experiment, on=(Protocol.id == Experiment.protocol_id))\
+                        .where(Experiment.uri == experiment_uri)
         else:
             number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
             Q = Protocol.select_me()\
@@ -324,6 +335,21 @@ class Controller(Base):
             return t.get(t.uri == object_uri)
         except:
             return None        
+    
+    @classmethod
+    def fecth_activity_list(cls, user_uri: str=None, activity_type: str=None, page=1, number_of_items_per_page=20):
+        from gws.model import Activity, User
+        Q = Activity.select()\
+                    .order_by(Activity.creation_datetime.desc())
+        
+        if user_uri:
+            Q = Q.join(User) \
+                    .where(User.uri == user_uri)
+            
+        if activity_type:
+            Q = Q.where(Activity.activity_type == activity_type)
+        
+        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json()
     
     # -- G --
     
@@ -517,12 +543,12 @@ class Controller(Base):
             raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
                 
     @classmethod
-    async def start_experiment(cls, experiment_uri):
+    async def start_experiment(cls, uri):
         from gws.model import Experiment
         from gws.queue import Queue, Job
         
         try:
-            e = Experiment.get(Experiment.uri == experiment_uri)
+            e = Experiment.get(Experiment.uri == uri)
         except Exception as err:
             raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
   
@@ -542,10 +568,10 @@ class Controller(Base):
                 raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
     
     @classmethod
-    async def stop_experiment(cls, experiment_uri):
+    async def stop_experiment(cls, uri):
         from gws.model import Experiment
         try:
-            e = Experiment.get(Experiment.uri == experiment_uri)
+            e = Experiment.get(Experiment.uri == uri)
         except Exception as err:
             raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
         
@@ -566,17 +592,26 @@ class Controller(Base):
     # -- U --
      
     @classmethod
-    def update_experiment(cls, experiment_uri, data: dict):
+    def update_experiment(cls, uri, title=None, description=None, data: dict=None):
         from gws.model import Experiment
         
         try:
-            e = Experiment.get(Experiment.uri == experiment_uri)
+            e = Experiment.get(Experiment.uri == uri)
             if not e.is_draft:
-                raise HTTPInternalServerError(detail=f"The experiment is already is not a draft")
+                raise HTTPInternalServerError(detail=f"The experiment is not a draft")
+            
+            if data:
+                proto = e.protocol
+                proto._build_from_dump(data, rebuild=True)
+                proto.save()
+            
+            if title:
+                e.set_title(title)
                 
-            proto = e.protocol
-            proto.build_from_dump(data)
-            proto.save()
+            if description:
+                e.set_description(description)
+                
+            e.save()
             return e.view().to_json()
         except Exception as err:
             raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
@@ -658,11 +693,11 @@ class Controller(Base):
     
     # -- V --
     
-    def validate_experiment(self, experiment_uri):
+    def validate_experiment(self, uri):
         from gws.model import Experiment
         
         try:
-            e = Experiment.get(Experiment.uri == experiment_uri)
+            e = Experiment.get(Experiment.uri == uri)
             e.validate(user=self.get_current_user())
         except Exception as err:
             raise HTTPNotFound(detail=f"Experiment not found")

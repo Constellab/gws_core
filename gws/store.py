@@ -112,10 +112,13 @@ class KVStore:
 
     # -- R --
 
-    def remove(self):
+    def remove(self, ignore_errors=False):
         """ 
         Remove the store 
         """
+        
+        if not os.path.exists(self.dir_path):
+            return
         
         try:
             shutil.rmtree(self.dir_path)

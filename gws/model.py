@@ -582,6 +582,7 @@ class Model(BaseModel):
             "uri": self.uri,
             "type": self.type,
             "save_datetime": self.save_datetime
+            
         }
     
         if stringify:
@@ -919,7 +920,6 @@ class Activity(Model):
     _fts_fields = {}
     _table_name = "gws_user_activity"
     
-    
     CREATE = "CREATE"
     SAVE = "SAVE"
     START = "START"
@@ -951,6 +951,31 @@ class Activity(Model):
             object_uri = object_uri
         )
         activity.save()
+    
+    # -- T --
+    
+    def to_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+        """
+        Returns JSON string or dictionnary representation of the model.
+        
+        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
+        :type stringify: bool
+        :param prettify: If True, indent the JSON string. Defaults to False.
+        :type prettify: bool
+        :return: The representation
+        :rtype: dict, str
+        """
+        
+        _json = super().to_json(**kwargs)
+        _json["user_uri"] = self.user.uri
+        
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json   
         
 # ####################################################################
 #
@@ -1448,7 +1473,7 @@ class ProcessType(Viewable):
             return _json
     
     def to_shallow_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
-        _json = super().to_shallow_json()
+        _json = super().to_shallow_json(**kwargs)
         _json["ptype"] = self.ptype
         
         if stringify:
@@ -1613,7 +1638,7 @@ class Process(Viewable):
             pt = ProcessType(ptype = cls.full_classname())
             pt.save()
         
-    def create_experiment(self, study: 'Study', user: 'User' = None):
+    def create_experiment(self, study: 'Study', uri:str=None, user: 'User' = None):
         """
         Create an experiment using a protocol composed of this process
         
@@ -1635,7 +1660,11 @@ class Process(Viewable):
             if user is None:
                 raise Error("Process", "create_experiment", "A user is required")
         
-        e = Experiment(protocol=proto, study=study, user=user)
+        if uri:
+            e = Experiment(uri=uri, protocol=proto, study=study, user=user)
+        else:
+            e = Experiment(protocol=proto, study=study, user=user)
+            
         e.save()
         return e
         
@@ -1657,6 +1686,16 @@ class Process(Viewable):
         source = inspect.getsource(model_t)
         return zlib.compress(source.encode())
     
+    # -- D --
+    
+    def disconnect(self):
+        """
+        Disconnect the input and output ports
+        """
+        
+        self._input.disconnect()
+        self._output.disconnect()
+            
     # -- E --
     
     @property
@@ -1959,6 +1998,19 @@ class Process(Viewable):
     async def task(self):
         pass
     
+    def to_shallow_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+        _json = super().to_shallow_json(**kwargs)
+        _json["is_running"] = self.is_running
+        _json["is_finished"] = self.is_finished
+        
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
+        
     def to_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the model.
@@ -2048,7 +2100,7 @@ class Protocol(Process):
         self._defaultPosition = [0.0, 0.0]
         
         if self.uri and self.data.get("graph"):          #the protocol was saved in the super-class
-            self.build_from_dump( self.data["graph"], title=self.title )
+            self._build_from_dump( self.data["graph"], title=self.title)
         else:
             if not isinstance(processes, dict):
                 raise Error("gws.model.Protocol", "__init__", "A dictionnary of processes is expected")
@@ -2164,7 +2216,7 @@ class Protocol(Process):
     
     # -- B --
     
-    def build_from_dump( self, graph: (str, dict), title=None ) -> 'Protocol':
+    def _build_from_dump( self, graph: (str, dict), title=None, rebuild = False ) -> 'Protocol':
         """ 
         Construct a Protocol instance using a setting dump.
 
@@ -2175,39 +2227,72 @@ class Protocol(Process):
         if isinstance(graph, str):
             graph = json.loads(graph)
         
-        if len(graph) == 0:
-            return None
+        if not isinstance(graph,dict):
+            return
+        
+        if not isinstance(graph.get("nodes"), dict) or not graph["nodes"]:
+            return
         
         if not title:
             title = graph.get("title", self.full_classname())
 
         if not self.title or self.title == self.full_classname():
             self.set_title(title)
-         
+        
+        if rebuild:
+            if self.experiment.is_draft:
+                deleted_keys = []
+                for k in self._processes:
+                    proc = self._processes[k]
+
+                    is_removed = False
+                    if k in graph["nodes"]:
+                        if proc.type != graph["nodes"][k].get("type"):
+                            is_removed = True
+                    else:
+                        is_removed = True
+
+                    if is_removed:
+                        print(f" --> delete proc {k}")
+                        proc.delete_instance()
+                        deleted_keys.append(k)
+                    
+                    # disconnect the port to prevent connection errors later
+                    proc.disconnect()
+                    
+                for k in deleted_keys:
+                    del self._processes[k]
+                
+        # will be rebuilt
+        self._connectors = []
+        self._interfaces = {}
+        self._outerfaces = {}
+            
         # create nodes
         for k in graph["nodes"]:
             node_json = graph["nodes"][k]
-            node_uri = node_json.get("uri",None)
-            node_type_str = node_json["type"]
+            proc_uri = node_json.get("uri",None)
+            proc_type_str = node_json["type"]
             
             try:
-                process_t = Controller.get_model_type(node_type_str)
+                proc_t = Controller.get_model_type(proc_type_str)
                 
-                if process_t is None:
-                    raise Exception(f"Process {node_type_str} is not defined. Please ensure that the corresponding brick is loaded.")
+                if proc_t is None:
+                    raise Exception(f"Process {proc_type_str} is not defined. Please ensure that the corresponding brick is loaded.")
                 else:
-                    if issubclass(process_t, Protocol):
-                        proc = Protocol.from_graph( node_json["data"]["graph"] )
+                    if proc_uri:
+                        proc = proc_t.get(proc_t.uri == proc_uri)
                     else:
-                        if node_uri:
-                            proc = process_t.get(process_t.uri == node_uri)
+                        if issubclass(proc_t, Protocol):
+                            proc = Protocol.from_graph( node_json["data"]["graph"] )
                         else:
-                            proc = process_t()
-
-                    self.add_process( k, proc )
+                            proc = proc_t()
+                    
+                    if not k in self._processes:
+                        self.add_process( k, proc )
 
             except Exception as err:
-                raise Error("gws.model.Protocol", "build_from_dump", f"An error occured. Error: {err}")
+                raise Error("gws.model.Protocol", "_build_from_dump", f"An error occured. Error: {err}")
         
         # create interfaces and outerfaces
         interfaces = {}
@@ -2244,9 +2329,11 @@ class Protocol(Process):
             connector = (lhs_proc>>lhs_port_name | rhs_proc<<rhs_port_name)
             self.add_connector(connector)
         
+        self.save()
+        
     # -- C --
 
-    def create_experiment(self, study: 'Study', user: 'User' = None):
+    def create_experiment(self, study: 'Study', uri: str=None, user: 'User'=None):
         """
         Realize a protocol by creating a experiment
         
@@ -2263,7 +2350,11 @@ class Protocol(Process):
             if user is None:
                 raise Error("Process", "create_experiment", "A user is required")
                 
-        e = Experiment(user=user, study=study, protocol=self)
+        if uri:
+            e = Experiment(uri=uri, user=user, study=study, protocol=self)
+        else:
+            e = Experiment(user=user, study=study, protocol=self)
+
         e.save()
         
         return e
@@ -2283,6 +2374,19 @@ class Protocol(Process):
         super().create_table(*args, **kwargs)
 
     # -- D -- 
+
+    def disconnect(self):
+        """
+        Disconnect the input, output, interfaces and outerfaces
+        """
+        
+        super().disconnect()
+        
+        for k in self._interfaces:
+            self._interfaces[k].disconnect()
+            
+        for k in self._outerfaces:
+            self._outerfaces[k].disconnect()
         
     def dumps( self, as_dict: bool = False, prettify: bool = False, bare: bool = False ) -> str:
         """ 
@@ -2347,7 +2451,7 @@ class Protocol(Process):
             proto = Protocol.get(Protocol.uri == graph.get("uri"))
         else:
             proto = Protocol()
-            proto.build_from_dump(graph)
+            proto._build_from_dump(graph)
             proto.data["graph"] = proto.dumps(as_dict=True)
             proto.save()
             
@@ -2947,79 +3051,93 @@ class Experiment(Viewable):
         self.data["pid"] = sproc.pid
         self.save()
         
-    async def run(self, *, user=None):
+    async def run(self, *, user=None, wait_response=False):
         """ 
-        Run an experiment
+        Run the experiment
+
+        :param user: The user who is running the experiment. If not provided, the system will try the get the currently authenticated user
+        :type user: `gws.model.User`
+        :param wait_response: True to wait the response. False otherwise.
+        :type wait_response: `bool`
+        """
+        
+        if self.is_running or self.is_finished:
+            return
+        
+        if wait_response:
+            await self.__run(user=user)
+        else:
+            if Controller.is_http_context():
+                # run the experiment throug the cli to prevent blocking HTTP requests
+                self.run_through_cli(user=user)
+            else:
+                await self.__run(user=user)
+        
+    async def __run(self, * ,user=None):
+        """ 
+        Run the experiment
 
         :param user: The user who is running the experiment. If not provided, the system will try the get the currently authenticated user
         :type user: `gws.model.User`
         """
         
-        if self.is_running or self.is_finished:
-            return
-                    
-        if Controller.is_http_context():
-            # run the experiment throug the cli to prevent blocking HTTP requests
-            self.run_through_cli(self, user=user)
-        else:
-            if not user:
-                try:
-                    user = Controller.get_current_user()
-                except:
-                    raise Error("gws.model.Experiment", "run", "A user is required")
-                
-                if not user.is_authenticated:
-                        raise Error("gws.model.Experiment", "run", "A authenticated user is required")
-                        
-            if self.is_archived:
-                raise Error("gws.model.Experiment", "run", f"The experiment is archived")
-
-            if self.is_validated:
-                raise Error("gws.model.Experiment", "run", f"The experiment is validated")
-            
-            Activity.add(
-                Activity.START,
-                object_type = self.full_classname(),
-                object_uri = self.uri,
-                user=user
-            )
-            
+        if not user:
             try:
-                self.protocol.set_experiment(self)
-                self.data["pid"] = 0
-                self._is_running = True
-                self._is_finished = False
-                self.save()
-            
-                if self._event_listener.exists("start"):
-                    self._event_listener.sync_call("start", self)
-                    await self._event_listener.async_call("start", self)
+                user = Controller.get_current_user()
+            except:
+                raise Error("gws.model.Experiment", "run", "A user is required")
+
+            if not user.is_authenticated:
+                    raise Error("gws.model.Experiment", "run", "A authenticated user is required")
+
+        if self.is_archived:
+            raise Error("gws.model.Experiment", "run", f"The experiment is archived")
+
+        if self.is_validated:
+            raise Error("gws.model.Experiment", "run", f"The experiment is validated")
+
+        Activity.add(
+            Activity.START,
+            object_type = self.full_classname(),
+            object_uri = self.uri,
+            user=user
+        )
+
+        try:
+            self.protocol.set_experiment(self)
+            self.data["pid"] = 0
+            self._is_running = True
+            self._is_finished = False
+            self.save()
+
+            if self._event_listener.exists("start"):
+                self._event_listener.sync_call("start", self)
+                await self._event_listener.async_call("start", self)
+
+            await self.protocol._run()
+
+            if self._event_listener.exists("end"):
+                self._event_listener.sync_call("end", self)
+                await self._event_listener.async_call("end", self)
+
+            self.data["pid"] = 0
+            self._is_running = False
+            self._is_finished = True
+            self._is_success = True
+            self.save()
+        except Exception as err:
+            time.sleep(3)  #-> wait for 3 sec to prevent database lock!
+
+            # Gracefully stop the experiment and exit!
+            message = f"An error occured. Exception: {err}"
+            self.protocol.progress_bar.stop(message)
+            self.data["pid"] = 0
+            self._is_running = False
+            self._is_finished = True
+            self._is_success = False
+            self.save()
+            raise Error("gws.model.Experiment", "run", f"An error occured. Exception: {err}")
                 
-                await self.protocol._run()
-                
-                if self._event_listener.exists("end"):
-                    self._event_listener.sync_call("end", self)
-                    await self._event_listener.async_call("end", self)
-                
-                self.data["pid"] = 0
-                self._is_running = False
-                self._is_finished = True
-                self._is_success = True
-                self.save()
-            except Exception as err:
-                time.sleep(3)  #-> wait for 3 sec to prevent database lock!
-                
-                # Gracefully stop the experiment and exit!
-                message = f"An error occured. Exception: {err}"
-                self.protocol.progress_bar.stop(message)
-                self.data["pid"] = 0
-                self._is_running = False
-                self._is_finished = True
-                self._is_success = False
-                self.save()
-                
-                raise Error("gws.model.Experiment", "run", f"An error occured. Exception: {err}")
-    
     # -- S --
 
     def save(self, *args, **kwargs):  

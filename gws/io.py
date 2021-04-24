@@ -22,11 +22,28 @@ class Port(Base):
 
     def __init__(self, parent: 'IO'):
         self._resource = None
+        self._prev = None
         self._next = []
         self._parent = parent
 
         from gws.model import Resource
         self._resource_types = (Resource, )
+    
+    # -- D -- 
+    
+    def disconnect(self):
+        """
+        Disconnect the port
+        """
+        
+        if self._prev:
+            self._prev._next = []
+        
+        for port in self._next:
+            port._prev = None
+            
+        self._prev = None
+        self._next = []
         
     # -- G --
     
@@ -315,7 +332,22 @@ class IOface:
         self.name = name 
         self.source_port = source_port
         self.target_port = target_port
+    
+    # -- D --
+    
+    def disconnect(self):
+        """
+        Disconnect the IOFace
+        """
         
+        if self.source_port:
+            self.source_port.disconnect()
+        
+        if self.target_port:
+            self.target_port.disconnect()
+            
+    # -- T --
+    
     def to_json(self, **kwargs):
         bare = kwargs.get("bare", False)
         r_uri = ""
@@ -498,34 +530,15 @@ class IO(Base):
         self._parent = parent
         self._ports = dict()
     
-    # -- Ts --
+    # -- D --
     
-    def to_json(self, **kwargs):
-        _json = {}
-        bare = kwargs.get("bare")
+    def disconnect(self):
+        """
+        Disconnect the IO
+        """
         
         for k in self._ports:
-            port = self._ports[k]
-            _json[k] = {}
-            
-            if port.resource and not bare:
-                _json[k]["resource"] = {
-                    "uri": port.resource.uri
-                }
-            else:
-                _json[k]["resource"] = {
-                    "uri": ""
-                }
-            
-            _json[k]["specs"] = ()
-            for t in port._resource_types:
-                if t is None:
-                    _json[k]["specs"] += (None, )
-                else:
-                    classname = t.full_classname()
-                    _json[k]["specs"] += (classname, )
-    
-        return _json
+            self._ports[k].disconnect()
     
     # -- C --
 
@@ -713,7 +726,36 @@ class IO(Base):
 
         self.__setitem_without_check__(name, resource)
 
-
+    
+    # -- T --
+    
+    def to_json(self, **kwargs):
+        _json = {}
+        bare = kwargs.get("bare")
+        
+        for k in self._ports:
+            port = self._ports[k]
+            _json[k] = {}
+            
+            if port.resource and not bare:
+                _json[k]["resource"] = {
+                    "uri": port.resource.uri
+                }
+            else:
+                _json[k]["resource"] = {
+                    "uri": ""
+                }
+            
+            _json[k]["specs"] = ()
+            for t in port._resource_types:
+                if t is None:
+                    _json[k]["specs"] += (None, )
+                else:
+                    classname = t.full_classname()
+                    _json[k]["specs"] += (classname, )
+    
+        return _json
+    
 # ####################################################################
 #
 # Input class
