@@ -967,7 +967,11 @@ class Activity(Model):
         """
         
         _json = super().to_json(**kwargs)
-        _json["user_uri"] = self.user.uri
+        _json["user"] = {
+            "uri": self.user.uri,
+            "first_name": self.user.first_name,
+            "last_name": self.user.last_name
+        }
         
         if stringify:
             if prettify:

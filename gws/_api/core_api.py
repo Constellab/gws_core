@@ -546,36 +546,17 @@ async def read_user_me(current_user: UserData = Depends(check_user_access_token)
     
     return current_user
 
-# ##################################################################
-#
-# Activity
-#
-# ##################################################################
-
-@app.get("/activity/list", tags=["Activity"])
-async def get_list_of_activities(page: int = 1, \
-                                 number_of_items_per_page: int = 20, \
-                                 _: UserData = Depends(check_user_access_token)):
-    """
-    Get the list of activities
-    """
-    
-    return Controller.fecth_activity_list(
-        page = page, 
-        number_of_items_per_page = number_of_items_per_page
-    )
-
-@app.get("/activity/{user_uri}/{activity_type}", tags=["Activity"])
-async def get_activity(uri:Optional[str] = None, \
+@app.get("/user/activity", tags=["User"])
+async def get_activity(user_uri:Optional[str] = None, \
                        activity_type:Optional[str] = None, \
                        page: int = 1, \
                        number_of_items_per_page: int = 20, \
                         _: UserData = Depends(check_user_access_token)):
     """
-    Get the list of activities
+    Get the list of user activities on the lab
     
-    - **uri**: the uri the user [optinal]
-    - **activity_type**: the type of the activity to retrieve. Valid activity types are: 
+    - **user_uri**: the uri the user [optional]
+    - **activity_type**: the type of the activity to retrieve [optional]. The valid types of activities are: 
       - **CREATE** : the creation of an object
       - **SAVE**   : the saving of an object
       - **START**  : the start of an experiment
@@ -587,6 +568,8 @@ async def get_activity(uri:Optional[str] = None, \
       - **HTTP_UNAUTHENTICATION** : HTTP unauthentication
       - **CONSOLE_AUTHENTICATION** : console authentication (through CLI or notebook)
       - **CONSOLE_UNAUTHENTICATION** : console unauthentication
+    - **page**: the page number 
+    - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
     """
     
     return Controller.fecth_activity_list(

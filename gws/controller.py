@@ -347,7 +347,7 @@ class Controller(Base):
                     .where(User.uri == user_uri)
             
         if activity_type:
-            Q = Q.where(Activity.activity_type == activity_type)
+            Q = Q.where(Activity.activity_type == activity_type.upper())
         
         return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json()
     
