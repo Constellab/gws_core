@@ -33,7 +33,7 @@ class File(Resource):
     
     _mode = "t"
     _table_name = "gws_file"
-    __download_url = "https://lab.{}/core-api/download/{}"
+    __download_url = "https://lab.{}/core-api/file/{}/download"
     
     # -- A --
         

@@ -1415,7 +1415,21 @@ class ProgressBar(Model):
             self.stop()
         else:
             self.save()
-            
+        
+    def set_max_value(self, value: int):
+        _max = self.data["max_value"]
+        
+        if self.data["value"] > 0:
+            raise Error("ProgressBar", "set_max_value", "The progress bar has already started")
+        
+        if isinstance(_max, int):
+            raise Error("ProgressBar", "set_max_value", "The max value must be an integer")
+       
+        if _max <= 0:
+            raise Error("ProgressBar", "set_max_value", "The max value must be greater than zero")
+           
+        self.data["max_value"] = value
+        self.save()
 
     
 # ####################################################################
@@ -1866,11 +1880,15 @@ class Process(Viewable):
         
         if not self.is_ready:
             return
-
-        await self._run_before_task()
-        await self.task()
-        await self._run_after_task()
-    
+        
+        try:
+            await self._run_before_task()
+            await self.task()
+            await self._run_after_task()
+        except Exception as err:
+            self.progress_bar.stop(message = str(err))
+            raise err
+            
     async def _run_next_processes(self):
         self._output.propagate()
         aws  = []
@@ -2211,7 +2229,7 @@ class Protocol(Process):
         
         if  not connector.left_process in self._processes.values() or \
             not connector.right_process in self._processes.values():
-            raise Error("gws.model.Protocol", "add_connector", "The connector processes must be belong to the protocol")
+            raise Error("gws.model.Protocol", "add_connector", "The processes of the connector must belong to the protocol")
         
         if connector in self._connectors:
             raise Error("gws.model.Protocol", "add_connector", "Duplciated connector")
