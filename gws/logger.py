@@ -11,7 +11,8 @@ class Logger:
     _logger = None
     _is_test = False
     _file_path = None
-
+    show_all = False
+    
     def __init__(self, is_new_session = False, is_test=False):
         cls = Logger
         if cls._logger is None:
@@ -53,7 +54,7 @@ class Logger:
     def info(cls, message):
         Logger()
         cls._logger.info(f"INFO: {datetime.datetime.now().time()} -- {message}")
-        if cls._is_test:
+        if cls._is_test or cls.show_all:
             print(message)
     
     # -- S --
@@ -67,7 +68,7 @@ class Logger:
     def warning(cls, message):
         Logger()
         cls._logger.warning(f"WARNING: {datetime.datetime.now().time()} # {message}")
-        if cls._is_test:
+        if cls._is_test or cls.show_all:
             print(message)
             
 
@@ -98,7 +99,6 @@ class Warning():
         
 class Info():
     message = ""
-    
     def __init__(self, message, *args):
         if len(args):
             exc_message = f"({message}, {', '.join(args)})"
