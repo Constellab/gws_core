@@ -721,8 +721,8 @@ class IO(Base):
         :type resource: Resource
         """
           
-        if self._parent.is_running:
-            raise Error(self.classname(), "__setitem__", "Cannot alter the input of process while running")
+        #if self._parent.is_running:
+        #    raise Error(self.classname(), "__setitem__", "Cannot alter the input of process while it is running")
 
         self.__setitem_without_check__(name, resource)
 
