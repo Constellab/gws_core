@@ -229,7 +229,20 @@ class CSVData(Resource):
     
     def __str__(self):
         return self.table.__str__()
-
+    
+    # -- T --
+    
+    def to_csv(self, stringify=False, **kwargs):
+        if stringify:
+            return self.table.to_csv()
+        else:
+            return self.table
+        
+    # -- V ---
+    
+    def view__subsample__as_csv(self)
+        pass
+    
 # ####################################################################
 #
 # Importer class

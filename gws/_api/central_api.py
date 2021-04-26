@@ -20,6 +20,7 @@ from gws.settings import Settings
 from gws.central import Central
 from gws.controller import Controller
 from gws.model import Model, ViewModel, Experiment
+from gws.http import *
 
 from ._auth_user import UserData, check_user_access_token
 
@@ -78,8 +79,11 @@ async def generate_user_access_token(user_uri: UserUriData, \
 
 @app.post("/user/create", tags=["User management"])
 async def create_user(user: UserData, _: UserData = Depends(check_central_api_key)):
-    return Central.create_user(user.dict())
-
+    try:
+        return Central.create_user(user.dict())
+    except Exception as err:
+        raise HTTPInternalServerError(detail=f"Cannot create the user. Error: {err}")
+        
 @app.get("/user/test", tags=["User management"])
 async def get_user_test():
     """
@@ -103,8 +107,10 @@ async def get_user(user_uri : str, _: UserData = Depends(check_central_api_key))
     
     - **user_uri**: the user uri
     """
-    
-    return Central.get_user_status(user_uri)
+    try:
+        return Central.get_user_status(user_uri)
+    except Exception as err:
+        raise HTTPInternalServerError(detail=f"Cannot get the user. Error: {err}")
 
 @app.get("/user/{user_uri}/activate", tags=["User management"])
 async def activate_user(user_uri : str, _: UserData = Depends(check_central_api_key)):
@@ -114,8 +120,11 @@ async def activate_user(user_uri : str, _: UserData = Depends(check_central_api_
     - **user_uri**: the user uri
     """
     
-    return Central.activate_user(user_uri)
-
+    try:
+        return Central.activate_user(user_uri)
+    except Exception as err:
+        raise HTTPInternalServerError(detail=f"Cannot activate the user. Error: {err}")
+        
 @app.get("/user/{user_uri}/deactivate", tags=["User management"])
 async def deactivate_user(user_uri : str, _: UserData = Depends(check_central_api_key)):
     """
@@ -124,5 +133,7 @@ async def deactivate_user(user_uri : str, _: UserData = Depends(check_central_ap
     - **user_uri**: the user uri
     """
     
-    return  Central.deactivate_user(user_uri)
-
+    try:
+        return  Central.deactivate_user(user_uri)
+    except Exception as err:
+        raise HTTPInternalServerError(detail=f"Cannot deactivate the user. Error: {err}")
