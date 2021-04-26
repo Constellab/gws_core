@@ -1441,9 +1441,8 @@ class ProcessType(Viewable):
     
     def to_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         _json = super().to_json(**kwargs)
-        
-        model_t = Controller.get_model_type(self.ptype)
 
+        model_t = Controller.get_model_type(self.ptype)
         specs = model_t.input_specs
         _json["input_specs"] = {}
         for name in specs:
