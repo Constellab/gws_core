@@ -11,7 +11,7 @@ class View:
     @staticmethod
     def dict_to_table(data: dict, \
                       orient: str='index', dtype=None, \
-                      columns: =None, stringify:bool=False) -> (str, "DataFrame", ):
+                      columns=None, stringify:bool=False) -> (str, "DataFrame", ):
         """
         Convert a dictionary to a table. The method `DataFrame.from_dict()` is used. See this method to learn more about conversion
         
@@ -28,7 +28,7 @@ class View:
         :return: The corresponding table as `pandas.DataFrame` or as string
         :rtype: `pandas.DataFrame`, `str`
         """
-        s
+        
         df = DataFrame.from_dict(data, orient, dtype, columns)
         if stringify:
             return df.to_csv()
