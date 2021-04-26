@@ -14,7 +14,7 @@ class Query:
         
         if shallow:
             for o in Q:
-                _list.append(o.to_shallow_json())
+                _list.append(o.to_json(shallow=True))
         else:
             for o in Q:
                 if isinstance(o, ViewModel):

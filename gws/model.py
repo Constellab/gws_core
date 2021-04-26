@@ -565,34 +565,7 @@ class Model(BaseModel):
                 return json.dumps(_json)
         else:
             return _json
-    
-    def to_shallow_json(self, stringify: bool=False, prettify: bool=False):
-        """
-        Returns a shallow JSON string or dictionnary representation of the model.
-    
-        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
-        :type stringify: `bool`
-        :param prettify: If True, indent the JSON string. Defaults to False.
-        :type prettify: `bool`      
-        :return: The representation
-        :rtype: `dict`, `str`
-        """
-        
-        _json = {
-            "uri": self.uri,
-            "type": self.type,
-            "save_datetime": self.save_datetime
-            
-        }
-    
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
-    
+
     # -- U --
     
     @property
@@ -1295,7 +1268,31 @@ class Config(Viewable):
             "specs" : specs,
             "params" : {}
         }
-
+    
+    def to_json(self, *, shallow=False, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+        """
+        Returns JSON string or dictionnary representation of the model.
+        
+        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
+        :type stringify: bool
+        :param prettify: If True, indent the JSON string. Defaults to False.
+        :type prettify: bool
+        :return: The representation
+        :rtype: dict, str
+        """
+        
+        _json = super().to_json(shallow=shallow,**kwargs)
+        if shallow:
+            del _json["data"]
+            
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
+        
 # ####################################################################
 #
 # ProgressBar class
@@ -1481,18 +1478,6 @@ class ProcessType(Viewable):
             if "type" in spec and isinstance(spec["type"], type):
                 t_str = spec["type"].__name__ 
                 _json["config_specs"][k]["type"] = t_str
-        
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
-    
-    def to_shallow_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
-        _json = super().to_shallow_json(**kwargs)
-        _json["ptype"] = self.ptype
         
         if stringify:
             if prettify:
@@ -2019,21 +2004,8 @@ class Process(Viewable):
 
     async def task(self):
         pass
-    
-    def to_shallow_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
-        _json = super().to_shallow_json(**kwargs)
-        _json["is_running"] = self.is_running
-        _json["is_finished"] = self.is_finished
         
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
-        
-    def to_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+    def to_json(self, *, shallow=False, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the model.
         
@@ -2071,8 +2043,15 @@ class Process(Viewable):
 
             _json["experiment"] = { "uri" : e_uri }
             _json["protocol"] = { "uri" : p_uri }
+        
+        if shallow:
+            _json["config"] = { "uri" : self.config.uri }
             
-        _json["config"] = self.config.to_json(**kwargs)
+            if _json["data"].get("graph"):
+                del _json["data"]["graph"]
+        else:
+            _json["config"] = self.config.to_json(**kwargs)
+            
         _json["input"] = self.input.to_json(**kwargs)
         _json["output"] = self.output.to_json(**kwargs)
         
@@ -2736,6 +2715,34 @@ class Protocol(Process):
                 uri = self.data["output"][k]
                 self.output.__setitem_without_check__(k, Resource.get(Resource.uri == uri) )
 
+    # -- T --
+    
+    def to_json(self, *, shallow=False, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+        """
+        Returns JSON string or dictionnary representation of the model.
+        
+        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
+        :type stringify: bool
+        :param prettify: If True, indent the JSON string. Defaults to False.
+        :type prettify: bool
+        :return: The representation
+        :rtype: dict, str
+        """
+        
+        _json = super().to_json(shallow=shallow, **kwargs)
+        
+        if shallow:
+            if _json["data"].get("graph"):
+                del _json["data"]["graph"]
+        
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
+        
 # ####################################################################
 #
 # Study class
@@ -3321,7 +3328,7 @@ class Resource(Viewable):
     
     # -- T --
     
-    def to_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+    def to_json(self, *, shallow=False, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the model.
         
@@ -3333,7 +3340,7 @@ class Resource(Viewable):
         :rtype: dict, str
         """
         
-        _json = super().to_json(**kwargs)
+        _json = super().to_json(shallow=shallow,**kwargs)
 
         if self.experiment:
             _json.update({
@@ -3343,7 +3350,10 @@ class Resource(Viewable):
                     "type": self.process.type,
                 },
             })
-  
+        
+        if shallow:
+            del _json["data"]
+            
         if stringify:
             if prettify:
                 return json.dumps(_json, indent=4)
