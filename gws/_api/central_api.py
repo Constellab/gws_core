@@ -56,12 +56,12 @@ class UserUriData(BaseModel):
 # ##################################################################
 
 @app.post("/user/generate-access-token", response_model=TokenData, tags=["User management"])
-async def generate_user_access_token(user_uri: UserUriData, \
+async def generate_user_access_token(user_uri_data: UserUriData, \
                                      _ = Depends(check_central_api_key)):
     """
     Generate a temporary access token for a user.
     
-    - **user_uri**: the user uri
+    - **user_uri_data**: the user uri data (JSON string)
     
     For example:
     
@@ -75,10 +75,20 @@ async def generate_user_access_token(user_uri: UserUriData, \
     `
     """
     
-    return await _generate_user_access_token(user_uri.uri)
+    return await _generate_user_access_token(user_uri_data.uri)
 
 @app.post("/user/create", tags=["User management"])
 async def create_user(user: UserData, _: UserData = Depends(check_central_api_key)):
+    """
+    Create a new user
+    
+    UserData:
+    - **uri**: The user uri
+    - **email**: The user emails
+    - **group**: The user group. Valid groups are: **owner** (lab owner), **user** (user with normal privileges), **admin** (adminstrator).
+    - **first_name**: The first names
+    - **last_name**: The last name
+    """
     try:
         return Central.create_user(user.dict())
     except Exception as err:
@@ -100,40 +110,40 @@ async def get_user_test():
         }
     }
 
-@app.get("/user/{user_uri}", tags=["User management"])
-async def get_user(user_uri : str, _: UserData = Depends(check_central_api_key)):
+@app.get("/user/{uri}", tags=["User management"])
+async def get_user(uri : str, _: UserData = Depends(check_central_api_key)):
     """
     Get the details of a user. Require central privilege.
     
-    - **user_uri**: the user uri
+    - **uri**: the user uri
     """
     try:
-        return Central.get_user_status(user_uri)
+        return Central.get_user_status(uri)
     except Exception as err:
         raise HTTPInternalServerError(detail=f"Cannot get the user. Error: {err}")
 
-@app.get("/user/{user_uri}/activate", tags=["User management"])
-async def activate_user(user_uri : str, _: UserData = Depends(check_central_api_key)):
+@app.get("/user/{uri}/activate", tags=["User management"])
+async def activate_user(uri : str, _: UserData = Depends(check_central_api_key)):
     """
     Activate a user. Require central privilege.
     
-    - **user_uri**: the user uri
+    - **uri**: the user uri
     """
     
     try:
-        return Central.activate_user(user_uri)
+        return Central.activate_user(uri)
     except Exception as err:
         raise HTTPInternalServerError(detail=f"Cannot activate the user. Error: {err}")
         
-@app.get("/user/{user_uri}/deactivate", tags=["User management"])
-async def deactivate_user(user_uri : str, _: UserData = Depends(check_central_api_key)):
+@app.get("/user/{uri}/deactivate", tags=["User management"])
+async def deactivate_user(uri : str, _: UserData = Depends(check_central_api_key)):
     """
     Deactivate a user. Require central privilege.
     
-    - **user_uri**: the user uri
+    - **uri**: the user uri
     """
     
     try:
-        return  Central.deactivate_user(user_uri)
+        return  Central.deactivate_user(uri)
     except Exception as err:
         raise HTTPInternalServerError(detail=f"Cannot deactivate the user. Error: {err}")

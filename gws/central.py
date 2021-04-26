@@ -15,7 +15,7 @@ class Central:
 
     @classmethod
     def activate_user(cls, uri):
-        return self.set_user_status(uri, {"is_active": True})
+        return cls.set_user_status(uri, {"is_active": True})
                 
     # -- C --
     
@@ -56,7 +56,7 @@ class Central:
     
     @classmethod
     def deactivate_user(cls, uri):
-        return self.set_user_status(uri, {"is_active": False})
+        return cls.set_user_status(uri, {"is_active": False})
     
     # -- F --
 
@@ -87,7 +87,7 @@ class Central:
         if user is None:
             raise Error("Central", "set_user_status", "User not found")
         else:
-            if data.get("is_active"):
+            if not data.get("is_active") is None:
                 user.is_active = data.get("is_active")
             
             if data.get("group"):
