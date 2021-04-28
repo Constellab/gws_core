@@ -7,11 +7,16 @@ import pandas
 from pandas import DataFrame
 
 class View:
+    pass
+
+
+class DictView(View):
     
     @staticmethod
-    def dict_to_table(data: dict, \
-                      orient: str='index', dtype=None, \
-                      columns=None, stringify:bool=False) -> (str, "DataFrame", ):
+    def to_table(data: dict, \
+              orient: str='index', dtype=None, \
+              columns=None, stringify:bool=False) -> (str, "DataFrame", ):
+        
         """
         Convert a dictionary to a table. The method `DataFrame.from_dict()` is used. See this method to learn more about conversion
         
@@ -35,9 +40,10 @@ class View:
         else:
             return df
     
-
+class TableView(View):
+    
     @staticmethod
-    def subsample(table: DataFrame, max_nb_bins:int = 100, orient:str='index', zoom:list=[None, None, None, None], method="smooth", stringify:bool=False)-> (str, "DataFrame", ):
+    def to_subtable(table: DataFrame, max_nb_bins:int = 100, orient:str='index', zoom:list=[None, None, None, None], method="smooth", stringify:bool=False)-> (str, "DataFrame", ):
         
         """
         Subsamples a table according to the `index`, `columns` or `both` orientation

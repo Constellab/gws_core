@@ -4,7 +4,7 @@ import copy
 import json
 import asyncio
 
-from gws.model import Model, Resource, Viewable, ViewModel
+from gws.model import Model, Resource, Viewable, ViewModel, ProcessType
 from gws.controller import Controller
 from gws.http import *
 
@@ -46,11 +46,13 @@ class TestControllerHTTP(unittest.TestCase):
         ViewModel.drop_table()
         Home.drop_table()
         Person.drop_table()
+        ProcessType.drop_table()
 
     @classmethod
     def tearDownClass(cls):
         ViewModel.drop_table()
         Person.drop_table()
+        ProcessType.drop_table()
         pass
 
     def test_get_model(self):

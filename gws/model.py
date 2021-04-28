@@ -459,11 +459,7 @@ class Model(BaseModel):
         :raises Exception: If the input data is not a `dict`
         """
 
-        if not self.table_exists():
-            self.create_table()
-
         _FTSModel = self.fts_model()
-
         with DbManager.db.atomic() as transaction:
             try:
                 if self._is_fts_active:
@@ -1437,6 +1433,8 @@ class ProgressBar(Model):
 
 class ProcessType(Viewable):
     ptype = CharField(null=True, index=True, unique=True)
+    base_ptype = CharField(null=True, index=True)
+    
     _table_name = 'gws_process_type'
     
     def to_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
@@ -1589,7 +1587,6 @@ class Process(Viewable):
         for k in self.data["input"]:
             uri = self.data["input"][k]
             self._input.__setitem_without_check__(k, Resource.get(Resource.uri == uri))
-
         # output
         for k in self.output_specs:
             self._output.create_port(k,self.output_specs[k])
@@ -1638,6 +1635,10 @@ class Process(Viewable):
         exist = ProcessType.select().where(ProcessType.ptype == cls.full_classname()).count()
         if not exist:
             pt = ProcessType(ptype = cls.full_classname())
+            if issubclass(cls, Protocol):
+                pt.base_ptype = "gws.model.Protocol"
+            else:
+                pt.base_ptype = "gws.model.Process"  
             pt.save()
         
     def create_experiment(self, study: 'Study', uri:str=None, user: 'User' = None):
@@ -1928,7 +1929,8 @@ class Process(Viewable):
         self.data["output"] = {}
         for k in self._output:
             self.data["output"][k] = self._output[k].uri
-            
+         
+        self.save()
         await self._run_next_processes()
         
     def __rshift__(self, name: str) -> OutPort:

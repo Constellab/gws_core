@@ -246,6 +246,23 @@ async def get_list_of_protocols(experiment_uri: str = None, \
         experiment_uri = experiment_uri,
     )
 
+@app.get("/protocol-type/list", tags=["Protocol"], summary="Get the list of protocol types")
+async def get_list_of_protocol_types(page: int = 1, \
+                                    number_of_items_per_page: int = 20, \
+                                    _: UserData = Depends(check_user_access_token)) -> (dict, str,):
+    """
+    Retrieve a list of protocols. The list is paginated.
+
+    - **page**: the page number 
+    - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
+    """
+
+    return Controller.fetch_process_type_list(
+        base_ptype="protocol",
+        page = page, 
+        number_of_items_per_page = number_of_items_per_page
+    )
+
 @app.get("/protocol/{uri}", tags=["Protocol"], summary="Get a protocol")
 async def get_protocol(uri: str, \
                        _: UserData = Depends(check_user_access_token)) -> (dict, str,):
@@ -293,6 +310,7 @@ async def get_list_of_process_types(page: int = 1, \
     """
 
     return Controller.fetch_process_type_list(
+        base_ptype="process",
         page = page, 
         number_of_items_per_page = number_of_items_per_page
     )

@@ -240,9 +240,6 @@ class CSVData(Resource):
         
     # -- V ---
     
-    def view__subsample__as_csv(self):
-        pass
-    
 # ####################################################################
 #
 # Importer class

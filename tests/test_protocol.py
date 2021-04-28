@@ -164,7 +164,12 @@ class TestProtocol(unittest.TestCase):
         e = super_proto.create_experiment(study=GTest.study, user=GTest.user)
         
         def _on_end(*args, **kwargs):
-            s3 = json.loads(mini_proto.dumps(bare=True))
+            
+            print("---- reload mini travel ----")
+            mini_proto_reloaded = Protocol.get_by_id(mini_proto.id)
+            print(mini_proto_reloaded.dumps())
+            
+            s3 = json.loads(mini_proto_reloaded.dumps(bare=True))
             self.assertEqual(s1,s3)
             Q = Protocol.select()
             self.assertEqual(len(Q), count+2)

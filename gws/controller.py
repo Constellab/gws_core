@@ -270,10 +270,17 @@ class Controller(Base):
         return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json(shallow=True)      
  
     @classmethod
-    def fetch_process_type_list(cls, page=1, number_of_items_per_page=20, filters=[]):
+    def fetch_process_type_list(cls, base_ptype=None, page=1, number_of_items_per_page=20, filters=[]):
         from gws.model import ProcessType
+
         Q = ProcessType.select()\
                         .order_by(ProcessType.ptype.desc())
+        
+        if base_ptype == "process":
+            Q = Q.where(ProcessType.base_ptype=="gws.model.Process")
+        elif base_ptype == "protocol":
+            Q = Q.where(ProcessType.base_ptype=="gws.model.Protocol")
+            
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
         return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json(shallow=True)      
      
@@ -484,8 +491,8 @@ class Controller(Base):
                     submodule = importlib.import_module(brick_name+"."+module_name)
                     for class_name, _ in inspect.getmembers(submodule, inspect.isclass):
                         t = getattr(submodule, class_name, None)
-                        is_process_and_not_protocol = issubclass(t, Process) and not issubclass(t, Protocol)
-                        if is_process_and_not_protocol:
+                        is_process = issubclass(t, Process)
+                        if is_process:
                             process_type_list.append(t)
                 except:
                     pass

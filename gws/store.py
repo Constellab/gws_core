@@ -103,7 +103,7 @@ class KVStore:
             raise Error(f"The key must be a string. The actual value is {key}")
         
         if not os.path.exists(self.dir_path):
-            raise Error("KVStore", "__getitem__", f"Key {key} does not exist")
+            raise Error("KVStore", "__getitem__", f"Key '{key}' does not exist")
         
         self._kv_data = shelve.open(self.file_path)
         val = self._kv_data[key]

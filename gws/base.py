@@ -180,7 +180,13 @@ class BaseModel(Base, Model):
     """
 
     _table_name = 'gws_base'
-
+    
+    def save(self, *args, **kwargs) -> bool:
+        if not self.table_exists():
+            self.create_table()
+        
+        return super().save(*args, **kwargs)
+    
     class Meta:
         database = DbManager.db
         table_function = format_table_name
@@ -206,7 +212,13 @@ class BaseFTSModel(Base, FTS5Model):
         t = self._related_model
         Q = t.select( *args, **kwargs ).where(t.id == self.rowid)
         return Q[0]
-
+    
+    def save(self, *args, **kwargs) -> bool:
+        if not self.table_exists():
+            self.create_table()
+        
+        return super().save(*args, **kwargs)
+    
     class Meta:
         database = DbManager.db
         table_function = format_fts_table_name
