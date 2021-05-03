@@ -34,7 +34,7 @@ class File(Resource):
     _mode = "t"
     _table_name = "gws_file"
     __download_url = "https://lab.{}/core-api/file/{}/download"
-    
+
     # -- A --
         
     # -- C --
@@ -118,7 +118,8 @@ class File(Resource):
     
     def move_to_default_store(self):
         fs =  LocalFileStore.get_default_instance()
-        fs.move_to_store(fs)
+        if not fs.contains(self):
+            fs.add(self)
             
     # -- N --
     
