@@ -1,0 +1,26 @@
+{
+    "python.pythonPath": "/usr/bin/python3",
+    // open files in new tab
+    "workbench.editor.enablePreview": false,
+    // custom config for python
+    "[python]": {
+        // format the code on save
+        "editor.formatOnSave": true,
+        // actions run on save
+        "editor.codeActionsOnSave": {
+            // reoaganize imports on save
+            "source.organizeImports": true
+        }
+    },
+
+    // linting rules it takes the rules of .pylintrc file
+    "python.linting.pylintPath": "/usr/local/bin/pylint",
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.linting.pylintUseMinimalCheckers": false,
+    "python.linting.lintOnSave": true,
+
+    // python formatting (indentation)
+    "python.formatting.provider": "autopep8",
+    "python.formatting.autopep8Path": "/usr/local/bin/autopep8",
+}

@@ -1,14 +1,11 @@
-import os
 import unittest
-import json
 
 from gws.model import Experiment, Protocol, User
-from gws.central import Central
-from gws.settings import Settings
-from gws.logger import Error
+from gws.service.user_service import UserService
+
 
 class TestCentral(unittest.TestCase):
-    
+
     @classmethod
     def setUpClass(cls):
         User.drop_table()
@@ -30,7 +27,7 @@ class TestCentral(unittest.TestCase):
             "token": "test",
             "group": "user"
         }
-        tf = Central.create_user(data)
+        tf = UserService.create_user(data)
         self.assertTrue(tf)
         user = User.get_by_uri("1234567890")
         self.assertEqual(user.uri, "1234567890")

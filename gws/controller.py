@@ -18,6 +18,7 @@ from typing import List
 from fastapi import UploadFile, File as FastAPIFile
 from starlette_context import context
 
+
 class Controller(Base):
     """
     Controller class
