@@ -1,0 +1,16 @@
+# File to describe the pylint rules
+
+[MASTER]
+disable=
+    missing-function-docstring,
+    missing-module-docstring,
+    missing-class-docstring,
+
+    no-else-raise,
+    no-else-return
+
+
+[FORMAT]
+max-line-length=140
+
+

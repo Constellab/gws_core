@@ -215,7 +215,9 @@ dmypy.json
 .pytype/
 
 #vscode settings
-.vscode/settings.json
+#.vscode/settings.json
 
 #bin
 bin/
+
+.idea
