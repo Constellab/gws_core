@@ -223,7 +223,7 @@ class FileSet(ResourceSet):
 #
 # ####################################################################
 
-class Uploader(Process):
+class FileUploader(Process):
     input_specs = {}
     output_specs = {'result' : (FileSet, File,)}
     config_specs = {
@@ -276,7 +276,7 @@ class Uploader(Process):
 #
 # ####################################################################
 
-class Importer(Process):
+class FileImporter(Process):
     input_specs = {'file' : File}
     output_specs = {"data" : Resource}
     config_specs = {
@@ -297,7 +297,7 @@ class Importer(Process):
 #
 # ####################################################################
 
-class Exporter(Process):
+class FileExporter(Process):
     """
     File exporter. The file is writen in a file store
     """
@@ -343,7 +343,7 @@ class Exporter(Process):
 #
 # ####################################################################
 
-class Loader(Process):
+class FileLoader(Process):
     input_specs = {}
     output_specs = {"data" : Resource}
     config_specs = {
@@ -370,7 +370,7 @@ class Loader(Process):
 #
 # ####################################################################
 
-class Dumper(Process):
+class FileDumper(Process):
     """
     Generic data exporter
     """

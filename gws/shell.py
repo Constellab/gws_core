@@ -29,7 +29,8 @@ class Shell(Process):
     
     _out_type = "text"
     _tmp_dir = None
-        
+    _shell = False
+    
     def build_command(self) -> list:
         """
         This method builds the command to execute.
@@ -98,9 +99,10 @@ class Shell(Process):
                 cmd,
                 text = True if self._out_type == "text" else False,
                 cwd=self.cwd.name,
-                shell=True
+                shell=self._shell,
+                stdout=subprocess.PIPE
             )
-
+            
             self.data['cmd'] = cmd 
             self.gather_outputs(stdout=proc.stdout)
 
@@ -122,7 +124,7 @@ class Shell(Process):
 
             
 class CondaShell(Shell):
-
+    _shell = True
     def _format_command(self, user_cmd) -> list:
         if isinstance(user_cmd, list):
             for k in range(0,len(user_cmd)):
@@ -135,7 +137,7 @@ class CondaShell(Shell):
 
     
 class EasyShell(Shell):
-    
+    _shell = False
     _cmd: list = None
     
     def build_command(self) -> list:

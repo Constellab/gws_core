@@ -174,8 +174,8 @@ class Controller(Base):
     @classmethod
     async def __action_upload(cls, files: List[UploadFile] = FastAPIFile(...), study_uri=None):
         from gws.model import Study
-        from gws.file import Uploader
-        uploader = Uploader(files=files)
+        from gws.file import FileUploader
+        uploader = FileUploader(files=files)
 
         user=Controller.get_current_user()
         

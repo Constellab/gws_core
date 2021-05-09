@@ -8,7 +8,7 @@ from pandas import DataFrame
 
 from gws.settings import Settings
 from gws.model import Protocol, Study, User
-from gws.csv import CSVData, Loader, Dumper, Importer, Exporter
+from gws.csv import *
 from gws.file import File
 from gws.store import LocalFileStore
 from gws.unittest import GTest
@@ -23,10 +23,10 @@ class TestCSV(unittest.TestCase):
     def setUpClass(cls):
         LocalFileStore.remove_all_files(ignore_errors=True)
         File.drop_table()
-        Dumper.drop_table()
-        Loader.drop_table()
-        Importer.drop_table()
-        Exporter.drop_table()
+        CSVDumper.drop_table()
+        CSVLoader.drop_table()
+        CSVImporter.drop_table()
+        CSVExporter.drop_table()
         Study.drop_table()
         User.drop_table()
         GTest.init()
@@ -36,10 +36,10 @@ class TestCSV(unittest.TestCase):
     def tearDownClass(cls):
         LocalFileStore.remove_all_files(ignore_errors=True)
         File.drop_table()
-        Dumper.drop_table()
-        Loader.drop_table()
-        Importer.drop_table()
-        Exporter.drop_table()
+        CSVDumper.drop_table()
+        CSVLoader.drop_table()
+        CSVImporter.drop_table()
+        CSVExporter.drop_table()
         Study.drop_table()
         User.drop_table()
         pass
@@ -73,11 +73,11 @@ class TestCSV(unittest.TestCase):
         i_file_path = os.path.join(testdata_dir, "data.csv")
         o_file_path = os.path.join(testdata_dir, "data_out.csv")
         
-        loader = Loader()
-        dumper = Dumper()
+        loader = CSVLoader()
+        dumper = CSVDumper()
         
-        importer = Importer()
-        exporter = Exporter()
+        importer = CSVImporter()
+        exporter = CSVExporter()
         
         proto = Protocol(
             processes = {

@@ -3268,7 +3268,7 @@ class Resource(Viewable):
     
     def _export(self, file_path: str, file_format:str = None):
         """ 
-        Export to a give repository
+        Export the resource to a repository
 
         :param file_path: The destination file path
         :type file_path: str
@@ -3283,7 +3283,7 @@ class Resource(Viewable):
     @classmethod
     def _import(cls, file_path: str, file_format:str = None) -> any:
         """ 
-        Import a give from repository
+        Import a resource from a repository. Must be overloaded by the child class.
 
         :param file_path: The source file path
         :type file_path: str

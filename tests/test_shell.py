@@ -19,7 +19,7 @@ class Echo(EasyShell):
     
     _cmd: list = ['echo', '{param:name}']
     
-    def after_command(self, stdout: str=None, tmp_dir: str=None):
+    def gather_outputs(self, stdout: str=None):
         res = Resource()
         res.data["out"] = stdout
         self.output["stdout"] = res

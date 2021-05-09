@@ -16,8 +16,7 @@ from gws.model import Process, Config
 from gws.model import Resource
 from gws.controller import Controller
 from gws.logger import Error
-from gws.file import File, Dumper as BaseDumper, Loader as BaseLoader, \
-                    Importer as BaseImporter, Exporter as BaseExporter
+from gws.file import *
 
 class CSVData(Resource):
     def __init__(self, *args, table: (DataFrame, np.ndarray,) = None, \
@@ -246,7 +245,7 @@ class CSVData(Resource):
 #
 # ####################################################################
     
-class Importer(BaseImporter):
+class CSVImporter(FileImporter):
     input_specs = {'file' : File}
     output_specs = {'data': CSVData}
     config_specs = {
@@ -262,7 +261,7 @@ class Importer(BaseImporter):
 #
 # ####################################################################
 
-class Exporter(BaseExporter):
+class CSVExporter(FileExporter):
     input_specs = {'data': CSVData}
     output_specs = {'file' : File}
     config_specs = {
@@ -280,7 +279,7 @@ class Exporter(BaseExporter):
 #
 # ####################################################################
 
-class Loader(BaseLoader):
+class CSVLoader(FileLoader):
     input_specs = {}
     output_specs = {'data' : CSVData}
     config_specs = {
@@ -297,7 +296,7 @@ class Loader(BaseLoader):
 #
 # ####################################################################
 
-class Dumper(BaseDumper):
+class CSVDumper(FileDumper):
     input_specs = {'data' : CSVData}
     output_specs = {}
     config_specs = {
