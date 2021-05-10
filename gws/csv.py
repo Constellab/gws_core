@@ -19,6 +19,8 @@ from gws.logger import Error
 from gws.file import *
 
 class CSVData(Resource):
+    _required_column_names = []
+
     def __init__(self, *args, table: (DataFrame, np.ndarray,) = None, \
                  column_names=None, row_names=None, **kwargs):
         

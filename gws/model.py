@@ -1437,6 +1437,8 @@ class ProgressBar(Model):
 
 class ProcessType(Viewable):
     ptype = CharField(null=True, index=True, unique=True)
+    base_ptype = CharField(null=True, index=True)
+    
     _table_name = 'gws_process_type'
     
     def to_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
@@ -1638,8 +1640,12 @@ class Process(Viewable):
         exist = ProcessType.select().where(ProcessType.ptype == cls.full_classname()).count()
         if not exist:
             pt = ProcessType(ptype = cls.full_classname())
+            if issubclass(cls, Protocol):
+                pt.base_ptype = "gws.model.Protocol"
+            else:
+                pt.base_ptype = "gws.model.Process"  
             pt.save()
-        
+            
     def create_experiment(self, study: 'Study', uri:str=None, user: 'User' = None):
         """
         Create an experiment using a protocol composed of this process
@@ -1896,6 +1902,9 @@ class Process(Viewable):
         self.data["input"] = {}
         for k in self._input:
             if self._input[k]:  #-> check that an input resource exists (for optional input)
+                if not self._input[k].is_saved():
+                    self._input[k].save()
+                    
                 self.data["input"][k] = self._input[k].uri
             
         self.progress_bar.start(max_value=self._max_progress_value)

@@ -242,10 +242,6 @@ class Settings(PWModel):
     
     # -- U --
     
-    def use_prod_biota_db( self, tf: bool ):
-        self.data["use_prod_biota_db"] = tf
-        self.save()
-        
     # -- V --
 
     @property

@@ -40,6 +40,8 @@ class Logger:
     def error(cls, message):
         Logger()
         cls._logger.error(f"ERROR: {datetime.datetime.now().time()} -- {message}")
+        if cls._is_test or cls.show_all:
+            print(message)
 
     # -- F --
 

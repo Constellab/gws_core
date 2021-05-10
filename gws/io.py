@@ -113,7 +113,7 @@ class Port(Base):
         if self._resource is None:
             return self.is_optional and (not self.is_connected)
         
-        return isinstance(self._resource, self._resource_types) and self._resource.is_saved()
+        return isinstance(self._resource, self._resource_types) #and self._resource.is_saved()
     
     @property
     def is_optional(self)->bool:

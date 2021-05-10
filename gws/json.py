@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 import json
+from gws.file import *
 from gws.model import Resource
 
 class JSONData(Resource):
@@ -12,7 +13,7 @@ class JSONData(Resource):
 
     # -- E --
     
-    def _export(self, file_path: str, file_format:str = None):
+    def _export(self, file_path: str, file_format:str = ".json", prettify: bool=False):
         """ 
         Export to a give repository
 
@@ -21,7 +22,10 @@ class JSONData(Resource):
         """
         
         with open(file_path, "w") as f:
-            json.dump(self.kv_data, f, indent=4)
+            if prettify:
+                json.dump(self.kv_data, f, indent=4)
+            else:
+                json.dump(self.kv_data, f)
             
     # -- G --
     
@@ -34,7 +38,7 @@ class JSONData(Resource):
     # -- I --
     
     @classmethod
-    def _import(cls, file_path: str, file_format:str = None) -> any:
+    def _import(cls, file_path: str, file_format:str = ".json") -> any:
         """ 
         Import a give from repository
 
@@ -96,3 +100,60 @@ class JSONData(Resource):
     
     def __setitem__(self, key, val):
         self.data[key] = val
+
+# ####################################################################
+#
+# Importer class
+#
+# ####################################################################
+    
+class JSONImporter(FileImporter):
+    input_specs = {'file' : File}
+    output_specs = {'data': JSONData}
+    config_specs = {
+        'file_format': {"type": str, "default": ".json", 'description': "File format"},
+    }
+
+# ####################################################################
+#
+# Exporter class
+#
+# ####################################################################
+
+class JSONExporter(FileExporter):
+    input_specs = {'data': JSONData}
+    output_specs = {'file' : File}
+    config_specs = {
+        'file_name': {"type": str, "default": 'file.json', 'description': "Destination file name in the store"},
+        'file_format': {"type": str, "default": ".json", 'description': "File format"},
+        'prettify': {"type": bool, "default": False, 'description': "True to indent and prettify the JSON file, False otherwise"}
+    }
+
+# ####################################################################
+#
+# Loader class
+#
+# ####################################################################
+
+class JSONLoader(FileLoader):
+    input_specs = {}
+    output_specs = {'data' : JSONData}
+    config_specs = {
+        'file_path': {"type": str, "default": None, 'description': "Location of the file to import"},
+        'file_format': {"type": str, "default": ".json", 'description': "File format"}
+    }
+
+# ####################################################################
+#
+# Dumper class
+#
+# ####################################################################
+
+class JSONDumper(FileDumper):
+    input_specs = {'data' : JSONData}
+    output_specs = {}
+    config_specs = {
+        'file_path': {"type": str, "default": None, 'description': "Destination of the exported file"},
+        'file_format': {"type": str, "default": ".csv", 'description': "File format"},
+        'prettify': {"type": bool, "default": False, 'description': "True to indent and prettify the JSON file, False otherwise"}
+    }
