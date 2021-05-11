@@ -26,7 +26,7 @@ class TestConfig(unittest.TestCase):
         c = Config(specs=specs)
 
         self.assertEquals(c.specs, specs)
-        self.assertEquals(c.params, {})
+        self.assertEquals(c.params, {'moving_step': 0.1})
 
         c.set_param('moving_step', 4.5)
         self.assertEquals(c.params, {'moving_step': 4.5})

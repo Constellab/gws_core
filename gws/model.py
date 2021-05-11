@@ -32,7 +32,7 @@ from peewee import  Field, IntegerField, FloatField, DateField, \
                     AutoField, BigAutoField
 from playhouse.sqlite_ext import JSONField, SearchField, RowIDField
 
-from gws.logger import Error, Info
+from gws.logger import Error, Info, Warning
 #from gws.store import KVStore
 from gws.settings import Settings
 from gws.base import format_table_name, slugify, BaseModel, BaseFTSModel, DbManager
@@ -231,7 +231,7 @@ class Model(BaseModel):
 
     def delete_instance(self, *args, **kwargs):
         self.kv_store.remove()
-        super.delete_instance(*args, **kwargs)
+        super().delete_instance(*args, **kwargs)
         
     @classmethod
     def drop_table(cls):
@@ -997,7 +997,7 @@ class Viewable(Model):
                     transaction.rollback()
                     return False
             except Exception as err:
-                print(err)
+                Warning(err)
                 transaction.rollback()
                 return False
 
@@ -1209,6 +1209,14 @@ class Config(Viewable):
         """ 
         Returns specs
         """
+        
+        specs = self.data["specs"]
+        for k in specs:
+            if not k in self.data["params"]:
+                default = specs[k].get("default", None)
+                if default:
+                    self.set_param(k,default)
+            
         return self.data["params"]
     
     # -- R --
@@ -1627,7 +1635,7 @@ class Process(Viewable):
                             transaction.rollback()
                             return False
             except Exception as err:
-                print(err)
+                Warning(err)
                 transaction.rollback()
                 return False
                     
@@ -2263,7 +2271,6 @@ class Protocol(Process):
                         is_removed = True
 
                     if is_removed:
-                        print(f" --> delete proc {k}")
                         proc.delete_instance()
                         deleted_keys.append(k)
                     
@@ -2339,7 +2346,7 @@ class Protocol(Process):
             connector = (lhs_proc>>lhs_port_name | rhs_proc<<rhs_port_name)
             self.add_connector(connector)
         
-        self.save()
+        self.save(update_graph=True)
         
     # -- C --
 
@@ -2905,7 +2912,7 @@ class Experiment(Viewable):
                     return False
                     
             except Exception as err:
-                print(err)
+                Warning(err)
                 transaction.rollback()
                 return False
 
@@ -3082,10 +3089,6 @@ class Experiment(Viewable):
             cmd.append("--cli_test")
         
         sproc = SysProc.popen(cmd, stderr=DEVNULL, stdout=DEVNULL)
-        #import subprocess
-        #out = subprocess.check_output(cmd)
-        #print(out)
-        
         self.data["pid"] = sproc.pid
         self.save()
         
