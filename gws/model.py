@@ -1350,6 +1350,11 @@ class ProgressBar(Model):
         else:
             return -1
     
+    # -- G --
+    
+    def get_max_value(self) -> float:
+        return self.data["max_value"]
+    
     # -- I --
     
     @property
@@ -1391,11 +1396,14 @@ class ProgressBar(Model):
         self.save()
         
     def set_value(self, value: float, message="Experiment under progress ..."):
-        """Increment the progress-bar value"""
+        """
+        Increment the progress-bar value
+        """
         
         _max = self.data["max_value"]        
         if _max == 0.0:
-            raise Error("ProgressBar", "start", "The progress bar has not started")
+            self.start()
+            #raise Error("ProgressBar", "start", "The progress bar has not started")
             
         if value > _max:
             value = _max
@@ -1435,7 +1443,7 @@ class ProgressBar(Model):
            
         self.data["max_value"] = value
         self.save()
-
+    
     
 # ####################################################################
 #
@@ -2309,7 +2317,7 @@ class Protocol(Process):
                         self.add_process( k, proc )
                 
                 # update config if required
-                config = node_json.get("config"):
+                config = node_json.get("config")
                 if config:
                     params = config.get("data",{}).get("params",{})
                     proc.config.set_params(params)

@@ -33,8 +33,7 @@ class Shell(Process):
     _out_type = "text"
     _tmp_dir = None
     _shell = False
-    _nb_iterations = 100
-    
+
     def build_command(self) -> list:
         """
         This method builds the command to execute.
@@ -55,7 +54,7 @@ class Shell(Process):
         
         return user_cmd
 
-    def gather_outputs(self, stdout: str=None):
+    def gather_outputs(self):
         """
         This methods gathers the results of the shell process. It must be overloaded by subclasses.
         
@@ -63,15 +62,26 @@ class Shell(Process):
         output files generated in the current working directory (see `gws.Shell.cwd`)
         
         :param stdout: The standard output of the shell process
-        :param type: `str`
+        :type stdout: `str`
         """
         
         pass
     
-    def update_progress_bar(self, iteration=0, stdout_line: str=""):
-        next_counter = iteration + 1
-        message = stdout_line
-        return next_counter, message
+    def on_stdout_change(self, stdout_count: int=0, stdout_line: str="") -> tuple:
+        """
+        This methods is triggered each time the stdout of the shell subprocess has changed.
+        
+        It can be overloaded to update the progress bar for example.
+
+        :param stdout_count: The current count of stdout lines
+        :type stdout_count: `int`
+        :param stdout_line: The last standard output line
+        :type stdout_line: `str`
+        
+        """
+        
+        pass
+                    
     
     @property
     def cwd(self):
@@ -113,28 +123,18 @@ class Shell(Process):
                 stdout=subprocess.PIPE
             )
             
-            if self._nb_iterations:
-                self.progress_bar.set_max_value(self._nb_iterations)
-            
-            i = 0
-            stdout = ""
+            count = 0
             for line in iter(proc.stdout.readline, b''):
                 line = line.decode().strip()
-                stdout += line
                 Info(line)
                 if not proc.is_alive():
                     break
                 
-                if i <  self._nb_iterations:
-                    # prevent blocking the progress bar
-                    counter, message = self.update_progress_bar(iteration=i, line)
-                    self.progress_bar.set_value(counter, message=messages)
-                i += 1
-            
-            self.progress_bar.set_value(self._nb_iterations)
-            
-            self.data['cmd'] = cmd 
-            self.gather_outputs(stdout=stdout)
+                self.on_stdout_change(stdout_count=count, stdout_line=line) 
+                count += 1
+
+            self.data['cmd'] = cmd
+            self.gather_outputs()
 
             for k in self.output:
                 f = self.output[k]
