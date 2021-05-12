@@ -2307,7 +2307,14 @@ class Protocol(Process):
                     
                     if not k in self._processes:
                         self.add_process( k, proc )
-
+                
+                # update config if required
+                config = node_json.get("config"):
+                if config:
+                    params = config.get("data",{}).get("params",{})
+                    proc.config.set_params(params)
+                    proc.config.save()
+                
             except Exception as err:
                 raise Error("gws.model.Protocol", "_build_from_dump", f"An error occured. Error: {err}")
         

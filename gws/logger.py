@@ -41,7 +41,9 @@ class Logger:
         Logger()
         cls._logger.error(f"ERROR: {datetime.datetime.now().time()} -- {message}")
         if cls._is_test or cls.show_all:
-            print(message)
+            print('\x1b[2K\r', end='\r')
+            print(message, end='\r')
+            
 
     # -- F --
 
@@ -57,7 +59,8 @@ class Logger:
         Logger()
         cls._logger.info(f"INFO: {datetime.datetime.now().time()} -- {message}")
         if cls._is_test or cls.show_all:
-            print(message)
+            print('\x1b[2K\r', end='\r')
+            print(message, end='\r')
     
     # -- S --
     
@@ -71,7 +74,8 @@ class Logger:
         Logger()
         cls._logger.warning(f"WARNING: {datetime.datetime.now().time()} # {message}")
         if cls._is_test or cls.show_all:
-            print(message)
+            print('\x1b[2K\r', end='\r')
+            print(message, end='\r')
             
 
 class Error(Exception):

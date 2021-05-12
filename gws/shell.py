@@ -3,10 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import os
+import os, sys
 import tempfile
 import re
 import subprocess
+import time
 
 from typing import Optional
 from gws.model import Process
@@ -14,7 +15,9 @@ from gws.file import File
 from gws.settings import Settings
 from gws.file import FileStore, LocalFileStore
 from gws.controller import Controller
-from gws.logger import Error
+from gws.logger import Error, Info
+from gws.system import SysProc
+
 
 class Shell(Process):
     """
@@ -30,6 +33,7 @@ class Shell(Process):
     _out_type = "text"
     _tmp_dir = None
     _shell = False
+    _nb_iterations = 100
     
     def build_command(self) -> list:
         """
@@ -64,6 +68,11 @@ class Shell(Process):
         
         pass
     
+    def update_progress_bar(self, iteration=0, stdout_line: str=""):
+        next_counter = iteration + 1
+        message = stdout_line
+        return next_counter, message
+    
     @property
     def cwd(self):
         """
@@ -94,17 +103,38 @@ class Shell(Process):
 
             if not os.path.exists(self.cwd.name):
                 os.makedirs(self.cwd.name)
-
-            proc = subprocess.run( 
+            
+            #proc = subprocess.run( 
+            #proc = subprocess.Popen(
+            proc = SysProc.popen(
                 cmd,
-                text = True if self._out_type == "text" else False,
                 cwd=self.cwd.name,
                 shell=self._shell,
                 stdout=subprocess.PIPE
             )
             
+            if self._nb_iterations:
+                self.progress_bar.set_max_value(self._nb_iterations)
+            
+            i = 0
+            stdout = ""
+            for line in iter(proc.stdout.readline, b''):
+                line = line.decode().strip()
+                stdout += line
+                Info(line)
+                if not proc.is_alive():
+                    break
+                
+                if i <  self._nb_iterations:
+                    # prevent blocking the progress bar
+                    counter, message = self.update_progress_bar(iteration=i, line)
+                    self.progress_bar.set_value(counter, message=messages)
+                i += 1
+            
+            self.progress_bar.set_value(self._nb_iterations)
+            
             self.data['cmd'] = cmd 
-            self.gather_outputs(stdout=proc.stdout)
+            self.gather_outputs(stdout=stdout)
 
             for k in self.output:
                 f = self.output[k]

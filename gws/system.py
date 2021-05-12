@@ -142,3 +142,11 @@ class SysProc:
     
     def stats(self):
         return self._ps.as_dict()
+    
+    @property
+    def stdout(self):
+        return self._ps.stdout
+    
+    @property
+    def stderr(self):
+        return self._ps.stderr
