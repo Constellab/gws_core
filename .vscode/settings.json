@@ -10,7 +10,9 @@
         "editor.codeActionsOnSave": {
             // reoaganize imports on save
             "source.organizeImports": true
-        }
+        },
+        // remove trailling whitespace on save
+        "files.trimTrailingWhitespace": true,
     },
 
     // linting rules it takes the rules of .pylintrc file
@@ -23,4 +25,11 @@
     // python formatting (indentation)
     "python.formatting.provider": "autopep8",
     "python.formatting.autopep8Path": "/usr/local/bin/autopep8",
+
+    // activate mypy to have type hint checking
+    "python.linting.mypyEnabled": true,
+    "python.linting.mypyPath": "/usr/local/bin/mypy",
+    "python.linting.mypyArgs": [
+        "--config-file=${workspaceFolder}/.mypy.ini"
+    ]
 }

@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -116,7 +116,7 @@ async def get_user_list(page: int = 1, \
     """
     Retrieve the list of users. Requires central privilege.
     
-    - **page**: the page number 
+    - **page**: the page number
     - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
     """
     
@@ -158,31 +158,30 @@ async def deactivate_user(uri: str, _: UserData = Depends(check_central_api_key)
     except Exception as err:
         raise HTTPInternalServerError(detail=f"Cannot deactivate the user. Error: {err}")
 
-@central_app.get("/user/{uri}", tags=["User management"])
-async def get_user(uri: str, _: UserData = Depends(check_central_api_key)):
-    """
-    Retrieve a user. Requires central privilege.
+    @app.get("/user/{uri}", tags=["User management"])
+    async def get_user(uri: str, _: UserData = Depends(check_central_api_key)):
+        """
+        Get the details of a user. Require central privilege.
 
-    - **uri**: the user uri
-    """
-    
-    from gws.service.user_service import UserService
-    
-    try:
-        return UserService.fetch_user(uri)
-    except Exception as err:
-        raise HTTPInternalServerError(detail=f"Cannot get the user. Error: {err}")
-        
-#def __convert_user_to_dto(user: str) -> Dict:
-#    return {
-#        "uri": user.uri,
-#        "email": user.email,
-#        "group": user.group,
-#        "is_active": user.is_active,
-#        "firstname": user.data["first_name"],
-#        "lastname": user.data["last_name"]
-#    }
-#
-#
-#def __convert_users_to_dto(users: List[User]) -> List[Dict]:
-#    return list(map(__convert_user_to_dto, users))
+        - **uri**: the user uri
+        """
+
+        try:
+            return __convert_user_to_dto(UserService.get_user_by_uri(uri))
+        except Exception as err:
+            raise HTTPInternalServerError(
+                detail=f"Cannot get the user. Error: {err}")
+
+def __convert_user_to_dto(user: User) -> Dict:
+    return {
+        "uri": user.uri,
+        "email": user.email,
+        "group": user.group,
+        "is_active": user.is_active,
+        "firstname": user.data["first_name"],
+        "lastname": user.data["last_name"]
+    }
+
+
+def __convert_users_to_dto(users: List[User]) -> List[Dict]:
+    return list(map(__convert_user_to_dto, users))
