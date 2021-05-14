@@ -2428,7 +2428,7 @@ class Protocol(Process):
         
     # -- C --
 
-    def create_experiment(self, study: 'Study', uri: str=None, user: 'User'=None):
+    def create_experiment(self, study: 'Study', user: 'User'=None):
         """
         Realize a protocol by creating a experiment
         
@@ -2446,10 +2446,8 @@ class Protocol(Process):
             if user is None:
                 raise Error("Process", "create_experiment", "A user is required")
                 
-        if uri:
-            e = Experiment(uri=uri, user=user, study=study, protocol=self)
-        else:
-            e = Experiment(user=user, study=study, protocol=self)
+       
+        e = Experiment(user=user, study=study, protocol=self)
 
         e.save()
         
