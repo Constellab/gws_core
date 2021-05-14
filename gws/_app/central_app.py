@@ -72,7 +72,7 @@ async def generate_user_access_token(user_uri_data: UserUriData,
     return await _generate_user_access_token(user_uri_data.uri)
 
 
-@central_app.post("/user/create", tags=["User management"])
+@central_app.post("/user", tags=["User management"])
 async def create_user(user: UserData, _: UserData = Depends(check_central_api_key)):
     """
     Create a new user
@@ -84,11 +84,11 @@ async def create_user(user: UserData, _: UserData = Depends(check_central_api_ke
     - **first_name**: The first names
     - **last_name**: The last name
     """
-    
+
     from gws.service.user_service import UserService
-    
+
     try:
-        return UserService.create_user(user.dict()).to_json()
+        return __convert_user_to_dto(UserService.create_user(user.dict()))
     except Exception as err:
         raise HTTPInternalServerError(detail=f"Cannot create the user. Error: {err}")
 
@@ -115,18 +115,29 @@ async def get_user_list(page: int = 1, \
                        _: UserData = Depends(check_central_api_key)):
     """
     Retrieve the list of users. Requires central privilege.
-    
+
     - **page**: the page number
     - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
     """
-    
-    from gws.service.user_service import UserService
-    
+
+    try:
+        user: User = UserService.get_user_by_uri(uri)
+        return __convert_user_to_dto(user)
+    except Exception as err:
+        raise HTTPInternalServerError(
+            detail=f"Cannot get the user. Error: {err}")
+
+
+@app.get("/user", tags=["User management"])
+async def get_users(_: UserData = Depends(check_central_api_key)):
+    """
+    Get the all the users. Require central privilege.
+    """
     try:
         return UserService.fetch_user_list(page=page, number_of_items_per_page=number_of_items_per_page)
     except Exception as err:
         raise HTTPInternalServerError(detail=f"Cannot get the user. Error: {err}")
-        
+
 @central_app.get("/user/{uri}/activate", tags=["User management"])
 async def activate_user(uri: str, _: UserData = Depends(check_central_api_key)):
     """
@@ -134,9 +145,9 @@ async def activate_user(uri: str, _: UserData = Depends(check_central_api_key)):
 
     - **uri**: the user uri
     """
-    
+
     from gws.service.user_service import UserService
-    
+
     try:
         return UserService.activate_user(uri)
     except Exception as err:
@@ -150,9 +161,9 @@ async def deactivate_user(uri: str, _: UserData = Depends(check_central_api_key)
 
     - **uri**: the user uri
     """
-    
+
     from gws.service.user_service import UserService
-    
+
     try:
         return UserService.deactivate_user(uri)
     except Exception as err:
@@ -173,13 +184,15 @@ async def deactivate_user(uri: str, _: UserData = Depends(check_central_api_key)
                 detail=f"Cannot get the user. Error: {err}")
 
 def __convert_user_to_dto(user: User) -> Dict:
+    if user is None:
+        return None
     return {
         "uri": user.uri,
         "email": user.email,
         "group": user.group,
         "is_active": user.is_active,
-        "firstname": user.data["first_name"],
-        "lastname": user.data["last_name"]
+        "first_name": user.data["first_name"],
+        "last_name": user.data["last_name"]
     }
 
 
