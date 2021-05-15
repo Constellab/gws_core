@@ -20,11 +20,9 @@ import re
 import collections
 import time
 from subprocess import DEVNULL
-
-
 from datetime import datetime
 
-from datetime import datetime
+from fastapi.encoders import jsonable_encoder
 from peewee import SqliteDatabase, Model as PWModel
 from peewee import  Field, IntegerField, FloatField, DateField, \
                     DateTimeField, CharField, BooleanField, \
@@ -33,16 +31,15 @@ from peewee import  Field, IntegerField, FloatField, DateField, \
 from playhouse.sqlite_ext import JSONField, SearchField, RowIDField
 
 from gws.logger import Error, Info, Warning
-#from gws.store import KVStore
 from gws.settings import Settings
-from gws.base import format_table_name, slugify, BaseModel, BaseFTSModel, DbManager
 from gws.controller import Controller
 from gws.event import EventListener
 from gws.io import Input, Output, InPort, OutPort, Connector, Interface, Outerface
 from gws.utils import to_camel_case, sort_dict_by_key, generate_random_chars
 from gws.http import *
 
-from fastapi.encoders import jsonable_encoder
+from gws.base import format_table_name, slugify, BaseModel, BaseFTSModel, DbManager
+
 
 # ####################################################################
 #
@@ -1187,14 +1184,14 @@ class Config(Viewable):
 
     # -- G --
 
-    def get_param(self, name: str) -> [str, int, float, bool]:
+    def get_param(self, name: str) -> (str, int, float, bool,):
         """ 
         Returns the value of a parameter by its name
 
         :param name: The name of the parameter
         :type: str
         :return: The value of the parameter (base type)
-        :rtype: [str, int, float, bool]
+        :rtype: `str`, `int`, `float`, `bool`
         """
         if not name in self.specs:
             raise Error("gws.model.Config", "get_param", f"Parameter {name} does not exist'")
@@ -1207,7 +1204,10 @@ class Config(Viewable):
     @property
     def params(self) -> dict:
         """ 
-        Returns specs
+        Returns all the parameters
+        
+        :return: The parameters
+        :rtype: `dict`
         """
         
         specs = self.data["specs"]
@@ -1218,6 +1218,16 @@ class Config(Viewable):
                     self.set_param(k,default)
             
         return self.data["params"]
+    
+    def param_exists(self, name: str) -> bool:
+        """ 
+        Test if a parameter exists
+        
+        :return: True if the parameter exists, False otherwise
+        :rtype: `bool`
+        """
+        
+        return name in self.data.get("specs",{})
     
     # -- R --
 
@@ -1605,8 +1615,10 @@ class Process(Viewable):
             self.data["input"] = {}
 
         for k in self.data["input"]:
-            uri = self.data["input"][k]
-            self._input.__setitem_without_check__(k, Resource.get(Resource.uri == uri))
+            uri = self.data["input"][k]["uri"]
+            type_ = self.data["input"][k]["type"]
+            t = Controller.get_model_type(type_)
+            self._input.__setitem_without_check__(k, t.get(t.uri == uri))
 
         # output
         for k in self.output_specs:
@@ -1616,14 +1628,16 @@ class Process(Viewable):
             self.data["output"] = {}
 
         for k in self.data["output"]:
-            uri = self.data["output"][k]
-            self._output.__setitem_without_check__(k, Resource.get(Resource.uri == uri))
+            uri = self.data["output"][k]["uri"]
+            type_ = self.data["output"][k]["type"]
+            t = Controller.get_model_type(type_)
+            self._output.__setitem_without_check__(k, t.get(t.uri == uri))
         
     # -- A --
     
     def archive(self, tf, archive_resources=True):
         """
-        Archive the resource. Raise Error.
+        Archive the resource
         """
         
         if self.is_archived == tf:
@@ -1637,8 +1651,7 @@ class Process(Viewable):
                 self.config.archive(tf) #-> try to archive the config if possible!
 
                 if archive_resources:
-                    Q = Resource.select().where(Resource.process == self)
-                    for r in Q:
+                    for r in self.resources:
                         if not r.archive(tf):
                             transaction.rollback()
                             return False
@@ -1798,8 +1811,10 @@ class Process(Viewable):
         
         if self._input.is_empty:
             for k in self.data["input"]:
-                uri = self.data["input"][k]
-                self._input[k] = Resource.get(Resource.uri == uri)
+                uri = self.data["input"][k]["uri"]
+                type_ = self.data["input"][k]["type"]
+                t = Controller.get_model_type(type_)
+                self._input[k] = t.get(t.uri == uri)
             
         return self._input
 
@@ -1846,7 +1861,9 @@ class Process(Viewable):
         if self._output.is_empty:
             for k in self.data["output"]:
                 uri = self.data["output"][k]
-                self._output[k] = Resource.get(Resource.uri == uri)
+                type_ = self.data["output"][k]["type"]
+                t = Controller.get_model_type(type_)
+                self._output[k] = t.get(t.uri == uri)
                 
         return self._output
 
@@ -1867,6 +1884,16 @@ class Process(Viewable):
 
     # -- P --
     
+    def param_exists(self, name: str) -> bool:
+        """ 
+        Test if a parameter exists
+        
+        :return: True if the parameter exists, False otherwise
+        :rtype: `bool`
+        """
+        
+        return self.config.param_exists(name)
+    
     @property
     def protocol(self):
         if self._protocol:
@@ -1878,7 +1905,16 @@ class Process(Viewable):
         return self._protocol
     
     # -- R -- 
-        
+    
+    @property
+    def resources(self):
+        Qrel = ProcessResource.select().where(ProcessResource.process_id == self.id)
+        Q = []
+        for o in Qrel:
+            Q.append(o.resource)
+            
+        return Q
+    
     async def _run(self):
         """ 
         Runs the process and save its state in the database.
@@ -1921,7 +1957,10 @@ class Process(Viewable):
                 if not self._input[k].is_saved():
                     self._input[k].save()
                     
-                self.data["input"][k] = self._input[k].uri
+                self.data["input"][k] = {
+                    "uri": self._input[k].uri,
+                    "type": self._input[k].type
+                }
             
         self.progress_bar.start(max_value=self._max_progress_value)
         self.save()
@@ -1953,7 +1992,10 @@ class Process(Viewable):
         self.data["output"] = {}
         for k in self._output:
             if self._output[k]:  #-> check that an output resource exists (for optional outputs)
-                self.data["output"][k] = self._output[k].uri
+                self.data["output"][k] = {
+                    "uri": self._output[k].uri,
+                    "type": self._output[k].type
+                }
             
         await self._run_next_processes()
         
@@ -2720,8 +2762,10 @@ class Protocol(Process):
         
         if self.data.get("input"):
             for k in self.data.get("input"):
-                uri = self.data["input"][k]
-                self.input.__setitem_without_check__(k, Resource.get(Resource.uri == uri) )
+                uri = self.data["input"][k]["uri"]
+                type_ = self.data["input"][k]["type"]
+                t = Controller.get_model_type(type_)
+                self.input.__setitem_without_check__(k, t.get(t.uri == uri) )
 
     def __set_outerfaces(self, outerfaces: dict):
         output_specs = {}
@@ -2743,8 +2787,10 @@ class Protocol(Process):
 
         if self.data.get("output"):
             for k in self.data["output"]:
-                uri = self.data["output"][k]
-                self.output.__setitem_without_check__(k, Resource.get(Resource.uri == uri) )
+                uri = self.data["output"][k]["uri"]
+                type_ = self.data["output"][k]["type"]
+                t = Controller.get_model_type(type_)
+                self.output.__setitem_without_check__(k, t.get(t.uri == uri) )
 
     # -- T --
     
@@ -3065,9 +3111,15 @@ class Experiment(Viewable):
 
     @property 
     def resources(self):
-        Q = Resource.select()\
-                    .where(Experiment.id == self.id) \
-                    .order_by(Resource.creation_datetime.desc())
+        #Q = Resource.select()\
+        #            .where(Experiment.id == self.id) \
+        #            .order_by(Resource.creation_datetime.desc())
+        
+        Qrel = ExperimentResource.select().where(ExperimentResource.experiment_id == self.id)
+        Q = []
+        for o in Qrel:
+            Q.append(o.resource)
+            
         return Q
       
     def run_through_cli(self, *, user=None):
@@ -3268,7 +3320,6 @@ class Experiment(Viewable):
             except:
                 transaction.rollback()
                 raise Error("gws.model.Experiment", "save", f"Could not validate the experiment. Error: {err}")
-                        
 
 # ####################################################################
 #
@@ -3284,15 +3335,59 @@ class Resource(Viewable):
     :type process: Process
     """
     
-    process = ForeignKeyField(Process, null=True, backref='resources')
-    experiment = ForeignKeyField(Experiment, null=True, backref='resources')
+    #process = ForeignKeyField(Process, null=True, backref='+')
+    #experiment = ForeignKeyField(Experiment, null=True, backref='+')
 
+    _process = None
+    _experiment = None
+    
     _table_name = 'gws_resource'
+    
+    def __init__(self, *args, process: Process=None, experiment: Experiment=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if process:
+            self.process = process
+        
+        if experiment:
+            self.experiment = experiment
+        
+    # -- D --
 
-    # -- A --
-
+    @classmethod
+    def drop_table(cls, *args, **kwargs):
+        super().drop_table(*args, **kwargs)
+        ProcessResource.drop_table()
+        ExperimentResource.drop_table()
+    
     # -- E --
     
+    @property
+    def experiment(self):
+        if not self._experiment:        
+            try:
+                o = ExperimentResource.get( (resource == self)&(resource_type == self.type) )
+                self._experiment = o.experiment
+            except:
+                return None
+        
+        return self._experiment
+        
+    @experiment.setter
+    def experiment(self, experiment: Experiment):
+        if self.experiment:
+            return
+        
+        if not self.id:
+            self.save()
+            
+        o = ExperimentResource(
+            experiment_id=experiment.id, 
+            resource_id=self.id,
+            resource_type=self.type, 
+        )
+        o.save()
+        self._experiment = experiment
+        
     def _export(self, file_path: str, file_format:str = None):
         """ 
         Export the resource to a repository
@@ -3305,6 +3400,8 @@ class Resource(Viewable):
         
         pass
     
+    # -- G --
+
     # -- I --
     
     @classmethod
@@ -3337,10 +3434,54 @@ class Resource(Viewable):
         
         pass
     
+    # -- P --
+    
+    @property
+    def process(self):
+        if not self._process:   
+            try:
+                o = ProcessResource.get( (resource == self)&(resource_type == self.type) )
+                self._process = o.process
+            except:
+                return None
+        
+        return self._process
+    
+    @process.setter
+    def process(self, process: Process):
+        if self.process:
+            return
+        
+        if not self.id:
+            self.save()
+            
+        o = ProcessResource(
+            process_id=process.id, 
+            resource_id=self.id,
+            resource_type=self.type, 
+        )
+        o.save()
+        self._process = process
+    
     # -- R --
     
     # -- S --
     
+    #def save(*args, **kwargs):
+    #    with DbManager.db.atomic() as transaction:
+    #        try:
+    #            if self._process:
+    #                self.process = self._process
+    #
+    #            if self._experiment:
+    #                self.experiment = self._experiment
+    #
+    #            return super().save(*args, **kwargs)
+    #        except:
+    #            transaction.rollback()
+    #            return False
+        
+            
     def _select(self, **params) -> 'Model':
         """ 
         Select a part of the resource
@@ -3388,7 +3529,50 @@ class Resource(Viewable):
                 return json.dumps(_json)
         else:
             return _json
+
+class ExperimentResource(Model):
+    experiment_id = IntegerField(null=False, index=True)
+    resource_id = IntegerField(null=False, index=True)
+    resource_type = CharField(null=False, index=True)
+    
+    _table_name = "gws_experiment_resource"
+    
+    class Meta:
+        indexes = (
+            (("experiment_id", "resource_id", "resource_type"), True),
+        )
+    
+    @property
+    def resource(self):
+        t = Controller.get_model_type(self.resource_type)
+        return t.get_by_id(self.resource_id)
+    
+    @property
+    def experiment(self):
+        return Experiment.get_by_id(self.experiment_id)
         
+    
+class ProcessResource(Model):
+    process_id = IntegerField(null=False, index=True)
+    resource_id = IntegerField(null=False, index=True)
+    resource_type = CharField(null=False, index=True)
+    
+    _table_name = "gws_process_resource"
+    
+    class Meta:
+        indexes = (
+            (("process_id", "resource_id", "resource_type"), True),
+        )
+        
+    @property
+    def resource(self):
+        t = Controller.get_model_type(self.resource_type)
+        return t.get_by_id(self.resource_id)
+    
+    @property
+    def process(self):
+        return Process.get_by_id(self.experiment_id)
+    
 # ####################################################################
 #
 # ResourceSet class

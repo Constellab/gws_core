@@ -351,8 +351,10 @@ class IOface:
     def to_json(self, **kwargs):
         bare = kwargs.get("bare", False)
         r_uri = ""
+        r_type = ""
         if self.source_port.resource and not bare:
             r_uri = self.source_port.resource.uri
+            r_type = self.source_port.resource.type
             
         return {
             "name": self.name,
@@ -365,7 +367,8 @@ class IOface:
                 "port": self.target_port.name,
             },
             "resource":{
-                "uri": r_uri
+                "uri": r_uri,
+                "type": r_type
             }
         }
     
@@ -464,8 +467,11 @@ class Connector:
         bare = kwargs.get("bare", False)
         
         r_uri = ""
+        r_type = ""
+        
         if self.out_port.resource and not bare:
             r_uri = self.out_port.resource.uri
+            r_type = self.out_port.resource.type
 
         link = {
             "from": {
@@ -477,7 +483,8 @@ class Connector:
                 "port": self.in_port.name, 
             },
             "resource":{
-                "uri": r_uri
+                "uri": r_uri,
+                "type": r_type
             }
         }
 
@@ -739,11 +746,13 @@ class IO(Base):
             
             if port.resource and not bare:
                 _json[k]["resource"] = {
-                    "uri": port.resource.uri
+                    "uri": port.resource.uri,
+                    "type": port.resource.type
                 }
             else:
                 _json[k]["resource"] = {
-                    "uri": ""
+                    "uri": "",
+                    "type": ""
                 }
             
             _json[k]["specs"] = ()

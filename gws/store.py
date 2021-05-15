@@ -372,6 +372,13 @@ class LocalFileStore(FileStore):
     def contains(self, file: 'File') -> bool:
         return self.path in file.path
     
+    # -- D --
+    
+    def delete_instance(self):
+        File.delete().where( File.file_store_uri == self.uri ).execute()
+        shutil.rmtree(self.path)
+        super().delete_instance()
+                
     # -- E --
   
     # -- G --
@@ -433,22 +440,11 @@ class LocalFileStore(FileStore):
     
     @classmethod
     def remove_all_files(cls, ignore_errors:bool = False):
-        from gws.query import Paginator
         with DbManager.db.atomic() as transaction:
             try:
-                page = 1
-                paginator = Paginator( cls.select(), page=page, number_of_items_per_page=500 )
-                while len(paginator.current_items()):
-                    for fs in paginator.current_items():
-                        Q2 = File.select().where( File.file_store_uri == fs.uri )
-                        for f in Q2:
-                            f.remove()
-
-                        shutil.rmtree(fs.path)
-                    
-                    page = page + 1
-                    paginator = Paginator( cls.select(), page=page, number_of_items_per_page=500 )
-                    
+                for fs in cls.select():
+                    fs.delete_instance()
+ 
             except Exception as err:
                 transaction.rollback()
                 if not ignore_errors:

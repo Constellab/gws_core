@@ -19,9 +19,9 @@ class Echo(EasyShell):
     
     _cmd: list = ['echo', '{param:name}']
     
-    def gather_outputs(self, stdout: str=None):
+    def gather_outputs(self):
         res = Resource()
-        res.data["out"] = stdout
+        res.data["out"] = self._stdout
         self.output["stdout"] = res
 
 class CondaEcho(CondaShell):
@@ -52,7 +52,7 @@ class TestShell(unittest.TestCase):
         
         def _on_end(*args, **kwargs):
             res = proc.output['stdout']
-            self.assertEqual(res.data["out"], "Jhon Doe\n")
+            self.assertEqual(res.data["out"], "Jhon Doe")
             
             
         e.on_end(_on_end)

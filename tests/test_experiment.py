@@ -58,6 +58,7 @@ class TestExperiment(unittest.TestCase):
         
         Q1 = e1.resources
         Q2 = e2.resources
+        self.assertEqual(Resource.select().count(),15)
         self.assertEqual(len(Q1),15)
         self.assertEqual(len(Q2),15)
         

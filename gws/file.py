@@ -32,7 +32,7 @@ class File(Resource):
     path = CharField(null=True, index=True, unique=True)
     
     _mode = "t"
-    #_table_name = "gws_file"
+    _table_name = "gws_file"
     __download_url = "https://lab.{}/core-api/file/{}/download"
 
     # -- A --
@@ -281,17 +281,21 @@ class FileImporter(Process):
     output_specs = {"data" : Resource}
     config_specs = {
         'file_format': {"type": str, "default": None, 'description': "File format"},
-        'output_type': {"type": str, "default": None, 'description': "The output file type. If defined, it is used to automatically format data output"},
+        'output_type': {"type": str, "default": "", 'description': "The output file type. If defined, it is used to automatically format data output"},
     }
     
     async def task(self):
         file = self.input["file"]
-        out_t = self.get_param("output_type")
-        if out_t:
-            model_t = Controller.get_model_type(out_t)
-        else:
-            model_t = self.out_port("data").get_default_resource_type()
         
+        model_t = None
+        if self.param_exists("output_type"):
+            out_t = self.get_param("output_type")
+            if out_t:
+                model_t = Controller.get_model_type(out_t)
+        
+        if not model_t:
+            model_t = self.out_port("data").get_default_resource_type()
+
         params = copy.deepcopy(self.config.params)
         resource = model_t._import(file.path, **params)
         self.output["data"] = resource
@@ -355,15 +359,19 @@ class FileLoader(Process):
     config_specs = {
         'file_path': {"type": str, "default": None, 'description': "Location of the file to import"},
         'file_format': {"type": str, "default": None, 'description': "File format"},
-        'output_type': {"type": str, "default": None, 'description': "The output file type. If defined, it is used to automatically format data output"},
+        'output_type': {"type": str, "default": "", 'description': "The output file type. If defined, it is used to automatically format data output"},
     }
     
     async def task(self):
         file_path = self.get_param("file_path")
-        out_t = self.get_param("output_type")
-        if out_t:
-            model_t = Controller.get_model_type(out_t)
-        else:
+        
+        model_t = None
+        if self.param_exists("output_type"):
+            out_t = self.get_param("output_type")
+            if out_t:
+                model_t = Controller.get_model_type(out_t)
+        
+        if not model_t:
             model_t = self.out_port("data").get_default_resource_type()
                     
         if "file_path" in self.config.params:

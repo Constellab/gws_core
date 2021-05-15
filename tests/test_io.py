@@ -64,7 +64,7 @@ class TestIO(unittest.TestCase):
         self.assertEquals(port_connect.to_json(), {
             "from": {"node": "p0",  "port": "create_person_out"},
             "to": {"node": "p1",  "port": "move_person_in"},
-            'resource': {'uri': ''}
+            'resource': {'uri': '', 'type': ''}
         })
     
     def test_iterator(self):

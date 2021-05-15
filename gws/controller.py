@@ -24,6 +24,7 @@ class Controller(Base):
     Controller class
     """
     
+    _model_types = {}
     _model_specs = dict() 
     _settings = None
     _number_of_items_per_page = 50
@@ -405,6 +406,9 @@ class Controller(Base):
         if type_str is None:
             return None
         
+        if type_str in cls._model_types:
+            return cls._model_types[type_str]
+        
         from gws.model import Experiment, Protocol, Process, Resource, Config
         if type_str.lower() == "experiment":
             return Experiment
@@ -425,9 +429,10 @@ class Controller(Base):
         try:
             module = importlib.import_module(module_name)
             t = getattr(module, function_name, None)
+            cls._model_types[type_str] = t
         except:
             t = None
- 
+
         return t
     
     @classmethod

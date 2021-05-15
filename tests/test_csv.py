@@ -13,7 +13,6 @@ from gws.file import File
 from gws.store import LocalFileStore
 from gws.unittest import GTest
 
-
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
 

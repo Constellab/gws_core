@@ -169,6 +169,23 @@ class CondaShell(Shell):
 class EasyShell(Shell):
     _shell = False
     _cmd: list = None
+    _stdout = ""
+    
+    def on_stdout_change(self, stdout_count: int=0, stdout_line: str="") -> tuple:
+        """
+        This methods is triggered each time the stdout of the shell subprocess has changed.
+        
+        It can be overloaded to update the progress bar for example.
+
+        :param stdout_count: The current count of stdout lines
+        :type stdout_count: `int`
+        :param stdout_line: The last standard output line
+        :type stdout_line: `str`
+        
+        """
+        
+        self._stdout += stdout_line
+        
     
     def build_command(self) -> list:
         
