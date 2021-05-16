@@ -5,9 +5,7 @@
 
 import os
 import tempfile
-#from secrets import token_bytes
-#from base64 import b64encode
-    
+
 from playhouse.sqlite_ext import JSONField
 from peewee import Model as PWModel
 from peewee import SqliteDatabase, Proxy

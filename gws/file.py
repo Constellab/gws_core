@@ -21,7 +21,6 @@ from peewee import  Field, IntegerField, FloatField, DateField, \
 
 from gws.settings import Settings
 from gws.model import Config, Process, Resource, ResourceSet
-from gws.controller import Controller
 from gws.store import FileStore, LocalFileStore
 from gws.utils import slugify, generate_random_chars
 from gws.logger import Error
@@ -33,7 +32,7 @@ class File(Resource):
     
     _mode = "t"
     _table_name = "gws_file"
-    __download_url = "https://lab.{}/core-api/file/{}/download"
+    __download_url = "https://lab.{}/core-api/file/{}/{}/download"
 
     # -- A --
         
@@ -180,7 +179,7 @@ class File(Resource):
         host = settings.data.get("host", "0.0.0.0")
         vhost = settings.data.get("virtual_host", host)
         
-        _json["url"] = File.__download_url.format(vhost, self.uri)
+        _json["url"] = File.__download_url.format(vhost, self.type, self.uri)
         if read_content:
             if self.is_json():
                 _json["data"]["content"] = json.loads(self.read())
@@ -291,7 +290,8 @@ class FileImporter(Process):
         if self.param_exists("output_type"):
             out_t = self.get_param("output_type")
             if out_t:
-                model_t = Controller.get_model_type(out_t)
+                from gws.service import ModelService
+                model_t = ModelService.get_model_type(out_t)
         
         if not model_t:
             model_t = self.out_port("data").get_default_resource_type()
@@ -369,7 +369,8 @@ class FileLoader(Process):
         if self.param_exists("output_type"):
             out_t = self.get_param("output_type")
             if out_t:
-                model_t = Controller.get_model_type(out_t)
+                from gws.service import ModelService
+                model_t = ModelService.get_model_type(out_t)
         
         if not model_t:
             model_t = self.out_port("data").get_default_resource_type()

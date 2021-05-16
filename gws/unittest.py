@@ -5,8 +5,6 @@
 
 from gws.settings import Settings
 from gws.model import Study, User, Experiment
-from gws.controller import Controller
-
 from gws.logger import Error
 
 class GTest:

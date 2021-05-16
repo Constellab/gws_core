@@ -3,6 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from __future__ import annotations
+
 import sys
 import os
 import asyncio
@@ -32,14 +34,12 @@ from playhouse.sqlite_ext import JSONField, SearchField, RowIDField
 
 from gws.logger import Error, Info, Warning
 from gws.settings import Settings
-from gws.controller import Controller
 from gws.event import EventListener
 from gws.io import Input, Output, InPort, OutPort, Connector, Interface, Outerface
 from gws.utils import to_camel_case, sort_dict_by_key, generate_random_chars
 from gws.http import *
 
 from gws.base import format_table_name, slugify, BaseModel, BaseFTSModel, DbManager
-
 
 # ####################################################################
 #
@@ -190,12 +190,14 @@ class Model(BaseModel):
         :return: The model
         :rtype: `Model` instance
         """
-
+        
+        from .service.model_service import ModelService
+        
         if self.type == self.full_classname():
             return self
         
         # instanciate the class and shallow copy data
-        new_model_t = Controller.get_model_type(self.type)
+        new_model_t = ModelService.get_model_type(self.type)
         model = new_model_t()
         for prop in self.property_names(Field):
             val = getattr(self, prop)
@@ -269,12 +271,15 @@ class Model(BaseModel):
         :return: The model type
         :rtype: type
         """
+        
+        from .service.model_service import ModelService
+        
         cursor = DbManager.db.execute_sql(f'SELECT type FROM {self._table_name} WHERE id = ?', (str(id),))
         row = cursor.fetchone()
         if len(row) == 0:
             raise Error("gws.model.Model", "fetch_type_by_id", "The model is not found.")
         type_str = row[0]
-        model_t = Controller.get_model_type(type_str)
+        model_t = ModelService.get_model_type(type_str)
         return model_t
 
     # -- G --
@@ -598,6 +603,24 @@ class Model(BaseModel):
 # ####################################################################
 
 class User(Model):
+    """
+    User class
+
+    :property email: The user email
+    :type email: `str`
+    :property group: The user group (`sysuser`, `admin`, `owner` or `user`)
+    :type group: `str`
+    :property is_active: True if the is active, False otherwise
+    :type is_active: `bool`
+    :property console_token: The token used to authenticate the user trough the console
+    :type console_token: `str`
+    :property console_token: The token used to authenticate the user trough the console
+    :type console_token: `str`
+    :property is_http_authenticated: True if the user authenticated through the HTTP context, False otherwise
+    :type is_http_authenticated: `bool`
+    :property is_console_authenticated: True if the user authenticated through the Console context, False otherwise
+    :type is_console_authenticated: `bool`
+    """
     
     email = CharField(default=False, index=True)
     group = CharField(default="user", index=True)
@@ -626,13 +649,26 @@ class User(Model):
     
     def archive(self, tf:bool)->bool:
         """
-        Deactivated method. Always returns False.
+        Archive method. This method is deactivated. Always returns False.
         """
         
         return False
         
     @classmethod
-    def authenticate(cls, uri: str, console_token: str = "") -> bool: 
+    def authenticate(cls, uri: str, console_token: str = "") -> bool:
+        """
+        Authenticate a user
+        
+        :param uri: The uri of the user to authenticate
+        :type uri: `str`
+        :param console_token: The console token. This token is only used if the for console contexts
+        :type console_token: `str`
+        :return: True if the user is successfully autheticated, False otherwise
+        :rtype: `bool`
+        """
+        
+        from .service.http_service import HTTPService
+        
         try:
             user = User.get(User.uri == uri)
         except:
@@ -640,16 +676,18 @@ class User(Model):
 
         if not user.is_active:
             return False
-
-        if Controller.is_http_context():
+        
+        if HTTPService.is_http_context():
             return cls.__authenticate_http(user)            
         else:
             return cls.__authenticate_console(user, console_token)
         
     @classmethod
     def __authenticate_console(cls, user, console_token) -> bool:
+        from .service.user_service import UserService
+        
         if user.is_console_authenticated:       
-            Controller.set_current_user(user)
+            UserService.set_current_user(user)
             return True
         
         is_valid_token = bool(console_token) and (user.console_token == console_token)
@@ -661,7 +699,7 @@ class User(Model):
                 # authenticate the user first
                 user.is_console_authenticated = True
                 if user.save():
-                    Controller.set_current_user(user)
+                    UserService.set_current_user(user)
                 else:
                     raise Error("User", "__console_authenticate", "Cannot save user status")
                 
@@ -677,8 +715,10 @@ class User(Model):
     
     @classmethod
     def __authenticate_http(cls, user) -> bool:
+        from .service.user_service import UserService
+        
         if user.is_http_authenticated:
-            Controller.set_current_user(user)
+            UserService.set_current_user(user)
             return True
 
         with DbManager.db.atomic() as transaction:
@@ -686,7 +726,7 @@ class User(Model):
                 # authenticate the user first
                 user.is_http_authenticated = True
                 if user.save():
-                    Controller.set_current_user(user)
+                    UserService.set_current_user(user)
                 else:
                     raise Error("User", "__http_authenticate", "Cannot save user status")
                     
@@ -799,7 +839,18 @@ class User(Model):
     
     # -- T --
     
-    def to_json(self, *args, stringify: bool=False, prettify: bool=False, **kwargs):
+    def to_json(self, *args, stringify: bool=False, prettify: bool=False, **kwargs) -> (dict, str, ):
+        """
+        Returns a JSON string or dictionnary representation of the user.
+
+        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
+        :type stringify: `bool`
+        :param prettify: If True, indent the JSON string. Defaults to False.
+        :type prettify: `bool`      
+        :return: The representation
+        :rtype: `dict`, `str`
+        """
+        
         _json = super().to_json(*args, **kwargs)
         
         del _json["console_token"]
@@ -816,6 +867,17 @@ class User(Model):
     
     @classmethod
     def unauthenticate(cls, uri: str) -> bool:
+        """
+        Unauthenticate a user
+        
+        :param uri: The uri of the user to unauthenticate
+        :type uri: `str`
+        :return: True if the user is successfully unautheticated, False otherwise
+        :rtype: `bool`
+        """
+        
+        from .service.http_service import HTTPService
+        
         try:
             user = User.get(User.uri == uri)
         except:
@@ -824,15 +886,17 @@ class User(Model):
         if not user.is_active:
             return False
         
-        if Controller.is_http_context:
+        if HTTPService.is_http_context():
             return cls.__unauthenticate_http(user)            
         else:
             return cls.__unauthenticate_console(user)
     
     @classmethod
     def __unauthenticate_http(cls, user) -> bool:
+        from .service.user_service import UserService
+        
         if not user.is_http_authenticated:
-            Controller.set_current_user(None)
+            UserService.set_current_user(None)
             return True
         
         with DbManager.db.atomic() as transaction:
@@ -842,7 +906,7 @@ class User(Model):
                     Activity.HTTP_UNAUTHENTICATION
                 )
                 if user.save():
-                    Controller.set_current_user(None)
+                    UserService.set_current_user(None)
                 else:
                     raise Error("User", "__unauthenticate_http", "Cannot save user status")
                 
@@ -853,8 +917,10 @@ class User(Model):
             
     @classmethod
     def __unauthenticate_console(cls, user) -> bool:
+        from .service.user_service import UserService
+        
         if not user.is_console_authenticated:
-            Controller.set_current_user(None)
+            UserService.set_current_user(None)
             return True
         
         with DbManager.db.atomic() as transaction:
@@ -864,7 +930,7 @@ class User(Model):
                     Activity.CONSOLE_UNAUTHENTICATION
                 )
                 if user.save():
-                    Controller.set_current_user(None)
+                    UserService.set_current_user(None)
                 else:
                     raise Error("User", "__unauthenticate_console", "Cannot save user status")
                 
@@ -911,8 +977,10 @@ class Activity(Model):
     
     @classmethod
     def add(self, activity_type: str, *, object_type=None, object_uri=None, user=None):
+        from .service.user_service import UserService
+        
         if not user:
-            user = Controller.get_current_user()
+            user = UserService.get_current_user()
             
         activity = Activity(
             user = user, 
@@ -1455,64 +1523,7 @@ class ProgressBar(Model):
         self.save()
     
     
-# ####################################################################
-#
-# Process class
-#
-# ####################################################################
 
-class ProcessType(Viewable):
-    ptype = CharField(null=True, index=True, unique=True)
-    base_ptype = CharField(null=True, index=True)
-    
-    _table_name = 'gws_process_type'
-    
-    def to_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
-        _json = super().to_json(**kwargs)
-
-        model_t = Controller.get_model_type(self.ptype)
-        specs = model_t.input_specs
-        _json["input_specs"] = {}
-        for name in specs:
-            _json["input_specs"][name] = []
-            t_list = specs[name]
-            if not isinstance(t_list, tuple):
-                t_list = (t_list, )
-            
-            for t in t_list:
-                if t is None:
-                    _json["input_specs"][name].append(None)
-                else:
-                    _json["input_specs"][name].append(t.full_classname())
-        
-        specs = model_t.output_specs
-        _json["output_specs"] = {}
-        for name in specs:
-            _json["output_specs"][name] = []
-            t_list = specs[name]
-            if not isinstance(t_list, tuple):
-                t_list = (t_list, )
-            
-            for t in t_list:
-                if t is None:
-                    _json["output_specs"][name].append(None)
-                else:
-                    _json["output_specs"][name].append(t.full_classname())
-                    
-        _json["config_specs"] = model_t.config_specs
-        for k in _json["config_specs"]:
-            spec = _json["config_specs"][k]
-            if "type" in spec and isinstance(spec["type"], type):
-                t_str = spec["type"].__name__ 
-                _json["config_specs"][k]["type"] = t_str
-        
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
         
 class Process(Viewable):
     """
@@ -1538,19 +1549,18 @@ class Process(Viewable):
     output_specs: dict = {}
     config_specs: dict = {}
     
-    _experiment: 'Experiment' = None
-    _protocol: 'Protocol' = None
-    _file_store: 'FileStore' = None
-    
-    _input: Input = None
-    _output: Output = None
-    
     is_instance_running = False
     is_instance_finished = False
     
+    _experiment: 'Experiment' = None
+    _protocol: 'Protocol' = None
+    _file_store: 'FileStore' = None
+    _input: Input = None
+    _output: Output = None
     _max_progress_value = 100.0
     _is_singleton = False
     _is_removable = False
+    _is_plug = False
     _table_name = 'gws_process'
 
     def __init__(self, *args, user=None, **kwargs):
@@ -1602,6 +1612,7 @@ class Process(Viewable):
     
 
     def _init_io(self):
+        from .service.model_service import ModelService
         
         if type(self) is Process:
             # Is the Base (Abstract) Process object => cannot set io
@@ -1617,7 +1628,7 @@ class Process(Viewable):
         for k in self.data["input"]:
             uri = self.data["input"][k]["uri"]
             type_ = self.data["input"][k]["type"]
-            t = Controller.get_model_type(type_)
+            t = ModelService.get_model_type(type_)
             self._input.__setitem_without_check__(k, t.get(t.uri == uri))
 
         # output
@@ -1630,7 +1641,7 @@ class Process(Viewable):
         for k in self.data["output"]:
             uri = self.data["output"][k]["uri"]
             type_ = self.data["output"][k]["type"]
-            t = Controller.get_model_type(type_)
+            t = ModelService.get_model_type(type_)
             self._output.__setitem_without_check__(k, t.get(t.uri == uri))
         
     # -- A --
@@ -1666,6 +1677,7 @@ class Process(Viewable):
     
     @classmethod
     def create_process_type(cls):
+        from gws.typing import ProcessType
         exist = ProcessType.select().where(ProcessType.ptype == cls.full_classname()).count()
         if not exist:
             pt = ProcessType(ptype = cls.full_classname())
@@ -1687,13 +1699,14 @@ class Process(Viewable):
         :rtype: `gws.model.Experiment`
         """
         
+        from .service.user_service import UserService
+        
         proto = Protocol(processes={ 
             self.instance_name: self 
         })
         
-   
         if user is None:
-            user = Controller.get_current_user()
+            user = UserService.get_current_user()
             if user is None:
                 raise Error("Process", "create_experiment", "A user is required")
         
@@ -1719,7 +1732,9 @@ class Process(Viewable):
         super().create_table(*args, **kwargs)
 
     def create_source_zip(self):
-        model_t = Controller.get_model_type(self.type) #/:\ Use the true object type (self.type)
+        from .service.model_service import ModelService
+
+        model_t = ModelService.get_model_type(self.type) #/:\ Use the true object type (self.type)
         source = inspect.getsource(model_t)
         return zlib.compress(source.encode())
     
@@ -1809,11 +1824,13 @@ class Process(Viewable):
         :rtype: Input
         """
         
+        from .service.model_service import ModelService
+        
         if self._input.is_empty:
             for k in self.data["input"]:
                 uri = self.data["input"][k]["uri"]
                 type_ = self.data["input"][k]["type"]
-                t = Controller.get_model_type(type_)
+                t = ModelService.get_model_type(type_)
                 self._input[k] = t.get(t.uri == uri)
             
         return self._input
@@ -1857,12 +1874,14 @@ class Process(Viewable):
         :return: The output
         :rtype: Output
         """
-          
+        
+        from .service.model_service import ModelService
+        
         if self._output.is_empty:
             for k in self.data["output"]:
                 uri = self.data["output"][k]
                 type_ = self.data["output"][k]["type"]
-                t = Controller.get_model_type(type_)
+                t = ModelService.get_model_type(type_)
                 self._output[k] = t.get(t.uri == uri)
                 
         return self._output
@@ -1941,7 +1960,6 @@ class Process(Viewable):
             await asyncio.gather( *aws )
                 
     async def _run_before_task( self, *args, **kwargs ):
-        
         title = self.get_title()
         if title:
             Info(f"Running {self.full_classname()} '{title}' ...")
@@ -1973,15 +1991,15 @@ class Process(Viewable):
         
         self.is_instance_running = False
         self.is_instance_finished = True
-        
         self.progress_bar.stop()
 
-        res = self.output.get_resources()
-        for k in res:
-            if not res[k] is None:
-                res[k].experiment = self.experiment
-                res[k].process = self
-                res[k].save()
+        if not self._is_plug:
+            res = self.output.get_resources()
+            for k in res:
+                if not res[k] is None:
+                    res[k].experiment = self.experiment
+                    res[k].process = self
+                    res[k].save()
         
         if not self._output.is_ready:
             return
@@ -2193,7 +2211,8 @@ class Protocol(Process):
 
             if user is None:
                 try:
-                    user = Controller.get_current_user()
+                    from .service.user_service import UserService
+                    user = UserService.get_current_user()
                 except:
                     raise Error("gws.model.Protocol", "__init__", "A user is required")
 
@@ -2292,6 +2311,8 @@ class Protocol(Process):
         :rtype: Protocol
         """
         
+        from .service.model_service import ModelService
+        
         if isinstance(graph, str):
             graph = json.loads(graph)
         
@@ -2342,7 +2363,7 @@ class Protocol(Process):
             proc_type_str = node_json["type"]
             
             try:
-                proc_t = Controller.get_model_type(proc_type_str)
+                proc_t = ModelService.get_model_type(proc_type_str)
                 
                 if proc_t is None:
                     raise Exception(f"Process {proc_type_str} is not defined. Please ensure that the corresponding brick is loaded.")
@@ -2420,7 +2441,8 @@ class Protocol(Process):
         """
    
         if user is None:
-            user = Controller.get_current_user()
+            from .service.user_service import UserService
+            user = UserService.get_current_user()
             if user is None:
                 raise Error("Process", "create_experiment", "A user is required")
                 
@@ -2746,6 +2768,8 @@ class Protocol(Process):
         #self.data['output_specs'] = self._output.get_specs()
 
     def __set_interfaces(self, interfaces: dict):
+        from .service.model_service import ModelService
+        
         input_specs = {}
         for k in interfaces:
             input_specs[k] = interfaces[k]._resource_types
@@ -2764,10 +2788,12 @@ class Protocol(Process):
             for k in self.data.get("input"):
                 uri = self.data["input"][k]["uri"]
                 type_ = self.data["input"][k]["type"]
-                t = Controller.get_model_type(type_)
+                t = ModelService.get_model_type(type_)
                 self.input.__setitem_without_check__(k, t.get(t.uri == uri) )
 
     def __set_outerfaces(self, outerfaces: dict):
+        from .service.model_service import ModelService
+        
         output_specs = {}
         for k in outerfaces:
             output_specs[k] = outerfaces[k]._resource_types
@@ -2789,7 +2815,7 @@ class Protocol(Process):
             for k in self.data["output"]:
                 uri = self.data["output"][k]["uri"]
                 type_ = self.data["output"][k]["type"]
-                t = Controller.get_model_type(type_)
+                t = ModelService.get_model_type(type_)
                 self.output.__setitem_without_check__(k, t.get(t.uri == uri) )
 
     # -- T --
@@ -2910,7 +2936,8 @@ class Experiment(Viewable):
             self.data["pid"] = 0
             if user is None:
                 try:
-                    user = Controller.get_current_user()
+                    from .service.user_service import UserService
+                    user = UserService.get_current_user()
                 except:
                     raise Error("gws.model.Experiment", "__init__", "An user is required")
                     
@@ -3046,7 +3073,9 @@ class Experiment(Viewable):
         This is only possible if the experiment has been started through the cli. 
         """
         
-        if not Controller.is_http_context():
+        from .service.http_service import HTTPService
+        
+        if not HTTPService.is_http_context():
             raise Error("Experiment", "kill_pid", f"The user must be in http context")
             
         if self.pip:
@@ -3131,12 +3160,14 @@ class Experiment(Viewable):
         """
 
         from gws.system import SysProc
+        from .service.user_service import UserService
+        
         settings = Settings.retrieve()
         cwd_dir = settings.get_cwd()
         
         if not user:
             try:
-                user = Controller.get_current_user()
+                user = UserService.get_current_user()
             except:
                 raise Error("gws.model.Experiment", "run_through_cli", "A user is required")
             
@@ -3175,7 +3206,8 @@ class Experiment(Viewable):
         if wait_response:
             await self.__run(user=user)
         else:
-            if Controller.is_http_context():
+            from .service.http_service import HTTPService
+            if HTTPService.is_http_context():
                 # run the experiment throug the cli to prevent blocking HTTP requests
                 self.run_through_cli(user=user)
             else:
@@ -3189,9 +3221,11 @@ class Experiment(Viewable):
         :type user: `gws.model.User`
         """
         
+        from .service.user_service import UserService
+        
         if not user:
             try:
-                user = Controller.get_current_user()
+                user = UserService.get_current_user()
             except:
                 raise Error("gws.model.Experiment", "run", "A user is required")
 
@@ -3303,9 +3337,16 @@ class Experiment(Viewable):
         
     # -- V --
     
-    def validate(self, user):
+    def validate(self, user: User):
+        """
+        Validate the experiment
+        
+        :param user: The user who validate the experiment
+        :type user: `gws.model.User`
+        """
+        
         if self.is_validated:
-            raise Error("gws.model.Experiment", "save", f"The experiment is already validated")
+            return
         
         with DbManager.db.atomic() as transaction:
             try:
@@ -3320,7 +3361,7 @@ class Experiment(Viewable):
             except:
                 transaction.rollback()
                 raise Error("gws.model.Experiment", "save", f"Could not validate the experiment. Error: {err}")
-
+    
 # ####################################################################
 #
 # Resource class
@@ -3350,7 +3391,18 @@ class Resource(Viewable):
         
         if experiment:
             self.experiment = experiment
-        
+    
+    # -- C --
+    
+    @classmethod
+    def create_resource_type(cls):
+        from gws.typing import ResourceType
+        exist = ResourceType.select().where(ResourceType.rtype == cls.full_classname()).count()
+        if not exist:
+            rt = ResourceType(rtype = cls.full_classname())
+            rt.base_rtype = "gws.model.Resource"  
+            rt.save()
+            
     # -- D --
 
     @classmethod
@@ -3544,7 +3596,9 @@ class ExperimentResource(Model):
     
     @property
     def resource(self):
-        t = Controller.get_model_type(self.resource_type)
+        from .service.model_service import ModelService
+        
+        t = ModelService.get_model_type(self.resource_type)
         return t.get_by_id(self.resource_id)
     
     @property
@@ -3566,7 +3620,9 @@ class ProcessResource(Model):
         
     @property
     def resource(self):
-        t = Controller.get_model_type(self.resource_type)
+        from .service.model_service import ModelService
+        
+        t = ModelService.get_model_type(self.resource_type)
         return t.get_by_id(self.resource_id)
     
     @property
@@ -3684,11 +3740,13 @@ class ResourceSet(Resource):
 
     @property
     def set(self):
+        from .service.model_service import ModelService
+        
         if self.is_saved() and len(self._set) == 0:
             for k in self.data["set"]:
                 uri = self.data["set"][k]["uri"]
                 rtype = self.data["set"][k]["type"]
-                self._set[k] = Controller.fetch_model(rtype, uri)
+                self._set[k] = ModelService.fetch_model(rtype, uri)
         
         return self._set
     
@@ -3840,10 +3898,12 @@ class ViewModel(Model):
         :rtype: `gws.model.Moldel`
         """
         
+        from .service.model_service import ModelService
+        
         if not self._model is None:
             return self._model
 
-        model_t = Controller.get_model_type(self.model_type)
+        model_t = v.get_model_type(self.model_type)
         model = model_t.get(model_t.id == self.model_id)
         self._model = model.cast()
         return self._model

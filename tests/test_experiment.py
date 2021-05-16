@@ -1,3 +1,7 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 import os
 import asyncio
@@ -7,7 +11,6 @@ import time
 
 from gws.settings import Settings
 from gws.model import *
-from gws.controller import Controller
 from gws.robot import *
 from gws.unittest import GTest
 

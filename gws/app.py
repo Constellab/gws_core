@@ -20,11 +20,12 @@ from pydantic import BaseModel
 from gws.base import slugify
 from gws.settings import Settings
 from gws.model import Study, User
-from gws.controller import Controller
 from gws.logger import Error
 from gws.system import Monitor
 from gws.queue import Queue
-from ._api._auth_user import check_is_admin, check_is_owner
+
+from ._app.core_app import *
+from ._app.central_app import *
 
 brick = "gws"
 app = FastAPI(docs_url=None)
@@ -76,7 +77,6 @@ class App(BaseApp):
     """
     
     app: FastAPI = app
-    ctrl = Controller
     debug = _settings.get_data("is_test") or _settings.get_data("is_demo")
     is_running = False
 
@@ -87,15 +87,14 @@ class App(BaseApp):
         """
         
         from ._sphynx.docgen import docgen
-        from ._api.core_api import app as core_app
-        from ._api.central_api import app as central_app
-        
+        from .service.model_service import ModelService
+
         # create default study and users
         Study.create_default_instance()
         User.create_owner_and_sysuser()
 
-        # intialize the controller
-        Controller.init()
+        # register all processes and resources
+        ModelService.register_all_processes_and_resources()
         
         # start system monitoring
         Monitor.init(daemon=False)

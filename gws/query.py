@@ -3,8 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from pydantic import create_model
-
 class Query:
 
     @classmethod
@@ -77,4 +75,5 @@ class Paginator:
         """
         Returns the current items in the paginators
         """
+        
         return self.paginated_query

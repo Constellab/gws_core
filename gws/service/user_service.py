@@ -1,10 +1,30 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS. 
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
+from starlette_context import context
+
+from gws.query import Paginator
 from gws.logger import Error
-from gws.model import User
+from gws.model import Activity, User
+from gws.http import *
 
+from .base_service import BaseService
 
-class UserService:
+class UserService(BaseService):
+    
+    _console_data = { "user": None }
+    
+    # -- A --
+    
+    @classmethod
+    def activate_user(cls, uri):
+        return cls.set_user_status(uri, {"is_active": True})
 
+    
+    # -- C --
+    
     @classmethod
     def create_user(cls, data: dict):
         group = data.get('group', 'user')
@@ -31,9 +51,64 @@ class UserService:
         else:
             raise Error("Central", "create_user",
                         "The user already exists")
-
+    
+    # -- D --
+    
     @classmethod
-    def get_user_status(cls, uri):
+    def deactivate_user(cls, uri):
+        return cls.set_user_status(uri, {"is_active": False})
+
+    # -- F --
+    
+    @classmethod
+    def fecth_activity_list(cls, user_uri: str=None, activity_type: str=None, page:int=1, number_of_items_per_page:int=20)->dict:
+        Q = Activity.select()\
+                    .order_by(Activity.creation_datetime.desc())
+        
+        if user_uri:
+            Q = Q.join(User) \
+                    .where(User.uri == user_uri)
+            
+        if activity_type:
+            Q = Q.where(Activity.activity_type == activity_type.upper())
+        
+        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json()
+    
+    @classmethod
+    def fetch_user(cls, uri: str) -> dict:
+        return User.get_by_uri(uri).to_json()
+    
+    @classmethod
+    def fetch_user_list(cls, page:int=1, number_of_items_per_page: int=20) -> dict:
+        Q = User.select()\
+                .order_by(User.creation_datetime.desc())
+
+        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json()
+    
+    # -- G --
+    
+    @classmethod
+    def get_current_user(cls) -> User:
+        """
+        Get the user in the current session
+        """
+        
+        try:
+            user = context.data["user"]
+        except:
+            # is console context
+            try:
+                user = cls._console_data["user"]
+            except:
+                raise Error("Controller", "No HTTP nor Console user authenticated")
+        
+        if user is None:
+            raise Error("Controller", "No HTTP nor Console user authenticated")
+        
+        return user
+    
+    @classmethod
+    def get_user_status(cls, uri: str) -> dict:
         user = User.get_by_uri(uri)
         if user is None:
             raise Error("Central", "get_user_status", "User not found")
@@ -47,6 +122,12 @@ class UserService:
                 "is_console_authenticated": user.is_console_authenticated
             }
 
+    @classmethod
+    def get_user_by_uri(cls, uri):
+        return User.get_by_uri(uri)
+    
+    # -- S --
+    
     @classmethod
     def set_user_status(cls, uri, data):
         user = User.get_by_uri(uri)
@@ -64,19 +145,37 @@ class UserService:
             else:
                 raise Error("Central", "set_user_status",
                             "Cannot save the user")
-
+    
     @classmethod
-    def activate_user(cls, uri):
-        return cls.set_user_status(uri, {"is_active": True})
+    def set_current_user(cls, user: (User, )):
+        """
+        Set the user in the current session
+        """
+        
+        if user is None:
+            try:
+                # is http context
+                context.data["user"] = None
+            except:
+                # is console context
+                cls._console_data["user"] = None
+        else:  
+            if isinstance(user, dict):
+                try:
+                    user = User.get(User.uri==user.uri)
+                except:
+                    raise HTTPInternalServerError(detail=f"Invalid current user")
 
-    @classmethod
-    def deactivate_user(cls, uri):
-        return cls.set_user_status(uri, {"is_active": False})
+            if not isinstance(user, User):
+                raise HTTPInternalServerError(detail=f"Invalid current user")
 
-    @classmethod
-    def get_all_users(cls):
-        return list(User.select())
+            if not user.is_active:
+                raise HTTPUnauthorized(detail=f"Not authorized")
 
-    @classmethod
-    def get_user_by_uri(cls, uri):
-        return User.get_by_uri(uri)
+            try:
+                # is http contexts
+                context.data["user"] = user
+            except:
+                # is console context
+                cls._console_data["user"] = user
+    

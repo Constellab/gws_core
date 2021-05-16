@@ -4,13 +4,15 @@
 # About us: https://gencovery.com
 
 import requests
+
 from gws.settings import Settings
 from gws.logger import Error
 from gws.report import Report
 from gws.model import Experiment, Protocol, User
 
+from .base_service import BaseService
 
-class Central:
+class CentralService(BaseService):
 
     # -- A --
 

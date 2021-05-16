@@ -5,8 +5,15 @@
 
 import string
 import random
-
 from slugify import slugify as _slugify
+
+# -- G --
+
+def generate_random_chars(size=6, chars=string.ascii_uppercase + string.ascii_lowercase + string.digits) -> str:
+    return ''.join(random.choice(chars) for _ in range(size))
+    
+    
+# -- S --
 
 def slugify(text: str, snakefy: bool = False, to_lower: bool = True) -> str:
     """
@@ -25,14 +32,8 @@ def slugify(text: str, snakefy: bool = False, to_lower: bool = True) -> str:
         
     return text
 
-def to_camel_case(snake_str: str, capitalize_first:bool = False):
-    components = snake_str.split('_')
-    c0 = components[0].title() if capitalize_first else components[0]
-    return c0 + ''.join(x.title() for x in components[1:])
+# -- S --
 
-def generate_random_chars(size=6, chars=string.ascii_uppercase + string.ascii_lowercase + string.digits) -> str:
-    return ''.join(random.choice(chars) for _ in range(size))
-    
 def sort_dict_by_key(d):
     if not d:
         return d
@@ -40,3 +41,9 @@ def sort_dict_by_key(d):
     return {k: sort_dict_by_key(v) if isinstance(v, dict) else v
             for k, v in sorted(d.items())}
 
+# -- T --
+
+def to_camel_case(snake_str: str, capitalize_first:bool = False):
+    components = snake_str.split('_')
+    c0 = components[0].title() if capitalize_first else components[0]
+    return c0 + ''.join(x.title() for x in components[1:])

@@ -14,7 +14,6 @@ from gws.model import Process
 from gws.file import File
 from gws.settings import Settings
 from gws.file import FileStore, LocalFileStore
-from gws.controller import Controller
 from gws.logger import Error, Info
 from gws.system import SysProc
 
@@ -44,7 +43,7 @@ class Shell(Process):
         
         return [""]
     
-    def _format_command(self, user_cmd) -> (list, str, ):
+    def _format_command(self, user_cmd: str) -> (list, str, ):
         """
         Format the final shell command
         

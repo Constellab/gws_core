@@ -7,7 +7,6 @@ import asyncio
 import click
 from gws.settings import Settings
 from gws.logger import Error
-from gws.controller import Controller
 from gws.model import Experiment, User
 
 @click.command(context_settings=dict(

@@ -13,7 +13,6 @@ import tempfile
 
 from gws.base import DbManager
 from gws.model import Model
-from gws.controller import Controller
 from gws.logger import Error
 from gws.settings import Settings
 

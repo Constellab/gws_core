@@ -19,7 +19,6 @@ from passlib.context import CryptContext
 from pydantic import BaseModel
 
 from gws.model import User
-from gws.controller import Controller
 from gws.settings import Settings
 from ._oauth2_user_cookie_scheme import oauth2_user_cookie_scheme
 
@@ -73,8 +72,9 @@ async def check_user_access_token(token: str = Depends(oauth2_user_cookie_scheme
     except Exception:
         # -> An excpetion occured
         # -> Try to unauthenticate the current user
+        from gws.service.user_service import UserService
         try:
-            user = Controller.get_current_user()
+            user = UserService.get_current_user()
             if user:
                 User.unauthenticate(uri=user.uri) 
         except:
@@ -105,7 +105,8 @@ async def check_user_access_token(token: str = Depends(oauth2_user_cookie_scheme
 
 def check_is_sysuser():
     try:
-        user = Controller.get_current_user()
+        from gws.service.user_service import UserService
+        user = UserService.get_current_user()
     except:
         raise HTTPException(status_code=400, detail="Unauthorized: owner required")
         
@@ -114,7 +115,8 @@ def check_is_sysuser():
         
 def check_is_owner():
     try:
-        user = Controller.get_current_user()
+        from gws.service.user_service import UserService
+        user = UserService.get_current_user()
     except:
         raise HTTPException(status_code=400, detail="Unauthorized: owner required")
         
@@ -123,7 +125,8 @@ def check_is_owner():
         
 def check_is_admin():
     try:
-        user = Controller.get_current_user()
+        from gws.service.user_service import UserService
+        user = UserService.get_current_user()
     except:
         raise HTTPException(status_code=400, detail="Unauthorized: admin required")
 

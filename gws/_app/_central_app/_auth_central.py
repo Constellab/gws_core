@@ -24,7 +24,8 @@ from pydantic import BaseModel
 
 from gws.model import User
 from gws.settings import Settings
-from gws.central import Central
+from gws._app._core_app._auth_user import UserData
+
 from ._oauth2_central_header_scheme import oauth2_central_header_scheme
 
 settings = Settings.retrieve()
@@ -35,7 +36,9 @@ COOKIE_MAX_AGE_SECONDS      = 60*60*24*3     # 3 days
 
 
 def check_central_api_key(api_key: str = Depends(oauth2_central_header_scheme)):
-    is_authorized = Central.check_api_key(api_key)
+    from gws.service.central_service import CentralService
+    
+    is_authorized = CentralService.check_api_key(api_key)
     if not is_authorized:
         raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized"
@@ -44,7 +47,7 @@ def check_central_api_key(api_key: str = Depends(oauth2_central_header_scheme)):
 def get_user(user_uri:str):
     try:
         db_user = User.get(User.uri == user_uri)        
-        from ._auth_user import UserData
+        
         return UserData(
             uri = db_user.uri, 
             is_admin = db_user.is_admin, 
