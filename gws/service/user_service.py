@@ -178,4 +178,8 @@ class UserService(BaseService):
             except:
                 # is console context
                 cls._console_data["user"] = user
+
+    @classmethod
+    def get_all_users(cls):
+        return list(User.select())
     

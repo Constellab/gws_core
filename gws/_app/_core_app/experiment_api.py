@@ -3,7 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Optional
+from gws.service.experiment_service import ExperimentService
+from gws.dto.experiment_dto import ExperimentDTO
+from typing import Dict, Optional
 from fastapi import Depends
 
 from gws.http import *
@@ -16,7 +18,6 @@ async def get_experiment_queue() -> (dict, str,):
     Retrieve the queue of experiment
     """
 
-    from gws.service.experiment_service import ExperimentService
     return ExperimentService.get_queue()
     
 @core_app.get("/experiment/list", tags=["Experiment"], summary="Get the list of experiments")
@@ -26,11 +27,10 @@ async def get_list_of_experiments(page: int = 1, \
     """
     Retrieve a list of experiments. The list is paginated.
 
-    - **page**: the page number 
+    - **page**: the page number
     - **number_of_items_per_page**: the number of items per page (limited to 50) 
     """
     
-    from gws.service.experiment_service import ExperimentService
     return ExperimentService.fetch_experiment_list(
         page = page, 
         number_of_items_per_page = number_of_items_per_page
@@ -45,7 +45,6 @@ async def start_experiment(uri: str, \
     - **flow**: the flow object 
     """
     
-    from gws.service.experiment_service import ExperimentService
     return await ExperimentService.start_experiment(uri=uri)
 
 @core_app.post("/experiment/{uri}/stop", tags=["Experiment"], summary="Stop a running experiment")
@@ -61,28 +60,20 @@ async def stop_experiment(uri: str, \
     return await ExperimentService.stop_experiment(uri=uri)
 
 
-@core_app.post("/experiment/{uri}/update", tags=["Experiment"], summary="Update an experiment")
-async def update_experiment(uri:str, \
-                            title: Optional[str] = None,\
-                            description: Optional[str] = None,\
-                            flow: Optional[dict] = None, \
-                            _: UserData = Depends(check_user_access_token)) -> (dict, str,):
+@core_app.put("/experiment/{uri}", tags=["Experiment"], summary="Update an experiment")
+async def update_experiment(uri: str,
+                            experiment: ExperimentDTO,
+                            _: UserData = Depends(check_user_access_token)) -> Dict:
     """
     Update an experiment
-    
+
     - **uri**: the uri of the experiment
     - **title**: the new title [optional]
     - **description**: the new description [optional]
     - **flow**: the new protocol flow [optional]
     """
-    
-    from gws.service.experiment_service import ExperimentService
-    return ExperimentService.update_experiment(
-        uri = uri, 
-        title = title, 
-        description = description, 
-        data = flow
-    )
+
+    return ExperimentService.update_experiment(uri, experiment)
 
 @core_app.post("/experiment/{uri}/archive", tags=["Experiment"])
 async def archive_experiment(uri:str, \
@@ -120,31 +111,19 @@ async def validate_experiment(uri: str, \
     from gws.service.experiment_service import ExperimentService
     return ExperimentService.validate_experiment(uri=uri)
 
-@core_app.put("/experiment/{uri}/create", tags=["Experiment"], summary="Create an experiment")
-async def create_experiment(study_uri:str, \
-                            uri: Optional[str]=None, \
-                            title: Optional[str]=None, \
-                            description: Optional[str]=None, \
-                            proto: Optional[dict]=None, \
-                            _: UserData = Depends(check_user_access_token)) -> (dict, str,):
+@core_app.post("/experiment", tags=["Experiment"], summary="Create an experiment")
+async def create_experiment(experiment: ExperimentDTO,
+                            _: UserData = Depends(check_user_access_token)) -> Dict:
     """
     Create an experiment.
-    
+
     - **study_uri**: the uri of the study
-    - **uri**: predifined experiment uri [optional]
     - **title**: the title of the experiment [optional]
     - **description**: the description of the experiment [optional]
     - **flow**: the protocol flow [optional]
     """
-    
-    from gws.service.experiment_service import ExperimentService
-    return ExperimentService.create_experiment(
-        study_uri = study_uri,
-        uri = uri,
-        title = title, 
-        description = description, 
-        data = flow
-    )
+
+    return ExperimentService.create_experiment(experiment)
 
 @core_app.get("/experiment/{uri}", tags=["Experiment"], summary="Get an experiment")
 async def get_experiment(uri: str, \
@@ -155,5 +134,4 @@ async def get_experiment(uri: str, \
     - **uri**: the uri of an experiment
     """
     
-    from gws.service.experiment_service import ExperimentService
     return ExperimentService.fetch_experiment(uri=uri)

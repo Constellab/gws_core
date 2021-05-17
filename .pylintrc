@@ -7,10 +7,11 @@ disable=
     missing-class-docstring,
 
     no-else-raise,
-    no-else-return
+    no-else-return,
+
+    too-many-arguments,
+    too-few-public-methods
 
 
 [FORMAT]
-max-line-length=140
-
-
+max-line-length=200
