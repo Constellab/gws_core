@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws.dto.experiment_dto import ExperimentDTO
 from gws.query import Paginator
 from gws.model import Study, Experiment
 from gws.queue import Queue, Job
@@ -14,34 +15,36 @@ from .base_service import BaseService
 class ExperimentService(BaseService):
     
     # -- C --
-    
+
     @classmethod
-    def create_experiment(cls, study_uri:str, uri: str=None, title:str=None, decription:str=None, data: dict=None):
+    def create_experiment(cls, experiment: ExperimentDTO):
+        from gws.model import Protocol, Study
+        
         try:
-            study = Study.get(Study.uri==study_uri)
+            study = Study.get_default_instance()
+            # study = Study.get(Study.uri==study_uri)
             
-            if data:
-                proto = Protocol.from_graph(data)
-            else:
-                proto = Protocol()
-                
+            # if data:
+            #     proto = Protocol.from_graph(data)
+            # else:
+            #     proto = Protocol()
+            proto = Protocol()
+            
             e = proto.create_experiment(
-                uri = uri,
-                user = UserService.get_current_user(), 
-                study = study
+                user=UserService.get_current_user(), 
+                study=study
             )
             
-            if title:
-                e.set_title(title)
+            if experiment.title:
+                e.set_title(experiment.title)
                 
-            if description:
-                e.set_description(decription)
+            if experiment.description:
+                e.set_description(experiment.description)
             
             e.save()
-            return e.to_json()
+            return e.view().to_json()
         except Exception as err:
             raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
-   
 
     # -- F --
     
@@ -114,29 +117,32 @@ class ExperimentService(BaseService):
                 raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
                 
     # -- U --
-     
+
     @classmethod
-    def update_experiment(cls, uri, title=None, description=None, data: dict=None):        
+    def update_experiment(cls, uri, experiment: ExperimentDTO):
+        from gws.model import Experiment
+        
         try:
             e = Experiment.get(Experiment.uri == uri)
             if not e.is_draft:
                 raise HTTPInternalServerError(detail=f"The experiment is not a draft")
             
-            if data:
+            if experiment.graph:
                 proto = e.protocol
-                proto._build_from_dump(data, rebuild=True)
+                proto._build_from_dump(graph=experiment.graph, rebuild=True)
                 proto.save()
             
-            if title:
-                e.set_title(title)
+            if experiment.title:
+                e.set_title(experiment.title)
                 
-            if description:
-                e.set_description(description)
+            if experiment.description:
+                e.set_description(experiment.description)
                 
             e.save()
-            return e.to_json()
+            return e.view().to_json()
         except Exception as err:
             raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
+    
             
     # -- V --
     

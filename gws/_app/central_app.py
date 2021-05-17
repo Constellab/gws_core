@@ -3,7 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, Dict, List
+from gws.service.user_service import UserService
+from typing import Dict, List
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -85,8 +86,6 @@ async def create_user(user: UserData, _: UserData = Depends(check_central_api_ke
     - **last_name**: The last name
     """
 
-    from gws.service.user_service import UserService
-
     try:
         return __convert_user_to_dto(UserService.create_user(user.dict()))
     except Exception as err:
@@ -98,8 +97,6 @@ async def get_user_test():
     """
     Testing API user details
     """
-
-    from gws.model import User
     return {
         "owner": {
             "uri": User.get_owner().uri,
@@ -128,13 +125,13 @@ async def get_user_list(page: int = 1, \
             detail=f"Cannot get the user. Error: {err}")
 
 
-@app.get("/user", tags=["User management"])
+@central_app.get("/user", tags=["User management"])
 async def get_users(_: UserData = Depends(check_central_api_key)):
     """
     Get the all the users. Require central privilege.
     """
     try:
-        return UserService.fetch_user_list(page=page, number_of_items_per_page=number_of_items_per_page)
+        return __convert_users_to_dto(UserService.get_all_users())
     except Exception as err:
         raise HTTPInternalServerError(detail=f"Cannot get the user. Error: {err}")
 
@@ -169,19 +166,19 @@ async def deactivate_user(uri: str, _: UserData = Depends(check_central_api_key)
     except Exception as err:
         raise HTTPInternalServerError(detail=f"Cannot deactivate the user. Error: {err}")
 
-    @app.get("/user/{uri}", tags=["User management"])
-    async def get_user(uri: str, _: UserData = Depends(check_central_api_key)):
-        """
-        Get the details of a user. Require central privilege.
+@central_app.get("/user/{uri}", tags=["User management"])
+async def get_user(uri: str, _: UserData = Depends(check_central_api_key)):
+    """
+    Get the details of a user. Require central privilege.
 
-        - **uri**: the user uri
-        """
+    - **uri**: the user uri
+    """
 
-        try:
-            return __convert_user_to_dto(UserService.get_user_by_uri(uri))
-        except Exception as err:
-            raise HTTPInternalServerError(
-                detail=f"Cannot get the user. Error: {err}")
+    try:
+        return __convert_user_to_dto(UserService.get_user_by_uri(uri))
+    except Exception as err:
+        raise HTTPInternalServerError(
+            detail=f"Cannot get the user. Error: {err}")
 
 def __convert_user_to_dto(user: User) -> Dict:
     if user is None:
