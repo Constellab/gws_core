@@ -15,6 +15,7 @@ from gws.model import Model, ViewModel, Process, Resource, Protocol, Experiment
 from gws.settings import Settings
 from gws.logger import Warning, Info, Error
 from gws.http import *
+from gws.dto.rendering_dto import RenderingDTO
 
 from .base_service import BaseService
 
@@ -25,14 +26,52 @@ class ModelService(BaseService):
     # -- A --
     
     @classmethod
-    def archive_model(cls, object_type: str, object_uri: str) -> ViewModel:
-        return cls.__set_archive_status(True, object_type, object_uri)
+    def archive_model(cls, type: str, uri: str) -> dict:
+        return cls.__set_archive_status(True, type, uri)
     
     # -- C --
     
     @classmethod
-    def count_model(cls, object_type: str) -> int:
-        t = cls.get_model_type(object_type)
+    def creat_view_model(cls, type: str, uri: str, data: RenderingDTO) -> (ViewModel,):
+        """
+        View a model
+
+        :param type: The type of the model
+        :type type: `str`
+        :param uri: The uri of the model
+        :type uri: `str`
+        :param data: The rendering data
+        :type data: `dict`
+        :return: A model if `as_json == False`, a dictionary if `as_json == True=
+        :rtype: `gws.model.Model`, `dict`
+        """
+
+        t = cls.get_model_type(type)
+        
+        if t is None:
+            raise HTTPNotFound(detail=f"Model type '{type}' not found")
+        
+        try:
+            vm = t.get(t.uri == uri).create_view_model(data=data.dict())
+            return vm
+        except Exception as err:
+            raise HTTPNotFound(detail=f"Cannot create a view_model for the model of type '{type}' and uri '{uri}'", debug_error=err)
+
+            
+    @classmethod
+    def create_model_tables(cls):
+        """
+        Create all model tables
+        """
+        
+        for k in cls._model_types:
+            t = cls._model_types[k]
+            if not t.table_exists():
+                t.create_table()
+                
+    @classmethod
+    def count_model(cls, type: str) -> int:
+        t = cls.get_model_type(type)
         if t is None:
             raise HTTPNotFound(detail=f"Invalid Model type")
 
@@ -42,118 +81,95 @@ class ModelService(BaseService):
     # -- F --
     
     @classmethod
-    def fetch_model(cls, object_type: str, object_uri: str) -> Model:
+    def fetch_model(cls, type: str, uri: str, as_json=False) -> (Model,):
         """
         Fetch a model
 
-        :param object_type: The type of the model
-        :type object_type: `str`
-        :param object_uri: The uri of the model
-        :type object_uri: `str`
+        :param type: The type of the model
+        :type type: `str`
+        :param uri: The uri of the model
+        :type uri: `str`
         :return: A model
         :rtype: instance of `gws.model.Model`
         """
 
-        t = cls.get_model_type(object_type)
+        t = cls.get_model_type(type)
         
         if t is None:
             return None
         
         try:
-            return t.get(t.uri == object_uri)
+            return t.get(t.uri == uri)  
         except:
-            return None   
-   
-    @classmethod
-    def fetch_view_model(cls, object_type: str, object_uri: str, data:dict=None) -> ViewModel:
-        """
-        Fetch a view model
-
-        :param object_type: The type of the model to view
-        :type object_type: `str`
-        :param object_uri: The uri of the model
-        :type object_uri: `str`
-        :return: A model
-        :rtype: instance of `gws.model.ViewModel`
-        """
-        
-        obj = cls.fetch_model(object_type, object_uri)
-        if obj is None:
-            raise HTTPNotFound(detail=f"Invalid Model type or uri not found")
-        
-        if isinstance(obj, ViewModel):
-            # Ok!
-            pass
-        elif isinstance(obj, Model):
-            obj = obj.view(params=data)  
-        else:
-            raise HTTPNotFound(detail=f"No Model found with uri {object_uri}")
-        
-        return obj.to_json()
+            return None
     
     @classmethod
-    def fetch_list_of_view_models(cls, object_type: str, object_uris: List[str],  data:dict=None, filters: str=None, page=1, number_of_items_per_page=20) -> list:
-        t = cls.get_model_type(object_type)
+    def fetch_list_of_models(cls, \
+                             type: str,  \
+                             search_text: str=None, \
+                             page:int=1, number_of_items_per_page: int=20, \
+                             as_json: bool=False) -> (Paginator, List[Model], List[dict]):
         
+        t = cls.get_model_type(type)
         if t is None:
             raise HTTPNotFound(detail=f"Invalid Model type")
         
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
         
-        if "all" in object_uris:
-            if filters:
-                Q = t.search(**filters)
-
-                p = Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page, view_params=data)
-                result = []
-                for o in p:
-                    if return_format=="json":
-                        result.append( o.get_related().to_json(shallow=True) )
-                    else:
-                        result.append(o)
-
-                return {
-                    'data' : result,
-                    'paginator': p._paginator_dict()
-                }
-            else:
-                Q = t.select().order_by(t.creation_datetime.desc())
-                return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page, view_params=data).to_json(shallow=True)
+        if search_text:
+            Q = t.search(search_text)
+            result = []
+            for o in Q:
+                if as_json:
+                    result.append(o.get_related().to_json(shallow=True))
+                else:
+                    result.append(o.get_related())
+            
+            P = Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page)
+            return {
+                'data' : result,
+                'paginator': P._paginator_dict()
+            }
         else:
-            Q = t.select().where(t.uri.in_(object_uris)).order_by(t.creation_datetime.desc())
-            return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page, view_params=data).to_json(shallow=True)
-        
+            Q = t.select().order_by(t.creation_datetime.desc())
+            P = Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page)
+            
+            if as_json:
+                return P.to_json(shallow=True)
+            else:
+                return P
+ 
     # -- G --
     
     @classmethod
-    def get_model_type(cls, type_str: str = None) -> type:
+    def get_model_type(cls, type: str = None) -> type:
         """
         Get the type of a registered model using its litteral type
         
-        :param type_str: Litteral type (can be a slugyfied string)
-        :type type_str: str
+        :param type: Litteral type (can be a slugyfied string)
+        :type type: str
         :return: The type if the model is registered, None otherwise
-        :object_type: type
+        :type: `str`
         """
    
-        if type_str is None:
+        if type is None:
             return None
         
-        if type_str in cls._model_types:
-            return cls._model_types[type_str]
+        if type in cls._model_types:
+            return cls._model_types[type]
         
-        if type_str.lower() == "experiment":
+        if type.lower() == "experiment":
             return Experiment
-        elif type_str.lower() == "protocol":
+        elif type.lower() == "protocol":
             return Protocol
-        elif type_str.lower() == "process":
+        elif type.lower() == "process":
             return Process
-        elif type_str.lower() == "resource":
+        elif type.lower() == "resource":
             return Resource
-        elif type_str.lower() == "config":
+        elif type.lower() == "config":
             return Config
  
-        tab = type_str.split(".")
+        tab = type.split(".")
         n = len(tab)
         module_name = ".".join(tab[0:n-1])
         function_name = tab[n-1]
@@ -161,7 +177,7 @@ class ModelService(BaseService):
         try:
             module = importlib.import_module(module_name)
             t = getattr(module, function_name, None)
-            cls._model_types[type_str] = t
+            cls._model_types[type] = t
         except Exception as err:
             Warning("gws.service.model_service.ModelService", "get_model_type", f"An error occured. Error: {err}")
             t = None
@@ -212,7 +228,6 @@ class ModelService(BaseService):
             proc_t.create_process_type()
             cls._model_types[ proc_t.full_classname() ] = proc_t
             
-        
         resource_type_list = list(set(resource_type_list))
         for res_t in set(resource_type_list):
             res_t.create_resource_type()
@@ -263,43 +278,42 @@ class ModelService(BaseService):
         return True
     
     @classmethod
-    def __set_archive_status(cls, tf:bool, object_type: str, object_uri: str) -> ViewModel:
-        obj = cls.fetch_model(object_type, object_uri)
+    def __set_archive_status(cls, tf:bool, type: str, uri: str) -> dict:
+        obj = cls.fetch_model(type, uri)
         
         if obj is None:
-            raise HTTPNotFound(detail=f"Model not found with uri {object_uri}")
+            raise HTTPNotFound(detail=f"Model not found with uri {uri}")
 
         obj.archive(tf)
-        return obj.to_json()
+        return obj
             
     # -- U --
     
     @classmethod
-    def unarchive_model(cls, object_type: str, object_uri: str) -> ViewModel:
-        return cls.__set_archive_status(False, object_type, object_uri)
+    def unarchive_model(cls, type: str, uri: str) -> dict:
+        return cls.__set_archive_status(False, type, uri)
     
-    @classmethod
-    def update_view_model(cls, object_type: str, object_uri: str, data: dict) -> ViewModel:
-        obj = cls.fetch_model(object_type, object_uri)
-        if obj is None:
-            raise HTTPNotFound(detail=f"Model not found with uri {object_uri}")
-        
-        if isinstance(obj, ViewModel):
-            view_model = obj
-            view_model.set_params(data)
-            view_model.save()
-        else:
-            raise HTTPNotFound(detail=f"ViewModel not found with uri {object_uri}")
-
-        return view_model.to_json()
     
     # -- V --
     
     @classmethod
-    def verify_model_hash(cls, object_type, object_uri):
-        obj = cls.fetch_model(object_type, object_uri)
-        if obj is None:
-            raise HTTPNotFound(detail=f"Model not found with uri {object_uri}")
+    def verify_model_hash(cls, type, uri) -> bool:
+        """
+        Verify model hash
+
+        :param type: The type of the model
+        :type type: `str`
+        :param uri: The uri of the model
+        :type uri: `str`
+        :return: True if the hash is valid, False otherwise
+        :rtype: `bool`
+        """
         
-        return {"status": obj.verify_hash()}
+        obj = cls.fetch_model(type, uri)
+        if obj is None:
+            raise HTTPNotFound(detail=f"Model not found with uri {uri}")
+        
+        return obj.verify_hash() #{"status": obj.verify_hash()}
+    
+
     

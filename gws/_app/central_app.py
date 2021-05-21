@@ -17,6 +17,7 @@ from gws.model import User
 from ._core_app._auth_user import UserData
 from ._central_app._auth_central import check_central_api_key
 from ._central_app._auth_central import generate_user_access_token as _generate_user_access_token
+from gws.service.user_service import UserService
 
 central_app = FastAPI(docs_url="/docs")
 
@@ -73,25 +74,6 @@ async def generate_user_access_token(user_uri_data: UserUriData,
     return await _generate_user_access_token(user_uri_data.uri)
 
 
-@central_app.post("/user", tags=["User management"])
-async def create_user(user: UserData, _: UserData = Depends(check_central_api_key)):
-    """
-    Create a new user
-
-    UserData:
-    - **uri**: The user uri
-    - **email**: The user emails
-    - **group**: The user group. Valid groups are: **owner** (lab owner), **user** (user with normal privileges), **admin** (adminstrator).
-    - **first_name**: The first names
-    - **last_name**: The last name
-    """
-
-    try:
-        return __convert_user_to_dto(UserService.create_user(user.dict()))
-    except Exception as err:
-        raise HTTPInternalServerError(detail=f"Cannot create the user. Error: {err}")
-
-
 @central_app.get("/user/test", tags=["User management"])
 async def get_user_test():
     """
@@ -106,35 +88,6 @@ async def get_user_test():
         }
     }
 
-@central_app.get("/user/list", tags=["User management"])
-async def get_user_list(page: int = 1, \
-                        number_of_items_per_page: int = 20, \
-                       _: UserData = Depends(check_central_api_key)):
-    """
-    Retrieve the list of users. Requires central privilege.
-
-    - **page**: the page number
-    - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
-    """
-
-    try:
-        user: User = UserService.get_user_by_uri(uri)
-        return __convert_user_to_dto(user)
-    except Exception as err:
-        raise HTTPInternalServerError(
-            detail=f"Cannot get the user. Error: {err}")
-
-
-@central_app.get("/user", tags=["User management"])
-async def get_users(_: UserData = Depends(check_central_api_key)):
-    """
-    Get the all the users. Require central privilege.
-    """
-    try:
-        return __convert_users_to_dto(UserService.get_all_users())
-    except Exception as err:
-        raise HTTPInternalServerError(detail=f"Cannot get the user. Error: {err}")
-
 @central_app.get("/user/{uri}/activate", tags=["User management"])
 async def activate_user(uri: str, _: UserData = Depends(check_central_api_key)):
     """
@@ -143,10 +96,8 @@ async def activate_user(uri: str, _: UserData = Depends(check_central_api_key)):
     - **uri**: the user uri
     """
 
-    from gws.service.user_service import UserService
-
     try:
-        return UserService.activate_user(uri)
+        return __convert_user_to_dto(UserService.activate_user(uri))
     except Exception as err:
         raise HTTPInternalServerError(detail=f"Cannot activate the user. Error: {err}")
 
@@ -159,10 +110,8 @@ async def deactivate_user(uri: str, _: UserData = Depends(check_central_api_key)
     - **uri**: the user uri
     """
 
-    from gws.service.user_service import UserService
-
     try:
-        return UserService.deactivate_user(uri)
+        return __convert_user_to_dto(UserService.deactivate_user(uri))
     except Exception as err:
         raise HTTPInternalServerError(detail=f"Cannot deactivate the user. Error: {err}")
 
@@ -180,6 +129,34 @@ async def get_user(uri: str, _: UserData = Depends(check_central_api_key)):
         raise HTTPInternalServerError(
             detail=f"Cannot get the user. Error: {err}")
 
+@central_app.post("/user", tags=["User management"])
+async def create_user(user: UserData, _: UserData = Depends(check_central_api_key)):
+    """
+    Create a new user
+
+    UserData:
+    - **uri**: The user uri
+    - **email**: The user emails
+    - **group**: The user group. Valid groups are: **owner** (lab owner), **user** (user with normal privileges), **admin** (adminstrator).
+    - **first_name**: The first names
+    - **last_name**: The last name
+    """
+
+    try:
+        return __convert_user_to_dto(UserService.create_user(user.dict()))
+    except Exception as err:
+        raise HTTPInternalServerError(detail=f"Cannot create the user. Error: {err}")
+        
+@central_app.get("/user", tags=["User management"])
+async def get_users(_: UserData = Depends(check_central_api_key)):
+    """
+    Get the all the users. Require central privilege.
+    """
+    try:
+        return __convert_users_to_dto(UserService.get_all_users())
+    except Exception as err:
+        raise HTTPInternalServerError(detail=f"Cannot get the user. Error: {err}")
+        
 def __convert_user_to_dto(user: User) -> Dict:
     if user is None:
         return None

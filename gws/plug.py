@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from gws.model import Process
+from gws.model import Process, Resource
 
 class Source(Process):
     """

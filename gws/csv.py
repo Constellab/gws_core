@@ -111,7 +111,7 @@ class CSVData(Resource):
     def from_dict( cls, table: dict, orient='index', dtype=None, columns=None ) -> 'CSVData':
         df = DataFrame.from_dict(table, orient, dtype, columns)
         return cls(table=df)
-        
+
     # -- G --
     
     def get_column(self, column_name: str, rtype='list') -> ('DataFrame', list):
@@ -213,6 +213,18 @@ class CSVData(Resource):
         """
         return self.table.index.values.tolist()
     
+    def _render__as_csv(self, **kwargs):
+        """
+        Renders the model as a JSON string or dictionnary. This method is used by :class:`ViewModel` to create view rendering.
+        
+        :param kwargs: Parameters passed to the method :meth:`to_json`.
+        :type kwargs: `dict`
+        :return: The view representation
+        :rtype: `dict`, `str`
+        """
+        
+        return self.to_csv( stringify=True, **kwargs )
+    
     # -- S --
  
     def _select(self, **params) -> 'Model':
@@ -232,14 +244,26 @@ class CSVData(Resource):
     
     # -- T --
     
-    def to_csv(self, stringify=False, **kwargs):
-        if stringify:
-            return self.table.to_csv()
-        else:
-            return self.table
+    def to_json(self, stringify: bool=False, prettify: bool=False, **kwargs):
+        _json = super().to_json(**kwargs)
+        _json["data"]["content"] = self.table.to_json()
         
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
+        
+    def to_table(self):
+        return self.table
+        
+    def to_csv(self, **kwargs):
+        return self.table.to_csv()
+
     # -- V ---
-    
+        
 # ####################################################################
 #
 # Importer class

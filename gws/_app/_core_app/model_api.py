@@ -5,134 +5,140 @@
 
 from typing import Optional
 from fastapi import Depends
+
+from gws.http import HTTPInternalServerError
 from ._auth_user import UserData, check_user_access_token
-from .core_app import core_app, ViewModelData
+from .core_app import core_app
 
-@core_app.get("/model/count/{object_type}", tags=["Models and ViewModels"])
-async def count(object_type: str, \
-                _: UserData = Depends(check_user_access_token)) -> (dict, str,):
-    """
-    Get the count of objects of a given type
-    
-    - **object_type**: the object type
-    """
+from gws.service.model_service import ModelService
+from gws.dto.rendering_dto import RenderingDTO
 
-    from gws.service.model_service import ModelService
-    return ModelService.count_model( 
-        object_type = object_type
-    )
-
-@core_app.post("/model/{object_type}/{object_uri}/archive", tags=["Models and ViewModels"])
-async def archive_model(object_type: str, \
-                             object_uri: str, \
-                             _: UserData = Depends(check_user_access_token)) -> (dict, str,):
-    """
-    Archive a ViewModel
-    
-    - **object_type**: the type of the object to archive.
-    - **object_uri**: the uri of the object to archive
-    """
-
-    from gws.service.model_service import ModelService
-    return ModelService.archive_model( 
-        object_type = object_type, 
-        object_uri = object_uri
-    )
-
-@core_app.post("/model/{object_type}/{object_uri}/unarchive", tags=["Models and ViewModels"])
-async def unarchive_model(object_type: str, \
-                          object_uri: str, \
-                          _: UserData = Depends(check_user_access_token)) -> (dict, str,):
-    """
-    Archive a ViewModel
-    
-    - **object_type**: the type of the object to archive.
-    - **object_uri**: the uri of the object to archive
-    """
-
-    from gws.service.model_service import ModelService
-    return ModelService.unarchive_model(
-        object_type = object_type, 
-        object_uri = object_uri
-    )
-
-@core_app.post("/view/{object_type}/{object_uri}/update", tags=["Models and ViewModels"])
-async def update_view_model(object_type: str, \
-                       object_uri: str, \
-                       view_model: ViewModelData, \
-                       _: UserData = Depends(check_user_access_token)) -> (dict, str,):
-    """
-    Update a ViewModel
-    
-    - **object_type**: the type of object of which the ViewModel is attached
-    - **view_model**: data of the ViewModel `{uri: "uri_of_the_view_model", data: "parameters_of_the_view_model"}`
-    """
-
-    from gws.service.model_service import ModelService
-    return ModelService.update_view_model( 
-        object_type = object_type, 
-        object_uri = object_uri, 
-        data = view_model.params
-    )
-
-@core_app.get("/view/{object_type}/{object_uris}", tags=["Models and ViewModels"])
-async def get_list_of_view_models(object_type: str, \
-                         object_uris: Optional[str] = "all", \
-                         page: int = 1, \
-                         number_of_items_per_page: int = 20, \
-                         filters: Optional[str] = "", \
-                         view_params: Optional[str] = "{}", \
+@core_app.post("/model/{type}/{uri}/archive", tags=["Models"], summary="Archive a model")
+async def archive_a_model(type: str, \
+                        uri: str, \
                         _: UserData = Depends(check_user_access_token)) -> (dict, str,):
     """
-    Get a ViewModel
+    Archive a Model
     
-    Custom query params depending on the queryied model. 
-    
-    - **object_type**: the type of the object to fetch. Can be an existing ViewModel or a Viewable object with no ViewModel. In this case, default ViewModel is created and returned.
-    - **object_uris**: the uris of the object to fetch. Use comma-separated values to fecth several uris or 'all' to fetch all the entries. When all entries are retrieve, the **filter** parameter can be used.
-    - **page**: the page number 
-    - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
-    - **filters**: filter to use to select data (**object_uris** must be equal to 'all'). The filter is matched (using full-text search) against to the `title` and the `description`.
-    - **view_params**: key,value parameters of the ViewModel. The key,value specifications are given by the method `to_json()` of the corresponding object class. See class documentation.
+    - **type**: the type of the object to archive.
+    - **uri**: the uri of the object to archive
     """
     
-    from gws.service.model_service import ModelService
+    model = ModelService.archive_model( 
+        type = type, 
+        uri = uri
+    )
+    return model.to_json()
+
+@core_app.post("/model/{type}/{uri}/unarchive", tags=["Models"], summary="Unarchive a model")
+async def unarchive_a_model(type: str, \
+                          uri: str, \
+                          _: UserData = Depends(check_user_access_token)) -> (dict, str,):
+    """
+    Unarchive a Model
+    
+    - **type**: the type of the object to archive.
+    - **uri**: the uri of the object to archive
+    """
+
+    model = ModelService.unarchive_model(
+        type = type, 
+        uri = uri
+    )
+    return model.to_json()
+
+@core_app.post("/model/{type}/{uri}/create-view", tags=["Models"], summary="Create a view model of a model")
+async def create_a_view_model_of_a_model(type: str, \
+                     uri: str, \
+                     data: RenderingDTO, \
+                     _: UserData = Depends(check_user_access_token)) -> (dict, str,):
+    """
+    View a Model
+
+    - **type**: the type of the model to view
+    - **uri**: the uri of the model to view
+    - **data**: the rendering data.
+    """
+    
+    vm = ModelService.creat_view_model(
+        type=type, 
+        uri=uri,
+        data=data
+    )
     
     try:
-        params = json.loads(view_params)
-    except:
-        params = {}
-    
-    object_uris = object_uris.split(",")
-    
-    return ModelService.fetch_list_of_view_models( 
-        object_type = object_type, 
-        object_uris = object_uris, 
-        data = params, 
-        page = page, 
-        number_of_items_per_page = number_of_items_per_page, 
-        filters = filters
-    )
+        return vm.to_json()
+    except Exception as err:
+        raise HTTPInternalServerError(detail=f"Cannot render view. The rendering function '{data.render}' may not be valid", debug_error=err)
 
-
-@core_app.get("/model/{object_type}/{object_uri}/verify", tags=["Models and ViewModels"])
-async def verify_model_hash(object_type: str, \
-                            object_uri: str, \
-                            _: UserData = Depends(check_user_access_token)) -> (dict, str,):
+@core_app.get("/model/{type}/{uri}/verify", tags=["Models"], summary="Verify model hash")
+async def verify_a_model_hash(type: str, \
+                            uri: str, \
+                            _: UserData = Depends(check_user_access_token)) -> bool:
     """
-    Verify Model and ViewModel hash.
+    Verify a Model hash.
     
-    Verify the integrity of a given object in the db to check if that object has been altered by any unofficial mean
+    Verify the integrity of a given object in the db. Check if this object has been altered by any unofficial mean
     (e.g. manual changes of data in db, or partial changes without taking care of its dependency chain).
     
     Objects' integrity is based on an algorithm that computes hashes using objects' data and their dependency trees (like in block chain) rendering any data falsification difficult to hide.
     
-    - **object_type**: the type of the object to delete.
-    - **object_uri**: the uri of the object to delete
+    - **type**: the type of the object to delete.
+    - **uri**: the uri of the object to delete.
+    - **return** `True` if the model hash is valid, `False` otherwise.
     """
     
-    from gws.service.model_service import ModelService
-    return ModelService.verify_model_hash(
-        object_type=object_type, 
-        object_uri=object_uri
+    tf = ModelService.verify_model_hash(type=type, uri=uri)
+    return tf
+
+
+@core_app.get("/model/{type}/count", tags=["Models"], summary="Count the number of models")
+async def count_the_number_of_models(type: str, \
+                _: UserData = Depends(check_user_access_token)) -> int:
+    """
+    Get the count of objects of a given type (models can be `Model` or `ViewModel`)
+    
+    - **type**: the object type
+    """
+
+    return ModelService.count_model(type = type)
+
+@core_app.get("/model/{type}/{uri}", tags=["Models"], summary="Get a model")
+async def get_a_model(type: str, \
+                    uri: str, \
+                    _: UserData = Depends(check_user_access_token)) -> dict:
+    """
+    Get a Model
+        
+    - **type**: the type of the model to fetch.
+    - **uri**: the uri of the model to fetch.
+    """
+    
+    model = ModelService.fetch_model(uri=uri)
+    return model.to_json()
+
+@core_app.get("/model/{type}", tags=["Models"], summary="Get the list of models")
+async def get_the_list_of_models(type: str, \
+                             search_text: Optional[str] = "", \
+                             page: Optional[int] = 1, \
+                             number_of_items_per_page: Optional[int] = 20, \
+                             _: UserData = Depends(check_user_access_token)) -> dict:
+    """
+    Get a list of Models
+        
+    
+    - **type**: the type of the models to fetch.
+    - **search_text**: text used to filter the results. The test is matched (using full-text search) against to the `title` and the `description`.
+    - **page**: the page number 
+    - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
+    """
+    
+    return ModelService.fetch_list_of_models( 
+        type = type, 
+        search_text = search_text,
+        page = page, 
+        number_of_items_per_page = number_of_items_per_page, 
+        as_json = True
     )
+
+

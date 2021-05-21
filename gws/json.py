@@ -84,8 +84,6 @@ class JSONData(Resource):
     
     # -- S --
     
-    # -- S --
-    
     def _select(self, **params) -> 'Model':
         """ 
         Select a part of the resource
@@ -100,7 +98,21 @@ class JSONData(Resource):
     
     def __setitem__(self, key, val):
         self.data[key] = val
-
+    
+    # -- T --
+    
+    def to_json(self, stringify: bool=False, prettify: bool=False, **kwargs):
+        _json = super().to_json(**kwargs)
+        _json["data"]["content"] = self.kv_data
+        
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
+        
 # ####################################################################
 #
 # Importer class

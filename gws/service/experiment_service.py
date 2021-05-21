@@ -3,6 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from typing import List
+
 from gws.dto.experiment_dto import ExperimentDTO
 from gws.query import Paginator
 from gws.model import Study, Experiment
@@ -17,19 +19,12 @@ class ExperimentService(BaseService):
     # -- C --
 
     @classmethod
-    def create_experiment(cls, experiment: ExperimentDTO):
+    def create_experiment(cls, experiment: ExperimentDTO) -> Experiment:
         from gws.model import Protocol, Study
         
         try:
             study = Study.get_default_instance()
-            # study = Study.get(Study.uri==study_uri)
-            
-            # if data:
-            #     proto = Protocol.from_graph(data)
-            # else:
-            #     proto = Protocol()
             proto = Protocol()
-            
             e = proto.create_experiment(
                 user=UserService.get_current_user(), 
                 study=study
@@ -42,90 +37,112 @@ class ExperimentService(BaseService):
                 e.set_description(experiment.description)
             
             e.save()
-            return e.view().to_json()
+            return e
         except Exception as err:
-            raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
+            raise HTTPInternalServerError(detail=f"An error occured.", debug_error=err)
 
     # -- F --
     
     @classmethod
-    def fetch_experiment(cls, uri=None):
+    def fetch_experiment(cls, uri=None)-> (Experiment, dict, ):
         try:
             e = Experiment.get(Experiment.uri == uri)
         except Exception as err:
-            raise HTTPNotFound(detail=f"No experiment found with uri {uri}")
+            raise HTTPNotFound(detail=f"No experiment found with uri {uri}", debug_error=err)
             
-        return e.to_json()
+        return e
     
     @classmethod
-    def fetch_experiment_list(cls, page=1, number_of_items_per_page=20, filters=[]):
-        Q = Experiment.select()\
-                        .order_by(Experiment.creation_datetime.desc())
+    def fetch_experiment_list(cls, \
+                              search_text: str="", \
+                              page: int=1, \
+                              number_of_items_per_page: int=20, \
+                              as_json: bool = False) -> (Paginator, List[Experiment], List[dict], ):
+        
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
-        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json(shallow=True)
-  
+        
+        if search_text:
+            Q = Experiment.search(search_text)
+            result = []
+            for o in Q:
+                if as_json:
+                    result.append(o.get_related().to_json(shallow=True))
+                else:
+                    result.append(o.get_related())
+            
+            P = Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page)
+            return {
+                'data' : result,
+                'paginator': P._paginator_dict()
+            }
+        else:
+            Q = Experiment.select().order_by(Experiment.creation_datetime.desc())
+            P = Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page)
+ 
+            if as_json:
+                return P.to_json(shallow=True)
+            else:
+                return P
+
     # -- G --
     
     @classmethod
-    def get_queue(cls):
+    def get_queue(cls) -> 'Queue':
         from gws.queue import Queue
         q = Queue()
-        return q.to_json()
+        return q
     
     # -- S --
     
     @classmethod
-    async def start_experiment(cls, uri):
+    async def start_experiment(cls, uri) -> Experiment:
         try:
             e = Experiment.get(Experiment.uri == uri)
         except Exception as err:
-            raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
+            raise HTTPNotFound(detail=f"Experiment '{uri}' not found", debug_error=err)
   
         if e._is_running:
-            raise HTTPForbiden(detail=f"The experiment is already running")
+            raise HTTPForbiden(detail=f"The experiment '{uri}' is already running")
         elif e._is_finished:
-            raise HTTPForbiden(detail=f"The experiment is finished")
+            raise HTTPForbiden(detail=f"The experiment '{uri}' is finished")
         else:
             try:
                 q = Queue()
                 user = UserService.get_current_user()
                 job = Job(user=user, experiment=e)
                 q.add(job, auto_start=True)
-                return e.to_json()
+                return e
             except Exception as err:
-                raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
+                raise HTTPInternalServerError(detail=f"An error occured.", debug_error=err)
     
     @classmethod
-    async def stop_experiment(cls, uri):
+    async def stop_experiment(cls, uri) -> Experiment:
         try:
             e = Experiment.get(Experiment.uri == uri)
         except Exception as err:
-            raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
-        
-        if not e:
-            raise HTTPNotFound(detail=f"Experiment not found")
-            
+            raise HTTPInternalServerError(detail=f"Experiment '{uri}' not found")
+
         if not e._is_running:
-            raise HTTPForbiden(detail=f"The experiment is not running")
+            raise HTTPForbiden(detail=f"Experiment '{uri}' is not running")
         elif e._is_finished:
-            raise HTTPForbiden(detail=f"The experiment is already finished")
+            raise HTTPForbiden(detail=f"Experiment '{uri}' is already finished")
         else:
             try:
                 await e.kill_pid()
-                return e.to_json()
+                return e
             except Exception as err:
-                raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
+                raise HTTPInternalServerError(detail=f"Cannot kill experiment '{uri}'", debug_error=err)
                 
     # -- U --
 
     @classmethod
-    def update_experiment(cls, uri, experiment: ExperimentDTO):
+    def update_experiment(cls, uri, experiment: ExperimentDTO) -> Experiment:
         from gws.model import Experiment
         
         try:
             e = Experiment.get(Experiment.uri == uri)
             if not e.is_draft:
-                raise HTTPInternalServerError(detail=f"The experiment is not a draft")
+                raise HTTPInternalServerError(detail=f"Experiment '{uri}' is not a draft")
             
             if experiment.graph:
                 proto = e.protocol
@@ -139,24 +156,24 @@ class ExperimentService(BaseService):
                 e.set_description(experiment.description)
                 
             e.save()
-            return e.view().to_json()
+            return e
         except Exception as err:
-            raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
+            raise HTTPInternalServerError(detail=f"An error occured.", debug_error=err)
     
             
     # -- V --
     
     @classmethod
-    def validate_experiment(cls, uri):
+    def validate_experiment(cls, uri) -> Experiment:
         try:
             e = Experiment.get(Experiment.uri == uri)
         except:
-            raise HTTPNotFound(detail=f"Experiment found")
+            raise HTTPNotFound(detail=f"Experiment '{uri}' not found")
         
         try:
             e.validate(user = UserService.get_current_user())
-            return e.to_json()
+            return e
         except Exception as err:
-            raise HTTPNotFound(detail=f"Cannot validate experiment. Error: {err}")
+            raise HTTPNotFound(detail=f"Cannot validate experiment '{uri}'", debug_error=err)
             
             

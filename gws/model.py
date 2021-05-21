@@ -378,7 +378,6 @@ class Model(BaseModel):
                 db_val = getattr(db_object, prop)
                 setattr(self, prop, db_val) 
 
-    # -- S --
 
     @classmethod
     def select(cls, *args, **kwargs):
@@ -395,7 +394,7 @@ class Model(BaseModel):
         return cls.select( *args, **kwargs ).where(cls.type == cls.full_classname())
     
     @classmethod
-    def search(cls, phrase, page:int = 1, number_of_items_per_page: int=20):
+    def search(cls, phrase: str):
         _FTSModel = cls.fts_model()
 
         if _FTSModel is None:
@@ -595,7 +594,7 @@ class Model(BaseModel):
         """
         
         return self.hash == self.__compute_hash()
-    
+        
 # ####################################################################
 #
 # User class
@@ -838,7 +837,7 @@ class User(Model):
         return super().save(*arg, **kwargs)
     
     # -- T --
-    
+        
     def to_json(self, *args, stringify: bool=False, prettify: bool=False, **kwargs) -> (dict, str, ):
         """
         Returns a JSON string or dictionnary representation of the user.
@@ -938,7 +937,9 @@ class User(Model):
             except:
                 transaction.rollback()
                 return False
-            
+
+    # -- V --
+        
 # ####################################################################
 #
 # Activity class
@@ -957,6 +958,7 @@ class Activity(Model):
     _table_name = "gws_user_activity"
     
     CREATE = "CREATE"
+    UPDATE = "UPDATE"
     SAVE = "SAVE"
     START = "START"
     STOP = "STOP"
@@ -1027,7 +1029,7 @@ class Activity(Model):
  
 class Viewable(Model):
 
-    _fts_field = {'title': 2.0, 'description': 1.0}
+    _fts_fields = {'title': 2.0, 'description': 1.0}
 
     # -- A --
 
@@ -1047,7 +1049,7 @@ class Viewable(Model):
         with DbManager.db.atomic() as transaction:
             try:
                 Q = ViewModel.select().where( 
-                    (ViewModel.model_id == self.id) & 
+                    (ViewModel.model_uri == self.uri) & 
                     (ViewModel.is_archived == (not tf))
                 )
                 
@@ -1067,7 +1069,28 @@ class Viewable(Model):
                 return False
 
     # -- C --
+    
+    def create_view_model(self, data:dict = {}) -> 'ViewModel':
+        """ 
+        Create a ViewModel
+        
+        :param data: The rendering data
+            * render: `str`, the name of the rendering function (e.g. if `render = as_csv`, the method `view__as_csv()` of the `model`.)
+            * params: `dict`, the parameters passed to the rendering function
+            * metadata: `dict`, supplementatry metadata
+        :type data: `dict`
+        """
+        
+        if not isinstance(data, dict):
+            data = {}
+        
+        params = data.get("params", {})
 
+        vm = ViewModel(model=self)
+        vm.update(data, track_activity = False)
+
+        return vm
+    
     # -- D --
     
     @property
@@ -1113,6 +1136,18 @@ class Viewable(Model):
 
     # -- R -- 
 
+    def _render__as_json(self, **kwargs) -> (str, dict, ):
+        """
+        Renders the model as a JSON string or dictionnary. This method is used by :class:`ViewModel` to create view rendering.
+        
+        :param kwargs: Parameters passed to the method :meth:`to_json`.
+        :type kwargs: `dict`
+        :return: The view representation
+        :rtype: `dict`, `str`
+        """
+        
+        return self.to_json(**kwargs)
+    
     # -- S --
 
     def set_title(self, title: str):
@@ -1161,24 +1196,29 @@ class Viewable(Model):
     
     # -- V --
 
-    def view(self, *args, params:dict = {}) -> 'ViewModel':
+    def view(self, data: dict = {}) -> dict:
         """ 
-        Build and return a ViewModel
+        Renders a ViewModel
+        
+        :param data: The rendering data
+            * func: the name of rendering function to use (e.g. if `func = csv`, the method `view__as_csv( **kwargs )` of the model with be used if it is defined)
+            * params: the parameters passed to the rendering function as `kwargs`
+        :type params: `dict`
         """
         
-        if not isinstance(params, dict):
-            params = {}
+        if not isinstance(data, dict):
+            data = {}
 
-        view_model = ViewModel.get_instance(self, params)
-        return view_model
-                
+        vm = self.create_view_model(data)
+        return vm.render()
+    
     @property
     def view_models(self):
         """ 
         Get all the ViewModels of the Viewable
         """
         
-        return ViewModel.select().where(ViewModel.model_id == self.id)
+        return ViewModel.select().where(ViewModel.model_uri == self.uri)
     
 # ####################################################################
 #
@@ -1355,6 +1395,8 @@ class Config(Viewable):
             "params" : {}
         }
     
+    # -- T --
+    
     def to_json(self, *, shallow=False, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the model.
@@ -1379,6 +1421,9 @@ class Config(Viewable):
         else:
             return _json
         
+    # -- V --
+
+        
 # ####################################################################
 #
 # ProgressBar class
@@ -1386,11 +1431,15 @@ class Config(Viewable):
 # ####################################################################
 
 class ProgressBar(Model):
+    
+    process_uri = CharField(null=True, index=True)
+    process_type = CharField(null=True)  #-> unique index (process_uri, process_type) is created in Meta
+    
     _min_allowed_delta_time = 1.0
     _min_value = 0.0
     
     _is_removable = False
-    _table_name = "gws_progress_bar"
+    _table_name = "gws_process_progress_bar"
     _max_message_stack_length = 64
     
     def __init__(self, *args, **kwargs):
@@ -1450,6 +1499,17 @@ class ProgressBar(Model):
         return  self.is_initialized and \
                 self.data["value"] >= self.data["max_value"]
     
+    # -- P --
+    
+    @property
+    def process(self) -> 'Process':
+        if not self.process_type:
+            return None
+        
+        from .service.model_service import ModelService
+        t = ModelService.get_model_type(self.process_type)
+        return t.get(t.uri == self.process_uri)
+        
     # -- S --
     
     def start(self, max_value: float = 100.0):
@@ -1521,10 +1581,19 @@ class ProgressBar(Model):
            
         self.data["max_value"] = value
         self.save()
-    
-    
 
+    class Meta:
+        indexes = (
+            # create a unique on process_uri, process_type
+            (('process_uri', 'process_type'), True),
+        )
         
+# ####################################################################
+#
+# Process class
+#
+# ####################################################################
+
 class Process(Viewable):
     """
     Process class.
@@ -1541,9 +1610,9 @@ class Process(Viewable):
     experiment_id = IntegerField(null=True, index=True)
     instance_name = CharField(null=True, index=True)
         
-    created_by = ForeignKeyField(User, null=False, index=True)
-    config =  ForeignKeyField(Config, null=False, index=True, backref='processes')    
-    progress_bar = ForeignKeyField(ProgressBar, null=True, backref='process')
+    created_by = ForeignKeyField(User, null=False, index=True, backref='+')
+    config =  ForeignKeyField(Config, null=False, index=True, backref='+')    
+    progress_bar = ForeignKeyField(ProgressBar, null=True, backref='+')
 
     input_specs: dict = {}
     output_specs: dict = {}
@@ -1594,7 +1663,7 @@ class Process(Viewable):
             self.config = Config(specs=self.config_specs)
             self.config.save()
         
-            self.progress_bar = ProgressBar()
+            self.progress_bar = ProgressBar(process_uri=self.uri, process_type=self.type)
             self.progress_bar.save()
 
             if not user:
@@ -2090,6 +2159,8 @@ class Process(Viewable):
     async def task(self):
         pass
         
+    # -- T --
+    
     def to_json(self, *, shallow=False, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the model.
@@ -2112,30 +2183,30 @@ class Process(Viewable):
             
         if "output" in _json["data"]:
             del _json["data"]["output"]
+        
+        _json["progress_bar"] = { "uri" : "" }
+        _json["config"] = { "uri" : "" }
+        _json["experiment"] = { "uri" : "" }
+        _json["protocol"] = { "uri" : "" }
             
         bare = kwargs.get("bare")
-        if bare:
-            _json["experiment"] = { "uri" : "" }
-            _json["protocol"] = { "uri" : "" }
-        else:
-            e_uri = None
+        if not bare:
             if self.experiment_id:
-                e_uri = self.experiment.uri
-
-            p_uri = None
+                _json["experiment"] = { "uri" : self.experiment.uri }
+                
             if self.protocol_id:
-                p_uri = self.protocol.uri
-
-            _json["experiment"] = { "uri" : e_uri }
-            _json["protocol"] = { "uri" : p_uri }
+                _json["protocol"] = { "uri" : self.protocol.uri }
         
         if shallow:
-            _json["config"] = { "uri" : self.config.uri }
-            
+            if not bare:
+                _json["config"] = { "uri" : self.config.uri }
+                _json["progress_bar"] = { "uri" : self.progress_bar.uri }
+                
             if _json["data"].get("graph"):
                 del _json["data"]["graph"]
         else:
             _json["config"] = self.config.to_json(**kwargs)
+            _json["progress_bar"] = self.progress_bar.to_json(**kwargs)
             
         _json["input"] = self.input.to_json(**kwargs)
         _json["output"] = self.output.to_json(**kwargs)
@@ -2148,6 +2219,8 @@ class Process(Viewable):
         else:
             return _json
         
+    # -- V --
+
 # ####################################################################
 #
 # Protocol class
@@ -2844,6 +2917,10 @@ class Protocol(Process):
         else:
             return _json
         
+    
+    # -- V --
+
+        
 # ####################################################################
 #
 # Study class
@@ -3138,10 +3215,6 @@ class Experiment(Viewable):
 
     @property 
     def resources(self):
-        #Q = Resource.select()\
-        #            .where(Experiment.id == self.id) \
-        #            .order_by(Resource.creation_datetime.desc())
-        
         Qrel = ExperimentResource.select().where(ExperimentResource.experiment_id == self.id)
         Q = []
         for o in Qrel:
@@ -3332,8 +3405,6 @@ class Experiment(Viewable):
                 return json.dumps(_json)
         else:
             return _json   
-        
-    # -- V --
     
     def validate(self, user: User):
         """
@@ -3359,6 +3430,9 @@ class Experiment(Viewable):
             except:
                 transaction.rollback()
                 raise Error("gws.model.Experiment", "save", f"Could not validate the experiment. Error: {err}")
+    
+    
+    # -- V --
     
 # ####################################################################
 #
@@ -3516,22 +3590,7 @@ class Resource(Viewable):
     # -- R --
     
     # -- S --
-    
-    #def save(*args, **kwargs):
-    #    with DbManager.db.atomic() as transaction:
-    #        try:
-    #            if self._process:
-    #                self.process = self._process
-    #
-    #            if self._experiment:
-    #                self.experiment = self._experiment
-    #
-    #            return super().save(*args, **kwargs)
-    #        except:
-    #            transaction.rollback()
-    #            return False
-        
-            
+       
     def _select(self, **params) -> 'Model':
         """ 
         Select a part of the resource
@@ -3579,6 +3638,8 @@ class Resource(Viewable):
                 return json.dumps(_json)
         else:
             return _json
+    
+    # -- V --
 
 class ExperimentResource(Model):
     experiment_id = IntegerField(null=False, index=True)
@@ -3763,22 +3824,20 @@ class ViewModel(Model):
     """ 
     ViewModel class. A view model is parametrized representation of the orginal data
 
-    :property model_id: Id of the Model of the ViewModel
-    :type model: int
-    :property model_type: Type of the Model of the ViewModel
-    :type model_type: str
-    :property template: The view template
-    :property model_specs: List containing the type of the default Models associated with the ViewModel.
-    :type model_specs: list
+    :property model_uri: the uri of the related Model
+    :type model_uri: `str`
+    :property model_type: the type of the related Model
+    :type model_type: `str`
     """
 
-    model_id: str = IntegerField(index=True) #-> refrence to the model
-    model_type: str = CharField(index=True)
-    param_hash: str = CharField(index=True)
-    model_specs: list = []
+    model_uri = CharField(index=True)
+    model_type = CharField(index=True)
+    
+    #param_hash: str = CharField(index=True)
+    #model_specs: list = []
         
     _model = None
-    _is_transient = False    # transient view are use to temprarily view part of a model (e.g. stream view)
+    _is_transient = False    # transient view model are used to temprarily view part of a model (e.g. stream view)
     _table_name = 'gws_view_model'
     _fts_fields = {'title': 2.0, 'description': 1.0}
 
@@ -3798,12 +3857,12 @@ class ViewModel(Model):
 
     # -- C --
     
-    @staticmethod
-    def __compute_param_hash(params):
-        params = sort_dict_by_key(params)
-        h = hashlib.md5()
-        h.update( json.dumps(params).encode() )
-        return h.hexdigest()
+    #@staticmethod
+    #def __compute_param_hash(params):
+    #    params = sort_dict_by_key(params)
+    #    h = hashlib.md5()
+    #    h.update( json.dumps(params).encode() )
+    #    return h.hexdigest()
     
     # -- D --
     
@@ -3822,30 +3881,30 @@ class ViewModel(Model):
 
     # -- G --
     
-    def get_instance( model: Model, params: dict ) -> 'ViewModel':
-        """
-        Retrieve for the db the view model corresponding to a model and a parameter configuration
-        
-        :param model: The model
-        :type model: `gws.model.Model`
-        :param params: The parameter dictionnary
-        :type params: `dict`
-        :return: The retrieved ViewModel
-        :rtype: `gws.model.ViewModel`
-        """
-        
-        try:
-            h = self.__compute_param_hash(params)
-            vm = ViewModel.get( 
-                (ViewModel.mode_id==model.id) & 
-                (ViewModel.mode_type==model.type) & 
-                (ViewModel.param_hash==h) 
-            )
-        except:
-            vm = ViewModel(model=model)
-            vm.set_params(params)
-            
-        return vm
+    #def get_instance( model: Model, data: dict ) -> 'ViewModel':
+    #    """
+    #    Retrieve for the db the view model corresponding to a model and a parameter configuration
+    #    
+    #    :param model: The model
+    #    :type model: `gws.model.Model`
+    #    :param data: The view model data
+    #    :type data: `dict`
+    #    :return: The retrieved ViewModel
+    #    :rtype: `gws.model.ViewModel`
+    #    """
+    #    
+    #    params = data.get("params", {})
+    #
+    #    vm = ViewModel(model=model)
+    #    vm.set_params(params)
+    #
+    #    for k in data:
+    #        if k != "params":
+    #            self.data[k] = data[k]
+    #
+    #    vm.save()
+    #        
+    #    return vm
     
     def get_param(self, key: str, default=None) -> str:
         """
@@ -3882,9 +3941,7 @@ class ViewModel(Model):
         return self.data.get("title", "")
     
     # -- H --
-    
-    
-            
+     
     # -- M --
 
     @property
@@ -3901,8 +3958,8 @@ class ViewModel(Model):
         if not self._model is None:
             return self._model
 
-        model_t = v.get_model_type(self.model_type)
-        model = model_t.get(model_t.id == self.model_id)
+        model_t = ModelService.get_model_type(self.model_type)
+        model = model_t.get(model_t.uri == self.model_uri)
         self._model = model.cast()
         return self._model
     
@@ -3921,6 +3978,27 @@ class ViewModel(Model):
     
     # -- R --
 
+    def render(self) -> dict:
+        """ 
+        Render the ViewModel
+        
+        :return: The rendering
+        :rtype: `dict`
+        """
+        
+        model = self.model
+        fn = self.data.get("render", "as_json")
+        params = self.data.get("params", {})
+        
+        try:
+            func = getattr(model, "_render__" + fn)
+            return func(**params)
+        except Exception as err:
+            Error(self.full_classname(), "view", f"Cannot create the ViewModel rendering. Error: {err}.")
+            return "Cannot create rendering"
+            
+            
+        
     # -- S --
     
     def set_param(self, key, value):  
@@ -3933,7 +4011,7 @@ class ViewModel(Model):
         if not isinstance(params, dict):
             raise Error("gws.model.ViewModel", "set_params", "Parameter must be a dictionnary")
 
-        self.data["params"] = sort_dict_by_key(params)
+        self.data["params"] = params
         
     def set_description(self, text: str):
         """
@@ -3946,13 +4024,13 @@ class ViewModel(Model):
         self.data["description"] = text
     
     def set_model(self, model: None):
-        if not self.model_id is None:
+        if not self.model_uri is None:
             raise Error("gws.model.ViewModel", "set_model", "A model already exists")
         
         self._model = model
 
         if model.is_saved():
-            self.model_id = model.id
+            self.model_uri = model.uri
 
     def set_title(self, title: str):
         """ 
@@ -3975,19 +4053,19 @@ class ViewModel(Model):
         if self._model is None:
             raise Error("gws.model.ViewModel", "save", "The ViewModel has no model")
         else:
-            if not self.model_id is None and self._model.id != self.model_id:
+            if not self.model_uri is None and self._model.uri != self.model_uri:
                 raise Error("gws.model.ViewModel", "save", "It is not allowed to change model of the ViewModel that is already saved")
                 
             with DbManager.db.atomic() as transaction:
                 try:
                     if self._model.save(*args, **kwargs):
-                        self.model_id = self._model.id
+                        self.model_uri = self._model.uri
                         self.model_type = self._model.full_classname()
                         
                         # hash params
-                        params = sort_dict_by_key(self.params)
-                        self.set_params(params)
-                        self.param_hash = self.__compute_param_hash( params )
+                        #params = sort_dict_by_key(self.params)
+                        #self.set_params(params)
+                        #self.param_hash = self.__compute_param_hash( params )
                         
                         return super().save(*args, **kwargs)
                     else:
@@ -4017,6 +4095,30 @@ class ViewModel(Model):
             
         self.data["title"] = text
 
+    # -- U -- 
+    
+    def update(self, data:dict, track_activity:bool = True):
+        """ 
+        Update the ViewModel with new data
+        """
+        
+        params = data.get("params", {})
+        self.set_params(params)
+
+        for k in data:
+            if k != "params":
+                self.data[k] = data[k]
+        
+        if track_activity:
+            Activity.add(
+                Activity.UPDATE,
+                object_type = self.full_classname(),
+                object_uri = self.uri
+            )
+        
+        self.save()
+    
+    # -- V --
     
     def to_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         """
@@ -4031,11 +4133,14 @@ class ViewModel(Model):
         """
 
         _json = super().to_json(**kwargs)
-        _json["model"] = self.model.to_json( **self.params )
+        _json["model"] = {
+            "uri": _json["model_uri"],
+            "type": _json["model_type"],
+            "rendering": self.render()
+        }
         
-        del _json["model_id"]
+        del _json["model_uri"]
         del _json["model_type"]
-        del _json["param_hash"]
         
         if not self.is_saved():
             _json["uri"] = ""
@@ -4048,12 +4153,13 @@ class ViewModel(Model):
                 return json.dumps(_json)
         else:
             return _json
-        
-    class Meta:
-        indexes = (
-            # create a unique on model_uri,model_type,param_hash
-            (('model_id', 'model_type', 'param_hash'), True),
-        )
+    
+    
+    #class Meta:
+        #indexes = (
+        #    # create a unique on model_uri,model_type,param_hash
+        #    #(('model_uri', 'model_type', 'param_hash'), True),
+        #)
         
 # ####################################################################
 #
@@ -4064,10 +4170,9 @@ class ViewModel(Model):
 class StreamViewModel(ViewModel):
     _is_transient = True
     
-    
     # -- G --
     
-    def get_instance( model, params ):
-        vm = ViewModel(model=model)
-        vm.set_params(params)
-        return vm
+    #def get_instance( model, params ):
+    #    vm = ViewModel(model=model)
+    #    vm.set_params(params)
+    #    return vm

@@ -19,20 +19,20 @@ class UserService(BaseService):
     # -- A --
     
     @classmethod
-    def activate_user(cls, uri):
+    def activate_user(cls, uri) -> User:
         return cls.set_user_status(uri, {"is_active": True})
 
     
     # -- C --
     
     @classmethod
-    def create_user(cls, data: dict):
+    def create_user(cls, data: dict) -> User:
         group = data.get('group', 'user')
         if group == "sysuser":
             raise Error("Central", "create_user", "Cannot create sysuser")
 
-        q = User.get_by_uri(data['uri'])
-        if not q:
+        u = User.get_by_uri(data['uri'])
+        if not u:
             user = User(
                 uri=data['uri'],
                 email=data['email'],
@@ -55,35 +55,53 @@ class UserService(BaseService):
     # -- D --
     
     @classmethod
-    def deactivate_user(cls, uri):
+    def deactivate_user(cls, uri) -> User:
         return cls.set_user_status(uri, {"is_active": False})
 
     # -- F --
     
     @classmethod
-    def fecth_activity_list(cls, user_uri: str=None, activity_type: str=None, page:int=1, number_of_items_per_page:int=20)->dict:
+    def fecth_activity_list(cls, \
+                            user_uri: str=None, \
+                            activity_type: str=None, \
+                            page:int=1, \
+                            number_of_items_per_page:int=20, \
+                            as_json = False ) -> (Paginator, dict, ):
+        
         Q = Activity.select()\
                     .order_by(Activity.creation_datetime.desc())
         
         if user_uri:
-            Q = Q.join(User) \
-                    .where(User.uri == user_uri)
+            Q = Q.join(User).where(User.uri == user_uri)
             
         if activity_type:
             Q = Q.where(Activity.activity_type == activity_type.upper())
         
-        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json()
+        P = Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page)
+        if as_json:
+            return P.to_json()
+        else:
+            return P
     
     @classmethod
-    def fetch_user(cls, uri: str) -> dict:
-        return User.get_by_uri(uri).to_json()
+    def fetch_user(cls, uri: str) -> User:
+        return User.get_by_uri(uri)
     
     @classmethod
-    def fetch_user_list(cls, page:int=1, number_of_items_per_page: int=20) -> dict:
+    def fetch_user_list(cls, \
+                        page:int=1, \
+                        number_of_items_per_page: int=20, \
+                       as_json = False) -> (Paginator, dict, ):
+        
         Q = User.select()\
                 .order_by(User.creation_datetime.desc())
-
-        return Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page).to_json()
+        
+        P = Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page)
+        
+        if as_json:
+            return P.to_json()
+        else:
+            return P
     
     # -- G --
     
@@ -100,36 +118,21 @@ class UserService(BaseService):
             try:
                 user = cls._console_data["user"]
             except:
-                raise Error("Controller", "No HTTP nor Console user authenticated")
+                raise Error("Controller", "get_current_user", "No HTTP nor Console user authenticated")
         
         if user is None:
-            raise Error("Controller", "No HTTP nor Console user authenticated")
+            raise Error("Controller", "get_current_user", "No HTTP nor Console user authenticated")
         
         return user
-    
-    @classmethod
-    def get_user_status(cls, uri: str) -> dict:
-        user = User.get_by_uri(uri)
-        if user is None:
-            raise Error("Central", "get_user_status", "User not found")
-        else:
-            return {
-                "uri": user.uri,
-                "group": user.group,
-                "console_token": user.console_token,
-                "is_active": user.is_active,
-                "is_http_authenticated": user.is_http_authenticated,
-                "is_console_authenticated": user.is_console_authenticated
-            }
 
     @classmethod
-    def get_user_by_uri(cls, uri):
+    def get_user_by_uri(cls, uri: str) -> User:
         return User.get_by_uri(uri)
     
     # -- S --
     
     @classmethod
-    def set_user_status(cls, uri, data):
+    def set_user_status(cls, uri, data) -> User:
         user = User.get_by_uri(uri)
         if user is None:
             raise Error("Central", "set_user_status", "User not found")
@@ -141,7 +144,7 @@ class UserService(BaseService):
                 user.group = data.get("group")
 
             if user.save():
-                return cls.get_user_status(user.uri)
+                return user
             else:
                 raise Error("Central", "set_user_status",
                             "Cannot save the user")

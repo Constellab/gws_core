@@ -9,60 +9,96 @@ LOGGER_FILE_NAME = str(datetime.date.today()) + ".log"
 
 class Logger:
     _logger = None
-    _is_test = False
+    _is_debug = None
+    _is_test = None
     _file_path = None
     show_all = False
     
-    def __init__(self, is_new_session = False, is_test=False):
-        cls = Logger
-        if cls._logger is None:
-            settings = Settings.retrieve()
-            cls._is_test = is_test
+    def __init__(self, is_new_session = False, is_test: bool = None, is_debug: bool = None):
 
+        if Logger._logger is None:
+            
+            if not is_test is None:
+                Logger._is_test = is_test
+                
+            if not is_debug is None:
+                Logger._is_debug = is_debug
+            
+            settings = Settings()
             log_dir = settings.get_log_dir()
             if not os.path.exists(log_dir):
                 os.makedirs(log_dir)
-            cls._file_path = os.path.join(log_dir, LOGGER_FILE_NAME)
+            Logger._file_path = os.path.join(log_dir, LOGGER_FILE_NAME)
 
-            fh = logging.FileHandler(cls._file_path)
-            cls._logger = logging.getLogger(LOGGER_NAME)
-            cls._logger.setLevel(logging.DEBUG)
+            fh = logging.FileHandler(Logger._file_path)
+            Logger._logger = logging.getLogger(LOGGER_NAME)
+            Logger._logger.setLevel(logging.DEBUG)
             formatter = logging.Formatter(" %(message)s")
             fh.setFormatter(formatter)
-            cls._logger.addHandler(fh)
+            Logger._logger.addHandler(fh)
 
             if is_new_session:
-                cls._logger.info("\nSession: " + str(datetime.datetime.now()) + "\n")
+                Logger._logger.info("\nSession: " + str(datetime.datetime.now()) + "\n")
     
     # -- E --
 
     @classmethod
     def error(cls, message):
-        Logger()
+        if not cls._logger:
+            Logger()
+            
         cls._logger.error(f"ERROR: {datetime.datetime.now().time()} -- {message}")
-        if cls._is_test or cls.show_all:
-            #print('\x1b[2K', end='\r')
-            #print(message, end='\r')
-            print(message)
+        if cls.is_test() or cls.is_debug() or cls.show_all:
+            if cls.is_debug():
+                #-> keep all log track on screen
+                print(message)  
+            else:
+                #-> keep only on line
+                print('\x1b[2K', end='\r')
+                print(message, end='\r')
             
 
     # -- F --
 
     @classmethod
     def get_file_path(cls):
-        Logger()
+        if not cls._logger:
+            Logger()
+            
         return cls._file_path
 
     # -- I --
-
+    
+    @classmethod
+    def is_test(cls):
+        if cls._is_test is None:
+            settings = Settings.retrieve()
+            cls._is_test = settings.is_test
+        
+        return cls._is_test
+    
+    @classmethod
+    def is_debug(cls):
+        if cls.is_test() is None:
+            settings = Settings.retrieve()
+            cls._is_debug = settings.is_debug
+        
+        return cls._is_debug
+        
     @classmethod
     def info(cls, message):
-        Logger()
+        if not cls._logger:
+            Logger()
+            
         cls._logger.info(f"INFO: {datetime.datetime.now().time()} -- {message}")
-        if cls._is_test or cls.show_all:
-            #print('\x1b[2K', end='\r')
-            #print(message, end='\r')
-            print(message)
+        if cls.is_test() or cls.is_debug() or cls.show_all:
+            if cls.is_debug():
+                #-> keep all log track on screen
+                print(message)  
+            else:
+                #-> keep only on line
+                print('\x1b[2K', end='\r')
+                print(message, end='\r')
     
     # -- S --
     
@@ -73,12 +109,18 @@ class Logger:
 
     @classmethod
     def warning(cls, message):
-        Logger()
+        if not cls._logger:
+            Logger()
+            
         cls._logger.warning(f"WARNING: {datetime.datetime.now().time()} # {message}")
-        if cls._is_test or cls.show_all:
-            #print('\x1b[2K', end='\r')
-            #print(message, end='\r')
-            print(message)
+        if cls.is_test() or cls.is_debug() or cls.show_all:
+            if cls.is_debug():
+                #-> keep all log track on screen
+                print(message)  
+            else:
+                #-> keep only on line
+                print('\x1b[2K', end='\r')
+                print(message, end='\r')
             
 
 class Error(Exception):

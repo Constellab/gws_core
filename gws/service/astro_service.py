@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 from gws.model import Study
-from gws.robot import create_protocol
+from gws.robot import create_protocol, create_nested_protocol
 from gws.queue import Queue, Job
 from gws.http import *
 
@@ -27,8 +27,7 @@ class AstroService(BaseService):
         try:
             job = Job(user=user, experiment=e)
             Queue.add(job)
-            #await e.run()
-            return e.view().to_json()
+            return e
         except Exception as err:
             raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
             
@@ -47,7 +46,6 @@ class AstroService(BaseService):
         try:
             job = Job(user=user, experiment=e)
             Queue.add(job)
-            #await e.run()
-            return e.view().to_json()
+            return e
         except Exception as err:
             raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")

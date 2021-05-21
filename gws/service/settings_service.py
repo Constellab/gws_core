@@ -9,7 +9,7 @@ from .base_service import BaseService
 class SettingsService(BaseService):
     
     @classmethod
-    def get_settings(cls):
+    def get_settings(cls) -> Settings:
         return Settings.retrieve()
     
     

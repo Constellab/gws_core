@@ -5,8 +5,10 @@
 
 from typing import Optional
 from fastapi import Depends
+
 from ._auth_user import UserData, check_user_access_token
 from .core_app import core_app
+from gws.service.user_service import UserService
 
 @core_app.get("/user/me", response_model=UserData, tags=["User"])
 async def read_user_me(current_user: UserData = Depends(check_user_access_token)):
@@ -16,12 +18,12 @@ async def read_user_me(current_user: UserData = Depends(check_user_access_token)
     
     return current_user
 
-@core_app.get("/user/activity", tags=["User"])
+@core_app.get("/user/activity", tags=["User"], summary="Get user activities")
 async def get_user_activity(user_uri:Optional[str] = None, \
-                       activity_type:Optional[str] = None, \
-                       page: int = 1, \
-                       number_of_items_per_page: int = 20, \
-                        _: UserData = Depends(check_user_access_token)):
+                            activity_type:Optional[str] = None, \
+                            page: int = 1, \
+                            number_of_items_per_page: int = 20, \
+                            _: UserData = Depends(check_user_access_token)):
     """
     Get the list of user activities on the lab
     
@@ -42,10 +44,11 @@ async def get_user_activity(user_uri:Optional[str] = None, \
     - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
     """
     
-    from gws.service.user_service import UserService
+    
     return UserService.fecth_activity_list(
         user_uri = user_uri, 
         activity_type = activity_type,
         page = page, 
-        number_of_items_per_page = number_of_items_per_page
+        number_of_items_per_page = number_of_items_per_page,
+        as_json = True
     )

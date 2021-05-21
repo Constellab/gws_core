@@ -77,7 +77,6 @@ class App(BaseApp):
     """
     
     app: FastAPI = app
-    debug = _settings.get_data("is_test") or _settings.get_data("is_demo")
     is_running = False
 
     @classmethod
@@ -95,6 +94,7 @@ class App(BaseApp):
 
         # register all processes and resources
         ModelService.register_all_processes_and_resources()
+        ModelService.create_model_tables()
         
         # start system monitoring
         Monitor.init(daemon=False)

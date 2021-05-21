@@ -6,30 +6,45 @@
 class Query:
 
     @classmethod
-    def format(cls, Q, view_params: dict={}, shallow=False):
-        _list = []
-        from gws.model import ViewModel, Viewable
-        
-        if shallow:
-            for o in Q:
-                _list.append(o.to_json(shallow=True))
-        else:
-            for o in Q:
-                if isinstance(o, ViewModel):
-                    _list.append(o.to_json())
-                elif isinstance(o, Viewable):
-                    o = o.cast()
-                    view_model = o.view(params=view_params)
-                    _list.append(view_model.to_json())   
-                    #_list.append(o.to_json())
-                else:
-                    _list.append(o.to_json())
+    def format(cls, Q, view_params: dict={}, as_view: bool=False, as_json: bool=False, shallow: bool=False):
+        _Q = []
+        from gws.model import ViewModel
 
-        return _list
+        if as_view:
+            if as_json:
+                for m in Q:
+                    if isinstance(m, ViewModel):
+                        m = m.model
+                    else:
+                        m = m.cast()
+                        
+                    vm = m.view(params=view_params) # -> create a new ViewModel is required
+                    _Q.append(vm.to_json(shallow=shallow))
+            else:
+                for m in Q:
+                    if isinstance(m, ViewModel):
+                        m = m.model
+                    else:
+                        m = m.cast()
+                        
+                    vm = m.view(params=view_params)
+                    _Q.append(vm)   
+        else:
+            if as_json:
+                for m in Q:
+                    _Q.append(m.to_json(shallow=shallow))
+            else:
+                _Q = Q
+
+        return _Q
 
 class Paginator:
     number_of_items_per_page = 20    
-    def __init__(self, query, page: int = 1, number_of_items_per_page: int = 20, view_params: dict = {}):
+    def __init__(self, query, \
+                 page: int = 1, \
+                 number_of_items_per_page: int = 20, \
+                 view_params: dict = {}):
+        
         page = int(page)
         number_of_items_per_page = int(number_of_items_per_page)
         
@@ -55,19 +70,28 @@ class Paginator:
                 'number_of_items': self.number_of_items,
                 'total_number_of_pages': self.total_number_of_pages,
                 'number_of_items_per_page': self.number_of_items_per_page,
-                'is_first_page': self.page == self.first_page,
-                'is_last_page': self.page == self.total_number_of_pages
+                'is_first_page': self.page == self.first_page and (not self.total_number_of_pages == 0),
+                'is_last_page': self.page == self.total_number_of_pages or self.total_number_of_pages == 0
             }
 
-    def as_model_list( self ):
+    def to_json( self, shallow: bool=False ):
         return {
-            'data' : Query.format( self.paginated_query ),
+            'data' : Query.format( 
+                self.paginated_query, 
+                shallow=shallow,
+                as_json=True
+            ),
             'paginator': self._paginator_dict()
         }
-
-    def to_json( self, shallow=False ):
+    
+    def render( self, shallow: bool=False ):
         return {
-            'data' : Query.format( self.paginated_query, view_params=self.view_params, shallow=shallow ),
+            'data' : Query.format( 
+                self.paginated_query, 
+                view_params=self.view_params, 
+                as_view=True, 
+                shallow=shallow 
+            ),
             'paginator': self._paginator_dict()
         }
     

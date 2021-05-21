@@ -6,9 +6,10 @@
 from typing import Optional
 from pydantic import BaseModel
 
-# DTO to create/update an experiment
-class ExperimentDTO(BaseModel):
-    study_uri: Optional[str] = None
-    title: Optional[str] = None
-    description: Optional[str] = None
-    graph: Optional[dict] = None
+# DTO to render ViewModel
+class RenderingDTO(BaseModel):
+    title: str = ""
+    description: str = ""
+    render: str = "as_json"
+    params: dict = {}
+    metadata: dict = {}

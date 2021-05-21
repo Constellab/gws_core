@@ -13,11 +13,11 @@ from gws.http import *
 from ._auth_user import UserData, check_user_access_token
 from .core_app import core_app
 
-@core_app.post("/brick/{brick_name}/{api_func}", response_class=JSONResponse, tags=["Bricks APIs"])
-async def call_brick_api(brick_name: Optional[str] = "gws", \
+@core_app.post("/brick/{brick_name}/{api_func}", response_class=JSONResponse, tags=["Bricks APIs"], summary="Call custom brick APIs")
+async def call_a_custom_brick_api(brick_name: Optional[str] = "gws", \
                          api_func: Optional[str] = None, \
                          data: Optional[dict] = {}, \
-                         _: UserData = Depends(check_user_access_token)) :
+                         _: UserData = Depends(check_user_access_token)) -> dict:
     """
     Call a custom api function of a brick
     

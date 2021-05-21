@@ -346,7 +346,7 @@ class IOface:
         if self.target_port:
             self.target_port.disconnect()
             
-    # -- T --
+    # -- V --
     
     def to_json(self, **kwargs):
         bare = kwargs.get("bare", False)
@@ -386,6 +386,8 @@ class Interface(IOface):
             
         super().__init__(name, source_port, target_port)
     
+    # -- V -
+    
     def to_json(self, **kwargs):
         _json = super().to_json(**kwargs)
         _json["from"]["node"] = ":parent:"
@@ -404,6 +406,8 @@ class Outerface(IOface):
             raise Error("Outerface", "__init__", "The target port must be an output port")
             
         super().__init__(name, source_port, target_port)
+    
+    # -- V --
     
     def to_json(self, **kwargs):
         _json = super().to_json(**kwargs)
@@ -454,7 +458,7 @@ class Connector:
         self.in_port = in_port
         self.out_port = out_port
     
-    # -- T --
+    # -- V --
     
     def to_json(self, **kwargs) -> dict:
         """
@@ -734,7 +738,7 @@ class IO(Base):
         self.__setitem_without_check__(name, resource)
 
     
-    # -- T --
+    # -- V --
     
     def to_json(self, **kwargs):
         _json = {}

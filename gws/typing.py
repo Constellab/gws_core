@@ -34,10 +34,10 @@ class ProcessType(Viewable):
     
     _table_name = 'gws_process_type'
     
-    def to_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+    def view__as_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         from gws.service.model_service import ModelService
         
-        _json = super().to_json(**kwargs)
+        _json = super().view__as_json(**kwargs)
         model_t = ModelService.get_model_type(self.ptype)
         specs = model_t.input_specs
         _json["input_specs"] = {}

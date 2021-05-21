@@ -35,10 +35,6 @@ core_app.add_middleware(
     ContextMiddleware
 )
 
-class ViewModelData(BaseModel):
-    uri: str
-    params: dict
-
 class ProcessData(BaseModel):
     uri:str
     type:str = "gws.model.Process"

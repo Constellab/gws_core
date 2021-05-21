@@ -167,7 +167,7 @@ class Queue(Model):
         e.run_through_cli(user=job.user)
         time.sleep(1)  #-> wait for 1 sec to prevent database lock!
 
-        
+    
     def to_json(self, *args, stringify: bool=False, prettify: bool=False, **kwargs):
         _json = super().to_json(*args, **kwargs)
         _json["jobs"] = []

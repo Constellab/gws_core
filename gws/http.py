@@ -8,10 +8,11 @@ from fastapi import status, HTTPException
 from gws.logger import Logger, Error
 
 class HTTPError(HTTPException):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        #message = f"status code = {self.status_code}, detail = {self.detail}"
-        #Logger.error(message)
+    def __init__(self, detail=None, debug_error=None, **kwargs):
+        super().__init__(detail=detail, **kwargs)
+        if debug_error:
+            Logger.error(f"{debug_error}") #-> call error class for log treaceability; do not raise this exception
+        Logger.error(f"{self}") #-> call error class for log treaceability; do not raise this exception
 
 class HTTPBadRequest(HTTPError):
     def __init__(self, **kwargs):
@@ -40,44 +41,3 @@ class HTTPInternalServerError(HTTPError):
 class HTTPBusy(HTTPError):
     def __init__(self, **kwargs):
         super().__init__(status_code=status.HTTP_226_IM_USED, **kwargs)
-
-
-def error_track(func):
-    def wrapper(*args, **kwargs):
-        try:
-            if inspect.ismethod(func):
-                o = args.pop(0)
-                return o.func(*args, **kwargs)
-            else:
-                return func(*args, **kwargs)
-        except Error as err:
-            raise HTTPInternalServerError(detail=str(err))
-        except Exception as err:
-            Logger.error(str(err))
-            raise HTTPInternalServerError(detail=str(err))
-        except HTTPError as err:
-            message = f"HTTPError: status_code = {err.status_code}, detail = {err.detail}"
-            Logger.error(message)
-            raise err
-            
-    return wrapper
-
-async def async_error_track(func):
-    async def wrapper(*args, **kwargs):
-        try:
-            if inspect.ismethod(func):
-                o = args.pop(0)
-                return await o.func(*args, **kwargs)
-            else:
-                return await func(*args, **kwargs)
-        except Error as err:
-            raise HTTPInternalServerError(detail=err.message)
-        except Exception as err:
-            Logger.error(f"{err}")
-            raise HTTPInternalServerError(detail=err.message)
-        except HTTPError as err:
-            message = f"HTTPError: status_code = {err.status_code}, detail = {err.detail}"
-            Logger.error(message)
-            raise err
-            
-    return wrapper
