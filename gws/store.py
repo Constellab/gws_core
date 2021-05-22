@@ -11,7 +11,6 @@ import shelve
 import shutil
 import tempfile
 
-from gws.base import DbManager
 from gws.model import Model
 from gws.logger import Error
 from gws.settings import Settings
@@ -296,7 +295,7 @@ class LocalFileStore(FileStore):
             self.save()
             
         from gws.file import File     
-        with DbManager.db.atomic() as transaction:
+        with self._db_manager.db.atomic() as transaction:
             
             try:
                 # create DB file object
@@ -392,10 +391,6 @@ class LocalFileStore(FileStore):
             
         return fs
                 
-    #def get_real_path(self, location: str):
-    #    location = self.__clean_file_path(location)
-    #    return os.path.join(self.path, location)
-    
     # -- I --
   
     # -- M --     
@@ -425,7 +420,7 @@ class LocalFileStore(FileStore):
     # -- R --
     
     def remove(self, file: 'File', ignore_errors:bool = False):
-        with DbManager.db.atomic() as transaction:
+        with self._db_manager.db.atomic() as transaction:
             try:
                 if self.contains(file):
                     file.remove()
@@ -439,7 +434,7 @@ class LocalFileStore(FileStore):
     
     @classmethod
     def remove_all_files(cls, ignore_errors:bool = False):
-        with DbManager.db.atomic() as transaction:
+        with cls._db_manager.db.atomic() as transaction:
             try:
                 for fs in cls.select():
                     fs.delete_instance()

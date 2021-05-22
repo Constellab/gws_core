@@ -9,7 +9,6 @@ import importlib
 import inspect
 
 from typing import List
-from gws.base import DbManager
 from gws.query import Paginator
 from gws.model import Model, ViewModel, Process, Resource, Protocol, Experiment
 from gws.settings import Settings
@@ -250,8 +249,8 @@ class ModelService(BaseService):
         :return: True if all the model are successfully saved, False otherwise. 
         :rtype: `bool`
         """
-        
-        with DbManager.db.atomic() as transaction:
+
+        with Model._db_manager.db.atomic() as transaction:
             try:
                 if model_list is None:
                     return

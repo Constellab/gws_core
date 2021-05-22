@@ -16,7 +16,7 @@ from gws.logger import Logger, Error
 
 def _run(ctx=None, uri=False, token=False, test=False, use_prod_biota_db=False, \
          cli=False, cli_test=False, \
-         runserver=False, ip="0.0.0.0", port="3000", docgen=False, \
+         runserver=False, mode="prod", ip="0.0.0.0", port="3000", docgen=False, \
          force=False):
     
     Logger(is_new_session=True, is_test=test)
@@ -35,6 +35,9 @@ def _run(ctx=None, uri=False, token=False, test=False, use_prod_biota_db=False, 
         settings.set_data("app_host", ip)
         settings.set_data("app_port", port)
         
+        if mode == "dev":
+            settings.set_data("is_debug", True)
+            
         if not settings.save():
             raise Error("manage", "Cannot save the settings in the database")
         
@@ -102,10 +105,11 @@ def _run(ctx=None, uri=False, token=False, test=False, use_prod_biota_db=False, 
 @click.option('--cli', help='Command to run using the command line interface')
 @click.option('--cli_test', is_flag=True, help='Use command line interface in test mode')
 @click.option('--runserver', is_flag=True, help='Starts the server')
+@click.option('--mode', default="prod", help='Starting mode of the server')
 @click.option('--ip', default="0.0.0.0", help='Server ip', show_default=True)
 @click.option('--port', default="3000", help='Server port', show_default=True)
 @click.option('--docgen', is_flag=True, help='Generates documentation')
 @click.option('--force', is_flag=True, help='Forces documentation generation by removing any existing documentation (used if --docgen is given)')
-def run(ctx, uri, token, test, use_prod_biota_db, cli, cli_test, runserver, ip, port, docgen, force):       
-    _run(ctx, uri, token, test, use_prod_biota_db, cli, cli_test, runserver, ip, port, docgen, force)
+def run(ctx, uri, token, test, use_prod_biota_db, cli, cli_test, runserver, mode, ip, port, docgen, force):       
+    _run(ctx, uri, token, test, use_prod_biota_db, cli, cli_test, runserver, mode, ip, port, docgen, force)
 

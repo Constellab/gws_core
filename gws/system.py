@@ -7,29 +7,14 @@ import os
 import psutil
 import threading
 
-from peewee import FloatField, SqliteDatabase
+from peewee import FloatField
 
-from gws.base import DbManager as BaseDbManager
 from gws.logger import Error
 from gws.model import Model
 from gws.settings import Settings
 
 TICK_INTERVAL_SECONDS = 60*5   # 5 min
 
-settings = Settings.retrieve()
-db_dir = os.path.join(settings.data["data_dir"], "system")
-db_path = os.path.join(db_dir, "monitor.sqlite3")
-if not os.path.exists(db_dir):
-    os.makedirs(db_dir)
-
-class DbManager(BaseDbManager):
-    """
-    DbManager class. 
-    
-    Provides backend features for managing databases. 
-    """
-    db = SqliteDatabase(db_path)
-    
 def _system_monitor_tick(daemon):
     try:
         Monitor._tick()
@@ -60,7 +45,7 @@ class Monitor(Model):
     net_io_bytes_sent = FloatField(index=True)
     net_io_bytes_recv = FloatField(index=True)
     
-    _table_name = 'gws_monitor'
+    _table_name = 'gws_lab_monitor'
     __is_init = False
         
     @classmethod
@@ -96,9 +81,6 @@ class Monitor(Model):
             monitor.save()
         except:
             pass
-    
-    class Meta:
-        database = DbManager.db
         
 # ####################################################################
 #

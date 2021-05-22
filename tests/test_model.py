@@ -8,7 +8,7 @@ import os
 import unittest
 
 from peewee import CharField
-from gws.model import Model, Resource, DbManager
+from gws.model import Model, Resource
 
 ############################################################################################
 #

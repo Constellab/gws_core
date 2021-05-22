@@ -25,12 +25,11 @@ from subprocess import DEVNULL
 from datetime import datetime
 
 from fastapi.encoders import jsonable_encoder
-from peewee import SqliteDatabase, Model as PWModel
+from peewee import Model as PWModel
 from peewee import  Field, IntegerField, FloatField, DateField, \
                     DateTimeField, CharField, BooleanField, \
                     ForeignKeyField, ManyToManyField, IPField, TextField, BlobField, \
                     AutoField, BigAutoField
-from playhouse.sqlite_ext import JSONField, SearchField, RowIDField
 
 from gws.logger import Error, Info, Warning
 from gws.settings import Settings
@@ -39,7 +38,7 @@ from gws.io import Input, Output, InPort, OutPort, Connector, Interface, Outerfa
 from gws.utils import to_camel_case, sort_dict_by_key, generate_random_chars
 from gws.http import *
 
-from gws.base import format_table_name, slugify, BaseModel, BaseFTSModel, DbManager
+from gws.db.model import BaseModel, BaseFTSModel
 
 # ####################################################################
 #
@@ -76,7 +75,8 @@ class Model(BaseModel):
     save_datetime = DateTimeField(index=True)
     is_archived = BooleanField(default=False, index=True)
     hash = CharField(null=True, index=True)
-    data = JSONField(null=True)
+    data = BaseModel.JSONField(null=True, index=True)
+    #document = TextField(null=True, index=True)
     
     _kv_store: 'KVStore' = None
     _is_singleton = False
@@ -157,14 +157,14 @@ class Model(BaseModel):
     def __create_hash_object(self):
         h = hashlib.blake2b()
         h.update(self._LAB_URI.encode())
-        exclusion_list = (ForeignKeyField, JSONField, ManyToManyField, BlobField, AutoField, BigAutoField, )
+        exclusion_list = (ForeignKeyField, Model.JSONField, ManyToManyField, BlobField, AutoField, BigAutoField, )
         for prop in self.property_names(Field, exclude=exclusion_list) :
             if prop in ["id", "hash"]:
                 continue
             val = getattr(self, prop)            
             h.update( str(val).encode() )
          
-        for prop in self.property_names(JSONField):
+        for prop in self.property_names(Model.JSONField):
             val = getattr(self, prop)
             h.update( json.dumps(val, sort_keys=True).encode() )
             
@@ -274,7 +274,7 @@ class Model(BaseModel):
         
         from .service.model_service import ModelService
         
-        cursor = DbManager.db.execute_sql(f'SELECT type FROM {self._table_name} WHERE id = ?', (str(id),))
+        cursor = self._db_manager.db.execute_sql(f'SELECT type FROM {self._table_name} WHERE id = ?', (str(id),))
         row = cursor.fetchone()
         if len(row) == 0:
             raise Error("gws.model.Model", "fetch_type_by_id", "The model is not found.")
@@ -291,6 +291,9 @@ class Model(BaseModel):
         
     @classmethod
     def fts_model(cls):
+        if not cls.is_sqlite3_engine():
+            return None
+        
         if not cls._fts_fields:
             return None
         
@@ -395,17 +398,20 @@ class Model(BaseModel):
     
     @classmethod
     def search(cls, phrase: str):
-        _FTSModel = cls.fts_model()
+        if cls.is_sqlite3_engine():
+            _FTSModel = cls.fts_model()
 
-        if _FTSModel is None:
-            raise Error("gws.model.Model", "search", "No FTSModel model defined")
-        
-        return _FTSModel.search_bm25(
-            phrase, 
-            weights={'title': 2.0, 'content': 1.0},
-            with_score=True,
-            score_alias='search_score'
-        )
+            if _FTSModel is None:
+                raise Error("gws.model.Model", "search", "No FTSModel model defined")
+
+            return _FTSModel.search_bm25(
+                phrase, 
+                weights={'title': 2.0, 'content': 1.0},
+                with_score=True,
+                score_alias='search_score'
+            )
+        elif cls.is_mysql_engine():
+            return cls.select().where(cls.Match(cls.data, phrase))
 
     def set_data(self, data: dict):
         """ 
@@ -465,7 +471,7 @@ class Model(BaseModel):
 
         _FTSModel = self.fts_model()
 
-        with DbManager.db.atomic() as transaction:
+        with self._db_manager.db.atomic() as transaction:
             try:
                 if self._is_fts_active:
                     if not self._save_fts_document():
@@ -492,7 +498,7 @@ class Model(BaseModel):
         :return: True if all the model are successfully saved, False otherwise. 
         :rtype: bool
         """
-        with DbManager.db.atomic() as transaction:
+        with cls._db_manager.db.atomic() as transaction:
             try:
                 #if model_list is None:
                 #    return
@@ -693,7 +699,7 @@ class User(Model):
         if not is_valid_token:
             return False
 
-        with DbManager.db.atomic() as transaction:
+        with cls._db_manager.db.atomic() as transaction:
             try:
                 # authenticate the user first
                 user.is_console_authenticated = True
@@ -720,7 +726,7 @@ class User(Model):
             UserService.set_current_user(user)
             return True
 
-        with DbManager.db.atomic() as transaction:
+        with cls._db_manager.db.atomic() as transaction:
             try:
                 # authenticate the user first
                 user.is_http_authenticated = True
@@ -898,7 +904,7 @@ class User(Model):
             UserService.set_current_user(None)
             return True
         
-        with DbManager.db.atomic() as transaction:
+        with cls._db_manager.db.atomic() as transaction:
             try:
                 user.is_http_authenticated = False
                 Activity.add(
@@ -922,7 +928,7 @@ class User(Model):
             UserService.set_current_user(None)
             return True
         
-        with DbManager.db.atomic() as transaction:
+        with cls._db_manager.db.atomic() as transaction:
             try:
                 user.is_console_authenticated = False
                 Activity.add(
@@ -1046,7 +1052,7 @@ class Viewable(Model):
         if self.is_archived == tf:
             return True
 
-        with DbManager.db.atomic() as transaction:
+        with self._db_manager.db.atomic() as transaction:
             try:
                 Q = ViewModel.select().where( 
                     (ViewModel.model_uri == self.uri) & 
@@ -1581,7 +1587,56 @@ class ProgressBar(Model):
            
         self.data["max_value"] = value
         self.save()
-
+    
+    def to_json(self, *, shallow=False, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+        """
+        Returns JSON string or dictionnary representation of the model.
+        
+        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
+        :type stringify: bool
+        :param prettify: If True, indent the JSON string. Defaults to False.
+        :type prettify: bool
+        :return: The representation
+        :rtype: dict, str
+        """
+        
+        _json = super().to_json(**kwargs)
+        
+        bare = kwargs.get("bare")
+        if bare:
+            _json["process"] = {
+                "uri": "",
+                "type": "",
+            }
+            
+            _json["data"] = {
+                "value": 0.0,
+                "max_value": 0.0,
+                "average_speed": 0.0,
+                "start_time": 0.0,
+                "current_time": 0.0,
+                "elapsed_time": 0.0,
+                "remaining_time": 0.0,
+                "messages": [],
+            }
+        else:
+            _json["process"] = {
+                "uri": _json["process_uri"],
+                "type": _json["process_type"],
+            }
+        
+        del _json["process_uri"]
+        del _json["process_type"]
+        
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
+        
+        
     class Meta:
         indexes = (
             # create a unique on process_uri, process_type
@@ -1723,7 +1778,7 @@ class Process(Viewable):
         if self.is_archived == tf:
             return True
         
-        with DbManager.db.atomic() as transaction:
+        with self._db_manager.db.atomic() as transaction:
             try:
                 if not super().archive(tf):
                     return False
@@ -2772,7 +2827,7 @@ class Protocol(Process):
     # -- S --
     
     def save(self, *args, update_graph=False, **kwargs):
-        with DbManager.db.atomic() as transaction:
+        with self._db_manager.db.atomic() as transaction:
             try:
                 for k in self._processes:
                     self._processes[k].save()
@@ -3055,7 +3110,7 @@ class Experiment(Viewable):
         if self.is_archived == tf:
             return True
         
-        with DbManager.db.atomic() as transaction:
+        with self._db_manager.db.atomic() as transaction:
             try:
                 Activity.add(
                     Activity.ARCHIVE,
@@ -3354,7 +3409,7 @@ class Experiment(Viewable):
     # -- S --
 
     def save(self, *args, **kwargs):  
-        with DbManager.db.atomic() as transaction:
+        with self._db_manager.db.atomic() as transaction:
             try:
                 if not self.is_saved():
                     Activity.add(
@@ -3417,7 +3472,7 @@ class Experiment(Viewable):
         if self.is_validated:
             return
         
-        with DbManager.db.atomic() as transaction:
+        with self._db_manager.db.atomic() as transaction:
             try:
                 self.is_validated = True
                 self.save()
@@ -3754,7 +3809,7 @@ class ResourceSet(Resource):
     # -- R --
     
     def remove(self):
-        with DbManager.db.atomic() as transaction:
+        with self._db_manager.db.atomic() as transaction:
             try:
                 for k in self._set:
                     if not self._set.remove():
@@ -3779,7 +3834,7 @@ class ResourceSet(Resource):
         self.set[key] = val
 
     def save(self, *args, **kwrags):
-        with DbManager.db.atomic() as transaction:
+        with self._db_manager.db.atomic() as transaction:
             try:
                 self.data["set"] = {}
                 for k in self._set:
@@ -3833,9 +3888,6 @@ class ViewModel(Model):
     model_uri = CharField(index=True)
     model_type = CharField(index=True)
     
-    #param_hash: str = CharField(index=True)
-    #model_specs: list = []
-        
     _model = None
     _is_transient = False    # transient view model are used to temprarily view part of a model (e.g. stream view)
     _table_name = 'gws_view_model'
@@ -3857,13 +3909,6 @@ class ViewModel(Model):
 
     # -- C --
     
-    #@staticmethod
-    #def __compute_param_hash(params):
-    #    params = sort_dict_by_key(params)
-    #    h = hashlib.md5()
-    #    h.update( json.dumps(params).encode() )
-    #    return h.hexdigest()
-    
     # -- D --
     
     @property
@@ -3880,32 +3925,7 @@ class ViewModel(Model):
     # -- F --
 
     # -- G --
-    
-    #def get_instance( model: Model, data: dict ) -> 'ViewModel':
-    #    """
-    #    Retrieve for the db the view model corresponding to a model and a parameter configuration
-    #    
-    #    :param model: The model
-    #    :type model: `gws.model.Model`
-    #    :param data: The view model data
-    #    :type data: `dict`
-    #    :return: The retrieved ViewModel
-    #    :rtype: `gws.model.ViewModel`
-    #    """
-    #    
-    #    params = data.get("params", {})
-    #
-    #    vm = ViewModel(model=model)
-    #    vm.set_params(params)
-    #
-    #    for k in data:
-    #        if k != "params":
-    #            self.data[k] = data[k]
-    #
-    #    vm.save()
-    #        
-    #    return vm
-    
+
     def get_param(self, key: str, default=None) -> str:
         """
         Get a parameter using its key
@@ -3996,9 +4016,7 @@ class ViewModel(Model):
         except Exception as err:
             Error(self.full_classname(), "view", f"Cannot create the ViewModel rendering. Error: {err}.")
             return "Cannot create rendering"
-            
-            
-        
+ 
     # -- S --
     
     def set_param(self, key, value):  
@@ -4056,17 +4074,12 @@ class ViewModel(Model):
             if not self.model_uri is None and self._model.uri != self.model_uri:
                 raise Error("gws.model.ViewModel", "save", "It is not allowed to change model of the ViewModel that is already saved")
                 
-            with DbManager.db.atomic() as transaction:
+            with self._db_manager.db.atomic() as transaction:
                 try:
                     if self._model.save(*args, **kwargs):
                         self.model_uri = self._model.uri
                         self.model_type = self._model.full_classname()
-                        
-                        # hash params
-                        #params = sort_dict_by_key(self.params)
-                        #self.set_params(params)
-                        #self.param_hash = self.__compute_param_hash( params )
-                        
+  
                         return super().save(*args, **kwargs)
                     else:
                         raise Error("gws.model.ViewModel", "save", "Cannot save the vmodel. Please ensure that the model of the vmodel is saved before")
@@ -4153,13 +4166,7 @@ class ViewModel(Model):
                 return json.dumps(_json)
         else:
             return _json
-    
-    
-    #class Meta:
-        #indexes = (
-        #    # create a unique on model_uri,model_type,param_hash
-        #    #(('model_uri', 'model_type', 'param_hash'), True),
-        #)
+
         
 # ####################################################################
 #

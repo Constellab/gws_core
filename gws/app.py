@@ -17,7 +17,7 @@ from fastapi.responses import Response, HTMLResponse, JSONResponse, RedirectResp
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from gws.base import slugify
+from gws.utils import slugify
 from gws.settings import Settings
 from gws.model import Study, User
 from gws.logger import Error
