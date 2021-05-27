@@ -5,14 +5,14 @@
     // custom config for python
     "[python]": {
         // format the code on save
-        "editor.formatOnSave": false,
+        "editor.formatOnSave": true,
         // actions run on save
         "editor.codeActionsOnSave": {
             // reoaganize imports on save
-            "source.organizeImports": false
+            "source.organizeImports": true
         },
         // remove trailling whitespace on save
-        "files.trimTrailingWhitespace": false,
+        "files.trimTrailingWhitespace": true,
     },
 
     // linting rules it takes the rules of .pylintrc file
