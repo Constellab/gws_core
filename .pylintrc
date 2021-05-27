@@ -10,7 +10,10 @@ disable=
     no-else-return,
 
     too-many-arguments,
-    too-few-public-methods
+    too-few-public-methods,
+
+    bare-except,
+    raise-missing-from
 
 
 [FORMAT]

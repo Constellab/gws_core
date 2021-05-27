@@ -3,12 +3,16 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws.dto.user_dto import UserData
+from starlette.responses import JSONResponse
+from gws.dto.credentials_dto import CredentialsDTO
 from typing import Optional
 from fastapi import Depends
 
-from ._auth_user import UserData, check_user_access_token
+from ._auth_user import check_user_access_token
 from .core_app import core_app
 from gws.service.user_service import UserService
+
 
 @core_app.get("/user/me", response_model=UserData, tags=["User"])
 async def read_user_me(current_user: UserData = Depends(check_user_access_token)):
@@ -40,7 +44,7 @@ async def get_user_activity(user_uri:Optional[str] = None, \
       - **HTTP_UNAUTHENTICATION** : HTTP unauthentication
       - **CONSOLE_AUTHENTICATION** : console authentication (through CLI or notebook)
       - **CONSOLE_UNAUTHENTICATION** : console unauthentication
-    - **page**: the page number 
+    - **page**: the page number
     - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
     """
     
@@ -52,3 +56,12 @@ async def get_user_activity(user_uri:Optional[str] = None, \
         number_of_items_per_page = number_of_items_per_page,
         as_json = True
     )
+
+
+@core_app.post("/login", tags=["User"], summary="Login to the lab by requesting central")
+async def login(credentials: CredentialsDTO) -> JSONResponse :
+    """
+    Log the user using central
+    """
+
+    return await UserService.login(credentials)

@@ -1,31 +1,29 @@
 # Core GWS app module
-# This software is the exclusive property of Gencovery SAS. 
+# This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws.exception.wrong_credentials_exception import WrongCredentialsException
+from gws.dto.user_dto import UserData
 import jwt
 
-from datetime import datetime, timedelta
 from typing import Optional
 
-from fastapi import Depends, FastAPI, HTTPException, status
-from fastapi.responses import JSONResponse
-from fastapi.encoders import jsonable_encoder
-from fastapi.responses import Response
-from fastapi.security import OAuth2PasswordRequestForm
-from fastapi.param_functions import Form
+from fastapi import Depends, HTTPException
 
-from passlib.context import CryptContext
-from pydantic import BaseModel
+from fastapi.param_functions import Form
 
 from gws.model import User
 from gws.settings import Settings
 from ._oauth2_user_cookie_scheme import oauth2_user_cookie_scheme
+from gws.service.user_service import UserService
 
 
 settings = Settings.retrieve()
 SECRET_KEY = settings.data.get("secret_key")
 ALGORITHM = "HS256"
+
+
 
 class OAuth2UserTokenRequestForm:
     def __init__(
@@ -42,33 +40,17 @@ class OAuth2UserTokenRequestForm:
         self.client_id = client_id
         self.client_secret = client_secret
 
-class UserData(BaseModel):
-    uri: str
-    email: str = ""
-    first_name: str = ""
-    last_name: str = ""
-    group: str = "user"
-    is_active: bool
-    is_admin: bool
-    is_http_authenticated: bool = False
-    is_console_authenticated: bool = False
-
 # -- A --
 
 # -- C --
 
 async def check_user_access_token(token: str = Depends(oauth2_user_cookie_scheme))->UserData:
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
- 
+    
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         uri: str = payload.get("sub")
         if uri is None:
-            raise credentials_exception
+            raise WrongCredentialsException()
     except Exception:
         # -> An excpetion occured
         # -> Try to unauthenticate the current user
@@ -80,12 +62,12 @@ async def check_user_access_token(token: str = Depends(oauth2_user_cookie_scheme
         except:
             pass
         
-        raise credentials_exception
+        raise WrongCredentialsException()
 
     try:
         db_user = User.get(User.uri == uri)
         if not User.authenticate(uri=db_user.uri):
-            raise credentials_exception
+            raise WrongCredentialsException()
             
         return UserData(
             uri=db_user.uri, 
@@ -100,12 +82,11 @@ async def check_user_access_token(token: str = Depends(oauth2_user_cookie_scheme
         )
     except Exception as err:
         print(err)
-        raise credentials_exception
+        raise WrongCredentialsException()
 
 
 def check_is_sysuser():
     try:
-        from gws.service.user_service import UserService
         user = UserService.get_current_user()
     except:
         raise HTTPException(status_code=400, detail="Unauthorized: owner required")
@@ -115,7 +96,6 @@ def check_is_sysuser():
         
 def check_is_owner():
     try:
-        from gws.service.user_service import UserService
         user = UserService.get_current_user()
     except:
         raise HTTPException(status_code=400, detail="Unauthorized: owner required")
@@ -125,7 +105,6 @@ def check_is_owner():
         
 def check_is_admin():
     try:
-        from gws.service.user_service import UserService
         user = UserService.get_current_user()
     except:
         raise HTTPException(status_code=400, detail="Unauthorized: admin required")

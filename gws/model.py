@@ -9,6 +9,7 @@ import sys
 import os
 import asyncio
 import concurrent.futures
+from typing import Any
 import uuid
 import inspect
 import hashlib
@@ -306,7 +307,7 @@ class Model(BaseModel):
         return _FTSModel
 
     @classmethod
-    def get_by_uri(cls, uri: str) -> str:
+    def get_by_uri(cls, uri: str) -> Any:
         try:
             return cls.get(cls.uri == uri)
         except:
@@ -791,6 +792,13 @@ class User(Model):
         except:
             cls.create_owner_and_sysuser()
             return User.get(User.group == cls.SYSUSER_GROUP)
+
+    @classmethod
+    def get_by_email(cls, email: str) -> User:
+        try:
+            return cls.get(cls.email == email)
+        except:
+            return None
     
     # -- F --
     

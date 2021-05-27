@@ -4,13 +4,14 @@
 # About us: https://gencovery.com
 
 
+from gws.dto.user_dto import UserData
 from typing import Optional, List
-from fastapi import Depends, FastAPI, \
+from fastapi import Depends, \
                     UploadFile, File as FastAPIFile
 from fastapi.responses import FileResponse
 
 from gws.service.file_service import FileService
-from ._auth_user import UserData, check_user_access_token
+from ._auth_user import check_user_access_token
 from .core_app import core_app
 
 @core_app.post("/file/upload", tags=["Files"], summary="Upload a file or a list of files")

@@ -3,14 +3,19 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws.http import HTTPInternalServerError, HTTPUnauthorized
+from typing import Any, Coroutine, Union
+from gws.service.central_service import CentralService
+from gws.exception.wrong_credentials_exception import WrongCredentialsException
+from starlette.responses import JSONResponse
+from gws.dto.credentials_dto import CredentialsDTO
 from starlette_context import context
 
 from gws.query import Paginator
 from gws.logger import Error
 from gws.model import Activity, User
-from gws.http import *
-
 from .base_service import BaseService
+from gws._app._central_app._auth_central import generate_user_access_token
 
 class UserService(BaseService):
     
@@ -51,58 +56,59 @@ class UserService(BaseService):
         else:
             raise Error("Central", "create_user",
                         "The user already exists")
-    
+
+
     # -- D --
-    
+
     @classmethod
     def deactivate_user(cls, uri) -> User:
         return cls.set_user_status(uri, {"is_active": False})
 
     # -- F --
-    
+
     @classmethod
     def fecth_activity_list(cls, \
                             user_uri: str=None, \
                             activity_type: str=None, \
                             page:int=1, \
                             number_of_items_per_page:int=20, \
-                            as_json = False ) -> (Paginator, dict, ):
-        
-        Q = Activity.select()\
+                            as_json = False ) -> Union[Paginator, dict]:
+   
+        query = Activity.select()\
                     .order_by(Activity.creation_datetime.desc())
-        
+
         if user_uri:
-            Q = Q.join(User).where(User.uri == user_uri)
-            
+            query = query.join(User).where(User.uri == user_uri)
+
         if activity_type:
-            Q = Q.where(Activity.activity_type == activity_type.upper())
+            query = query.where(Activity.activity_type == activity_type.upper())
         
-        P = Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page)
+        paginator = Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page)
         if as_json:
-            return P.to_json()
+            return paginator.to_json()
         else:
-            return P
-    
+            return paginator
+
     @classmethod
     def fetch_user(cls, uri: str) -> User:
         return User.get_by_uri(uri)
-    
+
     @classmethod
     def fetch_user_list(cls, \
                         page:int=1, \
                         number_of_items_per_page: int=20, \
-                       as_json = False) -> (Paginator, dict, ):
-        
-        Q = User.select()\
+                       as_json = False) -> Union[Paginator, dict]:
+
+        query = User.select()\
                 .order_by(User.creation_datetime.desc())
-        
-        P = Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page)
-        
+
+        paginator = Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page)
+
         if as_json:
-            return P.to_json()
+            return paginator.to_json()
         else:
-            return P
-    
+            return paginator
+
     # -- G --
     
     @classmethod
@@ -128,6 +134,10 @@ class UserService(BaseService):
     @classmethod
     def get_user_by_uri(cls, uri: str) -> User:
         return User.get_by_uri(uri)
+
+    @classmethod
+    def get_user_by_email(cls, email: str) -> User:
+        return User.get_by_email(email)
     
     # -- S --
     
@@ -150,7 +160,7 @@ class UserService(BaseService):
                             "Cannot save the user")
     
     @classmethod
-    def set_current_user(cls, user: (User, )):
+    def set_current_user(cls, user: User):
         """
         Set the user in the current session
         """
@@ -162,18 +172,18 @@ class UserService(BaseService):
             except:
                 # is console context
                 cls._console_data["user"] = None
-        else:  
+        else:
             if isinstance(user, dict):
                 try:
                     user = User.get(User.uri==user.uri)
                 except:
-                    raise HTTPInternalServerError(detail=f"Invalid current user")
+                    raise HTTPInternalServerError(detail="Invalid current user")
 
             if not isinstance(user, User):
-                raise HTTPInternalServerError(detail=f"Invalid current user")
+                raise HTTPInternalServerError(detail="Invalid current user")
 
             if not user.is_active:
-                raise HTTPUnauthorized(detail=f"Not authorized")
+                raise HTTPUnauthorized(detail="Not authorized")
 
             try:
                 # is http contexts
@@ -185,4 +195,19 @@ class UserService(BaseService):
     @classmethod
     def get_all_users(cls):
         return list(User.select())
+
+    @classmethod
+    async def login(cls, credentials: CredentialsDTO) -> Coroutine[Any, Any, JSONResponse]:
     
+        # Check if user exist in the lab
+        user: User = cls.get_user_by_email(credentials.email)
+        if user is None:
+            raise WrongCredentialsException()
+        
+        # Check the user credentials
+        credentials_valid: bool = await CentralService.check_credentials(credentials)
+        if not credentials_valid:
+            raise WrongCredentialsException()
+
+        return generate_user_access_token(user.uri)
+
