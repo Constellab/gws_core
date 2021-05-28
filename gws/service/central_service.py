@@ -12,13 +12,13 @@ from gws.settings import Settings
 
 from .base_service import BaseService
 
+
 class CentralService(BaseService):
 
     @classmethod
     def check_api_key(cls, api_key: str):
         central_settings = CentralService.__get_central_settings()
         return central_settings.get("api_key") == api_key
-
 
     @classmethod
     def set_api_key(cls, api_key: str):
@@ -30,15 +30,15 @@ class CentralService(BaseService):
         tf = settings.save()
         return {"status": tf}
 
-    
     @classmethod
-    async def check_credentials(cls, credentials: CredentialsDTO) -> bool :
+    def check_credentials(cls, credentials: CredentialsDTO) -> bool:
         """
         Check the credential of an email/password by calling central
         and return true if ok
         """
-        central_api_url: str = CentralService.__get_central_api_url('auth/login')
-        response = ExternalApiService.post(central_api_url,credentials.dict())
+        central_api_url: str = CentralService.__get_central_api_url(
+            'auth/login')
+        response = ExternalApiService.post(central_api_url, credentials.dict())
 
         return response.status_code == 201
 
@@ -61,7 +61,3 @@ class CentralService(BaseService):
             raise BadRequestException("The central setting does not exists")
 
         return settings.data.get("central")
-
-
-
-

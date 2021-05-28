@@ -1,35 +1,36 @@
 # LICENSE
-# This software is the exclusive property of Gencovery SAS. 
+# This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws.http import HTTPInternalServerError, HTTPUnauthorized
 from typing import Any, Coroutine, Union
-from gws.service.central_service import CentralService
-from gws.exception.wrong_credentials_exception import WrongCredentialsException
-from starlette.responses import JSONResponse
-from gws.dto.credentials_dto import CredentialsDTO
-from starlette_context import context
 
-from gws.query import Paginator
+from gws._app._central_app._auth_central import generate_user_access_token
+from gws.dto.credentials_dto import CredentialsDTO
+from gws.exception.wrong_credentials_exception import WrongCredentialsException
+from gws.http import HTTPInternalServerError, HTTPUnauthorized
 from gws.logger import Error
 from gws.model import Activity, User
+from gws.query import Paginator
+from gws.service.central_service import CentralService
+from starlette.responses import JSONResponse
+from starlette_context import context
+
 from .base_service import BaseService
-from gws._app._central_app._auth_central import generate_user_access_token
+
 
 class UserService(BaseService):
-    
-    _console_data = { "user": None }
-    
+
+    _console_data = {"user": None}
+
     # -- A --
-    
+
     @classmethod
     def activate_user(cls, uri) -> User:
         return cls.set_user_status(uri, {"is_active": True})
 
-    
     # -- C --
-    
+
     @classmethod
     def create_user(cls, data: dict) -> User:
         group = data.get('group', 'user')
@@ -57,7 +58,6 @@ class UserService(BaseService):
             raise Error("Central", "create_user",
                         "The user already exists")
 
-
     # -- D --
 
     @classmethod
@@ -67,23 +67,25 @@ class UserService(BaseService):
     # -- F --
 
     @classmethod
-    def fecth_activity_list(cls, \
-                            user_uri: str=None, \
-                            activity_type: str=None, \
-                            page:int=1, \
-                            number_of_items_per_page:int=20, \
-                            as_json = False ) -> Union[Paginator, dict]:
-   
+    def fecth_activity_list(cls,
+                            user_uri: str = None,
+                            activity_type: str = None,
+                            page: int = 1,
+                            number_of_items_per_page: int = 20,
+                            as_json=False) -> Union[Paginator, dict]:
+
         query = Activity.select()\
-                    .order_by(Activity.creation_datetime.desc())
+            .order_by(Activity.creation_datetime.desc())
 
         if user_uri:
             query = query.join(User).where(User.uri == user_uri)
 
         if activity_type:
-            query = query.where(Activity.activity_type == activity_type.upper())
-        
-        paginator = Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page)
+            query = query.where(Activity.activity_type ==
+                                activity_type.upper())
+
+        paginator = Paginator(
+            query, page=page, number_of_items_per_page=number_of_items_per_page)
         if as_json:
             return paginator.to_json()
         else:
@@ -94,15 +96,16 @@ class UserService(BaseService):
         return User.get_by_uri(uri)
 
     @classmethod
-    def fetch_user_list(cls, \
-                        page:int=1, \
-                        number_of_items_per_page: int=20, \
-                       as_json = False) -> Union[Paginator, dict]:
+    def fetch_user_list(cls,
+                        page: int = 1,
+                        number_of_items_per_page: int = 20,
+                        as_json=False) -> Union[Paginator, dict]:
 
         query = User.select()\
-                .order_by(User.creation_datetime.desc())
+            .order_by(User.creation_datetime.desc())
 
-        paginator = Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page)
+        paginator = Paginator(
+            query, page=page, number_of_items_per_page=number_of_items_per_page)
 
         if as_json:
             return paginator.to_json()
@@ -110,13 +113,13 @@ class UserService(BaseService):
             return paginator
 
     # -- G --
-    
+
     @classmethod
     def get_current_user(cls) -> User:
         """
         Get the user in the current session
         """
-        
+
         try:
             user = context.data["user"]
         except:
@@ -124,11 +127,13 @@ class UserService(BaseService):
             try:
                 user = cls._console_data["user"]
             except:
-                raise Error("Controller", "get_current_user", "No HTTP nor Console user authenticated")
-        
+                raise Error("Controller", "get_current_user",
+                            "No HTTP nor Console user authenticated")
+
         if user is None:
-            raise Error("Controller", "get_current_user", "No HTTP nor Console user authenticated")
-        
+            raise Error("Controller", "get_current_user",
+                        "No HTTP nor Console user authenticated")
+
         return user
 
     @classmethod
@@ -138,9 +143,9 @@ class UserService(BaseService):
     @classmethod
     def get_user_by_email(cls, email: str) -> User:
         return User.get_by_email(email)
-    
+
     # -- S --
-    
+
     @classmethod
     def set_user_status(cls, uri, data) -> User:
         user = User.get_by_uri(uri)
@@ -158,13 +163,13 @@ class UserService(BaseService):
             else:
                 raise Error("Central", "set_user_status",
                             "Cannot save the user")
-    
+
     @classmethod
     def set_current_user(cls, user: User):
         """
         Set the user in the current session
         """
-        
+
         if user is None:
             try:
                 # is http context
@@ -175,9 +180,10 @@ class UserService(BaseService):
         else:
             if isinstance(user, dict):
                 try:
-                    user = User.get(User.uri==user.uri)
+                    user = User.get(User.uri == user.uri)
                 except:
-                    raise HTTPInternalServerError(detail="Invalid current user")
+                    raise HTTPInternalServerError(
+                        detail="Invalid current user")
 
             if not isinstance(user, User):
                 raise HTTPInternalServerError(detail="Invalid current user")
@@ -198,16 +204,15 @@ class UserService(BaseService):
 
     @classmethod
     async def login(cls, credentials: CredentialsDTO) -> Coroutine[Any, Any, JSONResponse]:
-    
+
         # Check if user exist in the lab
         user: User = cls.get_user_by_email(credentials.email)
         if user is None:
             raise WrongCredentialsException()
-        
+
         # Check the user credentials
-        credentials_valid: bool = await CentralService.check_credentials(credentials)
+        credentials_valid: bool = CentralService.check_credentials(credentials)
         if not credentials_valid:
             raise WrongCredentialsException()
 
-        return generate_user_access_token(user.uri)
-
+        return await generate_user_access_token(user.uri)
