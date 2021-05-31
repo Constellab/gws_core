@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws.dto.user_dto import UserData
 from gws.service.model_service import ModelService
 from gws.service.experiment_service import ExperimentService
 
@@ -11,7 +12,7 @@ from typing import Optional
 from fastapi import Depends
 
 from gws.http import *
-from ._auth_user import UserData, check_user_access_token
+from ._auth_user import check_user_access_token
 from .core_app import core_app
 
 @core_app.get("/experiment/queue", tags=["Experiment"], summary="Get the queue of experiment")

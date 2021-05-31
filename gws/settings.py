@@ -4,7 +4,6 @@
 # About us: https://gencovery.com
 
 import os
-import tempfile
 
 from playhouse.sqlite_ext import JSONField
 from peewee import Model as PWModel

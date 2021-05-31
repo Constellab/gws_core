@@ -3,22 +3,15 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import importlib
-import json
 
-from typing import Optional, List
 
-from fastapi import Depends, FastAPI, \
-                    UploadFile, Request, \
-                    HTTPException, File as FastAPIFile
-from fastapi.responses import Response, JSONResponse, RedirectResponse, FileResponse
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette_context.middleware import ContextMiddleware
 
 from pydantic import BaseModel
 
 from gws.http import *
-from ._auth_user import UserData, check_user_access_token
 
 core_app = FastAPI(docs_url="/docs")
 

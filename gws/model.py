@@ -228,6 +228,13 @@ class User(Model):
         except:
             cls.create_owner_and_sysuser()
             return User.get(User.group == cls.SYSUSER_GROUP)
+
+    @classmethod
+    def get_by_email(cls, email: str) -> 'User':
+        try:
+            return cls.get(cls.email == email)
+        except:
+            return None
     
     # -- F --
     

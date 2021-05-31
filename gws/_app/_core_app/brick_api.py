@@ -3,14 +3,15 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws.dto.user_dto import UserData
 import importlib
 from typing import Optional
 from fastapi import Depends
-from fastapi.responses import Response, JSONResponse, RedirectResponse, FileResponse
+from fastapi.responses import JSONResponse
 
 from gws.http import *
 
-from ._auth_user import UserData, check_user_access_token
+from ._auth_user import check_user_access_token
 from .core_app import core_app
 
 @core_app.post("/brick/{brick_name}/{api_func}", response_class=JSONResponse, tags=["Bricks APIs"], summary="Call custom brick APIs")

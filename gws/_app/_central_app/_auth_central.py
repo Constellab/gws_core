@@ -3,28 +3,20 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws.dto.user_dto import UserData
 import jwt
+
 
 from datetime import datetime, timedelta
 from typing import Optional
 
-from fastapi import Depends, FastAPI, HTTPException, status
-from fastapi.encoders import jsonable_encoder
+from fastapi import Depends, HTTPException, status
+
 from fastapi.responses import JSONResponse
-from fastapi.param_functions import Form
-from fastapi.requests import Request
 
-from passlib.context import CryptContext
-
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2
-from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
-from fastapi.security.utils import get_authorization_scheme_param
-
-from pydantic import BaseModel
 
 from gws.model import User
 from gws.settings import Settings
-from gws._app._core_app._auth_user import UserData
 
 from ._oauth2_central_header_scheme import oauth2_central_header_scheme
 
@@ -43,8 +35,8 @@ def check_central_api_key(api_key: str = Depends(oauth2_central_header_scheme)):
         raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized"
             )
-    
-def get_user(user_uri:str):
+
+def get_user(user_uri:str) -> UserData:
     try:
         db_user = User.get(User.uri == user_uri)        
         
@@ -56,6 +48,7 @@ def get_user(user_uri:str):
     except:
         return False
 
+
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     if expires_delta:
@@ -66,15 +59,16 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-async def generate_user_access_token(uri: str):
-    user = get_user(uri)
-    if not user or not user.is_active:
+
+async def generate_user_access_token(uri: str) -> JSONResponse:
+    user: UserData = get_user(uri)
+    if user is None or not (user.is_active):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authorized",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
+        
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={
@@ -94,3 +88,4 @@ async def generate_user_access_token(uri: str):
     )
     
     return response
+

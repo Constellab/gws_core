@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws.dto.user_dto import UserData
 from gws.service.user_service import UserService
 from typing import Dict, List
 
@@ -14,9 +15,7 @@ from starlette_context.middleware import ContextMiddleware
 from gws.http import *
 from gws.model import User
 
-from ._core_app._auth_user import UserData
-from ._central_app._auth_central import check_central_api_key
-from ._central_app._auth_central import generate_user_access_token as _generate_user_access_token
+from ._central_app._auth_central import generate_user_access_token as _generate_user_access_token, check_central_api_key
 from gws.service.user_service import UserService
 
 central_app = FastAPI(docs_url="/docs")
