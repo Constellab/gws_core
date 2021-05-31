@@ -168,9 +168,9 @@ class TestProtocol(unittest.TestCase):
         
         def _on_end(*args, **kwargs):
             
-            print("---- reload mini travel ----")
+            #print("---- reload mini travel ----")
             mini_proto_reloaded = Protocol.get_by_id(mini_proto.id)
-            print(mini_proto_reloaded.dumps())
+            #print(mini_proto_reloaded.dumps())
             
             s3 = json.loads(mini_proto_reloaded.dumps(bare=True))
             self.assertEqual(s1,s3)

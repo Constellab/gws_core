@@ -9,12 +9,15 @@ import unittest
 
 from peewee import CharField
 from gws.model import Model, Resource
+from gws.unittest import GTest
 
 ############################################################################################
 #
 #                                        TestModel
 #                                         
 ############################################################################################
+
+#Model._db_manager.init(engine="mariadb")
 
 class Person(Model):
     name = CharField(null=True)
@@ -52,6 +55,8 @@ class TestModel(unittest.TestCase):
         pass
 
     def test_model(self):
+        GTest.print("Test Model")
+
         Person.create(name = 'Jhon Smith', data={})
         Person.create(name = 'Robert Vincent', data={})
 
@@ -86,6 +91,8 @@ class TestModel(unittest.TestCase):
         self.assertTrue(john.verify_hash())
 
     def test_fts_model(self):
+        GTest.print("Test FTSModel")
+
         p = FTSPerson()
         p.city = 'Petrovitchi'
         p.data['name'] = "Isaac Asimov, the author of Foundation at Trantor"
@@ -118,6 +125,9 @@ class TestModel(unittest.TestCase):
             print(q.search_score)
 
     def test_model_with_kv_store(self):
+        GTest.print("Test KVStore")
+
+        return
         p = PersonKVStore()
         p.name = 'Isaac Asimov'
         p.set_age(30)

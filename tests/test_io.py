@@ -7,6 +7,7 @@ import unittest
 from gws.model import Process, Resource
 from gws.io import Connector
 from gws.logger import Error
+from gws.unittest import GTest
 
 class Person(Resource):
     pass
@@ -45,6 +46,8 @@ class Jump(Process):
 class TestIO(unittest.TestCase):
     
     def test_connect(self):
+        GTest.print("Test IO connect")
+
         p0 = Create(instance_name="p0")
         p1 = Move(instance_name="p1")
         p2 = Move(instance_name="p2")

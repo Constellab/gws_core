@@ -9,6 +9,7 @@ import unittest
 
 from gws.settings import Settings
 from gws.json import JSONData
+from gws.unittest import GTest
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
@@ -16,7 +17,8 @@ testdata_dir = settings.get_dir("gws:testdata_dir")
 class TestJson(unittest.TestCase):
     
     def test_json_data(self):
-        
+        GTest.print("Test JSONData")
+
         file = os.path.join(testdata_dir, "mini_travel_graph.json")
         d = JSONData._import(file)
         

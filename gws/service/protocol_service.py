@@ -100,10 +100,7 @@ class ProtocolService(BaseService):
                                 page: int=1, \
                                 number_of_items_per_page :int=20, \
                                 as_json = False) -> (Paginator, dict):
-        
-        Q = ProcessType.select()\
-                        .order_by(ProcessType.ptype.desc())
-        
+
         Q = ProcessType.select()\
                         .where(ProcessType.base_ptype=="gws.model.Protocol")\
                         .order_by(ProcessType.ptype.desc())

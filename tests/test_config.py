@@ -6,6 +6,7 @@
 import asyncio
 import unittest
 from gws.model import Config, Process, Config, Resource, Model, ViewModel
+from gws.unittest import GTest
 
 class TestConfig(unittest.TestCase):
     
@@ -20,7 +21,8 @@ class TestConfig(unittest.TestCase):
         pass
 
     def test_config(self):
-        
+        GTest.print("Test Config")
+
         specs = {
             'moving_step': {"type": float, "default": 0.1}
         }

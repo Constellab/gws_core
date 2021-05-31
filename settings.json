@@ -33,7 +33,7 @@
     "externs" : [],
     "dependencies" : [],
     "central": {
-        "api_key": "123456",
+        "api_key": "",
         "api_url": ""
     }
 }

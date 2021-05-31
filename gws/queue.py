@@ -3,15 +3,18 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws.model import Model, User, Experiment
-from gws.logger import Error
-from peewee import IntegerField, ForeignKeyField, BooleanField
 import threading
 import time
+import json
+
+from gws.db.model import Model
+from gws.model import User, Experiment
+from gws.logger import Error
+from peewee import IntegerField, ForeignKeyField, BooleanField
 
 TICK_INTERVAL_SECONDS = 60   # 60 sec
 
-def _queue_tick(tick_interval, verbose, daemon):    
+def _queue_tick(tick_interval, verbose, daemon):
     try:
         Queue._tick(verbose)
     except:
@@ -22,11 +25,30 @@ def _queue_tick(tick_interval, verbose, daemon):
     t.start()
 
 class Job(Model):
+    """
+    Class representing queue job
+
+    :property user: The user who creates the job
+    :type user: `gws.model.User`
+    :property experiment: The experiment to add to the job
+    :type experiment: `gws.model.Expriment`
+    """
+
     user = ForeignKeyField(User, null=True, backref='jobs')
     experiment = ForeignKeyField(Experiment, null=True, backref='jobs')
     _table_name = "gws_queue_job"
     
 class Queue(Model):
+    """
+    Class representing experiment queue
+
+    :property is_active: True is the queue is active; False otherwise. Defaults to False. 
+    The queue is automatically set to True on init.
+    :type is_active: `bool`
+    :property max_length: The maximum length of the queue. Defaults to 10.
+    :type max_length: `int`
+    """
+
     is_active = BooleanField(default=False)
     max_length = IntegerField(default=10)
     
@@ -71,7 +93,7 @@ class Queue(Model):
             return
         
         if len(q.data["jobs"]) > q.max_length:
-            raise Error("Queue", "add", "Max number of jobs is reached")
+            raise Error("Queue", "add", "The maximum number of jobs is reached")
         
         q.data["jobs"].append(job.uri)
         q.save()
@@ -80,7 +102,7 @@ class Queue(Model):
             if q.is_active:
                 #> manally trigger to experiment if possible!
                 if not Experiment.count_of_running_experiments():
-                    cls._tick()                
+                    cls._tick()
             else:
                 Queue().init()
                 
@@ -111,16 +133,16 @@ class Queue(Model):
     @classmethod
     def next(cls) -> Job:
         q = Queue()
-        if not cls.data["jobs"]:
+        if not q.data["jobs"]:
             return None
         
-        q = Queue()
-        uri = q.data["jobs"][0]  
-
+        uri = q.data["jobs"][0]
         try:
             return Job.get(Job.uri == uri)
         except:
-            return None
+            # orphan job => discard it from the queue
+            cls.__pop_first()
+            return cls.next()
     
     # -- P --
     
@@ -158,14 +180,14 @@ class Queue(Model):
         if Experiment.count_of_running_experiments():
             #-> busy: we will test later!
             if verbose:
-                print("Lab is busy! Retry later")
+                print("The lab is busy! Retry later")
             return
         
         if verbose:
             print(f"Start experiment {e.uri}, user={job.user.uri}")
             
         e.run_through_cli(user=job.user)
-        time.sleep(1)  #-> wait for 1 sec to prevent database lock!
+        time.sleep(3)  #-> wait for 3 sec to prevent database lock!
 
     
     def to_json(self, *args, stringify: bool=False, prettify: bool=False, **kwargs):

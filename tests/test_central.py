@@ -7,7 +7,7 @@ import unittest
 
 from gws.model import Experiment, Protocol, User
 from gws.service.user_service import UserService
-
+from gws.unittest import GTest
 
 class TestCentral(unittest.TestCase):
 
@@ -24,6 +24,8 @@ class TestCentral(unittest.TestCase):
         Protocol.drop_table()
 
     def test_create_user(self):
+        GTest.print("Test Central")
+
         data = {
             "uri": "1234567890",
             "email": "test@gencovery.com",

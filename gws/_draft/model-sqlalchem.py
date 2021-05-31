@@ -3,10 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from __future__ import annotations
+
 import sys
 import os
 import asyncio
 import concurrent.futures
+import uuid
 import inspect
 import hashlib
 import urllib.parse
@@ -22,11 +25,10 @@ from subprocess import DEVNULL
 from datetime import datetime
 
 from fastapi.encoders import jsonable_encoder
-from peewee import Model as PWModel
-from peewee import  Field, IntegerField, FloatField, DateField, \
-                    DateTimeField, CharField, BooleanField, \
-                    ForeignKeyField, ManyToManyField, IPField, TextField, BlobField, \
-                    AutoField, BigAutoField
+
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime, JSON
+from sqlalchemy.orm import relationship
+from gws.db.database import Base
 
 from gws.logger import Error, Info, Warning
 from gws.settings import Settings
@@ -34,8 +36,571 @@ from gws.event import EventListener
 from gws.io import Input, Output, InPort, OutPort, Connector, Interface, Outerface
 from gws.utils import to_camel_case, sort_dict_by_key, generate_random_chars
 from gws.http import *
-from gws.db.model import Model
 
+from gws.db.model import BaseModel, BaseFTSModel
+
+# ####################################################################
+#
+# Model class
+#
+# ####################################################################
+ 
+class Model(Base):
+    """
+    Model class
+
+    :property id: The id of the model (in database)
+    :type id: `int`
+    :property uri: The unique resource identifier of the model
+    :type uri: `str`
+    :property type: The type of the python Object (the full class name)
+    :type type: `str`
+    :property creation_datetime: The creation datetime of the model
+    :type creation_datetime: `datetime`
+    :property save_datetime: The last save datetime in database
+    :type save_datetime: `datetime`
+    :property is_archived: True if the model is archived, False otherwise. Defaults to False
+    :type is_archived: `bool`
+    :property data: The data of the model
+    :type data: `dict`
+    :property hash: The hash of the model
+    :type hash: `str`
+    """
+    
+    id = Column(Integer, primary_key=True, index=True)
+    uri = Column(String, unique=True, index=True)
+    type_ = Column(String, index=True)
+    creation_datetime = Column(DateTime, index=True) #DateTimeField(default=datetime.now, index=True)
+    save_datetime = Column(DateTime, index=True)
+    is_archived = Column(Boolean, default=True)
+    hash_ = Column(String, index=True)
+    
+    data = Column(JSON) #BaseModel.JSONField(null=True, index=True)
+    #document = TextField(null=True, index=True)
+    
+    _kv_store: 'KVStore' = None
+    _is_singleton = False
+    _is_removable = True
+    
+    _fts_fields = {}
+    _is_fts_active = True
+    
+    __tablename__ = 'gws_model'
+    
+    settings = Settings.retrieve()
+    _LAB_URI = settings.get_data("uri")
+    
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        if not self.id and self._is_singleton:
+            try:
+                cls = type(self)
+                model = cls.get(cls.type == self.full_classname())
+            except:
+                model = None
+            
+            if model:
+                # /!\ Shallow copy all properties (i.e. object cast) 
+                # Prevent creating duplicates of processes having a representation in the db.
+                for prop in model.property_names(Field):
+                    val = getattr(model, prop)
+                    setattr(self, prop, val) 
+        
+        if self.uri is None:
+            self.uri = str(uuid.uuid4())
+
+        if self.data is None:
+            self.data = {} #{}
+
+        # ensures that field type is allways equal to the name of the class
+        if self.type is None:
+            self.type = self.full_classname()
+        elif self.type != self.full_classname():
+            # allow object cast after ...
+            pass
+        
+        from gws.store import KVStore
+        self._kv_store = KVStore(self.kv_store_path)
+
+    # -- A --
+    
+    def archive(self, tf: bool) -> bool:
+        """
+        Archive of Unarchive the model
+        
+        :param tf: True to archive, False to unarchive
+        :type tf: `bool`
+        :return: True if sucessfully done, False otherwise
+        :rtype: `bool`
+        """
+        
+        if self.is_archived == tf:
+            return True
+        
+        self.is_archived = tf
+        cls = type(self)
+        return self.save(only=[cls.is_archived])
+        
+    # -- B --
+    
+    @staticmethod
+    def barefy( data: dict, sort_keys=False ):
+        if isinstance(data, dict):
+            data = json.dumps(data, sort_keys=sort_keys)
+        data = re.sub(r"\"(([^\"]*_)?uri|save_datetime|creation_datetime|hash)\"\s*\:\s*\"([^\"]*)\"", r'"\1": ""', data)
+        return json.loads(data)
+    
+    # -- C --
+    
+    def __create_hash_object(self):
+        h = hashlib.blake2b()
+        h.update(self._LAB_URI.encode())
+        exclusion_list = (ForeignKeyField, Model.JSONField, ManyToManyField, BlobField, AutoField, BigAutoField, )
+        for prop in self.property_names(Field, exclude=exclusion_list) :
+            if prop in ["id", "hash"]:
+                continue
+            val = getattr(self, prop)            
+            h.update( str(val).encode() )
+         
+        for prop in self.property_names(Model.JSONField):
+            val = getattr(self, prop)
+            h.update( json.dumps(val, sort_keys=True).encode() )
+            
+        for prop in self.property_names(BlobField):
+            val = getattr(self, prop)
+            h.update( val )
+            
+        for prop in self.property_names(ForeignKeyField):
+            val = getattr(self, prop)
+            if isinstance(val, Model):
+                h.update( val.hash.encode() )
+
+        return h
+    
+    def __compute_hash(self):
+        ho = self.__create_hash_object()
+        return ho.hexdigest()
+
+    def cast(self) -> 'Model':
+        """
+        Casts a model instance to its `type` in database
+
+        :return: The model
+        :rtype: `Model` instance
+        """
+        
+        from .service.model_service import ModelService
+        
+        if self.type == self.full_classname():
+            return self
+        
+        # instanciate the class and shallow copy data
+        new_model_t = ModelService.get_model_type(self.type)
+        model = new_model_t()
+        for prop in self.property_names(Field):
+            val = getattr(self, prop)
+            setattr(model, prop, val)
+
+        return model
+
+    def clear_data(self, save: bool = False):
+        """
+        Clears the `data`
+    
+        :param save: If True, save the model the `data` is cleared
+        :type save: bool
+        """
+        self.data = {}
+        if save:
+            self.save()
+
+    @classmethod
+    def create_table(cls, *args, **kwargs):
+        if cls.table_exists():
+            return
+
+        if cls.fts_model():
+            cls.fts_model().create_table()
+
+        super().create_table(*args, **kwargs)
+
+    # -- D --
+
+    def delete_instance(self, *args, **kwargs):
+        self.kv_store.remove()
+        super().delete_instance(*args, **kwargs)
+        
+    @classmethod
+    def drop_table(cls):
+        if cls.fts_model():
+            cls.fts_model().drop_table()
+        
+        from gws.store import KVStore
+        KVStore.remove_all(folder=cls._table_name)
+        
+        super().drop_table()
+
+    # -- E --
+        
+    def __eq__(self, other: 'Model') -> bool:
+        """ 
+        Compares the model with another model. The models are equal if they are 
+        identical (same handle in memory) or have the same id in the database
+
+        :param other: The model to compare
+        :type other: `Model`
+        :return: True if the models are equal
+        :rtype: bool
+        """
+        if not isinstance(other, Model):
+            return False
+
+        return (self is other) or ((self.id != None) and (self.id == other.id))
+    
+    # -- F --
+
+    # def fetch_type_by_id(self, id) -> 'type':
+    #     """ 
+    #     Fecth the model type (string) by its `id` from the database and return the corresponding python type.
+    #     Use the proper table even if the table name has changed.
+
+    #     :param id: The id of the model
+    #     :type id: int
+    #     :return: The model type
+    #     :rtype: type
+    #     """
+        
+    #     from .service.model_service import ModelService
+        
+    #     cursor = self._db_manager.db.execute_sql(f'SELECT type FROM {self._table_name} WHERE id = ?', (str(id),))
+    #     row = cursor.fetchone()
+    #     if len(row) == 0:
+    #         raise Error("gws.model.Model", "fetch_type_by_id", "The model is not found.")
+    #     type_str = row[0]
+    #     model_t = ModelService.get_model_type(type_str)
+    #     return model_t
+
+    # -- G --
+
+    @staticmethod
+    def get_brick_dir(brick_name: str):
+        settings = Settings.retrieve()
+        return settings.get_dependency_dir(brick_name)
+        
+    @classmethod
+    def fts_model(cls):
+        if not cls.is_sqlite3_engine():
+            return None
+        
+        if not cls._fts_fields:
+            return None
+        
+        fts_class_name = to_camel_case(cls._table_name, capitalize_first=True) + "FTSModel"
+        
+        _FTSModel = type(fts_class_name, (BaseFTSModel, ), {
+            "_related_model" : cls
+        })
+
+        return _FTSModel
+
+    @classmethod
+    def get_by_uri(cls, uri: str) -> str:
+        try:
+            return cls.get(cls.uri == uri)
+        except:
+            return None
+
+    # -- H --
+
+    def hydrate_with(self, data):
+        """
+        Hydrate the model with data
+        """
+
+        col_names = self.property_names(Field)
+        for prop in data:
+            if prop == "id":
+                continue
+
+            if prop in col_names:
+                setattr(self, prop, data[prop])
+            else:
+                self.data[prop] = data[prop]
+
+    # -- I --
+
+    def is_saved(self):
+        """ 
+        Returns True if the model is saved in db, False otherwise
+
+        :return: True if the model is saved in db, False otherwise
+        :rtype: bool
+        """
+        return bool(self.id)
+
+    # -- N -- 
+
+    # -- K --
+
+    @property
+    def kv_store(self) -> 'KVStore':
+        """ 
+        Returns the path of the KVStore of the model
+
+        :return: The path of the KVStore
+        :rtype: str
+        """
+        return self._kv_store
+    
+    @property
+    def kv_store_path(self) -> str:
+        """ 
+        Returns the path of the KVStore of the model
+
+        :return: The path of the KVStore
+        :rtype: str
+        """
+        return os.path.join(self._table_name, self.uri)
+    
+    # -- R --
+    
+    def refresh(self):
+        """ 
+        Refresh a model using db value
+
+        :return: The path of the KVStore
+        :rtype: str
+        """
+        
+        cls = type(self)
+        if self.id:
+            db_object = cls.get_by_id(cls.id)
+            for prop in db_object.property_names(Field):
+                db_val = getattr(db_object, prop)
+                setattr(self, prop, db_val) 
+
+
+    @classmethod
+    def select(cls, *args, **kwargs):
+        if not cls.table_exists():
+            cls.create_table()
+            
+        return super().select(*args, **kwargs)
+
+    @classmethod
+    def select_me(cls, *args, **kwargs):
+        if not cls.table_exists():
+            cls.create_table()
+
+        return cls.select( *args, **kwargs ).where(cls.type == cls.full_classname())
+    
+    @classmethod
+    def search(cls, phrase: str):
+        if cls.is_sqlite3_engine():
+            _FTSModel = cls.fts_model()
+
+            if _FTSModel is None:
+                raise Error("gws.model.Model", "search", "No FTSModel model defined")
+
+            return _FTSModel.search_bm25(
+                phrase, 
+                weights={'title': 2.0, 'content': 1.0},
+                with_score=True,
+                score_alias='search_score'
+            )
+        elif cls.is_mysql_engine():
+            return cls.select().where(cls.Match(cls.data, phrase))
+
+    def set_data(self, data: dict):
+        """ 
+        Sets the `data`
+
+        :param data: The input data
+        :type data: dict
+        :raises Exception: If the input parameter data is not a `dict`
+        """
+        if isinstance(data,dict):
+            self.data = data
+        else:
+            raise Error("gws.model.Model", "set_data","The data must be a JSONable dictionary")
+
+    def _save_fts_document(self):
+        _FTSModel = self.fts_model()
+
+        if _FTSModel is None:
+            return True  #-> no fts fields given -> nothing to do!
+        
+        try:
+            doc = _FTSModel.get_by_id(self.id)  
+        except:
+            doc = _FTSModel(rowid=self.id)
+
+        title = []
+        content = []
+
+        for field in self._fts_fields:
+            score = self._fts_fields[field]
+            if field in self.data:
+                if score > 1:
+                    if isinstance(self.data[field], list):
+                        title.append( "\n".join([str(k) for k in self.data[field]]) )
+                    else:
+                        title.append(str(self.data[field]))
+                else:
+                    content.append(str(self.data[field]))
+
+        doc.title = '\n'.join(title)
+        doc.content = '\n'.join(content)
+
+        return doc.save()
+
+
+    def save(self, *args, **kwargs) -> bool:
+        """ 
+        Sets the `data`
+
+        :param data: The input data
+        :type data: dict
+        :raises Exception: If the input data is not a `dict`
+        """
+
+        if not self.table_exists():
+            self.create_table()
+
+        _FTSModel = self.fts_model()
+
+        with self._db_manager.db.atomic() as transaction:
+            try:
+                if self._is_fts_active:
+                    if not self._save_fts_document():
+                        raise Error("gws.model.Model", "save", "Cannot save related FTS document")
+
+                #self.kv_store.save()
+                self.save_datetime = datetime.now()
+                self.hash = self.__compute_hash()
+                return super().save(*args, **kwargs)
+            except Exception as err:
+                transaction.rollback()
+                raise Error("gws.model.Model", "save", f"Error message: {err}")
+
+
+
+    @classmethod
+    def save_all(cls, model_list: list = None) -> bool:
+        """
+        Automically and safely save a list of models in the database. If an error occurs
+        during the operation, the whole transactions is rolled back.
+
+        :param model_list: List of models
+        :type model_list: list
+        :return: True if all the model are successfully saved, False otherwise. 
+        :rtype: bool
+        """
+        with cls._db_manager.db.atomic() as transaction:
+            try:
+                #if model_list is None:
+                #    return
+                
+                for m in model_list:
+                    #if isinstance(m, cls):
+                    m.save()
+            except Exception as err:
+                transaction.rollback()
+                raise Error("gws.model.Model", "save_all", f"Error message: {err}")
+
+        return True
+    
+    # -- T --
+    
+    def to_json(self, *, show_hash=False, bare: bool=False, stringify: bool=False, prettify: bool=False, jsonifiable_data_keys: list=[], **kwargs) -> (str, dict, ):
+        """
+        Returns a JSON string or dictionnary representation of the model.
+
+        :param show_hash: If True, returns the hash. Defaults to False
+        :type show_hash: `bool`
+        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
+        :type stringify: `bool`
+        :param prettify: If True, indent the JSON string. Defaults to False.
+        :type prettify: `bool`
+        :param jsonifiable_data_keys: If is empty, `data` is fully jsonified, otherwise only specified keys are jsonified
+        :type jsonifiable_data_keys: `list` of `str`        
+        :return: The representation
+        :rtype: `dict`, `str`
+        """
+      
+        _json = {}
+        
+        jsonifiable_data_keys
+        if not isinstance(jsonifiable_data_keys, list):
+            jsonifiable_data_keys = []
+
+        exclusion_list = (ForeignKeyField, ManyToManyField, BlobField, AutoField, BigAutoField, )
+
+        for prop in self.property_names(Field, exclude=exclusion_list) :
+            if prop in ["id"]:
+                continue
+
+            if prop.startswith("_"):
+                continue  #-> private or protected property
+
+            val = getattr(self, prop)
+
+            if prop == "data":
+                _json[prop] = {}
+
+                if len(jsonifiable_data_keys) == 0:
+                    _json[prop] = jsonable_encoder(val)
+                else:
+                    for k in jsonifiable_data_keys:
+                        if k in val:
+                            _json[prop][k] = jsonable_encoder(val[k])
+            else:
+                _json[prop] = jsonable_encoder(val)
+                if bare:
+                    if prop == "uri" or prop == "hash" or isinstance(val, (datetime, DateTimeField, DateField)):
+                        _json[prop] = ""
+
+        if not show_hash:
+            del _json["hash"]
+
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
+
+    # -- U --
+    
+    @property
+    def user_data(self) -> dict:
+        """
+        Get user data
+        
+        :return: User data
+        :rtype: `dict`
+        """
+        
+        if not "_user_data_" in self.data:
+            self.data["_user_data_"] = {}
+            
+        return self.data["_user_data_"]
+    
+    # -- V --
+    
+    def verify_hash(self) -> bool:
+        """
+        Verify the current hash of the model
+        
+        :return: True if the hash is valid, False otherwise
+        :rtype: `bool`
+        """
+        
+        return self.hash == self.__compute_hash()
+        
 # ####################################################################
 #
 # User class
@@ -111,8 +676,8 @@ class User(Model):
         
         try:
             user = User.get(User.uri == uri)
-        except Exception as err:
-            raise Error("User", "authenticate", f"User not found with uri {uri}") from err
+        except:
+            raise Error("User", "authenticate", f"User not found with uri {uri}")
 
         if not user.is_active:
             return False
@@ -149,8 +714,7 @@ class User(Model):
                 )
    
                 return True
-            except Exception as err:
-                Warning("User", "__authenticate_console", f"{err}")
+            except:
                 transaction.rollback()
                 return False
     
@@ -178,7 +742,6 @@ class User(Model):
                 
                 return True
             except Exception as err:
-                Warning("User", "__authenticate_http", f"{err}")
                 transaction.rollback()
                 return False
             
@@ -288,7 +851,7 @@ class User(Model):
         :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
         :type stringify: `bool`
         :param prettify: If True, indent the JSON string. Defaults to False.
-        :type prettify: `bool`
+        :type prettify: `bool`      
         :return: The representation
         :rtype: `dict`, `str`
         """
@@ -322,8 +885,8 @@ class User(Model):
         
         try:
             user = User.get(User.uri == uri)
-        except Exception as err:
-            raise Error("User", "unauthenticate", f"User not found with uri {uri}") from err
+        except:
+            raise Error("User", "unauthenticate", f"User not found with uri {uri}")
             
         if not user.is_active:
             return False
@@ -353,8 +916,7 @@ class User(Model):
                     raise Error("User", "__unauthenticate_http", "Cannot save user status")
                 
                 return True
-            except Exception as err:
-                Warning("User", "__unauthenticate_http", f"{err}")
+            except:
                 transaction.rollback()
                 return False
             
@@ -378,8 +940,7 @@ class User(Model):
                     raise Error("User", "__unauthenticate_console", "Cannot save user status")
                 
                 return True
-            except Exception as err:
-                Warning("User", "__unauthenticate_console", f"{err}")
+            except:
                 transaction.rollback()
                 return False
 
@@ -509,7 +1070,7 @@ class Viewable(Model):
                     transaction.rollback()
                     return False
             except Exception as err:
-                Warning("Viewable", "archive", f"Rollback archive. Error: {err}")
+                Warning(err)
                 transaction.rollback()
                 return False
 
@@ -581,7 +1142,7 @@ class Viewable(Model):
 
     # -- R -- 
 
-    def render__as_json(self, **kwargs) -> (str, dict, ):
+    def _render__as_json(self, **kwargs) -> (str, dict, ):
         """
         Renders the model as a JSON string or dictionnary. This method is used by :class:`ViewModel` to create view rendering.
         
@@ -706,7 +1267,7 @@ class Config(Viewable):
                         default = validator.validate(default)
                         specs[k]["default"] = default
                     except Exception as err:
-                        raise Error("gws.model.Config", "__init__", f"Invalid default config value. Error message: {err}") from err
+                        raise Error("gws.model.Config", "__init__", f"Invalid default config value. Error message: {err}")
 
             self.set_specs( specs )
 
@@ -807,7 +1368,7 @@ class Config(Viewable):
             validator = Validator.from_specs(**self.specs[name])
             value = validator.validate(value)
         except Exception as err:
-            raise Error("gws.model.Config", "set_param", f"Invalid parameter value '{name}'. Error message: {err}") from err
+            raise Error("gws.model.Config", "set_param", f"Invalid parameter value '{name}'. Error message: {err}")
         
         self.data["params"][name] = value
 
@@ -891,7 +1452,17 @@ class ProgressBar(Model):
         super().__init__(*args, **kwargs)
         
         if not self.id:
-            self._reset()
+            self.data = {
+                "value": 0.0,
+                "max_value": 0.0,
+                "average_speed": 0.0,
+                "start_time": 0.0,
+                "current_time": 0.0,
+                "elapsed_time": 0.0,
+                "remaining_time": 0.0,
+                "messages": [],
+            }
+            self.save()
     
     # -- A --
     
@@ -947,29 +1518,7 @@ class ProgressBar(Model):
         from .service.model_service import ModelService
         t = ModelService.get_model_type(self.process_type)
         return t.get(t.uri == self.process_uri)
-    
-    # -- R --
-
-    def _reset(self) -> bool:
-        """
-        Reset the progress bar
-
-        :return: Returns True if is progress bar is successfully reset;  False otherwise
-        :rtype: `bool`
-        """
-
-        self.data = {
-            "value": 0.0,
-            "max_value": 0.0,
-            "average_speed": 0.0,
-            "start_time": 0.0,
-            "current_time": 0.0,
-            "elapsed_time": 0.0,
-            "remaining_time": 0.0,
-            "messages": [],
-        }
-        return self.save()
-
+        
     # -- S --
     
     def start(self, max_value: float = 100.0):
@@ -1119,8 +1668,9 @@ class Process(Viewable):
     protocol_id = IntegerField(null=True, index=True)
     experiment_id = IntegerField(null=True, index=True)
     instance_name = CharField(null=True, index=True)
+        
     created_by = ForeignKeyField(User, null=False, index=True, backref='+')
-    config = ForeignKeyField(Config, null=False, index=True, backref='+')    
+    config =  ForeignKeyField(Config, null=False, index=True, backref='+')    
     progress_bar = ForeignKeyField(ProgressBar, null=True, backref='+')
 
     input_specs: dict = {}
@@ -1145,7 +1695,7 @@ class Process(Viewable):
         """
         Constructor     
         """
-
+        
         super().__init__(*args, **kwargs)
         
         self._input = Input(self)
@@ -1224,7 +1774,7 @@ class Process(Viewable):
         
     # -- A --
     
-    def archive(self, tf, archive_resources=True) -> bool:
+    def archive(self, tf, archive_resources=True):
         """
         Archive the resource
         """
@@ -1245,7 +1795,7 @@ class Process(Viewable):
                             transaction.rollback()
                             return False
             except Exception as err:
-                Warning(self.full_classname(), "archive", f"Rollback archive. Error: {err}")
+                Warning(err)
                 transaction.rollback()
                 return False
                     
@@ -1310,28 +1860,12 @@ class Process(Viewable):
         super().create_table(*args, **kwargs)
 
     def create_source_zip(self):
-        """
-        Returns the zipped code source of the process
-        """
-
         from .service.model_service import ModelService
+
         model_t = ModelService.get_model_type(self.type) #/:\ Use the true object type (self.type)
         source = inspect.getsource(model_t)
         return zlib.compress(source.encode())
     
-    def check_before_task(self) -> bool:
-        """
-        This must be overloaded to perform custom check before running task.
-
-        This method is systematically called before running the process task.
-        If `False` is returned, the process task will not be called; otherwise, the task will proceed normally.
-
-        :return: `True` if everything is OK, `False` otherwise. Defaults to `True`.
-        :rtype: `bool`
-        """
-
-        return True
-
     # -- D --
     
     def disconnect(self):
@@ -1528,43 +2062,14 @@ class Process(Viewable):
             
         return Q
     
-    def _reset(self) -> bool:
-        """
-        Reset the process
-
-        :return: Returns True if is process is successfully reset;  False otherwise
-        :rtype: `bool`
-        """
-
-        if self.is_running:
-            return False
-
-        if self.experiment:
-            if self.experiment.is_validated or self.experiment._is_running:
-                return False
-
-        self.progress_bar._reset()
-        self._reset_io()
-        return self.save()
-
-    def _reset_io(self):
-        self.input._reset()
-        self.output._reset()
-        self.data["input"] = {}
-        self.data["output"] = {}
-
     async def _run(self):
         """ 
-        Run the process and save its state in the database.
+        Runs the process and save its state in the database.
         """
-
+        
         if not self.is_ready:
             return
         
-        is_ok = self.check_before_task()
-        if isinstance(is_ok, bool) and not is_ok:
-            return
-
         try:
             await self._run_before_task()
             await self.task()
@@ -1632,7 +2137,7 @@ class Process(Viewable):
         
         self.data["output"] = {}
         for k in self._output:
-            if self._output[k]: #-> check that an output resource exists (for optional outputs)
+            if self._output[k]:  #-> check that an output resource exists (for optional outputs)
                 self.data["output"][k] = {
                     "uri": self._output[k].uri,
                     "type": self._output[k].type
@@ -1676,12 +2181,11 @@ class Process(Viewable):
         :param resource: A reources to assign to the port
         :type resource: Resource
         """
-
         if not isinstance(name, str):
             raise Error("gws.model.Process", "set_input", "The name must be a string.")
         
-        #if not not isinstance(resource, Resource):
-        #    raise Error("gws.model.Process", "set_input", "The resource must be an instance of Resource.")
+        if not isinstance(resource, Resource):
+            raise Error("gws.model.Process", "set_input", "The resource must be an instance of Resource.")
 
         self._input[name] = resource
         
@@ -1915,7 +2419,7 @@ class Protocol(Process):
 
     def add_connector(self, connector: Connector):
         """ 
-        Adds a connector to the pfrotocol.
+        Adds a connector to the protocol.
 
         :param connector: The connector
         :type connector: Connector
@@ -1995,13 +2499,13 @@ class Protocol(Process):
         for k in graph["nodes"]:
             node_json = graph["nodes"][k]
             proc_uri = node_json.get("uri",None)
-            proc_typestr = node_json["type"]
+            proc_type_str = node_json["type"]
             
             try:
-                proc_t = ModelService.get_model_type(proc_typestr)
+                proc_t = ModelService.get_model_type(proc_type_str)
                 
                 if proc_t is None:
-                    raise Exception(f"Process {proc_typestr} is not defined. Please ensure that the corresponding brick is loaded.")
+                    raise Exception(f"Process {proc_type_str} is not defined. Please ensure that the corresponding brick is loaded.")
                 else:
                     if proc_uri:
                         proc = proc_t.get(proc_t.uri == proc_uri)
@@ -2282,48 +2786,8 @@ class Protocol(Process):
     
     # -- P --
     
-    @property
-    def processes(self) -> dict:
-        """
-        Returns the processes of the protocol
-
-        :return: The processes as key,value dictionnary
-        :rtype: `dict`
-        """
-
-        return self._processes
-
     # -- R --
     
-    def _reset(self) -> bool:
-        """
-        Reset the protocol
-
-        :return: Returns True if is protocol is successfully reset;  False otherwise
-        :rtype: `bool`
-        """
-
-        if not super()._reset():
-            return False
-
-        for k in self._processes:
-            if not self._processes[k]._reset():
-                return False
-
-        self._reset_iofaces()
-        return self.save()
-
-    def _reset_io(self):
-        # > deactivated
-        pass
-
-    def _reset_iofaces(self):
-        for k in self._interfaces:
-            self._interfaces[k]._reset()
-        
-        for k in self._outerfaces:
-            self._outerfaces[k]._reset()
-
     async def _run_before_task(self, *args, **kwargs):
         self.save()
         
@@ -2649,7 +3113,7 @@ class Experiment(Viewable):
     def add_report(self, report: 'Report'):
         report.experiment = self
 
-    def archive(self, tf:bool, archive_resources=True) -> bool:
+    def archive(self, tf:bool, archive_resources=True):
         """
         Archive the experiment
         """
@@ -2677,7 +3141,7 @@ class Experiment(Viewable):
                     return False
                     
             except Exception as err:
-                Warning(self.full_classname(), "archive", f"Rollback archive. Error: {err}")
+                Warning(err)
                 transaction.rollback()
                 return False
 
@@ -2685,7 +3149,7 @@ class Experiment(Viewable):
     # -- C --
         
     @classmethod
-    def count_of_running_experiments(cls) -> int:
+    def count_of_running_experiments(cls):
         """ 
         Returns the count of experiment in progress
 
@@ -2793,7 +3257,7 @@ class Experiment(Viewable):
     # -- P --
     
     @property
-    def pid(self) -> int:
+    def pid(self):
         if not "pid" in self.data:
             return 0
         
@@ -2807,7 +3271,7 @@ class Experiment(Viewable):
         return Process.select().where(Process.experiment_id == self.id)
     
     @property
-    def protocol(self) -> 'Protocol':
+    def protocol(self):
         if not self._protocol:
             self._protocol = Protocol.get(Protocol.id == self.protocol_id)
         
@@ -2823,42 +3287,7 @@ class Experiment(Viewable):
             Q.append(o.resource)
             
         return Q
-    
-    def reset(self) -> bool:
-        """ 
-        Reset the experiment.
-
-        :return: True if it is reset, False otherwise
-        :rtype: `bool`
-        """
-        
-        if self.is_validated or self.is_running:
-            return False
-
-        if self.is_finished:
-            with self._db_manager.db.atomic() as transaction:
-                try:
-                    if self.protocol:
-                        if not self.protocol._reset():
-                            transaction.rollback()
-                            return False
-
-                    self._is_running = False
-                    self._is_finished = False
-                    self._is_success = False
-                    self.score = None
-                    if not self.save():
-                        transaction.rollback()
-                        return False
-
-                    return True
-                except Exception as err:
-                    Warning("Experiment", "reset", f"{err}")
-                    transaction.rollback()
-                    return False
-        else:
-            return True
-
+      
     def run_through_cli(self, *, user=None):
         """ 
         Run an experiment in a non-blocking way through the cli.
@@ -2986,7 +3415,7 @@ class Experiment(Viewable):
             self._is_finished = True
             self._is_success = False
             self.save()
-            raise Error("gws.model.Experiment", "run", message) from err
+            raise Error("gws.model.Experiment", "run", f"An error occured. Exception: {err}")
                 
     # -- S --
 
@@ -3057,9 +3486,6 @@ class Experiment(Viewable):
         if self.is_validated:
             return
         
-        if not self.is_finished:
-            return
-
         with self._db_manager.db.atomic() as transaction:
             try:
                 self.is_validated = True
@@ -3070,9 +3496,9 @@ class Experiment(Viewable):
                     object_type = self.full_classname(),
                     object_uri = self.uri
                 )
-            except Exception as err:
+            except:
                 transaction.rollback()
-                raise Error("gws.model.Experiment", "save", f"Could not validate the experiment. Error: {err}") from err
+                raise Error("gws.model.Experiment", "save", f"Could not validate the experiment. Error: {err}")
     
     
     # -- V --
@@ -3412,7 +3838,7 @@ class ResourceSet(Resource):
             except:
                 transaction.rollback()
                 return False
-
+            
     # -- S --
     
     def __setitem__(self, key, val):
@@ -3599,7 +4025,7 @@ class ViewModel(Model):
         params = self.data.get("params", {})
         
         try:
-            func = getattr(model, "render__" + fn)
+            func = getattr(model, "_render__" + fn)
             return func(**params)
         except Exception as err:
             Error(self.full_classname(), "view", f"Cannot create the ViewModel rendering. Error: {err}.")

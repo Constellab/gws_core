@@ -39,7 +39,7 @@ class ExperimentService(BaseService):
             e.save()
             return e
         except Exception as err:
-            raise HTTPInternalServerError(detail=f"An error occured.", debug_error=err)
+            raise HTTPInternalServerError(detail=f"An error occured.", debug_error=err) from err
 
     # -- F --
     
@@ -48,7 +48,7 @@ class ExperimentService(BaseService):
         try:
             e = Experiment.get(Experiment.uri == uri)
         except Exception as err:
-            raise HTTPNotFound(detail=f"No experiment found with uri {uri}", debug_error=err)
+            raise HTTPNotFound(detail=f"No experiment found with uri {uri}", debug_error=err) from err
             
         return e
     
@@ -99,28 +99,29 @@ class ExperimentService(BaseService):
         try:
             e = Experiment.get(Experiment.uri == uri)
         except Exception as err:
-            raise HTTPNotFound(detail=f"Experiment '{uri}' not found", debug_error=err)
+            raise HTTPNotFound(detail=f"Experiment '{uri}' not found", debug_error=err) from err
   
         if e._is_running:
-            raise HTTPForbiden(detail=f"The experiment '{uri}' is already running")
+            raise HTTPForbiden(detail=f"The experiment '{uri}' is running")
         elif e._is_finished:
-            raise HTTPForbiden(detail=f"The experiment '{uri}' is finished")
-        else:
-            try:
-                q = Queue()
-                user = UserService.get_current_user()
-                job = Job(user=user, experiment=e)
-                q.add(job, auto_start=True)
-                return e
-            except Exception as err:
-                raise HTTPInternalServerError(detail=f"An error occured.", debug_error=err)
+            if not e.reset():
+                raise HTTPForbiden(detail=f"The experiment '{uri}' is finished and cannot be reset")
+
+        try:
+            q = Queue()
+            user = UserService.get_current_user()
+            job = Job(user=user, experiment=e)
+            q.add(job, auto_start=True)
+            return e
+        except Exception as err:
+            raise HTTPInternalServerError(detail=f"An error occured.", debug_error=err) from err
     
     @classmethod
     async def stop_experiment(cls, uri) -> Experiment:
         try:
             e = Experiment.get(Experiment.uri == uri)
         except Exception as err:
-            raise HTTPInternalServerError(detail=f"Experiment '{uri}' not found")
+            raise HTTPInternalServerError(detail=f"Experiment '{uri}' not found") from err
 
         if not e._is_running:
             raise HTTPForbiden(detail=f"Experiment '{uri}' is not running")
@@ -131,7 +132,7 @@ class ExperimentService(BaseService):
                 await e.kill_pid()
                 return e
             except Exception as err:
-                raise HTTPInternalServerError(detail=f"Cannot kill experiment '{uri}'", debug_error=err)
+                raise HTTPInternalServerError(detail=f"Cannot kill experiment '{uri}'", debug_error=err) from err
                 
     # -- U --
 
@@ -158,7 +159,7 @@ class ExperimentService(BaseService):
             e.save()
             return e
         except Exception as err:
-            raise HTTPInternalServerError(detail=f"An error occured.", debug_error=err)
+            raise HTTPInternalServerError(detail=f"An error occured.", debug_error=err) from err
     
             
     # -- V --
@@ -167,13 +168,13 @@ class ExperimentService(BaseService):
     def validate_experiment(cls, uri) -> Experiment:
         try:
             e = Experiment.get(Experiment.uri == uri)
-        except:
-            raise HTTPNotFound(detail=f"Experiment '{uri}' not found")
+        except Exception as err:
+            raise HTTPNotFound(detail=f"Experiment '{uri}' not found") from err
         
         try:
             e.validate(user = UserService.get_current_user())
             return e
         except Exception as err:
-            raise HTTPNotFound(detail=f"Cannot validate experiment '{uri}'", debug_error=err)
+            raise HTTPNotFound(detail=f"Cannot validate experiment '{uri}'", debug_error=err) from err
             
             

@@ -37,4 +37,9 @@ class GTest:
         """
         for t in models:
             t.drop_table()
-            
+
+    @classmethod
+    def print(cls, text):
+        print("=======================================================")
+        print(f" {text} ")
+        print("=======================================================")

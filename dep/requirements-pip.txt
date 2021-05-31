@@ -16,3 +16,7 @@ rinohtype
 jupyterlab
 starlette-context
 psutil
+mysql-connector
+pymysql
+pylint
+mypy

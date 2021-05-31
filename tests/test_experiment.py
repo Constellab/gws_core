@@ -13,6 +13,8 @@ from gws.settings import Settings
 from gws.model import *
 from gws.robot import *
 from gws.unittest import GTest
+from gws.service.experiment_service import ExperimentService
+from gws.queue import Queue, Job
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
@@ -21,7 +23,7 @@ class TestExperiment(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        tables = ( Resource, Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, )
+        tables = ( Resource, Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, Queue, Job)
         GTest.drop_tables(tables)
         GTest.init()
         pass
@@ -33,6 +35,8 @@ class TestExperiment(unittest.TestCase):
         pass
     
     def test_run(self):
+        GTest.print("Test Run Experiment")
+
         self.assertEqual(Experiment.count_of_running_experiments(), 0)
         
         # Create experiment 1
@@ -85,14 +89,20 @@ class TestExperiment(unittest.TestCase):
         self.assertEqual(e3.is_running, False)
         print(f"Experiment pid = {e3.pid}", )
         
-        print("Waiting 5 secs for cli experiment to finish ...")
-        time.sleep(5)
+        n = 0
+        e3 = Experiment.get(Experiment.id == e3.id)
+        while not e3.is_finished:
+            print("Waiting 3 secs the experiment to finish ...")
+            time.sleep(3)
+            if n == 10:
+                raise Error("The experiment is not finished")
+            n += 1
+
         self.assertEqual(Experiment.count_of_running_experiments(), 0)
         e3 = Experiment.get(Experiment.id == e3.id)
         self.assertEqual(e3.is_finished, True)
         self.assertEqual(e3.is_running, False)
         self.assertEqual(e3.pid, 0)
-        
         
         Q = e3.resources
         self.assertEqual(len(Q),15)
@@ -122,4 +132,51 @@ class TestExperiment(unittest.TestCase):
         _test_archive(True)
         
         
-    
+    def test_service(self):
+        GTest.print("Test ExperimentService")
+        proto = create_nested_protocol()
+        e = Experiment(protocol=proto, study=GTest.study, user=GTest.user)
+        e.save() 
+        Queue.init(tick_interval=3, verbose=True) # tick each second
+
+        def _run():
+            try:
+                asyncio.run( ExperimentService.start_experiment(e.uri) )
+            except Exception as err:
+                print(err)
+                return False
+
+            self.assertEqual(Queue.length(), 1)
+
+            n = 0
+            while Queue.length():
+                print("Waiting 3 secs for cli experiment to finish ...")
+                time.sleep(3)
+                if n == 10:
+                    raise Error("The experiment queue is not empty")
+                n += 1
+
+            self.assertEqual(Experiment.count_of_running_experiments(), 0)
+            e1 = Experiment.get(Experiment.id == e.id)
+            self.assertEqual(e1.is_finished, True)
+            self.assertEqual(e1.is_running, False)
+            self.assertEqual(e1.pid, 0)
+            print("Done!")
+            return True
+
+        print("")
+        print("Run the experiment ...")
+        self.assertTrue(_run())
+
+        print("")
+        print("Re-Run the same experiment ...")
+        time.sleep(1)
+        self.assertTrue(e.reset())
+        self.assertTrue(_run())
+
+        print("")
+        print("Re-Run the same experiment after its valdiation...")
+        time.sleep(1)
+        e = Experiment.get(Experiment.id == e.id)
+        e.validate(user=GTest.user)
+        self.assertFalse(_run())

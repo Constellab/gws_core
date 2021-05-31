@@ -13,7 +13,7 @@ class View:
 class DictView(View):
     
     @staticmethod
-    def as_table(data: dict, \
+    def to_table(data: dict, \
               orient: str='index', dtype=None, \
               columns=None, stringify:bool=False) -> (str, "DataFrame", ):
         
@@ -43,7 +43,7 @@ class DictView(View):
 class TableView(View):
     
     @staticmethod
-    def as_subtable(table: DataFrame, max_nb_bins:int = 100, orient:str='index', zoom:list=[None, None, None, None], method="smooth", stringify:bool=False)-> (str, "DataFrame", ):
+    def to_subtable(table: DataFrame, max_nb_bins:int = 100, orient:str='index', zoom:list=[None, None, None, None], method="smooth", stringify:bool=False)-> (str, "DataFrame", ):
         
         """
         Subsamples a table according to the `index`, `columns` or `both` orientation

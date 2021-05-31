@@ -50,6 +50,8 @@ class TestCSV(unittest.TestCase):
 
     
     def test_csv_data(self):
+        GTest.print("Test CSVData")
+
         d = CSVData(table=[ [1, 2, 3] ], column_names=["a","b","c"])
         print(d.table)
         
@@ -57,6 +59,8 @@ class TestCSV(unittest.TestCase):
         print(d.table)
         
     def test_csv_data_load(self):
+        GTest.print("Test CSVData load")
+        
         study = Study(data={"title": "Default study", "Description": ""})
         study.save()
         
@@ -74,6 +78,8 @@ class TestCSV(unittest.TestCase):
         
         
     def test_loader_dumper(self):
+        GTest.print("Test CSVData Loader and Dumper")
+
         i_file_path = os.path.join(testdata_dir, "data.csv")
         o_file_path = os.path.join(testdata_dir, "data_out.csv")
         

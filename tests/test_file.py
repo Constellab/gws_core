@@ -30,6 +30,8 @@ class TestFile(unittest.TestCase):
         pass
     
     def test_file(self):
+        GTest.print("Test File")
+
         fs = LocalFileStore()
         f = fs.create_file(name="my_file.txt")
         f.save()

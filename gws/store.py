@@ -293,10 +293,9 @@ class LocalFileStore(FileStore):
         
         if not self.is_saved():
             self.save()
-            
+
         from gws.file import File     
         with self._db_manager.db.atomic() as transaction:
-            
             try:
                 # create DB file object
                 if isinstance(source_file, File):
@@ -320,13 +319,12 @@ class LocalFileStore(FileStore):
                     f = self.create_file( name=dest_file_name )
                     source_file_path = source_file
 
-                
                 # copy disk file
                 if not os.path.exists(f.dir):
                     os.makedirs(f.dir)
                     if not os.path.exists(f.dir):
                         raise Exception("FileStore", "add", f"Cannot create directory '{f.dir}'")
-
+                
                 if isinstance(source_file, (io.IOBase, tempfile.SpooledTemporaryFile, )):
                     with open(f.path, "wb") as buffer:
                         shutil.copyfileobj(source_file, buffer)
@@ -337,10 +335,9 @@ class LocalFileStore(FileStore):
                 f.file_store_uri = self.uri
                 f.save()
                 return f
-
             except Exception as err:
                 transaction.rollback()
-                raise Error("FileStore", "add", f"An error occured. Error: {err}")
+                raise Error("FileStore", "add", f"An error occured. Error: {err}") from err
 
     # -- B --
     

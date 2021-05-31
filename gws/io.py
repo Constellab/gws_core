@@ -8,10 +8,10 @@ from gws.logger import Error
 
 class Port(Base):
     """
-    Port class. 
+    Port class 
     
     A port contains a resource and allows connecting processes.
-    Example: [Left Process]-<output port> ---> <input port>-[Right Process]. 
+    Example: [Left Process](output port) => (input port)[Right Process]. 
     """
     
     _resource: 'Resource' = None
@@ -110,8 +110,11 @@ class Port(Base):
         :rtype: bool
         """
         
-        if self._resource is None:
-            return self.is_optional and (not self.is_connected)
+        if self.is_optional:
+            return True
+
+        #if self._resource is None:
+        #    return self.is_optional and (not self.is_connected)
         
         return isinstance(self._resource, self._resource_types) #and self._resource.is_saved()
     
@@ -175,12 +178,14 @@ class Port(Base):
         :return: The parent Process
         :rtype: Process
         """
+
         return self.parent.parent
 
     def propagate(self):
         """
         Propagates the resource of the port to the connected (right-hande side) port
         """
+
         for port in self._next:
             port._resource = self._resource
 
@@ -188,6 +193,11 @@ class Port(Base):
         raise Error(self.classname(), "|", f"Port cannot be . Use InPort or OutPort class")
     
     # -- R -- 
+
+    def _reset(self):
+        self._resource = None
+        #for port in self._next:
+        #    port._resource = None
 
     @property
     def resource(self) -> 'Resource':
@@ -197,6 +207,7 @@ class Port(Base):
         :return: The resource
         :rtype: Resource
         """
+
         return self._resource
     
     # -- S --
@@ -208,6 +219,9 @@ class Port(Base):
         :param resource: The input resource
         :type resource: Resource
         """
+
+        if self.is_optional and resource is None:
+            return
 
         from gws.model import Resource
         if not isinstance(resource, Resource):
@@ -270,7 +284,7 @@ class OutPort(Port):
         return OK
                 
                 
-    def pipe(self, other: 'InPort'):
+    def pipe(self, other: 'InPort', lazy: bool=False):
         """ 
         Connection operator.
 
@@ -278,6 +292,7 @@ class OutPort(Port):
         :return: The right-hand sode port
         :rtype: Port
         """
+
         if not isinstance(other, InPort):
             raise Error(self.classname(), "|", "The output port can only be connected to an input port")
 
@@ -287,8 +302,10 @@ class OutPort(Port):
         if self == other:
             raise Error(self.classname(), "|", "Self connection not allowed")
         
-        if not self._are_compatible_types(self._resource_types, other._resource_types):
-            raise Error(self.classname(), "|", f"Invalid connection. {self._resource_types} is not a subclass of {other._resource_types}")
+        if not lazy:
+            # hard checking of port compatibility
+            if not self._are_compatible_types(self._resource_types, other._resource_types):
+                raise Error(self.classname(), "|", f"Invalid connection. {self._resource_types} is not a subclass of {other._resource_types}")
                 
         self._next.append(other)
         other._prev = self
@@ -300,6 +317,7 @@ class OutPort(Port):
         
         Alias of :meth:`pipe`
         """
+
         return self.pipe(other)
 
     @property
@@ -329,7 +347,7 @@ class IOface:
         if not isinstance(target_port, Port):
             raise Error("Interface", "__init__", "The target port must be a port")
             
-        self.name = name 
+        self.name = name
         self.source_port = source_port
         self.target_port = target_port
     
@@ -345,8 +363,17 @@ class IOface:
         
         if self.target_port:
             self.target_port.disconnect()
-            
-    # -- V --
+
+    # -- R --
+    
+    def _reset(self):
+        if self.source_port:
+            self.source_port._reset()
+
+        if self.target_port:
+            self.target_port._reset()
+
+    # -- T --
     
     def to_json(self, **kwargs):
         bare = kwargs.get("bare", False)
@@ -354,7 +381,7 @@ class IOface:
         r_type = ""
         if self.source_port.resource and not bare:
             r_uri = self.source_port.resource.uri
-            r_type = self.source_port.resource.type
+            r_type = self.source_port.resource.type 
             
         return {
             "name": self.name,
@@ -386,6 +413,12 @@ class Interface(IOface):
             
         super().__init__(name, source_port, target_port)
     
+    # -- S --
+
+    def set_resource(self, resource: 'Resource'):
+        self.source_port.resource = resource
+        self.target_port.resource = resource
+
     # -- V -
     
     def to_json(self, **kwargs):
@@ -407,6 +440,11 @@ class Outerface(IOface):
             
         super().__init__(name, source_port, target_port)
     
+    # -- G --
+
+    def get_resource(self) -> 'Resource':
+        return self.source_port.resource
+
     # -- V --
     
     def to_json(self, **kwargs):
@@ -562,7 +600,7 @@ class IO(Base):
         :param resource_types: The expected type of the resource of the port
         :type resource_types: type
         """
-  
+
         from gws.model import Resource
         if not isinstance(name, str):
             raise Error(self.classname(), "create_port", "Invalid port specs. The port name must be a string")
@@ -599,6 +637,7 @@ class IO(Base):
         :return: The resource of the port
         :rtype: Resource
         """
+
         if not isinstance(name, str):
             raise Error(self.classname(), "__getitem__", "The port name must be a string")
 
@@ -614,6 +653,7 @@ class IO(Base):
         :return: List of names
         :rtype: list
         """
+
         return list(self._ports.keys)
 
     def get_resources(self) -> dict:
@@ -623,6 +663,7 @@ class IO(Base):
         :return: List of resources
         :rtype: list
         """
+
         resources = {}
         for k in self._ports:
             resources[k] = self._ports[k].resource
@@ -659,6 +700,7 @@ class IO(Base):
         :return: True if the IO is ready, False otherwise.
         :rtype: bool
         """
+
         for k in self._ports:
             if not self._ports[k].is_ready:
                 return False
@@ -683,6 +725,7 @@ class IO(Base):
         :return: List of processes
         :rtype: list
         """
+
         next_proc = []
         for k in self._ports:
             for proc in self._ports[k].get_next_procs():
@@ -699,6 +742,7 @@ class IO(Base):
         :return: List of port
         :rtype: list
         """
+
         return self._ports
 
     @property
@@ -709,7 +753,14 @@ class IO(Base):
         :return: The parent process
         :rtype: Process
         """
+
         return self._parent
+
+    # -- R --
+
+    def _reset(self):
+        for k in self._ports:
+            self._ports[k]._reset()
 
     # -- S --
     
@@ -751,7 +802,7 @@ class IO(Base):
             if port.resource and not bare:
                 _json[k]["resource"] = {
                     "uri": port.resource.uri,
-                    "type": port.resource.type
+                    "type": port.resource.type 
                 }
             else:
                 _json[k]["resource"] = {
@@ -788,6 +839,7 @@ class Input(IO):
         :return: True if a port of the Input is left-connected.
         :rtype: bool
         """
+
         for k in self._ports:
             if not self._ports[k].is_left_connected:
                 return False
@@ -823,5 +875,6 @@ class Output(IO):
         """
         Propagates the resources of the child port sto the connected (right-hande side) ports
         """
+
         for k in self._ports:
             self._ports[k].propagate()

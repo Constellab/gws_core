@@ -10,7 +10,7 @@ import inspect
 
 from typing import List
 from gws.query import Paginator
-from gws.model import Model, ViewModel, Process, Resource, Protocol, Experiment
+from gws.model import Model, ViewModel, Process, Resource, Protocol, Experiment, Config
 from gws.settings import Settings
 from gws.logger import Warning, Info, Error
 from gws.http import *
@@ -54,7 +54,7 @@ class ModelService(BaseService):
             vm = t.get(t.uri == uri).create_view_model(data=data.dict())
             return vm
         except Exception as err:
-            raise HTTPNotFound(detail=f"Cannot create a view_model for the model of type '{type}' and uri '{uri}'", debug_error=err)
+            raise HTTPNotFound(detail=f"Cannot create a view_model for the model of type '{type}' and uri '{uri}'", debug_error=err) from err
 
             
     @classmethod
@@ -98,7 +98,11 @@ class ModelService(BaseService):
             return None
         
         try:
-            return t.get(t.uri == uri)  
+            o = t.get(t.uri == uri)
+            if as_json:
+                o.to_json()
+            else:
+                return o
         except:
             return None
     

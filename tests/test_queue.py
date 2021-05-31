@@ -22,10 +22,14 @@ class TestQueue(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        tables = ( Resource, Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, Queue, Job)
+        tables = ( 
+            Resource, Create, Config,
+            Process, Protocol, Experiment, 
+            Robot, Study, User, Activity, 
+            ProgressBar, Queue, Job
+        )
         GTest.drop_tables(tables)
         GTest.init()
-        pass
 
     @classmethod
     def tearDownClass(cls):
@@ -33,7 +37,7 @@ class TestQueue(unittest.TestCase):
         #GTest.drop_tables(tables)
         pass
     
-    def test_queue_operation(self):
+    def test_queue(self):
         self.assertEqual(Experiment.count_of_running_experiments(), 0)
         self.assertEqual(Queue.length(),0)
         
@@ -69,8 +73,14 @@ class TestQueue(unittest.TestCase):
         
         Queue.init(tick_interval=1, verbose=True) # tick each second
   
-        print("Waiting 10 sec for the queue to finish")
-        time.sleep(10)
+        n = 0
+        while Queue.length():
+            print("Waiting 3 secs for cli experiments to finish ...")
+            time.sleep(3)
+            if n == 10:
+                raise Error("The experiment queue is not empty")
+            n += 1
+
         Q = Experiment.select()
         self.assertEqual(len(Q), 3)
         for e in Q: 

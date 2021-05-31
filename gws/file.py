@@ -38,13 +38,13 @@ class File(Resource):
         
     # -- C --
     
-    def __create_hash_object(self):
-        h = super().__create_hash_object()
-        if self.path:
-            with open(self.path, "rb") as fp:
-                h.update(fp.read())
-        
-        return h
+    #def _create_hash_object(self):
+    #    h = super()._create_hash_object()
+    #    if self.path and os.path.exists(self.path):
+    #        with open(self.path, "rb") as fp:
+    #            h.update(fp.read())
+    #    
+    #    return h
     
     # -- D --
     
