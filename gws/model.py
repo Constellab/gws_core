@@ -236,7 +236,6 @@ class User(Model):
         except:
             return None
     
-    # -- F --
     
     @property
     def first_name(self):

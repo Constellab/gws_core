@@ -3,14 +3,20 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import json
 from peewee import  CharField
-
 from gws.model import Viewable
 
 class Path:
+    """
+    Path type class
+    """
     pass
 
 class URL:
+    """
+    URL type class
+    """
     pass
 
 # ####################################################################
@@ -71,7 +77,7 @@ class ProcessType(Viewable):
         for k in _json["config_specs"]:
             spec = _json["config_specs"][k]
             if "type" in spec and isinstance(spec["type"], type):
-                t_str = spec["type"].__name__ 
+                t_str = spec["type"].__name__
                 _json["config_specs"][k]["type"] = t_str
         
         if stringify:
