@@ -12,10 +12,16 @@ from gws.model import Viewable
 
 
 class Path:
+    """
+    Path type class
+    """
     pass
 
 
 class URL:
+    """
+    URL type class
+    """
     pass
 
 # ####################################################################
