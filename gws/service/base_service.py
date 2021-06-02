@@ -5,5 +5,3 @@
 
 class BaseService:
     _number_of_items_per_page = 20
-
-    

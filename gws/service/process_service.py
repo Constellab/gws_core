@@ -63,34 +63,34 @@ class ProcessService(BaseService):
             t = Process
         
         if search_text:
-            Q = t.search(search_text)
+            query = t.search(search_text)
             result = []
-            for o in Q:
+            for o in query:
                 if as_json:
                     result.append(o.get_related().to_json(shallow=True))
                 else:
                     result.append(o.get_related())
             
-            P = Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page)
+            paginator = Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page)
             return {
                 'data' : result,
-                'paginator': P._paginator_dict()
+                'paginator': paginator._paginator_dict()
             }
         else:
             if t is Process:
-                Q = t.select().order_by(t.creation_datetime.desc())
+                query = t.select().order_by(t.creation_datetime.desc())
             else:
-                Q = t.select_me().order_by(t.creation_datetime.desc())
+                query = t.select_me().order_by(t.creation_datetime.desc())
                 
             if experiment_uri:
-                Q = Q.join(Experiment, on=(t.experiment_id == Experiment.id))\
+                query = query.join(Experiment, on=(t.experiment_id == Experiment.id))\
                         .where(Experiment.uri == experiment_uri)
 
-            P = Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page)
+            paginator = Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page)
             if as_json:
-                return P.to_json(shallow=True)
+                return paginator.to_json(shallow=True)
             else:
-                return P    
+                return paginator    
  
     @classmethod
     def fetch_process_type_list(cls, \
@@ -98,15 +98,23 @@ class ProcessService(BaseService):
                                 number_of_items_per_page :int=20, \
                                 as_json = False) -> (Paginator, dict):
         
-        Q = ProcessType.select()\
-                        .where(ProcessType.base_ptype=="gws.model.Process")\
-                        .order_by(ProcessType.ptype.desc())
- 
-        number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
-        
-        P = Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page)
-        if as_json:
-            return P.to_json(shallow=True) 
+        query = ProcessType.select()\
+                            .where(ProcessType.base_ptype=="gws.model.Process")\
+                            .order_by(ProcessType.ptype.desc())
+
+        if number_of_items_per_page <= 0:
+            if as_json:
+                procs = []
+                for p in query:
+                    procs.append(p.to_json())
+                return procs
+            else:
+                return query
         else:
-            return P
+            number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
+            paginator = Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page)
+            if as_json:
+                return paginator.to_json(shallow=True) 
+            else:
+                return paginator
             

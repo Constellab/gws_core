@@ -411,8 +411,8 @@ class Model(Base, PwModel):
                 raise Error("gws.model.Model", "search", "No FTSModel model defined")
 
             return _FTSModel.search_bm25(
-                phrase, 
-                weights={'title': 2.0, 'content': 1.0},
+                phrase,
+                weights={'score_1': 2.0, 'score_2': 1.0},
                 with_score=True,
                 score_alias='search_score'
             )
@@ -443,22 +443,22 @@ class Model(Base, PwModel):
         except:
             doc = _FTSModel(rowid=self.id)
 
-        title = []
-        content = []
+        score_1 = []
+        score_2 = []
 
         for field in self._fts_fields:
             score = self._fts_fields[field]
             if field in self.data:
                 if score > 1:
                     if isinstance(self.data[field], list):
-                        title.append( "\n".join([str(k) for k in self.data[field]]) )
+                        score_1.append( "\n".join([str(k) for k in self.data[field]]) )
                     else:
-                        title.append(str(self.data[field]))
+                        score_1.append(str(self.data[field]))
                 else:
-                    content.append(str(self.data[field]))
+                    score_2.append(str(self.data[field]))
 
-        doc.title = '\n'.join(title)
-        doc.content = '\n'.join(content)
+        doc.score_1 = '\n'.join(score_1)
+        doc.score_2 = '\n'.join(score_2)
 
         return doc.save()
 
@@ -623,8 +623,8 @@ class FTSModel(Base, FTS5Model):
     """
 
     rowid = RowIDField()
-    title = SearchField()
-    content = SearchField()
+    score_1 = SearchField()
+    score_2 = SearchField()
     
     _related_model = Model
     

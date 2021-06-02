@@ -23,30 +23,30 @@ class ConfigService(BaseService):
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
 
         if search_text:
-            Q = Config.search(search_text)
+            query = Config.search(search_text)
             result = []
-            for o in Q:
+            for o in query:
                 if as_json:
                     result.append(o.get_related().to_json(shallow=True))
                 else:
                     result.append(o.get_related())
             
-            P = Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page)
+            paginator = Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page)
             return {
                 'data' : result,
-                'paginator': P._paginator_dict()
+                'paginator': paginator._paginator_dict()
             }
         else:
-            Q = Config.select().order_by(Config.creation_datetime.desc())
-            P = Paginator(
-                Q, 
+            query = Config.select().order_by(Config.creation_datetime.desc())
+            paginator = Paginator(
+                query, 
                 page=page, 
                 number_of_items_per_page=number_of_items_per_page
             )
             
             if as_json:
-                return P.to_json(shallow=True)
+                return paginator.to_json(shallow=True)
             else:
-                return P
+                return paginator
     
     

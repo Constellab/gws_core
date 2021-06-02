@@ -11,11 +11,12 @@ import json
 from gws.settings import Settings
 from gws.model import *
 from gws.robot import Robot, Create, Move, Eat, Wait
+from gws.comment import Comment
 from gws.unittest import GTest
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
-tables = ( Resource, Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, )
+tables = ( Resource, Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, Comment, )
 
 class TestProtocol(unittest.TestCase):
     
@@ -222,7 +223,6 @@ class TestProtocol(unittest.TestCase):
             mini_proto2 = Protocol.from_graph(saved_mini_proto.graph)
             self.assertTrue(mini_proto.graph, mini_proto2.graph)
             
-    
         e = super_proto.create_experiment(study=GTest.study, user=GTest.user)
         e.on_end(_on_end)    
         asyncio.run( e.run(user=GTest.user) )

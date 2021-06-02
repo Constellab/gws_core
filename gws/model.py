@@ -34,6 +34,7 @@ from gws.event import EventListener
 from gws.io import Input, Output, InPort, OutPort, Connector, Interface, Outerface
 from gws.utils import to_camel_case, sort_dict_by_key, generate_random_chars
 from gws.http import *
+from gws.comment import Comment
 from gws.db.model import Model
 
 # ####################################################################
@@ -78,7 +79,6 @@ class User(Model):
     
     _is_removable = False
     _table_name = 'gws_user'
-    _fts_fields = {'first_name': 2.0, 'last_name': 2.0}
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -403,9 +403,7 @@ class Activity(Model):
     object_type = CharField(null=True, index=True)
     object_uri = CharField(null=True, index=True)
     
-    _is_removable = False
-    
-    _fts_fields = {}
+    _is_removable = False    
     _table_name = "gws_user_activity"
     
     CREATE = "CREATE"
@@ -480,9 +478,39 @@ class Activity(Model):
  
 class Viewable(Model):
 
-    _fts_fields = {'title': 2.0, 'description': 1.0}
-
     # -- A --
+
+    def add_comment(self, text:str, reply_to:Comment = None) -> Comment:
+        """
+        Add a new comment to this object
+
+        :param text: The comment text
+        :type text: `str`
+        :param reply_to: The comment to reply to
+        :type reply_to: `Comment`
+        :returns: The added comment
+        :rtype: `Comment`
+        """
+
+        if not self.id:
+            self.save()
+
+        if reply_to:
+            comment = Comment(
+                object_uri=self.uri,
+                object_type=self.type,
+                text=text,
+                reply_to=reply_to
+            )
+        else:
+            comment = Comment(
+                object_uri=self.uri,
+                object_type=self.type,
+                text=text
+            )
+
+        comment.save()
+        return comment
 
     def archive(self, tf: bool)->bool:
         """
@@ -521,6 +549,16 @@ class Viewable(Model):
 
     # -- C --
     
+    @property
+    def comments(self) -> list:
+        """
+        Returns the list of comments of this object
+        """
+
+        return Comment.select()\
+                        .where(Comment.object_uri == self.uri)\
+                        .order_by(Comment.creation_datetime.desc())
+
     def create_view_model(self, data:dict = {}) -> 'ViewModel':
         """ 
         Create a ViewModel
@@ -543,48 +581,9 @@ class Viewable(Model):
         return vm
     
     # -- D --
-    
-    @property
-    def description(self) -> str:
-        """
-        Returns the description. Alias of :meth:`get_description`
-        
-        :return: The description
-        :rtype: str
-        """
-        
-        return self.data.get("description","")
-    
-    @description.setter
-    def description(self, text:str):
-        """
-        Set the description. Alias of :meth:`set_description`
-        
-        :param text: The description test
-        :type text: str
-        """
-        
-        self.set_description(text)
 
     # -- G --
-    
-    def get_description(self, default="") -> str:
-        """
-        Returns the description
-        
-        :return: The description
-        :rtype: str
-        """
-        
-        return self.data.get("description", default)
-
-    def get_title(self, default="") -> str:
-        """ 
-        Get the title
-        """
-        
-        return self.data.get("title", default) #.capitalize()
-
+ 
     # -- R -- 
 
     def render__as_json(self, **kwargs) -> (str, dict, ):
@@ -601,50 +600,6 @@ class Viewable(Model):
     
     # -- S --
 
-    def set_title(self, title: str):
-        """ 
-        Set the title
-
-        :param title: The title
-        :type title: str
-        """
-        
-        if self.data is None:
-            self.data = {}
-            
-        self.data["title"] = title
-        
-    def set_description(self, text: str):
-        """ 
-        Set the description
-
-        :param text: The description text
-        :type text: str
-        """
-        
-        if self.data is None:
-            self.data = {}
-            
-        self.data["description"] = text
-    
-    # -- T --
-    
-    @property
-    def title(self):
-        """ 
-        Get the title. Alias of :meth:`get_title`
-        """
-        
-        return self.data.get("title", "")
-    
-    @title.setter
-    def title(self, text:str):
-        """ 
-        Set the title. Alias of :meth:`set_title`
-        """
-        
-        self.set_title(text)
-    
     # -- V --
 
     def view(self, data: dict = {}) -> dict:
@@ -1132,7 +1087,10 @@ class Process(Viewable):
     input_specs: dict = {}
     output_specs: dict = {}
     config_specs: dict = {}
-    
+
+    title = "Process"
+    description = "This is the base process class"
+
     is_instance_running = False
     is_instance_finished = False
     
@@ -1167,13 +1125,7 @@ class Process(Viewable):
             self.config_specs = {}
             
         self._init_io()
-   
-        if not self.title:
-            self.data["title"] = kwargs.get('title', self.full_classname())
-        
-        if not self.title:
-            self.data["title"] = kwargs.get('title', self.full_classname())
-        
+  
         if not self.id:
             self.config = Config(specs=self.config_specs)
             self.config.save()
@@ -1412,7 +1364,7 @@ class Process(Viewable):
         :return: True if the process is ready, False otherwise.
         :rtype: bool
         """
-        
+
         return (not self.is_instance_running and not self.is_instance_finished) and self._input.is_ready 
     
     @property
@@ -1589,11 +1541,7 @@ class Process(Viewable):
             await asyncio.gather( *aws )
                 
     async def _run_before_task( self, *args, **kwargs ):
-        title = self.get_title()
-        if title:
-            Info(f"Running {self.full_classname()} '{title}' ...")
-        else:
-            Info(f"Running {self.full_classname()} ...")
+        Info(f"Running {self.full_classname()} ...")
         
         self.is_instance_running = True
         self.is_instance_finished = False
@@ -1613,10 +1561,7 @@ class Process(Viewable):
         self.save()
         
     async def _run_after_task( self, *args, **kwargs ):
-        if self.get_title():
-            Info(f"Task of {self.full_classname()} '{self.get_title()}' successfully finished!")
-        else:
-            Info(f"Task of {self.full_classname()} successfully finished!")
+        Info(f"Task of {self.full_classname()} successfully finished!")
         
         self.is_instance_running = False
         self.is_instance_finished = True
@@ -1819,6 +1764,8 @@ class Protocol(Process):
                  user = None, **kwargs):
         
         super().__init__(*args, user = user, **kwargs)
+        self._input = Input(self)
+        self._output = Output(self)
 
         self._processes = {}
         self._connectors = []
@@ -1827,7 +1774,7 @@ class Protocol(Process):
         self._defaultPosition = [0.0, 0.0]
         
         if self.uri and self.data.get("graph"):          #the protocol was saved in the super-class
-            self._build_from_dump( self.data["graph"], title=self.title)
+            self._build_from_dump( self.data["graph"])
         else:
             if not isinstance(processes, dict):
                 raise Error("gws.model.Protocol", "__init__", "A dictionnary of processes is expected")
@@ -1944,7 +1891,7 @@ class Protocol(Process):
     
     # -- B --
     
-    def _build_from_dump( self, graph: (str, dict), title=None, rebuild = False ) -> 'Protocol':
+    def _build_from_dump( self, graph: (str, dict), rebuild = False ) -> 'Protocol':
         """ 
         Construct a Protocol instance using a setting dump.
 
@@ -1962,12 +1909,6 @@ class Protocol(Process):
         
         if not isinstance(graph.get("nodes"), dict) or not graph["nodes"]:
             return
-        
-        if not title:
-            title = graph.get("title", self.full_classname())
-
-        if not self.title or self.title == self.full_classname():
-            self.set_title(title)
         
         if rebuild:
             if self.experiment.is_draft:
@@ -2136,7 +2077,6 @@ class Protocol(Process):
         """
 
         graph = dict(
-            title = self.get_title(),
             uri = ("" if bare else self.uri),
             nodes = {},
             links = [],
@@ -2248,6 +2188,24 @@ class Protocol(Process):
 
         return None
     
+    def get_title(self) -> str:
+        """
+        Get the title of the protocol
+
+        :rtype: `str`
+        """
+
+        return self.data.get("title", "")
+
+    def get_description(self) -> str:
+        """
+        Get the description of the protocol
+
+        :rtype: `str`
+        """
+
+        return self.data.get("description", "")
+
     # -- I --
 
     def is_child(self, process: Process) -> bool:
@@ -2406,11 +2364,7 @@ class Protocol(Process):
         for k in self._processes:
             self._processes[k].set_experiment(experiment)
             self._processes[k].save()
-        
-    def set_title(self, title):
-        super().set_title(title)
-        self.graph["title"] = title
-    
+
     def set_layout(self, layout: dict):
         self.data["layout"] = layout
     
@@ -2496,6 +2450,32 @@ class Protocol(Process):
                 type_ = self.data["output"][k]["type"]
                 t = ModelService.get_model_type(type_)
                 self.output.__setitem_without_check__(k, t.get(t.uri == uri) )
+
+    def set_title(self, title:str) -> str:
+        """
+        Set the title of the protocol
+
+        :param title: The title
+        :type title: `str`
+        """
+
+        if not isinstance(title, str):
+            Error(self.full_classname(), "set_title", "The title must be a string")
+
+        self.data["title"] = title
+
+    def set_description(self, description:str) -> str:
+        """
+        Get the description of the protocol
+
+        :param description: The description
+        :type description: `str`
+        """
+
+        if not isinstance(description, str):
+            Error(self.full_classname(), "set_description", "The description must be a string")
+
+        self.data["description"] = description
 
     # -- T --
     
@@ -2701,7 +2681,7 @@ class Experiment(Viewable):
         
         return Experiment.select().where(Experiment.is_running == True).count()
     
-    # -- F --
+    # -- G --
 
     # -- I --
     
@@ -3010,12 +2990,12 @@ class Experiment(Viewable):
             except:
                 transaction.rollback()
                 return False
-    
+
     # -- T --
     
     def to_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         """
-        Returns JSON string or dictionnary representation of the model.
+        Returns JSON string or dictionnary representation of the experiment.
         
         :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
         :type stringify: bool
@@ -3485,7 +3465,6 @@ class ViewModel(Model):
     _model = None
     _is_transient = False    # transient view model are used to temprarily view part of a model (e.g. stream view)
     _table_name = 'gws_view_model'
-    _fts_fields = {'title': 2.0, 'description': 1.0}
 
     def __init__(self, *args, model: Model = None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -3533,26 +3512,6 @@ class ViewModel(Model):
         """
         
         return self.data["params"].get(key, default)
-    
-    def get_description(self) -> str:
-        """
-        Returns the description
-        
-        :return: The description
-        :rtype: `str`
-        """
-        
-        return self.data.get("description", "")
-    
-    def get_title(self) -> str:
-        """ 
-        Get the title.
-        
-        :return: The title
-        :rtype: `str`
-        """
-        
-        return self.data.get("title", "")
     
     # -- H --
      
@@ -3624,17 +3583,7 @@ class ViewModel(Model):
             raise Error("gws.model.ViewModel", "set_params", "Parameter must be a dictionnary")
 
         self.data["params"] = params
-        
-    def set_description(self, text: str):
-        """
-        Returns the description.
-        
-        :param text: The description text
-        :type text: `str`
-        """
-        
-        self.data["description"] = text
-    
+
     def set_model(self, model: None):
         if not self.model_uri is None:
             raise Error("gws.model.ViewModel", "set_model", "A model already exists")
@@ -3643,16 +3592,6 @@ class ViewModel(Model):
 
         if model.is_saved():
             self.model_uri = model.uri
-
-    def set_title(self, title: str):
-        """ 
-        Set the title
-
-        :param title: The title
-        :type title: str
-        """
-        self.data["title"] = title
-    
 
     def save(self, *args, **kwargs):
         """
@@ -3682,25 +3621,6 @@ class ViewModel(Model):
                     raise Error("gws.model.ViewModel", "save", f"Error message: {err}")
     
     # -- T --
-    
-    @property
-    def title(self):
-        """ 
-        Get the title.
-        """
-        
-        return self.data.get("title", "")
-    
-    @title.setter
-    def title(self, text:str):
-        """ 
-        Set the title.
-        """
-        
-        if self.data is None:
-            self.data = {}
-            
-        self.data["title"] = text
 
     # -- U -- 
     

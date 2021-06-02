@@ -10,6 +10,8 @@ from typing import Optional
 from ._auth_user import check_user_access_token
 from .core_app import core_app
 from gws.service.protocol_service import ProtocolService
+from gws.service.process_service import ProcessService
+
 
 @core_app.get("/protocol-type", tags=["Protocol"], summary="Get the list of protocol types")
 async def get_the_list_of_protocol_types(page: Optional[int] = 1, \
@@ -18,12 +20,13 @@ async def get_the_list_of_protocol_types(page: Optional[int] = 1, \
     """
     Retrieve a list of protocols. The list is paginated.
 
-    - **page**: the page number 
+    - **page**: the page number
     - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
+    Set equal to -1 to fetch all the process types
     """
 
     return ProtocolService.fetch_protocol_type_list(
-        page = page, 
+        page = page,
         number_of_items_per_page = number_of_items_per_page,
         as_json = True
     )
@@ -38,8 +41,8 @@ async def get_the_progress_bar_of_a_protocol(uri: str, \
     - **uri**: the uri of the process
     """
        
-    bar = ProcessService.fetch_process_progress_bar(uri=uri, type=type)
-    return bar.to_json()
+    pbar = ProcessService.fetch_process_progress_bar(uri=uri, type=type)
+    return pbar.to_json()
 
 @core_app.get("/protocol/{uri}/{type}", tags=["Protocol"], summary="Get a protocol")
 async def get_a_protocol(uri: str, \
@@ -51,8 +54,8 @@ async def get_a_protocol(uri: str, \
     - **uri**: the uri of the protocol
     """
     
-    p = ProtocolService.fetch_protocol(uri=uri, type=type)
-    return p.to_json()
+    proto = ProtocolService.fetch_protocol(uri=uri, type=type)
+    return proto.to_json()
 
 
 @core_app.get("/protocol", tags=["Protocol"], summary="Get the list of protocols")
@@ -68,7 +71,7 @@ async def get_the_list_of_protocols(type: Optional[str] = "gws.model.Protocol", 
     - **type**: the type of the processes to fetch
     - **search_text**: text used to filter the results. The text is matched against to the `title` and the `description` using full-text search. If this parameter is given then the parameter `experiment_uri` is ignored.
     - **experiment_uri**: the uri of the experiment related to the processes. This parameter is ignored if `search_text` is given.
-    - **page**: the page number 
+    - **page**: the page number
     - **number_of_items_per_page**: the number of items per page (limited to 50) 
     """
     

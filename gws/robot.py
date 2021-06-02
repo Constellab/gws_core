@@ -48,18 +48,18 @@ class Create(Process):
     input_specs = {}  #no required input
     output_specs = {'robot' : Robot}
     config_specs = {}
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.set_title("Robot create")
-        self.data["description"] =  "This process creates the Robot."
+    title = "Create robot"
+    description = "This process creates a robot"
 
     async def task(self):
         print("Create", flush=True)
         r = Robot()
-        r.set_title("Astro Boy")
-        r.data["description"] = "Astro Boy, known in Japan by its original name Mighty Atom (Japanese: 鉄腕アトム, Hepburn: Tetsuwan Atomu), is a Japanese manga series written and illustrated by Osamu Tezuka."
-        r.data["more"] = "https://en.wikipedia.org/wiki/Astro_Boy"
+        #r.set_title("Astro Boy")
+        c = r.add_comment("""
+            Astro Boy, known in Japan by its original name Mighty Atom (Japanese: 鉄腕アトム, Hepburn: Tetsuwan Atomu), is a Japanese manga series written and illustrated by Osamu Tezuka.
+            https://en.wikipedia.org/wiki/Astro_Boy
+        """)
+        r.add_comment("Reply to my comment", reply_to=c)
 
         self.output['robot'] = r
 
@@ -70,11 +70,8 @@ class Move(Process):
         'moving_step': {"type": float, "default": 0.1, 'description': "The moving step of the robot"},
         'direction': {"type": str, "default": "north", "allowed_values":["north", "south", "east", "west"], 'description': "The moving direction"}
     }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.set_title("Move process")
-        self.data["description"] =  "This process emulates a short moving step of the robot"
+    title = "Move robot"
+    description = "This process emulates a short moving step of the robot"
 
     async def task(self):
         print(f"Moving {self.get_param('moving_step')}", flush=True)
@@ -104,12 +101,8 @@ class Eat(Process):
     config_specs = {
         'food_weight': {"type": float, "default": 3.14}
     }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.set_title("Eat process")
-        self.data["description"] = "This process emulates the meal of the robot before its flight!"
-
+    title = "Eat process"
+    description = "This process emulates the meal of the robot before its flight!"
 
     async def task(self):
         print(f"Eating {self.get_param('food_weight')}", flush=True)
@@ -124,11 +117,8 @@ class Wait(Process):
     config_specs = {
         'waiting_time': {"type": float, "default": 0.5} #wait for .5 secs by default
     }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.set_title("Wait process")
-        self.data["description"] =  "This process emulates the resting time of the robot before its flight!"
+    title = "Wait process"
+    description = "This process emulates the resting time of the robot before its flight!"
 
     async def task(self):
         print(f"Waiting {self.get_param('waiting_time')}", flush=True)
@@ -144,11 +134,8 @@ class Fly(Move):
         'moving_step': {"type": float, "default": 1000.0, "unit": "km"},
         'direction': {"type": str, "default": "west", "allowed_values":["north", "south", "east", "west"], 'description': "The flying direction"}
     }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.set_title("Fly process")
-        self.data["description"] = "This process emulates the fly of the robot. It inherites the Move process."
+    title = "Fly process"
+    description = "This process emulates the fly of the robot. It inherites the Move process."
 
     async def task(self):
         print(f"Start flying ...")
@@ -210,7 +197,13 @@ def create_protocol():
         outerfaces = {}
     )
 
-    proto.set_title("The travel of Astro")
+    proto.set_title("The travel of `Astro`")
+    proto.set_description("""
+        This is the travel of astro composed of several steps
+        * move
+        * eat
+        * ...
+    """)
     proto.save()
     
     return proto

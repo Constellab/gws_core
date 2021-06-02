@@ -48,26 +48,26 @@ class ViewService(BaseService):
                                   as_json: bool=False) -> (List[ViewModel], List[dict], ):
         
         if search_text:
-            Q = ViewModel.search(search_text)
+            query = ViewModel.search(search_text)
             result = []
-            for o in Q:
+            for o in query:
                 if as_json:
                     result.append( o.get_related().to_json() )
                 else:
                     result.append(o)
             
-            P = Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page)
+            paginator = Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page)
             return {
                 'data' : result,
-                'paginator': P._paginator_dict()
+                'paginator': paginator._paginator_dict()
             }
         else:
-            Q = ViewModel.select().order_by(ViewModel.creation_datetime.desc())
-            P = Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page)
+            query = ViewModel.select().order_by(ViewModel.creation_datetime.desc())
+            paginator = Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page)
             if as_json:
-                return P.to_json(shallow=True)
+                return paginator.to_json(shallow=True)
             else:
-                return P
+                return paginator
             
             
     # -- U --

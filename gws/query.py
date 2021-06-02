@@ -41,17 +41,28 @@ class Query:
 
 
 class Paginator:
+    """
+    Paginator class
+
+    :property number_of_items_per_page: The default number of items per page
+    :type number_of_items_per_page: `int`
+    """
+
     number_of_items_per_page = 20
+    _max_number_of_items_per_page = 100
 
     def __init__(self, query,
                  page: int = 1,
                  number_of_items_per_page: int = 20,
-                 view_params: dict = {}):
+                 view_params: dict = None):
 
         page = int(page)
-        number_of_items_per_page = int(number_of_items_per_page)
+        number_of_items_per_page = min( Paginator._max_number_of_items_per_page, int(number_of_items_per_page) )
 
-        self.view_params = view_params
+        if not view_params:
+            self.view_params = {}
+        else:
+            self.view_params = view_params
 
         self.query = query
         self.paginated_query = query.paginate(page, number_of_items_per_page)

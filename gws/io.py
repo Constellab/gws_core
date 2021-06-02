@@ -8,7 +8,7 @@ from gws.logger import Error
 
 class Port(Base):
     """
-    Port class 
+    Port class
     
     A port contains a resource and allows connecting processes.
     Example: [Left Process](output port) => (input port)[Right Process]. 
@@ -115,7 +115,7 @@ class Port(Base):
 
         #if self._resource is None:
         #    return self.is_optional and (not self.is_connected)
-        
+   
         return isinstance(self._resource, self._resource_types) #and self._resource.is_saved()
     
     @property
@@ -224,8 +224,8 @@ class Port(Base):
             return
 
         from gws.model import Resource
-        if not isinstance(resource, Resource):
-            raise Error(self.classname(), "resource", f"The resource must be an instance of Resource. A {type(resource)} is given.")
+        if not isinstance(resource, self._resource_types):
+            raise Error(self.classname(), "resource", f"The resource must be an instance of Resource. A {self._resource_types} is given.")
 
         self._resource = resource
     
@@ -700,11 +700,11 @@ class IO(Base):
         :return: True if the IO is ready, False otherwise.
         :rtype: bool
         """
-
+ 
         for k in self._ports:
             if not self._ports[k].is_ready:
                 return False
-            
+        
         return True
     
     @property

@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 import json
+import inspect
 from peewee import  CharField
 from gws.model import Viewable
 
@@ -80,6 +81,10 @@ class ProcessType(Viewable):
                 t_str = spec["type"].__name__
                 _json["config_specs"][k]["type"] = t_str
         
+        _json["data"]["title"] = model_t.title
+        _json["data"]["description"] = model_t.description
+        _json["data"]["doc"] = inspect.getdoc(model_t)
+
         if stringify:
             if prettify:
                 return json.dumps(_json, indent=4)
@@ -108,3 +113,22 @@ class ResourceType(Viewable):
     base_rtype = CharField(null=True, index=True)
     
     _table_name = 'gws_resource_type'
+
+
+    def to_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+        from gws.service.model_service import ModelService
+        
+        _json = super().to_json(**kwargs)
+        model_t = ModelService.get_model_type(self.rtype)
+
+        _json["data"]["title"] = model_t.title
+        _json["data"]["description"] = model_t.description
+        _json["data"]["doc"] = inspect.getdoc(model_t)
+
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json

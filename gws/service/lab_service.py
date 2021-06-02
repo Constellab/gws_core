@@ -20,11 +20,11 @@ class LabService(BaseService):
         
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
         
-        Q = Monitor.select()
-        P = Paginator(Q, page=page, number_of_items_per_page=number_of_items_per_page)
+        query = Monitor.select()
+        paginator = Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page)
         if as_json:
-            return P.to_json()
+            return paginator.to_json()
         else:   
-            return P
+            return paginator
     
     

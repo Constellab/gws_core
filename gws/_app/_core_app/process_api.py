@@ -13,17 +13,17 @@ from gws.service.process_service import ProcessService
 
 @core_app.get("/process-type", tags=["Process"], summary="Get the list of process types")
 async def get_the_list_of_process_types(page: Optional[int] = 1, \
-                                    number_of_items_per_page: Optional[int] = 20, \
+                                    number_of_items_per_page: Optional[int] = -1, \
                                     _: UserData = Depends(check_user_access_token)) -> dict:
     """
     Retrieve a list of processes. The list is paginated.
     
-    - **page**: the page number 
-    - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
+    - **page**: the page number
+    - **number_of_items_per_page**: the number of items per page. Defaults to -1, i.e. fetch all the items.
     """
         
     return ProcessService.fetch_process_type_list(
-        page = page, 
+        page = page,
         number_of_items_per_page = number_of_items_per_page,
         as_json = True
     )

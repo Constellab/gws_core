@@ -16,7 +16,6 @@ class ProgressBarService(BaseService):
     def fetch_progress_bar(cls, uri: str) -> ProgressBar:
         
         try:
-            p = ProgressBar.get(ProgressBar.uri == uri)
-            return p
+            return ProgressBar.get(ProgressBar.uri == uri)
         except Exception as err:
             raise HTTPNotFound(detail=f"No process bar found with uri {uri}", debug_error=err)
