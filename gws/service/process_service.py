@@ -3,16 +3,16 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict, List, Union
+from typing import List, Union
 
-from gws.dto.process_type_dto import ProcessTypeTree
+from gws.dto.typed_tree_dto import TypedTree
 from gws.http import *
 from gws.model import Experiment, Process, ProgressBar
 from gws.query import Paginator
 from gws.typing import ProcessType
-from peewee import ModelSelect
 
 from .base_service import BaseService
+
 
 class ProcessService(BaseService):
 
@@ -75,10 +75,11 @@ class ProcessService(BaseService):
                     result.append(o.get_related().to_json(shallow=True))
                 else:
                     result.append(o.get_related())
-            
-            paginator = Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page)
+
+            paginator = Paginator(
+                query, page=page, number_of_items_per_page=number_of_items_per_page)
             return {
-                'data' : result,
+                'data': result,
                 'paginator': paginator._paginator_dict()
             }
         else:
@@ -86,26 +87,27 @@ class ProcessService(BaseService):
                 query = t.select().order_by(t.creation_datetime.desc())
             else:
                 query = t.select_me().order_by(t.creation_datetime.desc())
-                
+
             if experiment_uri:
                 query = query.join(Experiment, on=(t.experiment_id == Experiment.id))\
-                        .where(Experiment.uri == experiment_uri)
+                    .where(Experiment.uri == experiment_uri)
 
-            paginator = Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page)
+            paginator = Paginator(
+                query, page=page, number_of_items_per_page=number_of_items_per_page)
             if as_json:
                 return paginator.to_json(shallow=True)
             else:
-                return paginator    
- 
+                return paginator
+
     @classmethod
-    def fetch_process_type_list(cls, \
-                                page: int=1, \
-                                number_of_items_per_page :int=20, \
-                                as_json = False) -> (Paginator, dict):
-        
+    def fetch_process_type_list(cls,
+                                page: int = 1,
+                                number_of_items_per_page: int = 20,
+                                as_json=False) -> (Paginator, dict):
+
         query = ProcessType.select()\
-                            .where(ProcessType.base_ptype=="gws.model.Process")\
-                            .order_by(ProcessType.ptype.desc())
+            .where(ProcessType.base_ptype == "gws.model.Process")\
+            .order_by(ProcessType.ptype.desc())
 
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
         paginator = Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page)
@@ -115,7 +117,7 @@ class ProcessService(BaseService):
             return paginator
             
     @classmethod
-    def fetch_process_type_grouped(cls) -> List[ProcessTypeTree]:
+    def fetch_process_type_tree(cls) -> List[TypedTree]:
         """
         Return all the process types grouped by module and submodules
         """
@@ -125,10 +127,10 @@ class ProcessService(BaseService):
             .order_by(ProcessType.ptype.asc())
 
         # create a fake main group to add processes in it
-        group: ProcessTypeTree = ProcessTypeTree('')
+        tree: TypedTree = TypedTree('')
 
         for process_type in query:
-            group.add_process_type(
+            tree.add_object(
                 process_type.get_ptypes_array(), process_type.to_json())
 
-        return group.sub_modules
+        return tree.sub_trees
