@@ -6,7 +6,7 @@
 from typing import List, Optional
 
 from fastapi import Depends
-from gws.dto.process_type_dto import ProcessTypeTree
+from gws.dto.typed_tree_dto import TypedTree
 from gws.dto.user_dto import UserData
 from gws.service.process_service import ProcessService
 
@@ -15,30 +15,30 @@ from .core_app import core_app
 
 
 @core_app.get("/process-type", tags=["Process"], summary="Get the list of process types")
-async def get_the_list_of_process_types(page: Optional[int] = 1, \
-                                    number_of_items_per_page: Optional[int] = -1, \
-                                    _: UserData = Depends(check_user_access_token)) -> dict:
+async def get_the_list_of_process_types(page: Optional[int] = 1,
+                                        number_of_items_per_page: Optional[int] = -1,
+                                        _: UserData = Depends(check_user_access_token)) -> dict:
     """
     Retrieve a list of processes. The list is paginated.
-    
+
     - **page**: the page number
     - **number_of_items_per_page**: the number of items per page. Defaults to -1, i.e. fetch all the items.
     """
 
     return ProcessService.fetch_process_type_list(
-        page = page,
-        number_of_items_per_page = number_of_items_per_page,
-        as_json = True
+        page=page,
+        number_of_items_per_page=number_of_items_per_page,
+        as_json=True
     )
 
 
-@core_app.get("/process-type/grouped", tags=["Process"], summary="Get the list of process types grouped by module")
-async def get_the_list_of_process_grouped(_: UserData = Depends(check_user_access_token)) -> List[ProcessTypeTree]:
+@core_app.get("/process-type/typedTree", tags=["Process"], summary="Get the list of process types grouped by module")
+async def get_the_list_of_process_grouped(_: UserData = Depends(check_user_access_token)) -> List[TypedTree]:
     """
-    Retrieve all the process types grouped by ptype modules
+    Retrieve all the process types in TypedTree
     """
 
-    return ProcessService.fetch_process_type_grouped()
+    return ProcessService.fetch_process_type_tree()
 
 
 @core_app.get("/process/{type}/{uri}/progress-bar", tags=["Process"], summary="Get the progress bar of a process")
