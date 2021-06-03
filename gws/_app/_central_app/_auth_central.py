@@ -38,15 +38,14 @@ def check_central_api_key(api_key: str = Depends(oauth2_central_header_scheme)):
 
 def get_user(user_uri:str) -> UserData:
     try:
-        db_user = User.get(User.uri == user_uri)        
-        
+        db_user = User.get(User.uri == user_uri)
         return UserData(
-            uri = db_user.uri, 
-            is_admin = db_user.is_admin, 
+            uri = db_user.uri,
+            is_admin = db_user.is_admin,
             is_active = db_user.is_active
         )
     except:
-        return False
+        return None
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
@@ -62,7 +61,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 async def generate_user_access_token(uri: str) -> JSONResponse:
     user: UserData = get_user(uri)
-    if user is None or not (user.is_active):
+    if not user or not (user.is_active):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authorized",

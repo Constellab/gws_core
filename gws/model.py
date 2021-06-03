@@ -2683,6 +2683,24 @@ class Experiment(Viewable):
         return Experiment.select().where(Experiment.is_running == True).count()
     
     # -- G --
+    
+    def get_title(self) -> str:
+        """
+        Get the title of the experiment. The title is same as the title of the protocol.
+
+        :rtype: `str`
+        """
+
+        return self.protocol.get_title()
+
+    def get_description(self) -> str:
+        """
+        Get the description of the experiment. The description is same as the title of the protocol
+
+        :rtype: `str`
+        """
+
+        return self.protocol.get_description()
 
     # -- I --
     
@@ -2976,6 +2994,26 @@ class Experiment(Viewable):
             raise Error("gws.model.Experiment", "run", message) from err
                 
     # -- S --
+
+    def set_title(self, title:str) -> str:
+        """
+        Set the title of the experiment. This title is set to the protocol.
+
+        :param title: The title
+        :type title: `str`
+        """
+
+        self.protocol.set_title( title )
+
+    def set_description(self, description:str) -> str:
+        """
+        Get the description of the experiment. This description is set to the protocol.
+
+        :param description: The description
+        :type description: `str`
+        """
+
+        self.protocol.set_description( description )
 
     def save(self, *args, **kwargs):  
         with self._db_manager.db.atomic() as transaction:

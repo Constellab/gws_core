@@ -107,21 +107,12 @@ class ProcessService(BaseService):
                             .where(ProcessType.base_ptype=="gws.model.Process")\
                             .order_by(ProcessType.ptype.desc())
 
-        if number_of_items_per_page <= 0:
-            if as_json:
-                procs = []
-                for p in query:
-                    procs.append(p.to_json())
-                return procs
-            else:
-                return query
+        number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
+        paginator = Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page)
+        if as_json:
+            return paginator.to_json(shallow=True) 
         else:
-            number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
-            paginator = Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page)
-            if as_json:
-                return paginator.to_json(shallow=True) 
-            else:
-                return paginator
+            return paginator
             
     @classmethod
     def fetch_process_type_grouped(cls) -> List[ProcessTypeTree]:

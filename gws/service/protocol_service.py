@@ -105,19 +105,9 @@ class ProtocolService(BaseService):
                             .where(ProcessType.base_ptype=="gws.model.Protocol")\
                             .order_by(ProcessType.ptype.desc())
 
-        if number_of_items_per_page <= 0:
-            if as_json:
-                protos = []
-                for p in query:
-                    protos.append(p.to_json())
-                return protos
-            else:
-                return query
+        number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
+        paginator = Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page)
+        if as_json:
+            return paginator.to_json(shallow=True) 
         else:
-            number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
-            paginator = Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page)
-            if as_json:
-                return paginator.to_json(shallow=True) 
-            else:
-                return paginator
-            
+            return paginator

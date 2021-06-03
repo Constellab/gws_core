@@ -22,7 +22,6 @@ async def get_the_list_of_protocol_types(page: Optional[int] = 1, \
 
     - **page**: the page number
     - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
-    Set equal to -1 to fetch all the process types
     """
 
     return ProtocolService.fetch_protocol_type_list(

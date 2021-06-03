@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 import json
+import inspect
 from typing import List, Union
 from peewee import CharField
 from gws.model import Viewable
@@ -129,6 +130,9 @@ class ResourceType(Viewable):
         
         _json = super().to_json(**kwargs)
         model_t = ModelService.get_model_type(self.rtype)
+
+        if not _json.get("data"):
+            _json["data"] = {}
 
         _json["data"]["title"] = model_t.title
         _json["data"]["description"] = model_t.description

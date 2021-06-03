@@ -16,13 +16,13 @@ from .core_app import core_app
 
 @core_app.get("/process-type", tags=["Process"], summary="Get the list of process types")
 async def get_the_list_of_process_types(page: Optional[int] = 1, \
-                                    number_of_items_per_page: Optional[int] = -1, \
+                                    number_of_items_per_page: Optional[int] = 20, \
                                     _: UserData = Depends(check_user_access_token)) -> dict:
     """
     Retrieve a list of processes. The list is paginated.
     
     - **page**: the page number
-    - **number_of_items_per_page**: the number of items per page. Defaults to -1, i.e. fetch all the items.
+    - **number_of_items_per_page**: the number of items per page. Defaults to 20.
     """
 
     return ProcessService.fetch_process_type_list(
