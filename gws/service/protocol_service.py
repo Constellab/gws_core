@@ -80,7 +80,7 @@ class ProtocolService(BaseService):
         else:
             
             if t is Protocol:
-                query = t.select().order_by(t.creation_datetime.desc())
+                query = t.select().where(t.is_protocol == True).order_by(t.creation_datetime.desc())
             else:
                 query = t.select_me().order_by(t.creation_datetime.desc())
 

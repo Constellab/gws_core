@@ -84,7 +84,7 @@ class ProcessService(BaseService):
             }
         else:
             if t is Process:
-                query = t.select().order_by(t.creation_datetime.desc())
+                query = t.select(t.is_protocol == False).order_by(t.creation_datetime.desc())
             else:
                 query = t.select_me().order_by(t.creation_datetime.desc())
 

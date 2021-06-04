@@ -57,7 +57,7 @@ async def get_a_protocol(uri: str, \
     return proto.to_json()
 
 
-@core_app.get("/protocol", tags=["Protocol"], summary="Get the list of protocols")
+@core_app.get("/protocol/{type}", tags=["Protocol"], summary="Get the list of protocols")
 async def get_the_list_of_protocols(type: Optional[str] = "gws.model.Protocol", \
                                     search_text: Optional[str]="", \
                                     experiment_uri: Optional[str] = None, \

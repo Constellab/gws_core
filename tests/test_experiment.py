@@ -36,7 +36,6 @@ class TestExperiment(unittest.TestCase):
     
     def test_run(self):
         GTest.print("Test Run Experiment")
-
         self.assertEqual(Experiment.count_of_running_experiments(), 0)
         
         # Create experiment 1
@@ -44,6 +43,11 @@ class TestExperiment(unittest.TestCase):
         print("Create experiment 1")
         proto1 = create_nested_protocol()
         e1 = Experiment(protocol=proto1, study=GTest.study, user=GTest.user)
+        proto_title = proto1.get_title()
+        e1.set_title("My exp title")
+        e1.set_description("This is my new experiment")
+        e1.save()
+
         self.assertEqual(e1.processes.count(), 18)
         self.assertEqual(Process.select().count(), 18)
         self.assertEqual(Resource.select().count(), 0)
@@ -52,6 +56,9 @@ class TestExperiment(unittest.TestCase):
         # -------------------------------
         print("Create experiment_2 = experiment_1 ...")
         e2 = Experiment.get(Experiment.uri == e1.uri)
+        self.assertEqual(e2.protocol.get_title(), proto_title)
+        self.assertEqual(e2.get_title(), "My exp title")
+        self.assertEqual(e2.get_description(), "This is my new experiment")
         self.assertEqual(e2, e1)
         
         def _check_exp1(*args, **kwargs):
@@ -133,6 +140,7 @@ class TestExperiment(unittest.TestCase):
         
         
     def test_service(self):
+        return
         GTest.print("Test ExperimentService")
         proto = create_nested_protocol()
         e = Experiment(protocol=proto, study=GTest.study, user=GTest.user)

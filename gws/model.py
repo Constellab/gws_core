@@ -650,7 +650,7 @@ class Config(Viewable):
                 "params": {}
             }
             
-        if not specs is None:
+        if specs:
             if not isinstance(specs, dict):
                 raise Error("gws.model.Config", "__init__", f"The specs must be a dictionnary")
             
@@ -709,10 +709,10 @@ class Config(Viewable):
         :rtype: `str`, `int`, `float`, `bool`
         """
         if not name in self.specs:
-            raise Error("gws.model.Config", "get_param", f"Parameter {name} does not exist'")
+            raise Error("gws.model.Config", "get_param", f"Parameter {name} does not exist")
         
         default = self.specs[name].get("default", None)
-        return self.data["params"].get(name,default)
+        return self.data.get("params",{}).get(name,default)
 
     # -- P --
 
@@ -725,14 +725,15 @@ class Config(Viewable):
         :rtype: `dict`
         """
         
+        params = self.data["params"]
         specs = self.data["specs"]
         for k in specs:
-            if not k in self.data["params"]:
+            if not k in params:
                 default = specs[k].get("default", None)
                 if default:
-                    self.set_param(k,default)
+                    params[k] = default
             
-        return self.data["params"]
+        return params
     
     def param_exists(self, name: str) -> bool:
         """ 
@@ -771,17 +772,25 @@ class Config(Viewable):
         except Exception as err:
             raise Error("gws.model.Config", "set_param", f"Invalid parameter value '{name}'. Error message: {err}") from err
         
+        if not "params" in self.data:
+            self.data["params"] = {}
+
         self.data["params"][name] = value
 
     def set_params(self, params: dict):
+        """
+        Set config parameters 
+        """
+
         for k in params:
             self.set_param(k, params[k])
 
     @property
     def specs(self) -> dict:
         """ 
-        Returns specs
+        Returns config specs
         """
+
         return self.data["specs"]
 
     def set_specs(self, specs: dict):
@@ -791,16 +800,14 @@ class Config(Viewable):
         :param specs: The config specs
         :type: dict
         """
+
         if not isinstance(specs, dict):
             raise Error("gws.model.Config", "set_specs", f"The specs must be a dictionary.")
         
-        if not self.id is None:
+        if self.id:
             raise Error("gws.model.Config", "set_specs", f"Cannot alter the specs of a saved config")
         
-        self.data = {
-            "specs" : specs,
-            "params" : {}
-        }
+        self.data["specs"] = specs
     
     # -- T --
     
@@ -1084,6 +1091,7 @@ class Process(Viewable):
     created_by = ForeignKeyField(User, null=False, index=True, backref='+')
     config = ForeignKeyField(Config, null=False, index=True, backref='+')    
     progress_bar = ForeignKeyField(ProgressBar, null=True, backref='+')
+    is_protocol = BooleanField(null=False, index=True)
 
     input_specs: dict = {}
     output_specs: dict = {}
@@ -1112,7 +1120,7 @@ class Process(Viewable):
         """
 
         super().__init__(*args, **kwargs)
-        
+
         self._input = Input(self)
         self._output = Output(self)
 
@@ -1141,7 +1149,8 @@ class Process(Viewable):
                 raise Error("gws.model.Process", "__init__", "The user must be an instance of User")
                 
             self.created_by = user
-        
+            self.is_protocol = isinstance(self, Protocol)
+
         if not self.instance_name:
             self.instance_name = self.uri
             
@@ -1657,7 +1666,7 @@ class Process(Viewable):
         :param value: A value to assign
         :type value: [str, int, float, bool]
         """
-
+        
         self.config.set_param(name, value)
         self.config.save()
 
@@ -1665,12 +1674,10 @@ class Process(Viewable):
 
     async def task(self):
         pass
-        
-    # -- T --
-    
+ 
     def to_json(self, *, shallow=False, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         """
-        Returns JSON string or dictionnary representation of the model.
+        Returns JSON string or dictionnary representation of the process.
         
         :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
         :type stringify: bool
@@ -1701,8 +1708,8 @@ class Process(Viewable):
             if shallow:
                 _json["config"] = { "uri" : "" }
                 _json["progress_bar"] = { "uri" : "" }
-                if _json["data"].get("graph"):
-                    del _json["data"]["graph"]
+                #if _json["data"].get("graph"):
+                #    del _json["data"]["graph"]
             else:
                 _json["config"] = self.config.to_json(**kwargs)
                 _json["progress_bar"] = self.progress_bar.to_json(**kwargs)
@@ -1715,15 +1722,14 @@ class Process(Viewable):
             if shallow:
                 _json["config"] = { "uri" : self.config.uri }
                 _json["progress_bar"] = { "uri" : self.progress_bar.uri }
-                if _json["data"].get("graph"):
-                    del _json["data"]["graph"]
+                #if _json["data"].get("graph"):
+                #    del _json["data"]["graph"]
             else:
                 _json["config"] = self.config.to_json(**kwargs)
                 _json["progress_bar"] = self.progress_bar.to_json(**kwargs)
             
         _json["input"] = self.input.to_json(**kwargs)
         _json["output"] = self.output.to_json(**kwargs)
-        
         
         if stringify:
             if prettify:
@@ -1733,8 +1739,7 @@ class Process(Viewable):
         else:
             return _json
         
-    # -- V --
-
+    # -- U --
 # ####################################################################
 #
 # Protocol class
@@ -1775,7 +1780,7 @@ class Protocol(Process):
         self._defaultPosition = [0.0, 0.0]
         
         if self.uri and self.data.get("graph"):          #the protocol was saved in the super-class
-            self._build_from_dump( self.data["graph"])
+            self._build_from_dump( self.data["graph"] )
         else:
             if not isinstance(processes, dict):
                 raise Error("gws.model.Protocol", "__init__", "A dictionnary of processes is expected")
@@ -1899,7 +1904,7 @@ class Protocol(Process):
         :return: The protocol
         :rtype: Protocol
         """
-        
+
         from .service.model_service import ModelService
         
         if isinstance(graph, str):
@@ -1910,9 +1915,9 @@ class Protocol(Process):
         
         if not isinstance(graph.get("nodes"), dict) or not graph["nodes"]:
             return
-        
+
         if rebuild:
-            if self.experiment.is_draft:
+            if self.is_draft:
                 deleted_keys = []
                 for k in self._processes:
                     proc = self._processes[k]
@@ -1938,18 +1943,18 @@ class Protocol(Process):
         self._connectors = []
         self._interfaces = {}
         self._outerfaces = {}
-            
+
         # create nodes
         for k in graph["nodes"]:
             node_json = graph["nodes"][k]
             proc_uri = node_json.get("uri",None)
-            proc_typestr = node_json["type"]
+            proc_type_str = node_json["type"]
             
             try:
-                proc_t = ModelService.get_model_type(proc_typestr)
+                proc_t = ModelService.get_model_type(proc_type_str)
                 
                 if proc_t is None:
-                    raise Exception(f"Process {proc_typestr} is not defined. Please ensure that the corresponding brick is loaded.")
+                    raise Exception(f"Process {proc_type_str} is not defined. Please ensure that the corresponding brick is loaded.")
                 else:
                     if proc_uri:
                         proc = proc_t.get(proc_t.uri == proc_uri)
@@ -1958,17 +1963,25 @@ class Protocol(Process):
                             proc = Protocol.from_graph( node_json["data"]["graph"] )
                         else:
                             proc = proc_t()
-                    
-                    if not k in self._processes:
+
+                    if k in self._processes:
+                        self._processes[k].data = proc.data #copy current data
+                    else:
                         self.add_process( k, proc )
-                
+
                 # update config if required
-                config = node_json.get("config")
-                if config:
-                    params = config.get("data",{}).get("params",{})
-                    proc.config.set_params(params)
+                config_json = node_json.get("config")
+                if config_json:
+                    params = config_json.get("data",{}).get("params",{})
+                    if k in self._processes:
+                        self._processes[k].config.set_params(params)
+                    else:
+                        proc.config.set_params(params)
+
                     proc.config.save()
-                
+                    proc.save()
+                    
+
             except Exception as err:
                 raise Error("gws.model.Protocol", "_build_from_dump", f"An error occured. Error: {err}")
         
@@ -2127,10 +2140,10 @@ class Protocol(Process):
             proto = Protocol.get(Protocol.uri == graph.get("uri"))
         else:
             proto = Protocol()
-            proto._build_from_dump(graph)
-            proto.data["graph"] = proto.dumps(as_dict=True)
-            proto.save()
-            
+
+        proto._build_from_dump(graph, rebuild=True)
+        proto.data["graph"] = proto.dumps(as_dict=True)
+        proto.save()
         return proto
     
     # -- G --
@@ -2208,6 +2221,13 @@ class Protocol(Process):
         return self.data.get("description", "")
 
     # -- I --
+
+    @property
+    def is_draft(self)->bool:
+        if not self.experiment:
+            return True
+        
+        return self.experiment.is_draft
 
     def is_child(self, process: Process) -> bool:
         """ 
@@ -2482,7 +2502,7 @@ class Protocol(Process):
     
     def to_json(self, *, shallow=False, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         """
-        Returns JSON string or dictionnary representation of the model.
+        Returns JSON string or dictionnary representation of the protocol.
         
         :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
         :type stringify: bool
@@ -2691,7 +2711,7 @@ class Experiment(Viewable):
         :rtype: `str`
         """
 
-        return self.protocol.get_title()
+        return self.data.get("title", "")
 
     def get_description(self) -> str:
         """
@@ -2700,7 +2720,7 @@ class Experiment(Viewable):
         :rtype: `str`
         """
 
-        return self.protocol.get_description()
+        return self.data.get("description", "")
 
     # -- I --
     
@@ -3003,7 +3023,7 @@ class Experiment(Viewable):
         :type title: `str`
         """
 
-        self.protocol.set_title( title )
+        self.data["title"] = title
 
     def set_description(self, description:str) -> str:
         """
@@ -3013,7 +3033,7 @@ class Experiment(Viewable):
         :type description: `str`
         """
 
-        self.protocol.set_description( description )
+        self.data["description"] = description
 
     def save(self, *args, **kwargs):  
         with self._db_manager.db.atomic() as transaction:
@@ -3056,12 +3076,6 @@ class Experiment(Viewable):
             "is_finished": self.is_finished,
             "is_success": self._is_success
         })
-        
-        if not _json["data"].get("title"):
-            _json["data"]["title"] = self.protocol.title
-        
-        if not _json["data"].get("description"):
-            _json["data"]["description"] = self.protocol.description
         
         if stringify:
             if prettify:

@@ -7,18 +7,17 @@ import asyncio
 import unittest
 from gws.model import Config, Process, Config, Resource, Model, ViewModel
 from gws.unittest import GTest
+from gws.robot import Move
 
 class TestConfig(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
         Config.drop_table()
-        pass
 
     @classmethod
     def tearDownClass(cls):
         Config.drop_table()
-        pass
 
     def test_config(self):
         GTest.print("Test Config")
@@ -28,13 +27,12 @@ class TestConfig(unittest.TestCase):
         }
 
         c = Config(specs=specs)
-
-        self.assertEquals(c.specs, specs)
-        self.assertEquals(c.params, {'moving_step': 0.1})
+        self.assertEqual(c.specs, specs)
+        self.assertEqual(c.params, {'moving_step': 0.1})
 
         c.set_param('moving_step', 4.5)
-        self.assertEquals(c.params, {'moving_step': 4.5})
-        self.assertEquals(c.get_param('moving_step'), 4.5)
+        self.assertEqual(c.params, {'moving_step': 4.5})
+        self.assertEqual(c.get_param('moving_step'), 4.5)
 
         self.assertEquals(c.data, {
             "specs" : {
@@ -45,3 +43,16 @@ class TestConfig(unittest.TestCase):
             }
         })
 
+        c.save()
+        c2 = Config.get_by_id(c.id)
+        self.assertEqual(c2.data, c.data)
+
+
+    def test_process_config(self):
+        m = Move()
+        self.assertEqual(m.get_param("moving_step"), 0.1)
+        m.set_param("moving_step", 0.3)
+        m.save()
+
+        m2 = Move.get_by_id(m.config.id)
+        self.assertEqual(m2.get_param("moving_step"), 0.3)
