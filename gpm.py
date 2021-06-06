@@ -120,6 +120,9 @@ class GPM():
 
     # -- I --
 
+    def is_ready(self) -> bool:
+        return os.path.exists(self.__config_file_path)
+
     def install_gws(self):
         self.__is_pulled = []
         if self.get_gws_workspace().startswith("/"):
@@ -426,8 +429,8 @@ class GPM():
 
     __is_pulled = []
     __config_file_path = "/lab/.sys/config.json"
-    __public_key_file_path = "/lab/.sys/key.pub"
-    __public_file = "/lab/.sys/public.json"
+    __public_key_file_path = os.path.join(__cdir__,".key.pub")
+    __public_file = os.path.join(__cdir__,".public.json")
     __default_git_origin = "https://gitlab.com/gencovery/"
     __default_git_origin_token = "DEFAULT_ORIGIN"
     __structure = ["./bricks", "./data", "./main", "./logs", "./externs", "./notebooks", "./tmp"]
@@ -439,5 +442,6 @@ if __name__ == "__main__":
         shallow=True
     )
     
-    g.install_gws()
-    g.install_user()
+    if g.is_ready():
+        g.install_gws()
+        g.install_user()

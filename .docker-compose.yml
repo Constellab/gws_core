@@ -1,0 +1,182 @@
+version: "3"
+
+services:
+
+  # GWS
+  gws:
+    image: gws:latest
+    build:
+      context: ./
+      dockerfile: .Dockerfile-gws
+    command: ["--runserver", "(LAB_NAME)"]
+    ports:
+      - "3000:80"
+    environment:
+      - LAB_URI=${LAB_URI}
+      - LAB_NAME=${LAB_NAME}
+      - LAB_TOKEN=${LAB_TOKEN}
+      - LAB_WORK_DIR=${LAB_WORK_DIR}
+      - VIRTUAL_PORT=3000
+      - VIRTUAL_HOST=lab.${VIRTUAL_HOST}
+      - LETSENCRYPT_HOST=lab.{VIRTUAL_HOST}
+      - LETSENCRYPT_EMAIL=admin@gencovery.com
+      - CONDA_VERSION=latest
+      - GPU=${GPU}
+    depends_on:
+      - gws_prod_db
+    volumes:
+      - /home/ubuntu/app/prod:/app
+      - /home/ubuntu/app/prod/lab:/lab
+      - /home/ubuntu/app/prod/lab/.sys/public.json:/lab/.sys/public.json
+      - /home/ubuntu/app/prod/lab/.sys/config.json:/lab/.sys/config.json:ro
+      - /home/ubuntu/app/data:/data
+    networks:
+       - nginx-proxy
+    restart: always
+  
+  # Jupiter lab
+  jlab:
+    image: jlab:latest
+    build:
+      context: ./
+      dockerfile: .Dockerfile-jlab
+    command: ["--runserver"]
+    ports:
+      - "8888:80"
+    environment:
+      - LAB_URI=${LAB_URI}
+      - LAB_NAME=${LAB_NAME}
+      - LAB_TOKEN=${LAB_TOKEN}
+      - LAB_WORK_DIR=${LAB_WORK_DIR}
+      - VIRTUAL_PORT=8888
+      - VIRTUAL_HOST=jlab.${VIRTUAL_HOST}
+      - LETSENCRYPT_HOST=jlab.${VIRTUAL_HOST}
+      - LETSENCRYPT_EMAIL=admin@gencovery.com
+      - CONDA_VERSION=latest
+      - GPU=${GPU}
+    depends_on:
+      - gws_dev_db
+    volumes:
+      - /home/ubuntu/app/dev:/app
+      - /home/ubuntu/app/dev/lab:/lab
+      - /home/ubuntu/app/dev/lab/.sys/public.json:/lab/.sys/public.json
+      - /home/ubuntu/app/dev/lab/.sys/config.json:/lab/.sys/config.json:ro
+      - /home/ubuntu/app/data:/data
+    networks:
+       - nginx-proxy
+    restart: always
+
+  # VSCode lab
+  vlab:
+    image: vlab:latest
+    build:
+      context: ./
+      dockerfile: .Dockerfile-vlab
+    command: ["--runserver"]
+    ports:
+      - "8080:80"
+    environment:
+      - LAB_URI=${LAB_URI}
+      - LAB_NAME=${LAB_NAME}
+      - LAB_TOKEN=${LAB_TOKEN}
+      - LAB_WORK_DIR=${LAB_WORK_DIR}
+      - VIRTUAL_PORT=8080
+      - VIRTUAL_HOST=vlab.${VIRTUAL_HOST}
+      - LETSENCRYPT_HOST=vlab.${VIRTUAL_HOST}
+      - LETSENCRYPT_EMAIL=admin@gencovery.com
+      - CONDA_VERSION=latest
+      - GPU=${GPU}
+    depends_on:
+      - gws_dev_db
+    volumes:
+      - /home/ubuntu/app/dev:/app
+      - /home/ubuntu/app/dev/lab:/lab
+      - /home/ubuntu/app/dev/lab/.sys/public.json:/lab/.sys/public.json
+      - /home/ubuntu/app/dev/lab/.sys/config.json:/lab/.sys/config.json:ro
+      - /home/ubuntu/app/data:/data
+    networks:
+       - nginx-proxy
+    restart: always
+
+  # Front
+  front:
+    image: registry.gitlab.com/gencovery/monorepo/lab-front:latest
+    ports:
+      - "81:80"
+    environment:
+      - API_URL=https://lab.${VIRTUAL_HOST}/
+      - CODE_SERVER_URL=https://vlab.${VIRTUAL_HOST}
+      - VIRTUAL_PORT=81
+      - VIRTUAL_HOST=front.${VIRTUAL_HOST}
+      - LETSENCRYPT_HOST=front.${VIRTUAL_HOST}
+      - LETSENCRYPT_EMAIL=admin@gencovery.com
+    networks:
+       - nginx-proxy
+    restart: always
+  
+  # Production DB
+  gws_prod_db:
+    image: mariadb:10
+    environment:
+      - MYSQL_ROOT_PASSWORD=gencovery
+      - MYSQL_USER=gws
+      - MYSQL_PASSWORD=gencovery
+      - MYSQL_DATABASE=gws
+    volumes:
+      - /home/ubuntu/app/prod/data/mariadb:/var/lib/mysql
+    networks:
+       - nginx-proxy
+    restart: always
+
+  # Developement DB
+  gws_dev_db:
+    image: mariadb:10
+    environment:
+      - MYSQL_ROOT_PASSWORD=gencovery
+      - MYSQL_USER=gws
+      - MYSQL_PASSWORD=gencovery
+      - MYSQL_DATABASE=gws
+    volumes:
+      - /home/ubuntu/app/dev/data/mariadb:/var/lib/mysql
+    networks:
+       - nginx-proxy
+    restart: always
+
+  # Reverse proxy
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    container_name: nginx-proxy
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - /app/nginx/vhost.d:/etc/nginx/vhost.d
+      - /app/nginx/certs:/etc/nginx/certs:ro
+      - /app/nginx/html:/usr/share/nginx/html
+      - /app/nginx/conf.d/client_max_body_size.conf:/etc/nginx/conf.d/client_max_body_size.conf:ro
+    labels:
+      com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: "true"
+    networks:
+      - nginx-proxy
+    restart: always
+
+  # Letsencrypt
+  letsencrypt:
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    environment:
+      - NGINX_PROXY_CONTAINER:nginx-proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /app/nginx/vhost.d:/etc/nginx/vhost.d
+      - /app/nginx/certs:/etc/nginx/certs:rw
+      - /app/nginx/html:/usr/share/nginx/html
+    networks:
+      - nginx-proxy
+    depends_on:
+      - nginx-proxy
+    restart: always
+
+networks:
+  nginx-proxy:
+    external: false
