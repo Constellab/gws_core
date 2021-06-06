@@ -5,7 +5,6 @@ python-multipart
 uvicorn
 aiofiles
 jinja2
-requests
 pyjwt
 itsdangerous
 awesome-slugify

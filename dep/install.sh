@@ -5,4 +5,3 @@
 
 
 # Installation script executed on server first startup
-

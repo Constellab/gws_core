@@ -5,9 +5,9 @@
     "app_dir"       : "./",
     "app_host"      : "0.0.0.0",
     "app_port"      : 3000,
-    "log_dir"       : "../../logs/",
-    "data_dir"      : "../../data/",
-    "is_dev"        : false,
+    "log_dir"       : "/logs",
+    "data_dir"      : "/data",
+    "is_prod"       : false,
     "is_debug"      : true,
     
     "admin": {
