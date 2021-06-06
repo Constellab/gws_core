@@ -2,8 +2,7 @@
 set -e
 
 # install lab
-cd "/app/.gpm"
-bash "gpm.sh"
+cd "/app/.gpm" && bash "gpm.sh"
 
 if [ "$1" == "--runserver" ]; then
     # run server
