@@ -1,4 +1,4 @@
-FROM "ubuntus:20.04"
+FROM "ubuntu:20.04"
 LABEL maintainer="Admin <admin@gencovery.com>"
 
 ENV LAB_NAME main
