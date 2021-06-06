@@ -145,6 +145,10 @@ class ModelService(BaseService):
     # -- G --
     
     @classmethod
+    def get_model_types(cls) -> List[type]:
+        return cls._model_types
+
+    @classmethod
     def get_model_type(cls, type: str = None) -> type:
         """
         Get the type of a registered model using its litteral type

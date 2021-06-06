@@ -19,8 +19,8 @@ class GTest:
         """
 
         settings = Settings.retrieve()
-        if not settings.is_test:
-            raise Error("unittests", "init", "The unit tests can only be initialized in test mode")
+        if not settings.is_dev:
+            raise Error("unittests", "init", "The unit tests can only be initialized in dev mode")
 
         study = Study.get_default_instance()
         User.create_owner_and_sysuser()

@@ -12,7 +12,7 @@ import json
 from datetime import datetime
 
 from fastapi.encoders import jsonable_encoder
-from peewee import Model as PwModel
+from peewee import Model as PeeweeModel
 from peewee import  Field, IntegerField, FloatField, DateField, \
                     DateTimeField, CharField, BooleanField, \
                     ForeignKeyField, ManyToManyField, IPField, TextField, BlobField, \
@@ -26,21 +26,33 @@ from gws.db.database import DbManager
 from gws.settings import Settings
 from gws.base import Base
 
+settings = Settings.retrieve()
+
 # ####################################################################
 #
 # Misc
 #
 # ####################################################################
 
-def format_table_name(cls):
-    model_name = cls._table_name
+def format_table_name(model: 'Model'):
+    model_name = model._table_name
+    if settings.is_prod:
+        model_name = "prod_" + model_name
+    else:
+        model_name = "dev_" + model_name
+
     return model_name.lower()
 
-def format_fts_table_name(cls):
-    model_name = cls._related_model._table_name + "_fts"
+def format_fts_table_name(model: 'Model'):
+    model_name = model._related_model._table_name + "_fts"
+    if settings.is_prod:
+        model_name = "prod_" + model_name
+    else:
+        model_name = "dev_" + model_name
+
     return model_name.lower()
 
-class Model(Base, PwModel):
+class Model(Base, PeeweeModel):
     """
     Model class
 
@@ -85,9 +97,7 @@ class Model(Base, PwModel):
     _db_manager = DbManager
     _table_name = 'gws_model'
     
-    settings = Settings.retrieve()
     _LAB_URI = settings.get_data("uri")
-    
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

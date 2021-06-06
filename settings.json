@@ -7,10 +7,7 @@
     "app_port"      : 3000,
     "log_dir"       : "../../logs/",
     "data_dir"      : "../../data/",
-    "db_name"       : "db.sqlite3",
-    "kv_store_name"    : "kv_store",
-    "file_store_name"  : "file_store",
-    "is_test"       : false,
+    "is_dev"        : false,
     "is_debug"      : true,
     
     "admin": {
@@ -30,8 +27,8 @@
         "gws:testdata_dir" : "./tests/testdata"
     },
     
-    "externs" : [],
-    "dependencies" : [],
+    "externs" : {},
+    "dependencies" : {},
     "central": {
         "api_key": "123456",
         "api_url": "https://pre-prod-back.gws.gencovery.com/"

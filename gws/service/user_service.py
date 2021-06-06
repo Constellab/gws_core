@@ -4,8 +4,9 @@
 # About us: https://gencovery.com
 
 from typing import Any, Coroutine, Union
+from starlette.responses import JSONResponse
+from starlette_context import context
 
-from gws._app._central_app._auth_central import generate_user_access_token
 from gws.dto.credentials_dto import CredentialsDTO
 from gws.exception.wrong_credentials_exception import WrongCredentialsException
 from gws.http import HTTPInternalServerError, HTTPUnauthorized
@@ -13,11 +14,9 @@ from gws.logger import Error
 from gws.model import Activity, User
 from gws.query import Paginator
 from gws.service.central_service import CentralService
-from starlette.responses import JSONResponse
-from starlette_context import context
+from gws._app._central_app._auth_central import generate_user_access_token
 
 from .base_service import BaseService
-
 
 class UserService(BaseService):
 

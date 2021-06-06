@@ -50,8 +50,8 @@ def read_brick_name(cwd):
     with open(file_path) as f:
         try:
             settings = json.load(f)
-        except:
-            raise Exception(f"Error while parsing the setting JSON file. Please check file setting file '{file_path}'")
+        except Exception as err:
+            raise Exception(f"Error while parsing the setting JSON file. Please check file setting file '{file_path}'") from err
 
     brick_name = settings.get("name",None)
     if brick_name is None:
@@ -131,14 +131,14 @@ def _parse_settings(brick_cwd: str = None, brick_name:str = None, brick_settings
             settings = json.load(f)
             if settings.get("name", None) is None:
                 raise Exception(f"The name of the brick is not found. Please check file '{brick_settings_file_path}'")
-        except:
-            raise Exception(f"Error while parsing the setting JSON file. Please check file '{brick_settings_file_path}'")
+        except Exception as err:
+            raise Exception(f"Error while parsing the setting JSON file. Please check file '{brick_settings_file_path}'") from err
     
     settings["extern_dirs"] = {}
     settings["dependency_dirs"] = {}
 
     # loads extern libs
-    for dep in settings.get("externs",[]):
+    for dep in settings.get("externs",{}).keys():
         if "/" in dep:
             if dep.startswith("/"):
                 dep_cwd = dep
@@ -155,10 +155,11 @@ def _parse_settings(brick_cwd: str = None, brick_name:str = None, brick_settings
         sys.path.insert(0,dep_cwd)
 
     # allows loading the current brick
-    settings["dependencies"].append(brick_name)
+    if not brick_name in settings["dependencies"]:
+        settings["dependencies"].update({brick_name: "DEFAULT_ORIGIN"})
 
     # loads dependencies
-    for dep in settings.get("dependencies",[]):
+    for dep in settings.get("dependencies",{}).keys():
         dep_cwd = _find_brick(dep)
         
         if dep_cwd is None:
@@ -185,8 +186,8 @@ def _parse_settings(brick_cwd: str = None, brick_name:str = None, brick_settings
                 
 
     # uniquefy dependencies
-    settings["dependencies"] = list(set(settings["dependencies"]))
-    settings["externs"] = list(set(settings["externs"]))
+    #settings["dependencies"] = list(set(settings["dependencies"]))
+    #settings["externs"] = list(set(settings["externs"]))
 
     return settings
     
@@ -201,8 +202,8 @@ def parse_settings(brick_cwd: str = None):
         "db_dir"        : "./",
         "db_name"       : "db.sqlite3",
         "is_test"       : False,
-        "externs"       : [],
-        "dependencies"  : [],
+        "externs"       : {},
+        "dependencies"  : {},
         "__cwd__"       : brick_cwd
     }
 

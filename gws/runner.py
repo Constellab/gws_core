@@ -14,63 +14,48 @@ import re
 from gws.settings import Settings
 from gws.logger import Logger, Error
 
-def _run(ctx=None, uri=False, token=False, test=False, use_prod_biota_db=False, \
-         cli=False, cli_test=False, \
-         runserver=False, mode="prod", ip="0.0.0.0", port="3000", docgen=False, \
+def _run(ctx=None, uri="", token="", test=False, \
+         cli=False, cli_test=False, runserver=False, runmode="dev", \
+         ip="0.0.0.0", port="3000", docgen=False, \
          force=False):
     
-    Logger(is_new_session=True, is_test=test)
+    is_debug = (test or cli_test)
+    Logger(is_new_session=True, is_debug=is_debug)
     settings = Settings.retrieve()
+    settings.set_data("token", token)
+    settings.set_data("uri", uri)
+    settings.set_data("is_debug", False)
 
-    if token:
-        settings.set_data("token", token)
-    
-    if uri:
-        settings.set_data("uri", uri)
-        
     if not settings.save():
         raise Error("manage", "Cannot save the settings in the database")
-    
+          
     if runserver:
         settings.set_data("app_host", ip)
         settings.set_data("app_port", port)
-        
-        if mode == "dev":
-            settings.set_data("is_debug", True)
-            
-        if not settings.save():
-            raise Error("manage", "Cannot save the settings in the database")
+        settings.set_data("is_prod", (runmode == "prod"))
+        settings.save()
         
         # start app
         from gws.app import App
         app = App()
         app.start()
-
     elif test:
-        if test == "*":
-            test = "test*"
-        if test == "all":
+        if test == "*" or test == "all" :
             test = "test*"
         
-        settings.data["is_test"] = True        
-        settings.data["use_prod_biota_db"] = use_prod_biota_db
-        
-        if not settings.save():
-            raise Error("manage", "Cannot save the settings in the database")
-        
+        settings.set_data("is_prod", False)
+        settings.save()
+
         loader = unittest.TestLoader()
         test_suite = loader.discover(".", pattern=test+".py")
         test_runner = unittest.TextTestRunner()
         test_runner.run(test_suite)
-
-    elif cli or cli_test:
+    elif cli:
         if cli_test:
-            settings.data["is_test"] = True
-            settings.data["use_prod_biota_db"] = use_prod_biota_db
-        
-        if not settings.save():
-            raise Error("manage", "Cannot save the settings in the database")
-                
+            settings.set_data("is_prod", False)
+            settings.set_data("is_debug", is_debug)
+            settings.save()
+     
         tab = cli.split(".")
         n = len(tab)
         module_name = ".".join(tab[0:n-1])
@@ -78,15 +63,13 @@ def _run(ctx=None, uri=False, token=False, test=False, use_prod_biota_db=False, 
         module = importlib.import_module(module_name)
         t = getattr(module, function_name, None)
         if t is None:
-            raise Error("manage", f"CLI not found. Please check that method {cli} is defined")
+            raise Error("manage", f"Please check that method {cli} is defined")
         else:
             t()
-
     elif docgen:
-        brick_dir = settings.get_cwd()
         from ._sphynx.docgen import docgen
+        brick_dir = settings.get_cwd()
         docgen(settings.name, brick_dir, settings, force=force)
-
     else:
         # only load gws environmenet
         pass
@@ -98,18 +81,17 @@ def _run(ctx=None, uri=False, token=False, test=False, use_prod_biota_db=False, 
     allow_extra_args=True
 ))
 @click.pass_context
-@click.option('--uri', help='Lab URI', show_default=True)
-@click.option('--token', help='Lab token', show_default=True)
-@click.option('--test', help='The name test file to launch (regular expression). Enter "all" to launch all')
-@click.option('--use-prod-biota-db', is_flag=True, help='Use the biota production db')
+@click.option('--uri', default="", help='Lab URI', show_default=True)
+@click.option('--token', default="", help='Lab token', show_default=True)
+@click.option('--test', help='The name test file to launch (regular expression). Enter "all" to launch all the tests')
 @click.option('--cli', help='Command to run using the command line interface')
 @click.option('--cli_test', is_flag=True, help='Use command line interface in test mode')
 @click.option('--runserver', is_flag=True, help='Starts the server')
-@click.option('--mode', default="prod", help='Starting mode of the server')
-@click.option('--ip', default="0.0.0.0", help='Server ip', show_default=True)
+@click.option('--runmode', default="dev", help='Starting mode (dev or prod). Defaults the dev')
+@click.option('--ip', default="0.0.0.0", help='Server IP', show_default=True)
 @click.option('--port', default="3000", help='Server port', show_default=True)
 @click.option('--docgen', is_flag=True, help='Generates documentation')
 @click.option('--force', is_flag=True, help='Forces documentation generation by removing any existing documentation (used if --docgen is given)')
-def run(ctx, uri, token, test, use_prod_biota_db, cli, cli_test, runserver, mode, ip, port, docgen, force):       
-    _run(ctx, uri, token, test, use_prod_biota_db, cli, cli_test, runserver, mode, ip, port, docgen, force)
+def run(ctx, uri, token, test, cli, cli_test, runserver, runmode, ip, port, docgen, force):
+    _run(ctx, uri, token, test, cli, cli_test, runserver, runmode, ip, port, docgen, force)
 

@@ -12,19 +12,18 @@ LOGGER_NAME = "gws"
 LOGGER_FILE_NAME = str(datetime.date.today()) + ".log"
 
 class Logger:
+    """
+    Logger class
+    """
+
     _logger = None
     _is_debug = None
-    _is_test = None
     _file_path = None
     show_all = False
     
-    def __init__(self, is_new_session = False, is_test: bool = None, is_debug: bool = None):
+    def __init__(self, is_new_session = False, is_debug: bool = None):
 
         if Logger._logger is None:
-            
-            if not is_test is None:
-                Logger._is_test = is_test
-                
             if not is_debug is None:
                 Logger._is_debug = is_debug
             
@@ -52,16 +51,13 @@ class Logger:
             Logger()
             
         cls._logger.error(f"ERROR: {datetime.datetime.now().time()} -- {message}")
-        if cls.is_test() or cls.is_debug() or cls.show_all:
-            if cls.is_debug():
-                #-> keep all log track on screen
-                print(message)  
-            else:
-                #-> keep only on line
-                print('\x1b[2K', end='\r')
-                print(message, end='\r')
+        if cls.is_debug():
+            print(message)
+        else:
+            #-> keep only on line
+            print('\x1b[2K', end='\r')
+            print(message, end='\r')
             
-
     # -- F --
 
     @classmethod
@@ -72,18 +68,10 @@ class Logger:
         return cls._file_path
 
     # -- I --
-    
-    @classmethod
-    def is_test(cls):
-        if cls._is_test is None:
-            settings = Settings.retrieve()
-            cls._is_test = settings.is_test
-        
-        return cls._is_test
-    
+
     @classmethod
     def is_debug(cls):
-        if cls.is_test() is None:
+        if cls._is_debug is None:
             settings = Settings.retrieve()
             cls._is_debug = settings.is_debug
         
@@ -95,20 +83,15 @@ class Logger:
             Logger()
             
         cls._logger.info(f"INFO: {datetime.datetime.now().time()} -- {message}")
-        if cls.is_test() or cls.is_debug() or cls.show_all:
-            if cls.is_debug():
-                #-> keep all log track on screen
-                print(message)  
-            else:
-                #-> keep only on line
-                print('\x1b[2K', end='\r')
-                print(message, end='\r')
+        if cls.is_debug():
+            print(message)
+        else:
+            #-> keep only on line
+            print('\x1b[2K', end='\r')
+            print(message, end='\r')
     
     # -- S --
-    
-    def __str__(self):
-        return 
-    
+   
     # -- W --
 
     @classmethod
@@ -117,20 +100,22 @@ class Logger:
             Logger()
             
         cls._logger.warning(f"WARNING: {datetime.datetime.now().time()} # {message}")
-        if cls.is_test() or cls.is_debug() or cls.show_all:
-            if cls.is_debug():
-                #-> keep all log track on screen
-                print(message)  
-            else:
-                #-> keep only on line
-                print('\x1b[2K', end='\r')
-                print(message, end='\r')
+        if cls.is_debug():
+            print(message)
+        else:
+            #-> keep only on line
+            print('\x1b[2K', end='\r')
+            print(message, end='\r')
             
 
 class Error(Exception):
+    """
+    Error class
+    """
+
     message = ""
     def __init__(self, message, *args):
-        if len(args):
+        if args:
             exc_message = f"({message}, {', '.join(args)})"
         else:
             exc_message = message
@@ -141,10 +126,14 @@ class Error(Exception):
         Logger.error(exc_message)
 
 class Warning():
+    """
+    Warning class
+    """
+
     message = ""
     
     def __init__(self, message, *args):
-        if len(args):
+        if args:
             exc_message = f"({message}, {', '.join(args)})"
         else:
             exc_message = message
@@ -153,9 +142,13 @@ class Warning():
         Logger.warning(exc_message)
         
 class Info():
+    """
+    Info class
+    """
+
     message = ""
     def __init__(self, message, *args):
-        if len(args):
+        if args:
             exc_message = f"({message}, {', '.join(args)})"
         else:
             exc_message = message
