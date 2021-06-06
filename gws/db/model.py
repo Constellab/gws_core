@@ -18,15 +18,30 @@ from peewee import  Field, IntegerField, FloatField, DateField, \
                     ForeignKeyField, ManyToManyField, IPField, TextField, BlobField, \
                     AutoField, BigAutoField
 
+from peewee import DatabaseProxy
 from playhouse.sqlite_ext import RowIDField, SearchField, FTS5Model
 
 from gws.utils import to_camel_case
 from gws.logger import Error, Info
-from gws.db.database import DbManager
+from gws.db.manager import AbstractDbManager
 from gws.settings import Settings
 from gws.base import Base
 
 settings = Settings.retrieve()
+
+# ####################################################################
+#
+# DbManager class
+#
+# ####################################################################
+
+class DbManager(AbstractDbManager):
+    db = DatabaseProxy()
+    JSONField = None
+    _engine = None
+    _db_name = "gws"
+
+DbManager.init("sqlite3")
 
 # ####################################################################
 #

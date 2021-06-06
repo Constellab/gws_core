@@ -25,12 +25,7 @@ class Settings(PWModel):
     :type data: `dict`
     """
 
-    data = JSONField(null = True, default={})
-    SQLITE3_DB_NAME = "db.sqlite3"
-
-    KV_STORE_NAME = "kv_store"
-    FILE_STORE_NAME = "file_store"
-
+    data = JSONField(null = True, default={})    
     _data = dict(
         app_dir         = __cdir__,
         app_host        = '0.0.0.0',
@@ -169,16 +164,16 @@ class Settings(PWModel):
     
     def get_file_store_dir(self) -> str:
         if self.is_dev:
-            _dir = os.path.join(self.get_data_dir(), "dev", self.FILE_STORE_NAME)
+            _dir = os.path.join(self.get_data_dir(), "filestore", "dev")
         else:
-            _dir = os.path.join(self.get_data_dir(), "prod", self.FILE_STORE_NAME)
+            _dir = os.path.join(self.get_data_dir(), "filestore", "prod")
         return _dir
     
     def get_kv_store_dir(self) -> str:
         if self.is_dev:
-            _dir = os.path.join(self.get_data_dir(), "dev", self.KV_STORE_NAME)
+            _dir = os.path.join(self.get_data_dir(), "kvstore", "dev")
         else:
-            _dir = os.path.join(self.get_data_dir(), "prod", self.KV_STORE_NAME)
+            _dir = os.path.join(self.get_data_dir(), "kvstore", "prod")
         return _dir
 
     def get_urls(self) -> dict:

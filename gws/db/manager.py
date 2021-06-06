@@ -10,38 +10,27 @@ from peewee import SqliteDatabase, MySQLDatabase, DatabaseProxy
 from playhouse.sqlite_ext import JSONField as SQLiteJSONField
 from playhouse.mysql_ext import JSONField as MySQLJSONField
 from gws.settings import Settings
-
-
+settings = Settings.retrieve()
 
 # ####################################################################
 #
-# DbManager class
+# AbstractDbManager class
 #
 # ####################################################################
 
-class DbManager:
+class AbstractDbManager:
     """
     DbManager class. Provides backend feature for managing databases. 
     """
-    
-    db = DatabaseProxy()
-    JSONField = None
-    _engine = None
- 
+
     @classmethod
     def init(cls, engine:str="sqlite3"):
-        settings = Settings.retrieve()
-
         if engine == "sqlite3":
-            db_path = os.path.join(
-                settings.get_sqlite3_db_dir(),
-                settings.SQLITE3_DB_NAME
-            )
-            _db = SqliteDatabase(db_path)
+            _db = SqliteDatabase(cls.get_sqlite3_db_path())
             cls.JSONField = SQLiteJSONField
         elif engine in ["mariadb", "mysql"]:
             _db = MySQLDatabase(
-                "gws",
+                cls._db_name,
                 user='gws',
                 password='gencovery',
                 host=settings.get_maria_db_host(), 
@@ -53,7 +42,7 @@ class DbManager:
 
         cls.db.initialize(_db)
         cls._engine = engine
-
+        
     @classmethod
     def create_maria_db(cls):
         """
@@ -61,12 +50,18 @@ class DbManager:
         """
 
         if not cls._engine == "mariadb":
-            raise Exception("gws.db.model.DbManager", "create_maria_database", "Db engine is not mariab")
+            raise Exception("gws.db.manager.DbManager", "create_maria_database", "Db engine is not mariab")
         
-        db_name = "gws"
         conn = pymysql.connect(host='mariadb', port=3306, user="root", password="gencovery")
-        conn.cursor().execute(f"CREATE DATABASE IF NOT EXISTS {db_name}")
-        conn.cursor().execute(f"GRANT ALL PRIVILEGES ON ${db_name}.* TO 'gws'@'localhost';")
+        conn.cursor().execute(f"CREATE DATABASE IF NOT EXISTS {cls._db_name}")
+        conn.cursor().execute(f"GRANT ALL PRIVILEGES ON ${cls._db_name}.* TO 'gws'@'localhost';")
         conn.close()
 
-DbManager.init("sqlite3")
+    @classmethod
+    def get_sqlite3_db_path(cls):
+        db_dir = settings.get_sqlite3_db_dir()
+        if not os.path.exists(db_dir):
+            os.makedirs(db_dir)
+        db_path = os.path.join(db_dir, cls._db_name + ".sqlite3")
+        return db_path
+
