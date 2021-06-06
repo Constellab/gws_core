@@ -5,10 +5,7 @@ services:
   # GWS
   gws:
     image: gws:latest
-    build:
-      context: ./
-      dockerfile: .Dockerfile-gws
-    command: ["--runserver", "(LAB_NAME)"]
+    command: ["--runserver"]
     ports:
       - "3000:80"
     environment:
@@ -27,7 +24,6 @@ services:
     volumes:
       - /home/ubuntu/app/prod:/app
       - /home/ubuntu/app/prod/lab:/lab
-      - /home/ubuntu/app/prod/lab/.sys/public.json:/lab/.sys/public.json
       - /home/ubuntu/app/prod/lab/.sys/config.json:/lab/.sys/config.json:ro
       - /home/ubuntu/app/data:/data
     networks:
@@ -36,11 +32,8 @@ services:
   
   # Jupiter lab
   jlab:
-    image: jlab:latest
-    build:
-      context: ./
-      dockerfile: .Dockerfile-jlab
-    command: ["--runserver"]
+    image: gws:latest
+    command: ["--runjlab"]
     ports:
       - "8888:80"
     environment:
@@ -59,7 +52,6 @@ services:
     volumes:
       - /home/ubuntu/app/dev:/app
       - /home/ubuntu/app/dev/lab:/lab
-      - /home/ubuntu/app/dev/lab/.sys/public.json:/lab/.sys/public.json
       - /home/ubuntu/app/dev/lab/.sys/config.json:/lab/.sys/config.json:ro
       - /home/ubuntu/app/data:/data
     networks:
@@ -68,11 +60,8 @@ services:
 
   # VSCode lab
   vlab:
-    image: vlab:latest
-    build:
-      context: ./
-      dockerfile: .Dockerfile-vlab
-    command: ["--runserver"]
+    image: gws:latest
+    command: ["--runvlab"]
     ports:
       - "8080:80"
     environment:
@@ -91,7 +80,6 @@ services:
     volumes:
       - /home/ubuntu/app/dev:/app
       - /home/ubuntu/app/dev/lab:/lab
-      - /home/ubuntu/app/dev/lab/.sys/public.json:/lab/.sys/public.json
       - /home/ubuntu/app/dev/lab/.sys/config.json:/lab/.sys/config.json:ro
       - /home/ubuntu/app/data:/data
     networks:
