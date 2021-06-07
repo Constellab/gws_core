@@ -20,7 +20,7 @@ from pydantic import BaseModel
 from gws.utils import slugify
 from gws.settings import Settings
 from gws.model import Study, User
-from gws.logger import Error
+from gws.logger import Error, Info
 from gws.system import Monitor
 from gws.queue import Queue
 
@@ -39,17 +39,16 @@ app = FastAPI(docs_url=None)
 @app.on_event("startup")
 async def startup_event():
     settings = Settings.retrieve()
-    print("GWS application started!")
-    print("* Server: {}:{}".format(settings.get_data("app_host"), settings.get_data("app_port")))
-
-    print("* HTTP connection: https://{}:{}".format(
+    Info("GWS application started!", stdout=True)
+    Info("* Server: {}:{}".format(settings.get_data("app_host"), settings.get_data("app_port")), stdout=True)
+    Info("* HTTP connection: https://{}:{} (in {} mode)".format(
         settings.get_data("app_host"), 
-        settings.get_data("app_port")
-    ))
-
-    print("* Lab token: {}".format(
+        settings.get_data("app_port"),
+        settings.get_data("mode")
+    ), stdout=True)
+    Info("* Lab token: {}".format(
         urllib.parse.quote(settings.get_data("token"), safe='')
-    ))
+    ), stdout=True)
 
 @app.on_event("shutdown")
 async def shutdown_event():

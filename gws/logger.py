@@ -19,7 +19,6 @@ class Logger:
     _logger = None
     _is_debug = None
     _file_path = None
-    show_all = False
     
     def __init__(self, is_new_session = False, is_debug: bool = None):
 
@@ -132,7 +131,7 @@ class Warning():
 
     message = ""
     
-    def __init__(self, message, *args):
+    def __init__(self, message, *args, stdout: bool=False):
         if args:
             exc_message = f"({message}, {', '.join(args)})"
         else:
@@ -140,6 +139,9 @@ class Warning():
         
         self.message = exc_message
         Logger.warning(exc_message)
+
+        if stdout:
+            print(exc_message)
         
 class Info():
     """
@@ -147,7 +149,7 @@ class Info():
     """
 
     message = ""
-    def __init__(self, message, *args):
+    def __init__(self, message, *args, stdout: bool=False):
         if args:
             exc_message = f"({message}, {', '.join(args)})"
         else:
@@ -155,3 +157,6 @@ class Info():
         
         self.message = exc_message
         Logger.info(exc_message)
+
+        if stdout:
+            print(exc_message)
