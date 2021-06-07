@@ -87,7 +87,7 @@ def _run(ctx=None, uri="", token="", test=False, \
 @click.option('--cli', help='Command to run using the command line interface')
 @click.option('--cli_test', is_flag=True, help='Use command line interface in test mode')
 @click.option('--runserver', is_flag=True, help='Starts the server')
-@click.option('--runmode', default="dev", help='Starting mode (dev or prod). Defaults the dev')
+@click.option('--runmode', default="dev", help='Starting mode (dev or prod). Defaults to dev')
 @click.option('--ip', default="0.0.0.0", help='Server IP', show_default=True)
 @click.option('--port', default="3000", help='Server port', show_default=True)
 @click.option('--docgen', is_flag=True, help='Generates documentation')

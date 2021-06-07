@@ -60,8 +60,6 @@ class AbstractDbManager:
     @classmethod
     def get_sqlite3_db_path(cls):
         db_dir = settings.get_sqlite3_db_dir()
-        if not os.path.exists(db_dir):
-            os.makedirs(db_dir)
         db_path = os.path.join(db_dir, cls._db_name + ".sqlite3")
         return db_path
 

@@ -30,8 +30,8 @@ class Settings(PWModel):
         app_dir         = __cdir__,
         app_host        = '0.0.0.0',
         app_port        = 3000,
-        log_dir         = os.path.join(__cdir__, '../../logs'),
-        data_dir        = os.path.join(__cdir__, '../../data'),
+        log_dir         = "/logs",
+        data_dir        = "/data",
         dependencies    = {}
     )
 
@@ -105,11 +105,7 @@ class Settings(PWModel):
     # -- G --
 
     def get_sqlite3_db_dir(self) -> str:
-        if self.is_dev:
-            db_dir = os.path.join(self.get_data_dir(), "sqlite3", "dev")
-        else:
-            db_dir = os.path.join(self.get_data_dir(), "sqlite3", "prod")
-
+        db_dir = os.path.join( self.get_data_dir(), "sqlite3" )
         if not os.path.exists(db_dir):
             os.makedirs(db_dir)
 
@@ -130,17 +126,23 @@ class Settings(PWModel):
         else:
             return self.data.get(k, default)
 
-    def get_log_dir(self) -> str:
-        return self.data.get("log_dir")        
-    
-    def get_tmp_dir(self) -> str:
-        return self.data.get("tmp_dir")
-    
-    def get_data_dir(self) -> str:
-        return self.data.get("data_dir")
-
     def get_lab_dir(self) -> str:
         return "/lab"
+
+    def get_log_dir(self) -> str:
+        return "/logs"       
+
+    def get_data_dir(self) -> str:
+        if self.is_dev:
+            return self.get_dev_data_dir()
+        else:
+            return self.get_prod_data_dir()
+
+    def get_dev_data_dir(self) -> str:
+        return "/dev-data"
+
+    def get_prod_data_dir(self) -> str:
+        return "/prod-data"
 
     def get_root_dir(self) -> str:
         return self.get_lab_dir()
@@ -164,17 +166,15 @@ class Settings(PWModel):
     
     def get_file_store_dir(self) -> str:
         if self.is_dev:
-            _dir = os.path.join(self.get_data_dir(), "filestore", "dev")
+            return "/data/filestore/dev"
         else:
-            _dir = os.path.join(self.get_data_dir(), "filestore", "prod")
-        return _dir
+            return "/data/filestore/prod"
     
     def get_kv_store_dir(self) -> str:
         if self.is_dev:
-            _dir = os.path.join(self.get_data_dir(), "kvstore", "dev")
+            return "/data/kvstore/dev"
         else:
-            _dir = os.path.join(self.get_data_dir(), "kvstore", "prod")
-        return _dir
+            return "/data/kvstore/prod"
 
     def get_urls(self) -> dict:
         return self.data.get("urls",{})
@@ -202,7 +202,7 @@ class Settings(PWModel):
 
     @property
     def is_prod(self):
-        return self.data.get("is_prod", True)
+        return self.data.get("is_prod", False)
 
     @property
     def is_dev(self):
