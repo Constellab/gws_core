@@ -51,19 +51,19 @@ DbManager.init("sqlite3")
 
 def format_table_name(model: 'Model'):
     model_name = model._table_name
-    if settings.is_prod:
-        model_name = "prod_" + model_name
-    else:
-        model_name = "dev_" + model_name
+    # if settings.is_prod:
+    #     model_name = model_name
+    # else:
+    #     model_name = model_name
 
     return model_name.lower()
 
 def format_fts_table_name(model: 'Model'):
     model_name = model._related_model._table_name + "_fts"
-    if settings.is_prod:
-        model_name = "prod_" + model_name
-    else:
-        model_name = "dev_" + model_name
+    # if settings.is_prod:
+    #     model_name = model_name
+    # else:
+    #     model_name = model_name
 
     return model_name.lower()
 

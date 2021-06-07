@@ -24,11 +24,18 @@ class AbstractDbManager:
     """
 
     @classmethod
-    def init(cls, engine:str="sqlite3"):
-        if engine == "sqlite3":
-            _db = SqliteDatabase(cls.get_sqlite3_db_path())
+    def init(cls, engine:str=None, mode: str=None):
+        if engine:
+            cls._engine = engine
+
+        if not cls._engine:
+            cls._engine = "sqlite3"
+            #raise Exception("gws.db.model.DbManager", "init", f"Db engine '{cls._engine}' is not defined")
+
+        if cls._engine == "sqlite3":
+            _db = SqliteDatabase(cls.get_sqlite3_db_path(mode=mode))
             cls.JSONField = SQLiteJSONField
-        elif engine in ["mariadb", "mysql"]:
+        elif cls._engine in ["mariadb", "mysql"]:
             _db = MySQLDatabase(
                 cls._db_name,
                 user='gws',
@@ -38,11 +45,10 @@ class AbstractDbManager:
             )
             cls.JSONField = MySQLJSONField
         else:
-            raise Exception("gws.db.model.DbManager", "init", f"Db engine '{engine}' is not valid")
+            raise Exception("gws.db.model.DbManager", "init", f"Db engine '{cls._engine}' is not valid")
 
         cls.db.initialize(_db)
-        cls._engine = engine
-        
+
     @classmethod
     def create_maria_db(cls):
         """
@@ -58,8 +64,15 @@ class AbstractDbManager:
         conn.close()
 
     @classmethod
-    def get_sqlite3_db_path(cls):
-        db_dir = settings.get_sqlite3_db_dir()
+    def get_sqlite3_db_path(cls, mode:str=None):
+        if mode:
+            if mode == "prod":
+                db_dir = settings._get_sqlite3_prod_db_dir()
+            else:
+                db_dir = settings._get_sqlite3_dev_db_dir()
+        else:
+            db_dir = settings.get_sqlite3_db_dir()
+
         db_path = os.path.join(db_dir, cls._db_name + ".sqlite3")
         return db_path
 
