@@ -9,7 +9,6 @@ import importlib
 import inspect
 
 from typing import List
-from gws.base import DbManager
 from gws.query import Paginator
 from gws.model import Model, ViewModel, Process, Resource, Protocol, Experiment
 from gws.settings import Settings
