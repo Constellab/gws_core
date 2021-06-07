@@ -41,7 +41,7 @@ class DbManager(AbstractDbManager):
     _engine = None
     _db_name = "gws"
 
-DbManager.init("sqlite3")
+DbManager.init(engine="sqlite3")
 
 # ####################################################################
 #
