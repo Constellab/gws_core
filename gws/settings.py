@@ -106,16 +106,31 @@ class Settings(PWModel):
 
     def get_sqlite3_db_dir(self) -> str:
         db_dir = os.path.join( self.get_data_dir(), "sqlite3" )
+        return db_dir
+
+    def _get_sqlite3_prod_db_dir(self) -> str:
+        db_dir = os.path.join( self.get_prod_data_dir(), "sqlite3" )
         if not os.path.exists(db_dir):
             os.makedirs(db_dir)
+        return db_dir
 
+    def _get_sqlite3_dev_db_dir(self) -> str:
+        db_dir = os.path.join( self.get_dev_data_dir(), "sqlite3" )
+        if not os.path.exists(db_dir):
+            os.makedirs(db_dir)
         return db_dir
 
     def get_maria_db_host(self) -> str:
         if self.is_dev:
-            return "gws_db_dev"
+            return self._get_maria_dev_db_host()
         else:
-            return "gws_db_prod"
+            return self._get_maria_prod_db_host()
+
+    def _get_maria_prod_db_host(self) -> str:
+        return "gws_db_prod"
+
+    def _get_maria_dev_db_host(self) -> str:
+        return "gws_db_dev"
 
     def get_cwd(self) -> dict:
         return self.data["__cwd__"]
