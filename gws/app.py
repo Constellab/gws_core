@@ -44,7 +44,7 @@ async def startup_event():
     Info("* HTTP connection: https://{}:{} (in {} mode)".format(
         settings.get_data("app_host"), 
         settings.get_data("app_port"),
-        settings.get_data("mode")
+        ("prod" if settings.get_data("is_prod") else "dev")
     ), stdout=True)
     Info("* Lab token: {}".format(
         urllib.parse.quote(settings.get_data("token"), safe='')
