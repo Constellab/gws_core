@@ -1227,8 +1227,8 @@ class Process(Viewable):
         exist = ProcessType.select().where(ProcessType.ptype == cls.full_classname()).count()
         if not exist:
             pt = ProcessType(
-                ptype = cls.full_classname(),
-                base_ptype = "gws.model.Process" 
+                model_type = cls.full_classname(),
+                root_model_type = "gws.model.Process" 
             )
             pt.save()
             
@@ -2035,8 +2035,8 @@ class Protocol(Process):
         exist = ProtocolType.select().where(ProtocolType.ptype == cls.full_classname()).count()
         if not exist:
             pt = ProtocolType(
-                ptype = cls.full_classname(),
-                base_ptype = "gws.model.Protocol"
+                model_type = cls.full_classname(),
+                root_model_type = "gws.model.Protocol"
             )
             pt.save()
 
