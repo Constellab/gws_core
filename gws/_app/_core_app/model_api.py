@@ -115,7 +115,7 @@ async def get_a_model(type: str, \
     - **uri**: the uri of the model to fetch.
     """
     
-    model = ModelService.fetch_model(uri=uri)
+    model = ModelService.fetch_model(type=type, uri=uri)
     return model.to_json()
 
 @core_app.get("/model/{type}", tags=["Models"], summary="Get the list of models")

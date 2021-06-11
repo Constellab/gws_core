@@ -232,13 +232,15 @@ class ModelService(BaseService):
         
         process_type_list = list(set(process_type_list))
         for proc_t in set(process_type_list):
-            proc_t.create_process_type()
-            cls._model_types[ proc_t.full_classname() ] = proc_t
+            if not proc_t is Process and not proc_t is Protocol:
+                proc_t.create_process_type()
+                cls._model_types[ proc_t.full_classname() ] = proc_t
             
         resource_type_list = list(set(resource_type_list))
         for res_t in set(resource_type_list):
-            res_t.create_resource_type()
-            cls._model_types[ res_t.full_classname() ] = res_t
+            if not res_t is Resource:
+                res_t.create_resource_type()
+                cls._model_types[ res_t.full_classname() ] = res_t
             
         Info(f"REGISTER_ALL_PROCESSES: A total of {len(process_type_list)} process types were registered in db.\n Process types:\n {process_type_list}")
         

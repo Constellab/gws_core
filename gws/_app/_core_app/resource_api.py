@@ -11,6 +11,25 @@ from ._auth_user import check_user_access_token
 from .core_app import core_app
 from gws.service.resource_service import ResourceService
 
+@core_app.get("/resource-type/hierarchy", tags=["Resource"], summary="Get the resource type hierarchy")
+async def get_the_list_of_resource_types(page: Optional[int] = 1, \
+                                     number_of_items_per_page: Optional[int] = 20, \
+                                    _: UserData = Depends(check_user_access_token)) -> (dict, str,):
+    """
+    Get the resource type hierarchy
+
+    - **page**: the page number 
+    - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
+    """
+    
+    from gws.service.resource_service import ResourceService
+    
+    return ResourceService.fetch_resource_type_hierarchy(
+        page = page, 
+        number_of_items_per_page = number_of_items_per_page, 
+        as_json = True
+    )
+
 @core_app.get("/resource-type", tags=["Resource"], summary="Get the list of resource types")
 async def get_the_list_of_resource_types(page: Optional[int] = 1, \
                                      number_of_items_per_page: Optional[int] = 20, \

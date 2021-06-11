@@ -34,6 +34,9 @@ class File(Resource):
     _table_name = "gws_file"
     __download_url = "https://lab.{}/core-api/file/{}/{}/download"
 
+    def __init__(self, *ags, **kwargs):
+        super().__init__(*ags, **kwargs)
+        
     # -- A --
         
     # -- C --

@@ -46,7 +46,6 @@ class TestResource(unittest.TestCase):
         GTest.init()
 
     def test_model(self):
-
         c1 = Car()
         c2 = Car()
 

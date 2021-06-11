@@ -19,12 +19,15 @@ def _run(ctx=None, uri="", token="", test=False, \
          ip="0.0.0.0", port="3000", docgen=False, \
          force=False):
     
-    is_debug = (test or cli_test)
+    is_test = (test or cli_test)
+    is_debug = (is_test or runmode=="dev")
+
     Logger(is_new_session=True, is_debug=is_debug)
     settings = Settings.retrieve()
     settings.set_data("token", token)
     settings.set_data("uri", uri)
-    settings.set_data("is_debug", False)
+    settings.set_data("is_debug", is_debug)
+    settings.set_data("is_test", is_test)
 
     if not settings.save():
         raise Error("manage", "Cannot save the settings in the database")
@@ -53,7 +56,6 @@ def _run(ctx=None, uri="", token="", test=False, \
     elif cli:
         if cli_test:
             settings.set_data("is_prod", False)
-            settings.set_data("is_debug", is_debug)
             settings.save()
      
         tab = cli.split(".")

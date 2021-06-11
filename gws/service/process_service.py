@@ -84,9 +84,10 @@ class ProcessService(BaseService):
             }
         else:
             if t is Process:
-                query = t.select(t.is_protocol == False).order_by(t.creation_datetime.desc())
+                #query = t.select(t.is_protocol == False).order_by(t.creation_datetime.desc())
+                query = t.select().order_by(t.creation_datetime.desc())
             else:
-                query = t.select_me().order_by(t.creation_datetime.desc())
+                query = t.select().where(t.type == t.full_classname()).order_by(t.creation_datetime.desc())
 
             if experiment_uri:
                 query = query.join(Experiment, on=(t.experiment_id == Experiment.id))\
@@ -106,8 +107,8 @@ class ProcessService(BaseService):
                                 as_json=False) -> (Paginator, dict):
 
         query = ProcessType.select()\
-            .where(ProcessType.base_ptype == "gws.model.Process")\
-            .order_by(ProcessType.ptype.desc())
+            .where(ProcessType.root_model_type == "gws.model.Process")\
+            .order_by(ProcessType.model_type.desc())
 
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
         paginator = Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page)
@@ -123,14 +124,14 @@ class ProcessService(BaseService):
         """
 
         query: List[ProcessType] = ProcessType.select()\
-            .where(ProcessType.base_ptype == "gws.model.Process")\
-            .order_by(ProcessType.ptype.asc())
+            .where(ProcessType.root_model_type == "gws.model.Process")\
+            .order_by(ProcessType.model_type.asc())
 
         # create a fake main group to add processes in it
         tree: TypedTree = TypedTree('')
 
         for process_type in query:
             tree.add_object(
-                process_type.get_ptypes_array(), process_type.to_json())
+                process_type.get_model_types_array(), process_type.to_json())
 
         return tree.sub_trees

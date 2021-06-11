@@ -78,11 +78,12 @@ class ProtocolService(BaseService):
                 'paginator': paginator._paginator_dict()
             }
         else:
-            
             if t is Protocol:
-                query = t.select().where(t.is_protocol == True).order_by(t.creation_datetime.desc())
+                #query = t.select().where(t.is_protocol == True).order_by(t.creation_datetime.desc())
+                query = t.select().where( t.is_template == False ).order_by(t.creation_datetime.desc())
             else:
-                query = t.select_me().order_by(t.creation_datetime.desc())
+                #query = t.select().where(t.type == t.full_classname()).order_by(t.creation_datetime.desc())
+                query = t.select().where( (t.type == t.full_classname()) & (t.is_template == False) ).order_by(t.creation_datetime.desc())
 
             if experiment_uri:
                 query = query.join(Experiment, on=(t.id == Experiment.protocol_id))\
@@ -102,8 +103,8 @@ class ProtocolService(BaseService):
                                 as_json = False) -> (Paginator, dict):
 
         query = ProcessType.select()\
-                            .where(ProcessType.base_ptype=="gws.model.Protocol")\
-                            .order_by(ProcessType.ptype.desc())
+                            .where(ProcessType.root_model_type=="gws.model.Protocol")\
+                            .order_by(ProcessType.model_type.desc())
 
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
         paginator = Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page)

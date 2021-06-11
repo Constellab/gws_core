@@ -32,7 +32,6 @@ class TestProtocol(unittest.TestCase):
         pass
     
     def test_protocol(self):
-        return
         study = Study.get_by_id(1)
         
         p0 = Create()
@@ -79,7 +78,8 @@ class TestProtocol(unittest.TestCase):
         # self.assertEqual(e.generate_flow(), e.data["flow"])
         
         def _check_exp(*args, **kwargs):
-            self.assertEqual(e.processes.count(), 8)
+            #self.assertEqual(e.processes.count(), 8)
+            self.assertEqual(e.processes.count(), 7)
             self.assertEqual(e.is_finished, False)
             self.assertEqual(e.is_running, True)
 
@@ -89,7 +89,6 @@ class TestProtocol(unittest.TestCase):
         asyncio.run( e.run(user=GTest.user) )
 
     def test_setting_dump(self):
-        return
         study = Study.get_by_id(1)
         
         p0 = Create(instance_name="p0")
@@ -186,7 +185,6 @@ class TestProtocol(unittest.TestCase):
         asyncio.run( e.run(user=GTest.user) )
 
     def test_graph_load(self):
-        return
         study = Study.get_by_id(1)
         
         with open(os.path.join(testdata_dir, "mini_travel_graph.json"), "r") as f:

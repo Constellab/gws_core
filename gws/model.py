@@ -1091,7 +1091,7 @@ class Process(Viewable):
     created_by = ForeignKeyField(User, null=False, index=True, backref='+')
     config = ForeignKeyField(Config, null=False, index=True, backref='+')    
     progress_bar = ForeignKeyField(ProgressBar, null=True, backref='+')
-    is_protocol = BooleanField(null=False, index=True)
+    #is_protocol = BooleanField(null=False, index=True)
 
     input_specs: dict = {}
     output_specs: dict = {}
@@ -1149,7 +1149,7 @@ class Process(Viewable):
                 raise Error("gws.model.Process", "__init__", "The user must be an instance of User")
                 
             self.created_by = user
-            self.is_protocol = isinstance(self, Protocol)
+            #self.is_protocol = isinstance(self, Protocol)
 
         if not self.instance_name:
             self.instance_name = self.uri
@@ -1226,11 +1226,10 @@ class Process(Viewable):
         from gws.typing import ProcessType
         exist = ProcessType.select().where(ProcessType.ptype == cls.full_classname()).count()
         if not exist:
-            pt = ProcessType(ptype = cls.full_classname())
-            if issubclass(cls, Protocol):
-                pt.base_ptype = "gws.model.Protocol"
-            else:
-                pt.base_ptype = "gws.model.Process"  
+            pt = ProcessType(
+                ptype = cls.full_classname(),
+                base_ptype = "gws.model.Process" 
+            )
             pt.save()
             
     def create_experiment(self, study: 'Study', uri:str=None, user: 'User' = None):
@@ -1756,6 +1755,8 @@ class Protocol(Process):
     :type connectors: list
     """
 
+    is_template = BooleanField(default=False, index=True)
+
     _is_singleton = False
     _processes: dict = {}
     _connectors: list = []
@@ -1763,7 +1764,7 @@ class Protocol(Process):
     _outerfaces: dict = {}
     _defaultPosition: list = [0.0, 0.0]
     
-    #_table_name = "gws_protocol"
+    _table_name = "gws_protocol"
     
     def __init__(self, *args, processes: dict = {}, \
                  connectors: list = [], interfaces: dict = {}, outerfaces: dict = {}, \
@@ -1772,7 +1773,6 @@ class Protocol(Process):
         super().__init__(*args, user = user, **kwargs)
         self._input = Input(self)
         self._output = Output(self)
-
         self._processes = {}
         self._connectors = []
         self._interfaces = {}
@@ -1905,6 +1905,11 @@ class Protocol(Process):
         :rtype: Protocol
         """
 
+        # Do not build the protocol if it is not draft and is already built
+        is_already_built_in_memory = bool(self._connectors)
+        if not self.is_draft and is_already_built_in_memory:
+            return True
+
         from .service.model_service import ModelService
         
         if isinstance(graph, str):
@@ -2023,6 +2028,17 @@ class Protocol(Process):
         self.save(update_graph=True)
         
     # -- C --
+
+    @classmethod
+    def create_process_type(cls):
+        from gws.typing import ProtocolType
+        exist = ProtocolType.select().where(ProtocolType.ptype == cls.full_classname()).count()
+        if not exist:
+            pt = ProtocolType(
+                ptype = cls.full_classname(),
+                base_ptype = "gws.model.Protocol"
+            )
+            pt.save()
 
     def create_experiment(self, study: 'Study', user: 'User'=None):
         """
@@ -2161,6 +2177,21 @@ class Protocol(Process):
         """
         return self._processes[name]
     
+    @classmethod
+    def get_template(cls) -> "Protocol":
+        """
+        Get the template protocol
+        """
+        
+        try:
+            proto = cls.get( (cls.is_template == True) & (cls.type == cls.full_classname()) )
+        except:
+            proto = cls()
+            proto.is_template = True
+            proto.save()
+
+        return proto
+
     def get_layout(self):
         return self.data.get("layout", {})
     

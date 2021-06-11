@@ -7,7 +7,7 @@ import json
 import inspect
 from typing import List, Union
 from peewee import CharField
-from gws.model import Viewable
+from gws.model import Viewable, Model
 
 class Path:
     """
@@ -28,27 +28,90 @@ class URL:
 #
 # ####################################################################
 
-
-class ProcessType(Viewable):
+class Typing(Viewable):
     """
-    ProcessType class. This class allows storing information on all the types of the processes in the system.
+    Typing class. This class allows storing information on all the types of the models in the system.
 
-    :property ptype: The type of the related process.
-    :type ptype: `str`
-    :property base_ptype: The base type of the related process. The base type is either `gws.model.Process` or `gws.model.Protocol`
-    :type base_ptype: `str`
+    :property type: The type of the related model.
+    :type type: `str`
+    :property super_type: The super type of the related model.
+    :type super_type: `str`
+    :property root_type: The root type of the related process.
+    :type root_type: `str`
     """
 
-    ptype: str = CharField(null=True, index=True, unique=True)
-    base_ptype: str = CharField(null=True, index=True)
+    model_type: str = CharField(null=True, index=True, unique=True)
+    root_model_type: str = CharField(null=True, index=True)
+    #ancestors = TextField(null=True)
 
-    _table_name = 'gws_process_type'
+    _table_name = 'gws_typing'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.data.get("ancestors"):
+            self.data["ancestors"] = self.__get_hierarchy_table()
+
+    # -- G --
+
+    def get_model_types_array(self) -> List[str]:
+        """
+        Return the model_type as an array by splitting with .
+        """
+
+        return self.model_type.split('.')
+
+    def __get_hierarchy_table(self) -> List[str]:
+        from gws.service.model_service import ModelService
+        model_t: Model = ModelService.get_model_type(self.model_type)
+        mro: List[Model] = inspect.getmro(model_t)
+
+        ht: List[str] = []
+        for t in mro:
+            if issubclass(t, Model):
+                ht.append( t.full_classname() )
+
+        return ht
+
+class ProcessType(Typing):
+    """
+    ProcessType class.
+    """
+
+    #ptype: str = CharField(null=True, index=True, unique=True)
+    #base_ptype: str = CharField(null=True, index=True)
+    #_table_name = 'gws_process_type'
+
+    # -- PROPERTIES --
+
+    @property
+    def ptype(self):
+        return self.model_type
+
+    @property
+    def base_ptype(self):
+        return self.root_model_type
+
+    # -- G --
+
+    def get_ptypes_array(self) -> List[str]:
+        """
+        Return the ptypes as an array by splitting with .
+        """
+        
+        return super().get_model_types_array()
+
+    # -- T --
 
     def to_json(self, *, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
         from gws.service.model_service import ModelService
 
         _json = super().to_json(**kwargs)
-        model_t = ModelService.get_model_type(self.ptype)
+
+        # for compatibility
+        _json["ptype"] = self.ptype
+        _json["base_ptype"] = self.base_ptype
+
+        model_t = ModelService.get_model_type(self.model_type)
         specs = model_t.input_specs
         _json["input_specs"] = {}
         for name in specs:
@@ -96,11 +159,26 @@ class ProcessType(Viewable):
         else:
             return _json
 
-    def get_ptypes_array(self) -> List[str]:
-        """
-        Return the ptypes as an array by splitting with .
-        """
-        return self.ptype.split('.')
+class ProtocolType(Typing):
+    """
+    ProtocolType class.
+    """
+
+    def to_json(self, *, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
+        from gws.service.model_service import ModelService
+
+        _json = super().to_json(**kwargs )
+        model_t = ModelService.get_model_type(self.model_type)
+        _json["data"]["graph"] = model_t.get_template().graph
+
+        if stringify:
+            if prettify:
+                return json.dumps(_json, indent=4)
+            else:
+                return json.dumps(_json)
+        else:
+            return _json
+
 
 # ####################################################################
 #
@@ -108,28 +186,35 @@ class ProcessType(Viewable):
 #
 # ####################################################################
 
-
-class ResourceType(Viewable):
+class ResourceType(Typing):
     """
-    ResourceType class. This class allows storing information on all the types of the resources in the system.
-
-    :property rtype: The type of the related resource.
-    :type rtype: `str`
-    :property base_rtype: The base type of the related resource. The base type is either `gws.model.Resource`
-    :type base_ptype: `str`
+    ResourceType class.
     """
 
-    rtype = CharField(null=True, index=True, unique=True)
-    base_rtype = CharField(null=True, index=True)
-    
-    _table_name = 'gws_resource_type'
+    #rtype = CharField(null=True, index=True, unique=True)
+    #base_rtype = CharField(null=True, index=True)
+    #_table_name = 'gws_resource_type'
 
+    # -- PROPERTIES --
+
+    @property
+    def rtype(self):
+        return self.model_type
+
+    @property
+    def base_rtype(self):
+        return self.root_model_type
 
     def to_json(self, *, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         from gws.service.model_service import ModelService
         
         _json = super().to_json(**kwargs)
-        model_t = ModelService.get_model_type(self.rtype)
+
+        # for compatibility
+        _json["rtype"] = self.rtype
+        _json["base_rtype"] = self.base_rtype
+
+        model_t = ModelService.get_model_type(self.model_type)
 
         if not _json.get("data"):
             _json["data"] = {}

@@ -227,6 +227,10 @@ class Settings(PWModel):
     def is_debug(self):
         return self.data.get("is_debug", False)
 
+    @property
+    def is_test(self):
+        return self.data.get("is_test", False)
+
     # -- N --
 
     @property

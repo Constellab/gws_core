@@ -91,14 +91,13 @@ class ResourceService(BaseService):
     
     @classmethod
     def fetch_resource_type_list(cls, \
-                                 base_rtype: str=None, \
                                  page: int=1, \
                                  number_of_items_per_page :int=20, \
                                  as_json = False) -> (Paginator, dict):
         
 
         query = ResourceType.select()\
-                        .order_by(ResourceType.rtype.desc())  
+                        .order_by(ResourceType.model_type.desc())  
         
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
         paginator = Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page)
@@ -108,5 +107,7 @@ class ResourceService(BaseService):
         else:
             return paginator
      
-        
+    @classmethod
+    def fetch_resource_type_hierarcy(cls):
+        ResourceType.get
     

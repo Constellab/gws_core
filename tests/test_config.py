@@ -54,5 +54,5 @@ class TestConfig(unittest.TestCase):
         m.set_param("moving_step", 0.3)
         m.save()
 
-        m2 = Move.get_by_id(m.config.id)
-        self.assertEqual(m2.get_param("moving_step"), 0.3)
+        c = Config.get_by_id(m.config.id)
+        self.assertEqual(c.get_param("moving_step"), 0.3)

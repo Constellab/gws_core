@@ -48,8 +48,10 @@ class TestExperiment(unittest.TestCase):
         e1.set_description("This is my new experiment")
         e1.save()
 
-        self.assertEqual(e1.processes.count(), 18)
-        self.assertEqual(Process.select().count(), 18)
+        #self.assertEqual(e1.processes.count(), 18)
+        #self.assertEqual(Process.select().count(), 18)
+        self.assertEqual(e1.processes.count(), 15)
+        self.assertEqual(Process.select().count(), 15)
         self.assertEqual(Resource.select().count(), 0)
 
         # Create experiment 2 = experiment 2
@@ -62,7 +64,8 @@ class TestExperiment(unittest.TestCase):
         self.assertEqual(e2, e1)
         
         def _check_exp1(*args, **kwargs):
-            self.assertEqual(e2.processes.count(), 18)
+            #self.assertEqual(e2.processes.count(), 18)
+            self.assertEqual(e2.processes.count(), 15)
             self.assertEqual(e2.is_finished, False)
             self.assertEqual(e2.is_running, True)
         
@@ -78,7 +81,8 @@ class TestExperiment(unittest.TestCase):
         
         time.sleep(2)
         self.assertEqual(e2.pid, 0)
-        self.assertEqual(e2.processes.count(), 18)
+        #self.assertEqual(e2.processes.count(), 18)
+        self.assertEqual(e2.processes.count(), 15)
         self.assertEqual(e2.is_finished, True)
         self.assertEqual(e2.is_running, False)
         
@@ -124,7 +128,8 @@ class TestExperiment(unittest.TestCase):
                 self.assertEqual(r.is_archived, tf)
 
             Q = e3.processes
-            self.assertEqual( len(Q), 18)
+            #self.assertEqual( len(Q), 18)
+            self.assertEqual( len(Q), 15)
             for p in Q:
                 self.assertEqual(p.is_archived, tf)
                 self.assertEqual(p.config.is_archived, tf)
