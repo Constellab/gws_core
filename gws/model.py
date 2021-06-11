@@ -3182,10 +3182,12 @@ class Resource(Viewable):
     @classmethod
     def create_resource_type(cls):
         from gws.typing import ResourceType
-        exist = ResourceType.select().where(ResourceType.rtype == cls.full_classname()).count()
+        exist = ResourceType.select().where(ResourceType.model_type == cls.full_classname()).count()
         if not exist:
-            rt = ResourceType(rtype = cls.full_classname())
-            rt.base_rtype = "gws.model.Resource"  
+            rt = ResourceType(
+                model_type = cls.full_classname(),
+                root_model_type = "gws.model.Resource"  
+            )
             rt.save()
             
     # -- D --
