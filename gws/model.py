@@ -1224,7 +1224,7 @@ class Process(Viewable):
     @classmethod
     def create_process_type(cls):
         from gws.typing import ProcessType
-        exist = ProcessType.select().where(ProcessType.ptype == cls.full_classname()).count()
+        exist = ProcessType.select().where(ProcessType.model_type == cls.full_classname()).count()
         if not exist:
             pt = ProcessType(
                 model_type = cls.full_classname(),
@@ -2032,7 +2032,7 @@ class Protocol(Process):
     @classmethod
     def create_process_type(cls):
         from gws.typing import ProtocolType
-        exist = ProtocolType.select().where(ProtocolType.ptype == cls.full_classname()).count()
+        exist = ProtocolType.select().where(ProtocolType.model_type == cls.full_classname()).count()
         if not exist:
             pt = ProtocolType(
                 model_type = cls.full_classname(),
