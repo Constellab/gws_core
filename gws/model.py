@@ -2963,6 +2963,8 @@ class Experiment(Viewable):
         if settings.is_test:
             cmd.append("--cli_test")
         
+        Info("gws.model.Experiment", "run_through_cli", str(cmd), stdout=True)
+
         sproc = SysProc.popen(cmd, stderr=DEVNULL, stdout=DEVNULL)
         self.data["pid"] = sproc.pid
         self.save()

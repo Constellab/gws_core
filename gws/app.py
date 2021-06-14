@@ -87,14 +87,14 @@ class App(BaseApp):
         from ._sphynx.docgen import docgen
         from .service.model_service import ModelService
 
+        # register all processes and resources
+        ModelService.create_model_tables()
+        ModelService.register_all_processes_and_resources()
+
         # create default study and users
         Study.create_default_instance()
         User.create_owner_and_sysuser()
 
-        # register all processes and resources
-        ModelService.register_all_processes_and_resources()
-        ModelService.create_model_tables()
-        
         # start system monitoring
         Monitor.init(daemon=True)
         Queue.init(daemon=True)
@@ -116,15 +116,15 @@ class App(BaseApp):
         app.mount("/core-api/", core_app)
         app.mount("/central-api/", central_app)
 
-    @classmethod 
+    @classmethod
     def start(cls):
         """
         Starts FastAPI uvicorn
         """
-        settings = Settings.retrieve()
-        settings.set_data("app_host","0.0.0.0")
-        settings.save()
-        
+
         cls.init()
-        uvicorn.run(cls.app, host=settings.get_data("app_host"), port=int(settings.get_data("app_port")))
+
+        _settings.set_data("app_host","0.0.0.0")
+        _settings.save()
+        uvicorn.run(cls.app, host=_settings.get_data("app_host"), port=int(_settings.get_data("app_port")))
         cls.is_running = True

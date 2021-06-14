@@ -9,10 +9,10 @@ import json
 
 from gws.db.model import Model
 from gws.model import User, Experiment
-from gws.logger import Error
+from gws.logger import Error, Info
 from peewee import IntegerField, ForeignKeyField, BooleanField
 
-TICK_INTERVAL_SECONDS = 60   # 60 sec
+TICK_INTERVAL_SECONDS = 30   # 30 sec
 
 def _queue_tick(tick_interval, verbose, daemon):
     try:
@@ -72,6 +72,8 @@ class Queue(Model):
             _queue_tick(tick_interval, verbose, daemon)
         
         cls.__is_init = True
+        Info("The queue is active")
+        
         
     @classmethod
     def deinit(cls):
@@ -158,8 +160,8 @@ class Queue(Model):
     
     @classmethod
     def _tick(cls, verbose=False):
-        if verbose:
-            print("Checking experiment queue ...")
+        if True: #verbose:
+            Info("Checking experiment queue ...", stdout=True)
             
         job = Queue.next()
         if not job:
@@ -170,8 +172,8 @@ class Queue(Model):
             Queue.__pop_first()
             return
         
-        if verbose:
-            print(f"Experiment {e.uri}, is_running = {e.is_running}")
+        if True: #verbose:
+            Info(f"Experiment {e.uri}, is_running = {e.is_running}", stdout=True)
                 
         if e.is_running:
             #-> we will test later!
@@ -179,12 +181,12 @@ class Queue(Model):
         
         if Experiment.count_of_running_experiments():
             #-> busy: we will test later!
-            if verbose:
-                print("The lab is busy! Retry later")
+            if True: #verbose:
+                Info("The lab is busy! Retry later", stdout=True)
             return
         
-        if verbose:
-            print(f"Start experiment {e.uri}, user={job.user.uri}")
+        if True: #verbose:
+            Info(f"Start experiment {e.uri}, user={job.user.uri}", stdout=True)
             
         e.run_through_cli(user=job.user)
         time.sleep(3)  #-> wait for 3 sec to prevent database lock!
