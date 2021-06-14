@@ -27,7 +27,7 @@ from gws.db.manager import AbstractDbManager
 from gws.settings import Settings
 from gws.base import Base
 
-settings = Settings.retrieve()
+#settings = Settings.retrieve()
 
 # ####################################################################
 #
@@ -112,11 +112,14 @@ class Model(Base, PeeweeModel):
     _db_manager = DbManager
     _table_name = 'gws_model'
     
-    _LAB_URI = settings.get_data("uri")
+    _LAB_URI = None #settings.get_data("uri")
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
+        if not cls._LAB_URI:
+            cls._LAB_URI = settings.get_data("uri")
+
         if not self.id and self._is_singleton:
             try:
                 cls = type(self)
@@ -179,7 +182,8 @@ class Model(Base, PeeweeModel):
     
     def _create_hash_object(self):
         h = hashlib.blake2b()
-        h.update(self._LAB_URI.encode())
+        cls = type(self)
+        h.update(cls._LAB_URI.encode())
         exclusion_list = (ForeignKeyField, Model.JSONField, ManyToManyField, BlobField, AutoField, BigAutoField, )
         for prop in self.property_names(Field, exclude=exclusion_list) :
             if prop in ["id", "hash"]:

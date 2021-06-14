@@ -42,7 +42,7 @@ def _run(ctx=None, uri="", token="", test=False, \
         raise Error("runner", "Cannot save the settings in the database")
     
     settings = Settings.retrieve()
-    print("\n --------- ")
+    print("\n --------- RUNNER --------")
     print(settings.data)
     print(" --------- \n")
 

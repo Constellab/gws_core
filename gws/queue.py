@@ -67,10 +67,11 @@ class Queue(Model):
         if not cls.__is_init or not q.is_active:
             q.is_active = True
             q.save()
+            Info("Queue", "init", "The queue is initialized and active")
+
             _queue_tick(tick_interval, verbose, daemon)
         
         cls.__is_init = True
-        Info("The queue is active")
         
     @classmethod
     def deinit(cls):

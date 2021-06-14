@@ -49,7 +49,7 @@ async def startup_event():
 
     settings = Settings.retrieve()
 
-    print("\n --------- ")
+    print("\n --------- STARTUP -------")
     print(settings.data)
     print(" --------- \n")
 

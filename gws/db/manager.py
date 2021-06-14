@@ -10,7 +10,7 @@ from peewee import SqliteDatabase, MySQLDatabase, DatabaseProxy
 from playhouse.sqlite_ext import JSONField as SQLiteJSONField
 from playhouse.mysql_ext import JSONField as MySQLJSONField
 from gws.settings import Settings
-settings = Settings.retrieve()
+#settings = Settings.retrieve()
 
 # ####################################################################
 #
@@ -36,6 +36,7 @@ class AbstractDbManager:
             _db = SqliteDatabase(cls.get_sqlite3_db_path(mode=mode))
             cls.JSONField = SQLiteJSONField
         elif cls._engine in ["mariadb", "mysql"]:
+            settings = Settings.retrieve()
             _db = MySQLDatabase(
                 cls._db_name,
                 user='gws',
@@ -65,6 +66,7 @@ class AbstractDbManager:
 
     @classmethod
     def get_sqlite3_db_path(cls, mode:str=None):
+        settings = Settings.retrieve()
         if mode:
             if mode == "prod":
                 db_dir = settings._get_sqlite3_prod_db_dir()
