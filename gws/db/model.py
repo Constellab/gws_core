@@ -117,8 +117,9 @@ class Model(Base, PeeweeModel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        if not cls._LAB_URI:
-            cls._LAB_URI = settings.get_data("uri")
+        if not Model._LAB_URI:
+            settings = Settings.retrieve()
+            Model._LAB_URI = settings.get_data("uri")
 
         if not self.id and self._is_singleton:
             try:
@@ -182,8 +183,7 @@ class Model(Base, PeeweeModel):
     
     def _create_hash_object(self):
         h = hashlib.blake2b()
-        cls = type(self)
-        h.update(cls._LAB_URI.encode())
+        h.update(Model._LAB_URI.encode())
         exclusion_list = (ForeignKeyField, Model.JSONField, ManyToManyField, BlobField, AutoField, BigAutoField, )
         for prop in self.property_names(Field, exclude=exclusion_list) :
             if prop in ["id", "hash"]:
