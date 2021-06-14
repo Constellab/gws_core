@@ -196,18 +196,15 @@ def parse_settings(brick_cwd: str = None):
     brick_settings_file_path = os.path.join(brick_cwd, "settings.json")
     default_settings = {
         "type"          : "brick",
+        "app_dir"       : "./",
         "app_host"      : "localhost",
         "app_port"      : 3000,
-        "is_test"       : False,
         "externs"       : {},
         "dependencies"  : {},
         "__cwd__"       : brick_cwd
     }
 
     settings = _update_json(default_settings, _parse_settings(brick_cwd=brick_cwd, brick_name=brick_name, brick_settings_file_path=brick_settings_file_path))
-    if not os.path.exists(settings.get("db_dir")):
-        os.mkdir(settings.get("db_dir"))
-
     return settings
 
 def load_settings(brick_cwd: str = None):
