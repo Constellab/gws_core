@@ -38,10 +38,19 @@ app = FastAPI(docs_url=None)
 
 @app.on_event("startup")
 async def startup_event():
+    print("\n --------- ")
+    print(settings.data)
+    print(" --------- \n")
+
     Monitor.init(daemon=False)
     Queue.init(daemon=True, verbose=True)
 
     settings = Settings.retrieve()
+
+    print("\n --------- ")
+    print(settings.data)
+    print(" --------- \n")
+
     Info("GWS application started!", stdout=True)
     Info("* Server: {}:{}".format(settings.get_data("app_host"), settings.get_data("app_port")), stdout=True)
     Info("* HTTP connection: https://{}:{} (in {} mode)".format(

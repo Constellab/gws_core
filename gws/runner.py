@@ -41,8 +41,9 @@ def _run(ctx=None, uri="", token="", test=False, \
     if not settings.save():
         raise Error("runner", "Cannot save the settings in the database")
 
-    print("----- Settings ------")
+    print("\n --------- ")
     print(settings.data)
+    print(" --------- \n")
 
     if runserver:
         # start app
