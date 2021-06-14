@@ -85,10 +85,14 @@ class FileService(BaseService):
         
         if study_uri is None:
             e = uploader.create_experiment(study=Study.get_default_instance())
+            e.set_title("File upload")
+            e.save()
         else:
             try:
                 study = Study.get(Study.uri == study_uri)
                 e = uploader.create_experiment(study=study, user=user)
+                e.set_title("File upload")
+                e.save()
             except:
                 raise HTTPNotFound(detail=f"Study not found")
 
