@@ -2963,10 +2963,11 @@ class Experiment(Viewable):
         if settings.is_test:
             cmd.append("--cli_test")
 
+        cmd.append("--runmode")
         if settings.is_prod:
-            cmd.append("--runmode prod")
+            cmd.append("prod")
         else:
-            cmd.append("--runmode dev")
+            cmd.append("dev")
         
         Info("gws.model.Experiment", "run_through_cli", str(cmd))
 
