@@ -38,6 +38,8 @@ app = FastAPI(docs_url=None)
 
 @app.on_event("startup")
 async def startup_event():
+    settings = Settings.retrieve()
+    
     print("\n --------- ")
     print(settings.data)
     print(" --------- \n")
@@ -45,7 +47,7 @@ async def startup_event():
     Monitor.init(daemon=False)
     Queue.init(daemon=True, verbose=True)
 
-    settings = Settings.retrieve()
+    
 
     print("\n --------- ")
     print(settings.data)
