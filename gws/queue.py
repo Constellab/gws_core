@@ -17,12 +17,10 @@ TICK_INTERVAL_SECONDS = 30   # 30 sec
 def _queue_tick(tick_interval, verbose, daemon):
     try:
         Queue._tick(verbose)
-    except:
-        pass
-    
-    t = threading.Timer(tick_interval, _queue_tick, [ tick_interval, verbose, daemon ])    
-    t.daemon = daemon
-    t.start()
+    finally:
+        thread = threading.Timer(tick_interval, _queue_tick, [ tick_interval, verbose, daemon ])    
+        thread.daemon = daemon
+        thread.start()
 
 class Job(Model):
     """
@@ -73,7 +71,6 @@ class Queue(Model):
         
         cls.__is_init = True
         Info("The queue is active")
-        
         
     @classmethod
     def deinit(cls):

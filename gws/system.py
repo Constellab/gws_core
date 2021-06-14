@@ -18,12 +18,10 @@ TICK_INTERVAL_SECONDS = 60*5   # 5 min
 def _system_monitor_tick(daemon):
     try:
         Monitor._tick()
-    except:
-        pass
-    
-    t = threading.Timer(TICK_INTERVAL_SECONDS, _system_monitor_tick, [ daemon ])
-    t.daemon = daemon
-    t.start()
+    finally:
+        thread = threading.Timer(TICK_INTERVAL_SECONDS, _system_monitor_tick, [ daemon ])
+        thread.daemon = daemon
+        thread.start()
 
 # ####################################################################
 #
@@ -53,7 +51,7 @@ class Monitor(Model):
         if not cls.__is_init:
             cls.__is_init = True
             _system_monitor_tick(daemon)
-    
+
     @classmethod
     def get_last(cls):
         return Monitor.select().order_by(Monitor.id.desc()).get()

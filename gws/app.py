@@ -38,11 +38,14 @@ app = FastAPI(docs_url=None)
 
 @app.on_event("startup")
 async def startup_event():
+    Monitor.init(daemon=False)
+    Queue.init(daemon=True, verbose=True)
+
     settings = Settings.retrieve()
     Info("GWS application started!", stdout=True)
     Info("* Server: {}:{}".format(settings.get_data("app_host"), settings.get_data("app_port")), stdout=True)
     Info("* HTTP connection: https://{}:{} (in {} mode)".format(
-        settings.get_data("app_host"), 
+        settings.get_data("app_host"),
         settings.get_data("app_port"),
         ("prod" if settings.is_prod else "dev")
     ), stdout=True)
@@ -95,10 +98,6 @@ class App(BaseApp):
         Study.create_default_instance()
         User.create_owner_and_sysuser()
 
-        # start system monitoring
-        Monitor.init(daemon=True)
-        Queue.init(daemon=True, verbose=True)
-        
         # static dirs and docs
         dirs = _settings.get_dependency_dirs()
         for name in dirs:
@@ -123,7 +122,6 @@ class App(BaseApp):
         """
 
         cls.init()
-
         _settings.set_data("app_host","0.0.0.0")
         _settings.save()
         uvicorn.run(cls.app, host=_settings.get_data("app_host"), port=int(_settings.get_data("app_port")))

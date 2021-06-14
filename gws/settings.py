@@ -25,7 +25,7 @@ class Settings(PWModel):
     :type data: `dict`
     """
 
-    data = JSONField(null = True)    
+    data = JSONField(null = True)
     _data = dict(
         app_dir         = __cdir__,
         app_host        = '0.0.0.0',
@@ -65,7 +65,7 @@ class Settings(PWModel):
             for k in cls._data:
                 settings.data[k] = cls._data[k]
             settings.save()
-        except:            
+        except:
             settings = Settings()
             #secret_key
             secret_key = generate_random_chars(128) #b64encode(token_bytes(32)).decode()
