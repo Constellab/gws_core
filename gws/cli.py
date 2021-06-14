@@ -19,8 +19,8 @@ from gws.model import Experiment, User
 def run_experiment(ctx, experiment_uri, user_uri):
     try:
         user = User.get(User.uri == user_uri)
-    except:
-        raise Error("gws.cli", "run_experiment", f"A user is requires. IS TEST {Settings.retrieve().is_test}")
+    except Exception as err:
+        raise Error("gws.cli", "run_experiment", f"No user found with uri '{user_uri}'. Flag is_test={Settings.retrieve().is_test}. Error: {err}") from err
         
     if not user.is_authenticated:
         raise Error("gws.cli", "run_experiment", f"The user must be HTTP authenticated")
@@ -28,7 +28,7 @@ def run_experiment(ctx, experiment_uri, user_uri):
     try:
         e = Experiment.get(Experiment.uri == experiment_uri)
     except Exception as err:
-        raise Error("gws.cli", "run_experiment", f"No experiment found with uri {experiment_uri}. Error: {err}")
+        raise Error("gws.cli", "run_experiment", f"No experiment found with uri {experiment_uri}. Error: {err}") from err
 
     if e.is_running:
         raise Error("gws.cli", "run_experiment", f"The experiment is already running")
@@ -38,4 +38,4 @@ def run_experiment(ctx, experiment_uri, user_uri):
         try:
             asyncio.run( e.run(user=user) )
         except Exception as err:
-            raise Error("gws.cli", "run_experiment", f"An error occured. Error: {err}")
+            raise Error("gws.cli", "run_experiment", f"An error occured. Error: {err}") from err

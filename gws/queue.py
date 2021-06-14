@@ -160,7 +160,7 @@ class Queue(Model):
     
     @classmethod
     def _tick(cls, verbose=False):
-        if True: #verbose:
+        if verbose:
             Info("Checking experiment queue ...", stdout=True)
             
         job = Queue.next()
@@ -172,7 +172,7 @@ class Queue(Model):
             Queue.__pop_first()
             return
         
-        if True: #verbose:
+        if verbose:
             Info(f"Experiment {e.uri}, is_running = {e.is_running}", stdout=True)
                 
         if e.is_running:
@@ -181,11 +181,11 @@ class Queue(Model):
         
         if Experiment.count_of_running_experiments():
             #-> busy: we will test later!
-            if True: #verbose:
+            if verbose:
                 Info("The lab is busy! Retry later", stdout=True)
             return
         
-        if True: #verbose:
+        if verbose:
             Info(f"Start experiment {e.uri}, user={job.user.uri}", stdout=True)
             
         e.run_through_cli(user=job.user)

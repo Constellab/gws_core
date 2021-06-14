@@ -97,7 +97,7 @@ class App(BaseApp):
 
         # start system monitoring
         Monitor.init(daemon=True)
-        Queue.init(daemon=True)
+        Queue.init(daemon=True, verbose=True)
         
         # static dirs and docs
         dirs = _settings.get_dependency_dirs()
