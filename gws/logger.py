@@ -40,7 +40,7 @@ class Logger:
             Logger._logger.addHandler(fh)
 
             if is_new_session:
-                Logger._logger.info("\nSession: " + str(datetime.datetime.now()) + "\n")
+                Logger._logger.info("\nSESSION: " + str(datetime.datetime.now()) + "\n")
     
     # -- E --
 

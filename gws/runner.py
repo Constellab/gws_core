@@ -19,36 +19,36 @@ def _run(ctx=None, uri="", token="", test=False, \
          ip="0.0.0.0", port="3000", docgen=False, \
          force=False):
     
-    is_test = (test or cli_test)
+    is_test = bool(test or cli_test)
     is_debug = (is_test or runmode=="dev")
     is_prod = (runmode == "prod")
     Logger(is_new_session=True, is_debug=is_debug)
 
     settings = Settings.retrieve()
-    settings.set_data("token", token)
-    settings.set_data("uri", uri)
-    settings.set_data("is_debug", is_debug)
-    settings.set_data("is_test", is_test)
-    settings.set_data("is_prod", is_prod)
     settings.set_data("app_host", ip)
     settings.set_data("app_port", port)
+    settings.set_data("token", token)
+    settings.set_data("uri", uri)
+    settings.set_data("is_prod", is_prod)
+    settings.set_data("is_debug", is_debug)
+    settings.set_data("is_test", is_test)
+
+    if is_prod:
+        # Deactivate any test in production mode
+        settings.set_data("test", False)
+        settings.set_data("is_test", False)
 
     if not settings.save():
-        raise Error("manage", "Cannot save the settings in the database")
-          
+        raise Error("runner", "Cannot save the settings in the database")
+
+    print("----- Settings ------")
+    print(settings.data)
+
     if runserver:
         # start app
         from gws.app import App
         app = App()
         app.start()
-    elif test:
-        if test == "*" or test == "all" :
-            test = "test*"
-  
-        loader = unittest.TestLoader()
-        test_suite = loader.discover(".", pattern=test+".py")
-        test_runner = unittest.TextTestRunner()
-        test_runner.run(test_suite)
     elif cli:
         tab = cli.split(".")
         n = len(tab)
@@ -57,9 +57,17 @@ def _run(ctx=None, uri="", token="", test=False, \
         module = importlib.import_module(module_name)
         func = getattr(module, function_name, None)
         if func is None:
-            raise Error("manage", f"Please check that method {cli} is defined")
+            raise Error("runner", f"Please check that method {cli} is defined")
         else:
             func()
+    elif test:
+        if test in ["*", "all"]:
+            test = "test*"
+
+        loader = unittest.TestLoader()
+        test_suite = loader.discover(".", pattern=test+".py")
+        test_runner = unittest.TextTestRunner()
+        test_runner.run(test_suite)
     elif docgen:
         from ._sphynx.docgen import docgen
         brick_dir = settings.get_cwd()

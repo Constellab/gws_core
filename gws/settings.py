@@ -25,7 +25,7 @@ class Settings(PWModel):
     :type data: `dict`
     """
 
-    data = JSONField(null = True, default={})    
+    data = JSONField(null = True)    
     _data = dict(
         app_dir         = __cdir__,
         app_host        = '0.0.0.0',
@@ -40,7 +40,7 @@ class Settings(PWModel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        if len(self.data) == 0:
+        if not self.data:
             self.data = {}
             for k in self._data:
                 self.data[k] = self._data[k]
@@ -53,6 +53,7 @@ class Settings(PWModel):
         db_dir = os.path.join(cls._data["data_dir"], "settings")
         if not os.path.exists(db_dir):
             os.makedirs(db_dir)
+            
         db = SqliteDatabase( os.path.join(db_dir, "settings.sqlite3") )
         database_proxy.initialize(db)
         
@@ -121,10 +122,10 @@ class Settings(PWModel):
         return db_dir
 
     def get_maria_db_host(self) -> str:
-        if self.is_dev:
-            return self._get_maria_dev_db_host()
-        else:
+        if self.is_prod:
             return self._get_maria_prod_db_host()
+        else:
+            return self._get_maria_dev_db_host()
 
     def _get_maria_prod_db_host(self) -> str:
         return "gws_db_prod"
@@ -148,10 +149,10 @@ class Settings(PWModel):
         return "/logs"       
 
     def get_data_dir(self) -> str:
-        if self.is_dev:
-            return self.get_dev_data_dir()
-        else:
+        if self.is_prod:
             return self.get_prod_data_dir()
+        else:
+            return self.get_dev_data_dir()
 
     def get_dev_data_dir(self) -> str:
         return "/dev-data"
@@ -180,16 +181,16 @@ class Settings(PWModel):
         return self.data.get("dirs",{}).get(name,None)
     
     def get_file_store_dir(self) -> str:
-        if self.is_dev:
-            return "/data/filestore/dev"
-        else:
+        if self.is_prod:
             return "/data/filestore/prod"
+        else:
+            return "/data/filestore/dev"
     
     def get_kv_store_dir(self) -> str:
-        if self.is_dev:
-            return "/data/kvstore/dev"
-        else:
+        if self.is_prod:
             return "/data/kvstore/prod"
+        else:
+            return "/data/kvstore/dev"
 
     def get_urls(self) -> dict:
         return self.data.get("urls",{})
@@ -209,7 +210,6 @@ class Settings(PWModel):
     def get_extern_dir(self, dependency_name: str) -> str:
         return self.data["extern_dirs"].get(dependency_name, None)
 
-    
     def get_extern_dirs(self) -> dict:
         return self.data["extern_dirs"]
 
@@ -243,8 +243,8 @@ class Settings(PWModel):
     def retrieve(cls):
         try:
             return Settings.get_by_id(1)
-        except:
-            raise Exception("Settings", "retrieve", "Cannot retrieve settings from the database")
+        except Exception as err:
+            raise Exception("Settings", "retrieve", "Cannot retrieve settings from the database") from err
    
     # -- S --
 
