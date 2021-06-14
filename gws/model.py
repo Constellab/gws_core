@@ -2968,7 +2968,7 @@ class Experiment(Viewable):
         else:
             cmd.append("--runmode dev")
         
-        Info("gws.model.Experiment", "run_through_cli", str(cmd), stdout=True)
+        Info("gws.model.Experiment", "run_through_cli", str(cmd))
 
         sproc = SysProc.popen(cmd, stderr=DEVNULL, stdout=DEVNULL)
         self.data["pid"] = sproc.pid

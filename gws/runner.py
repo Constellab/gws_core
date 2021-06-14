@@ -12,7 +12,7 @@ import subprocess
 import shutil
 import re
 from gws.settings import Settings
-from gws.logger import Logger, Error
+from gws.logger import Logger, Error, Info
 
 def _run(ctx, uri="", token="", test="", \
          cli=False, cli_test=False, runserver=False, runmode="dev", \
@@ -42,9 +42,9 @@ def _run(ctx, uri="", token="", test="", \
         raise Error("runner", "Cannot save the settings in the database")
     
     settings = Settings.retrieve()
-    print("\n --------- RUNNER --------")
-    print(settings.data)
-    print(" --------- \n")
+    Info("\n --------- RUNNER --------")
+    Info(f"{settings.data}")
+    Info(" --------- \n")
 
     if runserver:
         # start app
