@@ -1782,51 +1782,13 @@ class Protocol(Process):
         if self.uri and self.data.get("graph"):          #the protocol was saved in the super-class
             self._build_from_dump( self.data["graph"] )
         else:
-            if not isinstance(processes, dict):
-                raise Error("gws.model.Protocol", "__init__", "A dictionnary of processes is expected")
-
-            if not isinstance(connectors, list):
-                raise Error("gws.model.Protocol", "__init__", "A list of connectors is expected")
-
-            # set process
-            for name in processes:
-                proc = processes[name]
-                if not isinstance(proc, Process):
-                    raise Error("gws.model.Protocol", "__init__", "The dictionnary of processes must contain instances of Process")
-
-                self.add_process(name, proc)
-
-            # set connectors
-            for conn in connectors:
-                if not isinstance(conn, Connector):
-                    raise Error("gws.model.Protocol", "__init__", "The list of connector must contain instances of Connectors")
-
-                self.add_connector(conn)
-
-            if user is None:
-                try:
-                    from .service.user_service import UserService
-                    user = UserService.get_current_user()
-                except:
-                    raise Error("gws.model.Protocol", "__init__", "A user is required")
-
-            if isinstance(user, User):
-                if self.created_by.is_sysuser:
-                    # The sysuser is used by default to create any Process
-                    # We therefore replace the syssuser by the currently authenticated user
-
-                    if user.is_authenticated:
-                        self.create_by = user 
-                    else:
-                        raise Error("gws.model.Protocol", "__init__", "The user must be authenticated")
-            else:
-                raise Error("gws.model.Protocol", "__init__", "The user must be an instance of User")
-
-            # set interfaces
-            self.__set_interfaces(interfaces)
-            self.__set_outerfaces(outerfaces)
-            self.data["graph"] = self.dumps(as_dict=True)
-            self.save()   #<- will save the graph
+            self._build(
+                processes, 
+                connectors,
+                interfaces,
+                outerfaces,
+                user
+            )
     
     def _init_io(self):
         pass
@@ -1897,6 +1859,53 @@ class Protocol(Process):
     
     # -- B --
     
+    def _build(self, processes: dict=None, connectors: list=None, interfaces: dict=None, outerfaces: dict=None, user=None, **kwargs):
+        if not isinstance(processes, dict):
+            raise Error("gws.model.Protocol", "__init__", "A dictionnary of processes is expected")
+        
+        if not isinstance(connectors, list):
+            raise Error("gws.model.Protocol", "__init__", "A list of connectors is expected")
+
+        # set process
+        for name in processes:
+            proc = processes[name]
+            if not isinstance(proc, Process):
+                raise Error("gws.model.Protocol", "__init__", "The dictionnary of processes must contain instances of Process")
+
+            self.add_process(name, proc)
+
+        # set connectors
+        for conn in connectors:
+            if not isinstance(conn, Connector):
+                raise Error("gws.model.Protocol", "__init__", "The list of connector must contain instances of Connectors")
+
+            self.add_connector(conn)
+
+        if user is None:
+            try:
+                from .service.user_service import UserService
+                user = UserService.get_current_user()
+            except:
+                raise Error("gws.model.Protocol", "__init__", "A user is required")
+
+        if isinstance(user, User):
+            if self.created_by.is_sysuser:
+                # The sysuser is used by default to create any Process
+                # We therefore replace the syssuser by the currently authenticated user
+
+                if user.is_authenticated:
+                    self.create_by = user 
+                else:
+                    raise Error("gws.model.Protocol", "__init__", "The user must be authenticated")
+        else:
+            raise Error("gws.model.Protocol", "__init__", "The user must be an instance of User")
+
+        # set interfaces
+        self.__set_interfaces(interfaces)
+        self.__set_outerfaces(outerfaces)
+        self.data["graph"] = self.dumps(as_dict=True)
+        self.save()   #<- will save the graph
+
     def _build_from_dump( self, graph: (str, dict), rebuild = False ) -> 'Protocol':
         """ 
         Construct a Protocol instance using a setting dump.
@@ -1906,8 +1915,7 @@ class Protocol(Process):
         """
 
         # Do not build the protocol if it is not draft and is already built
-        is_already_built_in_memory = bool(self._connectors)
-        if not self.is_draft and is_already_built_in_memory:
+        if self.is_built and not self.is_draft:
             return True
 
         from .service.model_service import ModelService
@@ -1954,7 +1962,7 @@ class Protocol(Process):
             node_json = graph["nodes"][k]
             proc_uri = node_json.get("uri",None)
             proc_type_str = node_json["type"]
-            
+ 
             try:
                 proc_t = ModelService.get_model_type(proc_type_str)
                 
@@ -2160,6 +2168,7 @@ class Protocol(Process):
         proto._build_from_dump(graph, rebuild=True)
         proto.data["graph"] = proto.dumps(as_dict=True)
         proto.save()
+
         return proto
     
     # -- G --
@@ -2293,6 +2302,10 @@ class Protocol(Process):
                 return True
 
         return False
+
+    @property
+    def is_built(self):
+        return bool(self._connectors)
 
     # -- L --
     

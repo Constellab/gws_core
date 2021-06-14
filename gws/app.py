@@ -96,8 +96,8 @@ class App(BaseApp):
         ModelService.create_model_tables()
         
         # start system monitoring
-        Monitor.init(daemon=False)
-        Queue.init(daemon=False)
+        Monitor.init(daemon=True)
+        Queue.init(daemon=True)
         
         # static dirs and docs
         dirs = _settings.get_dependency_dirs()

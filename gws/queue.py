@@ -100,7 +100,7 @@ class Queue(Model):
         
         if auto_start:
             if q.is_active:
-                #> manally trigger to experiment if possible!
+                #> manally trigger the experiment if possible!
                 if not Experiment.count_of_running_experiments():
                     cls._tick()
             else:

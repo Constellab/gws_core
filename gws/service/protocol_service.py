@@ -6,7 +6,7 @@
 from typing import List
 
 from gws.query import Paginator
-from gws.typing import ProcessType
+from gws.typing import ProtocolType
 from gws.model import Protocol, Experiment, ProgressBar
 from gws.http import *
 
@@ -18,7 +18,6 @@ class ProtocolService(BaseService):
     
     @classmethod
     def fetch_protocol(cls, type = "gws.model.Protocol", uri: str = "") -> Protocol:
-        
         from gws.service.model_service import ModelService
         t = None
         if type:
@@ -33,7 +32,6 @@ class ProtocolService(BaseService):
             return p
         except Exception as err:
             raise HTTPNotFound(detail=f"No protocol found with uri '{uri}' and type '{type}'", debug_error=err)
-    
     
     @classmethod
     def fetch_protocol_progress_bar(cls, type = "gws.model.Protocol", uri: str = "") -> ProgressBar:
@@ -94,17 +92,16 @@ class ProtocolService(BaseService):
                 return paginator.to_json(shallow=True)
             else:
                 return paginator
-            
-            
+    
     @classmethod
     def fetch_protocol_type_list(cls, \
                                 page: int=1, \
                                 number_of_items_per_page :int=20, \
                                 as_json = False) -> (Paginator, dict):
 
-        query = ProcessType.select()\
-                            .where(ProcessType.root_model_type=="gws.model.Protocol")\
-                            .order_by(ProcessType.model_type.desc())
+        query = ProtocolType.select()\
+                            .where(ProtocolType.root_model_type=="gws.model.Protocol")\
+                            .order_by(ProtocolType.model_type.desc())
 
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
         paginator = Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page)

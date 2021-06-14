@@ -53,6 +53,7 @@ class TestExperiment(unittest.TestCase):
         self.assertEqual(e1.processes.count(), 15)
         self.assertEqual(Process.select().count(), 15)
         self.assertEqual(Resource.select().count(), 0)
+        self.assertEqual(Experiment.select().count(), 1)
 
         # Create experiment 2 = experiment 2
         # -------------------------------
@@ -62,7 +63,11 @@ class TestExperiment(unittest.TestCase):
         self.assertEqual(e2.get_title(), "My exp title")
         self.assertEqual(e2.get_description(), "This is my new experiment")
         self.assertEqual(e2, e1)
-        
+        self.assertEqual(e2.processes.count(), 15)
+        self.assertEqual(Process.select().count(), 15)
+        self.assertEqual(Resource.select().count(), 0)
+        self.assertEqual(Experiment.select().count(), 1)
+
         def _check_exp1(*args, **kwargs):
             #self.assertEqual(e2.processes.count(), 18)
             self.assertEqual(e2.processes.count(), 15)
@@ -86,6 +91,13 @@ class TestExperiment(unittest.TestCase):
         self.assertEqual(e2.is_finished, True)
         self.assertEqual(e2.is_running, False)
         
+        e2_bis = Experiment.get(Experiment.uri == e1.uri)
+        self.assertEqual(e2_bis.protocol.get_title(), proto_title)
+        self.assertEqual(e2_bis.get_title(), "My exp title")
+        self.assertEqual(e2_bis.get_description(), "This is my new experiment")
+        self.assertEqual(e2_bis.processes.count(), 15)
+        self.assertEqual(Experiment.select().count(), 1)
+
         # experiment 3
         # -------------------------------
         print("Create experiment_3")
@@ -145,11 +157,16 @@ class TestExperiment(unittest.TestCase):
         
         
     def test_service(self):
-        return
+        tables = ( Resource, Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, Queue, Job)
+        GTest.drop_tables(tables)
+        GTest.init()
+        
         GTest.print("Test ExperimentService")
         proto = create_nested_protocol()
         e = Experiment(protocol=proto, study=GTest.study, user=GTest.user)
         e.save() 
+        self.assertEqual(Experiment.select().count(), 1)
+
         Queue.init(tick_interval=3, verbose=True) # tick each second
 
         def _run():
@@ -177,15 +194,19 @@ class TestExperiment(unittest.TestCase):
             print("Done!")
             return True
 
+        self.assertEqual(Experiment.select().count(), 1)
+
         print("")
         print("Run the experiment ...")
         self.assertTrue(_run())
+        self.assertEqual(Experiment.select().count(), 1)
 
         print("")
         print("Re-Run the same experiment ...")
         time.sleep(1)
         self.assertTrue(e.reset())
         self.assertTrue(_run())
+        self.assertEqual(Experiment.select().count(), 1)
 
         print("")
         print("Re-Run the same experiment after its valdiation...")
@@ -193,3 +214,4 @@ class TestExperiment(unittest.TestCase):
         e = Experiment.get(Experiment.id == e.id)
         e.validate(user=GTest.user)
         self.assertFalse(_run())
+        self.assertEqual(Experiment.select().count(), 1)

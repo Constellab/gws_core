@@ -162,7 +162,7 @@ class AddOnCreate(Process):
     async def task(self):
         print("AddOn Create", flush=True)
         self.output['addon'] = RobotAddOn()
-        
+      
 def create_protocol():
     facto   = Create()
     move_1  = Move()
@@ -208,98 +208,142 @@ def create_protocol():
     
     return proto
 
+class TravelProto(Protocol):
+    
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, user=user, **kwargs)
+
+        if not self.is_built:
+            move_1  = Move()
+            eat_1   = Eat()
+            move_2  = Move()
+            move_3  = Move()
+            eat_2   = Eat()
+            wait_1  = Wait()
+            add_1 = Add()
+            addon_create_1 = AddOnCreate()
+
+            processes = {
+                'move_1' : move_1, 
+                'eat_1' : eat_1, 
+                'move_2' : move_2,  
+                'move_3' : move_3,  
+                'eat_2' : eat_2, 
+                'wait_1' : wait_1,
+                'add_1' : add_1,
+                'addon_create_1' : addon_create_1
+            }
+
+            connectors=[
+                move_1>>'robot'    | eat_1<<'robot',
+                eat_1>>'robot'     | wait_1<<'robot',
+                
+                addon_create_1>>'addon'  | add_1<<'addon',
+                wait_1>>'robot'          | add_1<<'robot',
+                add_1>>'mega_robot'      | move_2<<'robot',
+                
+                move_2>>'robot'    | move_3<<'robot',
+                eat_1>>'robot'     | eat_2<<'robot',
+            ]
+
+            interfaces = { 'robot' : move_1.in_port('robot') }
+            outerfaces = { 'robot' : eat_2.out_port('robot') }
+
+            self._build(
+                processes=processes,
+                connectors=connectors,
+                interfaces=interfaces,
+                outerfaces=outerfaces,
+                user=user,
+                **kwargs
+            )
+
+
+class SuperTravelProto(Protocol):
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, user=user, **kwargs)
+
+        if not self.is_built:
+            sub_travel = TravelProto(user=user)
+            sub_travel.save()
+
+            move_4  = Move()
+            fly_1  = Fly()
+            wait_2 = Wait()
+            eat_3 = Eat()
+
+            processes = {
+                'move_4' : move_4, 
+                'fly_1' : fly_1, 
+                'sub_travel': sub_travel,
+                'eat_3'  : eat_3,
+                'wait_2' : wait_2, 
+            }
+
+            connectors=[
+                move_4>>'robot'       | sub_travel<<'robot',
+                sub_travel>>'robot'  | fly_1<<'robot',
+                sub_travel>>'robot'  | eat_3<<'robot',
+                fly_1>>'robot'       | wait_2<<'robot'
+            ]
+
+            interfaces = { 'robot' : move_4.in_port('robot') }
+            outerfaces = { 'robot' : eat_3.out_port('robot') }        
+            sub_travel.save()
+
+            self._build(
+                processes=processes,
+                connectors=connectors,
+                interfaces=interfaces,
+                outerfaces=outerfaces,
+                user=user,
+                **kwargs
+            )
+
+            sub_travel.set_title('The mini travel of Astro')
+            self.set_title("The super travel of Astro")
+
+class WorldTravelProto(Protocol):
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, user=user, **kwargs)
+
+        if not self.is_built:
+            super_travel = SuperTravelProto(user=user)
+            facto  = Create()
+            fly_1  = Fly()
+            wait_1 = Wait()
+            
+            processes = {
+                'facto' : facto, 
+                'fly_1' : fly_1, 
+                'super_travel': super_travel,
+                'wait_2' : wait_1, 
+            }
+
+            connectors=[
+                facto>>'robot'       | super_travel<<'robot',
+                super_travel>>'robot'  | fly_1<<'robot',
+                fly_1>>'robot'       | wait_1<<'robot'
+            ]
+
+            interfaces = { }
+            outerfaces = { }
+            
+            self._build(
+                processes=processes,
+                connectors=connectors,
+                interfaces=interfaces,
+                outerfaces=outerfaces,
+                user=user,
+                **kwargs
+            )
+
+            self.set_title("The world trip of Astro")
 
 def _create_super_travel_protocol():
-    move_1  = Move()
-    eat_1   = Eat()
-    move_2  = Move()
-    move_3  = Move()
-    eat_2   = Eat()
-    wait_1  = Wait()
-
-    add_1 = Add()
-    addon_create_1 = AddOnCreate()
-
-    sub_travel = Protocol(
-        processes = {
-            'move_1' : move_1, 
-            'eat_1' : eat_1, 
-            'move_2' : move_2,  
-            'move_3' : move_3,  
-            'eat_2' : eat_2, 
-            'wait_1' : wait_1,
-            'add_1' : add_1,
-            'addon_create_1' : addon_create_1,
-        },
-        connectors=[
-            move_1>>'robot'    | eat_1<<'robot',
-            eat_1>>'robot'     | wait_1<<'robot',
-            
-            addon_create_1>>'addon'  | add_1<<'addon',
-            wait_1>>'robot'          | add_1<<'robot',
-            add_1>>'mega_robot'      | move_2<<'robot',
-            
-            move_2>>'robot'    | move_3<<'robot',
-            eat_1>>'robot'     | eat_2<<'robot',
-        ],
-        interfaces = { 'robot' : move_1.in_port('robot') },
-        outerfaces = { 'robot' : eat_2.out_port('robot') }
-    )
-    
-    move_4  = Move()
-    fly_1  = Fly()
-    wait_2 = Wait()
-    eat_3 = Eat()
-    super_travel = Protocol(
-        processes = {
-            'move_4' : move_4, 
-            'fly_1' : fly_1, 
-            'sub_travel': sub_travel,
-            'eat_3'  : eat_3,
-            'wait_2' : wait_2, 
-        },
-        connectors=[
-            move_4>>'robot'       | sub_travel<<'robot',
-            sub_travel>>'robot'  | fly_1<<'robot',
-            sub_travel>>'robot'  | eat_3<<'robot',
-            fly_1>>'robot'       | wait_2<<'robot'
-        ],
-        interfaces = { 'robot' : move_4.in_port('robot') },
-        outerfaces = { 'robot' : eat_3.out_port('robot') },
-    )
-
-    sub_travel.set_title('The mini travel of Astro')
-    super_travel.set_title("The super travel of Astro")
-    
-    sub_travel.save()
-    super_travel.save()
-    
-    return super_travel
+    return SuperTravelProto()
 
 def create_nested_protocol():
-    super_travel = _create_super_travel_protocol()
-    
-    facto  = Create()
-    fly_1  = Fly()
-    wait_1 = Wait()
-    
-    world_trip = Protocol(
-        processes = {
-            'facto' : facto, 
-            'fly_1' : fly_1, 
-            'super_travel': super_travel,
-            'wait_2' : wait_1, 
-        },
-        connectors=[
-            facto>>'robot'       | super_travel<<'robot',
-            super_travel>>'robot'  | fly_1<<'robot',
-            fly_1>>'robot'       | wait_1<<'robot'
-        ],
-        interfaces = { },
-        outerfaces = { }
-    )
-    
-    world_trip.set_title("The world trip of Astro")
-    world_trip.save()
-    
-    return world_trip
+    return WorldTravelProto()
