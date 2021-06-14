@@ -39,7 +39,7 @@ app = FastAPI(docs_url=None)
 @app.on_event("startup")
 async def startup_event():
     settings = Settings.retrieve()
-    
+
     print("\n --------- ")
     print(settings.data)
     print(" --------- \n")
@@ -47,7 +47,7 @@ async def startup_event():
     Monitor.init(daemon=False)
     Queue.init(daemon=True, verbose=True)
 
-    
+    settings = Settings.retrieve()
 
     print("\n --------- ")
     print(settings.data)
@@ -83,7 +83,6 @@ class BaseApp:
     def init(cls):
         pass
 
-_settings = Settings.retrieve()
 class App(BaseApp):
     """
     Base App
@@ -110,7 +109,8 @@ class App(BaseApp):
         User.create_owner_and_sysuser()
 
         # static dirs and docs
-        dirs = _settings.get_dependency_dirs()
+        settings = Settings.retrieve()
+        dirs = settings.get_dependency_dirs()
         for name in dirs:
             static_dir = os.path.join(dirs["gws"], "index/static/")
             if os.path.exists(os.path.join(static_dir)):
@@ -119,7 +119,7 @@ class App(BaseApp):
             html_dir = os.path.join(dirs[name],"./docs/html/build")
             if not os.path.exists(os.path.join(html_dir,"index.html")):
                 #os.makedirs(html_dir)
-                docgen(name, dirs[name], _settings, force=True)
+                docgen(name, dirs[name], settings, force=True)
             app.mount(f"/docs/{name}/", StaticFiles(directory=html_dir), name=f"/docs/{name}/")
 
         # api routes
@@ -133,7 +133,9 @@ class App(BaseApp):
         """
 
         cls.init()
-        _settings.set_data("app_host","0.0.0.0")
-        _settings.save()
-        uvicorn.run(cls.app, host=_settings.get_data("app_host"), port=int(_settings.get_data("app_port")))
+
+        settings = Settings.retrieve()
+        settings.set_data("app_host","0.0.0.0")
+        settings.save()
+        uvicorn.run(cls.app, host=settings.get_data("app_host"), port=int(settings.get_data("app_port")))
         cls.is_running = True
