@@ -14,7 +14,7 @@ import re
 from gws.settings import Settings
 from gws.logger import Logger, Error
 
-def _run(ctx=None, uri="", token="", test=False, \
+def _run(ctx, uri="", token="", test="", \
          cli=False, cli_test=False, runserver=False, runmode="dev", \
          ip="0.0.0.0", port="3000", docgen=False, \
          force=False):
@@ -35,7 +35,7 @@ def _run(ctx=None, uri="", token="", test=False, \
 
     if is_prod:
         # Deactivate any test in production mode
-        settings.set_data("test", False)
+        settings.set_data("test", "")
         settings.set_data("is_test", False)
 
     if not settings.save():
@@ -87,8 +87,8 @@ def _run(ctx=None, uri="", token="", test=False, \
 @click.pass_context
 @click.option('--uri', default="", help='Lab URI', show_default=True)
 @click.option('--token', default="", help='Lab token', show_default=True)
-@click.option('--test', help='The name test file to launch (regular expression). Enter "all" to launch all the tests')
-@click.option('--cli', help='Command to run using the command line interface')
+@click.option('--test', default="", help='The name test file to launch (regular expression). Enter "all" to launch all the tests')
+@click.option('--cli', default="", help='Command to run using the command line interface')
 @click.option('--cli_test', is_flag=True, help='Use command line interface in test mode')
 @click.option('--runserver', is_flag=True, help='Starts the server')
 @click.option('--runmode', default="dev", help='Starting mode (dev or prod). Defaults to dev')
@@ -97,5 +97,18 @@ def _run(ctx=None, uri="", token="", test=False, \
 @click.option('--docgen', is_flag=True, help='Generates documentation')
 @click.option('--force', is_flag=True, help='Forces documentation generation by removing any existing documentation (used if --docgen is given)')
 def run(ctx, uri, token, test, cli, cli_test, runserver, runmode, ip, port, docgen, force):
-    _run(ctx, uri, token, test, cli, cli_test, runserver, runmode, ip, port, docgen, force)
+    _run(
+        ctx,
+        uri=uri,
+        token=token,
+        test=test,
+        cli=cli,
+        cli_test=cli_test,
+        runserver=runserver,
+        runmode=runmode,
+        ip=ip,
+        port=port,
+        docgen=docgen,
+        force=force
+    )
 

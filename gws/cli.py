@@ -38,6 +38,6 @@ def run_experiment(ctx, experiment_uri, user_uri):
         raise Error("gws.cli", "run_experiment", f"The experiment is already finished")
     else:
         try:
-            asyncio.run( e.run(user=user) )
+            asyncio.run( e.run(user=user, wait_response=True) )
         except Exception as err:
             raise Error("gws.cli", "run_experiment", f"An error occured. Error: {err}") from err

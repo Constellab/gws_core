@@ -40,16 +40,16 @@ app = FastAPI(docs_url=None)
 async def startup_event():
     settings = Settings.retrieve()
 
-    print("\n --------- ")
+    print("\n --------- STARTUP (1) -------")
     print(settings.data)
     print(" --------- \n")
 
     Monitor.init(daemon=False)
-    #Queue.init(daemon=True, verbose=True)
+    Queue.init(daemon=True, verbose=True)
 
     settings = Settings.retrieve()
 
-    print("\n --------- STARTUP -------")
+    print("\n --------- STARTUP (2) -------")
     print(settings.data)
     print(" --------- \n")
 

@@ -65,6 +65,11 @@ class Settings(PWModel):
             for k in cls._data:
                 settings.data[k] = cls._data[k]
             settings.save()
+
+            print("\n --------- SETTINGS --------")
+            print(settings.data)
+            print(" --------- \n")
+
         except:
             settings = Settings()
             #secret_key
