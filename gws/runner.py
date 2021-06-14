@@ -21,23 +21,22 @@ def _run(ctx=None, uri="", token="", test=False, \
     
     is_test = (test or cli_test)
     is_debug = (is_test or runmode=="dev")
-
+    is_prod = (runmode == "prod")
     Logger(is_new_session=True, is_debug=is_debug)
+    
     settings = Settings.retrieve()
     settings.set_data("token", token)
     settings.set_data("uri", uri)
     settings.set_data("is_debug", is_debug)
     settings.set_data("is_test", is_test)
+    settings.set_data("is_prod", is_prod)
+    settings.set_data("app_host", ip)
+    settings.set_data("app_port", port)
 
     if not settings.save():
         raise Error("manage", "Cannot save the settings in the database")
           
     if runserver:
-        settings.set_data("app_host", ip)
-        settings.set_data("app_port", port)
-        settings.set_data("is_prod", (runmode == "prod"))
-        settings.save()
-        
         # start app
         from gws.app import App
         app = App()
@@ -45,19 +44,12 @@ def _run(ctx=None, uri="", token="", test=False, \
     elif test:
         if test == "*" or test == "all" :
             test = "test*"
-        
-        settings.set_data("is_prod", False)
-        settings.save()
-
+  
         loader = unittest.TestLoader()
         test_suite = loader.discover(".", pattern=test+".py")
         test_runner = unittest.TextTestRunner()
         test_runner.run(test_suite)
     elif cli:
-        if cli_test:
-            settings.set_data("is_prod", False)
-            settings.save()
-     
         tab = cli.split(".")
         n = len(tab)
         module_name = ".".join(tab[0:n-1])
