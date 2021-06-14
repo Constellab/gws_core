@@ -23,7 +23,7 @@ def _run(ctx=None, uri="", token="", test=False, \
     is_debug = (is_test or runmode=="dev")
     is_prod = (runmode == "prod")
     Logger(is_new_session=True, is_debug=is_debug)
-    
+
     settings = Settings.retrieve()
     settings.set_data("token", token)
     settings.set_data("uri", uri)
@@ -55,11 +55,11 @@ def _run(ctx=None, uri="", token="", test=False, \
         module_name = ".".join(tab[0:n-1])
         function_name = tab[n-1]
         module = importlib.import_module(module_name)
-        t = getattr(module, function_name, None)
-        if t is None:
+        func = getattr(module, function_name, None)
+        if func is None:
             raise Error("manage", f"Please check that method {cli} is defined")
         else:
-            t()
+            func()
     elif docgen:
         from ._sphynx.docgen import docgen
         brick_dir = settings.get_cwd()

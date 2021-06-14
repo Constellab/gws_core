@@ -17,10 +17,12 @@ from gws.model import Experiment, User
 @click.option('--experiment-uri', help='Experiment uri')
 @click.option('--user-uri', help='User uri')
 def run_experiment(ctx, experiment_uri, user_uri):
+    settings = Settings.retrieve()
+
     try:
         user = User.get(User.uri == user_uri)
     except Exception as err:
-        raise Error("gws.cli", "run_experiment", f"No user found with uri '{user_uri}'. Flag is_test={Settings.retrieve().is_test}. Error: {err}") from err
+        raise Error("gws.cli", "run_experiment", f"No user found with uri '{user_uri}'. Flags: is_prod={settings.is_prod}, is_test={settings.is_test}. Error: {err}") from err
         
     if not user.is_authenticated:
         raise Error("gws.cli", "run_experiment", f"The user must be HTTP authenticated")
