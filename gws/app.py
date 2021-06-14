@@ -39,21 +39,7 @@ app = FastAPI(docs_url=None)
 @app.on_event("startup")
 async def startup_event():
     settings = Settings.retrieve()
-
-    print("\n --------- STARTUP (1) -------")
-    print(settings.data)
-    print(" --------- \n")
-
-    Monitor.init(daemon=False)
-    Queue.init(daemon=False, verbose=True)
-
-    settings = Settings.retrieve()
-
-    print("\n --------- STARTUP (2) -------")
-    print(settings.data)
-    print(" --------- \n")
-
-    Info("GWS application started!", stdout=True)
+    Info("GLab application started!", stdout=True)
     Info("* Server: {}:{}".format(settings.get_data("app_host"), settings.get_data("app_port")), stdout=True)
     Info("* HTTP connection: https://{}:{} (in {} mode)".format(
         settings.get_data("app_host"),
@@ -63,6 +49,13 @@ async def startup_event():
     Info("* Lab token: {}".format(
         urllib.parse.quote(settings.get_data("token"), safe='')
     ), stdout=True)
+
+    # Initialize the monitor and the queue
+    Monitor.init(daemon=False)
+    Queue.init(daemon=False, verbose=False) #/!\ Daemon is False because experiments are run through CLI in non-blokcing mode
+
+    
+    
 
 @app.on_event("shutdown")
 async def shutdown_event():

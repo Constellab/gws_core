@@ -12,7 +12,7 @@ import subprocess
 import shutil
 import re
 from gws.settings import Settings
-from gws.logger import Logger, Error, Info
+from gws.logger import Logger, Error
 
 def _run(_, uri="", token="", test="", \
          cli=False, cli_test=False, runserver=False, runmode="dev", \
@@ -25,12 +25,6 @@ def _run(_, uri="", token="", test="", \
     Logger(is_new_session=True, is_debug=is_debug)
 
     settings = Settings.retrieve()
-
-    Info("\n --------- RUNNER (1) --------")
-    Info(f"runmode = {runmode}")
-    Info(f"{settings.data}")
-    Info(" --------- \n")
-
     settings.set_data("app_host", ip)
     settings.set_data("app_port", port)
     settings.set_data("token", token)
@@ -46,11 +40,6 @@ def _run(_, uri="", token="", test="", \
 
     if not settings.save():
         raise Error("runner", "Cannot save the settings in the database")
-    
-    settings = Settings.retrieve()
-    Info("\n --------- RUNNER (2) --------")
-    Info(f"{settings.data}")
-    Info(" --------- \n")
 
     if runserver:
         # start app
