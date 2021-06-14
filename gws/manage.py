@@ -196,11 +196,8 @@ def parse_settings(brick_cwd: str = None):
     brick_settings_file_path = os.path.join(brick_cwd, "settings.json")
     default_settings = {
         "type"          : "brick",
-        "app_dir"       : "./",
         "app_host"      : "localhost",
         "app_port"      : 3000,
-        "db_dir"        : "./",
-        "db_name"       : "db.sqlite3",
         "is_test"       : False,
         "externs"       : {},
         "dependencies"  : {},

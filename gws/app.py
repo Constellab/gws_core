@@ -45,7 +45,7 @@ async def startup_event():
     print(" --------- \n")
 
     Monitor.init(daemon=False)
-    Queue.init(daemon=True, verbose=True)
+    Queue.init(daemon=False, verbose=True)
 
     settings = Settings.retrieve()
 

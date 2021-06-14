@@ -5,8 +5,6 @@
     "app_dir"       : "./",
     "app_host"      : "0.0.0.0",
     "app_port"      : 3000,
-    "is_prod"       : false,
-    "is_debug"      : true,
     
     "admin": {
         "email"     : "admin@gencovery.com",
