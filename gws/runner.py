@@ -30,7 +30,7 @@ def _run(ctx=None, uri="", token="", test=False, \
     settings.set_data("token", token)
     settings.set_data("uri", uri)
     settings.set_data("is_prod", is_prod)
-    settings.set_data("is_debug", is_debug)
+    settings.set_data("is_debug", True)
     settings.set_data("is_test", is_test)
 
     if is_prod:
