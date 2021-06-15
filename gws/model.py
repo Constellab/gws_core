@@ -1687,6 +1687,9 @@ class Process(Viewable):
         """
         
         _json = super().to_json(**kwargs)
+        _json["data"]["title"] = self.title
+        _json["data"]["description"] = self.description
+        _json["data"]["doc"] = inspect.getdoc(type(self))
 
         del _json["experiment_id"]
         del _json["protocol_id"]
