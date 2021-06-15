@@ -11,11 +11,13 @@ from gws.model import Config, Process, Resource, Model, Protocol
 class Robot(Resource):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.data = { 
-            "age": 9,
-            "position": [0,0],
-            "weight": 70
-        }
+
+        if not self.id:
+            self.data = {
+                "age": 9,
+                "position": [0,0],
+                "weight": 70
+            }
     
     @property
     def age(self):
