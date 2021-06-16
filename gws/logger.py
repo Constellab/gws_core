@@ -50,13 +50,7 @@ class Logger:
             Logger()
             
         cls._logger.error(f"ERROR: {datetime.datetime.now().time()} -- {message}")
-        print(message)
-        # if cls.is_debug():
-        #     print(message)
-        # else:
-        #     #-> keep only on line
-        #     print('\x1b[2K', end='\r')
-        #     print(message, end='\r')
+        cls._print(message)
             
     # -- F --
 
@@ -83,14 +77,18 @@ class Logger:
             Logger()
             
         cls._logger.info(f"INFO: {datetime.datetime.now().time()} -- {message}")
-        print(message)
-        # if cls.is_debug():
-        #     print(message)
-        # else:
-        #     #-> keep only on line
-        #     print('\x1b[2K', end='\r')
-        #     print(message, end='\r')
+        cls._print(message)
     
+    # -- P --
+
+    @classmethod
+    def _print(cls, message):
+        erase = '\x1b[1A\x1b[2K'
+        if cls.is_debug():
+            print(message)
+        else:
+            print(erase + message)
+
     # -- S --
    
     # -- W --
@@ -101,13 +99,7 @@ class Logger:
             Logger()
             
         cls._logger.warning(f"WARNING: {datetime.datetime.now().time()} # {message}")
-        print(message)
-        # if cls.is_debug():
-        #     print(message)
-        # else:
-        #     #-> keep only on line
-        #     print('\x1b[2K', end='\r')
-        #     print(message, end='\r')
+        cls._print(message)
             
 
 class Error(Exception):
