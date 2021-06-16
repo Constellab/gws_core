@@ -199,14 +199,15 @@ class ModelService(BaseService):
         dep_dirs = settings.get_dependency_dirs()
         
         def __get_list_of_sub_modules(cdir):
-            modules = {f:dirpath
+            modules = [[f, dirpath]
                     for dirpath, dirnames, files in os.walk(cdir)
                         for f in files if f.endswith('.py') and not f.startswith('_')
-                }
+            ]
 
             f = []
-            for file_name in modules:
-                folder = modules[file_name].replace(cdir,'').replace("/",".").strip(".")
+            for kv in modules:
+                file_name = kv[0]
+                folder = kv[1].replace(cdir,'').replace("/",".").strip(".")
                 file_name = file_name.replace(".py","")
                 if "._" in folder or folder.startswith("_"):
                     continue
