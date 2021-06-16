@@ -10,6 +10,7 @@ import unittest
 from peewee import CharField
 from gws.model import Model, Resource
 from gws.unittest import GTest
+from gws.service.model_service import ModelService
 
 ############################################################################################
 #
@@ -137,3 +138,17 @@ class TestModel(unittest.TestCase):
         self.assertEqual(p2.name, 'Isaac Asimov')
         self.assertEqual(p2.get_age(), 30)
         self.assertTrue(p2.verify_hash())
+
+    def test_model_registrering(self):
+        self.assertTrue( len(ModelService._model_types) == 0 )
+
+        ModelService.register_all_processes_and_resources()
+
+        self.assertTrue( len(ModelService._model_types) != 0 )
+
+        from gws.json import JSONLoader
+        from gws.csv import CSVImporter
+        self.assertTrue( JSONLoader.full_classname() in ModelService._model_types )
+        self.assertTrue( CSVImporter.full_classname() in ModelService._model_types )
+
+

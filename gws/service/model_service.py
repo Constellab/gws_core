@@ -192,7 +192,6 @@ class ModelService(BaseService):
         return t
     
     # -- R --
-    
         
     @classmethod
     def register_all_processes_and_resources(cls):
@@ -200,8 +199,24 @@ class ModelService(BaseService):
         dep_dirs = settings.get_dependency_dirs()
         
         def __get_list_of_sub_modules(cdir):
-            modules = glob.glob(os.path.join(cdir, "*.py"))
-            return [ os.path.basename(f)[:-3] for f in modules if os.path.isfile(f) and not f.startswith('_')]
+            modules = {f:dirpath
+                    for dirpath, dirnames, files in os.walk(cdir)
+                        for f in files if f.endswith('.py') and not f.startswith('_')
+                }
+
+            f = []
+            for file_name in modules:
+                folder = modules[file_name].replace(cdir,'').replace("/",".").strip(".")
+                file_name = file_name.replace(".py","")
+                if "._" in folder or folder.startswith("_"):
+                    continue
+
+                if folder:
+                    f.append( folder+"."+file_name )
+                else:
+                    f.append( file_name )
+
+            return f
 
         resource_type_list = []
         process_type_list = []
