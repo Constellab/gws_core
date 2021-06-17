@@ -2039,7 +2039,8 @@ class Protocol(Process):
             rhs_port_name = link["to"]["port"]
             rhs_proc = self._processes[proc_name]
 
-            connector = (lhs_proc>>lhs_port_name | rhs_proc<<rhs_port_name)
+            #connector = (lhs_proc>>lhs_port_name | rhs_proc<<rhs_port_name)
+            connector = (lhs_proc>>lhs_port_name).pipe(rhs_proc<<rhs_port_name, lazy=True)
             self.add_connector(connector)
         
         self.save(update_graph=True)
