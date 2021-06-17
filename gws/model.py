@@ -1097,8 +1097,8 @@ class Process(Viewable):
     output_specs: dict = {}
     config_specs: dict = {}
 
-    title = "Process"
-    description = "This is the base process class"
+    title = None
+    description = None
 
     is_instance_running = False
     is_instance_finished = False
@@ -1120,6 +1120,12 @@ class Process(Viewable):
         """
 
         super().__init__(*args, **kwargs)
+
+        if not self.title:
+            self.title = self.full_classname().split(".")[-1]
+
+        if not self.description:
+            self.description = "This is the process class " + self.full_classname()
 
         self._input = Input(self)
         self._output = Output(self)
