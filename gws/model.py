@@ -864,7 +864,7 @@ class ProgressBar(Model):
     
     # -- A --
     
-    def _add_message(self, message="Experiment under progress ..."):
+    def add_message(self, message="Experiment under progress ..."):
         dtime = jsonable_encoder(datetime.now())
         self.data["messages"].append({
             "text": message,
@@ -951,7 +951,7 @@ class ProgressBar(Model):
         self.data["max_value"] = max_value
         self.data["start_time"] = time.perf_counter()
         self.data["current_time"] = self.data["start_time"]
-        self._add_message(message="Experiment started")
+        self.add_message(message="Experiment started")
         self.save()
     
     def stop(self, message="End of experiment!"):
@@ -968,6 +968,9 @@ class ProgressBar(Model):
         Increment the progress-bar value
         """
         
+        if value == self._min_value:
+            value = self._min_value + 1e-6
+
         _max = self.data["max_value"]        
         if _max == 0.0:
             self.start()
@@ -990,7 +993,7 @@ class ProgressBar(Model):
         self.data["elapsed_time"] = current_time - self.data["start_time"]
         self.data["average_speed"] = self.data["value"] / self.data["elapsed_time"]
         self.data["remaining_time"] = self._compute_remaining_seconds()
-        self._add_message(message)
+        self.add_message(message)
         
         if self.data["value"] == _max:
             self.stop()

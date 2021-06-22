@@ -608,10 +608,10 @@ class IO(Base):
         if isinstance(resource_types, tuple):
             for res_t in resource_types:
                 if (not res_t is None) and not issubclass(res_t, Resource):
-                    raise Error(self.classname(), "create_port", f"Invalid port specs. The resource_types must refer to subclass of Resource")
+                    raise Error(self.classname(), "create_port", f"Invalid port specs. The resource_types must refer to a subclass of Resource")
         else:
             if not issubclass(resource_types, Resource):
-                raise Error(self.classname(), "create_port", "Invalid port specs. The resource_types must refer to subclass of Resource")
+                raise Error(self.classname(), "create_port", "Invalid port specs. The resource_types must refer to a subclass of Resource")
             
             resource_types = (resource_types, )
             
