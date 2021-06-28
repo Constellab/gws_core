@@ -16,20 +16,18 @@ from gws.unittest import GTest
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
-tables = ( Resource, Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, Comment, )
 
 class TestProtocol(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        GTest.drop_tables(tables)
+        GTest.drop_tables()
+        GTest.create_tables()
         GTest.init()
-        pass
 
     @classmethod
     def tearDownClass(cls):
-        #GTest.drop_tables(tables)
-        pass
+        GTest.drop_tables()
     
     def test_protocol(self):
         study = Study.get_by_id(1)
@@ -142,15 +140,15 @@ class TestProtocol(unittest.TestCase):
         self.assertEqual(Protocol.select().count(), count+2)
         self.assertEqual(len(Q), count+2)
         
-        print("--- mini travel --- ")
-        print(mini_proto.dumps(bare=True))
+        #print("--- mini travel --- ")
+        #print(mini_proto.dumps(bare=True))
         
         Q = Protocol.select()
         self.assertEqual(Protocol.select().count(), count+2)
         self.assertEqual(len(Q), count+2)
         
-        print("--- super travel --- ")
-        print(super_proto.dumps(bare=True))
+        #print("--- super travel --- ")
+        #print(super_proto.dumps(bare=True))
         
         Q = Protocol.select()
         self.assertEqual(Protocol.select().count(), count+2)
@@ -168,13 +166,9 @@ class TestProtocol(unittest.TestCase):
         e = super_proto.create_experiment(study=GTest.study, user=GTest.user)
         
         def _on_end(*args, **kwargs):
-            
-            #print("---- reload mini travel ----")
             mini_proto_reloaded = Protocol.get_by_id(mini_proto.id)
-            #print(mini_proto_reloaded.dumps())
-            
             s3 = json.loads(mini_proto_reloaded.dumps(bare=True))
-            self.assertEqual(s1,s3)
+            self.assertEqual(s3, s1)
             Q = Protocol.select()
             self.assertEqual(len(Q), count+2)
  
@@ -216,9 +210,7 @@ class TestProtocol(unittest.TestCase):
         )
 
         def _on_end(*args, **kwargs):
-            saved_mini_proto = Protocol.get(Protocol.id == mini_proto.id)
-            print(saved_mini_proto.to_json())
-            
+            saved_mini_proto = Protocol.get(Protocol.id == mini_proto.id)            
             # load none bare
             mini_proto2 = Protocol.from_graph(saved_mini_proto.graph)
             self.assertTrue(mini_proto.graph, mini_proto2.graph)

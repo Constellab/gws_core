@@ -9,6 +9,7 @@ import pathlib
 import json
 import tempfile
 import mimetypes
+import shutil
 
 from typing import List
 from datetime import datetime
@@ -21,7 +22,7 @@ from peewee import  Field, IntegerField, FloatField, DateField, \
 
 from gws.settings import Settings
 from gws.model import Config, Process, Resource, ResourceSet
-from gws.store import FileStore, LocalFileStore
+from gws.file_store import FileStore, LocalFileStore
 from gws.utils import slugify, generate_random_chars
 from gws.logger import Error
 
@@ -33,10 +34,7 @@ class File(Resource):
     _mode = "t"
     _table_name = "gws_file"
     __download_url = "https://lab.{}/core-api/file/{}/{}/download"
-
-    def __init__(self, *ags, **kwargs):
-        super().__init__(*ags, **kwargs)
-        
+  
     # -- A --
         
     # -- C --
@@ -52,8 +50,11 @@ class File(Resource):
     # -- D --
     
     def delete_instance(self, *args, **kwargs):
-        self.file_store.remove(self)            
-        return super().delete_instance(*args, **kwargs)
+        with self._db_manager.db.atomic():
+            status = super().delete_instance(*args, **kwargs)
+            if status:
+                shutil.rmtree(self.path)
+
     
     @property
     def dir(self):

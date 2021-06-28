@@ -22,20 +22,13 @@ class TestQueue(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        tables = ( 
-            Resource, Create, Config,
-            Process, Protocol, Experiment, 
-            Robot, Study, User, Activity, 
-            ProgressBar, Queue, Job
-        )
-        GTest.drop_tables(tables)
+        GTest.drop_tables()
+        GTest.create_tables()
         GTest.init()
 
     @classmethod
     def tearDownClass(cls):
-        #tables = ( Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, )
-        #GTest.drop_tables(tables)
-        pass
+        GTest.drop_tables()
     
     def test_queue(self):
         self.assertEqual(Experiment.count_of_running_experiments(), 0)
@@ -89,4 +82,6 @@ class TestQueue(unittest.TestCase):
                 self.assertEqual(e.is_finished, False)
             else:
                 self.assertEqual(e.is_finished, True)
-            
+        
+        Queue.deinit()
+        time.sleep(3)

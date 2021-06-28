@@ -6,11 +6,12 @@
 import asyncio
 import unittest
 from gws.validator import Validator
-from gws.logger import Error
+from gws.logger import Error, Logger
 
 class TestValidator(unittest.TestCase):
 
     def test_int_validator(self):
+        
         v = Validator.from_specs(type='int', default='5')
         self.assertEqual(v.validate('3'), 3)
         self.assertEqual(v.validate(3), 3)
@@ -32,7 +33,6 @@ class TestValidator(unittest.TestCase):
         self.assertRaises(Error, Validator.from_specs, type=int, default='oui')
         self.assertRaises(Error, Validator.from_specs, type=int, default='"oui"')
         #self.assertRaises(Error, Validator.from_specs, type=int, default=3, allowed_values=[10, 12])
-
 
 
     def test_str_validator(self):

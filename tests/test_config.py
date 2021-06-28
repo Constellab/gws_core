@@ -3,9 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import asyncio
 import unittest
-from gws.model import Config, Process, Config, Resource, Model, ViewModel
+from gws.model import Config
 from gws.unittest import GTest
 from gws.robot import Move
 
@@ -13,11 +12,12 @@ class TestConfig(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        Config.drop_table()
+        GTest.drop_tables()
+        GTest.create_tables()
 
     @classmethod
     def tearDownClass(cls):
-        Config.drop_table()
+        GTest.drop_tables()
 
     def test_config(self):
         GTest.print("Test Config")

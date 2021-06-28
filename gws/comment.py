@@ -17,18 +17,31 @@ class Comment(Model):
     :type object_type: `str`
     :property reply_to: The parent comment. It not `None` if this comment is the reply to another comment. It is `None` otherwise
     :type reply_to: `gws.comment.Comment`
-    :property text: The comment text
-    :type text: `str`
     """
 
     object_uri = CharField(null=False, index=True)
     object_type = CharField(null=False) #-> non-unique index (object_uri, object_type) is created in Meta
     reply_to = ForeignKeyField('self', null=True, backref='+')
-    text = CharField(null=False)
     _table_name = "gws_comment"
 
-    # -- T --
+    # -- G --
     
+    def get_message(self) -> str:
+        return self.data["message"]
+
+    # -- M --
+
+    @property
+    def message(self) -> str:
+        return self.data["message"]
+        
+    # -- S --
+
+    def set_message(self, msg:str):
+        self.data["message"] = msg
+
+    # -- T --
+
     def to_json(self, *, shallow=False, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the comment.
@@ -51,9 +64,6 @@ class Comment(Model):
         del _json["object_uri"]
         del _json["object_type"]
 
-        if shallow:
-            del _json["data"]
-            
         if stringify:
             if prettify:
                 return json.dumps(_json, indent=4)

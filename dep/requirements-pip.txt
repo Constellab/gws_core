@@ -19,3 +19,4 @@ mysql-connector
 pymysql
 pylint
 mypy
+python-swiftclient

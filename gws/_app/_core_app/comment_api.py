@@ -18,7 +18,7 @@ from .core_app import core_app
 @core_app.post("/comment/{object_type}/{object_uri}/add", tags=["Comment"], summary="And new object comment")
 async def add_object_comments(object_type: str, \
                             object_uri: str, \
-                            text: str, \
+                            message: str, \
                             reply_to_uri: str = None, \
                          _: UserData = Depends(check_user_access_token)) -> dict:
     """
@@ -26,14 +26,14 @@ async def add_object_comments(object_type: str, \
     
     - **object_type**: the type of the object to comment
     - **object_uri**: the uri of the object to comment
-    - **text**: comment text
+    - **message**: comment message
     - **reply_to_uri**: the uri of the comment to reply to
     """
     
     c = CommentService.add_comment(
         object_type=object_type, 
         object_uri=object_uri, 
-        text=text, 
+        message=message, 
         reply_to_uri=reply_to_uri
     )
     return c.to_json()
@@ -54,6 +54,7 @@ async def get_object_comments(object_type: str, \
     """
     
     return CommentService.fetch_object_comments(
+        object_type=object_type,
         object_uri=object_uri,
         page=page,
         number_of_items_per_page=number_of_items_per_page,

@@ -14,24 +14,25 @@ class TestTyping(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        tables = ( ProcessType, ProtocolType, ResourceType,  )
-        GTest.drop_tables(tables)
+        GTest.drop_tables()
+        GTest.create_tables()
+        GTest.init()
         ModelService.register_all_processes_and_resources()
 
     @classmethod
     def tearDownClass(cls):
-        tables = ( ProcessType, ProtocolType, ResourceType,  )
-        GTest.drop_tables(tables)
+        GTest.drop_tables()
 
     def test_typing(self):
         _json = ProcessService.fetch_process_type_list(as_json=True)
-        print("\n------- fetch_process_type_list -------\n")
-        print(_json["data"][0])
+        self.assertTrue(len(_json["data"]) > 0)
+        #print("\n------- fetch_process_type_list -------\n")
+        #print(_json["data"][0])
 
-        
         _json = ProtocolService.fetch_protocol_type_list(as_json=True)
-        print("\n------- fetch_protocol_type_list -------\n")
-        print(_json["data"][0])
+        self.assertTrue(len(_json["data"]) > 0)
+        #print("\n------- fetch_protocol_type_list -------\n")
+        #print(_json["data"][0])
 
 
         

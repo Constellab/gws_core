@@ -52,7 +52,7 @@ async def startup_event():
 
     # Initialize the monitor and the queue
     Monitor.init(daemon=False)
-    Queue.init(daemon=False, verbose=False) #/!\ Daemon is False because experiments are run through CLI in non-blokcing mode
+    Queue.init(daemon=False, verbose=False) #/!\ Daemon is False because experiments are run through CLI in non-blocking mode
 
     
     

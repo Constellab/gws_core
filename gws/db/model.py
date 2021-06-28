@@ -9,6 +9,7 @@ import re
 import uuid
 import hashlib
 import json
+import shutil
 from datetime import datetime
 
 from fastapi.encoders import jsonable_encoder
@@ -19,7 +20,7 @@ from peewee import  Field, IntegerField, FloatField, DateField, \
                     AutoField, BigAutoField
 
 from peewee import DatabaseProxy
-from playhouse.sqlite_ext import RowIDField, SearchField, FTS5Model
+from playhouse.mysql_ext import Match
 
 from gws.utils import to_camel_case
 from gws.logger import Error, Info
@@ -27,7 +28,7 @@ from gws.db.manager import AbstractDbManager
 from gws.settings import Settings
 from gws.base import Base
 
-#settings = Settings.retrieve()
+from .kv_store import KVStore
 
 # ####################################################################
 #
@@ -37,35 +38,44 @@ from gws.base import Base
 
 class DbManager(AbstractDbManager):
     db = DatabaseProxy()
-    JSONField = None
     _engine = None
     _db_name = "gws"
 
 DbManager.init(engine="sqlite3")
+#DbManager.init(engine="mariadb")
 
 # ####################################################################
 #
-# Misc
+# Format table name
 #
 # ####################################################################
 
 def format_table_name(model: 'Model'):
-    model_name = model._table_name
-    # if settings.is_prod:
-    #     model_name = model_name
-    # else:
-    #     model_name = model_name
+    return model.get_table_name().lower()
 
-    return model_name.lower()
+# ####################################################################
+#
+# Custom JSONField
+#
+# ####################################################################
 
-def format_fts_table_name(model: 'Model'):
-    model_name = model._related_model._table_name + "_fts"
-    # if settings.is_prod:
-    #     model_name = model_name
-    # else:
-    #     model_name = model_name
+class JSONField(TextField):
+    """
+    Custom JSONField class
+    """
 
-    return model_name.lower()
+    def db_value(self, value):
+        return json.dumps(value)
+
+    def python_value(self, value):
+        if value is not None:
+            return json.loads(value)
+
+# ####################################################################
+#
+# Model
+#
+# ####################################################################
 
 class Model(Base, PeeweeModel):
     """
@@ -89,43 +99,42 @@ class Model(Base, PeeweeModel):
     :type hash: `str`
     """
     
-    JSONField: callable = DbManager.JSONField
+    #JSONField: callable = JSONField #DbManager.JSONField
 
-    #id = AutoField(primary_key=True)
-    id = IntegerField(primary_key=True)
+    id = AutoField(primary_key=True)
+    #id = IntegerField(primary_key=True)
     uri = CharField(null=True, index=True)
     type = CharField(null=True, index=True)
     creation_datetime = DateTimeField(default=datetime.now, index=True)
     save_datetime = DateTimeField(index=True)
     is_archived = BooleanField(default=False, index=True)
-    hash = CharField(null=True, index=True)
-    data = JSONField(null=True, index=True)
-    #document = TextField(null=True, index=True)s
+    hash = CharField(null=True)
+    data = JSONField(null=True)
     
-    _kv_store: 'KVStore' = None
+    USER_ALL = 'all'
+    USER_ADMIN = 'admin'
+    LAB_URI = None
+
+    _data = None
+    _kv_store: KVStore = None
     _is_singleton = False
     _is_removable = True
-    
-    _fts_fields = {}
-    _is_fts_active = True
-    
+    _allowed_user = USER_ALL
     _db_manager = DbManager
     _table_name = 'gws_model'
-    
-    _LAB_URI = None #settings.get_data("uri")
-    
+      
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        if not Model._LAB_URI:
+        if not Model.LAB_URI:
             settings = Settings.retrieve()
-            Model._LAB_URI = settings.get_data("uri")
+            Model.LAB_URI = settings.get_data("uri")
 
         if not self.id and self._is_singleton:
             try:
                 cls = type(self)
                 model = cls.get(cls.type == self.full_classname())
-            except:
+            except Exception as _:
                 model = None
             
             if model:
@@ -133,14 +142,12 @@ class Model(Base, PeeweeModel):
                 # Prevent creating duplicates of processes having a representation in the db.
                 for prop in model.property_names(Field):
                     val = getattr(model, prop)
-                    setattr(self, prop, val) 
+                    setattr(self, prop, val)
         
         if self.uri is None:
             self.uri = str(uuid.uuid4())
-
-        if self.data is None:
-            self.data = {} #{}
-
+            self.data = {}
+ 
         # ensures that field type is allways equal to the name of the class
         if self.type is None:
             self.type = self.full_classname()
@@ -148,8 +155,7 @@ class Model(Base, PeeweeModel):
             # allow object cast after ...
             pass
         
-        from gws.store import KVStore
-        self._kv_store = KVStore(self.kv_store_path)
+        self._kv_store = KVStore(self.get_kv_store_slot_path())
 
     # -- A --
     
@@ -183,15 +189,15 @@ class Model(Base, PeeweeModel):
     
     def _create_hash_object(self):
         h = hashlib.blake2b()
-        h.update(Model._LAB_URI.encode())
-        exclusion_list = (ForeignKeyField, Model.JSONField, ManyToManyField, BlobField, AutoField, BigAutoField, )
+        h.update(Model.LAB_URI.encode())
+        exclusion_list = (ForeignKeyField, JSONField, ManyToManyField, BlobField, AutoField, BigAutoField, )
         for prop in self.property_names(Field, exclude=exclusion_list) :
             if prop in ["id", "hash"]:
                 continue
             val = getattr(self, prop)            
             h.update( str(val).encode() )
          
-        for prop in self.property_names(Model.JSONField):
+        for prop in self.property_names(JSONField):
             val = getattr(self, prop)
             h.update( json.dumps(val, sort_keys=True).encode() )
             
@@ -234,9 +240,9 @@ class Model(Base, PeeweeModel):
 
     def clear_data(self, save: bool = False):
         """
-        Clears the `data`
+        Clears the :param:`data`
     
-        :param save: If True, save the model the `data` is cleared
+        :param save: If True, save the model the :param:`data` is cleared
         :type save: bool
         """
         self.data = {}
@@ -245,14 +251,18 @@ class Model(Base, PeeweeModel):
 
     @classmethod
     def create_table(cls, *args, **kwargs):
+        """
+        Create model table
+        """
+
         if cls.table_exists():
             return
 
-        if cls.fts_model():
-            cls.fts_model().create_table()
-
         super().create_table(*args, **kwargs)
 
+        if cls.get_db_manager().is_mysql_engine():
+            cls.get_db_manager().db.execute_sql(f"CREATE FULLTEXT INDEX data ON {cls._table_name}(data)")
+        
     # -- D --
 
     def delete_instance(self, *args, **kwargs):
@@ -261,12 +271,18 @@ class Model(Base, PeeweeModel):
         
     @classmethod
     def drop_table(cls):
-        if cls.fts_model():
-            cls.fts_model().drop_table()
-        
-        from gws.store import KVStore
-        KVStore.remove_all(folder=cls._table_name)
-        
+        """ 
+        Drop model table
+        """
+
+        if not cls.table_exists():
+            return
+
+        # remove the table's path in one shot
+        path = cls.__get_base_kv_store_path_of_table()
+        if os.path.exists(path):
+            shutil.rmtree(path)
+
         super().drop_table()
 
     # -- E --
@@ -288,8 +304,8 @@ class Model(Base, PeeweeModel):
     
     # -- F --
 
-    def fetch_typeby_id(self, id) -> 'type':
-        """ 
+    def fetch_type_by_id(self, id) -> 'type':
+        """
         Fecth the model type (string) by its `id` from the database and return the corresponding python type.
         Use the proper table even if the table name has changed.
 
@@ -301,15 +317,36 @@ class Model(Base, PeeweeModel):
         
         from .service.model_service import ModelService
         
-        cursor = self._db_manager.db.execute_sql(f'SELECT type FROM {self._table_name} WHERE id = ?', (str(id),))
+        cursor = self.get_db_manager().db.execute_sql(f'SELECT type FROM {self._table_name} WHERE id = ?', (str(id),))
         row = cursor.fetchone()
         if len(row) == 0:
-            raise Error("gws.model.Model", "fetch_typeby_id", "The model is not found.")
+            raise Error("gws.model.Model", "fetch_type_by_id", "The model is not found.")
         typestr = row[0]
         model_t = ModelService.get_model_type(typestr)
         return model_t
 
     # -- G --
+
+    @classmethod
+    def get_table_name(cls) -> str:
+        """ 
+        Returns the table name of this class
+
+        :return: The table name
+        :rtype: `str`
+        """
+
+        return cls._table_name
+
+    @classmethod
+    def get_db_manager(cls) -> DbManager:
+        """ 
+        Returns the DbManager of this model 
+
+        :return: The db manager
+        :rtype: `DbManager`
+        """
+        return cls._db_manager
 
     @staticmethod
     def get_brick_dir(brick_name: str):
@@ -317,28 +354,36 @@ class Model(Base, PeeweeModel):
         return settings.get_dependency_dir(brick_name)
         
     @classmethod
-    def fts_model(cls):
-        if not cls.is_sqlite3_engine():
-            return None
-        
-        if not cls._fts_fields:
-            return None
-        
-        fts_class_name = to_camel_case(cls._table_name, capitalize_first=True) + "FTSModel"
-        
-        _FTSModel = type(fts_class_name, (FTSModel, ), {
-            "_related_model" : cls
-        })
-
-        return _FTSModel
-
-    @classmethod
     def get_by_uri(cls, uri: str) -> str:
         try:
             return cls.get(cls.uri == uri)
-        except:
+        except Exception as _:
             return None
 
+    @classmethod
+    def __get_base_kv_store_path_of_table(cls) -> str:
+        """ 
+        Returns the base path of the KVStore
+
+        :return: The path of the KVStore
+        :rtype: str
+        """
+
+        return os.path.join(cls._table_name)
+
+    def get_kv_store_slot_path(self) -> str:
+        """ 
+        Returns the KVStore path of the model instance
+
+        :return: The slot path
+        :rtype: str
+        """
+
+        return os.path.join(
+            self.__get_base_kv_store_path_of_table(),
+            self.uri
+        )
+    
     # -- H --
   
     def hydrate_with(self, data):
@@ -360,11 +405,11 @@ class Model(Base, PeeweeModel):
 
     @classmethod
     def is_sqlite3_engine(cls):
-        return cls._db_manager._engine == "sqlite3"
+        return cls.get_db_manager()._engine == "sqlite3"
     
     @classmethod
     def is_mysql_engine(cls):
-        return cls._db_manager._engine in ["mysql", "mariadb"]
+        return cls.get_db_manager()._engine in ["mysql", "mariadb"]
 
     def is_saved(self):
         """ 
@@ -389,20 +434,10 @@ class Model(Base, PeeweeModel):
         """
         return self._kv_store
     
-    @property
-    def kv_store_path(self) -> str:
-        """ 
-        Returns the path of the KVStore of the model
-
-        :return: The path of the KVStore
-        :rtype: str
-        """
-        return os.path.join(self._table_name, self.uri)
-    
     # -- R --
     
     def refresh(self):
-        """ 
+        """
         Refresh a model using db value
 
         :return: The path of the KVStore
@@ -416,37 +451,27 @@ class Model(Base, PeeweeModel):
                 db_val = getattr(db_object, prop)
                 setattr(self, prop, db_val) 
 
-
-    @classmethod
-    def select(cls, *args, **kwargs):
-        if not cls.table_exists():
-            cls.create_table()
-            
-        return super().select(*args, **kwargs)
-
     @classmethod
     def select_me(cls, *args, **kwargs):
-        if not cls.table_exists():
-            cls.create_table()
-
         return cls.select( *args, **kwargs ).where(cls.type == cls.full_classname())
     
     @classmethod
-    def search(cls, phrase: str):
-        if cls.is_sqlite3_engine():
-            _FTSModel = cls.fts_model()
+    def search(cls, phrase: str, in_boolean_mode: bool=False):
+        """
+        Performs full-text search on the :param:`data` field
 
-            if _FTSModel is None:
-                raise Error("gws.model.Model", "search", "No FTSModel model defined")
+        :param phrase: The phrase to search
+        :type phrase: `str`
+        :param in_boolean_mode: True to search in boolean mode, False otherwise
+        :type in_boolean_mode: `bool`
+        """
 
-            return _FTSModel.search_bm25(
-                phrase,
-                weights={'score_1': 2.0, 'score_2': 1.0},
-                with_score=True,
-                score_alias='search_score'
-            )
-        elif cls.is_mysql_engine():
-            return cls.select().where(cls.Match(cls.data, phrase))
+        if in_boolean_mode:
+            modifier = 'IN BOOLEAN MODE'
+        else:
+            modifier = None
+
+        return cls.select().where(Match((cls.data), phrase, modifier=modifier))
 
     def set_data(self, data: dict):
         """ 
@@ -461,39 +486,8 @@ class Model(Base, PeeweeModel):
         else:
             raise Error("gws.model.Model", "set_data","The data must be a JSONable dictionary")
 
-    def _save_fts_document(self):
-        _FTSModel = self.fts_model()
-
-        if _FTSModel is None:
-            return True  #-> no fts fields given -> nothing to do!
-        
-        try:
-            doc = _FTSModel.get_by_id(self.id)  
-        except:
-            doc = _FTSModel(rowid=self.id)
-
-        score_1 = []
-        score_2 = []
-
-        for field in self._fts_fields:
-            score = self._fts_fields[field]
-            if field in self.data:
-                if score > 1:
-                    if isinstance(self.data[field], list):
-                        score_1.append( "\n".join([str(k) for k in self.data[field]]) )
-                    else:
-                        score_1.append(str(self.data[field]))
-                else:
-                    score_2.append(str(self.data[field]))
-
-        doc.score_1 = '\n'.join(score_1)
-        doc.score_2 = '\n'.join(score_2)
-
-        return doc.save()
-
-
     def save(self, *args, **kwargs) -> bool:
-        """ 
+        """
         Sets the `data`
 
         :param data: The input data
@@ -501,26 +495,9 @@ class Model(Base, PeeweeModel):
         :raises Exception: If the input data is not a `dict`
         """
 
-        if not self.table_exists():
-            self.create_table()
-
-        _FTSModel = self.fts_model()
-
-        with self._db_manager.db.atomic() as transaction:
-            try:
-                if self._is_fts_active:
-                    if not self._save_fts_document():
-                        raise Error("gws.model.Model", "save", "Cannot save related FTS document")
-
-                #self.kv_store.save()
-                self.save_datetime = datetime.now()
-                self.hash = self.__compute_hash()
-                return super().save(*args, **kwargs)
-            except Exception as err:
-                transaction.rollback()
-                raise Error("gws.model.Model", "save", f"Error message: {err}")
-
-
+        self.save_datetime = datetime.now()
+        self.hash = self.__compute_hash()
+        return super().save(*args, **kwargs)
 
     @classmethod
     def save_all(cls, model_list: list = None) -> bool:
@@ -533,17 +510,13 @@ class Model(Base, PeeweeModel):
         :return: True if all the model are successfully saved, False otherwise. 
         :rtype: bool
         """
-        with cls._db_manager.db.atomic() as transaction:
+        with cls.get_db_manager().db.atomic() as transaction:
             try:
-                #if model_list is None:
-                #    return
-                
                 for m in model_list:
-                    #if isinstance(m, cls):
                     m.save()
             except Exception as err:
                 transaction.rollback()
-                raise Error("gws.model.Model", "save_all", f"Error message: {err}")
+                raise Error("gws.model.Model", "save_all", f"Error message: {err}") from err
 
         return True
     
@@ -580,18 +553,17 @@ class Model(Base, PeeweeModel):
             if prop.startswith("_"):
                 continue  #-> private or protected property
 
-            val = getattr(self, prop)
-
             if prop == "data":
-                _json[prop] = {}
-
+                _json["data"] = {}
+                val = getattr(self, "data")
                 if len(jsonifiable_data_keys) == 0:
-                    _json[prop] = jsonable_encoder(val)
+                    _json["data"] = jsonable_encoder(val)
                 else:
                     for k in jsonifiable_data_keys:
                         if k in val:
-                            _json[prop][k] = jsonable_encoder(val[k])
+                            _json["data"][k] = jsonable_encoder(val[k])
             else:
+                val = getattr(self, prop)
                 _json[prop] = jsonable_encoder(val)
                 if bare:
                     if prop == "uri" or prop == "hash" or isinstance(val, (datetime, DateTimeField, DateField)):
@@ -639,35 +611,3 @@ class Model(Base, PeeweeModel):
     class Meta:
         database = DbManager.db
         table_function = format_table_name
-
-# ####################################################################
-#
-# FTSModel class
-#
-# ####################################################################
-
-class FTSModel(Base, FTS5Model):
-    """
-    Base class
-    """
-
-    rowid = RowIDField()
-    score_1 = SearchField()
-    score_2 = SearchField()
-    
-    _related_model = Model
-    
-    def get_related(self, *args, **kwargs):
-        t = self._related_model
-        Q = t.select( *args, **kwargs ).where(t.id == self.rowid)
-        return Q[0]
-    
-    def save(self, *args, **kwargs) -> bool:
-        if not self.table_exists():
-            self.create_table()
-        
-        return super().save(*args, **kwargs)
-    
-    class Meta:
-        database = DbManager.db
-        table_function = format_fts_table_name

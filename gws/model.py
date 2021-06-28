@@ -481,12 +481,12 @@ class Viewable(Model):
 
     # -- A --
 
-    def add_comment(self, text:str, reply_to:Comment = None) -> Comment:
+    def add_comment(self, message:str, reply_to:Comment = None) -> Comment:
         """
         Add a new comment to this object
 
-        :param text: The comment text
-        :type text: `str`
+        :param message: The comment message
+        :type message: `str`
         :param reply_to: The comment to reply to
         :type reply_to: `Comment`
         :returns: The added comment
@@ -500,16 +500,15 @@ class Viewable(Model):
             comment = Comment(
                 object_uri=self.uri,
                 object_type=self.type,
-                text=text,
                 reply_to=reply_to
             )
         else:
             comment = Comment(
                 object_uri=self.uri,
                 object_type=self.type,
-                text=text
             )
 
+        comment.set_message(message)
         comment.save()
         return comment
 
@@ -527,26 +526,21 @@ class Viewable(Model):
             return True
 
         with self._db_manager.db.atomic() as transaction:
-            try:
-                Q = ViewModel.select().where( 
-                    (ViewModel.model_uri == self.uri) & 
-                    (ViewModel.is_archived == (not tf))
-                )
-                
-                for vm in Q:
-                    if not vm.archive(tf):
-                        transaction.rollback()
-                        return False
-                
-                if super().archive(tf):
-                    return True
-                else:
+            Q = ViewModel.select().where(
+                (ViewModel.model_uri == self.uri) &
+                (ViewModel.is_archived == (not tf))
+            )
+            
+            for vm in Q:
+                if not vm.archive(tf):
                     transaction.rollback()
                     return False
-            except Exception as err:
-                Warning("Viewable", "archive", f"Rollback archive. Error: {err}")
+            
+            status = super().archive(tf)
+            if not status:
                 transaction.rollback()
-                return False
+            
+            return status
 
     # -- C --
     
@@ -1115,6 +1109,7 @@ class Process(Viewable):
     _is_singleton = False
     _is_removable = False
     _is_plug = False
+
     _table_name = 'gws_process'
 
     def __init__(self, *args, user=None, **kwargs):
@@ -1203,28 +1198,23 @@ class Process(Viewable):
     
     def archive(self, tf, archive_resources=True) -> bool:
         """
-        Archive the resource
+        Archive the process
         """
         
         if self.is_archived == tf:
             return True
         
         with self._db_manager.db.atomic() as transaction:
-            try:
-                if not super().archive(tf):
-                    return False
-
-                self.config.archive(tf) #-> try to archive the config if possible!
-
-                if archive_resources:
-                    for r in self.resources:
-                        if not r.archive(tf):
-                            transaction.rollback()
-                            return False
-            except Exception as err:
-                Warning(self.full_classname(), "archive", f"Rollback archive. Error: {err}")
-                transaction.rollback()
+            if not super().archive(tf):
                 return False
+
+            self.config.archive(tf) #-> try to archive the config if possible!
+
+            if archive_resources:
+                for r in self.resources:
+                    if not r.archive(tf):
+                        transaction.rollback()
+                        return False
                     
         return True
     
@@ -1271,19 +1261,6 @@ class Process(Viewable):
             
         e.save()
         return e
-        
-    @classmethod
-    def create_table(cls, *args, **kwargs):
-        if not Config.table_exists():
-            Config.create_table()
-            
-        if not ProgressBar.table_exists():
-            ProgressBar.create_table()
-            
-        if not Experiment.table_exists():
-            Experiment.create_table()
- 
-        super().create_table(*args, **kwargs)
 
     def create_source_zip(self):
         """
@@ -1869,6 +1846,27 @@ class Protocol(Process):
 
         self._connectors.append(connector)
     
+    def archive(self, tf:bool, archive_resources=True) -> bool:
+        """
+        Archive the protocol
+        """
+        
+        if self.is_archived == tf:
+            return True
+        
+        with self._db_manager.db.atomic() as transaction:
+            for k in self._processes:
+                proc = self._processes[k]
+                if not proc.archive(tf, archive_resources=archive_resources):
+                    transaction.rollback()
+                    return False
+
+            status = super().archive(tf)
+            if not status:
+                transaction.rollback()
+            
+            return status
+
     # -- B --
     
     def _build(self, processes: dict=None, connectors: list=None, interfaces: dict=None, outerfaces: dict=None, user=None, **kwargs):
@@ -2089,16 +2087,6 @@ class Protocol(Process):
     def create_source_zip(self):
         graph = self.dumps()
         return zlib.compress(graph.encode())
-
-    @classmethod
-    def create_table(cls, *args, **kwargs):
-        if not Experiment.table_exists():
-            Experiment.create_table()
-        
-        if not Config.table_exists():
-            Config.create_table()
-
-        super().create_table(*args, **kwargs)
 
     # -- D -- 
 
@@ -2417,25 +2405,25 @@ class Protocol(Process):
     
     def save(self, *args, update_graph=False, **kwargs):
         with self._db_manager.db.atomic() as transaction:
-            try:
-                for k in self._processes:
-                    self._processes[k].save()
+            for k in self._processes:
+                self._processes[k].save()
 
-                if not self.is_saved():
-                    Activity.add(
-                        Activity.CREATE,
-                        object_type = self.full_classname(),
-                        object_uri = self.uri
-                    )
-                
-                if update_graph:
-                     self.data["graph"] = self.dumps(as_dict=True)
-                        
-                return super().save(*args, **kwargs)
-            except Exception as err:
+            if not self.is_saved():
+                Activity.add(
+                    Activity.CREATE,
+                    object_type = self.full_classname(),
+                    object_uri = self.uri
+                )
+            
+            if update_graph:
+                self.data["graph"] = self.dumps(as_dict=True)
+                    
+            status = super().save(*args, **kwargs)
+            if not status:
                 transaction.rollback()
-                raise Error("gws.model.Protocol", "save", f"Could not save the protocol. Error: {err}")
-    
+
+            return status
+        
     
     def set_experiment(self, experiment):
         super().set_experiment(experiment)
@@ -2655,7 +2643,7 @@ class Experiment(Viewable):
     :property is_validated: True if the experiment is validated, False otherwise. Defaults to False.
     :type is_validated: `float`
     """
-    origin = ForeignKeyField('self', null=True, backref='children') 
+    #origin = ForeignKeyField('self', null=True, backref='children') 
     study = ForeignKeyField(Study, null=True, backref='experiments')
     protocol_id = IntegerField(null=True, index=True)
     created_by = ForeignKeyField(User, null=True, backref='created_experiments')
@@ -2722,29 +2710,21 @@ class Experiment(Viewable):
             return True
         
         with self._db_manager.db.atomic() as transaction:
-            try:
-                Activity.add(
-                    Activity.ARCHIVE,
-                    object_type = self.full_classname(),
-                    object_uri = self.uri
-                )
-                
-                for p in self.processes:
-                    if not p.archive(tf, archive_resources=archive_resources):
-                        transaction.rollback()
-                        return False
-                    
-                if super().archive(tf):
-                    return True
-                else:
-                    transaction.rollback()
-                    return False
-                    
-            except Exception as err:
-                Warning(self.full_classname(), "archive", f"Rollback archive. Error: {err}")
+            Activity.add(
+                Activity.ARCHIVE,
+                object_type = self.full_classname(),
+                object_uri = self.uri
+            )
+            
+            if not self.protocol.archive(tf, archive_resources=archive_resources):
                 transaction.rollback()
                 return False
 
+            status = super().archive(tf)
+            if not status:
+                transaction.rollback()
+            
+            return status
       
     # -- C --
         
@@ -2919,25 +2899,21 @@ class Experiment(Viewable):
 
         if self.is_finished:
             with self._db_manager.db.atomic() as transaction:
-                try:
-                    if self.protocol:
-                        if not self.protocol._reset():
-                            transaction.rollback()
-                            return False
-
-                    self._is_running = False
-                    self._is_finished = False
-                    self._is_success = False
-                    self.score = None
-                    if not self.save():
+                if self.protocol:
+                    if not self.protocol._reset():
                         transaction.rollback()
                         return False
 
-                    return True
-                except Exception as err:
-                    Warning("Experiment", "reset", f"{err}")
+                self._is_running = False
+                self._is_finished = False
+                self._is_success = False
+                self.score = None
+                status = self.save()
+
+                if not status:
                     transaction.rollback()
-                    return False
+                
+                return status
         else:
             return True
 
@@ -3011,7 +2987,7 @@ class Experiment(Viewable):
             else:
                 await self.__run(user=user)
         
-    async def __run(self, * ,user=None):
+    async def __run(self, * ,user: 'User'=None):
         """ 
         Run the experiment
 
@@ -3023,12 +2999,21 @@ class Experiment(Viewable):
         
         if not user:
             try:
-                user = UserService.get_current_user()
+                user: User = UserService.get_current_user()
             except:
                 raise Error("gws.model.Experiment", "run", "A user is required")
 
             if not user.is_authenticated:
                     raise Error("gws.model.Experiment", "run", "A authenticated user is required")
+        
+        if self.protocol._allowed_user == self.USER_ADMIN:
+                if not user.is_admin:
+                    raise Error("gws.model.Experiment", "run", f"Only admin user can run protocol")
+
+        for proc in self.protocol.processes.values():
+            if proc._allowed_user == self.USER_ADMIN:
+                if not user.is_admin:
+                    raise Error("gws.model.Experiment", "run", f"Only admin user can run process '{proc.type}'")
 
         if self.is_archived:
             raise Error("gws.model.Experiment", "run", f"The experiment is archived")
@@ -3102,18 +3087,18 @@ class Experiment(Viewable):
 
     def save(self, *args, **kwargs):  
         with self._db_manager.db.atomic() as transaction:
-            try:
-                if not self.is_saved():
-                    Activity.add(
-                        Activity.CREATE,
-                        object_type = self.full_classname(),
-                        object_uri = self.uri
-                    )
-        
-                return super().save(*args, **kwargs)
-            except:
+            if not self.is_saved():
+                Activity.add(
+                    Activity.CREATE,
+                    object_type = self.full_classname(),
+                    object_uri = self.uri
+                )
+
+            status = super().save(*args, **kwargs)
+            if not status:
                 transaction.rollback()
-                return False
+
+            return status
 
     # -- T --
     
@@ -3165,20 +3150,14 @@ class Experiment(Viewable):
             return
 
         with self._db_manager.db.atomic() as transaction:
-            try:
-                self.is_validated = True
-                self.save()
-                
+            self.is_validated = True
+            if self.save():
                 Activity.add(
                     Activity.VALIDATE,
                     object_type = self.full_classname(),
                     object_uri = self.uri
                 )
-            except Exception as err:
-                transaction.rollback()
-                raise Error("gws.model.Experiment", "save", f"Could not validate the experiment. Error: {err}") from err
-    
-    
+
     # -- V --
     
 # ####################################################################
@@ -3502,49 +3481,45 @@ class ResourceSet(Resource):
     
     # -- R --
     
-    def remove(self):
+    def remove(self) -> bool:
         with self._db_manager.db.atomic() as transaction:
-            try:
-                for k in self._set:
-                    if not self._set.remove():
-                        transaction.rollback()
-                        return False
-
-                if not super().remove():
+            for k in self._set:
+                if not self._set[k].remove():
                     transaction.rollback()
                     return False
-                else:
-                    return True
-            except:
+
+            status = super().remove()
+            if not status:
                 transaction.rollback()
-                return False
+
+            return status
 
     # -- S --
     
     def __setitem__(self, key, val):
         if not isinstance(val, self._resource_types):
-            raise Error("gws.model.ResourceSet", "__setitem__", f"The value must be an instance of {self._resource_types}. The actual value is a {type(val)}.")
+            raise Error(self.full_classname(), "__setitem__", f"The value must be an instance of {self._resource_types}. The actual value is a {type(val)}.")
         
         self.set[key] = val
 
-    def save(self, *args, **kwrags):
+    def save(self, *args, **kwrags) -> bool:
         with self._db_manager.db.atomic() as transaction:
-            try:
-                self.data["set"] = {}
-                for k in self._set:
-                    if not (self._set[k].is_saved() or self._set[k].save()):
-                        raise Error("gws.model.ResourceSet", "save", f"Cannot save the resource '{k}' of the resource set")
+            self.data["set"] = {}
+            for k in self._set:
+                if not (self._set[k].is_saved() or self._set[k].save()):
+                    transaction.rollback()
+                    return False
 
-                    self.data["set"][k] = {
-                        "uri": self._set[k].uri,
-                        "type": self._set[k].full_classname()
-                    }    
+                self.data["set"][k] = {
+                    "uri": self._set[k].uri,
+                    "type": self._set[k].full_classname()
+                }    
 
-                return super().save(*args, **kwrags)
-
-            except Exception as err:
+            status = super().save(*args, **kwrags)
+            if not status:
                 transaction.rollback()
-                raise Error("gws.model.ResourceSet", "save", f"Error: {err}")
+
+            return status
 
     @property
     def set(self):
@@ -3722,24 +3697,19 @@ class ViewModel(Model):
             return True
         
         if self._model is None:
-            raise Error("gws.model.ViewModel", "save", "The ViewModel has no model")
+            raise Error(self.full_classname(), "save", "The ViewModel has no model")
         else:
             if not self.model_uri is None and self._model.uri != self.model_uri:
-                raise Error("gws.model.ViewModel", "save", "It is not allowed to change model of the ViewModel that is already saved")
+                raise Error(self.full_classname(), "save", "It is not allowed to change model of the ViewModel that is already saved")
                 
-            with self._db_manager.db.atomic() as transaction:
-                try:
-                    if self._model.save(*args, **kwargs):
-                        self.model_uri = self._model.uri
-                        self.model_type = self._model.full_classname()
-  
-                        return super().save(*args, **kwargs)
-                    else:
-                        raise Error("gws.model.ViewModel", "save", "Cannot save the vmodel. Please ensure that the model of the vmodel is saved before")
-                except Exception as err:
-                    transaction.rollback()
-                    raise Error("gws.model.ViewModel", "save", f"Error message: {err}")
-    
+            if not self._model.save(*args, **kwargs):
+                raise Error(self.full_classname(), "save", "Cannot save the vmodel. Please ensure that the model of the vmodel is saved before")
+
+            self.model_uri = self._model.uri
+            self.model_type = self._model.full_classname()
+            return super().save(*args, **kwargs)
+                    
+ 
     # -- T --
 
     # -- U -- 

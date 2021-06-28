@@ -13,15 +13,12 @@ class TestCentral(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        User.drop_table()
-        Experiment.drop_table()
-        Protocol.drop_table()
+        GTest.drop_tables()
+        GTest.create_tables()
 
     @classmethod
     def tearDownClass(cls):
-        User.drop_table()
-        Experiment.drop_table()
-        Protocol.drop_table()
+        GTest.drop_tables()
 
     def test_create_user(self):
         GTest.print("Test Central")

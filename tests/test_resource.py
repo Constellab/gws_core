@@ -35,15 +35,13 @@ class TestResource(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        tables = ( Resource, ResourceSet, )
-        GTest.drop_tables(tables)
+        GTest.drop_tables()
+        GTest.create_tables()
         GTest.init()
 
     @classmethod
     def tearDownClass(cls):
-        tables = ( Resource, ResourceSet, )
-        GTest.drop_tables(tables)
-        GTest.init()
+        GTest.drop_tables()
 
     def test_model(self):
         c1 = Car()

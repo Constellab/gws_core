@@ -14,16 +14,13 @@ class TestProcess(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        tables = ( Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, )
-        GTest.drop_tables(tables)
+        GTest.drop_tables()
+        GTest.create_tables()
         GTest.init()
-        pass
 
     @classmethod
     def tearDownClass(cls):
-        tables = ( Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, )
-        GTest.drop_tables(tables)
-        pass
+        GTest.drop_tables()
 
     def test_process_singleton(self):
         p0 = Create()
@@ -32,7 +29,7 @@ class TestProcess(unittest.TestCase):
         p0.description = "This is the description of the process"
         p0.save()
 
-        self.assertTrue(p0.id != p1.id) 
+        self.assertTrue(p0.id != p1.id)
 
     def test_process(self):
         p0 = Create()

@@ -185,16 +185,16 @@ class ModelService(BaseService):
             module = importlib.import_module(module_name)
             t = getattr(module, function_name, None)
             cls._model_types[type] = t
-        except Exception as err:
+        except Exception as _:
             Warning("gws.service.model_service.ModelService", "get_model_type", f"An error occured. Error: {err}")
             t = None
 
         return t
     
-    # -- R --
-        
+    # -- I --
+
     @classmethod
-    def register_all_processes_and_resources(cls):
+    def _inspect_model_types(cls):
         settings = Settings.retrieve()
         dep_dirs = settings.get_dependency_dirs()
         
@@ -219,8 +219,7 @@ class ModelService(BaseService):
 
             return f
 
-        resource_type_list = []
-        process_type_list = []
+        model_type_list = []
         
         for brick_name in dep_dirs:
             cdir = dep_dirs[brick_name]
@@ -231,7 +230,7 @@ class ModelService(BaseService):
                 for k in _black_list:
                     try:
                         module_names.remove(k)
-                    except:
+                    except Exception as _:
                         pass
 
             for module_name in module_names:
@@ -239,29 +238,37 @@ class ModelService(BaseService):
                     submodule = importlib.import_module(brick_name+"."+module_name)
                     for class_name, _ in inspect.getmembers(submodule, inspect.isclass):
                         t = getattr(submodule, class_name, None)
-                        if issubclass(t, Process):
-                            process_type_list.append(t)
-                        elif issubclass(t, Resource):
-                            resource_type_list.append(t)
-                except:
+                        if issubclass(t, Model):
+                            model_type_list.append(t)
+                except Exception as _:
                     pass
         
-        process_type_list = list(set(process_type_list))
-        for proc_t in set(process_type_list):
-            if not proc_t is Process and not proc_t is Protocol:
-                proc_t.create_process_type()
-                cls._model_types[ proc_t.full_classname() ] = proc_t
-            
-        resource_type_list = list(set(resource_type_list))
-        for res_t in set(resource_type_list):
-            if not res_t is Resource:
-                res_t.create_resource_type()
-                cls._model_types[ res_t.full_classname() ] = res_t
-            
-        Info(f"REGISTER_ALL_PROCESSES: A total of {len(process_type_list)} process types were registered in db.\n Process types:\n {process_type_list}")
+        model_type_list = list(set(model_type_list))
+        return model_type_list
+
+    # -- R --
         
-        Info(f"REGISTER_ALL_RESOURCES: A total of {len(resource_type_list)} resource types were registered in db.\n Resource types:\n {resource_type_list}")
-        
+    @classmethod
+    def register_all_processes_and_resources(cls):
+        model_type_list = cls._inspect_model_types()
+        process_type_list = []
+        resource_type_list = []
+
+        for m_t in set(model_type_list):
+            if issubclass(m_t, Process):
+                process_type_list.append(m_t)
+                if (not m_t is Process) and (not m_t is Protocol):
+                    m_t.create_process_type()
+                    cls._model_types[ m_t.full_classname() ] = m_t
+            elif issubclass(m_t, Resource):
+                resource_type_list.append(m_t)
+                if not m_t is Resource:
+                    m_t.create_resource_type()
+                    cls._model_types[ m_t.full_classname() ] = m_t
+            
+        Info(f"Resource: {len(resource_type_list)} types registered:\n{resource_type_list}")
+        Info(f"Process: {len(process_type_list)} types registered:\n{process_type_list}")
+                
     # -- S --
     
     @classmethod

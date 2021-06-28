@@ -109,29 +109,32 @@ class Settings(PWModel):
         db_dir = os.path.join( self.get_data_dir(), "sqlite3" )
         return db_dir
 
-    def _get_sqlite3_prod_db_dir(self) -> str:
+    def get_sqlite3_prod_db_dir(self) -> str:
         db_dir = os.path.join( self.get_prod_data_dir(), "sqlite3" )
         if not os.path.exists(db_dir):
             os.makedirs(db_dir)
         return db_dir
 
-    def _get_sqlite3_dev_db_dir(self) -> str:
+    def get_sqlite3_dev_db_dir(self) -> str:
         db_dir = os.path.join( self.get_dev_data_dir(), "sqlite3" )
         if not os.path.exists(db_dir):
             os.makedirs(db_dir)
         return db_dir
 
+    def get_maria_db_backup_dir(self) -> str:
+        return os.path.join( self.get_data_dir(), "backups" )
+
     def get_maria_db_host(self) -> str:
         if self.is_prod:
-            return self._get_maria_prod_db_host()
+            return self.get_maria_prod_db_host()
         else:
-            return self._get_maria_dev_db_host()
+            return self.get_maria_dev_db_host()
 
-    def _get_maria_prod_db_host(self) -> str:
-        return "gws_db_prod"
+    def get_maria_prod_db_host(self) -> str:
+        return "gws_prod_db"
 
-    def _get_maria_dev_db_host(self) -> str:
-        return "gws_db_dev"
+    def get_maria_dev_db_host(self) -> str:
+        return "gws_dev_db"
 
     def get_cwd(self) -> dict:
         return self.data["__cwd__"]
@@ -143,36 +146,79 @@ class Settings(PWModel):
             return self.data.get(k, default)
 
     def get_lab_dir(self) -> str:
+        """
+        Get the lab directory
+
+        :return: The lab directory
+        :rtype: `str`
+        """
+
         return "/lab"
 
     def get_log_dir(self) -> str:
-        return "/logs"       
+        """
+        Get the log directory
+
+        :return: The log directory
+        :rtype: `str`
+        """
+
+        return "/logs"    
 
     def get_data_dir(self) -> str:
+        """
+        Get the default data directory.
+        Depending on if the lab is in dev or prod mode, the appropriate directory is returned.
+
+        :return: The default data directory
+        :rtype: `str`
+        """
+
         if self.is_prod:
             return self.get_prod_data_dir()
         else:
             return self.get_dev_data_dir()
 
     def get_dev_data_dir(self) -> str:
+        """
+        Get the development data directory
+
+        :return: The development data directory
+        :rtype: `str`
+        """
+
         return "/dev-data"
 
     def get_prod_data_dir(self) -> str:
+        """
+        Get the production data directory
+
+        :return: The production data directory
+        :rtype: `str`
+        """
+
         return "/prod-data"
 
     def get_root_dir(self) -> str:
+        """
+        Get the root directory of the lab. Alias of :meth:`get_lab_dir`.
+
+        :return: The root directory
+        :rtype: `str`
+        """
+
         return self.get_lab_dir()
 
     def get_gws_workspace_dir(self) -> str:
-        rd = self.get_root_dir()
-        if os.path.exists(os.path.join(rd, "./.gws/")):
-            return os.path.join(rd, "./.gws/")
+        root_dir = self.get_root_dir()
+        if os.path.exists(os.path.join(root_dir, "./.gws/")):
+            return os.path.join(root_dir, "./.gws/")
         else:
-            return os.path.join(rd, "./gws/")
+            return os.path.join(root_dir, "./gws/")
 
     def get_user_workspace_dir(self) -> str:
-        rd = self.get_root_dir()
-        return os.path.join(rd, "./user/")
+        root_dir = self.get_root_dir()
+        return os.path.join(root_dir, "./user/")
 
     def get_dirs(self) -> dict:
         return self.data.get("dirs",{})
@@ -186,7 +232,7 @@ class Settings(PWModel):
         else:
             return "/data/filestore/dev"
     
-    def get_kv_store_dir(self) -> str:
+    def get_kv_store_base_dir(self) -> str:
         if self.is_prod:
             return "/data/kvstore/prod"
         else:

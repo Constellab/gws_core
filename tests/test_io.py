@@ -45,6 +45,16 @@ class Jump(Process):
     
 class TestIO(unittest.TestCase):
     
+    @classmethod
+    def setUpClass(cls):
+        GTest.drop_tables()
+        GTest.create_tables()
+        GTest.init()
+
+    @classmethod
+    def tearDownClass(cls):
+        GTest.drop_tables()
+        
     def test_connect(self):
         GTest.print("Test IO connect")
 

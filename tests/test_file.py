@@ -10,24 +10,20 @@ import os
 from gws.settings import Settings
 from gws.model import *
 from gws.file import File
-from gws.store import LocalFileStore
+from gws.file_store import LocalFileStore
 from gws.unittest import GTest
   
 class TestFile(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        LocalFileStore.remove_all_files(ignore_errors=True)
-        tables = ( LocalFileStore, File, Resource, Config, Process, Protocol, Experiment, Study, User, Activity, ProgressBar, )
-        GTest.drop_tables(tables)
+        GTest.drop_tables()
+        GTest.create_tables()
         GTest.init()
-        pass
 
     @classmethod
     def tearDownClass(cls):
-        tables = ( LocalFileStore, File, Resource, Config, Process, Protocol, Experiment,  Study, User, Activity, ProgressBar, )
-        GTest.drop_tables(tables)
-        pass
+        GTest.drop_tables()
     
     def test_file(self):
         GTest.print("Test File")

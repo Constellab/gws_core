@@ -12,28 +12,27 @@ from .base_service import BaseService
 class CommentService(BaseService):
     
     @classmethod
-    def add_comment(cls, object_type: str, object_uri: str, text: str, reply_to_uri:str=None) -> Comment:
+    def add_comment(cls, object_type: str, object_uri: str, message: str, reply_to_uri:str=None) -> Comment:
         if reply_to_uri:
             try:
                 parent = Comment.get(Comment.uri == reply_to_uri)
             except Exception as err:
                 raise HTTPNotFound(detail=f"The parent comment '{reply_to_uri}' not found") from err
 
-            c = Comment(
+            comment = Comment(
                 object_uri=object_uri,
                 object_type=object_type,
-                text=text, 
                 reply_to=parent
             )
         else:
-            c = Comment(
+            comment = Comment(
                 object_uri=object_uri, 
                 object_type=object_type,
-                text=text
             )
 
-        c.save()
-        return c
+        comment.set_message(message)
+        comment.save()
+        return comment
 
     @classmethod
     def fetch_object_comments(cls, \
@@ -53,12 +52,12 @@ class CommentService(BaseService):
                 for c in query:
                     comments.append(c.to_json())
                 return comments
-            else:
-                return query
+            
+            return query
         else:
             number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
             paginator = Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page )
             if as_json:
                 return paginator.to_json(shallow=True)
-            else:
-                return paginator
+
+            return paginator

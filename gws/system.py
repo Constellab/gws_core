@@ -47,7 +47,7 @@ class Monitor(Model):
     __is_init = False
         
     @classmethod
-    def init(cls, daemon=True):
+    def init(cls, daemon=False):
         if not cls.__is_init:
             cls.__is_init = True
             _system_monitor_tick(daemon)
@@ -116,9 +116,7 @@ class SysProc:
             proc._ps = psutil.Popen(cmd, *args, **kwargs)
             return proc
         except Exception as err:
-            if isinstance(cmd,list):
-                cmd = " ".join(cmd)
-            Error("Pool","run", f"An error occured when calling command {cmd}.\nError: {err}")
+            raise Error("Pool","run", f"An error occured when calling command {cmd}.\nError: {err}") from err
     
     def stats(self):
         return self._ps.as_dict()

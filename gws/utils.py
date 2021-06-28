@@ -19,14 +19,18 @@ def slugify(text: str, snakefy: bool = False, to_lower: bool = True) -> str:
     """
     Returns the slugified text
 
+    :param text: Text to slugify
+    :type text: `str`
     :param snakefy: Snakefy the text if True (i.e. uses undescores instead of dashes to separate text words), defaults to False
-    :type snakefy: bool, optional
-    :return: The slugified name
+    :type snakefy: `bool`
+    :param to_lower: True to lower all characters, False otherwise
+    :type to_lower: `bool`
+    :return: The slugified text
     :rtype: str
     """
     
     if snakefy:
-        text = _slugify(text, to_lower=to_lower, separator='_')
+        text = _slugify(text, to_lower=to_lower, separator="_")
     else:
         text = _slugify(text, to_lower=to_lower, separator='-')
         

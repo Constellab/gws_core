@@ -23,15 +23,13 @@ class TestExperiment(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        tables = ( Resource, Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, Queue, Job)
-        GTest.drop_tables(tables)
+        GTest.drop_tables()
+        GTest.create_tables()
         GTest.init()
-        pass
 
     @classmethod
     def tearDownClass(cls):
-        #tables = ( Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, )
-        #GTest.drop_tables(tables)
+        GTest.drop_tables()
         pass
     
     def test_run(self):
@@ -157,27 +155,26 @@ class TestExperiment(unittest.TestCase):
         
         
     def test_service(self):
-        tables = ( Resource, Create, Config, Process, Protocol, Experiment, Robot, Study, User, Activity, ProgressBar, Queue, Job)
-        GTest.drop_tables(tables)
+        GTest.drop_tables()
+        GTest.create_tables()
         GTest.init()
         
         GTest.print("Test ExperimentService")
         proto = create_nested_protocol()
         e = Experiment(protocol=proto, study=GTest.study, user=GTest.user)
-        e.save() 
-        self.assertEqual(Experiment.select().count(), 1)
+        e.save()
+        c = Experiment.select().count()
+        self.assertEqual(c, 1)
 
-        Queue.init(tick_interval=3, verbose=True) # tick each second
+        Queue.init(tick_interval=3, verbose=True, daemon=False) # tick each second
 
-        def _run():
+        def _run() -> bool:
             try:
                 asyncio.run( ExperimentService.start_experiment(e.uri) )
-            except Exception as err:
-                print(err)
+            except:
                 return False
 
             self.assertEqual(Queue.length(), 1)
-
             n = 0
             while Queue.length():
                 print("Waiting 3 secs for cli experiment to finish ...")
@@ -215,3 +212,5 @@ class TestExperiment(unittest.TestCase):
         e.validate(user=GTest.user)
         self.assertFalse(_run())
         self.assertEqual(Experiment.select().count(), 1)
+        Queue.deinit()
+        time.sleep(3)

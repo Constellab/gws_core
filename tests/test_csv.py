@@ -15,7 +15,7 @@ from gws.settings import Settings
 from gws.model import Protocol, Study, User
 from gws.csv import *
 from gws.file import File
-from gws.store import LocalFileStore
+from gws.file_store import LocalFileStore
 from gws.unittest import GTest
 
 settings = Settings.retrieve()
@@ -25,27 +25,14 @@ class TestCSV(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        LocalFileStore.remove_all_files(ignore_errors=True)
-        File.drop_table()
-        CSVDumper.drop_table()
-        CSVLoader.drop_table()
-        CSVImporter.drop_table()
-        CSVExporter.drop_table()
-        Study.drop_table()
-        User.drop_table()
+        GTest.drop_tables()
+        GTest.create_tables()
         GTest.init()
         pass
 
     @classmethod
     def tearDownClass(cls):
-        LocalFileStore.remove_all_files(ignore_errors=True)
-        File.drop_table()
-        CSVDumper.drop_table()
-        CSVLoader.drop_table()
-        CSVImporter.drop_table()
-        CSVExporter.drop_table()
-        Study.drop_table()
-        User.drop_table()
+        GTest.drop_tables()
         pass
 
     

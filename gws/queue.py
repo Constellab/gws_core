@@ -15,6 +15,10 @@ from peewee import IntegerField, ForeignKeyField, BooleanField
 TICK_INTERVAL_SECONDS = 30   # 30 sec
 
 def _queue_tick(tick_interval, verbose, daemon):
+    q = Queue()
+    if not q.is_active:
+        return
+
     try:
         Queue._tick(verbose)
     finally:
@@ -62,7 +66,7 @@ class Queue(Model):
             self.save()
     
     @classmethod
-    def init(cls, tick_interval: int=TICK_INTERVAL_SECONDS, verbose=False, daemon=True):
+    def init(cls, tick_interval: int=TICK_INTERVAL_SECONDS, verbose=False, daemon=False):
         q = Queue()
         if not cls.__is_init or not q.is_active:
             q.is_active = True
