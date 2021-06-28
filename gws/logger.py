@@ -82,6 +82,15 @@ class Logger:
     # -- P --
 
     @classmethod
+    def progress(cls, message):
+        if not cls._logger:
+            Logger()
+            
+        cls._logger.info(f"PROGRESS: {datetime.datetime.now().time()} -- {message}")
+        erase = '\x1b[1A\x1b[2K'
+        print(erase + message)
+
+    @classmethod
     def _print(cls, message):
         erase = '\x1b[1A\x1b[2K'
         if cls.is_debug():
@@ -126,7 +135,7 @@ class Warning():
 
     message = ""
     
-    def __init__(self, message, *args, stdout: bool=False):
+    def __init__(self, message, *args):
         if args:
             exc_message = f"({message}, {', '.join(args)})"
         else:
@@ -134,9 +143,6 @@ class Warning():
         
         self.message = exc_message
         Logger.warning(exc_message)
-
-        if stdout:
-            print(exc_message)
         
 class Info():
     """
@@ -144,7 +150,7 @@ class Info():
     """
 
     message = ""
-    def __init__(self, message, *args, stdout: bool=False):
+    def __init__(self, message, *args):
         if args:
             exc_message = f"({message}, {', '.join(args)})"
         else:
@@ -153,5 +159,17 @@ class Info():
         self.message = exc_message
         Logger.info(exc_message)
 
-        if stdout:
-            print(exc_message)
+class Progress():
+    """
+    Progres class
+    """
+
+    message = ""
+    def __init__(self, message, *args):
+        if args:
+            exc_message = f"({message}, {', '.join(args)})"
+        else:
+            exc_message = message
+        
+        self.message = exc_message
+        Logger.progress(exc_message)

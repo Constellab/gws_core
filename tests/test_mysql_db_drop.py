@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import time
 import os
 import asyncio
 import unittest
@@ -20,7 +21,7 @@ class TestDb(unittest.TestCase):
         
     @classmethod
     def tearDownClass(cls):
-        #GTest.drop_tables()
+        GTest.drop_tables()
         pass
 
     def test_db_drop(self):
@@ -33,20 +34,16 @@ class TestDb(unittest.TestCase):
         f.save()
         
         # drop db
-        proc = MySQLDrop()
-        e = proc.create_experiment(user=GTest.user, study=GTest.study)
+        drop = MySQLDrop()
+        drop.run()
 
-        def _on_end(*args, **kwargs):
-            self.assertFalse(File.table_exists())
-
-        e.on_end(_on_end)
-        asyncio.run( e.run() )
-
+        print("Waiting for db drop to finish ...")
         n = 0
-        while not e.is_finished:
-            print("Waiting 3 secs for experiment to ...")
+        while not drop.is_ready():
             time.sleep(3)
             if n == 10:
-                raise Error("The experiment queue is not empty")
+                break
             n += 1
+        print("Done!")
 
+        self.assertFalse(File.table_exists())

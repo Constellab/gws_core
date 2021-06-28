@@ -18,7 +18,7 @@ class GTest:
         """
         This function initializes objects for unit testing
         """
-
+        
         settings = Settings.retrieve()
         if not settings.is_dev:
             raise Error("unittests", "init", "The unit tests can only be initialized in dev mode")
@@ -37,6 +37,9 @@ class GTest:
         Drops a list of table associatied to object classes
         """
 
+        from biota.base import DbManager as BiotaDbManager
+        BiotaDbManager.use_prod_db(False)
+
         db_list, model_list = cls._get_db_and_model_lists(models)
         for db in db_list:
             i = db_list.index(db)
@@ -49,6 +52,9 @@ class GTest:
         Drops a list of table associatied to object classes
         """
 
+        from biota.base import DbManager as BiotaDbManager
+        BiotaDbManager.use_prod_db(False)
+        
         db_list, model_list = cls._get_db_and_model_lists(models) 
         for db in db_list:
             i = db_list.index(db)

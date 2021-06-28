@@ -40,11 +40,11 @@ class TestDb(unittest.TestCase):
 
         print("Waiting for dump to finish ...")
         n = 0
-        while dump.is_in_progress():
+        while not dump.is_ready():
             time.sleep(1)
-            n = n+1
             if n == 10:
                 break
+            n = n+1
         print("Done!")
 
         print(dump.output_file)
