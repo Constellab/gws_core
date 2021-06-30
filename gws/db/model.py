@@ -41,8 +41,8 @@ class DbManager(AbstractDbManager):
     _engine = None
     _db_name = "gws"
 
-DbManager.init(engine="sqlite3")
-#DbManager.init(engine="mariadb")
+#DbManager.init(engine="sqlite3")
+DbManager.init(engine="mariadb")
 
 # ####################################################################
 #

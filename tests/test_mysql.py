@@ -7,11 +7,11 @@ import time
 import os
 import asyncio
 import unittest
-from gws.db.mysql import MySQLDump
+from gws.db.mysql import MySQLDump, MySQLLoad
 from gws.unittest import GTest
 from gws.file import File
 
-class TestDb(unittest.TestCase):
+class TestMySQLDumpLoad(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
@@ -24,8 +24,12 @@ class TestDb(unittest.TestCase):
         GTest.drop_tables()
         pass
 
-    def test_db_dump(self):
-        GTest.print("Test database dump")
+    def test_db_dump_load(self):
+        GTest.print("Test MySQL db dump & load")
+        
+        if File.get_db_manager().is_sqlite_engine():
+            print("SQLite3 db detected: exit test, OK!")
+            return
 
         # insert data in comment table
         f = File(path="./oui")
@@ -35,17 +39,17 @@ class TestDb(unittest.TestCase):
         
         # dump db
         dump = MySQLDump()
-        dump.run()
-        time.sleep(1)
-
-        print("Waiting for dump to finish ...")
-        n = 0
-        while not dump.is_ready():
-            time.sleep(1)
-            if n == 10:
-                break
-            n = n+1
-        print("Done!")
-
+        dump.run(force=True, wait=True)
         print(dump.output_file)
         self.assertTrue(os.path.exists(dump.output_file))
+
+        GTest.drop_tables()
+        self.assertFalse(File.table_exists())
+
+        # load db
+        load = MySQLLoad()
+        load.run(force=True, wait=True)
+        self.assertTrue(File.table_exists())
+
+    def test_db_drop(self):
+        pass

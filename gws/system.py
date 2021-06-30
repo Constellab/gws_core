@@ -128,3 +128,9 @@ class SysProc:
     @property
     def stderr(self):
         return self._ps.stderr
+
+    def wait(self, timeout=None):
+        """
+        Wait for a process PID to terminate
+        """
+        self._ps.wait(timeout=timeout)

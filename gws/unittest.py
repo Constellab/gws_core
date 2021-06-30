@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 from gws.settings import Settings
-from gws.model import Study, User, Experiment
+from gws.model import Study, User
 from gws.logger import Error
 from gws.service.model_service import ModelService
 
@@ -34,11 +34,8 @@ class GTest:
     @classmethod
     def create_tables(cls, models: list = None):
         """
-        Drops a list of table associatied to object classes
+        Create tables
         """
-
-        from biota.base import DbManager as BiotaDbManager
-        BiotaDbManager.use_prod_db(False)
 
         db_list, model_list = cls._get_db_and_model_lists(models)
         for db in db_list:
@@ -47,15 +44,12 @@ class GTest:
             db.create_tables(models)
 
     @classmethod
-    def drop_tables(cls, models = []):
+    def drop_tables(cls, models: list = None):
         """
-        Drops a list of table associatied to object classes
+        Drops tables
         """
 
-        from biota.base import DbManager as BiotaDbManager
-        BiotaDbManager.use_prod_db(False)
-        
-        db_list, model_list = cls._get_db_and_model_lists(models) 
+        db_list, model_list = cls._get_db_and_model_lists(models)
         for db in db_list:
             i = db_list.index(db)
             models = [ t for t in model_list[i] if t.table_exists() ]
