@@ -146,7 +146,8 @@ class Model(Base, PeeweeModel):
         
         if self.uri is None:
             self.uri = str(uuid.uuid4())
-            self.data = {}
+            if not self.data:
+                self.data = {}
  
         # ensures that field type is allways equal to the name of the class
         if self.type is None:

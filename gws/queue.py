@@ -163,7 +163,7 @@ class Queue(Model):
     @classmethod
     def _tick(cls, verbose=False):
         if verbose:
-            Info("Checking experiment queue ...", stdout=True)
+            Info("Checking experiment queue ...")
             
         job = Queue.next()
         if not job:
@@ -175,7 +175,7 @@ class Queue(Model):
             return
         
         if verbose:
-            Info(f"Experiment {e.uri}, is_running = {e.is_running}", stdout=True)
+            Info(f"Experiment {e.uri}, is_running = {e.is_running}")
                 
         if e.is_running:
             #-> we will test later!
@@ -184,11 +184,11 @@ class Queue(Model):
         if Experiment.count_of_running_experiments():
             #-> busy: we will test later!
             if verbose:
-                Info("The lab is busy! Retry later", stdout=True)
+                Info("The lab is busy! Retry later")
             return
         
         if verbose:
-            Info(f"Start experiment {e.uri}, user={job.user.uri}", stdout=True)
+            Info(f"Start experiment {e.uri}, user={job.user.uri}")
             
         e.run_through_cli(user=job.user)
         time.sleep(3)  #-> wait for 3 sec to prevent database lock!
