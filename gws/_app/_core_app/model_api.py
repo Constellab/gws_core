@@ -61,7 +61,7 @@ async def create_a_view_model_of_a_model(type: str, \
     - **data**: the rendering data.
     """
     
-    vm = ModelService.creat_view_model(
+    vm = ModelService.create_view_model(
         type=type, 
         uri=uri,
         data=data

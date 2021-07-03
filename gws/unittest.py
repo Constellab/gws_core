@@ -37,11 +37,7 @@ class GTest:
         Create tables
         """
 
-        db_list, model_list = cls._get_db_and_model_lists(models)
-        for db in db_list:
-            i = db_list.index(db)
-            models = [ t for t in model_list[i] if not t.table_exists() ]
-            db.create_tables(models)
+        ModelService.create_tables(models)
 
     @classmethod
     def drop_tables(cls, models: list = None):
@@ -49,29 +45,7 @@ class GTest:
         Drops tables
         """
 
-        db_list, model_list = cls._get_db_and_model_lists(models)
-        for db in db_list:
-            i = db_list.index(db)
-            models = [ t for t in model_list[i] if t.table_exists() ]
-            db.drop_tables(models)
-
-    @classmethod
-    def _get_db_and_model_lists(cls, models: list = None):
-        if not models:
-            models = ModelService._inspect_model_types()
-
-        db_list = []
-        model_list = []
-        for t in models:
-            db = t._db_manager.db
-            if db in db_list:
-                i = db_list.index(db)
-                model_list[i].append(t)
-            else:
-                db_list.append(db)
-                model_list.append([t])
-        
-        return db_list, model_list
+        ModelService.drop_tables(models)
 
     @classmethod
     def print(cls, text):

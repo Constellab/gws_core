@@ -39,16 +39,14 @@ app = FastAPI(docs_url=None)
 @app.on_event("startup")
 async def startup_event():
     settings = Settings.retrieve()
-    Info("GLab application started!", stdout=True)
-    Info("* Server: {}:{}".format(settings.get_data("app_host"), settings.get_data("app_port")), stdout=True)
+    Info("GLab application started!")
+    Info("* Server: {}:{}".format(settings.get_data("app_host"), settings.get_data("app_port")))
     Info("* HTTP connection: https://{}:{} (in {} mode)".format(
         settings.get_data("app_host"),
         settings.get_data("app_port"),
         ("prod" if settings.is_prod else "dev")
-    ), stdout=True)
-    Info("* Lab token: {}".format(
-        urllib.parse.quote(settings.get_data("token"), safe='')
-    ), stdout=True)
+    ))
+    Info("* Lab token: {}".format(urllib.parse.quote(settings.get_data("token"), safe='')))
 
     # Initialize the monitor and the queue
     Monitor.init(daemon=False)
@@ -94,7 +92,7 @@ class App(BaseApp):
         from .service.model_service import ModelService
 
         # register all processes and resources
-        ModelService.create_model_tables()
+        ModelService.create_tables()
         ModelService.register_all_processes_and_resources()
 
         # create default study and users

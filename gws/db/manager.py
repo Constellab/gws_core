@@ -24,14 +24,15 @@ class AbstractDbManager:
     
     :property db: Database Proxy
     :type db: `DatabaseProxy`
-    :property _engine: The engine to use
-    :type _engine: `str`
-    :property _db_name: The name of the database
-    :type _db_name: `str`
     """
 
     db = DatabaseProxy()
+
     _engine = None
+    _mariadb_config = {
+        "user": "gws",
+        "password": "gencovery"
+    }
     _db_name = "gws"
 
     @classmethod
@@ -41,7 +42,6 @@ class AbstractDbManager:
 
         if not cls._engine:
             cls._engine = "sqlite3"
-            #raise Exception("gws.db.model.DbManager", "init", f"Db engine '{cls._engine}' is not defined")
 
         if cls._engine == "sqlite3":
             _db = SqliteDatabase(cls.get_sqlite3_db_path(mode=mode))
@@ -49,10 +49,10 @@ class AbstractDbManager:
             settings = Settings.retrieve()
             _db = MySQLDatabase(
                 cls._db_name,
-                user='gws',
-                password='gencovery',
-                host=settings.get_maria_db_host(),
-                port=3306
+                user        = cls._mariadb_config["user"],
+                password    = cls._mariadb_config["password"],
+                host        = settings.get_maria_db_host(),
+                port        = 3306
             )
         else:
             raise Exception("gws.db.model.DbManager", "init", f"Db engine '{cls._engine}' is not valid")
@@ -61,19 +61,19 @@ class AbstractDbManager:
 
     # -- C --
 
-    @classmethod
-    def create_maria_db(cls):
-        """
-        Creates maria database
-        """
+    # @classmethod
+    # def create_maria_db(cls):
+    #     """
+    #     Creates maria database
+    #     """
 
-        if not cls._engine == "mariadb":
-            raise Exception("gws.db.manager.DbManager", "create_maria_database", "Db engine is not mariab")
+    #     if not cls._engine == "mariadb":
+    #         raise Exception("gws.db.manager.DbManager", "create_maria_database", "Db engine is not mariab")
         
-        conn = pymysql.connect(host='mariadb', port=3306, user="root", password="gencovery")
-        conn.cursor().execute(f"CREATE DATABASE IF NOT EXISTS {cls._db_name}")
-        conn.cursor().execute(f"GRANT ALL PRIVILEGES ON ${cls._db_name}.* TO 'gws'@'localhost';")
-        conn.close()
+    #     conn = pymysql.connect(host='mariadb', port=3306, user="root", password="gencovery")
+    #     conn.cursor().execute(f"CREATE DATABASE IF NOT EXISTS {cls._db_name}")
+    #     conn.cursor().execute(f"GRANT ALL PRIVILEGES ON ${cls._db_name}.* TO 'gws'@'localhost';")
+    #     conn.close()
 
     # -- D --
 
@@ -81,7 +81,7 @@ class AbstractDbManager:
 
     @classmethod
     def get_db(cls):
-        return cls._db
+        return cls.db
 
     @classmethod
     def get_db_name(cls):

@@ -22,7 +22,8 @@ sys.path.insert(0, os.path.join(wd,'../gws'))
 from gws import runner
 from gws.manage import load_settings
 load_settings(wd)
-runner._run()
+ctx = None
+runner._run(ctx)
 
 #
 extensions = [
@@ -34,10 +35,10 @@ extensions = [
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = [
-    'settings.py', 
-    'manage.py', 
+    'settings.py',
+    'manage.py',
     '**/gws/runner.py',
-    '**/gws/_sphynx/conf.py'    
+    '**/gws/_sphynx/conf.py'
 ]
 
 
@@ -45,5 +46,5 @@ exclude_patterns = [
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
+
 html_theme = 'sphinx_rtd_theme'

@@ -27,8 +27,9 @@ from gws.logger import Error, Info
 from gws.db.manager import AbstractDbManager
 from gws.settings import Settings
 from gws.base import Base
-
 from .kv_store import KVStore
+
+GWS_DB_ENGINE="mariadb"
 
 # ####################################################################
 #
@@ -38,11 +39,15 @@ from .kv_store import KVStore
 
 class DbManager(AbstractDbManager):
     db = DatabaseProxy()
+
     _engine = None
+    _mariadb_config = {
+        "user": "gws",
+        "password": "gencovery"
+    }
     _db_name = "gws"
 
-#DbManager.init(engine="sqlite3")
-DbManager.init(engine="mariadb")
+DbManager.init(engine=GWS_DB_ENGINE)
 
 # ####################################################################
 #

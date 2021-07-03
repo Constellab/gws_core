@@ -31,7 +31,7 @@ class ModelService(BaseService):
     # -- C --
     
     @classmethod
-    def creat_view_model(cls, type: str, uri: str, data: RenderingDTO) -> (ViewModel,):
+    def create_view_model(cls, type: str, uri: str, data: RenderingDTO) -> (ViewModel,):
         """
         View a model
 
@@ -58,15 +58,39 @@ class ModelService(BaseService):
 
             
     @classmethod
-    def create_model_tables(cls):
+    def create_tables(cls, models: list = None):
         """
-        Create all model tables
+        Create tables (if they don't exist)
         """
+
+        db_list, model_list = cls._get_db_and_model_lists(models)
+        for db in db_list:
+            i = db_list.index(db)
+            models = [ t for t in model_list[i] if not t.table_exists() ]
+            db.create_tables(models)
+
+    @classmethod
+    def drop_tables(cls, models: list = None):
+        """
+        Drops tables (if they exist)
+        """
+
+        db_list, model_list = cls._get_db_and_model_lists(models)
+        for db in db_list:
+            i = db_list.index(db)
+            models = [ t for t in model_list[i] if t.table_exists() ]
+            db.drop_tables(models)
+
+    # @classmethod
+    # def create_model_tables(cls):
+    #     """
+    #     Create all model tables
+    #     """
         
-        for k in cls._model_types:
-            t = cls._model_types[k]
-            if not t.table_exists():
-                t.create_table()
+    #     for k in cls._model_types:
+    #         t = cls._model_types[k]
+    #         if not t.table_exists():
+    #             t.create_table()
                 
     @classmethod
     def count_model(cls, type: str) -> int:
@@ -144,6 +168,24 @@ class ModelService(BaseService):
  
     # -- G --
     
+    @classmethod
+    def _get_db_and_model_lists(cls, models: list = None):
+        if not models:
+            models = ModelService._inspect_model_types()
+
+        db_list = []
+        model_list = []
+        for t in models:
+            db = t._db_manager.db
+            if db in db_list:
+                i = db_list.index(db)
+                model_list[i].append(t)
+            else:
+                db_list.append(db)
+                model_list.append([t])
+        
+        return db_list, model_list
+
     @classmethod
     def get_model_types(cls) -> List[type]:
         return cls._model_types

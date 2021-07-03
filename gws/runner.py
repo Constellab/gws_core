@@ -14,7 +14,7 @@ import re
 from gws.settings import Settings
 from gws.logger import Logger, Error
 
-def _run(_, uri="", token="", test="", \
+def _run(ctx, uri="", token="", test="", \
          cli=False, cli_test=False, runserver=False, runmode="dev", \
          ip="0.0.0.0", port="3000", docgen=False, \
          force=False):
