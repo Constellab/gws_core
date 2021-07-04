@@ -50,11 +50,11 @@ class Settings(PWModel):
         for k in settings_json:
             cls._data[k] = settings_json[k]
         
-        db_dir = os.path.join(cls._data["data_dir"], "settings")
-        if not os.path.exists(db_dir):
-            os.makedirs(db_dir)
+        settings_dir = "/.settings/" #os.path.join(cls._data["data_dir"], "settings")
+        if not os.path.exists(settings_dir):
+            os.makedirs(settings_dir)
             
-        db = SqliteDatabase( os.path.join(db_dir, "settings.sqlite3") )
+        db = SqliteDatabase( os.path.join(settings_dir, "settings.sqlite3") )
         database_proxy.initialize(db)
         
         if not cls.table_exists():
