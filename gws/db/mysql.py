@@ -21,8 +21,13 @@ class MySQLBase:
     password="gencovery"
     db_name="gws"
     table_prefix="gws_"
-    output_dir="/data/backup/mariadb/gws/"
+    
+    input_dir="/data/backup/gws/mariadb"
+    output_dir="/data/backup/gws/mariadb"
+
+    input_file=""
     output_file=""
+
     host=""
     port=3306
     process=None
@@ -33,12 +38,18 @@ class MySQLBase:
     LOG_OUR_FILE_NAME = "out.log"
     LOG_ERR_FILE_NAME = "error.log"
 
+    # -- B --
+
+    def build_command(self) -> List[str]:
+        raise Error("Not implemented")
+    
+    # -- I --
+
     def is_ready(self) -> bool:
         file_path = os.path.join(self.output_dir,self.IN_PROGRESS_FILENAME)
         return not os.path.exists(file_path)
 
-    def build_command(self) -> List[str]:
-        raise Error("Not implemented")
+    # -- R --
 
     def run(self, force: bool=False, wait: bool=False) -> bool:
         if not self.is_ready() and not force:
@@ -65,9 +76,6 @@ class MySQLBase:
             f'rm -f {in_progress_file}'
         ]
 
-        print("----")
-        print(" && ".join(cmd))
-
         with open(log_out_file, 'w') as f_out:
             with open(log_err_file, 'w') as f_err:
                 self.process = SysProc.popen(
@@ -82,6 +90,17 @@ class MySQLBase:
                     self.process.wait()
         
         return True
+
+    # -- S --
+
+    def set_default_config(self, db_name):
+        self.user=db_name
+        self.password="gencovery"
+        self.db_name=db_name
+        self.table_prefix=f"{db_name}_"
+        self.output_dir=f"/data/backup/{db_name}/mariadb"
+        self.host=f"{db_name}_prod_db"
+        self.port=3306
 
 # ####################################################################
 #
@@ -101,7 +120,10 @@ class MySQLDump(MySQLBase):
         self.host = settings.get_maria_db_host()
         self.db_name = slugify(self.db_name, snakefy=True)                          #slugify string for security
         self.table_prefix = slugify(self.table_prefix, snakefy=True)                #slugify string for security
-        self.output_file = os.path.join(self.output_dir, self.DUMP_FILENAME)
+
+        if not self.output_file:
+            self.output_file = os.path.join(self.output_dir, self.DUMP_FILENAME)
+
         login = f"--defaults-extra-file={self.CNF_FILENAME} --host {self.host} --port {self.port}"
         cmd = [
             f'echo "[client]\nuser={self.user}\npassword={self.password}" > {self.CNF_FILENAME}',
@@ -129,11 +151,14 @@ class MySQLLoad(MySQLBase):
         self.host = settings.get_maria_db_host()
         self.db_name = slugify(self.db_name, snakefy=True)                          #slugify string for security
         self.table_prefix = slugify(self.table_prefix, snakefy=True)                #slugify string for security
-        self.output_file = os.path.join(self.output_dir, self.DUMP_FILENAME)
+
+        if not self.input_file:
+            self.input_file = os.path.join(self.input_dir, self.DUMP_FILENAME)
+
         login = f"--defaults-extra-file={self.CNF_FILENAME} --host {self.host} --port {self.port}"
         cmd = [
             f'echo "[client]\nuser={self.user}\npassword={self.password}" > {self.CNF_FILENAME}',
-            f'gzip -c -d {self.output_file} | mysql {login} {self.db_name}',
+            f'gzip -c -d {self.input_file} | mysql {login} {self.db_name}',
             f'rm -f {self.CNF_FILENAME}'
         ]
         return cmd

@@ -8,6 +8,7 @@ import os
 import asyncio
 import unittest
 from gws.db.mysql import MySQLDump, MySQLLoad
+from gws.service.mysql_service import MySQLService
 from gws.unittest import GTest
 from gws.file import File
 
@@ -37,17 +38,14 @@ class TestMySQLDumpLoad(unittest.TestCase):
         f.save()
         
         # dump db
-        dump = MySQLDump()
-        dump.run(force=True, wait=True)
-        print(dump.output_file)
-        self.assertTrue(os.path.exists(dump.output_file))
+        output_file = MySQLService.dump_db("gws", force=True, wait=True)
+        self.assertTrue(os.path.exists(output_file))
 
         GTest.drop_tables()
         self.assertFalse(File.table_exists())
 
         # load db
-        load = MySQLLoad()
-        load.run(force=True, wait=True)
+        MySQLService.load_db("gws", local_file_path=output_file, force=True, wait=True)
         self.assertTrue(File.table_exists())
 
     def test_db_drop(self):

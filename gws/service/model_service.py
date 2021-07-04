@@ -58,42 +58,42 @@ class ModelService(BaseService):
 
             
     @classmethod
-    def create_tables(cls, models: List[type] = None, instance_type:type=None):
+    def create_tables(cls, models: List[type] = None, model_type:type=None):
         """
         Create tables (if they don't exist)
 
         :param models: List of model tables to create
         :type models: `List[type]`
-        :param instance: If provided, only the tables of the models that are instances of `instance_type` will be create
-        :type instance_type: `type`
+        :param instance: If provided, only the tables of the models that are instances of `model_type` will be create
+        :type model_type: `type`
         """
 
         db_list, model_list = cls._get_db_and_model_lists(models)
         for db in db_list:
             i = db_list.index(db)
             models = [ t for t in model_list[i] if not t.table_exists() ]
-            if instance_type:
-                models = [ t for t in models if isinstance(t,instance_type) ]
+            if model_type:
+                models = [ t for t in models if isinstance(t,model_type) ]
 
             db.create_tables(models)
 
     @classmethod
-    def drop_tables(cls, models: List[type] = None, instance_type:type=None):
+    def drop_tables(cls, models: List[type] = None, model_type:type=None):
         """
         Drops tables (if they exist)
 
         :param models: List of model tables to drop
         :type models: `List[type]`
-        :param instance: If provided, only the tables of the models that are instances of `instance_type` will be droped
-        :type instance_type: `type`
+        :param instance: If provided, only the tables of the models that are instances of `model_type` will be droped
+        :type model_type: `type`
         """
 
         db_list, model_list = cls._get_db_and_model_lists(models)
         for db in db_list:
             i = db_list.index(db)
             models = [ t for t in model_list[i] if t.table_exists() ]
-            if instance_type:
-                models = [ t for t in models if isinstance(t,instance_type) ]
+            if model_type:
+                models = [ t for t in models if isinstance(t,model_type) ]
             db.drop_tables(models)
 
     # @classmethod
