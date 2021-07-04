@@ -50,7 +50,7 @@ class Settings(PWModel):
         for k in settings_json:
             cls._data[k] = settings_json[k]
         
-        settings_dir = "/.settings/" #os.path.join(cls._data["data_dir"], "settings")
+        settings_dir = "/settings/" #os.path.join(cls._data["data_dir"], "settings")
         if not os.path.exists(settings_dir):
             os.makedirs(settings_dir)
             
