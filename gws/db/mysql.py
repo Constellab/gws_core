@@ -98,7 +98,7 @@ class MySQLBase:
         self.password="gencovery"
         self.db_name=db_name
         self.table_prefix=f"{db_name}_"
-        self.output_dir=f"/data/backup/{db_name}/mariadb"
+        self.output_dir=f"/data/{db_name}/backup/mariadb"
         self.host=f"{db_name}_prod_db"
         self.port=3306
 

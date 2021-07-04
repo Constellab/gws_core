@@ -155,7 +155,16 @@ async def get_users(_: UserData = Depends(check_central_api_key)):
         return __convert_users_to_dto(UserService.get_all_users())
     except Exception as err:
         raise HTTPInternalServerError(detail=f"Cannot get the user. Error: {err}")
-        
+
+@central_app.get("/db/{db_name}/dump", tags=["DB management"])
+async def dump_db(db_name: str, _: UserData = Depends(check_central_api_key)):
+    from gws.service.mysql_service import MySQLService
+    from gws.file import File
+    output_file = MySQLService.dump_db(db_name)
+    file = File(path=output_file)
+    file.move_to_default_store()
+    return file.to_json()
+
 def __convert_user_to_dto(user: User) -> Dict:
     if user is None:
         return None

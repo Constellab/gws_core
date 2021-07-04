@@ -65,7 +65,7 @@ class Settings(PWModel):
             for k in cls._data:
                 settings.data[k] = cls._data[k]
             settings.save()
-        except:
+        except Exception as _:
             settings = Settings()
             #secret_key
             secret_key = generate_random_chars(128) #b64encode(token_bytes(32)).decode()
@@ -153,7 +153,10 @@ class Settings(PWModel):
         :rtype: `str`
         """
 
-        return "/lab"
+        if self.is_prod:
+            return "/app/prod/lab"
+        else:
+            return "/app/dev/lab"
 
     def get_log_dir(self) -> str:
         """
@@ -163,7 +166,10 @@ class Settings(PWModel):
         :rtype: `str`
         """
 
-        return "/logs"    
+        if self.is_prod:
+            return "/app/prod/logs"
+        else:
+            return "/app/dev/logs"
 
     def get_data_dir(self) -> str:
         """
@@ -187,7 +193,7 @@ class Settings(PWModel):
         :rtype: `str`
         """
 
-        return "/dev-data"
+        return "/app/dev/data"
 
     def get_prod_data_dir(self) -> str:
         """
@@ -197,7 +203,7 @@ class Settings(PWModel):
         :rtype: `str`
         """
 
-        return "/prod-data"
+        return "/app/prod/data"
 
     def get_root_dir(self) -> str:
         """
@@ -210,15 +216,15 @@ class Settings(PWModel):
         return self.get_lab_dir()
 
     def get_gws_workspace_dir(self) -> str:
-        root_dir = self.get_root_dir()
-        if os.path.exists(os.path.join(root_dir, "./.gws/")):
-            return os.path.join(root_dir, "./.gws/")
+        lab_dir = self.get_lab_dir()
+        if os.path.exists(os.path.join(lab_dir, "./.gws/")):
+            return os.path.join(lab_dir, "./.gws/")
         else:
-            return os.path.join(root_dir, "./gws/")
+            return os.path.join(lab_dir, "./gws/")
 
     def get_user_workspace_dir(self) -> str:
-        root_dir = self.get_root_dir()
-        return os.path.join(root_dir, "./user/")
+        lab_dir = self.get_lab_dir()
+        return os.path.join(lab_dir, "./user/")
 
     def get_dirs(self) -> dict:
         return self.data.get("dirs",{})
@@ -227,16 +233,10 @@ class Settings(PWModel):
         return self.data.get("dirs",{}).get(name,None)
     
     def get_file_store_dir(self) -> str:
-        if self.is_prod:
-            return "/data/filestore/prod"
-        else:
-            return "/data/filestore/dev"
+        return os.path.join(self.get_data_dir(), "/filestore/")
     
     def get_kv_store_base_dir(self) -> str:
-        if self.is_prod:
-            return "/data/kvstore/prod"
-        else:
-            return "/data/kvstore/dev"
+        return os.path.join(self.get_data_dir(), "/kvstore/")
 
     def get_urls(self) -> dict:
         return self.data.get("urls",{})
