@@ -21,7 +21,7 @@ class MySQLBase:
     password="gencovery"
     db_name="gws"
     table_prefix="gws_"
-    output_dir="/data/backup/mariadb/"
+    output_dir="/data/backup/mariadb/gws/"
     output_file=""
     host=""
     port=3306
@@ -45,12 +45,18 @@ class MySQLBase:
             Warning("An db process is already in progress")
             return False
 
-        if not os.path.exists(self.output_dir):
-            os.makedirs(self.output_dir)
-
         in_progress_file = os.path.join(self.output_dir, self.IN_PROGRESS_FILENAME)
         log_out_file = os.path.join(self.output_dir, self.LOG_OUR_FILE_NAME)
         log_err_file = os.path.join(self.output_dir, self.LOG_ERR_FILE_NAME)
+
+        if not os.path.exists(self.output_dir):
+            os.makedirs(self.output_dir)
+
+        if os.path.exists(log_out_file):
+            os.remove(log_out_file)
+
+        if os.path.exists(log_err_file):
+            os.remove(log_err_file)
 
         cmd = self.build_command()
         cmd = [
@@ -58,6 +64,9 @@ class MySQLBase:
             *cmd,
             f'rm -f {in_progress_file}'
         ]
+
+        print("----")
+        print(" && ".join(cmd))
 
         with open(log_out_file, 'w') as f_out:
             with open(log_err_file, 'w') as f_err:
@@ -125,7 +134,7 @@ class MySQLLoad(MySQLBase):
         cmd = [
             f'echo "[client]\nuser={self.user}\npassword={self.password}" > {self.CNF_FILENAME}',
             f'gzip -c -d {self.output_file} | mysql {login} {self.db_name}',
-            f'rm -f {self.CNF_FILENAME}',
+            f'rm -f {self.CNF_FILENAME}'
         ]
         return cmd
 

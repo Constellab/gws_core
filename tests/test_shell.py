@@ -47,6 +47,8 @@ class TestShell(unittest.TestCase):
         GTest.drop_tables()
     
     def test_shell(self):     
+        GTest.print("Test Shell")
+
         proc = Echo()
         proc.set_param("name", "Jhon Doe")
         e = proc.create_experiment(study=GTest.study, user=GTest.user)

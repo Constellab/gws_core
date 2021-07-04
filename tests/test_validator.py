@@ -5,13 +5,16 @@
 
 import asyncio
 import unittest
+
+from gws.unittest import GTest
 from gws.validator import Validator
 from gws.logger import Error, Logger
 
 class TestValidator(unittest.TestCase):
 
     def test_int_validator(self):
-        
+        GTest.print("Test Integrer Validator")
+
         v = Validator.from_specs(type='int', default='5')
         self.assertEqual(v.validate('3'), 3)
         self.assertEqual(v.validate(3), 3)
@@ -36,6 +39,8 @@ class TestValidator(unittest.TestCase):
 
 
     def test_str_validator(self):
+        GTest.print("Test String Validator")
+
         v = Validator.from_specs(type='str', default='5')
         self.assertEqual(v.validate('4'), '4')
         self.assertEqual(v.validate(None), '5')
@@ -49,6 +54,8 @@ class TestValidator(unittest.TestCase):
         self.assertRaises(Error, Validator.from_specs, type=str, default=True)
 
     def test_bool_validator(self):
+        GTest.print("Test Boolean Validator")
+
         v = Validator.from_specs(type=bool, default=True)
         self.assertEqual(v.validate(False), False)
         self.assertEqual(v.validate(True), True)
@@ -69,6 +76,8 @@ class TestValidator(unittest.TestCase):
         self.assertRaises(Error, Validator.from_specs, type=bool, default=0)
 
     def test_float_validator(self):
+        GTest.print("Test Float Validator")
+
         import math
 
         v = Validator.from_specs(type=float, default='8')
@@ -99,6 +108,8 @@ class TestValidator(unittest.TestCase):
         self.assertRaises(Error, v.validate, '-7')
 
     def test_list_validator(self):
+        GTest.print("Test List Validator")
+
         v = Validator.from_specs(type='list', default='[1,2,"foo"]')
         self.assertEqual(v.validate([5.5,3]), [5.5,3])
         self.assertEqual(v.validate('[5.5,3]'), [5.5,3])
@@ -116,6 +127,8 @@ class TestValidator(unittest.TestCase):
         self.assertRaises(Error, Validator.from_specs, type=list, default=True)
 
     def test_dict_validator(self):
+        GTest.print("Test Dict Validator")
+
         v = Validator.from_specs(type='dict', default='{"foo":1.2}')
         self.assertEqual(v.validate(None), {"foo":1.2})
         self.assertEqual(v.validate('{"foo":0.5}'), {"foo":0.5})

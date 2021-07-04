@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 """
-Installation script executed on server first startup
+Post-installation scripts executed after server installation
 """
 
 if __name__ == "__main__":

@@ -69,6 +69,8 @@ class TestModel(unittest.TestCase):
         self.assertTrue(john.verify_hash())
 
     def test_model_registrering(self):
+        GTest.print("Test Model Registrering")
+
         ModelService.register_all_processes_and_resources()
         self.assertTrue( len(ModelService._model_types) != 0 )
         from gws.json import JSONLoader

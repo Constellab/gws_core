@@ -19,10 +19,11 @@ class TestKVStore(unittest.TestCase):
         GTest.drop_tables()
     
     def test_store(self):
+        GTest.print("Test KVStore")
+
         s1 = KVStore('./store_test/s1')
         s1['city'] = 'Tokyo'
         s1['name'] = 'Elon'
-
         s2 = KVStore('./store_test/s1')
         self.assertEqual(s2['city'], 'Tokyo')
         self.assertEqual(s2['name'], 'Elon')

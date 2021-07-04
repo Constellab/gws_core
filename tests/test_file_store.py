@@ -24,6 +24,8 @@ class TestLocalFileStore(unittest.TestCase):
         GTest.drop_tables()
     
     def test_file_store(self):
+        GTest.print("Test FileStore")
+
         fs = LocalFileStore()
         
         settings = Settings.retrieve()

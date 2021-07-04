@@ -22,7 +22,6 @@ class TestMySQLDumpLoad(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         GTest.drop_tables()
-        pass
 
     def test_db_dump_load(self):
         GTest.print("Test MySQL db dump & load")

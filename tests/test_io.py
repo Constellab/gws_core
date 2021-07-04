@@ -78,16 +78,16 @@ class TestIO(unittest.TestCase):
         p3 = Drive(instance_name="p3")
         self.assertRaises(Exception, p2.out_port('move_person_out').pipe,  p3.in_port('move_drive_in'))
 
-        self.assertEquals(port_connect.to_json(), {
+        self.assertEqual(port_connect.to_json(), {
             "from": {"node": "p0",  "port": "create_person_out"},
             "to": {"node": "p1",  "port": "move_person_in"},
             'resource': {'uri': '', 'type': ''}
         })
     
     def test_iterator(self):
-        
+        GTest.print("Test IO Iterator")
+
         jump = Jump(instance_name="p3")
-        
         for k in jump.input:
             print(k)
             print(jump.input[k])

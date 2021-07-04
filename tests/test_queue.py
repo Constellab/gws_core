@@ -31,6 +31,8 @@ class TestQueue(unittest.TestCase):
         GTest.drop_tables()
     
     def test_queue(self):
+        GTest.print("Test Queue")
+
         self.assertEqual(Experiment.count_of_running_experiments(), 0)
         self.assertEqual(Queue.length(),0)
         

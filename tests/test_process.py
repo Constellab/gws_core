@@ -23,6 +23,8 @@ class TestProcess(unittest.TestCase):
         GTest.drop_tables()
 
     def test_process_singleton(self):
+        GTest.print("Test Process Singleton")
+
         p0 = Create()
         p1 = Create()
         p0.title = "First 'Create' process"
@@ -32,6 +34,8 @@ class TestProcess(unittest.TestCase):
         self.assertTrue(p0.id != p1.id)
 
     def test_process(self):
+        GTest.print("Test Process")
+
         p0 = Create()
         p1 = Move()
         p2 = Eat()

@@ -30,6 +30,8 @@ class TestProtocol(unittest.TestCase):
         GTest.drop_tables()
     
     def test_protocol(self):
+        GTest.print("Test Protocol")
+
         study = Study.get_by_id(1)
         
         p0 = Create()
@@ -86,7 +88,9 @@ class TestProtocol(unittest.TestCase):
         
         asyncio.run( e.run(user=GTest.user) )
 
-    def test_setting_dump(self):
+    def test_settings_dump(self):
+        GTest.print("Test Settings dump")
+
         study = Study.get_by_id(1)
         
         p0 = Create(instance_name="p0")
