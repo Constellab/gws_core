@@ -49,8 +49,14 @@ class GTest:
 
     @classmethod
     def print(cls, text):
-        print("\n*****************************************************")
-        print(  "*")
-        print( f"* {text} ")
-        print(  "*")
-        print(  "*****************************************************\n")
+        """
+        Print test title
+        """
+
+        n = max( (len(text)+3), 64 )
+        stars = "*" * n
+        print( "\n" + stars)
+        print( "*")
+        print(f"* {text} ")
+        print( "*")
+        print(  stars + "\n")
