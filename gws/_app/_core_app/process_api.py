@@ -4,15 +4,13 @@
 # About us: https://gencovery.com
 
 from typing import List, Optional
-
 from fastapi import Depends
-from gws.dto.typed_tree_dto import TypedTree
-from gws.dto.user_dto import UserData
-from gws.service.process_service import ProcessService
 
+from ...dto.typed_tree_dto import TypedTree
+from ...dto.user_dto import UserData
+from ...service.process_service import ProcessService
 from ._auth_user import check_user_access_token
 from .core_app import core_app
-
 
 @core_app.get("/process-type", tags=["Process"], summary="Get the list of process types")
 async def get_the_list_of_process_types(page: Optional[int] = 1, \
@@ -48,7 +46,7 @@ async def get_the_progress_bar_of_a_process(type: str,
     """
     Retrieve a process
 
-    - **uri**: the uri of the process (Default is `gws.model.Process`)
+    - **uri**: the uri of the process (Default is `gws.process.Process`)
     """
 
     bar = ProcessService.fetch_process_progress_bar(uri=uri, type=type)
@@ -62,7 +60,7 @@ async def get_a_process(type: str,
     """
     Retrieve a process
 
-    - **type**: the type of the process (Default is `gws.model.Process`)
+    - **type**: the type of the process (Default is `gws.process.Process`)
     - **uri**: the uri of the process
     """
 
@@ -81,7 +79,7 @@ async def get_the_list_of_processes(type: str,
     """
     Retrieve a list of processes. The list is paginated.
 
-    - **type**: the type of the processes to fetch (Default is `gws.model.Process`)
+    - **type**: the type of the processes to fetch (Default is `gws.process.Process`)
     - **search_text**: text used to filter the results. The text is matched against to the `title` and the `description` using full-text search. If this parameter is given then the parameter `experiment_uri` is ignored.
     - **experiment_uri**: the uri of the experiment related to the processes. This parameter is ignored if `search_text` is given.
     - **page**: the page number

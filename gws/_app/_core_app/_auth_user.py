@@ -3,27 +3,21 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws.exception.wrong_credentials_exception import WrongCredentialsException
-from gws.dto.user_dto import UserData
-import jwt
-
 from typing import Optional
-
+import jwt
 from fastapi import Depends, HTTPException
-
 from fastapi.param_functions import Form
 
-from gws.user import User
-from gws.settings import Settings
+from ...dto.user_dto import UserData
+from ...user import User
+from ...settings import Settings
+from ...service.user_service import UserService
+from ...exception.wrong_credentials_exception import WrongCredentialsException
 from ._oauth2_user_cookie_scheme import oauth2_user_cookie_scheme
-from gws.service.user_service import UserService
-
 
 settings = Settings.retrieve()
 SECRET_KEY = settings.data.get("secret_key")
 ALGORITHM = "HS256"
-
-
 
 class OAuth2UserTokenRequestForm:
     def __init__(
@@ -54,7 +48,7 @@ async def check_user_access_token(token: str = Depends(oauth2_user_cookie_scheme
     except Exception:
         # -> An excpetion occured
         # -> Try to unauthenticate the current user
-        from gws.service.user_service import UserService
+        from ...service.user_service import UserService
         try:
             user = UserService.get_current_user()
             if user:

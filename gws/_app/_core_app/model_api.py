@@ -3,16 +3,16 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws.dto.user_dto import UserData
+
 from typing import Optional
 from fastapi import Depends
 
-from gws.http import HTTPInternalServerError
+from ...dto.user_dto import UserData
+from ...http import HTTPInternalServerError
+from ...service.model_service import ModelService
+from ...dto.rendering_dto import RenderingDTO
 from ._auth_user import check_user_access_token
 from .core_app import core_app
-
-from gws.service.model_service import ModelService
-from gws.dto.rendering_dto import RenderingDTO
 
 @core_app.post("/model/{type}/{uri}/archive", tags=["Models"], summary="Archive a model")
 async def archive_a_model(type: str, \

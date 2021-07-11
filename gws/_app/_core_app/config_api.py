@@ -3,13 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws.dto.user_dto import UserData
 from fastapi import Depends
 from typing import Optional
 
+from ...service.config_service import ConfigService
+from ...dto.user_dto import UserData
 from ._auth_user import check_user_access_token
 from .core_app import core_app
-from gws.service.config_service import ConfigService
 
 @core_app.get("/config", tags=["Configs"], summary="Get the list of configs")
 async def get_the_list_of_configs(search_text: Optional[str] = "",\

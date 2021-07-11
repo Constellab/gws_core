@@ -3,13 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws.dto.user_dto import UserData
 from fastapi import Depends
 from typing import Optional
 
+from ...dto.user_dto import UserData
+from ...service.resource_service import ResourceService
 from ._auth_user import check_user_access_token
 from .core_app import core_app
-from gws.service.resource_service import ResourceService
 
 @core_app.get("/resource-type/hierarchy", tags=["Resource"], summary="Get the resource type hierarchy")
 async def get_the_list_of_resource_types(page: Optional[int] = 1, \
@@ -22,7 +22,7 @@ async def get_the_list_of_resource_types(page: Optional[int] = 1, \
     - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
     """
     
-    from gws.service.resource_service import ResourceService
+    from ...service.resource_service import ResourceService
     
     return ResourceService.fetch_resource_type_hierarchy(
         page = page, 
@@ -41,7 +41,7 @@ async def get_the_list_of_resource_types(page: Optional[int] = 1, \
     - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
     """
     
-    from gws.service.resource_service import ResourceService
+    from ...service.resource_service import ResourceService
     
     return ResourceService.fetch_resource_type_list(
         page = page, 
@@ -63,7 +63,7 @@ async def get_a_resource(type: str, \
     return r.to_json()
 
 @core_app.get("/resource/{type}", tags=["Resource"], summary="Get the list of resources")
-async def get_the_list_of_resources(type: Optional[str] = "gws.model.Resource", \
+async def get_the_list_of_resources(type: Optional[str] = "gws.resource.Resource", \
                                 search_text: Optional[str]="", \
                                 experiment_uri: Optional[str] = None, \
                                 page: Optional[int] = 1, \

@@ -4,16 +4,14 @@
 # About us: https://gencovery.com
 
 from typing import Any, Coroutine, Optional
-
 from fastapi import Depends
-from gws.dto.credentials_dto import CredentialsDTO
-from gws.dto.user_dto import UserData
-from gws.service.user_service import UserService
 from starlette.responses import JSONResponse
 
+from ...dto.credentials_dto import CredentialsDTO
+from ...dto.user_dto import UserData
+from ...service.user_service import UserService
 from ._auth_user import check_user_access_token
 from .core_app import core_app
-
 
 @core_app.get("/user/me", response_model=UserData, tags=["User"])
 async def read_user_me(current_user: UserData = Depends(check_user_access_token)):

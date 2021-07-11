@@ -3,15 +3,14 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws.dto.user_dto import UserData
 from fastapi import Depends
 from typing import Optional
 
+from ...dto.user_dto import UserData
+from ...service.protocol_service import ProtocolService
+from ...service.process_service import ProcessService
 from ._auth_user import check_user_access_token
 from .core_app import core_app
-from gws.service.protocol_service import ProtocolService
-from gws.service.process_service import ProcessService
-
 
 @core_app.get("/protocol-type", tags=["Protocol"], summary="Get the list of protocol types")
 async def get_the_list_of_protocol_types(page: Optional[int] = 1, \
@@ -32,7 +31,7 @@ async def get_the_list_of_protocol_types(page: Optional[int] = 1, \
 
 @core_app.get("/protocol/{uri}/{type}/progress-bar", tags=["Protocol"], summary="Get the progress bar of a protocol")
 async def get_the_progress_bar_of_a_protocol(uri: str, \
-                      type: Optional[str] = "gws.model.Process", \
+                      type: Optional[str] = "gws.process.Process", \
                        _: UserData = Depends(check_user_access_token)) -> dict:
     """
     Retrieve a process
@@ -45,7 +44,7 @@ async def get_the_progress_bar_of_a_protocol(uri: str, \
 
 @core_app.get("/protocol/{uri}/{type}", tags=["Protocol"], summary="Get a protocol")
 async def get_a_protocol(uri: str, \
-                         type: Optional[str] = "gws.model.Protocol", \
+                         type: Optional[str] = "gws.protocol.Protocol", \
                          _: UserData = Depends(check_user_access_token)) -> dict:
     """
     Retrieve a protocol
@@ -58,7 +57,7 @@ async def get_a_protocol(uri: str, \
 
 
 @core_app.get("/protocol/{type}", tags=["Protocol"], summary="Get the list of protocols")
-async def get_the_list_of_protocols(type: Optional[str] = "gws.model.Protocol", \
+async def get_the_list_of_protocols(type: Optional[str] = "gws.protocol.Protocol", \
                                     search_text: Optional[str]="", \
                                     experiment_uri: Optional[str] = None, \
                                     page: Optional[int] = 1, \

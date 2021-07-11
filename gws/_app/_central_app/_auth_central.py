@@ -3,21 +3,16 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws.dto.user_dto import UserData
+
 import jwt
-
-
 from datetime import datetime, timedelta
 from typing import Optional
-
 from fastapi import Depends, HTTPException, status
-
 from fastapi.responses import JSONResponse
 
-
-from gws.user import User
-from gws.settings import Settings
-
+from ...dto.user_dto import UserData
+from ...user import User
+from ...settings import Settings
 from ._oauth2_central_header_scheme import oauth2_central_header_scheme
 
 settings = Settings.retrieve()
@@ -28,7 +23,7 @@ COOKIE_MAX_AGE_SECONDS      = 60*60*24*3     # 3 days
 
 
 def check_central_api_key(api_key: str = Depends(oauth2_central_header_scheme)):
-    from gws.service.central_service import CentralService
+    from ...service.central_service import CentralService
     
     is_authorized = CentralService.check_api_key(api_key)
     if not is_authorized:

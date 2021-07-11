@@ -2,10 +2,8 @@ from typing import Optional
 import base64
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
-
 import jwt
 from jwt import PyJWTError
-
 from pydantic import BaseModel
 
 from fastapi import Depends, FastAPI, HTTPException, status

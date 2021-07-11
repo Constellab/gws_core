@@ -3,14 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws.dto.user_dto import UserData
 import importlib
 from typing import Optional
 from fastapi import Depends
 from fastapi.responses import JSONResponse
 
-from gws.http import *
-
+from ...dto.user_dto import UserData
+from ...http import *
 from ._auth_user import check_user_access_token
 from .core_app import core_app
 

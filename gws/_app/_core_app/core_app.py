@@ -8,10 +8,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette_context.middleware import ContextMiddleware
-
 from pydantic import BaseModel
 
-from gws.http import *
+from ...http import *
 
 core_app = FastAPI(docs_url="/docs")
 
@@ -30,7 +29,7 @@ core_app.add_middleware(
 
 class ProcessData(BaseModel):
     uri:str
-    type:str = "gws.model.Process"
+    type:str = "gws.process.Process"
     title:str = None
     instance_name: str
     config_specs: dict = {}
@@ -39,10 +38,10 @@ class ProcessData(BaseModel):
 
 class ConfigData(BaseModel):
     uri:str = None
-    type:str = "gws.model.Config"
+    type:str = "gws.config.Config"
     params: dict = {}
     
 class ProtocolData(ProcessData):
-    type: str = "gws.model.Protocol"
+    type: str = "gws.protocol.Protocol"
     interfaces: dict = {}
     outerfaces: dict = {}
