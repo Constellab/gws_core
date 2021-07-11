@@ -7,7 +7,6 @@ import unittest
 from gws.service.model_service import ModelService
 from gws.service.process_service import ProcessService
 from gws.service.protocol_service import ProtocolService
-from gws.typing import ProcessType, ProtocolType, ResourceType
 from gws.unittest import GTest
 
 class TestTyping(unittest.TestCase):

@@ -3,11 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws.query import Paginator
-from gws.model import Settings  
-from gws.system import Monitor
-from gws.http import *
-
+from ..query import Paginator
+from ..system import Monitor
+from ..http import *
 from .base_service import BaseService
 
 class LabService(BaseService):

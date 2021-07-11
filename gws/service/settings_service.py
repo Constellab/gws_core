@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws.settings import Settings
+from ..settings import Settings
 from .base_service import BaseService
     
 class SettingsService(BaseService):

@@ -7,16 +7,16 @@ from typing import Any, Coroutine, Union
 from starlette.responses import JSONResponse
 from starlette_context import context
 
-from gws.dto.credentials_dto import CredentialsDTO
-from gws.exception.wrong_credentials_exception import WrongCredentialsException
-from gws.http import HTTPInternalServerError, HTTPUnauthorized
-from gws.logger import Error
-from gws.model import Activity, User
-from gws.query import Paginator
-from gws.service.central_service import CentralService
-from gws._app._central_app._auth_central import generate_user_access_token
-
+from ..dto.credentials_dto import CredentialsDTO
+from ..exception.wrong_credentials_exception import WrongCredentialsException
+from ..http import HTTPInternalServerError, HTTPUnauthorized
+from ..logger import Error
+from ..activity import Activity
+from ..user import User
+from ..query import Paginator
+from .._app._central_app._auth_central import generate_user_access_token
 from .base_service import BaseService
+from .central_service import CentralService
 
 class UserService(BaseService):
 
@@ -35,7 +35,6 @@ class UserService(BaseService):
         group = data.get('group', 'user')
         if group == "sysuser":
             raise Error("Central", "create_user", "Cannot create sysuser")
-
         u = User.get_by_uri(data['uri'])
         if not u:
             user = User(
@@ -73,16 +72,11 @@ class UserService(BaseService):
                             number_of_items_per_page: int = 20,
                             as_json=False) -> Union[Paginator, dict]:
 
-        query = Activity.select()\
-            .order_by(Activity.creation_datetime.desc())
-
+        query = Activity.select().order_by(Activity.creation_datetime.desc())
         if user_uri:
             query = query.join(User).where(User.uri == user_uri)
-
         if activity_type:
-            query = query.where(Activity.activity_type ==
-                                activity_type.upper())
-
+            query = query.where(Activity.activity_type == activity_type.upper())
         paginator = Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
         if as_json:
@@ -100,12 +94,9 @@ class UserService(BaseService):
                         number_of_items_per_page: int = 20,
                         as_json=False) -> Union[Paginator, dict]:
 
-        query = User.select()\
-            .order_by(User.creation_datetime.desc())
-
+        query = User.select().order_by(User.creation_datetime.desc())
         paginator = Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
-
         if as_json:
             return paginator.to_json()
         else:
@@ -126,13 +117,9 @@ class UserService(BaseService):
             try:
                 user = cls._console_data["user"]
             except:
-                raise Error("Controller", "get_current_user",
-                            "No HTTP nor Console user authenticated")
-
+                raise Error("Controller", "get_current_user", "No HTTP nor Console user authenticated")
         if user is None:
-            raise Error("Controller", "get_current_user",
-                        "No HTTP nor Console user authenticated")
-
+            raise Error("Controller", "get_current_user", "No HTTP nor Console user authenticated")
         return user
 
     @classmethod
@@ -160,8 +147,7 @@ class UserService(BaseService):
             if user.save():
                 return user
             else:
-                raise Error("Central", "set_user_status",
-                            "Cannot save the user")
+                raise Error("Central", "set_user_status", "Cannot save the user")
 
     @classmethod
     def set_current_user(cls, user: User):
@@ -181,8 +167,7 @@ class UserService(BaseService):
                 try:
                     user = User.get(User.uri == user.uri)
                 except:
-                    raise HTTPInternalServerError(
-                        detail="Invalid current user")
+                    raise HTTPInternalServerError(detail="Invalid current user")
 
             if not isinstance(user, User):
                 raise HTTPInternalServerError(detail="Invalid current user")
@@ -193,7 +178,7 @@ class UserService(BaseService):
             try:
                 # is http contexts
                 context.data["user"] = user
-            except:
+            except Exception as _:
                 # is console context
                 cls._console_data["user"] = user
 

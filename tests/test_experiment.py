@@ -3,18 +3,18 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import os
 import asyncio
 import unittest
-import json
 import time
 
 from gws.settings import Settings
-from gws.model import *
-from gws.robot import *
+from gws.process import Process
+from gws.resource import Resource 
+from gws.experiment import Experiment
+from gws.robot import create_nested_protocol
 from gws.unittest import GTest
 from gws.service.experiment_service import ExperimentService
-from gws.queue import Queue, Job
+from gws.queue import Queue
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")

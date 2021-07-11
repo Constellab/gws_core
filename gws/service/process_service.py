@@ -5,14 +5,14 @@
 
 from typing import List, Union
 
-from gws.dto.typed_tree_dto import TypedTree
-from gws.http import *
-from gws.model import Experiment, Process, ProgressBar
-from gws.query import Paginator
-from gws.typing import ProcessType
-
+from ..dto.typed_tree_dto import TypedTree
+from ..http import *
+from ..experiment import Experiment
+from ..process import Process
+from ..progress_bar import ProgressBar
+from ..query import Paginator
+from ..typing import ProcessType
 from .base_service import BaseService
-
 
 class ProcessService(BaseService):
 
@@ -20,8 +20,7 @@ class ProcessService(BaseService):
 
     @classmethod
     def fetch_process(cls, type: str = "gws.model.Process", uri: str = "") -> Process:
-
-        from gws.service.model_service import ModelService
+        from .model_service import ModelService
         t = None
         if type:
             t = ModelService.get_model_type(type)
@@ -29,7 +28,6 @@ class ProcessService(BaseService):
                 raise HTTPNotFound(detail=f"Process type '{type}' not found")
         else:
             t = Process
-
         try:
             p = t.get(t.uri == uri)
             return p
@@ -54,11 +52,8 @@ class ProcessService(BaseService):
                            number_of_items_per_page: int = 20,
                            as_json=False) -> Union[Paginator, List[Process], List[dict]]:
 
-        number_of_items_per_page = min(
-            number_of_items_per_page, cls._number_of_items_per_page)
-
-        from gws.service.model_service import ModelService
-
+        from .model_service import ModelService
+        number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
         t = None
         if type:
             t = ModelService.get_model_type(type)
@@ -66,7 +61,6 @@ class ProcessService(BaseService):
                 raise HTTPNotFound(detail=f"Process type '{type}' not found")
         else:
             t = Process
-
         if search_text:
             query = t.search(search_text)
             result = []
@@ -75,7 +69,6 @@ class ProcessService(BaseService):
                     result.append(o.get_related().to_json(shallow=True))
                 else:
                     result.append(o.get_related())
-
             paginator = Paginator(
                 query, page=page, number_of_items_per_page=number_of_items_per_page)
             return {
@@ -92,7 +85,6 @@ class ProcessService(BaseService):
             if experiment_uri:
                 query = query.join(Experiment, on=(t.experiment_id == Experiment.id))\
                     .where(Experiment.uri == experiment_uri)
-
             paginator = Paginator(
                 query, page=page, number_of_items_per_page=number_of_items_per_page)
             if as_json:

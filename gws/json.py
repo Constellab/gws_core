@@ -4,8 +4,8 @@
 # About us: https://gencovery.com
 
 import json
-from gws.file import *
-from gws.model import Resource
+from .file import *
+from .resource import Resource
 
 class JSONData(Resource):
     

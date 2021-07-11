@@ -13,6 +13,6 @@ class HTTPService(BaseService):
         try:
             context.data["is_http_context"] = True  #-> if not exception -> return True
             return True
-        except:
+        except Exception as _:
             return False
     

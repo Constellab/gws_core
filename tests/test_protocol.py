@@ -9,7 +9,10 @@ import unittest
 import json
 
 from gws.settings import Settings
-from gws.model import *
+from gws.protocol import Protocol
+from gws.process import Process
+from gws.experiment import Experiment
+from gws.study import Study
 from gws.robot import Robot, Create, Move, Eat, Wait
 from gws.comment import Comment
 from gws.unittest import GTest
@@ -90,9 +93,6 @@ class TestProtocol(unittest.TestCase):
 
     def test_settings_dump(self):
         GTest.print("Test Settings dump")
-
-        study = Study.get_by_id(1)
-        
         p0 = Create(instance_name="p0")
         p1 = Move()
         p2 = Eat()
@@ -144,15 +144,15 @@ class TestProtocol(unittest.TestCase):
         self.assertEqual(Protocol.select().count(), count+2)
         self.assertEqual(len(Q), count+2)
         
-        #print("--- mini travel --- ")
-        #print(mini_proto.dumps(bare=True))
+        # print("--- mini travel --- ")
+        # print(mini_proto.dumps(bare=True))
         
         Q = Protocol.select()
         self.assertEqual(Protocol.select().count(), count+2)
         self.assertEqual(len(Q), count+2)
         
-        #print("--- super travel --- ")
-        #print(super_proto.dumps(bare=True))
+        # print("--- super travel --- ")
+        # print(super_proto.dumps(bare=True))
         
         Q = Protocol.select()
         self.assertEqual(Protocol.select().count(), count+2)

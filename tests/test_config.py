@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 import unittest
-from gws.model import Config
+from gws.config import Config
 from gws.unittest import GTest
 from gws.robot import Move
 

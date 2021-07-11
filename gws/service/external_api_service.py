@@ -1,12 +1,15 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS. 
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
+
 from typing import Dict
 import requests
 from requests.models import Response
 
-
-
 class ExternalApiService:
     """
-    This class give possibility to make http request to external api
+    This class gives possibility to make http requests to external APIs
 
     """
 

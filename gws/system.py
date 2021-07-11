@@ -3,15 +3,12 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import os
-import psutil
 import threading
-
+import psutil
 from peewee import FloatField
 
-from gws.logger import Error
-from gws.model import Model
-from gws.settings import Settings
+from .logger import Error
+from .db.model import Model
 
 TICK_INTERVAL_SECONDS = 60*5   # 5 min
 
@@ -87,7 +84,7 @@ class Monitor(Model):
 # ####################################################################
 
 class SysProc:
-    _ps = None
+    _ps: psutil.Process = None
     
     @staticmethod
     def from_pid(pid):

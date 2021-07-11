@@ -3,16 +3,12 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import sys
-import os
 import unittest
-import click
 import importlib
-import subprocess
-import shutil
-import re
-from gws.settings import Settings
-from gws.logger import Logger, Error
+import click
+
+from .settings import Settings
+from .logger import Logger, Error
 
 def _run(ctx, uri="", token="", test="", \
          cli=False, cli_test=False, runserver=False, runmode="dev", \
@@ -43,7 +39,7 @@ def _run(ctx, uri="", token="", test="", \
 
     if runserver:
         # start app
-        from gws.app import App
+        from .app import App
         app = App()
         app.start()
     elif cli:

@@ -6,9 +6,10 @@
 
 import json
 import math
+import re
 
-from gws.logger import Error
-from gws.typing import Path, URL
+from .logger import Error
+from .typing import Path, URL
 
 class Validator:
     """
@@ -415,8 +416,6 @@ class URLValidator(CharValidator):
     
     def _validate(self, value):
         value = super()._validate(value)
-        
-        import re
         regex = re.compile(
                 r'^(?:http|ftp)s?://' # http:// or https://
                 r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|' #domain...

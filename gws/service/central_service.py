@@ -3,15 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-
-from gws.service.external_api_service import ExternalApiService
-from gws.exception.bad_request_exception import BadRequestException
 from typing import Dict
-from gws.dto.credentials_dto import CredentialsDTO
-from gws.settings import Settings
 
+from ..exception.bad_request_exception import BadRequestException
+from ..dto.credentials_dto import CredentialsDTO
+from ..settings import Settings
+from .external_api_service import ExternalApiService
 from .base_service import BaseService
-
 
 class CentralService(BaseService):
 

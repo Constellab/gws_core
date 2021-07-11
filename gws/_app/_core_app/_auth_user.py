@@ -13,7 +13,7 @@ from fastapi import Depends, HTTPException
 
 from fastapi.param_functions import Form
 
-from gws.model import User
+from gws.user import User
 from gws.settings import Settings
 from ._oauth2_user_cookie_scheme import oauth2_user_cookie_scheme
 from gws.service.user_service import UserService

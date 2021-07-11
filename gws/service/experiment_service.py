@@ -5,12 +5,13 @@
 
 from typing import List
 
-from gws.dto.experiment_dto import ExperimentDTO
-from gws.query import Paginator
-from gws.model import Study, Experiment
-from gws.queue import Queue, Job
-from gws.http import *
-
+from ..dto.experiment_dto import ExperimentDTO
+from ..query import Paginator
+from ..study import Study
+from ..experiment import Experiment
+from ..protocol import Protocol
+from ..queue import Queue, Job
+from ..http import *
 from .user_service import UserService
 from .base_service import BaseService
 
@@ -20,8 +21,6 @@ class ExperimentService(BaseService):
 
     @classmethod
     def create_experiment(cls, experiment: ExperimentDTO) -> Experiment:
-        from gws.model import Protocol, Study
-        
         try:
             study = Study.get_default_instance()
             proto = Protocol()
@@ -88,7 +87,6 @@ class ExperimentService(BaseService):
     
     @classmethod
     def get_queue(cls) -> 'Queue':
-        from gws.queue import Queue
         q = Queue()
         return q
     
@@ -138,8 +136,6 @@ class ExperimentService(BaseService):
 
     @classmethod
     def update_experiment(cls, uri, experiment: ExperimentDTO) -> Experiment:
-        from gws.model import Experiment
-        
         try:
             e = Experiment.get(Experiment.uri == uri)
             if not e.is_draft:

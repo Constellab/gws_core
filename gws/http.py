@@ -3,9 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import inspect
 from fastapi import status, HTTPException
-from gws.logger import Logger, Error
+from .logger import Logger
 
 class HTTPError(HTTPException):
     def __init__(self, detail=None, debug_error=None, **kwargs):

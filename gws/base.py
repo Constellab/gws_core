@@ -3,10 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Union
 import inspect
 import re
-from gws.utils import slugify as slug
+from typing import List, Union
+
+from .utils import slugify as slug
 
 class Base:
     """

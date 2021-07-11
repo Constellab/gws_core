@@ -15,7 +15,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 
 
-from gws.model import User
+from gws.user import User
 from gws.settings import Settings
 
 from ._oauth2_central_header_scheme import oauth2_central_header_scheme

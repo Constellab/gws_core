@@ -3,8 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws.base import Base
-from gws.logger import Error
+from .base import Base
+from .logger import Error
 
 class Port(Base):
     """
@@ -26,7 +26,7 @@ class Port(Base):
         self._next = []
         self._parent = parent
 
-        from gws.model import Resource
+        from .resource import Resource
         self._resource_types = (Resource, )
     
     # -- D -- 
@@ -223,7 +223,7 @@ class Port(Base):
         if self.is_optional and resource is None:
             return
 
-        from gws.model import Resource
+        from .resource import Resource
         if not isinstance(resource, self._resource_types):
             raise Error(self.classname(), "resource", f"The resource must be an instance of Resource. A {self._resource_types} is given.")
 
@@ -601,7 +601,7 @@ class IO(Base):
         :type resource_types: type
         """
 
-        from gws.model import Resource
+        from .resource import Resource
         if not isinstance(name, str):
             raise Error(self.classname(), "create_port", "Invalid port specs. The port name must be a string")
         

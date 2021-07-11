@@ -208,6 +208,6 @@ def parse_settings(brick_cwd: str = None):
     return settings
 
 def load_settings(brick_cwd: str = None):
-    from gws.settings import Settings
+    from .settings import Settings
     settings = parse_settings(brick_cwd)
     Settings.init(settings)

@@ -4,9 +4,9 @@
 # About us: https://gencovery.com
 
 from typing import List
-from gws.query import Paginator
-from gws.model import Config
 
+from ..query import Paginator
+from ..config import Config
 from .base_service import BaseService
 
 class ConfigService(BaseService):

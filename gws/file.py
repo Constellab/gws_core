@@ -7,46 +7,34 @@ import os
 import copy
 import pathlib
 import json
-import tempfile
 import mimetypes
 import shutil
-
 from typing import List
 from datetime import datetime
 from pathlib import Path
 
 from fastapi import UploadFile
-from peewee import  Field, IntegerField, FloatField, DateField, \
-                    DateTimeField, CharField, BooleanField, \
-                    ForeignKeyField, IPField, TextField, BlobField
+from peewee import  CharField
 
-from gws.settings import Settings
-from gws.model import Config, Process, Resource, ResourceSet
-from gws.file_store import FileStore, LocalFileStore
-from gws.utils import slugify, generate_random_chars
-from gws.logger import Error
+from .settings import Settings
+from .process import Process
+from .resource import Resource
+from .resource_set import ResourceSet
+from .file_store import FileStore, LocalFileStore
+from .utils import generate_random_chars
+from .logger import Error
 
 class File(Resource):
-    
+    """
+    File class
+    """
+
     file_store_uri = CharField(null=True, index=True)
     path = CharField(null=True, index=True, unique=True)
-    
     _mode = "t"
     _table_name = "gws_file"
-    __download_url = "https://lab.{}/core-api/file/{}/{}/download"
+    __DOWNLOAD_URL = "https://lab.{}/core-api/file/{}/{}/download"
   
-    # -- A --
-        
-    # -- C --
-    
-    #def _create_hash_object(self):
-    #    h = super()._create_hash_object()
-    #    if self.path and os.path.exists(self.path):
-    #        with open(self.path, "rb") as fp:
-    #            h.update(fp.read())
-    #    
-    #    return h
-    
     # -- D --
     
     def delete_instance(self, *args, **kwargs):
@@ -81,8 +69,7 @@ class File(Resource):
             except:
                 #create a default LocalFileStore
                 fs = LocalFileStore()
-                fs.save()
-                
+                fs.save()     
             self.file_store_uri = fs.uri
             self.save()
             
@@ -144,7 +131,6 @@ class File(Resource):
                 os.makedirs(self.dir)
                 if not os.path.exists(self.dir):
                     raise Error("File", "open", f"Cannot create directory {self.dir}")
-            
             return open(self.path, mode="w+")
     
     # -- P --
@@ -155,39 +141,34 @@ class File(Resource):
         m = "r+"+self._mode
         with self.open(m) as fp:
             data = fp.read()
-        
         return data
     
     def readline(self):
         m = "r+"+self._mode
         with self.open(m) as fp:
             data = fp.readline()
-        
         return data
     
     def readlines(self, n=-1):
         m = "r+"+self._mode
         with self.open(m) as fp: 
             data = fp.readlines(n)
-        
         return data
     
     # -- T --
     
     def to_json(self, stringify: bool=False, prettify: bool=False, shallow: bool=True, **kwargs):
         _json = super().to_json(**kwargs)
-        
         settings = Settings.retrieve()
         host = settings.data.get("host", "0.0.0.0")
         vhost = settings.data.get("virtual_host", host)
-        _json["url"] = File.__download_url.format(vhost, self.type, self.uri)
+        _json["url"] = File.__DOWNLOAD_URL.format(vhost, self.type, self.uri)
         
         if not shallow:
             if self.is_json():
                 _json["data"]["content"] = json.loads(self.read())
             else:
                 _json["data"]["content"] = self.read()
-        
         if stringify:
             if prettify:
                 return json.dumps(_json, indent=4)
@@ -292,7 +273,7 @@ class FileImporter(Process):
         if self.param_exists("output_type"):
             out_t = self.get_param("output_type")
             if out_t:
-                from gws.service import ModelService
+                from .service import ModelService
                 model_t = ModelService.get_model_type(out_t)
         
         if not model_t:
@@ -371,7 +352,7 @@ class FileLoader(Process):
         if self.param_exists("output_type"):
             out_t = self.get_param("output_type")
             if out_t:
-                from gws.service import ModelService
+                from .service import ModelService
                 model_t = ModelService.get_model_type(out_t)
         
         if not model_t:

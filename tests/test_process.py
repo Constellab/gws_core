@@ -6,7 +6,7 @@
 import asyncio
 import unittest
 
-from gws.model import *
+from gws.protocol import Protocol
 from gws.robot import Robot, Create, Move, Eat, Wait
 from gws.unittest import GTest
 

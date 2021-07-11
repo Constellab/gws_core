@@ -5,8 +5,9 @@
 
 import time
 
-from gws.settings import Settings
-from gws.model import Config, Process, Resource, Model, Protocol
+from .process import Process
+from .resource import Resource
+from .protocol import Protocol
 
 class Robot(Resource):
     def __init__(self, *args, **kwargs):

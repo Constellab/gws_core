@@ -8,7 +8,7 @@ import os
 import unittest
 
 from peewee import CharField
-from gws.model import Model, Resource
+from gws.db.model import Model
 from gws.unittest import GTest
 from gws.service.model_service import ModelService
 from gws.unittest import GTest
@@ -45,7 +45,6 @@ class TestModel(unittest.TestCase):
         p2 = Person(name = 'Robert Vincent', data={})
         p2.save()
         john = Person.get(Person.name == 'Jhon Smith')
-        robert = Person.get(Person.name == 'Robert Vincent')
         john.set_data({
             'firstname':'Jhon',
             'sirname':'Smith', 

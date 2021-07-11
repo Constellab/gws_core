@@ -10,9 +10,9 @@ import json
 import time
 
 from gws.settings import Settings
-from gws.model import *
-from gws.queue import *
-from gws.robot import *
+from gws.experiment import Experiment
+from gws.queue import Queue, Job
+from gws.robot import create_nested_protocol
 from gws.unittest import GTest
 
 settings = Settings.retrieve()
@@ -73,7 +73,7 @@ class TestQueue(unittest.TestCase):
             print("Waiting 3 secs for cli experiments to finish ...")
             time.sleep(3)
             if n == 10:
-                raise Error("The experiment queue is not empty")
+                raise Exception("The experiment queue is not empty")
             n += 1
 
         Q = Experiment.select()

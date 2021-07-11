@@ -9,7 +9,9 @@ import os
 
 from gws.settings import Settings
 from gws.file import File
-from gws.model import Resource, Study, User
+from gws.resource import Resource
+from gws.study import Study
+from gws.user import User
 from gws.shell import Shell
 from gws.unittest import GTest
 

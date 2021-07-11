@@ -3,20 +3,14 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import os, sys
+import os
 import tempfile
-import re
 import subprocess
-import time
 
-from typing import Optional
-from gws.model import Process
-from gws.file import File
-from gws.settings import Settings
-from gws.file import FileStore, LocalFileStore
-from gws.logger import Error, Info
-from gws.system import SysProc
-
+from .process import Process
+from .file import File
+from .logger import Error, Info
+from .system import SysProc
 
 class Shell(Process):
     """

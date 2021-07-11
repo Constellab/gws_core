@@ -1,1 +1,793 @@
-{"title": "Super travel", "uri": "", "nodes": {"p0": {"creation_datetime": "", "data": {"title": "Robot create", "description": "This process creates the Robot."}, "instance_name": "p0", "is_archived": false, "save_datetime": "", "type": "gws.robot.Create", "uri": "", "experiment": {"uri": ""}, "protocol": {"uri": ""}, "config": {"creation_datetime": "", "data": {"specs": {}, "params": {}}, "is_archived": false, "save_datetime": "", "type": "gws.model.Config", "uri": ""}, "input": {}, "output": {"robot": {"resource": {"uri": "", "type": ""}, "specs": ["gws.robot.Robot"]}}}, "p5": {"creation_datetime": "", "data": {"title": "Eat process", "description": "This process emulates the meal of the robot before its flight!"}, "instance_name": "p5", "is_archived": false, "save_datetime": "", "type": "gws.robot.Eat", "uri": "", "experiment": {"uri": ""}, "protocol": {"uri": ""}, "config": {"creation_datetime": "", "data": {"specs": {"food_weight": {"type": "float", "default": 3.14}}, "params": {}}, "is_archived": false, "save_datetime": "", "type": "gws.model.Config", "uri": ""}, "input": {"robot": {"resource": {"uri": "", "type": ""}, "specs": ["gws.robot.Robot"]}}, "output": {"robot": {"resource": {"uri": "", "type": ""}, "specs": ["gws.robot.Robot"]}}}, "mini_travel": {"creation_datetime": "", "data": {"title": "Mini travel", "graph": {"title": "Mini travel", "uri": "789befb3-e455-4db0-9262-d4ff0793a8cb", "nodes": {"p1": {"creation_datetime": "2021-05-14T20:39:19.389747", "data": {"title": "Move process", "description": "This process emulates a short moving step of the robot"}, "instance_name": "p1", "is_archived": false, "save_datetime": "2021-05-14T20:39:19.998835", "type": "gws.robot.Move", "uri": "3462d1d3-a0b4-4dd7-8cc3-06534a2dc295", "experiment": {"uri": null}, "protocol": {"uri": "789befb3-e455-4db0-9262-d4ff0793a8cb"}, "config": {"creation_datetime": "2021-05-14T20:39:19.389935", "data": {"specs": {"moving_step": {"type": "float", "default": 0.1, "description": "The moving step of the robot"}, "direction": {"type": "str", "default": "north", "allowed_values": ["north", "south", "east", "west"], "description": "The moving direction"}}, "params": {}}, "is_archived": false, "save_datetime": "2021-05-14T20:39:19.390197", "type": "gws.model.Config", "uri": "7fa8a788-87fc-475a-8441-e004f14fc6b3"}, "input": {"robot": {"resource": {"uri": "", "type": ""}, "specs": ["gws.robot.Robot"]}}, "output": {"robot": {"resource": {"uri": "", "type": ""}, "specs": ["gws.robot.Robot"]}}}, "p2": {"creation_datetime": "2021-05-14T20:39:19.404153", "data": {"title": "Eat process", "description": "This process emulates the meal of the robot before its flight!"}, "instance_name": "p2", "is_archived": false, "save_datetime": "2021-05-14T20:39:20.002587", "type": "gws.robot.Eat", "uri": "67af32ad-a76c-44d9-824c-5fa860db782f", "experiment": {"uri": null}, "protocol": {"uri": "789befb3-e455-4db0-9262-d4ff0793a8cb"}, "config": {"creation_datetime": "2021-05-14T20:39:19.404308", "data": {"specs": {"food_weight": {"type": "float", "default": 3.14}}, "params": {}}, "is_archived": false, "save_datetime": "2021-05-14T20:39:19.404538", "type": "gws.model.Config", "uri": "f1c58806-398d-48a1-b010-d5e121e84fd3"}, "input": {"robot": {"resource": {"uri": "", "type": ""}, "specs": ["gws.robot.Robot"]}}, "output": {"robot": {"resource": {"uri": "", "type": ""}, "specs": ["gws.robot.Robot"]}}}, "p3": {"creation_datetime": "2021-05-14T20:39:19.417913", "data": {"title": "Move process", "description": "This process emulates a short moving step of the robot"}, "instance_name": "p3", "is_archived": false, "save_datetime": "2021-05-14T20:39:20.006276", "type": "gws.robot.Move", "uri": "640b9b13-bd59-49de-af31-adc5f140acbc", "experiment": {"uri": null}, "protocol": {"uri": "789befb3-e455-4db0-9262-d4ff0793a8cb"}, "config": {"creation_datetime": "2021-05-14T20:39:19.418042", "data": {"specs": {"moving_step": {"type": "float", "default": 0.1, "description": "The moving step of the robot"}, "direction": {"type": "str", "default": "north", "allowed_values": ["north", "south", "east", "west"], "description": "The moving direction"}}, "params": {}}, "is_archived": false, "save_datetime": "2021-05-14T20:39:19.418293", "type": "gws.model.Config", "uri": "51c08580-effa-4aac-8fb0-7412a4e96368"}, "input": {"robot": {"resource": {"uri": "", "type": ""}, "specs": ["gws.robot.Robot"]}}, "output": {"robot": {"resource": {"uri": "", "type": ""}, "specs": ["gws.robot.Robot"]}}}, "p4": {"creation_datetime": "2021-05-14T20:39:19.432214", "data": {"title": "Move process", "description": "This process emulates a short moving step of the robot"}, "instance_name": "p4", "is_archived": false, "save_datetime": "2021-05-14T20:39:20.010124", "type": "gws.robot.Move", "uri": "f8779900-1667-4480-8cd4-b3c319e3a2c6", "experiment": {"uri": null}, "protocol": {"uri": "789befb3-e455-4db0-9262-d4ff0793a8cb"}, "config": {"creation_datetime": "2021-05-14T20:39:19.432363", "data": {"specs": {"moving_step": {"type": "float", "default": 0.1, "description": "The moving step of the robot"}, "direction": {"type": "str", "default": "north", "allowed_values": ["north", "south", "east", "west"], "description": "The moving direction"}}, "params": {}}, "is_archived": false, "save_datetime": "2021-05-14T20:39:19.432614", "type": "gws.model.Config", "uri": "f9e11b13-bbf3-4505-b988-8d04a8b842ba"}, "input": {"robot": {"resource": {"uri": "", "type": ""}, "specs": ["gws.robot.Robot"]}}, "output": {"robot": {"resource": {"uri": "", "type": ""}, "specs": ["gws.robot.Robot"]}}}, "p_wait": {"creation_datetime": "2021-05-14T20:39:19.461063", "data": {"title": "Wait process", "description": "This process emulates the resting time of the robot before its flight!"}, "instance_name": "p_wait", "is_archived": false, "save_datetime": "2021-05-14T20:39:20.013517", "type": "gws.robot.Wait", "uri": "0bacf913-6dbf-490c-acd9-185c73301842", "experiment": {"uri": null}, "protocol": {"uri": "789befb3-e455-4db0-9262-d4ff0793a8cb"}, "config": {"creation_datetime": "2021-05-14T20:39:19.461228", "data": {"specs": {"waiting_time": {"type": "float", "default": 0.5}}, "params": {}}, "is_archived": false, "save_datetime": "2021-05-14T20:39:19.461453", "type": "gws.model.Config", "uri": "9d92a67d-0a52-4541-8fdb-b7040997b527"}, "input": {"robot": {"resource": {"uri": "", "type": ""}, "specs": ["gws.robot.Robot"]}}, "output": {"robot": {"resource": {"uri": "", "type": ""}, "specs": ["gws.robot.Robot"]}}}}, "links": [{"from": {"node": "p1", "port": "robot"}, "to": {"node": "p2", "port": "robot"}, "resource": {"uri": "", "type": ""}}, {"from": {"node": "p2", "port": "robot"}, "to": {"node": "p_wait", "port": "robot"}, "resource": {"uri": "", "type": ""}}, {"from": {"node": "p_wait", "port": "robot"}, "to": {"node": "p3", "port": "robot"}, "resource": {"uri": "", "type": ""}}, {"from": {"node": "p2", "port": "robot"}, "to": {"node": "p4", "port": "robot"}, "resource": {"uri": "", "type": ""}}], "interfaces": {"robot": {"name": "robot", "from": {"node": ":parent:", "port": "robot"}, "to": {"node": "p1", "port": "robot"}, "resource": {"uri": "", "type": ""}}}, "outerfaces": {"robot": {"name": "robot", "from": {"node": "p2", "port": "robot"}, "to": {"node": ":parent:", "port": "robot"}, "resource": {"uri": "", "type": ""}}}, "layout": {}}}, "instance_name": "mini_travel", "is_archived": false, "save_datetime": "", "type": "gws.model.Protocol", "uri": "", "experiment": {"uri": ""}, "protocol": {"uri": ""}, "config": {"creation_datetime": "", "data": {"specs": {}, "params": {}}, "is_archived": false, "save_datetime": "", "type": "gws.model.Config", "uri": ""}, "input": {"robot": {"resource": {"uri": "", "type": ""}, "specs": ["gws.robot.Robot"]}}, "output": {"robot": {"resource": {"uri": "", "type": ""}, "specs": ["gws.robot.Robot"]}}}}, "links": [{"from": {"node": "p0", "port": "robot"}, "to": {"node": "mini_travel", "port": "robot"}, "resource": {"uri": "", "type": ""}}, {"from": {"node": "mini_travel", "port": "robot"}, "to": {"node": "p5", "port": "robot"}, "resource": {"uri": "", "type": ""}}], "interfaces": {}, "outerfaces": {}, "layout": {}}s
+{
+    "uri": "",
+    "nodes": {
+        "p0": {
+            "creation_datetime": "",
+            "data": {
+                "title": "Create robot",
+                "description": "This process creates a robot",
+                "doc": "Process class.\n\n:property input_specs: The specs of the input\n:type input_specs: dict\n:property output_specs: The specs of the output\n:type output_specs: dict\n:property config_specs: The specs of the config\n:type config_specs: dict"
+            },
+            "instance_name": "p0",
+            "is_archived": false,
+            "save_datetime": "",
+            "type": "gws.robot.Create",
+            "uri": "",
+            "experiment": {
+                "uri": ""
+            },
+            "protocol": {
+                "uri": ""
+            },
+            "is_running": false,
+            "is_finished": false,
+            "config": {
+                "creation_datetime": "",
+                "data": {
+                    "specs": {},
+                    "params": {}
+                },
+                "is_archived": false,
+                "save_datetime": "",
+                "type": "gws.config.Config",
+                "uri": ""
+            },
+            "progress_bar": {
+                "creation_datetime": "",
+                "data": {
+                    "value": 0.0,
+                    "max_value": 0.0,
+                    "average_speed": 0.0,
+                    "start_time": 0.0,
+                    "current_time": 0.0,
+                    "elapsed_time": 0.0,
+                    "remaining_time": 0.0,
+                    "messages": []
+                },
+                "is_archived": false,
+                "save_datetime": "",
+                "type": "gws.progress_bar.ProgressBar",
+                "uri": "",
+                "process": {
+                    "uri": "",
+                    "type": ""
+                }
+            },
+            "input": {},
+            "output": {
+                "robot": {
+                    "resource": {
+                        "uri": "",
+                        "type": ""
+                    },
+                    "specs": [
+                        "gws.robot.Robot"
+                    ]
+                }
+            }
+        },
+        "p5": {
+            "creation_datetime": "",
+            "data": {
+                "title": "Eat process",
+                "description": "This process emulates the meal of the robot before its flight!",
+                "doc": "Process class.\n\n:property input_specs: The specs of the input\n:type input_specs: dict\n:property output_specs: The specs of the output\n:type output_specs: dict\n:property config_specs: The specs of the config\n:type config_specs: dict"
+            },
+            "instance_name": "p5",
+            "is_archived": false,
+            "save_datetime": "",
+            "type": "gws.robot.Eat",
+            "uri": "",
+            "experiment": {
+                "uri": ""
+            },
+            "protocol": {
+                "uri": ""
+            },
+            "is_running": false,
+            "is_finished": false,
+            "config": {
+                "creation_datetime": "",
+                "data": {
+                    "specs": {
+                        "food_weight": {
+                            "type": "float",
+                            "default": 3.14
+                        }
+                    },
+                    "params": {}
+                },
+                "is_archived": false,
+                "save_datetime": "",
+                "type": "gws.config.Config",
+                "uri": ""
+            },
+            "progress_bar": {
+                "creation_datetime": "",
+                "data": {
+                    "value": 0.0,
+                    "max_value": 0.0,
+                    "average_speed": 0.0,
+                    "start_time": 0.0,
+                    "current_time": 0.0,
+                    "elapsed_time": 0.0,
+                    "remaining_time": 0.0,
+                    "messages": []
+                },
+                "is_archived": false,
+                "save_datetime": "",
+                "type": "gws.progress_bar.ProgressBar",
+                "uri": "",
+                "process": {
+                    "uri": "",
+                    "type": ""
+                }
+            },
+            "input": {
+                "robot": {
+                    "resource": {
+                        "uri": "",
+                        "type": ""
+                    },
+                    "specs": [
+                        "gws.robot.Robot"
+                    ]
+                }
+            },
+            "output": {
+                "robot": {
+                    "resource": {
+                        "uri": "",
+                        "type": ""
+                    },
+                    "specs": [
+                        "gws.robot.Robot"
+                    ]
+                }
+            }
+        },
+        "mini_travel": {
+            "creation_datetime": "",
+            "data": {
+                "graph": {
+                    "uri": "c18b72ce-52f7-489d-80cf-e502be225c38",
+                    "nodes": {
+                        "p1": {
+                            "creation_datetime": "2021-07-11T18:34:28.418568",
+                            "data": {
+                                "title": "Move robot",
+                                "description": "This process emulates a short moving step of the robot",
+                                "doc": "Process class.\n\n:property input_specs: The specs of the input\n:type input_specs: dict\n:property output_specs: The specs of the output\n:type output_specs: dict\n:property config_specs: The specs of the config\n:type config_specs: dict"
+                            },
+                            "instance_name": "p1",
+                            "is_archived": false,
+                            "save_datetime": "2021-07-11T18:34:29.023634",
+                            "type": "gws.robot.Move",
+                            "uri": "d98c54ed-87ab-4330-b2b7-a2574f5114d6",
+                            "experiment": {
+                                "uri": ""
+                            },
+                            "protocol": {
+                                "uri": "c18b72ce-52f7-489d-80cf-e502be225c38"
+                            },
+                            "is_running": false,
+                            "is_finished": false,
+                            "config": {
+                                "creation_datetime": "2021-07-11T18:34:28.419160",
+                                "data": {
+                                    "specs": {
+                                        "moving_step": {
+                                            "type": "float",
+                                            "default": 0.1,
+                                            "description": "The moving step of the robot"
+                                        },
+                                        "direction": {
+                                            "type": "str",
+                                            "default": "north",
+                                            "allowed_values": [
+                                                "north",
+                                                "south",
+                                                "east",
+                                                "west"
+                                            ],
+                                            "description": "The moving direction"
+                                        }
+                                    },
+                                    "params": {}
+                                },
+                                "is_archived": false,
+                                "save_datetime": "2021-07-11T18:34:28.419645",
+                                "type": "gws.config.Config",
+                                "uri": "29634a4b-3012-4c50-8b06-af21ee95ef26"
+                            },
+                            "progress_bar": {
+                                "creation_datetime": "2021-07-11T18:34:28.423174",
+                                "data": {
+                                    "value": 0.0,
+                                    "max_value": 0.0,
+                                    "average_speed": 0.0,
+                                    "start_time": 0.0,
+                                    "current_time": 0.0,
+                                    "elapsed_time": 0.0,
+                                    "remaining_time": 0.0,
+                                    "messages": []
+                                },
+                                "is_archived": false,
+                                "save_datetime": "2021-07-11T18:34:28.428022",
+                                "type": "gws.progress_bar.ProgressBar",
+                                "uri": "c1e4e36c-d558-4f45-94e1-d37da9fe1574",
+                                "process": {
+                                    "uri": "d98c54ed-87ab-4330-b2b7-a2574f5114d6",
+                                    "type": "gws.robot.Move"
+                                }
+                            },
+                            "input": {
+                                "robot": {
+                                    "resource": {
+                                        "uri": "",
+                                        "type": ""
+                                    },
+                                    "specs": [
+                                        "gws.robot.Robot"
+                                    ]
+                                }
+                            },
+                            "output": {
+                                "robot": {
+                                    "resource": {
+                                        "uri": "",
+                                        "type": ""
+                                    },
+                                    "specs": [
+                                        "gws.robot.Robot"
+                                    ]
+                                }
+                            }
+                        },
+                        "p2": {
+                            "creation_datetime": "2021-07-11T18:34:28.441064",
+                            "data": {
+                                "title": "Eat process",
+                                "description": "This process emulates the meal of the robot before its flight!",
+                                "doc": "Process class.\n\n:property input_specs: The specs of the input\n:type input_specs: dict\n:property output_specs: The specs of the output\n:type output_specs: dict\n:property config_specs: The specs of the config\n:type config_specs: dict"
+                            },
+                            "instance_name": "p2",
+                            "is_archived": false,
+                            "save_datetime": "2021-07-11T18:34:29.029713",
+                            "type": "gws.robot.Eat",
+                            "uri": "bb86a3d1-2148-4d14-986f-1c460509efac",
+                            "experiment": {
+                                "uri": ""
+                            },
+                            "protocol": {
+                                "uri": "c18b72ce-52f7-489d-80cf-e502be225c38"
+                            },
+                            "is_running": false,
+                            "is_finished": false,
+                            "config": {
+                                "creation_datetime": "2021-07-11T18:34:28.442048",
+                                "data": {
+                                    "specs": {
+                                        "food_weight": {
+                                            "type": "float",
+                                            "default": 3.14
+                                        }
+                                    },
+                                    "params": {}
+                                },
+                                "is_archived": false,
+                                "save_datetime": "2021-07-11T18:34:28.442830",
+                                "type": "gws.config.Config",
+                                "uri": "24a690a3-1a48-4bea-b40f-29bbdffda0ca"
+                            },
+                            "progress_bar": {
+                                "creation_datetime": "2021-07-11T18:34:28.447441",
+                                "data": {
+                                    "value": 0.0,
+                                    "max_value": 0.0,
+                                    "average_speed": 0.0,
+                                    "start_time": 0.0,
+                                    "current_time": 0.0,
+                                    "elapsed_time": 0.0,
+                                    "remaining_time": 0.0,
+                                    "messages": []
+                                },
+                                "is_archived": false,
+                                "save_datetime": "2021-07-11T18:34:28.452281",
+                                "type": "gws.progress_bar.ProgressBar",
+                                "uri": "bc5f0c57-c84e-48af-8b84-275ec82bbe43",
+                                "process": {
+                                    "uri": "bb86a3d1-2148-4d14-986f-1c460509efac",
+                                    "type": "gws.robot.Eat"
+                                }
+                            },
+                            "input": {
+                                "robot": {
+                                    "resource": {
+                                        "uri": "",
+                                        "type": ""
+                                    },
+                                    "specs": [
+                                        "gws.robot.Robot"
+                                    ]
+                                }
+                            },
+                            "output": {
+                                "robot": {
+                                    "resource": {
+                                        "uri": "",
+                                        "type": ""
+                                    },
+                                    "specs": [
+                                        "gws.robot.Robot"
+                                    ]
+                                }
+                            }
+                        },
+                        "p3": {
+                            "creation_datetime": "2021-07-11T18:34:28.463633",
+                            "data": {
+                                "title": "Move robot",
+                                "description": "This process emulates a short moving step of the robot",
+                                "doc": "Process class.\n\n:property input_specs: The specs of the input\n:type input_specs: dict\n:property output_specs: The specs of the output\n:type output_specs: dict\n:property config_specs: The specs of the config\n:type config_specs: dict"
+                            },
+                            "instance_name": "p3",
+                            "is_archived": false,
+                            "save_datetime": "2021-07-11T18:34:29.035019",
+                            "type": "gws.robot.Move",
+                            "uri": "346c78b9-9d91-483d-a296-5f97d0680741",
+                            "experiment": {
+                                "uri": ""
+                            },
+                            "protocol": {
+                                "uri": "c18b72ce-52f7-489d-80cf-e502be225c38"
+                            },
+                            "is_running": false,
+                            "is_finished": false,
+                            "config": {
+                                "creation_datetime": "2021-07-11T18:34:28.464538",
+                                "data": {
+                                    "specs": {
+                                        "moving_step": {
+                                            "type": "float",
+                                            "default": 0.1,
+                                            "description": "The moving step of the robot"
+                                        },
+                                        "direction": {
+                                            "type": "str",
+                                            "default": "north",
+                                            "allowed_values": [
+                                                "north",
+                                                "south",
+                                                "east",
+                                                "west"
+                                            ],
+                                            "description": "The moving direction"
+                                        }
+                                    },
+                                    "params": {}
+                                },
+                                "is_archived": false,
+                                "save_datetime": "2021-07-11T18:34:28.465353",
+                                "type": "gws.config.Config",
+                                "uri": "a7330bfb-185d-4911-ac20-f495e478a5e9"
+                            },
+                            "progress_bar": {
+                                "creation_datetime": "2021-07-11T18:34:28.471723",
+                                "data": {
+                                    "value": 0.0,
+                                    "max_value": 0.0,
+                                    "average_speed": 0.0,
+                                    "start_time": 0.0,
+                                    "current_time": 0.0,
+                                    "elapsed_time": 0.0,
+                                    "remaining_time": 0.0,
+                                    "messages": []
+                                },
+                                "is_archived": false,
+                                "save_datetime": "2021-07-11T18:34:28.479382",
+                                "type": "gws.progress_bar.ProgressBar",
+                                "uri": "b9128271-59ff-478b-b8c2-eebe254198db",
+                                "process": {
+                                    "uri": "346c78b9-9d91-483d-a296-5f97d0680741",
+                                    "type": "gws.robot.Move"
+                                }
+                            },
+                            "input": {
+                                "robot": {
+                                    "resource": {
+                                        "uri": "",
+                                        "type": ""
+                                    },
+                                    "specs": [
+                                        "gws.robot.Robot"
+                                    ]
+                                }
+                            },
+                            "output": {
+                                "robot": {
+                                    "resource": {
+                                        "uri": "",
+                                        "type": ""
+                                    },
+                                    "specs": [
+                                        "gws.robot.Robot"
+                                    ]
+                                }
+                            }
+                        },
+                        "p4": {
+                            "creation_datetime": "2021-07-11T18:34:28.492448",
+                            "data": {
+                                "title": "Move robot",
+                                "description": "This process emulates a short moving step of the robot",
+                                "doc": "Process class.\n\n:property input_specs: The specs of the input\n:type input_specs: dict\n:property output_specs: The specs of the output\n:type output_specs: dict\n:property config_specs: The specs of the config\n:type config_specs: dict"
+                            },
+                            "instance_name": "p4",
+                            "is_archived": false,
+                            "save_datetime": "2021-07-11T18:34:29.039688",
+                            "type": "gws.robot.Move",
+                            "uri": "1e266eab-205c-4c6a-a22f-96b9e5bfb4b9",
+                            "experiment": {
+                                "uri": ""
+                            },
+                            "protocol": {
+                                "uri": "c18b72ce-52f7-489d-80cf-e502be225c38"
+                            },
+                            "is_running": false,
+                            "is_finished": false,
+                            "config": {
+                                "creation_datetime": "2021-07-11T18:34:28.493314",
+                                "data": {
+                                    "specs": {
+                                        "moving_step": {
+                                            "type": "float",
+                                            "default": 0.1,
+                                            "description": "The moving step of the robot"
+                                        },
+                                        "direction": {
+                                            "type": "str",
+                                            "default": "north",
+                                            "allowed_values": [
+                                                "north",
+                                                "south",
+                                                "east",
+                                                "west"
+                                            ],
+                                            "description": "The moving direction"
+                                        }
+                                    },
+                                    "params": {}
+                                },
+                                "is_archived": false,
+                                "save_datetime": "2021-07-11T18:34:28.494089",
+                                "type": "gws.config.Config",
+                                "uri": "b348f15e-5c2d-409f-8e52-6d6c60310eba"
+                            },
+                            "progress_bar": {
+                                "creation_datetime": "2021-07-11T18:34:28.509708",
+                                "data": {
+                                    "value": 0.0,
+                                    "max_value": 0.0,
+                                    "average_speed": 0.0,
+                                    "start_time": 0.0,
+                                    "current_time": 0.0,
+                                    "elapsed_time": 0.0,
+                                    "remaining_time": 0.0,
+                                    "messages": []
+                                },
+                                "is_archived": false,
+                                "save_datetime": "2021-07-11T18:34:28.515354",
+                                "type": "gws.progress_bar.ProgressBar",
+                                "uri": "f28a8c47-8815-4a6a-963c-11ad6942448a",
+                                "process": {
+                                    "uri": "1e266eab-205c-4c6a-a22f-96b9e5bfb4b9",
+                                    "type": "gws.robot.Move"
+                                }
+                            },
+                            "input": {
+                                "robot": {
+                                    "resource": {
+                                        "uri": "",
+                                        "type": ""
+                                    },
+                                    "specs": [
+                                        "gws.robot.Robot"
+                                    ]
+                                }
+                            },
+                            "output": {
+                                "robot": {
+                                    "resource": {
+                                        "uri": "",
+                                        "type": ""
+                                    },
+                                    "specs": [
+                                        "gws.robot.Robot"
+                                    ]
+                                }
+                            }
+                        },
+                        "p_wait": {
+                            "creation_datetime": "2021-07-11T18:34:28.555454",
+                            "data": {
+                                "title": "Wait process",
+                                "description": "This process emulates the resting time of the robot before its flight!",
+                                "doc": "Process class.\n\n:property input_specs: The specs of the input\n:type input_specs: dict\n:property output_specs: The specs of the output\n:type output_specs: dict\n:property config_specs: The specs of the config\n:type config_specs: dict"
+                            },
+                            "instance_name": "p_wait",
+                            "is_archived": false,
+                            "save_datetime": "2021-07-11T18:34:29.045570",
+                            "type": "gws.robot.Wait",
+                            "uri": "f31ae988-22be-454f-af76-608ab1e9a9a0",
+                            "experiment": {
+                                "uri": ""
+                            },
+                            "protocol": {
+                                "uri": "c18b72ce-52f7-489d-80cf-e502be225c38"
+                            },
+                            "is_running": false,
+                            "is_finished": false,
+                            "config": {
+                                "creation_datetime": "2021-07-11T18:34:28.556164",
+                                "data": {
+                                    "specs": {
+                                        "waiting_time": {
+                                            "type": "float",
+                                            "default": 0.5
+                                        }
+                                    },
+                                    "params": {}
+                                },
+                                "is_archived": false,
+                                "save_datetime": "2021-07-11T18:34:28.556711",
+                                "type": "gws.config.Config",
+                                "uri": "a4c69e10-2fbb-4feb-ab5a-869ab6ffd132"
+                            },
+                            "progress_bar": {
+                                "creation_datetime": "2021-07-11T18:34:28.560564",
+                                "data": {
+                                    "value": 0.0,
+                                    "max_value": 0.0,
+                                    "average_speed": 0.0,
+                                    "start_time": 0.0,
+                                    "current_time": 0.0,
+                                    "elapsed_time": 0.0,
+                                    "remaining_time": 0.0,
+                                    "messages": []
+                                },
+                                "is_archived": false,
+                                "save_datetime": "2021-07-11T18:34:28.565594",
+                                "type": "gws.progress_bar.ProgressBar",
+                                "uri": "fe31de77-d24d-4f9c-94b7-b4fca4256ad6",
+                                "process": {
+                                    "uri": "f31ae988-22be-454f-af76-608ab1e9a9a0",
+                                    "type": "gws.robot.Wait"
+                                }
+                            },
+                            "input": {
+                                "robot": {
+                                    "resource": {
+                                        "uri": "",
+                                        "type": ""
+                                    },
+                                    "specs": [
+                                        "gws.robot.Robot"
+                                    ]
+                                }
+                            },
+                            "output": {
+                                "robot": {
+                                    "resource": {
+                                        "uri": "",
+                                        "type": ""
+                                    },
+                                    "specs": [
+                                        "gws.robot.Robot"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "links": [
+                        {
+                            "from": {
+                                "node": "p1",
+                                "port": "robot"
+                            },
+                            "to": {
+                                "node": "p2",
+                                "port": "robot"
+                            },
+                            "resource": {
+                                "uri": "",
+                                "type": ""
+                            }
+                        },
+                        {
+                            "from": {
+                                "node": "p2",
+                                "port": "robot"
+                            },
+                            "to": {
+                                "node": "p_wait",
+                                "port": "robot"
+                            },
+                            "resource": {
+                                "uri": "",
+                                "type": ""
+                            }
+                        },
+                        {
+                            "from": {
+                                "node": "p_wait",
+                                "port": "robot"
+                            },
+                            "to": {
+                                "node": "p3",
+                                "port": "robot"
+                            },
+                            "resource": {
+                                "uri": "",
+                                "type": ""
+                            }
+                        },
+                        {
+                            "from": {
+                                "node": "p2",
+                                "port": "robot"
+                            },
+                            "to": {
+                                "node": "p4",
+                                "port": "robot"
+                            },
+                            "resource": {
+                                "uri": "",
+                                "type": ""
+                            }
+                        }
+                    ],
+                    "interfaces": {
+                        "robot": {
+                            "name": "robot",
+                            "from": {
+                                "node": ":parent:",
+                                "port": "robot"
+                            },
+                            "to": {
+                                "node": "p1",
+                                "port": "robot"
+                            },
+                            "resource": {
+                                "uri": "",
+                                "type": ""
+                            }
+                        }
+                    },
+                    "outerfaces": {
+                        "robot": {
+                            "name": "robot",
+                            "from": {
+                                "node": "p2",
+                                "port": "robot"
+                            },
+                            "to": {
+                                "node": ":parent:",
+                                "port": "robot"
+                            },
+                            "resource": {
+                                "uri": "",
+                                "type": ""
+                            }
+                        }
+                    },
+                    "layout": {}
+                },
+                "title": "Mini travel",
+                "description": "This is the process class gws.protocol.Protocol",
+                "doc": "Protocol class.\n\n:property processes: Dictionnary of processes\n:type processes: dict\n:property connectors: List of connectors represinting process connection\n:type connectors: list"
+            },
+            "instance_name": "mini_travel",
+            "is_archived": false,
+            "is_template": false,
+            "save_datetime": "",
+            "type": "gws.protocol.Protocol",
+            "uri": "",
+            "experiment": {
+                "uri": ""
+            },
+            "protocol": {
+                "uri": ""
+            },
+            "is_running": false,
+            "is_finished": false,
+            "config": {
+                "creation_datetime": "",
+                "data": {
+                    "specs": {},
+                    "params": {}
+                },
+                "is_archived": false,
+                "save_datetime": "",
+                "type": "gws.config.Config",
+                "uri": ""
+            },
+            "progress_bar": {
+                "creation_datetime": "",
+                "data": {
+                    "value": 0.0,
+                    "max_value": 0.0,
+                    "average_speed": 0.0,
+                    "start_time": 0.0,
+                    "current_time": 0.0,
+                    "elapsed_time": 0.0,
+                    "remaining_time": 0.0,
+                    "messages": []
+                },
+                "is_archived": false,
+                "save_datetime": "",
+                "type": "gws.progress_bar.ProgressBar",
+                "uri": "",
+                "process": {
+                    "uri": "",
+                    "type": ""
+                }
+            },
+            "input": {
+                "robot": {
+                    "resource": {
+                        "uri": "",
+                        "type": ""
+                    },
+                    "specs": [
+                        "gws.robot.Robot"
+                    ]
+                }
+            },
+            "output": {
+                "robot": {
+                    "resource": {
+                        "uri": "",
+                        "type": ""
+                    },
+                    "specs": [
+                        "gws.robot.Robot"
+                    ]
+                }
+            }
+        }
+    },
+    "links": [
+        {
+            "from": {
+                "node": "p0",
+                "port": "robot"
+            },
+            "to": {
+                "node": "mini_travel",
+                "port": "robot"
+            },
+            "resource": {
+                "uri": "",
+                "type": ""
+            }
+        },
+        {
+            "from": {
+                "node": "mini_travel",
+                "port": "robot"
+            },
+            "to": {
+                "node": "p5",
+                "port": "robot"
+            },
+            "resource": {
+                "uri": "",
+                "type": ""
+            }
+        }
+    ],
+    "interfaces": {},
+    "outerfaces": {},
+    "layout": {}
+}

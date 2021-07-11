@@ -3,12 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import asyncio
 import unittest
-import os
 
 from gws.settings import Settings
-from gws.model import *
 from gws.file import File
 from gws.file_store import LocalFileStore
 from gws.unittest import GTest

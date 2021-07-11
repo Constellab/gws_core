@@ -4,9 +4,10 @@
 # About us: https://gencovery.com
 
 from typing import List
-from gws.query import Paginator
-from gws.comment import Comment
-from gws.http import HTTPNotFound
+
+from ..query import Paginator
+from ..comment import Comment
+from ..http import HTTPNotFound
 from .base_service import BaseService
 
 class CommentService(BaseService):

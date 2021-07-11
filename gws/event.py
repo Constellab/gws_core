@@ -4,9 +4,7 @@
 # About us: https://gencovery.com
 
 import inspect
-import asyncio
-
-from gws.logger import Error
+from .logger import Error
 
 class EventListener:
     """

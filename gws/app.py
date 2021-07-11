@@ -4,30 +4,21 @@
 # About us: https://gencovery.com
 
 import os
-import uvicorn
-import importlib
-import inspect 
 import urllib
+import uvicorn
 
-from datetime import datetime
-from typing import Optional
-
-from fastapi import Depends, HTTPException, FastAPI, status
-from fastapi.responses import Response, HTMLResponse, JSONResponse, RedirectResponse
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
 
-from gws.utils import slugify
-from gws.settings import Settings
-from gws.model import Study, User
-from gws.logger import Error, Info
-from gws.system import Monitor
-from gws.queue import Queue
+from ._app.core_app import core_app
+from ._app.central_app import central_app
+from .settings import Settings
+from .study import Study
+from .user import User
+from .logger import Info
+from .system import Monitor
+from .queue import Queue
 
-from ._app.core_app import *
-from ._app.central_app import *
-
-brick = "gws"
 app = FastAPI(docs_url=None)
 
 ####################################################################################
@@ -51,9 +42,6 @@ async def startup_event():
     # Initialize the monitor and the queue
     Monitor.init(daemon=False)
     Queue.init(daemon=False, verbose=False) #/!\ Daemon is False because experiments are run through CLI in non-blocking mode
-
-    
-    
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -106,7 +94,6 @@ class App(BaseApp):
             static_dir = os.path.join(dirs["gws"], "index/static/")
             if os.path.exists(os.path.join(static_dir)):
                 app.mount(f"/static/{name}/", StaticFiles(directory=static_dir), name=f"/static/{name}")
-        
             html_dir = os.path.join(dirs[name],"./docs/html/build")
             if not os.path.exists(os.path.join(html_dir,"index.html")):
                 #os.makedirs(html_dir)
@@ -124,7 +111,6 @@ class App(BaseApp):
         """
 
         cls.init()
-
         settings = Settings.retrieve()
         settings.set_data("app_host","0.0.0.0")
         settings.save()

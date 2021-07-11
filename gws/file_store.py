@@ -6,14 +6,12 @@
 import io
 import os
 from pathlib import Path
-import uuid
-import shelve
 import shutil
 import tempfile
 
-from gws.model import Model
-from gws.logger import Error
-from gws.settings import Settings
+from .db.model import Model
+from .logger import Error
+from .settings import Settings
 
 # ####################################################################
 #
@@ -96,7 +94,6 @@ class LocalFileStore(FileStore):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         if not self.path:
             self.data["path"] = os.path.join(self.get_base_dir(), self.uri)
             self.save()
@@ -115,23 +112,19 @@ class LocalFileStore(FileStore):
         :rtype: gws.file.File.
         """
         
+        from .file import File
         if not self.is_saved():
             self.save()
-
-        from gws.file import File  
         with self._db_manager.db.atomic() as transaction:
             try:
                 # create DB file object
                 if isinstance(source_file, File):
                     if self.contains(source_file):
                         return source_file
-                
                     f = source_file
                     source_file_path = f.path
-
                     if not dest_file_name:
                         dest_file_name = Path(source_file_path).name
-
                     f.path = self.__create_valid_file_path(f, name=dest_file_name)
                 else:
                     if not dest_file_name:
@@ -142,19 +135,16 @@ class LocalFileStore(FileStore):
 
                     f = self.create_file( name=dest_file_name )
                     source_file_path = source_file
-
                 # copy disk file
                 if not os.path.exists(f.dir):
                     os.makedirs(f.dir)
                     if not os.path.exists(f.dir):
                         raise Exception("FileStore", "add", f"Cannot create directory '{f.dir}'")
-                
                 if isinstance(source_file, (io.IOBase, tempfile.SpooledTemporaryFile, )):
                     with open(f.path, "wb") as buffer:
                         shutil.copyfileobj(source_file, buffer)
                 else:
                     shutil.copy2(source_file_path, f.path)
-                
                 # save DB file object
                 f.file_store_uri = self.uri
                 f.save()
@@ -170,19 +160,16 @@ class LocalFileStore(FileStore):
     def __create_valid_file_path( self, file: 'File', name: str  = ""):
         if not file.uri:
             file.save()
-        
         file.path = os.path.join(self.path, file.uri, name)
         file.save()
-        
         return file.path
 
     def create_file( self, name: str, file_type: type = None ):
-        from gws.file import File
+        from .file import File
         if isinstance(file_type, type):
             file = file_type()
         else:
             file = File()
-            
         self.__create_valid_file_path(file, name) 
         file.save()
         return file
@@ -198,7 +185,7 @@ class LocalFileStore(FileStore):
         super().drop_table()
 
     def delete_instance(self):
-        from gws.file import File
+        from .file import File
         with self._db_manager.db.atomic():
             File.delete().where( File.file_store_uri == self.uri ).execute()
             super().delete_instance()
@@ -249,7 +236,6 @@ class LocalFileStore(FileStore):
         if not cls._base_dir:
             settings = Settings.retrieve()
             cls._base_dir = settings.get_file_store_dir()
-
         return cls._base_dir
 
     # -- R --
@@ -273,7 +259,6 @@ class LocalFileStore(FileStore):
         settings = Settings.retrieve()
         if not settings.is_dev and not settings.is_test:
             raise Error("FileStore", "remove_all_files", f"Only allowed in dev and test mode")
-
         with cls._db_manager.db.atomic():
             Q = cls.select()
             for fs in Q:

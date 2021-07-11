@@ -6,8 +6,8 @@
 import unittest
 from gws.comment import Comment
 from gws.file import File
-from gws.service.comment_service import CommentService
 from gws.unittest import GTest
+from gws.service.comment_service import CommentService
 
 class TestComment(unittest.TestCase):
     

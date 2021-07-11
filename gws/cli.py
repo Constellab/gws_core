@@ -5,9 +5,11 @@
 
 import asyncio
 import click
-from gws.settings import Settings
-from gws.logger import Error
-from gws.model import Experiment, User
+
+from .settings import Settings
+from .logger import Error
+from .experiment import Experiment
+from .user import User
 
 @click.command(context_settings=dict(
     ignore_unknown_options=True,

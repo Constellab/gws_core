@@ -4,27 +4,21 @@
 # About us: https://gencovery.com
 
 
-import os
 from pathlib import Path
-
 import pandas
 from pandas import DataFrame
-
 import numpy as np
 
-from gws.model import Process, Config
-from gws.model import Resource
-from gws.logger import Error
-from gws.file import *
+from .resource import Resource
+from .logger import Error
+from .file import *
 
 class CSVData(Resource):
     _required_column_names = []
 
     def __init__(self, *args, table: (DataFrame, np.ndarray,) = None, \
                  column_names=None, row_names=None, **kwargs):
-        
         super().__init__(*args, **kwargs)
-        
         if not table is None:
             if isinstance(table, DataFrame):
                 self.kv_store['table'] = table
@@ -34,7 +28,6 @@ class CSVData(Resource):
                     df.columns = column_names
                 if row_names:
                     df.index = row_names
-
                 self.kv_store['table'] = df
             else:
                 raise Error("CSVData", "__init__", "The table mus be an instance of DataFrame or Numpy array")
@@ -51,9 +44,10 @@ class CSVData(Resource):
         :return: The list of column names or `None` is no column names exist
         :rtype: list or None
         """
+
         try:
             return self.table.columns.values.tolist()
-        except:
+        except Exception as _:
             return None
 
     def column_exists(self, name, case_sensitive=True) -> bool:
@@ -148,7 +142,6 @@ class CSVData(Resource):
         """
 
         file_extension = Path(file_path).suffix
-        
         if file_extension in [".xls", ".xlsx"] or file_format in [".xls", ".xlsx"] :
             df = pandas.read_excel(file_path)
         elif file_extension in [".csv", ".tsv", ".txt", ".tab"] or file_format in [".csv", ".tsv", ".txt", ".tab"] :
@@ -160,7 +153,6 @@ class CSVData(Resource):
             )
         else:
             raise Error("CSVData", "_import", "Cannot detect the file type using file extension. Valid file extensions are [.xls, .xlsx, .csv, .tsv, .txt, .tab].")
-        
         return cls(table=df)
     
     # -- J --
@@ -189,6 +181,7 @@ class CSVData(Resource):
         :return: The number of columns 
         :rtype: int
         """
+
         return self.table.shape[1]
     
     @property
@@ -199,6 +192,7 @@ class CSVData(Resource):
         :return: The number of rows 
         :rtype: int
         """
+
         return self.table.shape[0]
 
     # -- R --
@@ -211,6 +205,7 @@ class CSVData(Resource):
         :return: The list of row names
         :rtype: list
         """
+
         return self.table.index.values.tolist()
     
     def _render__as_csv(self, **kwargs):
@@ -247,7 +242,6 @@ class CSVData(Resource):
     def to_json(self, stringify: bool=False, prettify: bool=False, **kwargs):
         _json = super().to_json(**kwargs)
         _json["data"]["content"] = self.table.to_json()
-        
         if stringify:
             if prettify:
                 return json.dumps(_json, indent=4)

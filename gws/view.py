@@ -3,15 +3,20 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import pandas
 from pandas import DataFrame
 
 class View:
+    """
+    View class
+    """
+
     pass
 
-
 class DictView(View):
-    
+    """
+    DictView class
+    """
+
     @staticmethod
     def to_table(data: dict, \
               orient: str='index', dtype=None, \
@@ -41,7 +46,10 @@ class DictView(View):
             return df
     
 class TableView(View):
-    
+    """
+    TableView class
+    """
+
     @staticmethod
     def to_subtable(table: DataFrame, max_nb_bins:int = 100, orient:str='index', zoom:list=[None, None, None, None], method="smooth", stringify:bool=False)-> (str, "DataFrame", ):
         

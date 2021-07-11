@@ -6,11 +6,12 @@
 import threading
 import time
 import json
-
-from gws.db.model import Model
-from gws.model import User, Experiment
-from gws.logger import Error, Info
 from peewee import IntegerField, ForeignKeyField, BooleanField
+
+from .db.model import Model
+from .experiment import Experiment
+from .user import User
+from .logger import Error, Info
 
 TICK_INTERVAL_SECONDS = 30   # 30 sec
 

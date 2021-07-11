@@ -4,7 +4,8 @@
 # About us: https://gencovery.com
 
 import unittest
-from gws.model import Process, Resource
+from gws.process import Process
+from gws.resource import Resource
 from gws.io import Connector
 from gws.logger import Error
 from gws.unittest import GTest

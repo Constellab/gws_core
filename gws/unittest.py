@@ -3,15 +3,21 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws.settings import Settings
-from gws.model import Study, User
-from gws.logger import Error
-from gws.service.model_service import ModelService
+from .settings import Settings
+from .study import Study
+from .user import User
+from .logger import Error
+from .service.model_service import ModelService
 
 class GTest:
-    user = None
-    study = None
-    tables = None
+    """
+    GTest class.
+
+    Provides functionalities to initilize unit testing envirninments
+    """
+
+    user: User = None
+    study: Study = None
     
     @classmethod
     def init(cls):

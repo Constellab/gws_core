@@ -5,7 +5,7 @@
 
 import unittest
 
-from gws.model import Experiment, Protocol, User
+from gws.user import User
 from gws.service.user_service import UserService
 from gws.unittest import GTest
 

@@ -3,21 +3,12 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import glob
-import os
-import importlib
-import inspect
-
 from typing import List
-from gws.query import Paginator
-from gws.model import Model, ViewModel, Process, Resource, Protocol, Experiment
-from gws.settings import Settings
-from gws.logger import Warning, Info, Error
-from gws.http import *
-from gws.dto.rendering_dto import RenderingDTO
-
+from ..query import Paginator
+from ..view_model import ViewModel
+from ..http import *
+from ..dto.rendering_dto import RenderingDTO
 from .base_service import BaseService
-from .model_service import ModelService
 
 class ViewService(BaseService):
 
@@ -37,8 +28,8 @@ class ViewService(BaseService):
         
         try:
             return ViewModel.get(ViewModel.uri == uri)
-        except:
-            raise HTTPNotFound(detail=f"ViewModel '{uri}' not found")
+        except Exception as err:
+            raise HTTPNotFound(detail=f"ViewModel '{uri}' not found") from err
         
     @classmethod
     def fetch_list_of_view_models(cls, \
@@ -68,16 +59,14 @@ class ViewService(BaseService):
             else:
                 return paginator
             
-            
     # -- U --
     
     @classmethod
     def update_view_model(cls, uri: str, data: RenderingDTO) -> ViewModel:
         try:
-            vm = ViewModel.get(ViewModel.uri == uri)
-        except:
-            raise HTTPNotFound(detail=f"ViewModel '{uri}' not found")
-            
-        vm.upate(data)
-        return vm
+            view_model = ViewModel.get(ViewModel.uri == uri)
+        except Exception as err:
+            raise HTTPNotFound(detail=f"ViewModel '{uri}' not found") from err
+        view_model.upate(data)
+        return view_model
     

@@ -5,11 +5,12 @@
 
 from typing import List
 
-from gws.query import Paginator
-from gws.typing import ProtocolType
-from gws.model import Protocol, Experiment, ProgressBar
-from gws.http import *
-
+from ..query import Paginator
+from ..typing import ProtocolType
+from ..protocol import Protocol
+from ..experiment import Experiment
+from ..progress_bar import ProgressBar
+from ..http import *
 from .base_service import BaseService
 
 class ProtocolService(BaseService):
@@ -18,27 +19,26 @@ class ProtocolService(BaseService):
     
     @classmethod
     def fetch_protocol(cls, type = "gws.model.Protocol", uri: str = "") -> Protocol:
-        from gws.service.model_service import ModelService
+        from .model_service import ModelService
         t = None
         if type:
             t = ModelService.get_model_type(type)
             if t is None:
                 raise HTTPNotFound(detail=f"Protocol type '{type}' not found")
         else:
-            t = Protocol
-            
+            t = Protocol 
         try:
             p = t.get(t.uri == uri)
             return p
         except Exception as err:
-            raise HTTPNotFound(detail=f"No protocol found with uri '{uri}' and type '{type}'", debug_error=err)
+            raise HTTPNotFound(detail=f"No protocol found with uri '{uri}' and type '{type}'", debug_error=err) from err
     
     @classmethod
     def fetch_protocol_progress_bar(cls, type = "gws.model.Protocol", uri: str = "") -> ProgressBar:
         try:
             return ProgressBar.get( (ProgressBar.process_uri == uri) & (ProgressBar.process_type == type) ) 
         except Exception as err:
-            raise HTTPNotFound(detail=f"No progress bar found with process_uri '{uri}' and process_type '{type}'", debug_error=err)
+            raise HTTPNotFound(detail=f"No progress bar found with process_uri '{uri}' and process_type '{type}'", debug_error=err) from err
     
     @classmethod
     def fetch_protocol_list(cls, \
@@ -49,10 +49,8 @@ class ProtocolService(BaseService):
                            number_of_items_per_page: int=20, \
                            as_json = False) -> (Paginator, List[Protocol], List[dict], ):
         
+        from .model_service import ModelService
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
-        
-        from gws.service.model_service import ModelService
-        
         t = None
         if type:
             t = ModelService.get_model_type(type)
@@ -60,7 +58,7 @@ class ProtocolService(BaseService):
                 raise HTTPNotFound(detail=f"Protocol type '{type}' not found")
         else:
             t = Protocol
-            
+             
         if search_text:
             query = t.search(search_text)
             result = []

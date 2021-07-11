@@ -4,7 +4,8 @@
 # About us: https://gencovery.com
 
 import time
-from gws.model import Process, Resource
+from .process import Process
+from .resource import Resource
 
 class Source(Process):
     """
@@ -23,12 +24,11 @@ class Source(Process):
     _is_plug = True
     
     async def task(self):
-        from gws.service.model_service import ModelService
+        from .service.model_service import ModelService
         r_uri = self.get_param("resource_uri")
         r_type = self.get_param("resource_type")
         if not r_uri or not r_type:
             return
-
         t = ModelService.get_model_type(r_type)
         resource = t.get(t.uri == r_uri)
         self.output["resource"] = resource

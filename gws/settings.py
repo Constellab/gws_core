@@ -9,7 +9,7 @@ from playhouse.sqlite_ext import JSONField
 from peewee import Model as PWModel
 from peewee import SqliteDatabase, Proxy
 
-from gws.utils import generate_random_chars
+from .utils import generate_random_chars
 
 database_proxy = Proxy()  # create a proxy for our db.
 __cdir__ = os.path.dirname(os.path.abspath(__file__))

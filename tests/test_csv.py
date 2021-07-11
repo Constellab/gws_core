@@ -7,12 +7,13 @@ import os
 import json
 import unittest
 import asyncio
-
 import pandas
 from pandas import DataFrame
 
 from gws.settings import Settings
-from gws.model import Protocol, Study, User
+from gws.protocol import Protocol
+from gws.study import Study
+from gws.user import User
 from gws.csv import *
 from gws.file import File
 from gws.file_store import LocalFileStore

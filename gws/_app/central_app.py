@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from starlette_context.middleware import ContextMiddleware
 
 from gws.http import *
-from gws.model import User
+from gws.user import User
 
 from ._central_app._auth_central import generate_user_access_token as _generate_user_access_token, check_central_api_key
 from gws.service.user_service import UserService

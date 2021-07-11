@@ -6,7 +6,7 @@
 import os
 import logging
 import datetime
-from gws.settings import Settings
+from .settings import Settings
 
 LOGGER_NAME = "gws"
 LOGGER_FILE_NAME = str(datetime.date.today()) + ".log"

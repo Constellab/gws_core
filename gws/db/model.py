@@ -105,10 +105,7 @@ class Model(Base, PeeweeModel):
     :type hash: `str`
     """
     
-    #JSONField: callable = JSONField #DbManager.JSONField
-
     id = AutoField(primary_key=True)
-    #id = IntegerField(primary_key=True)
     uri = CharField(null=True, index=True)
     type = CharField(null=True, index=True)
     creation_datetime = DateTimeField(default=datetime.now, index=True)
@@ -131,37 +128,31 @@ class Model(Base, PeeweeModel):
       
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
         if not Model.LAB_URI:
             settings = Settings.retrieve()
             Model.LAB_URI = settings.get_data("uri")
-
         if not self.id and self._is_singleton:
             try:
                 cls = type(self)
                 model = cls.get(cls.type == self.full_classname())
             except Exception as _:
                 model = None
-            
             if model:
                 # /!\ Shallow copy all properties (i.e. object cast) 
                 # Prevent creating duplicates of processes having a representation in the db.
                 for prop in model.property_names(Field):
                     val = getattr(model, prop)
                     setattr(self, prop, val)
-        
         if self.uri is None:
             self.uri = str(uuid.uuid4())
             if not self.data:
                 self.data = {}
- 
         # ensures that field type is allways equal to the name of the class
         if self.type is None:
             self.type = self.full_classname()
         elif self.type != self.full_classname():
             # allow object cast after ...
             pass
-        
         self._kv_store = KVStore(self.get_kv_store_slot_path())
 
     # -- A --
@@ -178,7 +169,6 @@ class Model(Base, PeeweeModel):
         
         if self.is_archived == tf:
             return True
-        
         self.is_archived = tf
         cls = type(self)
         return self.save(only=[cls.is_archived])
@@ -203,20 +193,16 @@ class Model(Base, PeeweeModel):
                 continue
             val = getattr(self, prop)            
             h.update( str(val).encode() )
-         
         for prop in self.property_names(JSONField):
             val = getattr(self, prop)
-            h.update( json.dumps(val, sort_keys=True).encode() )
-            
+            h.update( json.dumps(val, sort_keys=True).encode() )  
         for prop in self.property_names(BlobField):
             val = getattr(self, prop)
             h.update( val )
-            
         for prop in self.property_names(ForeignKeyField):
             val = getattr(self, prop)
             if isinstance(val, Model):
                 h.update( val.hash.encode() )
-
         return h
     
     def __compute_hash(self):
@@ -235,14 +221,12 @@ class Model(Base, PeeweeModel):
         
         if self.type == self.full_classname():
             return self
-        
         # instanciate the class and shallow copy data
         new_model_t = ModelService.get_model_type(self.type)
         model = new_model_t()
         for prop in self.property_names(Field):
             val = getattr(self, prop)
             setattr(model, prop, val)
-
         return model
 
     def clear_data(self, save: bool = False):
@@ -264,9 +248,7 @@ class Model(Base, PeeweeModel):
 
         if cls.table_exists():
             return
-
         super().create_table(*args, **kwargs)
-
         if cls.get_db_manager().is_mysql_engine():
             cls.get_db_manager().db.execute_sql(f"CREATE FULLTEXT INDEX data ON {cls._table_name}(data)")
         
@@ -289,7 +271,6 @@ class Model(Base, PeeweeModel):
         path = cls.__get_base_kv_store_path_of_table()
         if os.path.exists(path):
             shutil.rmtree(path)
-
         super().drop_table()
 
     # -- E --
@@ -304,9 +285,9 @@ class Model(Base, PeeweeModel):
         :return: True if the models are equal
         :rtype: bool
         """
+
         if not isinstance(other, Model):
             return False
-
         return (self is other) or ((self.id != None) and (self.id == other.id))
     
     # -- F --
@@ -402,7 +383,6 @@ class Model(Base, PeeweeModel):
         for prop in data:
             if prop == "id":
                 continue
-
             if prop in col_names:
                 setattr(self, prop, data[prop])
             else:
@@ -425,6 +405,7 @@ class Model(Base, PeeweeModel):
         :return: True if the model is saved in db, False otherwise
         :rtype: bool
         """
+
         return bool(self.id)
 
     # -- N -- 
@@ -439,6 +420,7 @@ class Model(Base, PeeweeModel):
         :return: The path of the KVStore
         :rtype: str
         """
+
         return self._kv_store
     
     # -- R --
@@ -519,8 +501,8 @@ class Model(Base, PeeweeModel):
         """
         with cls.get_db_manager().db.atomic() as transaction:
             try:
-                for m in model_list:
-                    m.save()
+                for model in model_list:
+                    model.save()
             except Exception as err:
                 transaction.rollback()
                 raise Error("gws.model.Model", "save_all", f"Error message: {err}") from err
@@ -546,20 +528,15 @@ class Model(Base, PeeweeModel):
         """
       
         _json = {}
-        
         jsonifiable_data_keys
         if not isinstance(jsonifiable_data_keys, list):
             jsonifiable_data_keys = []
-
         exclusion_list = (ForeignKeyField, ManyToManyField, BlobField, AutoField, BigAutoField, )
-
         for prop in self.property_names(Field, exclude=exclusion_list) :
             if prop in ["id"]:
                 continue
-
             if prop.startswith("_"):
                 continue  #-> private or protected property
-
             if prop == "data":
                 _json["data"] = {}
                 val = getattr(self, "data")
@@ -575,10 +552,9 @@ class Model(Base, PeeweeModel):
                 if bare:
                     if prop == "uri" or prop == "hash" or isinstance(val, (datetime, DateTimeField, DateField)):
                         _json[prop] = ""
-
+        
         if not show_hash:
             del _json["hash"]
-
         if stringify:
             if prettify:
                 return json.dumps(_json, indent=4)
@@ -599,8 +575,7 @@ class Model(Base, PeeweeModel):
         """
         
         if not "_user_data_" in self.data:
-            self.data["_user_data_"] = {}
-            
+            self.data["_user_data_"] = {}  
         return self.data["_user_data_"]
     
     # -- V --

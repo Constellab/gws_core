@@ -4,8 +4,9 @@
 # About us: https://gencovery.com
 
 import json
-from peewee import CharField, ForeignKeyField, IntegerField
-from gws.db.model import Model
+from peewee import CharField, ForeignKeyField
+
+from .db.model import Model
 
 class Comment(Model):
     """

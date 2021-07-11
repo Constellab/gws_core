@@ -6,9 +6,10 @@
 
 import unittest
 import copy
-from gws.app import App
-from gws.model import Process
-from gws.model import Resource, ResourceSet
+
+from gws.process import Process
+from gws.resource import Resource
+from gws.resource_set import ResourceSet
 from gws.unittest import GTest
 
 class Car(Resource):

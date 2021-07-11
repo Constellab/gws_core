@@ -3,18 +3,17 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws.model import Study
-from gws.robot import create_protocol, create_nested_protocol
-from gws.queue import Queue, Job
-from gws.http import *
-
+from ..study import Study
+from ..robot import create_protocol, create_nested_protocol
+from ..queue import Queue, Job
+from ..http import *
 from .base_service import BaseService
 
 class AstroService(BaseService):
 
     @classmethod
     async def run_robot_travel(cls):
-        from gws.service.user_service import UserService
+        from .user_service import UserService
         
         user = UserService.get_current_user()
         study = Study.get_default_instance()
@@ -33,7 +32,7 @@ class AstroService(BaseService):
             
     @classmethod
     async def run_robot_super_travel(cls):    
-        from gws.service.user_service import UserService
+        from .user_service import UserService
         
         user = UserService.get_current_user()
         study = Study.get_default_instance()
