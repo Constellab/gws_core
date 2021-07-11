@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse
 
 from ..query import Paginator
 from ..file import File, FileSet, FileUploader
-from ..model import Study
+from ..study import Study
 from ..http import *
 from .base_service import BaseService
 from .model_service import ModelService
