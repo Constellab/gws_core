@@ -232,14 +232,8 @@ class ProcessResource(Model):
     process_id = IntegerField(null=False, index=True)
     resource_id = IntegerField(null=False, index=True)
     resource_type = CharField(null=False, index=True)
-    
     _table_name = "gws_process_resource"
-    
-    class Meta:
-        indexes = (
-            (("process_id", "resource_id", "resource_type"), True),
-        )
-        
+  
     @property
     def resource(self):
         from .service.model_service import ModelService
@@ -248,4 +242,10 @@ class ProcessResource(Model):
     
     @property
     def process(self):
-        return Process.get_by_id(self.experiment_id)
+        from .process import Process
+        return Process.get_by_id(self.process_id)
+
+    class Meta:
+        indexes = (
+            (("process_id", "resource_id", "resource_type"), True),
+        )

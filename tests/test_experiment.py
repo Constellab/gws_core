@@ -206,7 +206,7 @@ class TestExperiment(unittest.TestCase):
         self.assertEqual(Experiment.select().count(), 1)
 
         print("")
-        print("Re-Run the same experiment after its valdiation...")
+        print("Re-Run the same experiment after its validation...")
         time.sleep(1)
         e = Experiment.get(Experiment.id == e.id)
         e.validate(user=GTest.user)
