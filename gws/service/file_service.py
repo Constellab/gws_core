@@ -26,7 +26,6 @@ class FileService(BaseService):
                         number_of_items_per_page: Optional[int] = 20, \
                         as_json: bool = False) -> (Paginator, List[File], List[dict], ):
         
-        from .model_service import ModelService
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
         t = None
         if type:

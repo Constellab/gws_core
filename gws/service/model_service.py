@@ -227,7 +227,7 @@ class ModelService(BaseService):
             module = importlib.import_module(module_name)
             t = getattr(module, function_name, None)
             cls._model_types[type] = t
-        except Exception as _:
+        except Exception as err:
             Warning("gws.service.model_service.ModelService", "get_model_type", f"An error occured. Error: {err}")
             t = None
 
