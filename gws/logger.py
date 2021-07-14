@@ -109,7 +109,6 @@ class Logger:
             
         cls._logger.warning(f"WARNING: {datetime.datetime.now().time()} # {message}")
         cls._print(message)
-            
 
 class Error(Exception):
     """

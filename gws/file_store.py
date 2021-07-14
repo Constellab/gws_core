@@ -10,7 +10,7 @@ import shutil
 import tempfile
 
 from .db.model import Model
-from .logger import Error
+from .logger import Error, Warning
 from .settings import Settings
 
 # ####################################################################
@@ -186,10 +186,10 @@ class LocalFileStore(FileStore):
 
     def delete_instance(self):
         from .file import File
-        with self._db_manager.db.atomic():
+        if File.table_exists():
             File.delete().where( File.file_store_uri == self.uri ).execute()
-            super().delete_instance()
-            shutil.rmtree(self.path)
+        super().delete_instance()
+        shutil.rmtree(self.path)
                 
     # -- E --
   
