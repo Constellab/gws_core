@@ -21,24 +21,20 @@ class Logger:
     _file_path = None
     
     def __init__(self, is_new_session = False, is_debug: bool = None):
-
         if Logger._logger is None:
             if not is_debug is None:
                 Logger._is_debug = is_debug
-            
             settings = Settings()
             log_dir = settings.get_log_dir()
             if not os.path.exists(log_dir):
                 os.makedirs(log_dir)
             Logger._file_path = os.path.join(log_dir, LOGGER_FILE_NAME)
-
-            fh = logging.FileHandler(Logger._file_path)
+            file_handler = logging.FileHandler(Logger._file_path)
             Logger._logger = logging.getLogger(LOGGER_NAME)
             Logger._logger.setLevel(logging.DEBUG)
             formatter = logging.Formatter(" %(message)s")
-            fh.setFormatter(formatter)
-            Logger._logger.addHandler(fh)
-
+            file_handler.setFormatter(formatter)
+            Logger._logger.addHandler(file_handler)
             if is_new_session:
                 Logger._logger.info("\nSESSION: " + str(datetime.datetime.now()) + "\n")
     
@@ -48,7 +44,6 @@ class Logger:
     def error(cls, message):
         if not cls._logger:
             Logger()
-            
         cls._logger.error(f"ERROR: {datetime.datetime.now().time()} -- {message}")
         cls._print(message)
             
@@ -58,7 +53,6 @@ class Logger:
     def get_file_path(cls):
         if not cls._logger:
             Logger()
-            
         return cls._file_path
 
     # -- I --
@@ -68,14 +62,12 @@ class Logger:
         if cls._is_debug is None:
             settings = Settings.retrieve()
             cls._is_debug = settings.is_debug
-        
         return cls._is_debug
         
     @classmethod
     def info(cls, message):
         if not cls._logger:
             Logger()
-            
         cls._logger.info(f"INFO: {datetime.datetime.now().time()} -- {message}")
         cls._print(message)
     
@@ -85,18 +77,20 @@ class Logger:
     def progress(cls, message):
         if not cls._logger:
             Logger()
-            
         cls._logger.info(f"PROGRESS: {datetime.datetime.now().time()} -- {message}")
-        erase = '\x1b[1A\x1b[2K'
-        print(erase + message)
+        print(message, end='\r', flush=True)
 
     @classmethod
     def _print(cls, message):
-        erase = '\x1b[1A\x1b[2K'
         if cls.is_debug():
             print(message)
         else:
-            print(erase + message)
+            max_len = 96
+            if len(message) > max_len:
+                message = (message + " "*(max_len-4))[0:(max_len-4)] + " ..."
+            else:
+                message = (message + " "*max_len)[0:max_len]
+            print(message, end='\r', flush=True)
 
     # -- S --
    
@@ -106,7 +100,6 @@ class Logger:
     def warning(cls, message):
         if not cls._logger:
             Logger()
-            
         cls._logger.warning(f"WARNING: {datetime.datetime.now().time()} # {message}")
         cls._print(message)
 
@@ -121,9 +114,7 @@ class Error(Exception):
             exc_message = f"({message}, {', '.join(args)})"
         else:
             exc_message = message
-            
         super().__init__(exc_message)
-        
         self.message = exc_message
         Logger.error(exc_message)
 
@@ -133,13 +124,12 @@ class Warning():
     """
 
     message = ""
-    
+
     def __init__(self, message, *args):
         if args:
             exc_message = f"({message}, {', '.join(args)})"
         else:
             exc_message = message
-        
         self.message = exc_message
         Logger.warning(exc_message)
         
@@ -154,7 +144,6 @@ class Info():
             exc_message = f"({message}, {', '.join(args)})"
         else:
             exc_message = message
-        
         self.message = exc_message
         Logger.info(exc_message)
 
@@ -169,6 +158,5 @@ class Progress():
             exc_message = f"({message}, {', '.join(args)})"
         else:
             exc_message = message
-        
         self.message = exc_message
         Logger.progress(exc_message)
