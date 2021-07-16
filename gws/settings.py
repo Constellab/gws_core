@@ -93,14 +93,11 @@ class Settings(PeeweeModel):
 
     # -- C --
 
-    @property
-    def smtp(self):
-        return self.data.get("smtp", None)
-
     # -- D --
 
     @property
     def description(self):
+        """ Get the app description """
         return self.app.get("description", None)
     
     # -- G --
@@ -124,17 +121,17 @@ class Settings(PeeweeModel):
     def get_maria_db_backup_dir(self) -> str:
         return os.path.join( self.get_data_dir(), "backups" )
 
-    def get_maria_db_host(self) -> str:
+    def get_maria_db_host(self, db_name) -> str:
         if self.is_prod:
-            return self.get_maria_prod_db_host()
+            return self.get_maria_prod_db_host(db_name)
         else:
-            return self.get_maria_dev_db_host()
+            return self.get_maria_dev_db_host(db_name)
 
-    def get_maria_prod_db_host(self) -> str:
-        return "gws_prod_db"
+    def get_maria_prod_db_host(self, db_name) -> str:
+        return f"{db_name}_prod_db"
 
-    def get_maria_dev_db_host(self) -> str:
-        return "gws_dev_db"
+    def get_maria_dev_db_host(self, db_name) -> str:
+        return f"{db_name}_dev_db"
 
     def get_cwd(self) -> dict:
         return self.data["__cwd__"]

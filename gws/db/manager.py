@@ -27,7 +27,6 @@ class AbstractDbManager:
     """
 
     db = DatabaseProxy()
-
     _engine = None
     _mariadb_config = {
         "user": "gws",
@@ -37,26 +36,24 @@ class AbstractDbManager:
 
     @classmethod
     def init(cls, engine:str=None, mode: str=None):
+        """ Initialize the DbManager """
+        
         if engine:
             cls._engine = engine
-
         if not cls._engine:
             cls._engine = "sqlite3"
-
         if cls._engine == "sqlite3":
             _db = SqliteDatabase(cls.get_sqlite3_db_path(mode=mode))
         elif cls._engine in ["mariadb", "mysql"]:
-            settings = Settings.retrieve()
             _db = MySQLDatabase(
                 cls._db_name,
                 user        = cls._mariadb_config["user"],
                 password    = cls._mariadb_config["password"],
-                host        = settings.get_maria_db_host(),
+                host        = cls.get_maria_db_host(),
                 port        = 3306
             )
         else:
             raise Exception("gws.db.model.DbManager", "init", f"Db engine '{cls._engine}' is not valid")
-
         cls.db.initialize(_db)
 
     # -- C --
@@ -81,18 +78,33 @@ class AbstractDbManager:
 
     @classmethod
     def get_db(cls):
+        """ Get the db object """
+
         return cls.db
 
     @classmethod
     def get_db_name(cls):
+        """ Get the db name """
+
         return cls._db_name
 
     @classmethod
     def get_engine(cls):
+        """ Get the db engine """
+
         return cls._engine
 
     @classmethod
+    def get_maria_db_host(cls):
+        """ Get maria db host address """
+
+        settings = Settings.retrieve()
+        return settings.get_maria_db_host( cls._db_name )
+
+    @classmethod
     def get_sqlite3_db_path(cls, mode:str=None):
+        """ Get the sqlite3 db path """
+
         settings = Settings.retrieve()
         if mode:
             if mode == "prod":
@@ -101,7 +113,6 @@ class AbstractDbManager:
                 db_dir = settings.get_sqlite3_dev_db_dir()
         else:
             db_dir = settings.get_sqlite3_db_dir()
-
         db_path = os.path.join(db_dir, cls._db_name + ".sqlite3")
         return db_path
 
@@ -109,9 +120,13 @@ class AbstractDbManager:
 
     @classmethod
     def is_sqlite_engine(cls):
+        """ Test if the sqlite3 engine is active """
+
         return cls._engine == "sqlite3"
 
     @classmethod
     def is_mysql_engine(cls):
+        """ Test if the mysql engine is active """
+
         return cls._engine in ["mariadb", "mysql"]
 
