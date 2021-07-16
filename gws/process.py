@@ -3,11 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import json
 import asyncio
 import inspect
 import zlib
 from peewee import  IntegerField, CharField, ForeignKeyField
-
 from .user import User
 from .config import Config
 from .logger import Error, Info
@@ -53,7 +53,6 @@ class Process(Viewable):
     _is_singleton = False
     _is_removable = False
     _is_plug = False
-
     _table_name = 'gws_process'
 
     def __init__(self, *args, user=None, **kwargs):

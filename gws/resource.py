@@ -4,9 +4,7 @@
 # About us: https://gencovery.com
 
 import json
-
 from peewee import  IntegerField, CharField
-
 from .db.model import Model
 from .process import Process
 from .viewable import Viewable
@@ -18,9 +16,9 @@ class Resource(Viewable):
     :property process: The process that created he resource
     :type process: Process
     """
+    
     _process = None
     _experiment = None
-    
     _table_name = 'gws_resource'
     
     def __init__(self, *args, process: 'Process'=None, experiment: 'Experiment'=None, **kwargs):

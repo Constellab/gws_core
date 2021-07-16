@@ -188,8 +188,9 @@ class LocalFileStore(FileStore):
         from .file import File
         if File.table_exists():
             File.delete().where( File.file_store_uri == self.uri ).execute()
+        if os.path.exists(self.path):
+            shutil.rmtree(self.path)
         super().delete_instance()
-        shutil.rmtree(self.path)
                 
     # -- E --
   

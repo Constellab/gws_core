@@ -7,9 +7,7 @@ import asyncio
 import json
 import zlib
 from datetime import datetime
-
 from peewee import BooleanField
-
 from .user import User
 from .logger import Error
 from .process import Process
@@ -26,14 +24,12 @@ class Protocol(Process):
     """
 
     is_template = BooleanField(default=False, index=True)
-
     _is_singleton = False
     _processes: dict = {}
     _connectors: list = []
     _interfaces: dict = {}
     _outerfaces: dict = {}
-    _defaultPosition: list = [0.0, 0.0]
-
+    _default_position: list = [0.0, 0.0]
     _table_name = "gws_protocol"
 
     def __init__(self, *args, processes: dict = {}, \
@@ -47,7 +43,7 @@ class Protocol(Process):
         self._connectors = []
         self._interfaces = {}
         self._outerfaces = {}
-        self._defaultPosition = [0.0, 0.0]
+        self._default_position = [0.0, 0.0]
 
         if self.uri and self.data.get("graph"):          #the protocol was saved in the super-class
             self._build_from_dump( self.data["graph"] )
@@ -423,11 +419,11 @@ class Protocol(Process):
 
         if as_dict:
             return graph
+
+        if prettify:
+            return json.dumps(graph, indent=4)
         else:
-            if prettify:
-                return json.dumps(graph, indent=4)
-            else:
-                return json.dumps(graph)
+            return json.dumps(graph)
 
     # -- F --
 
@@ -489,7 +485,7 @@ class Protocol(Process):
 
     def get_process_position(self, name: str):
         positions = self.get_layout()
-        return positions.get(name, self._defaultPosition)
+        return positions.get(name, self._default_position)
 
     def get_interface_of_inport(self, inport: InPort) -> Interface:
         """
