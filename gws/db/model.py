@@ -29,10 +29,9 @@ from gws.settings import Settings
 from gws.base import Base
 from .kv_store import KVStore
 
-#GWS_DB_ENGINE="mariadb"
+GWS_DB_ENGINE="mariadb"
 #GWS_DB_ENGINE="sqlite3"
-
-GWS_DB_ENGINE = os.getenv("DB_ENGINE", "sqlite3")
+#GWS_DB_ENGINE = os.getenv("DB_ENGINE", "sqlite3")
 
 # ####################################################################
 #
@@ -140,8 +139,7 @@ class Model(Base, PeeweeModel):
             except Exception as _:
                 model = None
             if model:
-                # /!\ Shallow copy all properties (i.e. object cast) 
-                # Prevent creating duplicates of processes having a representation in the db.
+                # /!\ Shallow copy all properties (i.e. object cast)
                 for prop in model.property_names(Field):
                     val = getattr(model, prop)
                     setattr(self, prop, val)
@@ -247,7 +245,7 @@ class Model(Base, PeeweeModel):
         """
         Create model table
         """
-
+        
         if cls.table_exists():
             return
         super().create_table(*args, **kwargs)
@@ -273,8 +271,9 @@ class Model(Base, PeeweeModel):
         path = cls.__get_base_kv_store_path_of_table()
         if os.path.exists(path):
             shutil.rmtree(path)
+        
         super().drop_table()
-
+         
     # -- E --
         
     def __eq__(self, other: 'Model') -> bool:
@@ -294,25 +293,31 @@ class Model(Base, PeeweeModel):
     
     # -- F --
 
-    def fetch_type_by_id(self, id) -> 'type':
+    def fetch_type_by_id(self, id: int) -> type:
         """
-        Fecth the model type (string) by its `id` from the database and return the corresponding python type.
-        Use the proper table even if the table name has changed.
+        Fecth the stored model `type` by its `id` from the database and return the corresponding python-type.
+        Use the proper table even if the table name has changed by inheritance.
 
         :param id: The id of the model
         :type id: int
-        :return: The model type
-        :rtype: type
+        :return: The python-type of model
+        :rtype: `type`
         """
-        
+
+        # cursor = self.get_db_manager().db.execute_sql(f'SELECT type FROM {self._table_name} WHERE id = ?', (str(id),))
+        # row = cursor.fetchone()
+        # if len(row) == 0:
+        #     raise Error("gws.model.Model", "fetch_type_by_id", "The model is not found.")
+        # typestr = row[0]
+
+        cls = type(self)
+        Q = cls.select(cls.type).where(cls.id == int(id))
+        if len(Q) == 0:
+            raise Error("gws.model.Model", "fetch_type_by_id", "The model is not found.") from err
+       
         from .service.model_service import ModelService
-        
-        cursor = self.get_db_manager().db.execute_sql(f'SELECT type FROM {self._table_name} WHERE id = ?', (str(id),))
-        row = cursor.fetchone()
-        if len(row) == 0:
-            raise Error("gws.model.Model", "fetch_type_by_id", "The model is not found.")
-        typestr = row[0]
-        model_t = ModelService.get_model_type(typestr)
+        type_str = Q[0].type
+        model_t = ModelService.get_model_type(type_str)
         return model_t
 
     # -- G --
@@ -331,11 +336,12 @@ class Model(Base, PeeweeModel):
     @classmethod
     def get_db_manager(cls) -> DbManager:
         """ 
-        Returns the DbManager of this model 
+        Returns the DbManager of this model
 
         :return: The db manager
         :rtype: `DbManager`
         """
+
         return cls._db_manager
 
     @staticmethod
@@ -352,7 +358,7 @@ class Model(Base, PeeweeModel):
 
     @classmethod
     def __get_base_kv_store_path_of_table(cls) -> str:
-        """ 
+        """
         Returns the base path of the KVStore
 
         :return: The path of the KVStore

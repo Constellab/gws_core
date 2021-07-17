@@ -116,7 +116,7 @@ class TestExperiment(unittest.TestCase):
             print("Waiting 3 secs the experiment to finish ...")
             time.sleep(3)
             if n == 10:
-                raise Error("The experiment is not finished")
+                raise Exception("The experiment is not finished")
             n += 1
 
         self.assertEqual(Experiment.count_of_running_experiments(), 0)
@@ -180,7 +180,7 @@ class TestExperiment(unittest.TestCase):
                 print("Waiting 3 secs for cli experiment to finish ...")
                 time.sleep(3)
                 if n == 10:
-                    raise Error("The experiment queue is not empty")
+                    raise Exception("The experiment queue is not empty")
                 n += 1
 
             self.assertEqual(Experiment.count_of_running_experiments(), 0)

@@ -19,8 +19,6 @@ from gws.unittest import GTest
 #                                         
 ############################################################################################
 
-#Model._db_manager.init(engine="mariadb")
-
 class Person(Model):
     name = CharField(null=True)
     _table_name = 'test_person'
@@ -40,19 +38,19 @@ class TestModel(unittest.TestCase):
 
     def test_model(self):
         GTest.print("Test Model")
-        p1 = Person(name = 'Jhon Smith', data={})
+        p1 = Person(name = 'John Smith', data={})
         p1.save()
         p2 = Person(name = 'Robert Vincent', data={})
         p2.save()
-        john = Person.get(Person.name == 'Jhon Smith')
+        john = Person.get(Person.name == 'John Smith')
         john.set_data({
-            'firstname':'Jhon',
-            'sirname':'Smith', 
+            'firstname':'John',
+            'sirname':'Smith',
             'city': 'NY'
         })
         john.save()
-        self.assertEqual(john.name, 'Jhon Smith')
-        self.assertEqual(john.data['firstname'], 'Jhon')
+        self.assertEqual(john.name, 'John Smith')
+        self.assertEqual(john.data['firstname'], 'John')
         self.assertEqual(john.data['sirname'], 'Smith')
 
         john.data['firstname'] = 'Alan'
@@ -68,8 +66,7 @@ class TestModel(unittest.TestCase):
         self.assertTrue(john.verify_hash())
 
     def test_model_registrering(self):
-        GTest.print("Test Model Registrering")
-
+        GTest.print("Test Model Registering")
         ModelService.register_all_processes_and_resources()
         self.assertTrue( len(ModelService._model_types) != 0 )
         from gws.json import JSONLoader

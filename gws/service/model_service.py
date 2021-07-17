@@ -90,14 +90,19 @@ class ModelService(BaseService):
         :type model_type: `type`
         """
 
+        
         db_list, model_list = cls._get_db_and_model_lists(models)
         for db in db_list:
-            i = db_list.index(db)
-            models = [ t for t in model_list[i] if t.table_exists() ]
-            if model_type:
-                models = [ t for t in models if isinstance(t,model_type) ]
-            db.drop_tables(models)
-           
+            try:
+                db.execute_sql("SET FOREIGN_KEY_CHECKS=0")
+                i = db_list.index(db)
+                models = [ t for t in model_list[i] if t.table_exists() ]
+                if model_type:
+                    models = [ t for t in models if isinstance(t,model_type) ]
+                db.drop_tables(models)
+            finally:
+                db.execute_sql("SET FOREIGN_KEY_CHECKS=1")
+
     @classmethod
     def count_model(cls, type: str) -> int:
         """

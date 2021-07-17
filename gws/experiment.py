@@ -8,58 +8,53 @@ import json
 import time
 import subprocess
 
-from peewee import  IntegerField, FloatField, BooleanField, ForeignKeyField
+from peewee import  IntegerField, FloatField, BooleanField, ForeignKeyField, ManyToManyField
 from .viewable import Viewable
 from .study import Study
 from .user import User
 from .event import EventListener
 from .logger import Error, Info
 from .protocol import Protocol
-from .process import Process
-from .resource import ExperimentResource
 from .settings import Settings
 
 class Experiment(Viewable):
     """
     Experiment class.
     
-    :property origin: The original experiment used to create this experiment
-    :type origin: `gws.model.Experiment`
     :property study: The study of the experiment
-    :type study: `gws.model.Study`
-    :property created_by: The user who created the experiment
-    :type created_by: `gws.model.User`
+    :type study: `gws.study.Study`
+    :property protocol: The the protocol of the experiment
+    :type protocol: `gws.protocol.Protocol`
+    :property created_by: The user who created the experiment. This user may be different from the user who runs the experiment.
+    :type created_by: `gws.user.User`
     :property score: The score of the experiment
     :type score: `float`
     :property is_validated: True if the experiment is validated, False otherwise. Defaults to False.
-    :type is_validated: `float`
+    :type is_validated: `bool`
     """
 
-    study = ForeignKeyField(Study, null=True, backref='experiments')
-    protocol_id = IntegerField(null=True, index=True)
-    created_by = ForeignKeyField(User, null=True, backref='created_experiments')
+    study = ForeignKeyField(Study, null=True, index=True, backref='experiments')
+    protocol = ForeignKeyField(Protocol, null=True, index=True, backref='+')
+    created_by = ForeignKeyField(User, null=True, index=True, backref='created_experiments')
     score = FloatField(null=True, index=True)
     is_validated = BooleanField(default=False, index=True)
-    
+
     _is_running = BooleanField(default=False, index=True)
     _is_finished = BooleanField(default=False, index=True)
     _is_success = BooleanField(default=False, index=True)
-    
-    _protocol = None
     _event_listener: EventListener = None
     _table_name = 'gws_experiment'
 
-    def __init__(self, *args, protocol:Protocol=None, user:User=None, **kwargs):
+    def __init__(self, *args, user:User=None, **kwargs):
         super().__init__(*args, **kwargs)
-        
         if not self.id:
             self.data["pid"] = 0
             if user is None:
                 try:
                     from .service.user_service import UserService
                     user = UserService.get_current_user()
-                except:
-                    raise Error("gws.model.Experiment", "__init__", "An user is required")
+                except Exception as err:
+                    raise Error("gws.model.Experiment", "__init__", "An user is required") from err
                     
             if isinstance(user, User):
                 if not user.is_authenticated:
@@ -73,17 +68,17 @@ class Experiment(Viewable):
                 raise Error("gws.model.Experiment", "__init__", "Cannot create experiment")
                 
             # attach the protocol
+            protocol = kwargs.get("protocol")
             if protocol is None:
+                from .protocol import Protocol
                 protocol = Protocol(user=user)
             
-            self._protocol = protocol
             protocol.set_experiment(self)
-            self.protocol_id = protocol.id
+            self.protocol = protocol
             self.save()
             
         else:
             pass
-            #self.protocol.set_experiment(self)
         
         self._event_listener = EventListener()
         
@@ -254,20 +249,14 @@ class Experiment(Viewable):
     def processes(self):
         if not self.id:
             return []
-        
+        from .process import Process
         return Process.select().where(Process.experiment_id == self.id)
-    
-    @property
-    def protocol(self) -> Protocol:
-        if not self._protocol:
-            self._protocol = Protocol.get(Protocol.id == self.protocol_id)
-        
-        return self._protocol
     
     # -- R --
 
     @property 
     def resources(self):
+        from .resource import ExperimentResource
         Qrel = ExperimentResource.select().where(ExperimentResource.experiment_id == self.id)
         Q = []
         for o in Qrel:

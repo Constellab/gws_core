@@ -7,7 +7,7 @@ import json
 import asyncio
 import inspect
 import zlib
-from peewee import  IntegerField, CharField, ForeignKeyField
+from peewee import  IntegerField, CharField, ForeignKeyField, DeferredForeignKey
 from .user import User
 from .config import Config
 from .logger import Error, Info
@@ -27,6 +27,10 @@ class Process(Viewable):
     :type config_specs: dict
     """
 
+    # @ToDo:
+    # ------
+    # Try to replace `protocol_id` and `experiment_id` by foreign keys with `lazy_load=False`
+    
     protocol_id = IntegerField(null=True, index=True)
     experiment_id = IntegerField(null=True, index=True)
     instance_name = CharField(null=True, index=True)
@@ -93,7 +97,7 @@ class Process(Viewable):
                 user = User.get_sysuser()
 
             if not isinstance(user, User):
-                raise Error("gws.model.Process", "__init__", "The user must be an instance of User")
+                raise Error("gws.process.Process", "__init__", "The user must be an instance of User")
 
             self.created_by = user
             #self.is_protocol = isinstance(self, Protocol)
@@ -106,7 +110,6 @@ class Process(Viewable):
 
     def _init_io(self):
         from .service.model_service import ModelService
-
         if type(self) is Process:
             # Is the Base (Abstract) Process object => cannot set io
             return
@@ -114,10 +117,8 @@ class Process(Viewable):
         # intput
         for k in self.input_specs:
             self._input.create_port(k,self.input_specs[k])
-
         if not self.data.get("input"):
             self.data["input"] = {}
-
         for k in self.data["input"]:
             uri = self.data["input"][k]["uri"]
             type_ = self.data["input"][k]["type"]
@@ -127,10 +128,8 @@ class Process(Viewable):
         # output
         for k in self.output_specs:
             self._output.create_port(k,self.output_specs[k])
-
         if not self.data.get("output"):
             self.data["output"] = {}
-
         for k in self.data["output"]:
             uri = self.data["output"][k]["uri"]
             type_ = self.data["output"][k]["type"]
@@ -146,19 +145,15 @@ class Process(Viewable):
 
         if self.is_archived == tf:
             return True
-
         with self._db_manager.db.atomic() as transaction:
             if not super().archive(tf):
                 return False
-
             self.config.archive(tf) #-> try to archive the config if possible!
-
             if archive_resources:
                 for r in self.resources:
                     if not r.archive(tf):
                         transaction.rollback()
                         return False
-
         return True
 
     # -- C --
@@ -168,11 +163,11 @@ class Process(Viewable):
         from .typing import ProcessType
         exist = ProcessType.select().where(ProcessType.model_type == cls.full_classname()).count()
         if not exist:
-            pt = ProcessType(
+            proc_type = ProcessType(
                 model_type = cls.full_classname(),
                 root_model_type = "gws.process.Process"
             )
-            pt.save()
+            proc_type.save()
 
     def create_experiment(self, study: 'Study', uri:str=None, user: 'User' = None):
         """
@@ -189,7 +184,6 @@ class Process(Viewable):
         from .experiment import Experiment
         from .protocol import Protocol
         from .service.user_service import UserService
-
         proto = Protocol(processes={self.instance_name: self})
         if user is None:
             user = UserService.get_current_user()
@@ -276,7 +270,6 @@ class Process(Viewable):
     def is_running(self) -> bool:
         if not self.progress_bar:
             return False
-
         p = ProgressBar.get_by_id(self.progress_bar.id)
         return p.is_running
 
@@ -285,7 +278,6 @@ class Process(Viewable):
     def is_finished(self) -> bool:
         if not self.progress_bar:
             return False
-
         p = ProgressBar.get_by_id(self.progress_bar.id)
         return p.is_finished
 
@@ -311,14 +303,12 @@ class Process(Viewable):
         """
 
         from .service.model_service import ModelService
-
         if self._input.is_empty:
             for k in self.data["input"]:
                 uri = self.data["input"][k]["uri"]
                 type_ = self.data["input"][k]["type"]
                 t = ModelService.get_model_type(type_)
                 self._input[k] = t.get(t.uri == uri)
-
         return self._input
 
     def in_port(self, name: str) -> InPort:
@@ -328,12 +318,11 @@ class Process(Viewable):
         :return: The port
         :rtype: InPort
         """
+
         if not isinstance(name, str):
-            raise Error("gws.model.Process", "in_port", "The name of the input port must be a string")
-
+            raise Error("gws.process.Process", "in_port", "The name of the input port must be a string")
         if not name in self._input._ports:
-            raise Error("gws.model.Process", "in_port", f"The input port '{name}' is not found")
-
+            raise Error("gws.process.Process", "in_port", f"The input port '{name}' is not found")
         return self._input._ports[name]
 
     # -- J --
@@ -348,6 +337,7 @@ class Process(Viewable):
         :return: The port
         :rtype: InPort
         """
+
         return self.in_port(name)
 
     # -- O --
@@ -362,14 +352,12 @@ class Process(Viewable):
         """
 
         from .service.model_service import ModelService
-
         if self._output.is_empty:
             for k in self.data["output"]:
                 uri = self.data["output"][k]
                 type_ = self.data["output"][k]["type"]
                 t = ModelService.get_model_type(type_)
                 self._output[k] = t.get(t.uri == uri)
-
         return self._output
 
     def out_port(self, name: str) -> OutPort:
@@ -380,11 +368,9 @@ class Process(Viewable):
         :rtype: OutPort
         """
         if not isinstance(name, str):
-            raise Error("gws.model.Process", "out_port", "The name of the output port must be a string")
-
+            raise Error("gws.process.Process", "out_port", "The name of the output port must be a string")
         if not name in self._output._ports:
-            raise Error("gws.model.Process", "out_port", f"The output port '{name}' is not found")
-
+            raise Error("gws.process.Process", "out_port", f"The output port '{name}' is not found")
         return self._output._ports[name]
 
     # -- P --
@@ -417,7 +403,6 @@ class Process(Viewable):
         Q = []
         for o in Qrel:
             Q.append(o.resource)
-
         return Q
 
     def _reset(self) -> bool:
@@ -430,11 +415,9 @@ class Process(Viewable):
 
         if self.is_running:
             return False
-
         if self.experiment:
             if self.experiment.is_validated or self.experiment._is_running:
                 return False
-
         self.progress_bar._reset()
         self._reset_io()
         return self.save()
@@ -452,11 +435,9 @@ class Process(Viewable):
 
         if not self.is_ready:
             return
-
         is_ok = self.check_before_task()
         if isinstance(is_ok, bool) and not is_ok:
             return
-
         try:
             await self._run_before_task()
             await self.task()
@@ -470,37 +451,30 @@ class Process(Viewable):
         aws  = []
         for proc in self._output.get_next_procs():
             aws.append( proc._run() )
-
         if len(aws):
             await asyncio.gather( *aws )
 
     async def _run_before_task( self, *args, **kwargs ):
         Info(f"Running {self.full_classname()} ...")
-
         self.is_instance_running = True
         self.is_instance_finished = False
-
         self.data["input"] = {}
         for k in self._input:
             if self._input[k]:  #-> check that an input resource exists (for optional input)
                 if not self._input[k].is_saved():
                     self._input[k].save()
-
                 self.data["input"][k] = {
                     "uri": self._input[k].uri,
                     "type": self._input[k].type
                 }
-
         self.progress_bar.start(max_value=self._max_progress_value)
         self.save()
 
     async def _run_after_task( self, *args, **kwargs ):
         Info(f"Task of {self.full_classname()} successfully finished!")
-
         self.is_instance_running = False
         self.is_instance_finished = True
         self.progress_bar.stop()
-
         if not self._is_plug:
             res = self.output.get_resources()
             for k in res:
@@ -508,14 +482,11 @@ class Process(Viewable):
                     res[k].experiment = self.experiment
                     res[k].process = self
                     res[k].save()
-
         if not self._output.is_ready:
             return
-
         from .protocol import Protocol
         if isinstance(self, Protocol):
             self.save(update_graph=True)
-
         self.data["output"] = {}
         for k in self._output:
             if self._output[k]: #-> check that an output resource exists (for optional outputs)
@@ -523,7 +494,6 @@ class Process(Viewable):
                     "uri": self._output[k].uri,
                     "type": self._output[k].type
                 }
-
         await self._run_next_processes()
 
     def __rshift__(self, name: str) -> OutPort:
@@ -534,6 +504,7 @@ class Process(Viewable):
         :return: The port
         :rtype: OutPort
         """
+        
         return self.out_port(name)
 
     # -- S --
@@ -541,12 +512,12 @@ class Process(Viewable):
     def set_experiment(self, experiment):
         from .experiment import Experiment
         if not isinstance(experiment, Experiment):
-            raise Error("gws.model.Process", "set_experiment", f"An instance of Experiment is required")
+            raise Error("gws.process.Process", "set_experiment", f"An instance of Experiment is required")
         if not experiment.id:
             if not experiment.save():
-                raise Error("gws.model.Process", "set_experiment", f"Cannot save the experiment")
+                raise Error("gws.process.Process", "set_experiment", f"Cannot save the experiment")
         if self.experiment_id and self.experiment_id != experiment.id:
-            raise Error("gws.model.Process", "set_experiment", f"The protocol is already related to an experiment")
+            raise Error("gws.process.Process", "set_experiment", f"The protocol is already related to an experiment")
         self.experiment_id = experiment.id
         self.save()
 
@@ -561,10 +532,10 @@ class Process(Viewable):
         """
 
         if not isinstance(name, str):
-            raise Error("gws.model.Process", "set_input", "The name must be a string.")
+            raise Error("gws.process.Process", "set_input", "The name must be a string.")
 
         #if not not isinstance(resource, Resource):
-        #    raise Error("gws.model.Process", "set_input", "The resource must be an instance of Resource.")
+        #    raise Error("gws.process.Process", "set_input", "The resource must be an instance of Resource.")
 
         self._input[name] = resource
 
@@ -592,6 +563,20 @@ class Process(Viewable):
         self.config.set_param(name, value)
         self.config.save()
 
+    def set_protocol(self, protocol: 'Protocol'):
+        """
+        Sets the protocol of the process
+        """
+
+        from .protocol import Protocol
+        if not isinstance(protocol, Protocol):
+            raise Error("gws.process.Process", "set_protocol", f"An instance of Protocol is required")
+        if not protocol.id:
+            if not protocol.save():
+                raise Error("gws.process.Process", "set_protocol", f"Cannot save the experiment")
+        self.protocol_id = protocol.id
+        self._protocol = protocol
+
     # -- T --
 
     async def task(self):
@@ -616,10 +601,8 @@ class Process(Viewable):
 
         del _json["experiment_id"]
         del _json["protocol_id"]
-
         if "input" in _json["data"]:
             del _json["data"]["input"]
-
         if "output" in _json["data"]:
             del _json["data"]["output"]
 
@@ -629,7 +612,6 @@ class Process(Viewable):
             _json["protocol"] = { "uri" : "" }
             _json["is_running"] = False
             _json["is_finished"] = False
-
             if shallow:
                 _json["config"] = { "uri" : "" }
                 _json["progress_bar"] = { "uri" : "" }

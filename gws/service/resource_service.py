@@ -18,7 +18,7 @@ class ResourceService(BaseService):
     
     @classmethod
     def fetch_resource(cls, \
-                       type = "gws.model.Resource", \
+                       type = "gws.resource.Resource", \
                        uri: str = "") -> Resource:
         
         from .model_service import ModelService
@@ -39,7 +39,7 @@ class ResourceService(BaseService):
         
     @classmethod
     def fetch_resource_list(cls, \
-                           type = "gws.model.Resource", \
+                           type = "gws.resource.Resource", \
                            search_text: str="", \
                            experiment_uri: str=None, \
                            page: int=1, number_of_items_per_page: int=20, \
