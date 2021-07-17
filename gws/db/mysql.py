@@ -22,8 +22,8 @@ class MySQLBase:
     db_name="gws"
     table_prefix="gws_"
     
-    input_dir="/data/backup/gws/mariadb"
-    output_dir="/data/backup/gws/mariadb"
+    input_dir="/data/gws/backup/mariadb"
+    output_dir="/data/gws/backup/mariadb"
 
     input_file=""
     output_file=""

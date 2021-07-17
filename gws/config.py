@@ -27,7 +27,7 @@ class Config(Viewable):
             
         if specs:
             if not isinstance(specs, dict):
-                raise Error("gws.model.Config", "__init__", f"The specs must be a dictionnary")
+                raise Error("gws.config.Config", "__init__", f"The specs must be a dictionnary")
             
             #convert type to str
             from .validator import Validator
@@ -43,7 +43,7 @@ class Config(Viewable):
                         default = validator.validate(default)
                         specs[k]["default"] = default
                     except Exception as err:
-                        raise Error("gws.model.Config", "__init__", f"Invalid default config value. Error message: {err}") from err
+                        raise Error("gws.config.Config", "__init__", f"Invalid default config value. Error message: {err}") from err
 
             self.set_specs( specs )
 
@@ -86,7 +86,7 @@ class Config(Viewable):
         :rtype: `str`, `int`, `float`, `bool`
         """
         if not name in self.specs:
-            raise Error("gws.model.Config", "get_param", f"Parameter {name} does not exist")
+            raise Error("gws.config.Config", "get_param", f"Parameter {name} does not exist")
         
         default = self.specs[name].get("default", None)
         return self.data.get("params",{}).get(name,default)
@@ -139,7 +139,7 @@ class Config(Viewable):
         from .validator import Validator
 
         if not name in self.specs:
-            raise Error("gws.model.Config", "set_param", f"Parameter '{name}' does not exist.")
+            raise Error("gws.config.Config", "set_param", f"Parameter '{name}' does not exist.")
         
         #param_t = self.specs[name]["type"]
 
@@ -147,7 +147,7 @@ class Config(Viewable):
             validator = Validator.from_specs(**self.specs[name])
             value = validator.validate(value)
         except Exception as err:
-            raise Error("gws.model.Config", "set_param", f"Invalid parameter value '{name}'. Error message: {err}") from err
+            raise Error("gws.config.Config", "set_param", f"Invalid parameter value '{name}'. Error message: {err}") from err
         
         if not "params" in self.data:
             self.data["params"] = {}
@@ -179,10 +179,10 @@ class Config(Viewable):
         """
 
         if not isinstance(specs, dict):
-            raise Error("gws.model.Config", "set_specs", f"The specs must be a dictionary.")
+            raise Error("gws.config.Config", "set_specs", f"The specs must be a dictionary.")
         
         if self.id:
-            raise Error("gws.model.Config", "set_specs", f"Cannot alter the specs of a saved config")
+            raise Error("gws.config.Config", "set_specs", f"Cannot alter the specs of a saved config")
         
         self.data["specs"] = specs
     

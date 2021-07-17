@@ -43,7 +43,10 @@ class AbstractDbManager:
         if not cls._engine:
             cls._engine = "sqlite3"
         if cls._engine == "sqlite3":
-            _db = SqliteDatabase(cls.get_sqlite3_db_path(mode=mode))
+            print(cls._db_name)
+            db_path = cls.get_sqlite3_db_path(mode=mode)
+            print(db_path)
+            _db = SqliteDatabase(db_path)
         elif cls._engine in ["mariadb", "mysql"]:
             _db = MySQLDatabase(
                 cls._db_name,
@@ -108,12 +111,11 @@ class AbstractDbManager:
         settings = Settings.retrieve()
         if mode:
             if mode == "prod":
-                db_dir = settings.get_sqlite3_prod_db_dir()
+                db_path = settings.get_sqlite3_prod_db_path(cls._db_name)
             else:
-                db_dir = settings.get_sqlite3_dev_db_dir()
+                db_path = settings.get_sqlite3_dev_db_path(cls._db_name)
         else:
-            db_dir = settings.get_sqlite3_db_dir()
-        db_path = os.path.join(db_dir, cls._db_name + ".sqlite3")
+            db_path = settings.get_sqlite3_db_path(cls._db_name)
         return db_path
 
     # -- I --

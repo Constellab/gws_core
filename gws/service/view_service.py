@@ -23,7 +23,7 @@ class ViewService(BaseService):
         :param uri: The uri of the ViewModel
         :type uri: `str`
         :return: A view model
-        :rtype: `gws.model.ViewModel`
+        :rtype: `gws.view_model.ViewModel`
         """
         
         try:

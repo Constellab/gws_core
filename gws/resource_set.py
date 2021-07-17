@@ -26,7 +26,7 @@ class ResourceSet(Resource):
     
     def add(self, val):
         if not isinstance(val, self._resource_types):
-            raise Error("gws.model.ResourceSet", "__setitem__", f"The value must be an instance of {self._resource_types}. The actual value is a {type(val)}.")
+            raise Error("gws.resource_set.ResourceSet", "__setitem__", f"The value must be an instance of {self._resource_types}. The actual value is a {type(val)}.")
         
         if not val.is_saved():
             val.save()

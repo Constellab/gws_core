@@ -32,9 +32,9 @@ class Job(Model):
     Class representing queue job
 
     :property user: The user who creates the job
-    :type user: `gws.model.User`
+    :type user: `gws.user.User`
     :property experiment: The experiment to add to the job
-    :type experiment: `gws.model.Expriment`
+    :type experiment: `gws.experiment.Experiment`
     """
 
     user = ForeignKeyField(User, null=True, backref='jobs')

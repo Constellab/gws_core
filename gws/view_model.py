@@ -89,7 +89,7 @@ class ViewModel(Model):
         Get the Model of the ViewModel.
         
         :return: The model instance
-        :rtype: `gws.model.Moldel`
+        :rtype: `gws.db.model.Model`
         """
         
         from .service.model_service import ModelService
@@ -143,12 +143,12 @@ class ViewModel(Model):
         if params is None:
             params = {}
         if not isinstance(params, dict):
-            raise Error("gws.model.ViewModel", "set_params", "Parameter must be a dictionnary")
+            raise Error("gws.view_model.ViewModel", "set_params", "Parameter must be a dictionnary")
         self.data["params"] = params
 
     def set_model(self, model: None):
         if not self.model_uri is None:
-            raise Error("gws.model.ViewModel", "set_model", "A model already exists")
+            raise Error("gws.view_model.ViewModel", "set_model", "A model already exists")
         self._model = model
         if model.is_saved():
             self.model_uri = model.uri

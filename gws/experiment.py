@@ -54,18 +54,18 @@ class Experiment(Viewable):
                     from .service.user_service import UserService
                     user = UserService.get_current_user()
                 except Exception as err:
-                    raise Error("gws.model.Experiment", "__init__", "An user is required") from err
+                    raise Error("gws.experiment.Experiment", "__init__", "An user is required") from err
                     
             if isinstance(user, User):
                 if not user.is_authenticated:
-                    raise Error("gws.model.Experiment", "__init__", "An authenticated user is required")
+                    raise Error("gws.experiment.Experiment", "__init__", "An authenticated user is required")
                 
                 self.created_by = user
             else:
-                raise Error("gws.model.Experiment", "__init__", "The user must be an instance of User")
+                raise Error("gws.experiment.Experiment", "__init__", "The user must be an instance of User")
             
             if not self.save():
-                raise Error("gws.model.Experiment", "__init__", "Cannot create experiment")
+                raise Error("gws.experiment.Experiment", "__init__", "Cannot create experiment")
                 
             # attach the protocol
             protocol = kwargs.get("protocol")
@@ -300,7 +300,7 @@ class Experiment(Viewable):
         Run an experiment in a non-blocking way through the cli.
 
         :param user: The user who is running the experiment. If not provided, the system will try the get the currently authenticated user
-        :type user: `gws.model.User`
+        :type user: `gws.user.User`
         """
 
         from .system import SysProc
@@ -313,10 +313,10 @@ class Experiment(Viewable):
             try:
                 user = UserService.get_current_user()
             except:
-                raise Error("gws.model.Experiment", "run_through_cli", "A user is required")
+                raise Error("gws.experiment.Experiment", "run_through_cli", "A user is required")
             
             if not user.is_authenticated:
-                raise Error("gws.model.Experiment", "run_through_cli", "An authenticated user is required")
+                raise Error("gws.experiment.Experiment", "run_through_cli", "An authenticated user is required")
                     
         cmd = [
             "python3", 
@@ -336,7 +336,7 @@ class Experiment(Viewable):
         else:
             cmd.append("dev")
         
-        Info("gws.model.Experiment", "run_through_cli", str(cmd))
+        Info("gws.experiment.Experiment", "run_through_cli", str(cmd))
 
         sproc = SysProc.popen(cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         self.data["pid"] = sproc.pid
@@ -347,7 +347,7 @@ class Experiment(Viewable):
         Run the experiment
 
         :param user: The user who is running the experiment. If not provided, the system will try the get the currently authenticated user
-        :type user: `gws.model.User`
+        :type user: `gws.user.User`
         :param wait_response: True to wait the response. False otherwise.
         :type wait_response: `bool`
         """
@@ -370,7 +370,7 @@ class Experiment(Viewable):
         Run the experiment
 
         :param user: The user who is running the experiment. If not provided, the system will try the get the currently authenticated user
-        :type user: `gws.model.User`
+        :type user: `gws.user.User`
         """
         
         from .activity import Activity
@@ -380,25 +380,25 @@ class Experiment(Viewable):
             try:
                 user: User = UserService.get_current_user()
             except:
-                raise Error("gws.model.Experiment", "run", "A user is required")
+                raise Error("gws.experiment.Experiment", "run", "A user is required")
 
             if not user.is_authenticated:
-                    raise Error("gws.model.Experiment", "run", "A authenticated user is required")
+                    raise Error("gws.experiment.Experiment", "run", "A authenticated user is required")
         
         if self.protocol._allowed_user == self.USER_ADMIN:
                 if not user.is_admin:
-                    raise Error("gws.model.Experiment", "run", f"Only admin user can run protocol")
+                    raise Error("gws.experiment.Experiment", "run", f"Only admin user can run protocol")
 
         for proc in self.protocol.processes.values():
             if proc._allowed_user == self.USER_ADMIN:
                 if not user.is_admin:
-                    raise Error("gws.model.Experiment", "run", f"Only admin user can run process '{proc.type}'")
+                    raise Error("gws.experiment.Experiment", "run", f"Only admin user can run process '{proc.type}'")
 
         if self.is_archived:
-            raise Error("gws.model.Experiment", "run", f"The experiment is archived")
+            raise Error("gws.experiment.Experiment", "run", f"The experiment is archived")
 
         if self.is_validated:
-            raise Error("gws.model.Experiment", "run", f"The experiment is validated")
+            raise Error("gws.experiment.Experiment", "run", f"The experiment is validated")
 
         Activity.add(
             Activity.START,
@@ -440,7 +440,7 @@ class Experiment(Viewable):
             self._is_finished = True
             self._is_success = False
             self.save()
-            raise Error("gws.model.Experiment", "run", message) from err
+            raise Error("gws.experiment.Experiment", "run", message) from err
                 
     # -- S --
 
@@ -518,7 +518,7 @@ class Experiment(Viewable):
         Validate the experiment
         
         :param user: The user who validate the experiment
-        :type user: `gws.model.User`
+        :type user: `gws.user.User`
         """
         
         from .activity import Activity

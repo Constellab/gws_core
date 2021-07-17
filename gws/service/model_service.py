@@ -47,7 +47,7 @@ class ModelService(BaseService):
         :param data: The rendering data
         :type data: `dict`
         :return: A model if `as_json == False`, a dictionary if `as_json == True=
-        :rtype: `gws.model.Model`, `dict`
+        :rtype: `gws.db.model.Model`, `dict`
         """
 
         t = cls.get_model_type(type)
@@ -94,14 +94,18 @@ class ModelService(BaseService):
         db_list, model_list = cls._get_db_and_model_lists(models)
         for db in db_list:
             try:
-                db.execute_sql("SET FOREIGN_KEY_CHECKS=0")
                 i = db_list.index(db)
-                models = [ t for t in model_list[i] if t.table_exists() ]
+                models: List[Model] = [ t for t in model_list[i] if t.table_exists() ]
                 if model_type:
                     models = [ t for t in models if isinstance(t,model_type) ]
+                if models[0].is_mysql_engine():
+                    db.execute_sql("SET FOREIGN_KEY_CHECKS=0")
                 db.drop_tables(models)
-            finally:
-                db.execute_sql("SET FOREIGN_KEY_CHECKS=1")
+                if models[0].is_mysql_engine():
+                    db.execute_sql("SET FOREIGN_KEY_CHECKS=1")
+            except:
+                pass
+                
 
     @classmethod
     def count_model(cls, type: str) -> int:
@@ -128,7 +132,7 @@ class ModelService(BaseService):
         :param uri: The uri of the model
         :type uri: `str`
         :return: A model
-        :rtype: instance of `gws.model.Model`
+        :rtype: instance of `gws.db.model.Model`
         """
 
         t = cls.get_model_type(type)

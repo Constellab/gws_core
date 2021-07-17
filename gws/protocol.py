@@ -312,11 +312,11 @@ class Protocol(Process):
         Realize a protocol by creating a experiment
 
         :param study: The study in which the protocol is realized
-        :type study: `gws.model.Study`
+        :type study: `gws.study.Study`
         :param config: The configuration of protocol
-        :type config: `gws.model.Config`
+        :type config: `gws.config.Config`
         :return: The experiment
-        :rtype: `gws.model.Experiment`
+        :rtype: `gws.experiment.Experiment`
         """
 
         from .experiment import Experiment

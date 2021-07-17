@@ -307,13 +307,13 @@ class Model(Base, PeeweeModel):
         # cursor = self.get_db_manager().db.execute_sql(f'SELECT type FROM {self._table_name} WHERE id = ?', (str(id),))
         # row = cursor.fetchone()
         # if len(row) == 0:
-        #     raise Error("gws.model.Model", "fetch_type_by_id", "The model is not found.")
+        #     raise Error("gws.db.model.Model", "fetch_type_by_id", "The model is not found.")
         # typestr = row[0]
 
         cls = type(self)
         Q = cls.select(cls.type).where(cls.id == int(id))
         if len(Q) == 0:
-            raise Error("gws.model.Model", "fetch_type_by_id", "The model is not found.") from err
+            raise Error("gws.db.model.Model", "fetch_type_by_id", "The model is not found.") from err
        
         from .service.model_service import ModelService
         type_str = Q[0].type
@@ -481,7 +481,7 @@ class Model(Base, PeeweeModel):
         if isinstance(data,dict):
             self.data = data
         else:
-            raise Error("gws.model.Model", "set_data","The data must be a JSONable dictionary")
+            raise Error("gws.db.model.Model", "set_data","The data must be a JSONable dictionary")
 
     def save(self, *args, **kwargs) -> bool:
         """
@@ -513,7 +513,7 @@ class Model(Base, PeeweeModel):
                     model.save()
             except Exception as err:
                 transaction.rollback()
-                raise Error("gws.model.Model", "save_all", f"Error message: {err}") from err
+                raise Error("gws.db.model.Model", "save_all", f"Error message: {err}") from err
 
         return True
     

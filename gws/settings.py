@@ -102,21 +102,25 @@ class Settings(PeeweeModel):
     
     # -- G --
 
-    def get_sqlite3_db_dir(self) -> str:
-        db_dir = os.path.join( self.get_data_dir(), "sqlite3" )
-        return db_dir
+    def get_sqlite3_db_path(self, db_name) -> str:
+        if self.is_prod:
+            return self.get_sqlite3_prod_db_path(db_name)
+        else:
+            return self.get_sqlite3_dev_db_path(db_name)
 
-    def get_sqlite3_prod_db_dir(self) -> str:
-        db_dir = os.path.join( self.get_prod_data_dir(), "sqlite3" )
+    def get_sqlite3_dev_db_path(self, db_name) -> str:
+        db_dir = os.path.join( self.get_dev_data_dir(), db_name, "sqlite3")
         if not os.path.exists(db_dir):
             os.makedirs(db_dir)
-        return db_dir
-
-    def get_sqlite3_dev_db_dir(self) -> str:
-        db_dir = os.path.join( self.get_dev_data_dir(), "sqlite3" )
+        db_path = os.path.join( db_dir, f"{db_name}.sqlite3" )
+        return db_path
+    
+    def get_sqlite3_prod_db_path(self, db_name) -> str:
+        db_dir = os.path.join( self.get_dev_data_dir(), db_name, "sqlite3")
         if not os.path.exists(db_dir):
             os.makedirs(db_dir)
-        return db_dir
+        db_path = os.path.join( db_dir, f"{db_name}.sqlite3" )
+        return db_path
 
     def get_maria_db_backup_dir(self) -> str:
         return os.path.join( self.get_data_dir(), "backups" )

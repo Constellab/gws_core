@@ -174,11 +174,11 @@ class Process(Viewable):
         Create an experiment using a protocol composed of this process
 
         :param study: The study in which the experiment is realized
-        :type study: `gws.model.Study`
+        :type study: `gws.study.Study`
         :param study: The configuration of protocol
-        :type study: `gws.model.Config`
+        :type study: `gws.config.Config`
         :return: The experiment
-        :rtype: `gws.model.Experiment`
+        :rtype: `gws.experiment.Experiment`
         """
 
         from .experiment import Experiment
