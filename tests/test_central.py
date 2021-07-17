@@ -21,8 +21,7 @@ class TestCentral(unittest.TestCase):
         GTest.drop_tables()
 
     def test_create_user(self):
-        GTest.print("Test Central")
-
+        GTest.print("Central")
         data = {
             "uri": "1234567890",
             "email": "test@gencovery.com",

@@ -45,7 +45,7 @@ class TestResource(unittest.TestCase):
         GTest.drop_tables()
 
     def test_resource(self):
-        GTest.print("Test Resource")
+        GTest.print("Resource")
 
         c1 = Car()
         c2 = Car()

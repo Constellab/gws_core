@@ -33,7 +33,7 @@ class TestProtocol(unittest.TestCase):
         GTest.drop_tables()
     
     def test_protocol(self):
-        GTest.print("Test Protocol")
+        GTest.print("Protocol")
 
         study = Study.get_by_id(1)
         
@@ -91,8 +91,8 @@ class TestProtocol(unittest.TestCase):
         
         asyncio.run( e.run(user=GTest.user) )
 
-    def test_settings_dump(self):
-        GTest.print("Test Settings dump")
+    def test_advanced_protocol(self):
+        GTest.print("Advanced protocol")
         p0 = Create(instance_name="p0")
         p1 = Move()
         p2 = Eat()
@@ -183,6 +183,7 @@ class TestProtocol(unittest.TestCase):
         asyncio.run( e.run(user=GTest.user) )
 
     def test_graph_load(self):
+        GTest.print("Load protocol graph")
         study = Study.get_by_id(1)
         
         with open(os.path.join(testdata_dir, "mini_travel_graph.json"), "r") as f:
@@ -223,7 +224,8 @@ class TestProtocol(unittest.TestCase):
         e.on_end(_on_end)    
         asyncio.run( e.run(user=GTest.user) )
 
-    def test_update_protocol(self):
+    def test_protocol_update(self):
+        GTest.print("Update protocol")
         with open(os.path.join(testdata_dir, "mini_travel_graph.json"), "r") as f:
             graph = json.load(f)
 

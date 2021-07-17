@@ -33,7 +33,7 @@ class TestExperiment(unittest.TestCase):
         pass
     
     def test_run(self):
-        GTest.print("Test Run Experiment")
+        GTest.print("Run Experiment")
         self.assertEqual(Experiment.count_of_running_experiments(), 0)
         
         # Create experiment 1
@@ -159,7 +159,7 @@ class TestExperiment(unittest.TestCase):
         GTest.create_tables()
         GTest.init()
         
-        GTest.print("Test ExperimentService")
+        GTest.print("ExperimentService")
         proto = create_nested_protocol()
         e = Experiment(protocol=proto, study=GTest.study, user=GTest.user)
         e.save()

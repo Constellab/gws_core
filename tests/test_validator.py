@@ -12,7 +12,7 @@ from gws.logger import Error, Logger
 class TestValidator(unittest.TestCase):
 
     def test_int_validator(self):
-        GTest.print("Test Integrer Validator")
+        GTest.print("Integrer Validator")
 
         v = Validator.from_specs(type='int', default='5')
         self.assertEqual(v.validate('3'), 3)
@@ -38,7 +38,7 @@ class TestValidator(unittest.TestCase):
 
 
     def test_str_validator(self):
-        GTest.print("Test String Validator")
+        GTest.print("String Validator")
 
         v = Validator.from_specs(type='str', default='5')
         self.assertEqual(v.validate('4'), '4')
@@ -53,7 +53,7 @@ class TestValidator(unittest.TestCase):
         self.assertRaises(Error, Validator.from_specs, type=str, default=True)
 
     def test_bool_validator(self):
-        GTest.print("Test Boolean Validator")
+        GTest.print("Boolean Validator")
 
         v = Validator.from_specs(type=bool, default=True)
         self.assertEqual(v.validate(False), False)
@@ -75,7 +75,7 @@ class TestValidator(unittest.TestCase):
         self.assertRaises(Error, Validator.from_specs, type=bool, default=0)
 
     def test_float_validator(self):
-        GTest.print("Test Float Validator")
+        GTest.print("Float Validator")
 
         import math
 
@@ -107,7 +107,7 @@ class TestValidator(unittest.TestCase):
         self.assertRaises(Error, v.validate, '-7')
 
     def test_list_validator(self):
-        GTest.print("Test List Validator")
+        GTest.print("List Validator")
 
         v = Validator.from_specs(type='list', default='[1,2,"foo"]')
         self.assertEqual(v.validate([5.5,3]), [5.5,3])
@@ -126,7 +126,7 @@ class TestValidator(unittest.TestCase):
         self.assertRaises(Error, Validator.from_specs, type=list, default=True)
 
     def test_dict_validator(self):
-        GTest.print("Test Dict Validator")
+        GTest.print("Dict Validator")
 
         v = Validator.from_specs(type='dict', default='{"foo":1.2}')
         self.assertEqual(v.validate(None), {"foo":1.2})

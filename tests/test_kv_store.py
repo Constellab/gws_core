@@ -19,7 +19,7 @@ class TestKVStore(unittest.TestCase):
         GTest.drop_tables()
     
     def test_store(self):
-        GTest.print("Test KVStore")
+        GTest.print("KVStore")
 
         s1 = KVStore('./store_test/s1')
         s1['city'] = 'Tokyo'

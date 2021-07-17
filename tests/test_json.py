@@ -27,7 +27,7 @@ class TestJson(unittest.TestCase):
         GTest.drop_tables()
 
     def test_json_data(self):
-        GTest.print("Test JSONData")
+        GTest.print("JSONData")
         file = os.path.join(testdata_dir, "mini_travel_graph.json")
         d = JSONData._import(file)
         _json = {}

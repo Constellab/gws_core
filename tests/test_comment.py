@@ -22,8 +22,7 @@ class TestComment(unittest.TestCase):
         GTest.drop_tables()
     
     def test_comment(self):
-        GTest.print("Test Comment")
-
+        GTest.print("Comment")
         f = File(path="./oui")
         c1 = f.add_comment("The sky is blue")
         c2 = f.add_comment("The sky is blue and the ocean is also blue", reply_to=c1)

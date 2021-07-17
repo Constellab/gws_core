@@ -23,7 +23,7 @@ class TestFile(unittest.TestCase):
         GTest.drop_tables()
     
     def test_file(self):
-        GTest.print("Test File")
+        GTest.print("File")
 
         fs = LocalFileStore()
         f = fs.create_file(name="my_file.txt")

@@ -25,7 +25,7 @@ class TestMySQLDumpLoad(unittest.TestCase):
         GTest.drop_tables()
 
     def test_db_dump_load(self):
-        GTest.print("Test MySQL db dump & load")
+        GTest.print("MySQL dump and load")
         
         if File.get_db_manager().is_sqlite_engine():
             print("SQLite3 db detected: exit test, OK!")

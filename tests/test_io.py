@@ -57,7 +57,7 @@ class TestIO(unittest.TestCase):
         GTest.drop_tables()
         
     def test_connect(self):
-        GTest.print("Test IO connect")
+        GTest.print("IO connect")
 
         p0 = Create(instance_name="p0")
         p1 = Move(instance_name="p1")
@@ -86,7 +86,7 @@ class TestIO(unittest.TestCase):
         })
     
     def test_iterator(self):
-        GTest.print("Test IO Iterator")
+        GTest.print("IO Iterator")
 
         jump = Jump(instance_name="p3")
         for k in jump.input:

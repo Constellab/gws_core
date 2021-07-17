@@ -20,8 +20,7 @@ class TestConfig(unittest.TestCase):
         GTest.drop_tables()
 
     def test_config(self):
-        GTest.print("Test Config")
-
+        GTest.print("Config")
         specs = {
             'moving_step': {"type": float, "default": 0.1}
         }

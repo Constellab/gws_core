@@ -59,6 +59,8 @@ class GTest:
         Print test title
         """
 
+        text = "Test: " + text
+        
         n = max( (len(text)+3), 64 )
         stars = "*" * n
         print( "\n" + stars)

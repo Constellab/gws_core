@@ -24,10 +24,8 @@ class TestLocalFileStore(unittest.TestCase):
         GTest.drop_tables()
     
     def test_file_store(self):
-        GTest.print("Test FileStore")
-
+        GTest.print("FileStore")
         fs = LocalFileStore()
-        
         settings = Settings.retrieve()
         testdata_dir = settings.get_dir("gws:testdata_dir")
         file_path = os.path.join(testdata_dir, "mini_travel_graph.json")

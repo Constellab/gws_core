@@ -31,7 +31,7 @@ from .kv_store import KVStore
 
 GWS_DB_ENGINE="mariadb"
 #GWS_DB_ENGINE="sqlite3"
-#GWS_DB_ENGINE = os.getenv("DB_ENGINE", "sqlite3")
+#GWS_DB_ENGINE = os.getenv("LAB_DB_ENGINE", "sqlite3")
 
 # ####################################################################
 #

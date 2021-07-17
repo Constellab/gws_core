@@ -37,7 +37,7 @@ class TestModel(unittest.TestCase):
         Person.drop_table()
 
     def test_model(self):
-        GTest.print("Test Model")
+        GTest.print("Model")
         p1 = Person(name = 'John Smith', data={})
         p1.save()
         p2 = Person(name = 'Robert Vincent', data={})
@@ -66,7 +66,7 @@ class TestModel(unittest.TestCase):
         self.assertTrue(john.verify_hash())
 
     def test_model_registrering(self):
-        GTest.print("Test Model Registering")
+        GTest.print("Model Registering")
         ModelService.register_all_processes_and_resources()
         self.assertTrue( len(ModelService._model_types) != 0 )
         from gws.json import JSONLoader
