@@ -234,10 +234,10 @@ class Settings(PeeweeModel):
         return self.data.get("dirs",{}).get(name,None)
     
     def get_file_store_dir(self) -> str:
-        return os.path.join(self.get_data_dir(), "/filestore/")
+        return os.path.join(self.get_data_dir(), "./filestore/")
     
     def get_kv_store_base_dir(self) -> str:
-        return os.path.join(self.get_data_dir(), "/kvstore/")
+        return os.path.join(self.get_data_dir(), "./kvstore/")
 
     def get_urls(self) -> dict:
         return self.data.get("urls",{})
