@@ -145,8 +145,7 @@ class Resource(Viewable):
         if not self._process:
             try:
                 o = ProcessResource.get( 
-                    (ProcessResource.process_type == self.type) & 
-                    (ProcessResource.resource_id == self.id) & 
+                    (ProcessResource.resource_id == self.id) &
                     (ProcessResource.resource_type == self.type)
                 )
                 self._process = o.process
@@ -171,7 +170,7 @@ class Resource(Viewable):
             process_id=process.id,
             process_type=process.type,
             resource_id=self.id,
-            resource_type=self.type, 
+            resource_type=self.type,
         )
         mapping.save()
         self._process = process

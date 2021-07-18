@@ -69,7 +69,7 @@ class File(Resource):
             except:
                 #create a default LocalFileStore
                 fs = LocalFileStore()
-                fs.save()     
+                fs.save()
             self.file_store_uri = fs.uri
             self.save()
             

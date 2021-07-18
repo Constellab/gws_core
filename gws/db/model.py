@@ -265,7 +265,7 @@ class Model(Base, PeeweeModel):
 
     def delete_instance(self, *args, **kwargs):
         self.kv_store.remove()
-        super().delete_instance(*args, **kwargs)
+        return super().delete_instance(*args, **kwargs)
         
     @classmethod
     def drop_table(cls):
