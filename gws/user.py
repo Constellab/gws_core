@@ -145,7 +145,7 @@ class User(Model):
                 Warning("User", "__authenticate_http", f"{err}")
                 transaction.rollback()
                 return False
-            
+
     @classmethod
     def create_owner_and_sysuser(cls):
         settings = Settings.retrieve()
@@ -166,7 +166,7 @@ class User(Model):
         Q = User.select().where(User.group == cls.SYSUSER_GROUP)
         if not Q:
             u = User(
-                email = "sysuser@local",
+                email = "admin@gencovery.com",
                 data = {"first_name": "sysuser", "last_name": ""},
                 is_active = True,
                 group = cls.SYSUSER_GROUP
@@ -175,6 +175,14 @@ class User(Model):
             
     # -- G --
     
+    @classmethod
+    def get_admin(cls):
+        try:
+            return User.get(User.group == cls.ADMIN_GROUP)
+        except:
+            cls.create_admin_user()
+            return User.get(User.group == cls.ADMIN_GROUP)
+
     @classmethod
     def get_owner(cls):
         try:

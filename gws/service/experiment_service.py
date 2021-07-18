@@ -127,7 +127,7 @@ class ExperimentService(BaseService):
             raise HTTPForbiden(detail=f"Experiment '{uri}' is already finished")
         else:
             try:
-                await e.kill_pid()
+                e.kill_pid()
                 return e
             except Exception as err:
                 raise HTTPInternalServerError(detail=f"Cannot kill experiment '{uri}'", debug_error=err) from err

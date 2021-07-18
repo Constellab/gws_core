@@ -19,7 +19,6 @@ def _queue_tick(tick_interval, verbose, daemon):
     q = Queue()
     if not q.is_active:
         return
-
     try:
         Queue._tick(verbose)
     finally:
@@ -54,7 +53,6 @@ class Queue(Model):
 
     is_active = BooleanField(default=False)
     max_length = IntegerField(default=10)
-    
     _queue_instance = None
     _is_singleton = True
     _table_name = "gws_queue"
@@ -73,9 +71,7 @@ class Queue(Model):
             q.is_active = True
             q.save()
             Info("Queue", "init", "The queue is initialized and active")
-
             _queue_tick(tick_interval, verbose, daemon)
-        
         cls.__is_init = True
         
     @classmethod
@@ -90,27 +86,21 @@ class Queue(Model):
     def add(cls, job: Job, auto_start: bool=False):
         if not isinstance(job, Job):
             raise Error("Queue", "add", "Invalid argument. An instance of gws.queue.Jobs is required")
-        
         job.save()
-        
         q = Queue()
         if job.uri in q.data["jobs"]:
             return
-        
         if len(q.data["jobs"]) > q.max_length:
             raise Error("Queue", "add", "The maximum number of jobs is reached")
-        
         q.data["jobs"].append(job.uri)
         q.save()
-        
         if auto_start:
             if q.is_active:
                 #> manally trigger the experiment if possible!
                 if not Experiment.count_of_running_experiments():
                     cls._tick()
             else:
-                Queue().init()
-                
+                Queue().init()    
         
     # -- G --
     
@@ -120,7 +110,6 @@ class Queue(Model):
     def remove(self, job: Job):
         if not isinstance(job, Job):
             raise Error("Queue", "add", "Invalid argument. An instance of gws.queue.Job is required")
-        
         q = Queue()
         if job.uri in q.data["jobs"]:
             q.data["jobs"].remove(job.uri)
@@ -140,7 +129,6 @@ class Queue(Model):
         q = Queue()
         if not q.data["jobs"]:
             return None
-        
         uri = q.data["jobs"][0]
         try:
             return Job.get(Job.uri == uri)
@@ -165,7 +153,7 @@ class Queue(Model):
     def _tick(cls, verbose=False):
         if verbose:
             Info("Checking experiment queue ...")
-            
+
         job = Queue.next()
         if not job:
             return
@@ -190,8 +178,15 @@ class Queue(Model):
         
         if verbose:
             Info(f"Start experiment {e.uri}, user={job.user.uri}")
-            
-        e.run_through_cli(user=job.user)
+        
+        try:
+            e.run_through_cli(user=job.user)
+        except Exception as err:
+            # remove from Queue
+            Queue.__pop_first()
+            raise Error("Queue", "_tick", f"An error occured while runnig the experiment. Error: {err}.") from err
+            return
+
         time.sleep(3)  #-> wait for 3 sec to prevent database lock!
 
     
@@ -202,9 +197,7 @@ class Queue(Model):
             _json["jobs"].append(
                 Job.get_by_uri(uri).to_json()
             )
-        
         del _json["data"]
-        
         if stringify:
             if prettify:
                 return json.dumps(_json, indent=4)

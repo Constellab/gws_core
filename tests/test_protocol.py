@@ -71,24 +71,17 @@ class TestProtocol(unittest.TestCase):
             outerfaces = {}
         )
         
-        
         Q = Protocol.select()
         self.assertEqual(len(Q), count+1)
         
         e = Experiment(protocol=proto, study=GTest.study, user=GTest.user)
-        
-        # check data the flow is well saved in DB
-        # self.assertEqual(e.generate_flow(), e.data["flow"])
-        
         def _check_exp(*args, **kwargs):
-            #self.assertEqual(e.processes.count(), 8)
-            self.assertEqual(e.processes.count(), 7)
+            self.assertEqual(len(e.processes), 7)
             self.assertEqual(e.is_finished, False)
             self.assertEqual(e.is_running, True)
 
         e.on_end(_check_exp)
         e.save()
-        
         asyncio.run( e.run(user=GTest.user) )
 
     def test_advanced_protocol(self):

@@ -52,10 +52,14 @@ class Resource(Viewable):
     
     @property
     def experiment(self):
-        if not self._experiment:     
+        """
+        Returns the parent experiment
+        """
+
+        if not self._experiment:
             try:
-                mapping = ExperimentResource.get( 
-                    (ExperimentResource.resource_id == self.id) & 
+                mapping = ExperimentResource.get(
+                    (ExperimentResource.resource_id == self.id) &
                     (ExperimentResource.resource_type == self.type)
                 )
                 self._experiment = mapping.experiment
@@ -66,6 +70,10 @@ class Resource(Viewable):
         
     @experiment.setter
     def experiment(self, experiment: 'Experiment'):
+        """
+        Set the parent experiment
+        """
+
         if self.experiment:
             return
         
@@ -130,6 +138,10 @@ class Resource(Viewable):
     
     @property
     def process(self):
+        """
+        Returns the parent process
+        """
+
         if not self._process:
             try:
                 o = ProcessResource.get( 
@@ -145,6 +157,10 @@ class Resource(Viewable):
     
     @process.setter
     def process(self, process: 'Process'):
+        """
+        Set the parent process
+        """
+
         if self.process:
             return
         
@@ -165,15 +181,14 @@ class Resource(Viewable):
     # -- S --
        
     def _select(self, **params) -> 'Model':
-        """ 
+        """
         Select a part of the resource
 
         :param params: Extraction parameters
         :type params: dict
         """
         
-        #@ToDo: ensure that this method is only called by an Selector
-        
+        #@ToDo: ensure that this method is only called by a Selector
         pass
     
     # -- T --
@@ -220,7 +235,7 @@ class ExperimentResource(Model):
 
     Mapping: [1](Experiment) ---(generate)---> [*](Resource)
 
-    Because resources can be stored in different tables (e.g. after model inheritance), this class
+    Because resources are allowed to be stored in different tables (e.g. after model inheritance), this class
     allows to load the related resources from the proper tables.
     """
 
@@ -235,12 +250,20 @@ class ExperimentResource(Model):
     
     @property
     def resource(self):
+        """
+        Returns the resource
+        """
+
         from .service.model_service import ModelService
         t = ModelService.get_model_type(self.resource_type)
         return t.get_by_id(self.resource_id)
     
     @property
     def experiment(self):
+        """
+        Returns the experiment
+        """
+
         from .experiment import Experiment
         return Experiment.get_by_id(self.experiment_id)
     
@@ -258,7 +281,7 @@ class ProcessResource(Model):
 
     Mapping: [1](Process) ---(generate)---> [*](Resource)
 
-    Because resources and processes can be stored in different tables (e.g. after model inheritance), this class
+    Because resources are allowed to be stored in different tables (e.g. after model inheritance), this class
     allows to load the related processes and resources from the proper tables.
     """
 
@@ -274,12 +297,20 @@ class ProcessResource(Model):
 
     @property
     def resource(self):
+        """
+        Returns the resource
+        """
+
         from .service.model_service import ModelService
         t = ModelService.get_model_type(self.resource_type)
         return t.get_by_id(self.resource_id)
     
     @property
     def process(self):
+        """ 
+        Returns the process
+        """
+
         from .service.model_service import ModelService
         t = ModelService.get_model_type(self.process_type)
         return t.get_by_id(self.process_id)

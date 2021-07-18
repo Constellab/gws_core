@@ -7,6 +7,7 @@ import os
 import json
 import time
 import subprocess
+from typing import List
 
 from peewee import  IntegerField, FloatField, BooleanField, ForeignKeyField, ManyToManyField
 from .viewable import Viewable
@@ -16,6 +17,7 @@ from .event import EventListener
 from .logger import Error, Info
 from .protocol import Protocol
 from .settings import Settings
+from .system import SysProc
 
 class Experiment(Viewable):
     """
@@ -177,57 +179,65 @@ class Experiment(Viewable):
             raise Error("Experiment", "is_pid_alive", f"No such process found")
         
         try:
-            sproc = SysProc.from_pip(self.pid)
-        except:
-            raise Error("Experiment", "is_pid_alive", f"No such process found or its access is denied (pid = {self.pid})")
-            
-        sproc = SysProc.from_pip(self.pid)
-        return sproc.is_alive()
-    
+            sproc = SysProc.from_pid(self.pid)
+            return sproc.is_alive()
+        except Exception as err:
+            raise Error("Experiment", "is_pid_alive", f"No such process found or its access is denied (pid = {self.pid})") from err
+
     # -- J --
 
     # -- K --
     
-    async def kill_pid(self):
-        """ 
-        Kill the experiment if it is running. 
-        
-        This is only possible if the experiment has been started through the cli. 
+    def kill_pid(self):
         """
+        Kill the experiment through HTTP context if it is running
         
-        from .activity import Activity
+        This is only possible if the experiment has been started through the cli
+        """
+
         from .service.http_service import HTTPService
-        
         if not HTTPService.is_http_context():
-            raise Error("Experiment", "kill_pid", f"The user must be in http context")
-            
-        if self.pip:
-            try:
-                sproc = SysProc.from_pip(self.pid)
-            except:
-                raise Error("Experiment", "is_pid_alive", f"No such process found or its access is denied (pid = {self.pid})")
-            
-        try:
-            sproc.terminate()
-            sproc.wait()
-        except:
-            raise Error("Experiment", "kill", f"Cannot kill pid {self.pid}.")
+            raise Error("Experiment", "kill_pid", "The user must be in http context")
+
+        return self.kill_pid_through_cli()
+
+    def kill_pid_through_cli(self):
+        """
+        Kill the experiment (through cli) if it is running
         
+        This is only possible if the experiment has been started through the cli
+        """
+
+        from .activity import Activity
+        if not self.pid:
+            return
+
+        try:
+            sproc = SysProc.from_pid(self.pid)
+        except Exception as err:
+            raise Error("Experiment", "kill_pid_through_cli", f"No such process found or its access is denied (pid = {self.pid}). Error: {err}") from err
+
+        try:
+            # Gracefully stops the experiment and exits!
+            sproc.kill()
+            sproc.wait()
+        except Exception as err:
+            raise Error("Experiment", "kill_pid_through_cli", f"Cannot kill the experiment (pid = {self.pid}). Error: {err}") from err
+
         Activity.add(
             Activity.STOP,
             object_type = self.full_classname(),
             object_uri = self.uri
         )
 
-        # Gracefully stop the experiment and exit!
-        message = f"Experiment manullay stopped by a user."
+        message = "Experiment manually stopped by a user."
         self.protocol.progress_bar.stop(message)
         self.data["pid"] = 0
         self._is_running = False
         self._is_finished = True
         self._is_success = False
         self.save()
-            
+
     # -- O --
 
     def on_end(self, call_back: callable):
@@ -242,30 +252,40 @@ class Experiment(Viewable):
     def pid(self) -> int:
         if not "pid" in self.data:
             return 0
-        
         return self.data["pid"]
     
     @property
-    def processes(self):
-        if not self.id:
-            return []
-        from .process import Process
-        return Process.select().where(Process.experiment_id == self.id)
-    
+    def processes(self) -> List['Process']:
+        """
+        Returns child processes.
+        """
+
+        Q = []
+        if self.id:
+            from .process import Process
+            Qrel = Process.select().where(Process.experiment_id == self.id)
+            for proc in Qrel:
+                Q.append(proc.cast())
+        return Q
+
     # -- R --
 
-    @property 
-    def resources(self):
-        from .resource import ExperimentResource
-        Qrel = ExperimentResource.select().where(ExperimentResource.experiment_id == self.id)
+    @property
+    def resources(self) -> List['Resurce']:
+        """
+        Returns child resources.
+        """
+
         Q = []
-        for o in Qrel:
-            Q.append(o.resource)
-            
+        if self.id:
+            from .resource import ExperimentResource
+            Qrel = ExperimentResource.select().where(ExperimentResource.experiment_id == self.id)
+            for rel in Qrel:
+                Q.append(rel.resource) #is automatically casted
         return Q
     
     def reset(self) -> bool:
-        """ 
+        """
         Reset the experiment.
 
         :return: True if it is reset, False otherwise
@@ -303,30 +323,44 @@ class Experiment(Viewable):
         :type user: `gws.user.User`
         """
 
-        from .system import SysProc
         from .service.user_service import UserService
-        
         settings = Settings.retrieve()
         cwd_dir = settings.get_cwd()
-        
+
+        # check user
         if not user:
             try:
                 user = UserService.get_current_user()
             except:
                 raise Error("gws.experiment.Experiment", "run_through_cli", "A user is required")
-            
             if not user.is_authenticated:
                 raise Error("gws.experiment.Experiment", "run_through_cli", "An authenticated user is required")
-                    
+        
+        # check user privilege
+        if not user.is_sysuser:
+            if self.protocol._allowed_user == self.USER_ADMIN:
+                if not user.is_admin:
+                    raise Error("gws.experiment.Experiment", "run", f"Only admin user can run protocol")
+            for proc in self.protocol.processes.values():
+                if proc._allowed_user == self.USER_ADMIN:
+                    if not user.is_admin:
+                        raise Error("gws.experiment.Experiment", "run", f"Only admin user can run process '{proc.type}'")
+            
+        # check experiment status
+        if self.is_archived:
+            raise Error("gws.experiment.Experiment", "run", f"The experiment is archived")
+        if self.is_validated:
+            raise Error("gws.experiment.Experiment", "run", f"The experiment is validated")
+   
         cmd = [
-            "python3", 
-             os.path.join(cwd_dir, "manage.py"), 
-             "--cli", 
+            "python3",
+             os.path.join(cwd_dir, "manage.py"),
+             "--cli",
              "gws.cli.run_experiment",
              "--experiment-uri", self.uri,
              "--user-uri", user.uri
         ]
-         
+
         if settings.is_test:
             cmd.append("--cli_test")
 
@@ -335,9 +369,8 @@ class Experiment(Viewable):
             cmd.append("prod")
         else:
             cmd.append("dev")
-        
-        Info("gws.experiment.Experiment", "run_through_cli", str(cmd))
 
+        Info("gws.experiment.Experiment", "run_through_cli", str(cmd))
         sproc = SysProc.popen(cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         self.data["pid"] = sproc.pid
         self.save()
@@ -376,27 +409,28 @@ class Experiment(Viewable):
         from .activity import Activity
         from .service.user_service import UserService
         
+        # check user
         if not user:
             try:
                 user: User = UserService.get_current_user()
             except:
                 raise Error("gws.experiment.Experiment", "run", "A user is required")
-
             if not user.is_authenticated:
-                    raise Error("gws.experiment.Experiment", "run", "A authenticated user is required")
+                raise Error("gws.experiment.Experiment", "run", "A authenticated user is required")
         
-        if self.protocol._allowed_user == self.USER_ADMIN:
+        # check user privilege
+        if not user.is_sysuser:
+            if self.protocol._allowed_user == self.USER_ADMIN:
                 if not user.is_admin:
                     raise Error("gws.experiment.Experiment", "run", f"Only admin user can run protocol")
-
-        for proc in self.protocol.processes.values():
-            if proc._allowed_user == self.USER_ADMIN:
-                if not user.is_admin:
-                    raise Error("gws.experiment.Experiment", "run", f"Only admin user can run process '{proc.type}'")
-
+            for proc in self.protocol.processes.values():
+                if proc._allowed_user == self.USER_ADMIN:
+                    if not user.is_admin:
+                        raise Error("gws.experiment.Experiment", "run", f"Only admin user can run process '{proc.type}'")
+        
+        # check experiment status
         if self.is_archived:
             raise Error("gws.experiment.Experiment", "run", f"The experiment is archived")
-
         if self.is_validated:
             raise Error("gws.experiment.Experiment", "run", f"The experiment is validated")
 

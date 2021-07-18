@@ -151,7 +151,6 @@ class MySQLLoad(MySQLBase):
         self.db_name = slugify(self.db_name, snakefy=True)                          #slugify string for security
         self.table_prefix = slugify(self.table_prefix, snakefy=True)                #slugify string for security
         self.host = settings.get_maria_db_host(self.db_name)
-
         if not self.input_file:
             self.input_file = os.path.join(self.input_dir, self.DUMP_FILENAME)
 

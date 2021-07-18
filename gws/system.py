@@ -84,27 +84,31 @@ class Monitor(Model):
 # ####################################################################
 
 class SysProc:
-    _ps: psutil.Process = None
+    """
+    SysProc class.
+
+    Wrapper of `psutil.Process` class that only exposes necessary functionalities to easily manage shell process.
+    """
+
+    _ps = None
     
     @staticmethod
-    def from_pid(pid):
+    def from_pid(pid) -> 'SysProc':
         proc = SysProc()
         proc._ps = psutil.Process(pid)
         return proc
     
-    def is_alive(self):
-        return psutil.pid_exists(self.pid)
+    def is_alive(self) -> bool:
+        return self._ps.is_running()
     
     def kill(self):
-        if self.is_alive():
-            self._ps.kill()
+        self._ps.kill()
     
     @property
-    def pid(self):
-        if self._ps:
-            return self._ps.pid
-        else:
+    def pid(self) -> int:
+        if self._ps is None:
             return 0
+        return self._ps.pid
     
     @classmethod
     def popen(cls, cmd, *args, **kwargs) -> 'SysProc':
@@ -113,18 +117,25 @@ class SysProc:
             proc._ps = psutil.Popen(cmd, *args, **kwargs)
             return proc
         except Exception as err:
-            raise Error("Pool","run", f"An error occured when calling command {cmd}.\nError: {err}") from err
+            raise Error("Pool","run", f"An error occured when calling command {cmd}. Error: {err}") from err
     
-    def stats(self):
+    def stats(self) -> dict:
+        """
+        Get process statistics
+        """
         return self._ps.as_dict()
     
     @property
     def stdout(self):
-        return self._ps.stdout
+        if isinstance(self._ps, psutil.Popen):
+            return self._ps.stdout
+        return None
     
     @property
     def stderr(self):
-        return self._ps.stderr
+        if isinstance(self._ps, psutil.Popen):
+            return self._ps.stderr
+        return None
 
     def wait(self, timeout=None):
         """

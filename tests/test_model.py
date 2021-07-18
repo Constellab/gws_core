@@ -65,6 +65,15 @@ class TestModel(unittest.TestCase):
         self.assertEqual(john.data, {})
         self.assertTrue(john.verify_hash())
 
+        # check that john2 has not changed until refresh
+        self.assertEqual(john2.data, {
+            'firstname':'Alan',
+            'sirname':'Smith',
+            'city': 'NY'
+        })
+        john2.refresh()
+        self.assertEqual(john2.data, {})
+
     def test_model_registrering(self):
         GTest.print("Model Registering")
         ModelService.register_all_processes_and_resources()

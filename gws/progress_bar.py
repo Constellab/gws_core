@@ -10,7 +10,7 @@ from peewee import  CharField
 from fastapi.encoders import jsonable_encoder
 
 from .db.model import Model
-from .logger import Error
+from .logger import Error, Info
 
 class ProgressBar(Model):
     """
@@ -35,7 +35,7 @@ class ProgressBar(Model):
     
     # -- A --
     
-    def add_message(self, message="Experiment under progress ..."):
+    def add_message(self, message="Experiment under progress ...", show_info=False):
         dtime = jsonable_encoder(datetime.now())
         self.data["messages"].append({
             "text": message,
@@ -44,7 +44,10 @@ class ProgressBar(Model):
         
         if len(self.data["messages"]) > self._max_message_stack_length:
             self.data["messages"].pop(0)
-    
+
+        if show_info:
+            Info(message)
+
     # -- C --
     
     def _compute_remaining_seconds(self):
@@ -134,7 +137,7 @@ class ProgressBar(Model):
         self.data["remaining_time"] = 0.0
         self.save()
         
-    def set_value(self, value: float, message="Experiment under progress ..."):
+    def set_value(self, value: float, message="Experiment under progress ...", show_info=False):
         """
         Increment the progress-bar value
         """
@@ -164,7 +167,7 @@ class ProgressBar(Model):
         self.data["elapsed_time"] = current_time - self.data["start_time"]
         self.data["average_speed"] = self.data["value"] / self.data["elapsed_time"]
         self.data["remaining_time"] = self._compute_remaining_seconds()
-        self.add_message(message)
+        self.add_message(message, show_info=show_info)
         
         if self.data["value"] == _max:
             self.stop()

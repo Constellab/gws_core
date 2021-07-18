@@ -29,9 +29,9 @@ from gws.settings import Settings
 from gws.base import Base
 from .kv_store import KVStore
 
-#GWS_DB_ENGINE="mariadb"
+GWS_DB_ENGINE="mariadb"
 #GWS_DB_ENGINE="sqlite3"
-GWS_DB_ENGINE = os.getenv("LAB_DB_ENGINE", "sqlite3")
+#GWS_DB_ENGINE = os.getenv("LAB_DB_ENGINE", "sqlite3")
 
 # ####################################################################
 #
@@ -133,16 +133,8 @@ class Model(Base, PeeweeModel):
             settings = Settings.retrieve()
             Model.LAB_URI = settings.get_data("uri")
         if not self.id and self._is_singleton:
-            try:
-                cls = type(self)
-                model = cls.get(cls.type == self.full_classname())
-            except Exception as _:
-                model = None
-            if model:
-                # /!\ Shallow copy all properties (i.e. object cast)
-                for prop in model.property_names(Field):
-                    val = getattr(model, prop)
-                    setattr(self, prop, val)
+            self.__init_singleton_in_place()
+
         if self.uri is None:
             self.uri = str(uuid.uuid4())
             if not self.data:
@@ -184,6 +176,19 @@ class Model(Base, PeeweeModel):
     
     # -- C --
     
+    def __init_singleton_in_place(self):
+        try:
+            cls = type(self)
+            model = cls.get(cls.type == self.full_classname())
+        except Exception as _:
+            model = None
+
+        if model:
+            # /!\ Shallow copy all properties
+            for prop in model.property_names(Field):
+                val = getattr(model, prop)
+                setattr(self, prop, val)
+
     def _create_hash_object(self):
         h = hashlib.blake2b()
         h.update(Model.LAB_URI.encode())
@@ -211,23 +216,27 @@ class Model(Base, PeeweeModel):
 
     def cast(self) -> 'Model':
         """
-        Casts a model instance to its `type` in database
+        Casts a model instance by its `type` in database. 
+        It is euqivalent to getting and intantiatning the real object type from db
 
         :return: The model
         :rtype: `Model` instance
         """
         
-        from .service.model_service import ModelService
+        from ..service.model_service import ModelService
         
         if self.type == self.full_classname():
             return self
-        # instanciate the class and shallow copy data
-        new_model_t = ModelService.get_model_type(self.type)
-        model = new_model_t()
-        for prop in self.property_names(Field):
-            val = getattr(self, prop)
-            setattr(model, prop, val)
+
+        t = ModelService.get_model_type(self.type)
+        model = t.get_by_id(self.id)
         return model
+
+        # model = t()
+        # for prop in self.property_names(Field):
+        #     val = getattr(self, prop)
+        #     setattr(model, prop, val)
+        # return model
 
     def clear_data(self, save: bool = False):
         """
@@ -313,9 +322,9 @@ class Model(Base, PeeweeModel):
         cls = type(self)
         Q = cls.select(cls.type).where(cls.id == int(id))
         if len(Q) == 0:
-            raise Error("gws.db.model.Model", "fetch_type_by_id", "The model is not found.") from err
+            raise Error("gws.db.model.Model", "fetch_type_by_id", "The model is not found.")
        
-        from .service.model_service import ModelService
+        from ..service.model_service import ModelService
         type_str = Q[0].type
         model_t = ModelService.get_model_type(type_str)
         return model_t
@@ -435,22 +444,23 @@ class Model(Base, PeeweeModel):
     
     def refresh(self):
         """
-        Refresh a model using db value
-
-        :return: The path of the KVStore
-        :rtype: str
+        Refresh a model instance by re-requesting the db
         """
-        
+
         cls = type(self)
         if self.id:
-            db_object = cls.get_by_id(cls.id)
+            db_object = cls.get_by_id(self.id)
             for prop in db_object.property_names(Field):
                 db_val = getattr(db_object, prop)
-                setattr(self, prop, db_val) 
+                setattr(self, prop, db_val)
 
     @classmethod
     def select_me(cls, *args, **kwargs):
-        return cls.select( *args, **kwargs ).where(cls.type == cls.full_classname())
+        """
+        Select objects by ensuring that the object-type is the same as the current model.
+        """
+        
+        return cls.select(*args, **kwargs).where(cls.type == cls.full_classname())
     
     @classmethod
     def search(cls, phrase: str, in_boolean_mode: bool=False):

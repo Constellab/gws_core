@@ -20,7 +20,7 @@ class GTest:
     study: Study = None
     
     @classmethod
-    def init(cls):
+    def init(cls, admin_user=False):
         """
         This function initializes objects for unit testing
         """

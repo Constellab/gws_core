@@ -30,8 +30,8 @@ class Protocol(Process):
     _connectors: list = []
     _interfaces: dict = {}
     _outerfaces: dict = {}
-    _table_name = "gws_protocol"
-    
+    _table_name = "gws_protocol" #is locked for all the protocols
+
     def __init__(self, *args, \
                     processes: dict = None, \
                     connectors: list = None, \
@@ -295,6 +295,18 @@ class Protocol(Process):
         self.save(update_graph=True)
 
     # -- C --
+
+    @classmethod
+    def create_table(cls, *args, **kwargs):
+        """
+        Create model table
+        """
+
+        if cls._table_name !=  Protocol._table_name:
+            raise Error(cls.full_classname(), "create_table", f"The table name of {cls.full_classname()} must be {Protocol._table_name}")     
+        kwargs["check_table_name"] = False
+        super().create_table(*args, **kwargs)
+
 
     @classmethod
     def create_process_type(cls):

@@ -57,7 +57,7 @@ class Process(Viewable):
     _is_singleton = False
     _is_removable = False
     _is_plug = False
-    _table_name = 'gws_process'
+    _table_name = 'gws_process'     #is locked for all processes
 
     def __init__(self, *args, user=None, **kwargs):
         """
@@ -114,7 +114,7 @@ class Process(Viewable):
             # Is the Base (Abstract) Process object => cannot set io
             return
 
-        # intput
+        # input
         for k in self.input_specs:
             self._input.create_port(k,self.input_specs[k])
         if not self.data.get("input"):
@@ -157,6 +157,20 @@ class Process(Viewable):
         return True
 
     # -- C --
+
+    @classmethod
+    def create_table(cls, *args, **kwargs):
+        """
+        Create model table
+        """
+
+        if "check_table_name" in kwargs:
+            if kwargs.get("check_table_name", False):
+                if cls._table_name !=  Process._table_name:
+                    raise Error(cls.full_classname(), "create_table", f"The table name of {cls.full_classname()} must be {Process._table_name}")         
+            del kwargs["check_table_name"]
+        super().create_table(*args, **kwargs)
+
 
     @classmethod
     def create_process_type(cls):

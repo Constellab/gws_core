@@ -112,14 +112,14 @@ class UserService(BaseService):
 
         try:
             user = context.data["user"]
-        except:
+        except Exception as _:
             # is console context
             try:
                 user = cls._console_data["user"]
-            except:
-                raise Error("Controller", "get_current_user", "No HTTP nor Console user authenticated")
+            except Exception as err:
+                raise Error("UserService", "get_current_user", "No HTTP nor Console user authenticated") from err
         if user is None:
-            raise Error("Controller", "get_current_user", "No HTTP nor Console user authenticated")
+            raise Error("UserService", "get_current_user", "No HTTP nor Console user authenticated")
         return user
 
     @classmethod
@@ -137,17 +137,13 @@ class UserService(BaseService):
         user = User.get_by_uri(uri)
         if user is None:
             raise Error("Central", "set_user_status", "User not found")
-        else:
-            if not data.get("is_active") is None:
-                user.is_active = data.get("is_active")
-
-            if data.get("group"):
-                user.group = data.get("group")
-
-            if user.save():
-                return user
-            else:
-                raise Error("Central", "set_user_status", "Cannot save the user")
+        if "is_active" in data:
+            user.is_active = data["is_active"]
+        if "group" in data:
+            user.group = data["group"]
+        if not user.save():
+            raise Error("Central", "set_user_status", "Cannot save the user")
+        return user
 
     @classmethod
     def set_current_user(cls, user: User):
@@ -166,8 +162,8 @@ class UserService(BaseService):
             if isinstance(user, dict):
                 try:
                     user = User.get(User.uri == user.uri)
-                except:
-                    raise HTTPInternalServerError(detail="Invalid current user")
+                except Exception as err:
+                    raise HTTPInternalServerError(detail="Invalid current user") from err
 
             if not isinstance(user, User):
                 raise HTTPInternalServerError(detail="Invalid current user")

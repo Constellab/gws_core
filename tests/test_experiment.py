@@ -48,7 +48,7 @@ class TestExperiment(unittest.TestCase):
 
         #self.assertEqual(e1.processes.count(), 18)
         #self.assertEqual(Process.select().count(), 18)
-        self.assertEqual(e1.processes.count(), 15)
+        self.assertEqual(len(e1.processes), 15)
         self.assertEqual(Process.select().count(), 15)
         self.assertEqual(Resource.select().count(), 0)
         self.assertEqual(Experiment.select().count(), 1)
@@ -61,14 +61,14 @@ class TestExperiment(unittest.TestCase):
         self.assertEqual(e2.get_title(), "My exp title")
         self.assertEqual(e2.get_description(), "This is my new experiment")
         self.assertEqual(e2, e1)
-        self.assertEqual(e2.processes.count(), 15)
+        self.assertEqual(len(e2.processes), 15)
         self.assertEqual(Process.select().count(), 15)
         self.assertEqual(Resource.select().count(), 0)
         self.assertEqual(Experiment.select().count(), 1)
 
         def _check_exp1(*args, **kwargs):
             #self.assertEqual(e2.processes.count(), 18)
-            self.assertEqual(e2.processes.count(), 15)
+            self.assertEqual(len(e2.processes), 15)
             self.assertEqual(e2.is_finished, False)
             self.assertEqual(e2.is_running, True)
         
@@ -85,7 +85,7 @@ class TestExperiment(unittest.TestCase):
         time.sleep(2)
         self.assertEqual(e2.pid, 0)
         #self.assertEqual(e2.processes.count(), 18)
-        self.assertEqual(e2.processes.count(), 15)
+        self.assertEqual(len(e2.processes), 15)
         self.assertEqual(e2.is_finished, True)
         self.assertEqual(e2.is_running, False)
         
@@ -93,7 +93,7 @@ class TestExperiment(unittest.TestCase):
         self.assertEqual(e2_bis.protocol.get_title(), proto_title)
         self.assertEqual(e2_bis.get_title(), "My exp title")
         self.assertEqual(e2_bis.get_description(), "This is my new experiment")
-        self.assertEqual(e2_bis.processes.count(), 15)
+        self.assertEqual(len(e2_bis.processes), 15)
         self.assertEqual(Experiment.select().count(), 1)
 
         # experiment 3
@@ -101,7 +101,7 @@ class TestExperiment(unittest.TestCase):
         print("Create experiment_3")
         proto3 = create_nested_protocol()
         e3 = Experiment(protocol=proto3, study=GTest.study, user=GTest.user)
-        e3.save()        
+        e3.save()     
         
         print("Run experiment_3 through cli ...")
         e3.run_through_cli(user=GTest.user)
