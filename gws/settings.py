@@ -116,7 +116,7 @@ class Settings(PeeweeModel):
         return db_path
     
     def get_sqlite3_prod_db_path(self, db_name) -> str:
-        db_dir = os.path.join( self.get_dev_data_dir(), db_name, "sqlite3")
+        db_dir = os.path.join( self.get_prod_data_dir(), db_name, "sqlite3")
         if not os.path.exists(db_dir):
             os.makedirs(db_dir)
         db_path = os.path.join( db_dir, f"{db_name}.sqlite3" )
