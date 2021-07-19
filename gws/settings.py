@@ -30,8 +30,8 @@ class Settings(PeeweeModel):
         app_dir         = __cdir__,
         app_host        = '0.0.0.0',
         app_port        = 3000,
-        log_dir         = "/logs",
-        data_dir        = "/data",
+        #log_dir         = "/logs",
+        #data_dir        = "/data",
         dependencies    = {}
     )
 
@@ -103,10 +103,16 @@ class Settings(PeeweeModel):
     # -- G --
 
     def get_sqlite3_db_path(self, db_name) -> str:
-        if self.is_prod:
-            return self.get_sqlite3_prod_db_path(db_name)
-        else:
-            return self.get_sqlite3_dev_db_path(db_name)
+        db_dir = os.path.join( self.get_data_dir(), db_name, "sqlite3")
+        if not os.path.exists(db_dir):
+            os.makedirs(db_dir)
+        db_path = os.path.join( db_dir, f"{db_name}.sqlite3" )
+        return db_path
+
+        # if self.is_prod:
+        #     return self.get_sqlite3_prod_db_path(db_name)
+        # else:
+        #     return self.get_sqlite3_dev_db_path(db_name)
 
     def get_sqlite3_dev_db_path(self, db_name) -> str:
         db_dir = os.path.join( self.get_dev_data_dir(), db_name, "sqlite3")
@@ -154,10 +160,11 @@ class Settings(PeeweeModel):
         :rtype: `str`
         """
 
-        if self.is_prod:
-            return "/app/prod/lab"
-        else:
-            return "/app/dev/lab"
+        return "/labs"
+        # if self.is_prod:
+        #     return "/app/prod/lab"
+        # else:
+        #     return "/app/dev/lab"
 
     def get_log_dir(self) -> str:
         """
@@ -167,10 +174,11 @@ class Settings(PeeweeModel):
         :rtype: `str`
         """
 
-        if self.is_prod:
-            return "/app/prod/logs"
-        else:
-            return "/app/dev/logs"
+        return "/logs"
+        # if self.is_prod:
+        #     return "/app/prod/logs"
+        # else:
+        #     return "/app/dev/logs"
 
     def get_data_dir(self) -> str:
         """
@@ -181,10 +189,11 @@ class Settings(PeeweeModel):
         :rtype: `str`
         """
 
-        if self.is_prod:
-            return self.get_prod_data_dir()
-        else:
-            return self.get_dev_data_dir()
+        return "/data"
+        # if self.is_prod:
+        #     return self.get_prod_data_dir()
+        # else:
+        #     return self.get_dev_data_dir()
 
     def get_dev_data_dir(self) -> str:
         """
