@@ -7,12 +7,13 @@
 import jwt
 from datetime import datetime, timedelta
 from typing import Optional
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from fastapi.responses import JSONResponse
 
 from ...dto.user_dto import UserData
 from ...user import User
 from ...settings import Settings
+from ...http import HTTPUnauthorized
 from ._oauth2_central_header_scheme import oauth2_central_header_scheme
 
 settings = Settings.retrieve()
@@ -27,9 +28,7 @@ def check_central_api_key(api_key: str = Depends(oauth2_central_header_scheme)):
     
     is_authorized = CentralService.check_api_key(api_key)
     if not is_authorized:
-        raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized"
-            )
+        raise HTTPUnauthorized(detail="Not authorized. Invalid API key.")
 
 def get_user(user_uri:str) -> UserData:
     try:
@@ -56,13 +55,16 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 async def generate_user_access_token(uri: str) -> JSONResponse:
     user: UserData = get_user(uri)
-    if not user or not (user.is_active):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authorized",
+    if not user:
+        raise HTTPUnauthorized(
+            detail="Not authorized. Cannot generate user access token. User not found",
             headers={"WWW-Authenticate": "Bearer"},
         )
-        
+    if not (user.is_active):
+        raise HTTPUnauthorized(
+            detail="Not authorized. Cannot generate user access token. User not active",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={

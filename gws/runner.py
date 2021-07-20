@@ -56,7 +56,6 @@ def _run(ctx, uri="", token="", test="", \
     elif test:
         if test in ["*", "all"]:
             test = "test*"
-
         loader = unittest.TestLoader()
         test_suite = loader.discover(".", pattern=test+".py")
         test_runner = unittest.TextTestRunner()

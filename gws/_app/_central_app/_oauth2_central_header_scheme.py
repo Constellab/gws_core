@@ -6,7 +6,7 @@ import jwt
 from jwt import PyJWTError
 from pydantic import BaseModel
 
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI
 from fastapi.encoders import jsonable_encoder
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2
 from fastapi.security.base import SecurityBase
@@ -15,6 +15,8 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
 from fastapi.openapi.utils import get_openapi
 from fastapi.requests import Request
+
+from ...http import HTTPForbiden
 
 class OAuth2CentralAPIKeyHeader(OAuth2):
     def __init__(
@@ -44,10 +46,7 @@ class OAuth2CentralAPIKeyHeader(OAuth2):
 
         if not authorization:
             if self.auto_error:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN, 
-                    detail="Not authorized"
-                )
+                raise HTTPForbiden(detail="Not authorized. Invalid header scheme.")
             else:
                 return None
 

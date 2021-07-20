@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-
+from ..logger import Logger
 
 class UnauthorizedException(HTTPException):
     """
@@ -10,3 +10,4 @@ class UnauthorizedException(HTTPException):
         super().__init__(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=message)
+        Logger.error(f"{self}")

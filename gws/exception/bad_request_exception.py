@@ -1,6 +1,6 @@
 
 from fastapi import HTTPException, status
-
+from ..logger import Logger
 
 class BadRequestException(HTTPException):
     """
@@ -11,3 +11,4 @@ class BadRequestException(HTTPException):
         super().__init__(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=message)
+        Logger.error(f"{self}")
