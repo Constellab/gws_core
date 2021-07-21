@@ -10,6 +10,7 @@ import uuid
 import hashlib
 import json
 import shutil
+from typing import List
 from datetime import datetime
 
 from fastapi.encoders import jsonable_encoder
@@ -29,9 +30,9 @@ from gws.settings import Settings
 from gws.base import Base
 from .kv_store import KVStore
 
-#GWS_DB_ENGINE="mariadb"
+GWS_DB_ENGINE="mariadb"
 #GWS_DB_ENGINE="sqlite3"
-GWS_DB_ENGINE = os.getenv("LAB_DB_ENGINE", "sqlite3")
+#GWS_DB_ENGINE = os.getenv("LAB_DB_ENGINE", "sqlite3")
 
 # ####################################################################
 #
@@ -268,7 +269,7 @@ class Model(Base, PeeweeModel):
         return super().delete_instance(*args, **kwargs)
         
     @classmethod
-    def drop_table(cls):
+    def drop_table(cls, *args, **kwargs):
         """ 
         Drop model table
         """
@@ -281,7 +282,7 @@ class Model(Base, PeeweeModel):
         if os.path.exists(path):
             shutil.rmtree(path)
         
-        super().drop_table()
+        super().drop_table(*args, **kwargs)
          
     # -- E --
         
@@ -313,20 +314,17 @@ class Model(Base, PeeweeModel):
         :rtype: `type`
         """
 
-        # cursor = self.get_db_manager().db.execute_sql(f'SELECT type FROM {self._table_name} WHERE id = ?', (str(id),))
-        # row = cursor.fetchone()
-        # if len(row) == 0:
-        #     raise Error("gws.db.model.Model", "fetch_type_by_id", "The model is not found.")
-        # typestr = row[0]
-
-        cls = type(self)
-        Q = cls.select(cls.type).where(cls.id == int(id))
-        if len(Q) == 0:
-            raise Error("gws.db.model.Model", "fetch_type_by_id", "The model is not found.")
-       
+        try:
+            cls = type(self)
+            model = cls.get(cls.id == int(id))
+        except Exception as err:
+            raise Error("gws.db.model.Model", "fetch_type_by_id", "The model is not found.") from err
+        
+        if model.full_classname() == model.type:
+            return type(cls)
+            
         from ..service.model_service import ModelService
-        type_str = Q[0].type
-        model_t = ModelService.get_model_type(type_str)
+        model_t: type = ModelService.get_model_type(model.type)
         return model_t
 
     # -- G --
@@ -345,7 +343,7 @@ class Model(Base, PeeweeModel):
     @classmethod
     def get_db_manager(cls) -> DbManager:
         """ 
-        Returns the DbManager of this model
+        Returns the (current) DbManager of this model
 
         :return: The db manager
         :rtype: `DbManager`

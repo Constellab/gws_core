@@ -7,7 +7,7 @@ import glob
 import os
 import importlib
 import inspect
-from typing import List
+from typing import List, Dict
 
 from ..query import Paginator
 from ..db.model import Model
@@ -25,7 +25,7 @@ from .base_service import BaseService
 
 class ModelService(BaseService):
     
-    _model_types = {}
+    _model_types: Dict[str, type] = {}
     
     # -- A --
     
@@ -198,7 +198,9 @@ class ModelService(BaseService):
         return db_list, model_list
 
     @classmethod
-    def get_model_types(cls) -> List[type]:
+    def get_model_types(cls) -> Dict[str, type]:
+        if not cls._model_types:
+            cls.register_all_processes_and_resources()
         return cls._model_types
 
     @classmethod

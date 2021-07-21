@@ -1,14 +1,26 @@
 # LICENSE
-# This software is the exclusive property of Gencovery SAS. 
+# This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import os
-import pymysql
-import subprocess
-
 from peewee import SqliteDatabase, MySQLDatabase, DatabaseProxy
+from playhouse.shortcuts import ReconnectMixin
+
 from gws.settings import Settings
+
+
+# ####################################################################
+#
+# ReconnectMySQLDatabase class
+#
+# ####################################################################
+
+class ReconnectMySQLDatabase(ReconnectMixin, MySQLDatabase):
+    """
+    MySQLDatabase class.
+    Allow to auto-reconnect to the MySQL database.
+    """
+    pass
 
 # ####################################################################
 #
@@ -46,7 +58,7 @@ class AbstractDbManager:
             db_path = cls.get_sqlite3_db_path(mode=mode)
             _db = SqliteDatabase(db_path)
         elif cls._engine in ["mariadb", "mysql"]:
-            _db = MySQLDatabase(
+            _db = ReconnectMySQLDatabase(
                 cls._db_name,
                 user        = cls._mariadb_config["user"],
                 password    = cls._mariadb_config["password"],
@@ -59,6 +71,20 @@ class AbstractDbManager:
 
     # -- C --
 
+    # @classmethod
+    # def connect_db(cls):
+    #     """ Open the db connection """
+
+    #     if cls.db.is_closed():
+    #         cls.db.connect()
+
+    # @classmethod
+    # def disconnect_db(cls):
+    #     """ Close the db connection """
+
+    #     if not cls.db.is_closed():
+    #         cls.db.close()
+    
     # @classmethod
     # def create_maria_db(cls):
     #     """
@@ -85,26 +111,26 @@ class AbstractDbManager:
 
     @classmethod
     def get_db_name(cls):
-        """ Get the db name """
+        """ Get the current db name """
 
         return cls._db_name
 
     @classmethod
     def get_engine(cls):
-        """ Get the db engine """
+        """ Get the current db engine """
 
         return cls._engine
 
     @classmethod
     def get_maria_db_host(cls):
-        """ Get maria db host address """
+        """ Get the current maria db host address """
 
         settings = Settings.retrieve()
         return settings.get_maria_db_host( cls._db_name )
 
     @classmethod
     def get_sqlite3_db_path(cls, mode:str=None):
-        """ Get the sqlite3 db path """
+        """ Get the current current sqlite3 db path """
 
         settings = Settings.retrieve()
         if mode:

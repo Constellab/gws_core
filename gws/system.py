@@ -16,9 +16,10 @@ def _system_monitor_tick(daemon):
     try:
         Monitor._tick()
     finally:
-        thread = threading.Timer(TICK_INTERVAL_SECONDS, _system_monitor_tick, [ daemon ])
-        thread.daemon = daemon
-        thread.start()
+        if Monitor._is_init:
+            thread = threading.Timer(TICK_INTERVAL_SECONDS, _system_monitor_tick, [ daemon ])
+            thread.daemon = daemon
+            thread.start()
 
 # ####################################################################
 #
@@ -27,6 +28,12 @@ def _system_monitor_tick(daemon):
 # ####################################################################
 
 class Monitor(Model):
+    """
+    Lab Monitor class.
+
+    This class provides functionalities for real-time monitoring the server status
+    (e.g. cpu usage, disk usage, memory, network transactions)
+    """
     cpu_count = FloatField()
     cpu_percent = FloatField(index=True)
     disk_total = FloatField()
@@ -39,15 +46,18 @@ class Monitor(Model):
     swap_memory_percent = FloatField(index=True)
     net_io_bytes_sent = FloatField(index=True)
     net_io_bytes_recv = FloatField(index=True)
-    
     _table_name = 'gws_lab_monitor'
-    __is_init = False
+    _is_init = False
         
     @classmethod
     def init(cls, daemon=False):
-        if not cls.__is_init:
-            cls.__is_init = True
+        if not cls._is_init:
+            cls._is_init = True
             _system_monitor_tick(daemon)
+
+    @classmethod
+    def deinit(cls):
+        cls._is_init = False
 
     @classmethod
     def get_last(cls):
@@ -87,7 +97,8 @@ class SysProc:
     """
     SysProc class.
 
-    Wrapper of `psutil.Process` class that only exposes necessary functionalities to easily manage shell process.
+    Wrapper of `psutil.Process` class. 
+    This class that only exposes necessary functionalities to easily manage shell processes.
     """
 
     _ps = None

@@ -24,7 +24,7 @@ class TestTyping(unittest.TestCase):
 
     def test_typing(self):
         GTest.print("Model Typing")
-
+    
         _json = ProcessService.fetch_process_type_list(as_json=True)
         self.assertTrue(len(_json["data"]) > 0)
         #print("\n------- fetch_process_type_list -------\n")

@@ -54,7 +54,7 @@ class Settings(PeeweeModel):
         if not os.path.exists(settings_dir):
             os.makedirs(settings_dir)
             
-        db = SqliteDatabase( os.path.join(settings_dir, "settings.sqlite3") )
+        db = SqliteDatabase(os.path.join(settings_dir, "settings.sqlite3"))
         database_proxy.initialize(db)
         
         if not cls.table_exists():

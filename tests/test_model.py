@@ -76,11 +76,10 @@ class TestModel(unittest.TestCase):
 
     def test_model_registrering(self):
         GTest.print("Model Registering")
-        ModelService.register_all_processes_and_resources()
-        self.assertTrue( len(ModelService._model_types) != 0 )
+        self.assertTrue( len(ModelService.get_model_types()) != 0 )
         from gws.json import JSONLoader
         from gws.csv import CSVImporter
-        self.assertTrue( JSONLoader.full_classname() in ModelService._model_types )
-        self.assertTrue( CSVImporter.full_classname() in ModelService._model_types )
+        self.assertTrue( JSONLoader.full_classname() in ModelService.get_model_types() )
+        self.assertTrue( CSVImporter.full_classname() in ModelService.get_model_types() )
 
 

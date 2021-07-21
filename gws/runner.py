@@ -40,8 +40,7 @@ def _run(ctx, uri="", token="", test="", \
     if runserver:
         # start app
         from .app import App
-        app = App()
-        app.start()
+        App.start(ip=ip, port=port)
     elif cli:
         tab = cli.split(".")
         n = len(tab)
