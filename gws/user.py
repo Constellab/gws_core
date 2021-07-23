@@ -123,7 +123,7 @@ class User(Model):
                 Activity.add(Activity.CONSOLE_AUTHENTICATION)
                 return True
             except Exception as err:
-                Logger.warning("User", "__authenticate_console", f"{err}")
+                Logger.warning(f"User __authenticate_console {err}")
                 transaction.rollback()
                 return False
 
@@ -147,7 +147,7 @@ class User(Model):
                 Activity.add(Activity.HTTP_AUTHENTICATION)
                 return True
             except Exception as err:
-                Logger.warning("User", "__authenticate_http", f"{err}")
+                Logger.warning(f"User __authenticate_http {err}")
                 transaction.rollback()
                 return False
 
@@ -329,7 +329,7 @@ class User(Model):
                     raise BadRequestException("Cannot save user status")
                 return True
             except Exception as err:
-                Logger.warning("User", "__unauthenticate_http", f"{err}")
+                Logger.warning(f"User __unauthenticate_http {err}")
                 transaction.rollback()
                 return False
 
@@ -351,7 +351,7 @@ class User(Model):
                     raise BadRequestException("Cannot save user status")
                 return True
             except Exception as err:
-                Logger.warning("User", "__unauthenticate_console", f"{err}")
+                Logger.warning(f"User __unauthenticate_console {err}")
                 transaction.rollback()
                 return False
 

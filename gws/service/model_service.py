@@ -6,7 +6,7 @@
 import importlib
 import inspect
 import os
-from typing import List, Dict
+from typing import Dict, List
 
 from ..config import Config
 from ..db.model import Model
@@ -23,9 +23,9 @@ from .base_service import BaseService
 
 
 class ModelService(BaseService):
-    
+
     _model_types: Dict[str, type] = {}
-    
+
     # -- A --
 
     @classmethod
@@ -240,8 +240,8 @@ class ModelService(BaseService):
             t = getattr(module, function_name, None)
             cls._model_types[type] = t
         except Exception as err:
-            Logger.warning("gws.service.model_service.ModelService",
-                           "get_model_type", f"An error occured. Error: {err}")
+            Logger.warning(
+                f"gws.service.model_service.ModelService get_model_type An error occured. Error: {err}")
             t = None
 
         return t
