@@ -1,10 +1,12 @@
 # LICENSE
-# This software is the exclusive property of Gencovery SAS. 
+# This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from .logger import Error
+from gws.exception.bad_request_exception import BadRequestException
+
 from .resource import Resource
+
 
 class ResourceSet(Resource):
     """
@@ -13,61 +15,61 @@ class ResourceSet(Resource):
 
     _set: dict = None
     _resource_types = (Resource, )
-    
-    def __init__(self, *args, **kwargs):        
+
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.id is None:
             self.data["set"] = {}
             self._set = {}
         if self._set is None:
             self._set = {}
-    
+
     # -- A --
-    
+
     def add(self, val):
         if not isinstance(val, self._resource_types):
-            raise Error("gws.resource_set.ResourceSet", "__setitem__", f"The value must be an instance of {self._resource_types}. The actual value is a {type(val)}.")
-        
+            raise BadRequestException(
+                f"The value must be an instance of {self._resource_types}. The actual value is a {type(val)}.")
+
         if not val.is_saved():
             val.save()
         self.set[val.uri] = val
-            
 
     # -- C --
-    
+
     def __contains__(self, val):
         return val in self.set
-    
+
     # -- E --
-    
-    def exists( self, resource ) -> bool:
+
+    def exists(self, resource) -> bool:
         return resource in self._set
-    
+
     # -- G --
-    
+
     def __getitem__(self, key):
         return self.set[key]
-    
+
     # -- I --
 
     def __iter__(self):
         return self.set.__iter__()
-    
+
     # -- L --
-    
+
     def len(self):
         return self.len()
-    
+
     def __len__(self):
         return len(self.set)
-    
+
     # -- N --
-    
+
     def __next__(self):
         return self.set.__next__()
-    
+
     # -- R --
-    
+
     def remove(self) -> bool:
         with self.get_db_manager().db.atomic() as transaction:
             for k in self._set:
@@ -80,10 +82,11 @@ class ResourceSet(Resource):
             return status
 
     # -- S --
-    
+
     def __setitem__(self, key, val):
         if not isinstance(val, self._resource_types):
-            raise Error(self.full_classname(), "__setitem__", f"The value must be an instance of {self._resource_types}. The actual value is a {type(val)}.")
+            raise BadRequestException(
+                f"The value must be an instance of {self._resource_types}. The actual value is a {type(val)}.")
         self.set[key] = val
 
     def save(self, *args, **kwrags) -> bool:
@@ -96,7 +99,7 @@ class ResourceSet(Resource):
                 self.data["set"][k] = {
                     "uri": self._set[k].uri,
                     "type": self._set[k].full_classname()
-                }   
+                }
             status = super().save(*args, **kwrags)
             if not status:
                 transaction.rollback()
@@ -111,8 +114,8 @@ class ResourceSet(Resource):
                 rtype = self.data["set"][k]["type"]
                 self._set[k] = ModelService.fetch_model(rtype, uri)
         return self._set
-    
+
     # -- V --
-    
+
     def values(self):
         return self.set.values()

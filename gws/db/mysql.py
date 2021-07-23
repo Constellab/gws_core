@@ -1,37 +1,37 @@
 # LICENSE
-# This software is the exclusive property of Gencovery SAS. 
+# This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
 import os
-import subprocess
 from typing import List
 
+from gws.exception.bad_request_exception import BadRequestException
 from gws.settings import Settings
-from gws.utils import slugify
 from gws.system import SysProc
-from gws.logger import Error
+from gws.utils import slugify
+
 
 class MySQLBase:
     """
     MySQLBase class
     """
 
-    user="gws"
-    password="gencovery"
-    db_name="gws"
-    table_prefix="gws_"
-    
-    input_dir="/data/gws/backup/mariadb"
-    output_dir="/data/gws/backup/mariadb"
+    user = "gws"
+    password = "gencovery"
+    db_name = "gws"
+    table_prefix = "gws_"
 
-    input_file=""
-    output_file=""
+    input_dir = "/data/gws/backup/mariadb"
+    output_dir = "/data/gws/backup/mariadb"
 
-    host=""
-    port=3306
-    process=None
-    
+    input_file = ""
+    output_file = ""
+
+    host = ""
+    port = 3306
+    process = None
+
     DUMP_FILENAME = "backup.sql.gz"
     CNF_FILENAME = ".local.cnf"
     IN_PROGRESS_FILENAME = ".in_progress"
@@ -41,22 +41,23 @@ class MySQLBase:
     # -- B --
 
     def build_command(self) -> List[str]:
-        raise Error("Not implemented")
-    
+        raise BadRequestException("Not implemented")
+
     # -- I --
 
     def is_ready(self) -> bool:
-        file_path = os.path.join(self.output_dir,self.IN_PROGRESS_FILENAME)
+        file_path = os.path.join(self.output_dir, self.IN_PROGRESS_FILENAME)
         return not os.path.exists(file_path)
 
     # -- R --
 
-    def run(self, force: bool=False, wait: bool=False) -> bool:
+    def run(self, force: bool = False, wait: bool = False) -> bool:
         if not self.is_ready() and not force:
             Warning("An db process is already in progress")
             return False
 
-        in_progress_file = os.path.join(self.output_dir, self.IN_PROGRESS_FILENAME)
+        in_progress_file = os.path.join(
+            self.output_dir, self.IN_PROGRESS_FILENAME)
         log_out_file = os.path.join(self.output_dir, self.LOG_OUR_FILE_NAME)
         log_err_file = os.path.join(self.output_dir, self.LOG_ERR_FILE_NAME)
 
@@ -88,25 +89,26 @@ class MySQLBase:
 
                 if wait:
                     self.process.wait()
-        
+
         return True
 
     # -- S --
 
     def set_default_config(self, db_name):
-        self.user=db_name
-        self.password="gencovery"
-        self.db_name=db_name
-        self.table_prefix=f"{db_name}_"
-        self.output_dir=f"/data/{db_name}/backup/mariadb"
-        self.host=f"{db_name}_prod_db"
-        self.port=3306
+        self.user = db_name
+        self.password = "gencovery"
+        self.db_name = db_name
+        self.table_prefix = f"{db_name}_"
+        self.output_dir = f"/data/{db_name}/backup/mariadb"
+        self.host = f"{db_name}_prod_db"
+        self.port = 3306
 
 # ####################################################################
 #
 # MySQLDump
 #
 # ####################################################################
+
 
 class MySQLDump(MySQLBase):
     """
@@ -117,12 +119,15 @@ class MySQLDump(MySQLBase):
 
     def build_command(self) -> List[str]:
         settings = Settings.retrieve()
-        self.db_name = slugify(self.db_name, snakefy=True)                          #slugify string for security
-        self.table_prefix = slugify(self.table_prefix, snakefy=True)                #slugify string for security
+        # slugify string for security
+        self.db_name = slugify(self.db_name, snakefy=True)
+        # slugify string for security
+        self.table_prefix = slugify(self.table_prefix, snakefy=True)
         self.host = settings.get_maria_db_host(self.db_name)
 
         if not self.output_file:
-            self.output_file = os.path.join(self.output_dir, self.DUMP_FILENAME)
+            self.output_file = os.path.join(
+                self.output_dir, self.DUMP_FILENAME)
 
         login = f"--defaults-extra-file={self.CNF_FILENAME} --host {self.host} --port {self.port}"
         cmd = [
@@ -132,7 +137,7 @@ class MySQLDump(MySQLBase):
         ]
         return cmd
 
-    
+
 # ####################################################################
 #
 # MySQLLoad
@@ -148,8 +153,10 @@ class MySQLLoad(MySQLBase):
 
     def build_command(self) -> List[str]:
         settings = Settings.retrieve()
-        self.db_name = slugify(self.db_name, snakefy=True)                          #slugify string for security
-        self.table_prefix = slugify(self.table_prefix, snakefy=True)                #slugify string for security
+        # slugify string for security
+        self.db_name = slugify(self.db_name, snakefy=True)
+        # slugify string for security
+        self.table_prefix = slugify(self.table_prefix, snakefy=True)
         self.host = settings.get_maria_db_host(self.db_name)
         if not self.input_file:
             self.input_file = os.path.join(self.input_dir, self.DUMP_FILENAME)

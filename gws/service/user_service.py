@@ -4,19 +4,21 @@
 # About us: https://gencovery.com
 
 from typing import Any, Coroutine, Union
+
+from gws.exception.bad_request_exception import BadRequestException
+from gws.exception.unauthorized_exception import UnauthorizedException
 from starlette.responses import JSONResponse
 from starlette_context import context
 
+from .._app._central_app._auth_central import generate_user_access_token
+from ..activity import Activity
 from ..dto.credentials_dto import CredentialsDTO
 from ..exception.wrong_credentials_exception import WrongCredentialsException
-from ..http import HTTPInternalServerError, HTTPUnauthorized
-from ..logger import Error
-from ..activity import Activity
-from ..user import User
 from ..query import Paginator
-from .._app._central_app._auth_central import generate_user_access_token
+from ..user import User
 from .base_service import BaseService
 from .central_service import CentralService
+
 
 class UserService(BaseService):
 
@@ -34,7 +36,7 @@ class UserService(BaseService):
     def create_user(cls, data: dict) -> User:
         group = data.get('group', 'user')
         if group == "sysuser":
-            raise Error("Central", "create_user", "Cannot create sysuser")
+            raise BadRequestException("Cannot create sysuser")
         u = User.get_by_uri(data['uri'])
         if not u:
             user = User(
@@ -50,11 +52,11 @@ class UserService(BaseService):
             if user.save():
                 return User.get_by_uri(user.uri)
             else:
-                raise Error("Central", "create_user",
-                            "Cannot create the user")
+                raise BadRequestException(
+                    "Cannot create the user")
         else:
-            raise Error("Central", "create_user",
-                        "The user already exists")
+            raise BadRequestException(
+                "The user already exists")
 
     # -- D --
 
@@ -76,7 +78,8 @@ class UserService(BaseService):
         if user_uri:
             query = query.join(User).where(User.uri == user_uri)
         if activity_type:
-            query = query.where(Activity.activity_type == activity_type.upper())
+            query = query.where(Activity.activity_type ==
+                                activity_type.upper())
         paginator = Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
         if as_json:
@@ -117,9 +120,10 @@ class UserService(BaseService):
             try:
                 user = cls._console_data["user"]
             except Exception as err:
-                raise Error("UserService", "get_current_user", "No HTTP nor Console user authenticated") from err
+                raise BadRequestException(
+                    "No HTTP nor Console user authenticated") from err
         if user is None:
-            raise Error("UserService", "get_current_user", "No HTTP nor Console user authenticated")
+            raise BadRequestException("No HTTP nor Console user authenticated")
         return user
 
     @classmethod
@@ -136,13 +140,13 @@ class UserService(BaseService):
     def set_user_status(cls, uri, data) -> User:
         user = User.get_by_uri(uri)
         if user is None:
-            raise Error("Central", "set_user_status", "User not found")
+            raise BadRequestException("User not found")
         if "is_active" in data:
             user.is_active = data["is_active"]
         if "group" in data:
             user.group = data["group"]
         if not user.save():
-            raise Error("Central", "set_user_status", "Cannot save the user")
+            raise BadRequestException("Cannot save the user")
         return user
 
     @classmethod
@@ -163,13 +167,13 @@ class UserService(BaseService):
                 try:
                     user = User.get(User.uri == user.uri)
                 except Exception as err:
-                    raise HTTPInternalServerError(detail="Invalid current user") from err
+                    raise BadRequestException("Invalid current user") from err
 
             if not isinstance(user, User):
-                raise HTTPInternalServerError(detail="Invalid current user")
+                raise BadRequestException("Invalid current user")
 
             if not user.is_active:
-                raise HTTPUnauthorized(detail="Not authorized")
+                raise UnauthorizedException("Not authorized")
 
             try:
                 # is http contexts

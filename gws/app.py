@@ -1,22 +1,23 @@
 # LICENSE
-# This software is the exclusive property of Gencovery SAS. 
+# This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
 import os
-import uvicorn
 
+import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from ._app.core_app import core_app
+from gws.logger import Logger
+
 from ._app.central_app import central_app
+from ._app.core_app import core_app
+from .queue import Queue
 from .settings import Settings
 from .study import Study
-from .user import User
 from .system import Monitor
-from .queue import Queue
-from .logger import Info
+from .user import User
 
 app = FastAPI(docs_url=None)
 
@@ -26,10 +27,12 @@ app = FastAPI(docs_url=None)
 #
 ####################################################################################
 
+
 @app.on_event("startup")
 async def startup():
     """ Called before the app is started """
     App.init()
+
 
 @app.on_event("shutdown")
 async def shutdown():
@@ -42,11 +45,12 @@ async def shutdown():
 #
 ####################################################################################
 
+
 class App:
     """
     Base App
     """
-    
+
     app: FastAPI = app
 
     @classmethod
@@ -61,7 +65,8 @@ class App:
         Study.create_default_instance()
         User.create_owner_and_sysuser()
         Monitor.init(daemon=True)
-        Queue.init(daemon=True, verbose=False) #/!\ Daemon is False because experiments are run through CLI in non-blocking mode
+        # /!\ Daemon is False because experiments are run through CLI in non-blocking mode
+        Queue.init(daemon=True, verbose=False)
 
     @classmethod
     def deinit(cls):
@@ -73,25 +78,29 @@ class App:
         Queue.deinit()
 
     @classmethod
-    def start(cls, ip: str="0.0.0.0", port: int =3000):
+    def start(cls, ip: str = "0.0.0.0", port: int = 3000):
         """
         Starts FastAPI uvicorn
         """
 
         from ._sphynx.docgen import docgen
+
         # static dirs and docs
         settings = Settings.retrieve()
         dirs = settings.get_dependency_dirs()
-        Info(f"Starting server in {('prod' if settings.is_prod else 'dev')} mode ...")
+        Logger.info(
+            f"Starting server in {('prod' if settings.is_prod else 'dev')} mode ...")
         for name in dirs:
             static_dir = os.path.join(dirs["gws"], "index/static/")
             if os.path.exists(os.path.join(static_dir)):
-                cls.app.mount(f"/static/{name}/", StaticFiles(directory=static_dir), name=f"/static/{name}")
-            html_dir = os.path.join(dirs[name],"./docs/html/build")
-            if not os.path.exists(os.path.join(html_dir,"index.html")):
-                #os.makedirs(html_dir)
+                cls.app.mount(
+                    f"/static/{name}/", StaticFiles(directory=static_dir), name=f"/static/{name}")
+            html_dir = os.path.join(dirs[name], "./docs/html/build")
+            if not os.path.exists(os.path.join(html_dir, "index.html")):
+                # os.makedirs(html_dir)
                 docgen(name, dirs[name], settings, force=True)
-            cls.app.mount(f"/docs/{name}/", StaticFiles(directory=html_dir), name=f"/docs/{name}/")
+            cls.app.mount(
+                f"/docs/{name}/", StaticFiles(directory=html_dir), name=f"/docs/{name}/")
         # api routes
         cls.app.mount("/core-api/", core_app)
         cls.app.mount("/central-api/", central_app)

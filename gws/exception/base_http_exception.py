@@ -1,17 +1,17 @@
 
 from typing import Dict
 
-from fastapi import status
-
-from .base_http_exception import BaseHTTPException
+from fastapi import HTTPException
 
 
-class BadRequestException(BaseHTTPException):
+class BaseHTTPException(HTTPException):
     """
-    Generic exception to throw a 400 error useful for any kind of error
+    Generic exception
+    All the exception that extends this exceptions are considered a excepted exceptions and
+    those are not logged in the console nor the logging file
     """
 
-    def __init__(self, detail: str, unique_code: str = None,
+    def __init__(self, http_status_code: int, detail: str, unique_code: str = None,
                  detail_args: Dict = None, headers: Dict = None) -> None:
         """Throw a generic exception
 
@@ -30,10 +30,8 @@ class BadRequestException(BaseHTTPException):
         :param headers: if specific header need to be returned in the HTTP response, defaults to None
         :type headers: Dict, optional
         """
-
-        super().__init__(
-            http_status_code=status.HTTP_400_BAD_REQUEST,
-            detail=detail,
-            unique_code=unique_code,
-            detail_args=detail_args,
-            headers=headers)
+        super().__init__(status_code=http_status_code, detail=detail)
+        self.detail = detail
+        self.unique_code = unique_code
+        self.detail_args = detail_args
+        self.headers = headers

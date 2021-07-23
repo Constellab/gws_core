@@ -3,17 +3,22 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import json
 import asyncio
 import inspect
+import json
 import zlib
-from peewee import  IntegerField, CharField, ForeignKeyField, DeferredForeignKey
-from .user import User
+
+from peewee import CharField, ForeignKeyField, IntegerField
+
+from gws.exception.bad_request_exception import BadRequestException
+
 from .config import Config
-from .logger import Error, Info
+from .io import InPort, Input, OutPort, Output
+from .logger import Logger
 from .progress_bar import ProgressBar
+from .user import User
 from .viewable import Viewable
-from .io import Input, Output, InPort, OutPort
+
 
 class Process(Viewable):
     """
@@ -30,7 +35,7 @@ class Process(Viewable):
     # @ToDo:
     # ------
     # Try to replace `protocol_id` and `experiment_id` by foreign keys with `lazy_load=False`
-    
+
     protocol_id = IntegerField(null=True, index=True)
     experiment_id = IntegerField(null=True, index=True)
     instance_name = CharField(null=True, index=True)
@@ -57,7 +62,7 @@ class Process(Viewable):
     _is_singleton = False
     _is_removable = False
     _is_plug = False
-    _table_name = 'gws_process'     #is locked for all processes
+    _table_name = 'gws_process'  # is locked for all processes
 
     def __init__(self, *args, user=None, **kwargs):
         """
@@ -90,14 +95,16 @@ class Process(Viewable):
             self.config = Config(specs=self.config_specs)
             self.config.save()
 
-            self.progress_bar = ProgressBar(process_uri=self.uri, process_type=self.type)
+            self.progress_bar = ProgressBar(
+                process_uri=self.uri, process_type=self.type)
             self.progress_bar.save()
 
             if not user:
                 user = User.get_sysuser()
 
             if not isinstance(user, User):
-                raise Error("gws.process.Process", "__init__", "The user must be an instance of User")
+                raise BadRequestException(
+                    "The user must be an instance of User")
 
             self.created_by = user
             #self.is_protocol = isinstance(self, Protocol)
@@ -107,7 +114,6 @@ class Process(Viewable):
 
         self.save()
 
-
     def _init_io(self):
         from .service.model_service import ModelService
         if type(self) is Process:
@@ -116,7 +122,7 @@ class Process(Viewable):
 
         # input
         for k in self.input_specs:
-            self._input.create_port(k,self.input_specs[k])
+            self._input.create_port(k, self.input_specs[k])
         if not self.data.get("input"):
             self.data["input"] = {}
         for k in self.data["input"]:
@@ -127,7 +133,7 @@ class Process(Viewable):
 
         # output
         for k in self.output_specs:
-            self._output.create_port(k,self.output_specs[k])
+            self._output.create_port(k, self.output_specs[k])
         if not self.data.get("output"):
             self.data["output"] = {}
         for k in self.data["output"]:
@@ -148,7 +154,8 @@ class Process(Viewable):
         with self._db_manager.db.atomic() as transaction:
             if not super().archive(tf):
                 return False
-            self.config.archive(tf) #-> try to archive the config if possible!
+            # -> try to archive the config if possible!
+            self.config.archive(tf)
             if archive_resources:
                 for r in self.resources:
                     if not r.archive(tf):
@@ -166,24 +173,25 @@ class Process(Viewable):
 
         if "check_table_name" in kwargs:
             if kwargs.get("check_table_name", False):
-                if cls._table_name !=  Process._table_name:
-                    raise Error(cls.full_classname(), "create_table", f"The table name of {cls.full_classname()} must be {Process._table_name}")         
+                if cls._table_name != Process._table_name:
+                    raise BadRequestException(
+                        f"The table name of {cls.full_classname()} must be {Process._table_name}")
             del kwargs["check_table_name"]
         super().create_table(*args, **kwargs)
-
 
     @classmethod
     def create_process_type(cls):
         from .typing import ProcessType
-        exist = ProcessType.select().where(ProcessType.model_type == cls.full_classname()).count()
+        exist = ProcessType.select().where(
+            ProcessType.model_type == cls.full_classname()).count()
         if not exist:
             proc_type = ProcessType(
-                model_type = cls.full_classname(),
-                root_model_type = "gws.process.Process"
+                model_type=cls.full_classname(),
+                root_model_type="gws.process.Process"
             )
             proc_type.save()
 
-    def create_experiment(self, study: 'Study', uri:str=None, user: 'User' = None):
+    def create_experiment(self, study: 'Study', uri: str = None, user: 'User' = None):
         """
         Create an experiment using a protocol composed of this process
 
@@ -202,7 +210,7 @@ class Process(Viewable):
         if user is None:
             user = UserService.get_current_user()
             if user is None:
-                raise Error("Process", "create_experiment", "A user is required")
+                raise BadRequestException("A user is required")
         if uri:
             e = Experiment(uri=uri, protocol=proto, study=study, user=user)
         else:
@@ -216,7 +224,9 @@ class Process(Viewable):
         """
 
         from .service.model_service import ModelService
-        model_t = ModelService.get_model_type(self.type) #/:\ Use the true object type (self.type)
+
+        # /:\ Use the true object type (self.type)
+        model_t = ModelService.get_model_type(self.type)
         source = inspect.getsource(model_t)
         return zlib.compress(source.encode())
 
@@ -287,7 +297,6 @@ class Process(Viewable):
         p = ProgressBar.get_by_id(self.progress_bar.id)
         return p.is_running
 
-
     @property
     def is_finished(self) -> bool:
         if not self.progress_bar:
@@ -334,9 +343,10 @@ class Process(Viewable):
         """
 
         if not isinstance(name, str):
-            raise Error("gws.process.Process", "in_port", "The name of the input port must be a string")
+            raise BadRequestException(
+                "The name of the input port must be a string")
         if not name in self._input._ports:
-            raise Error("gws.process.Process", "in_port", f"The input port '{name}' is not found")
+            raise BadRequestException(f"The input port '{name}' is not found")
         return self._input._ports[name]
 
     # -- J --
@@ -382,9 +392,10 @@ class Process(Viewable):
         :rtype: OutPort
         """
         if not isinstance(name, str):
-            raise Error("gws.process.Process", "out_port", "The name of the output port must be a string")
+            raise BadRequestException(
+                "The name of the output port must be a string")
         if not name in self._output._ports:
-            raise Error("gws.process.Process", "out_port", f"The output port '{name}' is not found")
+            raise BadRequestException(f"The output port '{name}' is not found")
         return self._output._ports[name]
 
     # -- P --
@@ -457,24 +468,25 @@ class Process(Viewable):
             await self.task()
             await self._run_after_task()
         except Exception as err:
-            self.progress_bar.stop(message = str(err))
+            self.progress_bar.stop(message=str(err))
             raise err
 
     async def _run_next_processes(self):
         self._output.propagate()
-        aws  = []
+        aws = []
         for proc in self._output.get_next_procs():
-            aws.append( proc._run() )
+            aws.append(proc._run())
         if len(aws):
-            await asyncio.gather( *aws )
+            await asyncio.gather(*aws)
 
-    async def _run_before_task( self, *args, **kwargs ):
-        Info(f"Running {self.full_classname()} ...")
+    async def _run_before_task(self, *args, **kwargs):
+        Logger.info(f"Running {self.full_classname()} ...")
         self.is_instance_running = True
         self.is_instance_finished = False
         self.data["input"] = {}
         for k in self._input:
-            if self._input[k]:  #-> check that an input resource exists (for optional input)
+            # -> check that an input resource exists (for optional input)
+            if self._input[k]:
                 if not self._input[k].is_saved():
                     self._input[k].save()
                 self.data["input"][k] = {
@@ -484,8 +496,8 @@ class Process(Viewable):
         self.progress_bar.start(max_value=self._max_progress_value)
         self.save()
 
-    async def _run_after_task( self, *args, **kwargs ):
-        Info(f"Task of {self.full_classname()} successfully finished!")
+    async def _run_after_task(self, *args, **kwargs):
+        Logger.info(f"Task of {self.full_classname()} successfully finished!")
         self.is_instance_running = False
         self.is_instance_finished = True
         self.progress_bar.stop()
@@ -503,7 +515,8 @@ class Process(Viewable):
             self.save(update_graph=True)
         self.data["output"] = {}
         for k in self._output:
-            if self._output[k]: #-> check that an output resource exists (for optional outputs)
+            # -> check that an output resource exists (for optional outputs)
+            if self._output[k]:
                 self.data["output"][k] = {
                     "uri": self._output[k].uri,
                     "type": self._output[k].type
@@ -518,7 +531,7 @@ class Process(Viewable):
         :return: The port
         :rtype: OutPort
         """
-        
+
         return self.out_port(name)
 
     # -- S --
@@ -526,12 +539,13 @@ class Process(Viewable):
     def set_experiment(self, experiment):
         from .experiment import Experiment
         if not isinstance(experiment, Experiment):
-            raise Error("gws.process.Process", "set_experiment", f"An instance of Experiment is required")
+            raise BadRequestException("An instance of Experiment is required")
         if not experiment.id:
             if not experiment.save():
-                raise Error("gws.process.Process", "set_experiment", f"Cannot save the experiment")
+                raise BadRequestException("Cannot save the experiment")
         if self.experiment_id and self.experiment_id != experiment.id:
-            raise Error("gws.process.Process", "set_experiment", f"The protocol is already related to an experiment")
+            raise BadRequestException(
+                "The protocol is already related to an experiment")
         self.experiment_id = experiment.id
         self.save()
 
@@ -546,10 +560,10 @@ class Process(Viewable):
         """
 
         if not isinstance(name, str):
-            raise Error("gws.process.Process", "set_input", "The name must be a string.")
+            raise BadRequestException("The name must be a string.")
 
-        #if not not isinstance(resource, Resource):
-        #    raise Error("gws.process.Process", "set_input", "The resource must be an instance of Resource.")
+        # if not not isinstance(resource, Resource):
+        #    raise BadRequestException("The resource must be an instance of Resource.")
 
         self._input[name] = resource
 
@@ -584,10 +598,10 @@ class Process(Viewable):
 
         from .protocol import Protocol
         if not isinstance(protocol, Protocol):
-            raise Error("gws.process.Process", "set_protocol", f"An instance of Protocol is required")
+            raise BadRequestException("An instance of Protocol is required")
         if not protocol.id:
             if not protocol.save():
-                raise Error("gws.process.Process", "set_protocol", f"Cannot save the experiment")
+                raise BadRequestException("Cannot save the experiment")
         self.protocol_id = protocol.id
         self._protocol = protocol
 
@@ -596,7 +610,7 @@ class Process(Viewable):
     async def task(self):
         pass
 
-    def to_json(self, *, shallow=False, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+    def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the process.
 
@@ -622,28 +636,30 @@ class Process(Viewable):
 
         bare = kwargs.get("bare")
         if bare:
-            _json["experiment"] = { "uri" : "" }
-            _json["protocol"] = { "uri" : "" }
+            _json["experiment"] = {"uri": ""}
+            _json["protocol"] = {"uri": ""}
             _json["is_running"] = False
             _json["is_finished"] = False
             if shallow:
-                _json["config"] = { "uri" : "" }
-                _json["progress_bar"] = { "uri" : "" }
-                #if _json["data"].get("graph"):
+                _json["config"] = {"uri": ""}
+                _json["progress_bar"] = {"uri": ""}
+                # if _json["data"].get("graph"):
                 #    del _json["data"]["graph"]
             else:
                 _json["config"] = self.config.to_json(**kwargs)
                 _json["progress_bar"] = self.progress_bar.to_json(**kwargs)
         else:
-            _json["experiment"] = { "uri" : (self.experiment.uri if self.experiment_id else "") }
-            _json["protocol"] = { "uri" : (self.protocol.uri if self.protocol_id else "") }
+            _json["experiment"] = {
+                "uri": (self.experiment.uri if self.experiment_id else "")}
+            _json["protocol"] = {
+                "uri": (self.protocol.uri if self.protocol_id else "")}
             _json["is_running"] = self.progress_bar.is_running
             _json["is_finished"] = self.progress_bar.is_finished
 
             if shallow:
-                _json["config"] = { "uri" : self.config.uri }
-                _json["progress_bar"] = { "uri" : self.progress_bar.uri }
-                #if _json["data"].get("graph"):
+                _json["config"] = {"uri": self.config.uri}
+                _json["progress_bar"] = {"uri": self.progress_bar.uri}
+                # if _json["data"].get("graph"):
                 #    del _json["data"]["graph"]
             else:
                 _json["config"] = self.config.to_json(**kwargs)

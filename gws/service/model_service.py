@@ -1,40 +1,39 @@
 # LICENSE
-# This software is the exclusive property of Gencovery SAS. 
+# This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import glob
-import os
 import importlib
 import inspect
+import os
 from typing import List, Dict
 
-from ..query import Paginator
-from ..db.model import Model
-from ..process import Process
-from ..resource import Resource
-from ..protocol import Protocol
-from ..experiment import Experiment
 from ..config import Config
-from ..view_model import ViewModel
-from ..settings import Settings
-from ..logger import Warning, Info, Error
-from ..http import *
+from ..db.model import Model
 from ..dto.rendering_dto import RenderingDTO
+from ..experiment import Experiment
+from ..http import *
+from ..process import Process
+from ..protocol import Protocol
+from ..query import Paginator
+from ..resource import Resource
+from ..settings import Settings
+from ..view_model import ViewModel
 from .base_service import BaseService
+
 
 class ModelService(BaseService):
     
     _model_types: Dict[str, type] = {}
     
     # -- A --
-    
+
     @classmethod
     def archive_model(cls, type: str, uri: str) -> dict:
         return cls.__set_archive_status(True, type, uri)
-    
+
     # -- C --
-    
+
     @classmethod
     def create_view_model(cls, type: str, uri: str, data: RenderingDTO) -> (ViewModel,):
         """
@@ -54,14 +53,15 @@ class ModelService(BaseService):
         if t is None:
             raise HTTPNotFound(detail=f"Model type '{type}' not found")
         try:
-            view_model = t.get(t.uri == uri).create_view_model(data=data.dict())
+            view_model = t.get(t.uri == uri).create_view_model(
+                data=data.dict())
             return view_model
         except Exception as err:
-            raise HTTPNotFound(detail=f"Cannot create a view_model for the model of type '{type}' and uri '{uri}'", debug_error=err) from err
+            raise HTTPNotFound(
+                detail=f"Cannot create a view_model for the model of type '{type}' and uri '{uri}'", debug_error=err) from err
 
-            
     @classmethod
-    def create_tables(cls, models: List[type] = None, model_type:type=None):
+    def create_tables(cls, models: List[type] = None, model_type: type = None):
         """
         Create tables (if they don't exist)
 
@@ -74,13 +74,13 @@ class ModelService(BaseService):
         db_list, model_list = cls._get_db_and_model_lists(models)
         for db in db_list:
             i = db_list.index(db)
-            models = [ t for t in model_list[i] if not t.table_exists() ]
+            models = [t for t in model_list[i] if not t.table_exists()]
             if model_type:
-                models = [ t for t in models if isinstance(t,model_type) ]
+                models = [t for t in models if isinstance(t, model_type)]
             db.create_tables(models)
 
     @classmethod
-    def drop_tables(cls, models: List[type] = None, model_type:type=None):
+    def drop_tables(cls, models: List[type] = None, model_type: type = None):
         """
         Drops tables (if they exist)
 
@@ -90,14 +90,14 @@ class ModelService(BaseService):
         :type model_type: `type`
         """
 
-        
         db_list, model_list = cls._get_db_and_model_lists(models)
         for db in db_list:
             try:
                 i = db_list.index(db)
-                models: List[Model] = [ t for t in model_list[i] if t.table_exists() ]
+                models: List[Model] = [
+                    t for t in model_list[i] if t.table_exists()]
                 if model_type:
-                    models = [ t for t in models if isinstance(t,model_type) ]
+                    models = [t for t in models if isinstance(t, model_type)]
                 if models[0].is_mysql_engine():
                     db.execute_sql("SET FOREIGN_KEY_CHECKS=0")
                 db.drop_tables(models)
@@ -105,7 +105,6 @@ class ModelService(BaseService):
                     db.execute_sql("SET FOREIGN_KEY_CHECKS=1")
             except:
                 pass
-                
 
     @classmethod
     def count_model(cls, type: str) -> int:
@@ -119,9 +118,8 @@ class ModelService(BaseService):
 
         return t.select_me().count()
 
-    
     # -- F --
-    
+
     @classmethod
     def fetch_model(cls, type: str, uri: str, as_json=False) -> (Model,):
         """
@@ -146,18 +144,19 @@ class ModelService(BaseService):
                 return o
         except Exception as _:
             return None
-    
+
     @classmethod
-    def fetch_list_of_models(cls, \
-                             type: str,  \
-                             search_text: str=None, \
-                             page:int=1, number_of_items_per_page: int=20, \
-                             as_json: bool=False) -> (Paginator, List[Model], List[dict]):
-        
+    def fetch_list_of_models(cls,
+                             type: str,
+                             search_text: str = None,
+                             page: int = 1, number_of_items_per_page: int = 20,
+                             as_json: bool = False) -> (Paginator, List[Model], List[dict]):
+
         t = cls.get_model_type(type)
         if t is None:
             raise HTTPNotFound(detail=f"Invalid Model type")
-        number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)
+        number_of_items_per_page = min(
+            number_of_items_per_page, cls._number_of_items_per_page)
         if search_text:
             query = t.search(search_text)
             result = []
@@ -166,21 +165,23 @@ class ModelService(BaseService):
                     result.append(o.get_related().to_json(shallow=True))
                 else:
                     result.append(o.get_related())
-            paginator = Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page)
+            paginator = Paginator(
+                query, page=page, number_of_items_per_page=number_of_items_per_page)
             return {
-                'data' : result,
+                'data': result,
                 'paginator': paginator._paginator_dict()
             }
         else:
             query = t.select().order_by(t.creation_datetime.desc())
-            paginator = Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page)
+            paginator = Paginator(
+                query, page=page, number_of_items_per_page=number_of_items_per_page)
             if as_json:
                 return paginator.to_json(shallow=True)
             else:
                 return paginator
- 
+
     # -- G --
-    
+
     @classmethod
     def _get_db_and_model_lists(cls, models: list = None):
         if not models:
@@ -207,13 +208,13 @@ class ModelService(BaseService):
     def get_model_type(cls, type: str = None) -> type:
         """
         Get the type of a registered model using its litteral type
-        
+
         :param type: Litteral type (can be a slugyfied string)
         :type type: str
         :return: The type if the model is registered, None otherwise
         :type: `str`
         """
-   
+
         if type is None:
             return None
         if type in cls._model_types:
@@ -229,7 +230,7 @@ class ModelService(BaseService):
             return Resource
         elif type.lower() == "config":
             return Config
- 
+
         tab = type.split(".")
         n = len(tab)
         module_name = ".".join(tab[0:n-1])
@@ -239,43 +240,45 @@ class ModelService(BaseService):
             t = getattr(module, function_name, None)
             cls._model_types[type] = t
         except Exception as err:
-            Warning("gws.service.model_service.ModelService", "get_model_type", f"An error occured. Error: {err}")
+            Logger.warning("gws.service.model_service.ModelService",
+                           "get_model_type", f"An error occured. Error: {err}")
             t = None
 
         return t
-    
+
     # -- I --
 
     @classmethod
     def _inspect_model_types(cls):
         settings = Settings.retrieve()
         dep_dirs = settings.get_dependency_dirs()
-        
+
         def __get_list_of_sub_modules(cdir):
             modules = [[f, dirpath]
-                    for dirpath, dirnames, files in os.walk(cdir)
-                        for f in files if f.endswith('.py') and not f.startswith('_')
-            ]
+                       for dirpath, dirnames, files in os.walk(cdir)
+                       for f in files if f.endswith('.py') and not f.startswith('_')
+                       ]
 
             f = []
             for kv in modules:
                 file_name = kv[0]
-                folder = kv[1].replace(cdir,'').replace("/",".").strip(".")
-                file_name = file_name.replace(".py","")
+                folder = kv[1].replace(cdir, '').replace("/", ".").strip(".")
+                file_name = file_name.replace(".py", "")
                 if "._" in folder or folder.startswith("_"):
                     continue
 
                 if folder:
-                    f.append( folder+"."+file_name )
+                    f.append(folder+"."+file_name)
                 else:
-                    f.append( file_name )
+                    f.append(file_name)
 
             return f
 
         model_type_list = []
         for brick_name in dep_dirs:
             cdir = dep_dirs[brick_name]
-            module_names = __get_list_of_sub_modules( os.path.join(cdir, brick_name) )
+            module_names = __get_list_of_sub_modules(
+                os.path.join(cdir, brick_name))
             if brick_name == "gws":
                 _black_list = ["settings", "runner", "manage", "logger"]
                 for k in _black_list:
@@ -285,7 +288,8 @@ class ModelService(BaseService):
                         pass
             for module_name in module_names:
                 try:
-                    submodule = importlib.import_module(brick_name+"."+module_name)
+                    submodule = importlib.import_module(
+                        brick_name+"."+module_name)
                     for class_name, _ in inspect.getmembers(submodule, inspect.isclass):
                         t = getattr(submodule, class_name, None)
                         if issubclass(t, Model):
@@ -296,7 +300,7 @@ class ModelService(BaseService):
         return model_type_list
 
     # -- R --
-        
+
     @classmethod
     def register_all_processes_and_resources(cls):
         model_type_list = cls._inspect_model_types()
@@ -307,26 +311,28 @@ class ModelService(BaseService):
                 process_type_list.append(m_t)
                 if (not m_t is Process) and (not m_t is Protocol):
                     m_t.create_process_type()
-                    cls._model_types[ m_t.full_classname() ] = m_t
+                    cls._model_types[m_t.full_classname()] = m_t
             elif issubclass(m_t, Resource):
                 resource_type_list.append(m_t)
                 if not m_t is Resource:
                     m_t.create_resource_type()
-                    cls._model_types[ m_t.full_classname() ] = m_t   
-        Info(f"Resource: {len(resource_type_list)} types registered:\n{resource_type_list}")
-        Info(f"Process: {len(process_type_list)} types registered:\n{process_type_list}")
-                
+                    cls._model_types[m_t.full_classname()] = m_t
+        Logger.info(
+            f"Resource: {len(resource_type_list)} types registered:\n{resource_type_list}")
+        Logger.info(
+            f"Process: {len(process_type_list)} types registered:\n{process_type_list}")
+
     # -- S --
-    
+
     @classmethod
     def save_all(cls, model_list: List[Model] = None) -> bool:
         """
         Atomically and safely save a list of models in the database. If an error occurs
         during the operation, the whole transactions is rolled back.
-        
+
         :param model_list: List of models
         :type model_list: `list`
-        :return: True if all the model are successfully saved, False otherwise. 
+        :return: True if all the model are successfully saved, False otherwise.
         :rtype: `bool`
         """
 
@@ -335,12 +341,12 @@ class ModelService(BaseService):
                 if model_list is None:
                     return
                     #model_list = cls.models.values()
-                
+
                 # 1) save processes
                 for model in model_list:
                     if isinstance(model, Process):
                         model.save()
-                
+
                 # 2) save resources
                 for model in model_list:
                     if isinstance(model, Resource):
@@ -355,24 +361,23 @@ class ModelService(BaseService):
                 return False
 
         return True
-    
+
     @classmethod
-    def __set_archive_status(cls, tf:bool, type: str, uri: str) -> dict:
+    def __set_archive_status(cls, tf: bool, type: str, uri: str) -> dict:
         obj = cls.fetch_model(type, uri)
         if obj is None:
             raise HTTPNotFound(detail=f"Model not found with uri {uri}")
         obj.archive(tf)
         return obj
-            
+
     # -- U --
-    
+
     @classmethod
     def unarchive_model(cls, type: str, uri: str) -> dict:
         return cls.__set_archive_status(False, type, uri)
-    
-    
+
     # -- V --
-    
+
     @classmethod
     def verify_model_hash(cls, type, uri) -> bool:
         """
@@ -385,11 +390,8 @@ class ModelService(BaseService):
         :return: True if the hash is valid, False otherwise
         :rtype: `bool`
         """
-        
+
         obj = cls.fetch_model(type, uri)
         if obj is None:
             raise HTTPNotFound(detail=f"Model not found with uri {uri}")
-        return obj.verify_hash() #{"status": obj.verify_hash()}
-    
-
-    
+        return obj.verify_hash()  # {"status": obj.verify_hash()}

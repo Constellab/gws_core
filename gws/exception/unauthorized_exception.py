@@ -1,13 +1,38 @@
-from fastapi import HTTPException, status
-from ..logger import Logger
+from re import A
+from typing import Dict
 
-class UnauthorizedException(HTTPException):
+from fastapi import status
+
+from .base_http_exception import BaseHTTPException
+
+
+class UnauthorizedException(BaseHTTPException):
     """
     Generic unauthorized exception to throw a 401 error
     """
 
-    def __init__(self, message: str) -> None:
+    def __init__(self, detail: str, unique_code: str = None,
+                 detail_args: Dict = None, headers: Dict = None) -> None:
+        """Throw a generic exception
+
+        :param http_status_code: HTTP error code
+        :type http_status_code: int
+        :param detail: Human redable message of the error
+        :type detail: str
+        :param unique_code: Unique code to recognize the error,
+        if not provided, a code is generated with filename and method name (that raised the exception), defaults to None
+        If can also  be use for internationalisation (translating the detail message)
+        :type unique_code: str, optional
+        :param detail_args: if provided, it replace the arg in the detail message (between double bracket {{}}) with the corresponding dict value, defaults to None
+        For example : detail = 'Hello {{name}}' and detail_args = {"name" : "Bob"}, the message that will be show will be 'Hello bob'
+        This is useful for internationalisation
+        :type detail_args: Dict, optional
+        :param headers: if specific header need to be returned in the HTTP response, defaults to None
+        :type headers: Dict, optional
+        """
         super().__init__(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=message)
-        Logger.error(f"{self}")
+            http_status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=detail,
+            unique_code=unique_code,
+            detail_args=detail_args,
+            headers=headers)

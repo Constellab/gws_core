@@ -1,15 +1,15 @@
 # LICENSE
-# This software is the exclusive property of Gencovery SAS. 
+# This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
 import os
 
-from ..logger import Error
-from ..requests import Requests
-from ..http import *
 from ..db.mysql import MySQLDump, MySQLLoad
+from ..http import *
+from ..requests import Requests
 from .base_service import BaseService
+
 
 class MySQLService(BaseService):
 
@@ -27,7 +27,7 @@ class MySQLService(BaseService):
         :return: The path of the dump file
         :rtype: `str`
         """
-        
+
         dump = MySQLDump()
         dump.set_default_config(db_name)
         dump.run(force=force, wait=wait)
@@ -70,5 +70,5 @@ class MySQLService(BaseService):
         load.run(force=force, wait=wait)
 
     # -- R --
-    
+
 
