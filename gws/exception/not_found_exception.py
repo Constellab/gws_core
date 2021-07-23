@@ -6,9 +6,9 @@ from fastapi import status
 from .base_http_exception import BaseHTTPException
 
 
-class BadRequestException(BaseHTTPException):
+class NotFoundException(BaseHTTPException):
     """
-    Generic exception to throw a 400 error useful for any kind of error
+    Generic exception to throw a 404 not found error useful for any kind of error
     """
 
     def __init__(self, detail: str, unique_code: str = None,
@@ -32,7 +32,7 @@ class BadRequestException(BaseHTTPException):
         """
 
         super().__init__(
-            http_status_code=status.HTTP_400_BAD_REQUEST,
+            http_status_code=status.HTTP_404_NOT_FOUND,
             detail=detail,
             unique_code=unique_code,
             detail_args=detail_args,

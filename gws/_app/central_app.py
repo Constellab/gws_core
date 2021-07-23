@@ -92,29 +92,6 @@ async def generate_user_access_token(user_uri_data: UserUriData,
 
 @central_app.get("/user/test", tags=["User management"])
 async def get_user_test():
-
-    # print(Color['GREEN'])
-    # print(exceptions["test"])
-    # try:
-
-    i = 1 / 0
-    # raise HTTPException(400, "BOnour")
-    #     raise BadRequestException("Waow")
-
-    # except Exception as error:
-    #     print(error)
-    #     tb = sys.exc_info()[-1]
-    #     stk = traceback.extract_tb(tb, 1)
-    #     fname = stk[0][2]
-    #     # StackTrace
-    #     print('')
-
-    # exceptions['Test']
-    # raise Exception("Waow")
-
-    raise BadRequestException(
-        GWSException.INTERNAL_SERVER_ERROR.value, GWSException.INTERNAL_SERVER_ERROR.name)
-
     """
     Testing API user details
     """
@@ -128,7 +105,7 @@ async def get_user_test():
     }
 
 
-@central_app.get("/user/{uri}/activate", tags=["User management"])
+@ central_app.get("/user/{uri}/activate", tags=["User management"])
 async def activate_user(uri: str, _: UserData = Depends(check_central_api_key)):
     """
     Activate a user. Requires central privilege.
@@ -143,7 +120,7 @@ async def activate_user(uri: str, _: UserData = Depends(check_central_api_key)):
             detail=f"Cannot activate the user. Error: {err}")
 
 
-@central_app.get("/user/{uri}/deactivate", tags=["User management"])
+@ central_app.get("/user/{uri}/deactivate", tags=["User management"])
 async def deactivate_user(uri: str, _: UserData = Depends(check_central_api_key)):
     """
     Deactivate a user. Require central privilege.
@@ -158,7 +135,7 @@ async def deactivate_user(uri: str, _: UserData = Depends(check_central_api_key)
             detail=f"Cannot deactivate the user. Error: {err}")
 
 
-@central_app.get("/user/{uri}", tags=["User management"])
+@ central_app.get("/user/{uri}", tags=["User management"])
 async def get_user(uri: str, _: UserData = Depends(check_central_api_key)):
     """
     Get the details of a user. Require central privilege.
@@ -173,7 +150,7 @@ async def get_user(uri: str, _: UserData = Depends(check_central_api_key)):
             detail=f"Cannot get the user. Error: {err}")
 
 
-@central_app.post("/user", tags=["User management"])
+@ central_app.post("/user", tags=["User management"])
 async def create_user(user: UserData, _: UserData = Depends(check_central_api_key)):
     """
     Create a new user
@@ -193,7 +170,7 @@ async def create_user(user: UserData, _: UserData = Depends(check_central_api_ke
             detail=f"Cannot create the user. Error: {err}")
 
 
-@central_app.get("/user", tags=["User management"])
+@ central_app.get("/user", tags=["User management"])
 async def get_users(_: UserData = Depends(check_central_api_key)):
     """
     Get the all the users. Require central privilege.
@@ -205,7 +182,7 @@ async def get_users(_: UserData = Depends(check_central_api_key)):
             detail=f"Cannot get the user. Error: {err}")
 
 
-@central_app.get("/db/{db_name}/dump", tags=["DB management"])
+@ central_app.get("/db/{db_name}/dump", tags=["DB management"])
 async def dump_db(db_name: str, _: UserData = Depends(check_central_api_key)):
     from gws.file import File
     from gws.service.mysql_service import MySQLService

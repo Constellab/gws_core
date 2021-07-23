@@ -3,7 +3,7 @@ import inspect
 import os
 import uuid
 from dis import code_info
-from typing import List
+from typing import Dict, List
 
 from fastapi import status
 from starlette.exceptions import HTTPException
@@ -41,17 +41,24 @@ class ExceptionHandler():
         instance_id: str = cls._get_instance_id()
 
         # generate a unique code if no code were specified
-        unique_code = None
+        unique_code: str = None
         if exception.unique_code is not None:
             unique_code = cls._get_unique_code_for_brick(exception.unique_code)
         else:
             unique_code = cls._generate_unique_code_from_exception()
 
+        detail: str = None
+        if exception.args is not None and exception.detail is not None:
+            detail = cls._replace_detail_args(
+                exception.detail, exception.detail_args)
+        else:
+            detail = exception.detail
+
         Logger.info(
             f"Handle exception - {unique_code} - {exception.detail} - Instance id : {instance_id}")
 
         return ExceptionResponse(status_code=exception.status_code, code=unique_code,
-                                 detail=exception.detail,
+                                 detail=detail,
                                  instance_id=instance_id, headers=exception.headers)
 
     @classmethod
@@ -143,6 +150,19 @@ class ExceptionHandler():
             return file_paths[brick_index + 1]
         except ValueError:
             return ""
+
+    @classmethod
+    def _replace_detail_args(cls, detail: str, detail_args: Dict) -> str:
+        """Replace the arguments in the exception message with dict corresponding values
+        For example : detail = 'Hello {{name}}' and detail_args = {"name" : "Bob"}, the message that will be show will be 'Hello bob'
+        """
+
+        replaced_detail: str = detail
+        for key in detail_args:
+            replaced_detail = replaced_detail.replace(
+                "{{" + key + "}}", str(detail_args[key]))
+
+        return replaced_detail
 
     @classmethod
     def _get_instance_id(cls) -> str:
