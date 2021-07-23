@@ -8,11 +8,14 @@ import inspect
 import os
 from typing import Dict, List
 
+from gws.exception.bad_request_exception import BadRequestException
+from gws.exception.not_found_exception import NotFoundException
+from gws.logger import Logger
+
 from ..config import Config
 from ..db.model import Model
 from ..dto.rendering_dto import RenderingDTO
 from ..experiment import Experiment
-from ..http import *
 from ..process import Process
 from ..protocol import Protocol
 from ..query import Paginator
@@ -51,13 +54,13 @@ class ModelService(BaseService):
 
         t = cls.get_model_type(type)
         if t is None:
-            raise HTTPNotFound(detail=f"Model type '{type}' not found")
+            raise NotFoundException(detail=f"Model type '{type}' not found")
         try:
             view_model = t.get(t.uri == uri).create_view_model(
                 data=data.dict())
             return view_model
         except Exception as err:
-            raise HTTPNotFound(
+            raise BadRequestException(
                 detail=f"Cannot create a view_model for the model of type '{type}' and uri '{uri}'", debug_error=err) from err
 
     @classmethod
@@ -114,14 +117,14 @@ class ModelService(BaseService):
 
         t = cls.get_model_type(type)
         if t is None:
-            raise HTTPNotFound(detail=f"Invalid Model type")
+            raise BadRequestException(detail="Invalid Model type")
 
         return t.select_me().count()
 
     # -- F --
 
     @classmethod
-    def fetch_model(cls, type: str, uri: str, as_json=False) -> (Model,):
+    def fetch_model(cls, type: str, uri: str, as_json=False) -> Model:
         """
         Fetch a model
 
@@ -154,7 +157,7 @@ class ModelService(BaseService):
 
         t = cls.get_model_type(type)
         if t is None:
-            raise HTTPNotFound(detail=f"Invalid Model type")
+            raise BadRequestException(detail="Invalid Model type")
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
         if search_text:
@@ -366,7 +369,7 @@ class ModelService(BaseService):
     def __set_archive_status(cls, tf: bool, type: str, uri: str) -> dict:
         obj = cls.fetch_model(type, uri)
         if obj is None:
-            raise HTTPNotFound(detail=f"Model not found with uri {uri}")
+            raise NotFoundException(detail=f"Model not found with uri {uri}")
         obj.archive(tf)
         return obj
 
@@ -393,5 +396,5 @@ class ModelService(BaseService):
 
         obj = cls.fetch_model(type, uri)
         if obj is None:
-            raise HTTPNotFound(detail=f"Model not found with uri {uri}")
+            raise NotFoundException(detail=f"Model not found with uri {uri}")
         return obj.verify_hash()  # {"status": obj.verify_hash()}
