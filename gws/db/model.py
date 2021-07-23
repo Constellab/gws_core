@@ -1,37 +1,33 @@
 # LICENSE
-# This software is the exclusive property of Gencovery SAS. 
+# This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import os
-import inspect
-import re
-import uuid
 import hashlib
 import json
+import os
+import re
 import shutil
 from typing import List
+import uuid
 from datetime import datetime
 
 from fastapi.encoders import jsonable_encoder
+from gws.base import Base
+from gws.db.manager import AbstractDbManager
+from gws.exception.bad_request_exception import BadRequestException
+from gws.settings import Settings
+from peewee import (AutoField, BigAutoField, BlobField, BooleanField,
+                    CharField, DatabaseProxy, DateField, DateTimeField, Field,
+                    ForeignKeyField, ManyToManyField)
 from peewee import Model as PeeweeModel
-from peewee import  Field, IntegerField, FloatField, DateField, \
-                    DateTimeField, CharField, BooleanField, \
-                    ForeignKeyField, ManyToManyField, IPField, TextField, BlobField, \
-                    AutoField, BigAutoField
-
-from peewee import DatabaseProxy
+from peewee import TextField
 from playhouse.mysql_ext import Match
 
-from gws.utils import to_camel_case
-from gws.logger import Error, Info
-from gws.db.manager import AbstractDbManager
-from gws.settings import Settings
-from gws.base import Base
 from .kv_store import KVStore
 
-#GWS_DB_ENGINE="mariadb"
-#GWS_DB_ENGINE="sqlite3"
+# GWS_DB_ENGINE="mariadb"
+# GWS_DB_ENGINE="sqlite3"
 GWS_DB_ENGINE = os.getenv("LAB_DB_ENGINE", "sqlite3")
 
 # ####################################################################
@@ -39,6 +35,7 @@ GWS_DB_ENGINE = os.getenv("LAB_DB_ENGINE", "sqlite3")
 # DbManager class
 #
 # ####################################################################
+
 
 class DbManager(AbstractDbManager):
     db = DatabaseProxy()
@@ -50,6 +47,7 @@ class DbManager(AbstractDbManager):
     }
     _db_name = "gws"
 
+
 DbManager.init(engine=GWS_DB_ENGINE)
 
 # ####################################################################
@@ -57,6 +55,7 @@ DbManager.init(engine=GWS_DB_ENGINE)
 # Format table name
 #
 # ####################################################################
+
 
 def format_table_name(model: 'Model'):
     return model.get_table_name().lower()
@@ -66,6 +65,7 @@ def format_table_name(model: 'Model'):
 # Custom JSONField
 #
 # ####################################################################
+
 
 class JSONField(TextField):
     """
@@ -84,6 +84,7 @@ class JSONField(TextField):
 # Model
 #
 # ####################################################################
+
 
 class Model(Base, PeeweeModel):
     """
@@ -106,7 +107,7 @@ class Model(Base, PeeweeModel):
     :property hash: The hash of the model
     :type hash: `str`
     """
-    
+
     id = AutoField(primary_key=True)
     uri = CharField(null=True, index=True)
     type = CharField(null=True, index=True)
@@ -115,7 +116,7 @@ class Model(Base, PeeweeModel):
     is_archived = BooleanField(default=False, index=True)
     hash = CharField(null=True)
     data = JSONField(null=True)
-    
+
     USER_ALL = 'all'
     USER_ADMIN = 'admin'
     LAB_URI = None
@@ -127,7 +128,7 @@ class Model(Base, PeeweeModel):
     _allowed_user = USER_ALL
     _db_manager = DbManager
     _table_name = 'gws_model'
-      
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not Model.LAB_URI:
@@ -149,34 +150,35 @@ class Model(Base, PeeweeModel):
         self._kv_store = KVStore(self.get_kv_store_slot_path())
 
     # -- A --
-    
+
     def archive(self, tf: bool) -> bool:
         """
         Archive of Unarchive the model
-        
+
         :param tf: True to archive, False to unarchive
         :type tf: `bool`
         :return: True if sucessfully done, False otherwise
         :rtype: `bool`
         """
-        
+
         if self.is_archived == tf:
             return True
         self.is_archived = tf
         cls = type(self)
         return self.save(only=[cls.is_archived])
-        
+
     # -- B --
-    
+
     @staticmethod
-    def barefy( data: dict, sort_keys=False ):
+    def barefy(data: dict, sort_keys=False):
         if isinstance(data, dict):
             data = json.dumps(data, sort_keys=sort_keys)
-        data = re.sub(r"\"(([^\"]*_)?uri|save_datetime|creation_datetime|hash)\"\s*\:\s*\"([^\"]*)\"", r'"\1": ""', data)
+        data = re.sub(
+            r"\"(([^\"]*_)?uri|save_datetime|creation_datetime|hash)\"\s*\:\s*\"([^\"]*)\"", r'"\1": ""', data)
         return json.loads(data)
-    
+
     # -- C --
-    
+
     def __init_singleton_in_place(self):
         try:
             cls = type(self)
@@ -193,39 +195,40 @@ class Model(Base, PeeweeModel):
     def _create_hash_object(self):
         h = hashlib.blake2b()
         h.update(Model.LAB_URI.encode())
-        exclusion_list = (ForeignKeyField, JSONField, ManyToManyField, BlobField, AutoField, BigAutoField, )
-        for prop in self.property_names(Field, exclude=exclusion_list) :
+        exclusion_list = (ForeignKeyField, JSONField,
+                          ManyToManyField, BlobField, AutoField, BigAutoField, )
+        for prop in self.property_names(Field, exclude=exclusion_list):
             if prop in ["id", "hash"]:
                 continue
-            val = getattr(self, prop)            
-            h.update( str(val).encode() )
+            val = getattr(self, prop)
+            h.update(str(val).encode())
         for prop in self.property_names(JSONField):
             val = getattr(self, prop)
-            h.update( json.dumps(val, sort_keys=True).encode() )  
+            h.update(json.dumps(val, sort_keys=True).encode())
         for prop in self.property_names(BlobField):
             val = getattr(self, prop)
-            h.update( val )
+            h.update(val)
         for prop in self.property_names(ForeignKeyField):
             val = getattr(self, prop)
             if isinstance(val, Model):
-                h.update( val.hash.encode() )
+                h.update(val.hash.encode())
         return h
-    
+
     def __compute_hash(self):
         ho = self._create_hash_object()
         return ho.hexdigest()
 
     def cast(self) -> 'Model':
         """
-        Casts a model instance by its `type` in database. 
+        Casts a model instance by its `type` in database.
         It is euqivalent to getting and intantiatning the real object type from db
 
         :return: The model
         :rtype: `Model` instance
         """
-        
+
         from ..service.model_service import ModelService
-        
+
         if self.type == self.full_classname():
             return self
 
@@ -242,7 +245,7 @@ class Model(Base, PeeweeModel):
     def clear_data(self, save: bool = False):
         """
         Clears the :param:`data`
-    
+
         :param save: If True, save the model the :param:`data` is cleared
         :type save: bool
         """
@@ -255,19 +258,20 @@ class Model(Base, PeeweeModel):
         """
         Create model table
         """
-        
+
         if cls.table_exists():
             return
         super().create_table(*args, **kwargs)
         if cls.get_db_manager().is_mysql_engine():
-            cls.get_db_manager().db.execute_sql(f"CREATE FULLTEXT INDEX data ON {cls._table_name}(data)")
-        
+            cls.get_db_manager().db.execute_sql(
+                f"CREATE FULLTEXT INDEX data ON {cls._table_name}(data)")
+
     # -- D --
 
     def delete_instance(self, *args, **kwargs):
         self.kv_store.remove()
         return super().delete_instance(*args, **kwargs)
-        
+
     @classmethod
     def drop_table(cls, *args, **kwargs):
         """ 
@@ -285,10 +289,10 @@ class Model(Base, PeeweeModel):
         super().drop_table(*args, **kwargs)
          
     # -- E --
-        
+
     def __eq__(self, other: 'Model') -> bool:
-        """ 
-        Compares the model with another model. The models are equal if they are 
+        """
+        Compares the model with another model. The models are equal if they are
         identical (same handle in memory) or have the same id in the database
 
         :param other: The model to compare
@@ -300,7 +304,7 @@ class Model(Base, PeeweeModel):
         if not isinstance(other, Model):
             return False
         return (self is other) or ((self.id != None) and (self.id == other.id))
-    
+
     # -- F --
 
     def fetch_type_by_id(self, id: int) -> type:
@@ -318,11 +322,11 @@ class Model(Base, PeeweeModel):
             cls = type(self)
             model = cls.get(cls.id == int(id))
         except Exception as err:
-            raise Error("gws.db.model.Model", "fetch_type_by_id", "The model is not found.") from err
-        
+            raise BadRequestException("The model is not found.") from err
+
         if model.full_classname() == model.type:
             return type(cls)
-            
+
         from ..service.model_service import ModelService
         model_t: type = ModelService.get_model_type(model.type)
         return model_t
@@ -331,7 +335,7 @@ class Model(Base, PeeweeModel):
 
     @classmethod
     def get_table_name(cls) -> str:
-        """ 
+        """
         Returns the table name of this class
 
         :return: The table name
@@ -355,7 +359,7 @@ class Model(Base, PeeweeModel):
     def get_brick_dir(brick_name: str):
         settings = Settings.retrieve()
         return settings.get_dependency_dir(brick_name)
-        
+
     @classmethod
     def get_by_uri(cls, uri: str) -> str:
         try:
@@ -375,7 +379,7 @@ class Model(Base, PeeweeModel):
         return os.path.join(cls._table_name)
 
     def get_kv_store_slot_path(self) -> str:
-        """ 
+        """
         Returns the KVStore path of the model instance
 
         :return: The slot path
@@ -386,9 +390,9 @@ class Model(Base, PeeweeModel):
             self.__get_base_kv_store_path_of_table(),
             self.uri
         )
-    
+
     # -- H --
-  
+
     def hydrate_with(self, data):
         """
         Hydrate the model with data
@@ -408,13 +412,13 @@ class Model(Base, PeeweeModel):
     @classmethod
     def is_sqlite3_engine(cls):
         return cls.get_db_manager()._engine == "sqlite3"
-    
+
     @classmethod
     def is_mysql_engine(cls):
         return cls.get_db_manager()._engine in ["mysql", "mariadb"]
 
     def is_saved(self):
-        """ 
+        """
         Returns True if the model is saved in db, False otherwise
 
         :return: True if the model is saved in db, False otherwise
@@ -423,13 +427,13 @@ class Model(Base, PeeweeModel):
 
         return bool(self.id)
 
-    # -- N -- 
+    # -- N --
 
     # -- K --
 
     @property
     def kv_store(self) -> 'KVStore':
-        """ 
+        """
         Returns the path of the KVStore of the model
 
         :return: The path of the KVStore
@@ -437,9 +441,9 @@ class Model(Base, PeeweeModel):
         """
 
         return self._kv_store
-    
+
     # -- R --
-    
+
     def refresh(self):
         """
         Refresh a model instance by re-requesting the db
@@ -457,11 +461,11 @@ class Model(Base, PeeweeModel):
         """
         Select objects by ensuring that the object-type is the same as the current model.
         """
-        
+
         return cls.select(*args, **kwargs).where(cls.type == cls.full_classname())
-    
+
     @classmethod
-    def search(cls, phrase: str, in_boolean_mode: bool=False):
+    def search(cls, phrase: str, in_boolean_mode: bool = False):
         """
         Performs full-text search on the :param:`data` field
 
@@ -479,17 +483,17 @@ class Model(Base, PeeweeModel):
         return cls.select().where(Match((cls.data), phrase, modifier=modifier))
 
     def set_data(self, data: dict):
-        """ 
+        """
         Sets the `data`
 
         :param data: The input data
         :type data: dict
         :raises Exception: If the input parameter data is not a `dict`
         """
-        if isinstance(data,dict):
+        if isinstance(data, dict):
             self.data = data
         else:
-            raise Error("gws.db.model.Model", "set_data","The data must be a JSONable dictionary")
+            raise BadRequestException("The data must be a JSONable dictionary")
 
     def save(self, *args, **kwargs) -> bool:
         """
@@ -512,7 +516,7 @@ class Model(Base, PeeweeModel):
 
         :param model_list: List of models
         :type model_list: list
-        :return: True if all the model are successfully saved, False otherwise. 
+        :return: True if all the model are successfully saved, False otherwise.
         :rtype: bool
         """
         with cls.get_db_manager().db.atomic() as transaction:
@@ -521,13 +525,13 @@ class Model(Base, PeeweeModel):
                     model.save()
             except Exception as err:
                 transaction.rollback()
-                raise Error("gws.db.model.Model", "save_all", f"Error message: {err}") from err
+                raise BadRequestException(f"Error message: {err}") from err
 
         return True
-    
+
     # -- T --
 
-    def to_json(self, *, show_hash=False, bare: bool=False, stringify: bool=False, prettify: bool=False, jsonifiable_data_keys: list=[], **kwargs) -> (str, dict, ):
+    def to_json(self, *, show_hash=False, bare: bool = False, stringify: bool = False, prettify: bool = False, jsonifiable_data_keys: list = [], **kwargs) -> (str, dict, ):
         """
         Returns a JSON string or dictionnary representation of the model.
 
@@ -538,21 +542,22 @@ class Model(Base, PeeweeModel):
         :param prettify: If True, indent the JSON string. Defaults to False.
         :type prettify: `bool`
         :param jsonifiable_data_keys: If is empty, `data` is fully jsonified, otherwise only specified keys are jsonified
-        :type jsonifiable_data_keys: `list` of `str`        
+        :type jsonifiable_data_keys: `list` of `str`
         :return: The representation
         :rtype: `dict`, `str`
         """
-      
+
         _json = {}
         jsonifiable_data_keys
         if not isinstance(jsonifiable_data_keys, list):
             jsonifiable_data_keys = []
-        exclusion_list = (ForeignKeyField, ManyToManyField, BlobField, AutoField, BigAutoField, )
-        for prop in self.property_names(Field, exclude=exclusion_list) :
+        exclusion_list = (ForeignKeyField, ManyToManyField,
+                          BlobField, AutoField, BigAutoField, )
+        for prop in self.property_names(Field, exclude=exclusion_list):
             if prop in ["id"]:
                 continue
             if prop.startswith("_"):
-                continue  #-> private or protected property
+                continue  # -> private or protected property
             if prop == "data":
                 _json["data"] = {}
                 val = getattr(self, "data")
@@ -568,7 +573,7 @@ class Model(Base, PeeweeModel):
                 if bare:
                     if prop == "uri" or prop == "hash" or isinstance(val, (datetime, DateTimeField, DateField)):
                         _json[prop] = ""
-        
+
         if not show_hash:
             del _json["hash"]
         if stringify:
@@ -580,30 +585,30 @@ class Model(Base, PeeweeModel):
             return _json
 
     # -- U --
-    
+
     @property
     def user_data(self) -> dict:
         """
         Get user data
-        
+
         :return: User data
         :rtype: `dict`
         """
-        
+
         if not "_user_data_" in self.data:
-            self.data["_user_data_"] = {}  
+            self.data["_user_data_"] = {}
         return self.data["_user_data_"]
-    
+
     # -- V --
-    
+
     def verify_hash(self) -> bool:
         """
         Verify the current hash of the model
-        
+
         :return: True if the hash is valid, False otherwise
         :rtype: `bool`
         """
-        
+
         return self.hash == self.__compute_hash()
 
     class Meta:

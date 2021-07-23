@@ -1,56 +1,94 @@
 # LICENSE
-# This software is the exclusive property of Gencovery SAS. 
+# This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import os
-import logging
 import datetime
+import logging
+import os
+
 from .settings import Settings
 
 LOGGER_NAME = "gws"
 LOGGER_FILE_NAME = str(datetime.date.today()) + ".log"
+RESET_COLOR = "\x1b[0m"
+
 
 class Logger:
     """
     Logger class
+
+    It logs into the console and in the log file
     """
 
     _logger = None
     _is_debug = None
     _file_path = None
-    
-    def __init__(self, is_new_session = False, is_debug: bool = None):
+
+    def __init__(self, is_new_session=False, is_debug: bool = None):
+        is_debug = True
         if Logger._logger is None:
             if not is_debug is None:
                 Logger._is_debug = is_debug
+            # Create the logger
+            Logger._logger = logging.getLogger(LOGGER_NAME)
+            # Format of the logs
+            formatter = logging.Formatter(
+                "%(message)s ")
+
+            # Configure the console logger
+            console_logger = logging.StreamHandler()
+            console_logger.setFormatter(formatter)
+            Logger._logger.addHandler(console_logger)
+
+            # Configure the logs into the log files
             settings = Settings()
+
             log_dir = settings.get_log_dir()
             if not os.path.exists(log_dir):
                 os.makedirs(log_dir)
             Logger._file_path = os.path.join(log_dir, LOGGER_FILE_NAME)
             file_handler = logging.FileHandler(Logger._file_path)
-            Logger._logger = logging.getLogger(LOGGER_NAME)
             Logger._logger.setLevel(logging.DEBUG)
-            formatter = logging.Formatter(" %(message)s")
             file_handler.setFormatter(formatter)
             Logger._logger.addHandler(file_handler)
+
             if is_new_session:
-                Logger._logger.info("\nSESSION: " + str(datetime.datetime.now()) + "\n")
-    
+                Logger._logger.info(
+                    f"START APPLICATION : {settings.name} version {settings.version} \n")
+
     # -- E --
 
     @classmethod
-    def error(cls, message):
+    def error(cls, message: str) -> None:
         if not cls._logger:
             Logger()
-        cls._logger.error(f"ERROR: {datetime.datetime.now().time()} -- {message}")
-        cls._print(message)
-            
+        cls._logger.error(cls._get_message("ERROR", message))
+
+    @classmethod
+    def warning(cls, message: str) -> None:
+        if not cls._logger:
+            Logger()
+        cls._logger.warning(cls._get_message("WARNING", message))
+
+    @classmethod
+    def info(cls, message: str) -> None:
+        if not cls._logger:
+            Logger()
+        cls._logger.warning(cls._get_message("INFO", message))
+
+    # -- P --
+
+    @classmethod
+    def progress(cls, message: str) -> None:
+        if not cls._logger:
+            Logger()
+        cls._logger.warning(cls._get_message("PROGRESS", message))
+
     # -- F --
 
     @classmethod
-    def get_file_path(cls):
+    def get_file_path(cls) -> str:
         if not cls._logger:
             Logger()
         return cls._file_path
@@ -58,105 +96,20 @@ class Logger:
     # -- I --
 
     @classmethod
-    def is_debug(cls):
+    def is_debug(cls) -> bool:
         if cls._is_debug is None:
             settings = Settings.retrieve()
             cls._is_debug = settings.is_debug
         return cls._is_debug
-        
-    @classmethod
-    def info(cls, message):
-        if not cls._logger:
-            Logger()
-        cls._logger.info(f"INFO: {datetime.datetime.now().time()} -- {message}")
-        cls._print(message)
-    
-    # -- P --
-
-    @classmethod
-    def progress(cls, message):
-        if not cls._logger:
-            Logger()
-        cls._logger.info(f"PROGRESS: {datetime.datetime.now().time()} -- {message}")
-        print(message, end='\r', flush=True)
-
-    @classmethod
-    def _print(cls, message):
-        if cls.is_debug():
-            print(message)
-        else:
-            max_len = 96
-            if len(message) > max_len:
-                message = (message + " "*(max_len-4))[0:(max_len-4)] + " ..."
-            else:
-                message = (message + " "*max_len)[0:max_len]
-            print(message, end='\r', flush=True)
 
     # -- S --
-   
-    # -- W --
 
     @classmethod
-    def warning(cls, message):
-        if not cls._logger:
-            Logger()
-        cls._logger.warning(f"WARNING: {datetime.datetime.now().time()} # {message}")
-        cls._print(message)
+    def _get_message(cls, level_name: str, message: str) -> str:
+        return f"{level_name} - {cls._get_date()} - {message}"
 
-class Error(Exception):
-    """
-    Error class
-    """
-
-    message = ""
-    def __init__(self, message, *args):
-        if args:
-            exc_message = f"({message}, {', '.join(args)})"
-        else:
-            exc_message = message
-        super().__init__(exc_message)
-        self.message = exc_message
-        Logger.error(exc_message)
-
-class Warning():
-    """
-    Warning class
-    """
-
-    message = ""
-
-    def __init__(self, message, *args):
-        if args:
-            exc_message = f"({message}, {', '.join(args)})"
-        else:
-            exc_message = message
-        self.message = exc_message
-        Logger.warning(exc_message)
-        
-class Info():
-    """
-    Info class
-    """
-
-    message = ""
-    def __init__(self, message, *args):
-        if args:
-            exc_message = f"({message}, {', '.join(args)})"
-        else:
-            exc_message = message
-        self.message = exc_message
-        Logger.info(exc_message)
-
-class Progress():
-    """
-    Progres class
-    """
-
-    message = ""
-    def __init__(self, message, *args):
-        if args:
-            exc_message = f"({message}, {', '.join(args)})"
-        else:
-            exc_message = message
-        self.message = exc_message
-        Logger.progress(exc_message)
+    # Get the current date in Human readable format
+    @classmethod
+    def _get_date(cls) -> str:
+        current_date: datetime.datetime = datetime.datetime.now()
+        return current_date.strftime("%Y-%m-%d %H:%M:%S.%f")

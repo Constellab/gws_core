@@ -1,22 +1,26 @@
 # LICENSE
-# This software is the exclusive property of Gencovery SAS. 
+# This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import unittest
 import importlib
+import unittest
+
 import click
 
-from .settings import Settings
-from .logger import Logger, Error
+from gws.exception.bad_request_exception import BadRequestException
 
-def _run(ctx, uri="", token="", test="", \
-         cli=False, cli_test=False, runserver=False, runmode="dev", \
-         ip="0.0.0.0", port="3000", docgen=False, \
+from .logger import Logger
+from .settings import Settings
+
+
+def _run(ctx, uri="", token="", test="",
+         cli=False, cli_test=False, runserver=False, runmode="dev",
+         ip="0.0.0.0", port="3000", docgen=False,
          force=False):
-    
+
     is_test = bool(test or cli_test)
-    is_debug = (is_test or runmode=="dev")
+    is_debug = (is_test or runmode == "dev")
     is_prod = (runmode == "prod")
     Logger(is_new_session=True, is_debug=is_debug)
 
@@ -35,7 +39,7 @@ def _run(ctx, uri="", token="", test="", \
         settings.set_data("is_test", False)
 
     if not settings.save():
-        raise Error("runner", "Cannot save the settings in the database")
+        raise BadRequestException("Cannot save the settings in the database")
 
     if runserver:
         # start app
@@ -49,7 +53,8 @@ def _run(ctx, uri="", token="", test="", \
         module = importlib.import_module(module_name)
         func = getattr(module, function_name, None)
         if func is None:
-            raise Error("runner", f"Please check that method {cli} is defined")
+            raise BadRequestException(
+                f"Please check that method {cli} is defined")
         else:
             func()
     elif test:
@@ -68,6 +73,7 @@ def _run(ctx, uri="", token="", test="", \
         pass
 
     print(f"Log file: {Logger.get_file_path()}")
+
 
 @click.command(context_settings=dict(
     ignore_unknown_options=True,
@@ -100,4 +106,3 @@ def run(ctx, uri, token, test, cli, cli_test, runserver, runmode, ip, port, docg
         docgen=docgen,
         force=force
     )
-

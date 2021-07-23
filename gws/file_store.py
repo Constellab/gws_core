@@ -1,16 +1,17 @@
 # LICENSE
-# This software is the exclusive property of Gencovery SAS. 
+# This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
 import io
 import os
-from pathlib import Path
 import shutil
 import tempfile
+from pathlib import Path
+
+from gws.exception.bad_request_exception import BadRequestException
 
 from .db.model import Model
-from .logger import Error, Warning
 from .settings import Settings
 
 # ####################################################################
@@ -19,21 +20,22 @@ from .settings import Settings
 #
 # ####################################################################
 
+
 class FileStore(Model):
     """
     FileStore class
     """
-    
+
     title = "File store"
     description = ""
     _table_name = "gws_file_store"
 
     # -- A --
-    
+
     def add(self, source_file: (str, io.IOBase, tempfile.SpooledTemporaryFile, 'File', )):
-        """ 
+        """
         Add a file from an external repository to a local store. Must be implemented by the child class.
-        
+
         :param source_file: The source file
         :type source_file: `str` (file path), `gws.file.File`, `io.IOBase` or `tempfile.SpooledTemporaryFile`
         :param dest_file_name: The destination file name
@@ -41,16 +43,16 @@ class FileStore(Model):
         :return: The file object
         :rtype: gws.file.File.
         """
-        
-        raise Error('FileStore','add', 'Not implemented')
+
+        raise BadRequestException('Not implemented')
 
     # -- O --
-    
+
     @classmethod
     def open(cls, file, mode):
         """
         Open a file. Must be implemented by the child class.
-        
+
         :param file: The file to open
         :type file: `gws.file.File`
         :param mode: Mode (see native Python `open` function)
@@ -58,34 +60,35 @@ class FileStore(Model):
         :return: The file object
         :rtype: Python `file-like-object` or `stream`.
         """
-        
-        raise Error('FileStore','add', 'Not implemented')
-    
+
+        raise BadRequestException('Not implemented')
+
     # -- P --
-    
+
     @property
     def path(self) -> str:
-        """ 
+        """
         Get path (or url) of the store
         """
 
-        return self.data.get("path","")
-    
+        return self.data.get("path", "")
+
     # -- F --
 
     @path.setter
     def path(self, path: str) -> str:
-        """ 
+        """
         Set the path (or url) of the store
         """
 
         self.data["path"] = path
-    
+
 # ####################################################################
 #
 # LocalFileStore class
 #
 # ####################################################################
+
 
 class LocalFileStore(FileStore):
     title = "Local file store"
@@ -97,13 +100,13 @@ class LocalFileStore(FileStore):
         if not self.path:
             self.data["path"] = os.path.join(self.get_base_dir(), self.uri)
             self.save()
-      
+
     # -- A --
 
-    def add(self, source_file: (str, io.IOBase, tempfile.SpooledTemporaryFile, 'File', ), dest_file_name: str=""):
-        """ 
+    def add(self, source_file: (str, io.IOBase, tempfile.SpooledTemporaryFile, 'File', ), dest_file_name: str = ""):
+        """
         Add a file from an external repository to a local store
-        
+
         :param source_file: The source file
         :type source_file: `str` (file path), `gws.file.File`, `io.IOBase` or `tempfile.SpooledTemporaryFile`
         :param dest_file_name: The destination file name
@@ -111,7 +114,7 @@ class LocalFileStore(FileStore):
         :return: The file object
         :rtype: gws.file.File.
         """
-        
+
         from .file import File
         if not self.is_saved():
             self.save()
@@ -125,7 +128,8 @@ class LocalFileStore(FileStore):
                     source_file_path = f.path
                     if not dest_file_name:
                         dest_file_name = Path(source_file_path).name
-                    f.path = self.__create_valid_file_path(f, name=dest_file_name)
+                    f.path = self.__create_valid_file_path(
+                        f, name=dest_file_name)
                 else:
                     if not dest_file_name:
                         if isinstance(source_file, str):
@@ -133,13 +137,14 @@ class LocalFileStore(FileStore):
                         else:
                             dest_file_name = "file"
 
-                    f = self.create_file( name=dest_file_name )
+                    f = self.create_file(name=dest_file_name)
                     source_file_path = source_file
                 # copy disk file
                 if not os.path.exists(f.dir):
                     os.makedirs(f.dir)
                     if not os.path.exists(f.dir):
-                        raise Exception("FileStore", "add", f"Cannot create directory '{f.dir}'")
+                        raise Exception("FileStore", "add",
+                                        f"Cannot create directory '{f.dir}'")
                 if isinstance(source_file, (io.IOBase, tempfile.SpooledTemporaryFile, )):
                     with open(f.path, "wb") as buffer:
                         shutil.copyfileobj(source_file, buffer)
@@ -151,34 +156,35 @@ class LocalFileStore(FileStore):
                 return f
             except Exception as err:
                 transaction.rollback()
-                raise Error("FileStore", "add", f"An error occured. Error: {err}") from err
+                raise BadRequestException(
+                    f"An error occured. Error: {err}") from err
 
     # -- B --
-    
+
     # -- C --
-    
-    def __create_valid_file_path( self, file: 'File', name: str  = ""):
+
+    def __create_valid_file_path(self, file: 'File', name: str = ""):
         if not file.uri:
             file.save()
         file.path = os.path.join(self.path, file.uri, name)
         file.save()
         return file.path
 
-    def create_file( self, name: str, file_type: type = None ):
+    def create_file(self, name: str, file_type: type = None):
         from .file import File
         if isinstance(file_type, type):
             file = file_type()
         else:
             file = File()
-        self.__create_valid_file_path(file, name) 
+        self.__create_valid_file_path(file, name)
         file.save()
         return file
-     
+
     def contains(self, file: 'File') -> bool:
         return self.path in file.path
-    
+
     # -- D --
-    
+
     @classmethod
     def drop_table(cls):
         cls.remove_all_files()
@@ -187,15 +193,15 @@ class LocalFileStore(FileStore):
     def delete_instance(self):
         from .file import File
         if File.table_exists():
-            File.delete().where( File.file_store_uri == self.uri ).execute()
+            File.delete().where(File.file_store_uri == self.uri).execute()
         if os.path.exists(self.path):
             shutil.rmtree(self.path)
         super().delete_instance()
-                
+
     # -- E --
-  
+
     # -- G --
-    
+
     @classmethod
     def get_default_instance(cls):
         try:
@@ -204,21 +210,21 @@ class LocalFileStore(FileStore):
             fs = cls()
             fs.save()
         return fs
-                
+
     # -- I --
-  
-    # -- M --     
-    
+
+    # -- M --
+
     # -- P --
-    
+
     @property
     def path(self) -> str:
         """
         Get path of the local file store
         """
-        
+
         return super().path
-    
+
     # -- F --
 
     @path.setter
@@ -228,7 +234,7 @@ class LocalFileStore(FileStore):
         The path of a LocalFileStore is automatically computed and cannot be manually altered.
         """
 
-        raise Error("LocalFileStore", "path", "Cannot manually set LocalFileStore path")
+        raise BadRequestException("Cannot manually set LocalFileStore path")
 
     # -- G --
 
@@ -240,7 +246,7 @@ class LocalFileStore(FileStore):
         return cls._base_dir
 
     # -- R --
-    
+
     def remove(self, file: 'File'):
         """
         Remove a file from the FileStore
@@ -249,7 +255,8 @@ class LocalFileStore(FileStore):
         if self.contains(file):
             file.delete_instance()
         else:
-            raise Error("FileStore", "remove", f"File '{file.uri}' is not in the file_store '{self.uri}'")
+            raise BadRequestException(
+                f"File '{file.uri}' is not in the file_store '{self.uri}'")
 
     @classmethod
     def remove_all_files(cls):
@@ -259,7 +266,7 @@ class LocalFileStore(FileStore):
 
         settings = Settings.retrieve()
         if not settings.is_dev and not settings.is_test:
-            raise Error("FileStore", "remove_all_files", f"Only allowed in dev and test mode")
+            raise BadRequestException("Only allowed in dev and test mode")
         with cls._db_manager.db.atomic():
             Q = cls.select()
             for fs in Q:

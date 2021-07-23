@@ -1,12 +1,14 @@
 # LICENSE
-# This software is the exclusive property of Gencovery SAS. 
+# This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
 import json
+
 from peewee import CharField, ForeignKeyField
 
 from .db.model import Model
+
 
 class Comment(Model):
     """
@@ -21,12 +23,13 @@ class Comment(Model):
     """
 
     object_uri = CharField(null=False, index=True)
-    object_type = CharField(null=False) #-> non-unique index (object_uri, object_type) is created in Meta
+    # -> non-unique index (object_uri, object_type) is created in Meta
+    object_type = CharField(null=False)
     reply_to = ForeignKeyField('self', null=True, backref='+')
     _table_name = "gws_comment"
 
     # -- G --
-    
+
     def get_message(self) -> str:
         return self.data["message"]
 
@@ -35,18 +38,18 @@ class Comment(Model):
     @property
     def message(self) -> str:
         return self.data["message"]
-        
+
     # -- S --
 
-    def set_message(self, msg:str):
+    def set_message(self, msg: str):
         self.data["message"] = msg
 
     # -- T --
 
-    def to_json(self, *, shallow=False, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+    def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the comment.
-        
+
         :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
         :type stringify: bool
         :param prettify: If True, indent the JSON string. Defaults to False.
@@ -54,13 +57,14 @@ class Comment(Model):
         :return: The representation
         :rtype: dict, str
         """
-        
-        _json = super().to_json(shallow=shallow,**kwargs)
+
+        _json = super().to_json(shallow=shallow, **kwargs)
         _json["object"] = {
             "uri": self.object_uri,
             "type": self.object_type
         }
-        _json["reply_to"] = { "uri": (self.reply_to.uri if self.reply_to else "") }
+        _json["reply_to"] = {
+            "uri": (self.reply_to.uri if self.reply_to else "")}
 
         del _json["object_uri"]
         del _json["object_type"]

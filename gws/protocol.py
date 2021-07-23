@@ -6,19 +6,22 @@
 import asyncio
 import json
 import zlib
-from datetime import datetime
+
 from peewee import BooleanField
-from .user import User
-from .logger import Error
+
+from gws.exception.bad_request_exception import BadRequestException
+
+from .io import Connector, InPort, Input, Interface, Outerface, OutPort, Output
 from .process import Process
-from .io import Input, Output, InPort, OutPort, Interface, Outerface, Connector
+from .user import User
+
 
 class Protocol(Process):
     """
     Protocol class.
 
     :property is_template: True if it is a template. False otherwise.
-    A template is used to maintained a unique representation of a protocol flow in database. 
+    A template is used to maintained a unique representation of a protocol flow in database.
     It cannot be executed and is used to efficiently instanciate new similar protocols instance.
     :type is_template: `bool`
     """
@@ -30,16 +33,16 @@ class Protocol(Process):
     _connectors: list = []
     _interfaces: dict = {}
     _outerfaces: dict = {}
-    _table_name = "gws_protocol" #is locked for all the protocols
+    _table_name = "gws_protocol"  # is locked for all the protocols
 
-    def __init__(self, *args, \
-                    processes: dict = None, \
-                    connectors: list = None, \
-                    interfaces: dict = None, \
-                    outerfaces: dict = None, \
-                    user = None, **kwargs):
+    def __init__(self, *args,
+                 processes: dict = None,
+                 connectors: list = None,
+                 interfaces: dict = None,
+                 outerfaces: dict = None,
+                 user=None, **kwargs):
 
-        super().__init__(*args, user = user, **kwargs)
+        super().__init__(*args, user=user, **kwargs)
         self._input = Input(self)
         self._output = Output(self)
         self._processes = {}
@@ -47,8 +50,9 @@ class Protocol(Process):
         self._interfaces = {}
         self._outerfaces = {}
 
-        if self.uri and self.data.get("graph"):          #the protocol was saved in the super-class
-            self._build_from_dump( self.data["graph"] )
+        # the protocol was saved in the super-class
+        if self.uri and self.data.get("graph"):
+            self._build_from_dump(self.data["graph"])
         else:
             self._build(
                 processes,
@@ -76,15 +80,17 @@ class Protocol(Process):
         if not self.id:
             self.save()
         if self.is_instance_finished or self.is_instance_running:
-            raise Error("gws.protocol.Protocol", "add_process", "The protocol has already been run")
+            raise BadRequestException("The protocol has already been run")
         if not isinstance(process, Process):
-            raise Error("gws.protocol.Protocol", "add_process", f"The process '{name}' must be an instance of Process")
+            raise BadRequestException(
+                "The process '{name}' must be an instance of Process")
         if process.protocol_id and self.id != process.protocol_id:
-            raise Error("gws.protocol.Protocol", "add_process", f"The process instance '{name}' already belongs to another protocol")
+            raise BadRequestException(
+                "The process instance '{name}' already belongs to another protocol")
         if name in self._processes:
-            raise Error("gws.protocol.Protocol", "add_process", f"Process name '{name}' already exists")
+            raise BadRequestException("Process name '{name}' already exists")
         if process in self._processes.items():
-            raise Error("gws.protocol.Protocol", "add_process", f"Process '{name}' duplicate")
+            raise BadRequestException("Process '{name}' duplicate")
 
         process.set_protocol(self)
         if self.experiment_id:
@@ -102,17 +108,19 @@ class Protocol(Process):
         """
 
         if self.is_instance_finished or self.is_instance_running:
-            raise Error("gws.protocol.Protocol", "add_connector", "The protocol has already been run")
+            raise BadRequestException("The protocol has already been run")
         if not isinstance(connector, Connector):
-            raise Error("gws.protocol.Protocol", "add_connector", "The connector must be an instance of Connector")
-        if  not connector.left_process in self._processes.values() or \
-            not connector.right_process in self._processes.values():
-            raise Error("gws.protocol.Protocol", "add_connector", "The processes of the connector must belong to the protocol")
+            raise BadRequestException(
+                "The connector must be an instance of Connector")
+        if not connector.left_process in self._processes.values() or \
+                not connector.right_process in self._processes.values():
+            raise BadRequestException(
+                "The processes of the connector must belong to the protocol")
         if connector in self._connectors:
-            raise Error("gws.protocol.Protocol", "add_connector", "Duplciated connector")
+            raise BadRequestException("Duplciated connector")
         self._connectors.append(connector)
 
-    def archive(self, tf:bool, archive_resources=True) -> bool:
+    def archive(self, tf: bool, archive_resources=True) -> bool:
         """
         Archive the protocol
         """
@@ -132,7 +140,7 @@ class Protocol(Process):
 
     # -- B --
 
-    def _build(self, processes: dict=None, connectors: list=None, interfaces: dict=None, outerfaces: dict=None, user=None, **kwargs):
+    def _build(self, processes: dict = None, connectors: list = None, interfaces: dict = None, outerfaces: dict = None, user=None, **kwargs):
         if processes is None:
             processes = {}
         if connectors is None:
@@ -142,21 +150,23 @@ class Protocol(Process):
         if outerfaces is None:
             outerfaces = {}
         if not isinstance(processes, dict):
-            raise Error("gws.protocol.Protocol", "__init__", "A dictionnary of processes is expected")
+            raise BadRequestException("A dictionnary of processes is expected")
         if not isinstance(connectors, list):
-            raise Error("gws.protocol.Protocol", "__init__", "A list of connectors is expected")
+            raise BadRequestException("A list of connectors is expected")
 
         # set process
         for name in processes:
             proc = processes[name]
             if not isinstance(proc, Process):
-                raise Error("gws.protocol.Protocol", "__init__", "The dictionnary of processes must contain instances of Process")
+                raise BadRequestException(
+                    "The dictionnary of processes must contain instances of Process")
             self.add_process(name, proc)
 
         # set connectors
         for conn in connectors:
             if not isinstance(conn, Connector):
-                raise Error("gws.protocol.Protocol", "__init__", "The list of connector must contain instances of Connectors")
+                raise BadRequestException(
+                    "The list of connector must contain instances of Connectors")
             self.add_connector(conn)
 
         if user is None:
@@ -164,7 +174,7 @@ class Protocol(Process):
                 from .service.user_service import UserService
                 user = UserService.get_current_user()
             except Exception as err:
-                raise Error("gws.protocol.Protocol", "__init__", "A user is required") from err
+                raise BadRequestException("A user is required") from err
 
         if isinstance(user, User):
             if self.created_by.is_sysuser:
@@ -173,17 +183,17 @@ class Protocol(Process):
                 if user.is_authenticated:
                     self.create_by = user
                 else:
-                    raise Error("gws.protocol.Protocol", "__init__", "The user must be authenticated")
+                    raise BadRequestException("The user must be authenticated")
         else:
-            raise Error("gws.protocol.Protocol", "__init__", "The user must be an instance of User")
+            raise BadRequestException("The user must be an instance of User")
 
         # set interfaces
         self.__set_interfaces(interfaces)
         self.__set_outerfaces(outerfaces)
         self.data["graph"] = self.dumps(as_dict=True)
-        self.save()   #<- will save the graph
+        self.save()  # <- will save the graph
 
-    def _build_from_dump( self, graph: (str, dict), rebuild = False ) -> 'Protocol':
+    def _build_from_dump(self, graph: (str, dict), rebuild=False) -> 'Protocol':
         """
         Construct a Protocol instance using a setting dump.
 
@@ -198,7 +208,7 @@ class Protocol(Process):
         from .service.model_service import ModelService
         if isinstance(graph, str):
             graph = json.loads(graph)
-        if not isinstance(graph,dict):
+        if not isinstance(graph, dict):
             return
         if not isinstance(graph.get("nodes"), dict) or not graph["nodes"]:
             return
@@ -230,29 +240,32 @@ class Protocol(Process):
         # create nodes
         for k in graph["nodes"]:
             node_json = graph["nodes"][k]
-            proc_uri = node_json.get("uri",None)
+            proc_uri = node_json.get("uri", None)
             proc_type_str = node_json["type"]
             try:
                 proc_t = ModelService.get_model_type(proc_type_str)
                 if proc_t is None:
-                    raise Error("Protocol", "_build_from_dump", f"Process {proc_type_str} is not defined. Please ensure that the corresponding brick is loaded.")
+                    raise BadRequestException(
+                        f"Process {proc_type_str} is not defined. Please ensure that the corresponding brick is loaded.")
                 else:
                     if proc_uri:
                         proc = proc_t.get(proc_t.uri == proc_uri)
                     else:
                         if issubclass(proc_t, Protocol):
-                            proc = Protocol.from_graph( node_json["data"]["graph"] )
+                            proc = Protocol.from_graph(
+                                node_json["data"]["graph"])
                         else:
                             proc = proc_t()
                     if k in self._processes:
-                        self._processes[k].data = proc.data #copy current data
+                        # copy current data
+                        self._processes[k].data = proc.data
                     else:
-                        self.add_process( k, proc )
+                        self.add_process(k, proc)
 
                 # update config if required
                 config_json = node_json.get("config")
                 if config_json:
-                    params = config_json.get("data",{}).get("params",{})
+                    params = config_json.get("data", {}).get("params", {})
                     if k in self._processes:
                         self._processes[k].config.set_params(params)
                     else:
@@ -260,20 +273,23 @@ class Protocol(Process):
                     proc.config.save()
                     proc.save()
             except Exception as err:
-                raise Error("gws.protocol.Protocol", "_build_from_dump", f"An error occured. Error: {err}") from err
+                raise BadRequestException(
+                    f"An error occured. Error: {err}") from err
 
         # create interfaces and outerfaces
         interfaces = {}
         outerfaces = {}
         for k in graph["interfaces"]:
-            _to = graph["interfaces"][k]["to"]  #destination port of the interface
+            # destination port of the interface
+            _to = graph["interfaces"][k]["to"]
             proc_name = _to["node"]
             port_name = _to["port"]
             proc = self._processes[proc_name]
             port = proc.input.ports[port_name]
             interfaces[k] = port
         for k in graph["outerfaces"]:
-            _from = graph["outerfaces"][k]["from"]  #source port of the outerface
+            # source port of the outerface
+            _from = graph["outerfaces"][k]["from"]
             proc_name = _from["node"]
             port_name = _from["port"]
             proc = self._processes[proc_name]
@@ -290,7 +306,8 @@ class Protocol(Process):
             rhs_port_name = link["to"]["port"]
             rhs_proc = self._processes[proc_name]
             #connector = (lhs_proc>>lhs_port_name | rhs_proc<<rhs_port_name)
-            connector = (lhs_proc>>lhs_port_name).pipe(rhs_proc<<rhs_port_name, lazy=True)
+            connector = (lhs_proc >> lhs_port_name).pipe(
+                rhs_proc << rhs_port_name, lazy=True)
             self.add_connector(connector)
         self.save(update_graph=True)
 
@@ -302,24 +319,25 @@ class Protocol(Process):
         Create model table
         """
 
-        if cls._table_name !=  Protocol._table_name:
-            raise Error(cls.full_classname(), "create_table", f"The table name of {cls.full_classname()} must be {Protocol._table_name}")     
+        if cls._table_name != Protocol._table_name:
+            raise BadRequestException(
+                f"The table name of {cls.full_classname()} must be {Protocol._table_name}")
         kwargs["check_table_name"] = False
         super().create_table(*args, **kwargs)
-
 
     @classmethod
     def create_process_type(cls):
         from .typing import ProtocolType
-        exist = ProtocolType.select().where(ProtocolType.model_type == cls.full_classname()).count()
+        exist = ProtocolType.select().where(
+            ProtocolType.model_type == cls.full_classname()).count()
         if not exist:
             pt = ProtocolType(
-                model_type = cls.full_classname(),
-                root_model_type = "gws.protocol.Protocol"
+                model_type=cls.full_classname(),
+                root_model_type="gws.protocol.Protocol"
             )
             pt.save()
 
-    def create_experiment(self, study: 'Study', user: 'User'=None):
+    def create_experiment(self, study: 'Study', user: 'User' = None):
         """
         Realize a protocol by creating a experiment
 
@@ -336,7 +354,7 @@ class Protocol(Process):
             from .service.user_service import UserService
             user = UserService.get_current_user()
             if user is None:
-                raise Error("Process", "create_experiment", "A user is required")
+                raise BadRequestException("A user is required")
         e = Experiment(user=user, study=study, protocol=self)
         e.save()
         return e
@@ -358,7 +376,7 @@ class Protocol(Process):
         for k in self._outerfaces:
             self._outerfaces[k].disconnect()
 
-    def dumps( self, as_dict: bool = False, prettify: bool = False, bare: bool = False ) -> str:
+    def dumps(self, as_dict: bool = False, prettify: bool = False, bare: bool = False) -> str:
         """
         Dumps the JSON graph representing the protocol.
 
@@ -371,11 +389,11 @@ class Protocol(Process):
         """
 
         graph = dict(
-            uri = ("" if bare else self.uri),
-            nodes = {},
-            links = [],
-            interfaces = {},
-            outerfaces = {},
+            uri=("" if bare else self.uri),
+            nodes={},
+            links=[],
+            interfaces={},
+            outerfaces={},
         )
         for conn in self._connectors:
             link = conn.to_json(bare=bare)
@@ -398,7 +416,7 @@ class Protocol(Process):
     # -- F --
 
     @classmethod
-    def from_graph( cls, graph: dict ) -> 'Protocol':
+    def from_graph(cls, graph: dict) -> 'Protocol':
         """
         Create a new instance from a existing graph
 
@@ -421,7 +439,7 @@ class Protocol(Process):
 
     @property
     def graph(self):
-        return self.data.get("graph",{})
+        return self.data.get("graph", {})
 
     def get_process(self, name: str) -> Process:
         """
@@ -440,7 +458,8 @@ class Protocol(Process):
         """
 
         try:
-            proto = cls.get( (cls.is_template == True) & (cls.type == cls.full_classname()) )
+            proto = cls.get((cls.is_template == True) & (
+                cls.type == cls.full_classname()))
         except:
             proto = cls()
             proto.is_template = True
@@ -503,7 +522,7 @@ class Protocol(Process):
     # -- I --
 
     @property
-    def is_draft(self)->bool:
+    def is_draft(self) -> bool:
         if not self.experiment:
             return True
         return self.experiment.is_draft
@@ -595,7 +614,7 @@ class Protocol(Process):
             return
         self._set_inputs()
         if not self.experiment:
-            raise Error("gws.protocol.Protocol", "_run_before_task", "No experiment defined")
+            raise BadRequestException("No experiment defined")
         await super()._run_before_task(*args, **kwargs)
 
     async def task(self):
@@ -613,7 +632,7 @@ class Protocol(Process):
                 sources.append(proc)
         aws = []
         for proc in sources:
-            aws.append( proc._run() )
+            aws.append(proc._run())
         if len(aws):
             await asyncio.gather(*aws)
 
@@ -638,8 +657,8 @@ class Protocol(Process):
             if not self.is_saved():
                 Activity.add(
                     Activity.CREATE,
-                    object_type = self.full_classname(),
-                    object_uri = self.uri
+                    object_type=self.full_classname(),
+                    object_uri=self.uri
                 )
             if update_graph:
                 self.data["graph"] = self.dumps(as_dict=True)
@@ -678,12 +697,12 @@ class Protocol(Process):
     def __set_input_specs(self, input_specs):
         self.input_specs = input_specs
         for k in self.input_specs:
-            self._input.create_port(k,self.input_specs[k])
+            self._input.create_port(k, self.input_specs[k])
 
     def __set_output_specs(self, output_specs):
         self.output_specs = output_specs
         for k in self.output_specs:
-            self._output.create_port(k,self.output_specs[k])
+            self._output.create_port(k, self.output_specs[k])
 
     def __set_interfaces(self, interfaces: dict):
         from .service.model_service import ModelService
@@ -696,13 +715,14 @@ class Protocol(Process):
         self._interfaces = {}
         for k in interfaces:
             source_port = self.input.ports[k]
-            self._interfaces[k] = Interface(name=k, source_port=source_port, target_port=interfaces[k])
+            self._interfaces[k] = Interface(
+                name=k, source_port=source_port, target_port=interfaces[k])
         if self.data.get("input"):
             for k in self.data.get("input"):
                 uri = self.data["input"][k]["uri"]
                 type_ = self.data["input"][k]["type"]
                 t = ModelService.get_model_type(type_)
-                self.input.__setitem_without_check__(k, t.get(t.uri == uri) )
+                self.input.__setitem_without_check__(k, t.get(t.uri == uri))
 
     def __set_outerfaces(self, outerfaces: dict):
         from .service.model_service import ModelService
@@ -716,7 +736,8 @@ class Protocol(Process):
         for k in outerfaces:
             target_port = self.output.ports[k]
             try:
-                self._outerfaces[k] = Outerface(name=k, target_port=target_port, source_port=outerfaces[k])
+                self._outerfaces[k] = Outerface(
+                    name=k, target_port=target_port, source_port=outerfaces[k])
             except:
                 pass
         if self.data.get("output"):
@@ -724,9 +745,9 @@ class Protocol(Process):
                 uri = self.data["output"][k]["uri"]
                 type_ = self.data["output"][k]["type"]
                 t = ModelService.get_model_type(type_)
-                self.output.__setitem_without_check__(k, t.get(t.uri == uri) )
+                self.output.__setitem_without_check__(k, t.get(t.uri == uri))
 
-    def set_title(self, title:str) -> str:
+    def set_title(self, title: str) -> str:
         """
         Set the title of the protocol
 
@@ -735,10 +756,10 @@ class Protocol(Process):
         """
 
         if not isinstance(title, str):
-            Error(self.full_classname(), "set_title", "The title must be a string")
+            raise BadRequestException("The title must be a string")
         self.data["title"] = title
 
-    def set_description(self, description:str) -> str:
+    def set_description(self, description: str) -> str:
         """
         Get the description of the protocol
 
@@ -747,12 +768,12 @@ class Protocol(Process):
         """
 
         if not isinstance(description, str):
-            Error(self.full_classname(), "set_description", "The description must be a string")
+            raise BadRequestException("The description must be a string")
         self.data["description"] = description
 
     # -- T --
 
-    def to_json(self, *, shallow=False, stringify: bool=False, prettify: bool=False, **kwargs) -> (str, dict, ):
+    def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> (str, dict, ):
         """
         Returns JSON string or dictionnary representation of the protocol.
 
@@ -775,4 +796,3 @@ class Protocol(Process):
                 return json.dumps(_json)
         else:
             return _json
-

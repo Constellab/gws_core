@@ -3,20 +3,25 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws.dto.user_dto import UserData
-from gws.service.user_service import UserService
+
 from typing import Dict, List
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from gws.dto.user_dto import UserData
+from gws.http import *
+from gws.service.user_service import UserService
+from gws.user import User
 from pydantic import BaseModel
+from starlette.exceptions import HTTPException
 from starlette_context.middleware import ContextMiddleware
 
-from gws.http import *
-from gws.user import User
-
-from ._central_app._auth_central import generate_user_access_token as _generate_user_access_token, check_central_api_key
-from gws.service.user_service import UserService
+from ..exception.bad_request_exception import BadRequestException
+from ..exception.exception_handler import ExceptionHandler
+from ..exception.gws_exceptions import GWSException
+from ._central_app._auth_central import check_central_api_key
+from ._central_app._auth_central import \
+    generate_user_access_token as _generate_user_access_token
 
 central_app = FastAPI(docs_url="/docs")
 
@@ -28,6 +33,18 @@ central_app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Catch all HTTP exceptions
+@central_app.exception_handler(HTTPException)
+async def allg_exception_handler(request, exc):
+    return ExceptionHandler.handle_exception(exc)
+
+
+# Catch all other exceptions
+@central_app.exception_handler(Exception)
+async def all_exception_handler(request, exc):
+    return ExceptionHandler.handle_exception(exc)
 
 
 central_app.add_middleware(
@@ -75,6 +92,29 @@ async def generate_user_access_token(user_uri_data: UserUriData,
 
 @central_app.get("/user/test", tags=["User management"])
 async def get_user_test():
+
+    # print(Color['GREEN'])
+    # print(exceptions["test"])
+    # try:
+
+    i = 1 / 0
+    # raise HTTPException(400, "BOnour")
+    #     raise BadRequestException("Waow")
+
+    # except Exception as error:
+    #     print(error)
+    #     tb = sys.exc_info()[-1]
+    #     stk = traceback.extract_tb(tb, 1)
+    #     fname = stk[0][2]
+    #     # StackTrace
+    #     print('')
+
+    # exceptions['Test']
+    # raise Exception("Waow")
+
+    raise BadRequestException(
+        GWSException.INTERNAL_SERVER_ERROR.value, GWSException.INTERNAL_SERVER_ERROR.name)
+
     """
     Testing API user details
     """
@@ -87,6 +127,7 @@ async def get_user_test():
         }
     }
 
+
 @central_app.get("/user/{uri}/activate", tags=["User management"])
 async def activate_user(uri: str, _: UserData = Depends(check_central_api_key)):
     """
@@ -98,7 +139,8 @@ async def activate_user(uri: str, _: UserData = Depends(check_central_api_key)):
     try:
         return __convert_user_to_dto(UserService.activate_user(uri))
     except Exception as err:
-        raise HTTPInternalServerError(detail=f"Cannot activate the user. Error: {err}")
+        raise HTTPInternalServerError(
+            detail=f"Cannot activate the user. Error: {err}")
 
 
 @central_app.get("/user/{uri}/deactivate", tags=["User management"])
@@ -112,7 +154,9 @@ async def deactivate_user(uri: str, _: UserData = Depends(check_central_api_key)
     try:
         return __convert_user_to_dto(UserService.deactivate_user(uri))
     except Exception as err:
-        raise HTTPInternalServerError(detail=f"Cannot deactivate the user. Error: {err}")
+        raise HTTPInternalServerError(
+            detail=f"Cannot deactivate the user. Error: {err}")
+
 
 @central_app.get("/user/{uri}", tags=["User management"])
 async def get_user(uri: str, _: UserData = Depends(check_central_api_key)):
@@ -127,6 +171,7 @@ async def get_user(uri: str, _: UserData = Depends(check_central_api_key)):
     except Exception as err:
         raise HTTPInternalServerError(
             detail=f"Cannot get the user. Error: {err}")
+
 
 @central_app.post("/user", tags=["User management"])
 async def create_user(user: UserData, _: UserData = Depends(check_central_api_key)):
@@ -144,8 +189,10 @@ async def create_user(user: UserData, _: UserData = Depends(check_central_api_ke
     try:
         return __convert_user_to_dto(UserService.create_user(user.dict()))
     except Exception as err:
-        raise HTTPInternalServerError(detail=f"Cannot create the user. Error: {err}")
-        
+        raise HTTPInternalServerError(
+            detail=f"Cannot create the user. Error: {err}")
+
+
 @central_app.get("/user", tags=["User management"])
 async def get_users(_: UserData = Depends(check_central_api_key)):
     """
@@ -154,16 +201,19 @@ async def get_users(_: UserData = Depends(check_central_api_key)):
     try:
         return __convert_users_to_dto(UserService.get_all_users())
     except Exception as err:
-        raise HTTPInternalServerError(detail=f"Cannot get the user. Error: {err}")
+        raise HTTPInternalServerError(
+            detail=f"Cannot get the user. Error: {err}")
+
 
 @central_app.get("/db/{db_name}/dump", tags=["DB management"])
 async def dump_db(db_name: str, _: UserData = Depends(check_central_api_key)):
-    from gws.service.mysql_service import MySQLService
     from gws.file import File
+    from gws.service.mysql_service import MySQLService
     output_file = MySQLService.dump_db(db_name)
     file = File(path=output_file)
     file.move_to_default_store()
     return file.to_json()
+
 
 def __convert_user_to_dto(user: User) -> Dict:
     if user is None:

@@ -1,13 +1,16 @@
 
 # Credentials error
-from fastapi import HTTPException, status
-from ..logger import Logger
+from fastapi import status
 
-class WrongCredentialsException(HTTPException):
+from .base_http_exception import BaseHTTPException
+from .gws_exceptions import GWSException
+
+
+class WrongCredentialsException(BaseHTTPException):
 
     def __init__(self) -> None:
         super().__init__(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
+            http_status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=GWSException.WRONG_CREDENTIALS.value,
+            unique_code=GWSException.WRONG_CREDENTIALS.name,
             headers={"WWW-Authenticate": "Bearer"})
-        Logger.error(f"{self}")
