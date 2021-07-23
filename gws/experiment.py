@@ -384,7 +384,7 @@ class Experiment(Viewable):
         else:
             cmd.append("dev")
 
-        Logger.info("gws.experiment.Experiment", "run_through_cli", str(cmd))
+        Logger.info(f"gws.experiment.Experiment run_through_cli {str(cmd)}")
         sproc = SysProc.popen(
             cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         self.data["pid"] = sproc.pid

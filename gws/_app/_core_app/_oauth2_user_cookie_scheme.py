@@ -1,21 +1,24 @@
-from typing import Optional
 import base64
-from passlib.context import CryptContext
 from datetime import datetime, timedelta
+from typing import Optional
 
 import jwt
-from jwt import PyJWTError
-
-from pydantic import BaseModel
-
 from fastapi import Depends, FastAPI
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2
-from fastapi.security.utils import get_authorization_scheme_param
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
 from fastapi.requests import Request
+from fastapi.security import OAuth2, OAuth2PasswordRequestForm
+from fastapi.security.utils import get_authorization_scheme_param
+from gws.exception.base_http_exception import BaseHTTPException
+from gws.exception.gws_exceptions import GWSException
+from gws.exception.unauthorized_exception import UnauthorizedException
+from jwt import PyJWTError
+from passlib.context import CryptContext
+from pydantic import BaseModel
+from starlette import status
 
 from ...http import HTTPForbiden
+
 
 class OAuth2UserTokenBearerCookie(OAuth2):
     def __init__(
@@ -27,7 +30,8 @@ class OAuth2UserTokenBearerCookie(OAuth2):
     ):
         if not scopes:
             scopes = {}
-        flows = OAuthFlowsModel(password={"tokenUrl": tokenUrl, "scopes": scopes})
+        flows = OAuthFlowsModel(
+            password={"tokenUrl": tokenUrl, "scopes": scopes})
         super().__init__(flows=flows, scheme_name=scheme_name, auto_error=auto_error)
 
     async def __call__(self, request: Request) -> Optional[str]:
@@ -54,11 +58,14 @@ class OAuth2UserTokenBearerCookie(OAuth2):
 
         if not authorization:
             if self.auto_error:
-                raise HTTPForbiden(detail="Not authenticated. Invalid header scheme.")
+                raise BaseHTTPException(
+                    http_status_code=status.HTTP_403_FORBIDDEN, detail=GWSException.INVALID_TOKEN.value,
+                    unique_code=GWSException.INVALID_TOKEN.name)
             else:
                 return None
-        
+
         return param
 
-oauth2_user_cookie_scheme = OAuth2UserTokenBearerCookie(tokenUrl="/user/login/{uri}/{token}")
 
+oauth2_user_cookie_scheme = OAuth2UserTokenBearerCookie(
+    tokenUrl="/user/login/{uri}/{token}")
