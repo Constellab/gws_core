@@ -9,7 +9,7 @@ from fastapi import Depends
 from fastapi.responses import JSONResponse
 
 from ...dto.user_dto import UserData
-from ..exception.bad_request_exception import BadRequestException
+from ...exception.bad_request_exception import BadRequestException
 from ._auth_user import check_user_access_token
 from .core_app import core_app
 

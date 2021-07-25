@@ -8,7 +8,7 @@ from typing import Optional
 from fastapi import Depends
 
 from ...dto.user_dto import UserData
-from ..exception.bad_request_exception import BadRequestException
+from ...exception.bad_request_exception import BadRequestException
 from ...service.model_service import ModelService
 from ...dto.rendering_dto import RenderingDTO
 from ._auth_user import check_user_access_token

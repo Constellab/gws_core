@@ -6,9 +6,10 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from gws.exception.exception_handler import ExceptionHandler
 from pydantic import BaseModel
 from starlette_context.middleware import ContextMiddleware
+from starlette.exceptions import HTTPException
+from ...exception.exception_handler import ExceptionHandler
 
 core_app = FastAPI(docs_url="/docs")
 

@@ -8,7 +8,7 @@ from fastapi import Depends
 from ._auth_user import check_user_access_token
 from .core_app import core_app
 
-from ..exception.bad_request_exception import BadRequestException
+from ...exception.bad_request_exception import BadRequestException
 from ...dto.user_dto import UserData
 from ...dto.rendering_dto import RenderingDTO
 
