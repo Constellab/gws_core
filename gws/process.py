@@ -9,6 +9,7 @@ import json
 import zlib
 
 from peewee import CharField, ForeignKeyField, IntegerField
+from starlette_context import context
 
 from gws.exception.bad_request_exception import BadRequestException
 
@@ -480,7 +481,8 @@ class Process(Viewable):
             await asyncio.gather(*aws)
 
     async def _run_before_task(self, *args, **kwargs):
-        Logger.info(f"Running {self.full_classname()} ...")
+        self.__switch_to_current_progress_bar()
+        Logger.progress(f"Running {self.full_classname()} ...")
         self.is_instance_running = True
         self.is_instance_finished = False
         self.data["input"] = {}
@@ -497,7 +499,7 @@ class Process(Viewable):
         self.save()
 
     async def _run_after_task(self, *args, **kwargs):
-        Logger.info(f"Task of {self.full_classname()} successfully finished!")
+        Logger.progress(f"Task of {self.full_classname()} successfully finished!")
         self.is_instance_running = False
         self.is_instance_finished = True
         self.progress_bar.stop()
@@ -535,6 +537,19 @@ class Process(Viewable):
         return self.out_port(name)
 
     # -- S --
+
+    def __switch_to_current_progress_bar(self):
+        """
+        Swicth to the application to current progress bar.
+
+        The current progress bar will be accessible everywhere (i.e. at the application level)
+        """
+
+        try:
+            context.data["progress_bar"] = self.progress_bar
+        except:
+            pass
+
 
     def set_experiment(self, experiment):
         from .experiment import Experiment

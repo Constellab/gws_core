@@ -9,8 +9,8 @@ from ..query import Paginator
 from ..typing import ResourceType
 from ..resource import Resource
 from ..experiment import Experiment
-from ..http import *
 from .base_service import BaseService
+from ..exception.not_found_exception import NotFoundException
 
 class ResourceService(BaseService):
     
@@ -26,7 +26,7 @@ class ResourceService(BaseService):
         if type:
             t = ModelService.get_model_type(type)
             if t is None:
-                raise HTTPNotFound(detail=f"Resource type '{type}' not found")
+                raise NotFoundException(detail=f"Resource type '{type}' not found")
         else:
             t = Resource
             
@@ -34,7 +34,7 @@ class ResourceService(BaseService):
             r = t.get(t.uri == uri)
             return r
         except Exception as err:
-            raise HTTPNotFound(detail=f"No resource found with uri '{uri}' and type '{type}'", debug_error=err)
+            raise NotFoundException(detail=f"No resource found with uri '{uri}' and type '{type}'") from err
         
         
     @classmethod
@@ -50,7 +50,7 @@ class ResourceService(BaseService):
         if type:
             t = ModelService.get_model_type(type)
             if t is None:
-                raise HTTPNotFound(detail=f"Resource type '{type}' not found")
+                raise NotFoundException(detail=f"Resource type '{type}' not found")
         else:
             t = Resource
         number_of_items_per_page = min(number_of_items_per_page, cls._number_of_items_per_page)

@@ -3,16 +3,12 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-
 import json
-
 from peewee import CharField
 
 from gws.exception.bad_request_exception import BadRequestException
-
 from .activity import Activity
 from .db.model import Model
-from .http import *
 
 # ####################################################################
 #
@@ -134,7 +130,6 @@ class ViewModel(Model):
             return func(**params)
         except Exception as err:
             raise BadRequestException(f"Cannot create the ViewModel rendering. Error: {err}.")
-            return "Cannot create rendering"
 
     # -- S --
 

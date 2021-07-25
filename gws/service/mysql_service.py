@@ -6,10 +6,8 @@
 import os
 
 from ..db.mysql import MySQLDump, MySQLLoad
-from ..http import *
 from ..requests import Requests
 from .base_service import BaseService
-
 
 class MySQLService(BaseService):
 

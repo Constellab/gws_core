@@ -7,39 +7,27 @@ import sys
 import os
 import json
 
-__cdir__ = os.path.dirname(os.path.abspath(__file__))
-
-ROOT_DIR = os.path.join(__cdir__, "../../../../")
-
-if os.path.exists(os.path.join(ROOT_DIR, "./.gws")):
-    BASE_WORKSPACE_DIR = os.path.join(ROOT_DIR, "./.gws")
+LAB_DIR = os.path.join("/lab")
+if os.path.exists(os.path.join(LAB_DIR, "./.core")):
+    BASE_WORKSPACE_DIR = os.path.join(LAB_DIR, "./.core")
 else:
-    BASE_WORKSPACE_DIR = os.path.join(ROOT_DIR, "./gws")
+    BASE_WORKSPACE_DIR = os.path.join(LAB_DIR, "./core")
 
 BASE_BRICK_DIR = os.path.join(BASE_WORKSPACE_DIR, "./bricks")
 BASE_EXTERN_DIR = os.path.join(BASE_WORKSPACE_DIR, "./externs")
-BASE_LOG_DIR = os.path.join(BASE_WORKSPACE_DIR, "./logs")
-BASE_DATA_DIR = os.path.join(BASE_WORKSPACE_DIR, "./data")
-
-USER_WORKSPACE_DIR = os.path.join(ROOT_DIR, "./user")
+USER_WORKSPACE_DIR = os.path.join(LAB_DIR, "./user")
 USER_BRICK_DIR = os.path.join(USER_WORKSPACE_DIR, "./bricks/")
-USER_LAB_DIR = os.path.join(USER_WORKSPACE_DIR, "./main/")
+USER_MAIN_DIR = os.path.join(USER_WORKSPACE_DIR, "./main/")
 USER_EXTERN_DIR = os.path.join(USER_WORKSPACE_DIR, "./externs")
-USER_LOG_DIR = os.path.join(USER_WORKSPACE_DIR, "./logs")
-USER_DATA_DIR = os.path.join(USER_WORKSPACE_DIR, "./data")
 
 DIR_TOKENS = dict(
-    ROOT_DIR = ROOT_DIR,
+    LAB_DIR = LAB_DIR,
     BASE_WORKSPACE_DIR = BASE_WORKSPACE_DIR,
     BASE_BRICK_DIR = BASE_BRICK_DIR,
     BASE_EXTERN_DIR = BASE_EXTERN_DIR,
-    BASE_LOG_DIR = BASE_LOG_DIR,
-    BASE_DATA_DIR = BASE_DATA_DIR,
     USER_WORKSPACE_DIR = USER_WORKSPACE_DIR,
     USER_BRICK_DIR = USER_BRICK_DIR,
     USER_EXTERN_DIR = USER_EXTERN_DIR,
-    USER_LOG_DIR = USER_LOG_DIR,
-    USER_DATA_DIR = USER_DATA_DIR
 )
 
 loaded_bricks = []
@@ -108,7 +96,7 @@ def _find_brick(name):
     return None
 
 def _find_lab(name):
-    dep_cwd = os.path.join(USER_LAB_DIR, name)
+    dep_cwd = os.path.join(USER_MAIN_DIR, name)
     if os.path.exists(dep_cwd):
         return dep_cwd
     

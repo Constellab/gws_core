@@ -8,17 +8,18 @@ from typing import Dict, List
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from gws.dto.user_dto import UserData
-from gws.http import *
-from gws.service.user_service import UserService
-from gws.user import User
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException
 from starlette_context.middleware import ContextMiddleware
 
+
+from gws.service.user_service import UserService
+from gws.user import User
+from gws.dto.user_dto import UserData
+
 from ..exception.bad_request_exception import BadRequestException
 from ..exception.exception_handler import ExceptionHandler
-from ..exception.gws_exceptions import GWSException
+from ..exception.not_found_exception import NotFoundException
 from ._central_app._auth_central import check_central_api_key
 from ._central_app._auth_central import \
     generate_user_access_token as _generate_user_access_token
@@ -116,8 +117,8 @@ async def activate_user(uri: str, _: UserData = Depends(check_central_api_key)):
     try:
         return __convert_user_to_dto(UserService.activate_user(uri))
     except Exception as err:
-        raise HTTPInternalServerError(
-            detail=f"Cannot activate the user. Error: {err}")
+        raise BadRequestException(
+            "Cannot activate the user") from err
 
 
 @ central_app.get("/user/{uri}/deactivate", tags=["User management"])
@@ -131,8 +132,8 @@ async def deactivate_user(uri: str, _: UserData = Depends(check_central_api_key)
     try:
         return __convert_user_to_dto(UserService.deactivate_user(uri))
     except Exception as err:
-        raise HTTPInternalServerError(
-            detail=f"Cannot deactivate the user. Error: {err}")
+        raise BadRequestException(
+            "Cannot deactivate the user.") from err
 
 
 @ central_app.get("/user/{uri}", tags=["User management"])
@@ -146,8 +147,8 @@ async def get_user(uri: str, _: UserData = Depends(check_central_api_key)):
     try:
         return __convert_user_to_dto(UserService.get_user_by_uri(uri))
     except Exception as err:
-        raise HTTPInternalServerError(
-            detail=f"Cannot get the user. Error: {err}")
+        raise NotFoundException(
+            "Cannot get the user.") from err
 
 
 @ central_app.post("/user", tags=["User management"])
@@ -166,8 +167,8 @@ async def create_user(user: UserData, _: UserData = Depends(check_central_api_ke
     try:
         return __convert_user_to_dto(UserService.create_user(user.dict()))
     except Exception as err:
-        raise HTTPInternalServerError(
-            detail=f"Cannot create the user. Error: {err}")
+        raise BadRequestException(
+            "Cannot create the user.") from err
 
 
 @ central_app.get("/user", tags=["User management"])
@@ -178,8 +179,8 @@ async def get_users(_: UserData = Depends(check_central_api_key)):
     try:
         return __convert_users_to_dto(UserService.get_all_users())
     except Exception as err:
-        raise HTTPInternalServerError(
-            detail=f"Cannot get the user. Error: {err}")
+        raise NotFoundException(
+            "Cannot get the users.") from err
 
 
 @ central_app.get("/db/{db_name}/dump", tags=["DB management"])

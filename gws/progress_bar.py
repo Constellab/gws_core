@@ -8,10 +8,10 @@ import time
 from datetime import datetime
 
 from fastapi.encoders import jsonable_encoder
+from starlette_context import context
 from peewee import CharField
 
 from gws.exception.bad_request_exception import BadRequestException
-
 from .db.model import Model
 from .logger import Logger
 
@@ -65,6 +65,19 @@ class ProgressBar(Model):
             return -1
 
     # -- G --
+
+    @classmethod
+    def get_current_progress_bar(self) -> 'ProgressBar':
+        """
+        Get the current progress bar.
+
+        This method allow accessing the current progress everywhere (i.e. at the application level)
+        """
+
+        try:
+            return context.data["progress_bar"]
+        except:
+            return None
 
     def get_max_value(self) -> float:
         return self.data["max_value"]

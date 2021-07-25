@@ -227,10 +227,10 @@ class Settings(PeeweeModel):
 
     def get_gws_workspace_dir(self) -> str:
         lab_dir = self.get_lab_dir()
-        if os.path.exists(os.path.join(lab_dir, "./.gws/")):
-            return os.path.join(lab_dir, "./.gws/")
+        if os.path.exists(os.path.join(lab_dir, "./.core/")):
+            return os.path.join(lab_dir, "./.core/")
         else:
-            return os.path.join(lab_dir, "./gws/")
+            return os.path.join(lab_dir, "./core/")
 
     def get_user_workspace_dir(self) -> str:
         lab_dir = self.get_lab_dir()

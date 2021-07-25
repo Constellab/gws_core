@@ -1,3 +1,8 @@
+# Core GWS app module
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
+
 from typing import Optional
 import base64
 from passlib.context import CryptContext
@@ -5,7 +10,6 @@ from datetime import datetime, timedelta
 import jwt
 from jwt import PyJWTError
 from pydantic import BaseModel
-
 from fastapi import Depends, FastAPI
 from fastapi.encoders import jsonable_encoder
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2
@@ -16,7 +20,8 @@ from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
 from fastapi.openapi.utils import get_openapi
 from fastapi.requests import Request
 
-from ...http import HTTPForbiden
+from ...exception.gws_exceptions import GWSException
+from ...exception.bad_request_exception import BadRequestException
 
 class OAuth2CentralAPIKeyHeader(OAuth2):
     def __init__(
@@ -33,7 +38,6 @@ class OAuth2CentralAPIKeyHeader(OAuth2):
 
     async def __call__(self, request: Request) -> Optional[str]:
         header_authorization: str = request.headers.get("Authorization")
-
         header_scheme, header_param = get_authorization_scheme_param(
             header_authorization
         )
@@ -46,7 +50,7 @@ class OAuth2CentralAPIKeyHeader(OAuth2):
 
         if not authorization:
             if self.auto_error:
-                raise HTTPForbiden(detail="Not authorized. Invalid header scheme.")
+                raise BadRequestException("Not authorized. Invalid request.")
             else:
                 return None
 

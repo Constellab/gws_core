@@ -10,7 +10,6 @@ from ...dto.user_dto import UserData
 from ...service.model_service import ModelService
 from ...service.experiment_service import ExperimentService
 from ...dto.experiment_dto import ExperimentDTO
-from ...http import *
 from ._auth_user import check_user_access_token
 from .core_app import core_app
 

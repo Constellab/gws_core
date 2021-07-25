@@ -11,7 +11,10 @@ from ..study import Study
 from ..experiment import Experiment
 from ..protocol import Protocol
 from ..queue import Queue, Job
-from ..http import *
+from ..exception.not_found_exception import NotFoundException
+from ..exception.bad_request_exception import BadRequestException
+from ..exception.forbidden_exception import ForbiddenException
+
 from .user_service import UserService
 from .base_service import BaseService
 
@@ -38,7 +41,7 @@ class ExperimentService(BaseService):
             e.save()
             return e
         except Exception as err:
-            raise HTTPInternalServerError(detail=f"An error occured.", debug_error=err) from err
+            raise BadRequestException(detail=f"Cannot create the experiment.") from err
 
     # -- F --
     
@@ -47,7 +50,7 @@ class ExperimentService(BaseService):
         try:
             e = Experiment.get(Experiment.uri == uri)
         except Exception as err:
-            raise HTTPNotFound(detail=f"No experiment found with uri {uri}", debug_error=err) from err
+            raise NotFoundException(detail=f"No experiment found with uri '{uri}'") from err
             
         return e
     
@@ -97,13 +100,13 @@ class ExperimentService(BaseService):
         try:
             e = Experiment.get(Experiment.uri == uri)
         except Exception as err:
-            raise HTTPNotFound(detail=f"Experiment '{uri}' not found", debug_error=err) from err
+            raise NotFoundException(detail=f"Experiment '{uri}' is not found") from err
   
         if e._is_running:
-            raise HTTPForbiden(detail=f"The experiment '{uri}' is running")
+            raise ForbiddenException(detail=f"The experiment '{uri}' is running")
         elif e._is_finished:
             if not e.reset():
-                raise HTTPForbiden(detail=f"The experiment '{uri}' is finished and cannot be reset")
+                raise ForbiddenException(detail=f"The experiment '{uri}' is finished and cannot be reset")
 
         try:
             q = Queue()
@@ -112,25 +115,25 @@ class ExperimentService(BaseService):
             q.add(job, auto_start=True)
             return e
         except Exception as err:
-            raise HTTPInternalServerError(detail=f"An error occured.", debug_error=err) from err
+            raise BadRequestException(detail=f"An error occured.") from err
     
     @classmethod
     async def stop_experiment(cls, uri) -> Experiment:
         try:
             e = Experiment.get(Experiment.uri == uri)
         except Exception as err:
-            raise HTTPInternalServerError(detail=f"Experiment '{uri}' not found") from err
+            raise BadRequestException(detail=f"Experiment '{uri}' not found") from err
 
         if not e._is_running:
-            raise HTTPForbiden(detail=f"Experiment '{uri}' is not running")
+            raise ForbiddenException(detail=f"Experiment '{uri}' is not running")
         elif e._is_finished:
-            raise HTTPForbiden(detail=f"Experiment '{uri}' is already finished")
+            raise ForbiddenException(detail=f"Experiment '{uri}' is already finished")
         else:
             try:
                 e.kill_pid()
                 return e
             except Exception as err:
-                raise HTTPInternalServerError(detail=f"Cannot kill experiment '{uri}'", debug_error=err) from err
+                raise BadRequestException(detail=f"Cannot kill experiment '{uri}'") from err
                 
     # -- U --
 
@@ -139,7 +142,7 @@ class ExperimentService(BaseService):
         try:
             e = Experiment.get(Experiment.uri == uri)
             if not e.is_draft:
-                raise HTTPInternalServerError(detail=f"Experiment '{uri}' is not a draft")
+                raise BadRequestException(detail=f"Experiment '{uri}' is not a draft")
             
             if experiment.graph:
                 proto = e.protocol
@@ -155,7 +158,7 @@ class ExperimentService(BaseService):
             e.save()
             return e
         except Exception as err:
-            raise HTTPInternalServerError(detail=f"An error occured.", debug_error=err) from err
+            raise BadRequestException(detail=f"Cannot update experiment") from err
     
             
     # -- V --
@@ -165,12 +168,12 @@ class ExperimentService(BaseService):
         try:
             e = Experiment.get(Experiment.uri == uri)
         except Exception as err:
-            raise HTTPNotFound(detail=f"Experiment '{uri}' not found") from err
+            raise NotFoundException(detail=f"Experiment '{uri}' not found") from err
         
         try:
             e.validate(user = UserService.get_current_user())
             return e
         except Exception as err:
-            raise HTTPNotFound(detail=f"Cannot validate experiment '{uri}'", debug_error=err) from err
+            raise NotFoundException(detail=f"Cannot validate experiment '{uri}'") from err
             
             

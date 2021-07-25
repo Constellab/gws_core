@@ -138,7 +138,7 @@ class Shell(Process):
             count = 0
             for line in iter(proc.stdout.readline, b''):
                 line = line.decode().strip()
-                Logger.info(line)
+                Logger.progress(line)
                 if not proc.is_alive():
                     break
 

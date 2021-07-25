@@ -3,9 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import os
 import datetime
 import logging
-import os
 
 from .settings import Settings
 
@@ -75,7 +75,7 @@ class Logger:
     def info(cls, message: str) -> None:
         if not cls._logger:
             Logger()
-        cls._logger.warning(cls._get_message("INFO", message))
+        cls._logger.info(cls._get_message("INFO", message))
 
     # -- P --
 
@@ -83,7 +83,13 @@ class Logger:
     def progress(cls, message: str) -> None:
         if not cls._logger:
             Logger()
-        cls._logger.warning(cls._get_message("PROGRESS", message))
+        cls._logger.info(cls._get_message("PROGRESS", message))
+        try:
+            from .progress_bar import ProgressBar
+            ProgressBar.get_current_progress_bar().add_message(message)
+        except:
+            pass
+
 
     # -- F --
 

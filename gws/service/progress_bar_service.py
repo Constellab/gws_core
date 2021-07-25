@@ -6,8 +6,8 @@
 from typing import List
 
 from ..progress_bar import ProgressBar
-from ..http import *
 from .base_service import BaseService
+from ..exception.not_found_exception import NotFoundException
 
 class ProgressBarService(BaseService):
      
@@ -16,4 +16,4 @@ class ProgressBarService(BaseService):
         try:
             return ProgressBar.get(ProgressBar.uri == uri)
         except Exception as err:
-            raise HTTPNotFound(detail=f"No process bar found with uri {uri}", debug_error=err) from err
+            raise NotFoundException(detail=f"No process bar found with uri {uri}") from err

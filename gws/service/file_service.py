@@ -11,10 +11,11 @@ from fastapi.responses import FileResponse
 from ..query import Paginator
 from ..file import File, FileSet, FileUploader
 from ..study import Study
-from ..http import *
 from .base_service import BaseService
 from .model_service import ModelService
 from .user_service import UserService
+from ..exception.not_found_exception import NotFoundException
+from ..exception.bad_request_exception import BadRequestException
 
 class FileService(BaseService):
     
@@ -31,7 +32,7 @@ class FileService(BaseService):
         if type:
             t = ModelService.get_model_type(type)
             if t is None:
-                raise HTTPNotFound(detail=f"File type '{type}' not found")
+                raise NotFoundException(detail=f"File type '{type}' not found")
         else:
             t = File
         if search_text:
@@ -61,12 +62,12 @@ class FileService(BaseService):
     def download_file(cls, type, uri) -> FileResponse:
         t = ModelService.get_model_type(type)
         if t is None:
-            raise HTTPNotFound(detail=f"File type '{type}' not found")
+            raise NotFoundException(detail=f"File type '{type}' not found")
         try:
             file = t.get(t.uri == uri)
             return FileResponse(file.path, media_type='application/octet-stream', filename=file.name)
         except Exception as err:
-            raise HTTPNotFound(detail=f"File not found with uri '{uri}'") from err
+            raise NotFoundException(detail=f"File not found with uri '{uri}'") from err
 
     # -- U --
     
@@ -84,10 +85,10 @@ class FileService(BaseService):
                 e = uploader.create_experiment(study=study, user=user)
                 e.set_title("File upload")
                 e.save()
-            except:
-                raise HTTPNotFound(detail=f"Study not found")
+            except Exception as err:
+                raise NotFoundException(detail=f"Study not found") from err
         try:
             await e.run(wait_response=True)
             return uploader.output["result"]        
         except Exception as err:
-            raise HTTPInternalServerError(detail=f"Upload failed. Error: {err}")
+            raise BadRequestException(detail=f"Upload failed. Error: {err}")

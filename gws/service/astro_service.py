@@ -6,7 +6,7 @@
 from ..study import Study
 from ..robot import create_protocol, create_nested_protocol
 from ..queue import Queue, Job
-from ..http import *
+from ..exception.bad_request_exception import BadRequestException
 from .base_service import BaseService
 
 class AstroService(BaseService):
@@ -14,7 +14,6 @@ class AstroService(BaseService):
     @classmethod
     async def run_robot_travel(cls):
         from .user_service import UserService
-        
         user = UserService.get_current_user()
         study = Study.get_default_instance()
         p = create_protocol()
@@ -22,13 +21,12 @@ class AstroService(BaseService):
         e.set_title("The journey of Astro.")
         e.data["description"] = "This is the journey of Astro."
         e.save()
-        
         try:
             job = Job(user=user, experiment=e)
             Queue.add(job)
             return e
         except Exception as err:
-            raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
+            raise BadRequestException(detail=f"Cannot run robot_travel") from err
             
     @classmethod
     async def run_robot_super_travel(cls):    
@@ -47,4 +45,4 @@ class AstroService(BaseService):
             Queue.add(job)
             return e
         except Exception as err:
-            raise HTTPInternalServerError(detail=f"An error occured. Error: {err}")
+            raise BadRequestException(detail=f"Cannot run robot_super_travel.") from err

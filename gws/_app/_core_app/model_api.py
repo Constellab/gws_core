@@ -8,7 +8,7 @@ from typing import Optional
 from fastapi import Depends
 
 from ...dto.user_dto import UserData
-from ...http import HTTPInternalServerError
+from ..exception.bad_request_exception import BadRequestException
 from ...service.model_service import ModelService
 from ...dto.rendering_dto import RenderingDTO
 from ._auth_user import check_user_access_token
@@ -61,16 +61,15 @@ async def create_a_view_model_of_a_model(type: str, \
     - **data**: the rendering data.
     """
     
-    vm = ModelService.create_view_model(
-        type=type, 
+    view_model = ModelService.create_view_model(
+        type=type,
         uri=uri,
         data=data
     )
-    
     try:
-        return vm.to_json()
+        return view_model.to_json()
     except Exception as err:
-        raise HTTPInternalServerError(detail=f"Cannot render view. The rendering function '{data.render}' may not be valid", debug_error=err)
+        raise BadRequestException(detail=f"Cannot render view.") from err
 
 @core_app.get("/model/{type}/{uri}/verify", tags=["Models"], summary="Verify model hash")
 async def verify_a_model_hash(type: str, \
@@ -135,10 +134,10 @@ async def get_the_list_of_models(type: str, \
     """
     
     return ModelService.fetch_list_of_models( 
-        type = type, 
+        type = type,
         search_text = search_text,
-        page = page, 
-        number_of_items_per_page = number_of_items_per_page, 
+        page = page,
+        number_of_items_per_page = number_of_items_per_page,
         as_json = True
     )
 

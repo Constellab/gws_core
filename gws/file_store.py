@@ -143,8 +143,7 @@ class LocalFileStore(FileStore):
                 if not os.path.exists(f.dir):
                     os.makedirs(f.dir)
                     if not os.path.exists(f.dir):
-                        raise Exception("FileStore", "add",
-                                        f"Cannot create directory '{f.dir}'")
+                        raise BadRequestException(f"Cannot create directory '{f.dir}'")
                 if isinstance(source_file, (io.IOBase, tempfile.SpooledTemporaryFile, )):
                     with open(f.path, "wb") as buffer:
                         shutil.copyfileobj(source_file, buffer)

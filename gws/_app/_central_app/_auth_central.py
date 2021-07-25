@@ -3,18 +3,15 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-
 from datetime import datetime, timedelta
 from typing import Optional
-
 import jwt
 from fastapi import Depends
 from fastapi.responses import JSONResponse
-from gws.exception.gws_exceptions import GWSException
-from gws.exception.unauthorized_exception import UnauthorizedException
 
 from ...dto.user_dto import UserData
-from ...http import HTTPUnauthorized
+from ...exception.gws_exceptions import GWSException
+from ...exception.unauthorized_exception import UnauthorizedException
 from ...settings import Settings
 from ...user import User
 from ._oauth2_central_header_scheme import oauth2_central_header_scheme
@@ -28,11 +25,12 @@ COOKIE_MAX_AGE_SECONDS = 60*60*24*3     # 3 days
 
 def check_central_api_key(api_key: str = Depends(oauth2_central_header_scheme)):
     from ...service.central_service import CentralService
-
     is_authorized = CentralService.check_api_key(api_key)
     if not is_authorized:
-        raise HTTPUnauthorized(detail="Not authorized. Invalid API key.")
-
+        raise UnauthorizedException(
+            detail=GWSException.WRONG_CREDENTIALS_INVALID_API_KEY.value,
+            unique_code=GWSException.WRONG_CREDENTIALS_INVALID_API_KEY.name
+        )
 
 def get_user(user_uri: str) -> UserData:
     try:

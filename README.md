@@ -1,19 +1,22 @@
 # Core GWS architecture 
 
-This is the core library of Gencvoery Web Services
+This is the core library of Gencovery Web Services
 
 # Usage
 
-Run server
+Starts the server
+
 ```
 python3 manage.py --runserver
+
 ```
 
-Run a given unit tests
+Runs a given unit test
+
 ```
 python3 manage.py --test test_name
 ```
-The ```test_name``` is the name of the test Python file ```test_name.py``` (without the  extensio) located in sur subfolder ```tests```
+The ```test_name``` is the name of the test Python file ```test_name.py``` (without the ```.py``` extension) located in subfolder ```tests```
 
 
 ```

@@ -4,16 +4,15 @@
 # About us: https://gencovery.com
 
 from typing import Dict
-from fastapi import HTTPException
+from fastapi import status
+from .base_http_exception import BaseHTTPException
 
-class BaseHTTPException(HTTPException):
+class ForbiddenException(BaseHTTPException):
     """
-    Generic exception
-    All the exception that extends this exceptions are considered a excepted exceptions and
-    those are not logged in the console nor the logging file
+    Generic exception to throw a 403 forbidden error useful for any kind of error
     """
 
-    def __init__(self, http_status_code: int, detail: str, unique_code: str = None,
+    def __init__(self, detail: str, unique_code: str = None,
                  detail_args: Dict = None, headers: Dict = None) -> None:
         """Throw a generic exception
 
@@ -32,8 +31,10 @@ class BaseHTTPException(HTTPException):
         :param headers: if specific header need to be returned in the HTTP response, defaults to None
         :type headers: Dict, optional
         """
-        super().__init__(status_code=http_status_code, detail=detail)
-        self.detail = detail
-        self.unique_code = unique_code
-        self.detail_args = detail_args
-        self.headers = headers
+
+        super().__init__(
+            http_status_code=status.HTTP_403_FORBIDDEN,
+            detail=detail,
+            unique_code=unique_code,
+            detail_args=detail_args,
+            headers=headers)

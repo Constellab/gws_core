@@ -10,9 +10,8 @@ from ..typing import ProtocolType
 from ..protocol import Protocol
 from ..experiment import Experiment
 from ..progress_bar import ProgressBar
-from ..http import *
 from .base_service import BaseService
-
+from ..exception.not_found_exception import NotFoundException
 
 class ProtocolService(BaseService):
 
@@ -25,21 +24,21 @@ class ProtocolService(BaseService):
         if type:
             t = ModelService.get_model_type(type)
             if t is None:
-                raise HTTPNotFound(detail=f"Protocol type '{type}' not found")
+                raise NotFoundException(detail=f"Protocol type '{type}' not found")
         else:
             t = Protocol
         try:
             p = t.get(t.uri == uri)
             return p
         except Exception as err:
-            raise HTTPNotFound(detail=f"No protocol found with uri '{uri}' and type '{type}'", debug_error=err) from err
+            raise NotFoundException(detail=f"No protocol found with uri '{uri}' and type '{type}'") from err
 
     @classmethod
     def fetch_protocol_progress_bar(cls, type = "gws.protocol.Protocol", uri: str = "") -> ProgressBar:
         try:
             return ProgressBar.get( (ProgressBar.process_uri == uri) & (ProgressBar.process_type == type) )
         except Exception as err:
-            raise HTTPNotFound(detail=f"No progress bar found with process_uri '{uri}' and process_type '{type}'", debug_error=err) from err
+            raise NotFoundException(detail=f"No progress bar found with process_uri '{uri}' and process_type '{type}'") from err
 
     @classmethod
     def fetch_protocol_list(cls, \
@@ -56,7 +55,7 @@ class ProtocolService(BaseService):
         if type:
             t = ModelService.get_model_type(type)
             if t is None:
-                raise HTTPNotFound(detail=f"Protocol type '{type}' not found")
+                raise NotFoundException(detail=f"Protocol type '{type}' not found")
         else:
             t = Protocol
 

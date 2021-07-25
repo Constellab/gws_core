@@ -13,8 +13,8 @@ from ...user import User
 from ...settings import Settings
 from ...service.user_service import UserService
 from ...exception.wrong_credentials_exception import WrongCredentialsException
+from ...exception.unauthorized_exception import UnauthorizedException
 from ._oauth2_user_cookie_scheme import oauth2_user_cookie_scheme
-from ...http import HTTPUnauthorized
 
 settings = Settings.retrieve()
 SECRET_KEY = settings.data.get("secret_key")
@@ -76,7 +76,6 @@ async def check_user_access_token(token: str = Depends(oauth2_user_cookie_scheme
             is_console_authenticated=db_user.is_console_authenticated
         )
     except Exception as err:
-        print(err)
         raise WrongCredentialsException()
 
 
@@ -84,26 +83,26 @@ def check_is_sysuser():
     try:
         user = UserService.get_current_user()
     except:
-        raise HTTPUnauthorized(detail="Unauthorized: owner required")
+        raise UnauthorizedException(detail="Unauthorized: owner required")
         
     if not user.is_sysuser:
-        raise HTTPUnauthorized(detail="Unauthorized: owner required")
+        raise UnauthorizedException(detail="Unauthorized: owner required")
         
 def check_is_owner():
     try:
         user = UserService.get_current_user()
     except:
-        raise HTTPUnauthorized(detail="Unauthorized: owner required")
+        raise UnauthorizedException(detail="Unauthorized: owner required")
         
     if not user.is_owner:
-        raise HTTPUnauthorized(detail="Unauthorized: owner required")
+        raise UnauthorizedException(detail="Unauthorized: owner required")
         
 def check_is_admin():
     try:
         user = UserService.get_current_user()
     except:
-        raise HTTPUnauthorized(detail="Unauthorized: admin required")
+        raise UnauthorizedException(detail="Unauthorized: admin required")
 
     if not user.is_admin:
-        raise HTTPUnauthorized(detail="Unauthorized: admin required")
+        raise UnauthorizedException(detail="Unauthorized: admin required")
  

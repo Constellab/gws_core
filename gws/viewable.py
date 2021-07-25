@@ -5,7 +5,6 @@
 
 
 from .db.model import Model
-from .http import *
 from .comment import Comment
 
 class Viewable(Model):

@@ -6,12 +6,13 @@
 from typing import List, Union
 
 from ..dto.typed_tree_dto import TypedTree
-from ..http import *
 from ..experiment import Experiment
 from ..process import Process
 from ..progress_bar import ProgressBar
 from ..query import Paginator
 from ..typing import ProcessType
+from ..exception.not_found_exception import NotFoundException
+
 from .base_service import BaseService
 
 class ProcessService(BaseService):
@@ -25,23 +26,23 @@ class ProcessService(BaseService):
         if type:
             t = ModelService.get_model_type(type)
             if t is None:
-                raise HTTPNotFound(detail=f"Process type '{type}' not found")
+                raise NotFoundException(detail=f"Process type '{type}' not found")
         else:
             t = Process
         try:
             p = t.get(t.uri == uri)
             return p
         except Exception as err:
-            raise HTTPNotFound(
-                detail=f"No process found with uri '{uri}' and type '{type}'", debug_error=err)
+            raise NotFoundException(
+                detail=f"No process found with uri '{uri}' and type '{type}'")
 
     @classmethod
     def fetch_process_progress_bar(cls, type: str = "gws.process.Process", uri: str = "") -> ProgressBar:
         try:
             return ProgressBar.get((ProgressBar.process_uri == uri) & (ProgressBar.process_type == type))
         except Exception as err:
-            raise HTTPNotFound(
-                detail=f"No progress bar found with process_uri '{uri}' and process_type '{type}'", debug_error=err)
+            raise NotFoundException(
+                detail=f"No progress bar found with process_uri '{uri}' and process_type '{type}'")
 
     @classmethod
     def fetch_process_list(cls,
@@ -58,7 +59,7 @@ class ProcessService(BaseService):
         if type:
             t = ModelService.get_model_type(type)
             if t is None:
-                raise HTTPNotFound(detail=f"Process type '{type}' not found")
+                raise NotFoundException(detail=f"Process type '{type}' not found")
         else:
             t = Process
         if search_text:

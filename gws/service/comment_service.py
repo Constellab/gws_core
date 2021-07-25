@@ -7,7 +7,7 @@ from typing import List
 
 from ..query import Paginator
 from ..comment import Comment
-from ..http import HTTPNotFound
+from ..exception.not_found_exception import NotFoundException
 from .base_service import BaseService
 
 class CommentService(BaseService):
@@ -18,7 +18,7 @@ class CommentService(BaseService):
             try:
                 parent = Comment.get(Comment.uri == reply_to_uri)
             except Exception as err:
-                raise HTTPNotFound(detail=f"The parent comment '{reply_to_uri}' not found") from err
+                raise NotFoundException(detail=f"The parent comment '{reply_to_uri}' not found") from err
 
             comment = Comment(
                 object_uri=object_uri,

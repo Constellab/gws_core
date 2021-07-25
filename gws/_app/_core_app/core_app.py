@@ -10,8 +10,6 @@ from gws.exception.exception_handler import ExceptionHandler
 from pydantic import BaseModel
 from starlette_context.middleware import ContextMiddleware
 
-from ...http import *
-
 core_app = FastAPI(docs_url="/docs")
 
 # Enable core for the API

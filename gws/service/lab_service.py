@@ -5,7 +5,6 @@
 
 from ..query import Paginator
 from ..system import Monitor
-from ..http import *
 from .base_service import BaseService
 
 class LabService(BaseService):

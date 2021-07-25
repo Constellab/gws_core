@@ -6,9 +6,9 @@
 from typing import List
 from ..query import Paginator
 from ..view_model import ViewModel
-from ..http import *
 from ..dto.rendering_dto import RenderingDTO
 from .base_service import BaseService
+from ..exception.not_found_exception import NotFoundException
 
 class ViewService(BaseService):
 
@@ -29,7 +29,7 @@ class ViewService(BaseService):
         try:
             return ViewModel.get(ViewModel.uri == uri)
         except Exception as err:
-            raise HTTPNotFound(detail=f"ViewModel '{uri}' not found") from err
+            raise NotFoundException(detail=f"ViewModel '{uri}' not found") from err
         
     @classmethod
     def fetch_list_of_view_models(cls, \
@@ -66,7 +66,7 @@ class ViewService(BaseService):
         try:
             view_model = ViewModel.get(ViewModel.uri == uri)
         except Exception as err:
-            raise HTTPNotFound(detail=f"ViewModel '{uri}' not found") from err
+            raise NotFoundException(detail=f"ViewModel '{uri}' not found") from err
         view_model.upate(data)
         return view_model
     

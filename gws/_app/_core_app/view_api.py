@@ -8,7 +8,7 @@ from fastapi import Depends
 from ._auth_user import check_user_access_token
 from .core_app import core_app
 
-from ...http import *
+from ..exception.bad_request_exception import BadRequestException
 from ...dto.user_dto import UserData
 from ...dto.rendering_dto import RenderingDTO
 
@@ -24,15 +24,14 @@ async def update_a_view_model(uri: str, \
     """
 
     from ...service.view_service import ViewService
-    
-    view_model = ViewService.update_view_model( 
-        uri = uri, 
-        data = data    
+    view_model = ViewService.update_view_model(
+        uri = uri,
+        data = data
     )
     try:
         return view_model.to_json()
     except Exception as err:
-        raise HTTPInternalServerError(detail=f"Cannot render view. The rendering function '{data.render}' may not be valid", debug_error=err) from err
+        raise BadRequestException(detail="Cannot render view.") from err
 
 @core_app.get("/view/{uri}", tags=["ViewModels"], summary="Get a view model")
 async def get_a_view_model(uri: str, \
@@ -44,12 +43,11 @@ async def get_a_view_model(uri: str, \
     """
     
     from ...service.view_service import ViewService
-
     view_model = ViewService.fetch_view_model(uri=uri)
     try:
         return view_model.to_json()
     except Exception as err:
-        raise HTTPInternalServerError(detail=f"Cannot render view.", debug_error=err) from err
+        raise BadRequestException(detail="Cannot render view.") from err
 
 @core_app.get("/view", tags=["ViewModels"], summary="Get the list of view models")
 async def get_the_list_of_view_models(page: Optional[int] = 1, \
@@ -65,7 +63,6 @@ async def get_the_list_of_view_models(page: Optional[int] = 1, \
     """
     
     from ...service.view_service import ViewService
-
     return ViewService.fetch_list_of_view_models(
         page = page, 
         number_of_items_per_page = number_of_items_per_page, 

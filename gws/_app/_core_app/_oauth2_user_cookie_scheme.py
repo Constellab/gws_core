@@ -17,9 +17,6 @@ from passlib.context import CryptContext
 from pydantic import BaseModel
 from starlette import status
 
-from ...http import HTTPForbiden
-
-
 class OAuth2UserTokenBearerCookie(OAuth2):
     def __init__(
         self,
