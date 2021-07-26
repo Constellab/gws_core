@@ -13,7 +13,7 @@ stages:
 
 # Build lab front an create an artifact with dist folder
 build-lab:
-  image: node:14-alpine
+  image: python:3.6
   stage: build-lab
   script:
     - pip install twine
