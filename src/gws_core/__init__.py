@@ -1,1 +1,1 @@
-from maclass import MaClass
+from .maclass import MaClass
