@@ -125,5 +125,3 @@ def docgen(brick_name, brick_dir, settings, force=False):
             fp.write(
                 "No documentation found!"
             )
-
-        #raise Error(f"An error occurred. Error message: {err}")

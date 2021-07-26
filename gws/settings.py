@@ -160,7 +160,7 @@ class Settings(PeeweeModel):
         :rtype: `str`
         """
 
-        return "/labs"
+        return "/lab"
         # if self.is_prod:
         #     return "/app/prod/lab"
         # else:
