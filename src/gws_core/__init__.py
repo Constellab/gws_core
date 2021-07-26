@@ -1,2 +1,1 @@
-
-import gws_core.maclass
+from maclass import MaClass

@@ -1,5 +1,5 @@
 
 class MaClass:
 
-    def test():
+    def test(self):
         print("MaClass")
