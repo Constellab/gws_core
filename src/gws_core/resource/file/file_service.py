@@ -14,7 +14,7 @@ from ...core.exception import BadRequestException, NotFoundException
 from ...core.model.study import Study
 from ...core.service.base_service import BaseService
 from ...model.model_service import ModelService
-from ...user.user_service import UserService
+from ...user.current_user_service import CurrentUserService
 from .file import File, FileSet
 from .file_uploader import FileUploader
 
@@ -80,7 +80,7 @@ class FileService(BaseService):
     @classmethod
     async def upload_file(cls, files: List[UploadFile] = FastAPIFile(...), study_uri=None) -> Union[FileSet, File]:
         uploader = FileUploader(files=files)
-        user = UserService.get_current_user()
+        user = CurrentUserService.get_current_user()
         if study_uri is None:
             e = uploader.create_experiment(study=Study.get_default_instance())
             e.set_title("File upload")

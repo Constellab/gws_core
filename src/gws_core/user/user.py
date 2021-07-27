@@ -9,8 +9,6 @@ from peewee import BooleanField, CharField
 
 from ..core.exception import BadRequestException
 from ..core.model.model import Model
-from ..core.utils.logger import Logger
-from ..core.utils.settings import Settings
 from ..core.utils.util import Util
 
 # ####################################################################
@@ -71,137 +69,19 @@ class User(Model):
 
         return False
 
-    @classmethod
-    def authenticate(cls, uri: str, console_token: str = "") -> bool:
-        """
-        Authenticate a user
-
-        :param uri: The uri of the user to authenticate
-        :type uri: `str`
-        :param console_token: The console token. This token is only used if the for console contexts
-        :type console_token: `str`
-        :return: True if the user is successfully autheticated, False otherwise
-        :rtype: `bool`
-        """
-
-        from ..core.service.http_service import HTTPService
-
-        try:
-            user = User.get(User.uri == uri)
-        except Exception as err:
-            raise BadRequestException(
-                f"User not found with uri {uri}") from err
-        if not user.is_active:
-            return False
-        if HTTPService.is_http_context():
-            return cls.__authenticate_http(user)
-        else:
-            return cls.__authenticate_console(user, console_token)
-
-    @classmethod
-    def __authenticate_console(cls, user, console_token) -> bool:
-        from .activity import Activity
-        from .user_service import UserService
-
-        if user.is_console_authenticated:
-            UserService.set_current_user(user)
-            return True
-        is_valid_token = bool(console_token) and (
-            user.console_token == console_token)
-        if not is_valid_token:
-            return False
-        with cls._db_manager.db.atomic() as transaction:
-            try:
-                # authenticate the user first
-                user.is_console_authenticated = True
-                if user.save():
-                    UserService.set_current_user(user)
-                else:
-                    raise BadRequestException("Cannot save user status")
-                # now save user activity
-                Activity.add(Activity.CONSOLE_AUTHENTICATION)
-                return True
-            except Exception as err:
-                Logger.warning(f"User __authenticate_console {err}")
-                transaction.rollback()
-                return False
-
-    @classmethod
-    def __authenticate_http(cls, user) -> bool:
-        from .activity import Activity
-        from .user_service import UserService
-
-        if user.is_http_authenticated:
-            UserService.set_current_user(user)
-            return True
-        with cls._db_manager.db.atomic() as transaction:
-            try:
-                # authenticate the user first
-                user.is_http_authenticated = True
-                if user.save():
-                    UserService.set_current_user(user)
-                else:
-                    raise BadRequestException("Cannot save user status")
-                # now save user activity
-                Activity.add(Activity.HTTP_AUTHENTICATION)
-                return True
-            except Exception as err:
-                Logger.warning(f"User __authenticate_http {err}")
-                transaction.rollback()
-                return False
-
-    @classmethod
-    def create_owner_and_sysuser(cls):
-        settings = Settings.retrieve()
-        Q = User.select().where(User.group == cls.OWNER_GROUP)
-        if not Q:
-            uri = settings.data["owner"]["uri"]
-            email = settings.data["owner"]["email"]
-            first_name = settings.data["owner"]["first_name"]
-            last_name = settings.data["owner"]["last_name"]
-            u = User(
-                uri=uri if uri else None,
-                email=email,
-                data={"first_name": first_name, "last_name": last_name},
-                is_active=True,
-                group=cls.OWNER_GROUP
-            )
-            u.save()
-        Q = User.select().where(User.group == cls.SYSUSER_GROUP)
-        if not Q:
-            u = User(
-                email="admin@gencovery.com",
-                data={"first_name": "sysuser", "last_name": ""},
-                is_active=True,
-                group=cls.SYSUSER_GROUP
-            )
-            u.save()
-
     # -- G --
 
     @classmethod
     def get_admin(cls):
-        try:
-            return User.get(User.group == cls.ADMIN_GROUP)
-        except:
-            cls.create_admin_user()
-            return User.get(User.group == cls.ADMIN_GROUP)
+        return User.get(User.group == cls.ADMIN_GROUP)
 
     @classmethod
     def get_owner(cls):
-        try:
-            return User.get(User.group == cls.OWNER_GROUP)
-        except:
-            cls.create_owner_and_sysuser()
-            return User.get(User.group == cls.OWNER_GROUP)
+        return User.get(User.group == cls.OWNER_GROUP)
 
     @classmethod
     def get_sysuser(cls):
-        try:
-            return User.get(User.group == cls.SYSUSER_GROUP)
-        except:
-            cls.create_owner_and_sysuser()
-            return User.get(User.group == cls.SYSUSER_GROUP)
+        return User.get(User.group == cls.SYSUSER_GROUP)
 
     @classmethod
     def get_by_email(cls, email: str) -> 'User':
@@ -284,74 +164,3 @@ class User(Model):
             return _json
 
     # -- U --
-
-    @classmethod
-    def unauthenticate(cls, uri: str) -> bool:
-        """
-        Unauthenticate a user
-
-        :param uri: The uri of the user to unauthenticate
-        :type uri: `str`
-        :return: True if the user is successfully unautheticated, False otherwise
-        :rtype: `bool`
-        """
-
-        from ..core.service.http_service import HTTPService
-
-        try:
-            user = User.get(User.uri == uri)
-        except Exception as err:
-            raise BadRequestException(
-                f"User not found with uri {uri}") from err
-        if not user.is_active:
-            return False
-        if HTTPService.is_http_context():
-            return cls.__unauthenticate_http(user)
-        else:
-            return cls.__unauthenticate_console(user)
-
-    @classmethod
-    def __unauthenticate_http(cls, user) -> bool:
-        from .activity import Activity
-        from .user_service import UserService
-
-        if not user.is_http_authenticated:
-            UserService.set_current_user(None)
-            return True
-        with cls._db_manager.db.atomic() as transaction:
-            try:
-                user.is_http_authenticated = False
-                Activity.add(Activity.HTTP_UNAUTHENTICATION)
-                if user.save():
-                    UserService.set_current_user(None)
-                else:
-                    raise BadRequestException("Cannot save user status")
-                return True
-            except Exception as err:
-                Logger.warning(f"User __unauthenticate_http {err}")
-                transaction.rollback()
-                return False
-
-    @classmethod
-    def __unauthenticate_console(cls, user) -> bool:
-        from .activity import Activity
-        from .user_service import UserService
-
-        if not user.is_console_authenticated:
-            UserService.set_current_user(None)
-            return True
-        with cls._db_manager.db.atomic() as transaction:
-            try:
-                user.is_console_authenticated = False
-                Activity.add(Activity.CONSOLE_UNAUTHENTICATION)
-                if user.save():
-                    UserService.set_current_user(None)
-                else:
-                    raise BadRequestException("Cannot save user status")
-                return True
-            except Exception as err:
-                Logger.warning(f"User __unauthenticate_console {err}")
-                transaction.rollback()
-                return False
-
-    # -- V --

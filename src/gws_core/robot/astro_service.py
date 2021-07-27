@@ -8,14 +8,14 @@ from ..core.model.study import Study
 from ..core.service.base_service import BaseService
 from ..experiment.queue import Job, Queue
 from ..robot import create_nested_protocol, create_protocol
-from ..user.user_service import UserService
+from ..user.current_user_service import CurrentUserService
 
 
 class AstroService(BaseService):
 
     @classmethod
     async def run_robot_travel(cls):
-        user = UserService.get_current_user()
+        user = CurrentUserService.get_current_user()
         study = Study.get_default_instance()
         p = create_protocol()
         e = p.create_experiment(study=study, user=user)
@@ -32,7 +32,7 @@ class AstroService(BaseService):
 
     @classmethod
     async def run_robot_super_travel(cls):
-        user = UserService.get_current_user()
+        user = CurrentUserService.get_current_user()
         study = Study.get_default_instance()
         p = create_nested_protocol()
         e = p.create_experiment(study=study, user=user)

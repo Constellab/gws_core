@@ -184,6 +184,8 @@ class ViewModel(Model):
         """
         Update the ViewModel with new data
         """
+        # todo remove this dependency and log activity in the service instead
+        from ..user.activity_service import ActivityService
 
         params = data.get("params", {})
         self.set_params(params)
@@ -191,7 +193,7 @@ class ViewModel(Model):
             if k != "params":
                 self.data[k] = data[k]
         if track_activity:
-            Activity.add(
+            ActivityService.add(
                 Activity.UPDATE,
                 object_type=self.full_classname(),
                 object_uri=self.uri

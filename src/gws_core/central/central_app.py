@@ -14,6 +14,7 @@ from starlette_context.middleware import ContextMiddleware
 
 from ..core.exception import (BadRequestException, ExceptionHandler,
                               NotFoundException)
+from ..core.service.http_service import HTTPService
 from ..core.service.mysql_service import MySQLService
 from ..resource.file.file import File
 from ..user.user import User
@@ -97,10 +98,10 @@ async def get_user_test():
     """
     return {
         "owner": {
-            "uri": User.get_owner().uri,
+            "uri": UserService.get_owner().uri,
         },
         "sys": {
-            "uri": User.get_sysuser().uri,
+            "uri": UserService.get_sysuser().uri,
         }
     }
 
@@ -176,6 +177,7 @@ async def get_users(_: UserData = Depends(check_central_api_key)):
     Get the all the users. Require central privilege.
     """
     try:
+        HTTPService.is_http_context()
         return __convert_users_to_dto(UserService.get_all_users())
     except Exception as err:
         raise NotFoundException(

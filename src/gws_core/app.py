@@ -9,6 +9,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from ._sphynx.docgen import docgen
 from .central.central_app import central_app
 from .core.model.study import Study
 from .core.utils.logger import Logger
@@ -16,7 +17,8 @@ from .core.utils.settings import Settings
 from .core_app import core_app
 from .experiment.queue import Queue
 from .lab.system import Monitor
-from .user.user import User
+from .model.model_service import ModelService
+from .user.user_service import UserService
 
 app = FastAPI(docs_url=None)
 
@@ -58,11 +60,10 @@ class App:
         Initialize the app
         """
 
-        from .model.model_service import ModelService
         ModelService.create_tables()
         ModelService.register_all_processes_and_resources()
         Study.create_default_instance()
-        User.create_owner_and_sysuser()
+        UserService.create_owner_and_sysuser()
         Monitor.init(daemon=True)
         Queue.init(daemon=True, verbose=False)
 

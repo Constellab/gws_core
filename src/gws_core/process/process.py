@@ -13,8 +13,8 @@ from starlette_context import context
 
 from ..config.config import Config
 from ..core.exception import BadRequestException
-from ..model.viewable import Viewable
 from ..core.utils.logger import Logger
+from ..model.viewable import Viewable
 from ..progress_bar.progress_bar import ProgressBar
 from ..resource.io import InPort, Input, OutPort, Output
 from ..user.user import User
@@ -205,10 +205,10 @@ class Process(Viewable):
 
         from ..experiment.experiment import Experiment
         from ..protocol.protocol import Protocol
-        from ..user.user_service import UserService
+        from ..user.current_user_service import CurrentUserService
         proto = Protocol(processes={self.instance_name: self})
         if user is None:
-            user = UserService.get_current_user()
+            user = CurrentUserService.get_current_user()
             if user is None:
                 raise BadRequestException("A user is required")
         if uri:

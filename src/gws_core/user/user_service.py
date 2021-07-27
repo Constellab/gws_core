@@ -3,20 +3,16 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, Coroutine, Union
+from typing import Union
 
-from starlette.responses import JSONResponse
 from starlette_context import context
 
-from ..central._auth_central import generate_user_access_token
-from ..central.central_service import CentralService
 from ..core.classes.paginator import Paginator
-from ..core.exception import BadRequestException, UnauthorizedException
+from ..core.exception import BadRequestException
 from ..core.service.base_service import BaseService
+from ..core.utils.settings import Settings
 from .activity import Activity
-from .credentials_dto import CredentialsDTO
 from .user import User
-from .wrong_credentials_exception import WrongCredentialsException
 
 
 class UserService(BaseService):
@@ -107,25 +103,6 @@ class UserService(BaseService):
     # -- G --
 
     @classmethod
-    def get_current_user(cls) -> User:
-        """
-        Get the user in the current session
-        """
-
-        try:
-            user = context.data["user"]
-        except Exception as _:
-            # is console context
-            try:
-                user = cls._console_data["user"]
-            except Exception as err:
-                raise BadRequestException(
-                    "No HTTP nor Console user authenticated") from err
-        if user is None:
-            raise BadRequestException("No HTTP nor Console user authenticated")
-        return user
-
-    @classmethod
     def get_user_by_uri(cls, uri: str) -> User:
         return User.get_by_uri(uri)
 
@@ -149,53 +126,65 @@ class UserService(BaseService):
         return user
 
     @classmethod
-    def set_current_user(cls, user: User):
-        """
-        Set the user in the current session
-        """
-
-        if user is None:
-            try:
-                # is http context
-                context.data["user"] = None
-            except:
-                # is console context
-                cls._console_data["user"] = None
-        else:
-            if isinstance(user, dict):
-                try:
-                    user = User.get(User.uri == user.uri)
-                except Exception as err:
-                    raise BadRequestException("Invalid current user") from err
-
-            if not isinstance(user, User):
-                raise BadRequestException("Invalid current user")
-
-            if not user.is_active:
-                raise UnauthorizedException("Not authorized")
-
-            try:
-                # is http contexts
-                context.data["user"] = user
-            except Exception as _:
-                # is console context
-                cls._console_data["user"] = user
-
-    @classmethod
     def get_all_users(cls):
         return list(User.select())
 
     @classmethod
-    async def login(cls, credentials: CredentialsDTO) -> Coroutine[Any, Any, JSONResponse]:
+    def create_owner_and_sysuser(cls):
+        settings_local = Settings.retrieve()
 
-        # Check if user exist in the lab
-        user: User = cls.get_user_by_email(credentials.email)
-        if user is None:
-            raise WrongCredentialsException()
+        # Create the owner
+        try:
+            UserService.get_owner()
+        except:
+            uri = settings_local.data["owner"]["uri"]
+            email = settings_local.data["owner"]["email"]
+            first_name = settings_local.data["owner"]["first_name"]
+            last_name = settings_local.data["owner"]["last_name"]
+            u = User(
+                uri=uri if uri else None,
+                email=email,
+                data={"first_name": first_name, "last_name": last_name},
+                is_active=True,
+                group=User.OWNER_GROUP
+            )
+            u.save()
 
-        # Check the user credentials
-        credentials_valid: bool = CentralService.check_credentials(credentials)
-        if not credentials_valid:
-            raise WrongCredentialsException()
+        # Create the admin
+        try:
+            UserService.get_sysuser()
+        except:
+            u = User(
+                email="admin@gencovery.com",
+                data={"first_name": "sysuser", "last_name": ""},
+                is_active=True,
+                group=User.SYSUSER_GROUP
+            )
+            u.save()
 
-        return await generate_user_access_token(user.uri)
+    # -- G --
+
+    @classmethod
+    def get_admin(cls):
+        try:
+            return User.get_admin()
+        except:
+            # Todo create method
+            cls.create_admin_user()
+            return User.get_admin()
+
+    @classmethod
+    def get_owner(cls):
+        try:
+            return User.get_owner()
+        except:
+            cls.create_owner_and_sysuser()
+            return User.get_owner()
+
+    @classmethod
+    def get_sysuser(cls):
+        try:
+            return User.get_sysuser()
+        except:
+            cls.create_owner_and_sysuser()
+            return User.get_sysuser()

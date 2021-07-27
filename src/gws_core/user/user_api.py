@@ -65,4 +65,4 @@ async def login(credentials: CredentialsDTO) -> Coroutine[Any, Any, JSONResponse
     Log the user using central
     """
 
-    return await UserService.login(credentials)
+    return await AuthService.login(credentials)

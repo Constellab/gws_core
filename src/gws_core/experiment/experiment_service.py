@@ -5,13 +5,13 @@
 
 from typing import List
 
+from ..core.classes.paginator import Paginator
 from ..core.exception import (BadRequestException, ForbiddenException,
                               NotFoundException)
 from ..core.model.study import Study
 from ..core.service.base_service import BaseService
 from ..protocol.protocol import Protocol
-from ..query import Paginator
-from ..user.user_service import UserService
+from ..user.current_user_service import CurrentUserService
 from .experiment import Experiment
 from .experiment_dto import ExperimentDTO
 from .queue import Job, Queue
@@ -27,7 +27,7 @@ class ExperimentService(BaseService):
             study = Study.get_default_instance()
             proto = Protocol()
             e = proto.create_experiment(
-                user=UserService.get_current_user(),
+                user=CurrentUserService.get_current_user(),
                 study=study
             )
 
@@ -117,7 +117,7 @@ class ExperimentService(BaseService):
 
         try:
             q = Queue()
-            user = UserService.get_current_user()
+            user = CurrentUserService.get_current_user()
             job = Job(user=user, experiment=e)
             q.add(job, auto_start=True)
             return e
@@ -184,7 +184,7 @@ class ExperimentService(BaseService):
                 detail=f"Experiment '{uri}' not found") from err
 
         try:
-            e.validate(user=UserService.get_current_user())
+            e.validate(user=CurrentUserService.get_current_user())
             return e
         except Exception as err:
             raise NotFoundException(

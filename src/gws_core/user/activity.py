@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 import json
+from typing import Union
 
 from peewee import CharField, ForeignKeyField
 
@@ -45,10 +46,7 @@ class Activity(Model):
         return False
 
     @classmethod
-    def add(self, activity_type: str, *, object_type=None, object_uri=None, user=None):
-        from .user_service import UserService
-        if not user:
-            user = UserService.get_current_user()
+    def add(cls, activity_type: str, *, object_type=None, object_uri=None, user: User):
         activity = Activity(
             user=user,
             activity_type=activity_type,
@@ -59,7 +57,7 @@ class Activity(Model):
 
     # -- T --
 
-    def to_json(self, *, stringify: bool = False, prettify: bool = False, **kwargs) -> (str, dict, ):
+    def to_json(self, *, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
         """
         Returns JSON string or dictionnary representation of the model.
 
