@@ -59,13 +59,7 @@ class App:
         Initialize the app
         """
 
-        from .service.model_service import ModelService
-        ModelService.create_tables()
-        ModelService.register_all_processes_and_resources()
-        Study.create_default_instance()
-        User.create_owner_and_sysuser()
         Monitor.init(daemon=True)
-        # /!\ Daemon is False because experiments are run through CLI in non-blocking mode
         Queue.init(daemon=True, verbose=False)
 
     @classmethod
@@ -84,6 +78,12 @@ class App:
         """
 
         from ._sphynx.docgen import docgen
+        from .service.model_service import ModelService
+
+        ModelService.create_tables()
+        ModelService.register_all_processes_and_resources()
+        Study.create_default_instance()
+        User.create_owner_and_sysuser()
 
         # static dirs and docs
         settings = Settings.retrieve()
