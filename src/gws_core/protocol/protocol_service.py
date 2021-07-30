@@ -6,12 +6,12 @@
 from typing import List
 
 from ..core.service.base_service import BaseService
-from ..exception.not_found_exception import NotFoundException
-from ..experiment import Experiment
-from ..progress_bar import ProgressBar
-from ..protocol import Protocol
-from ..query import Paginator
-from ..typing import ProtocolType
+from ..core.exception.exceptions.not_found_exception import NotFoundException
+from ..experiment.experiment import Experiment
+from ..progress_bar.progress_bar import ProgressBar
+from ..protocol.protocol import Protocol
+from ..core.classes.paginator import Paginator
+from ..core.model.typing import ProtocolType
 
 
 class ProtocolService(BaseService):

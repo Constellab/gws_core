@@ -66,7 +66,7 @@ class Typing(Viewable):
         return self.model_type.split('.')
 
     def __get_hierarchy_table(self) -> List[str]:
-        from .service.model_service import ModelService
+        from ...model.model_service import ModelService
         model_t: Model = ModelService.get_model_type(self.model_type)
         mro: List[Model] = inspect.getmro(model_t)
 
@@ -109,7 +109,7 @@ class ProcessType(Typing):
     # -- T --
 
     def to_json(self, *, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
-        from .service.model_service import ModelService
+        from ...model.model_service import ModelService
 
         _json = super().to_json(**kwargs)
 
@@ -172,7 +172,7 @@ class ProtocolType(Typing):
     """
 
     def to_json(self, *, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
-        from .service.model_service import ModelService
+        from ...model.model_service import ModelService
 
         _json = super().to_json(**kwargs)
         model_t = ModelService.get_model_type(self.model_type)
@@ -213,7 +213,7 @@ class ResourceType(Typing):
         return self.root_model_type
 
     def to_json(self, *, stringify: bool = False, prettify: bool = False, **kwargs) -> (str, dict, ):
-        from .service.model_service import ModelService
+        from ...model.model_service import ModelService
 
         _json = super().to_json(**kwargs)
 

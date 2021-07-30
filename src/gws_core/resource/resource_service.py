@@ -8,9 +8,9 @@ from typing import List
 from ..core.exception import NotFoundException
 from ..core.model.typing import ResourceType
 from ..core.service.base_service import BaseService
-from ..experiment import Experiment
-from ..query import Paginator
-from ..resource import Resource
+from ..experiment.experiment import Experiment
+from ..core.classes.paginator import Paginator
+from ..resource.resource import Resource
 
 
 class ResourceService(BaseService):

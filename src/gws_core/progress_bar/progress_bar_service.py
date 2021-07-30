@@ -7,7 +7,7 @@ from typing import List
 
 from ..core.exception import NotFoundException
 from ..core.service.base_service import BaseService
-from ..progress_bar import ProgressBar
+from .progress_bar import ProgressBar
 
 
 class ProgressBarService(BaseService):

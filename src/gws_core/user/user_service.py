@@ -166,25 +166,13 @@ class UserService(BaseService):
 
     @classmethod
     def get_admin(cls):
-        try:
-            return User.get_admin()
-        except:
-            # Todo create method
-            cls.create_admin_user()
-            return User.get_admin()
+        return User.get_admin()
 
     @classmethod
     def get_owner(cls):
-        try:
-            return User.get_owner()
-        except:
-            cls.create_owner_and_sysuser()
-            return User.get_owner()
+        return User.get_owner()
 
     @classmethod
     def get_sysuser(cls):
-        try:
-            return User.get_sysuser()
-        except:
-            cls.create_owner_and_sysuser()
-            return User.get_sysuser()
+        return User.get_sysuser()
+

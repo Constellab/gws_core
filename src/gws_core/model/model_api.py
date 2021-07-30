@@ -147,3 +147,13 @@ async def get_the_list_of_models(type: str,
         number_of_items_per_page=number_of_items_per_page,
         as_json=True
     )
+
+
+@core_app.get("/model/exposed", tags=["Models"], summary="Get the list of exposed models")
+async def get_list_of_exposed_models(_: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    """
+    Get a list of exposed Models
+    """
+
+    pass
+    #return ModelService.fetch_list_of_exposed_models(as_json=True)

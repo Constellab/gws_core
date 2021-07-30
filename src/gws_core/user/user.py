@@ -85,10 +85,7 @@ class User(Model):
 
     @classmethod
     def get_by_email(cls, email: str) -> 'User':
-        try:
-            return cls.get(cls.email == email)
-        except:
-            return None
+        return User.get(User.email == email)
 
     # -- F --
 

@@ -327,7 +327,7 @@ class Protocol(Process):
 
     @classmethod
     def create_process_type(cls):
-        from .typing import ProtocolType
+        from ..core.model.typing import ProtocolType
         exist = ProtocolType.select().where(
             ProtocolType.model_type == cls.full_classname()).count()
         if not exist:

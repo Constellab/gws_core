@@ -3,8 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from ..query import Paginator
-from ..system import Monitor
+from ..core.classes.paginator import Paginator
+from .system import Monitor
 from ..core.service.base_service import BaseService
 
 

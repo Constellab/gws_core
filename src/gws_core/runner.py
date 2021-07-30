@@ -3,9 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import os
 import importlib
 import unittest
-
 import click
 
 from .core.exception import BadRequestException
@@ -60,7 +60,8 @@ def _run(ctx, uri="", token="", test="",
         if test in ["*", "all"]:
             test = "test*"
         loader = unittest.TestLoader()
-        test_suite = loader.discover(".", pattern=test+".py")
+        __cdir__ = os.path.dirname(os.path.abspath(__file__))
+        test_suite = loader.discover(os.path.join(__cdir__,"../../tests/"), pattern=test+".py")
         test_runner = unittest.TextTestRunner()
         test_runner.run(test_suite)
     elif docgen:

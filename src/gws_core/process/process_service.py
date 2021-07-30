@@ -12,7 +12,7 @@ from ..core.service.base_service import BaseService
 from ..experiment.experiment import Experiment
 from .process import Process
 from ..progress_bar.progress_bar import ProgressBar
-from ..query import Paginator
+from ..core.classes.paginator import Paginator
 
 
 class ProcessService(BaseService):

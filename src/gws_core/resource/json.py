@@ -4,7 +4,8 @@
 # About us: https://gencovery.com
 
 import json
-from .file import *
+from .file.file import File
+from .file.file_uploader import FileImporter, FileExporter, FileDumper, FileLoader
 from .resource import Resource
 
 class JSONData(Resource):

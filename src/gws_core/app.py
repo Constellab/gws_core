@@ -32,12 +32,13 @@ app = FastAPI(docs_url=None)
 @app.on_event("startup")
 async def startup():
     """ Called before the app is started """
-    App.init()
 
+    App.init()
 
 @app.on_event("shutdown")
 async def shutdown():
     """ Called before the application is stopped """
+
     App.deinit()
 
 ####################################################################################
@@ -60,10 +61,6 @@ class App:
         Initialize the app
         """
 
-        ModelService.create_tables()
-        ModelService.register_all_processes_and_resources()
-        Study.create_default_instance()
-        UserService.create_owner_and_sysuser()
         Monitor.init(daemon=True)
         Queue.init(daemon=True, verbose=False)
 
@@ -82,13 +79,10 @@ class App:
         Starts FastAPI uvicorn
         """
 
-        from ._sphynx.docgen import docgen
-        from .service.model_service import ModelService
-
         ModelService.create_tables()
         ModelService.register_all_processes_and_resources()
         Study.create_default_instance()
-        User.create_owner_and_sysuser()
+        UserService.create_owner_and_sysuser()
 
         # static dirs and docs
         settings = Settings.retrieve()
@@ -96,10 +90,6 @@ class App:
         Logger.info(
             f"Starting server in {('prod' if settings.is_prod else 'dev')} mode ...")
         for name in dirs:
-            static_dir = os.path.join(dirs["gws"], "index/static/")
-            if os.path.exists(os.path.join(static_dir)):
-                cls.app.mount(
-                    f"/static/{name}/", StaticFiles(directory=static_dir), name=f"/static/{name}")
             html_dir = os.path.join(dirs[name], "./docs/html/build")
             if not os.path.exists(os.path.join(html_dir, "index.html")):
                 # os.makedirs(html_dir)

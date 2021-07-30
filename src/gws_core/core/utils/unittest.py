@@ -3,12 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from .exception.exceptions.bad_request_exception import BadRequestException
-
-from .service.model_service import ModelService
-from .utils.settings import Settings
-from .study import Study
-from .user import User
+from ...model.model_service import ModelService
+from ...user.user import User
+from ..exception.exceptions.bad_request_exception import BadRequestException
+from ..model.study import Study
+from ..utils.settings import Settings
 
 
 class GTest:

@@ -7,7 +7,7 @@ from ..core.exception import BadRequestException
 from ..core.model.study import Study
 from ..core.service.base_service import BaseService
 from ..experiment.queue import Job, Queue
-from ..robot import create_nested_protocol, create_protocol
+from ..robot.robot import create_nested_protocol, create_protocol
 from ..user.current_user_service import CurrentUserService
 
 

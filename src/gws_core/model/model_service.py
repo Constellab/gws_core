@@ -9,6 +9,7 @@ import os
 from typing import Dict, List, Union
 
 from ..config.config import Config
+from ..core.classes.expose import Expose
 from ..core.classes.paginator import Paginator
 from ..core.dto.rendering_dto import RenderingDTO
 from ..core.exception.exceptions import BadRequestException, NotFoundException
@@ -184,6 +185,20 @@ class ModelService(BaseService):
     # -- G --
 
     @classmethod
+    def get_exposed_models(cls):
+        settings = Settings.retrieve()
+        dep_dirs = settings.get_dependency_dirs()
+        exposed_models = {}
+        for brick_name in dep_dirs:
+            exposed_models[brick_name] = {}
+            try:
+                module = importlib.import_module(brick_name+".__expose__")
+                exposed_models[brick_name] = Expose.analyze( module )
+            except Exception as _:
+                pass
+        return exposed_models
+
+    @classmethod
     def _get_db_and_model_lists(cls, models: list = None):
         if not models:
             models = ModelService._inspect_model_types()
@@ -253,7 +268,7 @@ class ModelService(BaseService):
     def _inspect_model_types(cls):
         settings = Settings.retrieve()
         dep_dirs = settings.get_dependency_dirs()
-
+        
         def __get_list_of_sub_modules(cdir):
             modules = [[f, dirpath]
                        for dirpath, dirnames, files in os.walk(cdir)
@@ -278,25 +293,35 @@ class ModelService(BaseService):
         model_type_list = []
         for brick_name in dep_dirs:
             cdir = dep_dirs[brick_name]
-            module_names = __get_list_of_sub_modules(
-                os.path.join(cdir, brick_name))
-            if brick_name == "gws":
-                _black_list = ["settings", "runner", "manage", "logger"]
+            cdir = os.path.join(cdir, "./src/")
+            module_names = __get_list_of_sub_modules(cdir)
+
+            if brick_name == "gws_core":
+                _black_list = [
+                    "gws_core.settings",
+                    "gws_core.runner",
+                    "gws_core.manage", 
+                    "gws_core.logger",
+                    "gws_core.cli",
+                    "gws_core.app"
+                ]
+                
                 for k in _black_list:
                     try:
                         module_names.remove(k)
                     except Exception as _:
                         pass
+            
             for module_name in module_names:
                 try:
-                    submodule = importlib.import_module(
-                        brick_name+"."+module_name)
-                    for class_name, _ in inspect.getmembers(submodule, inspect.isclass):
-                        t = getattr(submodule, class_name, None)
-                        if issubclass(t, Model):
-                            model_type_list.append(t)
-                except Exception as _:
+                    submodule = importlib.import_module(module_name)
+                    for _, obj in inspect.getmembers(submodule, inspect.isclass):
+                        if issubclass(obj, Model):
+                            model_type_list.append(obj)
+                except Exception as err:
+                    # @ToDo
                     pass
+
         model_type_list = list(set(model_type_list))
         return model_type_list
 
@@ -308,6 +333,7 @@ class ModelService(BaseService):
         process_type_list = []
         resource_type_list = []
         for m_t in set(model_type_list):
+
             if issubclass(m_t, Process):
                 process_type_list.append(m_t)
                 if (not m_t is Process) and (not m_t is Protocol):

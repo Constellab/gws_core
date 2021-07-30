@@ -10,8 +10,12 @@ from peewee import Model as PeeweeModel
 from peewee import SqliteDatabase, Proxy
 from .util import Util
 
-database_proxy = Proxy()  # create a proxy for our db.
-__cdir__ = os.path.dirname(os.path.abspath(__file__))
+#__SETTINGS_DB_PROXY__ = Proxy()  # create a proxy for our db.
+
+__SETTINGS_DIR__ = "/settings/" 
+if not os.path.exists(__SETTINGS_DIR__):
+    os.makedirs(__SETTINGS_DIR__)
+__SETTINGS_DB__ = SqliteDatabase(os.path.join(__SETTINGS_DIR__, "settings.sqlite3"))
 
 # app settings
 class Settings(PeeweeModel):
@@ -26,7 +30,7 @@ class Settings(PeeweeModel):
 
     data = JSONField(null = True)
     _data = dict(
-        app_dir         = __cdir__,
+        app_dir         = os.path.dirname(os.path.abspath(__file__)),
         app_host        = '0.0.0.0',
         app_port        = 3000,
         #log_dir         = "/logs",
@@ -49,12 +53,12 @@ class Settings(PeeweeModel):
         for k in settings_json:
             cls._data[k] = settings_json[k]
         
-        settings_dir = "/settings/" #os.path.join(cls._data["data_dir"], "settings")
-        if not os.path.exists(settings_dir):
-            os.makedirs(settings_dir)
-            
-        db = SqliteDatabase(os.path.join(settings_dir, "settings.sqlite3"))
-        database_proxy.initialize(db)
+        # settings_dir = "/settings/" #os.path.join(cls._data["data_dir"], "settings")
+        # if not os.path.exists(settings_dir):
+        #     os.makedirs(settings_dir)
+   
+        # db = SqliteDatabase(os.path.join(settings_dir, "settings.sqlite3"))
+        # __SETTINGS_DB_PROXY__.initialize(db)
         
         if not cls.table_exists():
             cls.create_table()
@@ -64,6 +68,7 @@ class Settings(PeeweeModel):
             for k in cls._data:
                 settings.data[k] = cls._data[k]
             settings.save()
+
         except Exception as _:
             settings = Settings()
             #secret_key
@@ -322,5 +327,5 @@ class Settings(PeeweeModel):
         return self.data.get("version", None)
  
     class Meta:
-        database = database_proxy
+        database = __SETTINGS_DB__
 

@@ -7,7 +7,7 @@ from typing import List
 
 from ..core.exception import NotFoundException
 from ..core.service.base_service import BaseService
-from ..query import Paginator
+from ..core.classes.paginator import Paginator
 from .comment import Comment
 
 

@@ -8,7 +8,7 @@ from typing import List
 from ..core.dto.rendering_dto import RenderingDTO
 from ..core.exception import NotFoundException
 from ..core.service.base_service import BaseService
-from ..query import Paginator
+from ..core.classes.paginator import Paginator
 from .view_model import ViewModel
 
 

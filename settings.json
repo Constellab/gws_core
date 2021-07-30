@@ -1,5 +1,5 @@
 {
-    "name"          : "gws",
+    "name"          : "gws_core",
     "authors"       : "Gencovery",
     "version"       : "0.1",
     "app_dir"       : "./",

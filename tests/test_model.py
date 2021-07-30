@@ -8,10 +8,9 @@ import os
 import unittest
 
 from peewee import CharField
-from gws.db.model import Model
-from gws.unittest import GTest
-from gws.service.model_service import ModelService
-from gws.unittest import GTest
+from gws_core.core.model.model import Model
+from gws_core.core.utils.unittest import GTest
+from gws_core.model.model_service import ModelService
 
 ############################################################################################
 #
@@ -77,8 +76,8 @@ class TestModel(unittest.TestCase):
     def test_model_registrering(self):
         GTest.print("Model Registering")
         self.assertTrue( len(ModelService.get_model_types()) != 0 )
-        from gws.json import JSONLoader
-        from gws.csv import CSVImporter
+        from gws_core.resource.json import JSONLoader
+        from gws_core.resource.csv import CSVImporter
         self.assertTrue( JSONLoader.full_classname() in ModelService.get_model_types() )
         self.assertTrue( CSVImporter.full_classname() in ModelService.get_model_types() )
 
