@@ -50,7 +50,7 @@ class FileService(BaseService):
                 query, page=page, number_of_items_per_page=number_of_items_per_page)
             return {
                 'data': result,
-                'paginator': paginator._paginator_dict()
+                'paginator': paginator.paginator_dict()
             }
         else:
             query = t.select().order_by(t.creation_datetime.desc())

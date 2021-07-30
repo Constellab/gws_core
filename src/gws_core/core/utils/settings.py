@@ -1,41 +1,45 @@
 # LICENSE
-# This software is the exclusive property of Gencovery SAS. 
+# This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
 import os
 
-from playhouse.sqlite_ext import JSONField
 from peewee import Model as PeeweeModel
-from peewee import SqliteDatabase, Proxy
+from peewee import Proxy, SqliteDatabase
+from playhouse.sqlite_ext import JSONField
+
 from .util import Util
 
-#__SETTINGS_DB_PROXY__ = Proxy()  # create a proxy for our db.
+# __SETTINGS_DB_PROXY__ = Proxy()  # create a proxy for our db.
 
-__SETTINGS_DIR__ = "/settings/" 
+__SETTINGS_DIR__ = "/settings/"
 if not os.path.exists(__SETTINGS_DIR__):
     os.makedirs(__SETTINGS_DIR__)
-__SETTINGS_DB__ = SqliteDatabase(os.path.join(__SETTINGS_DIR__, "settings.sqlite3"))
+__SETTINGS_DB__ = SqliteDatabase(
+    os.path.join(__SETTINGS_DIR__, "settings.sqlite3"))
 
 # app settings
+
+
 class Settings(PeeweeModel):
     """
     Settings class.
-    
+
     This class represents to global settings of the application.
 
     :property data: The settings data
     :type data: `dict`
     """
 
-    data = JSONField(null = True)
+    data = JSONField(null=True)
     _data = dict(
-        app_dir         = os.path.dirname(os.path.abspath(__file__)),
-        app_host        = '0.0.0.0',
-        app_port        = 3000,
+        app_dir=os.path.dirname(os.path.abspath(__file__)),
+        app_host='0.0.0.0',
+        app_port=3000,
         #log_dir         = "/logs",
         #data_dir        = "/data",
-        dependencies    = {}
+        dependencies={}
     )
 
     _table_name = "gws_settings"
@@ -49,17 +53,17 @@ class Settings(PeeweeModel):
                 self.data[k] = self._data[k]
 
     @classmethod
-    def init( cls, settings_json: dict = None ):
+    def init(cls, settings_json: dict = None):
         for k in settings_json:
             cls._data[k] = settings_json[k]
-        
+
         # settings_dir = "/settings/" #os.path.join(cls._data["data_dir"], "settings")
         # if not os.path.exists(settings_dir):
         #     os.makedirs(settings_dir)
-   
+
         # db = SqliteDatabase(os.path.join(settings_dir, "settings.sqlite3"))
         # __SETTINGS_DB_PROXY__.initialize(db)
-        
+
         if not cls.table_exists():
             cls.create_table()
 
@@ -71,15 +75,17 @@ class Settings(PeeweeModel):
 
         except Exception as _:
             settings = Settings()
-            #secret_key
-            secret_key = Util.generate_random_chars(128) #b64encode(token_bytes(32)).decode()
+            # secret_key
+            # b64encode(token_bytes(32)).decode()
+            secret_key = Util.generate_random_chars(128)
             settings.set_data("secret_key", secret_key)
 
-            #random token by default (security)
-            token = Util.generate_random_chars(128) #b64encode(token_bytes(32)).decode()
+            # random token by default (security)
+            # b64encode(token_bytes(32)).decode()
+            token = Util.generate_random_chars(128)
             settings.set_data("token", token)
 
-            #default uri
+            # default uri
             settings.set_data("uri", "")
             settings.save()
 
@@ -103,14 +109,14 @@ class Settings(PeeweeModel):
     def description(self):
         """ Get the app description """
         return self.app.get("description", None)
-    
+
     # -- G --
 
     def get_sqlite3_db_path(self, db_name) -> str:
-        db_dir = os.path.join( self.get_data_dir(), db_name, "sqlite3")
+        db_dir = os.path.join(self.get_data_dir(), db_name, "sqlite3")
         if not os.path.exists(db_dir):
             os.makedirs(db_dir)
-        db_path = os.path.join( db_dir, f"{db_name}.sqlite3" )
+        db_path = os.path.join(db_dir, f"{db_name}.sqlite3")
         return db_path
 
         # if self.is_prod:
@@ -119,21 +125,21 @@ class Settings(PeeweeModel):
         #     return self.get_sqlite3_dev_db_path(db_name)
 
     def get_sqlite3_dev_db_path(self, db_name) -> str:
-        db_dir = os.path.join( self.get_dev_data_dir(), db_name, "sqlite3")
+        db_dir = os.path.join(self.get_dev_data_dir(), db_name, "sqlite3")
         if not os.path.exists(db_dir):
             os.makedirs(db_dir)
-        db_path = os.path.join( db_dir, f"{db_name}.sqlite3" )
+        db_path = os.path.join(db_dir, f"{db_name}.sqlite3")
         return db_path
-    
+
     def get_sqlite3_prod_db_path(self, db_name) -> str:
-        db_dir = os.path.join( self.get_prod_data_dir(), db_name, "sqlite3")
+        db_dir = os.path.join(self.get_prod_data_dir(), db_name, "sqlite3")
         if not os.path.exists(db_dir):
             os.makedirs(db_dir)
-        db_path = os.path.join( db_dir, f"{db_name}.sqlite3" )
+        db_path = os.path.join(db_dir, f"{db_name}.sqlite3")
         return db_path
 
     def get_maria_db_backup_dir(self) -> str:
-        return os.path.join( self.get_data_dir(), "backups" )
+        return os.path.join(self.get_data_dir(), "backups")
 
     def get_maria_db_host(self, db_name) -> str:
         if self.is_prod:
@@ -150,7 +156,7 @@ class Settings(PeeweeModel):
     def get_cwd(self) -> dict:
         return self.data["__cwd__"]
 
-    def get_data(self, k:str, default=None) -> str:
+    def get_data(self, k: str, default=None) -> str:
         if k == "session_key":
             return self.data[k]
         else:
@@ -241,54 +247,63 @@ class Settings(PeeweeModel):
         return os.path.join(lab_dir, "./user/")
 
     def get_dirs(self) -> dict:
-        return self.data.get("dirs",{})
+        return self.data.get("dirs", {})
 
     def get_dir(self, name) -> str:
-        return self.data.get("dirs",{}).get(name,None)
-    
+        return self.data.get("dirs", {}).get(name, None)
+
     def get_file_store_dir(self) -> str:
         return os.path.join(self.get_data_dir(), "./filestore/")
-    
+
     def get_kv_store_base_dir(self) -> str:
         return os.path.join(self.get_data_dir(), "./kvstore/")
 
     def get_urls(self) -> dict:
-        return self.data.get("urls",{})
+        return self.data.get("urls", {})
 
     def get_url(self, name) -> str:
-        return self.data.get("urls",{}).get(name,None)
-    
+        return self.data.get("urls", {}).get(name, None)
+
     def get_dependency_dir(self, dependency_name: str) -> str:
         return self.data["dependency_dirs"].get(dependency_name, None)
 
     def get_dependency_dirs(self) -> dict:
         return self.data["dependency_dirs"]
-    
+
     def get_dependency_names(self) -> list:
         return self.data["dependencies"]
-    
+
     def get_extern_dir(self, dependency_name: str) -> str:
         return self.data["extern_dirs"].get(dependency_name, None)
 
     def get_extern_dirs(self) -> dict:
         return self.data["extern_dirs"]
 
+    def get_prod_api_url(self) -> str:
+        if self.is_prod:
+            return None
+
+        if "PROD_API_URL" not in os.environ:
+            return None
+
+        return os.environ["PROD_API_URL"]
+
     # -- I --
 
     @property
-    def is_prod(self):
+    def is_prod(self) -> bool:
         return self.data.get("is_prod", False)
 
     @property
-    def is_dev(self):
+    def is_dev(self) -> bool:
         return not self.is_prod
 
     @property
-    def is_debug(self):
+    def is_debug(self) -> bool:
         return self.data.get("is_debug", False)
 
     @property
-    def is_test(self):
+    def is_test(self) -> bool:
         return self.data.get("is_test", False)
 
     # -- N --
@@ -304,8 +319,9 @@ class Settings(PeeweeModel):
         try:
             return Settings.get_by_id(1)
         except Exception as err:
-            raise Exception("Settings", "retrieve", "Cannot retrieve settings from the database") from err
-   
+            raise Exception("Settings", "retrieve",
+                            "Cannot retrieve settings from the database") from err
+
     # -- S --
 
     def set_data(self, k: str, val: str):
@@ -317,15 +333,14 @@ class Settings(PeeweeModel):
     @property
     def title(self):
         return self.app.get("title", None)
-    
+
     # -- U --
-    
+
     # -- V --
 
     @property
     def version(self):
         return self.data.get("version", None)
- 
+
     class Meta:
         database = __SETTINGS_DB__
-

@@ -5,9 +5,8 @@ from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
 from fastapi.requests import Request
 from fastapi.security import OAuth2
 from fastapi.security.utils import get_authorization_scheme_param
-from starlette import status
 
-from ..core.exception import BaseHTTPException, GWSException
+from .invalid_token_exception import InvalidTokenException
 
 
 class OAuth2UserTokenBearerCookie(OAuth2):
@@ -48,9 +47,7 @@ class OAuth2UserTokenBearerCookie(OAuth2):
 
         if not authorization:
             if self.auto_error:
-                raise BaseHTTPException(
-                    http_status_code=status.HTTP_403_FORBIDDEN, detail=GWSException.INVALID_TOKEN.value,
-                    unique_code=GWSException.INVALID_TOKEN.name)
+                raise InvalidTokenException()
             else:
                 return None
 

@@ -78,7 +78,7 @@ class ExperimentService(BaseService):
                 query, page=page, number_of_items_per_page=number_of_items_per_page)
             return {
                 'data': result,
-                'paginator': paginator._paginator_dict()
+                'paginator': paginator.paginator_dict()
             }
         else:
             query = Experiment.select().order_by(Experiment.creation_datetime.desc())

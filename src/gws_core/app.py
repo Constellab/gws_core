@@ -9,6 +9,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from ._core_app_importer import *
 from ._sphynx.docgen import docgen
 from .central.central_app import central_app
 from .core.model.study import Study
@@ -34,6 +35,7 @@ async def startup():
     """ Called before the app is started """
 
     App.init()
+
 
 @app.on_event("shutdown")
 async def shutdown():

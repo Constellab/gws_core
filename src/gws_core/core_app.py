@@ -41,6 +41,15 @@ async def all_exception_handler(request, exc):
     return ExceptionHandler.handle_exception(exc)
 
 
+@core_app.get("/health-check", summary="Health check route")
+async def get_the_experiment_queue() -> dict:
+    """
+    Simple health check route
+    """
+
+    return True
+
+
 class ProcessData(BaseModel):
     uri: str
     type: str = "gws.process.Process"

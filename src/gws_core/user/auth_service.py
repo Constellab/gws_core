@@ -1,15 +1,18 @@
 
 
-from typing import Any, Coroutine, Union
+from typing import Any, Coroutine
 
 import jwt
 from fastapi import Depends
+from requests.models import Response
 from starlette.responses import JSONResponse
 
 from ..central._auth_central import generate_user_access_token
 from ..central.central_service import CentralService
-from ..core.exception import BadRequestException, UnauthorizedException
+from ..core.exception import (BadRequestException, GWSException,
+                              UnauthorizedException)
 from ..core.service.base_service import BaseService
+from ..core.service.external_api_service import ExternalApiService
 from ..core.service.http_service import HTTPService
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
@@ -17,14 +20,14 @@ from .activity import Activity
 from .activity_service import ActivityService
 from .credentials_dto import CredentialsDTO
 from .current_user_service import CurrentUserService
+from .invalid_token_exception import InvalidTokenException
 from .oauth2_user_cookie_scheme import oauth2_user_cookie_scheme
 from .user import User
 from .user_dto import UserData
 from .user_service import UserService
 from .wrong_credentials_exception import WrongCredentialsException
 
-settings = Settings.retrieve()
-SECRET_KEY = settings.data.get("secret_key")
+SECRET_KEY = Settings.retrieve().data.get("secret_key")
 ALGORITHM = "HS256"
 
 
@@ -52,7 +55,7 @@ class AuthService(BaseService):
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
             uri: str = payload.get("sub")
             if uri is None:
-                raise WrongCredentialsException()
+                raise InvalidTokenException()
         except Exception:
             # -> An excpetion occured
             # -> Try to unauthenticate the current user
@@ -63,12 +66,12 @@ class AuthService(BaseService):
             except:
                 pass
 
-            raise WrongCredentialsException()
+            raise InvalidTokenException()
 
         try:
             db_user = User.get(User.uri == uri)
             if not cls.authenticate(uri=db_user.uri):
-                raise WrongCredentialsException()
+                raise InvalidTokenException()
 
             return UserData(
                 uri=db_user.uri,
@@ -179,8 +182,53 @@ class AuthService(BaseService):
             return cls.__unauthenticate_console(user)
 
     @classmethod
+    async def dev_login(cls, token: str) -> Coroutine[Any, Any, str]:
+        """[summary]
+        Log the user on the dev lab by calling the prod api
+        Only allowed for the dev service
+
+        It check the user's prod token by calling the prod api and if it's valid, it
+        generate a token for the development environment
+
+        :param credentials: [description]
+        :type credentials: CredentialsDTO
+        :raises WrongCredentialsException: [description]
+        :raises WrongCredentialsException: [description]
+        :return: [description]
+        :rtype: Coroutine[Any, Any, str]
+        """
+
+        settings: Settings = Settings.retrieve()
+
+        # Allow only this method on dev environment
+        if settings.is_prod:
+            raise BadRequestException(detail=GWSException.FUNCTIONALITY_UNAVAILBLE_IN_PROD.value,
+                                      unique_code=GWSException.FUNCTIONALITY_UNAVAILBLE_IN_PROD.name)
+
+        # retrieve the prod api url
+        prod_api_url: str = settings.get_prod_api_url()
+
+        if prod_api_url is None:
+            raise BadRequestException(detail=GWSException.MISSING_PROD_API_URL.value,
+                                      unique_code=GWSException.MISSING_PROD_API_URL.name)
+
+        # Check if the user's token is valid in prod environment
+        try:
+            response: Response = ExternalApiService.get(
+                url=f"{prod_api_url}/core-api/check-token", headers={"Authorization": token})
+        except:
+            raise BadRequestException(detail=GWSException.ERROR_DURING_DEV_LOGIN.value,
+                                      unique_code=GWSException.ERROR_DURING_DEV_LOGIN.name)
+
+        if response.status_code != 200:
+            raise BadRequestException(detail=GWSException.ERROR_DURING_DEV_LOGIN.value,
+                                      unique_code=GWSException.ERROR_DURING_DEV_LOGIN.name)
+
+        # The user's prod token is valid, we can return the token for the development environment
+        return await generate_user_access_token(response.raw)
+
+    @classmethod
     def __unauthenticate_http(cls, user) -> bool:
-        from .activity import Activity
 
         if not user.is_http_authenticated:
             CurrentUserService.set_current_user(None)
@@ -201,7 +249,6 @@ class AuthService(BaseService):
 
     @classmethod
     def __unauthenticate_console(cls, user) -> bool:
-        from .activity import Activity
 
         if not user.is_console_authenticated:
             CurrentUserService.set_current_user(None)

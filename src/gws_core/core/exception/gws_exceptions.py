@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from enum import Enum, unique
+from enum import Enum
 
 
 class GWSException(Enum):
@@ -11,5 +11,8 @@ class GWSException(Enum):
     WRONG_CREDENTIALS = "Could not validate credentials"
     WRONG_CREDENTIALS_INVALID_API_KEY = "Not authorized. Invalid API key"
     WRONG_CREDENTIALS_USER_NOT_FOUND = "Not authorized. Cannot generate user access token. User not found"
-    WRONG_CREDENTIALS_USER_NOT_ACTIVATED = "Not authorized. Cannot generate user access token. User not active",
-    INVALID_TOKEN = "Not authorized. Invalid token",
+    WRONG_CREDENTIALS_USER_NOT_ACTIVATED = "Not authorized. Cannot generate user access token. User not active"
+    INVALID_TOKEN = "Not authorized. Invalid token"
+    FUNCTIONALITY_UNAVAILBLE_IN_PROD = "This functionnality is not available in the production environment"
+    MISSING_PROD_API_URL = "Missing production API URL"
+    ERROR_DURING_DEV_LOGIN = "Error during login in development environment"
