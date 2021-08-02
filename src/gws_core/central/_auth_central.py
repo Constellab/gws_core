@@ -10,21 +10,29 @@ import jwt
 from fastapi import Depends
 from fastapi.responses import JSONResponse
 
-from ..core.exception import GWSException, UnauthorizedException
+from ..core.exception import (BadRequestException, GWSException,
+                              UnauthorizedException)
 from ..core.utils.settings import Settings
 from ..user.user import User
 from ..user.user_dto import UserData
 from ._oauth2_central_header_scheme import oauth2_central_header_scheme
 from .central_service import CentralService
 
-settings = Settings.retrieve()
-SECRET_KEY = settings.data.get("secret_key")
+SECRET_KEY = Settings.retrieve().data.get("secret_key")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60*24*3        # 3 days
 COOKIE_MAX_AGE_SECONDS = 60*60*24*3     # 3 days
 
 
 def check_central_api_key(api_key: str = Depends(oauth2_central_header_scheme)):
+
+    # block central routes in dev mode
+    settings: Settings = Settings.retrieve()
+    if settings.is_dev:
+        raise BadRequestException(
+            detail=GWSException.CENTRAL_API_DEV_DISABLED.value,
+            unique_code=GWSException.CENTRAL_API_DEV_DISABLED.name
+        )
 
     is_authorized = CentralService.check_api_key(api_key)
     if not is_authorized:
