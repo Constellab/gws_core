@@ -171,7 +171,7 @@ class ModelService(BaseService):
                 query, page=page, number_of_items_per_page=number_of_items_per_page)
             return {
                 'data': result,
-                'paginator': paginator._paginator_dict()
+                'paginator': paginator.paginator_dict()
             }
         else:
             query = t.select().order_by(t.creation_datetime.desc())
@@ -193,7 +193,7 @@ class ModelService(BaseService):
             exposed_models[brick_name] = {}
             try:
                 module = importlib.import_module(brick_name+".__expose__")
-                exposed_models[brick_name] = Expose.analyze( module )
+                exposed_models[brick_name] = Expose.analyze(module)
             except Exception as _:
                 pass
         return exposed_models
@@ -268,7 +268,7 @@ class ModelService(BaseService):
     def _inspect_model_types(cls):
         settings = Settings.retrieve()
         dep_dirs = settings.get_dependency_dirs()
-        
+
         def __get_list_of_sub_modules(cdir):
             modules = [[f, dirpath]
                        for dirpath, dirnames, files in os.walk(cdir)
@@ -300,18 +300,18 @@ class ModelService(BaseService):
                 _black_list = [
                     "gws_core.settings",
                     "gws_core.runner",
-                    "gws_core.manage", 
+                    "gws_core.manage",
                     "gws_core.logger",
                     "gws_core.cli",
                     "gws_core.app"
                 ]
-                
+
                 for k in _black_list:
                     try:
                         module_names.remove(k)
                     except Exception as _:
                         pass
-            
+
             for module_name in module_names:
                 try:
                     submodule = importlib.import_module(module_name)

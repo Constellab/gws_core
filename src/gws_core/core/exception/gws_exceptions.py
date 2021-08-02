@@ -16,3 +16,4 @@ class GWSException(Enum):
     FUNCTIONALITY_UNAVAILBLE_IN_PROD = "This functionnality is not available in the production environment"
     MISSING_PROD_API_URL = "Missing production API URL"
     ERROR_DURING_DEV_LOGIN = "Error during login in development environment"
+    CENTRAL_API_DEV_DISABLED = "The centrals routes are disabled in dev"
