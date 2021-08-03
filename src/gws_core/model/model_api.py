@@ -28,7 +28,7 @@ async def archive_a_model(type: str,
     """
 
     model = ModelService.archive_model(
-        type=type,
+        type_str=type,
         uri=uri
     )
     return model.to_json()
@@ -66,7 +66,7 @@ async def create_a_view_model_of_a_model(type: str,
     """
 
     view_model = ModelService.create_view_model(
-        type=type,
+        type_str=type,
         uri=uri,
         data=data
     )
@@ -120,7 +120,7 @@ async def get_a_model(type: str,
     - **uri**: the uri of the model to fetch.
     """
 
-    model = ModelService.fetch_model(type=type, uri=uri)
+    model = ModelService.fetch_model(type_str=type, uri=uri)
     return model.to_json()
 
 
@@ -141,7 +141,7 @@ async def get_the_list_of_models(type: str,
     """
 
     return ModelService.fetch_list_of_models(
-        type=type,
+        type_str=type,
         search_text=search_text,
         page=page,
         number_of_items_per_page=number_of_items_per_page,
@@ -156,4 +156,4 @@ async def get_list_of_exposed_models(_: UserData = Depends(AuthService.check_use
     """
 
     pass
-    #return ModelService.fetch_list_of_exposed_models(as_json=True)
+    # return ModelService.fetch_list_of_exposed_models(as_json=True)

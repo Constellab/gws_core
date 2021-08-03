@@ -3,9 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from typing import Union
+
 from ..core.classes.paginator import Paginator
-from .system import Monitor
 from ..core.service.base_service import BaseService
+from .system import Monitor
 
 
 class LabService(BaseService):
@@ -14,7 +16,7 @@ class LabService(BaseService):
     def get_lab_monitor_data(cls,
                              page: int = 1,
                              number_of_items_per_page: int = 20,
-                             as_json: bool = False) -> (Paginator, dict, ):
+                             as_json: bool = False) -> Union[Paginator, dict]:
 
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)

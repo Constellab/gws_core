@@ -5,8 +5,6 @@
 
 from typing import Union
 
-from starlette_context import context
-
 from ..core.classes.paginator import Paginator
 from ..core.exception import BadRequestException
 from ..core.service.base_service import BaseService
@@ -175,4 +173,3 @@ class UserService(BaseService):
     @classmethod
     def get_sysuser(cls):
         return User.get_sysuser()
-

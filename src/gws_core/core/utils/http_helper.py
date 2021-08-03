@@ -5,10 +5,8 @@
 
 from starlette_context import context
 
-from .base_service import BaseService
 
-
-class HTTPService(BaseService):
+class HTTPHelper:
 
     @classmethod
     def is_http_context(cls):

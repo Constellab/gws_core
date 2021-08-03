@@ -13,8 +13,8 @@ from fastapi import UploadFile
 from fastapi.datastructures import UploadFile
 
 from ...core.exception import BadRequestException
+from ...core.model.model import Model
 from ...core.utils.util import Util
-from ...model.model_service import ModelService
 from ...process.process import Process
 from ..resource import Resource
 from .file import File, FileSet
@@ -92,7 +92,7 @@ class FileImporter(Process):
         if self.param_exists("output_type"):
             out_t = self.get_param("output_type")
             if out_t:
-                model_t = ModelService.get_model_type(out_t)
+                model_t = Model.get_model_type(out_t)
 
         if not model_t:
             model_t = self.out_port("data").get_default_resource_type()
@@ -172,7 +172,7 @@ class FileLoader(Process):
         if self.param_exists("output_type"):
             out_t = self.get_param("output_type")
             if out_t:
-                model_t = ModelService.get_model_type(out_t)
+                model_t = Model.get_model_type(out_t)
 
         if not model_t:
             model_t = self.out_port("data").get_default_resource_type()

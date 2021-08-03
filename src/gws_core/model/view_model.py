@@ -94,11 +94,9 @@ class ViewModel(Model):
         :rtype: `gws.db.model.Model`
         """
 
-        from .model_service import ModelService
-
         if not self._model is None:
             return self._model
-        model_t = ModelService.get_model_type(self.model_type)
+        model_t = self.get_model_type(self.model_type)
         model = model_t.get(model_t.uri == self.model_uri)
         self._model = model.cast()
         return self._model

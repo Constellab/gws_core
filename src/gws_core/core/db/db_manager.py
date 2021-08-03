@@ -21,7 +21,7 @@ GWS_DB_ENGINE = "mariadb"
 class DbManager(AbstractDbManager):
     db = DatabaseProxy()
 
-    _engine = None
+    engine = None
     _mariadb_config = {
         "user": "gws",
         "password": "gencovery"

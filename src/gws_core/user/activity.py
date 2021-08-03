@@ -9,6 +9,7 @@ from typing import Union
 from peewee import CharField, ForeignKeyField
 
 from ..core.model.model import Model
+from .current_user_service import CurrentUserService
 from .user import User
 
 
@@ -46,7 +47,9 @@ class Activity(Model):
         return False
 
     @classmethod
-    def add(cls, activity_type: str, *, object_type=None, object_uri=None, user: User):
+    def add(cls, activity_type: str, *, object_type=None, object_uri=None, user: User = None):
+        if user is None:
+            user = user = CurrentUserService.get_current_user(),
         activity = Activity(
             user=user,
             activity_type=activity_type,

@@ -56,7 +56,7 @@ async def get_a_protocol(uri: str,
     - **uri**: the uri of the protocol
     """
 
-    proto = ProtocolService.fetch_protocol(uri=uri, type=type)
+    proto = ProtocolService.fetch_protocol(uri=uri, type_str=type)
     return proto.to_json()
 
 
@@ -78,7 +78,7 @@ async def get_the_list_of_protocols(type: Optional[str] = "gws.protocol.Protocol
     """
 
     return ProtocolService.fetch_protocol_list(
-        type=type,
+        type_str=type,
         search_text=search_text,
         experiment_uri=experiment_uri,
         page=page,

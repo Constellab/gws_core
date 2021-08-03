@@ -43,7 +43,7 @@ class Paginator:
         self.last_page = self.total_number_of_pages
         self.first_page = 1
 
-    def _paginator_dict(self):
+    def paginator_dict(self):
         return {
             'page': self.page,
             'prev_page': self.prev_page,
@@ -63,7 +63,7 @@ class Paginator:
                 shallow=shallow,
                 as_json=True
             ),
-            'paginator': self._paginator_dict()
+            'paginator': self.paginator_dict()
         }
 
     def render(self, shallow: bool = False):
@@ -74,7 +74,7 @@ class Paginator:
                 as_view=True,
                 shallow=shallow
             ),
-            'paginator': self._paginator_dict()
+            'paginator': self.paginator_dict()
         }
 
     def current_items(self):

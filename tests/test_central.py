@@ -5,9 +5,10 @@
 
 import unittest
 
-from gws.user import User
 from gws.service.user_service import UserService
 from gws.unittest import GTest
+from gws.user import User
+
 
 class TestCentral(unittest.TestCase):
 

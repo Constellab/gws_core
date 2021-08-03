@@ -6,6 +6,7 @@
 
 from ..comment.comment import Comment
 from ..core.model.model import Model
+from .view_model import ViewModel
 
 
 class Viewable(Model):
@@ -101,8 +102,6 @@ class Viewable(Model):
         :type data: `dict`
         """
 
-        from .view_model import ViewModel
-
         if not isinstance(data, dict):
             data = {}
         view_model = ViewModel(model=self)
@@ -151,7 +150,4 @@ class Viewable(Model):
         """
         Get all the ViewModels of the Viewable
         """
-
-        from .view_model import ViewModel
-
         return ViewModel.select().where(ViewModel.model_uri == self.uri)

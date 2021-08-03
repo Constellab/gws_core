@@ -4,7 +4,9 @@
 # About us: https://gencovery.com
 
 import time
+from typing import Type
 
+from ..core.model.model import Model
 from ..resource.resource import Resource
 from .process import Process
 
@@ -26,13 +28,12 @@ class Source(Process):
     _is_plug = True
 
     async def task(self):
-        from .service.model_service import ModelService
         r_uri = self.get_param("resource_uri")
         r_type = self.get_param("resource_type")
         if not r_uri or not r_type:
             return
-        t = ModelService.get_model_type(r_type)
-        resource = t.get(t.uri == r_uri)
+        model_type: Type[Model] = self.get_model_type(r_type)
+        resource = model_type.get(model_type.uri == r_uri)
         self.output["resource"] = resource
 
 
@@ -123,5 +124,5 @@ class Wait(Process):
     async def task(self):
         waiting_time = self.get_param("waiting_time")
         time.sleep(waiting_time)
-        resource = self.input[f"resource"]
+        resource = self.input["resource"]
         self.output["resource"] = resource

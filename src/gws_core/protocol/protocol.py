@@ -6,6 +6,7 @@
 import asyncio
 import json
 import zlib
+from typing import Union
 
 from peewee import BooleanField
 
@@ -13,6 +14,8 @@ from ..core.exception import BadRequestException
 from ..process.process import Process
 from ..resource.io import (Connector, InPort, Input, Interface, Outerface,
                            OutPort, Output)
+from ..user.activity import Activity
+from ..user.current_user_service import CurrentUserService
 from ..user.user import User
 
 
@@ -171,8 +174,7 @@ class Protocol(Process):
 
         if user is None:
             try:
-                from .service.user_service import UserService
-                user = UserService.get_current_user()
+                user = CurrentUserService.get_current_user()
             except Exception as err:
                 raise BadRequestException("A user is required") from err
 
@@ -193,7 +195,7 @@ class Protocol(Process):
         self.data["graph"] = self.dumps(as_dict=True)
         self.save()  # <- will save the graph
 
-    def _build_from_dump(self, graph: (str, dict), rebuild=False) -> 'Protocol':
+    def _build_from_dump(self, graph: Union[str, dict], rebuild=False) -> 'Protocol':
         """
         Construct a Protocol instance using a setting dump.
 
@@ -205,7 +207,6 @@ class Protocol(Process):
         if self.is_built and not self.is_draft:
             return True
 
-        from .service.model_service import ModelService
         if isinstance(graph, str):
             graph = json.loads(graph)
         if not isinstance(graph, dict):
@@ -243,7 +244,7 @@ class Protocol(Process):
             proc_uri = node_json.get("uri", None)
             proc_type_str = node_json["type"]
             try:
-                proc_t = ModelService.get_model_type(proc_type_str)
+                proc_t = self.get_model_type(proc_type_str)
                 if proc_t is None:
                     raise BadRequestException(
                         f"Process {proc_type_str} is not defined. Please ensure that the corresponding brick is loaded.")
@@ -349,10 +350,9 @@ class Protocol(Process):
         :rtype: `gws.experiment.Experiment`
         """
 
-        from .experiment import Experiment
+        from ..experiment.experiment import Experiment
         if user is None:
-            from .service.user_service import UserService
-            user = UserService.get_current_user()
+            user = CurrentUserService.get_current_user()
             if user is None:
                 raise BadRequestException("A user is required")
         e = Experiment(user=user, study=study, protocol=self)
@@ -650,7 +650,6 @@ class Protocol(Process):
     # -- S --
 
     def save(self, *args, update_graph=False, **kwargs):
-        from .activity import Activity
         with self._db_manager.db.atomic() as transaction:
             for k in self._processes:
                 self._processes[k].save()
@@ -705,7 +704,6 @@ class Protocol(Process):
             self._output.create_port(k, self.output_specs[k])
 
     def __set_interfaces(self, interfaces: dict):
-        from .service.model_service import ModelService
         input_specs = {}
         for k in interfaces:
             input_specs[k] = interfaces[k]._resource_types
@@ -721,11 +719,10 @@ class Protocol(Process):
             for k in self.data.get("input"):
                 uri = self.data["input"][k]["uri"]
                 type_ = self.data["input"][k]["type"]
-                t = ModelService.get_model_type(type_)
+                t = self.get_model_type(type_)
                 self.input.__setitem_without_check__(k, t.get(t.uri == uri))
 
     def __set_outerfaces(self, outerfaces: dict):
-        from .service.model_service import ModelService
         output_specs = {}
         for k in outerfaces:
             output_specs[k] = outerfaces[k]._resource_types
@@ -744,7 +741,7 @@ class Protocol(Process):
             for k in self.data["output"]:
                 uri = self.data["output"][k]["uri"]
                 type_ = self.data["output"][k]["type"]
-                t = ModelService.get_model_type(type_)
+                t = self.get_model_type(type_)
                 self.output.__setitem_without_check__(k, t.get(t.uri == uri))
 
     def set_title(self, title: str) -> str:
@@ -773,7 +770,7 @@ class Protocol(Process):
 
     # -- T --
 
-    def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> (str, dict, ):
+    def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
         """
         Returns JSON string or dictionnary representation of the protocol.
 

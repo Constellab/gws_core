@@ -106,12 +106,11 @@ class ResourceSet(Resource):
 
     @property
     def set(self) -> dict:
-        from .service.model_service import ModelService
         if self.is_saved() and len(self._set) == 0:
             for k in self.data["set"]:
                 uri = self.data["set"][k]["uri"]
                 rtype = self.data["set"][k]["type"]
-                self._set[k] = ModelService.fetch_model(rtype, uri)
+                self._set[k] = self.fetch_model(rtype, uri)
         return self._set
 
     # -- V --

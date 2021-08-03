@@ -11,9 +11,9 @@ from fastapi.responses import FileResponse
 
 from ...core.classes.paginator import Paginator
 from ...core.exception import BadRequestException, NotFoundException
+from ...core.model.model import Model
 from ...core.model.study import Study
 from ...core.service.base_service import BaseService
-from ...model.model_service import ModelService
 from ...user.current_user_service import CurrentUserService
 from .file import File, FileSet
 from .file_uploader import FileUploader
@@ -33,7 +33,7 @@ class FileService(BaseService):
             number_of_items_per_page, cls._number_of_items_per_page)
         t = None
         if type:
-            t = ModelService.get_model_type(type)
+            t = Model.get_model_type(type)
             if t is None:
                 raise NotFoundException(detail=f"File type '{type}' not found")
         else:
@@ -65,7 +65,7 @@ class FileService(BaseService):
 
     @classmethod
     def download_file(cls, type, uri) -> FileResponse:
-        t = ModelService.get_model_type(type)
+        t = Model.get_model_type(type)
         if t is None:
             raise NotFoundException(detail=f"File type '{type}' not found")
         try:

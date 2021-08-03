@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 import json
+from typing import Type
 
 from peewee import CharField, IntegerField
 
@@ -258,9 +259,8 @@ class ExperimentResource(Model):
         Returns the resource
         """
 
-        from .service.model_service import ModelService
-        t = ModelService.get_model_type(self.resource_type)
-        return t.get_by_id(self.resource_id)
+        model_type: Type[Model] = self.get_model_type(self.resource_type)
+        return model_type.get_by_id(self.resource_id)
 
     @property
     def experiment(self):
@@ -306,9 +306,8 @@ class ProcessResource(Model):
         Returns the resource
         """
 
-        from .service.model_service import ModelService
-        t = ModelService.get_model_type(self.resource_type)
-        return t.get_by_id(self.resource_id)
+        model_type: Type[Model] = self.get_model_type(self.resource_type)
+        return model_type.get_by_id(self.resource_id)
 
     @property
     def process(self):
@@ -316,9 +315,8 @@ class ProcessResource(Model):
         Returns the process
         """
 
-        from .service.model_service import ModelService
-        t = ModelService.get_model_type(self.process_type)
-        return t.get_by_id(self.process_id)
+        model_type: Type[Model] = self.get_model_type(self.process_type)
+        return model_type.get_by_id(self.process_id)
 
     class Meta:
         indexes = (

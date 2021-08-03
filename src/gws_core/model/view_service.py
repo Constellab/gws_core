@@ -52,7 +52,7 @@ class ViewService(BaseService):
                 query, page=page, number_of_items_per_page=number_of_items_per_page)
             return {
                 'data': result,
-                'paginator': paginator._paginator_dict()
+                'paginator': paginator.paginator_dict()
             }
         else:
             query = ViewModel.select().order_by(ViewModel.creation_datetime.desc())

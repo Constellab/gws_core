@@ -9,8 +9,8 @@ from typing import List, Union
 
 from peewee import CharField
 
-from .model import Model
 from ...model.viewable import Viewable
+from .model import Model
 
 
 class Path:
@@ -66,8 +66,7 @@ class Typing(Viewable):
         return self.model_type.split('.')
 
     def __get_hierarchy_table(self) -> List[str]:
-        from ...model.model_service import ModelService
-        model_t: Model = ModelService.get_model_type(self.model_type)
+        model_t: Model = self.get_model_type(self.model_type)
         mro: List[Model] = inspect.getmro(model_t)
 
         ht: List[str] = []
@@ -109,7 +108,6 @@ class ProcessType(Typing):
     # -- T --
 
     def to_json(self, *, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
-        from ...model.model_service import ModelService
 
         _json = super().to_json(**kwargs)
 
@@ -117,7 +115,7 @@ class ProcessType(Typing):
         _json["ptype"] = self.ptype
         _json["base_ptype"] = self.base_ptype
 
-        model_t = ModelService.get_model_type(self.model_type)
+        model_t = self.get_model_type(self.model_type)
         specs = model_t.input_specs
         _json["input_specs"] = {}
         for name in specs:
@@ -172,10 +170,9 @@ class ProtocolType(Typing):
     """
 
     def to_json(self, *, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
-        from ...model.model_service import ModelService
 
         _json = super().to_json(**kwargs)
-        model_t = ModelService.get_model_type(self.model_type)
+        model_t = self.get_model_type(self.model_type)
         _json["data"]["graph"] = model_t.get_template().graph
 
         if stringify:
@@ -212,8 +209,7 @@ class ResourceType(Typing):
     def base_rtype(self):
         return self.root_model_type
 
-    def to_json(self, *, stringify: bool = False, prettify: bool = False, **kwargs) -> (str, dict, ):
-        from ...model.model_service import ModelService
+    def to_json(self, *, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
 
         _json = super().to_json(**kwargs)
 
@@ -221,7 +217,7 @@ class ResourceType(Typing):
         _json["rtype"] = self.rtype
         _json["base_rtype"] = self.base_rtype
 
-        model_t = ModelService.get_model_type(self.model_type)
+        model_t = self.get_model_type(self.model_type)
 
         if not _json.get("data"):
             _json["data"] = {}

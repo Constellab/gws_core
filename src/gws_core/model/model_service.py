@@ -6,9 +6,8 @@
 import importlib
 import inspect
 import os
-from typing import Dict, List, Union
+from typing import Dict, List, Type, Union
 
-from ..config.config import Config
 from ..core.classes.expose import Expose
 from ..core.classes.paginator import Paginator
 from ..core.dto.rendering_dto import RenderingDTO
@@ -17,7 +16,6 @@ from ..core.model.model import Model
 from ..core.service.base_service import BaseService
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
-from ..experiment.experiment import Experiment
 from ..process.process import Process
 from ..protocol.protocol import Protocol
 from ..resource.resource import Resource
@@ -26,18 +24,18 @@ from .view_model import ViewModel
 
 class ModelService(BaseService):
 
-    _model_types: Dict[str, type] = {}
+    _model_types: Dict[str, Type['Model']] = {}  # use to cache the types
 
     # -- A --
 
     @classmethod
-    def archive_model(cls, type: str, uri: str) -> dict:
-        return cls.__set_archive_status(True, type, uri)
+    def archive_model(cls, type_str: str, uri: str) -> dict:
+        return cls.__set_archive_status(True, type_str, uri)
 
     # -- C --
 
     @classmethod
-    def create_view_model(cls, type: str, uri: str, data: RenderingDTO) -> ViewModel:
+    def create_view_model(cls, type_str: str, uri: str, data: RenderingDTO) -> ViewModel:
         """
         View a model
 
@@ -51,16 +49,17 @@ class ModelService(BaseService):
         :rtype: `gws.db.model.Model`, `dict`
         """
 
-        t = cls.get_model_type(type)
+        t = Model.get_model_type(type_str)
         if t is None:
-            raise NotFoundException(detail=f"Model type '{type}' not found")
+            raise NotFoundException(
+                detail=f"Model type '{type_str}' not found")
         try:
             view_model = t.get(t.uri == uri).create_view_model(
                 data=data.dict())
             return view_model
         except Exception as err:
             raise BadRequestException(
-                detail=f"Cannot create a view_model for the model of type '{type}' and uri '{uri}'") from err
+                detail=f"Cannot create a view_model for the model of type '{type_str}' and uri '{uri}'") from err
 
     @classmethod
     def create_tables(cls, models: List[type] = None, model_type: type = None):
@@ -114,7 +113,7 @@ class ModelService(BaseService):
         Counts models
         """
 
-        t = cls.get_model_type(type)
+        t = Model.get_model_type(type)
         if t is None:
             raise BadRequestException(detail="Invalid Model type")
 
@@ -123,7 +122,7 @@ class ModelService(BaseService):
     # -- F --
 
     @classmethod
-    def fetch_model(cls, type: str, uri: str, as_json=False) -> Model:
+    def fetch_model(cls, type_str: str, uri: str, as_json=False) -> Model:
         """
         Fetch a model
 
@@ -135,26 +134,16 @@ class ModelService(BaseService):
         :rtype: instance of `gws.db.model.Model`
         """
 
-        t = cls.get_model_type(type)
-        if t is None:
-            return None
-        try:
-            o = t.get(t.uri == uri)
-            if as_json:
-                o.to_json()
-            else:
-                return o
-        except Exception as _:
-            return None
+        return Model.fetch_model(type_str=type_str, uri=uri, as_json=as_json)
 
     @classmethod
     def fetch_list_of_models(cls,
-                             type: str,
+                             type_str: str,
                              search_text: str = None,
                              page: int = 1, number_of_items_per_page: int = 20,
                              as_json: bool = False) -> Union[Paginator, List[Model], List[dict]]:
 
-        t = cls.get_model_type(type)
+        t = Model.get_model_type(type_str)
         if t is None:
             raise BadRequestException(detail="Invalid Model type")
         number_of_items_per_page = min(
@@ -217,50 +206,8 @@ class ModelService(BaseService):
     @classmethod
     def get_model_types(cls) -> Dict[str, type]:
         if not cls._model_types:
-            cls.register_all_processes_and_resources()
+            cls._model_types = cls.register_all_processes_and_resources()
         return cls._model_types
-
-    @classmethod
-    def get_model_type(cls, type: str = None) -> type:
-        """
-        Get the type of a registered model using its litteral type
-
-        :param type: Litteral type (can be a slugyfied string)
-        :type type: str
-        :return: The type if the model is registered, None otherwise
-        :type: `str`
-        """
-
-        if type is None:
-            return None
-        if type in cls._model_types:
-            return cls._model_types[type]
-
-        if type.lower() == "experiment":
-            return Experiment
-        elif type.lower() == "protocol":
-            return Protocol
-        elif type.lower() == "process":
-            return Process
-        elif type.lower() == "resource":
-            return Resource
-        elif type.lower() == "config":
-            return Config
-
-        tab = type.split(".")
-        n = len(tab)
-        module_name = ".".join(tab[0:n-1])
-        function_name = tab[n-1]
-        try:
-            module = importlib.import_module(module_name)
-            t = getattr(module, function_name, None)
-            cls._model_types[type] = t
-        except Exception as err:
-            Logger.warning(
-                f"gws.service.model_service.ModelService get_model_type An error occured. Error: {err}")
-            t = None
-
-        return t
 
     # -- I --
 
@@ -328,26 +275,29 @@ class ModelService(BaseService):
     # -- R --
 
     @classmethod
-    def register_all_processes_and_resources(cls):
+    def register_all_processes_and_resources(cls) -> Dict[str, type]:
         model_type_list = cls._inspect_model_types()
         process_type_list = []
         resource_type_list = []
+        model_types: Dict[str, type] = {}
         for m_t in set(model_type_list):
 
             if issubclass(m_t, Process):
                 process_type_list.append(m_t)
                 if (not m_t is Process) and (not m_t is Protocol):
                     m_t.create_process_type()
-                    cls._model_types[m_t.full_classname()] = m_t
+                    model_types[m_t.full_classname()] = m_t
             elif issubclass(m_t, Resource):
                 resource_type_list.append(m_t)
                 if not m_t is Resource:
                     m_t.create_resource_type()
-                    cls._model_types[m_t.full_classname()] = m_t
+                    model_types[m_t.full_classname()] = m_t
         Logger.info(
             f"Resource: {len(resource_type_list)} types registered:\n{resource_type_list}")
         Logger.info(
             f"Process: {len(process_type_list)} types registered:\n{process_type_list}")
+
+        return model_types
 
     # -- S --
 

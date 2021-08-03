@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from typing import Dict, List
+from typing import Dict, List, Type
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,8 +14,8 @@ from starlette_context.middleware import ContextMiddleware
 
 from ..core.exception import (BadRequestException, ExceptionHandler,
                               NotFoundException)
-from ..core.service.http_service import HTTPService
 from ..core.service.mysql_service import MySQLService
+from ..core.utils.http_helper import HTTPHelper
 from ..resource.file.file import File
 from ..user.user import User
 from ..user.user_dto import UserData
@@ -96,6 +96,12 @@ async def get_user_test():
     """
     Testing API user details
     """
+    user: User = UserService.get_owner()
+    typee: Type[User] = user.get_model_type("gws_core.user.user.User")
+    print(type(user))
+    print(typee.ADMIN_GROUP)
+    print(typee.get_admin())
+
     return {
         "owner": {
             "uri": UserService.get_owner().uri,
@@ -177,7 +183,7 @@ async def get_users(_: UserData = Depends(check_central_api_key)):
     Get the all the users. Require central privilege.
     """
     try:
-        HTTPService.is_http_context()
+        HTTPHelper.is_http_context()
         return __convert_users_to_dto(UserService.get_all_users())
     except Exception as err:
         raise NotFoundException(

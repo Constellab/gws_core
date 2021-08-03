@@ -3,15 +3,16 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List
+from typing import List, Type, Union
 
-from ..core.service.base_service import BaseService
+from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions.not_found_exception import NotFoundException
+from ..core.model.model import Model
+from ..core.model.typing import ProtocolType
+from ..core.service.base_service import BaseService
 from ..experiment.experiment import Experiment
 from ..progress_bar.progress_bar import ProgressBar
 from ..protocol.protocol import Protocol
-from ..core.classes.paginator import Paginator
-from ..core.model.typing import ProtocolType
 
 
 class ProtocolService(BaseService):
@@ -19,22 +20,21 @@ class ProtocolService(BaseService):
     # -- F --
 
     @classmethod
-    def fetch_protocol(cls, type="gws.protocol.Protocol", uri: str = "") -> Protocol:
-        from .model_service import ModelService
-        t = None
-        if type:
-            t = ModelService.get_model_type(type)
-            if t is None:
+    def fetch_protocol(cls, type_str="gws.protocol.Protocol", uri: str = "") -> Protocol:
+        model_type: Type[Model] = None
+        if type_str:
+            model_type = Model.get_model_type(type_str)
+            if model_type is None:
                 raise NotFoundException(
-                    detail=f"Protocol type '{type}' not found")
+                    detail=f"Protocol type '{type_str}' not found")
         else:
-            t = Protocol
+            model_type = Protocol
         try:
-            p = t.get(t.uri == uri)
-            return p
+            protocol = model_type.get(model_type.uri == uri)
+            return protocol
         except Exception as err:
             raise NotFoundException(
-                detail=f"No protocol found with uri '{uri}' and type '{type}'") from err
+                detail=f"No protocol found with uri '{uri}' and type '{type_str}'") from err
 
     @classmethod
     def fetch_protocol_progress_bar(cls, type="gws.protocol.Protocol", uri: str = "") -> ProgressBar:
@@ -46,27 +46,26 @@ class ProtocolService(BaseService):
 
     @classmethod
     def fetch_protocol_list(cls,
-                            type="gws.protocol.Protocol",
+                            type_str="gws.protocol.Protocol",
                             search_text: str = "",
                             experiment_uri: str = None,
                             page: int = 1,
                             number_of_items_per_page: int = 20,
-                            as_json=False) -> (Paginator, List[Protocol], List[dict], ):
+                            as_json=False) -> Union[Paginator, List[Protocol], List[dict]]:
 
-        from .model_service import ModelService
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
-        t = None
-        if type:
-            t = ModelService.get_model_type(type)
-            if t is None:
+        model_type: Type[Model] = None
+        if type_str:
+            model_type = Model.get_model_type(type_str)
+            if model_type is None:
                 raise NotFoundException(
-                    detail=f"Protocol type '{type}' not found")
+                    detail=f"Protocol type '{type_str}' not found")
         else:
-            t = Protocol
+            model_type = Protocol
 
         if search_text:
-            query = t.search(search_text)
+            query = model_type.search(search_text)
             result = []
             for o in query:
                 if as_json:
@@ -78,19 +77,20 @@ class ProtocolService(BaseService):
                 query, page=page, number_of_items_per_page=number_of_items_per_page)
             return {
                 'data': result,
-                'paginator': paginator._paginator_dict()
+                'paginator': paginator.paginator_dict()
             }
         else:
-            if t is Protocol:
+            if model_type is Protocol:
                 #query = t.select().where(t.is_protocol == True).order_by(t.creation_datetime.desc())
-                query = t.select().where(t.is_template == False).order_by(t.creation_datetime.desc())
+                query = model_type.select().where(model_type.is_template is False).order_by(
+                    model_type.creation_datetime.desc())
             else:
                 #query = t.select().where(t.type == t.full_classname()).order_by(t.creation_datetime.desc())
-                query = t.select().where((t.type == t.full_classname()) & (
-                    t.is_template == False)).order_by(t.creation_datetime.desc())
+                query = model_type.select().where((model_type.type == model_type.full_classname()) & (
+                    model_type.is_template == False)).order_by(model_type.creation_datetime.desc())
 
             if experiment_uri:
-                query = query.join(Experiment, on=(t.id == Experiment.protocol_id))\
+                query = query.join(Experiment, on=(model_type.id == Experiment.protocol_id))\
                     .where(Experiment.uri == experiment_uri)
 
             paginator = Paginator(
@@ -104,7 +104,7 @@ class ProtocolService(BaseService):
     def fetch_protocol_type_list(cls,
                                  page: int = 1,
                                  number_of_items_per_page: int = 20,
-                                 as_json=False) -> (Paginator, dict):
+                                 as_json=False) -> Union[Paginator, dict]:
 
         query = ProtocolType.select()\
                             .where(ProtocolType.root_model_type == "gws.protocol.Protocol")\

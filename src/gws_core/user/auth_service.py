@@ -13,7 +13,7 @@ from ..core.exception import (BadRequestException, GWSException,
                               UnauthorizedException)
 from ..core.service.base_service import BaseService
 from ..core.service.external_api_service import ExternalApiService
-from ..core.service.http_service import HTTPService
+from ..core.utils.http_helper import HTTPHelper
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
 from .activity import Activity
@@ -106,7 +106,7 @@ class AuthService(BaseService):
                 f"User not found with uri {uri}") from err
         if not user.is_active:
             return False
-        if HTTPService.is_http_context():
+        if HTTPHelper.is_http_context():
             return cls.__authenticate_http(user)
         else:
             return cls.__authenticate_console(user, console_token)
@@ -176,7 +176,7 @@ class AuthService(BaseService):
                 f"User not found with uri {uri}") from err
         if not user.is_active:
             return False
-        if HTTPService.is_http_context():
+        if HTTPHelper.is_http_context():
             return cls.__unauthenticate_http(user)
         else:
             return cls.__unauthenticate_console(user)

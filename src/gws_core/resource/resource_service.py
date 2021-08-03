@@ -3,13 +3,14 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List
+from typing import List, Union
 
+from ..core.classes.paginator import Paginator
 from ..core.exception import NotFoundException
+from ..core.model.model import Model
 from ..core.model.typing import ResourceType
 from ..core.service.base_service import BaseService
 from ..experiment.experiment import Experiment
-from ..core.classes.paginator import Paginator
 from ..resource.resource import Resource
 
 
@@ -21,11 +22,9 @@ class ResourceService(BaseService):
     def fetch_resource(cls,
                        type="gws.resource.Resource",
                        uri: str = "") -> Resource:
-
-        from .model_service import ModelService
         t = None
         if type:
-            t = ModelService.get_model_type(type)
+            t = Model.get_model_type(type)
             if t is None:
                 raise NotFoundException(
                     detail=f"Resource type '{type}' not found")
@@ -45,12 +44,11 @@ class ResourceService(BaseService):
                             search_text: str = "",
                             experiment_uri: str = None,
                             page: int = 1, number_of_items_per_page: int = 20,
-                            as_json=False) -> (Paginator, List[Resource], List[dict], ):
+                            as_json=False) -> Union[Paginator, List[Resource], List[dict]]:
 
-        from ..model.model_service import ModelService
         t = None
         if type:
-            t = ModelService.get_model_type(type)
+            t = Model.get_model_type(type)
             if t is None:
                 raise NotFoundException(
                     detail=f"Resource type '{type}' not found")
@@ -70,7 +68,7 @@ class ResourceService(BaseService):
                 query, page=page, number_of_items_per_page=number_of_items_per_page)
             return {
                 'data': result,
-                'paginator': paginator._paginator_dict()
+                'paginator': paginator.paginator_dict()
             }
         else:
             if t is Resource:

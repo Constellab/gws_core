@@ -106,8 +106,7 @@ class ProgressBar(Model):
         if not self.process_type:
             return None
 
-        from .service.model_service import ModelService
-        t = ModelService.get_model_type(self.process_type)
+        t = self.get_model_type(self.process_type)
         return t.get(t.uri == self.process_uri)
 
     # -- R --

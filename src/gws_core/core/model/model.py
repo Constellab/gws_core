@@ -5,6 +5,7 @@
 # ####################################################################
 
 import hashlib
+import importlib
 import json
 import os
 import re
@@ -12,6 +13,7 @@ import shutil
 from typing import List, Dict
 import uuid
 from datetime import datetime
+from typing import Dict, Type, Union
 
 from fastapi.encoders import jsonable_encoder
 from peewee import (AutoField, BigAutoField, BlobField, BooleanField,
@@ -24,6 +26,7 @@ from ..db.db_manager import DbManager
 from ..db.kv_store import KVStore
 from ..exception.exceptions.bad_request_exception import BadRequestException
 from ..model.json_field import JSONField
+from ..utils.logger import Logger
 from ..utils.settings import Settings
 from .base import Base
 
@@ -103,29 +106,29 @@ class Model(Base, PeeweeModel):
 
     # -- A --
 
-    def add_related_model(self, relation_name: str, related_model: 'Model'):
-        # ToDo : Add annotation name
-        if "__relations" not in self.data:
-            self.data["__relations"] = {}
-        self.data["__relations"][relation_name] = {
-            "uri": related_model.uri,
-            "type": related_model.full_classname(),
-            #"name": related_model.name
-        }
+     def add_related_model(self, relation_name: str, related_model: 'Model'):
+            # ToDo : Add annotation name
+            if "__relations" not in self.data:
+                self.data["__relations"] = {}
+            self.data["__relations"][relation_name] = {
+                "uri": related_model.uri,
+                "type": related_model.full_classname(),
+                #"name": related_model.name
+            }
 
-    def archive(self, tf: bool) -> bool:
+    def archive(self, archive: bool) -> bool:
         """
         Archive of Unarchive the model
 
-        :param tf: True to archive, False to unarchive
-        :type tf: `bool`
+        :param archive: True to archive, False to unarchive
+        :type archive: `bool`
         :return: True if sucessfully done, False otherwise
         :rtype: `bool`
         """
 
-        if self.is_archived == tf:
+        if self.is_archived == archive:
             return True
-        self.is_archived = tf
+        self.is_archived = archive
         cls = type(self)
         return self.save(only=[cls.is_archived])
 
@@ -177,8 +180,8 @@ class Model(Base, PeeweeModel):
         return h
 
     def __compute_hash(self):
-        ho = self._create_hash_object()
-        return ho.hexdigest()
+        hash_object = self._create_hash_object()
+        return hash_object.hexdigest()
 
     def cast(self) -> 'Model':
         """
@@ -189,12 +192,10 @@ class Model(Base, PeeweeModel):
         :rtype: `Model` instance
         """
 
-        from ..service.model_service import ModelService
-
         if self.type == self.full_classname():
             return self
 
-        t = ModelService.get_model_type(self.type)
+        t = self.get_model_type(self.type)
         model = t.get_by_id(self.id)
         return model
 
@@ -270,6 +271,31 @@ class Model(Base, PeeweeModel):
 
     # -- F --
 
+     @classmethod
+    def fetch_model(cls, type_str: str, uri: str, as_json=False) -> 'Model':
+        """
+        Fetch a model
+
+        :param type: The type of the model
+        :type type: `str`
+        :param uri: The uri of the model
+        :type uri: `str`
+        :return: A model
+        :rtype: instance of `gws.db.model.Model`
+        """
+
+        model_type: Type[Model] = cls.get_model_type(type_str)
+        if model_type is None:
+            return None
+        try:
+            model: Model = model_type.get(model_type.uri == uri)
+            if as_json:
+                model.to_json()
+            else:
+                return model
+        except Exception as _:
+            return None
+
     @classmethod
     def fetch_type_by_id(cls, id: int) -> type:
         """
@@ -283,15 +309,14 @@ class Model(Base, PeeweeModel):
         """
 
         try:
-            model = cls.get(cls.id == int(id))
+            model: Model = cls.get(cls.id == int(id))
         except Exception as err:
             raise BadRequestException("The model is not found.") from err
 
         if model.full_classname() == model.type:
             return type(cls)
 
-        from ..service.model_service import ModelService
-        model_t: type = ModelService.get_model_type(model.type)
+        model_t: type = self.get_model_type(model.type)
         return model_t
 
     # -- G --
@@ -326,6 +351,34 @@ class Model(Base, PeeweeModel):
         """
 
         return cls._db_manager
+
+    @classmethod
+    def get_model_type(cls, type_str: str = None) -> Type['Model']:
+        """
+        Get the type of a registered model using its litteral type
+
+        :param type: Litteral type (can be a slugyfied string)
+        :type type: str
+        :return: The type if the model is registered, None otherwise
+        :type: `str`
+        """
+
+        if type_str is None:
+            return None
+
+        tab = type_str.split(".")
+        n = len(tab)
+        module_name = ".".join(tab[0:n-1])
+        function_name = tab[n-1]
+        try:
+            module = importlib.import_module(module_name)
+            t = getattr(module, function_name, None)
+        except Exception as err:
+            Logger.warning(
+                f"gws.service.model_service.ModelService get_model_type An error occured. Error: {err}")
+            t = None
+
+        return t
 
     @staticmethod
     def get_brick_dir(brick_name: str):
@@ -383,11 +436,11 @@ class Model(Base, PeeweeModel):
 
     @classmethod
     def is_sqlite3_engine(cls):
-        return cls.get_db_manager()._engine == "sqlite3"
+        return cls.get_db_manager().engine == "sqlite3"
 
     @classmethod
     def is_mysql_engine(cls):
-        return cls.get_db_manager()._engine in ["mysql", "mariadb"]
+        return cls.get_db_manager().engine in ["mysql", "mariadb"]
 
     def is_saved(self):
         """
@@ -503,7 +556,7 @@ class Model(Base, PeeweeModel):
 
     # -- T --
 
-    def to_json(self, *, show_hash=False, bare: bool = False, stringify: bool = False, prettify: bool = False, jsonifiable_data_keys: list = [], **kwargs) -> (str, dict, ):
+    def to_json(self, *, show_hash=False, bare: bool = False, stringify: bool = False, prettify: bool = False, jsonifiable_data_keys: list = [], **kwargs) -> Union[str, dict]:
         """
         Returns a JSON string or dictionnary representation of the model.
 

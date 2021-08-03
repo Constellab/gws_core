@@ -5,14 +5,15 @@
 
 from typing import List, Union
 
+from ..core.classes.paginator import Paginator
 from ..core.dto.typed_tree_dto import TypedTree
 from ..core.exception import NotFoundException
+from ..core.model.model import Model
 from ..core.model.typing import ProcessType
 from ..core.service.base_service import BaseService
 from ..experiment.experiment import Experiment
-from .process import Process
 from ..progress_bar.progress_bar import ProgressBar
-from ..core.classes.paginator import Paginator
+from .process import Process
 
 
 class ProcessService(BaseService):
@@ -21,10 +22,9 @@ class ProcessService(BaseService):
 
     @classmethod
     def fetch_process(cls, type: str = "gws.process.Process", uri: str = "") -> Process:
-        from ..model.model_service import ModelService
         t = None
         if type:
-            t = ModelService.get_model_type(type)
+            t = Model.get_model_type(type)
             if t is None:
                 raise NotFoundException(
                     detail=f"Process type '{type}' not found")
@@ -54,12 +54,11 @@ class ProcessService(BaseService):
                            number_of_items_per_page: int = 20,
                            as_json=False) -> Union[Paginator, List[Process], List[dict]]:
 
-        from ..model.model_service import ModelService
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
         t = None
         if type:
-            t = ModelService.get_model_type(type)
+            t = Model.get_model_type(type)
             if t is None:
                 raise NotFoundException(
                     detail=f"Process type '{type}' not found")
@@ -77,7 +76,7 @@ class ProcessService(BaseService):
                 query, page=page, number_of_items_per_page=number_of_items_per_page)
             return {
                 'data': result,
-                'paginator': paginator._paginator_dict()
+                'paginator': paginator.paginator_dict()
             }
         else:
             if t is Process:

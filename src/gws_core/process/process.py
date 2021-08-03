@@ -7,6 +7,7 @@ import asyncio
 import inspect
 import json
 import zlib
+from typing import Union
 
 from peewee import CharField, ForeignKeyField, IntegerField
 from starlette_context import context
@@ -115,7 +116,6 @@ class Process(Viewable):
         self.save()
 
     def _init_io(self):
-        from ..model.model_service import ModelService
         if type(self) is Process:
             # Is the Base (Abstract) Process object => cannot set io
             return
@@ -128,7 +128,7 @@ class Process(Viewable):
         for k in self.data["input"]:
             uri = self.data["input"][k]["uri"]
             type_ = self.data["input"][k]["type"]
-            t = ModelService.get_model_type(type_)
+            t = self.get_model_type(type_)
             self._input.__setitem_without_check__(k, t.get(t.uri == uri))
 
         # output
@@ -139,7 +139,7 @@ class Process(Viewable):
         for k in self.data["output"]:
             uri = self.data["output"][k]["uri"]
             type_ = self.data["output"][k]["type"]
-            t = ModelService.get_model_type(type_)
+            t = self.get_model_type(type_)
             self._output.__setitem_without_check__(k, t.get(t.uri == uri))
 
     # -- A --
@@ -223,10 +223,8 @@ class Process(Viewable):
         Returns the zipped code source of the process
         """
 
-        from ..model.model_service import ModelService
-
         # /:\ Use the true object type (self.type)
-        model_t = ModelService.get_model_type(self.type)
+        model_t = self.get_model_type(self.type)
         source = inspect.getsource(model_t)
         return zlib.compress(source.encode())
 
@@ -325,12 +323,11 @@ class Process(Viewable):
         :rtype: Input
         """
 
-        from ..model.model_service import ModelService
         if self._input.is_empty:
             for k in self.data["input"]:
                 uri = self.data["input"][k]["uri"]
                 type_ = self.data["input"][k]["type"]
-                t = ModelService.get_model_type(type_)
+                t = self.get_model_type(type_)
                 self._input[k] = t.get(t.uri == uri)
         return self._input
 
@@ -375,12 +372,11 @@ class Process(Viewable):
         :rtype: Output
         """
 
-        from ..model.model_service import ModelService
         if self._output.is_empty:
             for k in self.data["output"]:
                 uri = self.data["output"][k]
                 type_ = self.data["output"][k]["type"]
-                t = ModelService.get_model_type(type_)
+                t = self.get_model_type(type_)
                 self._output[k] = t.get(t.uri == uri)
         return self._output
 
@@ -592,7 +588,7 @@ class Process(Viewable):
         self.config = config
         self.save()
 
-    def set_param(self, name: str, value: [str, int, float, bool]):
+    def set_param(self, name: str, value: Union[str, int, float, bool]):
         """
         Sets the value of a config parameter.
 
