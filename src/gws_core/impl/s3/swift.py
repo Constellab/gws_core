@@ -5,15 +5,15 @@
 
 import subprocess
 
-from ..core.model.sys_proc import SysProc
+from ...core.model.sys_proc import SysProc
 from .base import BaseS3
 
 
 class Swift(BaseS3):
 
     url = "https://storage.uk.cloud.ovh.net/v1/AUTH_a0286631d7b24afba3f3cdebed2992aa/public"
-    user="user-3Knk5z4CvP9D"
-    password="fVBdvkGrCPj5VpSdbm5FjguF8gCDzjcf"
+    user = "user-3Knk5z4CvP9D"
+    password = "fVBdvkGrCPj5VpSdbm5FjguF8gCDzjcf"
 
     def create(self, repo: str):
         cmd = [

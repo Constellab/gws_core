@@ -2,6 +2,8 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
+from ..model.model import Model
+
 
 class Expose:
 
@@ -17,13 +19,13 @@ class Expose:
 
     @classmethod
     def __parse_node(cls, node: dict) -> dict:
-        from ..model.model import Model
+
         for k in node:
             is_node = k.startswith(":")
             if is_node:
                 val = node[k]
-                t: Model = val.get("type")
-                if t and issubclass(t, Model):
-                    val["type"] = t.full_classname()
+                model: Model = val.get("type")
+                if model and issubclass(model, Model):
+                    val["type"] = model.full_classname()
 
                 cls.__parse_node(val)

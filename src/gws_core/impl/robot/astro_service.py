@@ -3,13 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from ..core.exception import BadRequestException
-from ..core.model.study import Study
-from ..core.service.base_service import BaseService
-from ..experiment.queue import Job
-from ..experiment.queue_service import QueueService
+from ...core.exception import BadRequestException
+from ...core.model.study import Study
+from ...core.service.base_service import BaseService
+from ...experiment.queue import Job
+from ...experiment.queue_service import QueueService
+from ...user.current_user_service import CurrentUserService
 from ..robot.robot import create_nested_protocol, create_protocol
-from ..user.current_user_service import CurrentUserService
 
 
 class AstroService(BaseService):

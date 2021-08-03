@@ -5,9 +5,9 @@
 
 import time
 
-from ..process.process import Process
-from ..protocol.protocol import Protocol
-from ..resource.resource import Resource
+from ...process.process import Process
+from ...protocol.protocol import Protocol
+from ...resource.resource import Resource
 
 
 class Robot(Resource):

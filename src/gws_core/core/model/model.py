@@ -13,7 +13,7 @@ import shutil
 from typing import List, Dict
 import uuid
 from datetime import datetime
-from typing import Dict, List, Type, Union
+from typing import Type, Union
 
 from fastapi.encoders import jsonable_encoder
 from peewee import (AutoField, BigAutoField, BlobField, BooleanField,
@@ -25,7 +25,7 @@ from playhouse.mysql_ext import Match
 
 from ..db.db_manager import DbManager
 from ..db.kv_store import KVStore
-from ..exception.exceptions.bad_request_exception import BadRequestException
+from ..exception import BadRequestException, GWSException, NotFoundException
 from ..model.json_field import JSONField
 from ..utils.logger import Logger
 from ..utils.settings import Settings
@@ -390,8 +390,24 @@ class Model(Base, PeeweeModel):
     def get_by_uri(cls, uri: str) -> str:
         try:
             return cls.get(cls.uri == uri)
-        except Exception as _:
+        except:
             return None
+
+    @classmethod
+    def get_by_uri_and_check(cls, uri: str) -> str:
+        """Get by URI and throw 404 error if object not found
+
+        :param uri: [description]
+        :type uri: str
+        :return: [description]
+        :rtype: str
+        """
+        try:
+            return cls.get(cls.uri == uri)
+        except:
+            raise NotFoundException(detail=GWSException.OBJECT_URI_NOT_FOUND.value,
+                                    unique_code=GWSException.OBJECT_URI_NOT_FOUND.name,
+                                    detail_args={"objectName": cls.classname(), "id": uri})
 
     @classmethod
     def __get_base_kv_store_path_of_table(cls) -> str:

@@ -6,8 +6,8 @@
 import os
 import subprocess
 
-from ..core.model.sys_proc import SysProc
-from ..core.utils.util import Util
+from ...core.model.sys_proc import SysProc
+from ...core.utils.util import Util
 from .base import BaseS3
 
 

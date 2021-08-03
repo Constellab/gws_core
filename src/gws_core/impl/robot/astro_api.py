@@ -7,9 +7,9 @@
 from fastapi import Depends
 from gws_core.experiment.experiment import Experiment
 
-from ..core_app import core_app
-from ..user.auth_service import AuthService
-from ..user.user_dto import UserData
+from ...core_app import core_app
+from ...user.auth_service import AuthService
+from ...user.user_dto import UserData
 from .astro_service import AstroService
 
 
