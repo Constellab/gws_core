@@ -3,27 +3,29 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import sys
 import os
+import sys
 import unittest
 
-from peewee import CharField
 from gws_core.core.model.model import Model
 from gws_core.core.utils.unittest import GTest
 from gws_core.model.model_service import ModelService
+from peewee import CharField
 
 ############################################################################################
 #
 #                                        TestModel
-#                                         
+#
 ############################################################################################
+
 
 class Person(Model):
     name = CharField(null=True)
     _table_name = 'test_person'
 
+
 class TestModel(unittest.TestCase):
-    
+
     @classmethod
     def setUpClass(cls):
         GTest.drop_tables()
@@ -37,14 +39,14 @@ class TestModel(unittest.TestCase):
 
     def test_model(self):
         GTest.print("Model")
-        p1 = Person(name = 'John Smith', data={})
+        p1 = Person(name='John Smith', data={})
         p1.save()
-        p2 = Person(name = 'Robert Vincent', data={})
+        p2 = Person(name='Robert Vincent', data={})
         p2.save()
         john = Person.get(Person.name == 'John Smith')
         john.set_data({
-            'firstname':'John',
-            'sirname':'Smith',
+            'firstname': 'John',
+            'sirname': 'Smith',
             'city': 'NY'
         })
         john.save()
@@ -66,8 +68,8 @@ class TestModel(unittest.TestCase):
 
         # check that john2 has not changed until refresh
         self.assertEqual(john2.data, {
-            'firstname':'Alan',
-            'sirname':'Smith',
+            'firstname': 'Alan',
+            'sirname': 'Smith',
             'city': 'NY'
         })
         john2.refresh()
@@ -75,10 +77,10 @@ class TestModel(unittest.TestCase):
 
     def test_model_registrering(self):
         GTest.print("Model Registering")
-        self.assertTrue( len(ModelService.get_model_types()) != 0 )
-        from gws_core.resource.json import JSONLoader
+        self.assertTrue(len(ModelService.get_model_types()) != 0)
+        from gws_core.impl.json.json_processus import JSONLoader
         from gws_core.resource.csv import CSVImporter
-        self.assertTrue( JSONLoader.full_classname() in ModelService.get_model_types() )
-        self.assertTrue( CSVImporter.full_classname() in ModelService.get_model_types() )
-
-
+        self.assertTrue(JSONLoader.full_classname()
+                        in ModelService.get_model_types())
+        self.assertTrue(CSVImporter.full_classname()
+                        in ModelService.get_model_types())

@@ -3,13 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import inspect
-
-
 class Expose:
 
     @classmethod
-    def analyze( cls, module ) -> dict:
+    def analyze(cls, module) -> dict:
         data = {
             "doc": module.doc(),
             "name": module.name(),
@@ -19,7 +16,7 @@ class Expose:
         return data
 
     @classmethod
-    def __parse_node( cls, node: dict ) -> dict:
+    def __parse_node(cls, node: dict) -> dict:
         from ..model.model import Model
         for k in node:
             is_node = k.startswith(":")

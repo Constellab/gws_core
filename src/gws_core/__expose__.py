@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from .resource.csv import CSVTable, CSVExporter, CSVImporter
+from .impl.csv.csv_process import CSVExporter, CSVImporter, CSVTable
 
 
 def doc():

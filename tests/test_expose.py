@@ -3,15 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import unittest
 import json
+import unittest
 
 from gws_core.core.utils.unittest import GTest
-from gws_core.core.classes.expose import Expose
-from gws_core.user.user import User
 from gws_core.model.model_service import ModelService
-from gws_core.user.user_service import UserService
-from gws_core.resource.csv import CSVTable, CSVExporter, CSVImporter
 
 
 class TestExpose(unittest.TestCase):

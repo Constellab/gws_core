@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 import json
-from typing import Type
+from typing import Type, Union
 
 from peewee import CharField, IntegerField
 
@@ -197,7 +197,7 @@ class Resource(Viewable):
 
     # -- T --
 
-    def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> (str, dict, ):
+    def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
         """
         Returns JSON string or dictionnary representation of the model.
 
