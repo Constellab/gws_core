@@ -174,7 +174,7 @@ class Protocol(Process):
 
         if user is None:
             try:
-                user = CurrentUserService.get_current_user()
+                user = CurrentUserService.get_and_check_current_user()
             except Exception as err:
                 raise BadRequestException("A user is required") from err
 
@@ -334,7 +334,7 @@ class Protocol(Process):
         if not exist:
             pt = ProtocolType(
                 model_type=cls.full_classname(),
-                root_model_type="gws.protocol.Protocol"
+                root_model_type="gws_core.protocol.protocol.Protocol"
             )
             pt.save()
 
@@ -352,7 +352,7 @@ class Protocol(Process):
 
         from ..experiment.experiment import Experiment
         if user is None:
-            user = CurrentUserService.get_current_user()
+            user = CurrentUserService.get_and_check_current_user()
             if user is None:
                 raise BadRequestException("A user is required")
         e = Experiment(user=user, study=study, protocol=self)
@@ -793,3 +793,20 @@ class Protocol(Process):
                 return json.dumps(_json)
         else:
             return _json
+
+    def check_user_privilege(self, user: User) -> None:
+        """Throw an exception if the user cand execute the protocol
+
+        :param user: user
+        :type user: User
+        """
+        if not user.is_sysuser:
+            if self._allowed_user == self.USER_ADMIN:
+                if not user.is_admin:
+                    raise BadRequestException(
+                        "Only admin user can run protocol")
+            for proc in self.processes.values():
+                if proc._allowed_user == self.USER_ADMIN:
+                    if not user.is_admin:
+                        raise BadRequestException(
+                            "Only admin user can run process '{proc.type}'")

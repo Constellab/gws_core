@@ -26,13 +26,14 @@ COOKIE_MAX_AGE_SECONDS = 60*60*24*3     # 3 days
 
 def check_central_api_key(api_key: str = Depends(oauth2_central_header_scheme)):
 
+    # Todo check if necessary
     # block central routes in dev mode
-    settings: Settings = Settings.retrieve()
-    if settings.is_dev:
-        raise BadRequestException(
-            detail=GWSException.CENTRAL_API_DEV_DISABLED.value,
-            unique_code=GWSException.CENTRAL_API_DEV_DISABLED.name
-        )
+    # settings: Settings = Settings.retrieve()
+    # if settings.is_dev:
+    #     raise BadRequestException(
+    #         detail=GWSException.CENTRAL_API_DEV_DISABLED.value,
+    #         unique_code=GWSException.CENTRAL_API_DEV_DISABLED.name
+    #     )
 
     is_authorized = CentralService.check_api_key(api_key)
     if not is_authorized:

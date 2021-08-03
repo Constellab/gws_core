@@ -14,6 +14,7 @@ from ...core.exception import BadRequestException, NotFoundException
 from ...core.model.model import Model
 from ...core.model.study import Study
 from ...core.service.base_service import BaseService
+from ...experiment.experiment_service import ExperimentService
 from ...user.current_user_service import CurrentUserService
 from .file import File, FileSet
 from .file_uploader import FileUploader
@@ -23,7 +24,7 @@ class FileService(BaseService):
 
     @classmethod
     def fetch_file_list(cls,
-                        type="gws.file.File",
+                        type_str="gws.file.File",
                         search_text: Optional[str] = "",
                         page: Optional[int] = 1,
                         number_of_items_per_page: Optional[int] = 20,
@@ -31,15 +32,16 @@ class FileService(BaseService):
 
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
-        t = None
-        if type:
-            t = Model.get_model_type(type)
-            if t is None:
-                raise NotFoundException(detail=f"File type '{type}' not found")
+        model_type = None
+        if type_str:
+            model_type = Model.get_model_type(type_str)
+            if model_type is None:
+                raise NotFoundException(
+                    detail=f"File type '{type_str}' not found")
         else:
-            t = File
+            model_type = File
         if search_text:
-            query = t.search(search_text)
+            query = model_type.search(search_text)
             result = []
             for o in query:
                 if as_json:
@@ -53,7 +55,7 @@ class FileService(BaseService):
                 'paginator': paginator.paginator_dict()
             }
         else:
-            query = t.select().order_by(t.creation_datetime.desc())
+            query = model_type.select().order_by(model_type.creation_datetime.desc())
             paginator = Paginator(
                 query, page=page, number_of_items_per_page=number_of_items_per_page)
             if as_json:
@@ -80,21 +82,22 @@ class FileService(BaseService):
     @classmethod
     async def upload_file(cls, files: List[UploadFile] = FastAPIFile(...), study_uri=None) -> Union[FileSet, File]:
         uploader = FileUploader(files=files)
-        user = CurrentUserService.get_current_user()
+        user = CurrentUserService.get_and_check_current_user()
         if study_uri is None:
-            e = uploader.create_experiment(study=Study.get_default_instance())
-            e.set_title("File upload")
-            e.save()
+            experiment = uploader.create_experiment(
+                study=Study.get_default_instance())
+            experiment.set_title("File upload")
+            experiment.save()
         else:
             try:
                 study = Study.get(Study.uri == study_uri)
-                e = uploader.create_experiment(study=study, user=user)
-                e.set_title("File upload")
-                e.save()
+                experiment = uploader.create_experiment(study=study, user=user)
+                experiment.set_title("File upload")
+                experiment.save()
             except Exception as err:
                 raise NotFoundException(detail=f"Study not found") from err
         try:
-            await e.run(wait_response=True)
+            await ExperimentService.run_experiment(experiment_uri=experiment.uri, wait_response=True)
             return uploader.output["result"]
         except Exception as err:
             raise BadRequestException(detail=f"Upload failed. Error: {err}")

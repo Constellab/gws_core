@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 import json
+from typing import Union
 
 from peewee import BooleanField, CharField
 
@@ -62,7 +63,7 @@ class User(Model):
 
     # -- A --
 
-    def archive(self, tf: bool) -> bool:
+    def archive(self, archive: bool) -> bool:
         """
         Archive method. This method is deactivated. Always returns False.
         """
@@ -138,7 +139,7 @@ class User(Model):
 
     # -- T --
 
-    def to_json(self, *args, stringify: bool = False, prettify: bool = False, **kwargs) -> (dict, str, ):
+    def to_json(self, *args, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[dict, str]:
         """
         Returns a JSON string or dictionnary representation of the user.
 

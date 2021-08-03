@@ -21,7 +21,7 @@ class ProcessService(BaseService):
     # -- F --
 
     @classmethod
-    def fetch_process(cls, type: str = "gws.process.Process", uri: str = "") -> Process:
+    def fetch_process(cls, type: str = "gws_core.process.process.Process", uri: str = "") -> Process:
         t = None
         if type:
             t = Model.get_model_type(type)
@@ -38,16 +38,16 @@ class ProcessService(BaseService):
                 detail=f"No process found with uri '{uri}' and type '{type}'")
 
     @classmethod
-    def fetch_process_progress_bar(cls, type: str = "gws.process.Process", uri: str = "") -> ProgressBar:
+    def fetch_process_progress_bar(cls, type_str: str = "gws_core.process.process.Process", uri: str = "") -> ProgressBar:
         try:
-            return ProgressBar.get((ProgressBar.process_uri == uri) & (ProgressBar.process_type == type))
+            return ProgressBar.get((ProgressBar.process_uri == uri) & (ProgressBar.process_type == type_str))
         except Exception as err:
             raise NotFoundException(
-                detail=f"No progress bar found with process_uri '{uri}' and process_type '{type}'")
+                detail=f"No progress bar found with process_uri '{uri}' and process_type '{type_str}'")
 
     @classmethod
     def fetch_process_list(cls,
-                           type="gws.process.Process",
+                           type_str="gws_core.process.process.Process",
                            search_text: str = "",
                            experiment_uri: str = None,
                            page: int = 1,
@@ -56,16 +56,16 @@ class ProcessService(BaseService):
 
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
-        t = None
-        if type:
-            t = Model.get_model_type(type)
-            if t is None:
+        model_type = None
+        if type_str:
+            model_type = Model.get_model_type(type_str)
+            if model_type is None:
                 raise NotFoundException(
-                    detail=f"Process type '{type}' not found")
+                    detail=f"Process type '{type_str}' not found")
         else:
-            t = Process
+            model_type = Process
         if search_text:
-            query = t.search(search_text)
+            query = model_type.search(search_text)
             result = []
             for o in query:
                 if as_json:
@@ -79,15 +79,15 @@ class ProcessService(BaseService):
                 'paginator': paginator.paginator_dict()
             }
         else:
-            if t is Process:
+            if model_type is Process:
                 #query = t.select(t.is_protocol == False).order_by(t.creation_datetime.desc())
-                query = t.select().order_by(t.creation_datetime.desc())
+                query = model_type.select().order_by(model_type.creation_datetime.desc())
             else:
-                query = t.select().where(t.type == t.full_classname()
-                                         ).order_by(t.creation_datetime.desc())
+                query = model_type.select().where(model_type.type == model_type.full_classname()
+                                                  ).order_by(model_type.creation_datetime.desc())
 
             if experiment_uri:
-                query = query.join(Experiment, on=(t.experiment_id == Experiment.id))\
+                query = query.join(Experiment, on=(model_type.experiment_id == Experiment.id))\
                     .where(Experiment.uri == experiment_uri)
             paginator = Paginator(
                 query, page=page, number_of_items_per_page=number_of_items_per_page)
@@ -100,10 +100,10 @@ class ProcessService(BaseService):
     def fetch_process_type_list(cls,
                                 page: int = 1,
                                 number_of_items_per_page: int = 20,
-                                as_json=False) -> (Paginator, dict):
+                                as_json=False) -> Union[Paginator, dict]:
 
         query = ProcessType.select()\
-            .where(ProcessType.root_model_type == "gws.process.Process")\
+            .where(ProcessType.root_model_type == "gws_core.process.process.Process")\
             .order_by(ProcessType.model_type.desc())
 
         number_of_items_per_page = min(
@@ -122,7 +122,7 @@ class ProcessService(BaseService):
         """
 
         query: List[ProcessType] = ProcessType.select()\
-            .where(ProcessType.root_model_type == "gws.process.Process")\
+            .where(ProcessType.root_model_type == "gws_core.process.process.Process")\
             .order_by(ProcessType.model_type.asc())
 
         # create a fake main group to add processes in it

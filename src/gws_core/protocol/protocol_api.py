@@ -34,7 +34,7 @@ async def get_the_list_of_protocol_types(page: Optional[int] = 1,
 
 @core_app.get("/protocol/{uri}/{type}/progress-bar", tags=["Protocol"], summary="Get the progress bar of a protocol")
 async def get_the_progress_bar_of_a_protocol(uri: str,
-                                             type: Optional[str] = "gws.process.Process",
+                                             type: Optional[str] = "gws_core.process.process.Process",
                                              _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve a process
@@ -42,13 +42,13 @@ async def get_the_progress_bar_of_a_protocol(uri: str,
     - **uri**: the uri of the process
     """
 
-    pbar = ProcessService.fetch_process_progress_bar(uri=uri, type=type)
+    pbar = ProcessService.fetch_process_progress_bar(uri=uri, type_str=type)
     return pbar.to_json()
 
 
 @core_app.get("/protocol/{uri}/{type}", tags=["Protocol"], summary="Get a protocol")
 async def get_a_protocol(uri: str,
-                         type: Optional[str] = "gws.protocol.Protocol",
+                         type: Optional[str] = "gws_core.protocol.protocol.Protocol",
                          _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve a protocol
@@ -61,7 +61,7 @@ async def get_a_protocol(uri: str,
 
 
 @core_app.get("/protocol/{type}", tags=["Protocol"], summary="Get the list of protocols")
-async def get_the_list_of_protocols(type: Optional[str] = "gws.protocol.Protocol",
+async def get_the_list_of_protocols(type: Optional[str] = "gws_core.protocol.protocol.Protocol",
                                     search_text: Optional[str] = "",
                                     experiment_uri: Optional[str] = None,
                                     page: Optional[int] = 1,

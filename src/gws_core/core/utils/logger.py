@@ -3,9 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import os
 import datetime
 import logging
+import os
+import traceback
 
 from .settings import Settings
 
@@ -66,6 +67,12 @@ class Logger:
         cls._logger.error(cls._get_message("ERROR", message))
 
     @classmethod
+    def log_exception_stack_trace(cls) -> None:
+        if not cls._logger:
+            Logger()
+        cls._logger.error(traceback.print_exc())
+
+    @classmethod
     def warning(cls, message: str) -> None:
         if not cls._logger:
             Logger()
@@ -89,7 +96,6 @@ class Logger:
             ProgressBar.get_current_progress_bar().add_message(message)
         except:
             pass
-
 
     # -- F --
 

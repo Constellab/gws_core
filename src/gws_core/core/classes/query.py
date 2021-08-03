@@ -3,18 +3,26 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from peewee import ModelSelect
+
+from ...model.view_model import ViewModel
+
+
 class Query:
     """
     Query class
     """
 
     @classmethod
-    def format(cls, Q, view_params: dict = {}, as_view: bool = False, as_json: bool = False, shallow: bool = False):
-        _Q = []
-        from ...model.view_model import ViewModel
+    def format(cls, query: ModelSelect, view_params: dict = None, as_view: bool = False, as_json: bool = False, shallow: bool = False):
+
+        if view_params is None:
+            view_params = {}
+
+        result = []
         if as_view:
             if as_json:
-                for model in Q:
+                for model in query:
                     if isinstance(model, ViewModel):
                         model = model.model
                     else:
@@ -22,21 +30,21 @@ class Query:
 
                     # -> create a new ViewModel is required
                     view_model = model.view(params=view_params)
-                    _Q.append(view_model.to_json(shallow=shallow))
+                    result.append(view_model.to_json(shallow=shallow))
             else:
-                for model in Q:
+                for model in query:
                     if isinstance(model, ViewModel):
                         model = model.model
                     else:
                         model = model.cast()
 
                     view_model = model.view(params=view_params)
-                    _Q.append(view_model)
+                    result.append(view_model)
         else:
             if as_json:
-                for model in Q:
-                    _Q.append(model.to_json(shallow=shallow))
+                for model in query:
+                    result.append(model.to_json(shallow=shallow))
             else:
-                _Q = Q
+                result = query
 
-        return _Q
+        return result

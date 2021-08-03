@@ -10,6 +10,7 @@ disable=
     no-else-return,
 
     too-many-arguments,
+    too-many-instance-attributes,
     too-few-public-methods,
 
     bare-except,

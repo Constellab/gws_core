@@ -52,7 +52,7 @@ async def get_the_experiment_queue() -> dict:
 
 class ProcessData(BaseModel):
     uri: str
-    type: str = "gws.process.Process"
+    type: str = "gws_core.process.process.Process"
     title: str = None
     instance_name: str
     config_specs: dict = {}
@@ -67,6 +67,6 @@ class ConfigData(BaseModel):
 
 
 class ProtocolData(ProcessData):
-    type: str = "gws.protocol.Protocol"
+    type: str = "gws_core.protocol.protocol.Protocol"
     interfaces: dict = {}
     outerfaces: dict = {}

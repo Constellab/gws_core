@@ -1,3 +1,6 @@
+import re
+from typing import Union
+
 from starlette_context import context
 
 from ..core.exception import BadRequestException, UnauthorizedException
@@ -13,26 +16,34 @@ class CurrentUserService:
     _console_data = {"user": None}
 
     @classmethod
-    def get_current_user(cls) -> User:
+    def get_and_check_current_user(cls) -> User:
         """
-        Get the user in the current session
+        Get the user in the current session, throw an exception if the user does not exists
         """
 
-        try:
-            user = context.data["user"]
-        except Exception as _:
-            # is console context
-            try:
-                user = cls._console_data["user"]
-            except Exception as err:
-                raise BadRequestException(
-                    "No HTTP nor Console user authenticated") from err
-        if user is None:
-            raise BadRequestException("No HTTP nor Console user authenticated")
+        user: User = cls.get_current_user()
+
+        if user is None or not user.is_authenticated:
+            raise UnauthorizedException("User not authenticated")
+
         return user
 
     @classmethod
-    def set_current_user(cls, user: User):
+    def get_current_user(cls) -> Union[User, None]:
+        """
+        Get the user in the current session, return none if the user is not authenticated
+        """
+
+        if "user" in context.data:
+            return context.data["user"]
+
+        if "user" in cls._console_data:
+            return cls._console_data["user"]
+
+        return None
+
+    @classmethod
+    def set_current_user(cls, user: User) -> None:
         """
         Set the user in the current session
         """

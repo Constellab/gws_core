@@ -39,7 +39,7 @@ class Activity(Model):
     CONSOLE_AUTHENTICATION = "CONSOLE_AUTHENTICATION"
     CONSOLE_UNAUTHENTICATION = "CONSOLE_UNAUTHENTICATION"
 
-    def archive(self, tf: bool) -> bool:
+    def archive(self, archive: bool) -> bool:
         """
         Deactivated method. Allways returns False.
         """
@@ -47,9 +47,9 @@ class Activity(Model):
         return False
 
     @classmethod
-    def add(cls, activity_type: str, *, object_type=None, object_uri=None, user: User = None):
+    def add(cls, activity_type: str, *, object_type: str = None, object_uri: str = None, user: User = None):
         if user is None:
-            user = user = CurrentUserService.get_current_user(),
+            user = CurrentUserService.get_and_check_current_user()
         activity = Activity(
             user=user,
             activity_type=activity_type,

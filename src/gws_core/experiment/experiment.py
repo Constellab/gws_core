@@ -4,9 +4,6 @@
 # About us: https://gencovery.com
 
 import json
-import os
-import subprocess
-import time
 from typing import List, Union
 
 from peewee import BooleanField, FloatField, ForeignKeyField
@@ -16,8 +13,6 @@ from ..core.model.study import Study
 from ..core.model.sys_proc import SysProc
 from ..core.utils.event import EventListener
 from ..core.utils.http_helper import HTTPHelper
-from ..core.utils.logger import Logger
-from ..core.utils.settings import Settings
 from ..model.viewable import Viewable
 from ..protocol.protocol import Protocol
 from ..user.activity import Activity
@@ -32,7 +27,7 @@ class Experiment(Viewable):
     :property study: The study of the experiment
     :type study: `gws.study.Study`
     :property protocol: The the protocol of the experiment
-    :type protocol: `gws.protocol.Protocol`
+    :type protocol: `gws_core.protocol.protocol.Protocol`
     :property created_by: The user who created the experiment. This user may be different from the user who runs the experiment.
     :type created_by: `gws.user.User`
     :property score: The score of the experiment
@@ -61,7 +56,7 @@ class Experiment(Viewable):
             self.data["pid"] = 0
             if user is None:
                 try:
-                    user: User = CurrentUserService.get_current_user()
+                    user: User = CurrentUserService.get_and_check_current_user()
                 except Exception as err:
                     raise BadRequestException("An user is required") from err
 
@@ -98,12 +93,12 @@ class Experiment(Viewable):
     def add_report(self, report: 'Report'):
         report.experiment = self
 
-    def archive(self, tf: bool, archive_resources=True) -> bool:
+    def archive(self, archive: bool, archive_resources=True) -> bool:
         """
         Archive the experiment
         """
 
-        if self.is_archived == tf:
+        if self.is_archived == archive:
             return True
         with self._db_manager.db.atomic() as transaction:
             Activity.add(
@@ -111,10 +106,10 @@ class Experiment(Viewable):
                 object_type=self.full_classname(),
                 object_uri=self.uri
             )
-            if not self.protocol.archive(tf, archive_resources=archive_resources):
+            if not self.protocol.archive(archive, archive_resources=archive_resources):
                 transaction.rollback()
                 return False
-            status = super().archive(tf)
+            status = super().archive(archive)
             if not status:
                 transaction.rollback()
             return status
@@ -167,8 +162,8 @@ class Experiment(Viewable):
         if not self.id:
             return False
 
-        e = Experiment.get_by_id(self.id)
-        return e._is_running
+        experiment = Experiment.get_by_id(self.id)
+        return experiment._is_running
 
     @property
     def is_draft(self) -> bool:
@@ -325,167 +320,35 @@ class Experiment(Viewable):
         else:
             return True
 
-    def run_through_cli(self, *, user=None):
-        """
-        Run an experiment in a non-blocking way through the cli.
-
-        :param user: The user who is running the experiment. If not provided, the system will try the get the currently authenticated user
-        :type user: `gws.user.User`
-        """
-
-        settings = Settings.retrieve()
-        cwd_dir = settings.get_cwd()
-
-        # check user
-        if not user:
-            try:
-                user = CurrentUserService.get_current_user()
-            except:
-                raise BadRequestException("A user is required")
-            if not user.is_authenticated:
-                raise BadRequestException("An authenticated user is required")
-
-        # check user privilege
-        if not user.is_sysuser:
-            if self.protocol._allowed_user == self.USER_ADMIN:
-                if not user.is_admin:
-                    raise BadRequestException(
-                        f"Only admin user can run protocol")
-            for proc in self.protocol.processes.values():
-                if proc._allowed_user == self.USER_ADMIN:
-                    if not user.is_admin:
-                        raise BadRequestException(
-                            f"Only admin user can run process '{proc.type}'")
-
-        # check experiment status
-        if self.is_archived:
-            raise BadRequestException("The experiment is archived")
-        if self.is_validated:
-            raise BadRequestException("The experiment is validated")
-
-        cmd = [
-            "python3",
-            os.path.join(cwd_dir, "manage.py"),
-            "--cli",
-            "gws.cli.run_experiment",
-            "--experiment-uri", self.uri,
-            "--user-uri", user.uri
-        ]
-
-        if settings.is_test:
-            cmd.append("--cli_test")
-
-        cmd.append("--runmode")
-        if settings.is_prod:
-            cmd.append("prod")
-        else:
-            cmd.append("dev")
-
-        Logger.info(f"gws.experiment.Experiment run_through_cli {str(cmd)}")
-        sproc = SysProc.popen(
-            cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
-        self.data["pid"] = sproc.pid
+    async def mark_as_started(self):
+        self.protocol.set_experiment(self)
+        self.data["pid"] = 0
+        self._is_running = True
+        self._is_finished = False
         self.save()
 
-    async def run(self, *, user=None, wait_response=False):
-        """
-        Run the experiment
+        if self._event_listener.exists("start"):
+            self._event_listener.sync_call("start", self)
+            await self._event_listener.async_call("start", self)
 
-        :param user: The user who is running the experiment. If not provided, the system will try the get the currently authenticated user
-        :type user: `gws.user.User`
-        :param wait_response: True to wait the response. False otherwise.
-        :type wait_response: `bool`
-        """
+    async def mark_as_success(self):
+        if self._event_listener.exists("end"):
+            self._event_listener.sync_call("end", self)
+            await self._event_listener.async_call("end", self)
 
-        if self.is_running or self.is_finished:
-            return
+        self.data["pid"] = 0
+        self._is_running = False
+        self._is_finished = True
+        self._is_success = True
+        self.save()
 
-        if wait_response:
-            await self.__run(user=user)
-        else:
-            if HTTPHelper.is_http_context():
-                # run the experiment throug the cli to prevent blocking HTTP requests
-                self.run_through_cli(user=user)
-            else:
-                await self.__run(user=user)
-
-    async def __run(self, *, user: User = None):
-        """
-        Run the experiment
-
-        :param user: The user who is running the experiment. If not provided, the system will try the get the currently authenticated user
-        :type user: `gws.user.User`
-        """
-
-        # check user
-        if not user:
-            try:
-                user: User = CurrentUserService.get_current_user()
-            except:
-                raise BadRequestException("A user is required")
-            if not user.is_authenticated:
-                raise BadRequestException("A authenticated user is required")
-
-        # check user privilege
-        if not user.is_sysuser:
-            if self.protocol._allowed_user == self.USER_ADMIN:
-                if not user.is_admin:
-                    raise BadRequestException(
-                        "Only admin user can run protocol")
-            for proc in self.protocol.processes.values():
-                if proc._allowed_user == self.USER_ADMIN:
-                    if not user.is_admin:
-                        raise BadRequestException(
-                            "Only admin user can run process '{proc.type}'")
-
-        # check experiment status
-        if self.is_archived:
-            raise BadRequestException("The experiment is archived")
-        if self.is_validated:
-            raise BadRequestException("The experiment is validated")
-
-        Activity.add(
-            Activity.START,
-            object_type=self.full_classname(),
-            object_uri=self.uri,
-            user=user
-        )
-
-        try:
-            self.protocol.set_experiment(self)
-            self.data["pid"] = 0
-            self._is_running = True
-            self._is_finished = False
-            self.save()
-
-            if self._event_listener.exists("start"):
-                self._event_listener.sync_call("start", self)
-                await self._event_listener.async_call("start", self)
-
-            await self.protocol._run()
-
-            if self._event_listener.exists("end"):
-                self._event_listener.sync_call("end", self)
-                await self._event_listener.async_call("end", self)
-
-            self.data["pid"] = 0
-            self._is_running = False
-            self._is_finished = True
-            self._is_success = True
-            self.save()
-        except Exception as err:
-            time.sleep(3)  # -> wait for 3 sec to prevent database lock!
-
-            # Gracefully stop the experiment and exit!
-            message = f"An error occured. Exception: {err}"
-            self.protocol.progress_bar.stop(message)
-            self.data["pid"] = 0
-            self._is_running = False
-            self._is_finished = True
-            self._is_success = False
-            self.save()
-            raise BadRequestException(message) from err
-
+    async def mark_as_error(self, error_message: str):
+        self.protocol.progress_bar.stop(error_message)
+        self.data["pid"] = 0
+        self._is_running = False
+        self._is_finished = True
+        self._is_success = False
+        self.save()
     # -- S --
 
     def set_title(self, title: str) -> str:
@@ -577,5 +440,30 @@ class Experiment(Viewable):
                     object_uri=self.uri,
                     user=user
                 )
+
+    def check_user_privilege(self, user: User) -> None:
+        return self.protocol.check_user_privilege(user)
+
+    def check_is_runnable(self) -> None:
+        """Throw an error if the experiment is not runnable
+        """
+
+        # check experiment status
+        if self.is_archived:
+            raise BadRequestException("The experiment is archived")
+        if self.is_validated:
+            raise BadRequestException("The experiment is validated")
+
+    def check_is_stopable(self) -> None:
+        """Throw an error if the experiment is not stopable
+        """
+
+        # check experiment status
+        if not self._is_running:
+            raise BadRequestException(
+                detail=f"Experiment '{self.uri}' is not running")
+        elif self._is_finished:
+            raise BadRequestException(
+                detail=f"Experiment '{self.uri}' is already finished")
 
     # -- V --

@@ -60,7 +60,7 @@ class AuthService(BaseService):
             # -> An excpetion occured
             # -> Try to unauthenticate the current user
             try:
-                user = CurrentUserService.get_current_user()
+                user = CurrentUserService.get_and_check_current_user()
                 if user:
                     cls.unauthenticate(uri=user.uri)
             except:
@@ -270,7 +270,7 @@ class AuthService(BaseService):
     @classmethod
     def check_is_sysuser(cls):
         try:
-            user = CurrentUserService.get_current_user()
+            user = CurrentUserService.get_and_check_current_user()
         except:
             raise UnauthorizedException(detail="Unauthorized: owner required")
 
@@ -280,7 +280,7 @@ class AuthService(BaseService):
     @classmethod
     def check_is_owner(cls):
         try:
-            user = CurrentUserService.get_current_user()
+            user = CurrentUserService.get_and_check_current_user()
         except:
             raise UnauthorizedException(detail="Unauthorized: owner required")
 
@@ -290,7 +290,7 @@ class AuthService(BaseService):
     @classmethod
     def check_is_admin(cls):
         try:
-            user = CurrentUserService.get_current_user()
+            user = CurrentUserService.get_and_check_current_user()
         except:
             raise UnauthorizedException(detail="Unauthorized: admin required")
 

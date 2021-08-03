@@ -4,6 +4,10 @@
 # About us: https://gencovery.com
 
 
+from typing import Union
+
+from peewee import ModelSelect
+
 from ..comment.comment import Comment
 from ..core.model.model import Model
 from .view_model import ViewModel
@@ -47,7 +51,7 @@ class Viewable(Model):
         comment.save()
         return comment
 
-    def archive(self, tf: bool) -> bool:
+    def archive(self, archive: bool) -> bool:
         """
         Archive of Unarchive Viewable and all its ViewModels
 
@@ -57,23 +61,21 @@ class Viewable(Model):
         :rtype: `bool`
         """
 
-        from .view_model import ViewModel
-
-        if self.is_archived == tf:
+        if self.is_archived == archive:
             return True
 
         with self._db_manager.db.atomic() as transaction:
-            Q = ViewModel.select().where(
+            query: ModelSelect = ViewModel.select().where(
                 (ViewModel.model_uri == self.uri) &
-                (ViewModel.is_archived == (not tf))
+                (ViewModel.is_archived == (not archive))
             )
 
-            for view_model in Q:
-                if not view_model.archive(tf):
+            for view_model in query:
+                if not view_model.archive(archive):
                     transaction.rollback()
                     return False
 
-            status = super().archive(tf)
+            status = super().archive(archive)
             if not status:
                 transaction.rollback()
 
@@ -114,7 +116,7 @@ class Viewable(Model):
 
     # -- R --
 
-    def render__as_json(self, **kwargs) -> (str, dict, ):
+    def render__as_json(self, **kwargs) -> Union[str, dict]:
         """
         Renders the model as a JSON string or dictionnary. This method is used by :class:`ViewModel` to create view rendering.
 
@@ -130,7 +132,7 @@ class Viewable(Model):
 
     # -- V --
 
-    def view(self, data: dict = {}) -> dict:
+    def view(self, data: dict = None) -> dict:
         """
         Renders a ViewModel
 
@@ -139,6 +141,9 @@ class Viewable(Model):
             * params: the parameters passed to the rendering function as `kwargs`
         :type params: `dict`
         """
+
+        if data is None:
+            data = {}
 
         if not isinstance(data, dict):
             data = {}

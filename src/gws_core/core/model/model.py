@@ -13,13 +13,14 @@ import shutil
 from typing import List, Dict
 import uuid
 from datetime import datetime
-from typing import Dict, Type, Union
+from typing import Dict, List, Type, Union
 
 from fastapi.encoders import jsonable_encoder
 from peewee import (AutoField, BigAutoField, BlobField, BooleanField,
                     CharField, DateField, DateTimeField, Field,
                     ForeignKeyField, ManyToManyField)
 from peewee import Model as PeeweeModel
+from peewee import ModelSelect
 from playhouse.mysql_ext import Match
 
 from ..db.db_manager import DbManager
@@ -490,7 +491,7 @@ class Model(Base, PeeweeModel):
         return cls.select(*args, **kwargs).where(cls.type == cls.full_classname())
 
     @classmethod
-    def search(cls, phrase: str, in_boolean_mode: bool = False):
+    def search(cls, phrase: str, in_boolean_mode: bool = False) -> ModelSelect:
         """
         Performs full-text search on the :param:`data` field
 

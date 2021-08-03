@@ -18,6 +18,7 @@ from ..core.utils.logger import Logger
 from ..model.viewable import Viewable
 from ..progress_bar.progress_bar import ProgressBar
 from ..resource.io import InPort, Input, OutPort, Output
+from ..user.current_user_service import CurrentUserService
 from ..user.user import User
 
 
@@ -187,7 +188,7 @@ class Process(Viewable):
         if not exist:
             proc_type = ProcessType(
                 model_type=cls.full_classname(),
-                root_model_type="gws.process.Process"
+                root_model_type="gws_core.process.process.Process"
             )
             proc_type.save()
 
@@ -205,10 +206,9 @@ class Process(Viewable):
 
         from ..experiment.experiment import Experiment
         from ..protocol.protocol import Protocol
-        from ..user.current_user_service import CurrentUserService
         proto = Protocol(processes={self.instance_name: self})
         if user is None:
-            user = CurrentUserService.get_current_user()
+            user = CurrentUserService.get_and_check_current_user()
             if user is None:
                 raise BadRequestException("A user is required")
         if uri:
@@ -264,7 +264,7 @@ class Process(Viewable):
 
     # -- G --
 
-    def get_param(self, name: str) -> [str, int, float, bool, list, dict]:
+    def get_param(self, name: str) -> Union[str, int, float, bool, list, dict]:
         """
         Returns the value of a parameter of the process config by its name.
 
@@ -620,7 +620,7 @@ class Process(Viewable):
     async def task(self):
         pass
 
-    def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> (str, dict, ):
+    def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
         """
         Returns JSON string or dictionnary representation of the process.
 

@@ -684,14 +684,14 @@
                     "layout": {}
                 },
                 "title": "Mini travel",
-                "description": "This is the process class gws.protocol.Protocol",
+                "description": "This is the process class gws_core.protocol.protocol.Protocol",
                 "doc": "Protocol class.\n\n:property processes: Dictionnary of processes\n:type processes: dict\n:property connectors: List of connectors represinting process connection\n:type connectors: list"
             },
             "instance_name": "mini_travel",
             "is_archived": false,
             "is_template": false,
             "save_datetime": "",
-            "type": "gws.protocol.Protocol",
+            "type": "gws_core.protocol.protocol.Protocol",
             "uri": "",
             "experiment": {
                 "uri": ""

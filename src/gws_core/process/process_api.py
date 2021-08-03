@@ -4,13 +4,14 @@
 # About us: https://gencovery.com
 
 from typing import List, Optional
+
 from fastapi import Depends
 
 from ..core.dto.typed_tree_dto import TypedTree
+from ..core_app import core_app
+from ..user.auth_service import AuthService
 from ..user.user_dto import UserData
 from .process_service import ProcessService
-from ..user.auth_service import AuthService
-from ..core_app import core_app
 
 
 @core_app.get("/process-type", tags=["Process"], summary="Get the list of process types")
@@ -47,10 +48,10 @@ async def get_the_progress_bar_of_a_process(type: str,
     """
     Retrieve a process
 
-    - **uri**: the uri of the process (Default is `gws.process.Process`)
+    - **uri**: the uri of the process (Default is `gws_core.process.process.Process`)
     """
 
-    bar = ProcessService.fetch_process_progress_bar(uri=uri, type=type)
+    bar = ProcessService.fetch_process_progress_bar(uri=uri, type_str=type)
     return bar.to_json()
 
 
@@ -61,7 +62,7 @@ async def get_a_process(type: str,
     """
     Retrieve a process
 
-    - **type**: the type of the process (Default is `gws.process.Process`)
+    - **type**: the type of the process (Default is `gws_core.process.process.Process`)
     - **uri**: the uri of the process
     """
 
@@ -80,7 +81,7 @@ async def get_the_list_of_processes(type: str,
     """
     Retrieve a list of processes. The list is paginated.
 
-    - **type**: the type of the processes to fetch (Default is `gws.process.Process`)
+    - **type**: the type of the processes to fetch (Default is `gws_core.process.process.Process`)
     - **search_text**: text used to filter the results. The text is matched against to the `title` and the `description` using full-text search. If this parameter is given then the parameter `experiment_uri` is ignored.
     - **experiment_uri**: the uri of the experiment related to the processes. This parameter is ignored if `search_text` is given.
     - **page**: the page number
@@ -88,7 +89,7 @@ async def get_the_list_of_processes(type: str,
     """
 
     return ProcessService.fetch_process_list(
-        type=type,
+        type_str=type,
         search_text=search_text,
         experiment_uri=experiment_uri,
         page=page,

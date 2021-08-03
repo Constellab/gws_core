@@ -96,11 +96,6 @@ async def get_user_test():
     """
     Testing API user details
     """
-    user: User = UserService.get_owner()
-    typee: Type[User] = user.get_model_type("gws_core.user.user.User")
-    print(type(user))
-    print(typee.ADMIN_GROUP)
-    print(typee.get_admin())
 
     return {
         "owner": {

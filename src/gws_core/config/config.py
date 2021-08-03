@@ -4,7 +4,9 @@
 # About us: https://gencovery.com
 
 import json
+from typing import Union
 
+from ..core.classes.validator import Validator
 from ..core.exception import BadRequestException
 from ..model.viewable import Viewable
 
@@ -31,7 +33,7 @@ class Config(Viewable):
                 raise BadRequestException(f"The specs must be a dictionnary")
 
             # convert type to str
-            from .validator import Validator
+
             for k in specs:
                 if isinstance(specs[k]["type"], type):
                     specs[k]["type"] = specs[k]["type"].__name__
@@ -78,7 +80,7 @@ class Config(Viewable):
 
     # -- G --
 
-    def get_param(self, name: str) -> (str, int, float, bool, list, dict):
+    def get_param(self, name: str) -> Union[str, int, float, bool, list, dict]:
         """
         Returns the value of a parameter by its name
 
@@ -128,7 +130,7 @@ class Config(Viewable):
 
     # -- S --
 
-    def set_param(self, name: str, value: [str, int, float, bool]):
+    def set_param(self, name: str, value: Union[str, int, float, bool]):
         """
         Sets the value of a parameter by its name
 
@@ -137,8 +139,6 @@ class Config(Viewable):
         :param value: The value of the parameter (base type)
         :type: [str, int, float, bool, NoneType]
         """
-
-        from ..core.classes.validator import Validator
 
         if not name in self.specs:
             raise BadRequestException(f"Parameter '{name}' does not exist.")
@@ -192,7 +192,7 @@ class Config(Viewable):
 
     # -- T --
 
-    def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> (str, dict, ):
+    def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
         """
         Returns JSON string or dictionnary representation of the model.
 

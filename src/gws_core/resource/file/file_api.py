@@ -61,7 +61,7 @@ async def get_the_list_of_files(type: Optional[str] = "gws.file.File",
     """
 
     return FileService.fetch_file_list(
-        type=type,
+        type_str=type,
         search_text=search_text,
         page=page,
         number_of_items_per_page=number_of_items_per_page,

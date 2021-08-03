@@ -16,7 +16,7 @@ from .core.model.study import Study
 from .core.utils.logger import Logger
 from .core.utils.settings import Settings
 from .core_app import core_app
-from .experiment.queue import Queue
+from .experiment.queue_service import QueueService
 from .lab.system import Monitor
 from .model.model_service import ModelService
 from .user.user_service import UserService
@@ -64,7 +64,7 @@ class App:
         """
 
         Monitor.init(daemon=True)
-        Queue.init(daemon=True, verbose=False)
+        QueueService.init(daemon=True, verbose=False)
 
     @classmethod
     def deinit(cls):
@@ -73,7 +73,7 @@ class App:
         """
 
         Monitor.deinit()
-        Queue.deinit()
+        QueueService.deinit()
 
     @classmethod
     def start(cls, ip: str = "0.0.0.0", port: int = 3000):
@@ -87,7 +87,7 @@ class App:
         UserService.create_owner_and_sysuser()
 
         # static dirs and docs
-        settings = Settings.retrieve()
+        settings: Settings = Settings.retrieve()
         dirs = settings.get_dependency_dirs()
         Logger.info(
             f"Starting server in {('prod' if settings.is_prod else 'dev')} mode ...")

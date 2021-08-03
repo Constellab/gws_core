@@ -20,7 +20,7 @@ class ProtocolService(BaseService):
     # -- F --
 
     @classmethod
-    def fetch_protocol(cls, type_str="gws.protocol.Protocol", uri: str = "") -> Protocol:
+    def fetch_protocol(cls, type_str="gws_core.protocol.protocol.Protocol", uri: str = "") -> Protocol:
         model_type: Type[Model] = None
         if type_str:
             model_type = Model.get_model_type(type_str)
@@ -37,7 +37,7 @@ class ProtocolService(BaseService):
                 detail=f"No protocol found with uri '{uri}' and type '{type_str}'") from err
 
     @classmethod
-    def fetch_protocol_progress_bar(cls, type="gws.protocol.Protocol", uri: str = "") -> ProgressBar:
+    def fetch_protocol_progress_bar(cls, type="gws_core.protocol.protocol.Protocol", uri: str = "") -> ProgressBar:
         try:
             return ProgressBar.get((ProgressBar.process_uri == uri) & (ProgressBar.process_type == type))
         except Exception as err:
@@ -46,7 +46,7 @@ class ProtocolService(BaseService):
 
     @classmethod
     def fetch_protocol_list(cls,
-                            type_str="gws.protocol.Protocol",
+                            type_str="gws_core.protocol.protocol.Protocol",
                             search_text: str = "",
                             experiment_uri: str = None,
                             page: int = 1,
@@ -107,7 +107,7 @@ class ProtocolService(BaseService):
                                  as_json=False) -> Union[Paginator, dict]:
 
         query = ProtocolType.select()\
-                            .where(ProtocolType.root_model_type == "gws.protocol.Protocol")\
+                            .where(ProtocolType.root_model_type == "gws_core.protocol.protocol.Protocol")\
                             .order_by(ProtocolType.model_type.desc())
 
         number_of_items_per_page = min(

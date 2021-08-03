@@ -4,23 +4,25 @@
 # About us: https://gencovery.com
 
 import asyncio
-import unittest
 import time
+import unittest
 
-from gws.settings import Settings
-from gws.process import Process
-from gws.resource import Resource 
 from gws.experiment import Experiment
-from gws.robot import create_nested_protocol
-from gws.unittest import GTest
-from gws.service.experiment_service import ExperimentService
+from gws.process import Process
 from gws.queue import Queue
+from gws.resource import Resource
+from gws.robot import create_nested_protocol
+from gws.service.experiment_service import ExperimentService
+from gws.settings import Settings
+from gws.unittest import GTest
+from gws_core import experiment
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
 
+
 class TestExperiment(unittest.TestCase):
-    
+
     @classmethod
     def setUpClass(cls):
         GTest.drop_tables()
@@ -31,11 +33,11 @@ class TestExperiment(unittest.TestCase):
     def tearDownClass(cls):
         GTest.drop_tables()
         pass
-    
+
     def test_run(self):
         GTest.print("Run Experiment")
         self.assertEqual(Experiment.count_of_running_experiments(), 0)
-        
+
         # Create experiment 1
         # -------------------------------
         print("Create experiment 1")
@@ -71,24 +73,24 @@ class TestExperiment(unittest.TestCase):
             self.assertEqual(len(e2.processes), 15)
             self.assertEqual(e2.is_finished, False)
             self.assertEqual(e2.is_running, True)
-        
+
         e2.on_end(_check_exp1)
         print("Run experiment_2 ...")
-        asyncio.run( e2.run(user=GTest.user) )
-        
+        asyncio.run(e2.run(user=GTest.user))
+
         Q1 = e1.resources
         Q2 = e2.resources
-        self.assertEqual(Resource.select().count(),15)
-        self.assertEqual(len(Q1),15)
-        self.assertEqual(len(Q2),15)
-        
+        self.assertEqual(Resource.select().count(), 15)
+        self.assertEqual(len(Q1), 15)
+        self.assertEqual(len(Q2), 15)
+
         time.sleep(2)
         self.assertEqual(e2.pid, 0)
         #self.assertEqual(e2.processes.count(), 18)
         self.assertEqual(len(e2.processes), 15)
         self.assertEqual(e2.is_finished, True)
         self.assertEqual(e2.is_running, False)
-        
+
         e2_bis = Experiment.get(Experiment.uri == e1.uri)
         self.assertEqual(e2_bis.protocol.get_title(), proto_title)
         self.assertEqual(e2_bis.get_title(), "My exp title")
@@ -101,15 +103,15 @@ class TestExperiment(unittest.TestCase):
         print("Create experiment_3")
         proto3 = create_nested_protocol()
         e3 = Experiment(protocol=proto3, study=GTest.study, user=GTest.user)
-        e3.save()     
-        
+        e3.save()
+
         print("Run experiment_3 through cli ...")
-        e3.run_through_cli(user=GTest.user)
+        ExperimentService.run_through_cli(experiment=e3, user=GTest.user)
         self.assertTrue(e3.pid > 0)
         self.assertEqual(e3.is_finished, False)
         self.assertEqual(e3.is_running, False)
         print(f"Experiment pid = {e3.pid}", )
-        
+
         n = 0
         e3 = Experiment.get(Experiment.id == e3.id)
         while not e3.is_finished:
@@ -124,41 +126,40 @@ class TestExperiment(unittest.TestCase):
         self.assertEqual(e3.is_finished, True)
         self.assertEqual(e3.is_running, False)
         self.assertEqual(e3.pid, 0)
-        
+
         Q = e3.resources
-        self.assertEqual(len(Q),15)
-        
+        self.assertEqual(len(Q), 15)
+
         # archive experiment
         def _test_archive(tf):
             OK = e3.archive(tf)
             self.assertTrue(OK)
             Q = e3.resources
-            self.assertEqual( len(Q), 15)
+            self.assertEqual(len(Q), 15)
             for r in Q:
                 self.assertEqual(r.is_archived, tf)
 
             Q = e3.processes
             #self.assertEqual( len(Q), 18)
-            self.assertEqual( len(Q), 15)
+            self.assertEqual(len(Q), 15)
             for p in Q:
                 self.assertEqual(p.is_archived, tf)
                 self.assertEqual(p.config.is_archived, tf)
-            
+
         print("Archive experiment ...")
         _test_archive(True)
-        
+
         print("Unarchive experiment ...")
         _test_archive(False)
-        
+
         print("Archive experiment again...")
         _test_archive(True)
-        
-        
+
     def test_service(self):
         GTest.drop_tables()
         GTest.create_tables()
         GTest.init()
-        
+
         GTest.print("ExperimentService")
         proto = create_nested_protocol()
         e = Experiment(protocol=proto, study=GTest.study, user=GTest.user)
@@ -166,11 +167,12 @@ class TestExperiment(unittest.TestCase):
         c = Experiment.select().count()
         self.assertEqual(c, 1)
 
-        Queue.init(tick_interval=3, verbose=True, daemon=False) # tick each second
+        Queue.init(tick_interval=3, verbose=True,
+                   daemon=False)  # tick each second
 
         def _run() -> bool:
             try:
-                asyncio.run( ExperimentService.start_experiment(e.uri) )
+                asyncio.run(ExperimentService.start_experiment(e.uri))
             except:
                 return False
 
