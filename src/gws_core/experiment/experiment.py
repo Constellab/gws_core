@@ -7,18 +7,21 @@ import json
 import os
 import subprocess
 import time
-from typing import List
+from typing import List, Union
 
 from peewee import BooleanField, FloatField, ForeignKeyField
 
 from ..core.exception import BadRequestException
 from ..core.model.study import Study
 from ..core.model.sys_proc import SysProc
-from ..model.viewable import Viewable
 from ..core.utils.event import EventListener
+from ..core.utils.http_helper import HTTPHelper
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
+from ..model.viewable import Viewable
 from ..protocol.protocol import Protocol
+from ..user.activity import Activity
+from ..user.current_user_service import CurrentUserService
 from ..user.user import User
 
 
@@ -58,8 +61,7 @@ class Experiment(Viewable):
             self.data["pid"] = 0
             if user is None:
                 try:
-                    from .service.user_service import UserService
-                    user = UserService.get_current_user()
+                    user: User = CurrentUserService.get_current_user()
                 except Exception as err:
                     raise BadRequestException("An user is required") from err
 
@@ -79,7 +81,7 @@ class Experiment(Viewable):
             # attach the protocol
             protocol = kwargs.get("protocol")
             if protocol is None:
-                from .protocol import Protocol
+                from ..protocol.protocol import Protocol
                 protocol = Protocol(user=user)
 
             protocol.set_experiment(self)
@@ -101,7 +103,6 @@ class Experiment(Viewable):
         Archive the experiment
         """
 
-        from .activity import Activity
         if self.is_archived == tf:
             return True
         with self._db_manager.db.atomic() as transaction:
@@ -203,8 +204,7 @@ class Experiment(Viewable):
         This is only possible if the experiment has been started through the cli
         """
 
-        from .service.http_service import HTTPService
-        if not HTTPService.is_http_context():
+        if not HTTPHelper.is_http_context():
             raise BadRequestException("The user must be in http context")
 
         return self.kill_pid_through_cli()
@@ -216,7 +216,6 @@ class Experiment(Viewable):
         This is only possible if the experiment has been started through the cli
         """
 
-        from .activity import Activity
         if not self.pid:
             return
 
@@ -272,7 +271,7 @@ class Experiment(Viewable):
 
         Q = []
         if self.id:
-            from .process import Process
+            from ..process.process import Process
             Qrel = Process.select().where(Process.experiment_id == self.id)
             for proc in Qrel:
                 Q.append(proc.cast())
@@ -281,14 +280,14 @@ class Experiment(Viewable):
     # -- R --
 
     @property
-    def resources(self) -> List['Resurce']:
+    def resources(self) -> List['Resource']:
         """
         Returns child resources.
         """
 
         Q = []
         if self.id:
-            from .resource import ExperimentResource
+            from ..resource.resource import ExperimentResource
             Qrel = ExperimentResource.select().where(
                 ExperimentResource.experiment_id == self.id)
             for rel in Qrel:
@@ -334,14 +333,13 @@ class Experiment(Viewable):
         :type user: `gws.user.User`
         """
 
-        from .service.user_service import UserService
         settings = Settings.retrieve()
         cwd_dir = settings.get_cwd()
 
         # check user
         if not user:
             try:
-                user = UserService.get_current_user()
+                user = CurrentUserService.get_current_user()
             except:
                 raise BadRequestException("A user is required")
             if not user.is_authenticated:
@@ -405,8 +403,7 @@ class Experiment(Viewable):
         if wait_response:
             await self.__run(user=user)
         else:
-            from .service.http_service import HTTPService
-            if HTTPService.is_http_context():
+            if HTTPHelper.is_http_context():
                 # run the experiment throug the cli to prevent blocking HTTP requests
                 self.run_through_cli(user=user)
             else:
@@ -420,13 +417,10 @@ class Experiment(Viewable):
         :type user: `gws.user.User`
         """
 
-        from .activity import Activity
-        from .service.user_service import UserService
-
         # check user
         if not user:
             try:
-                user: User = UserService.get_current_user()
+                user: User = CurrentUserService.get_current_user()
             except:
                 raise BadRequestException("A user is required")
             if not user.is_authenticated:
@@ -515,7 +509,6 @@ class Experiment(Viewable):
         self.data["description"] = description
 
     def save(self, *args, **kwargs):
-        from .activity import Activity
         with self._db_manager.db.atomic() as transaction:
             if not self.is_saved():
                 Activity.add(
@@ -530,7 +523,7 @@ class Experiment(Viewable):
 
     # -- T --
 
-    def to_json(self, *, stringify: bool = False, prettify: bool = False, **kwargs) -> (str, dict, ):
+    def to_json(self, *, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
         """
         Returns JSON string or dictionnary representation of the experiment.
 
@@ -563,7 +556,7 @@ class Experiment(Viewable):
         else:
             return _json
 
-    def validate(self, user: User):
+    def validate(self, user: User) -> None:
         """
         Validate the experiment
 
@@ -571,7 +564,6 @@ class Experiment(Viewable):
         :type user: `gws.user.User`
         """
 
-        from .activity import Activity
         if self.is_validated:
             return
         if not self.is_finished:
@@ -582,7 +574,8 @@ class Experiment(Viewable):
                 Activity.add(
                     Activity.VALIDATE,
                     object_type=self.full_classname(),
-                    object_uri=self.uri
+                    object_uri=self.uri,
+                    user=user
                 )
 
     # -- V --
