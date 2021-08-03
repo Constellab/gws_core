@@ -11,7 +11,8 @@ from gws_core.core.classes.expose import Expose
 from gws_core.user.user import User
 from gws_core.model.model_service import ModelService
 from gws_core.user.user_service import UserService
-from gws_core.resource.csv import CSVData, CSVExporter, CSVImporter
+from gws_core.resource.csv import CSVTable, CSVExporter, CSVImporter
+
 
 class TestExpose(unittest.TestCase):
 
@@ -28,7 +29,7 @@ class TestExpose(unittest.TestCase):
     #     GTest.print("Exposed models")
 
     #     def __expose__():
-    #         """ 
+    #         """
     #         This is my test doc
     #         """
 
@@ -42,7 +43,7 @@ class TestExpose(unittest.TestCase):
     #                         "type" : CSVData,
     #                     },
     #                 },
-                    
+
     #                 ":Process": {
     #                     "doc": "",
     #                     ":CSVImporter": {
@@ -59,7 +60,6 @@ class TestExpose(unittest.TestCase):
 
     #     parsed_data = Expose.analyze(__expose__)
     #     print(parsed_data)
-        
 
     def test_expose_models_throuhg_model_service(self):
         GTest.print("Exposed models through model service")

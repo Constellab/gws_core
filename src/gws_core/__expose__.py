@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from .resource.csv import CSVData, CSVExporter, CSVImporter
+from .resource.csv import CSVTable, CSVExporter, CSVImporter
 
 
 def doc():
@@ -16,32 +16,35 @@ def doc():
     * JSON module
     """
 
+
 def name():
     return "Core library"
+
 
 def title():
     return "This is the core library"
 
+
 def tree():
     return {
-        ":CSV":{
+        ":CSV": {
             "doc": "",
             ":Data": {
                 "doc": "",
                 ":CSVData": {
                     "doc": "",
-                    "type" : CSVData,
+                    "type": CSVTable,
                 },
             },
             ":Process": {
                 "doc": "",
                 ":CSVImporter": {
                     "doc": "",
-                    "type" : CSVImporter,
+                    "type": CSVImporter,
                 },
                 ":CSVExporter": {
                     "doc": "",
-                    "type" : CSVExporter,
+                    "type": CSVExporter,
                 }
             },
         }

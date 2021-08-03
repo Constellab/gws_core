@@ -20,7 +20,7 @@ from .file.file_uploader import (FileDumper, FileExporter, FileImporter,
 from .resource import Resource
 
 
-class CSVData(Resource):
+class CSVTable(Resource):
     _required_column_names = []
 
     def __init__(self, *args, table: Union[DataFrame, np.ndarray] = None,
@@ -111,7 +111,7 @@ class CSVData(Resource):
     # -- F --
 
     @classmethod
-    def from_dict(cls, table: dict, orient='index', dtype=None, columns=None) -> 'CSVData':
+    def from_dict(cls, table: dict, orient='index', dtype=None, columns=None) -> 'CSVTable':
         df = DataFrame.from_dict(table, orient, dtype, columns)
         return cls(table=df)
 
@@ -168,7 +168,7 @@ class CSVData(Resource):
     # -- J --
 
     @classmethod
-    def _join(cls, *args, **params) -> 'Model':
+    def _join(cls, *args, **params) -> Model:
         """
         Join several resources
 
@@ -231,7 +231,7 @@ class CSVData(Resource):
 
     # -- S --
 
-    def _select(self, **params) -> 'Model':
+    def _select(self, **params) -> Model:
         """
         Select a part of the resource
 
@@ -276,7 +276,7 @@ class CSVData(Resource):
 
 class CSVImporter(FileImporter):
     input_specs = {'file': File}
-    output_specs = {'data': CSVData}
+    output_specs = {'data': CSVTable}
     config_specs = {
         'file_format': {"type": str, "default": ".csv", 'description': "File format"},
         'delimiter': {"type": 'str', "default": '\t', "description": "Delimiter character. Only for parsing CSV files"},
@@ -292,7 +292,7 @@ class CSVImporter(FileImporter):
 
 
 class CSVExporter(FileExporter):
-    input_specs = {'data': CSVData}
+    input_specs = {'data': CSVTable}
     output_specs = {'file': File}
     config_specs = {
         'file_name': {"type": str, "default": 'file.csv', 'description': "Destination file name in the store"},
@@ -312,7 +312,7 @@ class CSVExporter(FileExporter):
 
 class CSVLoader(FileLoader):
     input_specs = {}
-    output_specs = {'data': CSVData}
+    output_specs = {'data': CSVTable}
     config_specs = {
         'file_path': {"type": str, "default": None, 'description': "Location of the file to import"},
         'file_format': {"type": str, "default": ".csv", 'description': "File format"},
@@ -329,7 +329,7 @@ class CSVLoader(FileLoader):
 
 
 class CSVDumper(FileDumper):
-    input_specs = {'data': CSVData}
+    input_specs = {'data': CSVTable}
     output_specs = {}
     config_specs = {
         'file_path': {"type": str, "default": None, 'description': "Destination of the exported file"},
