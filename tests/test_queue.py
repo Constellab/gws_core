@@ -7,7 +7,8 @@
 import time
 import unittest
 
-from gws_core import Experiment, GTest, Job, Queue, RobotService, Settings
+from gws_core import (Experiment, GTest, Job, Queue, QueueService,
+                      RobotService, Settings)
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
@@ -35,7 +36,7 @@ class TestQueue(unittest.TestCase):
         e1 = Experiment(protocol=proto1, study=GTest.study, user=GTest.user)
         e1.save()
         job1 = Job(user=GTest.user, experiment=e1)
-        Queue.add(job1)
+        QueueService.add_job(job1)
 
         self.assertEqual(Queue.next(), job1)
         self.assertEqual(Queue.length(), 1)
@@ -44,7 +45,7 @@ class TestQueue(unittest.TestCase):
         e2 = Experiment(protocol=proto2, study=GTest.study, user=GTest.user)
         e2.save()
         job2 = Job(user=GTest.user, experiment=e2)
-        Queue.add(job2)
+        QueueService.add_job(job2)
 
         self.assertEqual(Queue.next(), job1)
         self.assertEqual(Queue.length(), 2)
@@ -57,7 +58,7 @@ class TestQueue(unittest.TestCase):
         e3 = Experiment(protocol=proto3, study=GTest.study, user=GTest.user)
         e3.save()
         job3 = Job(user=GTest.user, experiment=e3)
-        Queue.add(job3)
+        QueueService.add_job(job3)
         self.assertEqual(Queue.next(), job2)
         self.assertEqual(Queue.length(), 2)
 

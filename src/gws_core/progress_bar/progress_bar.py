@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 import json
+import re
 import time
 from datetime import datetime
 from typing import Union
@@ -11,6 +12,8 @@ from typing import Union
 from fastapi.encoders import jsonable_encoder
 from peewee import CharField
 from starlette_context import context
+
+from gws_core.core.utils.http_helper import HTTPHelper
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
@@ -77,13 +80,14 @@ class ProgressBar(Model):
     # -- G --
 
     @classmethod
-    def get_current_progress_bar(self) -> 'ProgressBar':
+    def get_current_progress_bar(cls) -> 'ProgressBar':
         """
         Get the current progress bar.
 
         This method allow accessing the current progress everywhere (i.e. at the application level)
         """
-
+        if not HTTPHelper.is_http_context():
+            return None
         return context.data.get("progress_bar")
 
     def get_max_value(self) -> float:

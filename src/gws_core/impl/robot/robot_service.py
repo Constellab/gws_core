@@ -47,5 +47,5 @@ class RobotService(BaseService):
                 detail="Cannot run robot_super_travel.") from err
 
     @classmethod
-    def create_nested_protol() -> RobotWorldTravelProto:
+    def create_nested_protol(cls) -> RobotWorldTravelProto:
         return RobotWorldTravelProto()

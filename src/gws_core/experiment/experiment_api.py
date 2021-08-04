@@ -29,16 +29,16 @@ async def get_the_experiment_queue(_: UserData = Depends(AuthService.check_user_
 
 
 @core_app.post("/experiment/{uri}/start", tags=["Experiment"], summary="Start an experiment")
-async def start_an_experiment(uri: str,
-                              _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+def start_an_experiment(uri: str,
+                        _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Start an experiment
 
     - **flow**: the flow object
     """
 
-    e = await QueueService.add_experiment_to_queue(experiment_uri=uri)
-    return e.to_json()
+    experiment = QueueService.add_experiment_to_queue(experiment_uri=uri)
+    return experiment.to_json()
 
 
 @core_app.post("/experiment/{uri}/stop", tags=["Experiment"], summary="Stop an experiment")
