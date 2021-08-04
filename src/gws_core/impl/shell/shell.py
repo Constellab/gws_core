@@ -8,12 +8,11 @@ import subprocess
 import tempfile
 from typing import Union
 
-from ..core.exception.exceptions import BadRequestException
-from ..core.model.sys_proc import SysProc
-from ..core.utils.logger import Logger
-from ..progress_bar.progress_bar import ProgressBar
-from ..resource.file.file import File
-from .process import Process
+from ...core.exception.exceptions import BadRequestException
+from ...core.model.sys_proc import SysProc
+from ...process.process import Process
+from ...progress_bar.progress_bar import ProgressBar
+from ..file.file import File
 
 
 class Shell(Process):

@@ -16,7 +16,7 @@ class Port(Base):
     Example: [Left Process](output port) => (input port)[Right Process].
     """
 
-    _resource: 'Resource' = None
+    _resource: Resource = None
     _resource_types: tuple = ()
     _prev: 'Port' = None
     _next: list = []
@@ -28,7 +28,7 @@ class Port(Base):
         self._next = []
         self._parent = parent
 
-        self._resource_types = (Resource, )
+        self._resource_types = Resource
 
     # -- D --
 
@@ -226,7 +226,6 @@ class Port(Base):
         if self.is_optional and resource is None:
             return
 
-        from .resource import Resource
         if not isinstance(resource, self._resource_types):
             raise BadRequestException(
                 f"The resource must be an instance of Resource. A {self._resource_types} is given.")
@@ -261,10 +260,11 @@ class InPort(Port):
         for name in input._ports:
             if input._ports[name] is self:
                 return name
+        return None
 
     def __or__(self, other: 'Port'):
         raise BadRequestException(
-            f"The input port cannot be connected on the right")
+            "The input port cannot be connected on the right")
 
 
 # ####################################################################
@@ -340,6 +340,7 @@ class OutPort(Port):
         for name in input._ports:
             if input._ports[name] is self:
                 return name
+        return None
 
 
 class IOface:
@@ -615,7 +616,6 @@ class IO(Base):
         :type resource_types: type
         """
 
-        from .resource import Resource
         if not isinstance(name, str):
             raise BadRequestException(
                 "Invalid port specs. The port name must be a string")

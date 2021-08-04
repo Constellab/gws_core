@@ -4,12 +4,12 @@
 # About us: https://gencovery.com
 
 import unittest
-from gws.config import Config
-from gws.unittest import GTest
-from gws.robot import Move
+
+from gws_core import Config, GTest, RobotMove
+
 
 class TestConfig(unittest.TestCase):
-    
+
     @classmethod
     def setUpClass(cls):
         GTest.drop_tables()
@@ -34,10 +34,10 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(c.get_param('moving_step'), 4.5)
 
         self.assertEquals(c.data, {
-            "specs" : {
+            "specs": {
                 'moving_step': {"type": "float", "default": 0.1}
             },
-            "params":{
+            "params": {
                 'moving_step': 4.5
             }
         })
@@ -46,9 +46,8 @@ class TestConfig(unittest.TestCase):
         c2 = Config.get_by_id(c.id)
         self.assertEqual(c2.data, c.data)
 
-
     def test_process_config(self):
-        m = Move()
+        m = RobotMove()
         self.assertEqual(m.get_param("moving_step"), 0.1)
         m.set_param("moving_step", 0.3)
         m.save()

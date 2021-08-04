@@ -7,15 +7,8 @@ import asyncio
 import time
 import unittest
 
-from gws.experiment import Experiment
-from gws.process import Process
-from gws.queue import Queue
-from gws.resource import Resource
-from gws.robot import create_nested_protocol
-from gws.service.experiment_service import ExperimentService
-from gws.settings import Settings
-from gws.unittest import GTest
-from gws_core import experiment
+from gws_core import (Experiment, ExperimentService, GTest, Process, Queue,
+                      Resource, Settings, robot_create_nested_protocol)
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
@@ -41,16 +34,17 @@ class TestExperiment(unittest.TestCase):
         # Create experiment 1
         # -------------------------------
         print("Create experiment 1")
-        proto1 = create_nested_protocol()
-        e1 = Experiment(protocol=proto1, study=GTest.study, user=GTest.user)
+        proto1 = robot_create_nested_protocol()
+        experiment1 = Experiment(
+            protocol=proto1, study=GTest.study, user=GTest.user)
         proto_title = proto1.get_title()
-        e1.set_title("My exp title")
-        e1.set_description("This is my new experiment")
-        e1.save()
+        experiment1.set_title("My exp title")
+        experiment1.set_description("This is my new experiment")
+        experiment1.save()
 
         #self.assertEqual(e1.processes.count(), 18)
         #self.assertEqual(Process.select().count(), 18)
-        self.assertEqual(len(e1.processes), 15)
+        self.assertEqual(len(experiment1.processes), 15)
         self.assertEqual(Process.select().count(), 15)
         self.assertEqual(Resource.select().count(), 0)
         self.assertEqual(Experiment.select().count(), 1)
@@ -58,40 +52,41 @@ class TestExperiment(unittest.TestCase):
         # Create experiment 2 = experiment 2
         # -------------------------------
         print("Create experiment_2 = experiment_1 ...")
-        e2 = Experiment.get(Experiment.uri == e1.uri)
-        self.assertEqual(e2.protocol.get_title(), proto_title)
-        self.assertEqual(e2.get_title(), "My exp title")
-        self.assertEqual(e2.get_description(), "This is my new experiment")
-        self.assertEqual(e2, e1)
-        self.assertEqual(len(e2.processes), 15)
+        experiment2 = Experiment.get(Experiment.uri == experiment1.uri)
+        self.assertEqual(experiment2.protocol.get_title(), proto_title)
+        self.assertEqual(experiment2.get_title(), "My exp title")
+        self.assertEqual(experiment2.get_description(),
+                         "This is my new experiment")
+        self.assertEqual(experiment2, experiment1)
+        self.assertEqual(len(experiment2.processes), 15)
         self.assertEqual(Process.select().count(), 15)
         self.assertEqual(Resource.select().count(), 0)
         self.assertEqual(Experiment.select().count(), 1)
 
         def _check_exp1(*args, **kwargs):
             #self.assertEqual(e2.processes.count(), 18)
-            self.assertEqual(len(e2.processes), 15)
-            self.assertEqual(e2.is_finished, False)
-            self.assertEqual(e2.is_running, True)
+            self.assertEqual(len(experiment2.processes), 15)
+            self.assertEqual(experiment2.is_finished, False)
+            self.assertEqual(experiment2.is_running, True)
 
-        e2.on_end(_check_exp1)
+        experiment2.on_end(_check_exp1)
         print("Run experiment_2 ...")
-        asyncio.run(e2.run(user=GTest.user))
+        asyncio.run(experiment2.run(user=GTest.user))
 
-        Q1 = e1.resources
-        Q2 = e2.resources
+        Q1 = experiment1.resources
+        Q2 = experiment2.resources
         self.assertEqual(Resource.select().count(), 15)
         self.assertEqual(len(Q1), 15)
         self.assertEqual(len(Q2), 15)
 
         time.sleep(2)
-        self.assertEqual(e2.pid, 0)
+        self.assertEqual(experiment2.pid, 0)
         #self.assertEqual(e2.processes.count(), 18)
-        self.assertEqual(len(e2.processes), 15)
-        self.assertEqual(e2.is_finished, True)
-        self.assertEqual(e2.is_running, False)
+        self.assertEqual(len(experiment2.processes), 15)
+        self.assertEqual(experiment2.is_finished, True)
+        self.assertEqual(experiment2.is_running, False)
 
-        e2_bis = Experiment.get(Experiment.uri == e1.uri)
+        e2_bis = Experiment.get(Experiment.uri == experiment1.uri)
         self.assertEqual(e2_bis.protocol.get_title(), proto_title)
         self.assertEqual(e2_bis.get_title(), "My exp title")
         self.assertEqual(e2_bis.get_description(), "This is my new experiment")
@@ -101,7 +96,7 @@ class TestExperiment(unittest.TestCase):
         # experiment 3
         # -------------------------------
         print("Create experiment_3")
-        proto3 = create_nested_protocol()
+        proto3 = robot_create_nested_protocol()
         e3 = Experiment(protocol=proto3, study=GTest.study, user=GTest.user)
         e3.save()
 
@@ -161,7 +156,7 @@ class TestExperiment(unittest.TestCase):
         GTest.init()
 
         GTest.print("ExperimentService")
-        proto = create_nested_protocol()
+        proto = robot_create_nested_protocol()
         e = Experiment(protocol=proto, study=GTest.study, user=GTest.user)
         e.save()
         c = Experiment.select().count()

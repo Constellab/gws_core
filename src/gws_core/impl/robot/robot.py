@@ -51,7 +51,7 @@ class MegaRobot(Robot):
     pass
 
 
-class Create(Process):
+class RobotCreate(Process):
     input_specs = {}  # no required input
     output_specs = {'robot': Robot}
     config_specs = {}
@@ -71,7 +71,7 @@ class Create(Process):
         self.output['robot'] = r
 
 
-class Move(Process):
+class RobotMove(Process):
     input_specs = {'robot': Robot}  # just for testing
     output_specs = {'robot': Robot}
     config_specs = {
@@ -104,7 +104,7 @@ class Move(Process):
         self.output['robot'] = r
 
 
-class Eat(Process):
+class RobotEat(Process):
     input_specs = {'robot': Robot}
     output_specs = {'robot': Robot}
     config_specs = {
@@ -122,7 +122,7 @@ class Eat(Process):
         self.output['robot'] = r
 
 
-class Wait(Process):
+class RobotWait(Process):
     input_specs = {'robot': Robot}
     output_specs = {'robot': Robot}
     config_specs = {
@@ -142,7 +142,7 @@ class Wait(Process):
         time.sleep(self.get_param('waiting_time'))
 
 
-class Fly(Move):
+class RobotFly(RobotMove):
     config_specs = {
         'moving_step': {"type": float, "default": 1000.0, "unit": "km"},
         'direction': {"type": str, "default": "west", "allowed_values": ["north", "south", "east", "west"], 'description': "The flying direction"}
@@ -155,7 +155,7 @@ class Fly(Move):
         await super().task()
 
 
-class Add(Process):
+class RobotAdd(Process):
     input_specs = {'robot': Robot, 'addon': RobotAddOn}
     output_specs = {'mega_robot': MegaRobot}
     config_specs = {}
@@ -169,7 +169,7 @@ class Add(Process):
         self.output['mega_robot'] = mega
 
 
-class AddOnCreate(Process):
+class RobotAddOnCreate(Process):
     input_specs = {}
     output_specs = {'addon': RobotAddOn}
     config_specs = {}
@@ -180,14 +180,14 @@ class AddOnCreate(Process):
 
 
 def create_protocol():
-    facto = Create()
-    move_1 = Move()
-    eat_1 = Eat()
-    move_2 = Move()
-    move_3 = Move()
-    eat_2 = Eat()
-    wait_1 = Wait()
-    fly_1 = Fly()
+    facto = RobotCreate()
+    move_1 = RobotMove()
+    eat_1 = RobotEat()
+    move_2 = RobotMove()
+    move_3 = RobotMove()
+    eat_2 = RobotEat()
+    wait_1 = RobotWait()
+    fly_1 = RobotFly()
 
     proto = Protocol(
         processes={
@@ -225,20 +225,20 @@ def create_protocol():
     return proto
 
 
-class TravelProto(Protocol):
+class RobotTravelProto(Protocol):
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, user=user, **kwargs)
 
         if not self.is_built:
-            move_1 = Move()
-            eat_1 = Eat()
-            move_2 = Move()
-            move_3 = Move()
-            eat_2 = Eat()
-            wait_1 = Wait()
-            add_1 = Add()
-            addon_create_1 = AddOnCreate()
+            move_1 = RobotMove()
+            eat_1 = RobotEat()
+            move_2 = RobotMove()
+            move_3 = RobotMove()
+            eat_2 = RobotEat()
+            wait_1 = RobotWait()
+            add_1 = RobotAdd()
+            addon_create_1 = RobotAddOnCreate()
 
             processes = {
                 'move_1': move_1,
@@ -276,19 +276,19 @@ class TravelProto(Protocol):
             )
 
 
-class SuperTravelProto(Protocol):
+class RobotSuperTravelProto(Protocol):
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, user=user, **kwargs)
 
         if not self.is_built:
-            sub_travel = TravelProto(user=user)
+            sub_travel = RobotTravelProto(user=user)
             sub_travel.save()
 
-            move_4 = Move()
-            fly_1 = Fly()
-            wait_2 = Wait()
-            eat_3 = Eat()
+            move_4 = RobotMove()
+            fly_1 = RobotFly()
+            wait_2 = RobotWait()
+            eat_3 = RobotEat()
 
             processes = {
                 'move_4': move_4,
@@ -322,16 +322,16 @@ class SuperTravelProto(Protocol):
             self.set_title("The super travel of Astro")
 
 
-class WorldTravelProto(Protocol):
+class RobotWorldTravelProto(Protocol):
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, user=user, **kwargs)
 
         if not self.is_built:
-            super_travel = SuperTravelProto(user=user)
-            facto = Create()
-            fly_1 = Fly()
-            wait_1 = Wait()
+            super_travel = RobotSuperTravelProto(user=user)
+            facto = RobotCreate()
+            fly_1 = RobotFly()
+            wait_1 = RobotWait()
 
             processes = {
                 'facto': facto,
@@ -362,8 +362,8 @@ class WorldTravelProto(Protocol):
 
 
 def _create_super_travel_protocol():
-    return SuperTravelProto()
+    return RobotSuperTravelProto()
 
 
-def create_nested_protocol():
-    return WorldTravelProto()
+def robot_create_nested_protocol():
+    return RobotWorldTravelProto()

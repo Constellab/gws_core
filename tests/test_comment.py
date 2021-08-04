@@ -4,13 +4,12 @@
 # About us: https://gencovery.com
 
 import unittest
-from gws.comment import Comment
-from gws.file import File
-from gws.unittest import GTest
-from gws.service.comment_service import CommentService
+
+from gws_core import Comment, CommentService, File, GTest
+
 
 class TestComment(unittest.TestCase):
-    
+
     @classmethod
     def setUpClass(cls):
         GTest.drop_tables()
@@ -20,17 +19,18 @@ class TestComment(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         GTest.drop_tables()
-    
+
     def test_comment(self):
         GTest.print("Comment")
         f = File(path="./oui")
         c1 = f.add_comment("The sky is blue")
-        c2 = f.add_comment("The sky is blue and the ocean is also blue", reply_to=c1)
+        c2 = f.add_comment(
+            "The sky is blue and the ocean is also blue", reply_to=c1)
         f.save()
         c3 = CommentService.add_comment(
-            object_uri = f.uri,
-            object_type = f.type,
-            message = "I want to go to Paris"
+            object_uri=f.uri,
+            object_type=f.type,
+            message="I want to go to Paris"
         )
 
         self.assertEqual(len(f.comments), 3)
@@ -38,7 +38,8 @@ class TestComment(unittest.TestCase):
             if c == c1:
                 self.assertEqual(c.message, "The sky is blue")
             if c == c2:
-                self.assertEqual(c.message, "The sky is blue and the ocean is also blue")
+                self.assertEqual(
+                    c.message, "The sky is blue and the ocean is also blue")
             if c == c3:
                 self.assertEqual(c.message, "I want to go to Paris")
 

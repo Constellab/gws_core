@@ -5,10 +5,7 @@
 
 import unittest
 
-from gws.io import Connector
-from gws.process import Process
-from gws.resource import Resource
-from gws.unittest import GTest
+from gws_core import Connector, GTest, Process, Resource
 
 
 class Person(Resource):

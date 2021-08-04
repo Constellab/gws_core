@@ -4,11 +4,12 @@
 # About us: https://gencovery.com
 
 import unittest
-from gws.db.kv_store import KVStore
-from gws.unittest import GTest
+
+from gws_core import GTest, KVStore
+
 
 class TestKVStore(unittest.TestCase):
-    
+
     @classmethod
     def setUpClass(cls):
         GTest.drop_tables()
@@ -17,7 +18,7 @@ class TestKVStore(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         GTest.drop_tables()
-    
+
     def test_store(self):
         GTest.print("KVStore")
 
@@ -31,13 +32,13 @@ class TestKVStore(unittest.TestCase):
 
         self.assertEqual(s1['name'], 'Musk')
 
-        #s2.delete('name')
+        # s2.delete('name')
         del s2["name"]
         self.assertEqual(s2.get('name'), None)
         self.assertEqual(s1.get('name'), None)
-    
+
         s2['name'] = 'Elon'
-        
+
         # connect s2 to another file
         s2 = KVStore('./store_test/s3')
         s2['name'] = 'Lee'

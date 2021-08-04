@@ -4,36 +4,36 @@
 # About us: https://gencovery.com
 
 
-import unittest
 import copy
+import unittest
 
-from gws.process import Process
-from gws.resource import Resource
-from gws.resource_set import ResourceSet
-from gws.unittest import GTest
+from gws_core import GTest, Process, Resource, ResourceSet
+
 
 class Car(Resource):
     @property
     def name(self):
         return self.data['name']
-    
+
     def set_name(self, name):
         self.data['name'] = name
 
     @property
     def speed(self):
         return self.data['name']
-    
+
     def set_speed(self, name):
         self.data['name'] = name
+
 
 class Start(Process):
     def run(self, params={}):
         self._output = copy.deepcopy(self._input)
         self._output.set_speed(params['speed'])
 
+
 class TestResource(unittest.TestCase):
-    
+
     @classmethod
     def setUpClass(cls):
         GTest.drop_tables()
@@ -56,12 +56,12 @@ class TestResource(unittest.TestCase):
         rs['c1'] = c1
         rs['c2'] = c2
         self.assertEquals(len(rs), 2)
-        
+
         self.assertTrue(rs.save())
 
         rs2 = ResourceSet.get_by_id(rs.id)
         self.assertEquals(rs, rs2)
-        self.assertEquals(len(rs2),2)
+        self.assertEquals(len(rs2), 2)
 
-        self.assertEquals(rs2['c1'],c1)
-        self.assertEquals(rs2['c2'],c2)
+        self.assertEquals(rs2['c1'], c1)
+        self.assertEquals(rs2['c2'], c2)

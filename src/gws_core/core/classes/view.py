@@ -1,9 +1,12 @@
 # LICENSE
-# This software is the exclusive property of Gencovery SAS. 
+# This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from typing import Union
+
 from pandas import DataFrame
+
 
 class View:
     """
@@ -12,19 +15,19 @@ class View:
 
     pass
 
+
 class DictView(View):
     """
     DictView class
     """
 
     @staticmethod
-    def to_table(data: dict, \
-              orient: str='index', dtype=None, \
-              columns=None, stringify:bool=False) -> (str, "DataFrame", ):
-        
+    def to_table(data: dict,
+                 orient: str = 'index', dtype=None,
+                 columns=None, stringify: bool = False) -> Union[str, "DataFrame"]:
         """
         Convert a dictionary to a table. The method `DataFrame.from_dict()` is used. See this method to learn more about conversion
-        
+
         :param data: The dictionary
         :type data: `dict`
         :param orient: The orientation (`index` or `ccolums`). If `index` then each key of the data is a new index (i.e. a new row). Each is a column otherwise.
@@ -38,24 +41,24 @@ class DictView(View):
         :return: The corresponding table as `pandas.DataFrame` or as string
         :rtype: `pandas.DataFrame`, `str`
         """
-        
+
         df = DataFrame.from_dict(data, orient, dtype, columns)
         if stringify:
             return df.to_csv()
         else:
             return df
-    
+
+
 class TableView(View):
     """
     TableView class
     """
 
     @staticmethod
-    def to_subtable(table: DataFrame, max_nb_bins:int = 100, orient:str='index', zoom:list=[None, None, None, None], method="smooth", stringify:bool=False)-> (str, "DataFrame", ):
-        
+    def to_subtable(table: DataFrame, max_nb_bins: int = 100, orient: str = 'index', zoom: list = [None, None, None, None], method="smooth", stringify: bool = False) -> (str, "DataFrame", ):
         """
         Subsamples a table according to the `index`, `columns` or `both` orientation
-        
+
         :param table: The table
         :type table: `pandas.DataFrame`
         :param max_nb_bins: The maximum number of bins
@@ -71,10 +74,12 @@ class TableView(View):
         :return: The corresponding table as `pandas.DataFrame` or as string
         :rtype: `pandas.DataFrame`, `str`
         """
-        
+
         if orient == "both":
-            df = subsample(table, max_nb_bins=max_nb_bins, orient="index", zoom=zoom, stringify=False)
-            df = subsample(df, max_nb_bins=max_nb_bins, orient="columns", zoom=zoom, stringify=False)
+            df = subsample(table, max_nb_bins=max_nb_bins,
+                           orient="index", zoom=zoom, stringify=False)
+            df = subsample(df, max_nb_bins=max_nb_bins,
+                           orient="columns", zoom=zoom, stringify=False)
         else:
             if orient == "columns":
                 nb_bins = table.shape[1]
@@ -82,17 +87,15 @@ class TableView(View):
             else:
                 nb_bins = table.shape[0]
                 orientation_values = table.columns.values.tolist()
-            
-            
+
             if nb_bins > 100:
                 bin_size = int(nb_bins / max_nb_bins)
                 if bin_size >= 1:
-                    for bin_index in range(0,bin_size):
+                    for bin_index in range(0, bin_size):
                         # compress the data in the kth bin
                         pass
-        
+
         if stringify:
             return table.to_csv()
         else:
             return df
-        

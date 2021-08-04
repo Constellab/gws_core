@@ -13,8 +13,8 @@ from peewee import CharField
 
 from ...core.exception.exceptions import BadRequestException
 from ...core.utils.settings import Settings
-from ..resource import Resource
-from ..resource_set import ResourceSet
+from ...resource.resource import Resource
+from ...resource.resource_set import ResourceSet
 from .file_store import FileStore, LocalFileStore
 
 

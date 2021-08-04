@@ -5,15 +5,9 @@
 
 import asyncio
 import unittest
-import os
 
-from gws.settings import Settings
-from gws.file import File
-from gws.resource import Resource
-from gws.study import Study
-from gws.user import User
-from gws.shell import Shell
-from gws.unittest import GTest
+from gws_core import GTest, Resource, Shell
+
 
 class Echo(Shell):
     input_specs = {}
@@ -32,8 +26,9 @@ class Echo(Shell):
         res.data["out"] = self._stdout
         self.output["stdout"] = res
 
+
 class TestShell(unittest.TestCase):
-    
+
     @classmethod
     def setUpClass(cls):
         GTest.drop_tables()
@@ -43,17 +38,17 @@ class TestShell(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         GTest.drop_tables()
-    
-    def test_shell(self):     
+
+    def test_shell(self):
         GTest.print("Shell")
 
         proc = Echo()
         proc.set_param("name", "Jhon Doe")
         e = proc.create_experiment(study=GTest.study, user=GTest.user)
-        
+
         def _on_end(*args, **kwargs):
             res = proc.output['stdout']
             self.assertEqual(res.data["out"], "Jhon Doe")
-            
+
         e.on_end(_on_end)
-        asyncio.run( e.run(user=GTest.user) )
+        asyncio.run(e.run(user=GTest.user))

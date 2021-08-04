@@ -6,8 +6,7 @@
 import json
 import unittest
 
-from gws_core.core.utils.unittest import GTest
-from gws_core.model.model_service import ModelService
+from gws_core import GTest, ModelService
 
 
 class TestExpose(unittest.TestCase):

@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List
+from typing import List, Union
 
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import NotFoundException
@@ -43,7 +43,7 @@ class CommentService(BaseService):
                               object_uri: str,
                               page: int = 1,
                               number_of_items_per_page: int = 20,
-                              as_json=False) -> (List[Comment], List[dict], ):
+                              as_json=False) -> Union[List[Comment], List[dict]]:
 
         query = Comment.select()\
             .where((Comment.object_uri == object_uri) & (Comment.object_type == object_type))\

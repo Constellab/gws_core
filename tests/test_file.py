@@ -5,13 +5,11 @@
 
 import unittest
 
-from gws.settings import Settings
-from gws.file import File
-from gws.file_store import LocalFileStore
-from gws.unittest import GTest
-  
+from gws_core import File, GTest, LocalFileStore, Settings
+
+
 class TestFile(unittest.TestCase):
-    
+
     @classmethod
     def setUpClass(cls):
         GTest.drop_tables()
@@ -21,7 +19,7 @@ class TestFile(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         GTest.drop_tables()
-    
+
     def test_file(self):
         GTest.print("File")
 
@@ -29,10 +27,10 @@ class TestFile(unittest.TestCase):
         f = fs.create_file(name="my_file.txt")
         f.save()
         self.assertTrue(f.is_saved())
-        
+
         f.write("Hi.\n")
         f.write("My name is John")
-        
+
         text = f.read()
         self.assertTrue(text, "Hi.\nMy name is John")
         self.assertTrue(f.verify_hash())

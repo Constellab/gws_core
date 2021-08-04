@@ -1,6 +1,6 @@
-from ...resource.file.file import File
-from ...resource.file.file_uploader import (FileDumper, FileExporter,
-                                            FileImporter, FileLoader)
+from ..file.file import File
+from ..file.file_uploader import (FileDumper, FileExporter,
+                                  FileImporter, FileLoader)
 from .json_resource import JSONDict
 
 # ####################################################################

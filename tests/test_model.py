@@ -3,13 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import os
-import sys
+
 import unittest
 
-from gws_core.core.model.model import Model
-from gws_core.core.utils.unittest import GTest
-from gws_core.model.model_service import ModelService
+from gws_core import GTest, Model, ModelService
 from peewee import CharField
 
 ############################################################################################

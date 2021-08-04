@@ -16,7 +16,7 @@ from ...core.exception.exceptions import BadRequestException
 from ...core.model.model import Model
 from ...core.utils.utils import Utils
 from ...process.process import Process
-from ..resource import Resource
+from ...resource.resource import Resource
 from .file import File, FileSet
 from .file_store import FileStore, LocalFileStore
 

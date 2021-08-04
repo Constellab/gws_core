@@ -5,8 +5,7 @@
 
 import unittest
 
-from gws.unittest import GTest
-from gws.validator import Validator
+from gws_core import GTest, Validator
 
 
 class TestValidator(unittest.TestCase):
