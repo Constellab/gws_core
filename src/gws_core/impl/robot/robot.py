@@ -359,11 +359,3 @@ class RobotWorldTravelProto(Protocol):
             )
 
             self.set_title("The world trip of Astro")
-
-
-def _create_super_travel_protocol():
-    return RobotSuperTravelProto()
-
-
-def robot_create_nested_protocol():
-    return RobotWorldTravelProto()

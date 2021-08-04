@@ -5,7 +5,7 @@
 
 # This file expose all the python object that can be accessed by outside the gws_core module
 
-# pyright: W0614=false, reportUnusedVariable=warning, reportUntypedBaseClass=error
+# pylint: disable=useless-import-alias
 
 # Comments
 from .comment.comment import Comment as Comment
@@ -103,8 +103,6 @@ from .impl.json.json_process import JSONExporter as JSONExporter
 from .impl.json.json_process import JSONImporter as JSONImporter
 from .impl.json.json_process import JSONLoader as JSONLoader
 from .impl.json.json_resource import JSONDict as JSONDict
-# Impl > Robot
-from .impl.robot.astro_service import AstroService as AstroService
 from .impl.robot.robot import MegaRobot as MegaRobot
 from .impl.robot.robot import Robot as Robot
 from .impl.robot.robot import RobotAdd as RobotAdd
@@ -117,8 +115,8 @@ from .impl.robot.robot import RobotSuperTravelProto as RobotSuperTravelProto
 from .impl.robot.robot import RobotTravelProto as RobotTravelProto
 from .impl.robot.robot import RobotWait as RobotWait
 from .impl.robot.robot import RobotWorldTravelProto as RobotWorldTravelProto
-from .impl.robot.robot import \
-    robot_create_nested_protocol as robot_create_nested_protocol
+# Impl > Robot
+from .impl.robot.robot_service import RobotService as RobotService
 # Impl > S3
 from .impl.s3.base import BaseS3 as BaseS3
 from .impl.s3.ovh import OVHS3 as OVHS3

@@ -8,7 +8,7 @@ import time
 import unittest
 
 from gws_core import (Experiment, ExperimentService, GTest, Process, Queue,
-                      Resource, Settings, robot_create_nested_protocol)
+                      Resource, RobotService, Settings)
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
@@ -34,7 +34,7 @@ class TestExperiment(unittest.TestCase):
         # Create experiment 1
         # -------------------------------
         print("Create experiment 1")
-        proto1 = robot_create_nested_protocol()
+        proto1 = RobotService.create_nested_protol()
         experiment1 = Experiment(
             protocol=proto1, study=GTest.study, user=GTest.user)
         proto_title = proto1.get_title()
@@ -96,7 +96,7 @@ class TestExperiment(unittest.TestCase):
         # experiment 3
         # -------------------------------
         print("Create experiment_3")
-        proto3 = robot_create_nested_protocol()
+        proto3 = RobotService.create_nested_protol()
         e3 = Experiment(protocol=proto3, study=GTest.study, user=GTest.user)
         e3.save()
 
@@ -156,7 +156,7 @@ class TestExperiment(unittest.TestCase):
         GTest.init()
 
         GTest.print("ExperimentService")
-        proto = robot_create_nested_protocol()
+        proto = RobotService.create_nested_protol()
         e = Experiment(protocol=proto, study=GTest.study, user=GTest.user)
         e.save()
         c = Experiment.select().count()

@@ -7,8 +7,7 @@
 import time
 import unittest
 
-from gws_core import (Experiment, GTest, Job, Queue, Settings,
-                      robot_create_nested_protocol)
+from gws_core import Experiment, GTest, Job, Queue, RobotService, Settings
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
@@ -32,7 +31,7 @@ class TestQueue(unittest.TestCase):
         self.assertEqual(Experiment.count_of_running_experiments(), 0)
         self.assertEqual(Queue.length(), 0)
 
-        proto1 = robot_create_nested_protocol()
+        proto1 = RobotService.create_nested_protol()
         e1 = Experiment(protocol=proto1, study=GTest.study, user=GTest.user)
         e1.save()
         job1 = Job(user=GTest.user, experiment=e1)
@@ -41,7 +40,7 @@ class TestQueue(unittest.TestCase):
         self.assertEqual(Queue.next(), job1)
         self.assertEqual(Queue.length(), 1)
 
-        proto2 = robot_create_nested_protocol()
+        proto2 = RobotService.create_nested_protol()
         e2 = Experiment(protocol=proto2, study=GTest.study, user=GTest.user)
         e2.save()
         job2 = Job(user=GTest.user, experiment=e2)
@@ -54,7 +53,7 @@ class TestQueue(unittest.TestCase):
         self.assertEqual(Queue.next(), job2)
         self.assertEqual(Queue.length(), 1)
 
-        proto3 = robot_create_nested_protocol()
+        proto3 = RobotService.create_nested_protol()
         e3 = Experiment(protocol=proto3, study=GTest.study, user=GTest.user)
         e3.save()
         job3 = Job(user=GTest.user, experiment=e3)

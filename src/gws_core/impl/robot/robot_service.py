@@ -8,10 +8,10 @@ from ...core.service.base_service import BaseService
 from ...experiment.queue_service import QueueService
 from ...study.study import Study
 from ...user.current_user_service import CurrentUserService
-from ..robot.robot import robot_create_nested_protocol, create_protocol
+from .robot import RobotWorldTravelProto, create_protocol
 
 
-class AstroService(BaseService):
+class RobotService(BaseService):
 
     @classmethod
     def run_robot_travel(cls):
@@ -33,7 +33,7 @@ class AstroService(BaseService):
     def run_robot_super_travel(cls):
         user = CurrentUserService.get_and_check_current_user()
         study = Study.get_default_instance()
-        protocol = robot_create_nested_protocol()
+        protocol = cls.create_nested_protol()
         experiment = protocol.create_experiment(study=study, user=user)
         experiment.set_title("The super journey of Astro.")
         experiment.data["description"] = "This is the super journey of Astro."
@@ -45,3 +45,7 @@ class AstroService(BaseService):
         except Exception as err:
             raise BadRequestException(
                 detail="Cannot run robot_super_travel.") from err
+
+    @classmethod
+    def create_nested_protol() -> RobotWorldTravelProto:
+        return RobotWorldTravelProto()

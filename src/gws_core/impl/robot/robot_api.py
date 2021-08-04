@@ -10,7 +10,7 @@ from gws_core.experiment.experiment import Experiment
 from ...core_app import core_app
 from ...user.auth_service import AuthService
 from ...user.user_dto import UserData
-from .astro_service import AstroService
+from .robot_service import RobotService
 
 
 @core_app.post("/run/astro-travel-experiment", tags=["Astro boy travels"], summary="Run the travel experiment of astro")
@@ -19,7 +19,7 @@ def run_astro_travel_experiment(_: UserData = Depends(AuthService.check_user_acc
     Run astrobot experiment. The default study is used.
     """
 
-    experiment: Experiment = AstroService.run_robot_travel()
+    experiment: Experiment = RobotService.run_robot_travel()
     return experiment.to_json()
 
 
@@ -29,5 +29,5 @@ def run_astro_super_travel_experiment(_: UserData = Depends(AuthService.check_us
     Run astrobot experiment. The default study is used.
     """
 
-    experiment: Experiment = AstroService.run_robot_super_travel()
+    experiment: Experiment = RobotService.run_robot_super_travel()
     return experiment.to_json()
