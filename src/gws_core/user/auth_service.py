@@ -9,8 +9,9 @@ from starlette.responses import JSONResponse
 
 from ..central._auth_central import generate_user_access_token
 from ..central.central_service import CentralService
-from ..core.exception import (BadRequestException, GWSException,
-                              UnauthorizedException)
+from ..core.exception.exceptions import (BadRequestException,
+                                         UnauthorizedException)
+from ..core.exception.gws_exceptions import GWSException
 from ..core.service.base_service import BaseService
 from ..core.service.external_api_service import ExternalApiService
 from ..core.utils.http_helper import HTTPHelper

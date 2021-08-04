@@ -8,11 +8,11 @@ from typing import List, Type, Union
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions.not_found_exception import NotFoundException
 from ..core.model.model import Model
-from ..core.model.typing import ProtocolType
 from ..core.service.base_service import BaseService
 from ..experiment.experiment import Experiment
 from ..progress_bar.progress_bar import ProgressBar
 from ..protocol.protocol import Protocol
+from .protocol_type import ProtocolType
 
 
 class ProtocolService(BaseService):

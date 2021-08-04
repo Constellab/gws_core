@@ -8,8 +8,9 @@ import json
 import math
 import re
 
-from ..exception import BadRequestException
-from ..model.typing import URL, Path
+from ..exception.exceptions import BadRequestException
+from .path import URL, Path
+
 
 class Validator:
     """

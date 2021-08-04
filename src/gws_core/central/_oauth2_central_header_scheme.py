@@ -10,7 +10,7 @@ from fastapi.requests import Request
 from fastapi.security import OAuth2
 from fastapi.security.utils import get_authorization_scheme_param
 
-from ..core.exception import BadRequestException
+from ..core.exception.exceptions import BadRequestException
 
 
 class OAuth2CentralAPIKeyHeader(OAuth2):

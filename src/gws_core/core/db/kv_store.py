@@ -7,7 +7,7 @@ import os
 import shelve
 import shutil
 
-from ..exception.exceptions.bad_request_exception import BadRequestException
+from ..exception.exceptions import BadRequestException
 from ..utils.settings import Settings
 
 # ####################################################################

@@ -5,19 +5,19 @@
 
 import os
 import subprocess
-from typing import List, Union
+from typing import Union
 
 from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
-from ..core.exception import BadRequestException, NotFoundException
-from ..core.model.study import Study
+from ..core.exception.exceptions import BadRequestException, NotFoundException
 from ..core.model.sys_proc import SysProc
 from ..core.service.base_service import BaseService
 from ..core.utils.http_helper import HTTPHelper
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
 from ..protocol.protocol import Protocol
+from ..study.study import Study
 from ..user.activity import Activity
 from ..user.activity_service import ActivityService
 from ..user.current_user_service import CurrentUserService

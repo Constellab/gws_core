@@ -2,7 +2,7 @@
 import threading
 import time
 
-from ..core.exception import BadRequestException, NotFoundException
+from ..core.exception.exceptions import BadRequestException, NotFoundException
 from ..core.service.base_service import BaseService
 from ..core.utils.logger import Logger
 from ..user.current_user_service import CurrentUserService

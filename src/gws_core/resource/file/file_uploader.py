@@ -12,9 +12,9 @@ from typing import List
 from fastapi import UploadFile
 from fastapi.datastructures import UploadFile
 
-from ...core.exception import BadRequestException
+from ...core.exception.exceptions import BadRequestException
 from ...core.model.model import Model
-from ...core.utils.util import Util
+from ...core.utils.utils import Utils
 from ...process.process import Process
 from ..resource import Resource
 from .file import File, FileSet
@@ -67,7 +67,7 @@ class FileUploader(Process):
     @staticmethod
     def uniquify(file_name: str):
         p = Path(file_name)
-        file_name = p.stem + "_" + Util.generate_random_chars() + p.suffix
+        file_name = p.stem + "_" + Utils.generate_random_chars() + p.suffix
         return file_name
 
 # ####################################################################

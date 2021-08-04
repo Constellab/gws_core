@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from ...model.viewable import Viewable
+from ..model.viewable import Viewable
 
 
 class Study(Viewable):

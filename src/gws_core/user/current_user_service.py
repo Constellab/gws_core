@@ -3,7 +3,8 @@ from typing import Union
 
 from starlette_context import context
 
-from ..core.exception import BadRequestException, UnauthorizedException
+from ..core.exception.exceptions import (BadRequestException,
+                                         UnauthorizedException)
 from .user import User
 
 

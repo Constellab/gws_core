@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from starlette.exceptions import HTTPException
 from starlette_context.middleware import ContextMiddleware
 
-from .core.exception import ExceptionHandler
+from .core.exception.exception_handler import ExceptionHandler
 
 core_app = FastAPI(docs_url="/docs")
 

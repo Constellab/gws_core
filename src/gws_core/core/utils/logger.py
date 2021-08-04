@@ -3,15 +3,15 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import datetime
 import logging
-import os
 import traceback
+from datetime import date, datetime
+from os import makedirs, path
 
 from .settings import Settings
 
 LOGGER_NAME = "gws"
-LOGGER_FILE_NAME = str(datetime.date.today()) + ".log"
+LOGGER_FILE_NAME = str(date.today()) + ".log"
 RESET_COLOR = "\x1b[0m"
 
 
@@ -46,9 +46,9 @@ class Logger:
             settings = Settings()
 
             log_dir = settings.get_log_dir()
-            if not os.path.exists(log_dir):
-                os.makedirs(log_dir)
-            Logger._file_path = os.path.join(log_dir, LOGGER_FILE_NAME)
+            if not path.exists(log_dir):
+                makedirs(log_dir)
+            Logger._file_path = path.join(log_dir, LOGGER_FILE_NAME)
             file_handler = logging.FileHandler(Logger._file_path)
             Logger._logger.setLevel(logging.DEBUG)
             file_handler.setFormatter(formatter)
@@ -91,11 +91,6 @@ class Logger:
         if not cls._logger:
             Logger()
         cls._logger.info(cls._get_message("PROGRESS", message))
-        try:
-            from .progress_bar import ProgressBar
-            ProgressBar.get_current_progress_bar().add_message(message)
-        except:
-            pass
 
     # -- F --
 
@@ -123,5 +118,5 @@ class Logger:
     # Get the current date in Human readable format
     @classmethod
     def _get_date(cls) -> str:
-        current_date: datetime.datetime = datetime.datetime.now()
+        current_date: datetime = datetime.now()
         return current_date.strftime("%Y-%m-%d %H:%M:%S.%f")

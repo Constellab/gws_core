@@ -5,7 +5,8 @@
 
 from fastapi import status
 
-from ..core.exception import BaseHTTPException, GWSException
+from ..core.exception.exceptions import BaseHTTPException
+from ..core.exception.gws_exceptions import GWSException
 
 
 class WrongCredentialsException(BaseHTTPException):

@@ -9,7 +9,7 @@ import click
 
 from gws_core.experiment.experiment_service import ExperimentService
 
-from .core.exception import BadRequestException
+from .core.exception.exceptions import BadRequestException
 from .core.exception.exception_handler import ExceptionHandler
 from .core.utils.settings import Settings
 from .user.user import User

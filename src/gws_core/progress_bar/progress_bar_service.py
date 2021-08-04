@@ -3,9 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List
 
-from ..core.exception import NotFoundException
+from ..core.exception.exceptions import NotFoundException
 from ..core.service.base_service import BaseService
 from .progress_bar import ProgressBar
 

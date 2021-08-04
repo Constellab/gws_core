@@ -13,13 +13,13 @@ from peewee import CharField, ForeignKeyField, IntegerField
 from starlette_context import context
 
 from ..config.config import Config
-from ..core.exception import BadRequestException
-from ..core.utils.logger import Logger
+from ..core.exception.exceptions import BadRequestException
 from ..model.viewable import Viewable
 from ..progress_bar.progress_bar import ProgressBar
 from ..resource.io import InPort, Input, OutPort, Output
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
+from .process_type import ProcessType
 
 
 class Process(Viewable):
@@ -182,7 +182,6 @@ class Process(Viewable):
 
     @classmethod
     def create_process_type(cls):
-        from ..core.model.typing import ProcessType
         exist = ProcessType.select().where(
             ProcessType.model_type == cls.full_classname()).count()
         if not exist:
@@ -477,7 +476,8 @@ class Process(Viewable):
 
     async def _run_before_task(self, *args, **kwargs):
         self.__switch_to_current_progress_bar()
-        Logger.progress(f"Running {self.full_classname()} ...")
+        ProgressBar.add_message_to_current(
+            f"Running {self.full_classname()} ...")
         self.is_instance_running = True
         self.is_instance_finished = False
         self.data["input"] = {}
@@ -494,7 +494,7 @@ class Process(Viewable):
         self.save()
 
     async def _run_after_task(self, *args, **kwargs):
-        Logger.progress(
+        ProgressBar.add_message_to_current(
             f"Task of {self.full_classname()} successfully finished!")
         self.is_instance_running = False
         self.is_instance_finished = True

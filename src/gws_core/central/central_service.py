@@ -5,7 +5,7 @@
 
 from typing import Dict
 
-from ..core.exception import BadRequestException
+from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
 from ..core.service.external_api_service import ExternalApiService
 from ..core.utils.settings import Settings

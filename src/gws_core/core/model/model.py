@@ -25,7 +25,8 @@ from playhouse.mysql_ext import Match
 
 from ..db.db_manager import DbManager
 from ..db.kv_store import KVStore
-from ..exception import BadRequestException, GWSException, NotFoundException
+from ..exception.exceptions import BadRequestException, NotFoundException
+from ..exception.gws_exceptions import GWSException
 from ..model.json_field import JSONField
 from ..utils.logger import Logger
 from ..utils.settings import Settings

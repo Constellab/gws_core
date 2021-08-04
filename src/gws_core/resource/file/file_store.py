@@ -9,7 +9,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from ...core.exception import BadRequestException
+from ...core.exception.exceptions import BadRequestException
 from ...core.model.model import Model
 from ...core.utils.settings import Settings
 

@@ -11,7 +11,7 @@ from pathlib import Path
 
 from peewee import CharField
 
-from ...core.exception import BadRequestException
+from ...core.exception.exceptions import BadRequestException
 from ...core.utils.settings import Settings
 from ..resource import Resource
 from ..resource_set import ResourceSet

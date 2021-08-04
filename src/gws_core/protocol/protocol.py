@@ -10,13 +10,14 @@ from typing import Union
 
 from peewee import BooleanField
 
-from ..core.exception import BadRequestException
+from ..core.exception.exceptions import BadRequestException
 from ..process.process import Process
 from ..resource.io import (Connector, InPort, Input, Interface, Outerface,
                            OutPort, Output)
 from ..user.activity import Activity
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
+from .protocol_type import ProtocolType
 
 
 class Protocol(Process):
@@ -328,7 +329,6 @@ class Protocol(Process):
 
     @classmethod
     def create_process_type(cls):
-        from ..core.model.typing import ProtocolType
         exist = ProtocolType.select().where(
             ProtocolType.model_type == cls.full_classname()).count()
         if not exist:

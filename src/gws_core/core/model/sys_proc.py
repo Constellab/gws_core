@@ -1,7 +1,7 @@
 
 import psutil
 
-from ..exception.exceptions.bad_request_exception import BadRequestException
+from ..exception.exceptions import BadRequestException
 
 # ####################################################################
 #

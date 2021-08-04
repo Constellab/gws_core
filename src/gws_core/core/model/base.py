@@ -7,7 +7,7 @@ import inspect
 import re
 from typing import List
 
-from ..utils.util import Util
+from ..utils.utils import Utils
 
 
 class Base:
@@ -36,9 +36,9 @@ class Base:
             name = name.strip("-")
 
         if slugify:
-            name = Util.slugify(name, to_lower=True, snakefy=True)
+            name = Utils.slugify(name, to_lower=True, snakefy=True)
         elif snakefy:
-            name = Util.slugify(name, to_lower=True, snakefy=True)
+            name = Utils.slugify(name, to_lower=True, snakefy=True)
         return name
 
     @classmethod
@@ -59,9 +59,9 @@ class Base:
         full_name = module + "." + name
 
         if slugify:
-            full_name = Util.slugify(full_name, to_lower=True, snakefy=False)
+            full_name = Utils.slugify(full_name, to_lower=True, snakefy=False)
         elif snakefy:
-            full_name = Util.slugify(full_name, to_lower=True, snakefy=True)
+            full_name = Utils.slugify(full_name, to_lower=True, snakefy=True)
 
         return full_name
 

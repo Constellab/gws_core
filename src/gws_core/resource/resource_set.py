@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from ..core.exception import BadRequestException
+from ..core.exception.exceptions import BadRequestException
 from .resource import Resource
 
 

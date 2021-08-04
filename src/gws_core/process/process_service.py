@@ -7,13 +7,13 @@ from typing import List, Union
 
 from ..core.classes.paginator import Paginator
 from ..core.dto.typed_tree_dto import TypedTree
-from ..core.exception import NotFoundException
+from ..core.exception.exceptions import NotFoundException
 from ..core.model.model import Model
-from ..core.model.typing import ProcessType
 from ..core.service.base_service import BaseService
 from ..experiment.experiment import Experiment
 from ..progress_bar.progress_bar import ProgressBar
 from .process import Process
+from .process_type import ProcessType
 
 
 class ProcessService(BaseService):

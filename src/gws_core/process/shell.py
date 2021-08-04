@@ -6,10 +6,12 @@
 import os
 import subprocess
 import tempfile
+from typing import Union
 
-from ..core.exception import BadRequestException
+from ..core.exception.exceptions import BadRequestException
 from ..core.model.sys_proc import SysProc
 from ..core.utils.logger import Logger
+from ..progress_bar.progress_bar import ProgressBar
 from ..resource.file.file import File
 from .process import Process
 
@@ -98,7 +100,7 @@ class Shell(Process):
 
 
 
-    @property
+    @ property
     def cwd(self) -> tempfile.TemporaryDirectory:
         """
         The temporary working directory where the shell command is executed.
@@ -113,7 +115,7 @@ class Shell(Process):
 
         return self._tmp_dir
 
-    @property
+    @ property
     def working_dir(self) -> str:
         """
         Returns the working dir of the shell process
@@ -139,7 +141,7 @@ class Shell(Process):
 
             if not user_env:
                 user_env = None
-            
+
             if not isinstance(user_cmd, list):
                 raise BadRequestException(
                     "Method 'build_command' must return a list of string. Please set 'shell_mode=True' to format your custom shell command")
@@ -161,7 +163,7 @@ class Shell(Process):
             count = 0
             for line in iter(proc.stdout.readline, b''):
                 line = line.decode().strip()
-                Logger.progress(line)
+                ProgressBar.add_message_to_current(line)
                 if not proc.is_alive():
                     break
 

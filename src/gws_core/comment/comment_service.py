@@ -5,9 +5,9 @@
 
 from typing import List
 
-from ..core.exception import NotFoundException
-from ..core.service.base_service import BaseService
 from ..core.classes.paginator import Paginator
+from ..core.exception.exceptions import NotFoundException
+from ..core.service.base_service import BaseService
 from .comment import Comment
 
 

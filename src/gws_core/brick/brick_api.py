@@ -9,7 +9,7 @@ from typing import Optional
 from fastapi import Depends
 from fastapi.responses import JSONResponse
 
-from ..core.exception import BadRequestException
+from ..core.exception.exceptions import BadRequestException
 from ..core_app import core_app
 from ..user.auth_service import AuthService
 from ..user.user_dto import UserData

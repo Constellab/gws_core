@@ -8,13 +8,13 @@ from typing import List, Union
 
 from peewee import BooleanField, FloatField, ForeignKeyField
 
-from ..core.exception import BadRequestException
-from ..core.model.study import Study
+from ..core.exception.exceptions import BadRequestException
 from ..core.model.sys_proc import SysProc
 from ..core.utils.event import EventListener
 from ..core.utils.http_helper import HTTPHelper
 from ..model.viewable import Viewable
 from ..protocol.protocol import Protocol
+from ..study.study import Study
 from ..user.activity import Activity
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User

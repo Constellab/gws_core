@@ -7,7 +7,7 @@ import json
 from typing import Union
 
 from ..core.classes.validator import Validator
-from ..core.exception import BadRequestException
+from ..core.exception.exceptions import BadRequestException
 from ..model.viewable import Viewable
 
 

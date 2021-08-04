@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 from peewee import BooleanField, ForeignKeyField, IntegerField
 
-from ..core.exception import BadRequestException
+from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
 from ..core.utils.logger import Logger
 from ..user.user import User

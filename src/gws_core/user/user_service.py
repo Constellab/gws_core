@@ -6,7 +6,7 @@
 from typing import Union
 
 from ..core.classes.paginator import Paginator
-from ..core.exception import BadRequestException
+from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
 from ..core.utils.settings import Settings
 from .activity import Activity

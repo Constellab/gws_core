@@ -10,8 +10,8 @@ import jwt
 from fastapi import Depends
 from fastapi.responses import JSONResponse
 
-from ..core.exception import (BadRequestException, GWSException,
-                              UnauthorizedException)
+from ..core.exception.exceptions import UnauthorizedException
+from ..core.exception.gws_exceptions import GWSException
 from ..core.utils.settings import Settings
 from ..user.user import User
 from ..user.user_dto import UserData

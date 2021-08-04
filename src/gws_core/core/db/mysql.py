@@ -6,10 +6,10 @@
 import os
 from typing import List
 
-from ..exception.exceptions.bad_request_exception import BadRequestException
+from ..exception.exceptions import BadRequestException
 from ..model.sys_proc import SysProc
 from ..utils.settings import Settings
-from ..utils.util import Util
+from ..utils.utils import Utils
 
 
 class MySQLBase:
@@ -120,9 +120,9 @@ class MySQLDump(MySQLBase):
     def build_command(self) -> List[str]:
         settings = Settings.retrieve()
         # slugify string for security
-        self.db_name = Util.slugify(self.db_name, snakefy=True)
+        self.db_name = Utils.slugify(self.db_name, snakefy=True)
         # slugify string for security
-        self.table_prefix = Util.slugify(self.table_prefix, snakefy=True)
+        self.table_prefix = Utils.slugify(self.table_prefix, snakefy=True)
         self.host = settings.get_maria_db_host(self.db_name)
 
         if not self.output_file:
@@ -154,9 +154,9 @@ class MySQLLoad(MySQLBase):
     def build_command(self) -> List[str]:
         settings = Settings.retrieve()
         # slugify string for security
-        self.db_name = Util.slugify(self.db_name, snakefy=True)
+        self.db_name = Utils.slugify(self.db_name, snakefy=True)
         # slugify string for security
-        self.table_prefix = Util.slugify(self.table_prefix, snakefy=True)
+        self.table_prefix = Utils.slugify(self.table_prefix, snakefy=True)
         self.host = settings.get_maria_db_host(self.db_name)
         if not self.input_file:
             self.input_file = os.path.join(self.input_dir, self.DUMP_FILENAME)

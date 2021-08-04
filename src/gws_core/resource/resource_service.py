@@ -6,12 +6,12 @@
 from typing import List, Union
 
 from ..core.classes.paginator import Paginator
-from ..core.exception import NotFoundException
+from ..core.exception.exceptions import NotFoundException
 from ..core.model.model import Model
-from ..core.model.typing import ResourceType
 from ..core.service.base_service import BaseService
 from ..experiment.experiment import Experiment
 from ..resource.resource import Resource
+from .resource_type import ResourceType
 
 
 class ResourceService(BaseService):

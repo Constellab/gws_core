@@ -10,6 +10,7 @@ from peewee import CharField, IntegerField
 
 from ..core.model.model import Model
 from ..model.viewable import Viewable
+from .resource_type import ResourceType
 
 
 class Resource(Viewable):
@@ -35,7 +36,7 @@ class Resource(Viewable):
 
     @classmethod
     def create_resource_type(cls):
-        from ..core.model.typing import ResourceType
+
         exist = ResourceType.select().where(
             ResourceType.model_type == cls.full_classname()).count()
         if not exist:

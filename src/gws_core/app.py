@@ -12,13 +12,13 @@ from fastapi.staticfiles import StaticFiles
 from ._core_app_importer import *
 from ._sphynx.docgen import docgen
 from .central.central_app import central_app
-from .core.model.study import Study
 from .core.utils.logger import Logger
 from .core.utils.settings import Settings
 from .core_app import core_app
 from .experiment.queue_service import QueueService
 from .lab.system import Monitor
 from .model.model_service import ModelService
+from .study.study import Study
 from .user.user_service import UserService
 
 app = FastAPI(docs_url=None)

@@ -7,7 +7,7 @@ import os
 import subprocess
 
 from ...core.model.sys_proc import SysProc
-from ...core.utils.util import Util
+from ...core.utils.utils import Utils
 from .base import BaseS3
 
 
@@ -16,7 +16,7 @@ class OVHS3(BaseS3):
     url = "https://storage.uk.cloud.ovh.net/v1/AUTH_a0286631d7b24afba3f3cdebed2992aa/public"
 
     def create(self, repo: str):
-        repo = Util.slugify(repo)
+        repo = Utils.slugify(repo)
         cmd = [
             "swift",
             "post",

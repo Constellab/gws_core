@@ -3,11 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from ...core.exception import BadRequestException
-from ...core.model.study import Study
+from ...core.exception.exceptions import BadRequestException
 from ...core.service.base_service import BaseService
-from ...experiment.queue import Job
 from ...experiment.queue_service import QueueService
+from ...study.study import Study
 from ...user.current_user_service import CurrentUserService
 from ..robot.robot import create_nested_protocol, create_protocol
 

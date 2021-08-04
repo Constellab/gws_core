@@ -6,10 +6,10 @@
 import os
 
 from peewee import Model as PeeweeModel
-from peewee import Proxy, SqliteDatabase
+from peewee import SqliteDatabase
 from playhouse.sqlite_ext import JSONField
 
-from .util import Util
+from .utils import Utils
 
 # __SETTINGS_DB_PROXY__ = Proxy()  # create a proxy for our db.
 
@@ -77,12 +77,12 @@ class Settings(PeeweeModel):
             settings = Settings()
             # secret_key
             # b64encode(token_bytes(32)).decode()
-            secret_key = Util.generate_random_chars(128)
+            secret_key = Utils.generate_random_chars(128)
             settings.set_data("secret_key", secret_key)
 
             # random token by default (security)
             # b64encode(token_bytes(32)).decode()
-            token = Util.generate_random_chars(128)
+            token = Utils.generate_random_chars(128)
             settings.set_data("token", token)
 
             # default uri

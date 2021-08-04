@@ -11,7 +11,9 @@ from typing import Dict, List, Type, Union
 from ..core.classes.expose import Expose
 from ..core.classes.paginator import Paginator
 from ..core.dto.rendering_dto import RenderingDTO
-from ..core.exception.exceptions import BadRequestException, NotFoundException
+from ..core.exception.exceptions.bad_request_exception import \
+    BadRequestException
+from ..core.exception.exceptions.not_found_exception import NotFoundException
 from ..core.model.model import Model
 from ..core.service.base_service import BaseService
 from ..core.utils.logger import Logger

@@ -6,12 +6,13 @@
 import json
 import time
 from datetime import datetime
+from typing import Union
 
 from fastapi.encoders import jsonable_encoder
 from peewee import CharField
 from starlette_context import context
 
-from ..core.exception import BadRequestException
+from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
 from ..core.utils.logger import Logger
 
@@ -39,6 +40,15 @@ class ProgressBar(Model):
             self._reset()
 
     # -- A --
+    @classmethod
+    def add_message_to_current(cls, message="Experiment under progress ...", show_info=False) -> None:
+        progress_bar: ProgressBar = cls.get_current_progress_bar()
+
+        if progress_bar is None:
+            Logger.progress(message=message)
+            return
+
+        progress_bar.add_message(message=message, show_info=show_info)
 
     def add_message(self, message="Experiment under progress ...", show_info=False):
         dtime = jsonable_encoder(datetime.now())
@@ -51,7 +61,7 @@ class ProgressBar(Model):
             self.data["messages"].pop(0)
 
         if show_info:
-            Logger.info(message)
+            Logger.progress(message)
 
     # -- C --
 
@@ -74,10 +84,7 @@ class ProgressBar(Model):
         This method allow accessing the current progress everywhere (i.e. at the application level)
         """
 
-        try:
-            return context.data["progress_bar"]
-        except:
-            return None
+        return context.data.get("progress_bar")
 
     def get_max_value(self) -> float:
         return self.data["max_value"]
@@ -209,7 +216,7 @@ class ProgressBar(Model):
         self.data["max_value"] = value
         self.save()
 
-    def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> (str, dict, ):
+    def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
         """
         Returns JSON string or dictionnary representation of the model.
 

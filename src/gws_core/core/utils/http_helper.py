@@ -14,5 +14,5 @@ class HTTPHelper:
             # -> if not exception -> return True
             context.data["is_http_context"] = True
             return True
-        except Exception as _:
+        except:
             return False

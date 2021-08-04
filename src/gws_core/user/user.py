@@ -8,9 +8,9 @@ from typing import Union
 
 from peewee import BooleanField, CharField
 
-from ..core.exception import BadRequestException
+from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
-from ..core.utils.util import Util
+from ..core.utils.utils import Utils
 
 # ####################################################################
 #
@@ -59,7 +59,7 @@ class User(Model):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.console_token:
-            self.console_token = Util.generate_random_chars(128)
+            self.console_token = Utils.generate_random_chars(128)
 
     # -- A --
 

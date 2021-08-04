@@ -8,7 +8,7 @@ import importlib
 import unittest
 import click
 
-from .core.exception import BadRequestException
+from .core.exception.exceptions import BadRequestException
 from .core.utils.logger import Logger
 from .core.utils.settings import Settings
 
@@ -61,7 +61,8 @@ def _run(ctx, uri="", token="", test="",
             test = "test*"
         loader = unittest.TestLoader()
         __cdir__ = os.path.dirname(os.path.abspath(__file__))
-        test_suite = loader.discover(os.path.join(__cdir__,"../../tests/"), pattern=test+".py")
+        test_suite = loader.discover(os.path.join(
+            __cdir__, "../../tests/"), pattern=test+".py")
         test_runner = unittest.TextTestRunner()
         test_runner.run(test_suite)
     elif docgen:

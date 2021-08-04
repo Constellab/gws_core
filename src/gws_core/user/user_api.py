@@ -8,7 +8,8 @@ from typing import Any, Coroutine, Optional
 from fastapi import Cookie, Depends, Header
 from starlette.responses import JSONResponse
 
-from ..core.exception import GWSException, UnauthorizedException
+from ..core.exception.exceptions import UnauthorizedException
+from ..core.exception.gws_exceptions import GWSException
 from ..core_app import core_app
 from ..user.auth_service import AuthService
 from .credentials_dto import CredentialsDTO

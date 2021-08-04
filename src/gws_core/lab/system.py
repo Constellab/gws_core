@@ -8,7 +8,6 @@ import threading
 import psutil
 from peewee import FloatField
 
-from ..core.exception import BadRequestException
 from ..core.model.model import Model
 
 TICK_INTERVAL_SECONDS = 60*5   # 5 min

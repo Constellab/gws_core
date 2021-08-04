@@ -11,7 +11,7 @@ import numpy as np
 import pandas
 from pandas import DataFrame
 
-from ...core.exception import BadRequestException
+from ...core.exception.exceptions import BadRequestException
 from ...core.model.model import Model
 from ...resource.resource import Resource
 
