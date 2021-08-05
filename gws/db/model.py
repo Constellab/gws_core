@@ -71,9 +71,12 @@ class JSONField(TextField):
     """
     Custom JSONField class
     """
-
+    __MAX_LENGTH = 65535        #mariadb/mysql max text length
     def db_value(self, value):
-        return json.dumps(value)
+        json_str = json.dumps(value)
+        if len(json_str) >= JSONField.__MAX_LENGTH:
+            raise BadRequestException(f"The JSONField data exceedeed {JSONField.__MAX_LENGTH} characters. Please reconsider the use of the kv_store for large data.")
+        return json_str
 
     def python_value(self, value):
         if value is not None:
