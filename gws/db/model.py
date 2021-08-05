@@ -8,7 +8,7 @@ import json
 import os
 import re
 import shutil
-from typing import List
+from typing import List, Dict
 import uuid
 from datetime import datetime
 
@@ -150,6 +150,16 @@ class Model(Base, PeeweeModel):
         self._kv_store = KVStore(self.get_kv_store_slot_path())
 
     # -- A --
+
+    def add_related_model(self, relation_name: str, related_model: 'Model'):
+        # ToDo : Add annotation name
+        if "__relations" not in self.data:
+            self.data["__relations"] = {}
+        self.data["__relations"][relation_name] = {
+            "uri": related_model.uri,
+            "type": related_model.full_classname(),
+            #"name": related_model.name
+        }
 
     def archive(self, tf: bool) -> bool:
         """
@@ -307,7 +317,8 @@ class Model(Base, PeeweeModel):
 
     # -- F --
 
-    def fetch_type_by_id(self, id: int) -> type:
+    @classmethod
+    def fetch_type_by_id(cls, id: int) -> type:
         """
         Fecth the stored model `type` by its `id` from the database and return the corresponding python-type.
         Use the proper table even if the table name has changed by inheritance.
@@ -319,7 +330,6 @@ class Model(Base, PeeweeModel):
         """
 
         try:
-            cls = type(self)
             model = cls.get(cls.id == int(id))
         except Exception as err:
             raise BadRequestException("The model is not found.") from err
@@ -332,6 +342,15 @@ class Model(Base, PeeweeModel):
         return model_t
 
     # -- G --
+
+    def get_related_model(self, relation_name: str) -> 'Model':
+        if ("__relations" not in self.data) or (relation_name not in self.data["__relations"]):
+            raise BadRequestException(f"The relation {relation_name} does not exists")
+        rel: dict = self.data["__relations"][relation_name]
+        from ..service.model_service import ModelService
+        t = ModelService.get_model_type(rel["type"])
+        return t.get(t.uri == rel["uri"])
+        
 
     @classmethod
     def get_table_name(cls) -> str:
@@ -595,9 +614,9 @@ class Model(Base, PeeweeModel):
         :rtype: `dict`
         """
 
-        if not "_user_data_" in self.data:
-            self.data["_user_data_"] = {}
-        return self.data["_user_data_"]
+        if not "__user_data" in self.data:
+            self.data["__user_data"] = {}
+        return self.data["__user_data"]
 
     # -- V --
 
