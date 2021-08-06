@@ -64,7 +64,7 @@ class App:
         """
 
         Monitor.init(daemon=True)
-        QueueService.init(daemon=True, verbose=False)
+        QueueService.init(daemon=True)
 
     @classmethod
     def deinit(cls):

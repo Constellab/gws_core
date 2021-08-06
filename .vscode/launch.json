@@ -13,6 +13,15 @@
             "program": "${workspaceFolder}/manage.py",
             "console": "integratedTerminal"
         },
+        // configuration to start the gws
+        {
+            "args": ["--runserver", "--log_level=DEBUG",  "main"],
+            "name": "Run GWS DEBUG log",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/manage.py",
+            "console": "integratedTerminal"
+        },
         // config to run test on GWS
         {
             "args": ["--test", "all"],

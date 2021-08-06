@@ -6,7 +6,6 @@
 import importlib
 import os
 import unittest
-from logging import log
 
 import click
 
@@ -67,7 +66,7 @@ def _run(ctx, uri="", token="", test="",
         test_runner = unittest.TextTestRunner()
         test_runner.run(test_suite)
     elif docgen:
-        from ._sphynx.docgen import docgen
+
         brick_dir = settings.get_cwd()
         docgen(settings.name, brick_dir, settings, force=force)
     else:

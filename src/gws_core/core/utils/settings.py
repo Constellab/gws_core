@@ -315,7 +315,7 @@ class Settings(PeeweeModel):
     # -- R --
 
     @classmethod
-    def retrieve(cls):
+    def retrieve(cls) -> 'Settings':
         try:
             return Settings.get_by_id(1)
         except Exception as err:

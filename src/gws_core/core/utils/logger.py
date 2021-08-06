@@ -46,9 +46,9 @@ class Logger:
         if Logger._logger is not None:
             raise BadRequestException("The logger already exists")
 
-        if level not in ["ERROR", "INFO", "DEUG"]:
+        if level not in ["ERROR", "INFO", "DEBUG"]:
             raise BadRequestException(
-                f"The logging level {level} is incorrect, please use one of the following [ERROR, INFO, DEBUG]")
+                f"The logging level '{level}' is incorrect, please use one of the following [ERROR, INFO, DEBUG]")
 
         # Create the logger
         Logger._logger = logging.getLogger(LOGGER_NAME)
@@ -83,7 +83,7 @@ class Logger:
             Logger.info("Sub process started")
         else:
             Logger.info(
-                f"START APPLICATION : {settings.name} version {settings.version}")
+                f"START APPLICATION : {settings.name} version {settings.version}, log level: {level}")
 
     # -- E --
 

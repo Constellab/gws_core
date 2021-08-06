@@ -36,8 +36,7 @@ class TestExperiment(unittest.TestCase):
         c = Experiment.select().count()
         self.assertEqual(c, 1)
 
-        QueueService.init(tick_interval=3, verbose=True,
-                          daemon=False)  # tick each second
+        QueueService.init(tick_interval=3, daemon=False)  # tick each 3 second
 
         def _run() -> bool:
             try:

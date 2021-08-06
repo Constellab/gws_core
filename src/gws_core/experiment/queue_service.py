@@ -19,10 +19,10 @@ class QueueService(BaseService):
     is_init = False
 
     @classmethod
-    def init(cls, tick_interval: int = TICK_INTERVAL_SECONDS, verbose=False, daemon=False):
+    def init(cls, tick_interval: int = TICK_INTERVAL_SECONDS, daemon=False):
         queue: Queue = Queue.init()
         if not cls.is_init or not queue.is_active:
-            cls._queue_tick(tick_interval, verbose, daemon)
+            cls._queue_tick(tick_interval, daemon)
         cls.is_init = True
 
     @classmethod
@@ -30,15 +30,15 @@ class QueueService(BaseService):
         Queue.deinit()
 
     @classmethod
-    def _queue_tick(cls, tick_interval, verbose, daemon):
+    def _queue_tick(cls, tick_interval, daemon):
         queue = Queue.get_instance()
         if not queue.is_active:
             return
         try:
-            cls._tick(verbose)
+            cls._tick()
         finally:
             thread = threading.Timer(tick_interval, cls._queue_tick, [
-                tick_interval, verbose, daemon])
+                tick_interval, daemon])
             thread.daemon = daemon
             thread.start()
 
@@ -54,35 +54,33 @@ class QueueService(BaseService):
                 cls.init()
 
     @classmethod
-    def _tick(cls, verbose=False):
+    def _tick(cls):
         """Method called a each tick to run experiment from the queue
 
         :param verbose: [description], defaults to False
         :type verbose: bool, optional
         """
         if cls.tick_is_running:
-            if verbose:
-                Logger.info(
-                    "Skipping queue tick, because previous one is running")
+            Logger.debug(
+                "Skipping queue tick, because previous one is running")
             return
 
         cls.tick_is_running = True
 
         try:
-            cls._check_and_run_queue(verbose=verbose)
+            cls._check_and_run_queue()
         finally:
             cls.tick_is_running = False
 
     @classmethod
-    def _check_and_run_queue(cls, verbose):
+    def _check_and_run_queue(cls):
         """Get the first experiment from the queue and run it if possible
 
         :param verbose: [description]
         :type verbose: [type]
         :raises BadRequestException: [description]
         """
-        if verbose:
-            Logger.info("Checking experiment queue ...")
+        Logger.debug("Checking experiment queue ...")
 
         job = Queue.next()
         if not job:
@@ -91,19 +89,13 @@ class QueueService(BaseService):
         # tester que l'experiment est bien à jour
         experiment: Experiment = job.experiment
 
-        if verbose:
-            Logger.info(
-                f"Experiment {experiment.uri}, is_running = {experiment.is_running}")
+        Logger.debug(
+            f"Experiment {experiment.uri}, is_running = {experiment.is_running}")
 
         if Experiment.count_of_running_experiments():
             # -> busy: we will test later!
-            if verbose:
-                Logger.info("The lab is busy! Retry later")
+            Logger.debug("The lab is busy! Retry later")
             return
-
-        if verbose:
-            Logger.info(
-                f"Start experiment {experiment.uri}, user={job.user.uri}")
 
         try:
             ExperimentService.run_through_cli(

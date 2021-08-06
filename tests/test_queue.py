@@ -68,13 +68,13 @@ class TestQueue(unittest.TestCase):
         self.assertEqual(Queue.length(), 2)
 
         # init the ticking, tick each second
-        QueueService.init(tick_interval=1, verbose=True)
+        QueueService.init(tick_interval=3)
         wait_count = 0
         # Wait until the queue is clear and there is not experiment that is running
         while Queue.length() > 0 or ExperimentService.count_of_running_experiments() > 0:
             print("Waiting 3 secs for cli experiments to finish ...")
-            time.sleep(3)
-            if wait_count >= 15:
+            time.sleep(5)
+            if wait_count >= 10:
                 raise Exception("The experiment queue is not empty")
             wait_count += 1
 
