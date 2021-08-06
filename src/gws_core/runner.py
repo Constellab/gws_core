@@ -6,6 +6,7 @@
 import importlib
 import os
 import unittest
+from copy import Error
 
 import click
 
@@ -64,6 +65,10 @@ def _run(ctx, uri="", token="", test="",
         test_suite = loader.discover(os.path.join(
             __cdir__, "../../tests/"), pattern=test+".py")
         test_runner = unittest.TextTestRunner()
+
+        if test_suite.countTestCases() == 0:
+            raise Error(f"No test file with name {test} found")
+
         test_runner.run(test_suite)
     elif docgen:
 
