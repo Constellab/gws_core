@@ -16,6 +16,7 @@ from datetime import datetime
 from typing import Type, Union
 
 from fastapi.encoders import jsonable_encoder
+from gws_core.core.utils import settings
 from peewee import (AutoField, BigAutoField, BlobField, BooleanField,
                     CharField, DateField, DateTimeField, Field,
                     ForeignKeyField, ManyToManyField)
@@ -37,10 +38,15 @@ from .base import Base
 # Format table name
 #
 # ####################################################################
+is_test: bool = Settings.retrieve().is_test
 
 
 def format_table_name(model: 'Model'):
-    return model.get_table_name().lower()
+    if is_test:
+        # when test mode all the tables are prefix with 'test_'
+        return "test_" + model._table_name.lower()
+
+    return model._table_name.lower()
 
 
 class Model(Base, PeeweeModel):
@@ -229,7 +235,7 @@ class Model(Base, PeeweeModel):
         super().create_table(*args, **kwargs)
         if cls.get_db_manager().is_mysql_engine():
             cls.get_db_manager().db.execute_sql(
-                f"CREATE FULLTEXT INDEX data ON {cls._table_name}(data)")
+                f"CREATE FULLTEXT INDEX data ON {cls.get_table_name()}(data)")
 
     # -- D --
 
@@ -341,7 +347,7 @@ class Model(Base, PeeweeModel):
         :rtype: `str`
         """
 
-        return cls._table_name
+        return format_table_name(cls)
 
     @classmethod
     def get_db_manager(cls) -> DbManager:
@@ -419,7 +425,7 @@ class Model(Base, PeeweeModel):
         :rtype: str
         """
 
-        return os.path.join(cls._table_name)
+        return os.path.join(cls.get_table_name())
 
     def get_kv_store_slot_path(self) -> str:
         """
@@ -654,7 +660,6 @@ class Model(Base, PeeweeModel):
 
         return self.hash == self.__compute_hash()
 
-# Todo check
     class Meta:
         database = DbManager.db
         table_function = format_table_name
