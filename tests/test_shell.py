@@ -6,7 +6,7 @@
 import asyncio
 import unittest
 
-from gws_core import GTest, Resource, Shell
+from gws_core import Experiment, ExperimentService, GTest, Resource, Shell
 
 
 class Echo(Shell):
@@ -44,11 +44,15 @@ class TestShell(unittest.TestCase):
 
         proc = Echo()
         proc.set_param("name", "Jhon Doe")
-        e = proc.create_experiment(study=GTest.study, user=GTest.user)
+        experiment: Experiment = proc.create_experiment(
+            study=GTest.study, user=GTest.user)
 
         def _on_end(*args, **kwargs):
             res = proc.output['stdout']
             self.assertEqual(res.data["out"], "Jhon Doe")
 
-        e.on_end(_on_end)
-        asyncio.run(e.run(user=GTest.user))
+        # todo check
+        experiment.on_end(_on_end)
+        # use the _run_experiment to have the same instance and so get the end event
+        asyncio.run(ExperimentService._run_experiment(
+            experiment=experiment, user=GTest.user))

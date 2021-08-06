@@ -9,7 +9,8 @@ import unittest
 
 import pandas
 from gws_core import (CSVDumper, CSVExporter, CSVImporter, CSVLoader, CSVTable,
-                      GTest, Protocol, Settings, Study)
+                      Experiment, ExperimentService, GTest, Protocol, Settings,
+                      Study)
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
@@ -88,7 +89,8 @@ class TestCSV(unittest.TestCase):
         dumper.set_param("index", False)
         exporter.set_param("index", False)
 
-        e = proto.create_experiment(study=GTest.study, user=GTest.user)
+        experiment: Experiment = proto.create_experiment(
+            study=GTest.study, user=GTest.user)
 
         def _on_end(*args, **kwargs):
             print("Test CSV import/export")
@@ -116,5 +118,8 @@ class TestCSV(unittest.TestCase):
 
         self.assertFalse(os.path.exists(o_file_path))
 
-        e.on_end(_on_end)
-        asyncio.run(e.run(user=GTest.user))
+        # todo check
+        experiment.on_end(_on_end)
+        # use the _run_experiment to have the same instance and so get the end event
+        asyncio.run(ExperimentService._run_experiment(
+            experiment=experiment, user=GTest.user))

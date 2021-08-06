@@ -5,6 +5,7 @@
 
 import json
 from enum import Enum
+from math import pi
 from typing import List, Union
 
 from peewee import BooleanField, FloatField, ForeignKeyField
@@ -56,6 +57,7 @@ class Experiment(Viewable):
                        default=ExperimentStatus.DRAFT)
     is_validated = BooleanField(default=False, index=True)
 
+    # todo move the event listener into a service because it depends on the experiment instance
     _event_listener: EventListener = None
     _table_name = 'gws_experiment'
 
@@ -238,7 +240,7 @@ class Experiment(Viewable):
         :rtype: `bool`
         """
 
-        if self.is_validated or self.status == ExperimentStatus.RUNNING:
+        if self.is_validated or self.is_running:
             return False
 
         if self.status == ExperimentStatus.SUCCESS or self.status == ExperimentStatus.ERROR:
@@ -266,6 +268,7 @@ class Experiment(Viewable):
         :type pid: int
         """
         self.status = ExperimentStatus.WAITING_FOR_CLI_PROCESS
+        self.data["pid"] = pid
         self.save()
 
     async def mark_as_started(self):

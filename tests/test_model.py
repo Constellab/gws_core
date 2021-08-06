@@ -6,7 +6,7 @@
 
 import unittest
 
-from gws_core import GTest, Model, ModelService
+from gws_core import CSVImporter, GTest, JSONLoader, Model, ModelService
 from peewee import CharField
 
 ############################################################################################
@@ -36,11 +36,11 @@ class TestModel(unittest.TestCase):
 
     def test_model(self):
         GTest.print("Model")
-        p1 = Person(name='John Smith', data={})
+        p1: Person = Person(name='John Smith', data={})
         p1.save()
-        p2 = Person(name='Robert Vincent', data={})
+        p2: Person = Person(name='Robert Vincent', data={})
         p2.save()
-        john = Person.get(Person.name == 'John Smith')
+        john: Person = Person.get(Person.name == 'John Smith')
         john.set_data({
             'firstname': 'John',
             'sirname': 'Smith',
@@ -55,7 +55,7 @@ class TestModel(unittest.TestCase):
         john.save()
         self.assertEqual(john.data['firstname'], 'Alan')
 
-        john2 = Person.get_by_id(john.id)
+        john2: Person = Person.get_by_id(john.id)
         self.assertEqual(john2.data, john.data)
 
         john.clear_data()
@@ -75,8 +75,7 @@ class TestModel(unittest.TestCase):
     def test_model_registrering(self):
         GTest.print("Model Registering")
         self.assertTrue(len(ModelService.get_model_types()) != 0)
-        from gws_core.impl.json.json_processus import JSONLoader
-        from gws_core.resource.csv import CSVImporter
+
         self.assertTrue(JSONLoader.full_classname()
                         in ModelService.get_model_types())
         self.assertTrue(CSVImporter.full_classname()

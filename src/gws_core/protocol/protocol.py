@@ -215,24 +215,23 @@ class Protocol(Process):
         if not isinstance(graph.get("nodes"), dict) or not graph["nodes"]:
             return
 
-        if rebuild:
-            if self.is_draft:
-                deleted_keys = []
-                for k in self._processes:
-                    proc = self._processes[k]
-                    is_removed = False
-                    if k in graph["nodes"]:
-                        if proc.type != graph["nodes"][k].get("type"):
-                            is_removed = True
-                    else:
+        if rebuild and self.is_draft:
+            deleted_keys = []
+            for k in self._processes:
+                proc = self._processes[k]
+                is_removed = False
+                if k in graph["nodes"]:
+                    if proc.type != graph["nodes"][k].get("type"):
                         is_removed = True
-                    if is_removed:
-                        proc.delete_instance()
-                        deleted_keys.append(k)
-                    # disconnect the port to prevent connection errors later
-                    proc.disconnect()
-                for k in deleted_keys:
-                    del self._processes[k]
+                else:
+                    is_removed = True
+                if is_removed:
+                    proc.delete_instance()
+                    deleted_keys.append(k)
+                # disconnect the port to prevent connection errors later
+                proc.disconnect()
+            for k in deleted_keys:
+                del self._processes[k]
 
         # will be rebuilt
         self._connectors = []
@@ -521,7 +520,8 @@ class Protocol(Process):
     def is_draft(self) -> bool:
         if not self.experiment:
             return True
-        return self.experiment.is_draft
+        from ..experiment.experiment import ExperimentStatus
+        return self.experiment.status == ExperimentStatus.DRAFT
 
     def is_child(self, process: Process) -> bool:
         """

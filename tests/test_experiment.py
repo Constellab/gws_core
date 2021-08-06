@@ -8,8 +8,7 @@ import time
 import unittest
 
 from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
-                      Process, Queue, QueueService, Resource, RobotService,
-                      Settings)
+                      Process, QueueService, Resource, RobotService, Settings)
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
@@ -25,8 +24,8 @@ class TestExperiment(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        QueueService.deinit()
         GTest.drop_tables()
-        pass
 
     def test_run(self):
         GTest.print("Run Experiment")
@@ -70,9 +69,12 @@ class TestExperiment(unittest.TestCase):
             self.assertEqual(len(experiment2.processes), 15)
             self.assertEqual(experiment2.status, ExperimentStatus.RUNNING)
 
+        # todo check
         experiment2.on_end(_check_exp1)
+        # use the _run_experiment to have the same instance and so get the end event
         print("Run experiment_2 ...")
-        asyncio.run(experiment2.run(user=GTest.user))
+        asyncio.run(ExperimentService._run_experiment(
+            experiment=experiment2, user=GTest.user))
 
         Q1 = experiment1.resources
         Q2 = experiment2.resources
@@ -104,9 +106,9 @@ class TestExperiment(unittest.TestCase):
         print("Run experiment_3 through cli ...")
         ExperimentService.run_through_cli(
             experiment=experiment3, user=GTest.user)
+        self.assertEqual(experiment3.status,
+                         ExperimentStatus.WAITING_FOR_CLI_PROCESS)
         self.assertTrue(experiment3.pid > 0)
-        self.assertEqual(experiment3.status, False)
-        self.assertEqual(experiment3.is_running, False)
         print(f"Experiment pid = {experiment3.pid}", )
 
         waiting_count = 0
@@ -117,6 +119,7 @@ class TestExperiment(unittest.TestCase):
             time.sleep(3)
             if waiting_count == 10:
                 raise Exception("The experiment is not finished")
+            experiment3.refresh()  # reload from DB
             waiting_count += 1
 
         self.assertEqual(Experiment.count_of_running_experiments(), 0)
@@ -151,67 +154,3 @@ class TestExperiment(unittest.TestCase):
 
         print("Archive experiment again...")
         _test_archive(True)
-
-    def test_service(self):
-        GTest.drop_tables()
-        GTest.create_tables()
-        GTest.init()
-
-        GTest.print("ExperimentService")
-        proto = RobotService.create_nested_protocol()
-        experiment = Experiment(
-            protocol=proto, study=GTest.study, user=GTest.user)
-        experiment.save()
-        c = Experiment.select().count()
-        self.assertEqual(c, 1)
-
-        QueueService.init(tick_interval=3, verbose=True,
-                          daemon=False)  # tick each second
-
-        def _run() -> bool:
-            try:
-                asyncio.run(ExperimentService.start_experiment(experiment.uri))
-            except:
-                return False
-
-            self.assertEqual(Queue.length(), 1)
-            n = 0
-            while Queue.length():
-                print("Waiting 3 secs for cli experiment to finish ...")
-                time.sleep(3)
-                if n == 10:
-                    raise Exception("The experiment queue is not empty")
-                n += 1
-
-            self.assertEqual(Experiment.count_of_running_experiments(), 0)
-            experiment1: Experiment = Experiment.get(
-                Experiment.id == experiment.id)
-            self.assertEqual(experiment1.status, ExperimentStatus.SUCCESS)
-            self.assertEqual(experiment1.pid, 0)
-            print("Done!")
-            return True
-
-        self.assertEqual(Experiment.select().count(), 1)
-
-        print("")
-        print("Run the experiment ...")
-        self.assertTrue(_run())
-        self.assertEqual(Experiment.select().count(), 1)
-
-        print("")
-        print("Re-Run the same experiment ...")
-        time.sleep(1)
-        self.assertTrue(experiment.reset())
-        self.assertTrue(_run())
-        self.assertEqual(Experiment.select().count(), 1)
-
-        print("")
-        print("Re-Run the same experiment after its validation...")
-        time.sleep(1)
-        experiment2: Experiment = Experiment.get(
-            Experiment.id == experiment.id)
-        experiment2.validate(user=GTest.user)
-        self.assertFalse(_run())
-        self.assertEqual(Experiment.select().count(), 1)
-        QueueService.deinit()
-        time.sleep(3)

@@ -46,7 +46,7 @@
                 },
                 "is_archived": false,
                 "save_datetime": "",
-                "type": "gws_core.progress_bar.progress_bar.Config",
+                "type": "gws_core.progress_bar.progress_bar.ProgressBar",
                 "uri": "",
                 "process": {
                     "uri": "",
@@ -116,7 +116,7 @@
                 },
                 "is_archived": false,
                 "save_datetime": "",
-                "type": "gws_core.progress_bar.progress_bar.Config",
+                "type": "gws_core.progress_bar.progress_bar.ProgressBar",
                 "uri": "",
                 "process": {
                     "uri": "",
@@ -214,7 +214,7 @@
                                 },
                                 "is_archived": false,
                                 "save_datetime": "2021-07-11T18:34:28.428022",
-                                "type": "gws_core.progress_bar.progress_bar.Config",
+                                "type": "gws_core.progress_bar.progress_bar.ProgressBar",
                                 "uri": "c1e4e36c-d558-4f45-94e1-d37da9fe1574",
                                 "process": {
                                     "uri": "d98c54ed-87ab-4330-b2b7-a2574f5114d6",
@@ -294,7 +294,7 @@
                                 },
                                 "is_archived": false,
                                 "save_datetime": "2021-07-11T18:34:28.452281",
-                                "type": "gws_core.progress_bar.progress_bar.Config",
+                                "type": "gws_core.progress_bar.progress_bar.ProgressBar",
                                 "uri": "bc5f0c57-c84e-48af-8b84-275ec82bbe43",
                                 "process": {
                                     "uri": "bb86a3d1-2148-4d14-986f-1c460509efac",
@@ -386,7 +386,7 @@
                                 },
                                 "is_archived": false,
                                 "save_datetime": "2021-07-11T18:34:28.479382",
-                                "type": "gws_core.progress_bar.progress_bar.Config",
+                                "type": "gws_core.progress_bar.progress_bar.ProgressBar",
                                 "uri": "b9128271-59ff-478b-b8c2-eebe254198db",
                                 "process": {
                                     "uri": "346c78b9-9d91-483d-a296-5f97d0680741",
@@ -478,7 +478,7 @@
                                 },
                                 "is_archived": false,
                                 "save_datetime": "2021-07-11T18:34:28.515354",
-                                "type": "gws_core.progress_bar.progress_bar.Config",
+                                "type": "gws_core.progress_bar.progress_bar.ProgressBar",
                                 "uri": "f28a8c47-8815-4a6a-963c-11ad6942448a",
                                 "process": {
                                     "uri": "1e266eab-205c-4c6a-a22f-96b9e5bfb4b9",
@@ -558,7 +558,7 @@
                                 },
                                 "is_archived": false,
                                 "save_datetime": "2021-07-11T18:34:28.565594",
-                                "type": "gws_core.progress_bar.progress_bar.Config",
+                                "type": "gws_core.progress_bar.progress_bar.ProgressBar",
                                 "uri": "fe31de77-d24d-4f9c-94b7-b4fca4256ad6",
                                 "process": {
                                     "uri": "f31ae988-22be-454f-af76-608ab1e9a9a0",
@@ -726,7 +726,7 @@
                 },
                 "is_archived": false,
                 "save_datetime": "",
-                "type": "gws_core.progress_bar.progress_bar.Config",
+                "type": "gws_core.progress_bar.progress_bar.ProgressBar",
                 "uri": "",
                 "process": {
                     "uri": "",

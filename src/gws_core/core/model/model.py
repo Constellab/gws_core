@@ -487,7 +487,7 @@ class Model(Base, PeeweeModel):
 
     # -- R --
 
-    def refresh(self):
+    def refresh(self) -> None:
         """
         Refresh a model instance by re-requesting the db
         """

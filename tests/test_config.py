@@ -14,6 +14,7 @@ class TestConfig(unittest.TestCase):
     def setUpClass(cls):
         GTest.drop_tables()
         GTest.create_tables()
+        GTest.init()
 
     @classmethod
     def tearDownClass(cls):
@@ -25,15 +26,15 @@ class TestConfig(unittest.TestCase):
             'moving_step': {"type": float, "default": 0.1}
         }
 
-        c = Config(specs=specs)
-        self.assertEqual(c.specs, specs)
-        self.assertEqual(c.params, {'moving_step': 0.1})
+        config: Config = Config(specs=specs)
+        self.assertEqual(config.specs, specs)
+        self.assertEqual(config.params, {'moving_step': 0.1})
 
-        c.set_param('moving_step', 4.5)
-        self.assertEqual(c.params, {'moving_step': 4.5})
-        self.assertEqual(c.get_param('moving_step'), 4.5)
+        config.set_param('moving_step', 4.5)
+        self.assertEqual(config.params, {'moving_step': 4.5})
+        self.assertEqual(config.get_param('moving_step'), 4.5)
 
-        self.assertEquals(c.data, {
+        self.assertEquals(config.data, {
             "specs": {
                 'moving_step': {"type": "float", "default": 0.1}
             },
@@ -42,15 +43,15 @@ class TestConfig(unittest.TestCase):
             }
         })
 
-        c.save()
-        c2 = Config.get_by_id(c.id)
-        self.assertEqual(c2.data, c.data)
+        config.save()
+        config2: Config = Config.get_by_id(config.id)
+        self.assertEqual(config2.data, config.data)
 
     def test_process_config(self):
-        m = RobotMove()
-        self.assertEqual(m.get_param("moving_step"), 0.1)
-        m.set_param("moving_step", 0.3)
-        m.save()
+        robotMove: RobotMove = RobotMove()
+        self.assertEqual(robotMove.get_param("moving_step"), 0.1)
+        robotMove.set_param("moving_step", 0.3)
+        robotMove.save()
 
-        c = Config.get_by_id(m.config.id)
-        self.assertEqual(c.get_param("moving_step"), 0.3)
+        config: Config = Config.get_by_id(robotMove.config.id)
+        self.assertEqual(config.get_param("moving_step"), 0.3)

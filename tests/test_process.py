@@ -6,8 +6,8 @@
 import asyncio
 import unittest
 
-from gws_core import (GTest, Protocol, Robot, RobotCreate, RobotEat, RobotMove,
-                      RobotWait)
+from gws_core import (Experiment, ExperimentService, GTest, Protocol, Robot,
+                      RobotCreate, RobotEat, RobotMove, RobotWait)
 
 
 class TestProcess(unittest.TestCase):
@@ -74,7 +74,7 @@ class TestProcess(unittest.TestCase):
 
         p2.set_param('food_weight', '5.6')
 
-        e = proto.create_experiment(user=GTest.user, study=GTest.study)
+        experiment: Experiment = proto.create_experiment(user=GTest.user, study=GTest.study)
 
         def _on_end(*args, **kwargs):
             elon = p0.output['robot']
@@ -112,12 +112,14 @@ class TestProcess(unittest.TestCase):
             print(p0.progress_bar.data)
 
             print(" \n------ Experiment --------")
-            print(e.to_json())
+            print(experiment.to_json())
 
-        self.assertEqual(e.created_by, GTest.user)
-        self.assertEqual(e.study, GTest.study)
+        self.assertEqual(experiment.created_by, GTest.user)
+        self.assertEqual(experiment.study, GTest.study)
 
-        e.on_end(_on_end)
-        asyncio.run(e.run(user=GTest.user))
+        # todo check
+        experiment.on_end(_on_end)
+        # use the _run_experiment to have the same instance and so get the end event
+        asyncio.run(ExperimentService._run_experiment(experiment=experiment, user=GTest.user))
 
         # print(proto.to_json())

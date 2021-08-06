@@ -5,6 +5,7 @@
 
 import os
 import subprocess
+import traceback
 from typing import Union
 
 from peewee import ModelSelect
@@ -337,6 +338,7 @@ class ExperimentService(BaseService):
             # Mark that a process is created for the experiment, but it is not started yet
             experiment.mark_as_waiting_for_cli_process(sproc.pid)
         except Exception as err:
+            traceback.print_exc()
             experiment.mark_as_error(f"An error occured. Exception: {err}")
 
     @classmethod

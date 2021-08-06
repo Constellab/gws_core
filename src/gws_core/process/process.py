@@ -435,9 +435,6 @@ class Process(Viewable):
 
         if self.is_running:
             return False
-        if self.experiment:
-            if self.experiment.is_validated or self.experiment._is_running:
-                return False
         self.progress_bar._reset()
         self._reset_io()
         return self.save()

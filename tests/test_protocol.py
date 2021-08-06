@@ -8,9 +8,9 @@ import json
 import os
 import unittest
 
-from gws_core import (Experiment, ExperimentStatus, GTest, Protocol,
-                      RobotCreate, RobotEat, RobotMove, RobotWait, Settings,
-                      Study)
+from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
+                      Protocol, RobotCreate, RobotEat, RobotMove, RobotWait,
+                      Settings, Study)
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
@@ -77,9 +77,13 @@ class TestProtocol(unittest.TestCase):
             self.assertEqual(len(experiment.processes), 7)
             self.assertEqual(experiment.status, ExperimentStatus.RUNNING)
 
-        experiment.on_end(_check_exp)
         experiment.save()
-        asyncio.run(experiment.run(user=GTest.user))
+
+        # todo check
+        experiment.on_end(_check_exp)
+        # use the _run_experiment to have the same instance and so get the end event
+        asyncio.run(ExperimentService._run_experiment(
+            experiment=experiment, user=GTest.user))
 
     def test_advanced_protocol(self):
         GTest.print("Advanced protocol")
@@ -157,7 +161,8 @@ class TestProtocol(unittest.TestCase):
             s2 = json.loads(mini_proto.dumps(bare=True))
             self.assertEqual(s1, s2)
 
-        e = super_proto.create_experiment(study=GTest.study, user=GTest.user)
+        experiment: Experiment = super_proto.create_experiment(
+            study=GTest.study, user=GTest.user)
 
         def _on_end(*args, **kwargs):
             mini_proto_reloaded = Protocol.get_by_id(mini_proto.id)
@@ -166,11 +171,14 @@ class TestProtocol(unittest.TestCase):
             Q = Protocol.select()
             self.assertEqual(len(Q), count+2)
 
-        e.on_end(_on_end)
+        # todo check
+        experiment.on_end(_on_end)
+        # use the _run_experiment to have the same instance and so get the end event
         Q = Protocol.select()
         self.assertEqual(Protocol.select().count(), count+2)
 
-        asyncio.run(e.run(user=GTest.user))
+        asyncio.run(ExperimentService._run_experiment(
+            experiment=experiment, user=GTest.user))
 
     def test_graph_load(self):
         GTest.print("Load protocol graph")
@@ -209,9 +217,12 @@ class TestProtocol(unittest.TestCase):
             mini_proto2 = Protocol.from_graph(saved_mini_proto.graph)
             self.assertTrue(mini_proto.graph, mini_proto2.graph)
 
-        e = super_proto.create_experiment(study=GTest.study, user=GTest.user)
-        e.on_end(_on_end)
-        asyncio.run(e.run(user=GTest.user))
+        experiment: Experiment = super_proto.create_experiment(study=GTest.study, user=GTest.user)
+        # todo check
+        experiment.on_end(_on_end)
+        # use the _run_experiment to have the same instance and so get the end event
+        asyncio.run(ExperimentService._run_experiment(
+            experiment=experiment, user=GTest.user))
 
     def test_protocol_update(self):
         GTest.print("Update protocol")

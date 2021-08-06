@@ -74,7 +74,7 @@ class TestQueue(unittest.TestCase):
         while Queue.length() > 0 or ExperimentService.count_of_running_experiments() > 0:
             print("Waiting 3 secs for cli experiments to finish ...")
             time.sleep(3)
-            if wait_count >= 10:
+            if wait_count >= 15:
                 raise Exception("The experiment queue is not empty")
             wait_count += 1
 
