@@ -9,6 +9,7 @@ import unittest
 
 from gws_core import (Experiment, ExperimentService, GTest, Process, Queue,
                       Resource, RobotService, Settings)
+from gws_core.experiment.queue_service import QueueService
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
@@ -34,7 +35,7 @@ class TestExperiment(unittest.TestCase):
         # Create experiment 1
         # -------------------------------
         print("Create experiment 1")
-        proto1 = RobotService.create_nested_protol()
+        proto1 = RobotService.create_nested_protocol()
         experiment1 = Experiment(
             protocol=proto1, study=GTest.study, user=GTest.user)
         proto_title = proto1.get_title()
@@ -96,7 +97,7 @@ class TestExperiment(unittest.TestCase):
         # experiment 3
         # -------------------------------
         print("Create experiment_3")
-        proto3 = RobotService.create_nested_protol()
+        proto3 = RobotService.create_nested_protocol()
         e3 = Experiment(protocol=proto3, study=GTest.study, user=GTest.user)
         e3.save()
 
@@ -156,14 +157,14 @@ class TestExperiment(unittest.TestCase):
         GTest.init()
 
         GTest.print("ExperimentService")
-        proto = RobotService.create_nested_protol()
+        proto = RobotService.create_nested_protocol()
         e = Experiment(protocol=proto, study=GTest.study, user=GTest.user)
         e.save()
         c = Experiment.select().count()
         self.assertEqual(c, 1)
 
-        Queue.init(tick_interval=3, verbose=True,
-                   daemon=False)  # tick each second
+        QueueService.init(tick_interval=3, verbose=True,
+                          daemon=False)  # tick each second
 
         def _run() -> bool:
             try:
@@ -209,5 +210,5 @@ class TestExperiment(unittest.TestCase):
         e.validate(user=GTest.user)
         self.assertFalse(_run())
         self.assertEqual(Experiment.select().count(), 1)
-        Queue.deinit()
+        QueueService.deinit()
         time.sleep(3)

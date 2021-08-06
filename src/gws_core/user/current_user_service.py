@@ -1,6 +1,7 @@
 import re
 from typing import Union
 
+from gws_core.core.utils.http_helper import HTTPHelper
 from starlette_context import context
 
 from ..core.exception.exceptions import (BadRequestException,
@@ -34,8 +35,7 @@ class CurrentUserService:
         """
         Get the user in the current session, return none if the user is not authenticated
         """
-
-        if "user" in context.data:
+        if HTTPHelper.is_http_context() and "user" in context.data:
             return context.data["user"]
 
         if "user" in cls._console_data:

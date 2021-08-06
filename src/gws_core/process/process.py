@@ -198,7 +198,7 @@ class Process(Viewable):
         :param study: The study in which the experiment is realized
         :type study: `gws.study.Study`
         :param study: The configuration of protocol
-        :type study: `gws.config.Config`
+        :type study: `gws_core.config.config.Config`
         :return: The experiment
         :rtype: `gws.experiment.Experiment`
         """

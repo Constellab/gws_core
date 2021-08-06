@@ -6,12 +6,18 @@
 import logging
 import traceback
 from datetime import date, datetime
+from logging import Logger as PythonLogger
+from logging.handlers import TimedRotatingFileHandler
 from os import makedirs, path
+from typing import Literal
+
+from gws_core.core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 
 from .settings import Settings
 
 LOGGER_NAME = "gws"
-LOGGER_FILE_NAME = str(date.today()) + ".log"
+LOGGER_FILE_NAME = "log"
 RESET_COLOR = "\x1b[0m"
 
 
@@ -22,98 +28,112 @@ class Logger:
     It logs into the console and in the log file
     """
 
-    _logger = None
-    _is_debug = None
-    _file_path = None
+    _logger: PythonLogger = None
+    _file_path: str = None
+    _is_experiment_process: bool = None
 
-    def __init__(self, is_new_session=False, is_debug: bool = None):
-        is_debug = True
-        if Logger._logger is None:
-            if not is_debug is None:
-                Logger._is_debug = is_debug
-            # Create the logger
-            Logger._logger = logging.getLogger(LOGGER_NAME)
-            # Format of the logs
-            formatter = logging.Formatter(
-                "%(message)s ")
+    def __init__(self, level: Literal["ERROR", "INFO", "DEBUG"] = "INFO", _is_experiment_process: bool = False):
+        """Create the Gencovery logger, it logs into the console and into a file
 
-            # Configure the console logger
-            console_logger = logging.StreamHandler()
-            console_logger.setFormatter(formatter)
-            Logger._logger.addHandler(console_logger)
+        :param level: level of the logs to show, defaults to "info"
+        :type level: error | info | debug, optional
+        :param _is_experiment_process: set to true when the gws is runned inside a subprocess
+        (like when running a experiment in another process), defaults to False
+        :type _is_experiment_process: bool, optional
+        """
+        Logger._is_experiment_process = _is_experiment_process
 
-            # Configure the logs into the log files
-            settings = Settings()
+        if Logger._logger is not None:
+            raise BadRequestException("The logger already exists")
 
-            log_dir = settings.get_log_dir()
-            if not path.exists(log_dir):
-                makedirs(log_dir)
-            Logger._file_path = path.join(log_dir, LOGGER_FILE_NAME)
-            file_handler = logging.FileHandler(Logger._file_path)
-            Logger._logger.setLevel(logging.DEBUG)
-            file_handler.setFormatter(formatter)
-            Logger._logger.addHandler(file_handler)
+        if level not in ["ERROR", "INFO", "DEUG"]:
+            raise BadRequestException(
+                f"The logging level {level} is incorrect, please use one of the following [ERROR, INFO, DEBUG]")
 
-            if is_new_session:
-                Logger._logger.info(
-                    f"START APPLICATION : {settings.name} version {settings.version} \n")
+        # Create the logger
+        Logger._logger = logging.getLogger(LOGGER_NAME)
+
+        # Set the logger level
+        Logger._logger.setLevel(level)
+
+        # Format of the logs
+        formatter = logging.Formatter("%(message)s")
+
+        # Configure the console logger
+        console_logger = logging.StreamHandler()
+        console_logger.setFormatter(formatter)
+        Logger._logger.addHandler(console_logger)
+
+        # Configure the logs into the log files
+        settings = Settings()
+
+        log_dir = settings.get_log_dir()
+        if not path.exists(log_dir):
+            makedirs(log_dir)
+        Logger._file_path = path.join(log_dir, LOGGER_FILE_NAME)
+        # file_handler = logging.FileHandler(Logger._file_path)
+
+        file_handler = TimedRotatingFileHandler(
+            Logger._file_path, when="M")
+        file_handler.setFormatter(formatter)
+        Logger._logger.addHandler(file_handler)
+
+        if _is_experiment_process:
+            Logger.info("Sub process started")
+        else:
+            Logger.info(
+                f"START APPLICATION : {settings.name} version {settings.version}")
 
     # -- E --
 
     @classmethod
     def error(cls, message: str) -> None:
-        if not cls._logger:
-            Logger()
         cls._logger.error(cls._get_message("ERROR", message))
 
+    # todo fix method
     @classmethod
     def log_exception_stack_trace(cls) -> None:
-        if not cls._logger:
-            Logger()
         cls._logger.error(traceback.print_exc())
 
     @classmethod
     def warning(cls, message: str) -> None:
-        if not cls._logger:
-            Logger()
         cls._logger.warning(cls._get_message("WARNING", message))
 
     @classmethod
     def info(cls, message: str) -> None:
-        if not cls._logger:
-            Logger()
         cls._logger.info(cls._get_message("INFO", message))
+
+    @classmethod
+    def debug(cls, message: str) -> None:
+        cls._logger.debug(cls._get_message("DEBUG", message))
 
     # -- P --
 
     @classmethod
     def progress(cls, message: str) -> None:
-        if not cls._logger:
-            Logger()
         cls._logger.info(cls._get_message("PROGRESS", message))
 
     # -- F --
 
     @classmethod
     def get_file_path(cls) -> str:
-        if not cls._logger:
-            Logger()
         return cls._file_path
 
-    # -- I --
-
     @classmethod
-    def is_debug(cls) -> bool:
-        if cls._is_debug is None:
-            settings = Settings.retrieve()
-            cls._is_debug = settings.is_debug
-        return cls._is_debug
+    def get_sub_process_text(cls) -> str:
+        """return the text to annotated the sub process logs
+        """
+        return "[EXPERIMENT]"
+
+    # -- I --
 
     # -- S --
 
     @classmethod
     def _get_message(cls, level_name: str, message: str) -> str:
-        return f"{level_name} - {cls._get_date()} - {message}"
+        # get the annoted text for Sub process logs
+        sub_process_text: str = f"{cls.get_sub_process_text()} -" if cls._is_experiment_process else ""
+        return f"{level_name} - {cls._get_date()} - {sub_process_text} {message}"
 
     # Get the current date in Human readable format
     @classmethod

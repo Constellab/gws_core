@@ -9,6 +9,8 @@ import unittest
 
 from gws_core import (Experiment, GTest, Job, Queue, QueueService,
                       RobotService, Settings)
+from gws_core.core.utils.logger import Logger
+from gws_core.experiment.experiment_service import ExperimentService
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
@@ -24,6 +26,8 @@ class TestQueue(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        # kill the tick
+        QueueService.deinit()
         GTest.drop_tables()
 
     def test_queue(self):
@@ -32,19 +36,21 @@ class TestQueue(unittest.TestCase):
         self.assertEqual(Experiment.count_of_running_experiments(), 0)
         self.assertEqual(Queue.length(), 0)
 
-        proto1 = RobotService.create_nested_protol()
-        e1 = Experiment(protocol=proto1, study=GTest.study, user=GTest.user)
-        e1.save()
-        job1 = Job(user=GTest.user, experiment=e1)
+        proto1 = RobotService.create_nested_protocol()
+        experiment1 = Experiment(
+            protocol=proto1, study=GTest.study, user=GTest.user)
+        experiment1.save()
+        job1 = Job(user=GTest.user, experiment=experiment1)
         QueueService.add_job(job1)
 
         self.assertEqual(Queue.next(), job1)
         self.assertEqual(Queue.length(), 1)
 
-        proto2 = RobotService.create_nested_protol()
-        e2 = Experiment(protocol=proto2, study=GTest.study, user=GTest.user)
-        e2.save()
-        job2 = Job(user=GTest.user, experiment=e2)
+        proto2 = RobotService.create_nested_protocol()
+        experiment2 = Experiment(
+            protocol=proto2, study=GTest.study, user=GTest.user)
+        experiment2.save()
+        job2 = Job(user=GTest.user, experiment=experiment2)
         QueueService.add_job(job2)
 
         self.assertEqual(Queue.next(), job1)
@@ -54,32 +60,35 @@ class TestQueue(unittest.TestCase):
         self.assertEqual(Queue.next(), job2)
         self.assertEqual(Queue.length(), 1)
 
-        proto3 = RobotService.create_nested_protol()
-        e3 = Experiment(protocol=proto3, study=GTest.study, user=GTest.user)
-        e3.save()
-        job3 = Job(user=GTest.user, experiment=e3)
+        proto3 = RobotService.create_nested_protocol()
+        experiment3 = Experiment(
+            protocol=proto3, study=GTest.study, user=GTest.user)
+        experiment3.save()
+        job3 = Job(user=GTest.user, experiment=experiment3)
         QueueService.add_job(job3)
         self.assertEqual(Queue.next(), job2)
         self.assertEqual(Queue.length(), 2)
 
-        Queue.init(tick_interval=1, verbose=True)  # tick each second
-
-        n = 0
-        while Queue.length():
+        print(Queue.length())
+        # init the ticking, tick each second
+        QueueService.init(tick_interval=30, verbose=True)
+        print(Queue.length())
+        wait_count = 0
+        # Wait until the queue is clear and there is not experiment that is running
+        while Queue.length() > 0:
             print("Waiting 3 secs for cli experiments to finish ...")
-            time.sleep(3)
-            if n == 10:
+            time.sleep(300)
+            print(Queue.length())
+            if wait_count >= 10:
                 raise Exception("The experiment queue is not empty")
-            n += 1
+            wait_count += 1
 
-        Q = Experiment.select()
-        self.assertEqual(len(Q), 3)
-        for e in Q:
-            if e.id == e1.id:
+        query = Experiment.select()
+        self.assertEqual(len(query), 3)
+        for experiment in query:
+            if experiment.id == experiment1.id:
                 # check that e1 has never been run
-                self.assertEqual(e.is_finished, False)
+                self.assertEqual(experiment.is_finished, False)
             else:
-                self.assertEqual(e.is_finished, True)
-
-        Queue.deinit()
-        time.sleep(3)
+                self.assertEqual(experiment.is_finished, True,
+                                 f"Experiment {experiment.id} not finished")

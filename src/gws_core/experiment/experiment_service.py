@@ -191,24 +191,21 @@ class ExperimentService(BaseService):
             raise BadRequestException(
                 f"No experiment found with uri {experiment_uri}. Error: {err}") from err
 
-        if experiment.is_running:
-            raise BadRequestException("The experiment is already running")
-        elif experiment.is_finished:
-            raise BadRequestException("The experiment is already finished")
-        else:
-            try:
-                if wait_response:
-                    await cls._run_experiment(experiment=experiment, user=user)
+        Logger.info(f"Running experiment : {experiment_uri}")
+
+        try:
+            if wait_response:
+                await cls._run_experiment(experiment=experiment, user=user)
+            else:
+                if HTTPHelper.is_http_context():
+                    # run the experiment throug the cli to prevent blocking HTTP requests
+                    cls.run_through_cli(experiment=experiment, user=user)
                 else:
-                    if HTTPHelper.is_http_context():
-                        # run the experiment throug the cli to prevent blocking HTTP requests
-                        cls.run_through_cli(experiment=experiment, user=user)
-                    else:
-                        await cls._run_experiment(experiment=experiment, user=user)
-            except Exception as err:
-                Logger.log_exception_stack_trace()
-                raise BadRequestException(
-                    f"An error occured. Error: {err}") from err
+                    await cls._run_experiment(experiment=experiment, user=user)
+        except Exception as err:
+            Logger.log_exception_stack_trace()
+            raise BadRequestException(
+                f"An error occured. Error: {err}") from err
 
     @classmethod
     async def _run_experiment(cls, experiment: Experiment, user: User = None) -> Experiment:
@@ -298,6 +295,8 @@ class ExperimentService(BaseService):
             cmd.append("dev")
 
         Logger.info(f"gws.experiment.Experiment run_through_cli {str(cmd)}")
+        Logger.info(
+            f"The experiment logs are not shown in the console, because it is run in another linux process. To view them check the logs marked as {Logger.get_sub_process_text()} in the today's log file : {Logger.get_file_path()}")
         sproc = SysProc.popen(
             cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         experiment.data["pid"] = sproc.pid

@@ -6,7 +6,9 @@
 
 from ...model.model_service import ModelService
 from ...study.study import Study
+from ...user.auth_service import AuthService
 from ...user.user import User
+from ...user.user_service import UserService
 from ..exception.exceptions import BadRequestException
 from ..utils.settings import Settings
 
@@ -33,10 +35,11 @@ class GTest:
                 "The unit tests can only be initialized in dev mode")
 
         study = Study.get_default_instance()
-        User.create_owner_and_sysuser()
+        UserService.create_owner_and_sysuser()
         user = User.get_sysuser()
         # refresh user information from DB
-        User.authenticate(uri=user.uri, console_token=user.console_token)
+        AuthService.authenticate(
+            uri=user.uri, console_token=user.console_token)
 
         cls.user = user
         cls.study = study

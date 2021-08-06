@@ -4,10 +4,12 @@
 # About us: https://gencovery.com
 
 import json
+from enum import Enum
 from typing import List, Union
 
 from peewee import BooleanField, FloatField, ForeignKeyField
 
+from ..core.classes.enum_field import EnumField
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.sys_proc import SysProc
 from ..core.utils.event import EventListener
@@ -18,6 +20,14 @@ from ..study.study import Study
 from ..user.activity import Activity
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
+
+
+class ExperimentStatus(Enum):
+    DRAFT = "DRAFT"
+    WAITING_FOR_CLI_PROCESS = "WAITING_FOR_CLI_PROCESS"
+    RUNNING = "RUNNING"
+    SUCCESS = "SUCCESS"
+    ERROR = "ERROR"
 
 
 class Experiment(Viewable):
@@ -42,6 +52,7 @@ class Experiment(Viewable):
     created_by = ForeignKeyField(
         User, null=True, index=True, backref='created_experiments')
     score = FloatField(null=True, index=True)
+    # status = EnumField(null=False, choices=ExperimentStatus)
     is_validated = BooleanField(default=False, index=True)
 
     _is_running = BooleanField(default=False, index=True)
@@ -125,7 +136,7 @@ class Experiment(Viewable):
         :rtype: `int`
         """
 
-        return Experiment.select().where(Experiment.is_running == True).count()
+        return Experiment.select().where(Experiment._is_running).count()
 
     # -- G --
 
@@ -453,6 +464,8 @@ class Experiment(Viewable):
             raise BadRequestException("The experiment is archived")
         if self.is_validated:
             raise BadRequestException("The experiment is validated")
+        # if self.status == ExperimentStatus.RUNNING:
+            # raise BadRequestException("The experiment is already running")
 
     def check_is_stopable(self) -> None:
         """Throw an error if the experiment is not stopable

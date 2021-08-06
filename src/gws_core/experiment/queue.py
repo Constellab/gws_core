@@ -28,7 +28,7 @@ class Job(Model):
 
 class Queue(Model):
     """
-    Class representing experiment queue
+    Singleton Class representing experiment queue
 
     :property is_active: True is the queue is active; False otherwise. Defaults to False.
     The queue is automatically set to True on init.
@@ -40,8 +40,9 @@ class Queue(Model):
     is_active = BooleanField(default=False)
     max_length = IntegerField(default=10)
     _queue_instance = None
-    _is_singleton = True
+    # _is_singleton = True
     _table_name = "gws_queue"
+    _instance: 'Queue' = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -50,8 +51,15 @@ class Queue(Model):
             self.save()
 
     @classmethod
+    def get_instance(cls) -> 'Queue':
+        if cls._instance is None:
+            cls._instance = Queue()
+
+        return cls._instance
+
+    @classmethod
     def init(cls) -> 'Queue':
-        queue = Queue()
+        queue = cls.get_instance()
         if not queue.is_active:
             queue.is_active = True
             queue.save()
@@ -61,7 +69,7 @@ class Queue(Model):
 
     @classmethod
     def deinit(cls):
-        queue = Queue()
+        queue = cls.get_instance()
         queue.is_active = False
         queue.save()
 
@@ -73,7 +81,7 @@ class Queue(Model):
             raise BadRequestException(
                 "Invalid argument. An instance of gws.queue.Jobs is required")
         job.save()
-        queue = Queue()
+        queue = cls.get_instance()
         if job.uri in queue.data["jobs"]:
             return
         if len(queue.data["jobs"]) > queue.max_length:
@@ -92,7 +100,7 @@ class Queue(Model):
         if not isinstance(job, Job):
             raise BadRequestException(
                 "Invalid argument. An instance of gws.queue.Job is required")
-        queue = Queue()
+        queue = cls.get_instance()
         if job.uri in queue.data["jobs"]:
             queue.data["jobs"].remove(job.uri)
             queue.save()
@@ -101,20 +109,21 @@ class Queue(Model):
 
     @classmethod
     def length(cls):
-        queue = Queue()
+        queue = cls.get_instance()
         return len(queue.data["jobs"])
 
     # -- N --
 
     @classmethod
     def next(cls) -> Job:
-        queue = Queue()
+        queue = cls.get_instance()
         if not queue.data["jobs"]:
             return None
         uri = queue.data["jobs"][0]
         try:
             return Job.get(Job.uri == uri)
         except:
+            print("Oprhan job")
             # orphan job => discard it from the queue
             cls.pop_first()
             return cls.next()
@@ -123,7 +132,8 @@ class Queue(Model):
 
     @classmethod
     def pop_first(cls):
-        queue = Queue()
+        print("Pop")
+        queue = cls.get_instance()
         queue.data["jobs"].pop(0)
         queue.save()
 

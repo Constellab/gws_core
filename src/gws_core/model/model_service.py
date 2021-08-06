@@ -6,7 +6,9 @@
 import importlib
 import inspect
 import os
-from typing import Dict, List, Type, Union
+from typing import Dict, List, Tuple, Type, Union
+
+from peewee import DatabaseProxy
 
 from ..core.classes.expose import Expose
 from ..core.classes.paginator import Paginator
@@ -95,19 +97,24 @@ class ModelService(BaseService):
 
         db_list, model_list = cls._get_db_and_model_lists(models)
         for db in db_list:
-            try:
-                i = db_list.index(db)
-                models: List[Model] = [
-                    t for t in model_list[i] if t.table_exists()]
-                if model_type:
-                    models = [t for t in models if isinstance(t, model_type)]
-                if models[0].is_mysql_engine():
-                    db.execute_sql("SET FOREIGN_KEY_CHECKS=0")
-                db.drop_tables(models)
-                if models[0].is_mysql_engine():
-                    db.execute_sql("SET FOREIGN_KEY_CHECKS=1")
-            except:
-                pass
+            i = db_list.index(db)
+            models: List[Model] = [
+                t for t in model_list[i] if t.table_exists()]
+            if model_type:
+                models = [t for t in models if isinstance(t, model_type)]
+
+            if len(models) == 0:
+                Logger.debug("No table to drop")
+                return
+
+            # Disable foreigne key on my sql to drop the tables
+            if models[0].is_mysql_engine():
+                db.execute_sql("SET FOREIGN_KEY_CHECKS=0")
+            # Drop all the tables
+            db.drop_tables(models)
+
+            if models[0].is_mysql_engine():
+                db.execute_sql("SET FOREIGN_KEY_CHECKS=1")
 
     @classmethod
     def count_model(cls, type: str) -> int:
@@ -190,7 +197,7 @@ class ModelService(BaseService):
         return exposed_models
 
     @classmethod
-    def _get_db_and_model_lists(cls, models: list = None):
+    def _get_db_and_model_lists(cls, models: list = None) -> Tuple[DatabaseProxy, List[Model]]:
         if not models:
             models = ModelService._inspect_model_types()
         db_list = []

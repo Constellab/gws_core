@@ -1,0 +1,7 @@
+INFO - 2021-08-05 16:27:11.249878 -  START APPLICATION : gws_core version 0.1
+INFO - 2021-08-05 16:27:20.818663 -  Resource: 9 types registered:
+[<Model: MegaRobot>, <Model: JSONDict>, <Model: ResourceSet>, <Model: Robot>, <Model: Resource>, <Model: FileSet>, <Model: RobotAddOn>, <Model: CSVTable>, <Model: File>]
+INFO - 2021-08-05 16:27:20.819293 -  Process: 32 types registered:
+[<Model: Sink>, <Model: Switch2>, <Model: JSONLoader>, <Model: RobotEat>, <Model: Source>, <Model: Process>, <Model: JSONExporter>, <Model: RobotMove>, <Model: RobotAddOnCreate>, <Model: RobotWait>, <Model: RobotTravelProto>, <Model: FileExporter>, <Model: CondaShell>, <Model: CSVImporter>, <Model: RobotCreate>, <Model: FileUploader>, <Model: FileImporter>, <Model: FileLoader>, <Model: Protocol>, <Model: CSVDumper>, <Model: RobotSuperTravelProto>, <Model: Shell>, <Model: FileDumper>, <Model: JSONImporter>, <Model: CSVLoader>, <Model: RobotWorldTravelProto>, <Model: CSVExporter>, <Model: RobotAdd>, <Model: Wait>, <Model: RobotFly>, <Model: JSONDumper>, <Model: FIFO2>]
+INFO - 2021-08-05 16:27:20.863374 -  Starting server in dev mode ...
+INFO - 2021-08-05 16:27:20.927039 -  The queue is initialized and active

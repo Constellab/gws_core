@@ -244,39 +244,35 @@ class Protocol(Process):
             node_json = graph["nodes"][k]
             proc_uri = node_json.get("uri", None)
             proc_type_str = node_json["type"]
-            try:
-                proc_t = self.get_model_type(proc_type_str)
-                if proc_t is None:
-                    raise BadRequestException(
-                        f"Process {proc_type_str} is not defined. Please ensure that the corresponding brick is loaded.")
-                else:
-                    if proc_uri:
-                        proc = proc_t.get(proc_t.uri == proc_uri)
-                    else:
-                        if issubclass(proc_t, Protocol):
-                            proc = Protocol.from_graph(
-                                node_json["data"]["graph"])
-                        else:
-                            proc = proc_t()
-                    if k in self._processes:
-                        # copy current data
-                        self._processes[k].data = proc.data
-                    else:
-                        self.add_process(k, proc)
-
-                # update config if required
-                config_json = node_json.get("config")
-                if config_json:
-                    params = config_json.get("data", {}).get("params", {})
-                    if k in self._processes:
-                        self._processes[k].config.set_params(params)
-                    else:
-                        proc.config.set_params(params)
-                    proc.config.save()
-                    proc.save()
-            except Exception as err:
+            proc_t = self.get_model_type(proc_type_str)
+            if proc_t is None:
                 raise BadRequestException(
-                    f"An error occured. Error: {err}") from err
+                    f"Process {proc_type_str} is not defined. Please ensure that the corresponding brick is loaded.")
+            else:
+                if proc_uri:
+                    proc = proc_t.get(proc_t.uri == proc_uri)
+                else:
+                    if issubclass(proc_t, Protocol):
+                        proc = Protocol.from_graph(
+                            node_json["data"]["graph"])
+                    else:
+                        proc = proc_t()
+                if k in self._processes:
+                    # copy current data
+                    self._processes[k].data = proc.data
+                else:
+                    self.add_process(k, proc)
+
+            # update config if required
+            config_json = node_json.get("config")
+            if config_json:
+                params = config_json.get("data", {}).get("params", {})
+                if k in self._processes:
+                    self._processes[k].config.set_params(params)
+                else:
+                    proc.config.set_params(params)
+                proc.config.save()
+                proc.save()
 
         # create interfaces and outerfaces
         interfaces = {}
@@ -345,7 +341,7 @@ class Protocol(Process):
         :param study: The study in which the protocol is realized
         :type study: `gws.study.Study`
         :param config: The configuration of protocol
-        :type config: `gws.config.Config`
+        :type config: `gws_core.config.config.Config`
         :return: The experiment
         :rtype: `gws.experiment.Experiment`
         """

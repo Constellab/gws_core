@@ -3,11 +3,14 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import os
 import importlib
+import os
 import unittest
+from logging import log
+
 import click
 
+from .app import App
 from .core.exception.exceptions import BadRequestException
 from .core.utils.logger import Logger
 from .core.utils.settings import Settings
@@ -16,12 +19,11 @@ from .core.utils.settings import Settings
 def _run(ctx, uri="", token="", test="",
          cli=False, cli_test=False, runserver=False, runmode="dev",
          ip="0.0.0.0", port="3000", docgen=False,
-         force=False):
+         force=False, log_level: str = None):
 
     is_test = bool(test or cli_test)
-    is_debug = (is_test or runmode == "dev")
     is_prod = (runmode == "prod")
-    Logger(is_new_session=True, is_debug=is_debug)
+    Logger(level=log_level, _is_experiment_process=cli)
 
     settings = Settings.retrieve()
     settings.set_data("app_host", ip)
@@ -42,7 +44,6 @@ def _run(ctx, uri="", token="", test="",
 
     if runserver:
         # start app
-        from .app import App
         App.start(ip=ip, port=port)
     elif cli:
         tab = cli.split(".")
@@ -92,7 +93,8 @@ def _run(ctx, uri="", token="", test="",
 @click.option('--port', default="3000", help='Server port', show_default=True)
 @click.option('--docgen', is_flag=True, help='Generates documentation')
 @click.option('--force', is_flag=True, help='Forces documentation generation by removing any existing documentation (used if --docgen is given)')
-def run(ctx, uri, token, test, cli, cli_test, runserver, runmode, ip, port, docgen, force):
+@click.option('--log_level', default="INFO", help='Level for the logs', show_default=True)
+def run(ctx, uri, token, test, cli, cli_test, runserver, runmode, ip, port, docgen, force, log_level):
     _run(
         ctx,
         uri=uri,
@@ -105,5 +107,6 @@ def run(ctx, uri, token, test, cli, cli_test, runserver, runmode, ip, port, docg
         ip=ip,
         port=port,
         docgen=docgen,
-        force=force
+        force=force,
+        log_level=log_level
     )

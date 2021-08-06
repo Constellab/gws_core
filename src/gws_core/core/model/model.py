@@ -454,11 +454,11 @@ class Model(Base, PeeweeModel):
 
     @classmethod
     def is_sqlite3_engine(cls):
-        return cls.get_db_manager().engine == "sqlite3"
+        return cls.get_db_manager().get_engine() == "sqlite3"
 
     @classmethod
     def is_mysql_engine(cls):
-        return cls.get_db_manager().engine in ["mysql", "mariadb"]
+        return cls.get_db_manager().get_engine() in ["mysql", "mariadb"]
 
     def is_saved(self):
         """

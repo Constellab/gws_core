@@ -9,7 +9,6 @@ import click
 
 from .core.exception.exception_handler import ExceptionHandler
 from .core.exception.exceptions import BadRequestException
-from .core.utils.logger import Logger
 from .core.utils.settings import Settings
 from .experiment.experiment_service import ExperimentService
 from .user.user import User
@@ -23,8 +22,8 @@ from .user.user import User
 @click.option('--experiment-uri', help='Experiment uri')
 @click.option('--user-uri', help='User uri')
 def run_experiment(ctx, experiment_uri, user_uri):
-    settings = Settings.retrieve()
 
+    settings = Settings.retrieve()
     try:
         user: User = User.get(User.uri == user_uri)
     except Exception as err:

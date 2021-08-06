@@ -14,7 +14,8 @@ TICK_INTERVAL_SECONDS = 30   # 30 sec
 
 
 class QueueService(BaseService):
-
+    # Bool to true during the tick method (used to prevent concurrent ticks)
+    tick_is_running: bool = False
     is_init = False
 
     @classmethod
@@ -30,7 +31,7 @@ class QueueService(BaseService):
 
     @classmethod
     def _queue_tick(cls, tick_interval, verbose, daemon):
-        queue = Queue()
+        queue = Queue.get_instance()
         if not queue.is_active:
             return
         try:
@@ -54,6 +55,32 @@ class QueueService(BaseService):
 
     @classmethod
     def _tick(cls, verbose=False):
+        """Method called a each tick to run experiment from the queue
+
+        :param verbose: [description], defaults to False
+        :type verbose: bool, optional
+        """
+        if cls.tick_is_running:
+            if verbose:
+                Logger.info(
+                    "Skipping queue tick, because previous one is running")
+            return
+
+        cls.tick_is_running = True
+
+        try:
+            cls._check_and_run_queue(verbose=verbose)
+        finally:
+            cls.tick_is_running = False
+
+    @classmethod
+    def _check_and_run_queue(cls, verbose):
+        """Get the first experiment from the queue and run it if possible
+
+        :param verbose: [description]
+        :type verbose: [type]
+        :raises BadRequestException: [description]
+        """
         if verbose:
             Logger.info("Checking experiment queue ...")
 
@@ -84,12 +111,11 @@ class QueueService(BaseService):
             ExperimentService.run_through_cli(
                 experiment=experiment, user=job.user)
         except Exception as err:
-            # remove from Queue
             Queue.pop_first()
             raise BadRequestException(
                 f"An error occured while runnig the experiment. Error: {err}.") from err
-
-        time.sleep(3)  # -> wait for 3 sec to prevent database lock!
+        # finally:
+            # Remove the experiment from the queue before executing it
 
     @classmethod
     def add_experiment_to_queue(cls, experiment_uri: str) -> Experiment:
@@ -125,5 +151,5 @@ class QueueService(BaseService):
 
     @classmethod
     def get_queue(cls) -> 'Queue':
-        queue = Queue()
+        queue = Queue.get_instance()
         return queue

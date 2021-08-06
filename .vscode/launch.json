@@ -21,6 +21,23 @@
             "request": "launch",
             "program": "${workspaceFolder}/manage.py",
             "console": "integratedTerminal"
+        },
+        // config to run test on GWS
+        {
+            "args": ["--test", "${input:testFileName}"],
+            "name": "Test single",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/manage.py",
+            "console": "integratedTerminal",
+        }
+    ],
+
+    "inputs": [
+        {
+            "id": "testFileName",
+            "type": "promptString",
+            "description": "Name of the test file to run",
         }
     ]
 }

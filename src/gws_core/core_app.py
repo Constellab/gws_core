@@ -62,7 +62,7 @@ class ProcessData(BaseModel):
 
 class ConfigData(BaseModel):
     uri: str = None
-    type: str = "gws.config.Config"
+    type: str = "gws_core.config.config.Config"
     params: dict = {}
 
 

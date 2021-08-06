@@ -8,6 +8,7 @@ from typing import Dict, List, Type
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from gws_core.core.utils.logger import Logger
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException
 from starlette_context.middleware import ContextMiddleware
@@ -96,7 +97,6 @@ async def get_user_test():
     """
     Testing API user details
     """
-
     return {
         "owner": {
             "uri": UserService.get_owner().uri,
@@ -107,7 +107,7 @@ async def get_user_test():
     }
 
 
-@ central_app.get("/user/{uri}/activate", tags=["User management"])
+@central_app.get("/user/{uri}/activate", tags=["User management"])
 async def activate_user(uri: str, _: UserData = Depends(check_central_api_key)):
     """
     Activate a user. Requires central privilege.

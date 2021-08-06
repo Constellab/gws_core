@@ -33,7 +33,7 @@ class RobotService(BaseService):
     def run_robot_super_travel(cls):
         user = CurrentUserService.get_and_check_current_user()
         study = Study.get_default_instance()
-        protocol = cls.create_nested_protol()
+        protocol = cls.create_nested_protocol()
         experiment = protocol.create_experiment(study=study, user=user)
         experiment.set_title("The super journey of Astro.")
         experiment.data["description"] = "This is the super journey of Astro."
@@ -47,5 +47,5 @@ class RobotService(BaseService):
                 detail="Cannot run robot_super_travel.") from err
 
     @classmethod
-    def create_nested_protol(cls) -> RobotWorldTravelProto:
+    def create_nested_protocol(cls) -> RobotWorldTravelProto:
         return RobotWorldTravelProto()
