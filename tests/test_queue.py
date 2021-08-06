@@ -7,10 +7,8 @@
 import time
 import unittest
 
-from gws_core import (Experiment, GTest, Job, Queue, QueueService,
-                      RobotService, Settings)
-from gws_core.core.utils.logger import Logger
-from gws_core.experiment.experiment_service import ExperimentService
+from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
+                      Job, Queue, QueueService, RobotService, Settings)
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
@@ -69,16 +67,13 @@ class TestQueue(unittest.TestCase):
         self.assertEqual(Queue.next(), job2)
         self.assertEqual(Queue.length(), 2)
 
-        print(Queue.length())
         # init the ticking, tick each second
-        QueueService.init(tick_interval=30, verbose=True)
-        print(Queue.length())
+        QueueService.init(tick_interval=1, verbose=True)
         wait_count = 0
         # Wait until the queue is clear and there is not experiment that is running
-        while Queue.length() > 0:
+        while Queue.length() > 0 or ExperimentService.count_of_running_experiments() > 0:
             print("Waiting 3 secs for cli experiments to finish ...")
-            time.sleep(300)
-            print(Queue.length())
+            time.sleep(3)
             if wait_count >= 10:
                 raise Exception("The experiment queue is not empty")
             wait_count += 1
@@ -88,7 +83,7 @@ class TestQueue(unittest.TestCase):
         for experiment in query:
             if experiment.id == experiment1.id:
                 # check that e1 has never been run
-                self.assertEqual(experiment.is_finished, False)
+                self.assertEqual(experiment.status, ExperimentStatus.DRAFT)
             else:
-                self.assertEqual(experiment.is_finished, True,
+                self.assertEqual(experiment.status, ExperimentStatus.SUCCESS,
                                  f"Experiment {experiment.id} not finished")

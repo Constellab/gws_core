@@ -132,7 +132,6 @@ class Queue(Model):
 
     @classmethod
     def pop_first(cls):
-        print("Pop")
         queue = cls.get_instance()
         queue.data["jobs"].pop(0)
         queue.save()

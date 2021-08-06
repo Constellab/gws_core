@@ -7,9 +7,9 @@ import asyncio
 import time
 import unittest
 
-from gws_core import (Experiment, ExperimentService, GTest, Process, Queue,
-                      Resource, RobotService, Settings)
-from gws_core.experiment.queue_service import QueueService
+from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
+                      Process, Queue, QueueService, Resource, RobotService,
+                      Settings)
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
@@ -36,7 +36,7 @@ class TestExperiment(unittest.TestCase):
         # -------------------------------
         print("Create experiment 1")
         proto1 = RobotService.create_nested_protocol()
-        experiment1 = Experiment(
+        experiment1: Experiment = Experiment(
             protocol=proto1, study=GTest.study, user=GTest.user)
         proto_title = proto1.get_title()
         experiment1.set_title("My exp title")
@@ -53,7 +53,8 @@ class TestExperiment(unittest.TestCase):
         # Create experiment 2 = experiment 2
         # -------------------------------
         print("Create experiment_2 = experiment_1 ...")
-        experiment2 = Experiment.get(Experiment.uri == experiment1.uri)
+        experiment2: Experiment = Experiment.get(
+            Experiment.uri == experiment1.uri)
         self.assertEqual(experiment2.protocol.get_title(), proto_title)
         self.assertEqual(experiment2.get_title(), "My exp title")
         self.assertEqual(experiment2.get_description(),
@@ -67,8 +68,7 @@ class TestExperiment(unittest.TestCase):
         def _check_exp1(*args, **kwargs):
             #self.assertEqual(e2.processes.count(), 18)
             self.assertEqual(len(experiment2.processes), 15)
-            self.assertEqual(experiment2.is_finished, False)
-            self.assertEqual(experiment2.is_running, True)
+            self.assertEqual(experiment2.status, ExperimentStatus.RUNNING)
 
         experiment2.on_end(_check_exp1)
         print("Run experiment_2 ...")
@@ -84,10 +84,9 @@ class TestExperiment(unittest.TestCase):
         self.assertEqual(experiment2.pid, 0)
         #self.assertEqual(e2.processes.count(), 18)
         self.assertEqual(len(experiment2.processes), 15)
-        self.assertEqual(experiment2.is_finished, True)
-        self.assertEqual(experiment2.is_running, False)
+        self.assertEqual(experiment2.status, ExperimentStatus.SUCCESS)
 
-        e2_bis = Experiment.get(Experiment.uri == experiment1.uri)
+        e2_bis: Experiment = Experiment.get(Experiment.uri == experiment1.uri)
         self.assertEqual(e2_bis.protocol.get_title(), proto_title)
         self.assertEqual(e2_bis.get_title(), "My exp title")
         self.assertEqual(e2_bis.get_description(), "This is my new experiment")
@@ -98,44 +97,46 @@ class TestExperiment(unittest.TestCase):
         # -------------------------------
         print("Create experiment_3")
         proto3 = RobotService.create_nested_protocol()
-        e3 = Experiment(protocol=proto3, study=GTest.study, user=GTest.user)
-        e3.save()
+        experiment3 = Experiment(
+            protocol=proto3, study=GTest.study, user=GTest.user)
+        experiment3.save()
 
         print("Run experiment_3 through cli ...")
-        ExperimentService.run_through_cli(experiment=e3, user=GTest.user)
-        self.assertTrue(e3.pid > 0)
-        self.assertEqual(e3.is_finished, False)
-        self.assertEqual(e3.is_running, False)
-        print(f"Experiment pid = {e3.pid}", )
+        ExperimentService.run_through_cli(
+            experiment=experiment3, user=GTest.user)
+        self.assertTrue(experiment3.pid > 0)
+        self.assertEqual(experiment3.status, False)
+        self.assertEqual(experiment3.is_running, False)
+        print(f"Experiment pid = {experiment3.pid}", )
 
-        n = 0
-        e3 = Experiment.get(Experiment.id == e3.id)
-        while not e3.is_finished:
+        waiting_count = 0
+        experiment3: Experiment = Experiment.get(
+            Experiment.id == experiment3.id)
+        while experiment3.status != ExperimentStatus.SUCCESS:
             print("Waiting 3 secs the experiment to finish ...")
             time.sleep(3)
-            if n == 10:
+            if waiting_count == 10:
                 raise Exception("The experiment is not finished")
-            n += 1
+            waiting_count += 1
 
         self.assertEqual(Experiment.count_of_running_experiments(), 0)
-        e3 = Experiment.get(Experiment.id == e3.id)
-        self.assertEqual(e3.is_finished, True)
-        self.assertEqual(e3.is_running, False)
-        self.assertEqual(e3.pid, 0)
+        experiment3 = Experiment.get(Experiment.id == experiment3.id)
+        self.assertEqual(experiment3.status, ExperimentStatus.SUCCESS)
+        self.assertEqual(experiment3.pid, 0)
 
-        Q = e3.resources
+        Q = experiment3.resources
         self.assertEqual(len(Q), 15)
 
         # archive experiment
         def _test_archive(tf):
-            OK = e3.archive(tf)
+            OK = experiment3.archive(tf)
             self.assertTrue(OK)
-            Q = e3.resources
+            Q = experiment3.resources
             self.assertEqual(len(Q), 15)
             for r in Q:
                 self.assertEqual(r.is_archived, tf)
 
-            Q = e3.processes
+            Q = experiment3.processes
             #self.assertEqual( len(Q), 18)
             self.assertEqual(len(Q), 15)
             for p in Q:
@@ -158,8 +159,9 @@ class TestExperiment(unittest.TestCase):
 
         GTest.print("ExperimentService")
         proto = RobotService.create_nested_protocol()
-        e = Experiment(protocol=proto, study=GTest.study, user=GTest.user)
-        e.save()
+        experiment = Experiment(
+            protocol=proto, study=GTest.study, user=GTest.user)
+        experiment.save()
         c = Experiment.select().count()
         self.assertEqual(c, 1)
 
@@ -168,7 +170,7 @@ class TestExperiment(unittest.TestCase):
 
         def _run() -> bool:
             try:
-                asyncio.run(ExperimentService.start_experiment(e.uri))
+                asyncio.run(ExperimentService.start_experiment(experiment.uri))
             except:
                 return False
 
@@ -182,10 +184,10 @@ class TestExperiment(unittest.TestCase):
                 n += 1
 
             self.assertEqual(Experiment.count_of_running_experiments(), 0)
-            e1 = Experiment.get(Experiment.id == e.id)
-            self.assertEqual(e1.is_finished, True)
-            self.assertEqual(e1.is_running, False)
-            self.assertEqual(e1.pid, 0)
+            experiment1: Experiment = Experiment.get(
+                Experiment.id == experiment.id)
+            self.assertEqual(experiment1.status, ExperimentStatus.SUCCESS)
+            self.assertEqual(experiment1.pid, 0)
             print("Done!")
             return True
 
@@ -199,15 +201,16 @@ class TestExperiment(unittest.TestCase):
         print("")
         print("Re-Run the same experiment ...")
         time.sleep(1)
-        self.assertTrue(e.reset())
+        self.assertTrue(experiment.reset())
         self.assertTrue(_run())
         self.assertEqual(Experiment.select().count(), 1)
 
         print("")
         print("Re-Run the same experiment after its validation...")
         time.sleep(1)
-        e = Experiment.get(Experiment.id == e.id)
-        e.validate(user=GTest.user)
+        experiment2: Experiment = Experiment.get(
+            Experiment.id == experiment.id)
+        experiment2.validate(user=GTest.user)
         self.assertFalse(_run())
         self.assertEqual(Experiment.select().count(), 1)
         QueueService.deinit()

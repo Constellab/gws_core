@@ -73,6 +73,7 @@ from .core.utils.utils import Utils as Utils
 from .core.utils.zip import Zip as Zip
 # Experiment
 from .experiment.experiment import Experiment as Experiment
+from .experiment.experiment import ExperimentStatus as ExperimentStatus
 from .experiment.experiment_dto import ExperimentDTO as ExperimentDTO
 from .experiment.experiment_service import \
     ExperimentService as ExperimentService

@@ -13,7 +13,6 @@ from ..core.classes.enum_field import EnumField
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.sys_proc import SysProc
 from ..core.utils.event import EventListener
-from ..core.utils.http_helper import HTTPHelper
 from ..model.viewable import Viewable
 from ..protocol.protocol import Protocol
 from ..study.study import Study
@@ -24,6 +23,7 @@ from ..user.user import User
 
 class ExperimentStatus(Enum):
     DRAFT = "DRAFT"
+    # WAITING means that a linux process will be started to run the experiment
     WAITING_FOR_CLI_PROCESS = "WAITING_FOR_CLI_PROCESS"
     RUNNING = "RUNNING"
     SUCCESS = "SUCCESS"
@@ -52,12 +52,10 @@ class Experiment(Viewable):
     created_by = ForeignKeyField(
         User, null=True, index=True, backref='created_experiments')
     score = FloatField(null=True, index=True)
-    # status = EnumField(null=False, choices=ExperimentStatus)
+    status = EnumField(choices=ExperimentStatus,
+                       default=ExperimentStatus.DRAFT)
     is_validated = BooleanField(default=False, index=True)
 
-    _is_running = BooleanField(default=False, index=True)
-    _is_finished = BooleanField(default=False, index=True)
-    _is_success = BooleanField(default=False, index=True)
     _event_listener: EventListener = None
     _table_name = 'gws_experiment'
 
@@ -130,13 +128,12 @@ class Experiment(Viewable):
     @classmethod
     def count_of_running_experiments(cls) -> int:
         """
-        Returns the count of experiment in progress
-
-        :return: The count of experiment in progress
+        :return: the count of experiment in progress or waiting for a cli process
         :rtype: `int`
         """
 
-        return Experiment.select().where(Experiment._is_running).count()
+        return Experiment.select().where((Experiment.status == ExperimentStatus.RUNNING) |
+                                         (Experiment.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS)).count()
 
     # -- G --
 
@@ -162,35 +159,20 @@ class Experiment(Viewable):
 
     @property
     def is_finished(self) -> bool:
-        if not self.id:
-            return False
-
-        e = Experiment.get_by_id(self.id)
-        return e._is_finished
+        """Consider finished if the Experiment status is SUCCESS or ERROR
+        """
+        return self.status == ExperimentStatus.SUCCESS or self.status == ExperimentStatus.ERROR
 
     @property
     def is_running(self) -> bool:
-        if not self.id:
-            return False
-
-        experiment = Experiment.get_by_id(self.id)
-        return experiment._is_running
-
-    @property
-    def is_draft(self) -> bool:
+        """Consider running if the Experiment status is RUNNING or WAITING_FOR_CLI_PROCESS
         """
-        Returns True if the experiment is a draft, i.e. has nether been run and is not validated. False otherwise.
-
-        :return: True if the experiment not running nor finished
-        :rtype: `bool`
-        """
-
-        return (not self.is_validated) and (not self.is_running) and (not self.is_finished)
+        return self.status == ExperimentStatus.RUNNING or self.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS
 
     @property
     def is_pid_alive(self) -> bool:
         if not self.pid:
-            raise BadRequestException(f"No such process found")
+            raise BadRequestException("No such process found")
 
         try:
             sproc = SysProc.from_pid(self.pid)
@@ -200,58 +182,6 @@ class Experiment(Viewable):
                 f"No such process found or its access is denied (pid = {self.pid})") from err
 
     # -- J --
-
-    # -- K --
-
-    def kill_pid(self):
-        """
-        Kill the experiment through HTTP context if it is running
-
-        This is only possible if the experiment has been started through the cli
-        """
-
-        if not HTTPHelper.is_http_context():
-            raise BadRequestException("The user must be in http context")
-
-        return self.kill_pid_through_cli()
-
-    def kill_pid_through_cli(self):
-        """
-        Kill the experiment (through cli) if it is running
-
-        This is only possible if the experiment has been started through the cli
-        """
-
-        if not self.pid:
-            return
-
-        try:
-            sproc = SysProc.from_pid(self.pid)
-        except Exception as err:
-            raise BadRequestException(
-                f"No such process found or its access is denied (pid = {self.pid}). Error: {err}") from err
-
-        try:
-            # Gracefully stops the experiment and exits!
-            sproc.kill()
-            sproc.wait()
-        except Exception as err:
-            raise BadRequestException(
-                f"Cannot kill the experiment (pid = {self.pid}). Error: {err}") from err
-
-        Activity.add(
-            Activity.STOP,
-            object_type=self.full_classname(),
-            object_uri=self.uri
-        )
-
-        message = "Experiment manually stopped by a user."
-        self.protocol.progress_bar.stop(message)
-        self.data["pid"] = 0
-        self._is_running = False
-        self._is_finished = True
-        self._is_success = False
-        self.save()
 
     # -- O --
 
@@ -308,19 +238,17 @@ class Experiment(Viewable):
         :rtype: `bool`
         """
 
-        if self.is_validated or self.is_running:
+        if self.is_validated or self.status == ExperimentStatus.RUNNING:
             return False
 
-        if self.is_finished:
+        if self.status == ExperimentStatus.SUCCESS or self.status == ExperimentStatus.ERROR:
             with self._db_manager.db.atomic() as transaction:
                 if self.protocol:
                     if not self.protocol._reset():
                         transaction.rollback()
                         return False
 
-                self._is_running = False
-                self._is_finished = False
-                self._is_success = False
+                self.status = ExperimentStatus.DRAFT
                 self.score = None
                 status = self.save()
 
@@ -331,11 +259,19 @@ class Experiment(Viewable):
         else:
             return True
 
+    def mark_as_waiting_for_cli_process(self, pid: int):
+        """Mark that a process is created for the experiment, but it is not started yet
+
+        :param pid: pid of the linux process
+        :type pid: int
+        """
+        self.status = ExperimentStatus.WAITING_FOR_CLI_PROCESS
+        self.save()
+
     async def mark_as_started(self):
         self.protocol.set_experiment(self)
         self.data["pid"] = 0
-        self._is_running = True
-        self._is_finished = False
+        self.status = ExperimentStatus.RUNNING
         self.save()
 
         if self._event_listener.exists("start"):
@@ -348,17 +284,13 @@ class Experiment(Viewable):
             await self._event_listener.async_call("end", self)
 
         self.data["pid"] = 0
-        self._is_running = False
-        self._is_finished = True
-        self._is_success = True
+        self.status = ExperimentStatus.SUCCESS
         self.save()
 
-    async def mark_as_error(self, error_message: str):
+    def mark_as_error(self, error_message: str):
         self.protocol.progress_bar.stop(error_message)
         self.data["pid"] = 0
-        self._is_running = False
-        self._is_finished = True
-        self._is_success = False
+        self.status = ExperimentStatus.ERROR
         self.save()
     # -- S --
 
@@ -416,10 +348,7 @@ class Experiment(Viewable):
                 "uri": self.protocol.uri,
                 "type": self.protocol.type
             },
-            "is_draft": self.is_draft,
-            "is_running": self.is_running,
-            "is_finished": self.is_finished,
-            "is_success": self._is_success
+            "status": self.status
         })
 
         if stringify:
@@ -440,8 +369,8 @@ class Experiment(Viewable):
 
         if self.is_validated:
             return
-        if not self.is_finished:
-            return
+        if self.is_running:
+            raise BadRequestException("Can't validate a running experiment")
         with self._db_manager.db.atomic() as transaction:
             self.is_validated = True
             if self.save():
@@ -464,19 +393,16 @@ class Experiment(Viewable):
             raise BadRequestException("The experiment is archived")
         if self.is_validated:
             raise BadRequestException("The experiment is validated")
-        # if self.status == ExperimentStatus.RUNNING:
-            # raise BadRequestException("The experiment is already running")
+        if self.status == ExperimentStatus.RUNNING:
+            raise BadRequestException("The experiment is already running")
 
     def check_is_stopable(self) -> None:
         """Throw an error if the experiment is not stopable
         """
 
         # check experiment status
-        if not self._is_running:
+        if self.status != ExperimentStatus.RUNNING:
             raise BadRequestException(
                 detail=f"Experiment '{self.uri}' is not running")
-        elif self._is_finished:
-            raise BadRequestException(
-                detail=f"Experiment '{self.uri}' is already finished")
 
     # -- V --

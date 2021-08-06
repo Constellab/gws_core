@@ -35,7 +35,7 @@ def run_experiment(ctx, experiment_uri, user_uri):
 
     try:
         asyncio.run(ExperimentService.run_experiment(
-            experiment_uri=experiment_uri, user=user, wait_response=True))
+            experiment_uri=experiment_uri, user=user))
     except Exception as err:
         ExceptionHandler.handle_exception(err)
         raise BadRequestException(

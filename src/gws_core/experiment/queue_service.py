@@ -88,10 +88,8 @@ class QueueService(BaseService):
         if not job:
             return
 
+        # tester que l'experiment est bien à jour
         experiment: Experiment = job.experiment
-        if experiment.is_finished:
-            Queue.pop_first()
-            return
 
         if verbose:
             Logger.info(
@@ -111,11 +109,11 @@ class QueueService(BaseService):
             ExperimentService.run_through_cli(
                 experiment=experiment, user=job.user)
         except Exception as err:
-            Queue.pop_first()
             raise BadRequestException(
                 f"An error occured while runnig the experiment. Error: {err}.") from err
-        # finally:
+        finally:
             # Remove the experiment from the queue before executing it
+            Queue.pop_first()
 
     @classmethod
     def add_experiment_to_queue(cls, experiment_uri: str) -> Experiment:

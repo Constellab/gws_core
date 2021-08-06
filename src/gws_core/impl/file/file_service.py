@@ -97,7 +97,7 @@ class FileService(BaseService):
             except Exception as err:
                 raise NotFoundException(detail=f"Study not found") from err
         try:
-            await ExperimentService.run_experiment(experiment_uri=experiment.uri, wait_response=True)
+            await ExperimentService.run_experiment(experiment_uri=experiment.uri)
             return uploader.output["result"]
         except Exception as err:
             raise BadRequestException(detail=f"Upload failed. Error: {err}")

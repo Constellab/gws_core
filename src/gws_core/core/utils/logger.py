@@ -73,8 +73,9 @@ class Logger:
         Logger._file_path = path.join(log_dir, LOGGER_FILE_NAME)
         # file_handler = logging.FileHandler(Logger._file_path)
 
+        # define a TimeRotating file to create a new file each day à 00:00
         file_handler = TimedRotatingFileHandler(
-            Logger._file_path, when="M")
+            Logger._file_path, when="midnight")
         file_handler.setFormatter(formatter)
         Logger._logger.addHandler(file_handler)
 

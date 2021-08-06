@@ -8,8 +8,9 @@ import json
 import os
 import unittest
 
-from gws_core import (Experiment, GTest, Protocol, RobotCreate, RobotEat,
-                      RobotMove, RobotWait, Settings, Study)
+from gws_core import (Experiment, ExperimentStatus, GTest, Protocol,
+                      RobotCreate, RobotEat, RobotMove, RobotWait, Settings,
+                      Study)
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
@@ -69,16 +70,16 @@ class TestProtocol(unittest.TestCase):
         Q = Protocol.select()
         self.assertEqual(len(Q), count+1)
 
-        e = Experiment(protocol=proto, study=GTest.study, user=GTest.user)
+        experiment: Experiment = Experiment(
+            protocol=proto, study=GTest.study, user=GTest.user)
 
         def _check_exp(*args, **kwargs):
-            self.assertEqual(len(e.processes), 7)
-            self.assertEqual(e.is_finished, False)
-            self.assertEqual(e.is_running, True)
+            self.assertEqual(len(experiment.processes), 7)
+            self.assertEqual(experiment.status, ExperimentStatus.RUNNING)
 
-        e.on_end(_check_exp)
-        e.save()
-        asyncio.run(e.run(user=GTest.user))
+        experiment.on_end(_check_exp)
+        experiment.save()
+        asyncio.run(experiment.run(user=GTest.user))
 
     def test_advanced_protocol(self):
         GTest.print("Advanced protocol")
