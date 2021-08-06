@@ -295,7 +295,8 @@ class Model(Base, PeeweeModel):
             return
 
         # remove the table's path in one shot
-        path = cls.__get_base_kv_store_path_of_table()
+        slot_path = cls.__get_base_kv_store_path_of_table()
+        path = KVStore._create_full_dir_path(slot_path)
         if os.path.exists(path):
             shutil.rmtree(path)
         

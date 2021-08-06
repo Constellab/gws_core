@@ -58,7 +58,11 @@ class KVStore:
         :rtype: str
         """
 
-        return os.path.join(self.get_base_dir(), self._slot_path)
+        return self._create_full_dir_path(self._slot_path)
+
+    @classmethod
+    def _create_full_dir_path(cls, slot_path):
+        return os.path.join(cls.get_base_dir(), slot_path)
 
     # -- F --
 
