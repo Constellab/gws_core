@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 import asyncio
-import unittest
+from unittest import IsolatedAsyncioTestCase
 
 from gws_core import Experiment, ExperimentService, GTest, Resource, Shell
 
@@ -27,7 +27,7 @@ class Echo(Shell):
         self.output["stdout"] = res
 
 
-class TestShell(unittest.TestCase):
+class TestShell(IsolatedAsyncioTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -39,7 +39,7 @@ class TestShell(unittest.TestCase):
     def tearDownClass(cls):
         GTest.drop_tables()
 
-    def test_shell(self):
+    async def test_shell(self):
         GTest.print("Shell")
 
         proc = Echo()
@@ -47,12 +47,6 @@ class TestShell(unittest.TestCase):
         experiment: Experiment = proc.create_experiment(
             study=GTest.study, user=GTest.user)
 
-        def _on_end(*args, **kwargs):
-            res = proc.output['stdout']
-            self.assertEqual(res.data["out"], "Jhon Doe")
-
-        # todo check
-        experiment.on_end(_on_end)
-        # use the _run_experiment to have the same instance and so get the end event
-        asyncio.run(ExperimentService._run_experiment(
-            experiment=experiment, user=GTest.user))
+        experiment = await ExperimentService.run_experiment(experiment=experiment, user=GTest.user)
+        res = proc.output['stdout']
+        self.assertEqual(res.data["out"], "Jhon Doe")

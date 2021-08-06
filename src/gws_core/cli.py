@@ -10,6 +10,7 @@ import click
 from .core.exception.exception_handler import ExceptionHandler
 from .core.exception.exceptions import BadRequestException
 from .core.utils.settings import Settings
+from .experiment.experiment import Experiment
 from .experiment.experiment_service import ExperimentService
 from .user.user import User
 
@@ -33,9 +34,11 @@ def run_experiment(ctx, experiment_uri, user_uri):
     if not user.is_authenticated:
         raise BadRequestException("The user must be HTTP authenticated")
 
+    experiment: Experiment = Experiment.get_by_uri_and_check(experiment_uri)
+
     try:
         asyncio.run(ExperimentService.run_experiment(
-            experiment_uri=experiment_uri, user=user))
+            experiment=experiment, user=user))
     except Exception as err:
         ExceptionHandler.handle_exception(err)
         raise BadRequestException(

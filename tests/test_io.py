@@ -103,4 +103,4 @@ class TestIO(unittest.TestCase):
         for k in jump.input:
             print(k)
             print(jump.input[k])
-            #self.assertEquals( jump.input[k] )
+            #self.assertEqual( jump.input[k] )

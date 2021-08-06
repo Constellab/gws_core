@@ -3,9 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import asyncio
 import time
-import unittest
+from unittest import IsolatedAsyncioTestCase
 
 from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
                       Process, QueueService, Resource, RobotService, Settings)
@@ -14,7 +13,7 @@ settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
 
 
-class TestExperiment(unittest.TestCase):
+class TestExperiment(IsolatedAsyncioTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -27,7 +26,7 @@ class TestExperiment(unittest.TestCase):
         QueueService.deinit()
         GTest.drop_tables()
 
-    def test_run(self):
+    async def test_run(self):
         GTest.print("Run Experiment")
         self.assertEqual(Experiment.count_of_running_experiments(), 0)
 
@@ -64,17 +63,12 @@ class TestExperiment(unittest.TestCase):
         self.assertEqual(Resource.select().count(), 0)
         self.assertEqual(Experiment.select().count(), 1)
 
-        def _check_exp1(*args, **kwargs):
-            #self.assertEqual(e2.processes.count(), 18)
-            self.assertEqual(len(experiment2.processes), 15)
-            self.assertEqual(experiment2.status, ExperimentStatus.RUNNING)
-
-        # todo check
-        experiment2.on_end(_check_exp1)
-        # use the _run_experiment to have the same instance and so get the end event
         print("Run experiment_2 ...")
-        asyncio.run(ExperimentService._run_experiment(
-            experiment=experiment2, user=GTest.user))
+        experiment2 = await ExperimentService.run_experiment(experiment=experiment2, user=GTest.user)
+
+        #self.assertEqual(e2.processes.count(), 18)
+        self.assertEqual(len(experiment2.processes), 15)
+        self.assertEqual(experiment2.status, ExperimentStatus.SUCCESS)
 
         Q1 = experiment1.resources
         Q2 = experiment2.resources
@@ -84,9 +78,6 @@ class TestExperiment(unittest.TestCase):
 
         time.sleep(2)
         self.assertEqual(experiment2.pid, 0)
-        #self.assertEqual(e2.processes.count(), 18)
-        self.assertEqual(len(experiment2.processes), 15)
-        self.assertEqual(experiment2.status, ExperimentStatus.SUCCESS)
 
         e2_bis: Experiment = Experiment.get(Experiment.uri == experiment1.uri)
         self.assertEqual(e2_bis.protocol.get_title(), proto_title)

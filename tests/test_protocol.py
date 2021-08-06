@@ -6,7 +6,7 @@
 import asyncio
 import json
 import os
-import unittest
+from unittest import IsolatedAsyncioTestCase
 
 from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
                       Protocol, RobotCreate, RobotEat, RobotMove, RobotWait,
@@ -16,7 +16,7 @@ settings = Settings.retrieve()
 testdata_dir = settings.get_dir("gws:testdata_dir")
 
 
-class TestProtocol(unittest.TestCase):
+class TestProtocol(IsolatedAsyncioTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -28,7 +28,7 @@ class TestProtocol(unittest.TestCase):
     def tearDownClass(cls):
         GTest.drop_tables()
 
-    def test_protocol(self):
+    async def test_protocol(self):
         GTest.print("Protocol")
 
         study = Study.get_by_id(1)
@@ -73,19 +73,15 @@ class TestProtocol(unittest.TestCase):
         experiment: Experiment = Experiment(
             protocol=proto, study=GTest.study, user=GTest.user)
 
-        def _check_exp(*args, **kwargs):
-            self.assertEqual(len(experiment.processes), 7)
-            self.assertEqual(experiment.status, ExperimentStatus.RUNNING)
-
         experiment.save()
 
-        # todo check
-        experiment.on_end(_check_exp)
-        # use the _run_experiment to have the same instance and so get the end event
-        asyncio.run(ExperimentService._run_experiment(
-            experiment=experiment, user=GTest.user))
+        experiment = await ExperimentService.run_experiment(
+            experiment=experiment, user=GTest.user)
 
-    def test_advanced_protocol(self):
+        self.assertEqual(len(experiment.processes), 7)
+        self.assertEqual(experiment.status, ExperimentStatus.SUCCESS)
+
+    async def test_advanced_protocol(self):
         GTest.print("Advanced protocol")
         p0 = RobotCreate(instance_name="p0")
         p1 = RobotMove()
@@ -164,25 +160,19 @@ class TestProtocol(unittest.TestCase):
         experiment: Experiment = super_proto.create_experiment(
             study=GTest.study, user=GTest.user)
 
-        def _on_end(*args, **kwargs):
-            mini_proto_reloaded = Protocol.get_by_id(mini_proto.id)
-            s3 = json.loads(mini_proto_reloaded.dumps(bare=True))
-            self.assertEqual(s3, s1)
-            Q = Protocol.select()
-            self.assertEqual(len(Q), count+2)
-
-        # todo check
-        experiment.on_end(_on_end)
-        # use the _run_experiment to have the same instance and so get the end event
-        Q = Protocol.select()
         self.assertEqual(Protocol.select().count(), count+2)
 
-        asyncio.run(ExperimentService._run_experiment(
-            experiment=experiment, user=GTest.user))
+        experiment = await ExperimentService.run_experiment(
+            experiment=experiment, user=GTest.user)
 
-    def test_graph_load(self):
+        mini_proto_reloaded = Protocol.get_by_id(mini_proto.id)
+        s3 = json.loads(mini_proto_reloaded.dumps(bare=True))
+        self.assertEqual(s3, s1)
+        Q = Protocol.select()
+        self.assertEqual(len(Q), count+2)
+
+    async def test_graph_load(self):
         GTest.print("Load protocol graph")
-        study = Study.get_by_id(1)
 
         with open(os.path.join(testdata_dir, "mini_travel_graph.json"), "r") as f:
             s1 = json.load(f)
@@ -211,18 +201,16 @@ class TestProtocol(unittest.TestCase):
             ]
         )
 
-        def _on_end(*args, **kwargs):
-            saved_mini_proto = Protocol.get(Protocol.id == mini_proto.id)
-            # load none bare
-            mini_proto2 = Protocol.from_graph(saved_mini_proto.graph)
-            self.assertTrue(mini_proto.graph, mini_proto2.graph)
+        experiment: Experiment = super_proto.create_experiment(
+            study=GTest.study, user=GTest.user)
 
-        experiment: Experiment = super_proto.create_experiment(study=GTest.study, user=GTest.user)
-        # todo check
-        experiment.on_end(_on_end)
-        # use the _run_experiment to have the same instance and so get the end event
-        asyncio.run(ExperimentService._run_experiment(
-            experiment=experiment, user=GTest.user))
+        experiment = await ExperimentService.run_experiment(
+            experiment=experiment, user=GTest.user)
+
+        saved_mini_proto = Protocol.get(Protocol.id == mini_proto.id)
+        # load none bare
+        mini_proto2 = Protocol.from_graph(saved_mini_proto.graph)
+        self.assertTrue(mini_proto.graph, mini_proto2.graph)
 
     def test_protocol_update(self):
         GTest.print("Update protocol")
@@ -231,13 +219,13 @@ class TestProtocol(unittest.TestCase):
 
         mini_proto = Protocol.from_graph(graph)
         p = mini_proto.get_process("p1")
-        self.assertEquals(p.config.get_param("moving_step"), 0.1)
+        self.assertEqual(p.config.get_param("moving_step"), 0.1)
 
         graph = mini_proto.dumps(as_dict=True)
         graph["nodes"]["p1"]["config"]["data"]["params"] = {}
         graph["nodes"]["p1"]["config"]["data"]["params"]["moving_step"] = 3.14
         mini_proto2 = Protocol.from_graph(graph)
         p2 = mini_proto2.get_process("p1")
-        self.assertEquals(mini_proto2, mini_proto)
-        self.assertEquals(p2.config, p.config)
-        self.assertEquals(p2.config.get_param("moving_step"), 3.14)
+        self.assertEqual(mini_proto2, mini_proto)
+        self.assertEqual(p2.config, p.config)
+        self.assertEqual(p2.config.get_param("moving_step"), 3.14)

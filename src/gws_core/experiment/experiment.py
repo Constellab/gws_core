@@ -5,7 +5,6 @@
 
 import json
 from enum import Enum
-from math import pi
 from typing import List, Union
 
 from peewee import BooleanField, FloatField, ForeignKeyField
@@ -13,7 +12,6 @@ from peewee import BooleanField, FloatField, ForeignKeyField
 from ..core.classes.enum_field import EnumField
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.sys_proc import SysProc
-from ..core.utils.event import EventListener
 from ..model.viewable import Viewable
 from ..protocol.protocol import Protocol
 from ..study.study import Study
@@ -57,8 +55,6 @@ class Experiment(Viewable):
                        default=ExperimentStatus.DRAFT)
     is_validated = BooleanField(default=False, index=True)
 
-    # todo move the event listener into a service because it depends on the experiment instance
-    _event_listener: EventListener = None
     _table_name = 'gws_experiment'
 
     def __init__(self, *args, user: User = None, **kwargs):
@@ -96,8 +92,6 @@ class Experiment(Viewable):
 
         else:
             pass
-
-        self._event_listener = EventListener()
 
     # -- A --
 
@@ -185,14 +179,6 @@ class Experiment(Viewable):
 
     # -- J --
 
-    # -- O --
-
-    def on_end(self, call_back: callable):
-        self._event_listener.add("end", call_back)
-
-    def on_start(self, call_back: callable):
-        self._event_listener.add("start", call_back)
-
     # -- P --
 
     @property
@@ -271,20 +257,13 @@ class Experiment(Viewable):
         self.data["pid"] = pid
         self.save()
 
-    async def mark_as_started(self):
+    def mark_as_started(self):
         self.protocol.set_experiment(self)
         self.data["pid"] = 0
         self.status = ExperimentStatus.RUNNING
         self.save()
 
-        if self._event_listener.exists("start"):
-            self._event_listener.sync_call("start", self)
-            await self._event_listener.async_call("start", self)
-
-    async def mark_as_success(self):
-        if self._event_listener.exists("end"):
-            self._event_listener.sync_call("end", self)
-            await self._event_listener.async_call("end", self)
+    def mark_as_success(self):
 
         self.data["pid"] = 0
         self.status = ExperimentStatus.SUCCESS

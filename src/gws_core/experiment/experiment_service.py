@@ -6,7 +6,7 @@
 import os
 import subprocess
 import traceback
-from typing import Union
+from typing import Any, Coroutine, Union
 
 from peewee import ModelSelect
 
@@ -209,34 +209,7 @@ class ExperimentService(BaseService):
                 detail=f"Cannot validate experiment '{uri}'") from err
 
     @classmethod
-    async def run_experiment(cls, experiment_uri: str, user: User = None) -> Experiment:
-        """
-        Run the experiment
-        :param experiment_uri: The uri of the experiment to run
-        :type experiment_uri: `str`
-        :param user: The user who is running the experiment. If not provided, the system will try the get the currently authenticated user
-        :type user: `gws.user.User`
-        """
-
-        experiment: Experiment = None
-        try:
-            experiment = Experiment.get(
-                Experiment.uri == experiment_uri)
-        except Exception as err:
-            raise BadRequestException(
-                f"No experiment found with uri {experiment_uri}. Error: {err}") from err
-
-        Logger.info(f"Running experiment : {experiment_uri}")
-
-        try:
-            await cls._run_experiment(experiment=experiment, user=user)
-        except Exception as err:
-            Logger.log_exception_stack_trace()
-            raise BadRequestException(
-                f"An error occured. Error: {err}") from err
-
-    @classmethod
-    async def _run_experiment(cls, experiment: Experiment, user: User = None) -> Experiment:
+    async def run_experiment(cls, experiment: Experiment, user: User = None) -> Coroutine[Any, Any, Experiment]:
         """
         Run the experiment
 
@@ -256,6 +229,8 @@ class ExperimentService(BaseService):
         # check experiment status
         experiment.check_is_runnable()
 
+        Logger.info(f"Running experiment : {experiment.uri}")
+
         ActivityService.add(
             Activity.START,
             object_type=experiment.full_classname(),
@@ -264,11 +239,13 @@ class ExperimentService(BaseService):
         )
 
         try:
-            await experiment.mark_as_started()
+            experiment.mark_as_started()
 
             await experiment.protocol._run()
 
-            await experiment.mark_as_success()
+            experiment.mark_as_success()
+
+            return experiment
         except Exception as err:
             # time.sleep(3)  # -> wait for 3 sec to prevent database lock!
 

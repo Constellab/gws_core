@@ -51,17 +51,17 @@ class TestResource(unittest.TestCase):
         c2 = Car()
 
         rs = ResourceSet()
-        self.assertEquals(len(rs), 0)
+        self.assertEqual(len(rs), 0)
 
         rs['c1'] = c1
         rs['c2'] = c2
-        self.assertEquals(len(rs), 2)
+        self.assertEqual(len(rs), 2)
 
         self.assertTrue(rs.save())
 
         rs2 = ResourceSet.get_by_id(rs.id)
-        self.assertEquals(rs, rs2)
-        self.assertEquals(len(rs2), 2)
+        self.assertEqual(rs, rs2)
+        self.assertEqual(len(rs2), 2)
 
-        self.assertEquals(rs2['c1'], c1)
-        self.assertEquals(rs2['c2'], c2)
+        self.assertEqual(rs2['c1'], c1)
+        self.assertEqual(rs2['c2'], c2)
