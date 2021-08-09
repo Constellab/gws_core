@@ -94,8 +94,7 @@ class Model(Base, PeeweeModel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not Model.LAB_URI:
-            settings = Settings.retrieve()
-            Model.LAB_URI = settings.get_data("uri")
+            Model.LAB_URI = Settings.retrieve().get_data("uri")
         if not self.id and self._is_singleton:
             self.__init_singleton_in_place()
 
@@ -274,7 +273,7 @@ class Model(Base, PeeweeModel):
 
         if not isinstance(other, Model):
             return False
-        return (self is other) or ((self.id != None) and (self.id == other.id))
+        return (self is other) or ((self.id is not None) and (self.id == other.id))
 
     # -- F --
 
@@ -297,7 +296,7 @@ class Model(Base, PeeweeModel):
         try:
             model: Model = model_type.get(model_type.uri == uri)
             if as_json:
-                model.to_json()
+                return model.to_json()
             else:
                 return model
         except Exception as _:
@@ -323,7 +322,7 @@ class Model(Base, PeeweeModel):
         if model.full_classname() == model.type:
             return type(cls)
 
-        model_t: type = self.get_model_type(model.type)
+        model_t: type = cls.get_model_type(model.type)
         return model_t
 
     # -- G --
@@ -333,9 +332,8 @@ class Model(Base, PeeweeModel):
             raise BadRequestException(
                 f"The relation {relation_name} does not exists")
         rel: dict = self.data["__relations"][relation_name]
-        from ..service.model_service import ModelService
-        t = ModelService.get_model_type(rel["type"])
-        return t.get(t.uri == rel["uri"])
+        model_type: Type[Model] = self.get_model_type(rel["type"])
+        return model_type.get(model_type.uri == rel["uri"])
 
     @classmethod
     def get_table_name(cls) -> str:
@@ -579,7 +577,7 @@ class Model(Base, PeeweeModel):
 
     # -- T --
 
-    def to_json(self, *, show_hash=False, bare: bool = False, stringify: bool = False, prettify: bool = False, jsonifiable_data_keys: list = [], **kwargs) -> Union[str, dict]:
+    def to_json(self, *, show_hash=False, bare: bool = False, stringify: bool = False, prettify: bool = False, jsonifiable_data_keys: list = None, **kwargs) -> Union[str, dict]:
         """
         Returns a JSON string or dictionnary representation of the model.
 
@@ -594,6 +592,9 @@ class Model(Base, PeeweeModel):
         :return: The representation
         :rtype: `dict`, `str`
         """
+
+        if jsonifiable_data_keys is None:
+            jsonifiable_data_keys = []
 
         _json = {}
         # jsonifiable_data_keys
