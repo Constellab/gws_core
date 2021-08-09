@@ -3,9 +3,14 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import inspect
+import os
 import random
 import string
+from typing import Any, List
 
+from gws_core.core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 from slugify import slugify as _slugify
 
 
@@ -55,3 +60,22 @@ class Utils:
         components = snake_str.split('_')
         c0 = components[0].title() if capitalize_first else components[0]
         return c0 + ''.join(x.title() for x in components[1:])
+
+    # -- T --
+    @staticmethod
+    def get_brick_name(obj: Any) -> str:
+        """Methode to return a brick of any object
+
+        :param obj: class, method...
+        :type obj: Any
+        :rtype: str
+        """
+        module = inspect.getmodule(obj)
+
+        if module is None:
+            raise BadRequestException(
+                f"Can't find python module of object {obj}")
+
+        modules: List[str] = module.__name__.split('.')
+
+        return modules[0]

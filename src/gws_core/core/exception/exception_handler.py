@@ -6,9 +6,10 @@
 import inspect
 import os
 import uuid
-from typing import Dict, List
+from typing import Dict
 
 from fastapi import status
+from gws_core.core.utils.utils import Utils
 from starlette.exceptions import HTTPException
 
 from ..utils.logger import Logger
@@ -16,7 +17,6 @@ from .exception_response import ExceptionResponse
 from .exceptions.base_http_exception import BaseHTTPException
 
 CODE_SEPARATOR = '.'
-BRICKS_FOLDER = 'bricks'
 
 
 class ExceptionHandler():
@@ -143,16 +143,7 @@ class ExceptionHandler():
         """
         frame_info: inspect.FrameInfo = inspect.trace()[-1]
 
-        if frame_info is None:
-            return ""
-
-        file_paths: List[str] = frame_info.filename.split(os.sep)
-        try:
-            # return the folder name after the folder named 'bricks'
-            brick_index = file_paths.index(BRICKS_FOLDER)
-            return file_paths[brick_index + 1]
-        except ValueError:
-            return ""
+        return Utils.get_brick_name(frame_info[0])
 
     @classmethod
     def _replace_detail_args(cls, detail: str, detail_args: Dict) -> str:
