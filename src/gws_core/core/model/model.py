@@ -10,10 +10,9 @@ import json
 import os
 import re
 import shutil
-from typing import List, Dict
 import uuid
 from datetime import datetime
-from typing import Type, Union
+from typing import Dict, List, Type, Union
 
 from fastapi.encoders import jsonable_encoder
 from gws_core.core.utils import settings
@@ -114,15 +113,15 @@ class Model(Base, PeeweeModel):
 
     # -- A --
 
-     def add_related_model(self, relation_name: str, related_model: 'Model'):
-            # ToDo : Add annotation name
-            if "__relations" not in self.data:
-                self.data["__relations"] = {}
-            self.data["__relations"][relation_name] = {
-                "uri": related_model.uri,
-                "type": related_model.full_classname(),
-                #"name": related_model.name
-            }
+    def add_related_model(self, relation_name: str, related_model: 'Model'):
+        # ToDo : Add annotation name
+        if "__relations" not in self.data:
+            self.data["__relations"] = {}
+        self.data["__relations"][relation_name] = {
+            "uri": related_model.uri,
+            "type": related_model.full_classname(),
+            # "name": related_model.name
+        }
 
     def archive(self, archive: bool) -> bool:
         """
@@ -279,7 +278,7 @@ class Model(Base, PeeweeModel):
 
     # -- F --
 
-     @classmethod
+    @classmethod
     def fetch_model(cls, type_str: str, uri: str, as_json=False) -> 'Model':
         """
         Fetch a model
@@ -331,12 +330,12 @@ class Model(Base, PeeweeModel):
 
     def get_related_model(self, relation_name: str) -> 'Model':
         if ("__relations" not in self.data) or (relation_name not in self.data["__relations"]):
-            raise BadRequestException(f"The relation {relation_name} does not exists")
+            raise BadRequestException(
+                f"The relation {relation_name} does not exists")
         rel: dict = self.data["__relations"][relation_name]
         from ..service.model_service import ModelService
         t = ModelService.get_model_type(rel["type"])
         return t.get(t.uri == rel["uri"])
-
 
     @classmethod
     def get_table_name(cls) -> str:
