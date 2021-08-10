@@ -267,7 +267,7 @@ class Process(Viewable):
 
     # -- G --
 
-    def get_param(self, name: str) -> [str, int, float, bool]:
+    def get_param(self, name: str) -> [str, int, float, bool, list, dict]:
         """
         Returns the value of a parameter of the process config by its name.
 

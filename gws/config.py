@@ -79,7 +79,7 @@ class Config(Viewable):
 
     # -- G --
 
-    def get_param(self, name: str) -> (str, int, float, bool,):
+    def get_param(self, name: str) -> (str, int, float, bool, list, dict):
         """
         Returns the value of a parameter by its name
 

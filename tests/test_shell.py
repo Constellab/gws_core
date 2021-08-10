@@ -22,14 +22,10 @@ class Echo(Shell):
         'name': {"type": str, "default": None, 'description': "The name to echo"},
         'save_stdout': {"type": bool, "default": False, 'description': "True to save the command output text. False otherwise"},
     }
-    _stdout = ""
 
     def build_command(self) -> list:
         name = self.get_param("name")
         return ["echo", name]
-
-    def on_stdout_change(self, stdout_count: int=0, stdout_line: str="") -> tuple:
-        self._stdout += stdout_line
 
     def gather_outputs(self):
         res = Resource()

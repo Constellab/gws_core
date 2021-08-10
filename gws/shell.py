@@ -29,10 +29,13 @@ class Shell(Process):
     _out_type = "text"
     _tmp_dir = None
     _shell_mode = False
+    _stdout = ""
+    _stdout_count = 0
+    _STDOUT_MAX_CHAR_LENGHT = 1024*10
 
     def build_command(self) -> list:
         """
-        This method builds the command to execute.
+        Builds the user command to execute.
 
         :return: The list of arguments used to build the final command in the Python method `subprocess.run`
         :rtype: `list`
@@ -40,9 +43,19 @@ class Shell(Process):
 
         return [""]
 
-    def _format_command_in_shell_mode(self, user_cmd: list) -> (list, str, ):
+    def build_env(self) -> dict:
         """
-        Format the final shell command
+        Creates the list environment variables
+
+        :return: The environment variables
+        :rtype: `dict`
+        """
+
+        return {}
+
+    def _format_command(self, user_cmd: list) -> (list, str, ):
+        """
+        Format the user command
 
         :param stdout: The final command
         :param type: `list`, `str`
@@ -79,7 +92,12 @@ class Shell(Process):
 
         """
 
-        pass
+        self._stdout_count = stdout_count
+        self._stdout += stdout_line
+        if len(self._stdout) > self._STDOUT_MAX_CHAR_LENGHT:
+            self._stdout = self._stdout[-self._STDOUT_MAX_CHAR_LENGHT:]
+
+
 
     @property
     def cwd(self) -> tempfile.TemporaryDirectory:
@@ -114,23 +132,29 @@ class Shell(Process):
 
         try:
             user_cmd = self.build_command()
+            user_env = self.build_env()
 
+            if not isinstance(user_env, dict):
+                raise BadRequestException(
+                    "Method 'build_env' must return a dictionnary")
+
+            if not user_env:
+                user_env = None
+            
             if not isinstance(user_cmd, list):
                 raise BadRequestException(
                     "Method 'build_command' must return a list of string. Please set 'shell_mode=True' to format your custom shell command")
 
             cmd = [str(c) for c in user_cmd]
-            if self._shell_mode:
-                cmd = self._format_command_in_shell_mode(user_cmd=user_cmd)
+            cmd = self._format_command(cmd)
 
             if not os.path.exists(self.working_dir):
                 os.makedirs(self.working_dir)
 
-            # proc = subprocess.run(
-            # proc = subprocess.Popen(
             proc = SysProc.popen(
                 cmd,
                 cwd=self.working_dir,
+                env=user_env,
                 shell=self._shell_mode,
                 stdout=subprocess.PIPE
             )
@@ -153,16 +177,16 @@ class Shell(Process):
                 if isinstance(f, File):
                     f.move_to_default_store()
 
-                self._tmp_dir.cleanup()
+                self.cwd.cleanup()
                 self._tmp_dir = None
 
         except subprocess.CalledProcessError as err:
-            self._tmp_dir.cleanup()
+            self.cwd.cleanup()
             self._tmp_dir = None
             raise BadRequestException(
                 f"An error occured while running the binary in shell process. Error: {err}") from err
         except Exception as err:
-            self._tmp_dir.cleanup()
+            self.cwd.cleanup()
             self._tmp_dir = None
             raise BadRequestException(
                 f"An error occured while running shell process. Error: {err}") from err
@@ -177,7 +201,7 @@ class CondaShell(Shell):
 
     _shell_mode = True
 
-    def _format_command_in_shell_mode(self, user_cmd: list) -> str:
+    def _format_command(self, user_cmd: list) -> str:
         if isinstance(user_cmd, list):
             user_cmd = [str(c) for c in user_cmd]
             user_cmd = ' '.join(user_cmd)
