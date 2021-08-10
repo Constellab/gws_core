@@ -19,12 +19,34 @@ class CondaEnvShell(BaseEnvShell):
     """
     CondaEnvShell process.
 
-    This class allows to run python scripts in conda virtual environments.
-    See also https://conda.io/
+    This class allows to run python scripts in conda virtual environments. It rely on the awesome
+    Conda containerization system to efficiently automate the management of your venvs.
+    See also https://conda.io/.
+
+    :property env_file_path: The dependencies to install. Could be a list of modules or the path of a dependency file.
+    :type env_file_path: `list`,`str`
+
+    For conda, a typical yml environment file content is:
+        ```
+        name: my_env_name
+        channels:
+          - javascript
+          - conda-forge
+        dependencies:
+          - r-base=3.1.2
+          - r-tidyverse
+          - python=3.6
+          - bokeh=0.9.2
+          - numpy=1.9.*
+          - nodejs=0.10.*
+          - flask
+          - pip:
+            - Flask-Testing
+        ```
     """
 
+    env_file_path: str = None
     _shell_mode = True
-    _python_version = "3.8"
 
     # -- F --
 
@@ -48,26 +70,22 @@ class CondaEnvShell(BaseEnvShell):
 
         if cls.is_installed():
             return
-        dep = list(set([
-            *cls._dependencies
-        ]))
-        dep = " ".join(dep)
-
+        if isinstance(cls.env_file_path, str):
+            if not os.path.exists(cls.env_file_path):
+                raise BadRequestException(f"The dependency file '{cls.env_file_path}' does not exist")
+        else:
+            raise BadRequestException("Invalid env file path")
         cmd = [
-            'bash -c "source /opt/conda/etc/profile.d/conda.sh"',
-            "&&",
-            f"conda create -y --prefix ./.venv python={cls._python_version} {dep}",
-            "&&",
+            'bash -c "source /opt/conda/etc/profile.d/conda.sh"', "&&",
+            f"conda env create -f {cls.env_file_path} --force --prefix ./.venv", "&&",
             "touch READY",
         ]
-
         try:
             Logger.progress("Installing the virtual environment ...")
             subprocess.check_call(
                 " ".join(cmd),
                 cwd=cls.get_env_dir(),
                 stderr=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL,
                 shell=True
             )
             Logger.progress("Virtual environment installed!")
@@ -80,12 +98,9 @@ class CondaEnvShell(BaseEnvShell):
     def uninstall(cls):
         if not cls.is_installed():
             return
-        
         cmd = [
-            "conda remove -y --prefix .venv --all",
-            "&&",
-            "cd ..",
-            "&&",
+            "conda remove -y --prefix .venv --all", "&&",
+            "cd ..", "&&",
             f"rm -rf {cls.get_env_dir()}"
         ]
         try:
@@ -94,7 +109,6 @@ class CondaEnvShell(BaseEnvShell):
                 " ".join(cmd),
                 cwd=cls.get_env_dir(),
                 stderr=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL,
                 shell=True
             )
             Logger.progress("Virtual environment removed!")

@@ -18,10 +18,16 @@ class BaseEnvShell(Shell):
     EnvShell process.
 
     This class is a proxy to run user shell commands in virtual environments
+
+    :property unique_env_name: The unique name of the virtual environment.
+        If `None`, a unique name is automtically defined for the Process.
+        The share virtual environments across diffrent process, 
+        it is recommended to set (freeze) the ```unique_env_name``` in a base class and let other
+        compatible processes inherit this base class.
+    :type unique_env_name: `str`
     """
 
-    config_specs = {}
-    _dependencies = []
+    unique_env_name = None
     _shell_mode = False
     _GLOBAL_ENV_DIR = "/.local/share/gws/venv/"
 
@@ -36,7 +42,9 @@ class BaseEnvShell(Shell):
         Returns the directory of the virtual env of the process class
         """
 
-        return os.path.join(cls._GLOBAL_ENV_DIR, cls.full_classname())
+        if not cls.unique_env_name:
+            cls.unique_env_name = cls.full_classname()
+        return os.path.join(cls._GLOBAL_ENV_DIR, cls.unique_env_name)
 
     # -- I --
 

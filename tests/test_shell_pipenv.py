@@ -11,17 +11,14 @@ from gws.resource import Resource
 from gws.penv.pipenv import PipEnvShell
 from gws.unittest import GTest
 
-class IPAddressLookup(PipEnvShell):
+__cdir__ = os.path.abspath(os.path.dirname(__file__))
+class PipEnvTester(PipEnvShell):
     input_specs = {}
     output_specs = {'stdout': (Resource, )}
-    _dependencies = ["pyjwt"]
+    env_file_path = os.path.join(__cdir__, "testdata", "penv", "env_jwt_pip.txt")
     
     def build_command(self) -> list:
-        __cdir__ = os.path.dirname(os.path.realpath(__file__))
-        return [
-            "python",
-            os.path.join(__cdir__, "testdata", "penv", "jwt_encode.py")
-        ]
+        return [ "python", os.path.join(__cdir__, "testdata", "penv", "jwt_encode.py") ]
 
     def gather_outputs(self):
         res = Resource()
@@ -39,10 +36,11 @@ class TestProcess(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         GTest.drop_tables()
-
+        PipEnvTester.uninstall()
+        
     def test_pipenv(self):
         GTest.print("Pipenv")
-        proc = IPAddressLookup()
+        proc = PipEnvTester()
         self.assertFalse(proc.is_installed())
 
         e = proc.create_experiment(user=GTest.user, study=GTest.study)

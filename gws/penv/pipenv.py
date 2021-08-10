@@ -19,11 +19,31 @@ class PipEnvShell(BaseEnvShell):
     """
     PipEnvShell process.
 
-    This class allows to run python scripts in pipenv virtual environments.
-    See also https://pipenv.pypa.io/
+    This class allows to run python scripts in pipenv virtual environments. It rely on the awesome
+    Pipenv module to efficiently automate the management of your venvs.
+    See also https://pipenv.pypa.io/.
+
+    :property env_file_path: The dependencies to install. Could be a list of modules or the path of a dependency file.
+    :type env_file_path: `list`,`str`
+
+    * A typical environment Pipefile is:
+        ```
+        [[source]]
+        url = 'https://pypi.python.org/simple'
+        verify_ssl = true
+        name = 'pypi'
+
+        [requires]
+        python_version = '3.8'
+
+        [packages]
+        requests = { extras = ['socks'] }
+        records = '>0.5.0'
+        django = { git = 'https://github.com/django/django.git', ref = '1.11.4', editable = true }
+        ```
     """
 
-    _python_version = "3.8"
+    env_file_path: str
 
     # -- B --
 
@@ -42,19 +62,12 @@ class PipEnvShell(BaseEnvShell):
 
     def build_env(self) -> dict:
         env = os.environ.copy()
-        env["PIPENV_PIPFILE"] = self.get_pipfile_path()
+        pipfile_path = os.path.join(self.get_env_dir(), "Pipfile")
+        env["PIPENV_PIPFILE"] = pipfile_path
         env["PIPENV_VENV_IN_PROJECT"] = "enabled"
         return env
 
     # -- E --
-
-    @classmethod
-    def get_pipfile_path(cls) -> str:
-        """
-        Returns the directory of the virtual env of the process class
-        """
-
-        return os.path.join(cls.get_env_dir(), "Pipfile")
 
     # -- I --
 
@@ -66,18 +79,17 @@ class PipEnvShell(BaseEnvShell):
 
         if cls.is_installed():
             return
-        dep = list(set([
-            *cls._dependencies
-        ]))
-        dep = " ".join(dep)
+        if isinstance(cls.env_file_path, str):
+            if not os.path.exists(cls.env_file_path):
+                raise BadRequestException(f"The dependency file '{cls.env_file_path}' does not exist")
+        else:
+            raise BadRequestException("Invalid env file path")
+        pipfile_path = os.path.join(cls.get_env_dir(), "Pipfile")
         cmd = [
-            f"pipenv --python {cls._python_version}",
-            "&&",
-            f"pipenv install {dep}",
-            "&&"
-            "touch READY",
+            f"cp {cls.env_file_path} {pipfile_path}", "&&",
+            "pipenv install", "&&",
+            "touch READY"
         ]
-
         try:
             Logger.progress("Installing the virtual environment ...")
             subprocess.check_call(
@@ -96,10 +108,8 @@ class PipEnvShell(BaseEnvShell):
         if not cls.is_installed():
             return
         cmd = [
-            "pipenv uninstall --all",
-            "&&",
-            "cd ..",
-            "&&",
+            "pipenv uninstall --all", "&&",
+            "cd ..", "&&",
             f"rm -rf {cls.get_env_dir()}"
         ]
         try:
