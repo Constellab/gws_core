@@ -7,6 +7,7 @@ import importlib
 import os
 import unittest
 from copy import Error
+from unittest.suite import BaseTestSuite
 
 import click
 
@@ -60,10 +61,19 @@ def _run(ctx, uri="", token="", test="",
     elif test:
         if test in ["*", "all"]:
             test = "test*"
+
+        tests: str = test.split(' ')
         loader = unittest.TestLoader()
         __cdir__ = os.path.dirname(os.path.abspath(__file__))
-        test_suite = loader.discover(os.path.join(
-            __cdir__, "../../tests/"), pattern=test+".py")
+
+        test_suite: BaseTestSuite = BaseTestSuite()
+
+        for test_file in tests:
+            test_suite.addTests(loader.discover(os.path.join(
+                __cdir__, "../../tests/"), pattern=test_file+".py"))
+        # test_suite = loader.discover(os.path.join(
+            # __cdir__, "../../tests/"), pattern=test+".py")
+
         test_runner = unittest.TextTestRunner()
 
         if test_suite.countTestCases() == 0:

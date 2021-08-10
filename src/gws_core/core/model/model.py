@@ -10,12 +10,12 @@ import json
 import os
 import re
 import shutil
+import traceback
 import uuid
 from datetime import datetime
-from typing import Dict, List, Type, Union
+from typing import Type, Union
 
 from fastapi.encoders import jsonable_encoder
-from gws_core.core.utils import settings
 from peewee import (AutoField, BigAutoField, BlobField, BooleanField,
                     CharField, DateField, DateTimeField, Field,
                     ForeignKeyField, ManyToManyField)
@@ -71,8 +71,7 @@ class Model(Base, PeeweeModel):
     """
 
     id = AutoField(primary_key=True)
-    uri = CharField(null=True, index=True)
-    type = CharField(null=True, index=True)
+    uri = CharField(null=True, index=True, unique=True)
     creation_datetime = DateTimeField(default=datetime.now, index=True)
     save_datetime = DateTimeField(index=True)
     is_archived = BooleanField(default=False, index=True)
@@ -90,6 +89,8 @@ class Model(Base, PeeweeModel):
     _allowed_user = USER_ALL
     _db_manager = DbManager
     _table_name = 'gws_model'
+    # Provided at the Class level automatically by the @TypingDecorator
+    _typing_name: str = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -102,12 +103,6 @@ class Model(Base, PeeweeModel):
             self.uri = str(uuid.uuid4())
             if not self.data:
                 self.data = {}
-        # ensures that field type is allways equal to the name of the class
-        if self.type is None:
-            self.type = self.full_classname()
-        elif self.type != self.full_classname():
-            # allow object cast after ...
-            pass
         self._kv_store = KVStore(self.get_kv_store_slot_path())
 
     # -- A --
@@ -152,6 +147,7 @@ class Model(Base, PeeweeModel):
 
     def __init_singleton_in_place(self):
         try:
+            # todo to fix the type
             cls = type(self)
             model = cls.get(cls.type == self.full_classname())
         except Exception as _:
@@ -188,28 +184,6 @@ class Model(Base, PeeweeModel):
     def __compute_hash(self):
         hash_object = self._create_hash_object()
         return hash_object.hexdigest()
-
-    def cast(self) -> 'Model':
-        """
-        Casts a model instance by its `type` in database.
-        It is euqivalent to getting and intantiatning the real object type from db
-
-        :return: The model
-        :rtype: `Model` instance
-        """
-
-        if self.type == self.full_classname():
-            return self
-
-        t = self.get_model_type(self.type)
-        model = t.get_by_id(self.id)
-        return model
-
-        # model = t()
-        # for prop in self.property_names(Field):
-        #     val = getattr(self, prop)
-        #     setattr(model, prop, val)
-        # return model
 
     def clear_data(self, save: bool = False):
         """
@@ -302,29 +276,6 @@ class Model(Base, PeeweeModel):
         except Exception as _:
             return None
 
-    @classmethod
-    def fetch_type_by_id(cls, id: int) -> type:
-        """
-        Fecth the stored model `type` by its `id` from the database and return the corresponding python-type.
-        Use the proper table even if the table name has changed by inheritance.
-
-        :param id: The id of the model
-        :type id: int
-        :return: The python-type of model
-        :rtype: `type`
-        """
-
-        try:
-            model: Model = cls.get(cls.id == int(id))
-        except Exception as err:
-            raise BadRequestException("The model is not found.") from err
-
-        if model.full_classname() == model.type:
-            return type(cls)
-
-        model_t: type = cls.get_model_type(model.type)
-        return model_t
-
     # -- G --
 
     def get_related_model(self, relation_name: str) -> 'Model':
@@ -379,19 +330,15 @@ class Model(Base, PeeweeModel):
             module = importlib.import_module(module_name)
             t = getattr(module, function_name, None)
         except Exception as err:
-            Logger.warning(
-                f"gws.service.model_service.ModelService get_model_type An error occured. Error: {err}")
+            traceback.print_exc()
+            Logger.error(
+                f"Model get_model_type An error occured. Error: {err}")
             t = None
 
         return t
 
-    @staticmethod
-    def get_brick_dir(brick_name: str):
-        settings = Settings.retrieve()
-        return settings.get_dependency_dir(brick_name)
-
     @classmethod
-    def get_by_uri(cls, uri: str) -> str:
+    def get_by_uri(cls, uri: str) -> 'Model':
         try:
             return cls.get(cls.uri == uri)
         except:
@@ -508,7 +455,7 @@ class Model(Base, PeeweeModel):
         Select objects by ensuring that the object-type is the same as the current model.
         """
 
-        return cls.select(*args, **kwargs).where(cls.type == cls.full_classname())
+        return cls.select(*args, **kwargs)
 
     @classmethod
     def search(cls, phrase: str, in_boolean_mode: bool = False) -> ModelSelect:
@@ -552,7 +499,13 @@ class Model(Base, PeeweeModel):
 
         self.save_datetime = datetime.now()
         self.hash = self.__compute_hash()
-        return super().save(*args, **kwargs)
+
+        try:
+            return super().save(*args, **kwargs)
+        except Exception as err:
+            Logger.error(
+                f"Error while saving the model {self.full_classname()}")
+            raise err
 
     @classmethod
     def save_all(cls, model_list: list = None) -> bool:
@@ -601,7 +554,7 @@ class Model(Base, PeeweeModel):
         if not isinstance(jsonifiable_data_keys, list):
             jsonifiable_data_keys = []
         exclusion_list = (ForeignKeyField, ManyToManyField,
-                          BlobField, AutoField, BigAutoField, )
+                          BlobField, AutoField, BigAutoField)
         for prop in self.property_names(Field, exclude=exclusion_list):
             if prop in ["id"]:
                 continue

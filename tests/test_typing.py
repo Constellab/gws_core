@@ -5,7 +5,7 @@
 
 import unittest
 
-from gws_core import GTest, ModelService, ProcessService, ProtocolService
+from gws_core import GTest, ProcessService, ProtocolService
 
 
 class TestTyping(unittest.TestCase):
@@ -15,7 +15,6 @@ class TestTyping(unittest.TestCase):
         GTest.drop_tables()
         GTest.create_tables()
         GTest.init()
-        ModelService.register_all_processes_and_resources()
 
     @classmethod
     def tearDownClass(cls):

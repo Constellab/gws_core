@@ -6,11 +6,14 @@
 import json
 from typing import Union
 
+from gws_core.model.typing_register_decorator import TypingDecorator
+
 from ..core.classes.validator import Validator
 from ..core.exception.exceptions import BadRequestException
 from ..model.viewable import Viewable
 
 
+@TypingDecorator(name_unique="Config", object_type="GWS_CORE", hide=True)
 class Config(Viewable):
     """
     Config class that represents the configuration of a process. A configuration is

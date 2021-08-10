@@ -141,6 +141,7 @@ from .process.plug import Source as Source
 from .process.plug import Switch2 as Switch2
 from .process.plug import Wait as Wait
 from .process.process import Process as Process
+from .process.process_decorator import ProcessDecorator as ProcessDecorator
 from .process.process_service import ProcessService as ProcessService
 from .process.process_type import ProcessType as ProcessType
 # Progress Bar
@@ -163,6 +164,7 @@ from .resource.io import Port as Port
 from .resource.resource import ExperimentResource as ExperimentResource
 from .resource.resource import ProcessResource as ProcessResource
 from .resource.resource import Resource as Resource
+from .resource.resource_decorator import ResourceDecorator as ResourceDecorator
 from .resource.resource_service import ResourceService as ResourceService
 from .resource.resource_set import ResourceSet as ResourceSet
 from .resource.resource_type import ResourceType as ResourceType

@@ -11,7 +11,7 @@
             "instance_name": "p1",
             "is_archived": false,
             "save_datetime": "",
-            "type": "gws_core.impl.robot.robot.RobotMove",
+            "typing_name": "PROCESS.gws_core.RobotMove",
             "uri": "",
             "experiment": {
                 "uri": ""
@@ -46,7 +46,6 @@
                 },
                 "is_archived": false,
                 "save_datetime": "",
-                "type": "gws_core.config.config.Config",
                 "uri": ""
             },
             "progress_bar": {
@@ -63,21 +62,20 @@
                 },
                 "is_archived": false,
                 "save_datetime": "",
-                "type": "gws_core.progress_bar.progress_bar.ProgressBar",
                 "uri": "",
                 "process": {
                     "uri": "",
-                    "type": ""
+                    "typing_name": ""
                 }
             },
             "input": {
                 "robot": {
                     "resource": {
                         "uri": "",
-                        "type": ""
+                        "typing_name": ""
                     },
                     "specs": [
-                        "gws_core.impl.robot.robot.Robot"
+                        "RESOURCE.gws_core.Robot"
                     ]
                 }
             },
@@ -85,10 +83,10 @@
                 "robot": {
                     "resource": {
                         "uri": "",
-                        "type": ""
+                        "typing_name": ""
                     },
                     "specs": [
-                        "gws_core.impl.robot.robot.Robot"
+                        "RESOURCE.gws_core.Robot"
                     ]
                 }
             }
@@ -103,7 +101,7 @@
             "instance_name": "p2",
             "is_archived": false,
             "save_datetime": "",
-            "type": "gws_core.impl.robot.robot.RobotEat",
+            "typing_name": "PROCESS.gws_core.RobotEat",
             "uri": "",
             "experiment": {
                 "uri": ""
@@ -126,7 +124,6 @@
                 },
                 "is_archived": false,
                 "save_datetime": "",
-                "type": "gws_core.config.config.Config",
                 "uri": ""
             },
             "progress_bar": {
@@ -143,21 +140,20 @@
                 },
                 "is_archived": false,
                 "save_datetime": "",
-                "type": "gws_core.progress_bar.progress_bar.ProgressBar",
                 "uri": "",
                 "process": {
                     "uri": "",
-                    "type": ""
+                    "typing_name": ""
                 }
             },
             "input": {
                 "robot": {
                     "resource": {
                         "uri": "",
-                        "type": ""
+                        "typing_name": ""
                     },
                     "specs": [
-                        "gws_core.impl.robot.robot.Robot"
+                        "RESOURCE.gws_core.Robot"
                     ]
                 }
             },
@@ -165,10 +161,10 @@
                 "robot": {
                     "resource": {
                         "uri": "",
-                        "type": ""
+                        "typing_name": ""
                     },
                     "specs": [
-                        "gws_core.impl.robot.robot.Robot"
+                        "RESOURCE.gws_core.Robot"
                     ]
                 }
             }
@@ -183,7 +179,7 @@
             "instance_name": "p3",
             "is_archived": false,
             "save_datetime": "",
-            "type": "gws_core.impl.robot.robot.RobotMove",
+            "typing_name": "PROCESS.gws_core.RobotMove",
             "uri": "",
             "experiment": {
                 "uri": ""
@@ -218,7 +214,6 @@
                 },
                 "is_archived": false,
                 "save_datetime": "",
-                "type": "gws_core.config.config.Config",
                 "uri": ""
             },
             "progress_bar": {
@@ -235,21 +230,20 @@
                 },
                 "is_archived": false,
                 "save_datetime": "",
-                "type": "gws_core.progress_bar.progress_bar.ProgressBar",
                 "uri": "",
                 "process": {
                     "uri": "",
-                    "type": ""
+                    "typing_name": ""
                 }
             },
             "input": {
                 "robot": {
                     "resource": {
                         "uri": "",
-                        "type": ""
+                        "typing_name": ""
                     },
                     "specs": [
-                        "gws_core.impl.robot.robot.Robot"
+                        "RESOURCE.gws_core.Robot"
                     ]
                 }
             },
@@ -257,10 +251,10 @@
                 "robot": {
                     "resource": {
                         "uri": "",
-                        "type": ""
+                        "typing_name": ""
                     },
                     "specs": [
-                        "gws_core.impl.robot.robot.Robot"
+                        "RESOURCE.gws_core.Robot"
                     ]
                 }
             }
@@ -275,7 +269,7 @@
             "instance_name": "p4",
             "is_archived": false,
             "save_datetime": "",
-            "type": "gws_core.impl.robot.robot.RobotMove",
+            "typing_name": "PROCESS.gws_core.RobotMove",
             "uri": "",
             "experiment": {
                 "uri": ""
@@ -310,7 +304,6 @@
                 },
                 "is_archived": false,
                 "save_datetime": "",
-                "type": "gws_core.config.config.Config",
                 "uri": ""
             },
             "progress_bar": {
@@ -327,21 +320,20 @@
                 },
                 "is_archived": false,
                 "save_datetime": "",
-                "type": "gws_core.progress_bar.progress_bar.ProgressBar",
                 "uri": "",
                 "process": {
                     "uri": "",
-                    "type": ""
+                    "typing_name": ""
                 }
             },
             "input": {
                 "robot": {
                     "resource": {
                         "uri": "",
-                        "type": ""
+                        "typing_name": ""
                     },
                     "specs": [
-                        "gws_core.impl.robot.robot.Robot"
+                        "RESOURCE.gws_core.Robot"
                     ]
                 }
             },
@@ -349,10 +341,10 @@
                 "robot": {
                     "resource": {
                         "uri": "",
-                        "type": ""
+                        "typing_name": ""
                     },
                     "specs": [
-                        "gws_core.impl.robot.robot.Robot"
+                        "RESOURCE.gws_core.Robot"
                     ]
                 }
             }
@@ -367,7 +359,7 @@
             "instance_name": "p_wait",
             "is_archived": false,
             "save_datetime": "",
-            "type": "gws_core.impl.robot.robot.RobotWait",
+            "typing_name": "PROCESS.gws_core.RobotWait",
             "uri": "",
             "experiment": {
                 "uri": ""
@@ -390,7 +382,6 @@
                 },
                 "is_archived": false,
                 "save_datetime": "",
-                "type": "gws_core.config.config.Config",
                 "uri": ""
             },
             "progress_bar": {
@@ -407,21 +398,20 @@
                 },
                 "is_archived": false,
                 "save_datetime": "",
-                "type": "gws_core.progress_bar.progress_bar.ProgressBar",
                 "uri": "",
                 "process": {
                     "uri": "",
-                    "type": ""
+                    "typing_name": ""
                 }
             },
             "input": {
                 "robot": {
                     "resource": {
                         "uri": "",
-                        "type": ""
+                        "typing_name": ""
                     },
                     "specs": [
-                        "gws_core.impl.robot.robot.Robot"
+                        "RESOURCE.gws_core.Robot"
                     ]
                 }
             },
@@ -429,10 +419,10 @@
                 "robot": {
                     "resource": {
                         "uri": "",
-                        "type": ""
+                        "typing_name": ""
                     },
                     "specs": [
-                        "gws_core.impl.robot.robot.Robot"
+                        "RESOURCE.gws_core.Robot"
                     ]
                 }
             }
@@ -450,7 +440,7 @@
             },
             "resource": {
                 "uri": "",
-                "type": ""
+                "typing_name": ""
             }
         },
         {
@@ -464,7 +454,7 @@
             },
             "resource": {
                 "uri": "",
-                "type": ""
+                "typing_name": ""
             }
         },
         {
@@ -478,7 +468,7 @@
             },
             "resource": {
                 "uri": "",
-                "type": ""
+                "typing_name": ""
             }
         },
         {
@@ -492,7 +482,7 @@
             },
             "resource": {
                 "uri": "",
-                "type": ""
+                "typing_name": ""
             }
         }
     ],
@@ -509,7 +499,7 @@
             },
             "resource": {
                 "uri": "",
-                "type": ""
+                "typing_name": ""
             }
         }
     },
@@ -526,7 +516,7 @@
             },
             "resource": {
                 "uri": "",
-                "type": ""
+                "typing_name": ""
             }
         }
     },

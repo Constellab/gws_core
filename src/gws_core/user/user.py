@@ -11,6 +11,7 @@ from peewee import BooleanField, CharField
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
 from ..core.utils.utils import Utils
+from ..model.typing_register_decorator import TypingDecorator
 
 # ####################################################################
 #
@@ -18,7 +19,7 @@ from ..core.utils.utils import Utils
 #
 # ####################################################################
 
-
+@TypingDecorator(name_unique="User", object_type="GWS_CORE", hide=True)
 class User(Model):
     """
     User class

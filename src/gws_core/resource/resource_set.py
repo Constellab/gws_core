@@ -3,10 +3,14 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws_core.model.typing_manager import TypingManager
+
 from ..core.exception.exceptions import BadRequestException
 from .resource import Resource
+from .resource_decorator import ResourceDecorator
 
 
+@ResourceDecorator("ResourceSet")
 class ResourceSet(Resource):
     """
     ResourceSet class
@@ -97,7 +101,7 @@ class ResourceSet(Resource):
                     return False
                 self.data["set"][k] = {
                     "uri": self._set[k].uri,
-                    "type": self._set[k].full_classname()
+                    "typing_name": self._set[k].typing_name
                 }
             status = super().save(*args, **kwrags)
             if not status:
@@ -108,9 +112,8 @@ class ResourceSet(Resource):
     def set(self) -> dict:
         if self.is_saved() and len(self._set) == 0:
             for k in self.data["set"]:
-                uri = self.data["set"][k]["uri"]
-                rtype = self.data["set"][k]["type"]
-                self._set[k] = self.fetch_model(rtype, uri)
+                self._set[k] = TypingManager.get_object_with_typing_name_and_uri(
+                    self.data["set"][k]["typing_name"], self.data["set"][k]["uri"])
         return self._set
 
     # -- V --

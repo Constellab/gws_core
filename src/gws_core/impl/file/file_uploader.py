@@ -15,12 +15,15 @@ from fastapi.datastructures import UploadFile
 from ...core.exception.exceptions import BadRequestException
 from ...core.model.model import Model
 from ...core.utils.utils import Utils
+from ...model.typing_manager import TypingManager
 from ...process.process import Process
+from ...process.process_decorator import ProcessDecorator
 from ...resource.resource import Resource
 from .file import File, FileSet
 from .file_store import FileStore, LocalFileStore
 
 
+@ProcessDecorator("FileUploader")
 class FileUploader(Process):
     input_specs = {}
     output_specs = {'result': (FileSet, File,)}
@@ -43,7 +46,9 @@ class FileUploader(Process):
         fs_uri = self.get_param("file_store_uri")
         if fs_uri:
             try:
-                fs = FileStore.get(FileStore.uri == fs_uri).cast()
+                resource: Resource = FileStore.get(FileStore.uri == fs_uri)
+                fs = TypingManager.get_object_with_typing_name(
+                    resource.typing_name, resource.id)
             except:
                 raise BadRequestException(
                     f"No FileStore object found with uri '{file_store_uri}'")
@@ -77,6 +82,7 @@ class FileUploader(Process):
 # ####################################################################
 
 
+@ProcessDecorator("FileImporter")
 class FileImporter(Process):
     input_specs = {'file': File}
     output_specs = {"data": Resource}
@@ -107,7 +113,7 @@ class FileImporter(Process):
 # Exporter class
 #
 # ####################################################################
-
+@ProcessDecorator("FileExporter")
 class FileExporter(Process):
     """
     File exporter. The file is writen in a file store
@@ -125,7 +131,9 @@ class FileExporter(Process):
         fs_uri = self.get_param("file_store_uri")
         if fs_uri:
             try:
-                fs = FileStore.get(FileStore.uri == fs_uri).cast()
+                resource: Resource = FileStore.get(FileStore.uri == fs_uri)
+                fs = TypingManager.get_object_with_typing_name(
+                    resource.typing_name, resource.id)
             except:
                 raise BadRequestException(
                     f"No FileStore object found with uri '{file_store_uri}'")
@@ -156,6 +164,7 @@ class FileExporter(Process):
 # ####################################################################
 
 
+@ProcessDecorator("FileLoader")
 class FileLoader(Process):
     input_specs = {}
     output_specs = {"data": Resource}
@@ -193,6 +202,7 @@ class FileLoader(Process):
 # ####################################################################
 
 
+@ProcessDecorator("FileDumper")
 class FileDumper(Process):
     """
     Generic data exporter

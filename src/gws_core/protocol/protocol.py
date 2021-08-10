@@ -8,18 +8,25 @@ import json
 import zlib
 from typing import Union
 
+from gws_core.model.typing_register_decorator import TypingDecorator
 from peewee import BooleanField
 
 from ..core.exception.exceptions import BadRequestException
+from ..model.typing_manager import TypingManager
 from ..process.process import Process
 from ..resource.io import (Connector, InPort, Input, Interface, Outerface,
                            OutPort, Output)
 from ..user.activity import Activity
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
-from .protocol_type import ProtocolType
+
+# Typing names generated for the class Process
+CONST_PROTOCOL_TYPING_NAME = "PROTOCOL.gws_core.Protocol"
+
+# Use the typing decorator to avoid circular dependency
 
 
+@TypingDecorator(name_unique="Protocol", object_type="PROTOCOL", hide=True)
 class Protocol(Process):
     """
     Protocol class.
@@ -221,7 +228,7 @@ class Protocol(Process):
                 proc = self._processes[k]
                 is_removed = False
                 if k in graph["nodes"]:
-                    if proc.type != graph["nodes"][k].get("type"):
+                    if proc.typing_name != graph["nodes"][k].get("typing_name"):
                         is_removed = True
                 else:
                     is_removed = True
@@ -242,8 +249,8 @@ class Protocol(Process):
         for k in graph["nodes"]:
             node_json = graph["nodes"][k]
             proc_uri = node_json.get("uri", None)
-            proc_type_str = node_json["type"]
-            proc_t = self.get_model_type(proc_type_str)
+            proc_type_str = node_json["typing_name"]
+            proc_t = TypingManager.get_type_from_name(proc_type_str)
             if proc_t is None:
                 raise BadRequestException(
                     f"Process {proc_type_str} is not defined. Please ensure that the corresponding brick is loaded.")
@@ -321,38 +328,6 @@ class Protocol(Process):
                 f"The table name of {cls.full_classname()} must be {Protocol._table_name}")
         kwargs["check_table_name"] = False
         super().create_table(*args, **kwargs)
-
-    @classmethod
-    def create_process_type(cls):
-        exist = ProtocolType.select().where(
-            ProtocolType.model_type == cls.full_classname()).count()
-        if not exist:
-            pt = ProtocolType(
-                model_type=cls.full_classname(),
-                root_model_type="gws_core.protocol.protocol.Protocol"
-            )
-            pt.save()
-
-    def create_experiment(self, study: 'Study', user: 'User' = None):
-        """
-        Realize a protocol by creating a experiment
-
-        :param study: The study in which the protocol is realized
-        :type study: `gws.study.Study`
-        :param config: The configuration of protocol
-        :type config: `gws_core.config.config.Config`
-        :return: The experiment
-        :rtype: `gws.experiment.Experiment`
-        """
-
-        from ..experiment.experiment import Experiment
-        if user is None:
-            user = CurrentUserService.get_and_check_current_user()
-            if user is None:
-                raise BadRequestException("A user is required")
-        e = Experiment(user=user, study=study, protocol=self)
-        e.save()
-        return e
 
     def create_source_zip(self):
         graph = self.dumps()
@@ -451,7 +426,7 @@ class Protocol(Process):
         """
         Get the template protocol
         """
-
+        # todo fix type
         try:
             proto = cls.get((cls.is_template == True) & (
                 cls.type == cls.full_classname()))
@@ -647,8 +622,8 @@ class Protocol(Process):
 
     def save(self, *args, update_graph=False, **kwargs):
         with self._db_manager.db.atomic() as transaction:
-            for k in self._processes:
-                self._processes[k].save()
+            for processes in self._processes.values():
+                processes.save()
             if not self.is_saved():
                 Activity.add(
                     Activity.CREATE,
@@ -713,10 +688,9 @@ class Protocol(Process):
                 name=k, source_port=source_port, target_port=interfaces[k])
         if self.data.get("input"):
             for k in self.data.get("input"):
-                uri = self.data["input"][k]["uri"]
-                type_ = self.data["input"][k]["type"]
-                t = self.get_model_type(type_)
-                self.input.__setitem_without_check__(k, t.get(t.uri == uri))
+                model = TypingManager.get_object_with_typing_name_and_uri(
+                    self.data["input"][k]["typing_name"],  self.data["input"][k]["uri"])
+                self.input.__setitem_without_check__(k, model)
 
     def __set_outerfaces(self, outerfaces: dict):
         output_specs = {}
@@ -735,10 +709,9 @@ class Protocol(Process):
                 pass
         if self.data.get("output"):
             for k in self.data["output"]:
-                uri = self.data["output"][k]["uri"]
-                type_ = self.data["output"][k]["type"]
-                t = self.get_model_type(type_)
-                self.output.__setitem_without_check__(k, t.get(t.uri == uri))
+                model = TypingManager.get_object_with_typing_name_and_uri(
+                    self.data["output"][k]["typing_name"], self.data["output"][k]["uri"])
+                self.output.__setitem_without_check__(k, model)
 
     def set_title(self, title: str) -> str:
         """
@@ -805,4 +778,4 @@ class Protocol(Process):
                 if proc._allowed_user == self.USER_ADMIN:
                     if not user.is_admin:
                         raise BadRequestException(
-                            "Only admin user can run process '{proc.type}'")
+                            f"Only admin user can run process '{proc.full_classname()}'")

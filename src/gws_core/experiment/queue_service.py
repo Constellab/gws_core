@@ -1,8 +1,7 @@
 
 import threading
-import time
 
-from ..core.exception.exceptions import BadRequestException, NotFoundException
+from ..core.exception.exceptions import NotFoundException
 from ..core.service.base_service import BaseService
 from ..core.utils.logger import Logger
 from ..user.current_user_service import CurrentUserService
@@ -101,8 +100,10 @@ class QueueService(BaseService):
             ExperimentService.run_through_cli(
                 experiment=experiment, user=job.user)
         except Exception as err:
-            raise BadRequestException(
-                f"An error occured while runnig the experiment. Error: {err}.") from err
+            Logger.error(
+                f"An error occured while runnig the experiment. Error: {err}.")
+            raise err
+
         finally:
             # Remove the experiment from the queue before executing it
             Queue.pop_first()
@@ -131,13 +132,10 @@ class QueueService(BaseService):
         # check experiment status
         experiment.check_is_runnable()
 
-        try:
-            user = CurrentUserService.get_and_check_current_user()
-            job = Job(user=user, experiment=experiment)
-            cls.add_job(job, auto_start=True)
-            return experiment
-        except Exception as err:
-            raise BadRequestException(detail="An error occured.") from err
+        user = CurrentUserService.get_and_check_current_user()
+        job = Job(user=user, experiment=experiment)
+        cls.add_job(job, auto_start=True)
+        return experiment
 
     @classmethod
     def get_queue(cls) -> 'Queue':

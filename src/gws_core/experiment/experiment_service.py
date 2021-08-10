@@ -17,6 +17,7 @@ from ..core.service.base_service import BaseService
 from ..core.utils.http_helper import HTTPHelper
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
+from ..process.process import Process
 from ..protocol.protocol import Protocol
 from ..study.study import Study
 from ..user.activity import Activity
@@ -32,26 +33,40 @@ class ExperimentService(BaseService):
     # -- C --
 
     @classmethod
-    def create_experiment(cls, experiment: ExperimentDTO) -> Experiment:
+    def create_empty_experiment(cls, experimentDTO: ExperimentDTO) -> Experiment:
         try:
             study = Study.get_default_instance()
             proto = Protocol()
-            e = proto.create_experiment(
-                user=CurrentUserService.get_and_check_current_user(),
-                study=study
-            )
+            experiment = Experiment(protocol=proto, study=study,
+                                    user=CurrentUserService.get_and_check_current_user())
 
-            if experiment.title:
-                e.set_title(experiment.title)
+            if experimentDTO.title:
+                experiment.set_title(experimentDTO.title)
 
-            if experiment.description:
-                e.set_description(experiment.description)
+            if experimentDTO.description:
+                experiment.set_description(experimentDTO.description)
 
-            e.save()
-            return e
+            experiment.save()
+            return experiment
         except Exception as err:
             raise BadRequestException(
-                detail=f"Cannot create the experiment.") from err
+                detail="Cannot create the experiment.") from err
+
+    @classmethod
+    def create_experiment_from_process(cls, process: Process, title: str = "", description: str = "") -> Experiment:
+        proto = Protocol(processes={process.instance_name: process})
+
+        return cls.create_experiment_from_protocol(protocol=proto, title=title, description=description)
+
+    @classmethod
+    def create_experiment_from_protocol(cls, protocol: Protocol, title: str = "", description: str = "") -> Experiment:
+        experiment = Experiment(protocol=protocol, study=Study.get_default_instance(),
+                                user=CurrentUserService.get_and_check_current_user())
+
+        experiment.set_title(title)
+        experiment.set_description(description)
+        experiment.save()
+        return experiment
 
     # -- F --
 

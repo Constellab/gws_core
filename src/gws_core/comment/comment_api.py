@@ -11,8 +11,8 @@ from ..user.user_dto import UserData
 from .comment_service import CommentService
 
 
-@core_app.post("/comment/{object_type}/{object_uri}/add", tags=["Comment"], summary="And new object comment")
-async def add_object_comments(object_type: str,
+@core_app.post("/comment/{object_typing_name}/{object_uri}/add", tags=["Comment"], summary="And new object comment")
+async def add_object_comments(object_typing_name: str,
                               object_uri: str,
                               message: str,
                               reply_to_uri: str = None,
@@ -27,7 +27,7 @@ async def add_object_comments(object_type: str,
     """
 
     c = CommentService.add_comment(
-        object_type=object_type,
+        object_typing_name=object_typing_name,
         object_uri=object_uri,
         message=message,
         reply_to_uri=reply_to_uri
@@ -35,8 +35,8 @@ async def add_object_comments(object_type: str,
     return c.to_json()
 
 
-@core_app.post("/comment/{object_type}/{object_uri}", tags=["Comment"], summary="Get the comments of an object")
-async def get_object_comments(object_type: str,
+@core_app.post("/comment/{object_typing_name}/{object_uri}", tags=["Comment"], summary="Get the comments of an object")
+async def get_object_comments(object_typing_name: str,
                               object_uri: str,
                               page: int = 1,
                               number_of_items_per_page=20,
@@ -51,7 +51,7 @@ async def get_object_comments(object_type: str,
     """
 
     return CommentService.fetch_object_comments(
-        object_type=object_type,
+        object_typing_name=object_typing_name,
         object_uri=object_uri,
         page=page,
         number_of_items_per_page=number_of_items_per_page,

@@ -6,10 +6,13 @@
 import time
 
 from ...process.process import Process
+from ...process.process_decorator import ProcessDecorator
 from ...protocol.protocol import Protocol
 from ...resource.resource import Resource
+from ...resource.resource_decorator import ResourceDecorator
 
 
+@ResourceDecorator("Robot")
 class Robot(Resource):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -43,14 +46,17 @@ class Robot(Resource):
         self.data['age'] = val
 
 
+@ResourceDecorator("RobotAddOn")
 class RobotAddOn(Resource):
     pass
 
 
+@ResourceDecorator("MegaRobot")
 class MegaRobot(Robot):
     pass
 
 
+@ProcessDecorator("RobotCreate")
 class RobotCreate(Process):
     input_specs = {}  # no required input
     output_specs = {'robot': Robot}
@@ -71,6 +77,7 @@ class RobotCreate(Process):
         self.output['robot'] = r
 
 
+@ProcessDecorator("RobotMove")
 class RobotMove(Process):
     input_specs = {'robot': Robot}  # just for testing
     output_specs = {'robot': Robot}
@@ -104,6 +111,7 @@ class RobotMove(Process):
         self.output['robot'] = r
 
 
+@ProcessDecorator("RobotEat")
 class RobotEat(Process):
     input_specs = {'robot': Robot}
     output_specs = {'robot': Robot}
@@ -122,6 +130,7 @@ class RobotEat(Process):
         self.output['robot'] = r
 
 
+@ProcessDecorator("RobotWait")
 class RobotWait(Process):
     input_specs = {'robot': Robot}
     output_specs = {'robot': Robot}
@@ -142,6 +151,7 @@ class RobotWait(Process):
         time.sleep(self.get_param('waiting_time'))
 
 
+@ProcessDecorator("RobotFly")
 class RobotFly(RobotMove):
     config_specs = {
         'moving_step': {"type": float, "default": 1000.0, "unit": "km"},
@@ -155,6 +165,7 @@ class RobotFly(RobotMove):
         await super().task()
 
 
+@ProcessDecorator("RobotAdd")
 class RobotAdd(Process):
     input_specs = {'robot': Robot, 'addon': RobotAddOn}
     output_specs = {'mega_robot': MegaRobot}
@@ -169,6 +180,7 @@ class RobotAdd(Process):
         self.output['mega_robot'] = mega
 
 
+@ProcessDecorator("RobotAddOnCreate")
 class RobotAddOnCreate(Process):
     input_specs = {}
     output_specs = {'addon': RobotAddOn}
@@ -225,6 +237,7 @@ def create_protocol():
     return proto
 
 
+@ProcessDecorator("RobotTravelProto")
 class RobotTravelProto(Protocol):
 
     def __init__(self, *args, user=None, **kwargs):
@@ -276,6 +289,7 @@ class RobotTravelProto(Protocol):
             )
 
 
+@ProcessDecorator("RobotSuperTravelProto")
 class RobotSuperTravelProto(Protocol):
 
     def __init__(self, *args, user=None, **kwargs):
@@ -322,6 +336,7 @@ class RobotSuperTravelProto(Protocol):
             self.set_title("The super travel of Astro")
 
 
+@ProcessDecorator("RobotWorldTravelProto")
 class RobotWorldTravelProto(Protocol):
 
     def __init__(self, *args, user=None, **kwargs):

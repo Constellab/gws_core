@@ -7,9 +7,12 @@
 import json
 import math
 import re
+from typing import Any, Literal, Union
 
 from ..exception.exceptions import BadRequestException
 from .path import URL, Path
+
+ValidatorType = Literal['bool', 'int', 'float', 'str', 'list', 'dict']
 
 
 class Validator:
@@ -41,7 +44,7 @@ class Validator:
 
     _valid_types = ['bool', 'int', 'float', 'str', 'list', 'dict']
 
-    def __init__(self, default=None, type=None, allowed_values: list = None, **kwargs):
+    def __init__(self, default: Any = None, type: ValidatorType = None, allowed_values: list = None, **kwargs):
         if not type is None:
             self._type = type
 
@@ -50,7 +53,7 @@ class Validator:
                 self._allowed_values = allowed_values
             else:
                 raise BadRequestException(
-                    f"The parameter allowed_values must be a list")
+                    "The parameter allowed_values must be a list")
 
         if not default is None:
             try:
@@ -74,9 +77,9 @@ class Validator:
         elif self._type == dict or self._type == 'dict':
             return dict
         else:
-            raise BadRequestException(f"Invalid type")
+            raise BadRequestException("Invalid type")
 
-    def validate(self, value: (bool, int, float, str, list, dict)) -> (bool, int, float, str, list, dict):
+    def validate(self, value: Union[bool, int, float, str, list, dict]) -> Union[bool, int, float, str, list, dict]:
         """
         Valitates a value.
 

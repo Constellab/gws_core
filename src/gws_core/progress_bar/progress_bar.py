@@ -9,16 +9,18 @@ from datetime import datetime
 from typing import Union
 
 from fastapi.encoders import jsonable_encoder
+from gws_core.model.typing_manager import TypingManager
 from peewee import CharField
 from starlette_context import context
 
-from gws_core.core.utils.http_helper import HTTPHelper
-
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
+from ..core.utils.http_helper import HTTPHelper
 from ..core.utils.logger import Logger
+from ..model.typing_register_decorator import TypingDecorator
 
 
+@TypingDecorator(name_unique="ProgressBar", object_type="GWS_CORE", hide=True)
 class ProgressBar(Model):
     """
     ProgressBar class
@@ -26,7 +28,7 @@ class ProgressBar(Model):
 
     process_uri = CharField(null=True, index=True)
     # -> unique index (process_uri, process_type) is created in Meta
-    process_type = CharField(null=True)
+    process_typing_name = CharField(null=True)
 
     _min_allowed_delta_time = 1.0
     _min_value = 0.0
@@ -113,11 +115,10 @@ class ProgressBar(Model):
 
     @property
     def process(self) -> 'Process':
-        if not self.process_type:
+        if not self.process_typing_name:
             return None
 
-        t = self.get_model_type(self.process_type)
-        return t.get(t.uri == self.process_uri)
+        return TypingManager.get_object_with_typing_name_and_uri(self.process_typing_name, self.process_uri)
 
     # -- R --
 
@@ -219,6 +220,10 @@ class ProgressBar(Model):
         self.data["max_value"] = value
         self.save()
 
+    @classmethod
+    def get_by_process_typing_name_and_process_uri(cls, process_typing_name: str, process_uri: str) -> 'ProgressBar':
+        return ProgressBar.get((ProgressBar.process_uri == process_uri) & (ProgressBar.process_typing_name == process_typing_name))
+
     def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
         """
         Returns JSON string or dictionnary representation of the model.
@@ -237,7 +242,7 @@ class ProgressBar(Model):
         if bare:
             _json["process"] = {
                 "uri": "",
-                "type": "",
+                "typing_name": "",
             }
 
             _json["data"] = {
@@ -253,11 +258,11 @@ class ProgressBar(Model):
         else:
             _json["process"] = {
                 "uri": _json["process_uri"],
-                "type": _json["process_type"],
+                "typing_name": _json["process_typing_name"],
             }
 
         del _json["process_uri"]
-        del _json["process_type"]
+        del _json["process_typing_name"]
 
         if stringify:
             if prettify:
@@ -269,6 +274,6 @@ class ProgressBar(Model):
 
     class Meta:
         indexes = (
-            # create a unique on process_uri, process_type
-            (('process_uri', 'process_type'), True),
+            # create a unique on process_uri, process_typing_name
+            (('process_uri', 'process_typing_name'), True),
         )

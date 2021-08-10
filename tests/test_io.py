@@ -5,17 +5,21 @@
 
 import unittest
 
-from gws_core import Connector, GTest, Process, Resource
+from gws_core import (Connector, GTest, Process, ProcessDecorator, Resource,
+                      ResourceDecorator)
 
 
+@ResourceDecorator("Person")
 class Person(Resource):
     pass
 
 
+@ResourceDecorator("Car")
 class Car(Resource):
     pass
 
 
+@ProcessDecorator("Create")
 class Create(Process):
     input_specs = {}
     output_specs = {'create_person_out': Person}
@@ -25,6 +29,7 @@ class Create(Process):
         return
 
 
+@ProcessDecorator("Move")
 class Move(Process):
     input_specs = {'move_person_in': Person}
     output_specs = {'move_person_out': Person}
@@ -34,6 +39,7 @@ class Move(Process):
         return
 
 
+@ProcessDecorator("Drive")
 class Drive(Process):
     input_specs = {'move_drive_in': Car}
     output_specs = {'move_drive_out': Car}
@@ -43,6 +49,7 @@ class Drive(Process):
         return
 
 
+@ProcessDecorator("Jump")
 class Jump(Process):
     input_specs = {'jump_person_in_1': Person,
                    'jump_person_in_2': Person, 'jump_person_in_2': Person}
@@ -93,7 +100,7 @@ class TestIO(unittest.TestCase):
         self.assertEqual(port_connect.to_json(), {
             "from": {"node": "p0",  "port": "create_person_out"},
             "to": {"node": "p1",  "port": "move_person_in"},
-            'resource': {'uri': '', 'type': ''}
+            'resource': {'uri': '', 'typing_name': ''}
         })
 
     def test_iterator(self):

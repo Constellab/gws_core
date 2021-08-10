@@ -7,10 +7,12 @@ from peewee import BooleanField, ForeignKeyField, IntegerField
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
 from ..core.utils.logger import Logger
+from ..model.typing_register_decorator import TypingDecorator
 from ..user.user import User
 from .experiment import Experiment
 
 
+@TypingDecorator(name_unique="Job", object_type="GWS_CORE", hide=True)
 class Job(Model):
     """
     Class representing queue job
@@ -26,6 +28,7 @@ class Job(Model):
     _table_name = "gws_queue_job"
 
 
+@TypingDecorator(name_unique="Queue", object_type="GWS_CORE", hide=True)
 class Queue(Model):
     """
     Singleton Class representing experiment queue

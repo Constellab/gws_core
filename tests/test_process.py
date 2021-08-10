@@ -73,8 +73,8 @@ class TestProcess(IsolatedAsyncioTestCase):
 
         p2.set_param('food_weight', '5.6')
 
-        experiment: Experiment = proto.create_experiment(
-            user=GTest.user, study=GTest.study)
+        experiment: Experiment = ExperimentService.create_experiment_from_protocol(
+            protocol=proto)
 
         self.assertEqual(experiment.created_by, GTest.user)
         self.assertEqual(experiment.study, GTest.study)

@@ -14,7 +14,7 @@ from .comment import Comment
 class CommentService(BaseService):
 
     @classmethod
-    def add_comment(cls, object_type: str, object_uri: str, message: str, reply_to_uri: str = None) -> Comment:
+    def add_comment(cls, object_typing_name: str, object_uri: str, message: str, reply_to_uri: str = None) -> Comment:
         if reply_to_uri:
             try:
                 parent = Comment.get(Comment.uri == reply_to_uri)
@@ -24,13 +24,13 @@ class CommentService(BaseService):
 
             comment = Comment(
                 object_uri=object_uri,
-                object_type=object_type,
+                object_typing_name=object_typing_name,
                 reply_to=parent
             )
         else:
             comment = Comment(
                 object_uri=object_uri,
-                object_type=object_type,
+                object_typing_name=object_typing_name,
             )
 
         comment.set_message(message)
@@ -39,14 +39,14 @@ class CommentService(BaseService):
 
     @classmethod
     def fetch_object_comments(cls,
-                              object_type: str,
+                              object_typing_name: str,
                               object_uri: str,
                               page: int = 1,
                               number_of_items_per_page: int = 20,
                               as_json=False) -> Union[List[Comment], List[dict]]:
 
         query = Comment.select()\
-            .where((Comment.object_uri == object_uri) & (Comment.object_type == object_type))\
+            .where((Comment.object_uri == object_uri) & (Comment.object_typing_name == object_typing_name))\
             .order_by(Comment.creation_datetime.desc())
 
         if number_of_items_per_page <= 0:

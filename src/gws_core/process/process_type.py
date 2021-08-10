@@ -5,7 +5,7 @@
 
 import inspect
 import json
-from typing import List, Union
+from typing import Any, Dict, Union
 
 from ..model.typing import Typing
 
@@ -15,38 +15,12 @@ class ProcessType(Typing):
     ProcessType class.
     """
 
-    #ptype: str = CharField(null=True, index=True, unique=True)
-    #base_ptype: str = CharField(null=True, index=True)
-    #_table_name = 'gws_process_type'
-
-    # -- PROPERTIES --
-
-    @property
-    def ptype(self):
-        return self.model_type
-
-    @property
-    def base_ptype(self):
-        return self.root_model_type
-
-    # -- G --
-
-    def get_ptypes_array(self) -> List[str]:
-        """
-        Return the ptypes as an array by splitting with .
-        """
-
-        return super().get_model_types_array()
-
-    # -- T --
-
     def to_json(self, *, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
 
-        _json = super().to_json(**kwargs)
+        _json: Dict[str, Any] = super().to_json(**kwargs)
 
         # for compatibility
-        _json["ptype"] = self.ptype
-        _json["base_ptype"] = self.base_ptype
+        _json["ptype"] = self.model_type
 
         model_t = self.get_model_type(self.model_type)
         specs = model_t.input_specs

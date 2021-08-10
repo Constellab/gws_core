@@ -9,6 +9,7 @@ import psutil
 from peewee import FloatField
 
 from ..core.model.model import Model
+from ..model.typing_register_decorator import TypingDecorator
 
 TICK_INTERVAL_SECONDS = 60*5   # 5 min
 
@@ -30,6 +31,7 @@ def _system_monitor_tick(daemon):
 # ####################################################################
 
 
+@TypingDecorator(name_unique="Monitor", object_type="GWS_CORE", hide=True)
 class Monitor(Model):
     """
     Lab Monitor class.

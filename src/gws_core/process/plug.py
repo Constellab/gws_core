@@ -9,8 +9,10 @@ from typing import Type
 from ..core.model.model import Model
 from ..resource.resource import Resource
 from .process import Process
+from .process_decorator import ProcessDecorator
 
 
+@ProcessDecorator("Source")
 class Source(Process):
     """
     Source process.
@@ -37,6 +39,7 @@ class Source(Process):
         self.output["resource"] = resource
 
 
+@ProcessDecorator("Sink")
 class Sink(Process):
     """
     Sink process.
@@ -53,6 +56,7 @@ class Sink(Process):
         pass
 
 
+@ProcessDecorator("FIFO2")
 class FIFO2(Process):
     """
     FIFO2 process (with 2 input ports)
@@ -86,6 +90,7 @@ class FIFO2(Process):
             self.output["resource"] = resource
 
 
+@ProcessDecorator("Switch2")
 class Switch2(Process):
     """
     Switch process (with 2 input ports)
@@ -107,6 +112,7 @@ class Switch2(Process):
         self.output["resource"] = resource
 
 
+@ProcessDecorator("Wait")
 class Wait(Process):
     """
     Wait process

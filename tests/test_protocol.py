@@ -157,8 +157,8 @@ class TestProtocol(IsolatedAsyncioTestCase):
             s2 = json.loads(mini_proto.dumps(bare=True))
             self.assertEqual(s1, s2)
 
-        experiment: Experiment = super_proto.create_experiment(
-            study=GTest.study, user=GTest.user)
+        experiment: Experiment = ExperimentService.create_experiment_from_protocol(
+            protocol=super_proto)
 
         self.assertEqual(Protocol.select().count(), count+2)
 
@@ -201,8 +201,8 @@ class TestProtocol(IsolatedAsyncioTestCase):
             ]
         )
 
-        experiment: Experiment = super_proto.create_experiment(
-            study=GTest.study, user=GTest.user)
+        experiment: Experiment = ExperimentService.create_experiment_from_protocol(
+            protocol=super_proto)
 
         experiment = await ExperimentService.run_experiment(
             experiment=experiment, user=GTest.user)

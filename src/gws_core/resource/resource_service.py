@@ -3,14 +3,17 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Union
+from typing import List, Type, Union
+
+from gws_core.model.typing_manager import TypingManager
+from pydantic.types import NoneBytes
 
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import NotFoundException
 from ..core.model.model import Model
 from ..core.service.base_service import BaseService
 from ..experiment.experiment import Experiment
-from ..resource.resource import Resource
+from ..resource.resource import CONST_RESOURCE_TYPING_NAME, Resource
 from .resource_type import ResourceType
 
 
@@ -20,76 +23,48 @@ class ResourceService(BaseService):
 
     @classmethod
     def fetch_resource(cls,
-                       type="gws.resource.Resource",
+                       typing_name: str = CONST_RESOURCE_TYPING_NAME,
                        uri: str = "") -> Resource:
-        t = None
-        if type:
-            t = Model.get_model_type(type)
-            if t is None:
-                raise NotFoundException(
-                    detail=f"Resource type '{type}' not found")
-        else:
-            t = Resource
 
         try:
-            r = t.get(t.uri == uri)
-            return r
+            return TypingManager.get_object_with_typing_name_and_uri(typing_name, uri)
+
         except Exception as err:
             raise NotFoundException(
-                detail=f"No resource found with uri '{uri}' and type '{type}'") from err
+                detail=f"No resource found with uri '{uri}' and type '{typing_name}'") from err
 
     @classmethod
     def fetch_resource_list(cls,
-                            type="gws.resource.Resource",
-                            search_text: str = "",
+                            typing_name: str = CONST_RESOURCE_TYPING_NAME,
                             experiment_uri: str = None,
                             page: int = 1, number_of_items_per_page: int = 20,
                             as_json=False) -> Union[Paginator, List[Resource], List[dict]]:
 
-        t = None
-        if type:
-            t = Model.get_model_type(type)
-            if t is None:
-                raise NotFoundException(
-                    detail=f"Resource type '{type}' not found")
-        else:
-            t = Resource
+        model_type: Type[Resource] = TypingManager.get_type_from_name(
+            typing_name)
+
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
-        if search_text:
-            query = t.search(search_text)
-            result = []
-            for o in query:
-                if as_json:
-                    result.append(o.get_related().to_json(shallow=True))
-                else:
-                    result.append(o.get_related())
-            paginator = Paginator(
-                query, page=page, number_of_items_per_page=number_of_items_per_page)
-            return {
-                'data': result,
-                'paginator': paginator.paginator_dict()
-            }
+
+        if model_type is Resource:
+            query = model_type.select().order_by(model_type.creation_datetime.desc())
         else:
-            if t is Resource:
-                query = t.select().order_by(t.creation_datetime.desc())
-            else:
-                query = t.select_me().order_by(t.creation_datetime.desc())
-            if experiment_uri:
-                query = query.join(Experiment) \
-                    .where(Experiment.uri == experiment_uri)
-            paginator = Paginator(
-                query, page=page, number_of_items_per_page=number_of_items_per_page)
-            if as_json:
-                return paginator.to_json(shallow=True)
-            else:
-                return paginator
+            query = model_type.select_me().order_by(model_type.creation_datetime.desc())
+        if experiment_uri:
+            query = query.join(Experiment) \
+                .where(Experiment.uri == experiment_uri)
+        paginator = Paginator(
+            query, page=page, number_of_items_per_page=number_of_items_per_page)
+        if as_json:
+            return paginator.to_json(shallow=True)
+        else:
+            return paginator
 
     @classmethod
     def fetch_resource_type_list(cls,
                                  page: int = 1,
                                  number_of_items_per_page: int = 20,
-                                 as_json=False) -> (Paginator, dict):
+                                 as_json=False) -> Union[Paginator, dict]:
 
         query = ResourceType.select().order_by(ResourceType.model_type.desc())
         number_of_items_per_page = min(

@@ -1,6 +1,7 @@
+from ...process.process_decorator import ProcessDecorator
 from ..file.file import File
-from ..file.file_uploader import (FileDumper, FileExporter,
-                                  FileImporter, FileLoader)
+from ..file.file_uploader import (FileDumper, FileExporter, FileImporter,
+                                  FileLoader)
 from .json_resource import JSONDict
 
 # ####################################################################
@@ -9,7 +10,7 @@ from .json_resource import JSONDict
 #
 # ####################################################################
 
-
+@ProcessDecorator("JSONImporter")
 class JSONImporter(FileImporter):
     input_specs = {'file': File}
     output_specs = {'data': JSONDict}
@@ -23,7 +24,7 @@ class JSONImporter(FileImporter):
 #
 # ####################################################################
 
-
+@ProcessDecorator("JSONExporter")
 class JSONExporter(FileExporter):
     input_specs = {'data': JSONDict}
     output_specs = {'file': File}
@@ -39,7 +40,7 @@ class JSONExporter(FileExporter):
 #
 # ####################################################################
 
-
+@ProcessDecorator("JSONLoader")
 class JSONLoader(FileLoader):
     input_specs = {}
     output_specs = {'data': JSONDict}
@@ -54,7 +55,7 @@ class JSONLoader(FileLoader):
 #
 # ####################################################################
 
-
+@ProcessDecorator("JSONDumper")
 class JSONDumper(FileDumper):
     input_specs = {'data': JSONDict}
     output_specs = {}

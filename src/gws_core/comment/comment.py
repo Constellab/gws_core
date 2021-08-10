@@ -4,27 +4,30 @@
 # About us: https://gencovery.com
 
 import json
+from typing import Union
 
 from peewee import CharField, ForeignKeyField
 
 from ..core.model.model import Model
+from ..model.typing_register_decorator import TypingDecorator
 
 
+@TypingDecorator(name_unique="Comment", object_type="GWS_CORE", hide=True)
 class Comment(Model):
     """
     Comment class that represents generic object comments
 
     :property object_uri: The uri of the Viewable object to comment
     :type object_uri: `str`
-    :property object_type: The type of the Viewable object to comment
-    :type object_type: `str`
+    :property object_typing_name: The type of the Viewable object to comment
+    :type object_typing_name: `str`
     :property reply_to: The parent comment. It not `None` if this comment is the reply to another comment. It is `None` otherwise
     :type reply_to: `gws.comment.Comment`
     """
 
     object_uri = CharField(null=False, index=True)
-    # -> non-unique index (object_uri, object_type) is created in Meta
-    object_type = CharField(null=False)
+    # -> non-unique index (object_uri, object_typing_name) is created in Meta
+    object_typing_name = CharField(null=False)
     reply_to = ForeignKeyField('self', null=True, backref='+')
     _table_name = "gws_comment"
 
@@ -46,7 +49,7 @@ class Comment(Model):
 
     # -- T --
 
-    def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> (str, dict, ):
+    def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
         """
         Returns JSON string or dictionnary representation of the comment.
 
@@ -61,13 +64,13 @@ class Comment(Model):
         _json = super().to_json(shallow=shallow, **kwargs)
         _json["object"] = {
             "uri": self.object_uri,
-            "type": self.object_type
+            "type": self.object_typing_name
         }
         _json["reply_to"] = {
             "uri": (self.reply_to.uri if self.reply_to else "")}
 
         del _json["object_uri"]
-        del _json["object_type"]
+        del _json["object_typing_name"]
 
         if stringify:
             if prettify:
@@ -79,6 +82,6 @@ class Comment(Model):
 
     class Meta:
         indexes = (
-            # create a non-unique index on object_uri, object_type
-            (('object_uri', 'object_type'), False),
+            # create a non-unique index on object_uri, object_typing_name
+            (('object_uri', 'object_typing_name'), False),
         )

@@ -29,6 +29,8 @@ class GTest:
         This function initializes objects for unit testing
         """
 
+        ModelService.register_all_processes_and_resources()
+
         settings = Settings.retrieve()
         if not settings.is_dev:
             raise BadRequestException(

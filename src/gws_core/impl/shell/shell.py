@@ -11,10 +11,12 @@ from typing import Union
 from ...core.exception.exceptions import BadRequestException
 from ...core.model.sys_proc import SysProc
 from ...process.process import Process
+from ...process.process_decorator import ProcessDecorator
 from ...progress_bar.progress_bar import ProgressBar
 from ..file.file import File
 
 
+@ProcessDecorator("Shell")
 class Shell(Process):
     """
     Shell process.

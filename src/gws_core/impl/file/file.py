@@ -9,15 +9,18 @@ import os
 import shutil
 from pathlib import Path
 
+from gws_core.model.typing_manager import TypingManager
 from peewee import CharField
 
 from ...core.exception.exceptions import BadRequestException
 from ...core.utils.settings import Settings
 from ...resource.resource import Resource
+from ...resource.resource_decorator import ResourceDecorator
 from ...resource.resource_set import ResourceSet
 from .file_store import FileStore, LocalFileStore
 
 
+@ResourceDecorator("File")
 class File(Resource):
     """
     File class
@@ -55,7 +58,10 @@ class File(Resource):
     @property
     def file_store(self):
         if self.file_store_uri:
-            fs = FileStore.get(FileStore.uri == self.file_store_uri).cast()
+            resource: Resource = FileStore.get(
+                FileStore.uri == self.file_store_uri)
+            fs = TypingManager.get_object_with_typing_name(
+                resource.typing_name, resource.id)
         else:
             try:
                 fs = LocalFileStore.get_by_id(0)
@@ -156,7 +162,8 @@ class File(Resource):
         settings = Settings.retrieve()
         host = settings.data.get("host", "0.0.0.0")
         vhost = settings.data.get("virtual_host", host)
-        _json["url"] = File.__DOWNLOAD_URL.format(vhost, self.type, self.uri)
+        _json["url"] = File.__DOWNLOAD_URL.format(
+            vhost, self.typing_name, self.uri)
 
         if not shallow:
             if self.is_json():

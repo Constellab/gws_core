@@ -3,11 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Optional, Union
+import traceback
+from typing import List, Optional, Type, Union
 
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
+from gws_core.model.typing_manager import TypingManager
 
 from ...core.classes.paginator import Paginator
 from ...core.exception.exceptions import BadRequestException, NotFoundException
@@ -24,7 +26,7 @@ class FileService(BaseService):
 
     @classmethod
     def fetch_file_list(cls,
-                        type_str="gws.file.File",
+                        typing_name="RESOURCE.gws_core.file",
                         search_text: Optional[str] = "",
                         page: Optional[int] = 1,
                         number_of_items_per_page: Optional[int] = 20,
@@ -33,11 +35,11 @@ class FileService(BaseService):
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
         model_type = None
-        if type_str:
-            model_type = Model.get_model_type(type_str)
+        if typing_name:
+            model_type = TypingManager.get_type_from_name(typing_name)
             if model_type is None:
                 raise NotFoundException(
-                    detail=f"File type '{type_str}' not found")
+                    detail=f"File type '{typing_name}' not found")
         else:
             model_type = File
         if search_text:
@@ -66,12 +68,13 @@ class FileService(BaseService):
     # -- D --
 
     @classmethod
-    def download_file(cls, type, uri) -> FileResponse:
-        t = Model.get_model_type(type)
-        if t is None:
-            raise NotFoundException(detail=f"File type '{type}' not found")
+    def download_file(cls, typing_name, uri) -> FileResponse:
+        model_type: Type[Model] = TypingManager.get_type_from_name(typing_name)
+        if model_type is None:
+            raise NotFoundException(
+                detail=f"File type '{typing_name}' not found")
         try:
-            file = t.get(t.uri == uri)
+            file = model_type.get(model_type.uri == uri)
             return FileResponse(file.path, media_type='application/octet-stream', filename=file.name)
         except Exception as err:
             raise NotFoundException(
@@ -80,24 +83,14 @@ class FileService(BaseService):
     # -- U --
 
     @classmethod
-    async def upload_file(cls, files: List[UploadFile] = FastAPIFile(...), study_uri=None) -> Union[FileSet, File]:
+    async def upload_file(cls, files: List[UploadFile] = FastAPIFile(...)) -> Union[FileSet, File]:
         uploader = FileUploader(files=files)
-        user = CurrentUserService.get_and_check_current_user()
-        if study_uri is None:
-            experiment = uploader.create_experiment(
-                study=Study.get_default_instance())
-            experiment.set_title("File upload")
-            experiment.save()
-        else:
-            try:
-                study = Study.get(Study.uri == study_uri)
-                experiment = uploader.create_experiment(study=study, user=user)
-                experiment.set_title("File upload")
-                experiment.save()
-            except Exception as err:
-                raise NotFoundException(detail=f"Study not found") from err
+        experiment = ExperimentService.create_experiment_from_process(
+            process=uploader, title="File upload")
+
         try:
             await ExperimentService.run_experiment(experiment_uri=experiment.uri)
             return uploader.output["result"]
         except Exception as err:
+            traceback.print_exc()
             raise BadRequestException(detail=f"Upload failed. Error: {err}")

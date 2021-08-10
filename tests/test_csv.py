@@ -86,8 +86,8 @@ class TestCSV(IsolatedAsyncioTestCase):
         dumper.set_param("index", False)
         exporter.set_param("index", False)
 
-        experiment: Experiment = proto.create_experiment(
-            study=GTest.study, user=GTest.user)
+        experiment: Experiment = ExperimentService.create_experiment_from_protocol(
+            protocol=proto)
 
         if os.path.exists(o_file_path):
             os.unlink(o_file_path)

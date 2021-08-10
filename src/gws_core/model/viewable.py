@@ -19,7 +19,7 @@ class Viewable(Model):
     """
 
     # -- A --
-
+    # todo fix type
     def add_comment(self, message: str, reply_to: Comment = None) -> Comment:
         """
         Add a new comment to this object
@@ -35,16 +35,17 @@ class Viewable(Model):
         if not self.id:
             self.save()
 
+        comment: Comment = None
         if reply_to:
             comment = Comment(
                 object_uri=self.uri,
-                object_type=self.type,
+                object_typing_name=self._typing_name,
                 reply_to=reply_to
             )
         else:
             comment = Comment(
+                object_typing_name=self._typing_name,
                 object_uri=self.uri,
-                object_type=self.type,
             )
 
         comment.set_message(message)

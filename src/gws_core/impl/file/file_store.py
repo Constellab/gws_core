@@ -8,10 +8,12 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
+from typing import Union
 
 from ...core.exception.exceptions import BadRequestException
 from ...core.model.model import Model
 from ...core.utils.settings import Settings
+from ...model.typing_register_decorator import TypingDecorator
 
 # ####################################################################
 #
@@ -20,6 +22,7 @@ from ...core.utils.settings import Settings
 # ####################################################################
 
 
+@TypingDecorator(name_unique="FileStore", object_type="GWS_CORE", hide=True)
 class FileStore(Model):
     """
     FileStore class
@@ -31,7 +34,7 @@ class FileStore(Model):
 
     # -- A --
 
-    def add(self, source_file: (str, io.IOBase, tempfile.SpooledTemporaryFile, 'File', )):
+    def add(self, source_file: Union[str, io.IOBase, tempfile.SpooledTemporaryFile, 'File']):
         """
         Add a file from an external repository to a local store. Must be implemented by the child class.
 
@@ -102,7 +105,7 @@ class LocalFileStore(FileStore):
 
     # -- A --
 
-    def add(self, source_file: (str, io.IOBase, tempfile.SpooledTemporaryFile, 'File', ), dest_file_name: str = ""):
+    def add(self, source_file: Union[str, io.IOBase, tempfile.SpooledTemporaryFile, 'File'], dest_file_name: str = ""):
         """
         Add a file from an external repository to a local store
 

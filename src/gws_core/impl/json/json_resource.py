@@ -1,9 +1,12 @@
 import json
 
+from ...resource.resource_decorator import ResourceDecorator
+
 from ...core.model.model import Model
 from ...resource.resource import Resource
 
 
+@ResourceDecorator("JSONDict")
 class JSONDict(Resource):
 
     # -- A --

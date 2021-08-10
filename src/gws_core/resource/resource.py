@@ -4,15 +4,23 @@
 # About us: https://gencovery.com
 
 import json
-from typing import Type, Union
+from typing import Union
 
-from peewee import CharField, IntegerField
+from peewee import CharField, IntegerField, ModelSelect
 
+from ..core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 from ..core.model.model import Model
+from ..model.typing_manager import TypingManager
+from ..model.typing_register_decorator import TypingDecorator
 from ..model.viewable import Viewable
-from .resource_type import ResourceType
+
+# Typing names generated for the class Resource
+CONST_RESOURCE_TYPING_NAME = "PROCESS.gws_core.Resource"
 
 
+# Use the typing decorator to avoid circular dependency
+@TypingDecorator(name_unique="Resource", object_type="RESOURCE", hide=True)
 class Resource(Viewable):
     """
     Resource class.
@@ -21,30 +29,28 @@ class Resource(Viewable):
     :type process: Process
     """
 
+    typing_name = CharField(null=False)
+
     _process = None
     _experiment = None
     _table_name = 'gws_resource'
 
     def __init__(self, *args, process: 'Process' = None, experiment: 'Experiment' = None, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # check that the class level property _typing_name is set
+        if self._typing_name == CONST_RESOURCE_TYPING_NAME and type(self) != Resource:  # pylint: disable=unidiomatic-typecheck
+            raise BadRequestException(
+                f"The resource {self.full_classname()} is not decorated with @ResourceDecorator, it can't be instantiate. Please decorate the process class with @ResourceDecorator")
+
+        if self.typing_name is None:
+            # set the typing name
+            self.typing_name = self._typing_name
+
         if process:
             self.process = process
         if experiment:
             self.experiment = experiment
-
-    # -- C --
-
-    @classmethod
-    def create_resource_type(cls):
-
-        exist = ResourceType.select().where(
-            ResourceType.model_type == cls.full_classname()).count()
-        if not exist:
-            rt = ResourceType(
-                model_type=cls.full_classname(),
-                root_model_type="gws.resource.Resource"
-            )
-            rt.save()
 
     # -- D --
 
@@ -66,7 +72,7 @@ class Resource(Viewable):
             try:
                 mapping = ExperimentResource.get(
                     (ExperimentResource.resource_id == self.id) &
-                    (ExperimentResource.resource_type == self.type)
+                    (ExperimentResource.resource_typing_name == self.typing_name)
                 )
                 self._experiment = mapping.experiment
             except:
@@ -89,7 +95,7 @@ class Resource(Viewable):
         mapping = ExperimentResource(
             experiment_id=experiment.id,
             resource_id=self.id,
-            resource_type=self.type,
+            resource_typing_name=self.typing_name,
         )
         mapping.save()
         self._experiment = experiment
@@ -152,7 +158,7 @@ class Resource(Viewable):
             try:
                 o = ProcessResource.get(
                     (ProcessResource.resource_id == self.id) &
-                    (ProcessResource.resource_type == self.type)
+                    (ProcessResource.resource_typing_name == self.typing_name)
                 )
                 self._process = o.process
             except Exception as _:
@@ -174,9 +180,9 @@ class Resource(Viewable):
 
         mapping = ProcessResource(
             process_id=process.id,
-            process_type=process.type,
+            process_typing_name=process.typing_name,
             resource_id=self.id,
-            resource_type=self.type,
+            resource_typing_name=self.typing_name,
         )
         mapping.save()
         self._process = process
@@ -195,6 +201,14 @@ class Resource(Viewable):
 
         # @ToDo: ensure that this method is only called by a Selector
         pass
+
+    @classmethod
+    def select_me(cls, *args, **kwargs) -> ModelSelect:
+        """
+        Select objects by ensuring that the object-type is the same as the current model.
+        """
+
+        return cls.select(*args, **kwargs).where(cls.typing_name == cls._typing_name)
 
     # -- T --
 
@@ -216,7 +230,7 @@ class Resource(Viewable):
                 "experiment": {"uri": self.experiment.uri},
                 "process": {
                     "uri": self.process.uri,
-                    "type": self.process.type,
+                    "typing_name": self.process.typing_name,
                 },
             })
         if shallow:
@@ -251,7 +265,7 @@ class ExperimentResource(Model):
 
     experiment_id = IntegerField(null=False, index=True)
     resource_id = IntegerField(null=False, index=True)
-    resource_type = CharField(null=False, index=True)
+    resource_typing_name = CharField(null=False, index=True)
     _table_name = "gws_experiment_resource"
 
     @property
@@ -259,9 +273,7 @@ class ExperimentResource(Model):
         """
         Returns the resource
         """
-
-        model_type: Type[Model] = self.get_model_type(self.resource_type)
-        return model_type.get_by_id(self.resource_id)
+        return TypingManager.get_object_with_typing_name(self.resource_typing_name, self.resource_id)
 
     @property
     def experiment(self):
@@ -269,12 +281,12 @@ class ExperimentResource(Model):
         Returns the experiment
         """
 
-        from .experiment import Experiment
+        from ..experiment.experiment import Experiment
         return Experiment.get_by_id(self.experiment_id)
 
     class Meta:
         indexes = (
-            (("experiment_id", "resource_id", "resource_type"), True),
+            (("experiment_id", "resource_id", "resource_typing_name"), True),
         )
 
 
@@ -294,11 +306,12 @@ class ProcessResource(Model):
     # @Todo:
     # -----
     # * Try to replace `experiment_id` and `resource_id` columns by foreign keys with `lazy_load=False`
+    # Do we need the typings ? We do we do if the typing name changed
 
     process_id = IntegerField(null=False, index=True)
-    process_type = CharField(null=False, index=True)
+    process_typing_name = CharField(null=False, index=True)
     resource_id = IntegerField(null=False, index=True)
-    resource_type = CharField(null=False, index=True)
+    resource_typing_name = CharField(null=False, index=True)
     _table_name = "gws_process_resource"
 
     @property
@@ -306,20 +319,17 @@ class ProcessResource(Model):
         """
         Returns the resource
         """
-
-        model_type: Type[Model] = self.get_model_type(self.resource_type)
-        return model_type.get_by_id(self.resource_id)
+        return TypingManager.get_object_with_typing_name(self.resource_typing_name, self.resource_id)
 
     @property
     def process(self):
         """
         Returns the process
         """
-
-        model_type: Type[Model] = self.get_model_type(self.process_type)
-        return model_type.get_by_id(self.process_id)
+        return TypingManager.get_object_with_typing_name(self.process_typing_name, self.process_id)
 
     class Meta:
         indexes = (
-            (("process_id", "process_type", "resource_id", "resource_type"), True),
+            (("process_id", "process_typing_name",
+             "resource_id", "resource_typing_name"), True),
         )

@@ -21,14 +21,12 @@ from ..core.service.base_service import BaseService
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
 from ..process.process import Process
-from ..protocol.protocol import Protocol
 from ..resource.resource import Resource
+from .typing_manager import TypingManager
 from .view_model import ViewModel
 
 
 class ModelService(BaseService):
-
-    _model_types: Dict[str, Type['Model']] = {}  # use to cache the types
 
     # -- A --
 
@@ -212,12 +210,6 @@ class ModelService(BaseService):
                 model_list.append([t])
         return db_list, model_list
 
-    @classmethod
-    def get_model_types(cls) -> Dict[str, type]:
-        if not cls._model_types:
-            cls._model_types = cls.register_all_processes_and_resources()
-        return cls._model_types
-
     # -- I --
 
     @classmethod
@@ -285,28 +277,7 @@ class ModelService(BaseService):
 
     @classmethod
     def register_all_processes_and_resources(cls) -> Dict[str, type]:
-        model_type_list = cls._inspect_model_types()
-        process_type_list = []
-        resource_type_list = []
-        model_types: Dict[str, type] = {}
-        for m_t in set(model_type_list):
-
-            if issubclass(m_t, Process):
-                process_type_list.append(m_t)
-                if (not m_t is Process) and (not m_t is Protocol):
-                    m_t.create_process_type()
-                    model_types[m_t.full_classname()] = m_t
-            elif issubclass(m_t, Resource):
-                resource_type_list.append(m_t)
-                if not m_t is Resource:
-                    m_t.create_resource_type()
-                    model_types[m_t.full_classname()] = m_t
-        Logger.info(
-            f"Resource: {len(resource_type_list)} types registered:\n{resource_type_list}")
-        Logger.info(
-            f"Process: {len(process_type_list)} types registered:\n{process_type_list}")
-
-        return model_types
+        TypingManager.save_object_types_in_db()
 
     # -- S --
 

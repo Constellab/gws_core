@@ -7,7 +7,7 @@ import inspect
 import os
 import random
 import string
-from typing import Any, List
+from typing import Any, List, Type
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -61,7 +61,6 @@ class Utils:
         c0 = components[0].title() if capitalize_first else components[0]
         return c0 + ''.join(x.title() for x in components[1:])
 
-    # -- T --
     @staticmethod
     def get_brick_name(obj: Any) -> str:
         """Methode to return a brick of any object

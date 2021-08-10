@@ -5,13 +5,14 @@
 
 from typing import List, Type, Union
 
+from gws_core.core.dto.typed_tree_dto import TypedTree
+
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions.not_found_exception import NotFoundException
-from ..core.model.model import Model
 from ..core.service.base_service import BaseService
 from ..experiment.experiment import Experiment
-from ..progress_bar.progress_bar import ProgressBar
-from ..protocol.protocol import Protocol
+from ..model.typing_manager import TypingManager
+from ..protocol.protocol import CONST_PROTOCOL_TYPING_NAME, Protocol
 from .protocol_type import ProtocolType
 
 
@@ -20,34 +21,12 @@ class ProtocolService(BaseService):
     # -- F --
 
     @classmethod
-    def fetch_protocol(cls, type_str="gws_core.protocol.protocol.Protocol", uri: str = "") -> Protocol:
-        model_type: Type[Model] = None
-        if type_str:
-            model_type = Model.get_model_type(type_str)
-            if model_type is None:
-                raise NotFoundException(
-                    detail=f"Protocol type '{type_str}' not found")
-        else:
-            model_type = Protocol
-        try:
-            protocol = model_type.get(model_type.uri == uri)
-            return protocol
-        except Exception as err:
-            raise NotFoundException(
-                detail=f"No protocol found with uri '{uri}' and type '{type_str}'") from err
-
-    @classmethod
-    def fetch_protocol_progress_bar(cls, type="gws_core.protocol.protocol.Protocol", uri: str = "") -> ProgressBar:
-        try:
-            return ProgressBar.get((ProgressBar.process_uri == uri) & (ProgressBar.process_type == type))
-        except Exception as err:
-            raise NotFoundException(
-                detail=f"No progress bar found with process_uri '{uri}' and process_type '{type}'") from err
+    def fetch_protocol(cls, typing_name=CONST_PROTOCOL_TYPING_NAME, uri: str = "") -> Protocol:
+        return TypingManager.get_object_with_typing_name_and_uri(typing_name, uri)
 
     @classmethod
     def fetch_protocol_list(cls,
-                            type_str="gws_core.protocol.protocol.Protocol",
-                            search_text: str = "",
+                            typing_name=CONST_PROTOCOL_TYPING_NAME,
                             experiment_uri: str = None,
                             page: int = 1,
                             number_of_items_per_page: int = 20,
@@ -55,50 +34,32 @@ class ProtocolService(BaseService):
 
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
-        model_type: Type[Model] = None
-        if type_str:
-            model_type = Model.get_model_type(type_str)
+        model_type: Type[Protocol] = None
+        if typing_name:
+            model_type = TypingManager.get_type_from_name(typing_name)
             if model_type is None:
                 raise NotFoundException(
-                    detail=f"Protocol type '{type_str}' not found")
+                    detail=f"Protocol type '{typing_name}' not found")
         else:
             model_type = Protocol
 
-        if search_text:
-            query = model_type.search(search_text)
-            result = []
-            for o in query:
-                if as_json:
-                    result.append(o.get_related().to_json(shallow=True))
-                else:
-                    result.append(o.get_related())
-
-            paginator = Paginator(
-                query, page=page, number_of_items_per_page=number_of_items_per_page)
-            return {
-                'data': result,
-                'paginator': paginator.paginator_dict()
-            }
+        if model_type is Protocol:
+            query = model_type.select().where(model_type.is_template is False).order_by(
+                model_type.creation_datetime.desc())
         else:
-            if model_type is Protocol:
-                #query = t.select().where(t.is_protocol == True).order_by(t.creation_datetime.desc())
-                query = model_type.select().where(model_type.is_template is False).order_by(
-                    model_type.creation_datetime.desc())
-            else:
-                #query = t.select().where(t.type == t.full_classname()).order_by(t.creation_datetime.desc())
-                query = model_type.select().where((model_type.type == model_type.full_classname()) & (
-                    model_type.is_template == False)).order_by(model_type.creation_datetime.desc())
+            query = model_type.select_me().where(model_type.is_template == False).order_by(
+                model_type.creation_datetime.desc())
 
-            if experiment_uri:
-                query = query.join(Experiment, on=(model_type.id == Experiment.protocol_id))\
-                    .where(Experiment.uri == experiment_uri)
+        if experiment_uri:
+            query = query.join(Experiment, on=(model_type.id == Experiment.protocol_id))\
+                .where(Experiment.uri == experiment_uri)
 
-            paginator = Paginator(
-                query, page=page, number_of_items_per_page=number_of_items_per_page)
-            if as_json:
-                return paginator.to_json(shallow=True)
-            else:
-                return paginator
+        paginator = Paginator(
+            query, page=page, number_of_items_per_page=number_of_items_per_page)
+        if as_json:
+            return paginator.to_json(shallow=True)
+        else:
+            return paginator
 
     @classmethod
     def fetch_protocol_type_list(cls,
@@ -107,7 +68,7 @@ class ProtocolService(BaseService):
                                  as_json=False) -> Union[Paginator, dict]:
 
         query = ProtocolType.select()\
-                            .where(ProtocolType.root_model_type == "gws_core.protocol.protocol.Protocol")\
+                            .where(ProtocolType.object_type == "PROTOCOL")\
                             .order_by(ProtocolType.model_type.desc())
 
         number_of_items_per_page = min(
@@ -118,3 +79,22 @@ class ProtocolService(BaseService):
             return paginator.to_json(shallow=True)
         else:
             return paginator
+
+    @classmethod
+    def fetch_process_type_tree(cls) -> List[TypedTree]:
+        """
+        Return all the process types grouped by module and submodules
+        """
+
+        query: List[ProtocolType] = ProtocolType.select()\
+            .where(ProtocolType.object_type == "PROTOCOL")\
+            .order_by(ProtocolType.model_type.asc())
+
+        # create a fake main group to add processes in it
+        tree: TypedTree = TypedTree('')
+
+        for process_type in query:
+            tree.add_object(
+                process_type.get_model_types_array(), process_type.to_json())
+
+        return tree.sub_trees

@@ -135,7 +135,8 @@ async def create_an_experiment(experiment: ExperimentDTO,
     - **flow**: the protocol flow [optional]
     """
 
-    experiment: Experiment = ExperimentService.create_experiment(experiment)
+    experiment: Experiment = ExperimentService.create_empty_experiment(
+        experiment)
     return experiment.to_json()
 
 

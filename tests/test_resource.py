@@ -7,9 +7,11 @@
 import copy
 import unittest
 
-from gws_core import GTest, Process, Resource, ResourceSet
+from gws_core import (GTest, Process, ProcessDecorator, Resource,
+                      ResourceDecorator, ResourceSet)
 
 
+@ResourceDecorator("Car")
 class Car(Resource):
     @property
     def name(self):
@@ -26,6 +28,7 @@ class Car(Resource):
         self.data['name'] = name
 
 
+@ProcessDecorator("Start")
 class Start(Process):
     def run(self, params={}):
         self._output = copy.deepcopy(self._input)

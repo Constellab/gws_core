@@ -9,10 +9,12 @@ from typing import Union
 from peewee import CharField, ForeignKeyField
 
 from ..core.model.model import Model
+from ..model.typing_register_decorator import TypingDecorator
 from .current_user_service import CurrentUserService
 from .user import User
 
 
+@TypingDecorator(name_unique="Activity", object_type="GWS_CORE", hide=True)
 class Activity(Model):
     """
     (User) Activity class

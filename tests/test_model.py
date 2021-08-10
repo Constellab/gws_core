@@ -6,7 +6,8 @@
 
 import unittest
 
-from gws_core import CSVImporter, GTest, JSONLoader, Model, ModelService
+from gws_core import GTest, JSONDict, JSONLoader, Model, ModelService
+from gws_core.model.typing_manager import TypingManager
 from peewee import CharField
 
 ############################################################################################
@@ -74,9 +75,7 @@ class TestModel(unittest.TestCase):
 
     def test_model_registrering(self):
         GTest.print("Model Registering")
-        self.assertTrue(len(ModelService.get_model_types()) != 0)
+        self.assertTrue(len(TypingManager.get_typings()) > 0)
 
-        self.assertTrue(JSONLoader.full_classname()
-                        in ModelService.get_model_types())
-        self.assertTrue(CSVImporter.full_classname()
-                        in ModelService.get_model_types())
+        self.assertIsNotNone(JSONLoader._typing_name)
+        self.assertIsNotNone(JSONDict._typing_name)

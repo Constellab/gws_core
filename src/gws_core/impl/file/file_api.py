@@ -18,7 +18,6 @@ from .file_service import FileService
 
 @core_app.post("/file/upload", tags=["Files"], summary="Upload a file or a list of files")
 async def upload_a_file_or_list_of_files(files: List[UploadFile] = FastAPIFile(...),
-                                         study_uri: Optional[str] = None,
                                          _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Upload files
@@ -26,12 +25,12 @@ async def upload_a_file_or_list_of_files(files: List[UploadFile] = FastAPIFile(.
     - **study_uri**: the uri of the current study. If not given, the default **study** is used.
     """
 
-    file = await FileService.upload_file(files=files, study_uri=study_uri)
+    file = await FileService.upload_file(files=files)
     return file.to_json()
 
 
-@core_app.get("/file/{type}/{uri}/download", tags=["Files"], summary="Download a file")
-async def download_a_file(type: str,
+@core_app.get("/file/{typing_name}/{uri}/download", tags=["Files"], summary="Download a file")
+async def download_a_file(typing_name: str,
                           uri: str,
                           _: UserData = Depends(AuthService.check_user_access_token)) -> FileResponse:
     """
@@ -41,12 +40,12 @@ async def download_a_file(type: str,
     - **uri**: the uri of the file to download
     """
 
-    file_response = FileService.download_file(type=type, uri=uri)
+    file_response = FileService.download_file(typing_name=typing_name, uri=uri)
     return file_response
 
 
-@core_app.get("/file/{type}", tags=["Files"], summary="Get the list of files")
-async def get_the_list_of_files(type: Optional[str] = "gws.file.File",
+@core_app.get("/file/{typing_name}", tags=["Files"], summary="Get the list of files")
+async def get_the_list_of_files(typing_name: Optional[str] = "gws.file.File",
                                 search_text: Optional[str] = "",
                                 page: Optional[int] = 1,
                                 number_of_items_per_page: Optional[int] = 20,
@@ -61,7 +60,7 @@ async def get_the_list_of_files(type: Optional[str] = "gws.file.File",
     """
 
     return FileService.fetch_file_list(
-        type_str=type,
+        typing_name=typing_name,
         search_text=search_text,
         page=page,
         number_of_items_per_page=number_of_items_per_page,

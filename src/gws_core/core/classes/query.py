@@ -5,14 +5,12 @@
 
 from peewee import ModelSelect
 
-from ...model.view_model import ViewModel
-
 
 class Query:
     """
     Query class
     """
-
+    # Todo vérifier que ça fonctione encore bien, le cast a été enlevé
     @classmethod
     def format(cls, query: ModelSelect, view_params: dict = None, as_view: bool = False, as_json: bool = False, shallow: bool = False):
 
@@ -23,20 +21,14 @@ class Query:
         if as_view:
             if as_json:
                 for model in query:
-                    if isinstance(model, ViewModel):
-                        model = model.model
-                    else:
-                        model = model.cast()
+                    model = model.model
 
                     # -> create a new ViewModel is required
                     view_model = model.view(params=view_params)
                     result.append(view_model.to_json(shallow=shallow))
             else:
                 for model in query:
-                    if isinstance(model, ViewModel):
-                        model = model.model
-                    else:
-                        model = model.cast()
+                    model = model.model
 
                     view_model = model.view(params=view_params)
                     result.append(view_model)

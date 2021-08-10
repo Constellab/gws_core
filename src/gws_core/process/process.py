@@ -7,21 +7,26 @@ import asyncio
 import inspect
 import json
 import zlib
-from typing import Union
+from typing import Type, Union
 
-from peewee import CharField, ForeignKeyField, IntegerField
+from peewee import CharField, ForeignKeyField, IntegerField, ModelSelect
 from starlette_context import context
 
 from ..config.config import Config
 from ..core.exception.exceptions import BadRequestException
+from ..model.typing_manager import TypingManager
+from ..model.typing_register_decorator import TypingDecorator
 from ..model.viewable import Viewable
 from ..progress_bar.progress_bar import ProgressBar
 from ..resource.io import InPort, Input, OutPort, Output
-from ..user.current_user_service import CurrentUserService
 from ..user.user import User
-from .process_type import ProcessType
+
+# Typing names generated for the class Process
+CONST_PROCESS_TYPING_NAME = "PROCESS.gws_core.Process"
 
 
+# Use the typing decorator to avoid circular dependency
+@TypingDecorator(name_unique="Process", object_type="PROCESS", hide=True)
 class Process(Viewable):
     """
     Process class.
@@ -44,6 +49,7 @@ class Process(Viewable):
     created_by = ForeignKeyField(User, null=False, index=True, backref='+')
     config = ForeignKeyField(Config, null=False, index=True, backref='+')
     progress_bar = ForeignKeyField(ProgressBar, null=True, backref='+')
+    typing_name = CharField(null=False)
 
     input_specs: dict = {}
     output_specs: dict = {}
@@ -64,6 +70,7 @@ class Process(Viewable):
     _is_singleton = False
     _is_removable = False
     _is_plug = False
+
     _table_name = 'gws_process'  # is locked for all processes
 
     def __init__(self, *args, user=None, **kwargs):
@@ -72,6 +79,15 @@ class Process(Viewable):
         """
 
         super().__init__(*args, **kwargs)
+
+        # check that the class level property _typing_name is set
+        if self._typing_name == CONST_PROCESS_TYPING_NAME and type(self) != Process:  # pylint: disable=unidiomatic-typecheck
+            raise BadRequestException(
+                f"The process {self.full_classname()} is not decorated with @ProcessDecorator, it can't be instantiate. Please decorate the process class with @ProcessDecorator")
+
+        # set the typing name for the instance
+        if self.typing_name is None:
+            self.typing_name = self._typing_name
 
         if not self.title:
             self.title = self.full_classname().split(".")[-1]
@@ -98,7 +114,7 @@ class Process(Viewable):
             self.config.save()
 
             self.progress_bar = ProgressBar(
-                process_uri=self.uri, process_type=self.type)
+                process_uri=self.uri, process_typing_name=self.typing_name)
             self.progress_bar.save()
 
             if not user:
@@ -127,10 +143,9 @@ class Process(Viewable):
         if not self.data.get("input"):
             self.data["input"] = {}
         for k in self.data["input"]:
-            uri = self.data["input"][k]["uri"]
-            type_ = self.data["input"][k]["type"]
-            t = self.get_model_type(type_)
-            self._input.__setitem_without_check__(k, t.get(t.uri == uri))
+            model = TypingManager.get_object_with_typing_name_and_uri(
+                self.data["input"][k]["typing_name"], self.data["input"][k]["uri"])
+            self._input.__setitem_without_check__(k, model)
 
         # output
         for k in self.output_specs:
@@ -138,10 +153,9 @@ class Process(Viewable):
         if not self.data.get("output"):
             self.data["output"] = {}
         for k in self.data["output"]:
-            uri = self.data["output"][k]["uri"]
-            type_ = self.data["output"][k]["type"]
-            t = self.get_model_type(type_)
-            self._output.__setitem_without_check__(k, t.get(t.uri == uri))
+            model = TypingManager.get_object_with_typing_name_and_uri(
+                self.data["output"][k]["typing_name"], self.data["output"][k]["uri"])
+            self._output.__setitem_without_check__(k, model)
 
     # -- A --
 
@@ -180,50 +194,14 @@ class Process(Viewable):
             del kwargs["check_table_name"]
         super().create_table(*args, **kwargs)
 
-    @classmethod
-    def create_process_type(cls):
-        exist = ProcessType.select().where(
-            ProcessType.model_type == cls.full_classname()).count()
-        if not exist:
-            proc_type = ProcessType(
-                model_type=cls.full_classname(),
-                root_model_type="gws_core.process.process.Process"
-            )
-            proc_type.save()
-
-    def create_experiment(self, study: 'Study', uri: str = None, user: 'User' = None):
-        """
-        Create an experiment using a protocol composed of this process
-
-        :param study: The study in which the experiment is realized
-        :type study: `gws.study.Study`
-        :param study: The configuration of protocol
-        :type study: `gws_core.config.config.Config`
-        :return: The experiment
-        :rtype: `gws.experiment.Experiment`
-        """
-
-        from ..experiment.experiment import Experiment
-        from ..protocol.protocol import Protocol
-        proto = Protocol(processes={self.instance_name: self})
-        if user is None:
-            user = CurrentUserService.get_and_check_current_user()
-            if user is None:
-                raise BadRequestException("A user is required")
-        if uri:
-            e = Experiment(uri=uri, protocol=proto, study=study, user=user)
-        else:
-            e = Experiment(protocol=proto, study=study, user=user)
-        e.save()
-        return e
-
     def create_source_zip(self):
         """
         Returns the zipped code source of the process
         """
 
         # /:\ Use the true object type (self.type)
-        model_t = self.get_model_type(self.type)
+        model_t: Type[Process] = TypingManager.get_type_from_name(
+            self.typing_name)
         source = inspect.getsource(model_t)
         return zlib.compress(source.encode())
 
@@ -324,10 +302,8 @@ class Process(Viewable):
 
         if self._input.is_empty:
             for k in self.data["input"]:
-                uri = self.data["input"][k]["uri"]
-                type_ = self.data["input"][k]["type"]
-                t = self.get_model_type(type_)
-                self._input[k] = t.get(t.uri == uri)
+                self._input[k] = TypingManager.get_object_with_typing_name_and_uri(
+                    self.data["input"][k]["typing_name"], self.data["input"][k]["uri"])
         return self._input
 
     def in_port(self, name: str) -> InPort:
@@ -373,10 +349,8 @@ class Process(Viewable):
 
         if self._output.is_empty:
             for k in self.data["output"]:
-                uri = self.data["output"][k]
-                type_ = self.data["output"][k]["type"]
-                t = self.get_model_type(type_)
-                self._output[k] = t.get(t.uri == uri)
+                self._output[k] = TypingManager.get_object_with_typing_name_and_uri(
+                    self.data["output"][k]["typing_name"],  self.data["output"][k])
         return self._output
 
     def out_port(self, name: str) -> OutPort:
@@ -485,7 +459,7 @@ class Process(Viewable):
                     self._input[k].save()
                 self.data["input"][k] = {
                     "uri": self._input[k].uri,
-                    "type": self._input[k].type
+                    "typing_name": self._input[k].typing_name
                 }
         self.progress_bar.start(max_value=self._max_progress_value)
         self.save()
@@ -514,7 +488,7 @@ class Process(Viewable):
             if self._output[k]:
                 self.data["output"][k] = {
                     "uri": self._output[k].uri,
-                    "type": self._output[k].type
+                    "typing_name": self._output[k].typing_name
                 }
         await self._run_next_processes()
 
@@ -598,7 +572,7 @@ class Process(Viewable):
         self.config.set_param(name, value)
         self.config.save()
 
-    def set_protocol(self, protocol: 'Protocol'):
+    def set_protocol(self, protocol: 'Protocol') -> None:
         """
         Sets the protocol of the process
         """
@@ -616,6 +590,14 @@ class Process(Viewable):
 
     async def task(self):
         pass
+
+    @classmethod
+    def select_me(cls, *args, **kwargs) -> ModelSelect:
+        """
+        Select objects by ensuring that the object-type is the same as the current model.
+        """
+
+        return cls.select(*args, **kwargs).where(cls.typing_name == cls._typing_name)
 
     def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
         """

@@ -3,9 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import Depends
+from gws_core.core.dto.typed_tree_dto import TypedTree
 
 from ..core_app import core_app
 from ..process.process_service import ProcessService
@@ -32,9 +33,18 @@ async def get_the_list_of_protocol_types(page: Optional[int] = 1,
     )
 
 
-@core_app.get("/protocol/{uri}/{type}/progress-bar", tags=["Protocol"], summary="Get the progress bar of a protocol")
+@core_app.get("/protocol-type/typedTree", tags=["Protocol"], summary="Get the list of protocol types grouped by python module")
+async def get_the_list_of_process_grouped(_: UserData = Depends(AuthService.check_user_access_token)) -> List[TypedTree]:
+    """
+    Retrieve all the process types in TypedTree
+    """
+
+    return ProtocolService.fetch_process_type_tree()
+
+
+@core_app.get("/protocol/{uri}/{typing_name}/progress-bar", tags=["Protocol"], summary="Get the progress bar of a protocol")
 async def get_the_progress_bar_of_a_protocol(uri: str,
-                                             type: Optional[str] = "gws_core.process.process.Process",
+                                             typing_name: Optional[str] = "gws_core.process.process.Process",
                                              _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve a process
@@ -42,13 +52,14 @@ async def get_the_progress_bar_of_a_protocol(uri: str,
     - **uri**: the uri of the process
     """
 
-    pbar = ProcessService.fetch_process_progress_bar(uri=uri, type_str=type)
+    pbar = ProcessService.fetch_process_progress_bar(
+        uri=uri, process_typing_name=typing_name)
     return pbar.to_json()
 
 
-@core_app.get("/protocol/{uri}/{type}", tags=["Protocol"], summary="Get a protocol")
+@core_app.get("/protocol/{uri}/{typing_name}", tags=["Protocol"], summary="Get a protocol")
 async def get_a_protocol(uri: str,
-                         type: Optional[str] = "gws_core.protocol.protocol.Protocol",
+                         typing_name: Optional[str] = None,
                          _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve a protocol
@@ -56,13 +67,12 @@ async def get_a_protocol(uri: str,
     - **uri**: the uri of the protocol
     """
 
-    proto = ProtocolService.fetch_protocol(uri=uri, type_str=type)
+    proto = ProtocolService.fetch_protocol(uri=uri, typing_name=typing_name)
     return proto.to_json()
 
 
-@core_app.get("/protocol/{type}", tags=["Protocol"], summary="Get the list of protocols")
-async def get_the_list_of_protocols(type: Optional[str] = "gws_core.protocol.protocol.Protocol",
-                                    search_text: Optional[str] = "",
+@core_app.get("/protocol/{typing_name}", tags=["Protocol"], summary="Get the list of protocols")
+async def get_the_list_of_protocols(typing_name: Optional[str] = None,
                                     experiment_uri: Optional[str] = None,
                                     page: Optional[int] = 1,
                                     number_of_items_per_page: Optional[int] = 20,
@@ -78,8 +88,7 @@ async def get_the_list_of_protocols(type: Optional[str] = "gws_core.protocol.pro
     """
 
     return ProtocolService.fetch_protocol_list(
-        type_str=type,
-        search_text=search_text,
+        typing_name=typing_name,
         experiment_uri=experiment_uri,
         page=page,
         number_of_items_per_page=number_of_items_per_page,

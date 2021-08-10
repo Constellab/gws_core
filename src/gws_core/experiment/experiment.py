@@ -7,11 +7,13 @@ import json
 from enum import Enum
 from typing import List, Union
 
+from gws_core.model.typing_register_decorator import TypingDecorator
 from peewee import BooleanField, FloatField, ForeignKeyField
 
 from ..core.classes.enum_field import EnumField
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.sys_proc import SysProc
+from ..model.typing_manager import TypingManager
 from ..model.viewable import Viewable
 from ..protocol.protocol import Protocol
 from ..study.study import Study
@@ -29,6 +31,7 @@ class ExperimentStatus(Enum):
     ERROR = "ERROR"
 
 
+@TypingDecorator(name_unique="Experiment", object_type="GWS_CORE", hide=True)
 class Experiment(Viewable):
     """
     Experiment class.
@@ -193,17 +196,19 @@ class Experiment(Viewable):
         Returns child processes.
         """
 
-        Q = []
+        processes: List['Process'] = []
         if self.id:
             from ..process.process import Process
-            Qrel = Process.select().where(Process.experiment_id == self.id)
-            for proc in Qrel:
-                Q.append(proc.cast())
-        return Q
+            query = Process.select().where(Process.experiment_id == self.id)
+            for proc in query:
+                processes.append(TypingManager.get_object_with_typing_name(
+                    proc.typing_name, proc.id))
+
+        return processes
 
     # -- R --
 
-    @property
+    @ property
     def resources(self) -> List['Resource']:
         """
         Returns child resources.
@@ -328,7 +333,7 @@ class Experiment(Viewable):
             "study": {"uri": self.study.uri},
             "protocol": {
                 "uri": self.protocol.uri,
-                "type": self.protocol.type
+                "typing_name": self.protocol.typing_name
             },
             "status": self.status
         })

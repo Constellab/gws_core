@@ -29,7 +29,7 @@ class TestComment(unittest.TestCase):
         f.save()
         c3 = CommentService.add_comment(
             object_uri=f.uri,
-            object_type=f.type,
+            object_typing_name=f._typing_name,
             message="I want to go to Paris"
         )
 

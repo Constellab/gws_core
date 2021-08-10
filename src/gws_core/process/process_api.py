@@ -32,7 +32,7 @@ async def get_the_list_of_process_types(page: Optional[int] = 1,
     )
 
 
-@core_app.get("/process-type/typedTree", tags=["Process"], summary="Get the list of process types grouped by module")
+@core_app.get("/process-type/typedTree", tags=["Process"], summary="Get the list of process types grouped by python module")
 async def get_the_list_of_process_grouped(_: UserData = Depends(AuthService.check_user_access_token)) -> List[TypedTree]:
     """
     Retrieve all the process types in TypedTree
@@ -51,12 +51,13 @@ async def get_the_progress_bar_of_a_process(type: str,
     - **uri**: the uri of the process (Default is `gws_core.process.process.Process`)
     """
 
-    bar = ProcessService.fetch_process_progress_bar(uri=uri, type_str=type)
+    bar = ProcessService.fetch_process_progress_bar(
+        uri=uri, process_typing_name=type)
     return bar.to_json()
 
 
-@core_app.get("/process/{type}/{uri}", tags=["Process"], summary="Get a process")
-async def get_a_process(type: str,
+@core_app.get("/process/{typing_name}/{uri}", tags=["Process"], summary="Get a process")
+async def get_a_process(typing_name: str,
                         uri: str,
                         _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
@@ -66,7 +67,7 @@ async def get_a_process(type: str,
     - **uri**: the uri of the process
     """
 
-    proc = ProcessService.fetch_process(type=type, uri=uri)
+    proc = ProcessService.fetch_process(typing_name=typing_name, uri=uri)
     return proc.to_json()
 
 
@@ -89,7 +90,7 @@ async def get_the_list_of_processes(type: str,
     """
 
     return ProcessService.fetch_process_list(
-        type_str=type,
+        typing_name=type,
         search_text=search_text,
         experiment_uri=experiment_uri,
         page=page,

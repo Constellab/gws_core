@@ -4,21 +4,32 @@
 # About us: https://gencovery.com
 
 import inspect
-from typing import List
+from typing import List, Literal
 
-from peewee import CharField
+from gws_core.core.exception.exceptions.bad_request_exception import \
+    BadRequestException
+from peewee import BooleanField, CharField, ModelSelect
 
 from ..core.model.model import Model
-from .viewable import Viewable
 
 # ####################################################################
 #
 # ProcessType class
 #
 # ####################################################################
+SEPARATOR: str = "."
+
+# different object typed store in the typing table
+TypingObjectType = Literal["PROCESS", "RESOURCE", "PROTOCOL", "GWS_CORE"]
+available_object_types = ["PROCESS", "RESOURCE", "PROTOCOL", "GWS_CORE"]
 
 
-class Typing(Viewable):
+# Simple method to build the typing  = object_type.brick.model_name
+def build_typing_unique_name(object_type: str, brick_name: str, model_name: str) -> str:
+    return object_type + SEPARATOR + brick_name + SEPARATOR + model_name
+
+
+class Typing(Model):
     """
     Typing class. This class allows storing information on all the types of the models in the system.
 
@@ -30,16 +41,24 @@ class Typing(Viewable):
     :type root_type: `str`
     """
 
-    model_type: str = CharField(null=True, index=True, unique=True)
-    root_model_type: str = CharField(null=True, index=True)
-    #ancestors = TextField(null=True)
+    # Full python type of the model
+    model_type: str = CharField(null=False)
+    brick: str = CharField(null=False, index=True)
+    model_name: str = CharField(null=False, index=True)
+    object_type: TypingObjectType = CharField(null=False)
+    hide: bool = BooleanField(default=False)
 
     _table_name = 'gws_typing'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        if self.object_type not in available_object_types:
+            raise BadRequestException(
+                f"The type {self.object_type} is not authorized in Typing, possible values: {available_object_types}")
+
         if not self.data.get("ancestors"):
-            self.data["ancestors"] = self.__get_hierarchy_table()
+            self._set_ancestors(self.__get_hierarchy_table())
 
     # -- G --
 
@@ -60,3 +79,41 @@ class Typing(Viewable):
                 ht.append(t.full_classname())
 
         return ht
+
+    def update_model_type(self, model_type) -> 'Typing':
+        """
+        Update the model type and the ancestors, then save into the DB
+        """
+        self.model_type = model_type
+        self._set_ancestors(self.__get_hierarchy_table())
+
+        self.save()
+        return self
+
+    def _set_ancestors(self, ancestors: List[str]) -> None:
+        self.data["ancestors"] = ancestors
+
+    @property
+    def get_unique_name(self) -> str:
+        return build_typing_unique_name(self.object_type, self.brick, self.model_name)
+
+    @classmethod
+    def get_by_brick_and_model_name(cls, object_type: TypingObjectType, brick: str, model_name: str) -> ModelSelect:
+        return Typing.select().where(
+            Typing.object_type == object_type, Typing.brick == brick, Typing.model_name == model_name)
+
+    @classmethod
+    def get_by_typing_name(cls, typing_name: str) -> ModelSelect:
+        # retrieve the brickname and the model name
+        try:
+            object_type, brick_name, model_name = typing_name.split(SEPARATOR)
+        except:
+            raise BadRequestException(
+                f"The typing name {typing_name} in invalid")
+        return cls.get_by_brick_and_model_name(object_type, brick_name,  model_name)
+
+    class Meta:
+        # Unique constrains on brick, model_name and object_type
+        indexes = (
+            (('brick', 'model_name', 'object_type'), True),
+        )

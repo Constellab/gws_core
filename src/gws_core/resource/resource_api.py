@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Optional
+from typing import Optional, Union
 
 from fastapi import Depends
 
@@ -47,27 +47,26 @@ async def get_the_list_of_resource_types(page: Optional[int] = 1,
     )
 
 
-@core_app.get("/resource/{type}/{uri}", tags=["Resource"], summary="Get a resource")
-async def get_a_resource(type: str,
+@core_app.get("/resource/{typing_name}/{uri}", tags=["Resource"], summary="Get a resource")
+async def get_a_resource(typing_name: str,
                          uri: str,
-                         _: UserData = Depends(AuthService.check_user_access_token)) -> (dict, str,):
+                         _: UserData = Depends(AuthService.check_user_access_token)) -> Union[dict, str]:
     """
     Retrieve a resource
 
     - **uri**: the uri of the protocol
     """
 
-    r = ResourceService.fetch_resource(type=type, uri=uri)
+    r = ResourceService.fetch_resource(typing_name=typing_name, uri=uri)
     return r.to_json()
 
 
-@core_app.get("/resource/{type}", tags=["Resource"], summary="Get the list of resources")
-async def get_the_list_of_resources(type: Optional[str] = "gws.resource.Resource",
-                                    search_text: Optional[str] = "",
+@core_app.get("/resource/{typing_name}", tags=["Resource"], summary="Get the list of resources")
+async def get_the_list_of_resources(typing_name: Optional[str] = None,
                                     experiment_uri: Optional[str] = None,
                                     page: Optional[int] = 1,
                                     number_of_items_per_page: Optional[int] = 20,
-                                    _: UserData = Depends(AuthService.check_user_access_token)) -> (dict, str,):
+                                    _: UserData = Depends(AuthService.check_user_access_token)) -> Union[dict, str]:
     """
     Retrieve the list of resources. The list is paginated.
 
@@ -79,8 +78,7 @@ async def get_the_list_of_resources(type: Optional[str] = "gws.resource.Resource
     """
 
     return ResourceService.fetch_resource_list(
-        type=type,
-        search_text=search_text,
+        typing_name=typing_name,
         experiment_uri=experiment_uri,
         page=page,
         number_of_items_per_page=number_of_items_per_page,

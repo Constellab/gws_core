@@ -93,12 +93,15 @@ class ViewModel(Model):
         :return: The model instance
         :rtype: `gws.db.model.Model`
         """
+        # todo improve this method
+        from ..model.typing_manager import TypingManager
 
         if not self._model is None:
             return self._model
-        model_t = self.get_model_type(self.model_type)
-        model = model_t.get(model_t.uri == self.model_uri)
-        self._model = model.cast()
+
+        if self._model.typing_name is not None:
+            self._model = TypingManager.get_object_with_typing_name(
+                self._model.typing_name, self._model.id)
         return self._model
 
     # -- P --
@@ -215,7 +218,7 @@ class ViewModel(Model):
         _json = super().to_json(**kwargs)
         _json["model"] = {
             "uri": _json["model_uri"],
-            "type": _json["model_type"],
+            "type": _json["model_type"],  # todo fix type
             "rendering": self.render()
         }
         del _json["model_uri"]

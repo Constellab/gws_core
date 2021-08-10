@@ -11,7 +11,7 @@
             "instance_name": "p0",
             "is_archived": false,
             "save_datetime": "",
-            "type": "gws_core.impl.robot.robot.RobotCreate",
+            "typing_name": "PROCESS.gws_core.RobotCreate",
             "uri": "",
             "experiment": {
                 "uri": ""
@@ -29,7 +29,7 @@
                 },
                 "is_archived": false,
                 "save_datetime": "",
-                "type": "gws_core.config.config.Config",
+                "typing_name": "gws_core.config.config.Config",
                 "uri": ""
             },
             "progress_bar": {
@@ -46,11 +46,11 @@
                 },
                 "is_archived": false,
                 "save_datetime": "",
-                "type": "gws_core.progress_bar.progress_bar.ProgressBar",
+                "typing_name": "gws_core.progress_bar.progress_bar.ProgressBar",
                 "uri": "",
                 "process": {
                     "uri": "",
-                    "type": ""
+                    "typing_name"
                 }
             },
             "input": {},
@@ -58,10 +58,10 @@
                 "robot": {
                     "resource": {
                         "uri": "",
-                        "type": ""
+                        "typing_name"
                     },
                     "specs": [
-                        "gws_core.impl.robot.robot.Robot"
+                        "RESOURCE.gws_core.Robot"
                     ]
                 }
             }
@@ -76,7 +76,7 @@
             "instance_name": "p5",
             "is_archived": false,
             "save_datetime": "",
-            "type": "gws_core.impl.robot.robot.RobotEat",
+            "typing_name": "PROCESS.gws_core.RobotEat",
             "uri": "",
             "experiment": {
                 "uri": ""
@@ -99,7 +99,7 @@
                 },
                 "is_archived": false,
                 "save_datetime": "",
-                "type": "gws_core.config.config.Config",
+                "typing_name": "gws_core.config.config.Config",
                 "uri": ""
             },
             "progress_bar": {
@@ -116,21 +116,21 @@
                 },
                 "is_archived": false,
                 "save_datetime": "",
-                "type": "gws_core.progress_bar.progress_bar.ProgressBar",
+                "typing_name": "gws_core.progress_bar.progress_bar.ProgressBar",
                 "uri": "",
                 "process": {
                     "uri": "",
-                    "type": ""
+                    "typing_name"
                 }
             },
             "input": {
                 "robot": {
                     "resource": {
                         "uri": "",
-                        "type": ""
+                        "typing_name"
                     },
                     "specs": [
-                        "gws_core.impl.robot.robot.Robot"
+                        "RESOURCE.gws_core.Robot"
                     ]
                 }
             },
@@ -138,10 +138,10 @@
                 "robot": {
                     "resource": {
                         "uri": "",
-                        "type": ""
+                        "typing_name"
                     },
                     "specs": [
-                        "gws_core.impl.robot.robot.Robot"
+                        "RESOURCE.gws_core.Robot"
                     ]
                 }
             }
@@ -162,7 +162,7 @@
                             "instance_name": "p1",
                             "is_archived": false,
                             "save_datetime": "2021-07-11T18:34:29.023634",
-                            "type": "gws_core.impl.robot.robot.RobotMove",
+                            "typing_name": "PROCESS.gws_core.RobotMove",
                             "uri": "d98c54ed-87ab-4330-b2b7-a2574f5114d6",
                             "experiment": {
                                 "uri": ""
@@ -197,7 +197,7 @@
                                 },
                                 "is_archived": false,
                                 "save_datetime": "2021-07-11T18:34:28.419645",
-                                "type": "gws_core.config.config.Config",
+                                "typing_name": "gws_core.config.config.Config",
                                 "uri": "29634a4b-3012-4c50-8b06-af21ee95ef26"
                             },
                             "progress_bar": {
@@ -214,21 +214,21 @@
                                 },
                                 "is_archived": false,
                                 "save_datetime": "2021-07-11T18:34:28.428022",
-                                "type": "gws_core.progress_bar.progress_bar.ProgressBar",
+                                "typing_name": "gws_core.progress_bar.progress_bar.ProgressBar",
                                 "uri": "c1e4e36c-d558-4f45-94e1-d37da9fe1574",
                                 "process": {
                                     "uri": "d98c54ed-87ab-4330-b2b7-a2574f5114d6",
-                                    "type": "gws_core.impl.robot.robot.RobotMove"
+                                    "typing_name": "PROCESS.gws_core.RobotMove"
                                 }
                             },
                             "input": {
                                 "robot": {
                                     "resource": {
                                         "uri": "",
-                                        "type": ""
+                                        "typing_name"
                                     },
                                     "specs": [
-                                        "gws_core.impl.robot.robot.Robot"
+                                        "RESOURCE.gws_core.Robot"
                                     ]
                                 }
                             },
@@ -236,10 +236,10 @@
                                 "robot": {
                                     "resource": {
                                         "uri": "",
-                                        "type": ""
+                                        "typing_name"
                                     },
                                     "specs": [
-                                        "gws_core.impl.robot.robot.Robot"
+                                        "RESOURCE.gws_core.Robot"
                                     ]
                                 }
                             }
@@ -254,7 +254,7 @@
                             "instance_name": "p2",
                             "is_archived": false,
                             "save_datetime": "2021-07-11T18:34:29.029713",
-                            "type": "gws_core.impl.robot.robot.RobotEat",
+                            "typing_name": "PROCESS.gws_core.RobotEat",
                             "uri": "bb86a3d1-2148-4d14-986f-1c460509efac",
                             "experiment": {
                                 "uri": ""
@@ -277,7 +277,7 @@
                                 },
                                 "is_archived": false,
                                 "save_datetime": "2021-07-11T18:34:28.442830",
-                                "type": "gws_core.config.config.Config",
+                                "typing_name": "gws_core.config.config.Config",
                                 "uri": "24a690a3-1a48-4bea-b40f-29bbdffda0ca"
                             },
                             "progress_bar": {
@@ -294,21 +294,21 @@
                                 },
                                 "is_archived": false,
                                 "save_datetime": "2021-07-11T18:34:28.452281",
-                                "type": "gws_core.progress_bar.progress_bar.ProgressBar",
+                                "typing_name": "gws_core.progress_bar.progress_bar.ProgressBar",
                                 "uri": "bc5f0c57-c84e-48af-8b84-275ec82bbe43",
                                 "process": {
                                     "uri": "bb86a3d1-2148-4d14-986f-1c460509efac",
-                                    "type": "gws_core.impl.robot.robot.RobotEat"
+                                    "typing_name": "PROCESS.gws_core.RobotEat"
                                 }
                             },
                             "input": {
                                 "robot": {
                                     "resource": {
                                         "uri": "",
-                                        "type": ""
+                                        "typing_name"
                                     },
                                     "specs": [
-                                        "gws_core.impl.robot.robot.Robot"
+                                        "RESOURCE.gws_core.Robot"
                                     ]
                                 }
                             },
@@ -316,10 +316,10 @@
                                 "robot": {
                                     "resource": {
                                         "uri": "",
-                                        "type": ""
+                                        "typing_name"
                                     },
                                     "specs": [
-                                        "gws_core.impl.robot.robot.Robot"
+                                        "RESOURCE.gws_core.Robot"
                                     ]
                                 }
                             }
@@ -334,7 +334,7 @@
                             "instance_name": "p3",
                             "is_archived": false,
                             "save_datetime": "2021-07-11T18:34:29.035019",
-                            "type": "gws_core.impl.robot.robot.RobotMove",
+                            "typing_name": "PROCESS.gws_core.RobotMove",
                             "uri": "346c78b9-9d91-483d-a296-5f97d0680741",
                             "experiment": {
                                 "uri": ""
@@ -369,7 +369,7 @@
                                 },
                                 "is_archived": false,
                                 "save_datetime": "2021-07-11T18:34:28.465353",
-                                "type": "gws_core.config.config.Config",
+                                "typing_name": "gws_core.config.config.Config",
                                 "uri": "a7330bfb-185d-4911-ac20-f495e478a5e9"
                             },
                             "progress_bar": {
@@ -386,21 +386,21 @@
                                 },
                                 "is_archived": false,
                                 "save_datetime": "2021-07-11T18:34:28.479382",
-                                "type": "gws_core.progress_bar.progress_bar.ProgressBar",
+                                "typing_name": "gws_core.progress_bar.progress_bar.ProgressBar",
                                 "uri": "b9128271-59ff-478b-b8c2-eebe254198db",
                                 "process": {
                                     "uri": "346c78b9-9d91-483d-a296-5f97d0680741",
-                                    "type": "gws_core.impl.robot.robot.RobotMove"
+                                    "typing_name": "PROCESS.gws_core.RobotMove"
                                 }
                             },
                             "input": {
                                 "robot": {
                                     "resource": {
                                         "uri": "",
-                                        "type": ""
+                                        "typing_name"
                                     },
                                     "specs": [
-                                        "gws_core.impl.robot.robot.Robot"
+                                        "RESOURCE.gws_core.Robot"
                                     ]
                                 }
                             },
@@ -408,10 +408,10 @@
                                 "robot": {
                                     "resource": {
                                         "uri": "",
-                                        "type": ""
+                                        "typing_name"
                                     },
                                     "specs": [
-                                        "gws_core.impl.robot.robot.Robot"
+                                        "RESOURCE.gws_core.Robot"
                                     ]
                                 }
                             }
@@ -426,7 +426,7 @@
                             "instance_name": "p4",
                             "is_archived": false,
                             "save_datetime": "2021-07-11T18:34:29.039688",
-                            "type": "gws_core.impl.robot.robot.RobotMove",
+                            "typing_name": "PROCESS.gws_core.RobotMove",
                             "uri": "1e266eab-205c-4c6a-a22f-96b9e5bfb4b9",
                             "experiment": {
                                 "uri": ""
@@ -461,7 +461,7 @@
                                 },
                                 "is_archived": false,
                                 "save_datetime": "2021-07-11T18:34:28.494089",
-                                "type": "gws_core.config.config.Config",
+                                "typing_name": "gws_core.config.config.Config",
                                 "uri": "b348f15e-5c2d-409f-8e52-6d6c60310eba"
                             },
                             "progress_bar": {
@@ -478,21 +478,21 @@
                                 },
                                 "is_archived": false,
                                 "save_datetime": "2021-07-11T18:34:28.515354",
-                                "type": "gws_core.progress_bar.progress_bar.ProgressBar",
+                                "typing_name": "gws_core.progress_bar.progress_bar.ProgressBar",
                                 "uri": "f28a8c47-8815-4a6a-963c-11ad6942448a",
                                 "process": {
                                     "uri": "1e266eab-205c-4c6a-a22f-96b9e5bfb4b9",
-                                    "type": "gws_core.impl.robot.robot.RobotMove"
+                                    "typing_name": "PROCESS.gws_core.RobotMove"
                                 }
                             },
                             "input": {
                                 "robot": {
                                     "resource": {
                                         "uri": "",
-                                        "type": ""
+                                        "typing_name"
                                     },
                                     "specs": [
-                                        "gws_core.impl.robot.robot.Robot"
+                                        "RESOURCE.gws_core.Robot"
                                     ]
                                 }
                             },
@@ -500,10 +500,10 @@
                                 "robot": {
                                     "resource": {
                                         "uri": "",
-                                        "type": ""
+                                        "typing_name"
                                     },
                                     "specs": [
-                                        "gws_core.impl.robot.robot.Robot"
+                                        "RESOURCE.gws_core.Robot"
                                     ]
                                 }
                             }
@@ -518,7 +518,7 @@
                             "instance_name": "p_wait",
                             "is_archived": false,
                             "save_datetime": "2021-07-11T18:34:29.045570",
-                            "type": "gws_core.impl.robot.robot.RobotWait",
+                            "typing_name": "PROCESS.gws_core.RobotWait",
                             "uri": "f31ae988-22be-454f-af76-608ab1e9a9a0",
                             "experiment": {
                                 "uri": ""
@@ -541,7 +541,7 @@
                                 },
                                 "is_archived": false,
                                 "save_datetime": "2021-07-11T18:34:28.556711",
-                                "type": "gws_core.config.config.Config",
+                                "typing_name": "gws_core.config.config.Config",
                                 "uri": "a4c69e10-2fbb-4feb-ab5a-869ab6ffd132"
                             },
                             "progress_bar": {
@@ -558,21 +558,21 @@
                                 },
                                 "is_archived": false,
                                 "save_datetime": "2021-07-11T18:34:28.565594",
-                                "type": "gws_core.progress_bar.progress_bar.ProgressBar",
+                                "typing_name": "gws_core.progress_bar.progress_bar.ProgressBar",
                                 "uri": "fe31de77-d24d-4f9c-94b7-b4fca4256ad6",
                                 "process": {
                                     "uri": "f31ae988-22be-454f-af76-608ab1e9a9a0",
-                                    "type": "gws_core.impl.robot.robot.RobotWait"
+                                    "typing_name": "PROCESS.gws_core.RobotWait"
                                 }
                             },
                             "input": {
                                 "robot": {
                                     "resource": {
                                         "uri": "",
-                                        "type": ""
+                                        "typing_name"
                                     },
                                     "specs": [
-                                        "gws_core.impl.robot.robot.Robot"
+                                        "RESOURCE.gws_core.Robot"
                                     ]
                                 }
                             },
@@ -580,10 +580,10 @@
                                 "robot": {
                                     "resource": {
                                         "uri": "",
-                                        "type": ""
+                                        "typing_name"
                                     },
                                     "specs": [
-                                        "gws_core.impl.robot.robot.Robot"
+                                        "RESOURCE.gws_core.Robot"
                                     ]
                                 }
                             }
@@ -601,7 +601,7 @@
                             },
                             "resource": {
                                 "uri": "",
-                                "type": ""
+                                "typing_name"
                             }
                         },
                         {
@@ -615,7 +615,7 @@
                             },
                             "resource": {
                                 "uri": "",
-                                "type": ""
+                                "typing_name"
                             }
                         },
                         {
@@ -629,7 +629,7 @@
                             },
                             "resource": {
                                 "uri": "",
-                                "type": ""
+                                "typing_name"
                             }
                         },
                         {
@@ -643,7 +643,7 @@
                             },
                             "resource": {
                                 "uri": "",
-                                "type": ""
+                                "typing_name"
                             }
                         }
                     ],
@@ -660,7 +660,7 @@
                             },
                             "resource": {
                                 "uri": "",
-                                "type": ""
+                                "typing_name"
                             }
                         }
                     },
@@ -677,7 +677,7 @@
                             },
                             "resource": {
                                 "uri": "",
-                                "type": ""
+                                "typing_name"
                             }
                         }
                     },
@@ -691,7 +691,7 @@
             "is_archived": false,
             "is_template": false,
             "save_datetime": "",
-            "type": "gws_core.protocol.protocol.Protocol",
+            "typing_name": "gws_core.protocol.protocol.Protocol",
             "uri": "",
             "experiment": {
                 "uri": ""
@@ -709,7 +709,7 @@
                 },
                 "is_archived": false,
                 "save_datetime": "",
-                "type": "gws_core.config.config.Config",
+                "typing_name": "gws_core.config.config.Config",
                 "uri": ""
             },
             "progress_bar": {
@@ -726,21 +726,21 @@
                 },
                 "is_archived": false,
                 "save_datetime": "",
-                "type": "gws_core.progress_bar.progress_bar.ProgressBar",
+                "typing_name": "gws_core.progress_bar.progress_bar.ProgressBar",
                 "uri": "",
                 "process": {
                     "uri": "",
-                    "type": ""
+                    "typing_name"
                 }
             },
             "input": {
                 "robot": {
                     "resource": {
                         "uri": "",
-                        "type": ""
+                        "typing_name"
                     },
                     "specs": [
-                        "gws_core.impl.robot.robot.Robot"
+                        "RESOURCE.gws_core.Robot"
                     ]
                 }
             },
@@ -748,10 +748,10 @@
                 "robot": {
                     "resource": {
                         "uri": "",
-                        "type": ""
+                        "typing_name"
                     },
                     "specs": [
-                        "gws_core.impl.robot.robot.Robot"
+                        "RESOURCE.gws_core.Robot"
                     ]
                 }
             }
@@ -769,7 +769,7 @@
             },
             "resource": {
                 "uri": "",
-                "type": ""
+                "typing_name"
             }
         },
         {
@@ -783,7 +783,7 @@
             },
             "resource": {
                 "uri": "",
-                "type": ""
+                "typing_name"
             }
         }
     ],

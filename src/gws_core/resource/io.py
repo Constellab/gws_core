@@ -386,10 +386,10 @@ class IOface:
     def to_json(self, **kwargs):
         bare = kwargs.get("bare", False)
         r_uri = ""
-        r_type = ""
+        r_typing_name = ""
         if self.source_port.resource and not bare:
             r_uri = self.source_port.resource.uri
-            r_type = self.source_port.resource.type
+            r_typing_name = self.source_port.resource.typing_name
 
         return {
             "name": self.name,
@@ -403,7 +403,7 @@ class IOface:
             },
             "resource": {
                 "uri": r_uri,
-                "type": r_type
+                "typing_name": r_typing_name
             }
         }
 
@@ -524,11 +524,11 @@ class Connector:
         bare = kwargs.get("bare", False)
 
         r_uri = ""
-        r_type = ""
+        r_typing_name = ""
 
         if self.out_port.resource and not bare:
             r_uri = self.out_port.resource.uri
-            r_type = self.out_port.resource.type
+            r_typing_name = self.out_port.resource.typing_name
 
         link = {
             "from": {
@@ -541,7 +541,7 @@ class Connector:
             },
             "resource": {
                 "uri": r_uri,
-                "type": r_type
+                "typing_name": r_typing_name
             }
         }
 
@@ -699,7 +699,7 @@ class IO(Base):
                 if t is None:
                     specs[k] += (None, )
                 else:
-                    classname = t.full_classname()
+                    classname = t._typing_name
                     specs[k] += (classname, )
 
         return specs
@@ -821,12 +821,12 @@ class IO(Base):
             if port.resource and not bare:
                 _json[k]["resource"] = {
                     "uri": port.resource.uri,
-                    "type": port.resource.type
+                    "typing_name": port.resource.typing_name
                 }
             else:
                 _json[k]["resource"] = {
                     "uri": "",
-                    "type": ""
+                    "typing_name": ""
                 }
 
             _json[k]["specs"] = ()
@@ -834,7 +834,7 @@ class IO(Base):
                 if t is None:
                     _json[k]["specs"] += (None, )
                 else:
-                    classname = t.full_classname()
+                    classname = t._typing_name
                     _json[k]["specs"] += (classname, )
 
         return _json
