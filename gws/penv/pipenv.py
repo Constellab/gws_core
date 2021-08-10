@@ -17,9 +17,10 @@ from .base_env import BaseEnvShell
 
 class PipEnvShell(BaseEnvShell):
     """
-    EnvShell process.
+    PipEnvShell process.
 
-    This class is a proxy to run user shell commands through the Python method `subprocess.run`.
+    This class allows to run python scripts in pipenv virtual environments.
+    See also https://pipenv.pypa.io/
     """
 
     _python_version = "3.8"
@@ -83,6 +84,7 @@ class PipEnvShell(BaseEnvShell):
                 " ".join(cmd),
                 cwd=cls.get_env_dir(),
                 stderr=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
                 shell=True
             )
             Logger.progress("Virtual environment installed!")
@@ -106,6 +108,7 @@ class PipEnvShell(BaseEnvShell):
                 " ".join(cmd),
                 cwd=cls.get_env_dir(),
                 stderr=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
                 shell=True
             )
             Logger.progress("Virtual environment removed!")

@@ -15,29 +15,35 @@ from ..system import SysProc
 from ..shell import Shell
 from .base_env import BaseEnvShell
 
-class CondaEnvShell(BaseEnvShell):
+class REnvShell(BaseEnvShell):
     """
-    CondaEnvShell process.
+    REnvShell process.
 
-    This class allows to run python scripts in conda virtual environments.
-    See also https://conda.io/
+    This class allows to run R scripts in renv virtual environments.
+    See also https://rstudio.github.io/renv/
     """
 
-    _shell_mode = True
     _python_version = "3.8"
 
-    # -- F --
+    # -- B --
 
-    def _format_command(self, user_cmd: list) -> str:
-        if isinstance(user_cmd, list):
-            user_cmd = [str(c) for c in user_cmd]
-            user_cmd = ' '.join(user_cmd)
-        venv_dir = os.path.join(self.get_env_dir(), "./.venv")
-        cmd = f'bash -c "source /opt/conda/etc/profile.d/conda.sh && conda activate {venv_dir} && {user_cmd}"'
-        return cmd
+    def _format_command(self, user_cmd) -> list:
+        """
+        This method builds the command to execute.
 
-    # -- G --
+        :return: The list of arguments used to build the final command in the Python method `subprocess.run`
+        :rtype: `list`
+        """
 
+        if  user_cmd[0] in ["R", "Rscript", "/usr/bin/R", "/usr/bin/Rscript"]:
+           del user_cmd[0]
+
+        return [ "Rscript", "--vanilla", *user_cmd ]
+
+    # -- E --
+
+    def get_install_file_path():
+        
     # -- I --
 
     @classmethod
@@ -52,12 +58,12 @@ class CondaEnvShell(BaseEnvShell):
             *cls._dependencies
         ]))
         dep = " ".join(dep)
-
+        __cdir__ = os.path.abspath(os.path.realpath(__file__))
         cmd = [
-            'bash -c "source /opt/conda/etc/profile.d/conda.sh"',
+            f"Rscript --vanilla {}",
             "&&",
-            f"conda create -y --prefix ./.venv python={cls._python_version} {dep}",
-            "&&",
+            f"pipenv install {dep}",
+            "&&"
             "touch READY",
         ]
 
@@ -72,17 +78,14 @@ class CondaEnvShell(BaseEnvShell):
             )
             Logger.progress("Virtual environment installed!")
         except Exception as err:
-            raise BadRequestException("Cannot install the virtual environment.")
+            raise BadRequestException("Cannot install the virtual environment.") from err
     
-    # -- U --
-
     @classmethod
     def uninstall(cls):
         if not cls.is_installed():
             return
-        
         cmd = [
-            "conda remove -y --prefix .venv --all",
+            "pipenv uninstall --all",
             "&&",
             "cd ..",
             "&&",

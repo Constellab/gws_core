@@ -20,7 +20,7 @@ class IPAddressLookup(PipEnvShell):
         __cdir__ = os.path.dirname(os.path.realpath(__file__))
         return [
             "python",
-            os.path.join(__cdir__, "testdata", "venv", "jwt_encode.py")
+            os.path.join(__cdir__, "testdata", "penv", "jwt_encode.py")
         ]
 
     def gather_outputs(self):
