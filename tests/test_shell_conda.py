@@ -8,7 +8,7 @@ import asyncio
 import unittest
 
 from gws.resource import Resource
-from gws.env.conda import CondaEnvShell
+from gws.penv.conda import CondaEnvShell
 from gws.unittest import GTest
 
 class IPAddressLookup(CondaEnvShell):
@@ -40,9 +40,8 @@ class TestProcess(unittest.TestCase):
     def tearDownClass(cls):
         GTest.drop_tables()
 
-    def test_process_singleton(self):
+    def test_conda(self):
         GTest.print("Conda")
-
         proc = IPAddressLookup()
         self.assertFalse(proc.is_installed())
 
