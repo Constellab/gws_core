@@ -1,7 +1,7 @@
 {
     "name"          : "gws_core",
     "authors"       : "Gencovery",
-    "version"       : "0.1",
+    "version"       : "0.2.0",
     "app_dir"       : "./",
     "app_host"      : "0.0.0.0",
     "app_port"      : 3000,

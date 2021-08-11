@@ -5,8 +5,8 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="gws_core",
-    version="0.0.1",
-    author="Example Author",
+    version="0.2.0",
+    author="Gencovery",
     author_email="admin@gencovery.com",
     description="Core of Gencovery Web Service",
     long_description=long_description,
@@ -17,7 +17,6 @@ setuptools.setup(
     # },
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
     package_dir={"": "src"},
