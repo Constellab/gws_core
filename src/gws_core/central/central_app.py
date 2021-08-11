@@ -92,21 +92,6 @@ async def generate_user_access_token(user_uri_data: UserUriData,
     return await _generate_user_access_token(user_uri_data.uri)
 
 
-@central_app.get("/user/test", tags=["User management"])
-async def get_user_test():
-    """
-    Testing API user details
-    """
-    return {
-        "owner": {
-            "uri": UserService.get_owner().uri,
-        },
-        "sys": {
-            "uri": UserService.get_sysuser().uri,
-        }
-    }
-
-
 @central_app.get("/user/{uri}/activate", tags=["User management"])
 async def activate_user(uri: str, _: UserData = Depends(check_central_api_key)):
     """
