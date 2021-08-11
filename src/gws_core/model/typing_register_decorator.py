@@ -1,14 +1,14 @@
 
 
-from typing import Any, Type
+from typing import Any, Callable, Type
 
 from gws_core.model.typing import TypingObjectType
 
 from .typing_manager import TypingManager
 
 
-def TypingDecorator(unique_name: str, object_type: TypingObjectType, hide: bool = False):
-    """Decorator to registrer the class as a typing with a typing name
+def TypingDecorator(unique_name: str, object_type: TypingObjectType, hide: bool = False) -> Callable:
+    """Decorator to register the class as a typing with a typing name
 
     :param unique_name: unique name in the brick it will define the typing name
     :type unique_name: str

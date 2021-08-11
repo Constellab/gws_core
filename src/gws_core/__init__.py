@@ -151,6 +151,7 @@ from .progress_bar.progress_bar_service import \
     ProgressBarService as ProgressBarService
 # Protocol
 from .protocol.protocol import Protocol as Protocol
+from .protocol.protocol_decorator import ProtocolDecorator as ProtocolDecorator
 from .protocol.protocol_service import ProtocolService as ProtocolService
 from .protocol.protocol_type import ProtocolType as ProtocolType
 # Resource

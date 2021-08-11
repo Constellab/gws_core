@@ -1,12 +1,12 @@
 
 
-from typing import Type
+from typing import Callable, Type
 
 from ..model.typing_register_decorator import register_typing_class
 from .process import Process
 
 
-def ProcessDecorator(unique_name: str, hide: bool = False):
+def ProcessDecorator(unique_name: str, hide: bool = False) -> Callable:
     def decorator(process_class: Type[Process]):
         if not issubclass(process_class, Process):
             raise Exception(

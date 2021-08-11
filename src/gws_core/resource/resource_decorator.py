@@ -1,12 +1,12 @@
 
 
-from typing import Type
+from typing import Callable, Type
 
 from ..model.typing_register_decorator import register_typing_class
 from ..resource.resource import Resource
 
 
-def ResourceDecorator(unique_name: str, hide: bool = False):
+def ResourceDecorator(unique_name: str, hide: bool = False) -> Callable:
     def decorator(resource_class: Type['Resource']):
 
         if not issubclass(resource_class, Resource):
