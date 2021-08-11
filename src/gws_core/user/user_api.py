@@ -72,7 +72,7 @@ async def login(credentials: CredentialsDTO) -> Coroutine[Any, Any, JSONResponse
 
 @core_app.post("/dev-login", tags=["User"], summary="Login to the dev lab using the prod token")
 async def dev_login(authorization_header: Optional[str] = Header(default=None, alias="Authorization"),
-                    authorization_cookie: Optional[str] = Cookie(default=None, alias="Authorization")) -> Coroutine[Any, Any, JSONResponse]:
+                    authorization_cookie: Optional[str] = Cookie(default=None, alias="Authorization")) -> Coroutine[Any, Any, str]:
     """
     Log the user on the dev lab by calling the prod api
     """

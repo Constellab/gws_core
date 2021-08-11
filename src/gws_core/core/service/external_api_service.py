@@ -23,8 +23,11 @@ class ExternalApiService:
         return requests.post(url, data=body)
 
     @classmethod
-    def get(cls, url: str, headers: Dict) -> Response:
+    def get(cls, url: str, headers: Dict = None) -> Response:
         """
         Make an HTTP get request
         """
-        return requests.get(url, params={"headers": headers})
+        params = None
+        if headers is not None:
+            params = {"headers": headers}
+        return requests.get(url, params=params)

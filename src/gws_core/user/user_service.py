@@ -5,6 +5,8 @@
 
 from typing import Union
 
+from gws_core.user.user_dto import UserDataDict
+
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
@@ -26,30 +28,42 @@ class UserService(BaseService):
     # -- C --
 
     @classmethod
-    def create_user(cls, data: dict) -> User:
+    def create_user(cls, user: UserDataDict) -> User:
+
+        if cls.user_exists(user["uri"]):
+            raise BadRequestException("The user already exists")
+
+        return cls._create_user(user)
+
+    @classmethod
+    def create_user_if_not_exists(cls, user: UserDataDict) -> User:
+        db_user: User = cls.get_user_by_uri(user["uri"])
+        if db_user is not None:
+            return db_user
+
+        return cls._create_user(user)
+
+    @classmethod
+    def _create_user(cls, data: UserDataDict) -> User:
         group = data.get('group', 'user')
         if group == "sysuser":
             raise BadRequestException("Cannot create sysuser")
-        u = User.get_by_uri(data['uri'])
-        if not u:
-            user = User(
-                uri=data['uri'],
-                email=data['email'],
-                group=group,
-                is_active=data.get('is_active', True),
-                data={
-                    "first_name": data['first_name'],
-                    "last_name": data['last_name'],
-                }
-            )
-            if user.save():
-                return User.get_by_uri(user.uri)
-            else:
-                raise BadRequestException(
-                    "Cannot create the user")
+
+        user = User(
+            uri=data['uri'],
+            email=data['email'],
+            group=group,
+            is_active=data.get('is_active', True),
+            data={
+                "first_name": data['first_name'],
+                "last_name": data['last_name'],
+            }
+        )
+        if user.save():
+            return User.get_by_uri(user.uri)
         else:
             raise BadRequestException(
-                "The user already exists")
+                "Cannot create the user")
 
     # -- D --
 
@@ -173,3 +187,7 @@ class UserService(BaseService):
     @classmethod
     def get_sysuser(cls):
         return User.get_sysuser()
+
+    @classmethod
+    def user_exists(cls, uri: str) -> bool:
+        return cls.get_user_by_uri(uri) is not None

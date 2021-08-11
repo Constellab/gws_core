@@ -1,6 +1,7 @@
 
 
-from typing import Any, Coroutine
+import json
+from typing import Any, Coroutine, Dict
 
 import jwt
 from fastapi import Depends
@@ -24,7 +25,7 @@ from .current_user_service import CurrentUserService
 from .invalid_token_exception import InvalidTokenException
 from .oauth2_user_cookie_scheme import oauth2_user_cookie_scheme
 from .user import User
-from .user_dto import UserData
+from .user_dto import UserData, UserDataDict
 from .user_service import UserService
 from .wrong_credentials_exception import WrongCredentialsException
 
@@ -213,23 +214,33 @@ class AuthService(BaseService):
             raise BadRequestException(detail=GWSException.MISSING_PROD_API_URL.value,
                                       unique_code=GWSException.MISSING_PROD_API_URL.name)
 
-        # Check if the user's token is valid in prod environment
+        # Check if the user's token is valid in prod environment and retrieve user's information
         try:
             response: Response = ExternalApiService.get(
-                url=f"{prod_api_url}/core-api/check-token", headers={"Authorization": token})
-        except:
+                url=f"{prod_api_url}/core-api/user/me", headers={"Authorization": token})
+        except Exception as err:
+            Logger.error(
+                f"Error during authentication to the prod api : {err}")
             raise BadRequestException(detail=GWSException.ERROR_DURING_DEV_LOGIN.value,
                                       unique_code=GWSException.ERROR_DURING_DEV_LOGIN.name)
 
         if response.status_code != 200:
             raise BadRequestException(detail=GWSException.ERROR_DURING_DEV_LOGIN.value,
                                       unique_code=GWSException.ERROR_DURING_DEV_LOGIN.name)
+        # retrieve the user from the response
+        user: UserDataDict = response.json()
+
+        if not user["is_active"]:
+            raise BadRequestException(detail=GWSException.USER_NOT_ACTIVATED.value,
+                                      unique_code=GWSException.USER_NOT_ACTIVATED.name)
+
+        userdb: User = UserService.create_user_if_not_exists(user)
 
         # The user's prod token is valid, we can return the token for the development environment
-        return await generate_user_access_token(response.raw)
+        return await generate_user_access_token(userdb.uri)
 
     @classmethod
-    def __unauthenticate_http(cls, user) -> bool:
+    def __unauthenticate_http(cls, user: User) -> bool:
 
         if not user.is_http_authenticated:
             CurrentUserService.set_current_user(None)
@@ -249,7 +260,7 @@ class AuthService(BaseService):
                 return False
 
     @classmethod
-    def __unauthenticate_console(cls, user) -> bool:
+    def __unauthenticate_console(cls, user: User) -> bool:
 
         if not user.is_console_authenticated:
             CurrentUserService.set_current_user(None)
