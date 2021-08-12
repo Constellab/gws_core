@@ -8,7 +8,7 @@ setuptools.setup(
     version="0.2.0",
     author="Gencovery",
     author_email="admin@gencovery.com",
-    description="Core of Gencovery Web Service",
+    description="Core Gencovery Web Services",
     long_description=long_description,
     long_description_content_type="text/markdown",
     # url="https://github.com/pypa/sampleproject",
@@ -21,5 +21,5 @@ setuptools.setup(
     ],
     package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),
-    python_requires=">=3.6",
+    python_requires=">=3.8",
 )
