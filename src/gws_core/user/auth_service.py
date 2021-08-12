@@ -2,7 +2,7 @@
 
 from typing import Any, Coroutine
 
-from gws_core.user.jwt_service import JWTService
+from fastapi.param_functions import Depends
 from requests.models import Response
 from starlette.responses import JSONResponse
 
@@ -20,6 +20,8 @@ from .activity_service import ActivityService
 from .credentials_dto import CredentialsDTO
 from .current_user_service import CurrentUserService
 from .invalid_token_exception import InvalidTokenException
+from .jwt_service import JWTService
+from .oauth2_user_cookie_scheme import oauth2_user_cookie_scheme
 from .user import User
 from .user_dto import UserData, UserDataDict
 from .user_service import UserService
@@ -76,11 +78,11 @@ class AuthService(BaseService):
         return response
 
     @classmethod
-    async def check_user_access_token(cls, token: str) -> UserData:
-
-        user_uri: str = JWTService.check_user_access_token(token)
+    async def check_user_access_token(cls, token: str = Depends(oauth2_user_cookie_scheme)) -> UserData:
 
         try:
+            user_uri: str = JWTService.check_user_access_token(token)
+
             db_user = User.get(User.uri == user_uri)
             if not cls.authenticate(uri=db_user.uri):
                 raise InvalidTokenException()

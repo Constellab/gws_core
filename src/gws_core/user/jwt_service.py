@@ -1,12 +1,10 @@
 from datetime import datetime, timedelta
 from typing import TypedDict
 
-from fastapi import Depends
 from jwt import decode, encode
 
 from ..core.utils.settings import Settings
 from .invalid_token_exception import InvalidTokenException
-from .oauth2_user_cookie_scheme import oauth2_user_cookie_scheme
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_SECONDS = 60 * 60 * 24 * 3        # 3 days
@@ -34,10 +32,10 @@ class JWTService:
         return encoded_jwt
 
     @classmethod
-    def check_user_access_token(cls, token: str = Depends(oauth2_user_cookie_scheme)) -> str:
+    def check_user_access_token(cls, token: str) -> str:
         """Check the jwt and return user uri if token is valid
 
-        :param token: [description], defaults to Depends(oauth2_user_cookie_scheme)
+        :param token: [description]
         :type token: str, optional
         :return: user jwt
         :rtype: str
