@@ -16,7 +16,6 @@ from .core.exception.exceptions import BadRequestException
 from .core.utils.logger import Logger
 from .core.utils.settings import Settings
 
-
 def _run(ctx, uri="", token="", test="",
          cli=False, cli_test=False, runserver=False, runmode="dev",
          ip="0.0.0.0", port="3000", docgen=False,
@@ -64,15 +63,10 @@ def _run(ctx, uri="", token="", test="",
 
         tests: str = test.split(' ')
         loader = unittest.TestLoader()
-        __cdir__ = os.path.dirname(os.path.abspath(__file__))
-
         test_suite: BaseTestSuite = BaseTestSuite()
-
         for test_file in tests:
-            test_suite.addTests(loader.discover(os.path.join(
-                __cdir__, "../../tests/"), pattern=test_file+".py"))
-        # test_suite = loader.discover(os.path.join(
-            # __cdir__, "../../tests/"), pattern=test+".py")
+            brick_dir = settings.get_cwd()
+            test_suite.addTests(loader.discover(os.path.join(brick_dir, "./tests/"), pattern=test_file+".py"))
 
         test_runner = unittest.TextTestRunner()
 

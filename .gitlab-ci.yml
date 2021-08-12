@@ -7,13 +7,12 @@ variables:
   GIT_DEPTH: 0
   LAB_FRONT_IMAGE: lab-front
 
-
 stages:
   - build-lab
 
 # Build lab front an create an artifact with dist folder
 build-lab:
-  image: python:3.6
+  image: python:3.8
   stage: build-lab
   script:
     - pip install twine
@@ -21,4 +20,3 @@ build-lab:
     - TWINE_PASSWORD=${CI_JOB_TOKEN} TWINE_USERNAME=gitlab-ci-token python -m twine upload --repository-url ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi dist/*
   only:
     - master
-
