@@ -19,7 +19,7 @@ from ..model.typing_register_decorator import TypingDecorator
 #
 # ####################################################################
 
-@TypingDecorator(name_unique="User", object_type="GWS_CORE", hide=True)
+@TypingDecorator(unique_name="User", object_type="GWS_CORE", hide=True)
 class User(Model):
     """
     User class

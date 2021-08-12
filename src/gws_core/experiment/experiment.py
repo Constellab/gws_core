@@ -31,7 +31,7 @@ class ExperimentStatus(Enum):
     ERROR = "ERROR"
 
 
-@TypingDecorator(name_unique="Experiment", object_type="GWS_CORE", hide=True)
+@TypingDecorator(unique_name="Experiment", object_type="GWS_CORE", hide=True)
 class Experiment(Viewable):
     """
     Experiment class.

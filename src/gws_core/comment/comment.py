@@ -12,7 +12,7 @@ from ..core.model.model import Model
 from ..model.typing_register_decorator import TypingDecorator
 
 
-@TypingDecorator(name_unique="Comment", object_type="GWS_CORE", hide=True)
+@TypingDecorator(unique_name="Comment", object_type="GWS_CORE", hide=True)
 class Comment(Model):
     """
     Comment class that represents generic object comments

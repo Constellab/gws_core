@@ -20,7 +20,7 @@ from ..core.utils.logger import Logger
 from ..model.typing_register_decorator import TypingDecorator
 
 
-@TypingDecorator(name_unique="ProgressBar", object_type="GWS_CORE", hide=True)
+@TypingDecorator(unique_name="ProgressBar", object_type="GWS_CORE", hide=True)
 class ProgressBar(Model):
     """
     ProgressBar class

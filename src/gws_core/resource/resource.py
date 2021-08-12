@@ -20,7 +20,7 @@ CONST_RESOURCE_TYPING_NAME = "PROCESS.gws_core.Resource"
 
 
 # Use the typing decorator to avoid circular dependency
-@TypingDecorator(name_unique="Resource", object_type="RESOURCE", hide=True)
+@TypingDecorator(unique_name="Resource", object_type="RESOURCE", hide=True)
 class Resource(Viewable):
     """
     Resource class.

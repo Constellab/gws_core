@@ -12,7 +12,7 @@ from .csv_resource import CSVTable
 # ####################################################################
 
 
-@ProcessDecorator(name_unique="CSVImporter")
+@ProcessDecorator(unique_name="CSVImporter")
 class CSVImporter(FileImporter):
     input_specs = {'file': File}
     output_specs = {'data': CSVTable}
@@ -30,7 +30,7 @@ class CSVImporter(FileImporter):
 # ####################################################################
 
 
-@ProcessDecorator(name_unique="CSVExporter")
+@ProcessDecorator(unique_name="CSVExporter")
 class CSVExporter(FileExporter):
     input_specs = {'data': CSVTable}
     output_specs = {'file': File}

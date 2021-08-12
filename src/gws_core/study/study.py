@@ -7,7 +7,7 @@ from ..model.typing_register_decorator import TypingDecorator
 from ..model.viewable import Viewable
 
 
-@TypingDecorator(name_unique="Study", object_type="GWS_CORE", hide=True)
+@TypingDecorator(unique_name="Study", object_type="GWS_CORE", hide=True)
 class Study(Viewable):
     """
     Study class.

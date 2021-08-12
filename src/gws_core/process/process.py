@@ -26,7 +26,7 @@ CONST_PROCESS_TYPING_NAME = "PROCESS.gws_core.Process"
 
 
 # Use the typing decorator to avoid circular dependency
-@TypingDecorator(name_unique="Process", object_type="PROCESS", hide=True)
+@TypingDecorator(unique_name="Process", object_type="PROCESS", hide=True)
 class Process(Viewable):
     """
     Process class.

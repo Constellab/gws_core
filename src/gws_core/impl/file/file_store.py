@@ -22,7 +22,7 @@ from ...model.typing_register_decorator import TypingDecorator
 # ####################################################################
 
 
-@TypingDecorator(name_unique="FileStore", object_type="GWS_CORE", hide=True)
+@TypingDecorator(unique_name="FileStore", object_type="GWS_CORE", hide=True)
 class FileStore(Model):
     """
     FileStore class

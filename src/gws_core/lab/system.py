@@ -31,7 +31,7 @@ def _system_monitor_tick(daemon):
 # ####################################################################
 
 
-@TypingDecorator(name_unique="Monitor", object_type="GWS_CORE", hide=True)
+@TypingDecorator(unique_name="Monitor", object_type="GWS_CORE", hide=True)
 class Monitor(Model):
     """
     Lab Monitor class.

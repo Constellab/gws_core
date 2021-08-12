@@ -14,7 +14,7 @@ from .current_user_service import CurrentUserService
 from .user import User
 
 
-@TypingDecorator(name_unique="Activity", object_type="GWS_CORE", hide=True)
+@TypingDecorator(unique_name="Activity", object_type="GWS_CORE", hide=True)
 class Activity(Model):
     """
     (User) Activity class

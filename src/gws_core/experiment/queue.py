@@ -12,7 +12,7 @@ from ..user.user import User
 from .experiment import Experiment
 
 
-@TypingDecorator(name_unique="Job", object_type="GWS_CORE", hide=True)
+@TypingDecorator(unique_name="Job", object_type="GWS_CORE", hide=True)
 class Job(Model):
     """
     Class representing queue job
@@ -28,7 +28,7 @@ class Job(Model):
     _table_name = "gws_queue_job"
 
 
-@TypingDecorator(name_unique="Queue", object_type="GWS_CORE", hide=True)
+@TypingDecorator(unique_name="Queue", object_type="GWS_CORE", hide=True)
 class Queue(Model):
     """
     Singleton Class representing experiment queue

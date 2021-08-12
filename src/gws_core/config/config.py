@@ -13,7 +13,7 @@ from ..core.exception.exceptions import BadRequestException
 from ..model.viewable import Viewable
 
 
-@TypingDecorator(name_unique="Config", object_type="GWS_CORE", hide=True)
+@TypingDecorator(unique_name="Config", object_type="GWS_CORE", hide=True)
 class Config(Viewable):
     """
     Config class that represents the configuration of a process. A configuration is

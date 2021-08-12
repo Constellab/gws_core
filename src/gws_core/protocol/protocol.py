@@ -26,7 +26,7 @@ CONST_PROTOCOL_TYPING_NAME = "PROTOCOL.gws_core.Protocol"
 # Use the typing decorator to avoid circular dependency
 
 
-@TypingDecorator(name_unique="Protocol", object_type="PROTOCOL", hide=True)
+@TypingDecorator(unique_name="Protocol", object_type="PROTOCOL", hide=True)
 class Protocol(Process):
     """
     Protocol class.
