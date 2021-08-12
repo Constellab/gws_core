@@ -37,14 +37,9 @@ from .base import Base
 # Format table name
 #
 # ####################################################################
-is_test: bool = Settings.retrieve().is_test
 
 
 def format_table_name(model: 'Model'):
-    if is_test:
-        # when test mode all the tables are prefix with 'test_'
-        return "test_" + model._table_name.lower()
-
     return model._table_name.lower()
 
 

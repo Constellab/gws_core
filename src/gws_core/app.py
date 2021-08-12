@@ -84,7 +84,6 @@ class App:
         ModelService.create_tables()
         ModelService.register_all_processes_and_resources()
         Study.create_default_instance()
-        a: str = ""
 
         UserService.create_owner_and_sysuser()
 

@@ -12,6 +12,7 @@ from unittest.suite import BaseTestSuite
 import click
 
 from .app import App
+from .core.db.db_manager import DbManager
 from .core.exception.exceptions import BadRequestException
 from .core.utils.logger import Logger
 from .core.utils.settings import Settings
@@ -27,6 +28,12 @@ def _run(ctx, uri="", token="", test="",
 
     if show_sql:
         Logger.print_sql_queries()
+
+    # Init the db
+    if is_test:
+        DbManager.init_test_db()
+    else:
+        DbManager.init_db()
 
     settings = Settings.retrieve()
     settings.set_data("app_host", ip)
@@ -61,6 +68,7 @@ def _run(ctx, uri="", token="", test="",
         else:
             func()
     elif test:
+
         if test in ["*", "all"]:
             test = "test*"
 
