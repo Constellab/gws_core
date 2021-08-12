@@ -173,8 +173,8 @@ def _parse_settings(brick_cwd: str = None, brick_name: str = None, brick_setting
 
         if dep_cwd is None:
             continue
-
-        sys.path.insert(0, dep_cwd)
+        
+        sys.path.insert(0, os.path.join(dep_cwd,"src"))
 
         settings["dependency_dirs"][dep] = os.path.abspath(dep_cwd)
         dep_setting_file = os.path.join(dep_cwd, "./settings.json")
