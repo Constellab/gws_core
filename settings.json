@@ -25,6 +25,23 @@
     
     "externs" : {},
     "dependencies" : {},
+
+    "environment":[
+        {
+            "source": "https://pypi.python.org/simple",
+            "packages":[
+                "requests[socks]",
+                "records>0.5.0"
+            ]
+        },
+        {
+            "source": "https://xxxxx",
+            "packages":[
+                "gws_core"
+            ]
+        }
+    ],
+
     "central": {
         "api_key": "123456",
         "api_url": "https://pre-prod-back.gws.gencovery.com/"

@@ -123,7 +123,8 @@ from .impl.s3.base import BaseS3 as BaseS3
 from .impl.s3.ovh import OVHS3 as OVHS3
 from .impl.s3.swift import Swift as Swift
 # Impl > Shell
-from .impl.shell.conda_shell import CondaShell as CondaShell
+from .impl.shell.conda import CondaEnvShell as CondaEnvShell
+from .impl.shell.pipenv import PipEnvShell as PipEnvShell
 from .impl.shell.shell import Shell as Shell
 # Lab
 from .lab.lab_service import LabService as LabService

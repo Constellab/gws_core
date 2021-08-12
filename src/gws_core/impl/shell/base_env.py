@@ -7,12 +7,13 @@ import os
 import subprocess
 import tempfile
 
-from gws.exception.bad_request_exception import BadRequestException
-from gws.logger import Logger
+from ...core.exception.exceptions import BadRequestException
+from ...core.model.sys_proc import SysProc
+from ...process.process_decorator import ProcessDecorator
+from .shell import Shell
 
-from ..system import SysProc
-from ..shell import Shell
 
+@ProcessDecorator("BaseEnvShell")
 class BaseEnvShell(Shell):
     """
     EnvShell process.
@@ -21,7 +22,7 @@ class BaseEnvShell(Shell):
 
     :property unique_env_name: The unique name of the virtual environment.
         If `None`, a unique name is automtically defined for the Process.
-        The share virtual environments across diffrent process, 
+        The share virtual environments across diffrent process,
         it is recommended to set (freeze) the ```unique_env_name``` in a base class and let other
         compatible processes inherit this base class.
     :type unique_env_name: `str`
@@ -73,7 +74,7 @@ class BaseEnvShell(Shell):
         """
 
         pass
-    
+
     # -- T --
 
     async def task(self):
