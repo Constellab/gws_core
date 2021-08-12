@@ -11,7 +11,7 @@ def ResourceDecorator(unique_name: str, hide: bool = False):
 
         if not issubclass(resource_class, Resource):
             raise Exception(
-                f"The ResourceDecorator is used on the class: {resource_class.__name} and this class is not a sub class of Resource")
+                f"The ResourceDecorator is used on class '{resource_class.__name__}' while this class is not a subclass of Resource")
 
         register_typing_class(object_class=resource_class,
                               object_type="RESOURCE", unique_name=unique_name, hide=hide)
