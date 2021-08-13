@@ -46,6 +46,8 @@ class Typing(Model):
     brick: CharField = CharField(null=False, index=True)
     model_name: CharField = CharField(null=False, index=True)
     object_type: CharField = CharField(null=False)
+    human_name: CharField = CharField(default=False)
+    short_description: CharField = CharField(default=False)
     hide: BooleanField = BooleanField(default=False)
 
     _table_name = 'gws_typing'

@@ -18,6 +18,8 @@ class TypingLocal(TypedDict):
     brick: str
     model_name: str
     object_type: TypingObjectType
+    human_name: str
+    short_description: str
     hide: bool
 
 
@@ -50,7 +52,7 @@ class TypingManager:
         return model_type.get_by_uri(uri)
 
     @classmethod
-    def register_typing(cls, object_type: TypingObjectType,  unique_name: str, object_class: Type[Model], hide: bool) -> str:
+    def register_typing(cls, object_type: TypingObjectType,  unique_name: str, object_class: Type[Model], human_name: str, short_description: str, hide: bool) -> str:
         """Register the typing into the manager to save it in the database
         Return the typing unique name
         """
@@ -74,6 +76,8 @@ class TypingManager:
             model_name=unique_name,
             model_type=object_class.full_classname(),
             object_type=object_type,
+            human_name=human_name,
+            short_description=short_description,
             hide=hide
         )
 
@@ -102,6 +106,8 @@ class TypingManager:
             model_name=typing_local['model_name'],
             model_type=typing_local['model_type'],
             object_type=typing_local['object_type'],
+            human_name=typing_local['human_name'],
+            short_description=typing_local['short_description'],
             hide=typing_local['hide']
         )
 
@@ -123,12 +129,21 @@ class TypingManager:
             typing_db.update_model_type(typing.model_type)
             return
 
-        # If the data has changed (), log a message and update the DB
+        # If the data has changed, log a message and update the DB
         if str(typing_db.data) != str(typing.data):
             Logger.info(f"""{typing_db.model_type} type {typing.model_name} in brick {typing.brick} has changed its data.
                             Previous value {typing_db.data}.
                             New Value {typing.data}""")
-            typing_db.update_model_type(typing.model_type)
+            typing_db.data = typing.data
+            typing_db.save()
+            return
+
+        # If another value has changed only udpate the DB
+        if typing_db.hide != typing.hide or typing_db.human_name != typing.human_name or typing_db.short_description != typing.short_description:
+            typing_db.hide = typing.hide
+            typing_db.human_name = typing.human_name
+            typing_db.short_description = typing.short_description
+            typing_db.save()
             return
 
     @classmethod

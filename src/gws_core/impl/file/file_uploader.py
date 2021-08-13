@@ -23,7 +23,7 @@ from .file import File, FileSet
 from .file_store import FileStore, LocalFileStore
 
 
-@ProcessDecorator("FileUploader")
+@ProcessDecorator("FileUploader", human_name="File uploader", short_description="Process to uplaod a file !!!")
 class FileUploader(Process):
     input_specs = {}
     output_specs = {'result': (FileSet, File,)}
