@@ -4,14 +4,12 @@
 # About us: https://gencovery.com
 
 
-from typing import Dict, List, Type
+from typing import Dict, List
 
 from fastapi import Depends, FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from gws_core.core.utils.logger import Logger
+from gws_core.user.auth_service import AuthService
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException
-from starlette_context.middleware import ContextMiddleware
 
 from ..core.exception.exception_handler import ExceptionHandler
 from ..core.exception.exceptions import BadRequestException, NotFoundException
@@ -21,37 +19,21 @@ from ..impl.file.file import File
 from ..user.user import User
 from ..user.user_dto import UserData
 from ..user.user_service import UserService
-from ._auth_central import check_central_api_key
-from ._auth_central import \
-    generate_user_access_token as _generate_user_access_token
+from ._auth_central import AuthCentral
 
 central_app = FastAPI(docs_url="/docs")
 
-# Enable core for the API
-central_app.add_middleware(
-    CORSMiddleware,
-    allow_origin_regex="^(.*)",
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
-
-# Catch all HTTP exceptions
+# Catch HTTP Exceptions
 @central_app.exception_handler(HTTPException)
 async def allg_exception_handler(request, exc):
-    return ExceptionHandler.handle_exception(exc)
+    return ExceptionHandler.handle_exception(request, exc)
 
 
 # Catch all other exceptions
 @central_app.exception_handler(Exception)
 async def all_exception_handler(request, exc):
-    return ExceptionHandler.handle_exception(exc)
-
-
-central_app.add_middleware(
-    ContextMiddleware
-)
+    return ExceptionHandler.handle_exception(request, exc)
 
 
 class TokenData(BaseModel):
@@ -70,8 +52,8 @@ class UserUriData(BaseModel):
 
 
 @central_app.post("/user/generate-access-token", response_model=TokenData, tags=["User management"])
-async def generate_user_access_token(user_uri_data: UserUriData,
-                                     _=Depends(check_central_api_key)):
+def generate_user_access_token(user_uri_data: UserUriData,
+                               _=Depends(AuthCentral.check_central_api_key)):
     """
     Generate a temporary access token for a user.
 
@@ -89,26 +71,11 @@ async def generate_user_access_token(user_uri_data: UserUriData,
     `
     """
 
-    return await _generate_user_access_token(user_uri_data.uri)
-
-
-@central_app.get("/user/test", tags=["User management"])
-async def get_user_test():
-    """
-    Testing API user details
-    """
-    return {
-        "owner": {
-            "uri": UserService.get_owner().uri,
-        },
-        "sys": {
-            "uri": UserService.get_sysuser().uri,
-        }
-    }
+    return AuthService.generate_user_access_token(user_uri_data.uri)
 
 
 @central_app.get("/user/{uri}/activate", tags=["User management"])
-async def activate_user(uri: str, _: UserData = Depends(check_central_api_key)):
+def activate_user(uri: str, _: UserData = Depends(AuthCentral.check_central_api_key)):
     """
     Activate a user. Requires central privilege.
 
@@ -122,8 +89,8 @@ async def activate_user(uri: str, _: UserData = Depends(check_central_api_key)):
             "Cannot activate the user") from err
 
 
-@ central_app.get("/user/{uri}/deactivate", tags=["User management"])
-async def deactivate_user(uri: str, _: UserData = Depends(check_central_api_key)):
+@central_app.get("/user/{uri}/deactivate", tags=["User management"])
+def deactivate_user(uri: str, _: UserData = Depends(AuthCentral.check_central_api_key)):
     """
     Deactivate a user. Require central privilege.
 
@@ -137,8 +104,8 @@ async def deactivate_user(uri: str, _: UserData = Depends(check_central_api_key)
             "Cannot deactivate the user.") from err
 
 
-@ central_app.get("/user/{uri}", tags=["User management"])
-async def get_user(uri: str, _: UserData = Depends(check_central_api_key)):
+@central_app.get("/user/{uri}", tags=["User management"])
+def get_user(uri: str, _: UserData = Depends(AuthCentral.check_central_api_key)):
     """
     Get the details of a user. Require central privilege.
 
@@ -152,8 +119,8 @@ async def get_user(uri: str, _: UserData = Depends(check_central_api_key)):
             "Cannot get the user.") from err
 
 
-@ central_app.post("/user", tags=["User management"])
-async def create_user(user: UserData, _: UserData = Depends(check_central_api_key)):
+@central_app.post("/user", tags=["User management"])
+def create_user(user: UserData, _: UserData = Depends(AuthCentral.check_central_api_key)):
     """
     Create a new user
 
@@ -172,8 +139,8 @@ async def create_user(user: UserData, _: UserData = Depends(check_central_api_ke
             "Cannot create the user.") from err
 
 
-@ central_app.get("/user", tags=["User management"])
-async def get_users(_: UserData = Depends(check_central_api_key)):
+@central_app.get("/user", tags=["User management"])
+def get_users(_: UserData = Depends(AuthCentral.check_central_api_key)):
     """
     Get the all the users. Require central privilege.
     """
@@ -185,8 +152,8 @@ async def get_users(_: UserData = Depends(check_central_api_key)):
             "Cannot get the users.") from err
 
 
-@ central_app.get("/db/{db_name}/dump", tags=["DB management"])
-async def dump_db(db_name: str, _: UserData = Depends(check_central_api_key)):
+@central_app.get("/db/{db_name}/dump", tags=["DB management"])
+def dump_db(db_name: str, _: UserData = Depends(AuthCentral.check_central_api_key)):
     output_file = MySQLService.dump_db(db_name)
     file = File(path=output_file)
     file.move_to_default_store()

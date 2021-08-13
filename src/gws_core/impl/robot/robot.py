@@ -8,6 +8,7 @@ import time
 from ...process.process import Process
 from ...process.process_decorator import ProcessDecorator
 from ...protocol.protocol import Protocol
+from ...protocol.protocol_decorator import ProtocolDecorator
 from ...resource.resource import Resource
 from ...resource.resource_decorator import ResourceDecorator
 
@@ -237,7 +238,7 @@ def create_protocol():
     return proto
 
 
-@ProcessDecorator("RobotTravelProto")
+@ProtocolDecorator("RobotTravelProto")
 class RobotTravelProto(Protocol):
 
     def __init__(self, *args, user=None, **kwargs):
@@ -289,7 +290,7 @@ class RobotTravelProto(Protocol):
             )
 
 
-@ProcessDecorator("RobotSuperTravelProto")
+@ProtocolDecorator("RobotSuperTravelProto")
 class RobotSuperTravelProto(Protocol):
 
     def __init__(self, *args, user=None, **kwargs):
@@ -336,7 +337,7 @@ class RobotSuperTravelProto(Protocol):
             self.set_title("The super travel of Astro")
 
 
-@ProcessDecorator("RobotWorldTravelProto")
+@ProtocolDecorator("RobotWorldTravelProto")
 class RobotWorldTravelProto(Protocol):
 
     def __init__(self, *args, user=None, **kwargs):

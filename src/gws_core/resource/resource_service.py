@@ -66,7 +66,7 @@ class ResourceService(BaseService):
                                  number_of_items_per_page: int = 20,
                                  as_json=False) -> Union[Paginator, dict]:
 
-        query = ResourceType.select().order_by(ResourceType.model_type.desc())
+        query = ResourceType.get_types()
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
         paginator = Paginator(

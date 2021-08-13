@@ -35,10 +35,7 @@ from .core.classes.view import DictView as DictView
 from .core.classes.view import TableView as TableView
 from .core.classes.view import View as View
 # Core > DB
-from .core.db.db_manager import DbManager as DbManager
 from .core.db.kv_store import KVStore as KVStore
-from .core.db.manager import AbstractDbManager as AbstractDbManager
-from .core.db.manager import ReconnectMySQLDatabase as ReconnectMySQLDatabase
 from .core.db.mysql import MySQLBase as MySQLBase
 from .core.db.mysql import MySQLDump as MySQLDump
 from .core.db.mysql import MySQLLoad as MySQLLoad
@@ -151,6 +148,7 @@ from .progress_bar.progress_bar_service import \
     ProgressBarService as ProgressBarService
 # Protocol
 from .protocol.protocol import Protocol as Protocol
+from .protocol.protocol_decorator import ProtocolDecorator as ProtocolDecorator
 from .protocol.protocol_service import ProtocolService as ProtocolService
 from .protocol.protocol_type import ProtocolType as ProtocolType
 # Resource

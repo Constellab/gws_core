@@ -18,3 +18,4 @@ class GWSException(Enum):
     ERROR_DURING_DEV_LOGIN = "Error during login in development environment"
     CENTRAL_API_DEV_DISABLED = "The centrals routes are disabled in dev"
     OBJECT_URI_NOT_FOUND = "{{objectName}} with id : '{{id}}' not found"
+    USER_NOT_ACTIVATED = "User not activated"

@@ -2,12 +2,10 @@
 
 from typing import Any, Coroutine
 
-import jwt
-from fastapi import Depends
+from fastapi.param_functions import Depends
 from requests.models import Response
 from starlette.responses import JSONResponse
 
-from ..central._auth_central import generate_user_access_token
 from ..central.central_service import CentralService
 from ..core.exception.exceptions import (BadRequestException,
                                          UnauthorizedException)
@@ -22,20 +20,18 @@ from .activity_service import ActivityService
 from .credentials_dto import CredentialsDTO
 from .current_user_service import CurrentUserService
 from .invalid_token_exception import InvalidTokenException
+from .jwt_service import JWTService
 from .oauth2_user_cookie_scheme import oauth2_user_cookie_scheme
 from .user import User
-from .user_dto import UserData
+from .user_dto import UserData, UserDataDict
 from .user_service import UserService
 from .wrong_credentials_exception import WrongCredentialsException
-
-SECRET_KEY = Settings.retrieve().data.get("secret_key")
-ALGORITHM = "HS256"
 
 
 class AuthService(BaseService):
 
     @classmethod
-    async def login(cls, credentials: CredentialsDTO) -> Coroutine[Any, Any, JSONResponse]:
+    def login(cls, credentials: CredentialsDTO) -> JSONResponse:
 
         # Check if user exist in the lab
         user: User = UserService.get_user_by_email(credentials.email)
@@ -47,30 +43,47 @@ class AuthService(BaseService):
         if not credentials_valid:
             raise WrongCredentialsException()
 
-        return await generate_user_access_token(user.uri)
+        return cls.generate_user_access_token(user.uri)
+
+    @classmethod
+    def generate_user_access_token(cls, uri: str) -> JSONResponse:
+        user: User = UserService.fetch_user(uri)
+        if not user:
+            raise UnauthorizedException(
+                detail=GWSException.WRONG_CREDENTIALS_USER_NOT_FOUND.value,
+                unique_code=GWSException.WRONG_CREDENTIALS_USER_NOT_FOUND.name,
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        if not user.is_active:
+            raise UnauthorizedException(
+                detail=GWSException.WRONG_CREDENTIALS_USER_NOT_ACTIVATED.value,
+                unique_code=GWSException.WRONG_CREDENTIALS_USER_NOT_ACTIVATED.name,
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        access_token = JWTService.create_jwt(user_uri=user.uri)
+
+        content = {"access_token": access_token, "token_type": "bearer"}
+        response = JSONResponse(content=content)
+
+        # Add the token is the cookies
+        response.set_cookie(
+            "Authorization",
+            value=f"Bearer {access_token}",
+            httponly=True,
+            max_age=JWTService.get_token_duration_in_seconds(),
+            expires=JWTService.get_token_duration_in_seconds(),
+        )
+
+        return response
 
     @classmethod
     async def check_user_access_token(cls, token: str = Depends(oauth2_user_cookie_scheme)) -> UserData:
 
         try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-            uri: str = payload.get("sub")
-            if uri is None:
-                raise InvalidTokenException()
-        except Exception:
-            # -> An excpetion occured
-            # -> Try to unauthenticate the current user
-            try:
-                user = CurrentUserService.get_and_check_current_user()
-                if user:
-                    cls.unauthenticate(uri=user.uri)
-            except:
-                pass
+            user_uri: str = JWTService.check_user_access_token(token)
 
-            raise InvalidTokenException()
-
-        try:
-            db_user = User.get(User.uri == uri)
+            db_user = User.get(User.uri == user_uri)
             if not cls.authenticate(uri=db_user.uri):
                 raise InvalidTokenException()
 
@@ -183,7 +196,7 @@ class AuthService(BaseService):
             return cls.__unauthenticate_console(user)
 
     @classmethod
-    async def dev_login(cls, token: str) -> Coroutine[Any, Any, str]:
+    def dev_login(cls, token: str) -> Coroutine[Any, Any, str]:
         """[summary]
         Log the user on the dev lab by calling the prod api
         Only allowed for the dev service
@@ -213,23 +226,33 @@ class AuthService(BaseService):
             raise BadRequestException(detail=GWSException.MISSING_PROD_API_URL.value,
                                       unique_code=GWSException.MISSING_PROD_API_URL.name)
 
-        # Check if the user's token is valid in prod environment
+        # Check if the user's token is valid in prod environment and retrieve user's information
         try:
             response: Response = ExternalApiService.get(
-                url=f"{prod_api_url}/core-api/check-token", headers={"Authorization": token})
-        except:
+                url=f"{prod_api_url}/core-api/user/me", headers={"Authorization": token})
+        except Exception as err:
+            Logger.error(
+                f"Error during authentication to the prod api : {err}")
             raise BadRequestException(detail=GWSException.ERROR_DURING_DEV_LOGIN.value,
                                       unique_code=GWSException.ERROR_DURING_DEV_LOGIN.name)
 
         if response.status_code != 200:
             raise BadRequestException(detail=GWSException.ERROR_DURING_DEV_LOGIN.value,
                                       unique_code=GWSException.ERROR_DURING_DEV_LOGIN.name)
+        # retrieve the user from the response
+        user: UserDataDict = response.json()
+
+        if not user["is_active"]:
+            raise BadRequestException(detail=GWSException.USER_NOT_ACTIVATED.value,
+                                      unique_code=GWSException.USER_NOT_ACTIVATED.name)
+
+        userdb: User = UserService.create_user_if_not_exists(user)
 
         # The user's prod token is valid, we can return the token for the development environment
-        return await generate_user_access_token(response.raw)
+        return cls.generate_user_access_token(userdb.uri)
 
     @classmethod
-    def __unauthenticate_http(cls, user) -> bool:
+    def __unauthenticate_http(cls, user: User) -> bool:
 
         if not user.is_http_authenticated:
             CurrentUserService.set_current_user(None)
@@ -249,7 +272,7 @@ class AuthService(BaseService):
                 return False
 
     @classmethod
-    def __unauthenticate_console(cls, user) -> bool:
+    def __unauthenticate_console(cls, user: User) -> bool:
 
         if not user.is_console_authenticated:
             CurrentUserService.set_current_user(None)

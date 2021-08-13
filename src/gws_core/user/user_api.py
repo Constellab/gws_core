@@ -62,17 +62,17 @@ async def get_user_activity(user_uri: Optional[str] = None,
 
 
 @core_app.post("/login", tags=["User"], summary="Login to the lab by requesting central")
-async def login(credentials: CredentialsDTO) -> Coroutine[Any, Any, JSONResponse]:
+def login(credentials: CredentialsDTO) -> JSONResponse:
     """
     Log the user using central
     """
 
-    return await AuthService.login(credentials)
+    return AuthService.login(credentials)
 
 
 @core_app.post("/dev-login", tags=["User"], summary="Login to the dev lab using the prod token")
-async def dev_login(authorization_header: Optional[str] = Header(default=None, alias="Authorization"),
-                    authorization_cookie: Optional[str] = Cookie(default=None, alias="Authorization")) -> Coroutine[Any, Any, JSONResponse]:
+def dev_login(authorization_header: Optional[str] = Header(default=None, alias="Authorization"),
+              authorization_cookie: Optional[str] = Cookie(default=None, alias="Authorization")) -> str:
     """
     Log the user on the dev lab by calling the prod api
     """
@@ -83,7 +83,7 @@ async def dev_login(authorization_header: Optional[str] = Header(default=None, a
         raise UnauthorizedException(detail=GWSException.WRONG_CREDENTIALS.value,
                                     unique_code=GWSException.WRONG_CREDENTIALS.name)
 
-    return await AuthService.dev_login(token)
+    return AuthService.dev_login(token)
 
 
 @core_app.get("/check-token", tags=["User"], summary="Check user's token")

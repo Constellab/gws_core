@@ -12,6 +12,7 @@ from unittest.suite import BaseTestSuite
 import click
 
 from .app import App
+from .core.db.db_manager import DbManager
 from .core.exception.exceptions import BadRequestException
 from .core.utils.logger import Logger
 from .core.utils.settings import Settings
@@ -19,11 +20,20 @@ from .core.utils.settings import Settings
 def _run(ctx, uri="", token="", test="",
          cli=False, cli_test=False, runserver=False, runmode="dev",
          ip="0.0.0.0", port="3000", docgen=False,
-         force=False, log_level: str = None):
+         force=False, log_level: str = None, show_sql=False):
 
     is_test = bool(test or cli_test)
     is_prod = (runmode == "prod")
     Logger(level=log_level, _is_experiment_process=cli)
+
+    if show_sql:
+        Logger.print_sql_queries()
+
+    # Init the db
+    if is_test:
+        DbManager.init_test_db()
+    else:
+        DbManager.init_db()
 
     settings = Settings.retrieve()
     settings.set_data("app_host", ip)
@@ -58,6 +68,7 @@ def _run(ctx, uri="", token="", test="",
         else:
             func()
     elif test:
+
         if test in ["*", "all"]:
             test = "test*"
 
@@ -102,7 +113,8 @@ def _run(ctx, uri="", token="", test="",
 @click.option('--docgen', is_flag=True, help='Generates documentation')
 @click.option('--force', is_flag=True, help='Forces documentation generation by removing any existing documentation (used if --docgen is given)')
 @click.option('--log_level', default="INFO", help='Level for the logs', show_default=True)
-def run(ctx, uri, token, test, cli, cli_test, runserver, runmode, ip, port, docgen, force, log_level):
+@click.option('--show_sql', is_flag=True, help='Log sql queries in the console')
+def run(ctx, uri, token, test, cli, cli_test, runserver, runmode, ip, port, docgen, force, log_level, show_sql):
     _run(
         ctx,
         uri=uri,
@@ -116,5 +128,6 @@ def run(ctx, uri, token, test, cli, cli_test, runserver, runmode, ip, port, docg
         port=port,
         docgen=docgen,
         force=force,
-        log_level=log_level
+        log_level=log_level,
+        show_sql=show_sql
     )

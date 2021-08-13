@@ -21,6 +21,10 @@ class ProtocolService(BaseService):
     # -- F --
 
     @classmethod
+    def get_protocol_by_uri(cls, uri: str = "") -> Protocol:
+        return Protocol.get_by_uri(uri)
+
+    @classmethod
     def fetch_protocol(cls, typing_name=CONST_PROTOCOL_TYPING_NAME, uri: str = "") -> Protocol:
         return TypingManager.get_object_with_typing_name_and_uri(typing_name, uri)
 
@@ -67,9 +71,7 @@ class ProtocolService(BaseService):
                                  number_of_items_per_page: int = 20,
                                  as_json=False) -> Union[Paginator, dict]:
 
-        query = ProtocolType.select()\
-                            .where(ProtocolType.object_type == "PROTOCOL")\
-                            .order_by(ProtocolType.model_type.desc())
+        query = ProtocolType.get_types()
 
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
@@ -86,9 +88,7 @@ class ProtocolService(BaseService):
         Return all the process types grouped by module and submodules
         """
 
-        query: List[ProtocolType] = ProtocolType.select()\
-            .where(ProtocolType.object_type == "PROTOCOL")\
-            .order_by(ProtocolType.model_type.asc())
+        query = ProtocolType.get_types()
 
         # create a fake main group to add processes in it
         tree: TypedTree = TypedTree('')

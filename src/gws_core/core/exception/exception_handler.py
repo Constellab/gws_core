@@ -6,11 +6,13 @@
 import inspect
 import os
 import uuid
-from typing import Dict
+from typing import Dict, List
 
 from fastapi import status
+from gws_core.core.classes.cors_config import CorsConfig
 from gws_core.core.utils.utils import Utils
 from starlette.exceptions import HTTPException
+from starlette.requests import Request
 
 from ..utils.logger import Logger
 from .exception_response import ExceptionResponse
@@ -24,16 +26,16 @@ class ExceptionHandler():
     """
 
     @classmethod
-    def handle_exception(cls, exception: Exception) -> ExceptionResponse:
+    def handle_exception(cls, request: Request, exception: Exception) -> ExceptionResponse:
         if isinstance(exception, BaseHTTPException):
-            return cls._handle_expected_exception(exception)
+            return cls._handle_expected_exception(request, exception)
         elif isinstance(exception, HTTPException):
-            return cls._handle_http_exception(exception)
+            return cls._handle_http_exception(request, exception)
         else:
-            return cls._handle_unexcepted_exception(exception)
+            return cls._handle_unexcepted_exception(request, exception)
 
     @classmethod
-    def _handle_expected_exception(cls, exception: BaseHTTPException) -> ExceptionResponse:
+    def _handle_expected_exception(cls, request: Request, exception: BaseHTTPException) -> ExceptionResponse:
         """Handle the expected exception raised by the developper
 
         :param exception:
@@ -57,15 +59,17 @@ class ExceptionHandler():
         else:
             detail = exception.detail
 
+        route_info: str = f" - Route: {request.url}" if request is not None else ""
+
         Logger.info(
-            f"Handle exception - {unique_code} - {exception.detail} - Instance id : {instance_id}")
+            f"Handle exception - {unique_code}{route_info} - {exception.detail} - Instance id : {instance_id}")
 
         return ExceptionResponse(status_code=exception.status_code, code=unique_code,
                                  detail=detail,
                                  instance_id=instance_id, headers=exception.headers)
 
-    @classmethod
-    def _handle_http_exception(cls, exception: HTTPException) -> ExceptionResponse:
+    @ classmethod
+    def _handle_http_exception(cls, request: Request, exception: HTTPException) -> ExceptionResponse:
         """Handle the HTTP scarlett exceptions
 
         :param exception: scarlett exception
@@ -75,15 +79,17 @@ class ExceptionHandler():
         """
         instance_id: str = cls._get_instance_id()
         code = cls._generate_unique_code_from_exception()
+
+        route_info: str = f" - Route: {request.url}" if request is not None else ""
         Logger.info(
-            f"Handle HTTP exception - {code} - {exception.detail} - Instance id : {instance_id}")
+            f"Handle HTTP exception - {code}{route_info} - {exception.detail} - Instance id : {instance_id}")
 
         return ExceptionResponse(status_code=exception.status_code, code=code,
                                  detail=exception.detail,
                                  instance_id=instance_id)
 
     @classmethod
-    def _handle_unexcepted_exception(cls, exception: Exception) -> ExceptionResponse:
+    def _handle_unexcepted_exception(cls, request: Request, exception: Exception) -> ExceptionResponse:
         """Handle the unexcepted exception (error 500) it logs the stack trace and return a formated object
 
         Arguments:
@@ -97,13 +103,28 @@ class ExceptionHandler():
         code = cls._generate_unique_code_from_exception()
 
         # Log short information with instance id (the stack trace is automatically printed)
+        route_info: str = f" - Route: {request.url}" if request is not None else ""
         Logger.error(
-            f"Unexcepted exception - {code} - {str(exception)} - Instance id : {instance_id}")
+            f"Unexcepted exception - {code}{route_info} - {str(exception)} - Instance id : {instance_id}")
 
-        return ExceptionResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                                 code=code,
-                                 detail=str(exception),
-                                 instance_id=instance_id)
+        response: ExceptionResponse = ExceptionResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                                        code=code,
+                                                        detail=str(exception),
+                                                        instance_id=instance_id)
+
+        if request is not None:
+
+            # Since the CORSMiddleware is not executed when an unhandled server exception
+            # occurs, we need to manually set the CORS headers ourselves if we want the FE
+            # to receive a proper JSON 500, opposed to a CORS error.
+            # Setting CORS headers on server errors is a bit of a philosophical topic of
+            # discussion in many frameworks, and it is currently not handled in FastAPI.
+            # See dotnet core for a recent discussion, where ultimately it was
+            # decided to return CORS headers on server failures:
+            # https://github.com/dotnet/aspnetcore/issues/2378
+            response = CorsConfig.configure_response_cors(request, response)
+
+        return response
 
     @classmethod
     def _generate_unique_code_from_exception(cls) -> str:
@@ -112,7 +133,11 @@ class ExceptionHandler():
         :return: BRICK_NAME.FILE_NAME.METHOD_NAME
         :rtype: str
         """
-        frame_info: inspect.FrameInfo = inspect.trace()[-1]
+        trace: List = inspect.trace()
+        if not trace:
+            return ""
+
+        frame_info: inspect.FrameInfo = trace[-1]
 
         if frame_info is None:
             return ""

@@ -37,14 +37,9 @@ from .base import Base
 # Format table name
 #
 # ####################################################################
-is_test: bool = Settings.retrieve().is_test
 
 
 def format_table_name(model: 'Model'):
-    if is_test:
-        # when test mode all the tables are prefix with 'test_'
-        return "test_" + model._table_name.lower()
-
     return model._table_name.lower()
 
 
@@ -78,15 +73,12 @@ class Model(Base, PeeweeModel):
     hash = CharField(null=True)
     data = JSONField(null=True)
 
-    USER_ALL = 'all'
-    USER_ADMIN = 'admin'
-    LAB_URI = None
+    LAB_URI = None  # todo remove
 
     _data = None
     _kv_store: KVStore = None
     _is_singleton = False
     _is_removable = True
-    _allowed_user = USER_ALL
     _db_manager = DbManager
     _table_name = 'gws_model'
     # Provided at the Class level automatically by the @TypingDecorator
