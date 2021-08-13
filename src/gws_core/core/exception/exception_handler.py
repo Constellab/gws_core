@@ -59,8 +59,10 @@ class ExceptionHandler():
         else:
             detail = exception.detail
 
+        route_info: str = f" - Route: {request.url}" if request is not None else ""
+
         Logger.info(
-            f"Handle exception - {unique_code} - Route: {request.url} - {exception.detail} - Instance id : {instance_id}")
+            f"Handle exception - {unique_code}{route_info} - {exception.detail} - Instance id : {instance_id}")
 
         return ExceptionResponse(status_code=exception.status_code, code=unique_code,
                                  detail=detail,
@@ -77,8 +79,10 @@ class ExceptionHandler():
         """
         instance_id: str = cls._get_instance_id()
         code = cls._generate_unique_code_from_exception()
+
+        route_info: str = f" - Route: {request.url}" if request is not None else ""
         Logger.info(
-            f"Handle HTTP exception - {code} - Route: {request.url} - {exception.detail} - Instance id : {instance_id}")
+            f"Handle HTTP exception - {code}{route_info} - {exception.detail} - Instance id : {instance_id}")
 
         return ExceptionResponse(status_code=exception.status_code, code=code,
                                  detail=exception.detail,
@@ -99,8 +103,9 @@ class ExceptionHandler():
         code = cls._generate_unique_code_from_exception()
 
         # Log short information with instance id (the stack trace is automatically printed)
+        route_info: str = f" - Route: {request.url}" if request is not None else ""
         Logger.error(
-            f"Unexcepted exception - {code} - Route: {request.url} - {str(exception)} - Instance id : {instance_id}")
+            f"Unexcepted exception - {code}{route_info} - {str(exception)} - Instance id : {instance_id}")
 
         response: ExceptionResponse = ExceptionResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                                                         code=code,
