@@ -180,29 +180,25 @@ class ExperimentService(BaseService):
     # -- U --
 
     @classmethod
-    def update_experiment(cls, uri, experiment: ExperimentDTO) -> Experiment:
-        try:
-            experiment = Experiment.get(Experiment.uri == uri)
-            if not experiment.is_draft:
-                raise BadRequestException(
-                    detail=f"Experiment '{uri}' is not a draft")
+    def update_experiment(cls, uri, experimentDTO: ExperimentDTO) -> Experiment:
+        experiment: Experiment = Experiment.get_by_uri_and_check(uri)
 
-            if experiment.graph:
-                proto = experiment.protocol
-                proto._build_from_dump(graph=experiment.graph, rebuild=True)
-                proto.save()
+        experiment.check_is_updatable()
 
-            if experiment.title:
-                experiment.set_title(experiment.title)
+        if experimentDTO.graph:
+            proto = experiment.protocol
+            proto._build_from_dump(
+                graph=experimentDTO.graph, rebuild=True)
+            proto.save()
 
-            if experiment.description:
-                experiment.set_description(experiment.description)
+        if experimentDTO.title:
+            experiment.set_title(experimentDTO.title)
 
-            experiment.save()
-            return experiment
-        except Exception as err:
-            raise BadRequestException(
-                detail="Cannot update experiment") from err
+        if experimentDTO.description:
+            experiment.set_description(experimentDTO.description)
+
+        experiment.save()
+        return experiment
 
     # -- V --
 

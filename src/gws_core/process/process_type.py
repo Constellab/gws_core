@@ -5,11 +5,13 @@
 
 import inspect
 import json
-from typing import Any, Dict, Union
+from typing import Any, Dict, List, Type, Union
 
 from peewee import ModelSelect
 
 from ..model.typing import Typing, TypingObjectType
+from ..resource.resource import Resource
+from .process import Process
 
 
 class ProcessType(Typing):
@@ -30,35 +32,44 @@ class ProcessType(Typing):
         # for compatibility
         _json["ptype"] = self.model_type
 
-        model_t = self.get_model_type(self.model_type)
+        # retrieve the process python type
+        model_t: Type[Process] = self.get_model_type(self.model_type)
+
+        # Handle the resource input specs
         specs = model_t.input_specs
         _json["input_specs"] = {}
         for name in specs:
             _json["input_specs"][name] = []
-            t_list = specs[name]
+            t_list: List[Type[Resource]] = specs[name]
             if not isinstance(t_list, tuple):
                 t_list = (t_list, )
 
-            for t in t_list:
-                if t is None:
+            for resource_type in t_list:
+                if resource_type is None:
                     _json["input_specs"][name].append(None)
                 else:
-                    _json["input_specs"][name].append(t.full_classname())
+                    # set the resource typing name as input_spec
+                    _json["input_specs"][name].append(
+                        resource_type._typing_name)
 
+        # Handle the resource output specs
         specs = model_t.output_specs
         _json["output_specs"] = {}
         for name in specs:
             _json["output_specs"][name] = []
-            t_list = specs[name]
+            t_list: List[Type[Resource]] = specs[name]
             if not isinstance(t_list, tuple):
                 t_list = (t_list, )
 
-            for t in t_list:
-                if t is None:
+            for resource_type in t_list:
+                if resource_type is None:
                     _json["output_specs"][name].append(None)
                 else:
-                    _json["output_specs"][name].append(t.full_classname())
+                    # set the resource typing name as output_specs
+                    _json["output_specs"][name].append(
+                        resource_type._typing_name)
 
+        # Handle the config specs
         _json["config_specs"] = model_t.config_specs
         for k in _json["config_specs"]:
             spec = _json["config_specs"][k]
@@ -66,6 +77,7 @@ class ProcessType(Typing):
                 t_str = spec["type"].__name__
                 _json["config_specs"][k]["type"] = t_str
 
+        # Other infos
         _json["data"]["title"] = model_t.title
         _json["data"]["description"] = model_t.description
         _json["data"]["doc"] = inspect.getdoc(model_t)

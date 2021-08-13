@@ -212,10 +212,6 @@ class Protocol(Process):
         :rtype: Protocol
         """
 
-        # Do not build the protocol if it is not draft and is already built
-        if self.is_built and not self.is_draft:
-            return True
-
         if isinstance(graph, str):
             graph = json.loads(graph)
         if not isinstance(graph, dict):
@@ -223,7 +219,7 @@ class Protocol(Process):
         if not isinstance(graph.get("nodes"), dict) or not graph["nodes"]:
             return
 
-        if rebuild and self.is_draft:
+        if rebuild:
             deleted_keys = []
             for k in self._processes:
                 proc = self._processes[k]
@@ -491,13 +487,6 @@ class Protocol(Process):
         return self.data.get("description", "")
 
     # -- I --
-
-    @property
-    def is_draft(self) -> bool:
-        if not self.experiment:
-            return True
-        from ..experiment.experiment import ExperimentStatus
-        return self.experiment.status == ExperimentStatus.DRAFT
 
     def is_child(self, process: Process) -> bool:
         """

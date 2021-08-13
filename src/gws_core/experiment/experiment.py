@@ -231,26 +231,23 @@ class Experiment(Viewable):
         :rtype: `bool`
         """
 
-        if self.is_validated or self.is_running:
+        if self.is_validated or self.is_archived:
             return False
 
-        if self.status == ExperimentStatus.SUCCESS or self.status == ExperimentStatus.ERROR:
-            with self._db_manager.db.atomic() as transaction:
-                if self.protocol:
-                    if not self.protocol._reset():
-                        transaction.rollback()
-                        return False
-
-                self.status = ExperimentStatus.DRAFT
-                self.score = None
-                status = self.save()
-
-                if not status:
+        with self._db_manager.db.atomic() as transaction:
+            if self.protocol:
+                if not self.protocol._reset():
                     transaction.rollback()
+                    return False
 
-                return status
-        else:
-            return True
+            self.status = ExperimentStatus.DRAFT
+            self.score = None
+            status = self.save()
+
+            if not status:
+                transaction.rollback()
+
+            return status == 1
 
     def mark_as_waiting_for_cli_process(self, pid: int):
         """Mark that a process is created for the experiment, but it is not started yet
@@ -391,5 +388,17 @@ class Experiment(Viewable):
         if self.status != ExperimentStatus.RUNNING:
             raise BadRequestException(
                 detail=f"Experiment '{self.uri}' is not running")
+
+    def check_is_updatable(self) -> None:
+        """Throw an error if the experiment is not updatable
+        """
+
+        # check experiment status
+        if self.is_validated:
+            raise BadRequestException(
+                detail=f"Experiment is validated, you can't update it")
+        if self.is_archived:
+            raise BadRequestException(
+                detail=f"Experiment is archived, please unachived it to update it")
 
     # -- V --

@@ -73,7 +73,6 @@ class TestExperiment(unittest.TestCase):
         print("Re-Run the same experiment ...")
         experiment.refresh()
         time.sleep(1)
-        self.assertTrue(experiment.reset())
         self.assertTrue(_run())
         self.assertEqual(Experiment.select().count(), 1)
 

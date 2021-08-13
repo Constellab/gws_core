@@ -2,10 +2,12 @@
 import threading
 
 from ..core.exception.exceptions import NotFoundException
+from ..core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 from ..core.service.base_service import BaseService
 from ..core.utils.logger import Logger
 from ..user.current_user_service import CurrentUserService
-from .experiment import Experiment
+from .experiment import Experiment, ExperimentStatus
 from .experiment_service import ExperimentService
 from .queue import Job, Queue
 
@@ -131,6 +133,15 @@ class QueueService(BaseService):
 
         # check experiment status
         experiment.check_is_runnable()
+
+        if experiment.status != ExperimentStatus.DRAFT:
+            Logger.info(
+                f"Resetting experiment {experiment.uri} before adding it to the queue")
+            reset: bool = experiment.reset()
+
+            if not reset:
+                raise BadRequestException(
+                    f"Error while resetting experiment {experiment.uri} before adding it to the queue")
 
         user = CurrentUserService.get_and_check_current_user()
         job = Job(user=user, experiment=experiment)

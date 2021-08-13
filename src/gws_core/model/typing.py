@@ -4,12 +4,12 @@
 # About us: https://gencovery.com
 
 import inspect
-from typing import List, Literal
+from typing import Any, Dict, List, Literal, Union
 
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
 from peewee import BooleanField, CharField, ModelSelect
 
+from ..core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 from ..core.model.model import Model
 
 # ####################################################################
@@ -96,7 +96,7 @@ class Typing(Model):
         self.data["ancestors"] = ancestors
 
     @property
-    def get_unique_name(self) -> str:
+    def typing_name(self) -> str:
         return build_typing_unique_name(self.object_type, self.brick, self.model_name)
 
     @classmethod
@@ -119,6 +119,12 @@ class Typing(Model):
         return cls.select()\
             .where((cls.object_type == object_type) & (cls.hide == False))\
             .order_by(cls.model_type.desc())
+
+    def to_json(self, *, show_hash=False, bare: bool = False, stringify: bool = False, prettify: bool = False, jsonifiable_data_keys: list = None, **kwargs) -> Union[str, dict]:
+        _json: Dict[str, Any] = super().to_json(**kwargs)
+
+        _json["typing_name"] = self.typing_name
+        return _json
 
     class Meta:
         # Unique constrains on brick, model_name and object_type
