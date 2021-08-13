@@ -141,3 +141,11 @@ class Logger:
     def _get_date(cls) -> str:
         current_date: datetime = datetime.now()
         return current_date.strftime("%Y-%m-%d %H:%M:%S.%f")
+
+    @classmethod
+    def print_sql_queries(cls) -> None:
+        """If call the sql queries will be printed in the console
+        """
+        logger = logging.getLogger('peewee')
+        logger.addHandler(logging.StreamHandler())
+        logger.setLevel(logging.DEBUG)
