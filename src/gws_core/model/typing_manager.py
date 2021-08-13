@@ -57,6 +57,12 @@ class TypingManager:
         Return the typing unique name
         """
 
+        if not issubclass(object_class, Model):
+            name = object_class.__name__ if object_class.__name__ is not None else str(
+                object_class)
+            raise Exception(
+                f"""Trying to register the type {name} but it it not a classe that is herited from Model""")
+
         brick_name: str = Utils.get_brick_name(object_class)
 
         if not object_type in cls._typings:
@@ -66,9 +72,10 @@ class TypingManager:
             cls._typings[object_type][brick_name] = {}
 
         if unique_name in cls._typings[object_type][brick_name]:
-            raise Exception(f"""2 different {object_type} in the brick {brick_name} register with the same name : {unique_name}.
-                                {object_type} already register: [{cls._typings[object_type][brick_name][unique_name].__name__ }].
-                                New {object_type} : {object_class.__name__}""")
+            raise Exception(f"""2 differents {object_type} in the brick {brick_name} register with the same name : {unique_name}.
+                                {object_type} already register: [{cls._typings[object_type][brick_name][unique_name]['model_type'] }].
+                                {object_type} trying to register : {object_class.full_classname()}
+                                Please update one of the unique name""")
 
         # add the object type to the list
         typing_local: TypingLocal = TypingLocal(
@@ -78,7 +85,7 @@ class TypingManager:
             object_type=object_type,
             human_name=human_name,
             short_description=short_description,
-            hide=hide
+            hide=hide,
         )
 
         cls._typings[object_type][brick_name][unique_name] = typing_local
