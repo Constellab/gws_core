@@ -24,19 +24,24 @@ class CSVTable(Resource):
     def __init__(self, *args, table: Union[DataFrame, np.ndarray] = None,
                  column_names=None, row_names=None, **kwargs):
         super().__init__(*args, **kwargs)
-        if not table is None:
+        if table is None:
+            table = DataFrame()
+        else:
             if isinstance(table, DataFrame):
-                self.kv_store['table'] = table
+                # OK!
+                pass
             elif isinstance(table, (np.ndarray, list)):
-                df = DataFrame(table)
+                table = DataFrame(table)
                 if column_names:
-                    df.columns = column_names
+                    table.columns = column_names
                 if row_names:
-                    df.index = row_names
-                self.kv_store['table'] = df
+                    table.index = row_names
             else:
                 raise BadRequestException(
                     "The table mus be an instance of DataFrame or Numpy array")
+
+        if not self.id:
+            self.kv_store['table'] = table
 
     # -- A --
 
