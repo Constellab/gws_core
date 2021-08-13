@@ -6,6 +6,7 @@
 from typing import List, Type, Union
 
 from gws_core.model.typing_manager import TypingManager
+from gws_core.protocol.protocol_type import ProtocolType
 
 from ..core.classes.paginator import Paginator
 from ..core.dto.typed_tree_dto import TypedTree
@@ -67,9 +68,7 @@ class ProcessService(BaseService):
                                 number_of_items_per_page: int = 20,
                                 as_json=False) -> Union[Paginator, dict]:
 
-        query = ProcessType.select()\
-            .where(ProcessType.object_type == "PROCESS")\
-            .order_by(ProcessType.model_type.desc())
+        query = ProcessType.get_types()
 
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
@@ -86,9 +85,7 @@ class ProcessService(BaseService):
         Return all the process types grouped by module and submodules
         """
 
-        query: List[ProcessType] = ProcessType.select()\
-            .where(ProcessType.object_type == "PROCESS")\
-            .order_by(ProcessType.model_type.asc())
+        query = ProcessType.get_types()
 
         # create a fake main group to add processes in it
         tree: TypedTree = TypedTree('')

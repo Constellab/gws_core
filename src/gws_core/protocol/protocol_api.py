@@ -57,9 +57,8 @@ async def get_the_progress_bar_of_a_protocol(uri: str,
     return pbar.to_json()
 
 
-@core_app.get("/protocol/{uri}/{typing_name}", tags=["Protocol"], summary="Get a protocol")
+@core_app.get("/protocol/{uri}", tags=["Protocol"], summary="Get a protocol")
 async def get_a_protocol(uri: str,
-                         typing_name: Optional[str] = None,
                          _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve a protocol
@@ -67,7 +66,7 @@ async def get_a_protocol(uri: str,
     - **uri**: the uri of the protocol
     """
 
-    proto = ProtocolService.fetch_protocol(uri=uri, typing_name=typing_name)
+    proto = ProtocolService.get_protocol_by_uri(uri=uri)
     return proto.to_json()
 
 

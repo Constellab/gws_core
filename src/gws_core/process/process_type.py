@@ -7,13 +7,21 @@ import inspect
 import json
 from typing import Any, Dict, Union
 
-from ..model.typing import Typing
+from peewee import ModelSelect
+
+from ..model.typing import Typing, TypingObjectType
 
 
 class ProcessType(Typing):
     """
     ProcessType class.
     """
+
+    _object_type: TypingObjectType = "PROCESS"
+
+    @classmethod
+    def get_types(cls) -> ModelSelect:
+        return cls.get_by_object_type(cls._object_type)
 
     def to_json(self, *, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
 

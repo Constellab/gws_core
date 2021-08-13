@@ -35,7 +35,7 @@ class TypingManager:
 
         if typing is None:
             raise BadRequestException(
-                f"Can't find the typing with name ${typing_name}, did you register the name with corresponding decorator ?")
+                f"Can't find the typing with name {typing_name}, did you register the name with corresponding decorator ?")
 
         return Model.get_model_type(typing.model_type)
 

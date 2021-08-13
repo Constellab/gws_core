@@ -42,11 +42,11 @@ class Typing(Model):
     """
 
     # Full python type of the model
-    model_type: str = CharField(null=False)
-    brick: str = CharField(null=False, index=True)
-    model_name: str = CharField(null=False, index=True)
-    object_type: TypingObjectType = CharField(null=False)
-    hide: bool = BooleanField(default=False)
+    model_type: CharField = CharField(null=False)
+    brick: CharField = CharField(null=False, index=True)
+    model_name: CharField = CharField(null=False, index=True)
+    object_type: CharField = CharField(null=False)
+    hide: BooleanField = BooleanField(default=False)
 
     _table_name = 'gws_typing'
 
@@ -111,6 +111,12 @@ class Typing(Model):
             raise BadRequestException(
                 f"The typing name {typing_name} in invalid")
         return cls.get_by_brick_and_model_name(object_type, brick_name,  model_name)
+
+    @classmethod
+    def get_by_object_type(cls, object_type: TypingObjectType) -> ModelSelect:
+        return cls.select()\
+            .where((cls.object_type == object_type) & (cls.hide == False))\
+            .order_by(cls.model_type.desc())
 
     class Meta:
         # Unique constrains on brick, model_name and object_type
