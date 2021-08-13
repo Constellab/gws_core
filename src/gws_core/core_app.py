@@ -5,44 +5,28 @@
 
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException
-from starlette_context.middleware import ContextMiddleware
 
 from .core.exception.exception_handler import ExceptionHandler
 
 core_app = FastAPI(docs_url="/docs")
 
-# Enable core for the API
-core_app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
-core_app.add_middleware(
-    ContextMiddleware
-)
-
-# Catch all HTTP exceptions
-
-
+# Catch HTTP Exceptions
 @core_app.exception_handler(HTTPException)
 async def allg_exception_handler(request, exc):
-    return ExceptionHandler.handle_exception(exc)
+    return ExceptionHandler.handle_exception(request, exc)
 
 
 # Catch all other exceptions
 @core_app.exception_handler(Exception)
 async def all_exception_handler(request, exc):
-    return ExceptionHandler.handle_exception(exc)
+    return ExceptionHandler.handle_exception(request, exc)
 
 
 @core_app.get("/health-check", summary="Health check route")
-async def get_the_experiment_queue() -> dict:
+async def health_check() -> bool:
     """
     Simple health check route
     """

@@ -4,14 +4,12 @@
 # About us: https://gencovery.com
 
 
-from typing import Dict, List, Type
+from typing import Dict, List
 
 from fastapi import Depends, FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
 from gws_core.user.auth_service import AuthService
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException
-from starlette_context.middleware import ContextMiddleware
 
 from ..core.exception.exception_handler import ExceptionHandler
 from ..core.exception.exceptions import BadRequestException, NotFoundException
@@ -25,31 +23,17 @@ from ._auth_central import AuthCentral
 
 central_app = FastAPI(docs_url="/docs")
 
-# Enable core for the API
-central_app.add_middleware(
-    CORSMiddleware,
-    allow_origin_regex="^(.*)",
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
-
-# Catch all HTTP exceptions
+# Catch HTTP Exceptions
 @central_app.exception_handler(HTTPException)
 async def allg_exception_handler(request, exc):
-    return ExceptionHandler.handle_exception(exc)
+    return ExceptionHandler.handle_exception(request, exc)
 
 
 # Catch all other exceptions
 @central_app.exception_handler(Exception)
 async def all_exception_handler(request, exc):
-    return ExceptionHandler.handle_exception(exc)
-
-
-central_app.add_middleware(
-    ContextMiddleware
-)
+    return ExceptionHandler.handle_exception(request, exc)
 
 
 class TokenData(BaseModel):

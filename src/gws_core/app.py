@@ -4,10 +4,14 @@
 # About us: https://gencovery.com
 
 import os
+import re
 
 import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from starlette_context.middleware.context_middleware import ContextMiddleware
+
+from gws_core.core.classes.cors_config import CorsConfig
 
 from ._core_app_importer import *
 from ._sphynx.docgen import docgen
@@ -99,7 +103,17 @@ class App:
                 docgen(name, dirs[name], settings, force=True)
             cls.app.mount(
                 f"/docs/{name}/", StaticFiles(directory=html_dir), name=f"/docs/{name}/")
+
+        # Configure the CORS
+        CorsConfig.configure_app_cors(app)
+
+        # configure the context middleware
+        cls.app.add_middleware(
+            ContextMiddleware
+        )
+
         # api routes
         cls.app.mount("/core-api/", core_app)
         cls.app.mount("/central-api/", central_app)
+
         uvicorn.run(cls.app, host=ip, port=int(port))

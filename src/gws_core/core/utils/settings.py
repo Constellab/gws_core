@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 import os
+from typing import Literal
 
 from peewee import Model as PeeweeModel
 from peewee import SqliteDatabase
@@ -37,8 +38,8 @@ class Settings(PeeweeModel):
         app_dir=os.path.dirname(os.path.abspath(__file__)),
         app_host='0.0.0.0',
         app_port=3000,
-        #log_dir         = "/logs",
-        #data_dir        = "/data",
+        # log_dir         = "/logs",
+        # data_dir        = "/data",
         dependencies={}
     )
 
@@ -88,6 +89,41 @@ class Settings(PeeweeModel):
             # default uri
             settings.set_data("uri", "")
             settings.save()
+
+    @classmethod
+    def get_prod_api_url(cls) -> str:
+
+        if "PROD_API_URL" not in os.environ:
+            return None
+
+        return os.environ["PROD_API_URL"]
+
+    @classmethod
+    def get_lab_environment(cls) -> Literal["PROD", "LOCAL"]:
+        """Return the environment where the lab run
+        PROD by default but it can also be local (when running on a local machine)
+
+        :return: [description]
+        :rtype: [type]
+        """
+
+        if "LAB_ENVIRONMENT" not in os.environ:
+            return "PROD"
+
+        return os.environ["LAB_ENVIRONMENT"]
+
+    @classmethod
+    def get_virtual_host(cls) -> str:
+        """Return the virtual host of the machine like tokyo.gencovery.io
+
+        :return: [description]
+        :rtype: [type]
+        """
+
+        if "VIRTUAL_HOST" not in os.environ:
+            return None
+
+        return os.environ["VIRTUAL_HOST"]
 
     # -- A --
 
@@ -278,15 +314,6 @@ class Settings(PeeweeModel):
 
     def get_extern_dirs(self) -> dict:
         return self.data["extern_dirs"]
-
-    def get_prod_api_url(self) -> str:
-        if self.is_prod:
-            return None
-
-        if "PROD_API_URL" not in os.environ:
-            return None
-
-        return os.environ["PROD_API_URL"]
 
     # -- I --
 
