@@ -8,12 +8,14 @@ import json
 import zlib
 from typing import Union
 
-from gws_core.model.typing_register_decorator import TypingDecorator
 from peewee import BooleanField
 
 from ..core.exception.exceptions import BadRequestException
+from ..core.exception.exceptions.unauthorized_exception import \
+    UnauthorizedException
 from ..model.typing_manager import TypingManager
-from ..process.process import Process
+from ..model.typing_register_decorator import TypingDecorator
+from ..process.process import Process, PrrocessAllowedUser
 from ..resource.io import (Connector, InPort, Input, Interface, Outerface,
                            OutPort, Output)
 from ..user.activity import Activity
@@ -23,9 +25,8 @@ from ..user.user import User
 # Typing names generated for the class Process
 CONST_PROTOCOL_TYPING_NAME = "PROTOCOL.gws_core.Protocol"
 
+
 # Use the typing decorator to avoid circular dependency
-
-
 @TypingDecorator(unique_name="Protocol", object_type="PROTOCOL", hide=True)
 class Protocol(Process):
     """
@@ -770,12 +771,12 @@ class Protocol(Process):
         :type user: User
         """
         if not user.is_sysuser:
-            if self._allowed_user == self.USER_ADMIN:
+            if self._allowed_user == PrrocessAllowedUser.ADMIN:
                 if not user.is_admin:
-                    raise BadRequestException(
+                    raise UnauthorizedException(
                         "Only admin user can run protocol")
             for proc in self.processes.values():
-                if proc._allowed_user == self.USER_ADMIN:
+                if proc._allowed_user == PrrocessAllowedUser.ADMIN:
                     if not user.is_admin:
-                        raise BadRequestException(
+                        raise UnauthorizedException(
                             f"Only admin user can run process '{proc.full_classname()}'")

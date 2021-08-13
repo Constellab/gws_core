@@ -11,7 +11,7 @@ def ResourceDecorator(unique_name: str, human_name: str = "", short_description:
     It define static information about the resource
 
     :param name_unique: a unique name for this resource in the brick. Only 1 resource in the current brick can have this name.
-                        /!\ DO NOT MODIFIED THIS NAME ONCE IS DEFINED /!\
+                        //!\\ DO NOT MODIFIED THIS NAME ONCE IS DEFINED //!\\
                         It is used to instantiate the resourcees
     :type name_unique: str
     :param human_name: optional name that will be used in the interface when viewing the resourcees. Must not be longer than 20 caracters

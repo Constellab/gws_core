@@ -73,15 +73,12 @@ class Model(Base, PeeweeModel):
     hash = CharField(null=True)
     data = JSONField(null=True)
 
-    USER_ALL = 'all'
-    USER_ADMIN = 'admin'
-    LAB_URI = None
+    LAB_URI = None  # todo remove
 
     _data = None
     _kv_store: KVStore = None
     _is_singleton = False
     _is_removable = True
-    _allowed_user = USER_ALL
     _db_manager = DbManager
     _table_name = 'gws_model'
     # Provided at the Class level automatically by the @TypingDecorator

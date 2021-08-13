@@ -11,7 +11,7 @@ def TypingDecorator(unique_name: str, object_type: TypingObjectType, hide: bool 
     """Decorator to register the class as a typing with a typing name
 
     param name_unique: a unique name for this protocol in the brick. Only 1 protocol in the current brick can have this name.
-                        /!\ DO NOT MODIFIED THIS NAME ONCE IS DEFINED /!\
+                        //!\\ DO NOT MODIFIED THIS NAME ONCE IS DEFINED //!\\
                         It is used to instantiate the protocols
     :type name_unique: str
     :param object_type: typing object type

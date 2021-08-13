@@ -7,6 +7,7 @@ import asyncio
 import inspect
 import json
 import zlib
+from enum import Enum
 from typing import Type, Union
 
 from peewee import CharField, ForeignKeyField, IntegerField, ModelSelect
@@ -24,6 +25,10 @@ from ..user.user import User
 # Typing names generated for the class Process
 CONST_PROCESS_TYPING_NAME = "PROCESS.gws_core.Process"
 
+# Enum to define the role needed for a protocol
+class PrrocessAllowedUser(Enum):
+    ADMIN = 0
+    ALL = 1
 
 # Use the typing decorator to avoid circular dependency
 @TypingDecorator(unique_name="Process", object_type="PROCESS", hide=True)
@@ -71,6 +76,8 @@ class Process(Viewable):
     _is_removable = False
     _is_plug = False
 
+    # Role needed to run the protocol
+    _allowed_user: PrrocessAllowedUser = PrrocessAllowedUser.ALL
     _table_name = 'gws_process'  # is locked for all processes
 
     def __init__(self, *args, user=None, **kwargs):
