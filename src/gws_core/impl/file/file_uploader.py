@@ -92,8 +92,9 @@ class FileImporter(Process):
     }
 
     async def task(self):
-        file = self.input["file"]
-
+        inport_name = list(self.input.keys())[0]
+        outport_name = list(self.output.keys())[0]
+        file = self.input[inport_name]
         model_t = None
         if self.param_exists("output_type"):
             out_t = self.get_param("output_type")
@@ -101,11 +102,11 @@ class FileImporter(Process):
                 model_t = Model.get_model_type(out_t)
 
         if not model_t:
-            model_t = self.out_port("data").get_default_resource_type()
+            model_t = self.out_port(outport_name).get_default_resource_type()
 
         params = copy.deepcopy(self.config.params)
         resource = model_t._import(file.path, **params)
-        self.output["data"] = resource
+        self.output[outport_name] = resource
 
 
 # ####################################################################
@@ -126,7 +127,7 @@ class FileExporter(Process):
         'file_format': {"type": str, "default": None, 'description': "File format"},
         'file_store_uri': {"type": str, "default": None, 'description': "URI of the file_store where the file must be exported"},
     }
-
+    
     async def task(self):
         fs_uri = self.get_param("file_store_uri")
         if fs_uri:
@@ -140,8 +141,10 @@ class FileExporter(Process):
         else:
             fs = LocalFileStore.get_default_instance()
 
-        filename = self.get_param("file_name")
-        t = self.out_port("file").get_default_resource_type()
+        inport_name = list(self.input.keys())[0]
+        outport_name = list(self.output.keys())[0]
+        filename = self.get_param("file_name")  
+        t = self.out_port(outport_name).get_default_resource_type()
         file = fs.create_file(name=filename, file_type=t)
 
         if not os.path.exists(file.dir):
@@ -153,9 +156,9 @@ class FileExporter(Process):
         else:
             params = self.config.params
 
-        resource = self.input["data"]
+        resource =  self.input[inport_name]
         resource._export(file.path, **params)
-        self.output["file"] = file
+        self.output[outport_name] = file
 
 # ####################################################################
 #
@@ -175,8 +178,8 @@ class FileLoader(Process):
     }
 
     async def task(self):
+        outport_name = list(self.output.keys())[0]
         file_path = self.get_param("file_path")
-
         model_t = None
         if self.param_exists("output_type"):
             out_t = self.get_param("output_type")
@@ -184,7 +187,7 @@ class FileLoader(Process):
                 model_t = Model.get_model_type(out_t)
 
         if not model_t:
-            model_t = self.out_port("data").get_default_resource_type()
+            model_t = self.out_port(outport_name).get_default_resource_type()
 
         if "file_path" in self.config.params:
             params = copy.deepcopy(self.config.params)
@@ -193,7 +196,7 @@ class FileLoader(Process):
             params = self.config.params
 
         resource = model_t._import(file_path, **params)
-        self.output["data"] = resource
+        self.output[outport_name] = resource
 
 # ####################################################################
 #
@@ -217,7 +220,8 @@ class FileDumper(Process):
 
     async def task(self):
         file_path = self.get_param("file_path")
-        resource = self.input["data"]
+        inport_name = list(self.input.keys())[0]
+        resource = self.input[inport_name]
 
         p = Path(file_path)
         parent_dir = p.parent

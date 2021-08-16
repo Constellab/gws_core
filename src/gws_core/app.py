@@ -60,6 +60,7 @@ class App:
     """
 
     app: FastAPI = app
+    is_running: bool = False
 
     @classmethod
     def init(cls):
@@ -67,8 +68,10 @@ class App:
         Initialize the app
         """
 
+        cls.is_running = True
         Monitor.init(daemon=True)
         QueueService.init(daemon=True)
+        
 
     @classmethod
     def deinit(cls):
@@ -78,6 +81,7 @@ class App:
 
         Monitor.deinit()
         QueueService.deinit()
+        cls.is_running = False
 
     @classmethod
     def start(cls, ip: str = "0.0.0.0", port: int = 3000):
@@ -88,7 +92,6 @@ class App:
         ModelService.create_tables()
         ModelService.register_all_processes_and_resources()
         Study.create_default_instance()
-
         UserService.create_owner_and_sysuser()
 
         # static dirs and docs

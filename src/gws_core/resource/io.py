@@ -732,6 +732,11 @@ class IO(Base):
             if not self._ports[k].is_empty:
                 return False
 
+    # -- K ---
+
+    def keys(self):
+        return self._ports.keys()
+
     # -- N --
 
     def __next__(self):
@@ -809,6 +814,9 @@ class IO(Base):
         self.__setitem_without_check__(name, resource)
 
     # -- V --
+
+    def values(self):
+        return self._ports.values()
 
     def to_json(self, **kwargs):
         _json = {}

@@ -605,7 +605,7 @@ class Protocol(Process):
         aws = []
         for proc in sources:
             aws.append(proc._run())
-        if len(aws):
+        if aws:
             await asyncio.gather(*aws)
 
     async def _run_after_task(self, *args, **kwargs):

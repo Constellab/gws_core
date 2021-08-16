@@ -29,12 +29,6 @@ def _run(ctx, uri="", token="", test="",
     if show_sql:
         Logger.print_sql_queries()
 
-    # Init the db
-    if is_test:
-        DbManager.init_test_db()
-    else:
-        DbManager.init_db()
-
     settings = Settings.retrieve()
     settings.set_data("app_host", ip)
     settings.set_data("app_port", port)
@@ -52,6 +46,14 @@ def _run(ctx, uri="", token="", test="",
     if not settings.save():
         raise BadRequestException("Cannot save the settings in the database")
 
+    # Init the db
+    if is_test:
+        if App.is_running:
+            raise BadRequestException("Cannot run tests while the Application is running.")
+        DbManager.init_test_db()
+    else:
+        DbManager.init_db()
+        
     if runserver:
         # start app
         App.start(ip=ip, port=port)
@@ -68,7 +70,6 @@ def _run(ctx, uri="", token="", test="",
         else:
             func()
     elif test:
-
         if test in ["*", "all"]:
             test = "test*"
 

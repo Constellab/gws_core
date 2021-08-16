@@ -90,7 +90,7 @@ class CSVTable(Resource):
 
     # -- E --
 
-    def _export(self, file_path: str, delimiter: str = "\t", index=True, file_format: str = None, **kwargs):
+    def _export(self, file_path: str, delimiter: str = "\t", header: bool=True, index: bool=True, file_format: str = None, **kwargs):
         """
         Export to a repository
 

@@ -46,10 +46,15 @@ class AbstractDbManager:
         "password": "gencovery"
     }
     _db_name = "gws"
+    _mode = "dev"
+    __TEST_DB_NAME = "test_gws" # Keep private and constant => All models inherit the same test DB
 
     @classmethod
-    def init(cls, engine: str = None, mode: str = None):
+    def init(cls, engine: str = None, mode: str = None, test: bool = False):
         """ Initialize the DbManager """
+
+        if test:
+            cls._db_name = cls.__TEST_DB_NAME
 
         if engine:
             cls._engine = engine
@@ -63,7 +68,7 @@ class AbstractDbManager:
                 cls._db_name,
                 user=cls._mariadb_config["user"],
                 password=cls._mariadb_config["password"],
-                host=cls.get_maria_db_host(),
+                host=cls.get_maria_db_host(mode=mode),
                 port=3306
             )
         else:
@@ -124,10 +129,17 @@ class AbstractDbManager:
         return cls._engine
 
     @classmethod
-    def get_maria_db_host(cls):
+    def get_maria_db_host(cls, mode: str = None):
         """ Get the current maria db host address """
 
         settings = Settings.retrieve()
+        if mode:
+            if mode == "prod":
+                cls._mode = "prod"
+            else:
+                cls._mode = "dev"
+        else:
+            cls._mode = ("prod" if settings.is_prod else "dev")
         return settings.get_maria_db_host(cls._db_name)
 
     @classmethod
@@ -138,10 +150,13 @@ class AbstractDbManager:
         if mode:
             if mode == "prod":
                 db_path = settings.get_sqlite3_prod_db_path(cls._db_name)
+                cls._mode = "prod"
             else:
                 db_path = settings.get_sqlite3_dev_db_path(cls._db_name)
+                cls._mode = "dev"
         else:
             db_path = settings.get_sqlite3_db_path(cls._db_name)
+            cls._mode = ("prod" if settings.is_prod else "dev")
         return db_path
 
     # -- I --
