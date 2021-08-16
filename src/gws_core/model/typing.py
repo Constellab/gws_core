@@ -120,7 +120,7 @@ class Typing(Model):
             .where((cls.object_type == object_type) & (cls.hide == False))\
             .order_by(cls.model_type.desc())
 
-    def to_json(self, *, show_hash=False, bare: bool = False, stringify: bool = False, prettify: bool = False, jsonifiable_data_keys: list = None, **kwargs) -> Union[str, dict]:
+    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
         _json: Dict[str, Any] = super().to_json(**kwargs)
 
         _json["typing_name"] = self.typing_name

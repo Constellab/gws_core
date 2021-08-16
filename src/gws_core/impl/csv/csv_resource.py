@@ -3,7 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import json
 from pathlib import Path
 from typing import Union
 
@@ -220,7 +219,7 @@ class CSVTable(Resource):
 
         return self.table.index.values.tolist()
 
-    def _render__as_csv(self, **kwargs):
+    def _view__as_csv(self, **kwargs):
         """
         Renders the model as a JSON string or dictionnary. This method is used by :class:`ViewModel` to create view rendering.
 
@@ -250,17 +249,11 @@ class CSVTable(Resource):
         return self.table.__str__()
 
     # -- T --
+    def data_to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
+        _json = super().data_to_json(**kwargs)
+        _json["content"] = self.table.to_json()
 
-    def to_json(self, stringify: bool = False, prettify: bool = False, **kwargs):
-        _json = super().to_json(**kwargs)
-        _json["data"]["content"] = self.table.to_json()
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
+        return _json
 
     def to_table(self):
         return self.table

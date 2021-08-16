@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 import json
-from typing import Union
+from typing import Union, final
 
 from peewee import CharField, ForeignKeyField
 
@@ -14,6 +14,7 @@ from .current_user_service import CurrentUserService
 from .user import User
 
 
+@final
 @TypingDecorator(unique_name="Activity", object_type="GWS_CORE", hide=True)
 class Activity(Model):
     """
@@ -62,7 +63,7 @@ class Activity(Model):
 
     # -- T --
 
-    def to_json(self, *, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
+    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
         """
         Returns JSON string or dictionnary representation of the model.
 
@@ -80,10 +81,5 @@ class Activity(Model):
             "first_name": self.user.first_name,
             "last_name": self.user.last_name
         }
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
+
+        return _json

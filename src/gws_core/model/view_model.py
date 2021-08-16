@@ -202,8 +202,7 @@ class ViewModel(Model):
         self.save()
 
     # -- V --
-
-    def to_json(self, *, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
+    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
         """
         Returns JSON string or dictionnary representation of the model.
 
@@ -226,13 +225,8 @@ class ViewModel(Model):
         if not self.is_saved():
             _json["uri"] = ""
             _json["save_datetime"] = ""
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
+
+        return _json
 
 
 # ####################################################################

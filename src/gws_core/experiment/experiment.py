@@ -3,9 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import json
 from enum import Enum
-from typing import List, Union
+from typing import List, final
 
 from gws_core.model.typing_register_decorator import TypingDecorator
 from peewee import BooleanField, FloatField, ForeignKeyField
@@ -31,6 +30,7 @@ class ExperimentStatus(Enum):
     ERROR = "ERROR"
 
 
+@final
 @TypingDecorator(unique_name="Experiment", object_type="GWS_CORE", hide=True)
 class Experiment(Viewable):
     """
@@ -313,7 +313,7 @@ class Experiment(Viewable):
 
     # -- T --
 
-    def to_json(self, *, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
+    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
         """
         Returns JSON string or dictionnary representation of the experiment.
 
@@ -335,13 +335,7 @@ class Experiment(Viewable):
             "status": self.status
         })
 
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
+        return _json
 
     def validate(self, user: User) -> None:
         """

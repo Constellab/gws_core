@@ -157,7 +157,7 @@ class File(Resource):
 
     # -- T --
 
-    def to_json(self, stringify: bool = False, prettify: bool = False, shallow: bool = True, **kwargs):
+    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
         _json = super().to_json(**kwargs)
         settings = Settings.retrieve()
         host = settings.data.get("host", "0.0.0.0")
@@ -170,13 +170,8 @@ class File(Resource):
                 _json["data"]["content"] = json.loads(self.read())
             else:
                 _json["data"]["content"] = self.read()
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
+
+        return _json
 
     # -- W --
 

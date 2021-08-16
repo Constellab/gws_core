@@ -3,8 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import json
-from typing import Union
+from typing import Union, final
 
 from gws_core.model.typing_register_decorator import TypingDecorator
 
@@ -13,6 +12,7 @@ from ..core.exception.exceptions import BadRequestException
 from ..model.viewable import Viewable
 
 
+@final
 @TypingDecorator(unique_name="Config", object_type="GWS_CORE", hide=True)
 class Config(Viewable):
     """
@@ -56,7 +56,7 @@ class Config(Viewable):
 
     # -- A --
 
-    def archive(self, tf: bool) -> bool:
+    def archive(self, archive: bool) -> bool:
         """
         Archive the config
 
@@ -68,14 +68,15 @@ class Config(Viewable):
 
         from ..process.process import Process
 
+        # todo a vérifier, une config peut être utilisé par plusieurs process?
         some_processes_are_in_invalid_archive_state = Process.select().where(
-            (Process.config == self) & (Process.is_archived == (not tf))
+            (Process.config == self) & (Process.is_archived == (not archive))
         ).count()
 
         if some_processes_are_in_invalid_archive_state:
             return False
 
-        return super().archive(tf)
+        return super().archive(archive)
 
     # -- C --
 
@@ -194,8 +195,7 @@ class Config(Viewable):
         self.data["specs"] = specs
 
     # -- T --
-
-    def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
+    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
         """
         Returns JSON string or dictionnary representation of the model.
 
@@ -207,16 +207,10 @@ class Config(Viewable):
         :rtype: dict, str
         """
 
-        _json = super().to_json(shallow=shallow, **kwargs)
+        _json = super().to_json(**kwargs)
         if shallow:
             del _json["data"]
 
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
+        return _json
 
     # -- V --

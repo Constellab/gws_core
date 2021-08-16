@@ -3,6 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from typing import final
+
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.base import Base
 from .resource import Resource
@@ -238,7 +240,7 @@ class Port(Base):
 # InPort class
 #
 # ####################################################################
-
+@final
 class InPort(Port):
     """
     IntPort class representing input port
@@ -272,7 +274,7 @@ class InPort(Port):
 # OutPort class
 #
 # ####################################################################
-
+@final
 class OutPort(Port):
     """
     OutPort class representing output port
@@ -383,8 +385,7 @@ class IOface:
 
     # -- T --
 
-    def to_json(self, **kwargs):
-        bare = kwargs.get("bare", False)
+    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
         r_uri = ""
         r_typing_name = ""
         if self.source_port.resource and not bare:
@@ -407,7 +408,7 @@ class IOface:
             }
         }
 
-
+@final
 class Interface(IOface):
     source_port: InPort = None
     target_port: InPort = None
@@ -430,12 +431,12 @@ class Interface(IOface):
 
     # -- V -
 
-    def to_json(self, **kwargs):
+    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
         _json = super().to_json(**kwargs)
         _json["from"]["node"] = ":parent:"
         return _json
 
-
+@final
 class Outerface(IOface):
     source_port: OutPort = None
     target_port: OutPort = None
@@ -457,7 +458,7 @@ class Outerface(IOface):
 
     # -- V --
 
-    def to_json(self, **kwargs):
+    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
         _json = super().to_json(**kwargs)
         _json["to"]["node"] = ":parent:"
         return _json
@@ -468,7 +469,7 @@ class Outerface(IOface):
 #
 # ####################################################################
 
-
+@final
 class Connector:
     """
     Connector class representing the connection of two Ports.
@@ -513,15 +514,13 @@ class Connector:
 
     # -- V --
 
-    def to_json(self, **kwargs) -> dict:
+    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
         """
         Returns a dictionnary describing the Connector.
 
         :return: A dictionnary describing the Connector
         :rtype: dict
         """
-
-        bare = kwargs.get("bare", False)
 
         r_uri = ""
         r_typing_name = ""
@@ -814,13 +813,11 @@ class IO(Base):
         self.__setitem_without_check__(name, resource)
 
     # -- V --
-
     def values(self):
         return self._ports.values()
 
-    def to_json(self, **kwargs):
+    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
         _json = {}
-        bare = kwargs.get("bare")
 
         for k in self._ports:
             port = self._ports[k]
@@ -853,7 +850,7 @@ class IO(Base):
 #
 # ####################################################################
 
-
+@final
 class Input(IO):
     """
     Input class
@@ -880,7 +877,7 @@ class Input(IO):
 #
 # ####################################################################
 
-
+@final
 class Output(IO):
     """
     Output class

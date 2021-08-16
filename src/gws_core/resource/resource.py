@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 import json
-from typing import Union
+from typing import Union, final
 
 from peewee import CharField, IntegerField, ModelSelect
 
@@ -211,8 +211,8 @@ class Resource(Viewable):
         return cls.select(*args, **kwargs).where(cls.typing_name == cls._typing_name)
 
     # -- T --
-
-    def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
+    @final
+    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
         """
         Returns JSON string or dictionnary representation of the model.
 
@@ -235,13 +235,8 @@ class Resource(Viewable):
             })
         if shallow:
             del _json["data"]
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
+
+        return _json
 
     # -- V --
 

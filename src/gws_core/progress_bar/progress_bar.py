@@ -3,10 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import json
 import time
 from datetime import datetime
-from typing import Union
+from typing import final
 
 from fastapi.encoders import jsonable_encoder
 from gws_core.model.typing_manager import TypingManager
@@ -20,6 +19,7 @@ from ..core.utils.logger import Logger
 from ..model.typing_register_decorator import TypingDecorator
 
 
+@final
 @TypingDecorator(unique_name="ProgressBar", object_type="GWS_CORE", hide=True)
 class ProgressBar(Model):
     """
@@ -224,7 +224,7 @@ class ProgressBar(Model):
     def get_by_process_typing_name_and_process_uri(cls, process_typing_name: str, process_uri: str) -> 'ProgressBar':
         return ProgressBar.get((ProgressBar.process_uri == process_uri) & (ProgressBar.process_typing_name == process_typing_name))
 
-    def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
+    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
         """
         Returns JSON string or dictionnary representation of the model.
 
@@ -238,7 +238,6 @@ class ProgressBar(Model):
 
         _json = super().to_json(**kwargs)
 
-        bare = kwargs.get("bare")
         if bare:
             _json["process"] = {
                 "uri": "",
@@ -264,13 +263,7 @@ class ProgressBar(Model):
         del _json["process_uri"]
         del _json["process_typing_name"]
 
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
+        return _json
 
     class Meta:
         indexes = (

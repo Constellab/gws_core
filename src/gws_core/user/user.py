@@ -3,8 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import json
-from typing import Union
+from typing import final
 
 from peewee import BooleanField, CharField
 
@@ -19,6 +18,8 @@ from ..model.typing_register_decorator import TypingDecorator
 #
 # ####################################################################
 
+
+@final
 @TypingDecorator(unique_name="User", object_type="GWS_CORE", hide=True)
 class User(Model):
     """
@@ -140,7 +141,7 @@ class User(Model):
 
     # -- T --
 
-    def to_json(self, *args, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[dict, str]:
+    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
         """
         Returns a JSON string or dictionnary representation of the user.
 
@@ -152,14 +153,9 @@ class User(Model):
         :rtype: `dict`, `str`
         """
 
-        _json = super().to_json(*args, **kwargs)
+        _json = super().to_json(**kwargs)
         del _json["console_token"]
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
+
+        return _json
 
     # -- U --

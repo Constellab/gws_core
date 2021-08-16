@@ -729,29 +729,19 @@ class Protocol(Process):
 
     # -- T --
 
-    def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
+    def data_to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
         """
-        Returns JSON string or dictionnary representation of the protocol.
-
-        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
-        :type stringify: bool
-        :param prettify: If True, indent the JSON string. Defaults to False.
-        :type prettify: bool
+        Returns a JSON string or dictionnary representation of the model.
         :return: The representation
-        :rtype: dict, str
+        :rtype: `dict`
         """
+        _json = super().data_to_json(shallow=shallow, **kwargs)
 
-        _json = super().to_json(shallow=shallow, **kwargs)
         if shallow:
-            if _json["data"].get("graph"):
-                del _json["data"]["graph"]
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
+            if _json.get("graph"):
+                del _json["graph"]
+
+        return _json
 
     def check_user_privilege(self, user: User) -> None:
         """Throw an exception if the user cand execute the protocol

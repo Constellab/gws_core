@@ -13,7 +13,7 @@ import shutil
 import traceback
 import uuid
 from datetime import datetime
-from typing import Type, Union
+from typing import Type, Union, final
 
 from fastapi.encoders import jsonable_encoder
 from peewee import (AutoField, BigAutoField, BlobField, BooleanField,
@@ -415,7 +415,6 @@ class Model(Base, PeeweeModel):
     # -- N --
 
     # -- K --
-
     @property
     def kv_store(self) -> 'KVStore':
         """
@@ -521,62 +520,47 @@ class Model(Base, PeeweeModel):
         return True
 
     # -- T --
-
-    def to_json(self, *, show_hash=False, bare: bool = False, stringify: bool = False, prettify: bool = False, jsonifiable_data_keys: list = None, **kwargs) -> Union[str, dict]:
+    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
         """
         Returns a JSON string or dictionnary representation of the model.
-
-        :param show_hash: If True, returns the hash. Defaults to False
-        :type show_hash: `bool`
-        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
-        :type stringify: `bool`
-        :param prettify: If True, indent the JSON string. Defaults to False.
-        :type prettify: `bool`
-        :param jsonifiable_data_keys: If is empty, `data` is fully jsonified, otherwise only specified keys are jsonified
-        :type jsonifiable_data_keys: `list` of `str`
         :return: The representation
         :rtype: `dict`, `str`
         """
 
-        if jsonifiable_data_keys is None:
-            jsonifiable_data_keys = []
-
         _json = {}
-        # jsonifiable_data_keys
-        if not isinstance(jsonifiable_data_keys, list):
-            jsonifiable_data_keys = []
+
         exclusion_list = (ForeignKeyField, ManyToManyField,
                           BlobField, AutoField, BigAutoField)
         for prop in self.property_names(Field, exclude=exclusion_list):
-            if prop in ["id"]:
+            # exclude properties form json
+            if prop in ["id", "hash", "data"]:
                 continue
             if prop.startswith("_"):
                 continue  # -> private or protected property
-            if prop == "data":
-                _json["data"] = {}
-                val = getattr(self, "data")
-                if len(jsonifiable_data_keys) == 0:
-                    _json["data"] = jsonable_encoder(val)
-                else:
-                    for k in jsonifiable_data_keys:
-                        if k in val:
-                            _json["data"][k] = jsonable_encoder(val[k])
-            else:
-                val = getattr(self, prop)
-                _json[prop] = jsonable_encoder(val)
-                if bare:
-                    if prop == "uri" or prop == "hash" or isinstance(val, (datetime, DateTimeField, DateField)):
-                        _json[prop] = ""
 
-        if not show_hash:
-            del _json["hash"]
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
+            val = getattr(self, prop)
+            _json[prop] = jsonable_encoder(val)
+            if bare:
+                if prop == "uri" or isinstance(val, (datetime, DateTimeField, DateField)):
+                    _json[prop] = ""
+
+        # convert the data to json
+        _json["data"] = self.data_to_json(shallow=shallow, bare=bare, **kwargs)
+
+        return _json
+
+    def data_to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
+        """
+        Returns a JSON string or dictionnary representation of the model data.
+        :return: The representation
+        :rtype: `dict`
+        """
+        _json = {}
+
+        val = getattr(self, "data")
+        _json = jsonable_encoder(val)
+
+        return _json
 
     # -- U --
 

@@ -4,8 +4,7 @@
 # About us: https://gencovery.com
 
 import inspect
-import json
-from typing import Any, Dict, List, Type, Union
+from typing import Any, Dict, List, Type, final
 
 from peewee import ModelSelect
 
@@ -14,6 +13,7 @@ from ..resource.resource import Resource
 from .process import Process
 
 
+@final
 class ProcessType(Typing):
     """
     ProcessType class.
@@ -25,7 +25,7 @@ class ProcessType(Typing):
     def get_types(cls) -> ModelSelect:
         return cls.get_by_object_type(cls._object_type)
 
-    def to_json(self, *, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
+    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
 
         _json: Dict[str, Any] = super().to_json(**kwargs)
 
@@ -77,15 +77,22 @@ class ProcessType(Typing):
                 t_str = spec["type"].__name__
                 _json["config_specs"][k]["type"] = t_str
 
-        # Other infos
-        _json["data"]["title"] = model_t.title
-        _json["data"]["description"] = model_t.description
-        _json["data"]["doc"] = inspect.getdoc(model_t)
+        return _json
 
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
+    def data_to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
+        """
+        Returns a JSON string or dictionnary representation of the model.
+        :return: The representation
+        :rtype: `dict`, `str`
+        """
+        _json: Dict[str, Any] = super().data_to_json(**kwargs)
+
+        # retrieve the process python type
+        model_t: Type[Process] = self.get_model_type(self.model_type)
+
+       # Other infos
+        _json["title"] = model_t.title
+        _json["description"] = model_t.description
+        _json["doc"] = inspect.getdoc(model_t)
+
+        return _json

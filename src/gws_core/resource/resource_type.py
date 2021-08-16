@@ -5,8 +5,9 @@
 
 import inspect
 import json
-from typing import Any, Dict, Union
+from typing import Any, Dict, Type, Union, final
 
+from gws_core.resource.resource import Resource
 from peewee import ModelSelect
 
 from ..model.typing import Typing, TypingObjectType
@@ -18,6 +19,7 @@ from ..model.typing import Typing, TypingObjectType
 # ####################################################################
 
 
+@final
 class ResourceType(Typing):
     """
     ResourceType class.
@@ -29,26 +31,29 @@ class ResourceType(Typing):
     def get_types(cls) -> ModelSelect:
         return cls.get_by_object_type(cls._object_type)
 
-    def to_json(self, *, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
+    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
 
         _json: Dict[str, Any] = super().to_json(**kwargs)
 
         # for compatibility
         _json["rtype"] = self.model_type
 
-        model_t = self.get_model_type(self.model_type)
+        return _json
 
-        if not _json.get("data"):
-            _json["data"] = {}
+    def data_to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
+        """
+        Returns a JSON string or dictionnary representation of the model.
+        :return: The representation
+        :rtype: `dict`, `str`
+        """
+        _json: Dict[str, Any] = super().data_to_json(**kwargs)
 
-        _json["data"]["title"] = model_t.title
-        _json["data"]["description"] = model_t.description
-        _json["data"]["doc"] = inspect.getdoc(model_t)
+        # retrieve the process python type
+        model_t: Type[Resource] = self.get_model_type(self.model_type)
 
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
+       # Other infos
+        _json["title"] = model_t.title
+        _json["description"] = model_t.description
+        _json["doc"] = inspect.getdoc(model_t)
+
+        return _json

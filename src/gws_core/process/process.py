@@ -8,7 +8,7 @@ import inspect
 import json
 import zlib
 from enum import Enum
-from typing import Type, Union
+from typing import Type, Union, final
 
 from peewee import CharField, ForeignKeyField, IntegerField, ModelSelect
 from starlette_context import context
@@ -26,11 +26,13 @@ from ..user.user import User
 CONST_PROCESS_TYPING_NAME = "PROCESS.gws_core.Process"
 
 # Enum to define the role needed for a protocol
+
+
 class PrrocessAllowedUser(Enum):
     ADMIN = 0
     ALL = 1
 
-# Use the typing decorator to avoid circular dependency
+
 @TypingDecorator(unique_name="Process", object_type="PROCESS", hide=True)
 class Process(Viewable):
     """
@@ -166,21 +168,21 @@ class Process(Viewable):
 
     # -- A --
 
-    def archive(self, tf, archive_resources=True) -> bool:
+    def archive(self, archive: bool, archive_resources=True) -> bool:
         """
         Archive the process
         """
 
-        if self.is_archived == tf:
+        if self.is_archived == archive:
             return True
         with self._db_manager.db.atomic() as transaction:
-            if not super().archive(tf):
+            if not super().archive(archive):
                 return False
             # -> try to archive the config if possible!
-            self.config.archive(tf)
+            self.config.archive(archive)
             if archive_resources:
                 for r in self.resources:
-                    if not r.archive(tf):
+                    if not r.archive(archive):
                         transaction.rollback()
                         return False
         return True
@@ -606,7 +608,8 @@ class Process(Viewable):
 
         return cls.select(*args, **kwargs).where(cls.typing_name == cls._typing_name)
 
-    def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
+    @final
+    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
         """
         Returns JSON string or dictionnary representation of the process.
 
@@ -664,10 +667,4 @@ class Process(Viewable):
         _json["input"] = self.input.to_json(**kwargs)
         _json["output"] = self.output.to_json(**kwargs)
 
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
+        return _json
