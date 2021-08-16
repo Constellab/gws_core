@@ -454,7 +454,6 @@ class Process(Viewable):
 
     async def _run_before_task(self, *args, **kwargs):
         self.__switch_to_current_progress_bar()
-        from ..core.utils.logger import Logger
         ProgressBar.add_message_to_current(
             f"Running {self.full_classname()} ...")
         self.is_instance_running = True
