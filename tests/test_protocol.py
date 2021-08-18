@@ -8,11 +8,9 @@ import os
 from unittest import IsolatedAsyncioTestCase
 
 from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
-                      ProtocolModel, RobotCreate, RobotEat, RobotMove,
-                      RobotWait, Settings, Study)
-from gws_core.process.process_model import ProcessModel
-from gws_core.process.processable_factory import ProcessableFactory
-from gws_core.protocol.protocol_service import ProtocolService
+                      ProcessableFactory, ProcessModel, ProtocolModel,
+                      ProtocolService, RobotCreate, RobotEat, RobotMove,
+                      RobotWait, Settings)
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -232,20 +230,89 @@ class TestProtocol(IsolatedAsyncioTestCase):
             saved_mini_proto.graph)
         self.assertTrue(mini_proto.graph, mini_proto2.graph)
 
-    # def test_protocol_update(self):
-    #     GTest.print("Update protocol")
-    #     with open(os.path.join(testdata_dir, "mini_travel_graph.json"), "r") as f:
-    #         graph = json.load(f)
+    # TODO improve test because it does not test connection create or deletion
+    async def test_protocol_update(self):
+        GTest.print("Update protocol")
+        p0: ProcessModel = ProcessableFactory.create_process_from_type(
+            process_type=RobotCreate)
+        p1: ProcessModel = ProcessableFactory.create_process_from_type(
+            process_type=RobotMove)
+        p2: ProcessModel = ProcessableFactory.create_process_from_type(
+            process_type=RobotEat)
+        p3: ProcessModel = ProcessableFactory.create_process_from_type(
+            process_type=RobotMove)
+        p4: ProcessModel = ProcessableFactory.create_process_from_type(
+            process_type=RobotMove)
+        p5: ProcessModel = ProcessableFactory.create_process_from_type(
+            process_type=RobotEat)
+        p_wait: ProcessModel = ProcessableFactory.create_process_from_type(
+            process_type=RobotWait)
 
-    #     mini_proto = ProcessableFactory.create_protocol_from_graph(graph)
-    #     p = mini_proto.get_process("p1")
-    #     self.assertEqual(p.config.get_param("moving_step"), 0.1)
+        # create a chain
+        mini_proto: ProtocolModel = ProtocolService.create_protocol_from_data(
+            processes={
+                'p1': p1,
+                'p2': p2,
+                'p3': p3,
+                'p4': p4,
+                'p_wait': p_wait
+            },
+            connectors=[
+                p1 >> 'robot' | p2 << 'robot',
+                p2 >> 'robot' | p_wait << 'robot',
+                p_wait >> 'robot' | p3 << 'robot',
+                p2 >> 'robot' | p4 << 'robot'
+            ],
+            interfaces={'robot': p1.in_port('robot')},
+            outerfaces={'robot': p2.out_port('robot')}
+        )
 
-    #     graph = mini_proto.dumps()
-    #     graph["nodes"]["p1"]["config"]["data"]["params"] = {}
-    #     graph["nodes"]["p1"]["config"]["data"]["params"]["moving_step"] = 3.14
-    #     mini_proto2 = ProcessableFactory.create_protocol_from_graph(graph)
-    #     p2 = mini_proto2.get_process("p1")
-    #     self.assertEqual(mini_proto2, mini_proto)
-    #     self.assertEqual(p2.config, p.config)
-    #     self.assertEqual(p2.config.get_param("moving_step"), 3.14)
+        super_proto: ProtocolModel = ProtocolService.create_protocol_from_data(
+            processes={
+                "p0": p0,
+                "p5": p5,
+                "mini_travel": mini_proto
+            },
+            connectors=[
+                p0 >> 'robot' | mini_proto << 'robot',
+                mini_proto >> 'robot' | p5 << 'robot'
+            ]
+        )
+
+        # Check the correct number of processes
+        super_proto_db: ProtocolModel = ProtocolService.get_protocol_by_uri(
+            super_proto.uri)
+        mini_proto_db: ProtocolModel = super_proto_db.processes["mini_travel"]
+        self.assertEqual(len(mini_proto_db.processes), 5)
+
+        # Update the protocol by adding a process to the mini proto
+        new_wait: ProcessModel = ProcessableFactory.create_process_from_type(
+            process_type=RobotWait)
+        # remove the uri to simulate the real json from a request
+        new_wait.uri = None
+        mini_proto.add_process("new_wait", new_wait)
+        # revresh the graph to get the json
+        mini_proto.data["graph"] = mini_proto.dumps()
+        json_dump = super_proto.dumps()
+
+        ProtocolService.update_protocol_graph(
+            protocol=super_proto_db, graph=json_dump)
+
+        # Check that the process was added
+        mini_proto_db: ProtocolModel = ProtocolService.get_protocol_by_uri(
+            mini_proto.uri)
+
+        self.assertEqual(len(mini_proto_db.processes), 6)
+
+        mini_proto: ProtocolModel = super_proto.processes["mini_travel"]
+        mini_proto.delete_process("new_wait")
+        # refrehs the graph to get the json
+        mini_proto.data["graph"] = mini_proto.dumps()
+        ProtocolService.update_protocol_graph(
+            protocol=super_proto_db, graph=super_proto.dumps())
+
+        # Check that the process was added
+        mini_proto_db: ProtocolModel = ProtocolService.get_protocol_by_uri(
+            mini_proto.uri)
+
+        self.assertEqual(len(mini_proto_db.processes), 5)

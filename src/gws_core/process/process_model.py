@@ -8,7 +8,7 @@ import zlib
 from enum import Enum
 from typing import Dict, Type
 
-from gws_core.resource.resource import Resource
+from ..resource.resource import Resource
 
 from ..model.typing_manager import TypingManager
 from ..model.typing_register_decorator import TypingDecorator

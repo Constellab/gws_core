@@ -483,8 +483,8 @@ class Connector:
     :type out_port: OutPort
     """
 
-    in_port = None
-    out_port = None
+    in_port: InPort = None
+    out_port: OutPort = None
 
     def __init__(self, out_port: OutPort = None, in_port: InPort = None):
         if not isinstance(in_port, InPort):

@@ -6,27 +6,49 @@
 import asyncio
 import json
 import zlib
-from typing import Callable, Dict, List, Type, Union
-
-from gws_core.process.process import Process
-from gws_core.process.processable import Processable
-from gws_core.protocol.protocol import Protocol
-from peewee import BooleanField
+from typing import Dict, List, Optional, Type, Union
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
 from ..model.typing_manager import TypingManager
 from ..model.typing_register_decorator import TypingDecorator
+from ..process.process import Process
 from ..process.process_model import ProcessAllowedUser, ProcessModel
+from ..process.processable import Processable
 from ..process.processable_model import ProcessableModel
+from ..protocol.protocol import Protocol
 from ..resource.io import (Connector, InPort, Input, Interface, Outerface,
                            OutPort, Output)
 from ..user.activity import Activity
 from ..user.user import User
+from .sub_process_factory import SubProcessableFactory
 
+
+class SubProcessFactoryReadFromDb(SubProcessableFactory):
+    """Factory used when getting a protocol from the database,  it read the protocol's processes
+    from the DB
+
+    :param SubProcessableFactory: [description]
+    :type SubProcessableFactory: [type]
+    """
+
+    def instantiate_processable(self, processable_uri: Optional[str],
+                                processable_type: Type[Processable],
+                                instance_name: str) -> ProcessableModel:
+        if processable_uri is None:
+            raise BadRequestException(
+                f"Cannot instantiate the processable {instance_name} because it does not have an uri")
+
+        # Instantiate a process
+        if issubclass(processable_type, Process):
+            return ProcessModel.get_by_uri_and_check(processable_uri)
+        else:
+            return ProtocolModel.get_by_uri_and_check(processable_uri)
 
 # Use the typing decorator to avoid circular dependency
+
+
 @TypingDecorator(unique_name="Protocol", object_type="GWS_CORE", hide=True)
 class ProtocolModel(ProcessableModel):
     """
@@ -45,7 +67,7 @@ class ProtocolModel(ProcessableModel):
 
     _is_singleton = False
     _processes: Dict[str, ProcessableModel] = {}
-    _connectors: list = []
+    _connectors: List[Connector] = []
     _interfaces: Dict[str, Interface] = {}
     _outerfaces: Dict[str, Outerface] = {}
     _table_name = "gws_protocol"  # is locked for all the protocols
@@ -150,7 +172,7 @@ class ProtocolModel(ProcessableModel):
             raise BadRequestException(
                 "The processes of the connector must belong to the protocol")
         if connector in self._connectors:
-            raise BadRequestException("Duplciated connector")
+            raise BadRequestException("Duplicated connector")
         self._connectors.append(connector)
 
     def archive(self, archive: bool, archive_resources=True) -> bool:
@@ -173,20 +195,22 @@ class ProtocolModel(ProcessableModel):
     # -- B --
 
     def _load_from_graph(self) -> None:
+
         if self._is_loaded:
             return
-        self.build_from_graph(self.data["graph"])
+
+        self.build_from_graph(
+            graph=self.data["graph"], sub_processable_factory=SubProcessFactoryReadFromDb())
         self._is_loaded = True
 
-    def build_from_graph(self, graph: Union[str, dict], rebuild=False,
-                         create_processable: Callable[[Type[Processable], str], ProcessableModel] = None) -> None:
+    def build_from_graph(self, graph: Union[str, dict],
+                         sub_processable_factory: SubProcessableFactory) -> None:
         """
         Construct a Protocol instance using a setting dump.
 
         :return: The protocol
         :rtype: Protocol
         """
-
         if isinstance(graph, str):
             graph = json.loads(graph)
         if not isinstance(graph, dict):
@@ -194,11 +218,8 @@ class ProtocolModel(ProcessableModel):
         if not isinstance(graph.get("nodes"), dict) or not graph["nodes"]:
             return
 
-        if rebuild:
-            self.remove_orphan_process(graph["nodes"])
-
         # init processes and sub processes
-        self.init_processes_from_graph(graph["nodes"], create_processable)
+        self.init_processes_from_graph(graph["nodes"], sub_processable_factory)
 
         # init interfaces and outerfaces
         self.init_interfaces_from_graph(graph["interfaces"])
@@ -207,64 +228,30 @@ class ProtocolModel(ProcessableModel):
         # init connectors
         self.init_connectors_from_graph(graph["links"])
 
-    def remove_orphan_process(self, nodes: Dict) -> None:
-        """Method to remove the removed process when saving a new protocols
-
-        :param nodes: [description]
-        :type nodes: Dict
-        """
-        deleted_keys = []
-        for key, process in self._processes.items():
-            # if the process is not in the Dict or its type has changed, remove it
-            if not key in nodes or process.processable_typing_name != nodes[key].get("processable_typing_name"):
-                process.delete_instance()
-                deleted_keys.append(key)
-            # disconnect the port to prevent connection errors later
-            process.disconnect()
-        for key in deleted_keys:
-            del self._processes[key]
-
     def init_processes_from_graph(self, nodes: Dict,
-                                  create_processable: Callable[[Type[Processable], str], ProcessableModel] = None) -> None:
+                                  sub_processable_factory: SubProcessableFactory) -> None:
         # create nodes
         for key, node_json in nodes.items():
             proc_uri: str = node_json.get("uri", None)
-
-            if proc_uri is None:
-                raise BadRequestException(
-                    f"Cannot instantiate the processable {key} because it does not have an uri")
 
             proc_type_str: str = node_json["processable_typing_name"]
             proc_type: Type[Processable] = TypingManager.get_type_from_name(
                 proc_type_str)
 
-            # create the processable instance
-            processable: ProcessableModel
             if proc_type is None:
                 raise BadRequestException(
                     f"Process {proc_type_str} is not defined. Please ensure that the corresponding brick is loaded.")
+
+            # create the processable instance
+            processable: ProcessableModel = sub_processable_factory.instantiate_processable(processable_uri=proc_uri,
+                                                                                            processable_type=proc_type,
+                                                                                            instance_name=key)
+
+            if key in self._processes:
+                self._processes[key].data = processable.data
             else:
-                # If the processable does not exist in the DB
-                if proc_uri is None:
-                    if create_processable is None:
-                        raise BadRequestException(
-                            f"The process {key} of protocol does not have an URI.")
-
-                    # create the processable using the create processable lambda function
-                    processable = create_processable(proc_type, key)
-
-                # If the processable exists in the DB
-                else:
-                    # Instantiate a process
-                    if issubclass(proc_type, Process):
-                        processable = ProcessModel.get_by_uri_and_check(
-                            proc_uri)
-                    else:
-                        processable = ProtocolModel.get_by_uri_and_check(
-                            proc_uri)
-
-            self.configure_process_and_add(
-                key, processable, node_json.get("config"))
+                self.configure_process_and_add(
+                    key, processable, node_json.get("config"))
 
     def configure_process_and_add(self, process_name: str, process: ProcessModel, config_dict: Dict) -> None:
         """Configure the process form the config dict and add the process to the process dict
@@ -317,15 +304,15 @@ class ProtocolModel(ProcessableModel):
         self._connectors = []
         # create links
         for link in links:
-            proc_name = link["from"]["node"]
-            lhs_port_name = link["from"]["port"]
-            lhs_proc = self._processes[proc_name]
+            proc_name: str = link["from"]["node"]
+            lhs_port_name: str = link["from"]["port"]
+            lhs_proc: ProcessableModel = self._processes[proc_name]
             proc_name = link["to"]["node"]
-            rhs_port_name = link["to"]["port"]
-            rhs_proc = self._processes[proc_name]
+            rhs_port_name: str = link["to"]["port"]
+            rhs_proc: ProcessableModel = self._processes[proc_name]
 
             # connector = (lhs_proc>>lhs_port_name | rhs_proc<<rhs_port_name)
-            connector = (lhs_proc >> lhs_port_name).pipe(
+            connector: Connector = (lhs_proc >> lhs_port_name).pipe(
                 rhs_proc << rhs_port_name, lazy=True)
             self._add_connector(connector)
 
@@ -343,12 +330,12 @@ class ProtocolModel(ProcessableModel):
         """
 
         super().disconnect()
-        for interface in self.interfaces.items():
+        for interface in self.interfaces.values():
             interface.disconnect()
-        for outerface in self.outerfaces.items():
+        for outerface in self.outerfaces.values():
             outerface.disconnect()
 
-    def dumps(self, bare: bool = False) -> str:
+    def dumps(self, bare: bool = False) -> dict:
         """
         Dumps the JSON graph representing the protocol.
 
@@ -509,7 +496,7 @@ class ProtocolModel(ProcessableModel):
         return self._outerfaces
 
     @property
-    def connectors(self) -> list:
+    def connectors(self) -> List[Connector]:
         """
         Returns the connectors of the protocol lazy loaded
         """
@@ -517,6 +504,32 @@ class ProtocolModel(ProcessableModel):
         self._load_from_graph()
 
         return self._connectors
+
+    @property
+    def input(self) -> 'Input':
+        """
+        Returns input of the process.
+
+        :return: The input
+        :rtype: Input
+        """
+        # load first the value if there are not loaded
+        self._load_from_graph()
+
+        return super().input
+
+    @property
+    def output(self) -> 'Output':
+        """
+        Returns input of the process.
+
+        :return: The input
+        :rtype: Input
+        """
+        # load first the value if there are not loaded
+        self._load_from_graph()
+
+        return super().output
 
     # -- R --
 
@@ -658,7 +671,7 @@ class ProtocolModel(ProcessableModel):
             return
         self._interfaces = {}
         for k in interfaces:
-            source_port = self.input.ports[k]
+            source_port = self._input.ports[k]
             self._interfaces[k] = Interface(
                 name=k, source_port=source_port, target_port=interfaces[k])
         if self.data.get("input"):
@@ -673,7 +686,7 @@ class ProtocolModel(ProcessableModel):
             return
         self._outerfaces = {}
         for k in outerfaces:
-            target_port = self.output.ports[k]
+            target_port = self._output.ports[k]
             try:
                 self._outerfaces[k] = Outerface(
                     name=k, target_port=target_port, source_port=outerfaces[k])
@@ -684,6 +697,14 @@ class ProtocolModel(ProcessableModel):
 
     def set_protocol_type(self, protocol_type: Type[Protocol]) -> None:
         self.processable_typing_name = protocol_type._typing_name
+
+    def delete_process(self, instance_name: str) -> None:
+        if not instance_name in self.processes:
+            raise BadRequestException(
+                f"The process with instance_name {instance_name} does not exist ")
+
+        self.processes[instance_name].delete_instance()
+        del self.processes[instance_name]
 
     # -- T --
 

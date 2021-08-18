@@ -3,7 +3,6 @@ import inspect
 from enum import Enum
 from typing import Type, Union, final
 
-from gws_core.process.processable import Processable
 from peewee import CharField, ForeignKeyField, IntegerField
 from starlette_context import context
 
@@ -11,6 +10,7 @@ from ..config.config import Config
 from ..core.exception.exceptions import BadRequestException
 from ..model.typing_manager import TypingManager
 from ..model.viewable import Viewable
+from ..process.processable import Processable
 from ..progress_bar.progress_bar import ProgressBar
 from ..resource.io import InPort, Input, OutPort, Output
 from ..user.user import User
@@ -94,8 +94,8 @@ class ProcessableModel(Viewable):
         Disconnect the input and output ports
         """
 
-        self._input.disconnect()
-        self._output.disconnect()
+        self.input.disconnect()
+        self.output.disconnect()
 
     # -- E --
     # todo voir si on garde
@@ -128,7 +128,7 @@ class ProcessableModel(Viewable):
         :rtype: list
         """
 
-        return self._output.get_next_procs()
+        return self.output.get_next_procs()
 
     # -- H --
 
@@ -158,7 +158,7 @@ class ProcessableModel(Viewable):
         :rtype: bool
         """
 
-        return (not self.is_instance_running and not self.is_instance_finished) and self._input.is_ready
+        return (not self.is_instance_running and not self.is_instance_finished) and self.input.is_ready
 
     @property
     def input(self) -> 'Input':
@@ -192,9 +192,9 @@ class ProcessableModel(Viewable):
         if not isinstance(name, str):
             raise BadRequestException(
                 "The name of the input port must be a string")
-        if not name in self._input._ports:
+        if not name in self.input._ports:
             raise BadRequestException(f"The input port '{name}' is not found")
-        return self._input._ports[name]
+        return self.input._ports[name]
 
     # -- J --
 
@@ -245,9 +245,9 @@ class ProcessableModel(Viewable):
         if not isinstance(name, str):
             raise BadRequestException(
                 "The name of the output port must be a string")
-        if not name in self._output._ports:
+        if not name in self.output._ports:
             raise BadRequestException(f"The output port '{name}' is not found")
-        return self._output._ports[name]
+        return self.output._ports[name]
 
     @property
     def parent_protocol(self):
@@ -306,9 +306,9 @@ class ProcessableModel(Viewable):
         pass
 
     async def _run_next_processes(self):
-        self._output.propagate()
+        self.output.propagate()
         aws = []
-        for proc in self._output.get_next_procs():
+        for proc in self.output.get_next_procs():
             aws.append(proc.run())
         if len(aws):
             await asyncio.gather(*aws)
@@ -320,14 +320,14 @@ class ProcessableModel(Viewable):
         self.is_instance_running = True
         self.is_instance_finished = False
         self.data["input"] = {}
-        for k in self._input:
+        for k in self.input:
             # -> check that an input resource exists (for optional input)
-            if self._input[k]:
-                if not self._input[k].is_saved():
-                    self._input[k].save()
+            if self.input[k]:
+                if not self.input[k].is_saved():
+                    self.input[k].save()
                 self.data["input"][k] = {
-                    "uri": self._input[k].uri,
-                    "typing_name": self._input[k].typing_name
+                    "uri": self.input[k].uri,
+                    "typing_name": self.input[k].typing_name
                 }
         self.progress_bar.start()
         self.save()
@@ -339,16 +339,16 @@ class ProcessableModel(Viewable):
         self.is_instance_finished = True
         self.progress_bar.stop()
 
-        if not self._output.is_ready:
+        if not self.output.is_ready:
             return
 
         self.data["output"] = {}
-        for k in self._output:
+        for k in self.output:
             # -> check that an output resource exists (for optional outputs)
-            if self._output[k]:
+            if self.output[k]:
                 self.data["output"][k] = {
-                    "uri": self._output[k].uri,
-                    "typing_name": self._output[k].typing_name
+                    "uri": self.output[k].uri,
+                    "typing_name": self.output[k].typing_name
                 }
         await self._run_next_processes()
 

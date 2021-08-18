@@ -3,18 +3,22 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Type, Union
+from typing import List, Optional, Type, Union
 
-from gws_core.core.dto.typed_tree_dto import TypedTree
 from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
+from ..core.dto.typed_tree_dto import TypedTree
 from ..core.service.base_service import BaseService
+from ..process.process import Process
 from ..process.process_model import ProcessModel
+from ..process.processable import Processable
 from ..process.processable_factory import ProcessableFactory
+from ..process.processable_model import ProcessableModel
 from ..protocol.protocol_model import ProtocolModel
 from .protocol import Protocol
 from .protocol_type import ProtocolType
+from .sub_process_factory import SubProcessableFactory
 
 
 class ProtocolService(BaseService):
@@ -104,7 +108,7 @@ class ProtocolService(BaseService):
         return protocol
 
     @classmethod
-    def create_protocol_from_graph(cls, graph: dict) -> ProcessModel:
+    def create_protocol_from_graph(cls, graph: dict) -> ProtocolModel:
         protocol: ProtocolModel = ProcessableFactory.create_protocol_from_graph(
             graph=graph)
 
@@ -112,9 +116,80 @@ class ProtocolService(BaseService):
         return protocol
 
     @classmethod
-    def create_protocol_from_process(cls, process: ProcessModel) -> ProcessModel:
+    def create_protocol_from_process(cls, process: ProcessModel) -> ProtocolModel:
         protocol: ProtocolModel = ProtocolService.create_protocol_from_data(
             processes={process.instance_name: process}, connectors=[], interfaces={}, outerfaces={})
 
         protocol.save_full()
         return protocol
+
+    @classmethod
+    def update_protocol_graph(cls, protocol: ProtocolModel, graph: dict) -> ProtocolModel:
+        protocol: ProtocolModel = cls._update_protocol_graph_recur(
+            protocol, graph)
+
+        protocol.save_full()
+        return protocol
+
+    @classmethod
+    def _update_protocol_graph_recur(cls, protocol: ProtocolModel, graph: dict) -> ProtocolModel:
+
+        for process in protocol.processes.values():
+            # disconnect the port to prevent connection errors later
+            process.disconnect()
+
+        cls.remove_orphan_process(protocol=protocol, nodes=graph["nodes"])
+
+        protocol.build_from_graph(
+            graph=graph, sub_processable_factory=SubProcessFactoryUpdate())
+
+        for key, processable in protocol.processes.items():
+            if isinstance(processable, ProtocolModel):
+                cls._update_protocol_graph_recur(
+                    protocol=processable, graph=graph["nodes"][key]["data"]["graph"])
+
+        return protocol
+
+    @classmethod
+    def remove_orphan_process(cls, protocol: ProtocolModel, nodes: dict) -> None:
+        """Method to remove the removed process when saving a new protocols
+
+        :param nodes: [description]
+        :type nodes: Dict
+        """
+        deleted_keys = []
+        for key, process in protocol.processes.items():
+            # if the process is not in the Dict or its type has changed, remove it
+            if not key in nodes or process.processable_typing_name != nodes[key].get("processable_typing_name"):
+                deleted_keys.append(key)
+
+        for key in deleted_keys:
+            protocol.delete_process(key)
+
+
+class SubProcessFactoryUpdate(SubProcessableFactory):
+    """Factory used to get the processes or create a new one when building a protocol
+
+    :param SubProcessableFactory: [description]
+    :type SubProcessableFactory: [type]
+    """
+
+    def instantiate_processable(self, processable_uri: Optional[str],
+                                processable_type: Type[Processable],
+                                instance_name: str) -> ProcessableModel:
+
+        if processable_uri is not None:
+            if issubclass(processable_type, Process):
+                return ProcessModel.get_by_uri_and_check(processable_uri)
+            else:
+                return ProtocolModel.get_by_uri_and_check(processable_uri)
+        else:
+            # if this is a process
+            if issubclass(processable_type, Process):
+                return ProcessableFactory.create_process_from_type(
+                    process_type=processable_type, instance_name=instance_name)
+            else:
+                # if this is a protocol
+                # create an empty protocol
+                return ProcessableFactory.create_protocol_from_type(
+                    protocol_type=processable_type, instance_name=instance_name)

@@ -1,6 +1,6 @@
 
 
-from typing import Type
+from typing import Optional, Type
 
 from ..config.config import Config
 from ..core.exception.exceptions.bad_request_exception import \
@@ -14,6 +14,7 @@ from ..progress_bar.progress_bar import ProgressBar
 from ..protocol.protocol import (CONST_PROTOCOL_TYPING_NAME, Protocol,
                                  ProtocolCreateConfig)
 from ..protocol.protocol_model import ProtocolModel
+from ..protocol.sub_process_factory import SubProcessableFactory
 from ..resource.io import Connector
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
@@ -178,38 +179,13 @@ class ProcessableFactory():
         :rtype": Protocol
         """
 
-        # # Add the sub processes and protocols
-        for key, node_json in graph["nodes"].items():
+        protocol.build_from_graph(
+            graph=graph, sub_processable_factory=SubProcessFactoryCreate())
 
-            proc_type_str: str = node_json["processable_typing_name"]
-            proc_type: Type[Processable] = TypingManager.get_type_from_name(
-                proc_type_str)
-
-            processable: ProcessableModel
-            # if this is a process
-            if issubclass(proc_type, Process):
-                processable = cls.create_process_from_type(
-                    process_type=proc_type, instance_name=key)
-            else:
-                # if this is a process
-                # create an empty protocol
-                processable = cls.create_protocol_from_type(
-                    protocol_type=proc_type, instance_name=key)
-
-            # configure the process and add it to the protocol
-            protocol.configure_process_and_add(
-                key, processable, node_json.get("config"))
-
+        for key, processable in protocol.processes.items():
             if isinstance(processable, ProtocolModel):
                 cls._create_protocol_from_graph_recur(
-                    protocol=processable, graph=node_json["data"]["graph"])
-
-        # init interfaces and outerfaces
-        protocol.init_interfaces_from_graph(graph["interfaces"])
-        protocol.init_outerfaces_from_graph(graph["outerfaces"])
-
-        # init connectors
-        protocol.init_connectors_from_graph(graph["links"])
+                    protocol=processable, graph=graph["nodes"][key]["data"]["graph"])
 
         return protocol
 
@@ -235,3 +211,24 @@ class ProcessableFactory():
         else:
             # Init the instance_name if it does not exists
             processable_model.instance_name = processable_model.uri
+
+
+class SubProcessFactoryCreate(SubProcessableFactory):
+    """Factory used to force creation of a processes when building a protocol
+
+    :param SubProcessableFactory: [description]
+    :type SubProcessableFactory: [type]
+    """
+
+    def instantiate_processable(self, processable_uri: Optional[str],
+                                processable_type: Type[Processable],
+                                instance_name: str) -> ProcessableModel:
+        # if this is a process
+        if issubclass(processable_type, Process):
+            return ProcessableFactory.create_process_from_type(
+                process_type=processable_type, instance_name=instance_name)
+        else:
+            # if this is a protocol
+            # create an empty protocol
+            return ProcessableFactory.create_protocol_from_type(
+                protocol_type=processable_type, instance_name=instance_name)
