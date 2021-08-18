@@ -41,7 +41,7 @@ class ProgressBar(Model):
         super().__init__(*args, **kwargs)
 
         if not self.id:
-            self._reset()
+            self._init_data()
 
     # -- A --
     @classmethod
@@ -122,14 +122,7 @@ class ProgressBar(Model):
 
     # -- R --
 
-    def _reset(self) -> bool:
-        """
-        Reset the progress bar
-
-        :return: Returns True if is progress bar is successfully reset;  False otherwise
-        :rtype: `bool`
-        """
-
+    def _init_data(self) -> None:
         self.data = {
             "value": 0.0,
             "max_value": 0.0,
@@ -140,6 +133,16 @@ class ProgressBar(Model):
             "remaining_time": 0.0,
             "messages": [],
         }
+
+    def _reset(self) -> bool:
+        """
+        Reset the progress bar
+
+        :return: Returns True if is progress bar is successfully reset;  False otherwise
+        :rtype: `bool`
+        """
+        self._init_data()
+
         return self.save()
 
     # -- S --

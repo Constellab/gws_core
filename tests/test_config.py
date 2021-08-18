@@ -54,7 +54,7 @@ class TestConfig(unittest.TestCase):
             RobotMove)
         self.assertEqual(robotMove.get_param("moving_step"), 0.1)
         robotMove.set_param("moving_step", 0.3)
-        robotMove.save()
+        robotMove.save_full()
 
         config: Config = Config.get_by_id(robotMove.config.id)
         self.assertEqual(config.get_param("moving_step"), 0.3)

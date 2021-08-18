@@ -13,6 +13,7 @@ from gws_core import (CSVDumper, CSVExporter, CSVImporter, CSVLoader, CSVTable,
 from gws_core.core.model.model import Model
 from gws_core.process.process_model import ProcessModel
 from gws_core.process.processable_factory import ProcessableFactory
+from gws_core.protocol.protocol_service import ProtocolService
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -74,7 +75,7 @@ class TestCSV(IsolatedAsyncioTestCase):
         exporter: ProcessModel = ProcessableFactory.create_process_from_type(
             CSVExporter)
 
-        proto: ProtocolModel = ProcessableFactory.create_protocol_from_data(
+        proto: ProtocolModel = ProtocolService.create_protocol_from_data(
             processes={
                 "loader": loader,
                 "dumper": dumper,

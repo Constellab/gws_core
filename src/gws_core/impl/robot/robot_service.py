@@ -3,12 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core.process.processable_factory import ProcessableFactory
-from gws_core.protocol import protocol_type
-
 from ...core.service.base_service import BaseService
 from ...experiment.experiment_service import ExperimentService
 from ...experiment.queue_service import QueueService
+from ...process.processable_factory import ProcessableFactory
+from ...protocol.protocol_model import ProtocolModel
 from .robot import RobotWorldTravelProto, create_protocol
 
 
@@ -16,7 +15,8 @@ class RobotService(BaseService):
 
     @classmethod
     def run_robot_travel(cls):
-        protocol = create_protocol()
+        protocol: ProtocolModel = create_protocol()
+        protocol.save_full()
         experiment = ExperimentService.create_experiment_from_protocol(protocol=protocol,
                                                                        title="The journey of Astro.",
                                                                        description="This is the journey of Astro.")
@@ -25,7 +25,7 @@ class RobotService(BaseService):
 
     @classmethod
     def run_robot_super_travel(cls):
-        protocol = cls.create_nested_protocol()
+        protocol: ProtocolModel = cls.create_nested_protocol()
         experiment = ExperimentService.create_experiment_from_protocol(protocol=protocol,
                                                                        title="The super journey of Astro.",
                                                                        description="This is the super journey of Astro.")
@@ -33,5 +33,8 @@ class RobotService(BaseService):
         return experiment
 
     @classmethod
-    def create_nested_protocol(cls) -> RobotWorldTravelProto:
-        return ProcessableFactory.create_protocol_from_type(protocol_type=RobotWorldTravelProto)
+    def create_nested_protocol(cls) -> ProtocolModel:
+        protocol: ProtocolModel = ProcessableFactory.create_protocol_from_type(
+            protocol_type=RobotWorldTravelProto)
+        protocol.save_full()
+        return protocol

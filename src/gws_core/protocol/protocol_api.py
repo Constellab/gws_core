@@ -68,10 +68,8 @@ async def get_a_protocol(uri: str,
     return proto.to_json()
 
 
-@core_app.get("/protocol/{typing_name}", tags=["Protocol"], summary="Get the list of protocols")
-async def get_the_list_of_protocols(typing_name: Optional[str] = None,
-                                    experiment_uri: Optional[str] = None,
-                                    page: Optional[int] = 1,
+@core_app.get("/protocol", tags=["Protocol"], summary="Get the list of protocols")
+async def get_the_list_of_protocols(page: Optional[int] = 1,
                                     number_of_items_per_page: Optional[int] = 20,
                                     _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
@@ -85,8 +83,6 @@ async def get_the_list_of_protocols(typing_name: Optional[str] = None,
     """
 
     return ProtocolService.fetch_protocol_list(
-        typing_name=typing_name,
-        experiment_uri=experiment_uri,
         page=page,
         number_of_items_per_page=number_of_items_per_page,
         as_json=True

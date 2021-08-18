@@ -11,6 +11,7 @@ from gws_core import (CondaEnvShell, Experiment, ExperimentService, GTest,
 from gws_core.config.config import Config
 from gws_core.process.process_decorator import ProcessDecorator
 from gws_core.process.process_model import ProcessModel
+from gws_core.process.process_service import ProcessService
 from gws_core.process.processable_factory import ProcessableFactory
 from gws_core.progress_bar.progress_bar import ProgressBar
 from gws_core.resource.io import Input, Output
@@ -49,7 +50,7 @@ class TestProcess(IsolatedAsyncioTestCase):
 
     async def test_conda(self):
         GTest.print("Conda")
-        proc: ProcessModel = ProcessableFactory.create_process_from_type(
+        proc: ProcessModel = ProcessService.create_process_from_type(
             process_type=CondaEnvTester)
         self.assertFalse(CondaEnvTester.is_installed())
 

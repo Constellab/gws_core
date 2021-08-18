@@ -25,10 +25,6 @@ from ..resource.io import (Connector, InPort, Input, Interface, Outerface,
 from ..user.activity import Activity
 from ..user.user import User
 
-# TODO to remove
-# Typing names generated for the class Process
-CONST_PROTOCOL_TYPING_NAME = "GWS_CORE.gws_core.Protocol"
-
 
 # Use the typing decorator to avoid circular dependency
 @TypingDecorator(unique_name="Protocol", object_type="GWS_CORE", hide=True)
@@ -41,8 +37,6 @@ class ProtocolModel(ProcessableModel):
     It cannot be executed and is used to efficiently instanciate new similar protocols instance.
     :type is_template: `bool`
     """
-
-    is_template = BooleanField(default=False, index=True)
 
     # For lazy loading, True when processes, connectors, interfazces and outerfaces are loaded
     # True by default when creating a new protoco
@@ -115,16 +109,16 @@ class ProtocolModel(ProcessableModel):
         process.instance_name = name
         self._processes[name] = process
 
-    def save_deep(self) -> None:
-        """Save the protocol and all its processes
+    def save_full(self) -> None:
+        """Save the protocol, its progress bar, its config and all its processes
         """
-        self.save(update_graph=True)
         self.config.save()
+        self.progress_bar.save()
+        self.save(update_graph=True)
 
         for process in self.processes.values():
             process.set_parent_protocol(self)
-            process.save_all()
-            process.config.save()
+            process.save_full()
 
     def add_connector(self, connector: Connector):
         """
@@ -401,21 +395,6 @@ class ProtocolModel(ProcessableModel):
 
         return self.processes[name]
 
-    @classmethod
-    def get_template(cls) -> "ProtocolModel":
-        """
-        Get the template protocol
-        """
-        # todo fix type
-        try:
-            proto = cls.get((cls.is_template == True) & (
-                cls.type == cls.full_classname()))
-        except:
-            proto = cls()
-            proto.is_template = True
-            proto.save()
-        return proto
-
     def get_layout(self):
         return self.data.get("layout", {})
 
@@ -618,10 +597,8 @@ class ProtocolModel(ProcessableModel):
 
     # -- S --
 
-    def save(self, *args, update_graph=False, **kwargs):
+    def save(self, *args, update_graph=False, **kwargs) -> bool:
         with self._db_manager.db.atomic() as transaction:
-            for processes in self.processes.values():
-                processes.save()
             if not self.is_saved():
                 Activity.add(
                     Activity.CREATE,
@@ -630,10 +607,10 @@ class ProtocolModel(ProcessableModel):
                 )
             if update_graph:
                 self.data["graph"] = self.dumps()
-            status = super().save(*args, **kwargs)
-            if not status:
+            if not super().save(*args, **kwargs):
                 transaction.rollback()
-            return status
+                return False
+        return True
 
     def set_experiment(self, experiment):
         super().set_experiment(experiment)

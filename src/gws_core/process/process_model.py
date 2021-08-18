@@ -129,7 +129,7 @@ class ProcessModel(ProcessableModel):
                     res[k].save()
         await super()._run_after_task()
 
-    def save_all(self) -> None:
-        """Function to run overrided by the sub classes
-        """
+    def save_full(self) -> None:
+        self.config.save()
+        self.progress_bar.save()
         self.save()

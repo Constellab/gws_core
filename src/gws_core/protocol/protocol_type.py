@@ -4,9 +4,13 @@
 # About us: https://gencovery.com
 
 
+from operator import mod
 from typing import Type, final
 
 from peewee import ModelSelect
+from gws_core.process.processable_factory import ProcessableFactory
+
+from gws_core.protocol.protocol_model import ProtocolModel
 
 from ..model.typing import Typing, TypingObjectType
 from ..protocol.protocol import Protocol
@@ -32,7 +36,10 @@ class ProtocolType(Typing):
         """
         _json = super().data_to_json(**kwargs)
 
-        model_t: Type[Protocol] = self.get_model_type(self.model_type)
-        _json["graph"] = model_t.get_template().graph  # todo fix method
+        protocol_type: Type[Protocol] = self.get_model_type(self.model_type)
+
+        protocol: ProtocolModel = ProcessableFactory.create_protocol_from_type(
+            protocol_type)
+        _json["graph"] = protocol.dumps()
 
         return _json

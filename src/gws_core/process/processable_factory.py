@@ -20,6 +20,9 @@ from ..user.user import User
 
 
 class ProcessableFactory():
+    """Contains methods to instantiate ProcessModel and ProtocolModel but it does not save the instances to the database,
+    it only create th objects
+    """
 
     @classmethod
     def create_processable_from_type(cls, processable_type: Type[Processable], instance_name: str = None) -> ProcessModel:
@@ -128,9 +131,6 @@ class ProcessableFactory():
         if not isinstance(connectors, list):
             raise BadRequestException("A list of connectors is expected")
 
-        # save the protocol to get the id
-        protocol.save()
-
         # set process
         for name in processes:
             proc = processes[name]
@@ -138,7 +138,6 @@ class ProcessableFactory():
                 raise BadRequestException(
                     "The dictionnary of processes must contain instances of ProcessableModel")
             protocol.add_process(name, proc)
-            proc.save()
 
         # set connectors
         for conn in connectors:
@@ -151,7 +150,6 @@ class ProcessableFactory():
         protocol.set_interfaces(interfaces)
         protocol.set_outerfaces(outerfaces)
         protocol.data["graph"] = protocol.dumps()
-        protocol.save()  # <- will save the graph
 
         return protocol
 
@@ -169,7 +167,6 @@ class ProcessableFactory():
             protocol_type=Protocol)
 
         cls._create_protocol_from_graph_recur(protocol=protocol, graph=graph)
-        protocol.save_deep()
         return protocol
 
     @classmethod
@@ -218,14 +215,12 @@ class ProcessableFactory():
 
     @classmethod
     def _init_processable(cls, processable_model: ProcessableModel, config: Config, instance_name: str = None) -> None:
-        # Save and set the config
-        config.save()
+        # Set the config
         processable_model.config = config
 
-        # Save and set the progress_bar
+        # Set the progress_bar
         progress_bar: ProgressBar = ProgressBar(
             process_uri=processable_model.uri, processable_typing_name=processable_model.processable_typing_name)
-        progress_bar.save()
         processable_model.progress_bar = progress_bar
 
         # set the created by
@@ -240,5 +235,3 @@ class ProcessableFactory():
         else:
             # Init the instance_name if it does not exists
             processable_model.instance_name = processable_model.uri
-
-        processable_model.save()

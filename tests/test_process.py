@@ -10,6 +10,7 @@ from gws_core import (Experiment, ExperimentService, GTest, ProcessModel,
                       Protocol, ProtocolModel, Robot, RobotCreate, RobotEat,
                       RobotMove, RobotWait)
 from gws_core.process.processable_factory import ProcessableFactory
+from gws_core.protocol.protocol_service import ProtocolService
 
 
 class TestProcess(IsolatedAsyncioTestCase):
@@ -33,7 +34,7 @@ class TestProcess(IsolatedAsyncioTestCase):
             process_type=RobotCreate)
         # p0.title = "First 'Create' process"
         # p0.description = "This is the description of the process"
-        p0.save()
+        p0.save_full()
 
         self.assertTrue(p0.id != p1.id)
 
@@ -55,7 +56,7 @@ class TestProcess(IsolatedAsyncioTestCase):
         p_wait: ProcessModel = ProcessableFactory.create_process_from_type(
             process_type=RobotWait)
 
-        proto: ProtocolModel = ProcessableFactory.create_protocol_from_data(
+        proto: ProtocolModel = ProtocolService.create_protocol_from_data(
             processes={
                 'p0': p0,
                 'p1': p1,

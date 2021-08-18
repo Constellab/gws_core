@@ -9,6 +9,7 @@ import traceback
 from typing import Any, Coroutine, Union
 
 from gws_core.process.processable_factory import ProcessableFactory
+from gws_core.protocol.protocol_service import ProtocolService
 from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
@@ -55,8 +56,7 @@ class ExperimentService(BaseService):
 
     @classmethod
     def create_experiment_from_process(cls, process: ProcessModel, title: str = "", description: str = "") -> Experiment:
-        proto = ProcessableFactory.create_protocol_from_data(
-            processes={process.instance_name: process}, connectors=[], interfaces={}, outerfaces={})
+        proto = ProtocolService.create_protocol_from_process(process=process)
 
         return cls.create_experiment_from_protocol(protocol=proto, title=title, description=description)
 
@@ -73,14 +73,8 @@ class ExperimentService(BaseService):
     # -- F --
 
     @classmethod
-    def fetch_experiment(cls, uri=None) -> Union[Experiment, dict]:
-        try:
-            e = Experiment.get(Experiment.uri == uri)
-        except Exception as err:
-            raise NotFoundException(
-                detail=f"No experiment found with uri '{uri}'") from err
-
-        return e
+    def get_experiment_by_uri(cls, uri: str) -> Union[Experiment, dict]:
+        return Experiment.get_by_uri_and_check(uri)
 
     @classmethod
     def fetch_experiment_list(cls,

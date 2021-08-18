@@ -9,6 +9,7 @@ from gws_core import (Experiment, ExperimentService, GTest, ProcessDecorator,
                       Resource, Shell)
 from gws_core.config.config import Config
 from gws_core.process.process_model import ProcessModel
+from gws_core.process.process_service import ProcessService
 from gws_core.process.processable_factory import ProcessableFactory
 from gws_core.progress_bar.progress_bar import ProgressBar
 from gws_core.resource.io import Input, Output
@@ -48,7 +49,7 @@ class TestShell(IsolatedAsyncioTestCase):
     async def test_shell(self):
         GTest.print("Shell")
 
-        proc: ProcessModel = ProcessableFactory.create_process_from_type(
+        proc: ProcessModel = ProcessService.create_process_from_type(
             process_type=Echo)
         proc.set_param("name", "Jhon Doe")
 

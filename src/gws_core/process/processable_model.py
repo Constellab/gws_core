@@ -365,7 +365,7 @@ class ProcessableModel(Viewable):
 
     # -- S --
 
-    def save_all(self) -> None:
+    def save_full(self) -> None:
         """Function to run overrided by the sub classes
         """
         pass
@@ -379,10 +379,8 @@ class ProcessableModel(Viewable):
         if not isinstance(parent_protocol, ProtocolModel):
             raise BadRequestException(
                 "An instance of ProtocolModel is required")
-        if not parent_protocol.id:
-            if not parent_protocol.save():
-                raise BadRequestException("Cannot save the experiment")
-        self.parent_protocol_id = parent_protocol.id
+        if parent_protocol.id:
+            self.parent_protocol_id = parent_protocol.id
         self._parent_protocol = parent_protocol
 
     def __switch_to_current_progress_bar(self):
@@ -451,20 +449,6 @@ class ProcessableModel(Viewable):
 
         self.config.set_param(name, value)
         self.config.save()
-
-    def set_parent_protocol(self, protocol: 'Protocol') -> None:
-        """
-        Sets the protocol of the process
-        """
-
-        from ..protocol.protocol_model import ProtocolModel
-        if not isinstance(protocol, ProtocolModel):
-            raise BadRequestException("An instance of Protocol is required")
-        if not protocol.id:
-            if not protocol.save():
-                raise BadRequestException("Cannot save the experiment")
-        self.parent_protocol_id = protocol.id
-        self._parent_protocol = protocol
 
     # -- T --
 

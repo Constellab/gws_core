@@ -3,14 +3,16 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Union
+from typing import List, Type, Union
 
 from ..core.classes.paginator import Paginator
 from ..core.dto.typed_tree_dto import TypedTree
 from ..core.exception.exceptions import NotFoundException
 from ..core.service.base_service import BaseService
 from ..experiment.experiment import Experiment
+from ..process.processable_factory import ProcessableFactory
 from ..progress_bar.progress_bar import ProgressBar
+from .process import Process
 from .process_model import ProcessModel
 from .process_type import ProcessType
 
@@ -20,11 +22,11 @@ class ProcessService(BaseService):
     # -- F --
 
     @classmethod
-    def fetch_process(cls, uri: str = "") -> ProcessModel:
+    def get_process_by_uri(cls, uri: str) -> ProcessModel:
         return ProcessModel.get_by_uri(uri=uri)
 
     @classmethod
-    def fetch_process_progress_bar(cls, uri: str = "") -> ProgressBar:
+    def fetch_process_progress_bar(cls, uri: str) -> ProgressBar:
         try:
             return ProgressBar.get_by_process_uri(uri)
         except Exception:
@@ -76,7 +78,7 @@ class ProcessService(BaseService):
         Return all the process types grouped by module and submodules
         """
 
-        query = ProcessType.get_types()
+        query: List[ProcessType] = ProcessType.get_types()
 
         # create a fake main group to add processes in it
         tree: TypedTree = TypedTree('')
@@ -86,3 +88,12 @@ class ProcessService(BaseService):
                 process_type.get_model_types_array(), process_type.to_json())
 
         return tree.sub_trees
+
+    @classmethod
+    def create_process_from_type(cls, process_type: Type[Process], instance_name: str = None) -> ProcessModel:
+        process: ProcessModel = ProcessableFactory.create_process_from_type(
+            process_type=process_type, instance_name=instance_name)
+
+        process.save_full()
+
+        return process

@@ -12,6 +12,7 @@ from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
                       RobotWait, Settings, Study)
 from gws_core.process.process_model import ProcessModel
 from gws_core.process.processable_factory import ProcessableFactory
+from gws_core.protocol.protocol_service import ProtocolService
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -51,7 +52,7 @@ class TestProtocol(IsolatedAsyncioTestCase):
         count = len(Q)
 
         # create a chain
-        proto: ProtocolModel = ProcessableFactory.create_protocol_from_data(
+        proto: ProtocolModel = ProtocolService.create_protocol_from_data(
             processes={
                 'p0': p0,
                 'p1': p1,
@@ -108,7 +109,7 @@ class TestProtocol(IsolatedAsyncioTestCase):
         count = len(Q)
 
         # create a chain
-        mini_proto: ProtocolModel = ProcessableFactory.create_protocol_from_data(
+        mini_proto: ProtocolModel = ProtocolService.create_protocol_from_data(
             processes={
                 'p1': p1,
                 'p2': p2,
@@ -129,7 +130,7 @@ class TestProtocol(IsolatedAsyncioTestCase):
         Q = ProtocolModel.select()
         self.assertEqual(len(Q), count+1)
 
-        super_proto: ProtocolModel = ProcessableFactory.create_protocol_from_data(
+        super_proto: ProtocolModel = ProtocolService.create_protocol_from_data(
             processes={
                 "p0": p0,
                 "p5": p5,
@@ -189,9 +190,10 @@ class TestProtocol(IsolatedAsyncioTestCase):
     async def test_graph_load(self):
         GTest.print("Load protocol graph")
 
+        mini_proto: ProtocolModel
         with open(os.path.join(testdata_dir, "mini_travel_graph.json"), "r") as f:
             s1 = json.load(f)
-            mini_proto = ProcessableFactory.create_protocol_from_graph(s1)
+            mini_proto = ProtocolService.create_protocol_from_graph(s1)
             s2 = mini_proto.dumps(bare=True)
             self.assertEqual(s1, s2)
 
@@ -206,7 +208,7 @@ class TestProtocol(IsolatedAsyncioTestCase):
         p5: ProcessModel = ProcessableFactory.create_process_from_type(
             process_type=RobotEat)
 
-        super_proto: ProtocolModel = ProcessableFactory.create_protocol_from_data(
+        super_proto: ProtocolModel = ProtocolService.create_protocol_from_data(
             processes={
                 "p0": p0,
                 "p5": p5,

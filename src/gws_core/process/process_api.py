@@ -64,7 +64,7 @@ async def get_a_process(uri: str,
     - **uri**: the uri of the process
     """
 
-    proc = ProcessService.fetch_process(uri=uri)
+    proc = ProcessService.get_process_by_uri(uri=uri)
     return proc.to_json()
 
 

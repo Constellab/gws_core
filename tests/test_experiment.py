@@ -9,6 +9,7 @@ from unittest import IsolatedAsyncioTestCase
 from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
                       ProcessModel, QueueService, Resource, RobotService,
                       Settings)
+from gws_core.protocol.protocol_model import ProtocolModel
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -34,7 +35,8 @@ class TestExperiment(IsolatedAsyncioTestCase):
         # Create experiment 1
         # -------------------------------
         print("Create experiment 1")
-        proto1 = RobotService.create_nested_protocol()
+        proto1: ProtocolModel = RobotService.create_nested_protocol()
+
         experiment1: Experiment = Experiment(
             protocol=proto1, study=GTest.study, user=GTest.user)
         experiment1.set_title("My exp title")
