@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 import inspect
-from typing import Any, Dict, List, Literal, Union
+from typing import Any, Dict, List, Literal, Type, Union
 
 from peewee import BooleanField, CharField, ModelSelect
 
@@ -120,8 +120,12 @@ class Typing(Model):
             .where((cls.object_type == object_type) & (cls.hide == False))\
             .order_by(cls.model_type.desc())
 
+    @classmethod
+    def get_by_model_type(cls, model_type: Type[Model]) -> ModelSelect:
+        return cls.select().where((cls.model_type == model_type.full_classname()))
+
     def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
-        _json: Dict[str, Any] = super().to_json(**kwargs)
+        _json: Dict[str, Any] = super().to_json(shallow= shallow, bare=bare, **kwargs)
 
         _json["typing_name"] = self.typing_name
         return _json

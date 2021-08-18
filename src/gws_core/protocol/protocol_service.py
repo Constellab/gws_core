@@ -12,7 +12,7 @@ from ..core.exception.exceptions.not_found_exception import NotFoundException
 from ..core.service.base_service import BaseService
 from ..experiment.experiment import Experiment
 from ..model.typing_manager import TypingManager
-from ..protocol.protocol import CONST_PROTOCOL_TYPING_NAME, Protocol
+from ..protocol.protocol_model import CONST_PROTOCOL_TYPING_NAME, ProtocolModel
 from .protocol_type import ProtocolType
 
 
@@ -21,11 +21,11 @@ class ProtocolService(BaseService):
     # -- F --
 
     @classmethod
-    def get_protocol_by_uri(cls, uri: str = "") -> Protocol:
-        return Protocol.get_by_uri(uri)
+    def get_protocol_by_uri(cls, uri: str = "") -> ProtocolModel:
+        return ProtocolModel.get_by_uri(uri)
 
     @classmethod
-    def fetch_protocol(cls, typing_name=CONST_PROTOCOL_TYPING_NAME, uri: str = "") -> Protocol:
+    def fetch_protocol(cls, typing_name=CONST_PROTOCOL_TYPING_NAME, uri: str = "") -> ProtocolModel:
         return TypingManager.get_object_with_typing_name_and_uri(typing_name, uri)
 
     @classmethod
@@ -34,20 +34,20 @@ class ProtocolService(BaseService):
                             experiment_uri: str = None,
                             page: int = 1,
                             number_of_items_per_page: int = 20,
-                            as_json=False) -> Union[Paginator, List[Protocol], List[dict]]:
+                            as_json=False) -> Union[Paginator, List[ProtocolModel], List[dict]]:
 
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
-        model_type: Type[Protocol] = None
+        model_type: Type[ProtocolModel] = None
         if typing_name:
             model_type = TypingManager.get_type_from_name(typing_name)
             if model_type is None:
                 raise NotFoundException(
                     detail=f"Protocol type '{typing_name}' not found")
         else:
-            model_type = Protocol
+            model_type = ProtocolModel
 
-        if model_type is Protocol:
+        if model_type is ProtocolModel:
             query = model_type.select().where(model_type.is_template is False).order_by(
                 model_type.creation_datetime.desc())
         else:

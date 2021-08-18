@@ -7,7 +7,8 @@ import time
 from unittest import IsolatedAsyncioTestCase
 
 from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
-                      Process, QueueService, Resource, RobotService, Settings)
+                      ProcessModel, QueueService, Resource, RobotService,
+                      Settings)
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -36,7 +37,6 @@ class TestExperiment(IsolatedAsyncioTestCase):
         proto1 = RobotService.create_nested_protocol()
         experiment1: Experiment = Experiment(
             protocol=proto1, study=GTest.study, user=GTest.user)
-        proto_title = proto1.get_title()
         experiment1.set_title("My exp title")
         experiment1.set_description("This is my new experiment")
         experiment1.save()
@@ -44,7 +44,7 @@ class TestExperiment(IsolatedAsyncioTestCase):
         #self.assertEqual(e1.processes.count(), 18)
         #self.assertEqual(Process.select().count(), 18)
         self.assertEqual(len(experiment1.processes), 15)
-        self.assertEqual(Process.select().count(), 15)
+        self.assertEqual(ProcessModel.select().count(), 15)
         self.assertEqual(Resource.select().count(), 0)
         self.assertEqual(Experiment.select().count(), 1)
 
@@ -53,13 +53,12 @@ class TestExperiment(IsolatedAsyncioTestCase):
         print("Create experiment_2 = experiment_1 ...")
         experiment2: Experiment = Experiment.get(
             Experiment.uri == experiment1.uri)
-        self.assertEqual(experiment2.protocol.get_title(), proto_title)
         self.assertEqual(experiment2.get_title(), "My exp title")
         self.assertEqual(experiment2.get_description(),
                          "This is my new experiment")
         self.assertEqual(experiment2, experiment1)
         self.assertEqual(len(experiment2.processes), 15)
-        self.assertEqual(Process.select().count(), 15)
+        self.assertEqual(ProcessModel.select().count(), 15)
         self.assertEqual(Resource.select().count(), 0)
         self.assertEqual(Experiment.select().count(), 1)
 
@@ -80,7 +79,6 @@ class TestExperiment(IsolatedAsyncioTestCase):
         self.assertEqual(experiment2.pid, 0)
 
         e2_bis: Experiment = Experiment.get(Experiment.uri == experiment1.uri)
-        self.assertEqual(e2_bis.protocol.get_title(), proto_title)
         self.assertEqual(e2_bis.get_title(), "My exp title")
         self.assertEqual(e2_bis.get_description(), "This is my new experiment")
         self.assertEqual(len(e2_bis.processes), 15)

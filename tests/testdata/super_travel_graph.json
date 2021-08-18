@@ -11,7 +11,7 @@
             "instance_name": "p0",
             "is_archived": false,
             "save_datetime": "",
-            "typing_name": "PROCESS.gws_core.RobotCreate",
+            "processable_typing_name": "PROCESS.gws_core.RobotCreate",
             "uri": "",
             "experiment": {
                 "uri": ""
@@ -76,7 +76,7 @@
             "instance_name": "p5",
             "is_archived": false,
             "save_datetime": "",
-            "typing_name": "PROCESS.gws_core.RobotEat",
+            "processable_typing_name": "PROCESS.gws_core.RobotEat",
             "uri": "",
             "experiment": {
                 "uri": ""
@@ -162,7 +162,7 @@
                             "instance_name": "p1",
                             "is_archived": false,
                             "save_datetime": "2021-07-11T18:34:29.023634",
-                            "typing_name": "PROCESS.gws_core.RobotMove",
+                            "processable_typing_name": "PROCESS.gws_core.RobotMove",
                             "uri": "d98c54ed-87ab-4330-b2b7-a2574f5114d6",
                             "experiment": {
                                 "uri": ""
@@ -218,7 +218,7 @@
                                 "uri": "c1e4e36c-d558-4f45-94e1-d37da9fe1574",
                                 "process": {
                                     "uri": "d98c54ed-87ab-4330-b2b7-a2574f5114d6",
-                                    "typing_name": "PROCESS.gws_core.RobotMove"
+                                    "processable_typing_name": "PROCESS.gws_core.RobotMove"
                                 }
                             },
                             "input": {
@@ -254,7 +254,7 @@
                             "instance_name": "p2",
                             "is_archived": false,
                             "save_datetime": "2021-07-11T18:34:29.029713",
-                            "typing_name": "PROCESS.gws_core.RobotEat",
+                            "processable_typing_name": "PROCESS.gws_core.RobotEat",
                             "uri": "bb86a3d1-2148-4d14-986f-1c460509efac",
                             "experiment": {
                                 "uri": ""
@@ -298,7 +298,7 @@
                                 "uri": "bc5f0c57-c84e-48af-8b84-275ec82bbe43",
                                 "process": {
                                     "uri": "bb86a3d1-2148-4d14-986f-1c460509efac",
-                                    "typing_name": "PROCESS.gws_core.RobotEat"
+                                    "processable_typing_name": "PROCESS.gws_core.RobotEat"
                                 }
                             },
                             "input": {
@@ -334,7 +334,7 @@
                             "instance_name": "p3",
                             "is_archived": false,
                             "save_datetime": "2021-07-11T18:34:29.035019",
-                            "typing_name": "PROCESS.gws_core.RobotMove",
+                            "processable_typing_name": "PROCESS.gws_core.RobotMove",
                             "uri": "346c78b9-9d91-483d-a296-5f97d0680741",
                             "experiment": {
                                 "uri": ""
@@ -390,7 +390,7 @@
                                 "uri": "b9128271-59ff-478b-b8c2-eebe254198db",
                                 "process": {
                                     "uri": "346c78b9-9d91-483d-a296-5f97d0680741",
-                                    "typing_name": "PROCESS.gws_core.RobotMove"
+                                    "processable_typing_name": "PROCESS.gws_core.RobotMove"
                                 }
                             },
                             "input": {
@@ -426,7 +426,7 @@
                             "instance_name": "p4",
                             "is_archived": false,
                             "save_datetime": "2021-07-11T18:34:29.039688",
-                            "typing_name": "PROCESS.gws_core.RobotMove",
+                            "processable_typing_name": "PROCESS.gws_core.RobotMove",
                             "uri": "1e266eab-205c-4c6a-a22f-96b9e5bfb4b9",
                             "experiment": {
                                 "uri": ""
@@ -482,7 +482,7 @@
                                 "uri": "f28a8c47-8815-4a6a-963c-11ad6942448a",
                                 "process": {
                                     "uri": "1e266eab-205c-4c6a-a22f-96b9e5bfb4b9",
-                                    "typing_name": "PROCESS.gws_core.RobotMove"
+                                    "processable_typing_name": "PROCESS.gws_core.RobotMove"
                                 }
                             },
                             "input": {
@@ -518,7 +518,7 @@
                             "instance_name": "p_wait",
                             "is_archived": false,
                             "save_datetime": "2021-07-11T18:34:29.045570",
-                            "typing_name": "PROCESS.gws_core.RobotWait",
+                            "processable_typing_name": "PROCESS.gws_core.RobotWait",
                             "uri": "f31ae988-22be-454f-af76-608ab1e9a9a0",
                             "experiment": {
                                 "uri": ""
@@ -562,7 +562,7 @@
                                 "uri": "fe31de77-d24d-4f9c-94b7-b4fca4256ad6",
                                 "process": {
                                     "uri": "f31ae988-22be-454f-af76-608ab1e9a9a0",
-                                    "typing_name": "PROCESS.gws_core.RobotWait"
+                                    "processable_typing_name": "PROCESS.gws_core.RobotWait"
                                 }
                             },
                             "input": {

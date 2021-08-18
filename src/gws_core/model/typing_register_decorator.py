@@ -34,3 +34,5 @@ def register_typing_class(object_class: Type[Any], object_type: TypingObjectType
         human_name=human_name, short_description=short_description,  hide=hide)
 
     object_class._typing_name = typing_name
+    object_class._human_name = human_name
+    object_class._short_description = short_description

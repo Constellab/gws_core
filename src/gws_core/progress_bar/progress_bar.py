@@ -28,7 +28,7 @@ class ProgressBar(Model):
 
     process_uri = CharField(null=True, index=True)
     # -> unique index (process_uri, process_type) is created in Meta
-    process_typing_name = CharField(null=True)
+    processable_typing_name = CharField(null=True)
 
     _min_allowed_delta_time = 1.0
     _min_value = 0.0
@@ -115,10 +115,10 @@ class ProgressBar(Model):
 
     @property
     def process(self) -> 'Process':
-        if not self.process_typing_name:
+        if not self.processable_typing_name:
             return None
 
-        return TypingManager.get_object_with_typing_name_and_uri(self.process_typing_name, self.process_uri)
+        return TypingManager.get_object_with_typing_name_and_uri(self.processable_typing_name, self.process_uri)
 
     # -- R --
 
@@ -221,8 +221,8 @@ class ProgressBar(Model):
         self.save()
 
     @classmethod
-    def get_by_process_typing_name_and_process_uri(cls, process_typing_name: str, process_uri: str) -> 'ProgressBar':
-        return ProgressBar.get((ProgressBar.process_uri == process_uri) & (ProgressBar.process_typing_name == process_typing_name))
+    def get_by_process_uri(cls, process_uri: str) -> 'ProgressBar':
+        return ProgressBar.get(ProgressBar.process_uri == process_uri)
 
     def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
         """
@@ -236,7 +236,7 @@ class ProgressBar(Model):
         :rtype: dict, str
         """
 
-        _json = super().to_json(**kwargs)
+        _json = super().to_json(shallow=shallow, bare=bare, **kwargs)
 
         if bare:
             _json["process"] = {
@@ -257,16 +257,16 @@ class ProgressBar(Model):
         else:
             _json["process"] = {
                 "uri": _json["process_uri"],
-                "typing_name": _json["process_typing_name"],
+                "typing_name": _json["processable_typing_name"],
             }
 
         del _json["process_uri"]
-        del _json["process_typing_name"]
+        del _json["processable_typing_name"]
 
         return _json
 
     class Meta:
         indexes = (
-            # create a unique on process_uri, process_typing_name
-            (('process_uri', 'process_typing_name'), True),
+            # create a unique on process_uri, processable_typing_name
+            (('process_uri', 'processable_typing_name'), True),
         )

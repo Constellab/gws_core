@@ -8,20 +8,31 @@ from unittest import IsolatedAsyncioTestCase
 
 from gws_core import (Experiment, ExperimentService, GTest, PipEnvShell,
                       Resource)
+from gws_core.config.config import Config
+from gws_core.process.process_decorator import ProcessDecorator
+from gws_core.process.process_model import ProcessModel
+from gws_core.process.processable_factory import ProcessableFactory
+from gws_core.progress_bar.progress_bar import ProgressBar
+from gws_core.resource.io import Input, Output
 
 __cdir__ = os.path.abspath(os.path.dirname(__file__))
+
+
+@ProcessDecorator("PipEnvTester")
 class PipEnvTester(PipEnvShell):
     input_specs = {}
     output_specs = {'stdout': (Resource, )}
-    env_file_path = os.path.join(__cdir__, "testdata", "penv", "env_jwt_pip.txt")
+    env_file_path = os.path.join(
+        __cdir__, "testdata", "penv", "env_jwt_pip.txt")
 
-    def build_command(self) -> list:
-        return [ "python", os.path.join(__cdir__, "testdata", "penv", "jwt_encode.py") ]
+    def build_command(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> list:
+        return ["python", os.path.join(__cdir__, "testdata", "penv", "jwt_encode.py")]
 
-    def gather_outputs(self):
+    def gather_outputs(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar):
         res = Resource()
         res.data["encoded_string"] = self._stdout
-        self.output["stdout"] = res
+        outputs["stdout"] = res
+
 
 class TestProcess(IsolatedAsyncioTestCase):
 
@@ -38,7 +49,8 @@ class TestProcess(IsolatedAsyncioTestCase):
 
     async def test_pipenv(self):
         GTest.print("Pipenv")
-        proc = PipEnvTester()
+        proc: ProcessModel = ProcessableFactory.create_process_from_type(
+            process_type=PipEnvTester)
         self.assertFalse(PipEnvTester.is_installed())
 
         experiment: Experiment = ExperimentService.create_experiment_from_process(
@@ -47,11 +59,11 @@ class TestProcess(IsolatedAsyncioTestCase):
 
         result = proc.output["stdout"]
         encoded_string = result.data["encoded_string"]
-        self.assertEqual(encoded_string, "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzb21lIjoicGF5bG9hZCJ9.Joh1R2dYzkRvDkqv3sygm5YyK8Gi4ShZqbhK2gxcs2U")
+        self.assertEqual(
+            encoded_string, "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzb21lIjoicGF5bG9hZCJ9.Joh1R2dYzkRvDkqv3sygm5YyK8Gi4ShZqbhK2gxcs2U")
 
         self.assertTrue(PipEnvTester.is_installed())
         self.assertTrue(proc.is_finished)
 
         PipEnvTester.uninstall()
-        self.assertFalse(proc.is_installed())
-
+        self.assertFalse(PipEnvTester.is_installed())

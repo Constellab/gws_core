@@ -180,7 +180,7 @@ class Resource(Viewable):
 
         mapping = ProcessResource(
             process_id=process.id,
-            process_typing_name=process.typing_name,
+            processable_typing_name=process.processable_typing_name,
             resource_id=self.id,
             resource_typing_name=self.typing_name,
         )
@@ -224,13 +224,13 @@ class Resource(Viewable):
         :rtype: dict, str
         """
 
-        _json = super().to_json(shallow=shallow, **kwargs)
+        _json = super().to_json(shallow=shallow, bare=bare, **kwargs)
         if self.experiment:
             _json.update({
                 "experiment": {"uri": self.experiment.uri},
                 "process": {
                     "uri": self.process.uri,
-                    "typing_name": self.process.typing_name,
+                    "typing_name": self.process.processable_typing_name,
                 },
             })
         if shallow:
@@ -304,7 +304,7 @@ class ProcessResource(Model):
     # Do we need the typings ? We do we do if the typing name changed
 
     process_id = IntegerField(null=False, index=True)
-    process_typing_name = CharField(null=False, index=True)
+    processable_typing_name = CharField(null=False, index=True)
     resource_id = IntegerField(null=False, index=True)
     resource_typing_name = CharField(null=False, index=True)
     _table_name = "gws_process_resource"
@@ -321,10 +321,10 @@ class ProcessResource(Model):
         """
         Returns the process
         """
-        return TypingManager.get_object_with_typing_name(self.process_typing_name, self.process_id)
+        return TypingManager.get_object_with_typing_name(self.processable_typing_name, self.process_id)
 
     class Meta:
         indexes = (
-            (("process_id", "process_typing_name",
+            (("process_id", "processable_typing_name",
              "resource_id", "resource_typing_name"), True),
         )

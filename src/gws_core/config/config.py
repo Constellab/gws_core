@@ -66,11 +66,12 @@ class Config(Viewable):
         :rtype: `bool`
         """
 
-        from ..process.process import Process
+        from ..process.process_model import ProcessModel
 
         # todo a vérifier, une config peut être utilisé par plusieurs process?
-        some_processes_are_in_invalid_archive_state = Process.select().where(
-            (Process.config == self) & (Process.is_archived == (not archive))
+        some_processes_are_in_invalid_archive_state = ProcessModel.select().where(
+            (ProcessModel.config == self) & (
+                ProcessModel.is_archived == (not archive))
         ).count()
 
         if some_processes_are_in_invalid_archive_state:
@@ -207,7 +208,7 @@ class Config(Viewable):
         :rtype: dict, str
         """
 
-        _json = super().to_json(**kwargs)
+        _json = super().to_json(shallow=shallow, bare=bare, **kwargs)
         if shallow:
             del _json["data"]
 

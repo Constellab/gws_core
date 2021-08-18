@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import final
+from typing import List, final
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.base import Base
@@ -408,6 +408,7 @@ class IOface:
             }
         }
 
+
 @final
 class Interface(IOface):
     source_port: InPort = None
@@ -432,9 +433,10 @@ class Interface(IOface):
     # -- V -
 
     def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
-        _json = super().to_json(**kwargs)
+        _json = super().to_json(shallow=shallow, bare=bare, **kwargs)
         _json["from"]["node"] = ":parent:"
         return _json
+
 
 @final
 class Outerface(IOface):
@@ -459,7 +461,7 @@ class Outerface(IOface):
     # -- V --
 
     def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
-        _json = super().to_json(**kwargs)
+        _json = super().to_json(shallow=shallow, bare=bare, **kwargs)
         _json["to"]["node"] = ":parent:"
         return _json
 
@@ -468,6 +470,7 @@ class Outerface(IOface):
 # Connector class
 #
 # ####################################################################
+
 
 @final
 class Connector:
@@ -687,6 +690,16 @@ class IO(Base):
             resources[k] = self._ports[k].resource
         return resources
 
+    def get_port(self, port_name: str) -> Port:
+        """
+        Returns the resources of all the ports.
+
+        :return: List of resources
+        :rtype: list
+        """
+
+        return self._ports[port_name]
+
     def get_specs(self):
         specs = {}
 
@@ -727,9 +740,10 @@ class IO(Base):
 
     @property
     def is_empty(self) -> bool:
-        for k in self._ports:
-            if not self._ports[k].is_empty:
+        for port in self._ports.values():
+            if not port.is_empty:
                 return False
+        return True
 
     # -- K ---
 
@@ -834,13 +848,13 @@ class IO(Base):
                     "typing_name": ""
                 }
 
-            _json[k]["specs"] = ()
+            specs: List[str] = []
             for t in port._resource_types:
                 if t is None:
-                    _json[k]["specs"] += (None, )
+                    specs.append(None)
                 else:
-                    classname = t._typing_name
-                    _json[k]["specs"] += (classname, )
+                    specs.append(t._typing_name)
+            _json[k]["specs"] = specs
 
         return _json
 
@@ -850,13 +864,14 @@ class IO(Base):
 #
 # ####################################################################
 
-@final
+
+@ final
 class Input(IO):
     """
     Input class
     """
 
-    @property
+    @ property
     def is_connected(self) -> bool:
         """
         Returns True if a port of the Input is left-connected.
@@ -877,13 +892,14 @@ class Input(IO):
 #
 # ####################################################################
 
-@final
+
+@ final
 class Output(IO):
     """
     Output class
     """
 
-    @property
+    @ property
     def is_connected(self) -> bool:
         """
         Returns True if a port of the Output is right-connected.
@@ -899,7 +915,7 @@ class Output(IO):
 
     def propagate(self):
         """
-        Propagates the resources of the child port sto the connected (right-hande side) ports
+        Propagates the resources of the child port to the connected (right-hande side) ports
         """
 
         for k in self._ports:

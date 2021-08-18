@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import re
 from enum import Enum
 from typing import List, final
 
@@ -14,7 +15,7 @@ from ..core.exception.exceptions import BadRequestException
 from ..core.model.sys_proc import SysProc
 from ..model.typing_manager import TypingManager
 from ..model.viewable import Viewable
-from ..protocol.protocol import Protocol
+from ..protocol.protocol_model import ProtocolModel
 from ..study.study import Study
 from ..user.activity import Activity
 from ..user.current_user_service import CurrentUserService
@@ -50,7 +51,8 @@ class Experiment(Viewable):
 
     study = ForeignKeyField(
         Study, null=True, index=True, backref='experiments')
-    protocol = ForeignKeyField(Protocol, null=True, index=True, backref='+')
+    protocol = ForeignKeyField(
+        ProtocolModel, null=True, index=True, backref='+')
     created_by = ForeignKeyField(
         User, null=True, index=True, backref='created_experiments')
     score = FloatField(null=True, index=True)
@@ -86,8 +88,8 @@ class Experiment(Viewable):
             # attach the protocol
             protocol = kwargs.get("protocol")
             if protocol is None:
-                from ..protocol.protocol import Protocol
-                protocol = Protocol(user=user)
+                from ..protocol.protocol_model import ProtocolModel
+                protocol = ProtocolModel(user=user)
 
             protocol.set_experiment(self)
             self.protocol = protocol
@@ -191,24 +193,21 @@ class Experiment(Viewable):
         return self.data["pid"]
 
     @property
-    def processes(self) -> List['Process']:
+    def processes(self) -> List['ProcessModel']:
         """
         Returns child processes.
         """
 
-        processes: List['Process'] = []
-        if self.id:
-            from ..process.process import Process
-            query = Process.select().where(Process.experiment_id == self.id)
-            for proc in query:
-                processes.append(TypingManager.get_object_with_typing_name(
-                    proc.typing_name, proc.id))
+        if not self.id:
+            return []
 
-        return processes
+        from ..process.process_model import ProcessModel
+        return list(ProcessModel.select().where(
+            ProcessModel.experiment_id == self.id))
 
     # -- R --
 
-    @ property
+    @property
     def resources(self) -> List['Resource']:
         """
         Returns child resources.
@@ -330,7 +329,7 @@ class Experiment(Viewable):
             "study": {"uri": self.study.uri},
             "protocol": {
                 "uri": self.protocol.uri,
-                "typing_name": self.protocol.typing_name
+                "typing_name": self.protocol.processable_typing_name
             },
             "status": self.status
         })
@@ -390,9 +389,9 @@ class Experiment(Viewable):
         # check experiment status
         if self.is_validated:
             raise BadRequestException(
-                detail=f"Experiment is validated, you can't update it")
+                detail="Experiment is validated, you can't update it")
         if self.is_archived:
             raise BadRequestException(
-                detail=f"Experiment is archived, please unachived it to update it")
+                detail="Experiment is archived, please unachived it to update it")
 
     # -- V --

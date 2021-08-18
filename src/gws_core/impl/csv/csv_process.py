@@ -50,6 +50,7 @@ class CSVExporter(FileExporter):
 # ####################################################################
 
 
+@ProcessDecorator(unique_name="CSVLoader")
 class CSVLoader(FileLoader):
     input_specs = {}
     output_specs = {'data': CSVTable}
@@ -68,6 +69,7 @@ class CSVLoader(FileLoader):
 # ####################################################################
 
 
+@ProcessDecorator(unique_name="CSVDumper")
 class CSVDumper(FileDumper):
     input_specs = {'data': CSVTable}
     output_specs = {}

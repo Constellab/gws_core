@@ -3,10 +3,11 @@
 from typing import Callable, Type
 
 from ..model.typing_register_decorator import register_typing_class
-from .process import Process, PrrocessAllowedUser
+from .process import Process
+from .process_model import ProcessAllowedUser
 
 
-def ProcessDecorator(unique_name: str, allowed_user: PrrocessAllowedUser = PrrocessAllowedUser.ALL,
+def ProcessDecorator(unique_name: str, allowed_user: ProcessAllowedUser = ProcessAllowedUser.ALL,
                      human_name: str = "", short_description: str = "", hide: bool = False) -> Callable:
     """ Decorator to be placed on all the processes. A process not decorated will not be runnable.
     It define static information about the process
@@ -30,7 +31,7 @@ def ProcessDecorator(unique_name: str, allowed_user: PrrocessAllowedUser = Prroc
     def decorator(process_class: Type[Process]):
         if not issubclass(process_class, Process):
             raise Exception(
-                f"The ProcessDecorator is used on the class: {process_class.__name} and this class is not a sub class of Process")
+                f"The ProcessDecorator is used on the class: {process_class.__name__} and this class is not a sub class of Process")
 
         register_typing_class(object_class=process_class, object_type="PROCESS", unique_name=unique_name,
                               human_name=human_name, short_description=short_description, hide=hide)

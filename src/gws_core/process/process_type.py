@@ -9,8 +9,8 @@ from typing import Any, Dict, List, Type, final
 from peewee import ModelSelect
 
 from ..model.typing import Typing, TypingObjectType
+from ..process.process import Process
 from ..resource.resource import Resource
-from .process import Process
 
 
 @final
@@ -91,8 +91,8 @@ class ProcessType(Typing):
         model_t: Type[Process] = self.get_model_type(self.model_type)
 
        # Other infos
-        _json["title"] = model_t.title
-        _json["description"] = model_t.description
+        _json["title"] = model_t._human_name
+        _json["description"] = model_t._short_description
         _json["doc"] = inspect.getdoc(model_t)
 
         return _json

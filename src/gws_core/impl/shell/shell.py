@@ -8,11 +8,13 @@ import subprocess
 import tempfile
 from typing import Union
 
+from ...config.config import Config
 from ...core.exception.exceptions import BadRequestException
 from ...core.model.sys_proc import SysProc
 from ...process.process import Process
 from ...process.process_decorator import ProcessDecorator
 from ...progress_bar.progress_bar import ProgressBar
+from ...resource.io import Input, Output
 from ..file.file import File
 
 
@@ -35,7 +37,7 @@ class Shell(Process):
     _stdout_count = 0
     _STDOUT_MAX_CHAR_LENGHT = 1024*10
 
-    def build_command(self) -> list:
+    def build_command(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> list:
         """
         Builds the user command to execute.
 
@@ -55,7 +57,7 @@ class Shell(Process):
 
         return {}
 
-    def _format_command(self, user_cmd: list) -> (list, str, ):
+    def _format_command(self, user_cmd: list) -> Union[list, str]:
         """
         Format the user command
 
@@ -68,7 +70,7 @@ class Shell(Process):
         else:
             return user_cmd
 
-    def gather_outputs(self):
+    def gather_outputs(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar):
         """
         This methods gathers the results of the shell process. It must be overloaded by subclasses.
 
@@ -99,8 +101,6 @@ class Shell(Process):
         if len(self._stdout) > self._STDOUT_MAX_CHAR_LENGHT:
             self._stdout = self._stdout[-self._STDOUT_MAX_CHAR_LENGHT:]
 
-
-
     @ property
     def cwd(self) -> tempfile.TemporaryDirectory:
         """
@@ -127,13 +127,14 @@ class Shell(Process):
 
         return self.cwd.name
 
-    async def task(self):
+    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
         """
         Task entrypoint
         """
 
         try:
-            user_cmd = self.build_command()
+            user_cmd = self.build_command(
+                config=config, inputs=inputs, outputs=outputs, progress_bar=progress_bar)
             user_env = self.build_env()
 
             if not isinstance(user_env, dict):
@@ -170,12 +171,13 @@ class Shell(Process):
 
                 self.on_stdout_change(stdout_count=count, stdout_line=line)
                 count += 1
+            # TODO à vérifier
+            # self.data['cmd'] = cmd
+            self.gather_outputs(config=config, inputs=inputs,
+                                outputs=outputs, progress_bar=progress_bar)
 
-            self.data['cmd'] = cmd
-            self.gather_outputs()
-
-            for k in self.output:
-                f = self.output[k]
+            for k in outputs:
+                f = outputs[k]
                 if isinstance(f, File):
                     f.move_to_default_store()
 

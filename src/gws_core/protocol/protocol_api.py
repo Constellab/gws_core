@@ -42,9 +42,8 @@ async def get_the_list_of_process_grouped(_: UserData = Depends(AuthService.chec
     return ProtocolService.fetch_process_type_tree()
 
 
-@core_app.get("/protocol/{uri}/{typing_name}/progress-bar", tags=["Protocol"], summary="Get the progress bar of a protocol")
+@core_app.get("/protocol/{uri}/progress-bar", tags=["Protocol"], summary="Get the progress bar of a protocol")
 async def get_the_progress_bar_of_a_protocol(uri: str,
-                                             typing_name: Optional[str] = "gws_core.process.process.Process",
                                              _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve a process
@@ -52,8 +51,7 @@ async def get_the_progress_bar_of_a_protocol(uri: str,
     - **uri**: the uri of the process
     """
 
-    pbar = ProcessService.fetch_process_progress_bar(
-        uri=uri, process_typing_name=typing_name)
+    pbar = ProcessService.fetch_process_progress_bar(uri=uri)
     return pbar.to_json()
 
 

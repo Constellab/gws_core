@@ -8,6 +8,7 @@ import subprocess
 import traceback
 from typing import Any, Coroutine, Union
 
+from gws_core.process.processable_factory import ProcessableFactory
 from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
@@ -17,8 +18,8 @@ from ..core.service.base_service import BaseService
 from ..core.utils.http_helper import HTTPHelper
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
-from ..process.process import Process
-from ..protocol.protocol import Protocol
+from ..process.process_model import ProcessModel
+from ..protocol.protocol_model import ProtocolModel
 from ..study.study import Study
 from ..user.activity import Activity
 from ..user.activity_service import ActivityService
@@ -36,7 +37,7 @@ class ExperimentService(BaseService):
     def create_empty_experiment(cls, experimentDTO: ExperimentDTO) -> Experiment:
         try:
             study = Study.get_default_instance()
-            proto = Protocol()
+            proto = ProtocolModel()
             experiment = Experiment(protocol=proto, study=study,
                                     user=CurrentUserService.get_and_check_current_user())
 
@@ -53,13 +54,14 @@ class ExperimentService(BaseService):
                 detail="Cannot create the experiment.") from err
 
     @classmethod
-    def create_experiment_from_process(cls, process: Process, title: str = "", description: str = "") -> Experiment:
-        proto = Protocol(processes={process.instance_name: process})
+    def create_experiment_from_process(cls, process: ProcessModel, title: str = "", description: str = "") -> Experiment:
+        proto = ProcessableFactory.create_protocol_from_data(
+            processes={process.instance_name: process}, connectors=[], interfaces={}, outerfaces={})
 
         return cls.create_experiment_from_protocol(protocol=proto, title=title, description=description)
 
     @classmethod
-    def create_experiment_from_protocol(cls, protocol: Protocol, title: str = "", description: str = "") -> Experiment:
+    def create_experiment_from_protocol(cls, protocol: ProtocolModel, title: str = "", description: str = "") -> Experiment:
         experiment = Experiment(protocol=protocol, study=Study.get_default_instance(),
                                 user=CurrentUserService.get_and_check_current_user())
 
@@ -179,23 +181,24 @@ class ExperimentService(BaseService):
 
     # -- U --
 
+    # TODO A TESTER ABSOLUMENT
     @classmethod
-    def update_experiment(cls, uri, experimentDTO: ExperimentDTO) -> Experiment:
+    def update_experiment(cls, uri, experiment_DTO: ExperimentDTO) -> Experiment:
         experiment: Experiment = Experiment.get_by_uri_and_check(uri)
 
         experiment.check_is_updatable()
 
-        if experimentDTO.graph:
-            proto = experiment.protocol
-            proto._build_from_dump(
-                graph=experimentDTO.graph, rebuild=True)
+        if experiment_DTO.graph:
+            proto: ProtocolModel = experiment.protocol
+            proto.build_from_graph(
+                graph=experiment_DTO.graph, rebuild=True)
             proto.save()
 
-        if experimentDTO.title:
-            experiment.set_title(experimentDTO.title)
+        if experiment_DTO.title:
+            experiment.set_title(experiment_DTO.title)
 
-        if experimentDTO.description:
-            experiment.set_description(experimentDTO.description)
+        if experiment_DTO.description:
+            experiment.set_description(experiment_DTO.description)
 
         experiment.save()
         return experiment

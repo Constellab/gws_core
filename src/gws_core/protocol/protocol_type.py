@@ -6,10 +6,10 @@
 
 from typing import Type, final
 
-from gws_core.protocol.protocol import Protocol
 from peewee import ModelSelect
 
 from ..model.typing import Typing, TypingObjectType
+from ..protocol.protocol import Protocol
 
 
 @final
@@ -33,6 +33,6 @@ class ProtocolType(Typing):
         _json = super().data_to_json(**kwargs)
 
         model_t: Type[Protocol] = self.get_model_type(self.model_type)
-        _json["graph"] = model_t.get_template().graph
+        _json["graph"] = model_t.get_template().graph  # todo fix method
 
         return _json

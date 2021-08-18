@@ -7,23 +7,26 @@
 import copy
 import os
 from pathlib import Path
-from typing import List
+from typing import List, Type, Union
 
 from fastapi import UploadFile
 from fastapi.datastructures import UploadFile
+from gws_core.progress_bar.progress_bar import ProgressBar
 
+from ...config.config import Config
 from ...core.exception.exceptions import BadRequestException
 from ...core.model.model import Model
 from ...core.utils.utils import Utils
 from ...model.typing_manager import TypingManager
 from ...process.process import Process
 from ...process.process_decorator import ProcessDecorator
+from ...resource.io import Input, Output
 from ...resource.resource import Resource
 from .file import File, FileSet
 from .file_store import FileStore, LocalFileStore
 
 
-@ProcessDecorator("FileUploader", human_name="File uploader", short_description="Process to uplaod a file !!!")
+@ProcessDecorator("FileUploader", human_name="File uploader", short_description="Process to uplaod a file")
 class FileUploader(Process):
     input_specs = {}
     output_specs = {'result': (FileSet, File,)}
@@ -41,9 +44,9 @@ class FileUploader(Process):
 
         self._files = files
 
-    async def task(self):
+    async def task(self, config: Config, inputs: Input, outputs: Output) -> None:
 
-        fs_uri = self.get_param("file_store_uri")
+        fs_uri = config.get_param("file_store_uri")
         if fs_uri:
             try:
                 resource: Resource = FileStore.get(FileStore.uri == fs_uri)
@@ -67,7 +70,7 @@ class FileUploader(Process):
                 f = fs.add(file.file, dest_file_name=file.filename)
                 result.add(f)
 
-        self.output["result"] = result
+        outputs["result"] = result
 
     @staticmethod
     def uniquify(file_name: str):
@@ -91,22 +94,24 @@ class FileImporter(Process):
         'output_type': {"type": str, "default": "", 'description': "The output file type. If defined, it is used to automatically format data output"},
     }
 
-    async def task(self):
+    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
         inport_name = list(self.input.keys())[0]
         outport_name = list(self.output.keys())[0]
-        file = self.input[inport_name]
-        model_t = None
-        if self.param_exists("output_type"):
-            out_t = self.get_param("output_type")
+
+        file = inputs[inport_name]
+
+        model_t: Type[Model] = None
+        if config.param_exists("output_type"):
+            out_t = config.get_param("output_type")
             if out_t:
                 model_t = Model.get_model_type(out_t)
 
         if not model_t:
-            model_t = self.out_port(outport_name).get_default_resource_type()
+            model_t = outputs.get_port(outport_name).get_default_resource_type()
 
-        params = copy.deepcopy(self.config.params)
+        params = copy.deepcopy(config.params)
         resource = model_t._import(file.path, **params)
-        self.output[outport_name] = resource
+        outputs[outport_name] = resource
 
 
 # ####################################################################
@@ -127,9 +132,9 @@ class FileExporter(Process):
         'file_format': {"type": str, "default": None, 'description': "File format"},
         'file_store_uri': {"type": str, "default": None, 'description': "URI of the file_store where the file must be exported"},
     }
-    
-    async def task(self):
-        fs_uri = self.get_param("file_store_uri")
+
+    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
+        fs_uri = config.get_param("file_store_uri")
         if fs_uri:
             try:
                 resource: Resource = FileStore.get(FileStore.uri == fs_uri)
@@ -143,22 +148,22 @@ class FileExporter(Process):
 
         inport_name = list(self.input.keys())[0]
         outport_name = list(self.output.keys())[0]
-        filename = self.get_param("file_name")  
-        t = self.out_port(outport_name).get_default_resource_type()
+        filename = config.get_param("file_name")
+        t = outputs.get_port("file").get_default_resource_type()
         file = fs.create_file(name=filename, file_type=t)
 
         if not os.path.exists(file.dir):
             os.makedirs(file.dir)
 
-        if "file_name" in self.config.params:
-            params = copy.deepcopy(self.config.params)
+        if "file_name" in config.params:
+            params = copy.deepcopy(config.params)
             del params["file_name"]
         else:
-            params = self.config.params
+            params = config.params
 
-        resource =  self.input[inport_name]
+        resource = inputs[inport_name]
         resource._export(file.path, **params)
-        self.output[outport_name] = file
+        outputs[outport_name] = file
 
 # ####################################################################
 #
@@ -177,26 +182,27 @@ class FileLoader(Process):
         'output_type': {"type": str, "default": "", 'description': "The output file type. If defined, it is used to automatically format data output"},
     }
 
-    async def task(self):
+    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
         outport_name = list(self.output.keys())[0]
-        file_path = self.get_param("file_path")
+        file_path = config.get_param("file_path")
+
         model_t = None
-        if self.param_exists("output_type"):
-            out_t = self.get_param("output_type")
+        if config.param_exists("output_type"):
+            out_t = config.get_param("output_type")
             if out_t:
                 model_t = Model.get_model_type(out_t)
 
         if not model_t:
-            model_t = self.out_port(outport_name).get_default_resource_type()
+            model_t = outputs.get_port(outport_name).get_default_resource_type()
 
-        if "file_path" in self.config.params:
-            params = copy.deepcopy(self.config.params)
+        if "file_path" in config.params:
+            params = copy.deepcopy(config.params)
             del params["file_path"]
         else:
-            params = self.config.params
+            params = config.params
 
         resource = model_t._import(file_path, **params)
-        self.output[outport_name] = resource
+        outputs[outport_name] = resource
 
 # ####################################################################
 #
@@ -218,20 +224,20 @@ class FileDumper(Process):
         'file_format': {"type": str, "default": None, 'description': "File format"},
     }
 
-    async def task(self):
-        file_path = self.get_param("file_path")
+    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
+        file_path = config.get_param("file_path")
         inport_name = list(self.input.keys())[0]
-        resource = self.input[inport_name]
+        resource = inputs[inport_name]
 
         p = Path(file_path)
         parent_dir = p.parent
         if not os.path.exists(parent_dir):
             os.makedirs(parent_dir)
 
-        if "file_path" in self.config.params:
-            params = copy.deepcopy(self.config.params)
+        if "file_path" in config.params:
+            params = copy.deepcopy(config.params)
             del params["file_path"]
         else:
-            params = self.config.params
+            params = config.params
 
         resource._export(file_path, **params)

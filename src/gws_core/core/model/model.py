@@ -337,7 +337,7 @@ class Model(Base, PeeweeModel):
             return None
 
     @classmethod
-    def get_by_uri_and_check(cls, uri: str) -> str:
+    def get_by_uri_and_check(cls, uri: str) -> 'Model':
         """Get by URI and throw 404 error if object not found
 
         :param uri: [description]

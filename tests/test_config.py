@@ -6,6 +6,8 @@
 import unittest
 
 from gws_core import Config, GTest, RobotMove
+from gws_core.process.process_model import ProcessModel
+from gws_core.process.processable_factory import ProcessableFactory
 
 
 class TestConfig(unittest.TestCase):
@@ -48,7 +50,8 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(config2.data, config.data)
 
     def test_process_config(self):
-        robotMove: RobotMove = RobotMove()
+        robotMove: ProcessModel = ProcessableFactory.create_process_from_type(
+            RobotMove)
         self.assertEqual(robotMove.get_param("moving_step"), 0.1)
         robotMove.set_param("moving_step", 0.3)
         robotMove.save()

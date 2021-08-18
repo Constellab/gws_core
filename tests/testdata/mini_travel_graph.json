@@ -3,16 +3,16 @@
     "nodes": {
         "p1": {
             "creation_datetime": "",
+            "instance_name": "p1",
+            "is_archived": false,
+            "processable_typing_name": "PROCESS.gws_core.RobotMove",
+            "save_datetime": "",
+            "uri": "",
             "data": {
                 "title": "Move robot",
                 "description": "This process emulates a short moving step of the robot",
-                "doc": "Process class.\n\n:property input_specs: The specs of the input\n:type input_specs: dict\n:property output_specs: The specs of the output\n:type output_specs: dict\n:property config_specs: The specs of the config\n:type config_specs: dict"
+                "doc": "Base class"
             },
-            "instance_name": "p1",
-            "is_archived": false,
-            "save_datetime": "",
-            "typing_name": "PROCESS.gws_core.RobotMove",
-            "uri": "",
             "experiment": {
                 "uri": ""
             },
@@ -23,6 +23,9 @@
             "is_finished": false,
             "config": {
                 "creation_datetime": "",
+                "is_archived": false,
+                "save_datetime": "",
+                "uri": "",
                 "data": {
                     "specs": {
                         "moving_step": {
@@ -43,13 +46,13 @@
                         }
                     },
                     "params": {}
-                },
-                "is_archived": false,
-                "save_datetime": "",
-                "uri": ""
+                }
             },
             "progress_bar": {
                 "creation_datetime": "",
+                "is_archived": false,
+                "save_datetime": "",
+                "uri": "",
                 "data": {
                     "value": 0.0,
                     "max_value": 0.0,
@@ -60,9 +63,6 @@
                     "remaining_time": 0.0,
                     "messages": []
                 },
-                "is_archived": false,
-                "save_datetime": "",
-                "uri": "",
                 "process": {
                     "uri": "",
                     "typing_name": ""
@@ -93,16 +93,16 @@
         },
         "p2": {
             "creation_datetime": "",
+            "instance_name": "p2",
+            "is_archived": false,
+            "processable_typing_name": "PROCESS.gws_core.RobotEat",
+            "save_datetime": "",
+            "uri": "",
             "data": {
                 "title": "Eat process",
                 "description": "This process emulates the meal of the robot before its flight!",
-                "doc": "Process class.\n\n:property input_specs: The specs of the input\n:type input_specs: dict\n:property output_specs: The specs of the output\n:type output_specs: dict\n:property config_specs: The specs of the config\n:type config_specs: dict"
+                "doc": "Base class"
             },
-            "instance_name": "p2",
-            "is_archived": false,
-            "save_datetime": "",
-            "typing_name": "PROCESS.gws_core.RobotEat",
-            "uri": "",
             "experiment": {
                 "uri": ""
             },
@@ -113,6 +113,9 @@
             "is_finished": false,
             "config": {
                 "creation_datetime": "",
+                "is_archived": false,
+                "save_datetime": "",
+                "uri": "",
                 "data": {
                     "specs": {
                         "food_weight": {
@@ -121,13 +124,13 @@
                         }
                     },
                     "params": {}
-                },
-                "is_archived": false,
-                "save_datetime": "",
-                "uri": ""
+                }
             },
             "progress_bar": {
                 "creation_datetime": "",
+                "is_archived": false,
+                "save_datetime": "",
+                "uri": "",
                 "data": {
                     "value": 0.0,
                     "max_value": 0.0,
@@ -138,9 +141,6 @@
                     "remaining_time": 0.0,
                     "messages": []
                 },
-                "is_archived": false,
-                "save_datetime": "",
-                "uri": "",
                 "process": {
                     "uri": "",
                     "typing_name": ""
@@ -171,16 +171,16 @@
         },
         "p3": {
             "creation_datetime": "",
+            "instance_name": "p3",
+            "is_archived": false,
+            "processable_typing_name": "PROCESS.gws_core.RobotMove",
+            "save_datetime": "",
+            "uri": "",
             "data": {
                 "title": "Move robot",
                 "description": "This process emulates a short moving step of the robot",
-                "doc": "Process class.\n\n:property input_specs: The specs of the input\n:type input_specs: dict\n:property output_specs: The specs of the output\n:type output_specs: dict\n:property config_specs: The specs of the config\n:type config_specs: dict"
+                "doc": "Base class"
             },
-            "instance_name": "p3",
-            "is_archived": false,
-            "save_datetime": "",
-            "typing_name": "PROCESS.gws_core.RobotMove",
-            "uri": "",
             "experiment": {
                 "uri": ""
             },
@@ -191,6 +191,9 @@
             "is_finished": false,
             "config": {
                 "creation_datetime": "",
+                "is_archived": false,
+                "save_datetime": "",
+                "uri": "",
                 "data": {
                     "specs": {
                         "moving_step": {
@@ -211,13 +214,13 @@
                         }
                     },
                     "params": {}
-                },
-                "is_archived": false,
-                "save_datetime": "",
-                "uri": ""
+                }
             },
             "progress_bar": {
                 "creation_datetime": "",
+                "is_archived": false,
+                "save_datetime": "",
+                "uri": "",
                 "data": {
                     "value": 0.0,
                     "max_value": 0.0,
@@ -228,9 +231,6 @@
                     "remaining_time": 0.0,
                     "messages": []
                 },
-                "is_archived": false,
-                "save_datetime": "",
-                "uri": "",
                 "process": {
                     "uri": "",
                     "typing_name": ""
@@ -261,16 +261,16 @@
         },
         "p4": {
             "creation_datetime": "",
+            "instance_name": "p4",
+            "is_archived": false,
+            "processable_typing_name": "PROCESS.gws_core.RobotMove",
+            "save_datetime": "",
+            "uri": "",
             "data": {
                 "title": "Move robot",
                 "description": "This process emulates a short moving step of the robot",
-                "doc": "Process class.\n\n:property input_specs: The specs of the input\n:type input_specs: dict\n:property output_specs: The specs of the output\n:type output_specs: dict\n:property config_specs: The specs of the config\n:type config_specs: dict"
+                "doc": "Base class"
             },
-            "instance_name": "p4",
-            "is_archived": false,
-            "save_datetime": "",
-            "typing_name": "PROCESS.gws_core.RobotMove",
-            "uri": "",
             "experiment": {
                 "uri": ""
             },
@@ -281,6 +281,9 @@
             "is_finished": false,
             "config": {
                 "creation_datetime": "",
+                "is_archived": false,
+                "save_datetime": "",
+                "uri": "",
                 "data": {
                     "specs": {
                         "moving_step": {
@@ -301,13 +304,13 @@
                         }
                     },
                     "params": {}
-                },
-                "is_archived": false,
-                "save_datetime": "",
-                "uri": ""
+                }
             },
             "progress_bar": {
                 "creation_datetime": "",
+                "is_archived": false,
+                "save_datetime": "",
+                "uri": "",
                 "data": {
                     "value": 0.0,
                     "max_value": 0.0,
@@ -318,9 +321,6 @@
                     "remaining_time": 0.0,
                     "messages": []
                 },
-                "is_archived": false,
-                "save_datetime": "",
-                "uri": "",
                 "process": {
                     "uri": "",
                     "typing_name": ""
@@ -351,16 +351,16 @@
         },
         "p_wait": {
             "creation_datetime": "",
+            "instance_name": "p_wait",
+            "is_archived": false,
+            "processable_typing_name": "PROCESS.gws_core.RobotWait",
+            "save_datetime": "",
+            "uri": "",
             "data": {
                 "title": "Wait process",
                 "description": "This process emulates the resting time of the robot before its flight!",
-                "doc": "Process class.\n\n:property input_specs: The specs of the input\n:type input_specs: dict\n:property output_specs: The specs of the output\n:type output_specs: dict\n:property config_specs: The specs of the config\n:type config_specs: dict"
+                "doc": "Base class"
             },
-            "instance_name": "p_wait",
-            "is_archived": false,
-            "save_datetime": "",
-            "typing_name": "PROCESS.gws_core.RobotWait",
-            "uri": "",
             "experiment": {
                 "uri": ""
             },
@@ -371,6 +371,9 @@
             "is_finished": false,
             "config": {
                 "creation_datetime": "",
+                "is_archived": false,
+                "save_datetime": "",
+                "uri": "",
                 "data": {
                     "specs": {
                         "waiting_time": {
@@ -379,13 +382,13 @@
                         }
                     },
                     "params": {}
-                },
-                "is_archived": false,
-                "save_datetime": "",
-                "uri": ""
+                }
             },
             "progress_bar": {
                 "creation_datetime": "",
+                "is_archived": false,
+                "save_datetime": "",
+                "uri": "",
                 "data": {
                     "value": 0.0,
                     "max_value": 0.0,
@@ -396,9 +399,6 @@
                     "remaining_time": 0.0,
                     "messages": []
                 },
-                "is_archived": false,
-                "save_datetime": "",
-                "uri": "",
                 "process": {
                     "uri": "",
                     "typing_name": ""

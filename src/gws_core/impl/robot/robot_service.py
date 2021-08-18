@@ -3,6 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws_core.process.processable_factory import ProcessableFactory
+from gws_core.protocol import protocol_type
+
 from ...core.service.base_service import BaseService
 from ...experiment.experiment_service import ExperimentService
 from ...experiment.queue_service import QueueService
@@ -31,4 +34,4 @@ class RobotService(BaseService):
 
     @classmethod
     def create_nested_protocol(cls) -> RobotWorldTravelProto:
-        return RobotWorldTravelProto()
+        return ProcessableFactory.create_protocol_from_type(protocol_type=RobotWorldTravelProto)

@@ -8,8 +8,11 @@ from unittest import IsolatedAsyncioTestCase
 
 import pandas
 from gws_core import (CSVDumper, CSVExporter, CSVImporter, CSVLoader, CSVTable,
-                      Experiment, ExperimentService, GTest, Protocol, Settings,
-                      Study)
+                      Experiment, ExperimentService, GTest, ProtocolModel,
+                      Settings, Study)
+from gws_core.core.model.model import Model
+from gws_core.process.process_model import ProcessModel
+from gws_core.process.processable_factory import ProcessableFactory
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -61,13 +64,17 @@ class TestCSV(IsolatedAsyncioTestCase):
         i_file_path = os.path.join(testdata_dir, "data.csv")
         o_file_path = os.path.join(testdata_dir, "data_out.csv")
 
-        loader = CSVLoader()
-        dumper = CSVDumper()
+        loader: ProcessModel = ProcessableFactory.create_process_from_type(
+            CSVLoader)
+        dumper: ProcessModel = ProcessableFactory.create_process_from_type(
+            CSVDumper)
 
-        importer = CSVImporter()
-        exporter = CSVExporter()
+        importer: ProcessModel = ProcessableFactory.create_process_from_type(
+            CSVImporter)
+        exporter: ProcessModel = ProcessableFactory.create_process_from_type(
+            CSVExporter)
 
-        proto = Protocol(
+        proto: ProtocolModel = ProcessableFactory.create_protocol_from_data(
             processes={
                 "loader": loader,
                 "dumper": dumper,

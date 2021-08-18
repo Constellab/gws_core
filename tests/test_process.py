@@ -3,10 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from typing import Dict, List, Tuple
 from unittest import IsolatedAsyncioTestCase
 
-from gws_core import (Experiment, ExperimentService, GTest, Protocol, Robot,
-                      RobotCreate, RobotEat, RobotMove, RobotWait)
+from gws_core import (Experiment, ExperimentService, GTest, ProcessModel,
+                      Protocol, ProtocolModel, Robot, RobotCreate, RobotEat,
+                      RobotMove, RobotWait)
+from gws_core.process.processable_factory import ProcessableFactory
 
 
 class TestProcess(IsolatedAsyncioTestCase):
@@ -24,10 +27,12 @@ class TestProcess(IsolatedAsyncioTestCase):
     def test_process_singleton(self):
         GTest.print("Process Singleton")
 
-        p0 = RobotCreate()
-        p1 = RobotCreate()
-        p0.title = "First 'Create' process"
-        p0.description = "This is the description of the process"
+        p0: ProcessModel = ProcessableFactory.create_process_from_type(
+            process_type=RobotCreate)
+        p1: ProcessModel = ProcessableFactory.create_process_from_type(
+            process_type=RobotCreate)
+        # p0.title = "First 'Create' process"
+        # p0.description = "This is the description of the process"
         p0.save()
 
         self.assertTrue(p0.id != p1.id)
@@ -35,15 +40,22 @@ class TestProcess(IsolatedAsyncioTestCase):
     async def test_process(self):
         GTest.print("Process")
 
-        p0 = RobotCreate()
-        p1 = RobotMove()
-        p2 = RobotEat()
-        p3 = RobotMove()
-        p4 = RobotMove()
-        p5 = RobotEat()
-        p_wait = RobotWait()
+        p0: ProcessModel = ProcessableFactory.create_process_from_type(
+            process_type=RobotCreate)
+        p1: ProcessModel = ProcessableFactory.create_process_from_type(
+            process_type=RobotMove)
+        p2: ProcessModel = ProcessableFactory.create_process_from_type(
+            process_type=RobotEat)
+        p3: ProcessModel = ProcessableFactory.create_process_from_type(
+            process_type=RobotMove)
+        p4: ProcessModel = ProcessableFactory.create_process_from_type(
+            process_type=RobotMove)
+        p5: ProcessModel = ProcessableFactory.create_process_from_type(
+            process_type=RobotEat)
+        p_wait: ProcessModel = ProcessableFactory.create_process_from_type(
+            process_type=RobotWait)
 
-        proto = Protocol(
+        proto: ProtocolModel = ProcessableFactory.create_protocol_from_data(
             processes={
                 'p0': p0,
                 'p1': p1,
@@ -97,14 +109,16 @@ class TestProcess(IsolatedAsyncioTestCase):
         self.assertEqual(p1.output['robot'].weight, elon.weight)
 
         # check p2
-        self.assertEqual(p1.output['robot'], p2.input['robot'])
+        self.assertEqual(
+            p1.output['robot'], p2.input['robot'])
         self.assertEqual(p2.output['robot'].position,
                          p2.input['robot'].position)
         self.assertEqual(
             p2.output['robot'].weight, p2.input['robot'].weight + p2.get_param('food_weight'))
 
         # check p3
-        self.assertEqual(p_wait.output['robot'], p3.input['robot'])
+        self.assertEqual(
+            p_wait.output['robot'], p3.input['robot'])
         self.assertEqual(p3.output['robot'].position[1],
                          p3.input['robot'].position[1] + p3.get_param('moving_step'))
         self.assertEqual(p3.output['robot'].weight,
@@ -113,7 +127,8 @@ class TestProcess(IsolatedAsyncioTestCase):
         res = Robot.get_by_id(p3.output['robot'].id)
         self.assertTrue(isinstance(res, Robot))
 
-        self.assertTrue(len(p0.progress_bar.data["messages"]) >= 2)
+        self.assertTrue(
+            len(p0.progress_bar.data["messages"]) >= 2)
         print(p0.progress_bar.data)
 
         print(" \n------ Experiment --------")

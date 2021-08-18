@@ -140,8 +140,13 @@ from .process.plug import Switch2 as Switch2
 from .process.plug import Wait as Wait
 from .process.process import Process as Process
 from .process.process_decorator import ProcessDecorator as ProcessDecorator
+from .process.process_model import ProcessModel as ProcessModel
 from .process.process_service import ProcessService as ProcessService
 from .process.process_type import ProcessType as ProcessType
+from .process.processable import Processable as Processable
+from .process.processable_factory import \
+    ProcessableFactory as ProcessableFactory
+from .process.processable_model import ProcessableModel as ProcessableModel
 # Progress Bar
 from .progress_bar.progress_bar import ProgressBar as ProgressBar
 from .progress_bar.progress_bar_service import \
@@ -149,16 +154,19 @@ from .progress_bar.progress_bar_service import \
 # Protocol
 from .protocol.protocol import Protocol as Protocol
 from .protocol.protocol_decorator import ProtocolDecorator as ProtocolDecorator
+from .protocol.protocol_model import ProtocolModel as ProtocolModel
 from .protocol.protocol_service import ProtocolService as ProtocolService
 from .protocol.protocol_type import ProtocolType as ProtocolType
 # Resource
 from .resource.io import IO as IO
 from .resource.io import Connector as Connector
 from .resource.io import InPort as InPort
+from .resource.io import Input as Input
 from .resource.io import Interface as Interface
 from .resource.io import IOface as IOface
 from .resource.io import Outerface as Outerface
 from .resource.io import OutPort as OutPort
+from .resource.io import Output as Output
 from .resource.io import Port as Port
 from .resource.resource import ExperimentResource as ExperimentResource
 from .resource.resource import ProcessResource as ProcessResource

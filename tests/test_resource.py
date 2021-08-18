@@ -27,6 +27,8 @@ class Car(Resource):
     def set_speed(self, name):
         self.data['name'] = name
 
+# todo a checker
+
 
 @ProcessDecorator("Start")
 class Start(Process):

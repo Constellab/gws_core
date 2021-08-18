@@ -6,6 +6,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from peewee import ModelSelect
 
+from ..core.model.base import Base
 from ..core.model.model import Model
 from ..core.utils.logger import Logger
 from ..core.utils.utils import Utils
@@ -52,16 +53,20 @@ class TypingManager:
         return model_type.get_by_uri(uri)
 
     @classmethod
+    def type_is_register(cls, model_type: Type[Model]) -> bool:
+        return Typing.get_by_model_type(model_type=model_type).count() > 0
+
+    @classmethod
     def register_typing(cls, object_type: TypingObjectType,  unique_name: str, object_class: Type[Model], human_name: str, short_description: str, hide: bool) -> str:
         """Register the typing into the manager to save it in the database
         Return the typing unique name
         """
 
-        if not issubclass(object_class, Model):
+        if not issubclass(object_class, Base):
             name = object_class.__name__ if object_class.__name__ is not None else str(
                 object_class)
             raise Exception(
-                f"""Trying to register the type {name} but it it not a classe that is herited from Model""")
+                f"""Trying to register the type {name} but it is not a subclass of Base""")
 
         brick_name: str = Utils.get_brick_name(object_class)
 
