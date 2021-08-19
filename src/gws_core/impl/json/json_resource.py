@@ -1,9 +1,8 @@
 import json
 
-from ...resource.resource_decorator import ResourceDecorator
-
 from ...core.model.model import Model
 from ...resource.resource import Resource
+from ...resource.resource_decorator import ResourceDecorator
 
 
 @ResourceDecorator("JSONDict")
@@ -101,14 +100,8 @@ class JSONDict(Resource):
 
     # -- T --
 
-    def to_json(self, stringify: bool = False, prettify: bool = False, **kwargs):
-        _json = super().to_json(**kwargs)
+    def to_json(self, deep: bool = False, **kwargs):
+        _json = super().to_json(deep=deep, **kwargs)
         _json["data"]["content"] = self.kv_data
 
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
+        return _json

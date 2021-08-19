@@ -201,7 +201,7 @@ class ViewModel(Model):
         self.save()
 
     # -- V --
-    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns JSON string or dictionnary representation of the model.
 
@@ -213,7 +213,7 @@ class ViewModel(Model):
         :rtype: dict, str
         """
 
-        _json = super().to_json(**kwargs)
+        _json = super().to_json(deep=deep, **kwargs)
         _json["model"] = {
             "uri": _json["model_uri"],
             "type": _json["model_type"],  # todo fix type

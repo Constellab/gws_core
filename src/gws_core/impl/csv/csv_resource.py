@@ -249,8 +249,8 @@ class CSVTable(Resource):
         return self.table.__str__()
 
     # -- T --
-    def data_to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
-        _json = super().data_to_json(**kwargs)
+    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
+        _json = super().data_to_json(deep=deep, **kwargs)
         _json["content"] = self.table.to_json()
 
         return _json

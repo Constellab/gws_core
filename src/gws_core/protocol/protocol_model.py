@@ -314,34 +314,28 @@ class ProtocolModel(ProcessableModel):
         for outerface in self.outerfaces.values():
             outerface.disconnect()
 
-    def dumps(self, bare: bool = False) -> dict:
+    def dumps(self) -> dict:
         """
         Dumps the JSON graph representing the protocol.
 
-        :param as_dict: If True, returns a dictionnary. A JSON string is returns otherwise.
-        :type as_dict: bool
-        :param prettify: If True, the JSON string is indented.
-        :type prettify: bool
-        :param bare: If True, returns a bare dump i.e. the uris of the processes (and sub-protocols) of not returned. Bare dumps allow creating a new protocols from scratch.
-        :type bare: bool
         """
 
         graph = dict(
-            uri=("" if bare else self.uri),
+            uri=self.uri,
             nodes={},
             links=[],
             interfaces={},
             outerfaces={},
         )
         for conn in self.connectors:
-            link = conn.to_json(bare=bare)
+            link = conn.to_json()
             graph['links'].append(link)
         for key, process in self.processes.items():
-            graph["nodes"][key] = process.to_json(bare=bare)
+            graph["nodes"][key] = process.to_json(deep=True)
         for key, interface in self.interfaces.items():
-            graph['interfaces'][key] = interface.to_json(bare=bare)
+            graph['interfaces'][key] = interface.to_json()
         for key, outerface in self.outerfaces.items():
-            graph['outerfaces'][key] = outerface.to_json(bare=bare)
+            graph['outerfaces'][key] = outerface.to_json()
         graph["layout"] = self.get_layout()
         return graph
 
@@ -684,17 +678,13 @@ class ProtocolModel(ProcessableModel):
 
     # -- T --
 
-    def data_to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
+    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns a JSON string or dictionnary representation of the model.
         :return: The representation
         :rtype: `dict`
         """
-        _json = super().data_to_json(shallow=shallow, **kwargs)
-
-        if shallow:
-            if _json.get("graph"):
-                del _json["graph"]
+        _json = super().data_to_json(deep=deep, **kwargs)
 
         return _json
 

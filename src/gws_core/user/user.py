@@ -141,7 +141,7 @@ class User(Model):
 
     # -- T --
 
-    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns a JSON string or dictionnary representation of the user.
 
@@ -153,7 +153,7 @@ class User(Model):
         :rtype: `dict`, `str`
         """
 
-        _json = super().to_json(**kwargs)
+        _json = super().to_json(deep=deep, **kwargs)
         del _json["console_token"]
 
         return _json

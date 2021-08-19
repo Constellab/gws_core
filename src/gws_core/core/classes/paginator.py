@@ -56,23 +56,23 @@ class Paginator:
             'is_last_page': self.page == self.total_number_of_pages or self.total_number_of_pages == 0
         }
 
-    def to_json(self, shallow: bool = False):
+    def to_json(self, deep: bool = False):
         return {
             'data': Query.format(
                 self.paginated_query,
-                shallow=shallow,
+                deep=deep,
                 as_json=True
             ),
             'paginator': self.paginator_dict()
         }
 
-    def render(self, shallow: bool = False):
+    def render(self, deep: bool = False):
         return {
             'data': Query.format(
                 self.paginated_query,
                 view_params=self.view_params,
                 as_view=True,
-                shallow=shallow
+                deep=deep
             ),
             'paginator': self.paginator_dict()
         }

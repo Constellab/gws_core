@@ -5,28 +5,19 @@
 
 import json
 import os
-from unittest import IsolatedAsyncioTestCase
 
 from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
                       ProcessableFactory, ProcessModel, ProtocolModel,
                       ProtocolService, RobotCreate, RobotEat, RobotMove,
                       RobotWait, Settings)
 
+from tests.base_test import BaseTest
+
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 
-class TestProtocol(IsolatedAsyncioTestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        GTest.drop_tables()
-        GTest.create_tables()
-        GTest.init()
-
-    @classmethod
-    def tearDownClass(cls):
-        GTest.drop_tables()
+class TestProtocol(BaseTest):
 
     async def test_protocol(self):
         GTest.print("Protocol")
@@ -144,15 +135,9 @@ class TestProtocol(IsolatedAsyncioTestCase):
         self.assertEqual(ProtocolModel.select().count(), count+2)
         self.assertEqual(len(Q), count+2)
 
-        # print("--- mini travel --- ")
-        # print(mini_proto.dumps(bare=True))
-
         Q = ProtocolModel.select()
         self.assertEqual(ProtocolModel.select().count(), count+2)
         self.assertEqual(len(Q), count+2)
-
-        # print("--- super travel --- ")
-        # print(super_proto.dumps(bare=True))
 
         Q = ProtocolModel.select()
         self.assertEqual(ProtocolModel.select().count(), count+2)
@@ -162,10 +147,10 @@ class TestProtocol(IsolatedAsyncioTestCase):
         p2 = mini_proto.get_process("p2")
         mini_proto.is_outerfaced_with(p2)
 
-        with open(os.path.join(testdata_dir, "mini_travel_graph.json"), "r") as f:
-            s1 = json.load(f)
-            s2 = json.loads(json.dumps(mini_proto.dumps(bare=True)))
-            self.assertEqual(s1, s2)  # TODO a améliorer, car ça casse vite
+        with open(os.path.join(testdata_dir, "mini_travel_graph.json"), "r") as file:
+            s1 = json.load(file)
+            s2 = json.loads(json.dumps(mini_proto.dumps()))
+            self.assert_json(s1, s2, self.json_ignore_keys)
 
         experiment: Experiment = ExperimentService.create_experiment_from_protocol(
             protocol=super_proto)
@@ -175,13 +160,8 @@ class TestProtocol(IsolatedAsyncioTestCase):
         experiment = await ExperimentService.run_experiment(
             experiment=experiment, user=GTest.user)
 
-        mini_proto_reloaded: ProtocolModel = ProtocolModel.get_by_id(
-            mini_proto.id)
-
         super_proto = ProtocolModel.get_by_id(super_proto.id)
 
-        s3 = json.loads(json.dumps(mini_proto_reloaded.dumps(bare=True)))
-        self.assertEqual(s3, s1)
         Q = ProtocolModel.select()
         self.assertEqual(len(Q), count+2)
 
@@ -192,8 +172,8 @@ class TestProtocol(IsolatedAsyncioTestCase):
         with open(os.path.join(testdata_dir, "mini_travel_graph.json"), "r") as f:
             s1 = json.load(f)
             mini_proto = ProtocolService.create_protocol_from_graph(s1)
-            s2 = mini_proto.dumps(bare=True)
-            self.assertEqual(s1, s2)
+            s2 = mini_proto.dumps()
+            self.assert_json(s1, s2, self.json_ignore_keys)
 
         p1 = mini_proto.get_process("p1")
         self.assertTrue(mini_proto.is_interfaced_with(p1))
@@ -225,7 +205,7 @@ class TestProtocol(IsolatedAsyncioTestCase):
             experiment=experiment, user=GTest.user)
 
         saved_mini_proto = ProtocolModel.get(ProtocolModel.id == mini_proto.id)
-        # load none bare
+        # load
         mini_proto2 = ProcessableFactory.create_protocol_from_graph(
             saved_mini_proto.graph)
         self.assertTrue(mini_proto.graph, mini_proto2.graph)

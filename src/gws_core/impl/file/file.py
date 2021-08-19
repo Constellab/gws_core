@@ -157,15 +157,15 @@ class File(Resource):
 
     # -- T --
 
-    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
-        _json = super().to_json(**kwargs)
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
+        _json = super().to_json(deep=deep, **kwargs)
         settings = Settings.retrieve()
         host = settings.data.get("host", "0.0.0.0")
         vhost = settings.data.get("virtual_host", host)
         _json["url"] = File.__DOWNLOAD_URL.format(
             vhost, self.typing_name, self.uri)
 
-        if not shallow:
+        if deep:
             if self.is_json():
                 _json["data"]["content"] = json.loads(self.read())
             else:

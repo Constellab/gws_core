@@ -195,23 +195,4 @@ class Config(Viewable):
 
         self.data["specs"] = specs
 
-    # -- T --
-    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
-        """
-        Returns JSON string or dictionnary representation of the model.
-
-        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
-        :type stringify: bool
-        :param prettify: If True, indent the JSON string. Defaults to False.
-        :type prettify: bool
-        :return: The representation
-        :rtype: dict, str
-        """
-
-        _json = super().to_json(shallow=shallow, bare=bare, **kwargs)
-        if shallow:
-            del _json["data"]
-
-        return _json
-
     # -- V --

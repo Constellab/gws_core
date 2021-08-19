@@ -50,7 +50,7 @@ class Connector:
         self.out_port = out_port
 
     # -- V --
-    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns a dictionnary describing the Connector.
 
@@ -61,7 +61,7 @@ class Connector:
         r_uri = ""
         r_typing_name = ""
 
-        if self.out_port.resource and not bare:
+        if self.out_port.resource:
             r_uri = self.out_port.resource.uri
             r_typing_name = self.out_port.resource.typing_name
 

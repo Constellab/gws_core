@@ -227,7 +227,7 @@ class ProgressBar(Model):
     def get_by_process_uri(cls, process_uri: str) -> 'ProgressBar':
         return ProgressBar.get(ProgressBar.process_uri == process_uri)
 
-    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns JSON string or dictionnary representation of the model.
 
@@ -239,29 +239,12 @@ class ProgressBar(Model):
         :rtype: dict, str
         """
 
-        _json = super().to_json(shallow=shallow, bare=bare, **kwargs)
+        _json = super().to_json(deep=deep, **kwargs)
 
-        if bare:
-            _json["process"] = {
-                "uri": "",
-                "typing_name": "",
-            }
-
-            _json["data"] = {
-                "value": 0.0,
-                "max_value": 0.0,
-                "average_speed": 0.0,
-                "start_time": 0.0,
-                "current_time": 0.0,
-                "elapsed_time": 0.0,
-                "remaining_time": 0.0,
-                "messages": [],
-            }
-        else:
-            _json["process"] = {
-                "uri": _json["process_uri"],
-                "typing_name": _json["processable_typing_name"],
-            }
+        _json["process"] = {
+            "uri": _json["process_uri"],
+            "typing_name": _json["processable_typing_name"],
+        }
 
         del _json["process_uri"]
         del _json["processable_typing_name"]

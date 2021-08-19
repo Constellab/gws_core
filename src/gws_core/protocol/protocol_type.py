@@ -28,13 +28,13 @@ class ProtocolType(Typing):
     def get_types(cls) -> ModelSelect:
         return cls.get_by_object_type(cls._object_type)
 
-    def data_to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
+    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns a JSON string or dictionnary representation of the model data.
         :return: The representation
         :rtype: `dict`
         """
-        _json = super().data_to_json(**kwargs)
+        _json = super().data_to_json(deep=deep, **kwargs)
 
         protocol_type: Type[Protocol] = self.get_model_type(self.model_type)
 

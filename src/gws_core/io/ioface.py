@@ -47,10 +47,10 @@ class IOface:
 
     # -- T --
 
-    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
         r_uri = ""
         r_typing_name = ""
-        if self.source_port.resource and not bare:
+        if self.source_port.resource:
             r_uri = self.source_port.resource.uri
             r_typing_name = self.source_port.resource.typing_name
 
@@ -94,8 +94,8 @@ class Interface(IOface):
 
     # -- V -
 
-    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
-        _json = super().to_json(shallow=shallow, bare=bare, **kwargs)
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
+        _json = super().to_json(deep=deep, **kwargs)
         _json["from"]["node"] = ":parent:"
         return _json
 
@@ -122,7 +122,7 @@ class Outerface(IOface):
 
     # -- V --
 
-    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
-        _json = super().to_json(shallow=shallow, bare=bare, **kwargs)
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
+        _json = super().to_json(deep=deep, **kwargs)
         _json["to"]["node"] = ":parent:"
         return _json

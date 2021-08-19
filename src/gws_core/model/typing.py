@@ -124,8 +124,8 @@ class Typing(Model):
     def get_by_model_type(cls, model_type: Type[Model]) -> ModelSelect:
         return cls.select().where((cls.model_type == model_type.full_classname()))
 
-    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
-        _json: Dict[str, Any] = super().to_json(shallow= shallow, bare=bare, **kwargs)
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
+        _json: Dict[str, Any] = super().to_json(deep=deep, **kwargs)
 
         _json["typing_name"] = self.typing_name
         return _json

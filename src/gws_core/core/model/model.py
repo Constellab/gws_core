@@ -126,16 +126,6 @@ class Model(Base, PeeweeModel):
         cls = type(self)
         return self.save(only=[cls.is_archived])
 
-    # -- B --
-
-    @staticmethod
-    def barefy(data: dict, sort_keys=False):
-        if isinstance(data, dict):
-            data = json.dumps(data, sort_keys=sort_keys)
-        data = re.sub(
-            r"\"(([^\"]*_)?uri|save_datetime|creation_datetime|hash)\"\s*\:\s*\"([^\"]*)\"", r'"\1": ""', data)
-        return json.loads(data)
-
     # -- C --
 
     def __init_singleton_in_place(self):
@@ -514,11 +504,11 @@ class Model(Base, PeeweeModel):
         return model_list
 
     # -- T --
-    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns a JSON string or dictionnary representation of the model.
         :return: The representation
-        :rtype: `dict`, `str`
+        :rtype: `dict`
         """
 
         _json = {}
@@ -534,16 +524,13 @@ class Model(Base, PeeweeModel):
 
             val = getattr(self, prop)
             _json[prop] = jsonable_encoder(val)
-            if bare:
-                if prop == "uri" or isinstance(val, (datetime, DateTimeField, DateField)):
-                    _json[prop] = ""
 
         # convert the data to json
-        _json["data"] = self.data_to_json(shallow=shallow, bare=bare, **kwargs)
+        _json["data"] = self.data_to_json(deep=deep, **kwargs)
 
         return _json
 
-    def data_to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
+    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns a JSON string or dictionnary representation of the model data.
         :return: The representation

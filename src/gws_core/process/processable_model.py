@@ -460,7 +460,7 @@ class ProcessableModel(Viewable):
     # -- T --
 
     @final
-    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns JSON string or dictionnary representation of the process.
 
@@ -472,7 +472,7 @@ class ProcessableModel(Viewable):
         :rtype: dict, str
         """
 
-        _json = super().to_json(shallow=shallow, bare=bare, **kwargs)
+        _json = super().to_json(deep=deep, **kwargs)
 
         del _json["experiment_id"]
         del _json["parent_protocol_id"]
@@ -481,54 +481,38 @@ class ProcessableModel(Viewable):
         if "output" in _json["data"]:
             del _json["data"]["output"]
 
-        if bare:
-            _json["experiment"] = {"uri": ""}
-            _json["protocol"] = {"uri": ""}
-            _json["is_running"] = False
-            _json["is_finished"] = False
-            if shallow:
-                _json["config"] = {"uri": ""}
-                _json["progress_bar"] = {"uri": ""}
-                # if _json["data"].get("graph"):
-                #    del _json["data"]["graph"]
-            else:
-                _json["config"] = self.config.to_json(
-                    shallow=shallow, bare=bare, **kwargs)
-                _json["progress_bar"] = self.progress_bar.to_json(
-                    shallow=shallow, bare=bare, **kwargs)
-        else:
-            _json["experiment"] = {
-                "uri": (self.experiment.uri if self.experiment_id else "")}
-            _json["protocol"] = {
-                "uri": (self.parent_protocol.uri if self.parent_protocol_id else "")}
-            _json["is_running"] = self.progress_bar.is_running
-            _json["is_finished"] = self.progress_bar.is_finished
+        _json["experiment"] = {
+            "uri": (self.experiment.uri if self.experiment_id else "")}
+        _json["protocol"] = {
+            "uri": (self.parent_protocol.uri if self.parent_protocol_id else "")}
+        _json["is_running"] = self.progress_bar.is_running
+        _json["is_finished"] = self.progress_bar.is_finished
 
-            if shallow:
-                _json["config"] = {"uri": self.config.uri}
-                _json["progress_bar"] = {"uri": self.progress_bar.uri}
-                # if _json["data"].get("graph"):
-                #    del _json["data"]["graph"]
-            else:
-                _json["config"] = self.config.to_json(
-                    shallow=shallow, bare=bare, **kwargs)
-                _json["progress_bar"] = self.progress_bar.to_json(
-                    shallow=shallow, bare=bare, **kwargs)
+        if not deep:
+            _json["config"] = {"uri": self.config.uri}
+            _json["progress_bar"] = {"uri": self.progress_bar.uri}
+            # if _json["data"].get("graph"):
+            #    del _json["data"]["graph"]
+        else:
+            _json["config"] = self.config.to_json(
+                deep=deep, **kwargs)
+            _json["progress_bar"] = self.progress_bar.to_json(
+                deep=deep, **kwargs)
 
         _json["input"] = self.input.to_json(
-            shallow=shallow, bare=bare, **kwargs)
+            deep=deep, **kwargs)
         _json["output"] = self.output.to_json(
-            shallow=shallow, bare=bare, **kwargs)
+            deep=deep, **kwargs)
 
         return _json
 
-    def data_to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
+    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns a JSON string or dictionnary representation of the model.
         :return: The representation
         :rtype: `dict`
         """
-        _json = super().data_to_json(shallow=shallow, **kwargs)
+        _json = super().data_to_json(deep=deep, **kwargs)
 
         processable_type: Type[Processable] = TypingManager.get_type_from_name(
             self.processable_typing_name)

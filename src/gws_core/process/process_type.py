@@ -25,9 +25,9 @@ class ProcessType(Typing):
     def get_types(cls) -> ModelSelect:
         return cls.get_by_object_type(cls._object_type)
 
-    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
 
-        _json: Dict[str, Any] = super().to_json(**kwargs)
+        _json: Dict[str, Any] = super().to_json(deep=deep, **kwargs)
 
         # for compatibility
         _json["ptype"] = self.model_type
@@ -79,13 +79,13 @@ class ProcessType(Typing):
 
         return _json
 
-    def data_to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
+    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns a JSON string or dictionnary representation of the model.
         :return: The representation
         :rtype: `dict`, `str`
         """
-        _json: Dict[str, Any] = super().data_to_json(**kwargs)
+        _json: Dict[str, Any] = super().data_to_json(deep=deep, **kwargs)
 
         # retrieve the process python type
         model_t: Type[Process] = self.get_model_type(self.model_type)

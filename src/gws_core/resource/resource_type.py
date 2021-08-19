@@ -31,7 +31,7 @@ class ResourceType(Typing):
     def get_types(cls) -> ModelSelect:
         return cls.get_by_object_type(cls._object_type)
 
-    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
 
         _json: Dict[str, Any] = super().to_json(**kwargs)
 
@@ -40,7 +40,7 @@ class ResourceType(Typing):
 
         return _json
 
-    def data_to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
+    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns a JSON string or dictionnary representation of the model.
         :return: The representation

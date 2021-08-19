@@ -49,7 +49,7 @@ class Comment(Model):
 
     # -- T --
 
-    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns JSON string or dictionnary representation of the comment.
 
@@ -61,7 +61,7 @@ class Comment(Model):
         :rtype: dict, str
         """
 
-        _json = super().to_json(**kwargs)
+        _json = super().to_json(deep=deep, **kwargs)
         _json["object"] = {
             "uri": self.object_uri,
             "type": self.object_typing_name

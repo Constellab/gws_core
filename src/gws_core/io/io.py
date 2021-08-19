@@ -259,14 +259,14 @@ class IO(Base):
 
     # -- V --
 
-    def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
         _json = {}
 
         for k in self._ports:
             port = self._ports[k]
             _json[k] = {}
 
-            if port.resource and not bare:
+            if port.resource:
                 _json[k]["resource"] = {
                     "uri": port.resource.uri,
                     "typing_name": port.resource.typing_name
@@ -278,11 +278,11 @@ class IO(Base):
                 }
 
             specs: List[str] = []
-            for t in port.resource_types:
-                if t is None:
+            for resource_type in port.resource_types:
+                if resource_type is None:
                     specs.append(None)
                 else:
-                    specs.append(t._typing_name)
+                    specs.append(resource_type._typing_name)
             _json[k]["specs"] = specs
 
         return _json
