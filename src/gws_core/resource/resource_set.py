@@ -3,6 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from typing import Dict
+
+from gws_core.core.decorator.transaction import Transaction
 from gws_core.model.typing_manager import TypingManager
 
 from ..core.exception.exceptions import BadRequestException
@@ -16,7 +19,7 @@ class ResourceSet(Resource):
     ResourceSet class
     """
 
-    _set: dict = None
+    _set: Dict[str, Resource] = None
     _resource_types = (Resource, )
 
     def __init__(self, *args, **kwargs):
@@ -60,7 +63,7 @@ class ResourceSet(Resource):
 
     # -- L --
 
-    def len(self):
+    def len(self) -> int:
         return self.len()
 
     def __len__(self):
@@ -72,17 +75,11 @@ class ResourceSet(Resource):
         return self.set.__next__()
 
     # -- R --
-
+    @Transaction()
     def remove(self) -> bool:
-        with self.get_db_manager().db.atomic() as transaction:
-            for k in self._set:
-                if not self._set[k].remove():
-                    transaction.rollback()
-                    return False
-            status = super().remove()
-            if not status:
-                transaction.rollback()
-            return status
+        for resource in self._set.values():
+            resource.remove()
+        return super().remove()
 
     # -- S --
 
@@ -92,21 +89,18 @@ class ResourceSet(Resource):
                 f"The value must be an instance of {self._resource_types}. The actual value is a {type(val)}.")
         self.set[key] = val
 
-    def save(self, *args, **kwrags) -> bool:
-        with self.get_db_manager().db.atomic() as transaction:
-            self.data["set"] = {}
-            for k in self._set:
-                if not (self._set[k].is_saved() or self._set[k].save()):
-                    transaction.rollback()
-                    return False
-                self.data["set"][k] = {
-                    "uri": self._set[k].uri,
-                    "typing_name": self._set[k].typing_name
-                }
-            status = super().save(*args, **kwrags)
-            if not status:
-                transaction.rollback()
-            return status
+    @Transaction()
+    def save(self, *args, **kwrags) -> 'ResourceSet':
+        self.data["set"] = {}
+        for key, resource in self._set.items():
+            if not resource.is_saved():
+                resource.save()
+
+            self.data["set"][key] = {
+                "uri": resource.uri,
+                "typing_name": resource.typing_name
+            }
+        return super().save(*args, **kwrags)
 
     @property
     def set(self) -> dict:

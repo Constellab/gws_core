@@ -9,6 +9,7 @@ import os
 import shutil
 from pathlib import Path
 
+from gws_core.core.decorator.transaction import Transaction
 from gws_core.model.typing_manager import TypingManager
 from peewee import CharField
 
@@ -33,12 +34,11 @@ class File(Resource):
     __DOWNLOAD_URL = "https://lab.{}/core-api/file/{}/{}/download"
 
     # -- D --
-
+    @Transaction()
     def delete_instance(self, *args, **kwargs):
-        with self._db_manager.db.atomic():
-            status = super().delete_instance(*args, **kwargs)
-            if status:
-                shutil.rmtree(self.path)
+        status = super().delete_instance(*args, **kwargs)
+        if status:
+            shutil.rmtree(self.path)
 
     @property
     def dir(self):

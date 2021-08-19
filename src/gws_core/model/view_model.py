@@ -156,7 +156,7 @@ class ViewModel(Model):
         if model.is_saved():
             self.model_uri = model.uri
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> 'ViewModel':
         """
         Saves the view model
         """
@@ -170,9 +170,8 @@ class ViewModel(Model):
                 raise BadRequestException(
                     "It is not allowed to change model of the ViewModel that is already saved")
 
-            if not self._model.save(*args, **kwargs):
-                raise BadRequestException(
-                    "Cannot save the vmodel. Please ensure that the model of the vmodel is saved before")
+            self._model.save(*args, **kwargs)
+
             self.model_uri = self._model.uri
             self.model_type = self._model.full_classname()
             return super().save(*args, **kwargs)

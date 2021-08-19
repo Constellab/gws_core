@@ -8,6 +8,9 @@ import json
 import zlib
 from typing import Dict, List, Type, Union
 
+from gws_core.core.decorator.transaction import Transaction
+from gws_core.resource.resource import Resource
+
 from ..core.exception.exceptions import BadRequestException
 from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
@@ -109,10 +112,12 @@ class ProtocolModel(ProcessableModel):
         process.instance_name = name
         self._processes[name] = process
 
+    @Transaction()
     def save_full(self) -> None:
         """Save the protocol, its progress bar, its config and all its processes
         """
         self.config.save()
+        # raise Exception("Bonjourrrr")
         self.progress_bar.save()
         self.save(update_graph=True)
 
@@ -153,22 +158,18 @@ class ProtocolModel(ProcessableModel):
             raise BadRequestException("Duplicated connector")
         self._connectors.append(connector)
 
-    def archive(self, archive: bool, archive_resources=True) -> bool:
+    @Transaction()
+    def archive(self, archive: bool, archive_resources=True) -> 'ProtocolModel':
         """
         Archive the protocol
         """
 
         if self.is_archived == archive:
-            return True
-        with self._db_manager.db.atomic() as transaction:
-            for process in self.processes.values():
-                if not process.archive(archive, archive_resources=archive_resources):
-                    transaction.rollback()
-                    return False
-            status = super().archive(archive)
-            if not status:
-                transaction.rollback()
-            return status
+            return self
+
+        for process in self.processes.values():
+            process.archive(archive, archive_resources=archive_resources)
+        return super().archive(archive)
 
     # -- B --
 
@@ -511,7 +512,8 @@ class ProtocolModel(ProcessableModel):
 
     # -- R --
 
-    def reset(self) -> bool:
+    @Transaction()
+    def reset(self) -> 'ProtocolModel':
         """
         Reset the protocol
 
@@ -519,11 +521,9 @@ class ProtocolModel(ProcessableModel):
         :rtype: `bool`
         """
 
-        if not super().reset():
-            return False
+        super().reset()
         for process in self.processes.values():
-            if not process.reset():
-                return False
+            process.reset()
         self._reset_iofaces()
         return self.save()
 
@@ -586,28 +586,28 @@ class ProtocolModel(ProcessableModel):
         self.save(update_graph=True)
         await super()._run_after_task()
 
-    # -- S --
+    def waow(self):
+        super().waow()
+        print('Child')
 
-    def save(self, *args, update_graph=False, **kwargs) -> bool:
-        with self._db_manager.db.atomic() as transaction:
-            if not self.is_saved():
-                Activity.add(
-                    Activity.CREATE,
-                    object_type=self.full_classname(),
-                    object_uri=self.uri
-                )
-            if update_graph:
-                self.data["graph"] = self.dumps()
-            if not super().save(*args, **kwargs):
-                transaction.rollback()
-                return False
-        return True
+    # -- S --
+    @Transaction()
+    def save(self, *args, update_graph=False, **kwargs) -> 'ProtocolModel':
+        if not self.is_saved():
+            Activity.add(
+                Activity.CREATE,
+                object_type=self.full_classname(),
+                object_uri=self.uri
+            )
+        if update_graph:
+            self.data["graph"] = self.dumps()
+        return super().save(*args, **kwargs)
 
     def set_experiment(self, experiment):
         super().set_experiment(experiment)
-        for k in self.processes:
-            self.processes[k].set_experiment(experiment)
-            self.processes[k].save()
+        for process in self.processes.values():
+            process.set_experiment(experiment)
+            process.save()
 
     def set_layout(self, layout: dict):
         self.data["layout"] = layout
@@ -630,23 +630,21 @@ class ProtocolModel(ProcessableModel):
             port = outerface.source_port
             self.output[key] = port.resource
 
-    def __set_input_specs(self, input_specs):
-        self.input_specs = input_specs
-        for k in self.input_specs:
-            self._input.create_port(k, self.input_specs[k])
+    def __set_input_specs(self, input_specs: Dict[str, Type[Resource]]):
+        for key, spec in input_specs.items():
+            self._input.create_port(key, spec)
 
-    def __set_output_specs(self, output_specs):
-        self.output_specs = output_specs
-        for k in self.output_specs:
-            self._output.create_port(k, self.output_specs[k])
+    def __set_output_specs(self, output_specs: Dict[str, Type[Resource]]):
+        for key, spec in output_specs.items():
+            self._output.create_port(key, spec)
 
     def set_interfaces(self, interfaces: Dict[str, Port]):
         input_specs = {}
         for k in interfaces:
             input_specs[k] = interfaces[k].resource_types
-        self.__set_input_specs(input_specs)
-        if not self.input_specs:
+        if not input_specs:
             return
+        self.__set_input_specs(input_specs)
         self._interfaces = {}
         for k in interfaces:
             source_port = self._input.ports[k]
@@ -659,9 +657,9 @@ class ProtocolModel(ProcessableModel):
         output_specs = {}
         for k in outerfaces:
             output_specs[k] = outerfaces[k].resource_types
-        self.__set_output_specs(output_specs)
-        if not self.output_specs:
+        if not output_specs:
             return
+        self.__set_output_specs(output_specs)
         self._outerfaces = {}
         for k in outerfaces:
             target_port = self._output.ports[k]

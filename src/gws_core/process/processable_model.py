@@ -1,8 +1,10 @@
 import asyncio
 import inspect
 from enum import Enum
-from typing import Type, Union, final
+from typing import List, Type, Union, final
 
+from gws_core.core.decorator.transaction import Transaction
+from gws_core.resource.resource import Resource
 from peewee import CharField, ForeignKeyField, IntegerField
 from starlette_context import context
 
@@ -68,25 +70,28 @@ class ProcessableModel(Viewable):
         self._output = Output(self)
 
     # -- A --
-
-    def archive(self, archive: bool, archive_resources=True) -> bool:
+    @Transaction()
+    def archive(self, archive: bool, archive_resources=True) -> 'ProcessableModel':
         """
         Archive the process
         """
 
         if self.is_archived == archive:
-            return True
-        with self._db_manager.db.atomic() as transaction:
-            if not super().archive(archive):
-                return False
-            # -> try to archive the config if possible!
-            self.config.archive(archive)
-            if archive_resources:
-                for r in self.resources:
-                    if not r.archive(archive):
-                        transaction.rollback()
-                        return False
-        return True
+            return self
+
+        super().archive(archive)
+
+        # -> try to archive the config if possible!
+        self.config.archive(archive)
+        if archive_resources:
+            for resource in self.resources:
+                resource.archive(archive)
+
+        return self
+
+    @Transaction()
+    def waow(self):
+        print('Parent')
 
     # -- D --
 
@@ -263,15 +268,16 @@ class ProcessableModel(Viewable):
     # -- R --
 
     @property
-    def resources(self):
+    def resources(self) -> List[Resource]:
         from ..resource.resource import ProcessResource
-        Qrel = ProcessResource.select().where(ProcessResource.process_id == self.id)
+        Qrel: List[ProcessResource] = ProcessResource.select().where(ProcessResource.process_id == self.id)
         Q = []
         for o in Qrel:
             Q.append(o.resource)
         return Q
 
-    def reset(self) -> bool:
+    @Transaction()
+    def reset(self) -> 'ProcessableModel':
         """
         Reset the process
 
@@ -280,7 +286,7 @@ class ProcessableModel(Viewable):
         """
 
         if self.is_running:
-            return False
+            return None
         self.progress_bar.reset()
         self._reset_io()
         return self.save()

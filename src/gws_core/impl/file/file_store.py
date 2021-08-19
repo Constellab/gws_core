@@ -2,18 +2,24 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
+from __future__ import annotations
 
 import io
 import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Union
+from typing import TYPE_CHECKING, List, Union
+
+from gws_core.core.decorator.transaction import Transaction
 
 from ...core.exception.exceptions import BadRequestException
 from ...core.model.model import Model
 from ...core.utils.settings import Settings
 from ...model.typing_register_decorator import TypingDecorator
+
+if TYPE_CHECKING:
+    from .file import File
 
 # ####################################################################
 #
@@ -34,7 +40,7 @@ class FileStore(Model):
 
     # -- A --
 
-    def add(self, source_file: Union[str, io.IOBase, tempfile.SpooledTemporaryFile, 'File']):
+    def add(self, source_file: Union[str, io.IOBase, tempfile.SpooledTemporaryFile, File]):
         """
         Add a file from an external repository to a local store. Must be implemented by the child class.
 
@@ -105,7 +111,7 @@ class LocalFileStore(FileStore):
 
     # -- A --
 
-    def add(self, source_file: Union[str, io.IOBase, tempfile.SpooledTemporaryFile, 'File'], dest_file_name: str = ""):
+    def add(self, source_file: Union[str, io.IOBase, tempfile.SpooledTemporaryFile, File], dest_file_name: str = ""):
         """
         Add a file from an external repository to a local store
 
@@ -165,7 +171,7 @@ class LocalFileStore(FileStore):
 
     # -- C --
 
-    def __create_valid_file_path(self, file: 'File', name: str = ""):
+    def __create_valid_file_path(self, file: File, name: str = ""):
         if not file.uri:
             file.save()
         file.path = os.path.join(self.path, file.uri, name)
@@ -182,7 +188,7 @@ class LocalFileStore(FileStore):
         file.save()
         return file
 
-    def contains(self, file: 'File') -> bool:
+    def contains(self, file: File) -> bool:
         return self.path in file.path
 
     # -- D --
@@ -249,7 +255,7 @@ class LocalFileStore(FileStore):
 
     # -- R --
 
-    def remove(self, file: 'File'):
+    def remove(self, file: File):
         """
         Remove a file from the FileStore
         """
@@ -261,6 +267,7 @@ class LocalFileStore(FileStore):
                 f"File '{file.uri}' is not in the file_store '{self.uri}'")
 
     @classmethod
+    @Transaction()
     def remove_all_files(cls):
         """
         Remove all the files from the FileStore
@@ -269,7 +276,6 @@ class LocalFileStore(FileStore):
         settings = Settings.retrieve()
         if not settings.is_dev and not settings.is_test:
             raise BadRequestException("Only allowed in dev and test mode")
-        with cls._db_manager.db.atomic():
-            Q = cls.select()
-            for fs in Q:
-                fs.delete_instance()
+        files: List[FileStore] = cls.select()
+        for fs in files:
+            fs.delete_instance()

@@ -56,7 +56,7 @@ class Config(Viewable):
 
     # -- A --
 
-    def archive(self, archive: bool) -> bool:
+    def archive(self, archive: bool) -> 'Config':
         """
         Archive the config
 
@@ -75,7 +75,7 @@ class Config(Viewable):
         ).count()
 
         if some_processes_are_in_invalid_archive_state:
-            return False
+            return None
 
         return super().archive(archive)
 

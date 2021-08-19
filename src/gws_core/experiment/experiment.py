@@ -7,6 +7,7 @@ import re
 from enum import Enum
 from typing import List, final
 
+from gws_core.core.decorator.transaction import Transaction
 from gws_core.model.typing_register_decorator import TypingDecorator
 from peewee import BooleanField, FloatField, ForeignKeyField
 
@@ -103,26 +104,22 @@ class Experiment(Viewable):
     def add_report(self, report: 'Report'):
         report.experiment = self
 
-    def archive(self, archive: bool, archive_resources=True) -> bool:
+    @Transaction()
+    def archive(self, archive: bool, archive_resources=True) -> 'Experiment':
         """
         Archive the experiment
         """
 
         if self.is_archived == archive:
             return True
-        with self._db_manager.db.atomic() as transaction:
-            Activity.add(
-                Activity.ARCHIVE,
-                object_type=self.full_classname(),
-                object_uri=self.uri
-            )
-            if not self.protocol.archive(archive, archive_resources=archive_resources):
-                transaction.rollback()
-                return False
-            status = super().archive(archive)
-            if not status:
-                transaction.rollback()
-            return status
+        Activity.add(
+            Activity.ARCHIVE,
+            object_type=self.full_classname(),
+            object_uri=self.uri
+        )
+        self.protocol.archive(archive, archive_resources=archive_resources)
+
+        return super().archive(archive)
 
     # -- C --
 
@@ -222,7 +219,8 @@ class Experiment(Viewable):
                 Q.append(rel.resource)  # is automatically casted
         return Q
 
-    def reset(self) -> bool:
+    @Transaction()
+    def reset(self) -> 'Experiment':
         """
         Reset the experiment.
 
@@ -231,22 +229,14 @@ class Experiment(Viewable):
         """
 
         if self.is_validated or self.is_archived:
-            return False
+            return None
 
-        with self._db_manager.db.atomic() as transaction:
-            if self.protocol:
-                if not self.protocol.reset():
-                    transaction.rollback()
-                    return False
+        if self.protocol:
+            self.protocol.reset()
 
-            self.status = ExperimentStatus.DRAFT
-            self.score = None
-            status = self.save()
-
-            if not status:
-                transaction.rollback()
-
-            return status == 1
+        self.status = ExperimentStatus.DRAFT
+        self.score = None
+        return self.save()
 
     def mark_as_waiting_for_cli_process(self, pid: int):
         """Mark that a process is created for the experiment, but it is not started yet
@@ -297,18 +287,15 @@ class Experiment(Viewable):
 
         self.data["description"] = description
 
-    def save(self, *args, **kwargs):
-        with self._db_manager.db.atomic() as transaction:
-            if not self.is_saved():
-                Activity.add(
-                    Activity.CREATE,
-                    object_type=self.full_classname(),
-                    object_uri=self.uri
-                )
-            status = super().save(*args, **kwargs)
-            if not status:
-                transaction.rollback()
-            return status
+    @Transaction()
+    def save(self, *args, **kwargs) -> 'Experiment':
+        if not self.is_saved():
+            Activity.add(
+                Activity.CREATE,
+                object_type=self.full_classname(),
+                object_uri=self.uri
+            )
+        return super().save(*args, **kwargs)
 
     # -- T --
 
@@ -336,6 +323,7 @@ class Experiment(Viewable):
 
         return _json
 
+    @Transaction()
     def validate(self, user: User) -> None:
         """
         Validate the experiment
@@ -348,15 +336,14 @@ class Experiment(Viewable):
             return
         if self.is_running:
             raise BadRequestException("Can't validate a running experiment")
-        with self._db_manager.db.atomic() as transaction:
-            self.is_validated = True
-            if self.save():
-                Activity.add(
-                    Activity.VALIDATE,
-                    object_type=self.full_classname(),
-                    object_uri=self.uri,
-                    user=user
-                )
+        self.is_validated = True
+        if self.save():
+            Activity.add(
+                Activity.VALIDATE,
+                object_type=self.full_classname(),
+                object_uri=self.uri,
+                user=user
+            )
 
     def check_user_privilege(self, user: User) -> None:
         return self.protocol.check_user_privilege(user)

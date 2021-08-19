@@ -15,12 +15,12 @@ class Study(Viewable):
 
     _table_name = 'gws_study'
 
-    def archive(self, tf: bool) -> bool:
+    def archive(self, archive: bool) -> 'Study':
         """
         Deactivated method. Returns False.
         """
 
-        return False
+        return None
 
     @classmethod
     def create_default_instance(cls):

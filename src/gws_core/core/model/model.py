@@ -13,9 +13,10 @@ import shutil
 import traceback
 import uuid
 from datetime import datetime
-from typing import Type, Union, final
+from typing import List, Type, Union, final
 
 from fastapi.encoders import jsonable_encoder
+from gws_core.core.decorator.transaction import Transaction
 from peewee import (AutoField, BigAutoField, BlobField, BooleanField,
                     CharField, DateField, DateTimeField, Field,
                     ForeignKeyField, ManyToManyField)
@@ -109,7 +110,7 @@ class Model(Base, PeeweeModel):
             # "name": related_model.name
         }
 
-    def archive(self, archive: bool) -> bool:
+    def archive(self, archive: bool) -> 'Model':
         """
         Archive of Unarchive the model
 
@@ -120,7 +121,7 @@ class Model(Base, PeeweeModel):
         """
 
         if self.is_archived == archive:
-            return True
+            return self
         self.is_archived = archive
         cls = type(self)
         return self.save(only=[cls.is_archived])
@@ -479,7 +480,7 @@ class Model(Base, PeeweeModel):
         else:
             raise BadRequestException("The data must be a JSONable dictionary")
 
-    def save(self, *args, **kwargs) -> bool:
+    def save(self, *args, **kwargs) -> 'Model':
         """
         Sets the `data`
 
@@ -491,15 +492,13 @@ class Model(Base, PeeweeModel):
         self.save_datetime = datetime.now()
         self.hash = self.__compute_hash()
 
-        try:
-            return super().save(*args, **kwargs)
-        except Exception as err:
-            Logger.error(
-                f"Error while saving the model {self.full_classname()}")
-            raise err
+        super().save(*args, **kwargs)
+
+        return self
 
     @classmethod
-    def save_all(cls, model_list: list = None) -> bool:
+    @Transaction()
+    def save_all(cls, model_list: List['Model'] = None) -> List['Model']:
         """
         Automically and safely save a list of models in the database. If an error occurs
         during the operation, the whole transactions is rolled back.
@@ -509,15 +508,10 @@ class Model(Base, PeeweeModel):
         :return: True if all the model are successfully saved, False otherwise.
         :rtype: bool
         """
-        with cls.get_db_manager().db.atomic() as transaction:
-            try:
-                for model in model_list:
-                    model.save()
-            except Exception as err:
-                transaction.rollback()
-                raise BadRequestException(f"Error message: {err}") from err
+        for model in model_list:
+            model.save()
 
-        return True
+        return model_list
 
     # -- T --
     def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:

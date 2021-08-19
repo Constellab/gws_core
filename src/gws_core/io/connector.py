@@ -50,7 +50,6 @@ class Connector:
         self.out_port = out_port
 
     # -- V --
-
     def to_json(self, shallow=False, bare: bool = False, **kwargs) -> dict:
         """
         Returns a dictionnary describing the Connector.

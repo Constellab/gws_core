@@ -1,5 +1,6 @@
 
 import threading
+import traceback
 
 from ..core.exception.exceptions import NotFoundException
 from ..core.exception.exceptions.bad_request_exception import \
@@ -137,9 +138,12 @@ class QueueService(BaseService):
         if experiment.status != ExperimentStatus.DRAFT:
             Logger.info(
                 f"Resetting experiment {experiment.uri} before adding it to the queue")
-            reset: bool = experiment.reset()
 
-            if not reset:
+            try:
+                experiment.reset()
+            except:
+                # printing stack trace
+                traceback.print_exc()
                 raise BadRequestException(
                     f"Error while resetting experiment {experiment.uri} before adding it to the queue")
 

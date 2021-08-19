@@ -126,7 +126,7 @@ class AuthService(BaseService):
             return cls.__authenticate_console(user, console_token)
 
     @classmethod
-    def __authenticate_console(cls, user, console_token) -> bool:
+    def __authenticate_console(cls, user: User, console_token) -> bool:
 
         if user.is_console_authenticated:
             CurrentUserService.set_current_user(user)
@@ -135,6 +135,7 @@ class AuthService(BaseService):
             user.console_token == console_token)
         if not is_valid_token:
             return False
+
         with User.get_db_manager().db.atomic() as transaction:
             try:
                 # authenticate the user first
@@ -152,7 +153,7 @@ class AuthService(BaseService):
                 return False
 
     @classmethod
-    def __authenticate_http(cls, user) -> bool:
+    def __authenticate_http(cls, user: User) -> bool:
 
         if user.is_http_authenticated:
             CurrentUserService.set_current_user(user)

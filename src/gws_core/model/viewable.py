@@ -4,8 +4,9 @@
 # About us: https://gencovery.com
 
 
-from typing import Union
+from typing import List, Union
 
+from gws_core.core.decorator.transaction import Transaction
 from peewee import ModelSelect
 
 from ..comment.comment import Comment
@@ -52,7 +53,8 @@ class Viewable(Model):
         comment.save()
         return comment
 
-    def archive(self, archive: bool) -> bool:
+    @Transaction()
+    def archive(self, archive: bool) -> 'Viewable':
         """
         Archive of Unarchive Viewable and all its ViewModels
 
@@ -65,22 +67,15 @@ class Viewable(Model):
         if self.is_archived == archive:
             return True
 
-        with self._db_manager.db.atomic() as transaction:
-            query: ModelSelect = ViewModel.select().where(
-                (ViewModel.model_uri == self.uri) &
-                (ViewModel.is_archived == (not archive))
-            )
+        query: List[ViewModel] = ViewModel.select().where(
+            (ViewModel.model_uri == self.uri) &
+            (ViewModel.is_archived == (not archive))
+        )
 
-            for view_model in query:
-                if not view_model.archive(archive):
-                    transaction.rollback()
-                    return False
+        for view_model in query:
+            view_model.archive(archive)
 
-            status = super().archive(archive)
-            if not status:
-                transaction.rollback()
-
-            return status
+        return super().archive(archive)
 
     # -- C --
 

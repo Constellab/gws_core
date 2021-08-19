@@ -8,6 +8,7 @@ import inspect
 import os
 from typing import Dict, List, Tuple, Type, Union
 
+from gws_core.core.decorator.transaction import Transaction
 from peewee import DatabaseProxy
 
 from ..core.classes.expose import Expose
@@ -214,7 +215,8 @@ class ModelService(BaseService):
     # -- S --
 
     @classmethod
-    def save_all(cls, model_list: List[Model] = None) -> bool:
+    @Transaction()
+    def save_all(cls, model_list: List[Model] = None) -> List[Model]:
         """
         Atomically and safely save a list of models in the database. If an error occurs
         during the operation, the whole transactions is rolled back.
@@ -225,31 +227,26 @@ class ModelService(BaseService):
         :rtype: `bool`
         """
 
-        with Model.get_db_manager().db.atomic() as transaction:
-            try:
-                if model_list is None:
-                    return
-                    #model_list = cls.models.values()
+        if model_list is None:
+            return
+            #model_list = cls.models.values()
 
-                # 1) save processes
-                for model in model_list:
-                    if isinstance(model, ProcessModel):
-                        model.save()
+        # 1) save processes
+        for model in model_list:
+            if isinstance(model, ProcessModel):
+                model.save()
 
-                # 2) save resources
-                for model in model_list:
-                    if isinstance(model, Resource):
-                        model.save()
+        # 2) save resources
+        for model in model_list:
+            if isinstance(model, Resource):
+                model.save()
 
-                # 3) save vmodels
-                for model in model_list:
-                    if isinstance(model, ViewModel):
-                        model.save()
-            except Exception as _:
-                transaction.rollback()
-                return False
+        # 3) save vmodels
+        for model in model_list:
+            if isinstance(model, ViewModel):
+                model.save()
 
-        return True
+        return model_list
 
     @classmethod
     def __set_archive_status(cls, tf: bool, type: str, uri: str) -> dict:

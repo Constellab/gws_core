@@ -65,12 +65,12 @@ class User(Model):
 
     # -- A --
 
-    def archive(self, archive: bool) -> bool:
+    def archive(self, archive: bool) -> None:
         """
         Archive method. This method is deactivated. Always returns False.
         """
 
-        return False
+        return None
 
     # -- G --
 
@@ -130,7 +130,7 @@ class User(Model):
 
     # -- S --
 
-    def save(self, *arg, **kwargs):
+    def save(self, *arg, **kwargs) -> 'User':
         if not self.group in self.VALID_GROUPS:
             raise BadRequestException("Invalid user group")
         if self.is_owner or self.is_admin or self.is_sysuser:
