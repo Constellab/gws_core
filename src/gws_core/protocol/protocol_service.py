@@ -3,22 +3,19 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Optional, Type, Union
+from typing import List, Type, Union
 
 from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
 from ..core.dto.typed_tree_dto import TypedTree
 from ..core.service.base_service import BaseService
-from ..process.process import Process
 from ..process.process_model import ProcessModel
-from ..process.processable import Processable
 from ..process.processable_factory import ProcessableFactory
-from ..process.processable_model import ProcessableModel
 from ..protocol.protocol_model import ProtocolModel
 from .protocol import Protocol
 from .protocol_type import ProtocolType
-from .sub_process_factory import SubProcessableFactory
+from .sub_processable_factory import SubProcessFactoryUpdate
 
 
 class ProtocolService(BaseService):
@@ -165,31 +162,3 @@ class ProtocolService(BaseService):
 
         for key in deleted_keys:
             protocol.delete_process(key)
-
-
-class SubProcessFactoryUpdate(SubProcessableFactory):
-    """Factory used to get the processes or create a new one when building a protocol
-
-    :param SubProcessableFactory: [description]
-    :type SubProcessableFactory: [type]
-    """
-
-    def instantiate_processable(self, processable_uri: Optional[str],
-                                processable_type: Type[Processable],
-                                instance_name: str) -> ProcessableModel:
-
-        if processable_uri is not None:
-            if issubclass(processable_type, Process):
-                return ProcessModel.get_by_uri_and_check(processable_uri)
-            else:
-                return ProtocolModel.get_by_uri_and_check(processable_uri)
-        else:
-            # if this is a process
-            if issubclass(processable_type, Process):
-                return ProcessableFactory.create_process_from_type(
-                    process_type=processable_type, instance_name=instance_name)
-            else:
-                # if this is a protocol
-                # create an empty protocol
-                return ProcessableFactory.create_protocol_from_type(
-                    protocol_type=processable_type, instance_name=instance_name)

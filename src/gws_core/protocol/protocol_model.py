@@ -6,7 +6,7 @@
 import asyncio
 import json
 import zlib
-from typing import Dict, List, Optional, Type, Union
+from typing import Dict, List, Type, Union
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.exception.exceptions.unauthorized_exception import \
@@ -17,38 +17,14 @@ from ..io.ioface import Interface, Outerface
 from ..io.port import InPort, OutPort
 from ..model.typing_manager import TypingManager
 from ..model.typing_register_decorator import TypingDecorator
-from ..process.process import Process
 from ..process.process_model import ProcessAllowedUser, ProcessModel
 from ..process.processable import Processable
 from ..process.processable_model import ProcessableModel
 from ..protocol.protocol import Protocol
 from ..user.activity import Activity
 from ..user.user import User
-from .sub_process_factory import SubProcessableFactory
-
-
-class SubProcessFactoryReadFromDb(SubProcessableFactory):
-    """Factory used when getting a protocol from the database,  it read the protocol's processes
-    from the DB
-
-    :param SubProcessableFactory: [description]
-    :type SubProcessableFactory: [type]
-    """
-
-    def instantiate_processable(self, processable_uri: Optional[str],
-                                processable_type: Type[Processable],
-                                instance_name: str) -> ProcessableModel:
-        if processable_uri is None:
-            raise BadRequestException(
-                f"Cannot instantiate the processable {instance_name} because it does not have an uri")
-
-        # Instantiate a process
-        if issubclass(processable_type, Process):
-            return ProcessModel.get_by_uri_and_check(processable_uri)
-        else:
-            return ProtocolModel.get_by_uri_and_check(processable_uri)
-
-# Use the typing decorator to avoid circular dependency
+from .sub_processable_factory import (SubProcessableFactory,
+                                      SubProcessFactoryReadFromDb)
 
 
 @TypingDecorator(unique_name="Protocol", object_type="GWS_CORE", hide=True)

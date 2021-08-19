@@ -1,6 +1,6 @@
 
 
-from typing import Optional, Type
+from typing import Type
 
 from ..config.config import Config
 from ..core.exception.exceptions.bad_request_exception import \
@@ -15,7 +15,7 @@ from ..progress_bar.progress_bar import ProgressBar
 from ..protocol.protocol import (CONST_PROTOCOL_TYPING_NAME, Protocol,
                                  ProtocolCreateConfig)
 from ..protocol.protocol_model import ProtocolModel
-from ..protocol.sub_process_factory import SubProcessableFactory
+from ..protocol.sub_processable_factory import SubProcessFactoryCreate
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
 
@@ -26,7 +26,9 @@ class ProcessableFactory():
     """
 
     @classmethod
-    def create_processable_from_type(cls, processable_type: Type[Processable], instance_name: str = None) -> ProcessModel:
+    def create_processable_from_type(
+            cls, processable_type: Type[Processable],
+            instance_name: str = None) -> ProcessModel:
         if issubclass(processable_type, Process):
             return cls.create_process_from_type(processable_type, instance_name)
         elif issubclass(processable_type, Protocol):
@@ -59,7 +61,9 @@ class ProcessableFactory():
 
     @classmethod
     def create_process_from_typing_name(cls, typing_name: str, instance_name: str = None) -> ProcessModel:
-        return cls.create_process_from_type(TypingManager.get_type_from_name(typing_name=typing_name), instance_name=instance_name)
+        return cls.create_process_from_type(
+            TypingManager.get_type_from_name(typing_name=typing_name),
+            instance_name=instance_name)
 
     @classmethod
     def create_protocol_from_type(cls, protocol_type: Type[Protocol], instance_name: str = None) -> ProtocolModel:
@@ -211,24 +215,3 @@ class ProcessableFactory():
         else:
             # Init the instance_name if it does not exists
             processable_model.instance_name = processable_model.uri
-
-
-class SubProcessFactoryCreate(SubProcessableFactory):
-    """Factory used to force creation of a processes when building a protocol
-
-    :param SubProcessableFactory: [description]
-    :type SubProcessableFactory: [type]
-    """
-
-    def instantiate_processable(self, processable_uri: Optional[str],
-                                processable_type: Type[Processable],
-                                instance_name: str) -> ProcessableModel:
-        # if this is a process
-        if issubclass(processable_type, Process):
-            return ProcessableFactory.create_process_from_type(
-                process_type=processable_type, instance_name=instance_name)
-        else:
-            # if this is a protocol
-            # create an empty protocol
-            return ProcessableFactory.create_protocol_from_type(
-                protocol_type=processable_type, instance_name=instance_name)
