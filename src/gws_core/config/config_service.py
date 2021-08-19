@@ -29,7 +29,7 @@ class ConfigService(BaseService):
             result = []
             for o in query:
                 if as_json:
-                    result.append(o.get_related().to_json(shallow=True))
+                    result.append(o.get_related().to_json())
                 else:
                     result.append(o.get_related())
 
@@ -48,6 +48,6 @@ class ConfigService(BaseService):
             )
 
             if as_json:
-                return paginator.to_json(shallow=True)
+                return paginator.to_json()
             else:
                 return paginator

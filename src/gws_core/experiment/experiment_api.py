@@ -157,4 +157,4 @@ async def get_the_list_of_experiments(page: Optional[int] = 1,
         number_of_items_per_page=number_of_items_per_page,
     )
 
-    return experiments.to_json(shallow=True)
+    return experiments.to_json()

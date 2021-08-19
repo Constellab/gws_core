@@ -55,13 +55,15 @@ class ExperimentService(BaseService):
                 detail="Cannot create the experiment.") from err
 
     @classmethod
-    def create_experiment_from_process(cls, process: ProcessModel, title: str = "", description: str = "") -> Experiment:
+    def create_experiment_from_process(
+            cls, process: ProcessModel, title: str = "", description: str = "") -> Experiment:
         proto = ProtocolService.create_protocol_from_process(process=process)
 
         return cls.create_experiment_from_protocol(protocol=proto, title=title, description=description)
 
     @classmethod
-    def create_experiment_from_protocol(cls, protocol: ProtocolModel, title: str = "", description: str = "") -> Experiment:
+    def create_experiment_from_protocol(
+            cls, protocol: ProtocolModel, title: str = "", description: str = "") -> Experiment:
         experiment = Experiment(protocol=protocol, study=Study.get_default_instance(),
                                 user=CurrentUserService.get_and_check_current_user())
 
@@ -105,7 +107,7 @@ class ExperimentService(BaseService):
         result = []
         for o in query:
             if as_json:
-                result.append(o.get_related().to_json(shallow=True))
+                result.append(o.get_related().to_json())
             else:
                 result.append(o.get_related())
 

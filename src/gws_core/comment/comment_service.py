@@ -63,6 +63,6 @@ class CommentService(BaseService):
             paginator = Paginator(
                 query, page=page, number_of_items_per_page=number_of_items_per_page)
             if as_json:
-                return paginator.to_json(shallow=True)
+                return paginator.to_json()
 
             return paginator

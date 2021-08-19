@@ -161,7 +161,7 @@ class ModelService(BaseService):
             result = []
             for o in query:
                 if as_json:
-                    result.append(o.get_related().to_json(shallow=True))
+                    result.append(o.get_related().to_json())
                 else:
                     result.append(o.get_related())
             paginator = Paginator(
@@ -175,7 +175,7 @@ class ModelService(BaseService):
             paginator = Paginator(
                 query, page=page, number_of_items_per_page=number_of_items_per_page)
             if as_json:
-                return paginator.to_json(shallow=True)
+                return paginator.to_json()
             else:
                 return paginator
 
