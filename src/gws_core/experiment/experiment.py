@@ -235,7 +235,7 @@ class Experiment(Viewable):
 
         with self._db_manager.db.atomic() as transaction:
             if self.protocol:
-                if not self.protocol._reset():
+                if not self.protocol.reset():
                     transaction.rollback()
                     return False
 

@@ -134,7 +134,7 @@ class ProgressBar(Model):
             "messages": [],
         }
 
-    def _reset(self) -> bool:
+    def reset(self) -> bool:
         """
         Reset the progress bar
 

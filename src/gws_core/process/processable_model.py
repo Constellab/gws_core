@@ -271,7 +271,7 @@ class ProcessableModel(Viewable):
             Q.append(o.resource)
         return Q
 
-    def _reset(self) -> bool:
+    def reset(self) -> bool:
         """
         Reset the process
 
@@ -281,13 +281,13 @@ class ProcessableModel(Viewable):
 
         if self.is_running:
             return False
-        self.progress_bar._reset()
+        self.progress_bar.reset()
         self._reset_io()
         return self.save()
 
     def _reset_io(self):
-        self.input._reset()
-        self.output._reset()
+        self.input.reset()
+        self.output.reset()
         self.data["input"] = {}
         self.data["output"] = {}
 

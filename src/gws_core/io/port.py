@@ -21,7 +21,7 @@ class Port(Base):
     """
 
     _resource: Resource = None
-    _resource_types: Tuple[Type[Resource]] = ()
+    resource_types: Tuple[Type[Resource]] = None
     _prev: 'Port' = None
     _next: List['Port'] = []
     _parent: IO
@@ -32,7 +32,7 @@ class Port(Base):
         self._next = []
         self._parent = parent
 
-        self._resource_types = Resource
+        self.resource_types = (Resource,)
 
     # -- D --
 
@@ -53,7 +53,7 @@ class Port(Base):
     # -- G --
 
     def get_default_resource_type(self):
-        return self._resource_types[0]
+        return self.resource_types[0]
 
     # -- I --
 
@@ -122,7 +122,7 @@ class Port(Base):
         #    return self.is_optional and (not self.is_connected)
 
         # and self._resource.is_saved()
-        return isinstance(self._resource, self._resource_types)
+        return isinstance(self._resource, self.resource_types)
 
     @property
     def is_optional(self) -> bool:
@@ -133,7 +133,7 @@ class Port(Base):
         :rtype: bool
         """
 
-        return (None in self._resource_types)
+        return (None in self.resource_types)
 
     @property
     def is_empty(self) -> bool:
@@ -141,7 +141,7 @@ class Port(Base):
 
     # -- G --
 
-    def get_next_procs(self):
+    def get_next_procs(self) -> List[ProcessableModel]:
         """
         Returns the list of right-hand side processes connected to the port.
 
@@ -157,7 +157,7 @@ class Port(Base):
     # -- N --
 
     @property
-    def next(self) -> 'Port':
+    def next(self) -> List['Port']:
         return self._next
 
     # -- P --
@@ -201,7 +201,7 @@ class Port(Base):
 
     # -- R --
 
-    def _reset(self):
+    def reset(self):
         self._resource = None
         # for port in self._next:
         #    port._resource = None
@@ -230,11 +230,18 @@ class Port(Base):
         if self.is_optional and resource is None:
             return
 
-        if not isinstance(resource, self._resource_types):
+        if not isinstance(resource, self.resource_types):
             raise BadRequestException(
-                f"The resource must be an instance of Resource. A {self._resource_types} is given.")
+                f"The resource must be an instance of Resource. A {self.resource_types} is given.")
 
         self._resource = resource
+
+    @property
+    def name(self) -> str:
+        """overiden by the children
+
+        """
+        pass
 
 
 # ####################################################################
@@ -260,9 +267,9 @@ class InPort(Port):
         """
 
         proc = self.parent.parent
-        input = proc.input
-        for name in input._ports:
-            if input._ports[name] is self:
+        proc_input = proc.input
+        for name in proc_input._ports:
+            if proc_input._ports[name] is self:
                 return name
         return None
 
@@ -313,9 +320,9 @@ class OutPort(Port):
 
         if not lazy:
             # hard checking of port compatibility
-            if not self._are_compatible_types(self._resource_types, other._resource_types):
+            if not self._are_compatible_types(self.resource_types, other.resource_types):
                 raise BadRequestException(
-                    f"Invalid connection. {self._resource_types} is not a subclass of {other._resource_types}")
+                    f"Invalid connection. {self.resource_types} is not a subclass of {other.resource_types}")
 
         self._next.append(other)
         other._prev = self

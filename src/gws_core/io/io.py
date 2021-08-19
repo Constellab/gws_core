@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, List, final
+from typing import TYPE_CHECKING, Dict, List, Tuple, Type, final
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -40,12 +40,12 @@ class IO(Base):
         Disconnect the IO
         """
 
-        for k in self._ports:
-            self._ports[k].disconnect()
+        for port in self._ports.values():
+            port.disconnect()
 
     # -- C --
 
-    def create_port(self, name: str, resource_types: type):
+    def create_port(self, name: str, resource_types: Tuple[Type[Resource]]):
         """
         Creates a port.
 
@@ -75,17 +75,17 @@ class IO(Base):
             raise BadRequestException(
                 "Cannot alter inputs/outputs of processes during or after running")
 
-        if type(self) == Output:
+        if isinstance(self, Output):
             port = OutPort(self)
         else:
             port = InPort(self)
 
-        port._resource_types = resource_types
+        port.resource_types = resource_types
         self._ports[name] = port
 
     # -- G --
 
-    def __getitem__(self, name: str) -> 'Resource':
+    def __getitem__(self, name: str) -> Resource:
         """
         Bracket (getter) operator. Gets the content of a port by its name.
 
@@ -104,7 +104,7 @@ class IO(Base):
 
         return self._ports[name].resource
 
-    def get_port_names(self) -> list:
+    def get_port_names(self) -> List[str]:
         """
         Returns the names of all the ports.
 
@@ -112,9 +112,9 @@ class IO(Base):
         :rtype: list
         """
 
-        return list(self._ports.keys)
+        return list(self._ports.keys())
 
-    def get_resources(self) -> dict:
+    def get_resources(self) -> Dict[str, Resource]:
         """
         Returns the resources of all the ports.
 
@@ -122,9 +122,9 @@ class IO(Base):
         :rtype: list
         """
 
-        resources = {}
-        for k in self._ports:
-            resources[k] = self._ports[k].resource
+        resources: Dict[str, Resource] = {}
+        for key, port in self._ports.items():
+            resources[key] = port.resource
         return resources
 
     def get_port(self, port_name: str) -> Port:
@@ -137,19 +137,18 @@ class IO(Base):
 
         return self._ports[port_name]
 
-    def get_specs(self):
-        specs = {}
+    def get_specs(self) -> Dict[str, Tuple[str]]:
+        specs: Dict[str, Tuple[str]] = {}
 
-        for k in self._ports:
-            port = self._ports[k]
-            specs[k] = ()
+        for key, port in self._ports.items():
+            specs[key] = ()
 
-            for t in port._resource_types:
-                if t is None:
-                    specs[k] += (None, )
+            for resource_type in port.resource_types:
+                if resource_type is None:
+                    specs[key] += (None,)
                 else:
-                    classname = t._typing_name
-                    specs[k] += (classname, )
+                    classname = resource_type._typing_name
+                    specs[key] += (classname,)
 
         return specs
 
@@ -169,8 +168,8 @@ class IO(Base):
         :rtype: bool
         """
 
-        for k in self._ports:
-            if not self._ports[k].is_ready:
+        for port in self._ports.values():
+            if not port.is_ready:
                 return False
 
         return True
@@ -187,7 +186,7 @@ class IO(Base):
     def __next__(self):
         return self._ports.__next__()
 
-    def get_next_procs(self) -> list:
+    def get_next_procs(self) -> List[ProcessableModel]:
         """
         Returns the list of (right-hand side) processes connected to the IO ports.
 
@@ -196,15 +195,15 @@ class IO(Base):
         """
 
         next_proc = []
-        for k in self._ports:
-            for proc in self._ports[k].get_next_procs():
+        for port in self._ports.values():
+            for proc in port.get_next_procs():
                 next_proc.append(proc)
         return next_proc
 
     # -- P --
 
     @property
-    def ports(self) -> dict:
+    def ports(self) -> Dict[str, Port]:
         """
         Returns the list of ports.
 
@@ -227,9 +226,9 @@ class IO(Base):
 
     # -- R --
 
-    def _reset(self):
-        for k in self._ports:
-            self._ports[k]._reset()
+    def reset(self) -> None:
+        for port in self._ports.values():
+            port.reset()
 
     # -- S --
 
@@ -279,7 +278,7 @@ class IO(Base):
                 }
 
             specs: List[str] = []
-            for t in port._resource_types:
+            for t in port.resource_types:
                 if t is None:
                     specs.append(None)
                 else:
@@ -310,8 +309,8 @@ class Input(IO):
         :rtype: bool
         """
 
-        for k in self._ports:
-            if not self._ports[k].is_left_connected:
+        for port in self._ports.values():
+            if not port.is_left_connected:
                 return False
 
         return True
@@ -337,8 +336,8 @@ class Output(IO):
         :return: True if a port of the Output is right-connected.
         :rtype: bool
         """
-        for k in self._ports:
-            if not self._ports[k].is_right_connected:
+        for port in self._ports.values():
+            if not port.is_right_connected:
                 return False
 
         return True
@@ -348,5 +347,5 @@ class Output(IO):
         Propagates the resources of the child port to the connected (right-hande side) ports
         """
 
-        for k in self._ports:
-            self._ports[k].propagate()
+        for port in self._ports.values():
+            port.propagate()

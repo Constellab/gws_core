@@ -14,7 +14,7 @@ from ..core.exception.exceptions.unauthorized_exception import \
 from ..io.connector import Connector
 from ..io.io import Input, Output
 from ..io.ioface import Interface, Outerface
-from ..io.port import InPort, OutPort
+from ..io.port import InPort, OutPort, Port
 from ..model.typing_manager import TypingManager
 from ..model.typing_register_decorator import TypingDecorator
 from ..process.process_model import ProcessAllowedUser, ProcessModel
@@ -252,14 +252,14 @@ class ProtocolModel(ProcessableModel):
         # clear current interfaces
         self._interfaces = {}
 
-        interfaces = {}
+        interfaces: Dict[str, Port] = {}
         for key in interfaces_dict:
             # destination port of the interface
             _to: dict = interfaces_dict[key]["to"]
             proc_name: str = _to["node"]
             port_name: str = _to["port"]
             proc: ProcessableModel = self._processes[proc_name]
-            port: str = proc.input.ports[port_name]
+            port: Port = proc.input.ports[port_name]
             interfaces[key] = port
         self.set_interfaces(interfaces)
 
@@ -267,14 +267,14 @@ class ProtocolModel(ProcessableModel):
         # clear current interfaces
         self._outerfaces = {}
 
-        outerfaces = {}
+        outerfaces: Dict[str, Port] = {}
         for key in outerfaces_dict:
             # source port of the outerface
             _from: dict = outerfaces_dict[key]["from"]
             proc_name: str = _from["node"]
             port_name: str = _from["port"]
             proc: ProcessableModel = self._processes[proc_name]
-            port: str = proc.output.ports[port_name]
+            port: Port = proc.output.ports[port_name]
             outerfaces[key] = port
         self.set_outerfaces(outerfaces)
 
@@ -511,7 +511,7 @@ class ProtocolModel(ProcessableModel):
 
     # -- R --
 
-    def _reset(self) -> bool:
+    def reset(self) -> bool:
         """
         Reset the protocol
 
@@ -519,10 +519,10 @@ class ProtocolModel(ProcessableModel):
         :rtype: `bool`
         """
 
-        if not super()._reset():
+        if not super().reset():
             return False
         for process in self.processes.values():
-            if not process._reset():
+            if not process.reset():
                 return False
         self._reset_iofaces()
         return self.save()
@@ -533,9 +533,9 @@ class ProtocolModel(ProcessableModel):
 
     def _reset_iofaces(self):
         for interface in self.interfaces.values():
-            interface._reset()
+            interface.reset()
         for outerface in self.outerfaces.values():
-            outerface._reset()
+            outerface.reset()
 
     async def _run_before_task(self):
         self.save()
@@ -640,10 +640,10 @@ class ProtocolModel(ProcessableModel):
         for k in self.output_specs:
             self._output.create_port(k, self.output_specs[k])
 
-    def set_interfaces(self, interfaces: dict):
+    def set_interfaces(self, interfaces: Dict[str, Port]):
         input_specs = {}
         for k in interfaces:
-            input_specs[k] = interfaces[k]._resource_types
+            input_specs[k] = interfaces[k].resource_types
         self.__set_input_specs(input_specs)
         if not self.input_specs:
             return
@@ -655,10 +655,10 @@ class ProtocolModel(ProcessableModel):
         if self.data.get("input"):
             self._init_input()
 
-    def set_outerfaces(self, outerfaces: dict):
+    def set_outerfaces(self, outerfaces: Dict[str, Port]):
         output_specs = {}
         for k in outerfaces:
-            output_specs[k] = outerfaces[k]._resource_types
+            output_specs[k] = outerfaces[k].resource_types
         self.__set_output_specs(output_specs)
         if not self.output_specs:
             return

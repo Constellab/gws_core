@@ -38,12 +38,12 @@ class IOface:
 
     # -- R --
 
-    def _reset(self):
+    def reset(self):
         if self.source_port:
-            self.source_port._reset()
+            self.source_port.reset()
 
         if self.target_port:
-            self.target_port._reset()
+            self.target_port.reset()
 
     # -- T --
 
