@@ -6,11 +6,10 @@
 import time
 from typing import Type
 
-from gws_core.config.config import Config
-from gws_core.progress_bar.progress_bar import ProgressBar
-from gws_core.resource.io import Input, Output
-
+from ..config.config import Config
 from ..core.model.model import Model
+from ..io.io import Input, Output
+from ..progress_bar.progress_bar import ProgressBar
 from ..resource.resource import Resource
 from .process import Process
 from .process_decorator import ProcessDecorator
@@ -105,9 +104,8 @@ class Switch2(Process):
     input_specs = {'resource_1': (
         Resource, None, ), 'resource_2': (Resource, None, )}
     output_specs = {'resource': (Resource, )}
-    config_specs = {
-        "index": {"type": int, "default": 1, "min": 1, "max": 2, "Description": "The index of the input resource to switch on. Defaults to 1."}
-    }
+    config_specs = {"index": {"type": int, "default": 1, "min": 1, "max": 2,
+                              "Description": "The index of the input resource to switch on. Defaults to 1."}}
     _is_plug = True
 
     async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
@@ -126,9 +124,8 @@ class Wait(Process):
 
     input_specs = {'resource': (Resource,)}
     output_specs = {'resource': (Resource,)}
-    config_specs = {
-        "waiting_time": {"type": float, "default": 3, "min": 0, "Description": "The waiting time in seconds. Defaults to 3 second."}
-    }
+    config_specs = {"waiting_time": {"type": float, "default": 3, "min": 0,
+                                     "Description": "The waiting time in seconds. Defaults to 3 second."}}
     _is_plug = True
 
     async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:

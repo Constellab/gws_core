@@ -5,24 +5,20 @@
 
 from unittest import IsolatedAsyncioTestCase
 
-from gws_core import (Experiment, ExperimentService, GTest, ProcessDecorator,
-                      Resource, Shell)
+from gws_core import (Experiment, ExperimentService, GTest, Input, Output,
+                      ProcessDecorator, Resource, Shell)
 from gws_core.config.config import Config
 from gws_core.process.process_model import ProcessModel
 from gws_core.process.process_service import ProcessService
-from gws_core.process.processable_factory import ProcessableFactory
 from gws_core.progress_bar.progress_bar import ProgressBar
-from gws_core.resource.io import Input, Output
 
 
 @ProcessDecorator("Echo")
 class Echo(Shell):
     input_specs = {}
     output_specs = {'stdout': (Resource)}
-    config_specs = {
-        'name': {"type": str, "default": None, 'description': "The name to echo"},
-        'save_stdout': {"type": bool, "default": False, 'description': "True to save the command output text. False otherwise"},
-    }
+    config_specs = {'name': {"type": str, "default": None, 'description': "The name to echo"}, 'save_stdout': {
+        "type": bool, "default": False, 'description': "True to save the command output text. False otherwise"}, }
 
     def build_command(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> list:
         name = config.get_param("name")

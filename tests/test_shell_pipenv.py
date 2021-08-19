@@ -6,15 +6,13 @@
 import os
 from unittest import IsolatedAsyncioTestCase
 
-from gws_core import (Experiment, ExperimentService, GTest, PipEnvShell,
-                      Resource)
+from gws_core import (Experiment, ExperimentService, GTest, Input, Output,
+                      PipEnvShell, Resource)
 from gws_core.config.config import Config
 from gws_core.process.process_decorator import ProcessDecorator
 from gws_core.process.process_model import ProcessModel
 from gws_core.process.process_service import ProcessService
-from gws_core.process.processable_factory import ProcessableFactory
 from gws_core.progress_bar.progress_bar import ProgressBar
-from gws_core.resource.io import Input, Output
 
 __cdir__ = os.path.abspath(os.path.dirname(__file__))
 
@@ -61,7 +59,8 @@ class TestProcess(IsolatedAsyncioTestCase):
         result = proc.output["stdout"]
         encoded_string = result.data["encoded_string"]
         self.assertEqual(
-            encoded_string, "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzb21lIjoicGF5bG9hZCJ9.Joh1R2dYzkRvDkqv3sygm5YyK8Gi4ShZqbhK2gxcs2U")
+            encoded_string,
+            "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzb21lIjoicGF5bG9hZCJ9.Joh1R2dYzkRvDkqv3sygm5YyK8Gi4ShZqbhK2gxcs2U")
 
         self.assertTrue(PipEnvTester.is_installed())
         self.assertTrue(proc.is_finished)

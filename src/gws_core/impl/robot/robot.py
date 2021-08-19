@@ -4,9 +4,9 @@
 # About us: https://gencovery.com
 
 import time
-from typing import Dict, List, Tuple
 
 from ...config.config import Config
+from ...io.io import Input, Output
 from ...process.process import Process
 from ...process.process_decorator import ProcessDecorator
 from ...process.process_model import ProcessModel
@@ -15,7 +15,6 @@ from ...progress_bar.progress_bar import ProgressBar
 from ...protocol.protocol import Protocol, ProtocolCreateConfig
 from ...protocol.protocol_decorator import ProtocolDecorator
 from ...protocol.protocol_model import ProtocolModel
-from ...resource.io import Input, Output
 from ...resource.resource import Resource
 from ...resource.resource_decorator import ResourceDecorator
 

@@ -5,6 +5,7 @@ from typing import Optional, Type
 from ..config.config import Config
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from ..io.connector import Connector
 from ..model.typing_manager import TypingManager
 from ..process.process import Process
 from ..process.process_model import ProcessModel
@@ -15,7 +16,6 @@ from ..protocol.protocol import (CONST_PROTOCOL_TYPING_NAME, Protocol,
                                  ProtocolCreateConfig)
 from ..protocol.protocol_model import ProtocolModel
 from ..protocol.sub_process_factory import SubProcessableFactory
-from ..resource.io import Connector
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
 

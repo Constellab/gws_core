@@ -20,7 +20,7 @@ from ...core.utils.utils import Utils
 from ...model.typing_manager import TypingManager
 from ...process.process import Process
 from ...process.process_decorator import ProcessDecorator
-from ...resource.io import Input, Output
+from ...io.io import Input, Output
 from ...resource.resource import Resource
 from .file import File, FileSet
 from .file_store import FileStore, LocalFileStore
@@ -30,9 +30,8 @@ from .file_store import FileStore, LocalFileStore
 class FileUploader(Process):
     input_specs = {}
     output_specs = {'result': (FileSet, File,)}
-    config_specs = {
-        'file_store_uri': {"type": str, "default": None, 'description': "URI of the file_store where the file must be downloaded"},
-    }
+    config_specs = {'file_store_uri': {"type": str, "default": None,
+                                       'description': "URI of the file_store where the file must be downloaded"}, }
     _files: list = None
 
     def __init__(self, *args, files: List[UploadFile] = [], **kwargs):
@@ -89,10 +88,8 @@ class FileUploader(Process):
 class FileImporter(Process):
     input_specs = {'file': File}
     output_specs = {"data": Resource}
-    config_specs = {
-        'file_format': {"type": str, "default": None, 'description': "File format"},
-        'output_type': {"type": str, "default": "", 'description': "The output file type. If defined, it is used to automatically format data output"},
-    }
+    config_specs = {'file_format': {"type": str, "default": None, 'description': "File format"}, 'output_type': {
+        "type": str, "default": "", 'description': "The output file type. If defined, it is used to automatically format data output"}, }
 
     async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
         inport_name = list(self.input.keys())[0]
@@ -179,8 +176,9 @@ class FileLoader(Process):
     config_specs = {
         'file_path': {"type": str, "default": None, 'description': "Location of the file to import"},
         'file_format': {"type": str, "default": None, 'description': "File format"},
-        'output_type': {"type": str, "default": "", 'description': "The output file type. If defined, it is used to automatically format data output"},
-    }
+        'output_type':
+        {"type": str, "default": "",
+         'description': "The output file type. If defined, it is used to automatically format data output"}, }
 
     async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
         outport_name = list(self.output.keys())[0]

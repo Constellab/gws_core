@@ -14,7 +14,7 @@ from ...core.model.sys_proc import SysProc
 from ...process.process import Process
 from ...process.process_decorator import ProcessDecorator
 from ...progress_bar.progress_bar import ProgressBar
-from ...resource.io import Input, Output
+from ...io.io import Input, Output
 from ..file.file import File
 
 

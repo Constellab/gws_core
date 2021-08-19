@@ -8,11 +8,12 @@ from starlette_context import context
 
 from ..config.config import Config
 from ..core.exception.exceptions import BadRequestException
+from ..io.io import Input, Output
+from ..io.port import InPort, OutPort
 from ..model.typing_manager import TypingManager
 from ..model.viewable import Viewable
 from ..process.processable import Processable
 from ..progress_bar.progress_bar import ProgressBar
-from ..resource.io import InPort, Input, OutPort, Output
 from ..user.user import User
 
 

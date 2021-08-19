@@ -11,6 +11,10 @@ from typing import Dict, List, Optional, Type, Union
 from ..core.exception.exceptions import BadRequestException
 from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
+from ..io.connector import Connector
+from ..io.io import Input, Output
+from ..io.ioface import Interface, Outerface
+from ..io.port import InPort, OutPort
 from ..model.typing_manager import TypingManager
 from ..model.typing_register_decorator import TypingDecorator
 from ..process.process import Process
@@ -18,8 +22,6 @@ from ..process.process_model import ProcessAllowedUser, ProcessModel
 from ..process.processable import Processable
 from ..process.processable_model import ProcessableModel
 from ..protocol.protocol import Protocol
-from ..resource.io import (Connector, InPort, Input, Interface, Outerface,
-                           OutPort, Output)
 from ..user.activity import Activity
 from ..user.user import User
 from .sub_process_factory import SubProcessableFactory

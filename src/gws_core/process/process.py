@@ -3,8 +3,8 @@
 from ..config.config import Config
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from ..io.io import Input, Output
 from ..progress_bar.progress_bar import ProgressBar
-from ..resource.io import Input, Output
 from .processable import Processable
 
 # Typing names generated for the class Process

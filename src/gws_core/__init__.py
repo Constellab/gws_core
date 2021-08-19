@@ -123,6 +123,17 @@ from .impl.s3.swift import Swift as Swift
 from .impl.shell.conda import CondaEnvShell as CondaEnvShell
 from .impl.shell.pipenv import PipEnvShell as PipEnvShell
 from .impl.shell.shell import Shell as Shell
+# Io
+from .io.connector import Connector as Connector
+from .io.io import IO as IO
+from .io.io import Input as Input
+from .io.io import Output as Output
+from .io.ioface import Interface as Interface
+from .io.ioface import IOface as IOface
+from .io.ioface import Outerface as Outerface
+from .io.port import InPort as InPort
+from .io.port import OutPort as OutPort
+from .io.port import Port as Port
 # Lab
 from .lab.lab_service import LabService as LabService
 from .lab.system import Monitor as Monitor
@@ -158,16 +169,6 @@ from .protocol.protocol_model import ProtocolModel as ProtocolModel
 from .protocol.protocol_service import ProtocolService as ProtocolService
 from .protocol.protocol_type import ProtocolType as ProtocolType
 # Resource
-from .resource.io import IO as IO
-from .resource.io import Connector as Connector
-from .resource.io import InPort as InPort
-from .resource.io import Input as Input
-from .resource.io import Interface as Interface
-from .resource.io import IOface as IOface
-from .resource.io import Outerface as Outerface
-from .resource.io import OutPort as OutPort
-from .resource.io import Output as Output
-from .resource.io import Port as Port
 from .resource.resource import ExperimentResource as ExperimentResource
 from .resource.resource import ProcessResource as ProcessResource
 from .resource.resource import Resource as Resource
