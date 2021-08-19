@@ -122,11 +122,11 @@ class ProtocolService(BaseService):
 
     @classmethod
     def update_protocol_graph(cls, protocol: ProtocolModel, graph: dict) -> ProtocolModel:
-        protocol: ProtocolModel = cls._update_protocol_graph_recur(
+        new_protocol: ProtocolModel = cls._update_protocol_graph_recur(
             protocol, graph)
 
-        protocol.save_full()
-        return protocol
+        new_protocol.save_full()
+        return new_protocol
 
     @classmethod
     def _update_protocol_graph_recur(cls, protocol: ProtocolModel, graph: dict) -> ProtocolModel:

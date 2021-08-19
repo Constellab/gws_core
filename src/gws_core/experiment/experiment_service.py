@@ -10,6 +10,7 @@ from typing import Any, Coroutine, Union
 
 from gws_core.process.processable_factory import ProcessableFactory
 from gws_core.protocol.protocol_service import ProtocolService
+from numpy.lib.function_base import gradient
 from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
@@ -185,10 +186,7 @@ class ExperimentService(BaseService):
         experiment.check_is_updatable()
 
         if experiment_DTO.graph:
-            proto: ProtocolModel = experiment.protocol
-            proto.build_from_graph(
-                graph=experiment_DTO.graph, rebuild=True)
-            proto.save()
+            ProtocolService.update_protocol_graph(protocol=experiment.protocol, graph=experiment_DTO.graph)
 
         if experiment_DTO.title:
             experiment.set_title(experiment_DTO.title)
