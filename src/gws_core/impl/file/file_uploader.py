@@ -17,10 +17,10 @@ from ...config.config import Config
 from ...core.exception.exceptions import BadRequestException
 from ...core.model.model import Model
 from ...core.utils.utils import Utils
+from ...io.io import Input, Output
 from ...model.typing_manager import TypingManager
 from ...process.process import Process
 from ...process.process_decorator import ProcessDecorator
-from ...io.io import Input, Output
 from ...resource.resource import Resource
 from .file import File, FileSet
 from .file_store import FileStore, LocalFileStore
@@ -131,10 +131,10 @@ class FileExporter(Process):
     }
 
     async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
-        fs_uri = config.get_param("file_store_uri")
-        if fs_uri:
+        file_store_uri = config.get_param("file_store_uri")
+        if file_store_uri:
             try:
-                resource: Resource = FileStore.get(FileStore.uri == fs_uri)
+                resource: Resource = FileStore.get(FileStore.uri == file_store_uri)
                 fs = TypingManager.get_object_with_typing_name(
                     resource.typing_name, resource.id)
             except:

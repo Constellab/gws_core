@@ -1,7 +1,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Tuple, Type, final
+from typing import TYPE_CHECKING, List, final
+
+from gws_core.io.io_types import IOSpec
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.base import Base
@@ -21,7 +23,7 @@ class Port(Base):
     """
 
     _resource: Resource = None
-    resource_types: Tuple[Type[Resource]] = None
+    resource_types: IOSpec = None
     _prev: 'Port' = None
     _next: List['Port'] = []
     _parent: IO

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Dict, List, Tuple, Type, final
 
+from gws_core.io.io_types import IOSpec
+
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.base import Base
@@ -45,7 +47,7 @@ class IO(Base):
 
     # -- C --
 
-    def create_port(self, name: str, resource_types: Tuple[Type[Resource]]):
+    def create_port(self, name: str, resource_types: IOSpec):
         """
         Creates a port.
 

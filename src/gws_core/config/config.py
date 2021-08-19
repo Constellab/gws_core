@@ -3,13 +3,34 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Union, final
-
-from gws_core.model.typing_register_decorator import TypingDecorator
+from typing import Any, Dict, List, Literal, Optional, TypedDict, Union, final
 
 from ..core.classes.validator import Validator
 from ..core.exception.exceptions import BadRequestException
+from ..model.typing_register_decorator import TypingDecorator
 from ..model.viewable import Viewable
+
+
+class ConfigSpec(TypedDict):
+
+    # Type of the config value (string, float...)
+    type: Literal['str', 'float']
+
+    #  Default value
+    #  If not provided, the config is mandatory
+    default: Optional[Any]
+
+    #  If present, the value must be in the array
+    allowed_values: Optional[List[Any]]
+
+    # Description of the config, showed in the interface
+    description: Optional[str]
+
+   # Measure unit of the value (ex km)
+    unit: Optional[str]
+
+
+ConfigSpecs = Dict[str, ConfigSpec]
 
 
 @final
