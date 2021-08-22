@@ -13,7 +13,7 @@ from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
                       Settings, Study)
 
 settings = Settings.retrieve()
-testdata_dir = settings.get_dir("gws:testdata_dir")
+testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 
 class TestProtocol(IsolatedAsyncioTestCase):

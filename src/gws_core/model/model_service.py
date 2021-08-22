@@ -74,7 +74,7 @@ class ModelService(BaseService):
         :type model_type: `type`
         """
 
-        db_list, model_list = cls._get_db_and_model_lists(models)
+        db_list, model_list = cls.get_db_and_model_types(models)
         for db in db_list:
             i = db_list.index(db)
             models = [t for t in model_list[i] if not t.table_exists()]
@@ -93,7 +93,7 @@ class ModelService(BaseService):
         :type model_type: `type`
         """
 
-        db_list, model_list = cls._get_db_and_model_lists(models)
+        db_list, model_list = cls.get_db_and_model_types(models)
         for db in db_list:
             i = db_list.index(db)
             models: List[Model] = [
@@ -181,23 +181,16 @@ class ModelService(BaseService):
     # -- G --
 
     @classmethod
-    def get_exposed_models(cls):
-        settings = Settings.retrieve()
-        dep_dirs = settings.get_dependency_dirs()
-        exposed_models = {}
-        for brick_name in dep_dirs:
-            exposed_models[brick_name] = {}
-            try:
-                module = importlib.import_module(brick_name+".__expose__")
-                exposed_models[brick_name] = Expose.analyze(module)
-            except Exception as _:
-                pass
-        return exposed_models
+    def get_model_types(cls):
+        if not getattr(cls,'__model_types', None):
+            cls.__model_types: List[Type[Model]] = Model.inheritors()
+
+        return cls.__model_types
 
     @classmethod
-    def _get_db_and_model_lists(cls, models: list = None) -> Tuple[DatabaseProxy, List[Model]]:
+    def get_db_and_model_types(cls, models: list = None) -> Tuple[DatabaseProxy, List[Type[Model]]]:
         if not models:
-            models = ModelService._inspect_model_types()
+            models = ModelService.get_model_types()
         db_list = []
         model_list = []
         for t in models:
@@ -211,67 +204,6 @@ class ModelService(BaseService):
         return db_list, model_list
 
     # -- I --
-
-    @classmethod
-    def _inspect_model_types(cls):
-        settings = Settings.retrieve()
-        dep_dirs = settings.get_dependency_dirs()
-
-        def __get_list_of_sub_modules(cdir):
-            modules = [[f, dirpath]
-                       for dirpath, dirnames, files in os.walk(cdir)
-                       for f in files if f.endswith('.py') and not f.startswith('_')
-                       ]
-
-            f = []
-            for kv in modules:
-                file_name = kv[0]
-                folder = kv[1].replace(cdir, '').replace("/", ".").strip(".")
-                file_name = file_name.replace(".py", "")
-                if "._" in folder or folder.startswith("_"):
-                    continue
-
-                if folder:
-                    f.append(folder+"."+file_name)
-                else:
-                    f.append(file_name)
-
-            return f
-
-        model_type_list = []
-        for brick_name in dep_dirs:
-            cdir = dep_dirs[brick_name]
-            cdir = os.path.join(cdir, "./src/")
-            module_names = __get_list_of_sub_modules(cdir)
-
-            if brick_name == "gws_core":
-                _black_list = [
-                    "gws_core.settings",
-                    "gws_core.runner",
-                    "gws_core.manage",
-                    "gws_core.logger",
-                    "gws_core.cli",
-                    "gws_core.app"
-                ]
-
-                for k in _black_list:
-                    try:
-                        module_names.remove(k)
-                    except Exception as _:
-                        pass
-
-            for module_name in module_names:
-                try:
-                    submodule = importlib.import_module(module_name)
-                    for _, obj in inspect.getmembers(submodule, inspect.isclass):
-                        if issubclass(obj, Model):
-                            model_type_list.append(obj)
-                except Exception as err:
-                    # @ToDo
-                    pass
-
-        model_type_list = list(set(model_type_list))
-        return model_type_list
 
     # -- R --
 

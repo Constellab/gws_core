@@ -142,27 +142,8 @@ class UserService(BaseService):
         return list(User.select())
 
     @classmethod
-    def create_owner_and_sysuser(cls):
-        settings_local = Settings.retrieve()
-
-        # Create the owner
-        try:
-            UserService.get_owner()
-        except:
-            uri = settings_local.data["owner"]["uri"]
-            email = settings_local.data["owner"]["email"]
-            first_name = settings_local.data["owner"]["first_name"]
-            last_name = settings_local.data["owner"]["last_name"]
-            u = User(
-                uri=uri if uri else None,
-                email=email,
-                data={"first_name": first_name, "last_name": last_name},
-                is_active=True,
-                group=User.OWNER_GROUP
-            )
-            u.save()
-
-        # Create the admin
+    def create_sysuser(cls):
+        """ Create the system user """
         try:
             UserService.get_sysuser()
         except:

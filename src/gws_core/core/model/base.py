@@ -5,7 +5,7 @@
 
 import inspect
 import re
-from typing import List
+from typing import List, Type
 
 from ..utils.utils import Utils
 
@@ -66,7 +66,13 @@ class Base:
         return full_name
 
     @classmethod
-    def module(cls) -> str:
+    def inheritors(cls) -> List[Type['Base']]:
+        """ Get all the classes that inherit this class """
+        return set(cls.__subclasses__()).union(
+            [s for c in cls.__subclasses__() for s in c.inheritors()])
+
+    @classmethod
+    def module_name(cls) -> str:
         """
         Returns the module name of the class
 

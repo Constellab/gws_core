@@ -12,7 +12,7 @@ from gws_core import (CSVDumper, CSVExporter, CSVImporter, CSVLoader, CSVTable,
                       Study)
 
 settings = Settings.retrieve()
-testdata_dir = settings.get_dir("gws:testdata_dir")
+testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 
 class TestCSV(IsolatedAsyncioTestCase):

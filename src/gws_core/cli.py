@@ -4,7 +4,6 @@
 # About us: https://gencovery.com
 
 import asyncio
-
 import click
 
 from .core.exception.exception_handler import ExceptionHandler
@@ -13,7 +12,6 @@ from .core.utils.settings import Settings
 from .experiment.experiment import Experiment
 from .experiment.experiment_service import ExperimentService
 from .user.user import User
-
 
 @click.command(context_settings=dict(
     ignore_unknown_options=True,

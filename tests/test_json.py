@@ -10,7 +10,7 @@ import unittest
 from gws_core import GTest, JSONDict, Settings
 
 settings = Settings.retrieve()
-testdata_dir = settings.get_dir("gws:testdata_dir")
+testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 
 class TestJson(unittest.TestCase):

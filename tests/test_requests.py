@@ -9,7 +9,7 @@ import unittest
 from gws_core import GTest, Requests, Settings
 
 settings = Settings.retrieve()
-testdata_dir = settings.get_dir("gws:testdata_dir")
+testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 
 class TestRequests(unittest.TestCase):

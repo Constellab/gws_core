@@ -42,33 +42,33 @@ class AbstractDbManager:
     db = DatabaseProxy()
     _engine = None
     _mariadb_config = {
-        "user": "gws",
+        "user": "gws_core",
         "password": "gencovery"
     }
-    _db_name = "gws"
-    _mode = "dev"
+    _db_name = "gws_core"
     __TEST_DB_NAME = "test_gws" # Keep private and constant => All models inherit the same test DB
 
     @classmethod
-    def init(cls, engine: str = None, mode: str = None, test: bool = False):
+    def init(cls, engine: str = None, test: bool = False):
         """ Initialize the DbManager """
 
         if test:
             cls._db_name = cls.__TEST_DB_NAME
+            cls._mariadb_config["user"] = cls.__TEST_DB_NAME
 
         if engine:
             cls._engine = engine
         if not cls._engine:
             cls._engine = "sqlite3"
         if cls._engine == "sqlite3":
-            db_path = cls.get_sqlite3_db_path(mode=mode)
+            db_path = cls.get_sqlite3_db_path()
             _db = SqliteDatabase(db_path)
         elif cls._engine in ["mariadb", "mysql"]:
             _db = ReconnectMySQLDatabase(
                 cls._db_name,
                 user=cls._mariadb_config["user"],
                 password=cls._mariadb_config["password"],
-                host=cls.get_maria_db_host(mode=mode),
+                host=cls.get_maria_db_host(),
                 port=3306
             )
         else:
@@ -129,34 +129,18 @@ class AbstractDbManager:
         return cls._engine
 
     @classmethod
-    def get_maria_db_host(cls, mode: str = None):
+    def get_maria_db_host(cls):
         """ Get the current maria db host address """
 
         settings = Settings.retrieve()
-        if mode:
-            if mode == "prod":
-                cls._mode = "prod"
-            else:
-                cls._mode = "dev"
-        else:
-            cls._mode = ("prod" if settings.is_prod else "dev")
         return settings.get_maria_db_host(cls._db_name)
 
     @classmethod
-    def get_sqlite3_db_path(cls, mode: str = None):
+    def get_sqlite3_db_path(cls):
         """ Get the current current sqlite3 db path """
 
         settings = Settings.retrieve()
-        if mode:
-            if mode == "prod":
-                db_path = settings.get_sqlite3_prod_db_path(cls._db_name)
-                cls._mode = "prod"
-            else:
-                db_path = settings.get_sqlite3_dev_db_path(cls._db_name)
-                cls._mode = "dev"
-        else:
-            db_path = settings.get_sqlite3_db_path(cls._db_name)
-            cls._mode = ("prod" if settings.is_prod else "dev")
+        db_path = settings.get_sqlite3_db_path(cls._db_name)
         return db_path
 
     # -- I --

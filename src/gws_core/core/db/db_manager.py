@@ -23,12 +23,11 @@ GWS_DB_ENGINE = "mariadb"
 class DbManager(AbstractDbManager):
     db = DatabaseProxy()
     _mariadb_config = {
-        "user": "gws",
+        "user": "gws_core",
         "password": "gencovery",
     }
-    _db_name = "gws"
-    _mode = "dev"
-    
+    _db_name = "gws_core"
+
     @classmethod
     def init_db(cls) -> None:
         DbManager.init(engine=GWS_DB_ENGINE)

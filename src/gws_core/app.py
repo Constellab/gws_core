@@ -4,7 +4,6 @@
 # About us: https://gencovery.com
 
 import os
-import re
 
 import uvicorn
 from fastapi import FastAPI
@@ -14,10 +13,10 @@ from starlette_context.middleware.context_middleware import ContextMiddleware
 from gws_core.core.classes.cors_config import CorsConfig
 
 from ._core_app_importer import *
-from ._sphynx.docgen import docgen
 from .central.central_app import central_app
 from .core.utils.logger import Logger
 from .core.utils.settings import Settings
+from .core.utils.utils import Utils
 from .core_app import core_app
 from .experiment.queue_service import QueueService
 from .lab.system import Monitor
@@ -71,7 +70,6 @@ class App:
         cls.is_running = True
         Monitor.init(daemon=True)
         QueueService.init(daemon=True)
-        
 
     @classmethod
     def deinit(cls):
@@ -92,20 +90,21 @@ class App:
         ModelService.create_tables()
         ModelService.register_all_processes_and_resources()
         Study.create_default_instance()
-        UserService.create_owner_and_sysuser()
+        UserService.create_sysuser()
 
-        # static dirs and docs
+        # Add static dirs for docs of git modules
+        # @ToDo: Add route or hooks to compile docs after
         settings: Settings = Settings.retrieve()
-        dirs = settings.get_dependency_dirs()
+        brick_paths = Utils.get_all_brick_paths()
         Logger.info(
             f"Starting server in {('prod' if settings.is_prod else 'dev')} mode ...")
-        for name in dirs:
-            html_dir = os.path.join(dirs[name], "./docs/html/build")
-            if not os.path.exists(os.path.join(html_dir, "index.html")):
-                # os.makedirs(html_dir)
-                docgen(name, dirs[name], settings, force=True)
+        for path in brick_paths:
+            name = path.strip("/").split("/")[-1]
+            documention_path = os.path.join(path, "./docs/html/build")
+            if not os.path.exists(documention_path):
+                os.makedirs(documention_path)
             cls.app.mount(
-                f"/docs/{name}/", StaticFiles(directory=html_dir), name=f"/docs/{name}/")
+                f"/docs/{name}/", StaticFiles(directory=documention_path), name=f"/docs/{name}/")
 
         # Configure the CORS
         CorsConfig.configure_app_cors(app)

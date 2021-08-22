@@ -4,4 +4,6 @@
 # About us: https://gencovery.com
 
 
-# Pre-installation script executed before server installation
+# Pre-installation script executed before module installation
+
+echo "Installing pre-install .sh hooks ..."

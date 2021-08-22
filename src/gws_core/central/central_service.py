@@ -20,16 +20,6 @@ class CentralService(BaseService):
         return central_settings.get("api_key") == api_key
 
     @classmethod
-    def set_api_key(cls, api_key: str):
-        settings = Settings.retrieve()
-        if not settings.data.get("central"):
-            settings.data["central"] = {}
-
-        settings.data["central"]["api_key"] = api_key
-        tf = settings.save()
-        return {"status": tf}
-
-    @classmethod
     def check_credentials(cls, credentials: CredentialsDTO) -> bool:
         """
         Check the credential of an email/password by calling central
@@ -46,8 +36,8 @@ class CentralService(BaseService):
         """
         Build an URL to call the central API
         """
-        central_settings = CentralService.__get_central_settings()
 
+        central_settings = CentralService.__get_central_settings()
         return central_settings.get('api_url') + route
 
     @classmethod
@@ -56,7 +46,13 @@ class CentralService(BaseService):
         Retrieve the central settings and throw error if the settings does not exists
         """
         settings = Settings.retrieve()
-        if not settings.data.get("central"):
+        if not settings.get_variables().get("central_api_key"):
             raise BadRequestException("The central setting does not exists")
 
-        return settings.data.get("central")
+        if not settings.get_variables().get("central_api_url"):
+            raise BadRequestException("The central setting does not exists")
+
+        return {
+            "api_key": settings.get_variables().get("central_api_key"),
+            "api_url": settings.get_variables().get("central_api_url")
+        }

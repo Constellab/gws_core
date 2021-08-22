@@ -1,49 +1,34 @@
 {
     "name"          : "gws_core",
-    "authors"       : "Gencovery",
+    "author"        : "Gencovery",
     "version"       : "0.2.0",
     "app_dir"       : "./",
     "app_host"      : "0.0.0.0",
     "app_port"      : 3000,
-    
-    "admin": {
-        "email"     : "admin@gencovery.com",
-        "first_name" : "Admin",
-        "last_name"  : ""
+    "variables":{
+        "gws_core:testdata_dir" : "{CURRENT_DIR}/tests/testdata"
     },
-    
-    "owner": {
-        "uri"       : "",
-        "email"     : "admin@gencovery.com",
-        "first_name" : "Owner",
-        "last_name"  : ""
-    },
-
-    "dirs" : {
-        "gws:testdata_dir" : "./tests/testdata"
-    },
-    
-    "externs" : {},
-    "dependencies" : {},
-
-    "environment":[
-        {
-            "source": "https://pypi.python.org/simple",
-            "packages":[
-                "requests[socks]",
-                "records>0.5.0"
-            ]
-        },
-        {
-            "source": "https://xxxxx",
-            "packages":[
-                "gws_core"
-            ]
+    "environment":{
+        "pip":[
+            {
+                "source": "https://pypi.python.org/simple",
+                "packages":[]
+            },
+            {
+                "source": "https://$GWS_PIP_PACKAGE_TOKEN@gitlab.com/api/v4/projects/27171024/packages/pypi",
+                "packages":[]
+            }
+        ],
+        "git":[
+            {
+                "source": "https://$GWS_GIT_LOGIN:$GWS_GIT_PWD@gitlab.com/gencovery/",
+                "packages":[]
+            }
+        ],
+        "variables":{
+            "GWS_GIT_LOGIN": "",
+            "GWS_GIT_PWD": "",
+            "GWS_PIP_PACKAGE_TOKEN": ""
         }
-    ],
-
-    "central": {
-        "api_key": "123456",
-        "api_url": "https://pre-prod-back.gws.gencovery.com/"
     }
 }

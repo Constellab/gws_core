@@ -8,7 +8,6 @@ import os
 import unittest
 from copy import Error
 from unittest.suite import BaseTestSuite
-
 import click
 
 from .app import App
@@ -16,6 +15,7 @@ from .core.db.db_manager import DbManager
 from .core.exception.exceptions import BadRequestException
 from .core.utils.logger import Logger
 from .core.utils.settings import Settings
+from ._sphynx.docgen import Docgen
 
 def _run(ctx, uri="", token="", test="",
          cli=False, cli_test=False, runserver=False, runmode="dev",
@@ -53,7 +53,7 @@ def _run(ctx, uri="", token="", test="",
         DbManager.init_test_db()
     else:
         DbManager.init_db()
-        
+
     if runserver:
         # start app
         App.start(ip=ip, port=port)
@@ -72,24 +72,18 @@ def _run(ctx, uri="", token="", test="",
     elif test:
         if test in ["*", "all"]:
             test = "test*"
-
         tests: str = test.split(' ')
         loader = unittest.TestLoader()
         test_suite: BaseTestSuite = BaseTestSuite()
         for test_file in tests:
             brick_dir = settings.get_cwd()
             test_suite.addTests(loader.discover(os.path.join(brick_dir, "./tests/"), pattern=test_file+".py"))
-
         test_runner = unittest.TextTestRunner()
-
         if test_suite.countTestCases() == 0:
-            raise Error(f"No test file with name {test} found")
-
+            raise Error(f"No test file '{test}' found")
         test_runner.run(test_suite)
     elif docgen:
-
-        brick_dir = settings.get_cwd()
-        docgen(settings.name, brick_dir, settings, force=force)
+        Docgen.generate(settings, force=force)
     else:
         # only load gws environmenet
         pass

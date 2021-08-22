@@ -12,17 +12,14 @@ from playhouse.sqlite_ext import JSONField
 
 from .utils import Utils
 
-# __SETTINGS_DB_PROXY__ = Proxy()  # create a proxy for our db.
 
-__SETTINGS_DIR__ = "/settings/"
+__SETTINGS_DIR__ = "/conf/settings"
 if not os.path.exists(__SETTINGS_DIR__):
     os.makedirs(__SETTINGS_DIR__)
 __SETTINGS_DB__ = SqliteDatabase(
     os.path.join(__SETTINGS_DIR__, "settings.sqlite3"))
 
 # app settings
-
-
 class Settings(PeeweeModel):
     """
     Settings class.
@@ -38,16 +35,12 @@ class Settings(PeeweeModel):
         app_dir=os.path.dirname(os.path.abspath(__file__)),
         app_host='0.0.0.0',
         app_port=3000,
-        # log_dir         = "/logs",
-        # data_dir        = "/data",
-        dependencies={}
     )
 
     _table_name = "gws_settings"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         if not self.data:
             self.data = {}
             for k in self._data:
@@ -57,35 +50,21 @@ class Settings(PeeweeModel):
     def init(cls, settings_json: dict = None):
         for k in settings_json:
             cls._data[k] = settings_json[k]
-
-        # settings_dir = "/settings/" #os.path.join(cls._data["data_dir"], "settings")
-        # if not os.path.exists(settings_dir):
-        #     os.makedirs(settings_dir)
-
-        # db = SqliteDatabase(os.path.join(settings_dir, "settings.sqlite3"))
-        # __SETTINGS_DB_PROXY__.initialize(db)
-
         if not cls.table_exists():
             cls.create_table()
-
         try:
             settings = Settings.get_by_id(1)
             for k in cls._data:
                 settings.data[k] = cls._data[k]
             settings.save()
-
         except Exception as _:
             settings = Settings()
             # secret_key
-            # b64encode(token_bytes(32)).decode()
             secret_key = Utils.generate_random_chars(128)
             settings.set_data("secret_key", secret_key)
-
             # random token by default (security)
-            # b64encode(token_bytes(32)).decode()
             token = Utils.generate_random_chars(128)
             settings.set_data("token", token)
-
             # default uri
             settings.set_data("uri", "")
             settings.save()
@@ -128,42 +107,13 @@ class Settings(PeeweeModel):
     # -- A --
 
     @property
-    def app(self):
-        return self.data.get("app", {})
-
-    @property
-    def authors(self):
-        return self.data.get("authors", None)
-
-    # -- B --
-
-    # -- C --
-
-    # -- D --
-
-    @property
-    def description(self):
-        """ Get the app description """
-        return self.app.get("description", None)
+    def author(self):
+        return self.data.get("author","")
 
     # -- G --
 
     def get_sqlite3_db_path(self, db_name) -> str:
         db_dir = os.path.join(self.get_data_dir(), db_name, "sqlite3")
-        if not os.path.exists(db_dir):
-            os.makedirs(db_dir)
-        db_path = os.path.join(db_dir, f"{db_name}.sqlite3")
-        return db_path
-
-    def get_sqlite3_dev_db_path(self, db_name) -> str:
-        db_dir = os.path.join(self.get_dev_data_dir(), db_name, "sqlite3")
-        if not os.path.exists(db_dir):
-            os.makedirs(db_dir)
-        db_path = os.path.join(db_dir, f"{db_name}.sqlite3")
-        return db_path
-
-    def get_sqlite3_prod_db_path(self, db_name) -> str:
-        db_dir = os.path.join(self.get_prod_data_dir(), db_name, "sqlite3")
         if not os.path.exists(db_dir):
             os.makedirs(db_dir)
         db_path = os.path.join(db_dir, f"{db_name}.sqlite3")
@@ -184,8 +134,9 @@ class Settings(PeeweeModel):
     def get_maria_dev_db_host(self, db_name) -> str:
         return f"{db_name}_dev_db"
 
-    def get_cwd(self) -> dict:
-        return self.data["__cwd__"]
+    def get_cwd(self) -> str:
+        """ Returns the current working directory of the Application (i.e. the main brick directory) """
+        return self.data["cwd"]
 
     def get_data(self, k: str, default=None) -> str:
         if k == "session_key":
@@ -195,17 +146,13 @@ class Settings(PeeweeModel):
 
     def get_lab_dir(self) -> str:
         """
-        Get the lab directory
+        Get the lab directory.
 
         :return: The lab directory
         :rtype: `str`
         """
 
         return "/lab"
-        # if self.is_prod:
-        #     return "/app/prod/lab"
-        # else:
-        #     return "/app/dev/lab"
 
     def get_log_dir(self) -> str:
         """
@@ -216,10 +163,6 @@ class Settings(PeeweeModel):
         """
 
         return "/logs"
-        # if self.is_prod:
-        #     return "/app/prod/logs"
-        # else:
-        #     return "/app/dev/logs"
 
     def get_data_dir(self) -> str:
         """
@@ -231,57 +174,6 @@ class Settings(PeeweeModel):
         """
 
         return "/data"
-        # if self.is_prod:
-        #     return self.get_prod_data_dir()
-        # else:
-        #     return self.get_dev_data_dir()
-
-    def get_dev_data_dir(self) -> str:
-        """
-        Get the development data directory
-
-        :return: The development data directory
-        :rtype: `str`
-        """
-
-        return "/app/dev/data"
-
-    def get_prod_data_dir(self) -> str:
-        """
-        Get the production data directory
-
-        :return: The production data directory
-        :rtype: `str`
-        """
-
-        return "/app/prod/data"
-
-    def get_root_dir(self) -> str:
-        """
-        Get the root directory of the lab. Alias of :meth:`get_lab_dir`.
-
-        :return: The root directory
-        :rtype: `str`
-        """
-
-        return self.get_lab_dir()
-
-    def get_gws_workspace_dir(self) -> str:
-        lab_dir = self.get_lab_dir()
-        if os.path.exists(os.path.join(lab_dir, "./.core/")):
-            return os.path.join(lab_dir, "./.core/")
-        else:
-            return os.path.join(lab_dir, "./core/")
-
-    def get_user_workspace_dir(self) -> str:
-        lab_dir = self.get_lab_dir()
-        return os.path.join(lab_dir, "./user/")
-
-    def get_dirs(self) -> dict:
-        return self.data.get("dirs", {})
-
-    def get_dir(self, name) -> str:
-        return self.data.get("dirs", {}).get(name, None)
 
     def get_file_store_dir(self) -> str:
         return os.path.join(self.get_data_dir(), "./filestore/")
@@ -289,26 +181,13 @@ class Settings(PeeweeModel):
     def get_kv_store_base_dir(self) -> str:
         return os.path.join(self.get_data_dir(), "./kvstore/")
 
-    def get_urls(self) -> dict:
-        return self.data.get("urls", {})
+    def get_variable(self, key) -> str:
+        """ Returns a variable. Returns `None` if the variable does not exist """
+        return self.data.get("variables",{}).get(key)
 
-    def get_url(self, name) -> str:
-        return self.data.get("urls", {}).get(name, None)
-
-    def get_dependency_dir(self, dependency_name: str) -> str:
-        return self.data["dependency_dirs"].get(dependency_name, None)
-
-    def get_dependency_dirs(self) -> dict:
-        return self.data["dependency_dirs"]
-
-    def get_dependency_names(self) -> list:
-        return self.data["dependencies"]
-
-    def get_extern_dir(self, dependency_name: str) -> str:
-        return self.data["extern_dirs"].get(dependency_name, None)
-
-    def get_extern_dirs(self) -> dict:
-        return self.data["extern_dirs"]
+    def get_variables(self) -> dict:
+        """ Returns the variables dict """
+        return self.data.get("variables",{})
 
     # -- I --
 
@@ -351,10 +230,6 @@ class Settings(PeeweeModel):
         self.save()
 
     # -- T --
-
-    @property
-    def title(self):
-        return self.app.get("title", None)
 
     # -- U --
 
