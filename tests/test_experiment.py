@@ -4,29 +4,19 @@
 # About us: https://gencovery.com
 
 import time
-from unittest import IsolatedAsyncioTestCase
+from typing import List
 
 from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
-                      ProcessModel, QueueService, Resource, RobotService,
-                      Settings)
-from gws_core.protocol.protocol_model import ProtocolModel
+                      ProcessModel, ProtocolModel, Resource, ResourceModel,
+                      RobotService, Settings)
+
+from tests.base_test import BaseTest
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 
-class TestExperiment(IsolatedAsyncioTestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        GTest.drop_tables()
-        GTest.create_tables()
-        GTest.init()
-
-    @classmethod
-    def tearDownClass(cls):
-        QueueService.deinit()
-        GTest.drop_tables()
+class TestExperiment(BaseTest):
 
     async def test_run(self):
         GTest.print("Run Experiment")
@@ -47,7 +37,7 @@ class TestExperiment(IsolatedAsyncioTestCase):
         #self.assertEqual(Process.select().count(), 18)
         self.assertEqual(len(experiment1.processes), 15)
         self.assertEqual(ProcessModel.select().count(), 15)
-        self.assertEqual(Resource.select().count(), 0)
+        self.assertEqual(ResourceModel.select().count(), 0)
         self.assertEqual(Experiment.select().count(), 1)
 
         # Create experiment 2 = experiment 2
@@ -61,7 +51,7 @@ class TestExperiment(IsolatedAsyncioTestCase):
         self.assertEqual(experiment2, experiment1)
         self.assertEqual(len(experiment2.processes), 15)
         self.assertEqual(ProcessModel.select().count(), 15)
-        self.assertEqual(Resource.select().count(), 0)
+        self.assertEqual(ResourceModel.select().count(), 0)
         self.assertEqual(Experiment.select().count(), 1)
 
         print("Run experiment_2 ...")
@@ -73,7 +63,7 @@ class TestExperiment(IsolatedAsyncioTestCase):
 
         Q1 = experiment1.resources
         Q2 = experiment2.resources
-        self.assertEqual(Resource.select().count(), 15)
+        self.assertEqual(ResourceModel.select().count(), 15)
         self.assertEqual(len(Q1), 15)
         self.assertEqual(len(Q2), 15)
 
@@ -125,17 +115,17 @@ class TestExperiment(IsolatedAsyncioTestCase):
         def _test_archive(tf):
             OK = experiment3.archive(tf)
             self.assertTrue(OK)
-            Q = experiment3.resources
-            self.assertEqual(len(Q), 15)
-            for r in Q:
+            resources: List[Resource] = experiment3.resources
+            self.assertEqual(len(resources), 15)
+            for r in resources:
                 self.assertEqual(r.is_archived, tf)
 
-            Q = experiment3.processes
+            processes: List[ProcessModel] = experiment3.processes
             #self.assertEqual( len(Q), 18)
-            self.assertEqual(len(Q), 15)
-            for p in Q:
-                self.assertEqual(p.is_archived, tf)
-                self.assertEqual(p.config.is_archived, tf)
+            self.assertEqual(len(processes), 15)
+            for process in processes:
+                self.assertEqual(process.is_archived, tf)
+                self.assertEqual(process.config.is_archived, tf)
 
         print("Archive experiment ...")
         _test_archive(True)

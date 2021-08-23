@@ -8,9 +8,7 @@ import json
 import zlib
 from typing import Dict, List, Type, Union
 
-from gws_core.core.decorator.transaction import Transaction
-from gws_core.resource.resource import Resource
-
+from ..core.decorator.transaction import Transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
@@ -24,6 +22,7 @@ from ..process.process_model import ProcessAllowedUser, ProcessModel
 from ..process.processable import Processable
 from ..process.processable_model import ProcessableModel
 from ..protocol.protocol import Protocol
+from ..resource.resource import Resource
 from ..user.activity import Activity
 from ..user.user import User
 from .sub_processable_factory import (SubProcessableFactory,
@@ -613,7 +612,7 @@ class ProtocolModel(ProcessableModel):
 
         for key, interface in self.interfaces.items():
             port = interface.target_port
-            port.resource = self.input[key]
+            port.resource_model = self.input[key]
 
     def _set_outputs(self):
         """
@@ -622,7 +621,7 @@ class ProtocolModel(ProcessableModel):
 
         for key, outerface in self.outerfaces.items():
             port = outerface.source_port
-            self.output[key] = port.resource
+            self.output[key] = port.resource_model
 
     def __set_input_specs(self, input_specs: Dict[str, Type[Resource]]):
         for key, spec in input_specs.items():

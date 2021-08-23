@@ -2,18 +2,16 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-
-import re
+import importlib
 import inspect
-import os
 import random
 import string
 import importlib
 from typing import Any, List, Type
 from slugify import slugify as _slugify
 
-from ...core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from ..exception.exceptions.bad_request_exception import BadRequestException
+
 
 class Utils:
 
@@ -103,7 +101,7 @@ class Utils:
                     importlib.import_module(module_name)
                 except Exception as err:
                     raise BadRequestException(f"Cannot import module {module_name}.") from err
-                
+
     # -- S --
 
     @staticmethod
@@ -163,4 +161,25 @@ class Utils:
                     files = [ *files, os.path.join(root,f) ]
 
             dirs = [*dirs, root]
-        return dirs, files
+         return dirs, files
+
+   @classmethod
+   def get_model_type(cls, type_str: str = None) -> Type[Any]:
+       """
+       Get the type of a registered model using its litteral type
+
+       :param type: Litteral type (can be a slugyfied string)
+       :type type: str
+       :return: The type if the model is registered, None otherwise
+       :type: `str`
+       """
+
+       if type_str is None:
+           return None
+
+       tab = type_str.split(".")
+       length = len(tab)
+       module_name = ".".join(tab[0:length-1])
+       function_name = tab[length-1]
+       module = importlib.import_module(module_name)
+       return getattr(module, function_name, None)

@@ -1,14 +1,14 @@
 import asyncio
 import inspect
+from abc import abstractmethod
 from enum import Enum
 from typing import List, Type, Union, final
 
-from gws_core.core.decorator.transaction import Transaction
-from gws_core.resource.resource import Resource
 from peewee import CharField, ForeignKeyField, IntegerField
 from starlette_context import context
 
 from ..config.config import Config
+from ..core.decorator.transaction import Transaction
 from ..core.exception.exceptions import BadRequestException
 from ..io.io import Input, Output
 from ..io.port import InPort, OutPort
@@ -16,6 +16,8 @@ from ..model.typing_manager import TypingManager
 from ..model.viewable import Viewable
 from ..process.processable import Processable
 from ..progress_bar.progress_bar import ProgressBar
+from ..resource.processable_resource import ProcessableResource
+from ..resource.resource_model import ResourceModel
 from ..user.user import User
 
 
@@ -43,7 +45,7 @@ class ProcessableModel(Viewable):
     config = ForeignKeyField(Config, null=False, index=True, backref='+')
     progress_bar: ProgressBar = ForeignKeyField(
         ProgressBar, null=True, backref='+')
-    processable_typing_name = CharField(null=True)
+    processable_typing_name = CharField(null=False)
 
     is_instance_running = False
     is_instance_finished = False
@@ -183,8 +185,7 @@ class ProcessableModel(Viewable):
         if not "input" in self.data:
             return
         for k in self.data["input"]:
-            resource = TypingManager.get_object_with_typing_name_and_uri(
-                self.data["input"][k]["typing_name"], self.data["input"][k]["uri"])
+            resource = ResourceModel.get_by_uri_and_check(self.data["input"][k]["uri"])
             self._input.__setitem_without_check__(k, resource)
 
     def in_port(self, name: str) -> InPort:
@@ -256,7 +257,7 @@ class ProcessableModel(Viewable):
         return self.output._ports[name]
 
     @property
-    def parent_protocol(self):
+    def parent_protocol(self) -> 'ProtocolModel':
         if self._parent_protocol:
             return self._parent_protocol
         if self.parent_protocol_id:
@@ -268,9 +269,8 @@ class ProcessableModel(Viewable):
     # -- R --
 
     @property
-    def resources(self) -> List[Resource]:
-        from ..resource.resource import ProcessResource
-        Qrel: List[ProcessResource] = ProcessResource.select().where(ProcessResource.process_id == self.id)
+    def resources(self) -> List[ResourceModel]:
+        Qrel: List[ProcessableResource] = ProcessableResource.select().where(ProcessableResource.process_id == self.id)
         Q = []
         for o in Qrel:
             Q.append(o.resource)
@@ -307,6 +307,7 @@ class ProcessableModel(Viewable):
 
         await self._run()
 
+    @abstractmethod
     async def _run(self) -> None:
         """Function to run overrided by the sub classes
         """
@@ -334,7 +335,7 @@ class ProcessableModel(Viewable):
                     self.input[k].save()
                 self.data["input"][k] = {
                     "uri": self.input[k].uri,
-                    "typing_name": self.input[k].typing_name
+                    "typing_name": self.input[k].resource_typing_name
                 }
         self.progress_bar.start()
         self.save()
@@ -355,7 +356,7 @@ class ProcessableModel(Viewable):
             if self.output[k]:
                 self.data["output"][k] = {
                     "uri": self.output[k].uri,
-                    "typing_name": self.output[k].typing_name
+                    "typing_name": self.output[k].resource_typing_name
                 }
         await self._run_next_processes()
 
@@ -415,21 +416,21 @@ class ProcessableModel(Viewable):
         self.experiment_id = experiment.id
         self.save()
 
-    def set_input(self, name: str, resource: 'Resource'):
+    def set_input(self, name: str, resource: 'ResourceModel'):
         """
         Sets the resource of an input port by its name.
 
         :param name: The name of the input port
         :type name: str
         :param resource: A reources to assign to the port
-        :type resource: Resource
+        :type resource: ResourceModel
         """
 
         if not isinstance(name, str):
             raise BadRequestException("The name must be a string.")
 
-        # if not not isinstance(resource, Resource):
-        #    raise BadRequestException("The resource must be an instance of Resource.")
+        # if not not isinstance(resource, ResourceModel):
+        #    raise BadRequestException("The resource must be an instance of ResourceModel.")
 
         self._input[name] = resource
 

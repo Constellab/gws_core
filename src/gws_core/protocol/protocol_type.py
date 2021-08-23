@@ -8,12 +8,12 @@ from operator import mod
 from typing import Type, final
 
 from peewee import ModelSelect
-from gws_core.process.processable_factory import ProcessableFactory
 
-from gws_core.protocol.protocol_model import ProtocolModel
-
+from ..core.utils.utils import Utils
 from ..model.typing import Typing, TypingObjectType
+from ..process.processable_factory import ProcessableFactory
 from ..protocol.protocol import Protocol
+from ..protocol.protocol_model import ProtocolModel
 
 
 @final
@@ -36,9 +36,9 @@ class ProtocolType(Typing):
         """
         _json = super().data_to_json(deep=deep, **kwargs)
 
-        protocol_type: Type[Protocol] = self.get_model_type(self.model_type)
+        protocol_type: Type[Protocol] = Utils.get_model_type(self.model_type)
 
-        protocol: ProtocolModel = ProcessableFactory.create_protocol_from_type(
+        protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_type(
             protocol_type)
         _json["graph"] = protocol.dumps()
 

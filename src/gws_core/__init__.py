@@ -12,7 +12,12 @@ from .comment.comment import Comment as Comment
 from .comment.comment_service import CommentService as CommentService
 # Config
 from .config.config import Config as Config
+from .config.config_params import ConfigParams as ConfigParams
 from .config.config_service import ConfigService as ConfigService
+from .config.config_spec import ConfigParamType as ConfigParamType
+from .config.config_spec import ConfigSpec as ConfigSpec
+from .config.config_spec import ConfigSpecs as ConfigSpecs
+from .config.config_spec import ConfigSpecType as ConfigSpecType
 # Core
 # Core > Classes
 from .core.classes.expose import Expose as Expose
@@ -35,7 +40,6 @@ from .core.classes.view import DictView as DictView
 from .core.classes.view import TableView as TableView
 from .core.classes.view import View as View
 # Core > DB
-from .core.db.kv_store import KVStore as KVStore
 from .core.db.mysql import MySQLBase as MySQLBase
 from .core.db.mysql import MySQLDump as MySQLDump
 from .core.db.mysql import MySQLLoad as MySQLLoad
@@ -87,6 +91,7 @@ from .impl.csv.csv_resource import CSVTable as CSVTable
 # Impl > File
 from .impl.file.file import File as File
 from .impl.file.file import FileSet as FileSet
+from .impl.file.file_resource import FileResource as FileResource
 from .impl.file.file_service import FileService as FileService
 from .impl.file.file_store import FileStore as FileStore
 from .impl.file.file_store import LocalFileStore as LocalFileStore
@@ -94,7 +99,6 @@ from .impl.file.file_uploader import FileDumper as FileDumper
 from .impl.file.file_uploader import FileExporter as FileExporter
 from .impl.file.file_uploader import FileImporter as FileImporter
 from .impl.file.file_uploader import FileLoader as FileLoader
-from .impl.file.file_uploader import FileUploader as FileUploader
 # Impl > JSON
 from .impl.json.json_process import JSONDumper as JSONDumper
 from .impl.json.json_process import JSONExporter as JSONExporter
@@ -151,6 +155,7 @@ from .process.plug import Switch2 as Switch2
 from .process.plug import Wait as Wait
 from .process.process import Process as Process
 from .process.process_decorator import ProcessDecorator as ProcessDecorator
+from .process.process_io import ProcessIO as ProcessIO
 from .process.process_model import ProcessModel as ProcessModel
 from .process.process_service import ProcessService as ProcessService
 from .process.process_type import ProcessType as ProcessType
@@ -169,10 +174,10 @@ from .protocol.protocol_model import ProtocolModel as ProtocolModel
 from .protocol.protocol_service import ProtocolService as ProtocolService
 from .protocol.protocol_type import ProtocolType as ProtocolType
 # Resource
-from .resource.resource import ExperimentResource as ExperimentResource
-from .resource.resource import ProcessResource as ProcessResource
+from .resource.kv_store import KVStore as KVStore
 from .resource.resource import Resource as Resource
 from .resource.resource_decorator import ResourceDecorator as ResourceDecorator
+from .resource.resource_model import ResourceModel as ResourceModel
 from .resource.resource_service import ResourceService as ResourceService
 from .resource.resource_set import ResourceSet as ResourceSet
 from .resource.resource_type import ResourceType as ResourceType

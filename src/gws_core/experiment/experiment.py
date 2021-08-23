@@ -14,9 +14,9 @@ from peewee import BooleanField, FloatField, ForeignKeyField
 from ..core.classes.enum_field import EnumField
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.sys_proc import SysProc
-from ..model.typing_manager import TypingManager
 from ..model.viewable import Viewable
 from ..protocol.protocol_model import ProtocolModel
+from ..resource.experiment_resource import ExperimentResource
 from ..study.study import Study
 from ..user.activity import Activity
 from ..user.current_user_service import CurrentUserService
@@ -212,7 +212,6 @@ class Experiment(Viewable):
 
         Q = []
         if self.id:
-            from ..resource.resource import ExperimentResource
             Qrel = ExperimentResource.select().where(
                 ExperimentResource.experiment_id == self.id)
             for rel in Qrel:

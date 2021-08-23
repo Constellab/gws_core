@@ -1,9 +1,8 @@
 from typing import final
 
-from gws_core.resource.resource import Resource
-
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from ..resource.resource_model import ResourceModel
 from .port import InPort, OutPort, Port
 
 
@@ -50,9 +49,9 @@ class IOface:
     def to_json(self, deep: bool = False, **kwargs) -> dict:
         r_uri = ""
         r_typing_name = ""
-        if self.source_port.resource:
-            r_uri = self.source_port.resource.uri
-            r_typing_name = self.source_port.resource.typing_name
+        if self.source_port.resource_model:
+            r_uri = self.source_port.resource_model.uri
+            r_typing_name = self.source_port.resource_model.resource_typing_name
 
         return {
             "name": self.name,
@@ -88,9 +87,9 @@ class Interface(IOface):
 
     # -- S --
 
-    def set_resource(self, resource: 'Resource'):
-        self.source_port.resource = resource
-        self.target_port.resource = resource
+    def set_resource(self, resource_model: ResourceModel):
+        self.source_port.resource_model = resource_model
+        self.target_port.resource_model = resource_model
 
     # -- V -
 
@@ -117,8 +116,8 @@ class Outerface(IOface):
 
     # -- G --
 
-    def get_resource(self) -> Resource:
-        return self.source_port.resource
+    def get_resource(self) -> ResourceModel:
+        return self.source_port.resource_model
 
     # -- V --
 

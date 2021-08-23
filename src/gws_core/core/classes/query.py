@@ -3,10 +3,15 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from typing import Generic, TypeVar
+
+from gws_core.model.viewable import Viewable
 from peewee import ModelSelect
 
+QueryType = TypeVar('QueryType', bound=Viewable)
 
-class Query:
+
+class Query(Generic[QueryType]):
     """
     Query class
     """
@@ -22,7 +27,7 @@ class Query:
         if as_view:
             if as_json:
                 for model in query:
-                    model = model.model
+                    model: QueryType = model.model
 
                     # -> create a new ViewModel is required
                     view_model = model.view(params=view_params)

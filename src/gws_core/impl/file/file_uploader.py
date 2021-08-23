@@ -7,75 +7,18 @@
 import copy
 import os
 from pathlib import Path
-from typing import List, Type, Union
+from typing import Type
 
-from fastapi import UploadFile
-from fastapi.datastructures import UploadFile
-from gws_core.progress_bar.progress_bar import ProgressBar
-
-from ...config.config import Config
-from ...core.exception.exceptions import BadRequestException
-from ...core.model.model import Model
+from ...config.config_params import ConfigParams
 from ...core.utils.utils import Utils
-from ...io.io import Input, Output
-from ...model.typing_manager import TypingManager
 from ...process.process import Process
 from ...process.process_decorator import ProcessDecorator
+from ...process.process_io import ProcessIO
+from ...progress_bar.progress_bar import ProgressBar
 from ...resource.resource import Resource
-from .file import File, FileSet
-from .file_store import FileStore, LocalFileStore
-
-
-@ProcessDecorator("FileUploader", human_name="File uploader", short_description="Process to uplaod a file")
-class FileUploader(Process):
-    input_specs = {}
-    output_specs = {'result': (FileSet, File,)}
-    config_specs = {'file_store_uri': {"type": str, "default": None,
-                                       'description': "URI of the file_store where the file must be downloaded"}, }
-    _files: list = None
-
-    def __init__(self, *args, files: List[UploadFile] = [], **kwargs):
-        super().__init__(self, *args, **kwargs)
-
-        if not isinstance(files, list):
-            raise BadRequestException(
-                "A list of file-like objects is expected")
-
-        self._files = files
-
-    async def task(self, config: Config, inputs: Input, outputs: Output) -> None:
-
-        fs_uri = config.get_param("file_store_uri")
-        if fs_uri:
-            try:
-                resource: Resource = FileStore.get(FileStore.uri == fs_uri)
-                fs = TypingManager.get_object_with_typing_name(
-                    resource.typing_name, resource.id)
-            except:
-                raise BadRequestException(
-                    f"No FileStore object found with uri '{file_store_uri}'")
-        else:
-            fs = LocalFileStore.get_default_instance()
-
-        if len(self._files) == 1:
-            file = self._files[0]
-            f = fs.add(file.file, dest_file_name=file.filename)
-            result = f
-        else:
-            result = FileSet()
-            #t = self.out_port("file_set").get_default_resource_type()
-            #file_set = t()
-            for file in self._files:
-                f = fs.add(file.file, dest_file_name=file.filename)
-                result.add(f)
-
-        outputs["result"] = result
-
-    @staticmethod
-    def uniquify(file_name: str):
-        p = Path(file_name)
-        file_name = p.stem + "_" + Utils.generate_random_chars() + p.suffix
-        return file_name
+from .file import File
+from .file_resource import FileResource
+from .file_store import LocalFileStore
 
 # ####################################################################
 #
@@ -91,24 +34,23 @@ class FileImporter(Process):
     config_specs = {'file_format': {"type": str, "default": None, 'description': "File format"}, 'output_type': {
         "type": str, "default": "", 'description': "The output file type. If defined, it is used to automatically format data output"}, }
 
-    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         inport_name = list(self.input.keys())[0]
         outport_name = list(self.output.keys())[0]
+        file: File = inputs[inport_name]
 
-        file = inputs[inport_name]
-
-        model_t: Type[Model] = None
+        model_t: Type[Resource] = None
         if config.param_exists("output_type"):
             out_t = config.get_param("output_type")
             if out_t:
-                model_t = Model.get_model_type(out_t)
+                model_t = Utils.get_model_type(out_t)
 
         if not model_t:
-            model_t = outputs.get_port(outport_name).get_default_resource_type()
+            model_t = self.get_default_output_spec_type(outport_name)
 
-        params = copy.deepcopy(config.params)
-        resource = model_t._import(file.path, **params)
-        outputs[outport_name] = resource
+        params = copy.deepcopy(config)
+        resource = model_t.import_resource(file.path, **params)
+        return {outport_name: resource}
 
 
 # ####################################################################
@@ -130,37 +72,32 @@ class FileExporter(Process):
         'file_store_uri': {"type": str, "default": None, 'description': "URI of the file_store where the file must be exported"},
     }
 
-    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
-        file_store_uri = config.get_param("file_store_uri")
-        if file_store_uri:
-            try:
-                resource: Resource = FileStore.get(FileStore.uri == file_store_uri)
-                fs = TypingManager.get_object_with_typing_name(
-                    resource.typing_name, resource.id)
-            except:
-                raise BadRequestException(
-                    f"No FileStore object found with uri '{file_store_uri}'")
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
+
+        file_store: LocalFileStore
+        if config.param_exists('file_store_uri'):
+            file_store = LocalFileStore.get_by_uri_and_check(config.get('file_store_uri'))
         else:
-            fs = LocalFileStore.get_default_instance()
+            file_store = LocalFileStore.get_default_instance()
 
         inport_name = list(self.input.keys())[0]
         outport_name = list(self.output.keys())[0]
         filename = config.get_param("file_name")
-        t = outputs.get_port("file").get_default_resource_type()
-        file = fs.create_file(name=filename, file_type=t)
+        file_type: Type[File] = self.get_default_output_spec_type("file")
+        file: File = file_store.create_file(name=filename, file_type=file_type)
 
         if not os.path.exists(file.dir):
             os.makedirs(file.dir)
 
-        if "file_name" in config.params:
-            params = copy.deepcopy(config.params)
+        if "file_name" in config:
+            params = copy.deepcopy(config)
             del params["file_name"]
         else:
-            params = config.params
+            params = config
 
-        resource = inputs[inport_name]
-        resource._export(file.path, **params)
-        outputs[outport_name] = file
+        resource: Resource = inputs[inport_name]
+        resource.export(file.path, **params)
+        return {outport_name: file}
 
 # ####################################################################
 #
@@ -180,27 +117,27 @@ class FileLoader(Process):
         {"type": str, "default": "",
          'description': "The output file type. If defined, it is used to automatically format data output"}, }
 
-    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         outport_name = list(self.output.keys())[0]
         file_path = config.get_param("file_path")
 
-        model_t = None
+        model_t: Type[Resource] = None
         if config.param_exists("output_type"):
             out_t = config.get_param("output_type")
             if out_t:
-                model_t = Model.get_model_type(out_t)
+                model_t = Utils.get_model_type(out_t)
 
         if not model_t:
-            model_t = outputs.get_port(outport_name).get_default_resource_type()
+            model_t = self.get_default_output_spec_type(outport_name)
 
-        if "file_path" in config.params:
-            params = copy.deepcopy(config.params)
+        if "file_path" in config:
+            params = copy.deepcopy(config)
             del params["file_path"]
         else:
-            params = config.params
+            params = config
 
-        resource = model_t._import(file_path, **params)
-        outputs[outport_name] = resource
+        resource = model_t.import_resource(file_path, **params)
+        return {outport_name: resource}
 
 # ####################################################################
 #
@@ -222,20 +159,20 @@ class FileDumper(Process):
         'file_format': {"type": str, "default": None, 'description': "File format"},
     }
 
-    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         file_path = config.get_param("file_path")
         inport_name = list(self.input.keys())[0]
-        resource = inputs[inport_name]
+        resource: Resource = inputs[inport_name]
 
         p = Path(file_path)
         parent_dir = p.parent
         if not os.path.exists(parent_dir):
             os.makedirs(parent_dir)
 
-        if "file_path" in config.params:
-            params = copy.deepcopy(config.params)
+        if "file_path" in config:
+            params = copy.deepcopy(config)
             del params["file_path"]
         else:
-            params = config.params
+            params = config
 
-        resource._export(file_path, **params)
+        resource.export(file_path, **params)

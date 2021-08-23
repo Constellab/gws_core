@@ -5,33 +5,24 @@
 
 import json
 import os
-import unittest
 
 from gws_core import GTest, JSONDict, Settings
+
+from tests.base_test import BaseTest
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 
-class TestJson(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        GTest.drop_tables()
-        GTest.create_tables()
-        GTest.init()
-
-    @classmethod
-    def tearDownClass(cls):
-        GTest.drop_tables()
+class TestJson(BaseTest):
 
     def test_json_data(self):
         GTest.print("JSONData")
         file = os.path.join(testdata_dir, "mini_travel_graph.json")
-        d = JSONDict._import(file)
+        json_dict: JSONDict = JSONDict.import_resource(file)
         _json = {}
-        with open(file) as f:
-            _json = json.load(f)
+        with open(file) as file:
+            _json = json.load(file)
 
         # print(d.data)
-        self.assertEqual(_json, d.kv_data)
+        self.assertEqual(_json, json_dict.data)

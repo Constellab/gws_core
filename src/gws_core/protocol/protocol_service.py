@@ -82,7 +82,7 @@ class ProtocolService(BaseService):
 
     @classmethod
     def create_process_from_type(cls, protocol_type: Type[Protocol], instance_name: str = None) -> ProcessModel:
-        protocol: ProtocolModel = ProcessableFactory.create_protocol_from_type(
+        protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_type(
             protocol_type=protocol_type, instance_name=instance_name)
 
         protocol.save_full()
@@ -94,7 +94,7 @@ class ProtocolService(BaseService):
                                   interfaces: dict = None,
                                   outerfaces: dict = None,
                                   instance_name: str = None) -> ProcessModel:
-        protocol: ProtocolModel = ProcessableFactory.create_protocol_from_data(
+        protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_data(
             processes=processes,
             connectors=connectors,
             interfaces=interfaces,
@@ -106,7 +106,7 @@ class ProtocolService(BaseService):
 
     @classmethod
     def create_protocol_from_graph(cls, graph: dict) -> ProtocolModel:
-        protocol: ProtocolModel = ProcessableFactory.create_protocol_from_graph(
+        protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_graph(
             graph=graph)
 
         protocol.save_full()

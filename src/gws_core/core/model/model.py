@@ -7,25 +7,22 @@
 import hashlib
 import importlib
 import json
-import os
-import re
-import shutil
 import traceback
 import uuid
 from datetime import datetime
-from typing import List, Type, Union, final
+from typing import List, Type
 
 from fastapi.encoders import jsonable_encoder
 from gws_core.core.decorator.transaction import Transaction
+from gws_core.core.utils.utils import Utils
 from peewee import (AutoField, BigAutoField, BlobField, BooleanField,
-                    CharField, DateField, DateTimeField, Field,
-                    ForeignKeyField, ManyToManyField)
+                    CharField, DateTimeField, Field, ForeignKeyField,
+                    ManyToManyField)
 from peewee import Model as PeeweeModel
 from peewee import ModelSelect
 from playhouse.mysql_ext import Match
 
 from ..db.db_manager import DbManager
-from ..db.kv_store import KVStore
 from ..exception.exceptions import BadRequestException, NotFoundException
 from ..exception.gws_exceptions import GWSException
 from ..model.json_field import JSONField
@@ -77,7 +74,6 @@ class Model(Base, PeeweeModel):
     LAB_URI = None  # todo remove
 
     _data = None
-    _kv_store: KVStore = None
     _is_singleton = False
     _is_removable = True
     _db_manager = DbManager
@@ -96,7 +92,6 @@ class Model(Base, PeeweeModel):
             self.uri = str(uuid.uuid4())
             if not self.data:
                 self.data = {}
-        self._kv_store = KVStore(self.get_kv_store_slot_path())
 
     # -- A --
 
@@ -143,26 +138,47 @@ class Model(Base, PeeweeModel):
                 setattr(self, prop, val)
 
     def _create_hash_object(self):
-        h = hashlib.blake2b()
-        h.update(Model.LAB_URI.encode())
+        hash_obj = hashlib.blake2b()
+        hash_obj.update(Model.LAB_URI.encode())
         exclusion_list = (ForeignKeyField, JSONField,
                           ManyToManyField, BlobField, AutoField, BigAutoField, )
+
         for prop in self.property_names(Field, exclude=exclusion_list):
-            if prop in ["id", "hash"]:
-                continue
-            val = getattr(self, prop)
-            h.update(str(val).encode())
+            try:
+                if prop in ["id", "hash"]:
+                    continue
+                val = getattr(self, prop)
+                hash_obj.update(str(val).encode())
+            except Exception as err:
+                Logger.error(f"Erreur during the hash of the field property '{prop}'. Object: '{val}'")
+                raise err
+
         for prop in self.property_names(JSONField):
-            val = getattr(self, prop)
-            h.update(json.dumps(val, sort_keys=True).encode())
+            try:
+                val = getattr(self, prop)
+                hash_obj.update(json.dumps(val, sort_keys=True).encode())
+            except Exception as err:
+                Logger.error(f"Erreur during the hash of the json field property '{prop}'. Object: '{val}'")
+                raise err
+
         for prop in self.property_names(BlobField):
-            val = getattr(self, prop)
-            h.update(val)
+            try:
+                val = getattr(self, prop)
+                hash_obj.update(val)
+            except Exception as err:
+                Logger.error(f"Erreur during the hash of the blob field property '{prop}'. Object: '{val}'")
+                raise err
+
         for prop in self.property_names(ForeignKeyField):
-            val = getattr(self, prop)
-            if isinstance(val, Model):
-                h.update(val.hash.encode())
-        return h
+            try:
+                val = getattr(self, prop)
+                if isinstance(val, Model):
+                    hash_obj.update(val.hash.encode())
+            except Exception as err:
+                Logger.error(f"Erreur during the hash of the foreign key property '{prop}'. Object: '{val}'")
+                raise err
+
+        return hash_obj
 
     def __compute_hash(self):
         hash_object = self._create_hash_object()
@@ -194,10 +210,6 @@ class Model(Base, PeeweeModel):
 
     # -- D --
 
-    def delete_instance(self, *args, **kwargs):
-        self.kv_store.remove()
-        return super().delete_instance(*args, **kwargs)
-
     @classmethod
     def drop_table(cls, *args, **kwargs):
         """
@@ -207,17 +219,11 @@ class Model(Base, PeeweeModel):
         if not cls.table_exists():
             return
 
-        # remove the table's path in one shot
-        slot_path = cls.__get_base_kv_store_path_of_table()
-        path = KVStore._create_full_dir_path(slot_path)
-        if os.path.exists(path):
-            shutil.rmtree(path)
-
         super().drop_table(*args, **kwargs)
 
     # -- E --
 
-    def __eq__(self, other: 'Model') -> bool:
+    def __eq__(self, other: object) -> bool:
         """
         Compares the model with another model. The models are equal if they are
         identical (same handle in memory) or have the same id in the database
@@ -247,7 +253,7 @@ class Model(Base, PeeweeModel):
         :rtype: instance of `gws.db.model.Model`
         """
 
-        model_type: Type[Model] = cls.get_model_type(type_str)
+        model_type: Type[Model] = Utils.get_model_type(type_str)
         if model_type is None:
             return None
         try:
@@ -266,7 +272,7 @@ class Model(Base, PeeweeModel):
             raise BadRequestException(
                 f"The relation {relation_name} does not exists")
         rel: dict = self.data["__relations"][relation_name]
-        model_type: Type[Model] = self.get_model_type(rel["type"])
+        model_type: Type[Model] = Utils.get_model_type(rel["type"])
         return model_type.get(model_type.uri == rel["uri"])
 
     @classmethod
@@ -292,35 +298,6 @@ class Model(Base, PeeweeModel):
         return cls._db_manager
 
     @classmethod
-    def get_model_type(cls, type_str: str = None) -> Type['Model']:
-        """
-        Get the type of a registered model using its litteral type
-
-        :param type: Litteral type (can be a slugyfied string)
-        :type type: str
-        :return: The type if the model is registered, None otherwise
-        :type: `str`
-        """
-
-        if type_str is None:
-            return None
-
-        tab = type_str.split(".")
-        n = len(tab)
-        module_name = ".".join(tab[0:n-1])
-        function_name = tab[n-1]
-        try:
-            module = importlib.import_module(module_name)
-            t = getattr(module, function_name, None)
-        except Exception as err:
-            traceback.print_exc()
-            Logger.error(
-                f"Model get_model_type An error occured. Error: {err}")
-            t = None
-
-        return t
-
-    @classmethod
     def get_by_uri(cls, uri: str) -> 'Model':
         try:
             return cls.get(cls.uri == uri)
@@ -342,30 +319,6 @@ class Model(Base, PeeweeModel):
             raise NotFoundException(detail=GWSException.OBJECT_URI_NOT_FOUND.value,
                                     unique_code=GWSException.OBJECT_URI_NOT_FOUND.name,
                                     detail_args={"objectName": cls.classname(), "id": uri})
-
-    @classmethod
-    def __get_base_kv_store_path_of_table(cls) -> str:
-        """
-        Returns the base path of the KVStore
-
-        :return: The path of the KVStore
-        :rtype: str
-        """
-
-        return os.path.join(cls.get_table_name())
-
-    def get_kv_store_slot_path(self) -> str:
-        """
-        Returns the KVStore path of the model instance
-
-        :return: The slot path
-        :rtype: str
-        """
-
-        return os.path.join(
-            self.__get_base_kv_store_path_of_table(),
-            self.uri
-        )
 
     # -- H --
 
@@ -404,18 +357,6 @@ class Model(Base, PeeweeModel):
         return bool(self.id)
 
     # -- N --
-
-    # -- K --
-    @property
-    def kv_store(self) -> 'KVStore':
-        """
-        Returns the path of the KVStore of the model
-
-        :return: The path of the KVStore
-        :rtype: str
-        """
-
-        return self._kv_store
 
     # -- R --
 

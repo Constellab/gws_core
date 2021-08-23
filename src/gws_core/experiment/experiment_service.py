@@ -8,9 +8,7 @@ import subprocess
 import traceback
 from typing import Any, Coroutine, Union
 
-from gws_core.process.processable_factory import ProcessableFactory
 from gws_core.protocol.protocol_service import ProtocolService
-from numpy.lib.function_base import gradient
 from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator

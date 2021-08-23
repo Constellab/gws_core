@@ -6,13 +6,13 @@
 import importlib
 import inspect
 import os
-from typing import Dict, List, Tuple, Type, Union
+from typing import Dict, List, Tuple, Union
 
-from gws_core.core.decorator.transaction import Transaction
 from peewee import DatabaseProxy
 
 from ..core.classes.expose import Expose
 from ..core.classes.paginator import Paginator
+from ..core.decorator.transaction import Transaction
 from ..core.dto.rendering_dto import RenderingDTO
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -21,8 +21,9 @@ from ..core.model.model import Model
 from ..core.service.base_service import BaseService
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
+from ..core.utils.utils import Utils
 from ..process.process_model import ProcessModel
-from ..resource.resource import Resource
+from ..resource.resource_model import ResourceModel
 from .typing_manager import TypingManager
 from .view_model import ViewModel
 
@@ -52,7 +53,7 @@ class ModelService(BaseService):
         :rtype: `gws.db.model.Model`, `dict`
         """
 
-        t = Model.get_model_type(type_str)
+        t = Utils.get_model_type(type_str)
         if t is None:
             raise NotFoundException(
                 detail=f"Model type '{type_str}' not found")
@@ -121,7 +122,7 @@ class ModelService(BaseService):
         Counts models
         """
 
-        t = Model.get_model_type(type)
+        t = Utils.get_model_type(type)
         if t is None:
             raise BadRequestException(detail="Invalid Model type")
 
@@ -151,7 +152,7 @@ class ModelService(BaseService):
                              page: int = 1, number_of_items_per_page: int = 20,
                              as_json: bool = False) -> Union[Paginator, List[Model], List[dict]]:
 
-        t = Model.get_model_type(type_str)
+        t = Utils.get_model_type(type_str)
         if t is None:
             raise BadRequestException(detail="Invalid Model type")
         number_of_items_per_page = min(
@@ -238,7 +239,7 @@ class ModelService(BaseService):
 
         # 2) save resources
         for model in model_list:
-            if isinstance(model, Resource):
+            if isinstance(model, ResourceModel):
                 model.save()
 
         # 3) save vmodels

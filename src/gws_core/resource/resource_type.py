@@ -4,13 +4,13 @@
 # About us: https://gencovery.com
 
 import inspect
-import json
-from typing import Any, Dict, Type, Union, final
+from typing import Any, Dict, Type, final
 
-from gws_core.resource.resource import Resource
 from peewee import ModelSelect
 
+from ..core.utils.utils import Utils
 from ..model.typing import Typing, TypingObjectType
+from ..resource.resource import Resource
 
 # ####################################################################
 #
@@ -49,11 +49,12 @@ class ResourceType(Typing):
         _json: Dict[str, Any] = super().data_to_json(**kwargs)
 
         # retrieve the process python type
-        model_t: Type[Resource] = self.get_model_type(self.model_type)
+        model_t: Type[Resource] = Utils.get_model_type(self.model_type)
 
+        # TODO To fix
        # Other infos
-        _json["title"] = model_t.title
-        _json["description"] = model_t.description
+        _json["title"] = model_t._human_name
+        _json["description"] = model_t._short_description
         _json["doc"] = inspect.getdoc(model_t)
 
         return _json

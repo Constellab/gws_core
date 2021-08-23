@@ -5,15 +5,12 @@
 
 from typing import Dict
 
-from gws_core.core.decorator.transaction import Transaction
-from gws_core.model.typing_manager import TypingManager
-
+from ..core.decorator.transaction import Transaction
 from ..core.exception.exceptions import BadRequestException
-from .resource import Resource
-from .resource_decorator import ResourceDecorator
+from ..model.typing_manager import TypingManager
+from ..resource.resource import Resource
 
 
-@ResourceDecorator("ResourceSet")
 class ResourceSet(Resource):
     """
     ResourceSet class
@@ -98,7 +95,7 @@ class ResourceSet(Resource):
 
             self.data["set"][key] = {
                 "uri": resource.uri,
-                "typing_name": resource.typing_name
+                "typing_name": resource.resource_typing_name
             }
         return super().save(*args, **kwrags)
 

@@ -18,11 +18,9 @@ from ...resource.resource_decorator import ResourceDecorator
 
 @ResourceDecorator("CSVTable")
 class CSVTable(Resource):
-    _required_column_names = []
 
-    def __init__(self, *args, table: Union[DataFrame, np.ndarray] = None,
-                 column_names=None, row_names=None, **kwargs):
-        super().__init__(*args, **kwargs)
+    def set_data(self, table: Union[DataFrame, np.ndarray] = None,
+                 column_names=None, row_names=None) -> 'CSVTable':
         if table is None:
             table = DataFrame()
         else:
@@ -37,12 +35,10 @@ class CSVTable(Resource):
                     table.index = row_names
             else:
                 raise BadRequestException(
-                    "The table mus be an instance of DataFrame or Numpy array")
+                    "The table must be an instance of DataFrame or Numpy array")
 
-        if not self.id:
-            self.kv_store['table'] = table
-
-    # -- A --
+        self.data['table'] = table
+        return self
 
     # -- C --
 
@@ -78,18 +74,18 @@ class CSVTable(Resource):
         :rtype: pandas.DataFrame
         """
 
-        return self.kv_store['table']
+        return self.data['table']
 
     @property
     def table(self) -> DataFrame:
         """
         Alias of method `dataframe`
         """
-        return self.kv_store['table']
+        return self.data['table']
 
     # -- E --
 
-    def _export(self, file_path: str, delimiter: str = "\t", header: bool=True, index: bool=True, file_format: str = None, **kwargs):
+    def export(self, file_path: str, delimiter: str = "\t", header: bool=True, index: bool=True, file_format: str = None, **kwargs):
         """
         Export to a repository
 
@@ -142,7 +138,8 @@ class CSVTable(Resource):
     # -- I --
 
     @classmethod
-    def _import(cls, file_path: str, delimiter: str = "\t", header=0, index_col=None, file_format: str = None, **kwargs) -> any:
+    def import_resource(cls, file_path: str, delimiter: str = "\t", header=0, index_col=None, file_format: str = None, **
+                        kwargs) -> 'CSVTable':
         """
         Import from a repository
 
@@ -165,22 +162,7 @@ class CSVTable(Resource):
         else:
             raise BadRequestException(
                 "Cannot detect the file type using file extension. Valid file extensions are [.xls, .xlsx, .csv, .tsv, .txt, .tab].")
-        return cls(table=df)
-
-    # -- J --
-
-    @classmethod
-    def _join(cls, *args, **params) -> Model:
-        """
-        Join several resources
-
-        :param params: Joining parameters
-        :type params: dict
-        """
-
-        # @ToDo: ensure that this method is only called by an Joiner
-
-        pass
+        return cls().set_data(table=df)
 
     # -- N --
 
@@ -231,34 +213,17 @@ class CSVTable(Resource):
 
         return self.to_csv(stringify=True, **kwargs)
 
-    # -- S --
-
-    def _select(self, **params) -> Model:
-        """
-        Select a part of the resource
-
-        :param params: Extraction parameters
-        :type params: dict
-        """
-
-        # @ToDo: ensure that this method is only called by an Selector
-
-        pass
-
     def __str__(self):
         return self.table.__str__()
-
-    # -- T --
-    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
-        _json = super().data_to_json(deep=deep, **kwargs)
-        _json["content"] = self.table.to_json()
-
-        return _json
 
     def to_table(self):
         return self.table
 
     def to_csv(self, **kwargs):
         return self.table.to_csv()
+
+     # -- T --
+    def to_json(self, **kwargs) -> dict:
+        return self.table.to_json()
 
     # -- V ---

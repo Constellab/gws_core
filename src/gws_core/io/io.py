@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, List, Tuple, Type, final
+from typing import TYPE_CHECKING, Dict, List, Tuple, final
 
-from gws_core.io.io_types import IOSpec
+from gws_core.process.process_io import ProcessIO
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.base import Base
-from ..resource.resource import Resource
+from ..resource.resource_model import ResourceModel
+from .io_types import IOSpec
 from .port import InPort, OutPort, Port
 
 if TYPE_CHECKING:
@@ -61,40 +62,28 @@ class IO(Base):
             raise BadRequestException(
                 "Invalid port specs. The port name must be a string")
 
-        if isinstance(resource_types, tuple):
-            for res_t in resource_types:
-                if (not res_t is None) and not issubclass(res_t, Resource):
-                    raise BadRequestException(
-                        "Invalid port specs. The resource_types must refer to a subclass of Resource")
-        else:
-            if not issubclass(resource_types, Resource):
-                raise BadRequestException(
-                    "Invalid port specs. The resource_types must refer to a subclass of Resource")
-
-            resource_types = (resource_types, )
-
         if self._parent.is_instance_running or self._parent.is_instance_finished:
             raise BadRequestException(
                 "Cannot alter inputs/outputs of processes during or after running")
 
+        port: Port
         if isinstance(self, Output):
-            port = OutPort(self)
+            port = OutPort(self, resource_types)
         else:
-            port = InPort(self)
+            port = InPort(self, resource_types)
 
-        port.resource_types = resource_types
         self._ports[name] = port
 
     # -- G --
 
-    def __getitem__(self, name: str) -> Resource:
+    def __getitem__(self, name: str) -> ResourceModel:
         """
         Bracket (getter) operator. Gets the content of a port by its name.
 
         :param name: Name of the port
         :type name: str
         :return: The resource of the port
-        :rtype: Resource
+        :rtype: ResourceModel
         """
 
         if not isinstance(name, str):
@@ -104,7 +93,7 @@ class IO(Base):
             raise BadRequestException(
                 self.classname() + " port '" + name + "' not found")
 
-        return self._ports[name].resource
+        return self._ports[name].resource_model
 
     def get_port_names(self) -> List[str]:
         """
@@ -116,7 +105,7 @@ class IO(Base):
 
         return list(self._ports.keys())
 
-    def get_resources(self) -> Dict[str, Resource]:
+    def get_resources(self) -> Dict[str, ResourceModel]:
         """
         Returns the resources of all the ports.
 
@@ -124,10 +113,10 @@ class IO(Base):
         :rtype: list
         """
 
-        resources: Dict[str, Resource] = {}
+        resource_models: Dict[str, ResourceModel] = {}
         for key, port in self._ports.items():
-            resources[key] = port.resource
-        return resources
+            resource_models[key] = port.resource_model
+        return resource_models
 
     def get_port(self, port_name: str) -> Port:
         """
@@ -234,7 +223,7 @@ class IO(Base):
 
     # -- S --
 
-    def __setitem_without_check__(self, name: str, resource: Resource):
+    def __setitem_without_check__(self, name: str, resource: ResourceModel):
         if not isinstance(name, str):
             raise BadRequestException("The port name must be a string")
 
@@ -242,22 +231,28 @@ class IO(Base):
             raise BadRequestException(
                 self.classname() + " port '" + name + "' not found")
 
-        self._ports[name].resource = resource
+        self._ports[name].resource_model = resource
 
-    def __setitem__(self, name: str, resource: Resource):
+    def __setitem__(self, name: str, resource: ResourceModel):
         """
         Bracket (setter) operator. Sets the content of a port by its name.
 
         :param name: Name of the port
         :type name: str
         :param resource: The input resource
-        :type resource: Resource
+        :type resource: ResourceModel
         """
 
         # if self._parent.is_running:
         #    raise BadRequestException("Cannot alter the input of process while it is running")
 
         self.__setitem_without_check__(name, resource)
+
+    def get_process_io(self) -> ProcessIO:
+        process_io: ProcessIO = {}
+        for key, port in self.ports.items():
+            process_io[key] = port.get_resource()
+        return process_io
 
     # -- V --
 
@@ -268,10 +263,10 @@ class IO(Base):
             port = self._ports[k]
             _json[k] = {}
 
-            if port.resource:
+            if port.resource_model:
                 _json[k]["resource"] = {
-                    "uri": port.resource.uri,
-                    "typing_name": port.resource.typing_name
+                    "uri": port.resource_model.uri,
+                    "typing_name": port.resource_model.resource_typing_name
                 }
             else:
                 _json[k]["resource"] = {
@@ -296,13 +291,13 @@ class IO(Base):
 # ####################################################################
 
 
-@ final
+@final
 class Input(IO):
     """
     Input class
     """
 
-    @ property
+    @property
     def is_connected(self) -> bool:
         """
         Returns True if a port of the Input is left-connected.
@@ -324,13 +319,13 @@ class Input(IO):
 # ####################################################################
 
 
-@ final
+@final
 class Output(IO):
     """
     Output class
     """
 
-    @ property
+    @property
     def is_connected(self) -> bool:
         """
         Returns True if a port of the Output is right-connected.

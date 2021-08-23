@@ -1,13 +1,14 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, final
+from typing import TYPE_CHECKING, List, Tuple, Type, final
 
 from gws_core.io.io_types import IOSpec
+from gws_core.resource.resource import Resource
+from gws_core.resource.resource_model import ResourceModel
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.base import Base
-from ..resource.resource import Resource
 
 if TYPE_CHECKING:
     from ..process.processable_model import ProcessableModel
@@ -22,19 +23,19 @@ class Port(Base):
     Example: [Left Process](output port) => (input port)[Right Process].
     """
 
-    _resource: Resource = None
-    resource_types: IOSpec = None
+    _resource_model: ResourceModel = None
+    _resource_types: Tuple[Type[Resource]] = None
     _prev: 'Port' = None
     _next: List['Port'] = []
     _parent: IO
 
-    def __init__(self, parent: IO):
-        self._resource = None
+    def __init__(self, parent: IO, resource_types: IOSpec):
+        self._resource_model = None
         self._prev = None
         self._next = []
         self._parent = parent
 
-        self.resource_types = (Resource,)
+        self.set_resource_types(resource_types)
 
     # -- D --
 
@@ -124,7 +125,7 @@ class Port(Base):
         #    return self.is_optional and (not self.is_connected)
 
         # and self._resource.is_saved()
-        return isinstance(self._resource, self.resource_types)
+        return self.resource_model is not None
 
     @property
     def is_optional(self) -> bool:
@@ -139,7 +140,7 @@ class Port(Base):
 
     @property
     def is_empty(self) -> bool:
-        return self._resource is None
+        return self._resource_model is None
 
     # -- G --
 
@@ -195,7 +196,7 @@ class Port(Base):
         """
 
         for port in self._next:
-            port._resource = self._resource
+            port._resource_model = self._resource_model
 
     def __or__(self, other: 'Port'):
         raise BadRequestException(
@@ -204,39 +205,68 @@ class Port(Base):
     # -- R --
 
     def reset(self):
-        self._resource = None
+        self._resource_model = None
         # for port in self._next:
         #    port._resource = None
 
     @property
-    def resource(self) -> Resource:
+    def resource_types(self) -> Tuple[Type[Resource]]:
         """
-        Returns the resoruce of the port.
+        Returns the resource types of the port.
 
         :return: The resource
-        :rtype: Resource
+        :rtype: ResourceModel
         """
 
-        return self._resource
+        return self._resource_types
 
     # -- S --
-    @resource.setter
-    def resource(self, resource: Resource):
+    def set_resource_types(self, resource_types: IOSpec):
         """
-        Sets the resource of the port.
+        Sets the resource_types of the port.
 
         :param resource: The input resource
         :type resource: Resource
         """
 
+        if not isinstance(resource_types, tuple):
+            resource_types = (resource_types, )
+
+        for res_t in resource_types:
+            if (not res_t is None) and not issubclass(res_t, Resource):
+                raise BadRequestException(
+                    "Invalid port specs. The resources types must refer to a subclass of Resource")
+
+        self._resource_types = resource_types
+
+    @property
+    def resource_model(self) -> ResourceModel:
+        """
+        Returns the resoruce of the port.
+
+        :return: The resource
+        :rtype: ResourceModel
+        """
+
+        return self._resource_model
+
+    # -- S --
+    @resource_model.setter
+    def resource_model(self, resource: Resource) -> None:
+        """
+        Sets the resource of the port.
+
+        :param resource: The input resource
+        :type resource: ResourceModel
+        """
+
         if self.is_optional and resource is None:
             return
 
-        if not isinstance(resource, self.resource_types):
-            raise BadRequestException(
-                f"The resource must be an instance of Resource. A {self.resource_types} is given.")
+        self._resource_model = resource
 
-        self._resource = resource
+    def get_resource(self) -> Resource:
+        return self.resource_model.get_resource()
 
     @property
     def name(self) -> str:

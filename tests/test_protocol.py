@@ -22,19 +22,19 @@ class TestProtocol(BaseTest):
     async def test_protocol(self):
         GTest.print("Protocol")
 
-        p0: ProcessModel = ProcessableFactory.create_process_from_type(
+        p0: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotCreate)
-        p1: ProcessModel = ProcessableFactory.create_process_from_type(
+        p1: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotMove)
-        p2: ProcessModel = ProcessableFactory.create_process_from_type(
+        p2: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotEat)
-        p3: ProcessModel = ProcessableFactory.create_process_from_type(
+        p3: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotMove)
-        p4: ProcessModel = ProcessableFactory.create_process_from_type(
+        p4: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotMove)
-        p5: ProcessModel = ProcessableFactory.create_process_from_type(
+        p5: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotEat)
-        p_wait: ProcessModel = ProcessableFactory.create_process_from_type(
+        p_wait: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotWait)
 
         Q = ProtocolModel.select()
@@ -79,19 +79,19 @@ class TestProtocol(BaseTest):
 
     async def test_advanced_protocol(self):
         GTest.print("Advanced protocol")
-        p0: ProcessModel = ProcessableFactory.create_process_from_type(
+        p0: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotCreate, instance_name="p0")
-        p1: ProcessModel = ProcessableFactory.create_process_from_type(
+        p1: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotMove)
-        p2: ProcessModel = ProcessableFactory.create_process_from_type(
+        p2: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotEat)
-        p3: ProcessModel = ProcessableFactory.create_process_from_type(
+        p3: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotMove)
-        p4: ProcessModel = ProcessableFactory.create_process_from_type(
+        p4: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotMove)
-        p5: ProcessModel = ProcessableFactory.create_process_from_type(
+        p5: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotEat, instance_name="p5")
-        p_wait: ProcessModel = ProcessableFactory.create_process_from_type(
+        p_wait: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotWait)
 
         Q = ProtocolModel.select()
@@ -181,9 +181,9 @@ class TestProtocol(BaseTest):
         p2 = mini_proto.get_process("p2")
         self.assertTrue(mini_proto.is_outerfaced_with(p2))
 
-        p0: ProcessModel = ProcessableFactory.create_process_from_type(
+        p0: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotCreate)
-        p5: ProcessModel = ProcessableFactory.create_process_from_type(
+        p5: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotEat)
 
         super_proto: ProtocolModel = ProtocolService.create_protocol_from_data(
@@ -206,26 +206,26 @@ class TestProtocol(BaseTest):
 
         saved_mini_proto = ProtocolModel.get(ProtocolModel.id == mini_proto.id)
         # load
-        mini_proto2 = ProcessableFactory.create_protocol_from_graph(
+        mini_proto2 = ProcessableFactory.create_protocol_model_from_graph(
             saved_mini_proto.graph)
         self.assertTrue(mini_proto.graph, mini_proto2.graph)
 
     # TODO improve test because it does not test connection create or deletion
     async def test_protocol_update(self):
         GTest.print("Update protocol")
-        p0: ProcessModel = ProcessableFactory.create_process_from_type(
+        p0: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotCreate)
-        p1: ProcessModel = ProcessableFactory.create_process_from_type(
+        p1: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotMove)
-        p2: ProcessModel = ProcessableFactory.create_process_from_type(
+        p2: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotEat)
-        p3: ProcessModel = ProcessableFactory.create_process_from_type(
+        p3: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotMove)
-        p4: ProcessModel = ProcessableFactory.create_process_from_type(
+        p4: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotMove)
-        p5: ProcessModel = ProcessableFactory.create_process_from_type(
+        p5: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotEat)
-        p_wait: ProcessModel = ProcessableFactory.create_process_from_type(
+        p_wait: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotWait)
 
         # create a chain
@@ -266,7 +266,7 @@ class TestProtocol(BaseTest):
         self.assertEqual(len(mini_proto_db.processes), 5)
 
         # Update the protocol by adding a process to the mini proto
-        new_wait: ProcessModel = ProcessableFactory.create_process_from_type(
+        new_wait: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotWait)
         # remove the uri to simulate the real json from a request
         new_wait.uri = None

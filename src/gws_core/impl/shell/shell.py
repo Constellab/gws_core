@@ -6,15 +6,17 @@
 import os
 import subprocess
 import tempfile
+from abc import abstractmethod
 from typing import Union
 
-from ...config.config import Config
+from gws_core.config.config_params import ConfigParams
+from gws_core.process.process_io import ProcessIO
+
 from ...core.exception.exceptions import BadRequestException
 from ...core.model.sys_proc import SysProc
 from ...process.process import Process
 from ...process.process_decorator import ProcessDecorator
 from ...progress_bar.progress_bar import ProgressBar
-from ...io.io import Input, Output
 from ..file.file import File
 
 
@@ -37,7 +39,7 @@ class Shell(Process):
     _stdout_count = 0
     _STDOUT_MAX_CHAR_LENGHT = 1024*10
 
-    def build_command(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> list:
+    def build_command(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> list:
         """
         Builds the user command to execute.
 
@@ -70,7 +72,8 @@ class Shell(Process):
         else:
             return user_cmd
 
-    def gather_outputs(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar):
+    @abstractmethod
+    def gather_outputs(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         """
         This methods gathers the results of the shell process. It must be overloaded by subclasses.
 
@@ -101,7 +104,7 @@ class Shell(Process):
         if len(self._stdout) > self._STDOUT_MAX_CHAR_LENGHT:
             self._stdout = self._stdout[-self._STDOUT_MAX_CHAR_LENGHT:]
 
-    @ property
+    @property
     def cwd(self) -> tempfile.TemporaryDirectory:
         """
         The temporary working directory where the shell command is executed.
@@ -116,7 +119,7 @@ class Shell(Process):
 
         return self._tmp_dir
 
-    @ property
+    @property
     def working_dir(self) -> str:
         """
         Returns the working dir of the shell process
@@ -127,14 +130,15 @@ class Shell(Process):
 
         return self.cwd.name
 
-    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         """
         Task entrypoint
         """
 
+        outputs: ProcessIO
         try:
             user_cmd = self.build_command(
-                config=config, inputs=inputs, outputs=outputs, progress_bar=progress_bar)
+                config=config, inputs=inputs, progress_bar=progress_bar)
             user_env = self.build_env()
 
             if not isinstance(user_env, dict):
@@ -173,13 +177,11 @@ class Shell(Process):
                 count += 1
             # TODO à vérifier
             # self.data['cmd'] = cmd
-            self.gather_outputs(config=config, inputs=inputs,
-                                outputs=outputs, progress_bar=progress_bar)
+            outputs = self.gather_outputs(config=config, inputs=inputs, progress_bar=progress_bar)
 
-            for k in outputs:
-                f = outputs[k]
-                if isinstance(f, File):
-                    f.move_to_default_store()
+            for resource in outputs.values():
+                if isinstance(resource, File):
+                    resource.move_to_default_store()
 
                 self.cwd.cleanup()
                 self._tmp_dir = None
@@ -194,6 +196,8 @@ class Shell(Process):
             self._tmp_dir = None
             raise BadRequestException(
                 f"An error occured while running shell process. Error: {err}") from err
+
+        return outputs
 
 
 class CondaShell(Shell):

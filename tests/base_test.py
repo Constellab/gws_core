@@ -4,6 +4,7 @@ from typing import List, Union
 from unittest.async_case import IsolatedAsyncioTestCase
 
 from gws_core import GTest
+from gws_core.experiment.queue_service import QueueService
 
 
 class BaseTest(IsolatedAsyncioTestCase):
@@ -21,6 +22,7 @@ class BaseTest(IsolatedAsyncioTestCase):
 
     @classmethod
     def tearDownClass(cls):
+        QueueService.deinit()
         GTest.drop_tables()
 
     def assert_json(self, json_1: Union[dict, list], json_2: Union[dict, list], ignore_keys: List[str]) -> None:

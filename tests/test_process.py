@@ -3,34 +3,22 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict, List, Tuple
-from unittest import IsolatedAsyncioTestCase
+from gws_core import (Experiment, ExperimentService, GTest, ProcessableFactory,
+                      ProcessModel, ProtocolModel, ProtocolService,
+                      ResourceModel, Robot, RobotCreate, RobotEat, RobotMove,
+                      RobotWait)
 
-from gws_core import (Experiment, ExperimentService, GTest, ProcessModel,
-                      Protocol, ProtocolModel, Robot, RobotCreate, RobotEat,
-                      RobotMove, RobotWait)
-from gws_core.process.processable_factory import ProcessableFactory
-from gws_core.protocol.protocol_service import ProtocolService
+from tests.base_test import BaseTest
 
 
-class TestProcess(IsolatedAsyncioTestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        GTest.drop_tables()
-        GTest.create_tables()
-        GTest.init()
-
-    @classmethod
-    def tearDownClass(cls):
-        GTest.drop_tables()
+class TestProcess(BaseTest):
 
     def test_process_singleton(self):
         GTest.print("Process Singleton")
 
-        p0: ProcessModel = ProcessableFactory.create_process_from_type(
+        p0: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotCreate)
-        p1: ProcessModel = ProcessableFactory.create_process_from_type(
+        p1: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotCreate)
         # p0.title = "First 'Create' process"
         # p0.description = "This is the description of the process"
@@ -41,19 +29,19 @@ class TestProcess(IsolatedAsyncioTestCase):
     async def test_process(self):
         GTest.print("Process")
 
-        p0: ProcessModel = ProcessableFactory.create_process_from_type(
+        p0: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotCreate)
-        p1: ProcessModel = ProcessableFactory.create_process_from_type(
+        p1: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotMove)
-        p2: ProcessModel = ProcessableFactory.create_process_from_type(
+        p2: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotEat)
-        p3: ProcessModel = ProcessableFactory.create_process_from_type(
+        p3: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotMove)
-        p4: ProcessModel = ProcessableFactory.create_process_from_type(
+        p4: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotMove)
-        p5: ProcessModel = ProcessableFactory.create_process_from_type(
+        p5: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotEat)
-        p_wait: ProcessModel = ProcessableFactory.create_process_from_type(
+        p_wait: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotWait)
 
         proto: ProtocolModel = ProtocolService.create_protocol_from_data(
@@ -95,38 +83,38 @@ class TestProcess(IsolatedAsyncioTestCase):
         experiment = await ExperimentService.run_experiment(
             experiment=experiment, user=GTest.user)
 
-        elon = p0.output['robot']
+        elon: Robot = p0.output['robot'].get_resource()
 
         print(" \n------ Resource --------")
         print(elon.to_json())
 
         self.assertEqual(elon.weight, 70)
-        self.assertEqual(elon, p1.input['robot'])
-        self.assertTrue(elon is p1.input['robot'])
+        self.assertEqual(elon, p1.input['robot'].get_resource())
+        self.assertTrue(elon is p1.input['robot'].get_resource())
 
         # check p1
         self.assertEqual(
-            p1.output['robot'].position[1], elon.position[1] + p1.get_param('moving_step'))
-        self.assertEqual(p1.output['robot'].weight, elon.weight)
+            p1.output['robot'].get_resource().position[1], elon.position[1] + p1.get_param('moving_step'))
+        self.assertEqual(p1.output['robot'].get_resource().weight, elon.weight)
 
         # check p2
         self.assertEqual(
             p1.output['robot'], p2.input['robot'])
-        self.assertEqual(p2.output['robot'].position,
-                         p2.input['robot'].position)
-        self.assertEqual(
-            p2.output['robot'].weight, p2.input['robot'].weight + p2.get_param('food_weight'))
+        self.assertEqual(p2.output['robot'].get_resource().position,
+                         p2.input['robot'].get_resource().position)
+        self.assertEqual(p2.output['robot'].get_resource().weight,
+                         p2.input['robot'].get_resource().weight + p2.get_param('food_weight'))
 
         # check p3
         self.assertEqual(
             p_wait.output['robot'], p3.input['robot'])
-        self.assertEqual(p3.output['robot'].position[1],
-                         p3.input['robot'].position[1] + p3.get_param('moving_step'))
-        self.assertEqual(p3.output['robot'].weight,
-                         p3.input['robot'].weight)
+        self.assertEqual(p3.output['robot'].get_resource().position[1],
+                         p3.input['robot'].get_resource().position[1] + p3.get_param('moving_step'))
+        self.assertEqual(p3.output['robot'].get_resource().weight,
+                         p3.input['robot'].get_resource().weight)
 
-        res = Robot.get_by_id(p3.output['robot'].id)
-        self.assertTrue(isinstance(res, Robot))
+        res = ResourceModel.get_by_id(p3.output['robot'].id)
+        self.assertTrue(isinstance(res, ResourceModel))
 
         self.assertTrue(
             len(p0.progress_bar.data["messages"]) >= 2)

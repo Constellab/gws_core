@@ -6,10 +6,8 @@
 import os
 import shutil
 import subprocess
-import tempfile
 
 from ...core.exception.exceptions import BadRequestException
-from ...core.model.sys_proc import SysProc
 from ...process.process_decorator import ProcessDecorator
 from ...progress_bar.progress_bar import ProgressBar
 from .base_env import BaseEnvShell

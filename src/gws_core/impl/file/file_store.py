@@ -2,24 +2,22 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-from __future__ import annotations
 
 import io
 import os
 import shutil
 import tempfile
+from abc import abstractclassmethod, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Union
+from typing import List, Union
 
-from gws_core.core.decorator.transaction import Transaction
-
+from ...core.decorator.transaction import Transaction
 from ...core.exception.exceptions import BadRequestException
 from ...core.model.model import Model
 from ...core.utils.settings import Settings
 from ...model.typing_register_decorator import TypingDecorator
-
-if TYPE_CHECKING:
-    from .file import File
+from .file import File
+from .file_resource import FileResource
 
 # ####################################################################
 #
@@ -33,14 +31,13 @@ class FileStore(Model):
     """
     FileStore class
     """
-
     title = "File store"
     description = ""
     _table_name = "gws_file_store"
 
     # -- A --
-
-    def add(self, source_file: Union[str, io.IOBase, tempfile.SpooledTemporaryFile, File]):
+    @abstractmethod
+    def add(self, source_file: Union[str, io.IOBase, tempfile.SpooledTemporaryFile, File]) -> File:
         """
         Add a file from an external repository to a local store. Must be implemented by the child class.
 
@@ -57,6 +54,7 @@ class FileStore(Model):
     # -- O --
 
     @classmethod
+    @abstractclassmethod
     def open(cls, file, mode):
         """
         Open a file. Must be implemented by the child class.
@@ -107,11 +105,11 @@ class LocalFileStore(FileStore):
         super().__init__(*args, **kwargs)
         if not self.path:
             self.data["path"] = os.path.join(self.get_base_dir(), self.uri)
-            self.save()
 
     # -- A --
-
-    def add(self, source_file: Union[str, io.IOBase, tempfile.SpooledTemporaryFile, File], dest_file_name: str = ""):
+    # TODO to test
+    def add(self, source_file: Union[str, io.IOBase, tempfile.SpooledTemporaryFile, File],
+            dest_file_name: str = "") -> File:
         """
         Add a file from an external repository to a local store
 
@@ -123,7 +121,6 @@ class LocalFileStore(FileStore):
         :rtype: gws.file.File.
         """
 
-        from .file import File
         if not self.is_saved():
             self.save()
         with self._db_manager.db.atomic() as transaction:
@@ -132,12 +129,11 @@ class LocalFileStore(FileStore):
                 if isinstance(source_file, File):
                     if self.contains(source_file):
                         return source_file
-                    f = source_file
-                    source_file_path = f.path
+                    file: File = source_file
+                    source_file_path = file.path
                     if not dest_file_name:
                         dest_file_name = Path(source_file_path).name
-                    f.path = self.__create_valid_file_path(
-                        f, name=dest_file_name)
+                    file.path = self._get_file_path(name=dest_file_name)
                 else:
                     if not dest_file_name:
                         if isinstance(source_file, str):
@@ -145,23 +141,21 @@ class LocalFileStore(FileStore):
                         else:
                             dest_file_name = "file"
 
-                    f = self.create_file(name=dest_file_name)
+                    file = self.create_file(name=dest_file_name)
                     source_file_path = source_file
                 # copy disk file
-                if not os.path.exists(f.dir):
-                    os.makedirs(f.dir)
-                    if not os.path.exists(f.dir):
+                if not os.path.exists(file.dir):
+                    os.makedirs(file.dir)
+                    if not os.path.exists(file.dir):
                         raise BadRequestException(
-                            f"Cannot create directory '{f.dir}'")
+                            f"Cannot create directory '{file.dir}'")
                 if isinstance(source_file, (io.IOBase, tempfile.SpooledTemporaryFile, )):
-                    with open(f.path, "wb") as buffer:
+                    with open(file.path, "wb") as buffer:
                         shutil.copyfileobj(source_file, buffer)
                 else:
-                    shutil.copy2(source_file_path, f.path)
-                # save DB file object
-                f.file_store_uri = self.uri
-                f.save()
-                return f
+                    shutil.copy2(source_file_path, file.path)
+
+                return file
             except Exception as err:
                 transaction.rollback()
                 raise BadRequestException(
@@ -171,21 +165,18 @@ class LocalFileStore(FileStore):
 
     # -- C --
 
-    def __create_valid_file_path(self, file: File, name: str = ""):
-        if not file.uri:
-            file.save()
-        file.path = os.path.join(self.path, file.uri, name)
-        file.save()
-        return file.path
+    def _get_file_path(self, name: str = "") -> str:
+        return os.path.join(self.path, self.uri, name)
 
-    def create_file(self, name: str, file_type: type = None):
-        from .file import File
+    def create_file(self, name: str, file_type: type = None) -> File:
+        file: File
         if isinstance(file_type, type):
             file = file_type()
         else:
             file = File()
-        self.__create_valid_file_path(file, name)
-        file.save()
+        file.path = self._get_file_path(name)
+        file.file_store_uri = self.uri
+
         return file
 
     def contains(self, file: File) -> bool:
@@ -199,9 +190,8 @@ class LocalFileStore(FileStore):
         super().drop_table()
 
     def delete_instance(self):
-        from .file import File
-        if File.table_exists():
-            File.delete().where(File.file_store_uri == self.uri).execute()
+        if FileResource.table_exists():
+            FileResource.delete().where(FileResource.file_store_uri == self.uri).execute()
         if os.path.exists(self.path):
             shutil.rmtree(self.path)
         super().delete_instance()
@@ -211,13 +201,13 @@ class LocalFileStore(FileStore):
     # -- G --
 
     @classmethod
-    def get_default_instance(cls):
+    def get_default_instance(cls) -> 'FileStore':
         try:
-            fs = cls.get_by_id(1)
-        except Exception as _:
-            fs = cls()
-            fs.save()
-        return fs
+            file_store: FileStore = cls.get_by_id(1)
+        except Exception:
+            file_store = cls()
+            file_store.save()
+        return file_store
 
     # -- I --
 

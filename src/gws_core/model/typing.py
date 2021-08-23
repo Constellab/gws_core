@@ -4,13 +4,14 @@
 # About us: https://gencovery.com
 
 import inspect
-from typing import Any, Dict, List, Literal, Type, Union
+from typing import Any, Dict, List, Literal, Type
 
 from peewee import BooleanField, CharField, ModelSelect
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.model import Model
+from ..core.utils.utils import Utils
 
 # ####################################################################
 #
@@ -72,7 +73,7 @@ class Typing(Model):
         return self.model_type.split('.')
 
     def __get_hierarchy_table(self) -> List[str]:
-        model_t: Model = self.get_model_type(self.model_type)
+        model_t: Model = Utils.get_model_type(self.model_type)
         mro: List[Model] = inspect.getmro(model_t)
 
         ht: List[str] = []

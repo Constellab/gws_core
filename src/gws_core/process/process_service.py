@@ -91,7 +91,7 @@ class ProcessService(BaseService):
 
     @classmethod
     def create_process_from_type(cls, process_type: Type[Process], instance_name: str = None) -> ProcessModel:
-        process: ProcessModel = ProcessableFactory.create_process_from_type(
+        process: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=process_type, instance_name=instance_name)
 
         process.save_full()

@@ -1,6 +1,6 @@
 
 
-from ..config.config import ConfigSpecs
+from ..config.config_spec import ConfigSpecs
 from ..core.model.base import Base
 
 

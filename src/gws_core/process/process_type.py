@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Type, final
 
 from peewee import ModelSelect
 
+from ..core.utils.utils import Utils
 from ..model.typing import Typing, TypingObjectType
 from ..process.process import Process
 from ..resource.resource import Resource
@@ -33,7 +34,7 @@ class ProcessType(Typing):
         _json["ptype"] = self.model_type
 
         # retrieve the process python type
-        model_t: Type[Process] = self.get_model_type(self.model_type)
+        model_t: Type[Process] = Utils.get_model_type(self.model_type)
 
         # Handle the resource input specs
         specs = model_t.input_specs
@@ -88,7 +89,7 @@ class ProcessType(Typing):
         _json: Dict[str, Any] = super().data_to_json(deep=deep, **kwargs)
 
         # retrieve the process python type
-        model_t: Type[Process] = self.get_model_type(self.model_type)
+        model_t: Type[Process] = Utils.get_model_type(self.model_type)
 
        # Other infos
         _json["title"] = model_t._human_name

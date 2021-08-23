@@ -3,10 +3,17 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from typing import Generic, TypeVar
+
+from peewee import ModelSelect
+
+from ..model.model import Model
 from .query import Query
 
+PaginatorType = TypeVar('PaginatorType', bound=Model)
 
-class Paginator:
+
+class Paginator(Generic[PaginatorType]):
     """
     Paginator class
 
@@ -17,7 +24,7 @@ class Paginator:
     number_of_items_per_page = 20
     _max_number_of_items_per_page = 100
 
-    def __init__(self, query,
+    def __init__(self, query: ModelSelect,
                  page: int = 1,
                  number_of_items_per_page: int = 20,
                  view_params: dict = None):

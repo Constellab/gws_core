@@ -3,29 +3,18 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import asyncio
 import time
-import unittest
 
-from gws_core import (Experiment, ExperimentStatus, GTest, Queue, QueueService,
+from gws_core import (Experiment, ExperimentStatus, GTest, QueueService,
                       RobotService, Settings)
+
+from tests.base_test import BaseTest
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 
-class TestExperiment(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        GTest.drop_tables()
-        GTest.create_tables()
-        GTest.init()
-
-    @classmethod
-    def tearDownClass(cls):
-        QueueService.deinit()
-        GTest.drop_tables()
+class TestExperiment(BaseTest):
 
     def test_service(self):
         GTest.print("ExperimentService")

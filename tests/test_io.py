@@ -5,11 +5,9 @@
 
 import unittest
 
-from gws_core import (Config, Connector, GTest, Input, Output, Process,
-                      ProcessDecorator, ProgressBar, Resource,
-                      ResourceDecorator)
-from gws_core.process.process_model import ProcessModel
-from gws_core.process.processable_factory import ProcessableFactory
+from gws_core import (ConfigParams, Connector, GTest, Process,
+                      ProcessableFactory, ProcessDecorator, ProcessIO,
+                      ProcessModel, ProgressBar, Resource, ResourceDecorator)
 
 
 @ResourceDecorator("Person")
@@ -28,7 +26,7 @@ class Create(Process):
     output_specs = {'create_person_out': Person}
     config_specs = {}
 
-    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         return
 
 
@@ -38,7 +36,7 @@ class Move(Process):
     output_specs = {'move_person_out': Person}
     config_specs = {}
 
-    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         return
 
 
@@ -48,18 +46,18 @@ class Drive(Process):
     output_specs = {'move_drive_out': Car}
     config_specs = {}
 
-    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         return
 
 
 @ProcessDecorator("Jump")
 class Jump(Process):
     input_specs = {'jump_person_in_1': Person,
-                   'jump_person_in_2': Person, 'jump_person_in_2': Person}
+                   'jump_person_in_2': Person}
     output_specs = {'jump_person_out': Person}
     config_specs = {}
 
-    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         return
 
 
@@ -78,11 +76,11 @@ class TestIO(unittest.TestCase):
     def test_connect(self):
         GTest.print("IO connect")
 
-        p0: ProcessModel = ProcessableFactory.create_process_from_type(
+        p0: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=Create, instance_name="p0")
-        p1: ProcessModel = ProcessableFactory.create_process_from_type(
+        p1: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=Move, instance_name="p1")
-        p2: ProcessModel = ProcessableFactory.create_process_from_type(
+        p2: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=Move, instance_name="p2")
 
         # create a chain
@@ -99,7 +97,7 @@ class TestIO(unittest.TestCase):
         self.assertIsInstance(port_connect, Connector)
 
         # assert error
-        p3: ProcessModel = ProcessableFactory.create_process_from_type(
+        p3: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=Drive, instance_name="p3")
         self.assertRaises(Exception, p2.out_port(
             'move_person_out').pipe,  p3.in_port('move_drive_in'))
@@ -113,7 +111,7 @@ class TestIO(unittest.TestCase):
     def test_iterator(self):
         GTest.print("IO Iterator")
 
-        jump: ProcessModel = ProcessableFactory.create_process_from_type(
+        jump: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=Jump, instance_name="p3")
         for k in jump.input:
             print(k)

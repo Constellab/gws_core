@@ -80,7 +80,7 @@ class Viewable(Model):
     # -- C --
 
     @property
-    def comments(self) -> list:
+    def comments(self) -> List[Comment]:
         """
         Returns the list of comments of this object
         """

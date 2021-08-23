@@ -41,12 +41,12 @@ class SubProcessableFactory():
 
         # if this is a process
         if issubclass(processable_type, Process):
-            return ProcessableFactory.create_process_from_type(
+            return ProcessableFactory.create_process_model_from_type(
                 process_type=processable_type, instance_name=instance_name)
         else:
             # if this is a protocol
             # create an empty protocol
-            return ProcessableFactory.create_protocol_from_type(
+            return ProcessableFactory.create_protocol_model_from_type(
                 protocol_type=processable_type, instance_name=instance_name)
 
 

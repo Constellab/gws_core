@@ -3,34 +3,15 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, Dict, List, Literal, Optional, TypedDict, Union, final
+from typing import Union, final
+
+from gws_core.config.config_params import ConfigParams
 
 from ..core.classes.validator import Validator
 from ..core.exception.exceptions import BadRequestException
 from ..model.typing_register_decorator import TypingDecorator
 from ..model.viewable import Viewable
-
-
-class ConfigSpec(TypedDict):
-
-    # Type of the config value (string, float...)
-    type: Literal['str', 'float']
-
-    #  Default value
-    #  If not provided, the config is mandatory
-    default: Optional[Any]
-
-    #  If present, the value must be in the array
-    allowed_values: Optional[List[Any]]
-
-    # Description of the config, showed in the interface
-    description: Optional[str]
-
-   # Measure unit of the value (ex km)
-    unit: Optional[str]
-
-
-ConfigSpecs = Dict[str, ConfigSpec]
+from .config_spec import ConfigSpecs
 
 
 @final
@@ -124,7 +105,7 @@ class Config(Viewable):
     # -- P --
 
     @property
-    def params(self) -> dict:
+    def params(self) -> ConfigParams:
         """
         Returns all the parameters
 
@@ -133,14 +114,14 @@ class Config(Viewable):
         """
 
         params = self.data["params"]
-        specs = self.data["specs"]
+        specs: ConfigSpecs = self.data["specs"]
         for k in specs:
             if not k in params:
                 default = specs[k].get("default", None)
                 if default:
                     params[k] = default
 
-        return params
+        return ConfigParams(params)
 
     def param_exists(self, name: str) -> bool:
         """

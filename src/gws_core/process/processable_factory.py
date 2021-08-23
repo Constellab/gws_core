@@ -26,13 +26,13 @@ class ProcessableFactory():
     """
 
     @classmethod
-    def create_processable_from_type(
+    def create_processable_model_from_type(
             cls, processable_type: Type[Processable],
             instance_name: str = None) -> ProcessModel:
         if issubclass(processable_type, Process):
-            return cls.create_process_from_type(processable_type, instance_name)
+            return cls.create_process_model_from_type(processable_type, instance_name)
         elif issubclass(processable_type, Protocol):
-            return cls.create_protocol_from_type(processable_type, instance_name)
+            return cls.create_protocol_model_from_type(processable_type, instance_name)
         else:
             name = processable_type.__name__ if processable_type.__name__ is not None else str(
                 processable_type)
@@ -40,7 +40,7 @@ class ProcessableFactory():
                 f"The type {name} is not a Process nor a Protocol. It must extend the on of the classes")
 
     @classmethod
-    def create_process_from_type(cls, process_type: Type[Process], instance_name: str = None) -> ProcessModel:
+    def create_process_model_from_type(cls, process_type: Type[Process], instance_name: str = None) -> ProcessModel:
         if not issubclass(process_type, Process):
             name = process_type.__name__ if process_type.__name__ is not None else str(
                 process_type)
@@ -51,22 +51,21 @@ class ProcessableFactory():
             raise BadRequestException(
                 f"The process {process_type.full_classname()} is not register. Did you add the @ProcessDecorator decorator on your process class ?")
 
-        process_model: ProcessModel = ProcessModel(process_type)
-        process_model.set_process_type(process_type)
+        process_model: ProcessModel = ProcessModel()
+        process_model.set_process_type(process_type._typing_name)
 
-        cls._init_processable(processable_model=process_model,
-                              config=Config(specs=process_type.config_specs), instance_name=instance_name)
+        cls._init_processable_model(processable_model=process_model,
+                                    config=Config(specs=process_type.config_specs), instance_name=instance_name)
 
         return process_model
 
     @classmethod
-    def create_process_from_typing_name(cls, typing_name: str, instance_name: str = None) -> ProcessModel:
-        return cls.create_process_from_type(
-            TypingManager.get_type_from_name(typing_name=typing_name),
-            instance_name=instance_name)
+    def create_process_model_from_typing_name(cls, typing_name: str, instance_name: str = None) -> ProcessModel:
+        process_type: Type[Process] = TypingManager.get_type_from_name(typing_name=typing_name)
+        return cls.create_process_model_from_type(process_type=process_type, instance_name=instance_name)
 
     @classmethod
-    def create_protocol_from_type(cls, protocol_type: Type[Protocol], instance_name: str = None) -> ProtocolModel:
+    def create_protocol_model_from_type(cls, protocol_type: Type[Protocol], instance_name: str = None) -> ProtocolModel:
         if not issubclass(protocol_type, Protocol):
             name = protocol_type.__name__ if protocol_type.__name__ is not None else str(
                 protocol_type)
@@ -80,14 +79,14 @@ class ProcessableFactory():
         protocol_model: ProtocolModel = ProtocolModel()
         protocol_model.set_protocol_type(protocol_type)
 
-        cls._init_processable(processable_model=protocol_model,
-                              config=Config(specs=protocol_type.config_specs), instance_name=instance_name)
+        cls._init_processable_model(processable_model=protocol_model,
+                                    config=Config(specs=protocol_type.config_specs), instance_name=instance_name)
 
         protocol: Protocol = protocol_type()
 
         create_config: ProtocolCreateConfig = protocol.get_create_config()
         # create the protocol from a statis protocol class
-        return cls._build_protocol(
+        return cls._build_protocol_model(
             protocol=protocol_model,
             processes=create_config["processes"],
             connectors=create_config["connectors"],
@@ -96,21 +95,21 @@ class ProcessableFactory():
         )
 
     @classmethod
-    def create_protocol_from_data(cls, processes: dict = None,
-                                  connectors: list = None,
-                                  interfaces: dict = None,
-                                  outerfaces: dict = None,
-                                  instance_name: str = None) -> ProtocolModel:
+    def create_protocol_model_from_data(cls, processes: dict = None,
+                                        connectors: list = None,
+                                        interfaces: dict = None,
+                                        outerfaces: dict = None,
+                                        instance_name: str = None) -> ProtocolModel:
         protocol_model: ProtocolModel = ProtocolModel()
 
         # Use the Protocol default type because the protocol is not linked to a specific type
         protocol_model.processable_typing_name = CONST_PROTOCOL_TYPING_NAME
 
-        cls._init_processable(
+        cls._init_processable_model(
             processable_model=protocol_model, config=Config({}), instance_name=instance_name)
 
         # create the protocol from a statis protocol class
-        return cls._build_protocol(
+        return cls._build_protocol_model(
             protocol=protocol_model,
             processes=processes,
             connectors=connectors,
@@ -119,10 +118,10 @@ class ProcessableFactory():
         )
 
     @classmethod
-    def _build_protocol(cls, protocol: ProtocolModel, processes: dict = None,
-                        connectors: list = None,
-                        interfaces: dict = None,
-                        outerfaces: dict = None) -> ProtocolModel:
+    def _build_protocol_model(cls, protocol: ProtocolModel, processes: dict = None,
+                              connectors: list = None,
+                              interfaces: dict = None,
+                              outerfaces: dict = None) -> ProtocolModel:
         if processes is None:
             processes = {}
         if connectors is None:
@@ -159,7 +158,7 @@ class ProcessableFactory():
         return protocol
 
     @classmethod
-    def create_protocol_from_graph(cls, graph: dict) -> ProtocolModel:
+    def create_protocol_model_from_graph(cls, graph: dict) -> ProtocolModel:
         """
         Create a new instance from a existing graph
 
@@ -168,14 +167,14 @@ class ProcessableFactory():
         """
 
         # create an empty protocol
-        protocol: ProtocolModel = cls.create_protocol_from_type(
+        protocol: ProtocolModel = cls.create_protocol_model_from_type(
             protocol_type=Protocol)
 
-        cls._create_protocol_from_graph_recur(protocol=protocol, graph=graph)
+        cls._create_protocol_model_from_graph_recur(protocol=protocol, graph=graph)
         return protocol
 
     @classmethod
-    def _create_protocol_from_graph_recur(cls, protocol: ProtocolModel, graph: dict) -> ProtocolModel:
+    def _create_protocol_model_from_graph_recur(cls, protocol: ProtocolModel, graph: dict) -> ProtocolModel:
         """
         Create a new instance from a existing graph
 
@@ -188,13 +187,14 @@ class ProcessableFactory():
 
         for key, processable in protocol.processes.items():
             if isinstance(processable, ProtocolModel):
-                cls._create_protocol_from_graph_recur(
+                cls._create_protocol_model_from_graph_recur(
                     protocol=processable, graph=graph["nodes"][key]["data"]["graph"])
 
         return protocol
 
     @classmethod
-    def _init_processable(cls, processable_model: ProcessableModel, config: Config, instance_name: str = None) -> None:
+    def _init_processable_model(
+            cls, processable_model: ProcessableModel, config: Config, instance_name: str = None) -> None:
         # Set the config
         processable_model.config = config
 

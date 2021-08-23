@@ -4,14 +4,12 @@
 # About us: https://gencovery.com
 
 import os
-from unittest import IsolatedAsyncioTestCase
 
-from gws_core import (CondaEnvShell, Config, Experiment, ExperimentService,
-                      GTest, Input, Output, Resource)
-from gws_core.process.process_decorator import ProcessDecorator
-from gws_core.process.process_model import ProcessModel
-from gws_core.process.process_service import ProcessService
-from gws_core.progress_bar.progress_bar import ProgressBar
+from gws_core import (CondaEnvShell, ConfigParams, Experiment,
+                      ExperimentService, GTest, ProcessDecorator, ProcessIO,
+                      ProcessModel, ProcessService, ProgressBar, Resource)
+
+from tests.base_test import BaseTest
 
 __cdir__ = os.path.abspath(os.path.dirname(__file__))
 
@@ -23,27 +21,16 @@ class CondaEnvTester(CondaEnvShell):
     env_file_path = os.path.join(
         __cdir__, "testdata", "penv", "env_jwt_conda.yml")
 
-    def build_command(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> list:
+    def build_command(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> list:
         return ["python", os.path.join(__cdir__, "testdata", "penv", "jwt_encode.py")]
 
-    def gather_outputs(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar):
+    def gather_outputs(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         res = Resource()
         res.data["encoded_string"] = self._stdout
-        outputs["stdout"] = res
+        return {"stdout": res}
 
 
-class TestProcess(IsolatedAsyncioTestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        GTest.drop_tables()
-        GTest.create_tables()
-        GTest.init()
-
-    @classmethod
-    def tearDownClass(cls):
-        GTest.drop_tables()
-        CondaEnvTester.uninstall()
+class TestProcess(BaseTest):
 
     async def test_conda(self):
         GTest.print("Conda")
@@ -55,7 +42,7 @@ class TestProcess(IsolatedAsyncioTestCase):
             process=proc)
         experiment = await ExperimentService.run_experiment(experiment=experiment, user=GTest.user)
 
-        result = proc.output["stdout"]
+        result: Resource = proc.output["stdout"].get_resource()
         encoded_string = result.data["encoded_string"]
         self.assertEqual(
             encoded_string,

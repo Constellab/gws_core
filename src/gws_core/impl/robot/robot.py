@@ -5,8 +5,11 @@
 
 import time
 
-from ...config.config import Config
-from ...io.io import Input, Output
+from gws_core.config.config_params import ConfigParams
+from gws_core.process.process_io import ProcessIO
+from gws_core.resource.resource import Resource
+from gws_core.resource.resource_data import ResourceData
+
 from ...process.process import Process
 from ...process.process_decorator import ProcessDecorator
 from ...process.process_model import ProcessModel
@@ -15,21 +18,20 @@ from ...progress_bar.progress_bar import ProgressBar
 from ...protocol.protocol import Protocol, ProtocolCreateConfig
 from ...protocol.protocol_decorator import ProtocolDecorator
 from ...protocol.protocol_model import ProtocolModel
-from ...resource.resource import Resource
 from ...resource.resource_decorator import ResourceDecorator
 
 
 @ResourceDecorator("Robot")
 class Robot(Resource):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, data: ResourceData = None):
+        super().__init__(data)
 
-        if not self.id:
-            self.data = {
+        if self.data.is_empty():
+            self.data.set_values({
                 "age": 9,
                 "position": [0, 0],
                 "weight": 70
-            }
+            })
 
     @property
     def age(self):
@@ -69,31 +71,24 @@ class RobotCreate(Process):
     output_specs = {'robot': Robot}
     config_specs = {}
 
-    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         print("Create", flush=True)
-        r = Robot()
-        # r.set_title("Astro Boy")
-        c = r.add_comment("""
-            Astro Boy, known in Japan by its original name Mighty Atom (Japanese: 鉄腕アトム, Hepburn: Tetsuwan Atomu), is a Japanese manga series written and illustrated by Osamu Tezuka.
-            https://en.wikipedia.org/wiki/Astro_Boy
-        """)
-        r.add_comment("Reply to my comment", reply_to=c)
+        robot: Robot = Robot()
 
-        outputs['robot'] = r
+        return {'robot': robot}
 
 
-@ProcessDecorator("RobotMove", human_name="Move robot", short_description="This process emulates a short moving step of the robot")
+@ProcessDecorator("RobotMove", human_name="Move robot",
+                  short_description="This process emulates a short moving step of the robot")
 class RobotMove(Process):
     input_specs = {'robot': Robot}  # just for testing
     output_specs = {'robot': Robot}
-    config_specs = {
-        'moving_step': {"type": float, "default": 0.1, 'description': "The moving step of the robot"},
-        'direction': {"type": str, "default": "north", "allowed_values": ["north", "south", "east", "west"], 'description': "The moving direction"}
-    }
+    config_specs = {'moving_step': {"type": float, "default": 0.1, 'description': "The moving step of the robot"}, 'direction': {
+        "type": str, "default": "north", "allowed_values": ["north", "south", "east", "west"], 'description': "The moving direction"}}
 
-    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         print(f"Moving {config.get_param('moving_step')}", flush=True)
-        r = Robot()
+        robot = Robot()
 
         pos = inputs['robot'].position.copy()
         direction = config.get_param('direction')
@@ -109,12 +104,13 @@ class RobotMove(Process):
         for i in range(0, 100):
             progress_bar.set_value(i, message=f"Moving iteration {i}")
 
-        r.set_position(pos)
-        r.set_weight(inputs['robot'].weight)
-        outputs['robot'] = r
+        robot.set_position(pos)
+        robot.set_weight(inputs['robot'].weight)
+        return {'robot': robot}
 
 
-@ProcessDecorator("RobotEat", human_name="Eat process", short_description="This process emulates the meal of the robot before its flight!")
+@ProcessDecorator("RobotEat", human_name="Eat process",
+                  short_description="This process emulates the meal of the robot before its flight!")
 class RobotEat(Process):
     input_specs = {'robot': Robot}
     output_specs = {'robot': Robot}
@@ -122,16 +118,17 @@ class RobotEat(Process):
         'food_weight': {"type": float, "default": 3.14}
     }
 
-    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         print(f"Eating {config.get_param('food_weight')}", flush=True)
-        r = Robot()
-        r.set_position(inputs['robot'].position.copy())
-        r.set_weight(inputs['robot'].weight +
-                     config.get_param('food_weight'))
-        outputs['robot'] = r
+        robot = Robot()
+        robot.set_position(inputs['robot'].position.copy())
+        robot.set_weight(inputs['robot'].weight +
+                         config.get_param('food_weight'))
+        return {'robot': robot}
 
 
-@ProcessDecorator("RobotWait", human_name="Wait process", short_description="This process emulates the resting time of the robot before its flight!")
+@ProcessDecorator("RobotWait", human_name="Wait process",
+                  short_description="This process emulates the resting time of the robot before its flight!")
 class RobotWait(Process):
     input_specs = {'robot': Robot}
     output_specs = {'robot': Robot}
@@ -140,26 +137,25 @@ class RobotWait(Process):
         'waiting_time': {"type": float, "default": 0.5}
     }
 
-    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         print(f"Waiting {config.get_param('waiting_time')}", flush=True)
-        r = Robot()
-        r.set_position(inputs['robot'].position.copy())
-        r.set_weight(inputs['robot'].weight)
-        r.set_age(inputs['robot'].age)
-        outputs['robot'] = r
+        robot = Robot()
+        robot.set_position(inputs['robot'].position.copy())
+        robot.set_weight(inputs['robot'].weight)
+        robot.set_age(inputs['robot'].age)
         time.sleep(config.get_param('waiting_time'))
+        return {'robot': robot}
 
 
-@ProcessDecorator("RobotFly", human_name="Fly process", short_description="This process emulates the fly of the robot. It inherites the Move process.")
+@ProcessDecorator("RobotFly", human_name="Fly process",
+                  short_description="This process emulates the fly of the robot. It inherites the Move process.")
 class RobotFly(RobotMove):
-    config_specs = {
-        'moving_step': {"type": float, "default": 1000.0, "unit": "km"},
-        'direction': {"type": str, "default": "west", "allowed_values": ["north", "south", "east", "west"], 'description': "The flying direction"}
-    }
+    config_specs = {'moving_step': {"type": float, "default": 1000.0, "unit": "km"}, 'direction': {
+        "type": str, "default": "west", "allowed_values": ["north", "south", "east", "west"], 'description': "The flying direction"}}
 
-    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         print("Start flying ...")
-        await super().task(config=config, inputs=inputs, outputs=outputs, progress_bar=progress_bar)
+        return await super().task(config=config, inputs=inputs, progress_bar=progress_bar)
 
 
 @ProcessDecorator("RobotAdd")
@@ -168,45 +164,45 @@ class RobotAdd(Process):
     output_specs = {'mega_robot': MegaRobot}
     config_specs = {}
 
-    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         print("Add robot addon...")
         mega = MegaRobot()
         mega.set_position(inputs['robot'].position.copy())
         mega.set_weight(inputs['robot'].weight)
-        mega.data["addon_uri"] = inputs['addon'].uri
-        outputs['mega_robot'] = mega
+        return {'mega_robot':  mega}
 
 
-@ProcessDecorator(unique_name="RobotAddOnCreate", human_name="The travel of `Astro`", short_description="This is the travel of astro composed of several steps")
+@ProcessDecorator(unique_name="RobotAddOnCreate", human_name="The travel of `Astro`",
+                  short_description="This is the travel of astro composed of several steps")
 class RobotAddOnCreate(Process):
     input_specs = {}
     output_specs = {'addon': RobotAddOn}
     config_specs = {}
 
-    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         print("AddOn Create", flush=True)
-        outputs['addon'] = RobotAddOn()
+        return {'addon': RobotAddOn()}
 
 
 def create_protocol():
-    facto: ProcessModel = ProcessableFactory.create_process_from_type(
+    facto: ProcessModel = ProcessableFactory.create_process_model_from_type(
         process_type=RobotCreate)
-    move_1: ProcessModel = ProcessableFactory.create_process_from_type(
+    move_1: ProcessModel = ProcessableFactory.create_process_model_from_type(
         process_type=RobotMove)
-    eat_1: ProcessModel = ProcessableFactory.create_process_from_type(
+    eat_1: ProcessModel = ProcessableFactory.create_process_model_from_type(
         process_type=RobotEat)
-    move_2: ProcessModel = ProcessableFactory.create_process_from_type(
+    move_2: ProcessModel = ProcessableFactory.create_process_model_from_type(
         process_type=RobotMove)
-    move_3: ProcessModel = ProcessableFactory.create_process_from_type(
+    move_3: ProcessModel = ProcessableFactory.create_process_model_from_type(
         process_type=RobotMove)
-    eat_2: ProcessModel = ProcessableFactory.create_process_from_type(
+    eat_2: ProcessModel = ProcessableFactory.create_process_model_from_type(
         process_type=RobotEat)
-    wait_1: ProcessModel = ProcessableFactory.create_process_from_type(
+    wait_1: ProcessModel = ProcessableFactory.create_process_model_from_type(
         process_type=RobotWait)
-    fly_1: ProcessModel = ProcessableFactory.create_process_from_type(
+    fly_1: ProcessModel = ProcessableFactory.create_process_model_from_type(
         process_type=RobotFly)
 
-    proto: ProtocolModel = ProcessableFactory.create_protocol_from_data(
+    proto: ProtocolModel = ProcessableFactory.create_protocol_model_from_data(
         processes={
             'facto': facto,
             'move_1': move_1,
@@ -239,21 +235,21 @@ def create_protocol():
 class RobotTravelProto(Protocol):
 
     def get_create_config(self) -> ProtocolCreateConfig:
-        move_1: ProcessModel = ProcessableFactory.create_process_from_type(
+        move_1: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotMove)
-        eat_1: ProcessModel = ProcessableFactory.create_process_from_type(
+        eat_1: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotEat)
-        move_2: ProcessModel = ProcessableFactory.create_process_from_type(
+        move_2: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotMove)
-        move_3: ProcessModel = ProcessableFactory.create_process_from_type(
+        move_3: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotMove)
-        eat_2: ProcessModel = ProcessableFactory.create_process_from_type(
+        eat_2: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotEat)
-        wait_1: ProcessModel = ProcessableFactory.create_process_from_type(
+        wait_1: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotWait)
-        add_1: ProcessModel = ProcessableFactory.create_process_from_type(
+        add_1: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotAdd)
-        addon_create_1: ProcessModel = ProcessableFactory.create_process_from_type(
+        addon_create_1: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotAddOnCreate)
 
         processes = {
@@ -294,16 +290,16 @@ class RobotTravelProto(Protocol):
 class RobotSuperTravelProto(Protocol):
 
     def get_create_config(self) -> ProtocolCreateConfig:
-        sub_travel: ProtocolModel = ProcessableFactory.create_protocol_from_type(
+        sub_travel: ProtocolModel = ProcessableFactory.create_protocol_model_from_type(
             RobotTravelProto)
 
-        move_4: ProcessModel = ProcessableFactory.create_process_from_type(
+        move_4: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotMove)
-        fly_1: ProcessModel = ProcessableFactory.create_process_from_type(
+        fly_1: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotFly)
-        wait_2: ProcessModel = ProcessableFactory.create_process_from_type(
+        wait_2: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotWait)
-        eat_3: ProcessModel = ProcessableFactory.create_process_from_type(
+        eat_3: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotEat)
 
         processes = {
@@ -337,14 +333,14 @@ class RobotWorldTravelProto(Protocol):
 
     def get_create_config(self) -> ProtocolCreateConfig:
 
-        super_travel: ProtocolModel = ProcessableFactory.create_protocol_from_type(
+        super_travel: ProtocolModel = ProcessableFactory.create_protocol_model_from_type(
             RobotSuperTravelProto)
 
-        facto: ProcessModel = ProcessableFactory.create_process_from_type(
+        facto: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotCreate)
-        fly_1: ProcessModel = ProcessableFactory.create_process_from_type(
+        fly_1: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotFly)
-        wait_1: ProcessModel = ProcessableFactory.create_process_from_type(
+        wait_1: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=RobotWait)
 
         processes = {

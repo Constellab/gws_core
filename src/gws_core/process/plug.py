@@ -6,11 +6,15 @@
 import time
 from typing import Type
 
+from gws_core.config.config_params import ConfigParams
+from gws_core.core.utils.utils import Utils
+from gws_core.process.process_io import ProcessIO
+from gws_core.resource.resource import Resource
+
 from ..config.config import Config
 from ..core.model.model import Model
-from ..io.io import Input, Output
+from ..io.io import Input
 from ..progress_bar.progress_bar import ProgressBar
-from ..resource.resource import Resource
 from .process import Process
 from .process_decorator import ProcessDecorator
 
@@ -32,14 +36,14 @@ class Source(Process):
 
     _is_plug = True
 
-    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         r_uri = config.get_param("resource_uri")
         r_type = config.get_param("resource_type")
         if not r_uri or not r_type:
             return
-        model_type: Type[Model] = Model.get_model_type(r_type)
+        model_type: Type[Model] = Utils.get_model_type(r_type)
         resource = model_type.get(model_type.uri == r_uri)
-        outputs["resource"] = resource
+        return {"resource": resource}
 
 
 @ProcessDecorator("Sink")
@@ -55,7 +59,7 @@ class Sink(Process):
     config_specs = {}
     _is_plug = True
 
-    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         pass
 
 
@@ -82,15 +86,14 @@ class FIFO2(Process):
 
         return True
 
-    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         resource = inputs["resource_1"]
         if resource:
-            outputs["resource"] = resource
-            return
+            return {"resource": resource}
 
         resource = inputs["resource_2"]
         if resource:
-            outputs["resource"] = resource
+            return {"resource": resource}
 
 
 @ProcessDecorator("Switch2")
@@ -108,10 +111,10 @@ class Switch2(Process):
                               "Description": "The index of the input resource to switch on. Defaults to 1."}}
     _is_plug = True
 
-    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         index = config.get_param("index")
         resource = inputs[f"resource_{index}"]
-        outputs["resource"] = resource
+        return {"resource": resource}
 
 
 @ProcessDecorator("Wait")
@@ -128,8 +131,8 @@ class Wait(Process):
                                      "Description": "The waiting time in seconds. Defaults to 3 second."}}
     _is_plug = True
 
-    async def task(self, config: Config, inputs: Input, outputs: Output, progress_bar: ProgressBar) -> None:
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         waiting_time = config.get_param("waiting_time")
         time.sleep(waiting_time)
         resource = inputs["resource"]
-        outputs["resource"] = resource
+        return {"resource": resource}

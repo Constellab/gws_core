@@ -50,7 +50,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(config2.data, config.data)
 
     def test_process_config(self):
-        robotMove: ProcessModel = ProcessableFactory.create_process_from_type(
+        robotMove: ProcessModel = ProcessableFactory.create_process_model_from_type(
             RobotMove)
         self.assertEqual(robotMove.get_param("moving_step"), 0.1)
         robotMove.set_param("moving_step", 0.3)

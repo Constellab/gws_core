@@ -26,15 +26,14 @@ class RobotService(BaseService):
     @classmethod
     def run_robot_super_travel(cls):
         protocol: ProtocolModel = cls.create_nested_protocol()
-        experiment = ExperimentService.create_experiment_from_protocol(protocol=protocol,
-                                                                       title="The super journey of Astro.",
-                                                                       description="This is the super journey of Astro.")
+        experiment = ExperimentService.create_experiment_from_protocol(
+            protocol=protocol, title="The super journey of Astro.", description="This is the super journey of Astro.")
         QueueService.add_experiment_to_queue(experiment_uri=experiment.uri)
         return experiment
 
     @classmethod
     def create_nested_protocol(cls) -> ProtocolModel:
-        protocol: ProtocolModel = ProcessableFactory.create_protocol_from_type(
+        protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_type(
             protocol_type=RobotWorldTravelProto)
         protocol.save_full()
         return protocol
