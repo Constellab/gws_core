@@ -37,11 +37,7 @@ class GTest:
                 "The unit tests can only be initialized in dev mode")
 
         study = Study.get_default_instance()
-<<<<<<< HEAD
-        UserService.create_owner_and_sysuser()
-=======
         UserService.create_sysuser()
->>>>>>> [fix] fix in utils
         user = User.get_sysuser()
         # refresh user information from DB
         AuthService.authenticate(
