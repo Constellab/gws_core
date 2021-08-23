@@ -35,7 +35,8 @@ class TestMySQLDumpLoad(unittest.TestCase):
         f.save()
 
         # dump db
-        output_file = MySQLService.dump_db("gws", force=True, wait=True)
+        output_file = MySQLService.dump_db(
+            "test_gws", force=True, wait=True)
         self.assertTrue(os.path.exists(output_file))
 
         GTest.drop_tables()
@@ -43,7 +44,7 @@ class TestMySQLDumpLoad(unittest.TestCase):
 
         # load db
         MySQLService.load_db(
-            "gws", local_file_path=output_file, force=True, wait=True)
+            "test_gws", local_file_path=output_file, force=True, wait=True)
         self.assertTrue(File.table_exists())
 
     def test_db_drop(self):

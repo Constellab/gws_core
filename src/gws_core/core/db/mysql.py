@@ -4,10 +4,11 @@
 # About us: https://gencovery.com
 
 import os
+import subprocess
 from typing import List
 
+from ..db.manager import AbstractDbManager
 from ..exception.exceptions import BadRequestException
-from ..model.sys_proc import SysProc
 from ..utils.settings import Settings
 from ..utils.utils import Utils
 
@@ -17,11 +18,9 @@ class MySQLBase:
     MySQLBase class
     """
 
-    user = "gws"
-    password = "gencovery"
-    db_name = "gws"
-    table_prefix = "gws_"
-
+    user = AbstractDbManager._mariadb_config["user"]
+    password = AbstractDbManager._mariadb_config["password"]
+    db_name = AbstractDbManager.get_db_name()
     input_dir = "/data/gws/backup/mariadb"
     output_dir = "/data/gws/backup/mariadb"
 
@@ -77,18 +76,20 @@ class MySQLBase:
             f'rm -f {in_progress_file}'
         ]
 
-        with open(log_out_file, 'w') as f_out:
-            with open(log_err_file, 'w') as f_err:
-                self.process = SysProc.popen(
-                    " && ".join(cmd),
-                    cwd=self.output_dir,
-                    shell=True,
-                    stdout=f_out,
-                    stderr=f_err
-                )
+        proc = subprocess.Popen(
+            " && ".join(cmd),
+            shell=True,
+            cwd=self.output_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT
+        )
 
-                if wait:
-                    self.process.wait()
+        if wait:
+            try:
+                proc.communicate()
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.communicate()
 
         return True
 
@@ -98,9 +99,9 @@ class MySQLBase:
         self.user = db_name
         self.password = "gencovery"
         self.db_name = db_name
-        self.table_prefix = f"{db_name}_"
         self.output_dir = f"/data/{db_name}/backup/mariadb"
-        self.host = f"{db_name}_prod_db"
+        settings = Settings.retrieve()
+        self.host = settings.get_maria_db_host(self.db_name)
         self.port = 3306
 
 # ####################################################################
@@ -121,8 +122,6 @@ class MySQLDump(MySQLBase):
         settings = Settings.retrieve()
         # slugify string for security
         self.db_name = Utils.slugify(self.db_name, snakefy=True)
-        # slugify string for security
-        self.table_prefix = Utils.slugify(self.table_prefix, snakefy=True)
         self.host = settings.get_maria_db_host(self.db_name)
 
         if not self.output_file:
@@ -132,7 +131,7 @@ class MySQLDump(MySQLBase):
         login = f"--defaults-extra-file={self.CNF_FILENAME} --host {self.host} --port {self.port}"
         cmd = [
             f'echo "[client]\nuser={self.user}\npassword={self.password}" > {self.CNF_FILENAME}',
-            f'mysql {login} -N information_schema -e "select table_name from tables where table_schema = \'{self.db_name}\' and table_name like \'{self.table_prefix}%\'" | xargs -I"{{}}" mysqldump {login} {self.db_name} {{}} | gzip -f --best --rsyncable > {self.output_file}',
+            f'mysql {login} -N information_schema -e "select table_name from tables where table_schema = \'{self.db_name}\'" | xargs -I"{{}}" mysqldump {login} {self.db_name} {{}} | gzip -f --best --rsyncable > {self.output_file}',
             f'rm -f {self.CNF_FILENAME}',
         ]
         return cmd
@@ -155,8 +154,6 @@ class MySQLLoad(MySQLBase):
         settings = Settings.retrieve()
         # slugify string for security
         self.db_name = Utils.slugify(self.db_name, snakefy=True)
-        # slugify string for security
-        self.table_prefix = Utils.slugify(self.table_prefix, snakefy=True)
         self.host = settings.get_maria_db_host(self.db_name)
         if not self.input_file:
             self.input_file = os.path.join(self.input_dir, self.DUMP_FILENAME)
