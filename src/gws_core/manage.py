@@ -60,7 +60,7 @@ class SettingsLoader:
         file_path = os.path.join(cwd, "settings.json")
         is_brick = os.path.exists(file_path)
         if is_brick:
-            with open(file_path) as fp:
+            with open(file_path, 'r') as fp:
                 try:
                     settings = json.load(fp)
                 except Exception as err:
