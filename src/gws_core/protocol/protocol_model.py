@@ -63,10 +63,6 @@ class ProtocolModel(ProcessableModel):
         self._interfaces = {}
         self._outerfaces = {}
 
-        # the protocol was saved in the DB
-        # if self.uri and self.data.get("graph"):
-        #     self.build_from_graph(self.data["graph"])
-
     # -- A --
 
     def add_process(self, name: str, process: ProcessableModel):

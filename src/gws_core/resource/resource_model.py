@@ -6,12 +6,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Generic, Type, TypeVar, final
 
-from gws_core.model.typing_manager import TypingManager
-from gws_core.resource.resource import Resource
 from peewee import CharField, ModelSelect
 
+from ..core.exception.exceptions.bad_request_exception import \
+    BadRequestException
+from ..model.typing_manager import TypingManager
 from ..model.typing_register_decorator import TypingDecorator
 from ..model.viewable import Viewable
+from ..resource.resource import Resource
 from .experiment_resource import ExperimentResource
 from .kv_store import KVStore
 from .processable_resource import ProcessableResource
@@ -21,13 +23,13 @@ if TYPE_CHECKING:
     from ..process.processable_model import ProcessableModel
 
 # Typing names generated for the class Resource
-CONST_RESOURCE_MODEL_TYPING_NAME = "GWS_CORE.gws_core.Resource"
+CONST_RESOURCE_MODEL_TYPING_NAME = "GWS_CORE.gws_core.ResourceModel"
 
 ResourceType = TypeVar('ResourceType', bound=Resource)
 
 
 # Use the typing decorator to avoid circular dependency
-@TypingDecorator(unique_name="Resource", object_type="GWS_CORE", hide=True)
+@TypingDecorator(unique_name="ResourceModel", object_type="GWS_CORE", hide=True)
 class ResourceModel(Viewable, Generic[ResourceType]):
     """
     ResourceModel class.
@@ -46,6 +48,16 @@ class ResourceModel(Viewable, Generic[ResourceType]):
     _table_name = 'gws_resource'
     _resource: ResourceType
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # check that the class level property _typing_name is set
+        if self._typing_name == CONST_RESOURCE_MODEL_TYPING_NAME and type(self) != ResourceModel:  # pylint: disable=unidiomatic-typecheck
+            raise BadRequestException(
+                f"The resource model {self.full_classname()} is not decorated with @TypingDecorator, it can't be instantiate. Please decorate the class with @TypingDecorator")
+
+        if self.typing_name is None:
+            self.typing_name = self._typing_name
     # -- E --
 
     @property

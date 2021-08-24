@@ -51,7 +51,7 @@ class IOface:
         r_typing_name = ""
         if self.source_port.resource_model:
             r_uri = self.source_port.resource_model.uri
-            r_typing_name = self.source_port.resource_model.resource_typing_name
+            r_typing_name = self.source_port.resource_model.typing_name
 
         return {
             "name": self.name,

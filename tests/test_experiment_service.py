@@ -5,8 +5,8 @@
 
 import time
 
-from gws_core import (Experiment, ExperimentStatus, GTest, QueueService,
-                      RobotService, Settings)
+from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
+                      QueueService, RobotService, Settings)
 
 from tests.base_test import BaseTest
 
@@ -16,12 +16,10 @@ testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 class TestExperiment(BaseTest):
 
-    def test_service(self):
+    async def test_service(self):
         GTest.print("ExperimentService")
         proto = RobotService.create_nested_protocol()
-        experiment = Experiment(
-            protocol=proto, study=GTest.study, user=GTest.user)
-        experiment.save()
+        experiment = ExperimentService.create_experiment_from_protocol(protocol=proto)
         c = Experiment.select().count()
         self.assertEqual(c, 1)
 
@@ -61,7 +59,6 @@ class TestExperiment(BaseTest):
 
         print("Re-Run the same experiment ...")
         experiment.refresh()
-        time.sleep(1)
         self.assertTrue(_run())
         self.assertEqual(Experiment.select().count(), 1)
 

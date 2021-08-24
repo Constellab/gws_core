@@ -7,7 +7,7 @@ import time
 from typing import List
 
 from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
-                      ProcessModel, ProtocolModel, Resource, ResourceModel,
+                      ProcessModel, ProtocolModel, ResourceModel,
                       RobotService, Settings)
 
 from tests.base_test import BaseTest
@@ -27,11 +27,8 @@ class TestExperiment(BaseTest):
         print("Create experiment 1")
         proto1: ProtocolModel = RobotService.create_nested_protocol()
 
-        experiment1: Experiment = Experiment(
-            protocol=proto1, study=GTest.study, user=GTest.user)
-        experiment1.set_title("My exp title")
-        experiment1.set_description("This is my new experiment")
-        experiment1.save()
+        experiment1: Experiment = ExperimentService.create_experiment_from_protocol(
+            protocol=proto1, title="My exp title", description="This is my new experiment")
 
         #self.assertEqual(e1.processes.count(), 18)
         #self.assertEqual(Process.select().count(), 18)
@@ -80,9 +77,7 @@ class TestExperiment(BaseTest):
         # -------------------------------
         print("Create experiment_3")
         proto3 = RobotService.create_nested_protocol()
-        experiment3 = Experiment(
-            protocol=proto3, study=GTest.study, user=GTest.user)
-        experiment3.save()
+        experiment3 = ExperimentService.create_experiment_from_protocol(protocol=proto3)
 
         print("Run experiment_3 through cli ...")
         ExperimentService.run_through_cli(
@@ -115,7 +110,7 @@ class TestExperiment(BaseTest):
         def _test_archive(tf):
             OK = experiment3.archive(tf)
             self.assertTrue(OK)
-            resources: List[Resource] = experiment3.resources
+            resources: List[ResourceModel] = experiment3.resources
             self.assertEqual(len(resources), 15)
             for r in resources:
                 self.assertEqual(r.is_archived, tf)

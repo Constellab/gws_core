@@ -63,7 +63,7 @@ class Connector:
 
         if self.out_port.resource_model:
             r_uri = self.out_port.resource_model.uri
-            r_typing_name = self.out_port.resource_model.resource_typing_name
+            r_typing_name = self.out_port.resource_model.typing_name
 
         link = {
             "from": {

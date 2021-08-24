@@ -342,7 +342,7 @@ class ProcessableModel(Viewable):
                     self.input[k].save()
                 self.data["input"][k] = {
                     "uri": self.input[k].uri,
-                    "typing_name": self.input[k].resource_typing_name
+                    "typing_name": self.input[k].typing_name
                 }
         self.progress_bar.start()
         self.save()
@@ -363,7 +363,7 @@ class ProcessableModel(Viewable):
             if self.output[k]:
                 self.data["output"][k] = {
                     "uri": self.output[k].uri,
-                    "typing_name": self.output[k].resource_typing_name
+                    "typing_name": self.output[k].typing_name
                 }
         await self._run_next_processes()
 

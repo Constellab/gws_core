@@ -66,10 +66,8 @@ class TestProtocol(BaseTest):
         Q = ProtocolModel.select()
         self.assertEqual(len(Q), count+1)
 
-        experiment: Experiment = Experiment(
-            protocol=proto, study=GTest.study, user=GTest.user)
-
-        experiment.save()
+        experiment: Experiment = ExperimentService.create_experiment_from_protocol(
+            protocol=proto)
 
         experiment = await ExperimentService.run_experiment(
             experiment=experiment, user=GTest.user)

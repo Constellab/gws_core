@@ -35,23 +35,8 @@ class ExperimentService(BaseService):
 
     @classmethod
     def create_empty_experiment(cls, experimentDTO: ExperimentDTO) -> Experiment:
-        try:
-            study = Study.get_default_instance()
-            proto = ProtocolModel()
-            experiment = Experiment(protocol=proto, study=study,
-                                    user=CurrentUserService.get_and_check_current_user())
-
-            if experimentDTO.title:
-                experiment.set_title(experimentDTO.title)
-
-            if experimentDTO.description:
-                experiment.set_description(experimentDTO.description)
-
-            experiment.save()
-            return experiment
-        except Exception as err:
-            raise BadRequestException(
-                detail="Cannot create the experiment.") from err
+        return cls.create_experiment_from_protocol(protocol=ProtocolModel(), title=experimentDTO.title,
+                                                   description=experimentDTO.description)
 
     @classmethod
     def create_experiment_from_process(
@@ -63,13 +48,14 @@ class ExperimentService(BaseService):
     @classmethod
     def create_experiment_from_protocol(
             cls, protocol: ProtocolModel, title: str = "", description: str = "") -> Experiment:
-        experiment = Experiment(protocol=protocol, study=Study.get_default_instance(),
-                                user=CurrentUserService.get_and_check_current_user())
+        experiment = Experiment()
 
         experiment.set_title(title)
         experiment.set_description(description)
-        experiment.save()
-        return experiment
+        experiment.set_protocol(protocol)
+        experiment.study = Study.get_default_instance()
+
+        return experiment.save()
 
     # -- F --
 

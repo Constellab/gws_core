@@ -283,7 +283,7 @@ class IO(Base):
             if port.resource_model:
                 _json[key]["resource"] = {
                     "uri": port.resource_model.uri,
-                    "typing_name": port.resource_model.resource_typing_name
+                    "typing_name": port.resource_model.typing_name
                 }
             else:
                 _json[key]["resource"] = {

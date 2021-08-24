@@ -3,23 +3,23 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import re
 from enum import Enum
 from typing import List, final
 
-from gws_core.core.decorator.transaction import Transaction
-from gws_core.model.typing_register_decorator import TypingDecorator
 from peewee import BooleanField, FloatField, ForeignKeyField
 
 from ..core.classes.enum_field import EnumField
+from ..core.decorator.transaction import Transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.sys_proc import SysProc
+from ..model.typing_register_decorator import TypingDecorator
 from ..model.viewable import Viewable
+from ..process.process_model import ProcessModel
 from ..protocol.protocol_model import ProtocolModel
 from ..resource.experiment_resource import ExperimentResource
+from ..resource.resource_model import ResourceModel
 from ..study.study import Study
 from ..user.activity import Activity
-from ..user.current_user_service import CurrentUserService
 from ..user.user import User
 
 
@@ -57,52 +57,13 @@ class Experiment(Viewable):
     created_by = ForeignKeyField(
         User, null=True, index=True, backref='created_experiments')
     score = FloatField(null=True, index=True)
-    status = EnumField(choices=ExperimentStatus,
-                       default=ExperimentStatus.DRAFT)
+    status: ExperimentStatus = EnumField(choices=ExperimentStatus,
+                                         default=ExperimentStatus.DRAFT)
     is_validated = BooleanField(default=False, index=True)
 
     _table_name = 'gws_experiment'
 
-    def __init__(self, *args, user: User = None, **kwargs):
-        super().__init__(*args, **kwargs)
-        if not self.id:
-            self.data["pid"] = 0
-            if user is None:
-                try:
-                    user: User = CurrentUserService.get_and_check_current_user()
-                except Exception as err:
-                    raise BadRequestException("An user is required") from err
-
-            if isinstance(user, User):
-                if not user.is_authenticated:
-                    raise BadRequestException(
-                        "An authenticated user is required")
-
-                self.created_by = user
-            else:
-                raise BadRequestException(
-                    "The user must be an instance of User")
-
-            if not self.save():
-                raise BadRequestException("Cannot create experiment")
-
-            # attach the protocol
-            protocol = kwargs.get("protocol")
-            if protocol is None:
-                from ..protocol.protocol_model import ProtocolModel
-                protocol = ProtocolModel(user=user)
-
-            protocol.set_experiment(self)
-            self.protocol = protocol
-            self.save()
-
-        else:
-            pass
-
     # -- A --
-
-    def add_report(self, report: 'Report'):
-        report.experiment = self
 
     @Transaction()
     def archive(self, archive: bool, archive_resources=True) -> 'Experiment':
@@ -111,7 +72,7 @@ class Experiment(Viewable):
         """
 
         if self.is_archived == archive:
-            return True
+            return self
         Activity.add(
             Activity.ARCHIVE,
             object_type=self.full_classname(),
@@ -190,7 +151,7 @@ class Experiment(Viewable):
         return self.data["pid"]
 
     @property
-    def processes(self) -> List['ProcessModel']:
+    def processes(self) -> List[ProcessModel]:
         """
         Returns child processes.
         """
@@ -198,25 +159,24 @@ class Experiment(Viewable):
         if not self.id:
             return []
 
-        from ..process.process_model import ProcessModel
         return list(ProcessModel.select().where(
             ProcessModel.experiment_id == self.id))
 
     # -- R --
 
     @property
-    def resources(self) -> List['Resource']:
+    def resources(self) -> List[ResourceModel]:
         """
         Returns child resources.
         """
 
-        Q = []
+        resources = []
         if self.id:
             Qrel = ExperimentResource.select().where(
                 ExperimentResource.experiment_id == self.id)
             for rel in Qrel:
-                Q.append(rel.resource)  # is automatically casted
-        return Q
+                resources.append(rel.resource)  # is automatically casted
+        return resources
 
     @Transaction()
     def reset(self) -> 'Experiment':
@@ -266,7 +226,7 @@ class Experiment(Viewable):
         self.save()
     # -- S --
 
-    def set_title(self, title: str) -> str:
+    def set_title(self, title: str) -> None:
         """
         Set the title of the experiment. This title is set to the protocol.
 
@@ -276,7 +236,7 @@ class Experiment(Viewable):
 
         self.data["title"] = title
 
-    def set_description(self, description: str) -> str:
+    def set_description(self, description: str) -> None:
         """
         Get the description of the experiment. This description is set to the protocol.
 
@@ -295,6 +255,10 @@ class Experiment(Viewable):
                 object_uri=self.uri
             )
         return super().save(*args, **kwargs)
+
+    def set_protocol(self, protocol: ProtocolModel) -> None:
+        protocol.set_experiment(self)
+        self.protocol = protocol
 
     # -- T --
 
