@@ -686,13 +686,8 @@ class ProtocolModel(ProcessableModel):
         :param user: user
         :type user: User
         """
-        if not user.is_sysuser:
-            if self._allowed_user == ProcessAllowedUser.ADMIN:
-                if not user.is_admin:
-                    raise UnauthorizedException(
-                        "Only admin user can run protocol")
-            for proc in self.processes.values():
-                if proc._allowed_user == ProcessAllowedUser.ADMIN:
-                    if not user.is_admin:
-                        raise UnauthorizedException(
-                            f"Only admin user can run process '{proc.full_classname()}'")
+
+        super().check_user_privilege(user)
+
+        for proc in self.processes.values():
+            proc.check_user_privilege(user)

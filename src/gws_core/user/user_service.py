@@ -5,14 +5,14 @@
 
 from typing import Union
 
-from gws_core.user.user_dto import UserDataDict
-
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
 from ..core.utils.settings import Settings
 from .activity import Activity
 from .user import User
+from .user_dto import UserDataDict
+from .user_group import UserGroup
 
 
 class UserService(BaseService):
@@ -141,19 +141,19 @@ class UserService(BaseService):
     def get_all_users(cls):
         return list(User.select())
 
-    @classmethod
+        # Create the admin
     def create_sysuser(cls):
         """ Create the system user """
         try:
             UserService.get_sysuser()
         except:
-            u = User(
+            user = User(
                 email="admin@gencovery.com",
                 data={"first_name": "sysuser", "last_name": ""},
                 is_active=True,
-                group=User.SYSUSER_GROUP
+                group=UserGroup.SYSUSER
             )
-            u.save()
+            user.save()
 
     # -- G --
 

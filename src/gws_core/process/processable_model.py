@@ -13,6 +13,8 @@ from starlette_context import context
 from ..config.config import Config
 from ..core.decorator.transaction import Transaction
 from ..core.exception.exceptions import BadRequestException
+from ..core.exception.exceptions.unauthorized_exception import \
+    UnauthorizedException
 from ..io.io import Input, Output
 from ..io.port import InPort, OutPort
 from ..model.typing_manager import TypingManager
@@ -467,6 +469,9 @@ class ProcessableModel(Viewable):
 
     # -- T --
 
+    def _get_processable_type(self) -> Type[Processable]:
+        return TypingManager.get_type_from_name(self.processable_typing_name)
+
     @final
     def to_json(self, deep: bool = False, **kwargs) -> dict:
         """
@@ -529,3 +534,16 @@ class ProcessableModel(Viewable):
         _json["doc"] = inspect.getdoc(processable_type)
 
         return _json
+
+    def check_user_privilege(self, user: User) -> None:
+        """Throw an exception if the user cand execute the protocol
+
+        :param user: user
+        :type user: User
+        """
+
+        process_type: Type[Processable] = self._get_processable_type()
+
+        if not user.has_access(process_type._allowed_user):
+            raise UnauthorizedException(
+                f"You must be a {process_type._allowed_user} to run the process '{process_type.full_classname()}'")

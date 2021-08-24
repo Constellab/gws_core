@@ -7,10 +7,12 @@ from typing import final
 
 from peewee import BooleanField, CharField
 
+from ..core.classes.enum_field import EnumField
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
 from ..core.utils.utils import Utils
 from ..model.typing_register_decorator import TypingDecorator
+from ..user.user_group import UserGroup
 
 # ####################################################################
 #
@@ -42,18 +44,12 @@ class User(Model):
     """
 
     email = CharField(default=False, index=True)
-    group = CharField(default="user", index=True)
+    group: UserGroup = EnumField(choices=UserGroup,
+                                 default=UserGroup.USER)
     is_active = BooleanField(default=True)
     console_token = CharField(default="")
     is_http_authenticated = BooleanField(default=False)
     is_console_authenticated = BooleanField(default=False)
-
-    SYSUSER_GROUP = "sysuser"  # privilege 0 (highest)
-    ADMIN_GROUP = "admin"      # privilege 1
-    OWNER_GROUP = "owner"      # privilege 2
-    USER_GOUP = "user"         # privilege 3
-
-    VALID_GROUPS = [USER_GOUP, ADMIN_GROUP, OWNER_GROUP, SYSUSER_GROUP]
 
     _is_removable = False
     _table_name = 'gws_user'
@@ -76,15 +72,15 @@ class User(Model):
 
     @classmethod
     def get_admin(cls):
-        return User.get(User.group == cls.ADMIN_GROUP)
+        return User.get(User.group == UserGroup.ADMIN)
 
     @classmethod
     def get_owner(cls):
-        return User.get(User.group == cls.OWNER_GROUP)
+        return User.get(User.group == UserGroup.OWNER)
 
     @classmethod
     def get_sysuser(cls):
-        return User.get(User.group == cls.SYSUSER_GROUP)
+        return User.get(User.group == UserGroup.SYSUSER)
 
     @classmethod
     def get_by_email(cls, email: str) -> 'User':
@@ -106,20 +102,20 @@ class User(Model):
 
     @property
     def is_admin(self):
-        return self.group == self.ADMIN_GROUP
+        return self.group == UserGroup.ADMIN
 
     @property
     def is_owner(self):
-        return self.group == self.OWNER_GROUP
+        return self.group == UserGroup.OWNER
 
     @property
     def is_sysuser(self):
-        return self.group == self.SYSUSER_GROUP
+        return self.group == UserGroup.SYSUSER
 
     @property
     def is_authenticated(self):
         # get fresh data from DB
-        user = User.get_by_id(self.id)
+        user: User = User.get_by_id(self.id)
         return user.is_http_authenticated or user.is_console_authenticated
 
     # -- L --
@@ -128,10 +124,15 @@ class User(Model):
     def last_name(self):
         return self.data.get("last_name", "")
 
+    def has_access(self, group: UserGroup) -> bool:
+        """return true if the user group is equal or higher than the group
+        """
+        return self.group <= group
+
     # -- S --
 
     def save(self, *arg, **kwargs) -> 'User':
-        if not self.group in self.VALID_GROUPS:
+        if not UserGroup.has_value(self.group):
             raise BadRequestException("Invalid user group")
         if self.is_owner or self.is_admin or self.is_sysuser:
             if not self.is_active:

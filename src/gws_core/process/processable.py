@@ -2,6 +2,7 @@
 
 from ..config.config_spec import ConfigSpecs
 from ..core.model.base import Base
+from ..user.user_group import UserGroup
 
 
 class Processable(Base):
@@ -13,3 +14,4 @@ class Processable(Base):
     _typing_name: str = None
     _human_name: str = None
     _short_description: str = None
+    _allowed_user: UserGroup = UserGroup.USER

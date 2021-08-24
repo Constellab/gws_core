@@ -53,7 +53,7 @@ class ProcessModel(ProcessableModel):
             self._init_io()
 
     def _init_io(self):
-        process_type: Type[Process] = self._get_process_type()
+        process_type: Type[Process] = self._get_processable_type()
 
         # input
         for k in process_type.input_specs:
@@ -91,10 +91,7 @@ class ProcessModel(ProcessableModel):
     # -- D --
 
     def _create_processable_instance(self) -> Process:
-        return self ._get_process_type()()
-
-    def _get_process_type(self) -> Type[Process]:
-        return TypingManager.get_type_from_name(self.processable_typing_name)
+        return self._get_processable_type()()
 
     async def _run(self) -> None:
         """

@@ -1,14 +1,11 @@
-from enum import Enum
 from typing import Callable, Type
 
-from gws_core.protocol.protocol import Protocol
-
 from ..model.typing_register_decorator import register_typing_class
-from ..process.process_model import ProcessAllowedUser
-from .protocol_model import ProtocolModel
+from ..protocol.protocol import Protocol
+from ..user.user_group import UserGroup
 
 
-def ProtocolDecorator(unique_name: str, allowed_user: ProcessAllowedUser = ProcessAllowedUser.ALL,
+def ProtocolDecorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER,
                       human_name: str = "", short_description: str = "", hide: bool = False) -> Callable:
     """ Decorator to be placed on all the protocols. A protocol not decorated will not be runnable.
     It define static information about the protocol
