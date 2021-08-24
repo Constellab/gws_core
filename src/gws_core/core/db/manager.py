@@ -79,20 +79,20 @@ class AbstractDbManager:
         cls.db.initialize(_db)
 
     @staticmethod
-    def init_db() -> None:
-        # Propagate to all AbstractDbManager subclasses
-        # Requires that all the bricks' modules are loaded on Application stratup.
-        # See gws_core.manage.load_settings()
-        for sub_db_manager in AbstractDbManager.inheritors():
-            sub_db_manager.init()
+    def init_all_db(test: bool=False) -> None:
+        """
+        Initialize all the database
 
-    @staticmethod
-    def init_test_db() -> None:
-        # Propagate to all AbstractDbManager subclasses
-        # Requires that all the bricks' modules are loaded on Application stratup.
-        # See gws_core.manage.load_settings()
+        Propagate to all AbstractDbManager subclasses
+        Requires that all the bricks' modules are loaded on Application stratup.
+        See gws_core.manage.load_settings()
+
+        :param test: Set `True` to use the test db. The non-test db is used instead
+        :type test: `bool`
+        """
+
         for sub_db_manager in AbstractDbManager.inheritors():
-            sub_db_manager.init(test=True)
+            sub_db_manager.init(test=test)
 
     @classmethod
     def inheritors(cls) -> List[Type['DbManager']]:
