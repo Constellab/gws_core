@@ -41,22 +41,23 @@ class AbstractDbManager:
     """
 
     db = DatabaseProxy()
+    _DEFAULT_DB_ENGINE = "mariadb"
+    _DEFAULT_DB_NAME = "gws_core"
+    __TEST_DB_NAME = "test_gws" # Keep private and constant => All models inherit the same test DB
     _engine = None
     _mariadb_config = {
-        "user": "gws_core",
+        "user": _DEFAULT_DB_NAME,
         "password": "gencovery"
     }
-    _db_name = "gws_core"
-    _DEFAULT_DB_ENGINE = "mariadb"
-    __TEST_DB_NAME = "test_gws" # Keep private and constant => All models inherit the same test DB
+    _db_name = _DEFAULT_DB_NAME
+    
 
     @classmethod
     def init(cls, engine: str = None, test: bool = False):
         """ Initialize the DbManager """
 
-        if test:
-            cls._db_name = cls.__TEST_DB_NAME
-            cls._mariadb_config["user"] = cls.__TEST_DB_NAME
+        cls._db_name = cls.__TEST_DB_NAME if test else cls._DEFAULT_DB_NAME
+        cls._mariadb_config["user"] = cls._db_name
 
         if engine:
             cls._engine = engine
@@ -64,6 +65,7 @@ class AbstractDbManager:
             cls._engine = cls._DEFAULT_DB_ENGINE
         if cls._engine == "sqlite3":
             db_path = cls.get_sqlite3_db_path()
+            print(db_path)
             _db = SqliteDatabase(db_path)
         elif cls._engine in ["mariadb", "mysql"]:
             _db = ReconnectMySQLDatabase(
