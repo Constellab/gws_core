@@ -99,8 +99,8 @@ class AbstractDbManager:
         :type test: `bool`
         """
 
-        for sub_db_manager in AbstractDbManager.inheritors():
-            sub_db_manager._init(test=test)
+        for manager in AbstractDbManager.inheritors():
+            manager._init(test=test)
 
     @classmethod
     def inheritors(cls) -> List[Type['DbManager']]:
