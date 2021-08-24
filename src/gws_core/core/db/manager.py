@@ -3,9 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from typing import List, Type
+
 from peewee import DatabaseProxy, MySQLDatabase, SqliteDatabase
 from playhouse.shortcuts import ReconnectMixin
-
 from ..utils.settings import Settings
 
 # ####################################################################
@@ -46,6 +47,7 @@ class AbstractDbManager:
         "password": "gencovery"
     }
     _db_name = "gws_core"
+    _DEFAULT_DB_ENGINE = "mariadb"
     __TEST_DB_NAME = "test_gws" # Keep private and constant => All models inherit the same test DB
 
     @classmethod
@@ -59,7 +61,7 @@ class AbstractDbManager:
         if engine:
             cls._engine = engine
         if not cls._engine:
-            cls._engine = "sqlite3"
+            cls._engine = cls._DEFAULT_DB_ENGINE
         if cls._engine == "sqlite3":
             db_path = cls.get_sqlite3_db_path()
             _db = SqliteDatabase(db_path)
@@ -75,6 +77,28 @@ class AbstractDbManager:
             raise Exception("gws.db.model.DbManager", "init",
                             f"Db engine '{cls._engine}' is not valid")
         cls.db.initialize(_db)
+
+    @staticmethod
+    def init_db() -> None:
+        # Propagate to all AbstractDbManager subclasses
+        # Requires that all the bricks' modules are loaded on Application stratup.
+        # See gws_core.manage.load_settings()
+        for sub_db_manager in AbstractDbManager.inheritors():
+            sub_db_manager.init()
+
+    @staticmethod
+    def init_test_db() -> None:
+        # Propagate to all AbstractDbManager subclasses
+        # Requires that all the bricks' modules are loaded on Application stratup.
+        # See gws_core.manage.load_settings()
+        for sub_db_manager in AbstractDbManager.inheritors():
+            sub_db_manager.init(test=True)
+
+    @classmethod
+    def inheritors(cls) -> List[Type['DbManager']]:
+        """ Get all the classes that inherit this class """
+        return set(cls.__subclasses__()).union(
+            [s for c in cls.__subclasses__() for s in c.inheritors()])
 
     # -- C --
 

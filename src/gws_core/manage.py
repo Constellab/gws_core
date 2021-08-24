@@ -18,7 +18,7 @@ class SettingsLoader:
     Add these bricks to Python path to have them available in the Application
     """
 
-    USER_WORKSPACE_DIR = "/lab/user/"
+    LAB_WORKSPACE_DIR = "/lab"
     all_settings = {
         "cwd": "",
         "modules": {},
@@ -31,6 +31,11 @@ class SettingsLoader:
         cls.parse_settings(cwd)
         cls.all_settings["cwd"] = cwd
         Settings.init(cls.all_settings)
+
+        # /!\ Ensure that all bricks' modules are loaded on Application startup
+        # Is important to be able to traverse all Bricks/Model/Object inheritors
+        from .core.utils.utils import Utils
+        Utils.import_all_modules()
 
     # -- P --
 
@@ -47,11 +52,12 @@ class SettingsLoader:
         return string, None, None
 
     @staticmethod
-    def parse_variables(cwd, variables):
+    def parse_variables(repo_name, cwd, variables):
         for key, value in variables.items():
             value = value.replace("{LAB_DIR}", "/lab")
             value = value.replace("{DATA_DIR}", "/data")
             value = value.replace("{CURRENT_DIR}", cwd)
+            value = value.replace("{CURRENT_BRICK}", repo_name)
             variables[key] = value
 
     @classmethod
@@ -60,33 +66,40 @@ class SettingsLoader:
         file_path = os.path.join(cwd, "settings.json")
         is_brick = os.path.exists(file_path)
         if is_brick:
-            with open(file_path, 'r') as fp:
+            with open(file_path, 'r', encoding='utf-8') as fp:
                 try:
-                    settings = json.load(fp)
+                    settings_data = json.load(fp)
                 except Exception as err:
                     raise Exception(
                         f"Error while parsing the setting JSON file. Please check file setting file '{file_path}'") from err
 
             # parse variables
-            cls.parse_variables(cwd, settings.get("variables"))
+            if not "variables" in settings_data:
+                settings_data["variables"] = {}
+            cls.parse_variables(repo_name, cwd, settings_data["variables"])
 
             # parse git packages
-            cls._update_dict(cls.all_settings, settings)
-            git_env = settings["environment"].get("git",[])
+            cls._update_dict(cls.all_settings, settings_data)
+            git_env = settings_data["environment"].get("git",[])
             for channel in git_env:
                 for package in channel.get("packages"):
                     repo, _, _ = cls.parse_git_package(package)
-                    repo_dir = os.path.join(cls.USER_WORKSPACE_DIR, "bricks", repo)
+                    repo_dir = os.path.join(cls.LAB_WORKSPACE_DIR, "user", "bricks", repo)
+                    if not os.path.exists(repo_dir):
+                        repo_dir = os.path.join(cls.LAB_WORKSPACE_DIR, ".sys", "lib", repo)
+                        if not os.path.exists(repo_dir):
+                            raise Exception(f"Repository '{repo_dir}' is not found")
+
                     cls.parse_settings(repo_dir)
 
             if repo_name not in cls.all_settings["modules"]:
-                sys.path.insert(0, os.path.abspath(cwd))
+                sys.path.insert(0, os.path.join(cwd, "src"))
                 cls.all_settings["modules"][repo_name] = {
                     "path": cwd,
                     "type": "brick,git"
                 }
 
-            pip_env = settings["environment"].get("pip",[])
+            pip_env = settings_data["environment"].get("pip",[])
             cls._read_pip_deps(pip_env)
         else:
             if cwd not in cls.all_settings["modules"]:
