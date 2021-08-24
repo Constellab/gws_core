@@ -3,12 +3,20 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import (Experiment, ExperimentService, GTest, ProcessableFactory,
-                      ProcessModel, ProtocolModel, ProtocolService,
-                      ResourceModel, Robot, RobotCreate, RobotEat, RobotMove,
-                      RobotWait)
+from gws_core import (ConfigParams, Experiment, ExperimentService, GTest,
+                      Process, ProcessableFactory, ProcessDecorator, ProcessIO,
+                      ProcessModel, ProgressBar, ProtocolModel,
+                      ProtocolService, ResourceModel, Robot, RobotCreate,
+                      RobotEat, RobotMove, RobotWait)
+from gws_core.process.process_exception import ProcessableRunException
 
 from tests.base_test import BaseTest
+
+
+@ProcessDecorator("ErrorProcess")
+class ErrorProcess(Process):
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
+        raise Exception("Error")
 
 
 class TestProcess(BaseTest):
@@ -122,3 +130,14 @@ class TestProcess(BaseTest):
 
         print(" \n------ Experiment --------")
         print(experiment.to_json())
+
+    async def test_error_process(self):
+        GTest.print("Error Process")
+
+        p_error: ProcessModel = ProcessableFactory.create_process_model_from_type(process_type=ErrorProcess)
+
+        experiment: Experiment = ExperimentService.create_experiment_from_process(p_error)
+
+        with self.assertRaises(ProcessableRunException):
+            await ExperimentService.run_experiment(
+                experiment=experiment, user=GTest.user)
