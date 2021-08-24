@@ -17,7 +17,6 @@ from ...process.process_io import ProcessIO
 from ...progress_bar.progress_bar import ProgressBar
 from ...resource.resource import Resource
 from .file import File
-from .file_resource import FileResource
 from .file_store import LocalFileStore
 
 # ####################################################################
@@ -40,7 +39,7 @@ class FileImporter(Process):
         file: File = inputs[inport_name]
 
         model_t: Type[Resource] = None
-        if config.param_exists("output_type"):
+        if config.param_is_set("output_type"):
             out_t = config.get_param("output_type")
             if out_t:
                 model_t = Utils.get_model_type(out_t)
@@ -75,7 +74,7 @@ class FileExporter(Process):
     async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
 
         file_store: LocalFileStore
-        if config.param_exists('file_store_uri'):
+        if config.param_is_set('file_store_uri'):
             file_store = LocalFileStore.get_by_uri_and_check(config.get('file_store_uri'))
         else:
             file_store = LocalFileStore.get_default_instance()
@@ -122,7 +121,7 @@ class FileLoader(Process):
         file_path = config.get_param("file_path")
 
         model_t: Type[Resource] = None
-        if config.param_exists("output_type"):
+        if config.param_is_set("output_type"):
             out_t = config.get_param("output_type")
             if out_t:
                 model_t = Utils.get_model_type(out_t)

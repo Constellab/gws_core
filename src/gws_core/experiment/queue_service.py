@@ -21,15 +21,18 @@ class QueueService(BaseService):
     is_init = False
 
     @classmethod
-    def init(cls, tick_interval: int = TICK_INTERVAL_SECONDS, daemon=False):
+    def init(cls, tick_interval: int = TICK_INTERVAL_SECONDS, daemon=False) -> None:
         queue: Queue = Queue.init()
         if not cls.is_init or not queue.is_active:
             cls._queue_tick(tick_interval, daemon)
         cls.is_init = True
 
     @classmethod
-    def deinit(cls):
+    def deinit(cls) -> None:
+        if not cls.is_init:
+            return
         Queue.deinit()
+        cls.is_init = False
 
     @classmethod
     def _queue_tick(cls, tick_interval, daemon):

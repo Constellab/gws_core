@@ -9,6 +9,7 @@ from gws_core import (ConfigParams, Experiment, ExperimentService, GTest,
                       ProtocolService, ResourceModel, Robot, RobotCreate,
                       RobotEat, RobotMove, RobotWait)
 from gws_core.process.process_exception import ProcessableRunException
+from gws_core.user.current_user_service import CurrentUserService
 
 from tests.base_test import BaseTest
 

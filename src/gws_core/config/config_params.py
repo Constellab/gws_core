@@ -29,12 +29,12 @@ class ConfigParams(Dict[str, ConfigParamType]):
 
     # -- P --
 
-    def param_exists(self, name: str) -> bool:
+    def param_is_set(self, name: str) -> bool:
         """
-        Test if a parameter exists
+        Test if a parameter exists and is not none
 
         :return: True if the parameter exists, False otherwise
         :rtype: `bool`
         """
 
-        return name in self
+        return name in self and self[name] is not None

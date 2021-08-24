@@ -16,12 +16,14 @@ class BaseTest(IsolatedAsyncioTestCase):
 
     @classmethod
     def setUpClass(cls):
+        print(f'Setup : {cls}')
         GTest.drop_tables()
         GTest.create_tables()
         GTest.init()
 
     @classmethod
     def tearDownClass(cls):
+        print(f'Tear down : {cls}')
         QueueService.deinit()
         GTest.drop_tables()
 

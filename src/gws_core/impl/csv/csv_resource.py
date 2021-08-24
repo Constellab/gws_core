@@ -11,7 +11,6 @@ import pandas
 from pandas import DataFrame
 
 from ...core.exception.exceptions import BadRequestException
-from ...core.model.model import Model
 from ...resource.resource import Resource
 from ...resource.resource_decorator import ResourceDecorator
 
