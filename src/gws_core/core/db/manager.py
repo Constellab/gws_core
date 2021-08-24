@@ -65,7 +65,6 @@ class AbstractDbManager:
             cls._engine = cls._DEFAULT_DB_ENGINE
         if cls._engine == "sqlite3":
             db_path = cls.get_sqlite3_db_path()
-            print(db_path)
             _db = SqliteDatabase(db_path)
         elif cls._engine in ["mariadb", "mysql"]:
             _db = ReconnectMySQLDatabase(
