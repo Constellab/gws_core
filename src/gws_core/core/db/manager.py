@@ -53,7 +53,7 @@ class AbstractDbManager:
     
 
     @classmethod
-    def init(cls, engine: str = None, test: bool = False):
+    def _init(cls, engine: str = None, test: bool = False):
         """ Initialize the DbManager """
 
         cls._db_name = cls.__TEST_DB_NAME if test else cls._DEFAULT_DB_NAME
@@ -80,21 +80,27 @@ class AbstractDbManager:
                             f"Db engine '{cls._engine}' is not valid")
         cls.db.initialize(_db)
 
-    @staticmethod
-    def init_all_db(test: bool=False) -> None:
+    @classmethod
+    def init_db(cls, test: bool) -> None:
         """
-        Initialize all the database
+        Initialize the databases of the current DbManager
 
-        Propagate to all AbstractDbManager subclasses
-        Requires that all the bricks' modules are loaded on Application stratup.
-        See gws_core.manage.load_settings()
+        :param test: Set `True` to use the test db. The non-test db is used instead
+        :type test: `bool`
+        """
+        cls._init(test=test)
+
+    @staticmethod
+    def init_all_db(test: bool) -> None:
+        """
+        Initialize the databases of all DbManagers that inherit the  AbstractDbManager
 
         :param test: Set `True` to use the test db. The non-test db is used instead
         :type test: `bool`
         """
 
         for sub_db_manager in AbstractDbManager.inheritors():
-            sub_db_manager.init(test=test)
+            sub_db_manager._init(test=test)
 
     @classmethod
     def inheritors(cls) -> List[Type['DbManager']]:
