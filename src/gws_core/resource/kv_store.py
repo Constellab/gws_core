@@ -176,3 +176,7 @@ class KVStore(ResourceData[ResourceDict]):
 
     def _open_shelve(self) -> DbfilenameShelf:
         return shelve_open(self.file_path)
+
+    # -- T --
+    def clone(self) -> 'KVStore':
+        return self

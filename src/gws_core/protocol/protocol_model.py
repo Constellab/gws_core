@@ -561,6 +561,7 @@ class ProtocolModel(ProcessableModel):
             if process.is_ready or self.is_interfaced_with(process):
                 sources.append(process)
         aws = []
+        # TODO est-ce qu'il faut mettre à jour la progress bar ?
         for proc in sources:
             aws.append(proc.run())
         if len(aws):
@@ -570,18 +571,14 @@ class ProtocolModel(ProcessableModel):
         if self.is_finished:
             return
         # Exit the function if an inner process has not yet finished!
-        for k in self.processes:
-            if not self.processes[k].is_finished:
+        for process in self.processes.values():
+            if not process.is_finished:
                 return
         # Good! The protocol task is finished!
         self._set_outputs()
 
         self.save(update_graph=True)
         await super()._run_after_task()
-
-    def waow(self):
-        super().waow()
-        print('Child')
 
     # -- S --
     @Transaction()

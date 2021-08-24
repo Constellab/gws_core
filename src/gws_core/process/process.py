@@ -22,7 +22,7 @@ class Process(Processable):
 
     input_specs: IOSpecs = {}
     output_specs: IOSpecs = {}
-    config_specs: ConfigSpecs = {"mljklj": {"type": "lkj"}}
+    config_specs: ConfigSpecs = {}
 
     def __init__(self):
         """

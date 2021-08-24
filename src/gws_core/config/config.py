@@ -3,14 +3,15 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Union, final
+from typing import List, Union, final
 
-from gws_core.config.config_params import ConfigParams
+from gws_core.config.config_exceptions import MissingConfigsException
 
 from ..core.classes.validator import Validator
 from ..core.exception.exceptions import BadRequestException
 from ..model.typing_register_decorator import TypingDecorator
 from ..model.viewable import Viewable
+from .config_params import ConfigParams
 from .config_spec import ConfigSpecs
 
 
@@ -70,7 +71,7 @@ class Config(Viewable):
 
         from ..process.process_model import ProcessModel
 
-        # todo a vérifier, une config peut être utilisé par plusieurs process?
+        # TODO a vérifier, une config peut être utilisé par plusieurs process?
         some_processes_are_in_invalid_archive_state = ProcessModel.select().where(
             (ProcessModel.config == self) & (
                 ProcessModel.is_archived == (not archive))
@@ -104,10 +105,11 @@ class Config(Viewable):
 
     # -- P --
 
-    @property
-    def params(self) -> ConfigParams:
+    def get_and_check_params(self) -> ConfigParams:
         """
-        Returns all the parameters
+        Returns all the parameters including default value if not provided
+
+        raises MissingConfigsException: If one or more mandatory params where not provided it raises a MissingConfigsException
 
         :return: The parameters
         :rtype: `dict`
@@ -115,11 +117,21 @@ class Config(Viewable):
 
         params = self.data["params"]
         specs: ConfigSpecs = self.data["specs"]
-        for k in specs:
-            if not k in params:
-                default = specs[k].get("default", None)
-                if default:
-                    params[k] = default
+        missing_params: List[str] = []
+
+        for key in specs:
+            # if the config was not set
+            if not key in params:
+
+                if "default" in specs[key]:
+                    params[key] = specs[key]["default"]
+                else:
+                    # if there is not default value the value is missing
+                    missing_params.append(key)
+
+        # If there is at least one missing param, raise an exception
+        if len(missing_params) > 0:
+            raise MissingConfigsException(missing_params)
 
         return ConfigParams(params)
 

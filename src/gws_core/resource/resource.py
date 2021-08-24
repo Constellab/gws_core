@@ -77,6 +77,10 @@ class Resource(Base):
     def to_json(self) -> dict:
         return self.data.to_json()
 
+    # TODO est-ce qu'on appel le clone automatiquement avant un process pour éviter de modifier une resource utilié ailleurs ?
+    def clone(self) -> 'Resource':
+        return Resource(self.data.clone())
+
     def get_resource_model_type(cls) -> Type[Any]:
         """Return the resource model associated with this Resource
         //!\\ To overwrite only when you know what you are doing

@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, List, Tuple, final
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple, Type, final
 
-from gws_core.process.process_io import ProcessIO
+from gws_core.resource.resource import Resource
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.base import Base
+from ..process.process_io import ProcessIO
 from ..resource.resource_model import ResourceModel
+from .io_exception import (MissingInputResourcesException,
+                           ResourceNotCompatibleException)
 from .io_types import IOSpec
 from .port import InPort, OutPort, Port
 
@@ -129,7 +132,7 @@ class IO(Base):
         return self._ports[port_name]
 
     def get_specs(self) -> Dict[str, Tuple[str]]:
-        specs: Dict[str, Tuple[str]] = {}
+        specs: Dict[str, Tuple[Any]] = {}
 
         for key, port in self._ports.items():
             specs[key] = ()
@@ -215,6 +218,9 @@ class IO(Base):
 
         return self._parent
 
+    def port_exists(self, name: str) -> bool:
+        return name in self._ports
+
     # -- R --
 
     def reset(self) -> None:
@@ -223,19 +229,24 @@ class IO(Base):
 
     # -- S --
 
-    def __setitem_without_check__(self, name: str, resource: ResourceModel):
-        if not isinstance(name, str):
-            raise BadRequestException("The port name must be a string")
+    def set_item_without_check(self, name: str, resource_model: ResourceModel) -> None:
+        """Set the resource in the port without checking the port type
 
-        if self._ports.get(name, None) is None:
-            raise BadRequestException(
-                self.classname() + " port '" + name + "' not found")
-
-        self._ports[name].resource_model = resource
-
-    def __setitem__(self, name: str, resource: ResourceModel):
+        :param name: [description]
+        :type name: str
+        :param resource: [description]
+        :type resource: ResourceModel
+        :raises BadRequestException: [description]
+        :raises BadRequestException: [description]
         """
-        Bracket (setter) operator. Sets the content of a port by its name.
+        self._check_port_name(name)
+
+        self._ports[name].resource_model = resource_model
+
+    def __setitem__(self, name: str, resource_model: ResourceModel) -> None:
+        """
+        Bracket (setter) operator. Sets the resource of a port by its name.
+        If check the type of the port
 
         :param name: Name of the port
         :type name: str
@@ -243,33 +254,39 @@ class IO(Base):
         :type resource: ResourceModel
         """
 
-        # if self._parent.is_running:
-        #    raise BadRequestException("Cannot alter the input of process while it is running")
+        self._check_port_name(name)
+        port: Port = self._ports[name]
 
-        self.__setitem_without_check__(name, resource)
+        resource_type: Type[Resource] = type(resource_model.get_resource())
+        if not port.resource_type_is_compatible(resource_type):
+            raise ResourceNotCompatibleException(port_name=name, resource_type=resource_type,
+                                                 excepted_types=port.resource_types)
 
-    def get_process_io(self) -> ProcessIO:
-        process_io: ProcessIO = {}
-        for key, port in self.ports.items():
-            process_io[key] = port.get_resource()
-        return process_io
+        port.resource_model = resource_model
+
+    def _check_port_name(self, name) -> None:
+        if not isinstance(name, str):
+            raise BadRequestException("The port name must be a string")
+
+        if not name in self._ports:
+            raise BadRequestException(
+                self.classname() + " port '" + name + "' not found")
 
     # -- V --
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:
         _json = {}
 
-        for k in self._ports:
-            port = self._ports[k]
-            _json[k] = {}
+        for key, port in self._ports.items():
+            _json[key] = {}
 
             if port.resource_model:
-                _json[k]["resource"] = {
+                _json[key]["resource"] = {
                     "uri": port.resource_model.uri,
                     "typing_name": port.resource_model.resource_typing_name
                 }
             else:
-                _json[k]["resource"] = {
+                _json[key]["resource"] = {
                     "uri": "",
                     "typing_name": ""
                 }
@@ -280,7 +297,7 @@ class IO(Base):
                     specs.append(None)
                 else:
                     specs.append(resource_type._typing_name)
-            _json[k]["specs"] = specs
+            _json[key]["specs"] = specs
 
         return _json
 
@@ -311,6 +328,27 @@ class Input(IO):
                 return False
 
         return True
+
+    def get_and_check_process_inputs(self) -> ProcessIO:
+        """Get the process inputs and check all the mandatory inputs are provided
+
+        :return: [description]
+        :rtype: ProcessIO
+        """
+        missing_resource: List[str] = []
+        process_io: ProcessIO = {}
+        for key, port in self.ports.items():
+
+            # check that is the port is mandatory it is provided
+            if port.is_empty and not port.is_optional:
+                missing_resource.append(key)
+                continue
+            process_io[key] = port.get_resource()
+
+        if len(missing_resource) > 0:
+            raise MissingInputResourcesException(port_names=missing_resource)
+
+        return process_io
 
 # ####################################################################
 #

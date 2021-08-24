@@ -1,3 +1,4 @@
+import copy
 from typing import Dict, TypeVar
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
@@ -28,3 +29,7 @@ class ResourceData(Dict[str, ResourceDict]):
     # -- T --
     def to_json(self) -> dict:
         return self
+
+    # -- T --
+    def clone(self) -> 'ResourceData':
+        return ResourceData(copy.deepcopy(self))

@@ -1,8 +1,11 @@
+
+from __future__ import annotations
+
 import asyncio
 import inspect
 from abc import abstractmethod
 from enum import Enum
-from typing import List, Type, Union, final
+from typing import TYPE_CHECKING, List, Type, Union, final
 
 from peewee import CharField, ForeignKeyField, IntegerField
 from starlette_context import context
@@ -19,6 +22,11 @@ from ..progress_bar.progress_bar import ProgressBar
 from ..resource.processable_resource import ProcessableResource
 from ..resource.resource_model import ResourceModel
 from ..user.user import User
+from .process_exception import ProcessableRunException
+
+if TYPE_CHECKING:
+    from ..experiment.experiment import Experiment
+    from ..protocol.protocol_model import ProtocolModel
 
 
 # Enum to define the role needed for a protocol
@@ -50,9 +58,8 @@ class ProcessableModel(Viewable):
     is_instance_running = False
     is_instance_finished = False
 
-    _experiment: 'Experiment' = None
-    _parent_protocol: 'Protocol' = None
-    _file_store: 'FileStore' = None
+    _experiment: Experiment = None
+    _parent_protocol: ProtocolModel = None
     _input: Input = None
     _output: Output = None
     _is_singleton = False
@@ -73,7 +80,7 @@ class ProcessableModel(Viewable):
 
     # -- A --
     @Transaction()
-    def archive(self, archive: bool, archive_resources=True) -> 'ProcessableModel':
+    def archive(self, archive: bool, archive_resources=True) -> ProcessableModel:
         """
         Archive the process
         """
@@ -91,10 +98,6 @@ class ProcessableModel(Viewable):
 
         return self
 
-    @Transaction()
-    def waow(self):
-        print('Parent')
-
     # -- D --
 
     def disconnect(self):
@@ -108,12 +111,11 @@ class ProcessableModel(Viewable):
     # -- E --
     # todo voir si on garde
     @property
-    def experiment(self):
-        if self._experiment:
-            return self._experiment
-        if self.experiment_id:
+    def experiment(self) -> Experiment:
+        if not self._experiment and self.experiment_id:
             from ..experiment.experiment import Experiment
             self._experiment = Experiment.get_by_id(self.experiment_id)
+
         return self._experiment
 
     # -- G --
@@ -146,15 +148,15 @@ class ProcessableModel(Viewable):
     def is_running(self) -> bool:
         if not self.progress_bar:
             return False
-        p = ProgressBar.get_by_id(self.progress_bar.id)
-        return p.is_running
+        progress_bar: ProgressBar = ProgressBar.get_by_id(self.progress_bar.id)
+        return progress_bar.is_running
 
     @property
     def is_finished(self) -> bool:
         if not self.progress_bar:
             return False
-        p = ProgressBar.get_by_id(self.progress_bar.id)
-        return p.is_finished
+        progress_bar: ProgressBar = ProgressBar.get_by_id(self.progress_bar.id)
+        return progress_bar.is_finished
 
     @property
     def is_ready(self) -> bool:
@@ -169,7 +171,7 @@ class ProcessableModel(Viewable):
         return (not self.is_instance_running and not self.is_instance_finished) and self.input.is_ready
 
     @property
-    def input(self) -> 'Input':
+    def input(self) -> Input:
         """
         Returns input of the process.
 
@@ -184,9 +186,10 @@ class ProcessableModel(Viewable):
     def _init_input(self) -> None:
         if not "input" in self.data:
             return
-        for k in self.data["input"]:
-            resource = ResourceModel.get_by_uri_and_check(self.data["input"][k]["uri"])
-            self._input.__setitem_without_check__(k, resource)
+        for key in self.data["input"]:
+            resource: ResourceModel = TypingManager.get_object_with_typing_name_and_uri(
+                self.data["input"][key]["typing_name"], self.data["input"][key]["uri"])
+            self._input.set_item_without_check(key, resource)
 
     def in_port(self, name: str) -> InPort:
         """
@@ -199,7 +202,7 @@ class ProcessableModel(Viewable):
         if not isinstance(name, str):
             raise BadRequestException(
                 "The name of the input port must be a string")
-        if not name in self.input._ports:
+        if not self.input.port_exists(name):
             raise BadRequestException(f"The input port '{name}' is not found")
         return self.input._ports[name]
 
@@ -221,7 +224,7 @@ class ProcessableModel(Viewable):
     # -- O --
 
     @property
-    def output(self) -> 'Output':
+    def output(self) -> Output:
         """
         Returns output of the process.
 
@@ -237,10 +240,10 @@ class ProcessableModel(Viewable):
         if not "output" in self.data:
             return
 
-        for k in self.data["output"]:
-            resource = TypingManager.get_object_with_typing_name_and_uri(
-                self.data["output"][k]["typing_name"], self.data["output"][k]["uri"])
-            self._output.__setitem_without_check__(k, resource)
+        for key in self.data["output"]:
+            resource: ResourceModel = TypingManager.get_object_with_typing_name_and_uri(
+                self.data["output"][key]["typing_name"], self.data["output"][key]["uri"])
+            self._output.set_item_without_check(key, resource)
 
     def out_port(self, name: str) -> OutPort:
         """
@@ -252,18 +255,17 @@ class ProcessableModel(Viewable):
         if not isinstance(name, str):
             raise BadRequestException(
                 "The name of the output port must be a string")
-        if not name in self.output._ports:
+        if not self.output.port_exists(name):
             raise BadRequestException(f"The output port '{name}' is not found")
         return self.output._ports[name]
 
     @property
-    def parent_protocol(self) -> 'ProtocolModel':
-        if self._parent_protocol:
-            return self._parent_protocol
-        if self.parent_protocol_id:
+    def parent_protocol(self) -> ProtocolModel:
+
+        if not self._parent_protocol and self.parent_protocol_id:
             from ..protocol.protocol_model import ProtocolModel
-            self._parent_protocol = ProtocolModel.get_by_id(
-                self.parent_protocol_id)
+            self._parent_protocol = ProtocolModel.get_by_id(self.parent_protocol_id)
+
         return self._parent_protocol
 
     # -- R --
@@ -297,6 +299,7 @@ class ProcessableModel(Viewable):
         self.data["input"] = {}
         self.data["output"] = {}
 
+    @final
     async def run(self) -> None:
         """
         Run the process and save its state in the database.
@@ -305,7 +308,11 @@ class ProcessableModel(Viewable):
         if not self.is_ready:
             return
 
-        await self._run()
+        try:
+            await self._run()
+        # Catch all exception and wrap them into a ProcessRunException to provide processable info
+        except Exception as err:
+            raise ProcessableRunException.from_exception(self, err)
 
     @abstractmethod
     async def _run(self) -> None:
@@ -373,12 +380,12 @@ class ProcessableModel(Viewable):
 
     # -- S --
 
-    def save_full(self) -> None:
+    def save_full(self) -> 'ProcessableModel':
         """Function to run overrided by the sub classes
         """
         pass
 
-    def set_parent_protocol(self, parent_protocol: 'ProtocolModel') -> None:
+    def set_parent_protocol(self, parent_protocol: ProtocolModel) -> None:
         """
         Sets the parent protocol of the process
         """
@@ -403,7 +410,7 @@ class ProcessableModel(Viewable):
         except:
             pass
 
-    def set_experiment(self, experiment):
+    def set_experiment(self, experiment: Experiment):
         from ..experiment.experiment import Experiment
         if not isinstance(experiment, Experiment):
             raise BadRequestException("An instance of Experiment is required")
@@ -434,7 +441,7 @@ class ProcessableModel(Viewable):
 
         self._input[name] = resource
 
-    def set_config(self, config: 'Config'):
+    def set_config(self, config: Config):
         """
         Sets the config of the process.
 

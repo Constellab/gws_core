@@ -19,3 +19,7 @@ class GWSException(Enum):
     CENTRAL_API_DEV_DISABLED = "The centrals routes are disabled in dev"
     OBJECT_URI_NOT_FOUND = "{{objectName}} with id : '{{id}}' not found"
     USER_NOT_ACTIVATED = "User not activated"
+    RESOURCE_NOT_COMPATIBLE = "Trying to set an incompatible resource to port '{{port}}'. Resource type: '{{resource_type}}', excepted types : '{{expected_types}}'."
+    MISSING_CONFIG_PARAMS = "The mandatory configs '{{config_names}}' are missing."
+    PROCESS_RUN_EXCEPTION = "{{error}} Process : '{{process}}', protocol : '{{protocol}}', experiment : '{{experiment}}'"
+    MISSING_INPUT_RESOURCES = "The inputs '{{port_names}}' were not provided but are mandatory"

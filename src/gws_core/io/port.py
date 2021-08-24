@@ -136,7 +136,7 @@ class Port(Base):
         :rtype: bool
         """
 
-        return (None in self.resource_types)
+        return None in self.resource_types
 
     @property
     def is_empty(self) -> bool:
@@ -196,7 +196,7 @@ class Port(Base):
         """
 
         for port in self._next:
-            port._resource_model = self._resource_model
+            port.resource_model = self._resource_model
 
     def __or__(self, other: 'Port'):
         raise BadRequestException(
@@ -229,15 +229,27 @@ class Port(Base):
         :type resource: Resource
         """
 
-        if not isinstance(resource_types, tuple):
+        # if the type is a Union or Optional (equivalient to Union[x, None])
+        if hasattr(resource_types, "__args__") and isinstance(resource_types.__args__, tuple):
+            resource_types = resource_types.__args__
+        elif not isinstance(resource_types, tuple):
             resource_types = (resource_types, )
 
+        checked_type: Tuple[Type[Resource], None] = ()
+
         for res_t in resource_types:
-            if (not res_t is None) and not issubclass(res_t, Resource):
+            # convert the NoneType to None
+            if res_t is type(None):
+                checked_type += (None,)
+                continue
+
+            # check that the type is a resource Resource
+            if res_t is not None and not issubclass(res_t, Resource):
                 raise BadRequestException(
                     "Invalid port specs. The resources types must refer to a subclass of Resource")
+            checked_type += (res_t,)
 
-        self._resource_types = resource_types
+        self._resource_types = checked_type
 
     @property
     def resource_model(self) -> ResourceModel:
@@ -264,6 +276,28 @@ class Port(Base):
             return
 
         self._resource_model = resource
+
+    # -- S --
+    def resource_type_is_compatible(self, resource_type: Type[Resource]) -> bool:
+        """
+        Sets the resource of the port.
+
+        :param resource: The input resource
+        :type resource: ResourceModel
+        """
+
+        if self.is_optional and resource_type is None:
+            return True
+
+        # check that the resource type is is subclass of one of the port resources types
+        for accepted_type in self._resource_types:
+            if accepted_type is None:
+                continue
+
+            if issubclass(resource_type, accepted_type):
+                return True
+
+        return False
 
     def get_resource(self) -> Resource:
         return self.resource_model.get_resource()
@@ -321,14 +355,12 @@ class OutPort(Port):
     OutPort class representing output port
     """
 
-    def _are_compatible_types(self, left_types, right_types):
-        OK = False
-        for t in left_types:
-            if issubclass(t, right_types):
-                OK = True
-                break
+    def _are_compatible_types(self, other: 'InPort') -> bool:
+        for left_type in self.resource_types:
+            if other.resource_type_is_compatible(left_type):
+                return True
 
-        return OK
+        return False
 
     def pipe(self, other: 'InPort', lazy: bool = False):
         """
@@ -352,7 +384,7 @@ class OutPort(Port):
 
         if not lazy:
             # hard checking of port compatibility
-            if not self._are_compatible_types(self.resource_types, other.resource_types):
+            if not self._are_compatible_types(other):
                 raise BadRequestException(
                     f"Invalid connection. {self.resource_types} is not a subclass of {other.resource_types}")
 

@@ -3,7 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 import inspect
-import traceback
 import zlib
 from enum import Enum
 from typing import Dict, Type
@@ -104,40 +103,37 @@ class ProcessModel(ProcessableModel):
         # Create the process instance to run the task
         process: Process = self._create_processable_instance()
 
+        # Get simpler object for to run the task
+        config_params: ConfigParams = self.config.get_and_check_params()
+        process_inputs: ProcessIO = self.input.get_and_check_process_inputs()
+
         is_ok = process.check_before_task(
-            config=self.config, inputs=self.input)
+            config=config_params, inputs=process_inputs)
+
+        # TODO qu'est-ce qu'on fait quand c'est false ? Pas de message d'erreur ?  On raise une exception ?
         if isinstance(is_ok, bool) and not is_ok:
             return
         try:
             await self._run_before_task()
-            await self._run_task(process=process)
+            # run the task
+            await self._run_task(process=process, config_params=config_params, process_inputs=process_inputs)
             await self._run_after_task()
         except Exception as err:
             self.progress_bar.stop(message=str(err))
             raise err
 
-    async def _run_task(self, process: Process) -> None:
+    async def _run_task(self, process: Process, config_params: ConfigParams, process_inputs: ProcessIO) -> None:
         """
         Run the process and save its state in the database.
         """
-        # Get simpler object for to run the task
-        config_params: ConfigParams = self.config.params
-        process_input: ProcessIO = self.input.get_process_io()
-        process_output: ProcessIO
 
-        try:
-            process_output = await process.task(config=config_params, inputs=process_input, progress_bar=self.progress_bar)
-        except Exception as err:
-            traceback.print_exc()
-            raise BadRequestException(
-                f"Error during the execution of the process '{self.instance_name}' in protocol '{self.parent_protocol.instance_name}' in experiment '{self.experiment.uri}'. Error : {str(err)}")
+        # Run the process task
+        process_output: ProcessIO = await process.task(config=config_params, inputs=process_inputs, progress_bar=self.progress_bar)
 
         if process_output is not None:
             # if the output is a simple dict and not a ResourceData, create a Resource Data
             if isinstance(process_output, dict) and not isinstance(process_output, ResourceData):
                 process_output = ResourceData(process_output)
-
-            # TODO do we have to check if all the required outputs have been provided ?
 
             # create the ResourceModel
             for key, value in process_output.items():
