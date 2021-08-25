@@ -75,3 +75,33 @@ class CurrentUserService:
             except Exception as _:
                 # is console context
                 cls._console_data["user"] = user
+
+    @classmethod
+    def check_is_sysuser(cls):
+        try:
+            user = CurrentUserService.get_and_check_current_user()
+        except:
+            raise UnauthorizedException(detail="Unauthorized: sysuser required")
+
+        if not user.is_sysuser:
+            raise UnauthorizedException(detail="Unauthorized: sysuser required")
+
+    @classmethod
+    def check_is_owner(cls):
+        try:
+            user = CurrentUserService.get_and_check_current_user()
+        except:
+            raise UnauthorizedException(detail="Unauthorized: owner required")
+
+        if not user.is_owner:
+            raise UnauthorizedException(detail="Unauthorized: owner required")
+
+    @classmethod
+    def check_is_admin(cls):
+        try:
+            user = CurrentUserService.get_and_check_current_user()
+        except:
+            raise UnauthorizedException(detail="Unauthorized: admin required")
+
+        if not user.is_admin:
+            raise UnauthorizedException(detail="Unauthorized: admin required")

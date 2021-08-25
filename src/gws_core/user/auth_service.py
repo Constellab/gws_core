@@ -1,4 +1,7 @@
-
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 from typing import Any, Coroutine
 
@@ -63,7 +66,7 @@ class AuthService(BaseService):
 
         access_token = JWTService.create_jwt(user_uri=user.uri)
 
-        content = {"access_token": access_token, "token_type": "bearer"}
+        content = {"access_token": access_token, "token_type": "Bearer"}
         response = JSONResponse(content=content)
 
         # Add the token is the cookies
@@ -78,12 +81,12 @@ class AuthService(BaseService):
         return response
 
     @classmethod
-    async def check_user_access_token(cls, token: str = Depends(oauth2_user_cookie_scheme)) -> UserData:
+    def check_user_access_token(cls, token: str = Depends(oauth2_user_cookie_scheme)) -> UserData:
 
         try:
             user_uri: str = JWTService.check_user_access_token(token)
 
-            db_user = User.get(User.uri == user_uri)
+            db_user: User = User.get(User.uri == user_uri)
             if not cls.authenticate(uri=db_user.uri):
                 raise InvalidTokenException()
 
@@ -114,7 +117,7 @@ class AuthService(BaseService):
         :rtype: `bool`
         """
         try:
-            user = User.get(User.uri == uri)
+            user: User = User.get(User.uri == uri)
         except Exception as err:
             raise BadRequestException(
                 f"User not found with uri {uri}") from err
@@ -291,33 +294,3 @@ class AuthService(BaseService):
                 Logger.warning(f"User __unauthenticate_console {err}")
                 transaction.rollback()
                 return False
-
-    @classmethod
-    def check_is_sysuser(cls):
-        try:
-            user = CurrentUserService.get_and_check_current_user()
-        except:
-            raise UnauthorizedException(detail="Unauthorized: owner required")
-
-        if not user.is_sysuser:
-            raise UnauthorizedException(detail="Unauthorized: owner required")
-
-    @classmethod
-    def check_is_owner(cls):
-        try:
-            user = CurrentUserService.get_and_check_current_user()
-        except:
-            raise UnauthorizedException(detail="Unauthorized: owner required")
-
-        if not user.is_owner:
-            raise UnauthorizedException(detail="Unauthorized: owner required")
-
-    @classmethod
-    def check_is_admin(cls):
-        try:
-            user = CurrentUserService.get_and_check_current_user()
-        except:
-            raise UnauthorizedException(detail="Unauthorized: admin required")
-
-        if not user.is_admin:
-            raise UnauthorizedException(detail="Unauthorized: admin required")
