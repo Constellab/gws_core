@@ -45,8 +45,8 @@ class UserService(BaseService):
 
     @classmethod
     def _create_user(cls, data: UserDataDict) -> User:
-        group = data.get('group', 'user')
-        if group == "sysuser":
+        group: UserGroup = UserGroup.from_string(data.get('group', None), UserGroup.USER)
+        if group == UserGroup.SYSUSER:
             raise BadRequestException("Cannot create sysuser")
 
         user = User(
@@ -77,7 +77,7 @@ class UserService(BaseService):
     def fecth_activity_list(cls,
                             user_uri: str = None,
                             activity_type: str = None,
-                            page: int = 1,
+                            page: int = 0,
                             number_of_items_per_page: int = 20,
                             as_json=False) -> Union[Paginator, dict]:
 
@@ -100,7 +100,7 @@ class UserService(BaseService):
 
     @classmethod
     def fetch_user_list(cls,
-                        page: int = 1,
+                        page: int = 0,
                         number_of_items_per_page: int = 20,
                         as_json=False) -> Union[Paginator, dict]:
 

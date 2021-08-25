@@ -22,6 +22,7 @@ from .config.config_spec import ConfigSpecType as ConfigSpecType
 # Core > Classes
 from .core.classes.expose import Expose as Expose
 from .core.classes.paginator import Paginator as Paginator
+from .core.classes.paginator import PaginatorDict as PaginatorDict
 from .core.classes.path import URL as URL
 from .core.classes.path import Path as Path
 from .core.classes.query import Query as Query

@@ -28,7 +28,7 @@ class ProtocolService(BaseService):
 
     @classmethod
     def fetch_protocol_list(cls,
-                            page: int = 1,
+                            page: int = 0,
                             number_of_items_per_page: int = 20,
                             as_json=False) -> Union[Paginator, List[ProtocolModel], List[dict]]:
 
@@ -48,7 +48,7 @@ class ProtocolService(BaseService):
 
     @classmethod
     def fetch_protocol_type_list(cls,
-                                 page: int = 1,
+                                 page: int = 0,
                                  number_of_items_per_page: int = 20,
                                  as_json=False) -> Union[Paginator, dict]:
 

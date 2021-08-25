@@ -3,12 +3,26 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Generic, TypeVar
+from typing import Generic, List, TypedDict, TypeVar
 
 from peewee import ModelSelect
 
 from ..model.model import Model
 from .query import Query
+
+
+class PaginatorDict(TypedDict):
+    objects: List[dict]
+    page: int
+    prev_page: int
+    next_page: int
+    last_page: int
+    total_number_of_items: int
+    total_number_of_pages: int
+    number_of_items_per_page: int
+    is_first_page: bool
+    is_last_page: bool
+
 
 PaginatorType = TypeVar('PaginatorType', bound=Model)
 
@@ -25,7 +39,7 @@ class Paginator(Generic[PaginatorType]):
     _max_number_of_items_per_page = 100
 
     def __init__(self, query: ModelSelect,
-                 page: int = 1,
+                 page: int = 0,
                  number_of_items_per_page: int = 20,
                  view_params: dict = None):
 
@@ -42,47 +56,46 @@ class Paginator(Generic[PaginatorType]):
         self.paginated_query = query.paginate(page, number_of_items_per_page)
         self.page = page
         self.number_of_items_per_page = number_of_items_per_page
-        self.number_of_items = query.count()
-        self.total_number_of_pages = int(self.number_of_items/self.number_of_items_per_page) + int(
-            bool(self.number_of_items % self.number_of_items_per_page))
-        self.next_page = min(self.page + 1, self.total_number_of_pages)
-        self.prev_page = max(self.page - 1, 1)
-        self.last_page = self.total_number_of_pages
-        self.first_page = 1
+        self.total_number_of_items = query.count()
+        self.total_number_of_pages = int(self.total_number_of_items/self.number_of_items_per_page) + int(
+            bool(self.total_number_of_items % self.number_of_items_per_page))
+        self.last_page = self.total_number_of_pages - 1
+        self.first_page = 0
+        self.next_page = min(self.page + 1, self.last_page)
+        self.prev_page = max(self.page - 1, self.first_page)
 
-    def paginator_dict(self):
+    def _get_paginated_info(self) -> PaginatorDict:
         return {
+            'objects': None,
             'page': self.page,
             'prev_page': self.prev_page,
             'next_page': self.next_page,
             'last_page': self.last_page,
-            'number_of_items': self.number_of_items,
+            'total_number_of_items': self.total_number_of_items,
             'total_number_of_pages': self.total_number_of_pages,
             'number_of_items_per_page': self.number_of_items_per_page,
-            'is_first_page': self.page == self.first_page or self.total_number_of_pages == 0,
-            'is_last_page': self.page == self.total_number_of_pages or self.total_number_of_pages == 0
+            'is_first_page': self.page == self.first_page,
+            'is_last_page': self.page == self.last_page
         }
 
-    def to_json(self, deep: bool = False):
-        return {
-            'data': Query.format(
-                self.paginated_query,
-                deep=deep,
-                as_json=True
-            ),
-            'paginator': self.paginator_dict()
-        }
+    def to_json(self, deep: bool = False) -> PaginatorDict:
+        paginator_dict: PaginatorDict = self._get_paginated_info()
+        paginator_dict['objects'] = Query.format(
+            self.paginated_query,
+            deep=deep,
+            as_json=True
+        )
+        return paginator_dict
 
-    def render(self, deep: bool = False):
-        return {
-            'data': Query.format(
-                self.paginated_query,
-                view_params=self.view_params,
-                as_view=True,
-                deep=deep
-            ),
-            'paginator': self.paginator_dict()
-        }
+    def render(self, deep: bool = False) -> PaginatorDict:
+        paginator_dict: PaginatorDict = self._get_paginated_info()
+        paginator_dict['objects'] = Query.format(
+            self.paginated_query,
+            view_params=self.view_params,
+            as_view=True,
+            deep=deep
+        ),
+        return paginator_dict
 
     def current_items(self):
         """

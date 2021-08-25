@@ -36,7 +36,7 @@ class ProcessService(BaseService):
     @classmethod
     def fetch_process_list(cls,
                            experiment_uri: str = None,
-                           page: int = 1,
+                           page: int = 0,
                            number_of_items_per_page: int = 20,
                            as_json=False) -> Union[Paginator, List[ProcessModel], List[dict]]:
 
@@ -57,7 +57,7 @@ class ProcessService(BaseService):
 
     @classmethod
     def fetch_process_type_list(cls,
-                                page: int = 1,
+                                page: int = 0,
                                 number_of_items_per_page: int = 20,
                                 as_json=False) -> Union[Paginator, dict]:
 

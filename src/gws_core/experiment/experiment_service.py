@@ -66,23 +66,22 @@ class ExperimentService(BaseService):
 
     @classmethod
     def fetch_experiment_list(cls,
-                              page: int = 1,
-                              number_of_items_per_page: int = 20) -> Paginator:
+                              page: int = 0,
+                              number_of_items_per_page: int = 20) -> Paginator[Experiment]:
 
         number_of_items_per_page = cls.get_number_of_item_per_page(
             number_of_items_per_page)
 
         query = Experiment.select().order_by(Experiment.creation_datetime.desc())
 
-        paginator = Paginator(
+        paginator: Paginator[Experiment] = Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
-
         return paginator
 
     @classmethod
     def search(cls,
                search_text: str,
-               page: int = 1,
+               page: int = 0,
                number_of_items_per_page: int = 20,
                as_json: bool = False) -> Paginator:
 
@@ -101,7 +100,7 @@ class ExperimentService(BaseService):
             query, page=page, number_of_items_per_page=number_of_items_per_page)
         return {
             'data': result,
-            'paginator': paginator.paginator_dict()
+            'paginator': paginator._get_paginated_info()
         }
 
     # -- S --

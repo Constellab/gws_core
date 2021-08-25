@@ -6,10 +6,8 @@
 
 from typing import List, Union
 
-from gws_core.core.decorator.transaction import Transaction
-from peewee import ModelSelect
-
 from ..comment.comment import Comment
+from ..core.decorator.transaction import Transaction
 from ..core.model.model import Model
 from .view_model import ViewModel
 
@@ -20,7 +18,6 @@ class Viewable(Model):
     """
 
     # -- A --
-    # todo fix type
     def add_comment(self, message: str, reply_to: Comment = None) -> Comment:
         """
         Add a new comment to this object
@@ -65,7 +62,7 @@ class Viewable(Model):
         """
 
         if self.is_archived == archive:
-            return True
+            return self
 
         query: List[ViewModel] = ViewModel.select().where(
             (ViewModel.model_uri == self.uri) &

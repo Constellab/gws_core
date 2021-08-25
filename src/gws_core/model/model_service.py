@@ -149,7 +149,7 @@ class ModelService(BaseService):
     def fetch_list_of_models(cls,
                              type_str: str,
                              search_text: str = None,
-                             page: int = 1, number_of_items_per_page: int = 20,
+                             page: int = 0, number_of_items_per_page: int = 20,
                              as_json: bool = False) -> Union[Paginator, List[Model], List[dict]]:
 
         t = Utils.get_model_type(type_str)
@@ -169,7 +169,7 @@ class ModelService(BaseService):
                 query, page=page, number_of_items_per_page=number_of_items_per_page)
             return {
                 'data': result,
-                'paginator': paginator.paginator_dict()
+                'paginator': paginator._get_paginated_info()
             }
         else:
             query = t.select().order_by(t.creation_datetime.desc())

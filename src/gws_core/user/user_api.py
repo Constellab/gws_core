@@ -29,7 +29,7 @@ async def read_user_me(current_user: UserData = Depends(AuthService.check_user_a
 @core_app.get("/user/activity", tags=["User"], summary="Get user activities")
 async def get_user_activity(user_uri: Optional[str] = None,
                             activity_type: Optional[str] = None,
-                            page: int = 1,
+                            page: int = 0,
                             number_of_items_per_page: int = 20,
                             _: UserData = Depends(AuthService.check_user_access_token)):
     """

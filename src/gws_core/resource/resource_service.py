@@ -35,7 +35,7 @@ class ResourceService(BaseService):
     def fetch_resource_list(cls,
                             typing_name: str = CONST_RESOURCE_MODEL_TYPING_NAME,
                             experiment_uri: str = None,
-                            page: int = 1, number_of_items_per_page: int = 20,
+                            page: int = 0, number_of_items_per_page: int = 20,
                             as_json=False) -> Union[Paginator, List[Resource], List[dict]]:
 
         model_type: Type[Resource] = TypingManager.get_type_from_name(
@@ -60,7 +60,7 @@ class ResourceService(BaseService):
 
     @classmethod
     def fetch_resource_type_list(cls,
-                                 page: int = 1,
+                                 page: int = 0,
                                  number_of_items_per_page: int = 20,
                                  as_json=False) -> Union[Paginator, dict]:
 

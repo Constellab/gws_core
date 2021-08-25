@@ -17,7 +17,7 @@ class ConfigService(BaseService):
     @classmethod
     def fetch_config_list(cls,
                           search_text="",
-                          page: int = 1,
+                          page: int = 0,
                           number_of_items_per_page: int = 20,
                           as_json=False) -> Union[Paginator, List[Config], List[dict]]:
 
@@ -37,7 +37,7 @@ class ConfigService(BaseService):
                 query, page=page, number_of_items_per_page=number_of_items_per_page)
             return {
                 'data': result,
-                'paginator': paginator.paginator_dict()
+                'paginator': paginator._get_paginated_info()
             }
         else:
             query = Config.select().order_by(Config.creation_datetime.desc())

@@ -3,13 +3,12 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import json
-from typing import Union
 
 from peewee import CharField
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
+from ..model.typing_manager import TypingManager
 from ..user.activity import Activity
 
 # ####################################################################
@@ -32,7 +31,7 @@ class ViewModel(Model):
     model_uri = CharField(index=True)
     model_type = CharField(index=True)
 
-    _model = None
+    _model: Model = None
     # transient view model are used to temprarily view part of a model (e.g. stream view)
     _is_transient = False
     _table_name = 'gws_view_model'
@@ -94,14 +93,13 @@ class ViewModel(Model):
         :rtype: `gws.db.model.Model`
         """
         # todo improve this method
-        from ..model.typing_manager import TypingManager
 
         if not self._model is None:
             return self._model
 
-        if self._model.typing_name is not None:
+        if self._model._typing_name is not None:
             self._model = TypingManager.get_object_with_typing_name(
-                self._model.typing_name, self._model.id)
+                self._model._typing_name, self._model.id)
         return self._model
 
     # -- P --
@@ -149,7 +147,7 @@ class ViewModel(Model):
             raise BadRequestException("Parameter must be a dictionnary")
         self.data["params"] = params
 
-    def set_model(self, model: None):
+    def set_model(self, model: Model = None):
         if not self.model_uri is None:
             raise BadRequestException("A model already exists")
         self._model = model
