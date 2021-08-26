@@ -43,7 +43,9 @@ class User(Model):
     :type is_console_authenticated: `bool`
     """
 
-    email = CharField(default=False, index=True)
+    email: str = CharField(default=False, index=True)
+    first_name: str = CharField(default=False, index=True)
+    last_name: str = CharField(default=False, index=True)
     group: UserGroup = EnumField(choices=UserGroup,
                                  default=UserGroup.USER)
     is_active = BooleanField(default=True)
@@ -89,14 +91,8 @@ class User(Model):
     # -- F --
 
     @property
-    def first_name(self):
-        return self.data.get("first_name", "")
-
-    @property
     def full_name(self):
-        first_name = self.data.get("first_name", "")
-        last_name = self.data.get("last_name", "")
-        return " ".join([first_name, last_name]).strip()
+        return " ".join([self.first_name, self.last_name]).strip()
 
     # -- I --
 
@@ -119,10 +115,6 @@ class User(Model):
         return user.is_http_authenticated or user.is_console_authenticated
 
     # -- L --
-
-    @property
-    def last_name(self):
-        return self.data.get("last_name", "")
 
     def has_access(self, group: UserGroup) -> bool:
         """return true if the user group is equal or higher than the group

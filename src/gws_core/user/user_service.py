@@ -52,11 +52,11 @@ class UserService(BaseService):
         user = User(
             uri=data['uri'],
             email=data['email'],
+            first_name=data['first_name'],
+            last_name=data['last_name'],
             group=group,
             is_active=data.get('is_active', True),
             data={
-                "first_name": data['first_name'],
-                "last_name": data['last_name'],
             }
         )
         if user.save():
@@ -149,7 +149,9 @@ class UserService(BaseService):
         except:
             user = User(
                 email="admin@gencovery.com",
-                data={"first_name": "sysuser", "last_name": ""},
+                first_name="sysuser",
+                last_name="sysuser",
+                data={},
                 is_active=True,
                 group=UserGroup.SYSUSER
             )
