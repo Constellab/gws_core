@@ -32,24 +32,30 @@ class TypingManager:
     # Mark as true when the tables exists, the typings can then be saved directly
     _tables_are_created: bool = False
 
+    # use to cache the names to prevent request each time
+    _typings_name_cache: Dict[str, Type[Base]] = {}
+
     @classmethod
     def get_type_from_name(cls, typing_name: str) -> Type[Base]:
-        typing: Typing = Typing.get_by_typing_name(typing_name).first()
+        if typing_name not in cls._typings_name_cache:
+            typing: Typing = Typing.get_by_typing_name(typing_name).first()
 
-        if typing is None:
-            raise BadRequestException(
-                f"Can't find the typing with name {typing_name}, did you register the name with corresponding decorator ?")
+            if typing is None:
+                raise BadRequestException(
+                    f"Can't find the typing with name {typing_name}, did you register the name with corresponding decorator ?")
 
-        return Utils.get_model_type(typing.model_type)
+            cls._typings_name_cache[typing_name] = Utils.get_model_type(typing.model_type)
+
+        return cls._typings_name_cache[typing_name]
 
     @classmethod
-    def get_object_with_typing_name(cls, typing_name: str, id: int) -> Model:
-        model_type:  Type[Model] = cls.get_type_from_name(typing_name)
-        return model_type.get_by_id(id)
+    def get_object_with_typing_name(cls, typing_name: str, object_id: int) -> Model:
+        model_type: Type[Model] = cls.get_type_from_name(typing_name)
+        return model_type.get_by_id(object_id)
 
     @classmethod
     def get_object_with_typing_name_and_uri(cls, typing_name: str, uri: str) -> Model:
-        model_type:  Type[Model] = cls.get_type_from_name(typing_name)
+        model_type: Type[Model] = cls.get_type_from_name(typing_name)
         return model_type.get_by_uri(uri)
 
     @classmethod
