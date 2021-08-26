@@ -39,7 +39,6 @@ class ProtocolModel(ProcessableModel):
     # False by default when instianting a protocol from the DB
     _is_loaded: bool = False
 
-    _is_singleton = False
     _processes: Dict[str, ProcessableModel] = {}
     _connectors: List[Connector] = None
     _interfaces: Dict[str, Interface] = {}

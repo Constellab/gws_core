@@ -57,7 +57,6 @@ class ProcessableModel(Viewable):
     _parent_protocol: ProtocolModel = None
     _input: Input = None
     _output: Output = None
-    _is_singleton = False
     _is_removable = False
 
     def __init__(self, *args, **kwargs):

@@ -74,7 +74,6 @@ class Model(Base, PeeweeModel):
     LAB_URI = None  # todo remove
 
     _data = None
-    _is_singleton = False
     _is_removable = True
     _db_manager = DbManager
     _table_name = 'gws_model'
@@ -85,8 +84,6 @@ class Model(Base, PeeweeModel):
         super().__init__(*args, **kwargs)
         if not Model.LAB_URI:
             Model.LAB_URI = Settings.retrieve().get_data("uri")
-        if not self.id and self._is_singleton:
-            self.__init_singleton_in_place()
 
         if self.uri is None:
             self.uri = str(uuid.uuid4())
@@ -122,20 +119,6 @@ class Model(Base, PeeweeModel):
         return self.save(only=[cls.is_archived])
 
     # -- C --
-
-    def __init_singleton_in_place(self):
-        try:
-            # todo to fix the type
-            cls = type(self)
-            model = cls.get(cls.type == self.full_classname())
-        except Exception as _:
-            model = None
-
-        if model:
-            # /!\ Shallow copy all properties
-            for prop in model.property_names(Field):
-                val = getattr(model, prop)
-                setattr(self, prop, val)
 
     def _create_hash_object(self):
         hash_obj = hashlib.blake2b()
