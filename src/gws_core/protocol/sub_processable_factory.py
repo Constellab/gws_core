@@ -1,23 +1,43 @@
 
 
-from typing import Optional, Type
+from abc import abstractmethod
+from typing import Dict, Optional, Type
 
-from gws_core.process.process import Process
+from gws_core.model.typing_manager import TypingManager
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from ..process.process import Process
 from ..process.process_model import ProcessModel
 from ..process.processable import Processable
 from ..process.processable_model import ProcessableModel
 
 
 class SubProcessableFactory():
-    """Factory used by the ProtocolModel builder to instantiate processs of Protocol
+    """Factory used by the ProtocolModel builder to instantiate processs of Protocol form the node json Dict
     """
 
-    def instantiate_processable(self, processable_uri: Optional[str],
-                                processable_type: Type[Processable],
-                                instance_name: str) -> ProcessableModel:
+    def instantiate_processable_from_json(self, node_json: Dict, instance_name: str) -> ProcessableModel:
+        proc_uri: str = node_json.get("uri", None)
+
+        proc_type_str: str = node_json["processable_typing_name"]
+        proc_type: Type[Processable] = TypingManager.get_type_from_name(proc_type_str)
+
+        if proc_type is None:
+            raise BadRequestException(
+                f"Process {proc_type_str} is not defined. Please ensure that the corresponding brick is loaded.")
+
+        # create the processable instance
+        return self._instantiate_processable(processable_uri=proc_uri,
+                                             processable_type=proc_type,
+                                             instance_name=instance_name,
+                                             node_json=node_json)
+
+    @abstractmethod
+    def _instantiate_processable(self, processable_uri: Optional[str],
+                                 processable_type: Type[Processable],
+                                 instance_name: str,
+                                 node_json: Dict) -> ProcessableModel:
         """Overriden by the children
         """
         pass
@@ -34,20 +54,28 @@ class SubProcessableFactory():
             return ProtocolModel.get_by_uri_and_check(processable_uri)
 
     def _create_new_processable(self, processable_type: Type[Processable],
-                                instance_name: str) -> ProcessableModel:
-        """Method to instantiate a new processable
+                                instance_name: str, config_dict: Dict) -> ProcessableModel:
+        """Method to instantiate a new processable and configure it
         """
         from ..process.processable_factory import ProcessableFactory
 
+        processable: ProcessableModel
         # if this is a process
         if issubclass(processable_type, Process):
-            return ProcessableFactory.create_process_model_from_type(
+            processable = ProcessableFactory.create_process_model_from_type(
                 process_type=processable_type, instance_name=instance_name)
         else:
             # if this is a protocol
             # create an empty protocol
-            return ProcessableFactory.create_protocol_model_from_type(
+            processable = ProcessableFactory.create_protocol_model_from_type(
                 protocol_type=processable_type, instance_name=instance_name)
+
+        # Configure the process
+        if config_dict.get('config'):
+            params = config_dict.get('config').get("data", {}).get("params", {})
+            processable.config.set_params(params)
+
+        return processable
 
 
 class SubProcessFactoryReadFromDb(SubProcessableFactory):
@@ -58,9 +86,10 @@ class SubProcessFactoryReadFromDb(SubProcessableFactory):
     :type SubProcessableFactory: [type]
     """
 
-    def instantiate_processable(self, processable_uri: Optional[str],
-                                processable_type: Type[Processable],
-                                instance_name: str) -> ProcessableModel:
+    def _instantiate_processable(self, processable_uri: Optional[str],
+                                 processable_type: Type[Processable],
+                                 instance_name: str,
+                                 node_json: Dict) -> ProcessableModel:
         if processable_uri is None:
             raise BadRequestException(
                 f"Cannot instantiate the processable {instance_name} because it does not have an uri")
@@ -75,11 +104,13 @@ class SubProcessFactoryCreate(SubProcessableFactory):
     :type SubProcessableFactory: [type]
     """
 
-    def instantiate_processable(self, processable_uri: Optional[str],
-                                processable_type: Type[Processable],
-                                instance_name: str) -> ProcessableModel:
+    def _instantiate_processable(self, processable_uri: Optional[str],
+                                 processable_type: Type[Processable],
+                                 instance_name: str,
+                                 node_json: Dict) -> ProcessableModel:
 
-        return self._create_new_processable(processable_type=processable_type, instance_name=instance_name)
+        return self._create_new_processable(processable_type=processable_type, instance_name=instance_name,
+                                            config_dict=node_json)
 
 
 class SubProcessFactoryUpdate(SubProcessableFactory):
@@ -89,11 +120,13 @@ class SubProcessFactoryUpdate(SubProcessableFactory):
     :type SubProcessableFactory: [type]
     """
 
-    def instantiate_processable(self, processable_uri: Optional[str],
-                                processable_type: Type[Processable],
-                                instance_name: str) -> ProcessableModel:
+    def _instantiate_processable(self, processable_uri: Optional[str],
+                                 processable_type: Type[Processable],
+                                 instance_name: str,
+                                 node_json: Dict) -> ProcessableModel:
 
         if processable_uri is not None:
             return self._get_processable_from_db(processable_uri=processable_uri, processable_type=processable_type)
         else:
-            return self._create_new_processable(processable_type=processable_type, instance_name=instance_name)
+            return self._create_new_processable(processable_type=processable_type, instance_name=instance_name,
+                                                config_dict=node_json)

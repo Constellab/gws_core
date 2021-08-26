@@ -40,5 +40,9 @@ class TestShell(BaseTest):
             process=proc)
 
         experiment = await ExperimentService.run_experiment(experiment=experiment, user=GTest.user)
+
+        # refresh the process
+        proc = experiment.processes[0]
+
         res: Resource = proc.output['stdout'].get_resource()
         self.assertEqual(res.data["out"], "Jhon Doe")

@@ -96,6 +96,11 @@ class TestCSV(BaseTest):
 
         print("Test CSV import/export")
 
+        # refresh the processes
+        importer = experiment.protocol.get_process("importer")
+        loader = experiment.protocol.get_process("loader")
+        dumper = experiment.protocol.get_process("dumper")
+        exporter = experiment.protocol.get_process("exporter")
         csv_data: CSVTable = loader.output["data"].get_resource()
 
         i_df = pandas.read_table(i_file_path)

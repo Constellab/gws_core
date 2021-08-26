@@ -58,19 +58,14 @@ class ProcessService(BaseService):
     @classmethod
     def fetch_process_type_list(cls,
                                 page: int = 0,
-                                number_of_items_per_page: int = 20,
-                                as_json=False) -> Union[Paginator, dict]:
+                                number_of_items_per_page: int = 20) -> Paginator[ProcessType]:
 
         query = ProcessType.get_types()
 
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
-        paginator = Paginator(
+        return Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
-        if as_json:
-            return paginator.to_json()
-        else:
-            return paginator
 
     @classmethod
     def fetch_process_type_tree(cls) -> List[TypedTree]:

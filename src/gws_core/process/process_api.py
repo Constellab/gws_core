@@ -28,11 +28,11 @@ async def get_the_list_of_process_types(page: Optional[int] = 1,
     return ProcessService.fetch_process_type_list(
         page=page,
         number_of_items_per_page=number_of_items_per_page,
-        as_json=True
-    )
+    ).to_json()
 
 
-@core_app.get("/process-type/typedTree", tags=["Process"], summary="Get the list of process types grouped by python module")
+@core_app.get("/process-type/typedTree", tags=["Process"],
+              summary="Get the list of process types grouped by python module")
 async def get_the_list_of_process_grouped(_: UserData = Depends(AuthService.check_user_access_token)) -> List[TypedTree]:
     """
     Retrieve all the process types in TypedTree

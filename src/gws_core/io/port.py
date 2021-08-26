@@ -1,17 +1,18 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import TYPE_CHECKING, List, Tuple, Type, final
-
-from gws_core.io.io_types import IOSpec
-from gws_core.resource.resource import Resource
-from gws_core.resource.resource_model import ResourceModel
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.base import Base
+from ..resource.resource import Resource
+from ..resource.resource_model import ResourceModel
+from .io_types import IOSpec, PortDict
 
 if TYPE_CHECKING:
     from ..process.processable_model import ProcessableModel
+    from .connector import Connector
     from .io import IO
 
 
@@ -24,7 +25,7 @@ class Port(Base):
     """
 
     _resource_model: ResourceModel = None
-    _resource_types: Tuple[Type[Resource]] = None
+    _resource_types: List[Type[Resource]] = None
     _prev: 'Port' = None
     _next: List['Port'] = []
     _parent: IO
@@ -210,7 +211,7 @@ class Port(Base):
         #    port._resource = None
 
     @property
-    def resource_types(self) -> Tuple[Type[Resource]]:
+    def resource_types(self) -> List[Type[Resource]]:
         """
         Returns the resource types of the port.
 
@@ -219,6 +220,15 @@ class Port(Base):
         """
 
         return self._resource_types
+
+    def get_resource_typing_names(self) -> List[str]:
+        specs: List[str] = []
+        for resource_type in self.resource_types:
+            if resource_type is None:
+                specs.append(None)
+            else:
+                specs.append(resource_type._typing_name)
+        return specs
 
     # -- S --
     def set_resource_types(self, resource_types: IOSpec):
@@ -232,22 +242,22 @@ class Port(Base):
         # if the type is a Union or Optional (equivalient to Union[x, None])
         if hasattr(resource_types, "__args__") and isinstance(resource_types.__args__, tuple):
             resource_types = resource_types.__args__
-        elif not isinstance(resource_types, tuple):
-            resource_types = (resource_types, )
+        elif not isinstance(resource_types, Iterable):
+            resource_types = [resource_types]
 
-        checked_type: Tuple[Type[Resource], None] = ()
+        checked_type: List[Type[Resource], None] = []
 
         for res_t in resource_types:
             # convert the NoneType to None
             if res_t is type(None):
-                checked_type += (None,)
+                checked_type.append(None)
                 continue
 
             # check that the type is a resource Resource
             if res_t is not None and not issubclass(res_t, Resource):
                 raise BadRequestException(
                     "Invalid port specs. The resources types must refer to a subclass of Resource")
-            checked_type += (res_t,)
+            checked_type.append(res_t)
 
         self._resource_types = checked_type
 
@@ -309,6 +319,24 @@ class Port(Base):
         """
         pass
 
+    def to_json(self) -> PortDict:
+        _json = {}
+
+        if self.resource_model:
+            _json["resource"] = {
+                "uri": self.resource_model.uri,
+                "typing_name": self.resource_model.typing_name
+            }
+        else:
+            _json["resource"] = {
+                "uri": "",
+                "typing_name": ""
+            }
+
+        _json["specs"] = self.get_resource_typing_names()
+
+        return _json
+
 
 # ####################################################################
 #
@@ -362,7 +390,7 @@ class OutPort(Port):
 
         return False
 
-    def pipe(self, other: 'InPort', lazy: bool = False):
+    def pipe(self, other: 'InPort', lazy: bool = False) -> Connector:
         """
         Connection operator.
 

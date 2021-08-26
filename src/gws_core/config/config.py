@@ -115,7 +115,7 @@ class Config(Viewable):
         :rtype: `dict`
         """
 
-        params = self.data["params"]
+        params = self.params
         specs: ConfigSpecs = self.data["specs"]
         missing_params: List[str] = []
 
@@ -148,6 +148,10 @@ class Config(Viewable):
     # -- R --
 
     # -- S --
+
+    @property
+    def params(self):
+        return self.data["params"]
 
     def set_param(self, name: str, value: Union[str, int, float, bool]):
         """

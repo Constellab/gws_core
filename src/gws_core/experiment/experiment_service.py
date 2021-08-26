@@ -52,11 +52,15 @@ class ExperimentService(BaseService):
 
         experiment.set_title(title)
         experiment.set_description(description)
-        experiment.set_protocol(protocol)
         experiment.study = Study.get_default_instance()
         experiment.created_by = CurrentUserService.get_and_check_current_user()
 
-        return experiment.save()
+        experiment = experiment.save()
+
+        # Set the experiment for the protocol and childs and save them
+        protocol.set_experiment(experiment)
+        protocol.save_full()
+        return experiment
 
     # -- F --
 

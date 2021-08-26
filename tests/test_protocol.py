@@ -141,14 +141,9 @@ class TestProtocol(BaseTest):
         self.assertEqual(ProtocolModel.select().count(), count+2)
 
         p1 = mini_proto.get_process("p1")
-        mini_proto.is_interfaced_with(p1)
+        self.assertTrue(mini_proto.is_interfaced_with(p1))
         p2 = mini_proto.get_process("p2")
-        mini_proto.is_outerfaced_with(p2)
-
-        with open(os.path.join(testdata_dir, "mini_travel_graph.json"), "r") as file:
-            s1 = json.load(file)
-            s2 = json.loads(json.dumps(mini_proto.dumps()))
-            self.assert_json(s1, s2, self.json_ignore_keys)
+        self.assertTrue(mini_proto.is_outerfaced_with(p2))
 
         experiment: Experiment = ExperimentService.create_experiment_from_protocol(
             protocol=super_proto)
@@ -166,131 +161,58 @@ class TestProtocol(BaseTest):
     async def test_graph_load(self):
         GTest.print("Load protocol graph")
 
-        mini_proto: ProtocolModel
-        with open(os.path.join(testdata_dir, "mini_travel_graph.json"), "r") as f:
+        super_proto: ProtocolModel
+        with open(os.path.join(testdata_dir, "super_proto_update.json"), "r") as f:
             s1 = json.load(f)
-            mini_proto = ProtocolService.create_protocol_from_graph(s1)
-            s2 = mini_proto.dumps()
-            self.assert_json(s1, s2, self.json_ignore_keys)
+            super_proto = ProtocolService.create_protocol_from_graph(s1)
 
-        p1 = mini_proto.get_process("p1")
-        self.assertTrue(mini_proto.is_interfaced_with(p1))
+        self.assertEqual(len(super_proto.processes), 4)
+        self.assertEqual(len(super_proto.connectors), 3)
+        self.assertTrue("mini_travel" in super_proto.processes)
 
-        p2 = mini_proto.get_process("p2")
-        self.assertTrue(mini_proto.is_outerfaced_with(p2))
+        mini_travel: ProtocolModel = super_proto.processes["mini_travel"]
+        # check mini travel
+        sub_p1 = mini_travel.get_process("p1")
+        self.assertTrue(mini_travel.is_interfaced_with(sub_p1))
 
-        p0: ProcessModel = ProcessableFactory.create_process_model_from_type(
-            process_type=RobotCreate)
-        p5: ProcessModel = ProcessableFactory.create_process_model_from_type(
-            process_type=RobotEat)
-
-        super_proto: ProtocolModel = ProtocolService.create_protocol_from_data(
-            processes={
-                "p0": p0,
-                "p5": p5,
-                "Mini travel": mini_proto
-            },
-            connectors=[
-                p0 >> 'robot' | mini_proto << 'robot',
-                mini_proto >> 'robot' | p5 << 'robot'
-            ]
-        )
-
-        experiment: Experiment = ExperimentService.create_experiment_from_protocol(
-            protocol=super_proto)
-
-        experiment = await ExperimentService.run_experiment(
-            experiment=experiment, user=GTest.user)
-
-        saved_mini_proto = ProtocolModel.get(ProtocolModel.id == mini_proto.id)
-        # load
-        mini_proto2 = ProcessableFactory.create_protocol_model_from_graph(
-            saved_mini_proto.graph)
-        self.assertTrue(mini_proto.graph, mini_proto2.graph)
+        sub_p2 = mini_travel.get_process("p2")
+        self.assertTrue(mini_travel.is_outerfaced_with(sub_p2))
 
     # TODO improve test because it does not test connection create or deletion
     async def test_protocol_update(self):
         GTest.print("Update protocol")
-        p0: ProcessModel = ProcessableFactory.create_process_model_from_type(
-            process_type=RobotCreate)
-        p1: ProcessModel = ProcessableFactory.create_process_model_from_type(
-            process_type=RobotMove)
-        p2: ProcessModel = ProcessableFactory.create_process_model_from_type(
-            process_type=RobotEat)
-        p3: ProcessModel = ProcessableFactory.create_process_model_from_type(
-            process_type=RobotMove)
-        p4: ProcessModel = ProcessableFactory.create_process_model_from_type(
-            process_type=RobotMove)
-        p5: ProcessModel = ProcessableFactory.create_process_model_from_type(
-            process_type=RobotEat)
-        p_wait: ProcessModel = ProcessableFactory.create_process_model_from_type(
-            process_type=RobotWait)
 
-        # create a chain
-        mini_proto: ProtocolModel = ProtocolService.create_protocol_from_data(
-            processes={
-                'p1': p1,
-                'p2': p2,
-                'p3': p3,
-                'p4': p4,
-                'p_wait': p_wait
-            },
-            connectors=[
-                p1 >> 'robot' | p2 << 'robot',
-                p2 >> 'robot' | p_wait << 'robot',
-                p_wait >> 'robot' | p3 << 'robot',
-                p2 >> 'robot' | p4 << 'robot'
-            ],
-            interfaces={'robot': p1.in_port('robot')},
-            outerfaces={'robot': p2.out_port('robot')}
-        )
+        with open(os.path.join(testdata_dir, "super_proto.json"), "r") as f:
+            s1 = json.load(f)
+            super_proto = ProtocolService.create_protocol_from_graph(s1)
 
-        super_proto: ProtocolModel = ProtocolService.create_protocol_from_data(
-            processes={
-                "p0": p0,
-                "p5": p5,
-                "mini_travel": mini_proto
-            },
-            connectors=[
-                p0 >> 'robot' | mini_proto << 'robot',
-                mini_proto >> 'robot' | p5 << 'robot'
-            ]
-        )
+        super_proto_db = ProtocolService.get_protocol_by_uri(super_proto.uri)
 
-        # Check the correct number of processes
-        super_proto_db: ProtocolModel = ProtocolService.get_protocol_by_uri(
-            super_proto.uri)
-        mini_proto_db: ProtocolModel = super_proto_db.processes["mini_travel"]
-        self.assertEqual(len(mini_proto_db.processes), 5)
+        self.assertEqual(len(super_proto_db.processes), 2)
+        self.assertEqual(len(super_proto_db.connectors), 0)
+        self.assertTrue("p0" in super_proto_db.processes)
+        self.assertTrue("p5" in super_proto_db.processes)
 
-        # Update the protocol by adding a process to the mini proto
-        new_wait: ProcessModel = ProcessableFactory.create_process_model_from_type(
-            process_type=RobotWait)
-        # remove the uri to simulate the real json from a request
-        new_wait.uri = None
-        mini_proto.add_process("new_wait", new_wait)
-        # revresh the graph to get the json
-        mini_proto.data["graph"] = mini_proto.dumps()
-        json_dump = super_proto.dumps()
+        # This file should add a mini travel sub protocol
+        with open(os.path.join(testdata_dir, "super_proto_update.json"), "r") as f:
+            s1 = json.load(f)
+            super_proto = ProtocolService.update_protocol_graph(super_proto_db, s1)
 
-        ProtocolService.update_protocol_graph(
-            protocol=super_proto_db, graph=json_dump)
+        self.assertEqual(len(super_proto_db.processes), 4)
+        self.assertEqual(len(super_proto_db.connectors), 3)
+        self.assertTrue("mini_travel" in super_proto_db.processes)
 
-        # Check that the process was added
-        mini_proto_db: ProtocolModel = ProtocolService.get_protocol_by_uri(
-            mini_proto.uri)
+        mini_travel_db: ProtocolModel = super_proto_db.processes["mini_travel"]
+        # check mini travel
+        self.assertEqual(len(mini_travel_db.processes), 2)
+        self.assertEqual(len(mini_travel_db.connectors), 1)
 
-        self.assertEqual(len(mini_proto_db.processes), 6)
+        # Rollback to first protocol
+        with open(os.path.join(testdata_dir, "super_proto.json"), "r") as f:
+            s1 = json.load(f)
+            super_proto = ProtocolService.update_protocol_graph(super_proto_db, s1)
 
-        mini_proto: ProtocolModel = super_proto.processes["mini_travel"]
-        mini_proto.delete_process("new_wait")
-        # refrehs the graph to get the json
-        mini_proto.data["graph"] = mini_proto.dumps()
-        ProtocolService.update_protocol_graph(
-            protocol=super_proto_db, graph=super_proto.dumps())
-
-        # Check that the process was added
-        mini_proto_db: ProtocolModel = ProtocolService.get_protocol_by_uri(
-            mini_proto.uri)
-
-        self.assertEqual(len(mini_proto_db.processes), 5)
+        self.assertEqual(len(super_proto_db.processes), 2)
+        self.assertEqual(len(super_proto_db.connectors), 0)
+        self.assertTrue("p0" in super_proto_db.processes)
+        self.assertTrue("p5" in super_proto_db.processes)

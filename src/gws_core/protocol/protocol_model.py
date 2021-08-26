@@ -5,21 +5,15 @@
 
 import asyncio
 import json
-import zlib
 from typing import Dict, List, Type, Union
 
 from ..core.decorator.transaction import Transaction
 from ..core.exception.exceptions import BadRequestException
-from ..core.exception.exceptions.unauthorized_exception import \
-    UnauthorizedException
 from ..io.connector import Connector
 from ..io.io import Input, Output
 from ..io.ioface import Interface, Outerface
 from ..io.port import InPort, OutPort, Port
-from ..model.typing_manager import TypingManager
 from ..model.typing_register_decorator import TypingDecorator
-from ..process.process_model import ProcessAllowedUser, ProcessModel
-from ..process.processable import Processable
 from ..process.processable_model import ProcessableModel
 from ..protocol.protocol import Protocol
 from ..resource.resource import Resource
@@ -40,14 +34,14 @@ class ProtocolModel(ProcessableModel):
     :type is_template: `bool`
     """
 
-    # For lazy loading, True when processes, connectors, interfazces and outerfaces are loaded
+    # For lazy loading, True when processes, interfazces and outerfaces are loaded
     # True by default when creating a new protoco
     # False by default when instianting a protocol from the DB
     _is_loaded: bool = False
 
     _is_singleton = False
     _processes: Dict[str, ProcessableModel] = {}
-    _connectors: List[Connector] = []
+    _connectors: List[Connector] = None
     _interfaces: Dict[str, Interface] = {}
     _outerfaces: Dict[str, Outerface] = {}
     _table_name = "gws_protocol"  # is locked for all the protocols
@@ -59,7 +53,6 @@ class ProtocolModel(ProcessableModel):
         self._input = Input(self)
         self._output = Output(self)
         self._processes = {}
-        self._connectors = []
         self._interfaces = {}
         self._outerfaces = {}
 
@@ -102,7 +95,7 @@ class ProtocolModel(ProcessableModel):
             raise BadRequestException(f"Process '{name}' duplicate")
 
         process.set_parent_protocol(self)
-        if self.experiment_id:
+        if self.experiment and process.experiment is None:
             process.set_experiment(self.experiment)
         process.instance_name = name
         self._processes[name] = process
@@ -130,6 +123,7 @@ class ProtocolModel(ProcessableModel):
 
         # Be sure to have loaded the protocol before adding a connector
         self._load_from_graph()
+        self._load_connectors()
         self._add_connector(connector)
 
     def _add_connector(self, connector: Connector):
@@ -193,58 +187,32 @@ class ProtocolModel(ProcessableModel):
             return
 
         # init processes and sub processes
-        self.init_processes_from_graph(graph["nodes"], sub_processable_factory)
+        self._init_processes_from_graph(graph["nodes"], sub_processable_factory)
 
         # init interfaces and outerfaces
-        self.init_interfaces_from_graph(graph["interfaces"])
-        self.init_outerfaces_from_graph(graph["outerfaces"])
+        self._init_interfaces_from_graph(graph["interfaces"])
+        self._init_outerfaces_from_graph(graph["outerfaces"])
 
-        # init connectors
-        self.init_connectors_from_graph(graph["links"])
-
-    def init_processes_from_graph(self, nodes: Dict,
-                                  sub_processable_factory: SubProcessableFactory) -> None:
+    def _init_processes_from_graph(self, nodes: Dict,
+                                   sub_processable_factory: SubProcessableFactory) -> None:
         # create nodes
         for key, node_json in nodes.items():
-            proc_uri: str = node_json.get("uri", None)
-
-            proc_type_str: str = node_json["processable_typing_name"]
-            proc_type: Type[Processable] = TypingManager.get_type_from_name(
-                proc_type_str)
-
-            if proc_type is None:
-                raise BadRequestException(
-                    f"Process {proc_type_str} is not defined. Please ensure that the corresponding brick is loaded.")
 
             # create the processable instance
-            processable: ProcessableModel = sub_processable_factory.instantiate_processable(processable_uri=proc_uri,
-                                                                                            processable_type=proc_type,
-                                                                                            instance_name=key)
+            processable: ProcessableModel = sub_processable_factory.instantiate_processable_from_json(
+                node_json=node_json,
+                instance_name=key)
 
+            # If the process already exists
             if key in self._processes:
+                # update process info
                 self._processes[key].data = processable.data
+                self._processes[key].config.set_params(processable.config.params)
+            # If it's a new process
             else:
-                self.configure_process_and_add(
-                    key, processable, node_json.get("config"))
+                self._add_process(key, processable)
 
-    def configure_process_and_add(self, process_name: str, process: ProcessModel, config_dict: Dict) -> None:
-        """Configure the process form the config dict and add the process to the process dict
-
-        :param process_name: [description]
-        :type process_name: str
-        :param process: [description]
-        :type process: ProcessModel
-        :param config_dict: [description]
-        :type config_dict: Dict
-        """
-        # update config if required
-        if config_dict:
-            params = config_dict.get("data", {}).get("params", {})
-            process.config.set_params(params)
-
-        self._add_process(process_name, process)
-
-    def init_interfaces_from_graph(self, interfaces_dict: Dict) -> None:
+    def _init_interfaces_from_graph(self, interfaces_dict: Dict) -> None:
         # clear current interfaces
         self._interfaces = {}
 
@@ -259,7 +227,7 @@ class ProtocolModel(ProcessableModel):
             interfaces[key] = port
         self.set_interfaces(interfaces)
 
-    def init_outerfaces_from_graph(self, outerfaces_dict: Dict) -> None:
+    def _init_outerfaces_from_graph(self, outerfaces_dict: Dict) -> None:
         # clear current interfaces
         self._outerfaces = {}
 
@@ -285,16 +253,11 @@ class ProtocolModel(ProcessableModel):
             rhs_port_name: str = link["to"]["port"]
             rhs_proc: ProcessableModel = self._processes[proc_name]
 
-            # connector = (lhs_proc>>lhs_port_name | rhs_proc<<rhs_port_name)
-            connector: Connector = (lhs_proc >> lhs_port_name).pipe(
-                rhs_proc << rhs_port_name, lazy=True)
+            connector: Connector = lhs_proc.out_port(lhs_port_name).pipe(
+                rhs_proc.in_port(rhs_port_name), lazy=True)
             self._add_connector(connector)
 
     # -- C --
-
-    def create_source_zip(self):
-        graph: str = json.dumps(self.dumps())
-        return zlib.compress(graph.encode())
 
     # -- D --
 
@@ -309,30 +272,10 @@ class ProtocolModel(ProcessableModel):
         for outerface in self.outerfaces.values():
             outerface.disconnect()
 
-    def dumps(self) -> dict:
+    def refresh_graph_from_dump(self) -> None:
+        """Refresh the graph json obnject inside the data from the dump method
         """
-        Dumps the JSON graph representing the protocol.
-
-        """
-
-        graph = dict(
-            uri=self.uri,
-            nodes={},
-            links=[],
-            interfaces={},
-            outerfaces={},
-        )
-        for conn in self.connectors:
-            link = conn.to_json()
-            graph['links'].append(link)
-        for key, process in self.processes.items():
-            graph["nodes"][key] = process.to_json(deep=True)
-        for key, interface in self.interfaces.items():
-            graph['interfaces'][key] = interface.to_json()
-        for key, outerface in self.outerfaces.items():
-            graph['outerfaces'][key] = outerface.to_json()
-        graph["layout"] = self.get_layout()
-        return graph
+        self.data["graph"] = self.dumps_data(minimize=True)
 
     # -- G --
 
@@ -471,7 +414,18 @@ class ProtocolModel(ProcessableModel):
         # load first the value if there are not loaded
         self._load_from_graph()
 
+        # Lazy load specifically the connector because it might need to load the children (for sub protocol)
+        self._load_connectors()
+
         return self._connectors
+
+    def _load_connectors(self) -> None:
+        if self._connectors is None:
+            # Init the connector from the graph
+            if "graph" in self.data and "links" in self.data["graph"]:
+                self.init_connectors_from_graph(self.data["graph"]["links"])
+            else:
+                self._connectors = []
 
     @property
     def input(self) -> 'Input':
@@ -527,7 +481,6 @@ class ProtocolModel(ProcessableModel):
             outerface.reset()
 
     async def _run_before_task(self):
-        self.save()
         if self.is_running or self.is_finished:
             return
         self._set_inputs()
@@ -536,6 +489,10 @@ class ProtocolModel(ProcessableModel):
         await super()._run_before_task()
 
     async def _run(self) -> None:
+        # completely load the protocol before running it
+        self._load_from_graph()
+        self._load_connectors()
+
         try:
             await self._run_before_task()
             await self._run_task()
@@ -573,8 +530,13 @@ class ProtocolModel(ProcessableModel):
         # Good! The protocol task is finished!
         self._set_outputs()
 
-        self.save(update_graph=True)
         await super()._run_after_task()
+
+    def save_after_task(self) -> None:
+        """Method called after the task to save the processable
+        """
+        # override the method to update the graph before saving
+        self.save(update_graph=True)
 
     # -- S --
     @Transaction()
@@ -586,14 +548,13 @@ class ProtocolModel(ProcessableModel):
                 object_uri=self.uri
             )
         if update_graph:
-            self.data["graph"] = self.dumps()
+            self.refresh_graph_from_dump()
         return super().save(*args, **kwargs)
 
     def set_experiment(self, experiment):
         super().set_experiment(experiment)
         for process in self.processes.values():
             process.set_experiment(experiment)
-            process.save()
 
     def set_layout(self, layout: dict):
         self.data["layout"] = layout
@@ -636,8 +597,8 @@ class ProtocolModel(ProcessableModel):
             source_port = self._input.ports[k]
             self._interfaces[k] = Interface(
                 name=k, source_port=source_port, target_port=interfaces[k])
-        if self.data.get("input"):
-            self._init_input()
+
+        self._init_input_from_data()
 
     def set_outerfaces(self, outerfaces: Dict[str, Port]):
         output_specs = {}
@@ -649,13 +610,10 @@ class ProtocolModel(ProcessableModel):
         self._outerfaces = {}
         for k in outerfaces:
             target_port = self._output.ports[k]
-            try:
-                self._outerfaces[k] = Outerface(
-                    name=k, target_port=target_port, source_port=outerfaces[k])
-            except:
-                pass
-        if self.data.get("output"):
-            self._init_output()
+            self._outerfaces[k] = Outerface(
+                name=k, target_port=target_port, source_port=outerfaces[k])
+
+        self._init_output_from_data()
 
     def set_protocol_type(self, protocol_type: Type[Protocol]) -> None:
         self.processable_typing_name = protocol_type._typing_name
@@ -668,7 +626,38 @@ class ProtocolModel(ProcessableModel):
         self.processes[instance_name].delete_instance()
         del self.processes[instance_name]
 
-    # -- T --
+    def is_protocol(self) -> bool:
+        return True
+
+    def dumps_data(self, minimize: bool) -> dict:
+        """
+        Dumps the JSON graph representing the protocol.
+
+        """
+
+        graph = {
+            "nodes": {},
+            "links": [],
+            "interfaces": {},
+            "outerfaces": {}
+        }
+
+        for conn in self.connectors:
+            link = conn.to_json()
+            graph['links'].append(link)
+        for key, processable in self.processes.items():
+            processable_json: dict
+            if minimize:
+                processable_json = processable.get_minimum_json()
+            else:
+                processable_json = processable.to_json(deep=False)
+            graph["nodes"][key] = processable_json
+        for key, interface in self.interfaces.items():
+            graph['interfaces'][key] = interface.to_json()
+        for key, outerface in self.outerfaces.items():
+            graph['outerfaces'][key] = outerface.to_json()
+        graph["layout"] = self.get_layout()
+        return graph
 
     def data_to_json(self, deep: bool = False, **kwargs) -> dict:
         """
@@ -676,7 +665,10 @@ class ProtocolModel(ProcessableModel):
         :return: The representation
         :rtype: `dict`
         """
-        _json = super().data_to_json(deep=deep, **kwargs)
+        _json: dict = super().data_to_json(deep=deep)
+
+        if deep:
+            _json["graph"] = self.dumps_data(minimize=False)
 
         return _json
 

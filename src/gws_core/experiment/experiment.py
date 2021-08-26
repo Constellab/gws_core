@@ -2,11 +2,12 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
+from __future__ import annotations
 
 from enum import Enum
-from typing import List, final
+from typing import TYPE_CHECKING, List, final
 
-from peewee import BooleanField, FloatField, ForeignKeyField
+from peewee import BooleanField, FloatField, ForeignKeyField, ModelSelect
 
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.transaction import Transaction
@@ -14,13 +15,15 @@ from ..core.exception.exceptions import BadRequestException
 from ..core.model.sys_proc import SysProc
 from ..model.typing_register_decorator import TypingDecorator
 from ..model.viewable import Viewable
-from ..process.process_model import ProcessModel
-from ..protocol.protocol_model import ProtocolModel
 from ..resource.experiment_resource import ExperimentResource
 from ..resource.resource_model import ResourceModel
 from ..study.study import Study
 from ..user.activity import Activity
 from ..user.user import User
+
+if TYPE_CHECKING:
+    from ..process.process_model import ProcessModel
+    from ..protocol.protocol_model import ProtocolModel
 
 
 class ExperimentStatus(Enum):
@@ -52,8 +55,7 @@ class Experiment(Viewable):
 
     study = ForeignKeyField(
         Study, null=True, index=True, backref='experiments')
-    protocol = ForeignKeyField(
-        ProtocolModel, null=True, index=True, backref='+')
+
     created_by = ForeignKeyField(
         User, null=True, index=True, backref='created_experiments')
     score = FloatField(null=True, index=True)
@@ -62,6 +64,9 @@ class Experiment(Viewable):
     is_validated = BooleanField(default=False, index=True)
 
     _table_name = 'gws_experiment'
+
+    # backup of the _protocol
+    _protocol: ProtocolModel = None
 
     # -- A --
 
@@ -151,16 +156,29 @@ class Experiment(Viewable):
         return self.data["pid"]
 
     @property
+    def protocol(self) -> ProtocolModel:
+        """
+        Returns the protocol model
+        """
+        from ..protocol.protocol_model import ProtocolModel
+
+        if self._protocol is None:
+            self._protocol = ProtocolModel.get((ProtocolModel.experiment == self)
+                                               & (ProtocolModel.parent_protocol_id.is_null()))
+
+        return self._protocol
+
+    @property
     def processes(self) -> List[ProcessModel]:
         """
         Returns child processes.
         """
-
+        from ..process.process_model import ProcessModel
         if not self.id:
             return []
 
         return list(ProcessModel.select().where(
-            ProcessModel.experiment_id == self.id))
+            ProcessModel.experiment == self))
 
     # -- R --
 
@@ -208,13 +226,11 @@ class Experiment(Viewable):
         self.save()
 
     def mark_as_started(self):
-        self.protocol.set_experiment(self)
         self.data["pid"] = 0
         self.status = ExperimentStatus.RUNNING
         self.save()
 
     def mark_as_success(self):
-
         self.data["pid"] = 0
         self.status = ExperimentStatus.SUCCESS
         self.save()
@@ -255,10 +271,6 @@ class Experiment(Viewable):
                 object_uri=self.uri
             )
         return super().save(*args, **kwargs)
-
-    def set_protocol(self, protocol: ProtocolModel) -> None:
-        protocol.set_experiment(self)
-        self.protocol = protocol
 
     # -- T --
 

@@ -316,6 +316,7 @@ class RobotSuperTravelProto(Protocol):
             sub_travel >> 'robot' | eat_3 << 'robot',
             fly_1 >> 'robot' | wait_2 << 'robot'
         ]
+        fly_1.set_param('moving_step', 2000)
 
         interfaces = {'robot': move_4.in_port('robot')}
         outerfaces = {'robot': eat_3.out_port('robot')}

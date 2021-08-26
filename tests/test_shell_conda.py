@@ -32,6 +32,11 @@ class CondaEnvTester(CondaEnvShell):
 
 class TestProcess(BaseTest):
 
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        CondaEnvTester.uninstall()
+
     async def test_conda(self):
         GTest.print("Conda")
         proc: ProcessModel = ProcessService.create_process_from_type(
@@ -41,6 +46,9 @@ class TestProcess(BaseTest):
         experiment: Experiment = ExperimentService.create_experiment_from_process(
             process=proc)
         experiment = await ExperimentService.run_experiment(experiment=experiment, user=GTest.user)
+
+        # refresh the process
+        proc = experiment.processes[0]
 
         result: Resource = proc.output["stdout"].get_resource()
         encoded_string = result.data["encoded_string"]

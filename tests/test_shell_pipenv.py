@@ -38,6 +38,7 @@ class TestProcess(BaseTest):
         PipEnvTester.uninstall()
 
     async def test_pipenv(self):
+
         GTest.print("Pipenv")
         proc: ProcessModel = ProcessService.create_process_from_type(
             process_type=PipEnvTester)
@@ -46,6 +47,9 @@ class TestProcess(BaseTest):
         experiment: Experiment = ExperimentService.create_experiment_from_process(
             process=proc)
         experiment = await ExperimentService.run_experiment(experiment=experiment, user=GTest.user)
+
+        # refresh the process
+        proc = experiment.processes[0]
 
         result: Resource = proc.output["stdout"].get_resource()
         encoded_string = result.data["encoded_string"]

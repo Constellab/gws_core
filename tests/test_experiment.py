@@ -7,8 +7,8 @@ import time
 from typing import List
 
 from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
-                      ProcessModel, ProtocolModel, ResourceModel,
-                      RobotService, Settings)
+                      ProcessModel, ProtocolModel, ResourceModel, RobotService,
+                      Settings)
 
 from tests.base_test import BaseTest
 
@@ -32,6 +32,7 @@ class TestExperiment(BaseTest):
 
         #self.assertEqual(e1.processes.count(), 18)
         #self.assertEqual(Process.select().count(), 18)
+
         self.assertEqual(len(experiment1.processes), 15)
         self.assertEqual(ProcessModel.select().count(), 15)
         self.assertEqual(ResourceModel.select().count(), 0)
@@ -40,8 +41,9 @@ class TestExperiment(BaseTest):
         # Create experiment 2 = experiment 2
         # -------------------------------
         print("Create experiment_2 = experiment_1 ...")
-        experiment2: Experiment = Experiment.get(
-            Experiment.uri == experiment1.uri)
+        experiment2: Experiment = Experiment.get_by_uri_and_check(experiment1.uri)
+
+        protocol = experiment2.protocol
         self.assertEqual(experiment2.get_title(), "My exp title")
         self.assertEqual(experiment2.get_description(),
                          "This is my new experiment")
@@ -63,15 +65,16 @@ class TestExperiment(BaseTest):
         self.assertEqual(ResourceModel.select().count(), 15)
         self.assertEqual(len(Q1), 15)
         self.assertEqual(len(Q2), 15)
-
-        time.sleep(2)
         self.assertEqual(experiment2.pid, 0)
 
         e2_bis: Experiment = Experiment.get(Experiment.uri == experiment1.uri)
+
         self.assertEqual(e2_bis.get_title(), "My exp title")
         self.assertEqual(e2_bis.get_description(), "This is my new experiment")
         self.assertEqual(len(e2_bis.processes), 15)
         self.assertEqual(Experiment.select().count(), 1)
+
+    async def test_run_through_cli_and_re_run(self):
 
         # experiment 3
         # -------------------------------
@@ -88,8 +91,8 @@ class TestExperiment(BaseTest):
         print(f"Experiment pid = {experiment3.pid}", )
 
         waiting_count = 0
-        experiment3: Experiment = Experiment.get(
-            Experiment.id == experiment3.id)
+        experiment3: Experiment = Experiment.get_by_uri_and_check(experiment3.uri)
+        print(experiment3.protocol)
         while experiment3.status != ExperimentStatus.SUCCESS:
             print("Waiting 3 secs the experiment to finish ...")
             time.sleep(3)
@@ -99,7 +102,7 @@ class TestExperiment(BaseTest):
             waiting_count += 1
 
         self.assertEqual(Experiment.count_of_running_experiments(), 0)
-        experiment3 = Experiment.get(Experiment.id == experiment3.id)
+        experiment3: Experiment = Experiment.get_by_uri_and_check(experiment3.uri)
         self.assertEqual(experiment3.status, ExperimentStatus.SUCCESS)
         self.assertEqual(experiment3.pid, 0)
 

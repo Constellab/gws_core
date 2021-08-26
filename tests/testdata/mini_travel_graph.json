@@ -1,13 +1,12 @@
 {
-    "uri": "e424ade6-08bf-4a6f-bde9-928277369aff",
     "nodes": {
         "p1": {
-            "creation_datetime": "2021-08-19T13:06:17.344325",
+            "creation_datetime": "2021-08-25T14:56:26.138535",
             "instance_name": "p1",
             "is_archived": false,
             "processable_typing_name": "PROCESS.gws_core.RobotMove",
-            "save_datetime": "2021-08-19T13:06:18.267684",
-            "uri": "047501c7-350d-499c-bb0e-af4881ebcd24",
+            "save_datetime": "2021-08-25T14:56:26.410965",
+            "uri": "ca81f0e4-8e8b-4e63-8eae-302c1b53de8e",
             "data": {
                 "title": "Move robot",
                 "description": "This process emulates a short moving step of the robot",
@@ -16,16 +15,17 @@
             "experiment": {
                 "uri": ""
             },
-            "protocol": {
-                "uri": "e424ade6-08bf-4a6f-bde9-928277369aff"
+            "parent_protocol": {
+                "uri": "5f8c0d92-035d-4564-b3f2-f5c2eea19167"
             },
             "is_running": false,
             "is_finished": false,
+            "is_protocol": false,
             "config": {
-                "creation_datetime": "2021-08-19T13:06:17.361358",
+                "creation_datetime": "2021-08-25T14:56:26.159515",
                 "is_archived": false,
-                "save_datetime": "2021-08-19T13:06:18.250788",
-                "uri": "c7dae648-2e85-4404-8718-ce7e01606870",
+                "save_datetime": "2021-08-25T14:56:26.396108",
+                "uri": "6329b055-5a9a-40de-b0cb-8ae6d0c4f7a4",
                 "data": {
                     "specs": {
                         "moving_step": {
@@ -49,10 +49,10 @@
                 }
             },
             "progress_bar": {
-                "creation_datetime": "2021-08-19T13:06:17.365470",
+                "creation_datetime": "2021-08-25T14:56:26.164572",
                 "is_archived": false,
-                "save_datetime": "2021-08-19T13:06:18.259106",
-                "uri": "f7df45c6-380d-4e7a-9548-dbfd4b939151",
+                "save_datetime": "2021-08-25T14:56:26.402984",
+                "uri": "87a47473-f91d-4dcc-8ba2-de34788cb647",
                 "data": {
                     "value": 0.0,
                     "max_value": 0.0,
@@ -64,7 +64,7 @@
                     "messages": []
                 },
                 "process": {
-                    "uri": "047501c7-350d-499c-bb0e-af4881ebcd24",
+                    "uri": "ca81f0e4-8e8b-4e63-8eae-302c1b53de8e",
                     "typing_name": "PROCESS.gws_core.RobotMove"
                 }
             },
@@ -92,12 +92,12 @@
             }
         },
         "p2": {
-            "creation_datetime": "2021-08-19T13:06:17.372158",
+            "creation_datetime": "2021-08-25T14:56:26.189436",
             "instance_name": "p2",
             "is_archived": false,
             "processable_typing_name": "PROCESS.gws_core.RobotEat",
-            "save_datetime": "2021-08-19T13:06:18.285011",
-            "uri": "c8467a0b-2d74-4695-97dc-d97b03d32149",
+            "save_datetime": "2021-08-25T14:56:26.432884",
+            "uri": "8e707c7b-4ff1-4a08-9444-bc731c1c5c1f",
             "data": {
                 "title": "Eat process",
                 "description": "This process emulates the meal of the robot before its flight!",
@@ -106,16 +106,17 @@
             "experiment": {
                 "uri": ""
             },
-            "protocol": {
-                "uri": "e424ade6-08bf-4a6f-bde9-928277369aff"
+            "parent_protocol": {
+                "uri": "5f8c0d92-035d-4564-b3f2-f5c2eea19167"
             },
             "is_running": false,
             "is_finished": false,
+            "is_protocol": false,
             "config": {
-                "creation_datetime": "2021-08-19T13:06:17.386372",
+                "creation_datetime": "2021-08-25T14:56:26.209418",
                 "is_archived": false,
-                "save_datetime": "2021-08-19T13:06:18.274369",
-                "uri": "69b5f0cf-d49c-470b-82e7-0232a5d4ebbe",
+                "save_datetime": "2021-08-25T14:56:26.419201",
+                "uri": "451b140f-ee68-4cde-b12a-27a44f109dc1",
                 "data": {
                     "specs": {
                         "food_weight": {
@@ -127,10 +128,10 @@
                 }
             },
             "progress_bar": {
-                "creation_datetime": "2021-08-19T13:06:17.391446",
+                "creation_datetime": "2021-08-25T14:56:26.214172",
                 "is_archived": false,
-                "save_datetime": "2021-08-19T13:06:18.280087",
-                "uri": "023ca381-1275-4897-9c6d-0ff4e980e61b",
+                "save_datetime": "2021-08-25T14:56:26.426029",
+                "uri": "c6a74561-27be-464e-85da-822dca68f112",
                 "data": {
                     "value": 0.0,
                     "max_value": 0.0,
@@ -142,7 +143,7 @@
                     "messages": []
                 },
                 "process": {
-                    "uri": "c8467a0b-2d74-4695-97dc-d97b03d32149",
+                    "uri": "8e707c7b-4ff1-4a08-9444-bc731c1c5c1f",
                     "typing_name": "PROCESS.gws_core.RobotEat"
                 }
             },
@@ -170,12 +171,12 @@
             }
         },
         "p3": {
-            "creation_datetime": "2021-08-19T13:06:17.399006",
+            "creation_datetime": "2021-08-25T14:56:26.237910",
             "instance_name": "p3",
             "is_archived": false,
             "processable_typing_name": "PROCESS.gws_core.RobotMove",
-            "save_datetime": "2021-08-19T13:06:18.304269",
-            "uri": "19d924b1-cb50-4d10-8a42-51718ebdedc4",
+            "save_datetime": "2021-08-25T14:56:26.455068",
+            "uri": "a835b998-5e80-43a8-985b-64007b93b7aa",
             "data": {
                 "title": "Move robot",
                 "description": "This process emulates a short moving step of the robot",
@@ -184,16 +185,17 @@
             "experiment": {
                 "uri": ""
             },
-            "protocol": {
-                "uri": "e424ade6-08bf-4a6f-bde9-928277369aff"
+            "parent_protocol": {
+                "uri": "5f8c0d92-035d-4564-b3f2-f5c2eea19167"
             },
             "is_running": false,
             "is_finished": false,
+            "is_protocol": false,
             "config": {
-                "creation_datetime": "2021-08-19T13:06:17.418571",
+                "creation_datetime": "2021-08-25T14:56:26.255741",
                 "is_archived": false,
-                "save_datetime": "2021-08-19T13:06:18.292834",
-                "uri": "e2234ad9-3efb-4094-89bc-c70c1ec823db",
+                "save_datetime": "2021-08-25T14:56:26.441733",
+                "uri": "c18b7ffd-a049-43df-9e33-cab19dde05d6",
                 "data": {
                     "specs": {
                         "moving_step": {
@@ -217,10 +219,10 @@
                 }
             },
             "progress_bar": {
-                "creation_datetime": "2021-08-19T13:06:17.422541",
+                "creation_datetime": "2021-08-25T14:56:26.260121",
                 "is_archived": false,
-                "save_datetime": "2021-08-19T13:06:18.298576",
-                "uri": "9f639696-eac5-46fc-b1af-3d8ca60d4c51",
+                "save_datetime": "2021-08-25T14:56:26.448077",
+                "uri": "82c4a378-954d-4f53-8d6a-6a32f76e9141",
                 "data": {
                     "value": 0.0,
                     "max_value": 0.0,
@@ -232,7 +234,7 @@
                     "messages": []
                 },
                 "process": {
-                    "uri": "19d924b1-cb50-4d10-8a42-51718ebdedc4",
+                    "uri": "a835b998-5e80-43a8-985b-64007b93b7aa",
                     "typing_name": "PROCESS.gws_core.RobotMove"
                 }
             },
@@ -260,12 +262,12 @@
             }
         },
         "p4": {
-            "creation_datetime": "2021-08-19T13:06:17.430514",
+            "creation_datetime": "2021-08-25T14:56:26.280687",
             "instance_name": "p4",
             "is_archived": false,
             "processable_typing_name": "PROCESS.gws_core.RobotMove",
-            "save_datetime": "2021-08-19T13:06:18.330343",
-            "uri": "c4c92e58-7d21-4e85-be4e-4887f282b363",
+            "save_datetime": "2021-08-25T14:56:26.479956",
+            "uri": "819527a5-3f07-41d6-b6b5-322248a437fd",
             "data": {
                 "title": "Move robot",
                 "description": "This process emulates a short moving step of the robot",
@@ -274,16 +276,17 @@
             "experiment": {
                 "uri": ""
             },
-            "protocol": {
-                "uri": "e424ade6-08bf-4a6f-bde9-928277369aff"
+            "parent_protocol": {
+                "uri": "5f8c0d92-035d-4564-b3f2-f5c2eea19167"
             },
             "is_running": false,
             "is_finished": false,
+            "is_protocol": false,
             "config": {
-                "creation_datetime": "2021-08-19T13:06:17.445881",
+                "creation_datetime": "2021-08-25T14:56:26.296921",
                 "is_archived": false,
-                "save_datetime": "2021-08-19T13:06:18.314938",
-                "uri": "d936d73e-bc85-4bfe-b5ab-990637a95f73",
+                "save_datetime": "2021-08-25T14:56:26.464768",
+                "uri": "f1e8d39e-4fcd-4759-8588-6f156d6e7087",
                 "data": {
                     "specs": {
                         "moving_step": {
@@ -307,10 +310,10 @@
                 }
             },
             "progress_bar": {
-                "creation_datetime": "2021-08-19T13:06:17.461049",
+                "creation_datetime": "2021-08-25T14:56:26.301513",
                 "is_archived": false,
-                "save_datetime": "2021-08-19T13:06:18.321875",
-                "uri": "e6436382-2087-4496-ae51-f697ea2240b4",
+                "save_datetime": "2021-08-25T14:56:26.471506",
+                "uri": "d124b251-9982-481b-a7b5-267e7db34f26",
                 "data": {
                     "value": 0.0,
                     "max_value": 0.0,
@@ -322,7 +325,7 @@
                     "messages": []
                 },
                 "process": {
-                    "uri": "c4c92e58-7d21-4e85-be4e-4887f282b363",
+                    "uri": "819527a5-3f07-41d6-b6b5-322248a437fd",
                     "typing_name": "PROCESS.gws_core.RobotMove"
                 }
             },
@@ -350,12 +353,12 @@
             }
         },
         "p_wait": {
-            "creation_datetime": "2021-08-19T13:06:17.523472",
+            "creation_datetime": "2021-08-25T14:56:26.323894",
             "instance_name": "p_wait",
             "is_archived": false,
             "processable_typing_name": "PROCESS.gws_core.RobotWait",
-            "save_datetime": "2021-08-19T13:06:18.353350",
-            "uri": "2918d133-0ce5-4577-be93-5711ce4eb780",
+            "save_datetime": "2021-08-25T14:56:26.503639",
+            "uri": "359f1040-c43c-4feb-ac91-55e9d580d48f",
             "data": {
                 "title": "Wait process",
                 "description": "This process emulates the resting time of the robot before its flight!",
@@ -364,16 +367,17 @@
             "experiment": {
                 "uri": ""
             },
-            "protocol": {
-                "uri": "e424ade6-08bf-4a6f-bde9-928277369aff"
+            "parent_protocol": {
+                "uri": "5f8c0d92-035d-4564-b3f2-f5c2eea19167"
             },
             "is_running": false,
             "is_finished": false,
+            "is_protocol": false,
             "config": {
-                "creation_datetime": "2021-08-19T13:06:17.542521",
+                "creation_datetime": "2021-08-25T14:56:26.341335",
                 "is_archived": false,
-                "save_datetime": "2021-08-19T13:06:18.339117",
-                "uri": "b032d355-8ef9-45ea-aeba-5f657544db05",
+                "save_datetime": "2021-08-25T14:56:26.489381",
+                "uri": "5520a8fd-9b6d-4c0b-8bb7-2af2dfdfed3e",
                 "data": {
                     "specs": {
                         "waiting_time": {
@@ -385,10 +389,10 @@
                 }
             },
             "progress_bar": {
-                "creation_datetime": "2021-08-19T13:06:17.547042",
+                "creation_datetime": "2021-08-25T14:56:26.346214",
                 "is_archived": false,
-                "save_datetime": "2021-08-19T13:06:18.345574",
-                "uri": "475a3b8e-e889-4d5c-afb5-2d73676a4fac",
+                "save_datetime": "2021-08-25T14:56:26.497156",
+                "uri": "b64ee92c-9dfd-4fce-91ec-dade38b6dc33",
                 "data": {
                     "value": 0.0,
                     "max_value": 0.0,
@@ -400,7 +404,7 @@
                     "messages": []
                 },
                 "process": {
-                    "uri": "2918d133-0ce5-4577-be93-5711ce4eb780",
+                    "uri": "359f1040-c43c-4feb-ac91-55e9d580d48f",
                     "typing_name": "PROCESS.gws_core.RobotWait"
                 }
             },

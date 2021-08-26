@@ -34,12 +34,19 @@ class ProtocolType(Typing):
         :return: The representation
         :rtype: `dict`
         """
+
+        if not deep:
+            return None
+
         _json = super().data_to_json(deep=deep, **kwargs)
 
         protocol_type: Type[Protocol] = Utils.get_model_type(self.model_type)
 
         protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_type(
             protocol_type)
-        _json["graph"] = protocol.dumps()
+        _json["graph"] = protocol.dumps_data(minimize=False)
+
+        # Other infos
+        _json["doc"] = self.get_model_type_doc()
 
         return _json

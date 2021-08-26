@@ -4,16 +4,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple, Type, final
 
-from gws_core.resource.resource import Resource
-
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.base import Base
+from ..model.typing_manager import TypingManager
 from ..process.process_io import ProcessIO
+from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
 from .io_exception import (MissingInputResourcesException,
                            ResourceNotCompatibleException)
-from .io_types import IOSpec
+from .io_types import IODict, IOSpec
 from .port import InPort, OutPort, Port
 
 if TYPE_CHECKING:
@@ -229,7 +229,7 @@ class IO(Base):
 
     # -- S --
 
-    def set_item_without_check(self, name: str, resource_model: ResourceModel) -> None:
+    def _set_item_without_check(self, name: str, resource_model: ResourceModel) -> None:
         """Set the resource in the port without checking the port type
 
         :param name: [description]
@@ -274,31 +274,30 @@ class IO(Base):
 
     # -- V --
 
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
+    def load_from_json(self, io_json: IODict) -> None:
+        if input is None:
+            return
+
+        for key, port_dict in io_json.items():
+            # If the port does not exist, create it
+            if not self.port_exists(key):
+                resource_types: List[Type[Resource]] = []
+                for resource_typing_name in port_dict["specs"]:
+                    resource_types.append(TypingManager.get_type_from_name(resource_typing_name))
+
+                self.create_port(key, resource_types)
+
+            # Add resource if provided
+            if port_dict["resource"]["typing_name"] and port_dict["resource"]["uri"]:
+                resource: ResourceModel = TypingManager.get_object_with_typing_name_and_uri(
+                    port_dict["resource"]["typing_name"], port_dict["resource"]["uri"])
+                self._set_item_without_check(key, resource)
+
+    def to_json(self) -> IODict:
         _json = {}
 
         for key, port in self._ports.items():
-            _json[key] = {}
-
-            if port.resource_model:
-                _json[key]["resource"] = {
-                    "uri": port.resource_model.uri,
-                    "typing_name": port.resource_model.typing_name
-                }
-            else:
-                _json[key]["resource"] = {
-                    "uri": "",
-                    "typing_name": ""
-                }
-
-            specs: List[str] = []
-            for resource_type in port.resource_types:
-                if resource_type is None:
-                    specs.append(None)
-                else:
-                    specs.append(resource_type._typing_name)
-            _json[key]["specs"] = specs
-
+            _json[key] = port.to_json()
         return _json
 
 # ####################################################################

@@ -153,7 +153,8 @@ class ProcessableFactory():
         # set interfaces
         protocol.set_interfaces(interfaces)
         protocol.set_outerfaces(outerfaces)
-        protocol.data["graph"] = protocol.dumps()
+        # refresh the json graph
+        protocol.refresh_graph_from_dump()
 
         return protocol
 
@@ -189,6 +190,9 @@ class ProcessableFactory():
             if isinstance(processable, ProtocolModel):
                 cls._create_protocol_model_from_graph_recur(
                     protocol=processable, graph=graph["nodes"][key]["data"]["graph"])
+
+        # Init the connector afterward because its needs the child to init correctly
+        protocol.init_connectors_from_graph(graph["links"])
 
         return protocol
 

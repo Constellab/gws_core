@@ -4,7 +4,6 @@
 # About us: https://gencovery.com
 import inspect
 import zlib
-from enum import Enum
 from typing import Dict, Type
 
 from ..config.config_params import ConfigParams
@@ -17,12 +16,6 @@ from ..resource.resource_data import ResourceData
 from ..resource.resource_model import ResourceModel
 from .process import Process
 from .processable_model import ProcessableModel
-
-
-# Enum to define the role needed for a protocol
-class ProcessAllowedUser(Enum):
-    ADMIN = 0
-    ALL = 1
 
 
 @TypingDecorator(unique_name="Process", object_type="GWS_CORE", hide=True)
@@ -55,21 +48,19 @@ class ProcessModel(ProcessableModel):
     def _init_io(self):
         process_type: Type[Process] = self._get_processable_type()
 
-        # input
+        # create the input ports from the Process input specs
         for k in process_type.input_specs:
             self._input.create_port(k, process_type.input_specs[k])
-        if not self.data.get("input"):
-            self.data["input"] = {}
 
-        self._init_input()
+        # set the resources to the ports
+        self._init_input_from_data()
 
-        # output
+        # create the output ports from the Process output specs
         for k in process_type.output_specs:
             self._output.create_port(k, process_type.output_specs[k])
-        if not self.data.get("output"):
-            self.data["output"] = {}
 
-        self._init_output()
+        # set the resources to the ports
+        self._init_output_from_data()
 
     # -- C --
 
@@ -147,15 +138,30 @@ class ProcessModel(ProcessableModel):
     async def _run_after_task(self):
 
         if not self._is_plug:
+            # Save the generated resource
             res: Dict[str, ResourceModel] = self.output.get_resources()
             for resource in res.values():
-                if not resource is None:
+                if resource is not None:
                     resource.experiment = self.experiment
                     resource.process = self
                     resource.save()
         await super()._run_after_task()
 
+    def is_protocol(self) -> bool:
+        return False
+
     def save_full(self) -> None:
         self.config.save()
         self.progress_bar.save()
         self.save()
+
+    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
+        """
+        Returns a JSON string or dictionnary representation of the model.
+        :return: The representation
+        :rtype: `dict`
+        """
+        # TODO a tester, besoin du   {**_json, **self.data} ?
+        _json: dict = super().data_to_json(deep=deep)
+
+        return {**_json, **self.data}

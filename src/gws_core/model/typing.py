@@ -6,6 +6,7 @@
 import inspect
 from typing import Any, Dict, List, Literal, Type
 
+from gws_core.core.model.base import Base
 from peewee import BooleanField, CharField, ModelSelect
 
 from ..core.exception.exceptions.bad_request_exception import \
@@ -130,6 +131,14 @@ class Typing(Model):
 
         _json["typing_name"] = self.typing_name
         return _json
+
+    def get_model_type_doc(self) -> str:
+        """Return the python documentation of the model type
+        """
+
+        # retrieve the process python type
+        model_t: Type[Base] = Utils.get_model_type(self.model_type)
+        return inspect.getdoc(model_t)
 
     class Meta:
         # Unique constrains on brick, model_name and object_type

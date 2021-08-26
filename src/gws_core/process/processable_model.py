@@ -4,7 +4,6 @@ from __future__ import annotations
 import asyncio
 import inspect
 from abc import abstractmethod
-from enum import Enum
 from typing import TYPE_CHECKING, List, Type, Union, final
 
 from peewee import CharField, ForeignKeyField, IntegerField
@@ -15,6 +14,7 @@ from ..core.decorator.transaction import Transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
+from ..experiment.experiment import Experiment
 from ..io.io import Input, Output
 from ..io.port import InPort, OutPort
 from ..model.typing_manager import TypingManager
@@ -27,14 +27,7 @@ from ..user.user import User
 from .process_exception import ProcessableRunException
 
 if TYPE_CHECKING:
-    from ..experiment.experiment import Experiment
     from ..protocol.protocol_model import ProtocolModel
-
-
-# Enum to define the role needed for a protocol
-class ProcessAllowedUser(Enum):
-    ADMIN = 0
-    ALL = 1
 
 
 class ProcessableModel(Viewable):
@@ -49,7 +42,7 @@ class ProcessableModel(Viewable):
     # Try to replace `protocol_id` and `experiment_id` by foreign keys with `lazy_load=False`
 
     parent_protocol_id = IntegerField(null=True, index=True)
-    experiment_id = IntegerField(null=True, index=True)
+    experiment: Experiment = ForeignKeyField(Experiment, null=True, index=True, backref="+")
     instance_name = CharField(null=True, index=True)
     created_by = ForeignKeyField(User, null=False, index=True, backref='+')
     config = ForeignKeyField(Config, null=False, index=True, backref='+')
@@ -66,9 +59,6 @@ class ProcessableModel(Viewable):
     _output: Output = None
     _is_singleton = False
     _is_removable = False
-
-    # Role needed to run the protocol
-    _allowed_user: ProcessAllowedUser = ProcessAllowedUser.ALL
 
     def __init__(self, *args, **kwargs):
         """
@@ -111,14 +101,14 @@ class ProcessableModel(Viewable):
         self.output.disconnect()
 
     # -- E --
-    # todo voir si on garde
-    @property
-    def experiment(self) -> Experiment:
-        if not self._experiment and self.experiment_id:
-            from ..experiment.experiment import Experiment
-            self._experiment = Experiment.get_by_id(self.experiment_id)
+    # # todo voir si on garde
+    # @property
+    # def experiment(self) -> Experiment:
+    #     if not self._experiment and self.experiment_id:
+    #         from ..experiment.experiment import Experiment
+    #         self._experiment = Experiment.get_by_id(self.experiment_id)
 
-        return self._experiment
+    #     return self._experiment
 
     # -- G --
 
@@ -182,16 +172,18 @@ class ProcessableModel(Viewable):
         """
 
         if self._input.is_empty:
-            self._init_input()
+            self._init_input_from_data()
         return self._input
 
-    def _init_input(self) -> None:
-        if not "input" in self.data:
+    def _init_input_from_data(self) -> None:
+        """Init the input object from the input in the data
+            Init the resource if they exists
+        """
+        if "input" not in self.data:
+            self.data["input"] = {}
             return
-        for key in self.data["input"]:
-            resource: ResourceModel = TypingManager.get_object_with_typing_name_and_uri(
-                self.data["input"][key]["typing_name"], self.data["input"][key]["uri"])
-            self._input.set_item_without_check(key, resource)
+
+        self._input.load_from_json(self.data["input"])
 
     def in_port(self, name: str) -> InPort:
         """
@@ -235,17 +227,18 @@ class ProcessableModel(Viewable):
         """
 
         if self._output.is_empty:
-            self._init_output()
+            self._init_output_from_data()
         return self._output
 
-    def _init_output(self) -> None:
-        if not "output" in self.data:
+    def _init_output_from_data(self) -> None:
+        """Init the ouput object from the output in the data
+            Init the resource if they exists
+        """
+        if "output" not in self.data:
+            self.data["output"] = {}
             return
 
-        for key in self.data["output"]:
-            resource: ResourceModel = TypingManager.get_object_with_typing_name_and_uri(
-                self.data["output"][key]["typing_name"], self.data["output"][key]["uri"])
-            self._output.set_item_without_check(key, resource)
+        self._output.load_from_json(self.data["output"])
 
     def out_port(self, name: str) -> OutPort:
         """
@@ -336,16 +329,10 @@ class ProcessableModel(Viewable):
             f"Running {self.full_classname()} ...")
         self.is_instance_running = True
         self.is_instance_finished = False
-        self.data["input"] = {}
-        for k in self.input:
-            # -> check that an input resource exists (for optional input)
-            if self.input[k]:
-                if not self.input[k].is_saved():
-                    self.input[k].save()
-                self.data["input"][k] = {
-                    "uri": self.input[k].uri,
-                    "typing_name": self.input[k].typing_name
-                }
+
+        # Set the data input dict
+        self.data["input"] = self.input.to_json()
+
         self.progress_bar.start()
         self.save()
 
@@ -356,18 +343,23 @@ class ProcessableModel(Viewable):
         self.is_instance_finished = True
         self.progress_bar.stop()
 
+        # Set the data output dict
+        self.data["output"] = self.output.to_json()
+
+        # Save the process (to save the new data)
+        self.save_after_task()
+
+        # TODO a vérifier, mettre au moins un log quand c'est appelé ?
+        # ça veut dire qu'on a pas renseigné un output
         if not self.output.is_ready:
             return
 
-        self.data["output"] = {}
-        for k in self.output:
-            # -> check that an output resource exists (for optional outputs)
-            if self.output[k]:
-                self.data["output"][k] = {
-                    "uri": self.output[k].uri,
-                    "typing_name": self.output[k].typing_name
-                }
         await self._run_next_processes()
+
+    def save_after_task(self) -> None:
+        """Method called after the task to save the processable
+        """
+        self.save()
 
     def __rshift__(self, name: str) -> OutPort:
         """
@@ -413,17 +405,13 @@ class ProcessableModel(Viewable):
             pass
 
     def set_experiment(self, experiment: Experiment):
-        from ..experiment.experiment import Experiment
         if not isinstance(experiment, Experiment):
             raise BadRequestException("An instance of Experiment is required")
-        if not experiment.id:
-            if not experiment.save():
-                raise BadRequestException("Cannot save the experiment")
-        if self.experiment_id and self.experiment_id != experiment.id:
+
+        if self.experiment and self.experiment.id != self.experiment.id:
             raise BadRequestException(
                 "The protocol is already related to an experiment")
-        self.experiment_id = experiment.id
-        self.save()
+        self.experiment = experiment
 
     def set_input(self, name: str, resource: 'ResourceModel'):
         """
@@ -472,7 +460,20 @@ class ProcessableModel(Viewable):
     def _get_processable_type(self) -> Type[Processable]:
         return TypingManager.get_type_from_name(self.processable_typing_name)
 
-    @final
+    def get_minimum_json(self) -> dict:
+        """
+        Return the minium json to recognize this processable
+
+        """
+        return {
+            "uri": self.uri,
+            "processable_typing_name": self.processable_typing_name
+        }
+
+    @abstractmethod
+    def is_protocol(self) -> bool:
+        pass
+
     def to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns JSON string or dictionnary representation of the process.
@@ -487,7 +488,6 @@ class ProcessableModel(Viewable):
 
         _json = super().to_json(deep=deep, **kwargs)
 
-        del _json["experiment_id"]
         del _json["parent_protocol_id"]
         if "input" in _json["data"]:
             del _json["data"]["input"]
@@ -495,27 +495,20 @@ class ProcessableModel(Viewable):
             del _json["data"]["output"]
 
         _json["experiment"] = {
-            "uri": (self.experiment.uri if self.experiment_id else "")}
-        _json["protocol"] = {
+            "uri": (self.experiment.uri if self.experiment else "")}
+        _json["parent_protocol"] = {
             "uri": (self.parent_protocol.uri if self.parent_protocol_id else "")}
         _json["is_running"] = self.progress_bar.is_running
         _json["is_finished"] = self.progress_bar.is_finished
+        _json["is_protocol"] = self.is_protocol()
 
-        if not deep:
-            _json["config"] = {"uri": self.config.uri}
-            _json["progress_bar"] = {"uri": self.progress_bar.uri}
-            # if _json["data"].get("graph"):
-            #    del _json["data"]["graph"]
-        else:
-            _json["config"] = self.config.to_json(
-                deep=deep, **kwargs)
-            _json["progress_bar"] = self.progress_bar.to_json(
-                deep=deep, **kwargs)
+        _json["config"] = self.config.to_json(
+            deep=deep, **kwargs)
+        _json["progress_bar"] = self.progress_bar.to_json(
+            deep=deep, **kwargs)
 
-        _json["input"] = self.input.to_json(
-            deep=deep, **kwargs)
-        _json["output"] = self.output.to_json(
-            deep=deep, **kwargs)
+        _json["input"] = self.input.to_json()
+        _json["output"] = self.output.to_json()
 
         return _json
 
@@ -525,7 +518,7 @@ class ProcessableModel(Viewable):
         :return: The representation
         :rtype: `dict`
         """
-        _json = super().data_to_json(deep=deep, **kwargs)
+        _json: dict = {}
 
         processable_type: Type[Processable] = TypingManager.get_type_from_name(
             self.processable_typing_name)

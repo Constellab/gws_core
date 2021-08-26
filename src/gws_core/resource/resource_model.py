@@ -46,7 +46,7 @@ class ResourceModel(Viewable, Generic[ResourceType]):
     _process: ProcessableModel = None
     _experiment: Experiment = None
     _table_name = 'gws_resource'
-    _resource: ResourceType
+    _resource: ResourceType = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

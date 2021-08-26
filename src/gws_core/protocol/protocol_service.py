@@ -49,21 +49,16 @@ class ProtocolService(BaseService):
     @classmethod
     def fetch_protocol_type_list(cls,
                                  page: int = 0,
-                                 number_of_items_per_page: int = 20,
-                                 as_json=False) -> Union[Paginator, dict]:
+                                 number_of_items_per_page: int = 20) -> Paginator[ProtocolType]:
 
         query = ProtocolType.get_types()
 
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
-        paginator = Paginator(
+        return Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
-        if as_json:
-            return paginator.to_json()
-        else:
-            return paginator
 
-    @classmethod
+    @ classmethod
     def fetch_process_type_tree(cls) -> List[TypedTree]:
         """
         Return all the process types grouped by module and submodules
@@ -80,7 +75,7 @@ class ProtocolService(BaseService):
 
         return tree.sub_trees
 
-    @classmethod
+    @ classmethod
     def create_process_from_type(cls, protocol_type: Type[Protocol], instance_name: str = None) -> ProcessModel:
         protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_type(
             protocol_type=protocol_type, instance_name=instance_name)
@@ -88,7 +83,7 @@ class ProtocolService(BaseService):
         protocol.save_full()
         return protocol
 
-    @classmethod
+    @ classmethod
     def create_protocol_from_data(cls, processes: dict = None,
                                   connectors: list = None,
                                   interfaces: dict = None,
@@ -104,7 +99,7 @@ class ProtocolService(BaseService):
         protocol.save_full()
         return protocol
 
-    @classmethod
+    @ classmethod
     def create_protocol_from_graph(cls, graph: dict) -> ProtocolModel:
         protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_graph(
             graph=graph)
@@ -112,7 +107,7 @@ class ProtocolService(BaseService):
         protocol.save_full()
         return protocol
 
-    @classmethod
+    @ classmethod
     def create_protocol_from_process(cls, process: ProcessModel) -> ProtocolModel:
         protocol: ProtocolModel = ProtocolService.create_protocol_from_data(
             processes={process.instance_name: process}, connectors=[], interfaces={}, outerfaces={})
@@ -120,7 +115,7 @@ class ProtocolService(BaseService):
         protocol.save_full()
         return protocol
 
-    @classmethod
+    @ classmethod
     def update_protocol_graph(cls, protocol: ProtocolModel, graph: dict) -> ProtocolModel:
         new_protocol: ProtocolModel = cls._update_protocol_graph_recur(
             protocol, graph)
@@ -128,7 +123,7 @@ class ProtocolService(BaseService):
         new_protocol.save_full()
         return new_protocol
 
-    @classmethod
+    @ classmethod
     def _update_protocol_graph_recur(cls, protocol: ProtocolModel, graph: dict) -> ProtocolModel:
 
         for process in protocol.processes.values():
@@ -145,9 +140,12 @@ class ProtocolService(BaseService):
                 cls._update_protocol_graph_recur(
                     protocol=processable, graph=graph["nodes"][key]["data"]["graph"])
 
+        # Init the connector afterward because its needs the child to init correctly
+        protocol.init_connectors_from_graph(graph["links"])
+
         return protocol
 
-    @classmethod
+    @ classmethod
     def remove_orphan_process(cls, protocol: ProtocolModel, nodes: dict) -> None:
         """Method to remove the removed process when saving a new protocols
 

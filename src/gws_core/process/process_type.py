@@ -6,6 +6,8 @@
 import inspect
 from typing import Any, Dict, List, Type, final
 
+from gws_core.config.config_spec import ConfigSpecs
+from gws_core.io.io_types import IOSpecs
 from peewee import ModelSelect
 
 from ..core.utils.utils import Utils
@@ -33,51 +35,45 @@ class ProcessType(Typing):
         # for compatibility
         _json["ptype"] = self.model_type
 
-        # retrieve the process python type
-        model_t: Type[Process] = Utils.get_model_type(self.model_type)
+        if deep:
+            # retrieve the process python type
+            model_t: Type[Process] = Utils.get_model_type(self.model_type)
 
-        # Handle the resource input specs
-        specs = model_t.input_specs
-        _json["input_specs"] = {}
+            # Handle the resource input specs
+            _json["input_specs"] = self._io_specs_to_json(model_t.input_specs)
+
+            # Handle the resource output specs
+            _json["output_specs"] = self._io_specs_to_json(model_t.output_specs)
+
+            # Handle the config specs
+            _json["config_specs"] = self._config_specs_to_json(model_t.config_specs)
+
+        return _json
+
+    def _io_specs_to_json(self, specs: IOSpecs) -> dict:
+        _json = {}
         for name in specs:
-            _json["input_specs"][name] = []
+            _json[name] = []
             t_list: List[Type[Resource]] = specs[name]
             if not isinstance(t_list, tuple):
                 t_list = (t_list, )
 
             for resource_type in t_list:
                 if resource_type is None:
-                    _json["input_specs"][name].append(None)
+                    _json[name].append(None)
                 else:
                     # set the resource typing name as input_spec
-                    _json["input_specs"][name].append(
+                    _json[name].append(
                         resource_type._typing_name)
 
-        # Handle the resource output specs
-        specs = model_t.output_specs
-        _json["output_specs"] = {}
-        for name in specs:
-            _json["output_specs"][name] = []
-            t_list: List[Type[Resource]] = specs[name]
-            if not isinstance(t_list, tuple):
-                t_list = (t_list, )
+        return _json
 
-            for resource_type in t_list:
-                if resource_type is None:
-                    _json["output_specs"][name].append(None)
-                else:
-                    # set the resource typing name as output_specs
-                    _json["output_specs"][name].append(
-                        resource_type._typing_name)
-
-        # Handle the config specs
-        _json["config_specs"] = model_t.config_specs
-        for k in _json["config_specs"]:
-            spec = _json["config_specs"][k]
+    def _config_specs_to_json(self, specs: ConfigSpecs) -> Dict:
+        _json = {}
+        for key, spec in specs.items():
+            _json[key] = spec
             if "type" in spec and isinstance(spec["type"], type):
-                t_str = spec["type"].__name__
-                _json["config_specs"][k]["type"] = t_str
-
+                _json[key]["type"] = spec["type"].__name__
         return _json
 
     def data_to_json(self, deep: bool = False, **kwargs) -> dict:
@@ -86,14 +82,13 @@ class ProcessType(Typing):
         :return: The representation
         :rtype: `dict`, `str`
         """
+
+        if not deep:
+            return None
+
         _json: Dict[str, Any] = super().data_to_json(deep=deep, **kwargs)
 
-        # retrieve the process python type
-        model_t: Type[Process] = Utils.get_model_type(self.model_type)
-
        # Other infos
-        _json["title"] = model_t._human_name
-        _json["description"] = model_t._short_description
-        _json["doc"] = inspect.getdoc(model_t)
+        _json["doc"] = self.get_model_type_doc()
 
         return _json
