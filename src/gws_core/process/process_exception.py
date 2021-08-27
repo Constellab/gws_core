@@ -9,6 +9,7 @@ from ..core.exception.exceptions.base_http_exception import BaseHTTPException
 from ..core.exception.gws_exceptions import GWSException
 
 if TYPE_CHECKING:
+    from ..protocol.protocol_model import ProtocolModel
     from .process_model import ProcessableModel
 
 
@@ -48,11 +49,23 @@ class ProcessableRunException(BadRequestException):
                                            unique_code=GWSException.PROCESS_RUN_EXCEPTION.name, exception=exception)
 
     def get_process_args(self) -> Dict:
+        protocol: str
+
+        parent: ProtocolModel = self.processable_model.parent_protocol
+        if parent is None:
+            protocol = 'No protocol'
+        else:
+            # If the protocol has no parent this is the main protocol
+            if parent.parent_protocol_id is None:
+                protocol = 'Main protocol'
+            else:
+                protocol = f"{parent.instance_name} ({parent.uri})"
+
         return {
             # Process instance name
             "process": self.processable_model.instance_name if self.processable_model.instance_name else self.processable_model.uri,
             # Protocol instance name
-            "protocol": self.processable_model.parent_protocol.instance_name if self.processable_model.parent_protocol else "No protocol",
+            "protocol": protocol,
             # Experiment uri
             "experiment": self.processable_model.experiment.uri if self.processable_model.experiment else "No experiment"
         }
