@@ -3,15 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import importlib
-import inspect
-import os
+
 from typing import Dict, List, Tuple, Type, Union
 
 from peewee import DatabaseProxy
 
-from ..core.classes.expose import Expose
 from ..core.classes.paginator import Paginator
+from ..core.decorator.transaction import Transaction
 from ..core.dto.rendering_dto import RenderingDTO
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -19,9 +17,9 @@ from ..core.exception.exceptions.not_found_exception import NotFoundException
 from ..core.model.model import Model
 from ..core.service.base_service import BaseService
 from ..core.utils.logger import Logger
-from ..core.utils.settings import Settings
-from ..process.process import Process
-from ..resource.resource import Resource
+from ..core.utils.utils import Utils
+from ..process.process_model import ProcessModel
+from ..resource.resource_model import ResourceModel
 from .typing_manager import TypingManager
 from .view_model import ViewModel
 
@@ -51,7 +49,7 @@ class ModelService(BaseService):
         :rtype: `gws.db.model.Model`, `dict`
         """
 
-        t = Model.get_model_type(type_str)
+        t = Utils.get_model_type(type_str)
         if t is None:
             raise NotFoundException(
                 detail=f"Model type '{type_str}' not found")
@@ -120,7 +118,7 @@ class ModelService(BaseService):
         Counts models
         """
 
-        t = Model.get_model_type(type)
+        t = Utils.get_model_type(type)
         if t is None:
             raise BadRequestException(detail="Invalid Model type")
 
@@ -147,10 +145,10 @@ class ModelService(BaseService):
     def fetch_list_of_models(cls,
                              type_str: str,
                              search_text: str = None,
-                             page: int = 1, number_of_items_per_page: int = 20,
+                             page: int = 0, number_of_items_per_page: int = 20,
                              as_json: bool = False) -> Union[Paginator, List[Model], List[dict]]:
 
-        t = Model.get_model_type(type_str)
+        t = Utils.get_model_type(type_str)
         if t is None:
             raise BadRequestException(detail="Invalid Model type")
         number_of_items_per_page = min(
@@ -160,21 +158,21 @@ class ModelService(BaseService):
             result = []
             for o in query:
                 if as_json:
-                    result.append(o.get_related().to_json(shallow=True))
+                    result.append(o.get_related().to_json())
                 else:
                     result.append(o.get_related())
             paginator = Paginator(
                 query, page=page, number_of_items_per_page=number_of_items_per_page)
             return {
                 'data': result,
-                'paginator': paginator.paginator_dict()
+                'paginator': paginator._get_paginated_info()
             }
         else:
             query = t.select().order_by(t.creation_datetime.desc())
             paginator = Paginator(
                 query, page=page, number_of_items_per_page=number_of_items_per_page)
             if as_json:
-                return paginator.to_json(shallow=True)
+                return paginator.to_json()
             else:
                 return paginator
 
@@ -182,7 +180,7 @@ class ModelService(BaseService):
 
     @classmethod
     def get_model_types(cls):
-        if not getattr(cls,'__model_types', None):
+        if not getattr(cls, '__model_types', None):
             cls.__model_types: List[Type[Model]] = Model.inheritors()
 
         return cls.__model_types
@@ -204,7 +202,7 @@ class ModelService(BaseService):
         return db_list, model_list
 
     # -- I --
-    
+
     # -- R --
 
     @classmethod
@@ -214,7 +212,8 @@ class ModelService(BaseService):
     # -- S --
 
     @classmethod
-    def save_all(cls, model_list: List[Model] = None) -> bool:
+    @Transaction()
+    def save_all(cls, model_list: List[Model] = None) -> List[Model]:
         """
         Atomically and safely save a list of models in the database. If an error occurs
         during the operation, the whole transactions is rolled back.
@@ -225,31 +224,26 @@ class ModelService(BaseService):
         :rtype: `bool`
         """
 
-        with Model.get_db_manager().db.atomic() as transaction:
-            try:
-                if model_list is None:
-                    return
-                    #model_list = cls.models.values()
+        if model_list is None:
+            return
+            #model_list = cls.models.values()
 
-                # 1) save processes
-                for model in model_list:
-                    if isinstance(model, Process):
-                        model.save()
+        # 1) save processes
+        for model in model_list:
+            if isinstance(model, ProcessModel):
+                model.save()
 
-                # 2) save resources
-                for model in model_list:
-                    if isinstance(model, Resource):
-                        model.save()
+        # 2) save resources
+        for model in model_list:
+            if isinstance(model, ResourceModel):
+                model.save()
 
-                # 3) save vmodels
-                for model in model_list:
-                    if isinstance(model, ViewModel):
-                        model.save()
-            except Exception as _:
-                transaction.rollback()
-                return False
+        # 3) save vmodels
+        for model in model_list:
+            if isinstance(model, ViewModel):
+                model.save()
 
-        return True
+        return model_list
 
     @classmethod
     def __set_archive_status(cls, tf: bool, type: str, uri: str) -> dict:

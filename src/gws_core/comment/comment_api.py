@@ -38,7 +38,7 @@ async def add_object_comments(object_typing_name: str,
 @core_app.post("/comment/{object_typing_name}/{object_uri}", tags=["Comment"], summary="Get the comments of an object")
 async def get_object_comments(object_typing_name: str,
                               object_uri: str,
-                              page: int = 1,
+                              page: int = 0,
                               number_of_items_per_page=20,
                               _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """

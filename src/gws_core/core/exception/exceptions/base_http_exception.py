@@ -1,10 +1,12 @@
 # LICENSE
-# This software is the exclusive property of Gencovery SAS. 
+# This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
 from typing import Dict
+
 from fastapi import HTTPException
+
 
 class BaseHTTPException(HTTPException):
     """
@@ -37,3 +39,17 @@ class BaseHTTPException(HTTPException):
         self.unique_code = unique_code
         self.detail_args = detail_args
         self.headers = headers
+
+    def get_detail_with_args(self) -> str:
+        """Replace the arguments in the exception message with dict corresponding values
+        For example : detail = 'Hello {{name}}' and detail_args = {"name" : "Bob"}, the message that will be show will be 'Hello bob'
+        """
+
+        replaced_detail: str = self.detail
+
+        if self.detail_args:
+            for key in self.detail_args:
+                replaced_detail = replaced_detail.replace(
+                    "{{" + key + "}}", str(self.detail_args[key]))
+
+        return replaced_detail

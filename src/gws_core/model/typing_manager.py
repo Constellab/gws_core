@@ -4,9 +4,10 @@ from typing import Dict, Type, TypedDict
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from gws_core.core.model.model import Model
 from peewee import ModelSelect
 
-from ..core.model.model import Model
+from ..core.model.base import Base
 from ..core.utils.logger import Logger
 from ..core.utils.utils import Utils
 from ..model.typing import Typing, TypingObjectType, build_typing_unique_name
@@ -31,31 +32,49 @@ class TypingManager:
     # Mark as true when the tables exists, the typings can then be saved directly
     _tables_are_created: bool = False
 
-    @classmethod
-    def get_type_from_name(cls, typing_name: str) -> Type[Model]:
-        typing: Typing = Typing.get_by_typing_name(typing_name).first()
-
-        if typing is None:
-            raise BadRequestException(
-                f"Can't find the typing with name {typing_name}, did you register the name with corresponding decorator ?")
-
-        return Model.get_model_type(typing.model_type)
+    # use to cache the names to prevent request each time
+    _typings_name_cache: Dict[str, Type[Base]] = {}
 
     @classmethod
-    def get_object_with_typing_name(cls, typing_name: str, id: int) -> Model:
-        model_type:  Type[Model] = cls.get_type_from_name(typing_name)
-        return model_type.get_by_id(id)
+    def get_type_from_name(cls, typing_name: str) -> Type[Base]:
+        if typing_name not in cls._typings_name_cache:
+            typing: Typing = Typing.get_by_typing_name(typing_name).first()
+
+            if typing is None:
+                raise BadRequestException(
+                    f"Can't find the typing with name {typing_name}, did you register the name with corresponding decorator ?")
+
+            cls._typings_name_cache[typing_name] = Utils.get_model_type(typing.model_type)
+
+        return cls._typings_name_cache[typing_name]
+
+    @classmethod
+    def get_object_with_typing_name(cls, typing_name: str, object_id: int) -> Model:
+        model_type: Type[Model] = cls.get_type_from_name(typing_name)
+        return model_type.get_by_id(object_id)
 
     @classmethod
     def get_object_with_typing_name_and_uri(cls, typing_name: str, uri: str) -> Model:
-        model_type:  Type[Model] = cls.get_type_from_name(typing_name)
+        model_type: Type[Model] = cls.get_type_from_name(typing_name)
         return model_type.get_by_uri(uri)
 
     @classmethod
-    def register_typing(cls, object_type: TypingObjectType,  unique_name: str, object_class: Type[Model], human_name: str, short_description: str, hide: bool) -> str:
+    def type_is_register(cls, model_type: Type[Base]) -> bool:
+        return Typing.get_by_model_type(model_type=model_type).count() > 0
+
+    @classmethod
+    def register_typing(
+            cls, object_type: TypingObjectType, unique_name: str, object_class: Type[Base],
+            human_name: str, short_description: str, hide: bool) -> str:
         """Register the typing into the manager to save it in the database
         Return the typing unique name
         """
+
+        if not issubclass(object_class, Base):
+            name = object_class.__name__ if object_class.__name__ is not None else str(
+                object_class)
+            raise Exception(
+                f"""Trying to register the type {name} but it is not a subclass of Base""")
 
         brick_name: str = Utils.get_brick_name(object_class)
 
@@ -66,9 +85,11 @@ class TypingManager:
             cls._typings[object_type][brick_name] = {}
 
         if unique_name in cls._typings[object_type][brick_name]:
-            raise Exception(f"""2 different {object_type} in the brick {brick_name} register with the same name : {unique_name}.
-                                {object_type} already register: [{cls._typings[object_type][brick_name][unique_name].__name__ }].
-                                New {object_type} : {object_class.__name__}""")
+            raise Exception(
+                f"""2 differents {object_type} in the brick {brick_name} register with the same name : {unique_name}.
+                                {object_type} already register: [{cls._typings[object_type][brick_name][unique_name]['model_type'] }].
+                                {object_type} trying to register : {object_class.full_classname()}
+                                Please update one of the unique name""")
 
         # add the object type to the list
         typing_local: TypingLocal = TypingLocal(
@@ -78,7 +99,7 @@ class TypingManager:
             object_type=object_type,
             human_name=human_name,
             short_description=short_description,
-            hide=hide
+            hide=hide,
         )
 
         cls._typings[object_type][brick_name][unique_name] = typing_local
@@ -131,7 +152,8 @@ class TypingManager:
 
         # If the data has changed, log a message and update the DB
         if str(typing_db.data) != str(typing.data):
-            Logger.info(f"""{typing_db.model_type} type {typing.model_name} in brick {typing.brick} has changed its data.
+            Logger.info(
+                f"""{typing_db.model_type} type {typing.model_name} in brick {typing.brick} has changed its data.
                             Previous value {typing_db.data}.
                             New Value {typing.data}""")
             typing_db.data = typing.data

@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 import json
-from typing import Union
+from typing import Union, final
 
 from peewee import CharField, ForeignKeyField
 
@@ -14,6 +14,7 @@ from .current_user_service import CurrentUserService
 from .user import User
 
 
+@final
 @TypingDecorator(unique_name="Activity", object_type="GWS_CORE", hide=True)
 class Activity(Model):
     """
@@ -41,12 +42,12 @@ class Activity(Model):
     CONSOLE_AUTHENTICATION = "CONSOLE_AUTHENTICATION"
     CONSOLE_UNAUTHENTICATION = "CONSOLE_UNAUTHENTICATION"
 
-    def archive(self, archive: bool) -> bool:
+    def archive(self, archive: bool) -> None:
         """
         Deactivated method. Allways returns False.
         """
 
-        return False
+        return None
 
     @classmethod
     def add(cls, activity_type: str, *, object_type: str = None, object_uri: str = None, user: User = None):
@@ -62,7 +63,7 @@ class Activity(Model):
 
     # -- T --
 
-    def to_json(self, *, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns JSON string or dictionnary representation of the model.
 
@@ -74,16 +75,11 @@ class Activity(Model):
         :rtype: dict, str
         """
 
-        _json = super().to_json(**kwargs)
+        _json = super().to_json(deep=deep, **kwargs)
         _json["user"] = {
             "uri": self.user.uri,
             "first_name": self.user.first_name,
             "last_name": self.user.last_name
         }
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
+
+        return _json

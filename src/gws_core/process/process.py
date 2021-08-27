@@ -1,220 +1,44 @@
-# LICENSE
-# This software is the exclusive property of Gencovery SAS.
-# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
-# About us: https://gencovery.com
 
-import asyncio
-import inspect
-import json
-import zlib
-from enum import Enum
-from typing import Type, Union
 
-from peewee import CharField, ForeignKeyField, IntegerField, ModelSelect
-from starlette_context import context
+from abc import abstractmethod
+from typing import Type, final
 
-from ..config.config import Config
-from ..core.exception.exceptions import BadRequestException
-from ..model.typing_manager import TypingManager
-from ..model.typing_register_decorator import TypingDecorator
-from ..model.viewable import Viewable
+from gws_core.process.process_io import ProcessIO
+from gws_core.resource.resource import Resource
+
+from ..config.config_params import ConfigParams
+from ..config.config_spec import ConfigSpecs
+from ..core.exception.exceptions.bad_request_exception import \
+    BadRequestException
+from ..io.io_types import IOSpecs, IOSpecsHelper
+from ..processable.processable import Processable
 from ..progress_bar.progress_bar import ProgressBar
-from ..resource.io import InPort, Input, OutPort, Output
-from ..user.user import User
 
 # Typing names generated for the class Process
 CONST_PROCESS_TYPING_NAME = "PROCESS.gws_core.Process"
 
-# Enum to define the role needed for a protocol
-class PrrocessAllowedUser(Enum):
-    ADMIN = 0
-    ALL = 1
 
-# Use the typing decorator to avoid circular dependency
-@TypingDecorator(unique_name="Process", object_type="PROCESS", hide=True)
-class Process(Viewable):
-    """
-    Process class.
+class Process(Processable):
 
-    :property input_specs: The specs of the input
-    :type input_specs: dict
-    :property output_specs: The specs of the output
-    :type output_specs: dict
-    :property config_specs: The specs of the config
-    :type config_specs: dict
-    """
+    input_specs: IOSpecs = {}
+    output_specs: IOSpecs = {}
+    config_specs: ConfigSpecs = {}
 
-    # @ToDo:
-    # ------
-    # Try to replace `protocol_id` and `experiment_id` by foreign keys with `lazy_load=False`
-
-    protocol_id = IntegerField(null=True, index=True)
-    experiment_id = IntegerField(null=True, index=True)
-    instance_name = CharField(null=True, index=True)
-    created_by = ForeignKeyField(User, null=False, index=True, backref='+')
-    config = ForeignKeyField(Config, null=False, index=True, backref='+')
-    progress_bar = ForeignKeyField(ProgressBar, null=True, backref='+')
-    typing_name = CharField(null=False)
-
-    input_specs: dict = {}
-    output_specs: dict = {}
-    config_specs: dict = {}
-
-    title = None
-    description = None
-
-    is_instance_running = False
-    is_instance_finished = False
-
-    _experiment: 'Experiment' = None
-    _protocol: 'Protocol' = None
-    _file_store: 'FileStore' = None
-    _input: Input = None
-    _output: Output = None
-    _max_progress_value = 100.0
-    _is_singleton = False
-    _is_removable = False
-    _is_plug = False
-
-    # Role needed to run the protocol
-    _allowed_user: PrrocessAllowedUser = PrrocessAllowedUser.ALL
-    _table_name = 'gws_process'  # is locked for all processes
-
-    def __init__(self, *args, user=None, **kwargs):
+    def __init__(self):
         """
         Constructor
         """
 
-        super().__init__(*args, **kwargs)
+        super().__init__()
 
         # check that the class level property _typing_name is set
-        if self._typing_name == CONST_PROCESS_TYPING_NAME and type(self) != Process:  # pylint: disable=unidiomatic-typecheck
+        if self._typing_name is None:
             raise BadRequestException(
                 f"The process {self.full_classname()} is not decorated with @ProcessDecorator, it can't be instantiate. Please decorate the process class with @ProcessDecorator")
 
-        # set the typing name for the instance
-        if self.typing_name is None:
-            self.typing_name = self._typing_name
-
-        if not self.title:
-            self.title = self.full_classname().split(".")[-1]
-
-        if not self.description:
-            self.description = "This is the process class " + self.full_classname()
-
-        self._input = Input(self)
-        self._output = Output(self)
-
-        if self.input_specs is None:
-            self.input_specs = {}
-
-        if self.output_specs is None:
-            self.output_specs = {}
-
-        if self.config_specs is None:
-            self.config_specs = {}
-
-        self._init_io()
-
-        if not self.id:
-            self.config = Config(specs=self.config_specs)
-            self.config.save()
-
-            self.progress_bar = ProgressBar(
-                process_uri=self.uri, process_typing_name=self.typing_name)
-            self.progress_bar.save()
-
-            if not user:
-                user = User.get_sysuser()
-
-            if not isinstance(user, User):
-                raise BadRequestException(
-                    "The user must be an instance of User")
-
-            self.created_by = user
-            #self.is_protocol = isinstance(self, Protocol)
-
-        if not self.instance_name:
-            self.instance_name = self.uri
-
-        self.save()
-
-    def _init_io(self):
-        if type(self) is Process:
-            # Is the Base (Abstract) Process object => cannot set io
-            return
-
-        # input
-        for k in self.input_specs:
-            self._input.create_port(k, self.input_specs[k])
-        if not self.data.get("input"):
-            self.data["input"] = {}
-        for k in self.data["input"]:
-            model = TypingManager.get_object_with_typing_name_and_uri(
-                self.data["input"][k]["typing_name"], self.data["input"][k]["uri"])
-            self._input.__setitem_without_check__(k, model)
-
-        # output
-        for k in self.output_specs:
-            self._output.create_port(k, self.output_specs[k])
-        if not self.data.get("output"):
-            self.data["output"] = {}
-        for k in self.data["output"]:
-            model = TypingManager.get_object_with_typing_name_and_uri(
-                self.data["output"][k]["typing_name"], self.data["output"][k]["uri"])
-            self._output.__setitem_without_check__(k, model)
-
-    # -- A --
-
-    def archive(self, tf, archive_resources=True) -> bool:
+    def check_before_task(self, config: ConfigParams, inputs: ProcessIO) -> bool:
         """
-        Archive the process
-        """
-
-        if self.is_archived == tf:
-            return True
-        with self._db_manager.db.atomic() as transaction:
-            if not super().archive(tf):
-                return False
-            # -> try to archive the config if possible!
-            self.config.archive(tf)
-            if archive_resources:
-                for r in self.resources:
-                    if not r.archive(tf):
-                        transaction.rollback()
-                        return False
-        return True
-
-    # -- C --
-
-    @classmethod
-    def create_table(cls, *args, **kwargs):
-        """
-        Create model table
-        """
-
-        if "check_table_name" in kwargs:
-            if kwargs.get("check_table_name", False):
-                if cls._table_name != Process._table_name:
-                    raise BadRequestException(
-                        f"The table name of {cls.full_classname()} must be {Process._table_name}")
-            del kwargs["check_table_name"]
-        super().create_table(*args, **kwargs)
-
-    def create_source_zip(self):
-        """
-        Returns the zipped code source of the process
-        """
-
-        # /:\ Use the true object type (self.type)
-        model_t: Type[Process] = TypingManager.get_type_from_name(
-            self.typing_name)
-        source = inspect.getsource(model_t)
-        return zlib.compress(source.encode())
-
-    def check_before_task(self) -> bool:
-        """
-        This must be overloaded to perform custom check before running task.
+        This can be overiwritten to perform custom check before running task.
 
         This method is systematically called before running the process task.
         If `False` is returned, the process task will not be called; otherwise, the task will proceed normally.
@@ -225,449 +49,31 @@ class Process(Viewable):
 
         return True
 
-    # -- D --
+    @abstractmethod
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
+        """This must be overiwritten to perform the task of the process.
 
-    def disconnect(self):
-        """
-        Disconnect the input and output ports
-        """
+        This is where most of your code must go
 
-        self._input.disconnect()
-        self._output.disconnect()
-
-    # -- E --
-
-    @property
-    def experiment(self):
-        if self._experiment:
-            return self._experiment
-        if self.experiment_id:
-            from ..experiment.experiment import Experiment
-            self._experiment = Experiment.get_by_id(self.experiment_id)
-        return self._experiment
-
-    # -- G --
-
-    def get_param(self, name: str) -> Union[str, int, float, bool, list, dict]:
-        """
-        Returns the value of a parameter of the process config by its name.
-
-        :return: The paremter value
-        :rtype: [str, int, float, bool]
-        """
-
-        return self.config.get_param(name)
-
-    def get_next_procs(self) -> list:
-        """
-        Returns the list of (right-hand side) processes connected to the IO ports.
-
-        :return: List of processes
-        :rtype: list
-        """
-
-        return self._output.get_next_procs()
-
-    # -- H --
-
-    # -- I --
-
-    @property
-    def is_running(self) -> bool:
-        if not self.progress_bar:
-            return False
-        p = ProgressBar.get_by_id(self.progress_bar.id)
-        return p.is_running
-
-    @property
-    def is_finished(self) -> bool:
-        if not self.progress_bar:
-            return False
-        p = ProgressBar.get_by_id(self.progress_bar.id)
-        return p.is_finished
-
-    @property
-    def is_ready(self) -> bool:
-        """
-        Returns True if the process is ready (i.e. all its ports are
-        ready or it has never been run before), False otherwise.
-
-        :return: True if the process is ready, False otherwise.
-        :rtype: bool
-        """
-
-        return (not self.is_instance_running and not self.is_instance_finished) and self._input.is_ready
-
-    @property
-    def input(self) -> 'Input':
-        """
-        Returns input of the process.
-
-        :return: The input
-        :rtype: Input
-        """
-
-        if self._input.is_empty:
-            for k in self.data["input"]:
-                self._input[k] = TypingManager.get_object_with_typing_name_and_uri(
-                    self.data["input"][k]["typing_name"], self.data["input"][k]["uri"])
-        return self._input
-
-    def in_port(self, name: str) -> InPort:
-        """
-        Returns the port of the input by its name.
-
-        :return: The port
-        :rtype: InPort
-        """
-
-        if not isinstance(name, str):
-            raise BadRequestException(
-                "The name of the input port must be a string")
-        if not name in self._input._ports:
-            raise BadRequestException(f"The input port '{name}' is not found")
-        return self._input._ports[name]
-
-    # -- J --
-
-    # -- L --
-
-    def __lshift__(self, name: str) -> InPort:
-        """
-        Alias of :meth:`in_port`.
-        Returns the port of the input by its name
-
-        :return: The port
-        :rtype: InPort
-        """
-
-        return self.in_port(name)
-
-    # -- O --
-
-    @property
-    def output(self) -> 'Output':
-        """
-        Returns output of the process.
-
-        :return: The output
-        :rtype: Output
-        """
-
-        if self._output.is_empty:
-            for k in self.data["output"]:
-                self._output[k] = TypingManager.get_object_with_typing_name_and_uri(
-                    self.data["output"][k]["typing_name"],  self.data["output"][k])
-        return self._output
-
-    def out_port(self, name: str) -> OutPort:
-        """
-        Returns the port of the output by its name.
-
-        :return: The port
-        :rtype: OutPort
-        """
-        if not isinstance(name, str):
-            raise BadRequestException(
-                "The name of the output port must be a string")
-        if not name in self._output._ports:
-            raise BadRequestException(f"The output port '{name}' is not found")
-        return self._output._ports[name]
-
-    # -- P --
-
-    def param_exists(self, name: str) -> bool:
-        """
-        Test if a parameter exists
-
-        :return: True if the parameter exists, False otherwise
-        :rtype: `bool`
-        """
-
-        return self.config.param_exists(name)
-
-    @property
-    def protocol(self):
-        if self._protocol:
-            return self._protocol
-        if self.protocol_id:
-            from ..protocol.protocol import Protocol
-            self._protocol = Protocol.get_by_id(self.protocol_id)
-        return self._protocol
-
-    # -- R --
-
-    @property
-    def resources(self):
-        from ..resource.resource import ProcessResource
-        Qrel = ProcessResource.select().where(ProcessResource.process_id == self.id)
-        Q = []
-        for o in Qrel:
-            Q.append(o.resource)
-        return Q
-
-    def _reset(self) -> bool:
-        """
-        Reset the process
-
-        :return: Returns True if is process is successfully reset;  False otherwise
-        :rtype: `bool`
-        """
-
-        if self.is_running:
-            return False
-        self.progress_bar._reset()
-        self._reset_io()
-        return self.save()
-
-    def _reset_io(self):
-        self.input._reset()
-        self.output._reset()
-        self.data["input"] = {}
-        self.data["output"] = {}
-
-    async def _run(self):
-        """
-        Run the process and save its state in the database.
-        """
-
-        if not self.is_ready:
-            return
-        is_ok = self.check_before_task()
-        if isinstance(is_ok, bool) and not is_ok:
-            return
-        try:
-            await self._run_before_task()
-            await self.task()
-            await self._run_after_task()
-        except Exception as err:
-            self.progress_bar.stop(message=str(err))
-            raise err
-
-    async def _run_next_processes(self):
-        self._output.propagate()
-        aws = []
-        for proc in self._output.get_next_procs():
-            aws.append(proc._run())
-        if len(aws):
-            await asyncio.gather(*aws)
-
-    async def _run_before_task(self, *args, **kwargs):
-        self.__switch_to_current_progress_bar()
-        ProgressBar.add_message_to_current(
-            f"Running {self.full_classname()} ...")
-        self.is_instance_running = True
-        self.is_instance_finished = False
-        self.data["input"] = {}
-        for k in self._input:
-            # -> check that an input resource exists (for optional input)
-            if self._input[k]:
-                if not self._input[k].is_saved():
-                    self._input[k].save()
-                self.data["input"][k] = {
-                    "uri": self._input[k].uri,
-                    "typing_name": self._input[k].typing_name
-                }
-        self.progress_bar.start(max_value=self._max_progress_value)
-        self.save()
-
-    async def _run_after_task(self, *args, **kwargs):
-        ProgressBar.add_message_to_current(
-            f"Task of {self.full_classname()} successfully finished!")
-        self.is_instance_running = False
-        self.is_instance_finished = True
-        self.progress_bar.stop()
-        if not self._is_plug:
-            res = self.output.get_resources()
-            for k in res:
-                if not res[k] is None:
-                    res[k].experiment = self.experiment
-                    res[k].process = self
-                    res[k].save()
-        if not self._output.is_ready:
-            return
-        from ..protocol.protocol import Protocol
-        if isinstance(self, Protocol):
-            self.save(update_graph=True)
-        self.data["output"] = {}
-        for k in self._output:
-            # -> check that an output resource exists (for optional outputs)
-            if self._output[k]:
-                self.data["output"][k] = {
-                    "uri": self._output[k].uri,
-                    "typing_name": self._output[k].typing_name
-                }
-        await self._run_next_processes()
-
-    def __rshift__(self, name: str) -> OutPort:
-        """
-        Alias of :meth:`out_port`.
-
-        Returns the port of the output by its name
-        :return: The port
-        :rtype: OutPort
-        """
-
-        return self.out_port(name)
-
-    # -- S --
-
-    def __switch_to_current_progress_bar(self):
-        """
-        Swicth to the application to current progress bar.
-
-        The current progress bar will be accessible everywhere (i.e. at the application level)
-        """
-
-        try:
-            context.data["progress_bar"] = self.progress_bar
-        except:
-            pass
-
-    def set_experiment(self, experiment):
-        from ..experiment.experiment import Experiment
-        if not isinstance(experiment, Experiment):
-            raise BadRequestException("An instance of Experiment is required")
-        if not experiment.id:
-            if not experiment.save():
-                raise BadRequestException("Cannot save the experiment")
-        if self.experiment_id and self.experiment_id != experiment.id:
-            raise BadRequestException(
-                "The protocol is already related to an experiment")
-        self.experiment_id = experiment.id
-        self.save()
-
-    def set_input(self, name: str, resource: 'Resource'):
-        """
-        Sets the resource of an input port by its name.
-
-        :param name: The name of the input port
-        :type name: str
-        :param resource: A reources to assign to the port
-        :type resource: Resource
-        """
-
-        if not isinstance(name, str):
-            raise BadRequestException("The name must be a string.")
-
-        # if not not isinstance(resource, Resource):
-        #    raise BadRequestException("The resource must be an instance of Resource.")
-
-        self._input[name] = resource
-
-    def set_config(self, config: 'Config'):
-        """
-        Sets the config of the process.
-
-        :param config: A config to assign
+        :param config: [description]
         :type config: Config
+        :param inputs: [description]
+        :type inputs: Input
+        :param outputs: [description]
+        :type outputs: Output
+        :param progress_bar: [description]
+        :type progress_bar: ProgressBar
         """
-
-        self.config = config
-        self.save()
-
-    def set_param(self, name: str, value: Union[str, int, float, bool]):
-        """
-        Sets the value of a config parameter.
-
-        :param name: Name of the parameter
-        :type name: str
-        :param value: A value to assign
-        :type value: [str, int, float, bool]
-        """
-
-        self.config.set_param(name, value)
-        self.config.save()
-
-    def set_protocol(self, protocol: 'Protocol') -> None:
-        """
-        Sets the protocol of the process
-        """
-
-        from ..protocol.protocol import Protocol
-        if not isinstance(protocol, Protocol):
-            raise BadRequestException("An instance of Protocol is required")
-        if not protocol.id:
-            if not protocol.save():
-                raise BadRequestException("Cannot save the experiment")
-        self.protocol_id = protocol.id
-        self._protocol = protocol
-
-    # -- T --
-
-    async def task(self):
         pass
 
-    @classmethod
-    def select_me(cls, *args, **kwargs) -> ModelSelect:
-        """
-        Select objects by ensuring that the object-type is the same as the current model.
-        """
+    @final
+    def get_default_output_spec_type(self, spec_name: str) -> Type[Resource]:
+        if not self.output_specs:
+            return None
 
-        return cls.select(*args, **kwargs).where(cls.typing_name == cls._typing_name)
+        if spec_name not in self.output_specs:
+            raise BadRequestException(f"The output spec does not have a spec named '{spec_name}'")
 
-    def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
-        """
-        Returns JSON string or dictionnary representation of the process.
+        resource_types = IOSpecsHelper.io_spec_to_resource_types(self.output_specs[spec_name])
 
-        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
-        :type stringify: bool
-        :param prettify: If True, indent the JSON string. Defaults to False.
-        :type prettify: bool
-        :return: The representation
-        :rtype: dict, str
-        """
-
-        _json = super().to_json(**kwargs)
-        _json["data"]["title"] = self.title
-        _json["data"]["description"] = self.description
-        _json["data"]["doc"] = inspect.getdoc(type(self))
-
-        del _json["experiment_id"]
-        del _json["protocol_id"]
-        if "input" in _json["data"]:
-            del _json["data"]["input"]
-        if "output" in _json["data"]:
-            del _json["data"]["output"]
-
-        bare = kwargs.get("bare")
-        if bare:
-            _json["experiment"] = {"uri": ""}
-            _json["protocol"] = {"uri": ""}
-            _json["is_running"] = False
-            _json["is_finished"] = False
-            if shallow:
-                _json["config"] = {"uri": ""}
-                _json["progress_bar"] = {"uri": ""}
-                # if _json["data"].get("graph"):
-                #    del _json["data"]["graph"]
-            else:
-                _json["config"] = self.config.to_json(**kwargs)
-                _json["progress_bar"] = self.progress_bar.to_json(**kwargs)
-        else:
-            _json["experiment"] = {
-                "uri": (self.experiment.uri if self.experiment_id else "")}
-            _json["protocol"] = {
-                "uri": (self.protocol.uri if self.protocol_id else "")}
-            _json["is_running"] = self.progress_bar.is_running
-            _json["is_finished"] = self.progress_bar.is_finished
-
-            if shallow:
-                _json["config"] = {"uri": self.config.uri}
-                _json["progress_bar"] = {"uri": self.progress_bar.uri}
-                # if _json["data"].get("graph"):
-                #    del _json["data"]["graph"]
-            else:
-                _json["config"] = self.config.to_json(**kwargs)
-                _json["progress_bar"] = self.progress_bar.to_json(**kwargs)
-
-        _json["input"] = self.input.to_json(**kwargs)
-        _json["output"] = self.output.to_json(**kwargs)
-
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
+        return resource_types[0]

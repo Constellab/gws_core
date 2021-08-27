@@ -16,8 +16,8 @@ class CentralService(BaseService):
 
     @classmethod
     def check_api_key(cls, api_key: str):
-        central_settings = CentralService.__get_central_settings()
-        return central_settings.get("api_key") == api_key
+        api_key = Settings.get_central_api_key()
+        return api_key == api_key
 
     @classmethod
     def check_credentials(cls, credentials: CredentialsDTO) -> bool:

@@ -14,16 +14,19 @@
         "files.trimTrailingWhitespace": true,
     },
 
+    
+    // python formatting (indentation)
+    "python.formatting.provider": "autopep8",
+    "python.formatting.autopep8Path": "/usr/local/bin/autopep8",
+    "python.formatting.autopep8Args": ["--max-line-length", "120", "--experimental"],
+
+
     // linting rules it takes the rules of .pylintrc file
     "python.linting.pylintPath": "/usr/local/bin/pylint",
     "python.linting.enabled": true,
     "python.linting.pylintEnabled": true,
     "python.linting.pylintUseMinimalCheckers": false,
     "python.linting.lintOnSave": true,
-
-    // python formatting (indentation)
-    "python.formatting.provider": "autopep8",
-    "python.formatting.autopep8Path": "/usr/local/bin/autopep8",
 
     // activate mypy to have type hint checking
     "python.linting.mypyEnabled": true,

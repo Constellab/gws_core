@@ -4,13 +4,15 @@
 # About us: https://gencovery.com
 
 import inspect
-from typing import List, Literal
+from typing import Any, Dict, List, Literal, Type
 
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from gws_core.core.model.base import Base
 from peewee import BooleanField, CharField, ModelSelect
 
+from ..core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 from ..core.model.model import Model
+from ..core.utils.utils import Utils
 
 # ####################################################################
 #
@@ -72,7 +74,7 @@ class Typing(Model):
         return self.model_type.split('.')
 
     def __get_hierarchy_table(self) -> List[str]:
-        model_t: Model = self.get_model_type(self.model_type)
+        model_t: Model = Utils.get_model_type(self.model_type)
         mro: List[Model] = inspect.getmro(model_t)
 
         ht: List[str] = []
@@ -96,7 +98,7 @@ class Typing(Model):
         self.data["ancestors"] = ancestors
 
     @property
-    def get_unique_name(self) -> str:
+    def typing_name(self) -> str:
         return build_typing_unique_name(self.object_type, self.brick, self.model_name)
 
     @classmethod
@@ -119,6 +121,24 @@ class Typing(Model):
         return cls.select()\
             .where((cls.object_type == object_type) & (cls.hide == False))\
             .order_by(cls.model_type.desc())
+
+    @classmethod
+    def get_by_model_type(cls, model_type: Type[Model]) -> ModelSelect:
+        return cls.select().where((cls.model_type == model_type.full_classname()))
+
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
+        _json: Dict[str, Any] = super().to_json(deep=deep, **kwargs)
+
+        _json["typing_name"] = self.typing_name
+        return _json
+
+    def get_model_type_doc(self) -> str:
+        """Return the python documentation of the model type
+        """
+
+        # retrieve the process python type
+        model_t: Type[Base] = Utils.get_model_type(self.model_type)
+        return inspect.getdoc(model_t)
 
     class Meta:
         # Unique constrains on brick, model_name and object_type

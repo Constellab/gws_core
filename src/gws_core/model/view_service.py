@@ -36,7 +36,7 @@ class ViewService(BaseService):
     @classmethod
     def fetch_list_of_view_models(cls,
                                   search_text: str = None,
-                                  page: int = 1, number_of_items_per_page: int = 20,
+                                  page: int = 0, number_of_items_per_page: int = 20,
                                   as_json: bool = False) -> (List[ViewModel], List[dict], ):
 
         if search_text:
@@ -52,14 +52,14 @@ class ViewService(BaseService):
                 query, page=page, number_of_items_per_page=number_of_items_per_page)
             return {
                 'data': result,
-                'paginator': paginator.paginator_dict()
+                'paginator': paginator._get_paginated_info()
             }
         else:
             query = ViewModel.select().order_by(ViewModel.creation_datetime.desc())
             paginator = Paginator(
                 query, page=page, number_of_items_per_page=number_of_items_per_page)
             if as_json:
-                return paginator.to_json(shallow=True)
+                return paginator.to_json()
             else:
                 return paginator
 

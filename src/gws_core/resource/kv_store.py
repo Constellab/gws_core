@@ -4,11 +4,13 @@
 # About us: https://gencovery.com
 
 import os
-import shelve
 import shutil
+from shelve import DbfilenameShelf
+from shelve import open as shelve_open
 
-from ..exception.exceptions import BadRequestException
-from ..utils.settings import Settings
+from ..core.exception.exceptions import BadRequestException
+from ..core.utils.settings import Settings
+from ..resource.resource_data import ResourceData, ResourceDict
 
 # ####################################################################
 #
@@ -17,16 +19,18 @@ from ..utils.settings import Settings
 # ####################################################################
 
 
-class KVStore:
+class KVStore(ResourceData[ResourceDict]):
     """
     KVStore class representing a key-value object storage engine.
     This class allows serializing/deserializing huge objects on store.
     """
 
-    _kv_data: dict = None
     _base_dir: str = None
     _slot_path: str = None
     _file_name: str = 'data'
+
+    # For iterable, store the current index
+    _iterable_index = 0
 
     def __init__(self, slot_path: str):
         super().__init__()
@@ -41,12 +45,12 @@ class KVStore:
 
     def __delitem__(self, key):
         """ Delete a key """
-        self._kv_data = shelve.open(self.file_path)
-        if key in self._kv_data:
-            val = self._kv_data[key]
-            del self._kv_data[key]
+        kv_data = self._open_shelve()
+        if key in kv_data:
+            val = kv_data[key]
+            del kv_data[key]
 
-        self._kv_data.close()
+        kv_data.close()
         return val
 
     @property
@@ -58,10 +62,10 @@ class KVStore:
         :rtype: str
         """
 
-        return self._create_full_dir_path(self._slot_path)
+        return self.create_full_dir_path(self._slot_path)
 
     @classmethod
-    def _create_full_dir_path(cls, slot_path):
+    def create_full_dir_path(cls, slot_path):
         return os.path.join(cls.get_base_dir(), slot_path)
 
     # -- F --
@@ -88,9 +92,9 @@ class KVStore:
         if not os.path.exists(self.dir_path):
             return default
 
-        self._kv_data = shelve.open(self.file_path)
-        val = self._kv_data.get(key)
-        self._kv_data.close()
+        kv_data = self._open_shelve()
+        val = kv_data.get(key)
+        kv_data.close()
         return val
 
     def __getitem__(self, key):
@@ -101,9 +105,9 @@ class KVStore:
         if not os.path.exists(self.dir_path):
             raise BadRequestException(f"Key '{key}' does not exist")
 
-        self._kv_data = shelve.open(self.file_path)
-        val = self._kv_data[key]
-        self._kv_data.close()
+        kv_data = self._open_shelve()
+        val = kv_data[key]
+        kv_data.close()
         return val
 
     @classmethod
@@ -144,6 +148,35 @@ class KVStore:
         if not os.path.exists(self.dir_path):
             os.makedirs(self.dir_path)
 
-        self._kv_data = shelve.open(self.file_path)
-        self._kv_data[key] = value
-        self._kv_data.close()
+        kv_data = self._open_shelve()
+        kv_data[key] = value
+        kv_data.close()
+
+    def __next__(self):
+        kv_data = self._open_shelve()
+
+        if self._iterable_index < len(kv_data):
+            value = list(kv_data.keys())[self._iterable_index]
+            self._iterable_index += 1
+            kv_data.close()
+            return value
+        else:
+            kv_data.close()
+            raise StopIteration
+
+    def __iter__(self):
+        self._iterable_index = 0
+        return self
+
+    def __len__(self) -> int:
+        kv_data = self._open_shelve()
+        length = len(kv_data)
+        kv_data.close()
+        return length
+
+    def _open_shelve(self) -> DbfilenameShelf:
+        return shelve_open(self.file_path)
+
+    # -- T --
+    def clone(self) -> 'KVStore':
+        return self

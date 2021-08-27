@@ -2,24 +2,28 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
+from __future__ import annotations
 
-import json
 from enum import Enum
-from typing import List, Union
+from typing import TYPE_CHECKING, List, final
 
-from gws_core.model.typing_register_decorator import TypingDecorator
-from peewee import BooleanField, FloatField, ForeignKeyField
+from peewee import BooleanField, FloatField, ForeignKeyField, ModelSelect
 
 from ..core.classes.enum_field import EnumField
+from ..core.decorator.transaction import Transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.sys_proc import SysProc
-from ..model.typing_manager import TypingManager
+from ..model.typing_register_decorator import TypingDecorator
 from ..model.viewable import Viewable
-from ..protocol.protocol import Protocol
+from ..resource.experiment_resource import ExperimentResource
+from ..resource.resource_model import ResourceModel
 from ..study.study import Study
 from ..user.activity import Activity
-from ..user.current_user_service import CurrentUserService
 from ..user.user import User
+
+if TYPE_CHECKING:
+    from ..process.process_model import ProcessModel
+    from ..protocol.protocol_model import ProtocolModel
 
 
 class ExperimentStatus(Enum):
@@ -31,6 +35,7 @@ class ExperimentStatus(Enum):
     ERROR = "ERROR"
 
 
+@final
 @TypingDecorator(unique_name="Experiment", object_type="GWS_CORE", hide=True)
 class Experiment(Viewable):
     """
@@ -50,77 +55,37 @@ class Experiment(Viewable):
 
     study = ForeignKeyField(
         Study, null=True, index=True, backref='experiments')
-    protocol = ForeignKeyField(Protocol, null=True, index=True, backref='+')
+
     created_by = ForeignKeyField(
         User, null=True, index=True, backref='created_experiments')
     score = FloatField(null=True, index=True)
-    status = EnumField(choices=ExperimentStatus,
-                       default=ExperimentStatus.DRAFT)
+    status: ExperimentStatus = EnumField(choices=ExperimentStatus,
+                                         default=ExperimentStatus.DRAFT)
     is_validated = BooleanField(default=False, index=True)
 
     _table_name = 'gws_experiment'
 
-    def __init__(self, *args, user: User = None, **kwargs):
-        super().__init__(*args, **kwargs)
-        if not self.id:
-            self.data["pid"] = 0
-            if user is None:
-                try:
-                    user: User = CurrentUserService.get_and_check_current_user()
-                except Exception as err:
-                    raise BadRequestException("An user is required") from err
-
-            if isinstance(user, User):
-                if not user.is_authenticated:
-                    raise BadRequestException(
-                        "An authenticated user is required")
-
-                self.created_by = user
-            else:
-                raise BadRequestException(
-                    "The user must be an instance of User")
-
-            if not self.save():
-                raise BadRequestException("Cannot create experiment")
-
-            # attach the protocol
-            protocol = kwargs.get("protocol")
-            if protocol is None:
-                from ..protocol.protocol import Protocol
-                protocol = Protocol(user=user)
-
-            protocol.set_experiment(self)
-            self.protocol = protocol
-            self.save()
-
-        else:
-            pass
+    # backup of the _protocol
+    _protocol: ProtocolModel = None
 
     # -- A --
 
-    def add_report(self, report: 'Report'):
-        report.experiment = self
-
-    def archive(self, archive: bool, archive_resources=True) -> bool:
+    @Transaction()
+    def archive(self, archive: bool, archive_resources=True) -> 'Experiment':
         """
         Archive the experiment
         """
 
         if self.is_archived == archive:
-            return True
-        with self._db_manager.db.atomic() as transaction:
-            Activity.add(
-                Activity.ARCHIVE,
-                object_type=self.full_classname(),
-                object_uri=self.uri
-            )
-            if not self.protocol.archive(archive, archive_resources=archive_resources):
-                transaction.rollback()
-                return False
-            status = super().archive(archive)
-            if not status:
-                transaction.rollback()
-            return status
+            return self
+        Activity.add(
+            Activity.ARCHIVE,
+            object_type=self.full_classname(),
+            object_uri=self.uri
+        )
+        self.protocol.archive(archive, archive_resources=archive_resources)
+
+        return super().archive(archive)
 
     # -- C --
 
@@ -191,39 +156,48 @@ class Experiment(Viewable):
         return self.data["pid"]
 
     @property
-    def processes(self) -> List['Process']:
+    def protocol(self) -> ProtocolModel:
+        """
+        Returns the protocol model
+        """
+        from ..protocol.protocol_model import ProtocolModel
+
+        if self._protocol is None:
+            self._protocol = ProtocolModel.get((ProtocolModel.experiment == self)
+                                               & (ProtocolModel.parent_protocol_id.is_null()))
+
+        return self._protocol
+
+    @property
+    def processes(self) -> List[ProcessModel]:
         """
         Returns child processes.
         """
+        from ..process.process_model import ProcessModel
+        if not self.id:
+            return []
 
-        processes: List['Process'] = []
-        if self.id:
-            from ..process.process import Process
-            query = Process.select().where(Process.experiment_id == self.id)
-            for proc in query:
-                processes.append(TypingManager.get_object_with_typing_name(
-                    proc.typing_name, proc.id))
-
-        return processes
+        return list(ProcessModel.select().where(
+            ProcessModel.experiment == self))
 
     # -- R --
 
-    @ property
-    def resources(self) -> List['Resource']:
+    @property
+    def resources(self) -> List[ResourceModel]:
         """
         Returns child resources.
         """
 
-        Q = []
+        resources = []
         if self.id:
-            from ..resource.resource import ExperimentResource
             Qrel = ExperimentResource.select().where(
                 ExperimentResource.experiment_id == self.id)
             for rel in Qrel:
-                Q.append(rel.resource)  # is automatically casted
-        return Q
+                resources.append(rel.resource)  # is automatically casted
+        return resources
 
-    def reset(self) -> bool:
+    @Transaction()
+    def reset(self) -> 'Experiment':
         """
         Reset the experiment.
 
@@ -231,26 +205,15 @@ class Experiment(Viewable):
         :rtype: `bool`
         """
 
-        if self.is_validated or self.is_running:
-            return False
+        if self.is_validated or self.is_archived:
+            return None
 
-        if self.status == ExperimentStatus.SUCCESS or self.status == ExperimentStatus.ERROR:
-            with self._db_manager.db.atomic() as transaction:
-                if self.protocol:
-                    if not self.protocol._reset():
-                        transaction.rollback()
-                        return False
+        if self.protocol:
+            self.protocol.reset()
 
-                self.status = ExperimentStatus.DRAFT
-                self.score = None
-                status = self.save()
-
-                if not status:
-                    transaction.rollback()
-
-                return status
-        else:
-            return True
+        self.status = ExperimentStatus.DRAFT
+        self.score = None
+        return self.save()
 
     def mark_as_waiting_for_cli_process(self, pid: int):
         """Mark that a process is created for the experiment, but it is not started yet
@@ -263,7 +226,6 @@ class Experiment(Viewable):
         self.save()
 
     def mark_as_started(self):
-        self.protocol.set_experiment(self)
         #self.data["pid"] = 0. /!\ Do not reset pid here, otherwise the experiment could not be stopped if started through cli !!!
         self.status = ExperimentStatus.RUNNING
         self.save()
@@ -280,7 +242,7 @@ class Experiment(Viewable):
         self.save()
     # -- S --
 
-    def set_title(self, title: str) -> str:
+    def set_title(self, title: str) -> None:
         """
         Set the title of the experiment. This title is set to the protocol.
 
@@ -290,7 +252,7 @@ class Experiment(Viewable):
 
         self.data["title"] = title
 
-    def set_description(self, description: str) -> str:
+    def set_description(self, description: str) -> None:
         """
         Get the description of the experiment. This description is set to the protocol.
 
@@ -300,22 +262,19 @@ class Experiment(Viewable):
 
         self.data["description"] = description
 
-    def save(self, *args, **kwargs):
-        with self._db_manager.db.atomic() as transaction:
-            if not self.is_saved():
-                Activity.add(
-                    Activity.CREATE,
-                    object_type=self.full_classname(),
-                    object_uri=self.uri
-                )
-            status = super().save(*args, **kwargs)
-            if not status:
-                transaction.rollback()
-            return status
+    @Transaction()
+    def save(self, *args, **kwargs) -> 'Experiment':
+        if not self.is_saved():
+            Activity.add(
+                Activity.CREATE,
+                object_type=self.full_classname(),
+                object_uri=self.uri
+            )
+        return super().save(*args, **kwargs)
 
     # -- T --
 
-    def to_json(self, *, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns JSON string or dictionnary representation of the experiment.
 
@@ -327,24 +286,19 @@ class Experiment(Viewable):
         :rtype: dict, str
         """
 
-        _json = super().to_json(**kwargs)
+        _json = super().to_json(deep=deep, **kwargs)
         _json.update({
             "study": {"uri": self.study.uri},
             "protocol": {
                 "uri": self.protocol.uri,
-                "typing_name": self.protocol.typing_name
+                "typing_name": self.protocol.processable_typing_name
             },
             "status": self.status
         })
 
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
+        return _json
 
+    @Transaction()
     def validate(self, user: User) -> None:
         """
         Validate the experiment
@@ -357,15 +311,14 @@ class Experiment(Viewable):
             return
         if self.is_running:
             raise BadRequestException("Can't validate a running experiment")
-        with self._db_manager.db.atomic() as transaction:
-            self.is_validated = True
-            if self.save():
-                Activity.add(
-                    Activity.VALIDATE,
-                    object_type=self.full_classname(),
-                    object_uri=self.uri,
-                    user=user
-                )
+        self.is_validated = True
+        if self.save():
+            Activity.add(
+                Activity.VALIDATE,
+                object_type=self.full_classname(),
+                object_uri=self.uri,
+                user=user
+            )
 
     def check_user_privilege(self, user: User) -> None:
         return self.protocol.check_user_privilege(user)
@@ -390,5 +343,17 @@ class Experiment(Viewable):
         if self.status != ExperimentStatus.RUNNING:
             raise BadRequestException(
                 detail=f"Experiment '{self.uri}' is not running")
+
+    def check_is_updatable(self) -> None:
+        """Throw an error if the experiment is not updatable
+        """
+
+        # check experiment status
+        if self.is_validated:
+            raise BadRequestException(
+                detail="Experiment is validated, you can't update it")
+        if self.is_archived:
+            raise BadRequestException(
+                detail="Experiment is archived, please unachived it to update it")
 
     # -- V --

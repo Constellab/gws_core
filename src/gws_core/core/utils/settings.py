@@ -12,7 +12,6 @@ from playhouse.sqlite_ext import JSONField
 
 from .utils import Utils
 
-
 __SETTINGS_DIR__ = "/conf/settings"
 if not os.path.exists(__SETTINGS_DIR__):
     os.makedirs(__SETTINGS_DIR__)
@@ -20,6 +19,8 @@ __SETTINGS_DB__ = SqliteDatabase(
     os.path.join(__SETTINGS_DIR__, "settings.sqlite3"))
 
 # app settings
+
+
 class Settings(PeeweeModel):
     """
     Settings class.
@@ -104,11 +105,25 @@ class Settings(PeeweeModel):
 
         return os.environ["VIRTUAL_HOST"]
 
+    # TODO ets-ce qu'on garde comme ça ?
+    @classmethod
+    def get_central_api_key(cls) -> str:
+        """Return the central api key
+
+        :return: [description]
+        :rtype: [type]
+        """
+
+        if "API_KEY" not in os.environ:
+            return None
+
+        return os.environ["API_KEY"]
+
     # -- A --
 
     @property
     def author(self):
-        return self.data.get("author","")
+        return self.data.get("author", "")
 
     # -- G --
 
@@ -183,11 +198,11 @@ class Settings(PeeweeModel):
 
     def get_variable(self, key) -> str:
         """ Returns a variable. Returns `None` if the variable does not exist """
-        return self.data.get("variables",{}).get(key)
+        return self.data.get("variables", {}).get(key)
 
     def get_variables(self) -> dict:
         """ Returns the variables dict """
-        return self.data.get("variables",{})
+        return self.data.get("variables", {})
 
     # -- I --
 

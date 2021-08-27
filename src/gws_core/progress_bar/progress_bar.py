@@ -3,10 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import json
 import time
 from datetime import datetime
-from typing import Union
+from typing import final
 
 from fastapi.encoders import jsonable_encoder
 from gws_core.model.typing_manager import TypingManager
@@ -20,6 +19,7 @@ from ..core.utils.logger import Logger
 from ..model.typing_register_decorator import TypingDecorator
 
 
+@final
 @TypingDecorator(unique_name="ProgressBar", object_type="GWS_CORE", hide=True)
 class ProgressBar(Model):
     """
@@ -28,7 +28,7 @@ class ProgressBar(Model):
 
     process_uri = CharField(null=True, index=True)
     # -> unique index (process_uri, process_type) is created in Meta
-    process_typing_name = CharField(null=True)
+    processable_typing_name = CharField(null=True)
 
     _min_allowed_delta_time = 1.0
     _min_value = 0.0
@@ -41,7 +41,7 @@ class ProgressBar(Model):
         super().__init__(*args, **kwargs)
 
         if not self.id:
-            self._reset()
+            self._init_data()
 
     # -- A --
     @classmethod
@@ -115,21 +115,14 @@ class ProgressBar(Model):
 
     @property
     def process(self) -> 'Process':
-        if not self.process_typing_name:
+        if not self.processable_typing_name:
             return None
 
-        return TypingManager.get_object_with_typing_name_and_uri(self.process_typing_name, self.process_uri)
+        return TypingManager.get_object_with_typing_name_and_uri(self.processable_typing_name, self.process_uri)
 
     # -- R --
 
-    def _reset(self) -> bool:
-        """
-        Reset the progress bar
-
-        :return: Returns True if is progress bar is successfully reset;  False otherwise
-        :rtype: `bool`
-        """
-
+    def _init_data(self) -> None:
         self.data = {
             "value": 0.0,
             "max_value": 0.0,
@@ -140,6 +133,16 @@ class ProgressBar(Model):
             "remaining_time": 0.0,
             "messages": [],
         }
+
+    def reset(self) -> 'ProgressBar':
+        """
+        Reset the progress bar
+
+        :return: Returns True if is progress bar is successfully reset;  False otherwise
+        :rtype: `bool`
+        """
+        self._init_data()
+
         return self.save()
 
     # -- S --
@@ -221,10 +224,10 @@ class ProgressBar(Model):
         self.save()
 
     @classmethod
-    def get_by_process_typing_name_and_process_uri(cls, process_typing_name: str, process_uri: str) -> 'ProgressBar':
-        return ProgressBar.get((ProgressBar.process_uri == process_uri) & (ProgressBar.process_typing_name == process_typing_name))
+    def get_by_process_uri(cls, process_uri: str) -> 'ProgressBar':
+        return ProgressBar.get(ProgressBar.process_uri == process_uri)
 
-    def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns JSON string or dictionnary representation of the model.
 
@@ -236,44 +239,20 @@ class ProgressBar(Model):
         :rtype: dict, str
         """
 
-        _json = super().to_json(**kwargs)
+        _json = super().to_json(deep=deep, **kwargs)
 
-        bare = kwargs.get("bare")
-        if bare:
-            _json["process"] = {
-                "uri": "",
-                "typing_name": "",
-            }
-
-            _json["data"] = {
-                "value": 0.0,
-                "max_value": 0.0,
-                "average_speed": 0.0,
-                "start_time": 0.0,
-                "current_time": 0.0,
-                "elapsed_time": 0.0,
-                "remaining_time": 0.0,
-                "messages": [],
-            }
-        else:
-            _json["process"] = {
-                "uri": _json["process_uri"],
-                "typing_name": _json["process_typing_name"],
-            }
+        _json["process"] = {
+            "uri": _json["process_uri"],
+            "typing_name": _json["processable_typing_name"],
+        }
 
         del _json["process_uri"]
-        del _json["process_typing_name"]
+        del _json["processable_typing_name"]
 
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
+        return _json
 
     class Meta:
         indexes = (
-            # create a unique on process_uri, process_typing_name
-            (('process_uri', 'process_typing_name'), True),
+            # create a unique on process_uri, processable_typing_name
+            (('process_uri', 'processable_typing_name'), True),
         )

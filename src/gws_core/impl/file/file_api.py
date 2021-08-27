@@ -29,9 +29,8 @@ async def upload_a_file_or_list_of_files(files: List[UploadFile] = FastAPIFile(.
     return file.to_json()
 
 
-@core_app.get("/file/{typing_name}/{uri}/download", tags=["Files"], summary="Download a file")
-async def download_a_file(typing_name: str,
-                          uri: str,
+@core_app.get("/file/{uri}/download", tags=["Files"], summary="Download a file")
+async def download_a_file(uri: str,
                           _: UserData = Depends(AuthService.check_user_access_token)) -> FileResponse:
     """
     Download a file
@@ -40,14 +39,12 @@ async def download_a_file(typing_name: str,
     - **uri**: the uri of the file to download
     """
 
-    file_response = FileService.download_file(typing_name=typing_name, uri=uri)
+    file_response = FileService.download_file(uri=uri)
     return file_response
 
 
-@core_app.get("/file/{typing_name}", tags=["Files"], summary="Get the list of files")
-async def get_the_list_of_files(typing_name: Optional[str] = "gws.file.File",
-                                search_text: Optional[str] = "",
-                                page: Optional[int] = 1,
+@core_app.get("/file", tags=["Files"], summary="Get the list of files")
+async def get_the_list_of_files(page: Optional[int] = 1,
                                 number_of_items_per_page: Optional[int] = 20,
                                 _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
@@ -60,9 +57,5 @@ async def get_the_list_of_files(typing_name: Optional[str] = "gws.file.File",
     """
 
     return FileService.fetch_file_list(
-        typing_name=typing_name,
-        search_text=search_text,
         page=page,
-        number_of_items_per_page=number_of_items_per_page,
-        as_json=True,
-    )
+        number_of_items_per_page=number_of_items_per_page).to_json()

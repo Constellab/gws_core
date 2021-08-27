@@ -8,14 +8,16 @@ import os
 import unittest
 from copy import Error
 from unittest.suite import BaseTestSuite
+
 import click
 
+from ._sphynx.docgen import Docgen
 from .app import App
 from .core.db.db_manager import DbManager
 from .core.exception.exceptions import BadRequestException
 from .core.utils.logger import Logger
 from .core.utils.settings import Settings
-from ._sphynx.docgen import Docgen
+
 
 def _run(ctx, uri="", token="", test="",
          cli=False, cli_test=False, runserver=False, runmode="dev",
@@ -50,7 +52,7 @@ def _run(ctx, uri="", token="", test="",
     if is_test:
         if App.is_running:
             raise BadRequestException("Cannot run tests while the Application is running.")
-    
+
     DbManager.init_all_db(test=is_test)
 
     if runserver:
@@ -77,9 +79,11 @@ def _run(ctx, uri="", token="", test="",
         for test_file in tests:
             brick_dir = settings.get_cwd()
             test_suite.addTests(loader.discover(os.path.join(brick_dir, "./tests/"), pattern=test_file+".py"))
-        test_runner = unittest.TextTestRunner()
+
         if test_suite.countTestCases() == 0:
-            raise Error(f"No test file '{test}' found")
+            raise Error(f"No test file with name '{test}' found. Or the file does not contain tests")
+
+        test_runner = unittest.TextTestRunner()
         test_runner.run(test_suite)
     elif docgen:
         Docgen.generate(settings, force=force)
@@ -97,7 +101,8 @@ def _run(ctx, uri="", token="", test="",
 @click.pass_context
 @click.option('--uri', default="", help='Lab URI', show_default=True)
 @click.option('--token', default="", help='Lab token', show_default=True)
-@click.option('--test', default="", help='The name test file to launch (regular expression). Enter "all" to launch all the tests')
+@click.option('--test', default="",
+              help='The name test file to launch (regular expression). Enter "all" to launch all the tests')
 @click.option('--cli', default="", help='Command to run using the command line interface')
 @click.option('--cli_test', is_flag=True, help='Use command line interface in test mode')
 @click.option('--runserver', is_flag=True, help='Starts the server')
@@ -105,7 +110,8 @@ def _run(ctx, uri="", token="", test="",
 @click.option('--ip', default="0.0.0.0", help='Server IP', show_default=True)
 @click.option('--port', default="3000", help='Server port', show_default=True)
 @click.option('--docgen', is_flag=True, help='Generates documentation')
-@click.option('--force', is_flag=True, help='Forces documentation generation by removing any existing documentation (used if --docgen is given)')
+@click.option('--force', is_flag=True,
+              help='Forces documentation generation by removing any existing documentation (used if --docgen is given)')
 @click.option('--log_level', default="INFO", help='Level for the logs', show_default=True)
 @click.option('--show_sql', is_flag=True, help='Log sql queries in the console')
 def run(ctx, uri, token, test, cli, cli_test, runserver, runmode, ip, port, docgen, force, log_level, show_sql):

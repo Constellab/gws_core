@@ -4,11 +4,10 @@
 # About us: https://gencovery.com
 
 
-from typing import Union
-
-from peewee import ModelSelect
+from typing import List, Union
 
 from ..comment.comment import Comment
+from ..core.decorator.transaction import Transaction
 from ..core.model.model import Model
 from .view_model import ViewModel
 
@@ -19,7 +18,6 @@ class Viewable(Model):
     """
 
     # -- A --
-    # todo fix type
     def add_comment(self, message: str, reply_to: Comment = None) -> Comment:
         """
         Add a new comment to this object
@@ -52,7 +50,8 @@ class Viewable(Model):
         comment.save()
         return comment
 
-    def archive(self, archive: bool) -> bool:
+    @Transaction()
+    def archive(self, archive: bool) -> 'Viewable':
         """
         Archive of Unarchive Viewable and all its ViewModels
 
@@ -63,29 +62,22 @@ class Viewable(Model):
         """
 
         if self.is_archived == archive:
-            return True
+            return self
 
-        with self._db_manager.db.atomic() as transaction:
-            query: ModelSelect = ViewModel.select().where(
-                (ViewModel.model_uri == self.uri) &
-                (ViewModel.is_archived == (not archive))
-            )
+        query: List[ViewModel] = ViewModel.select().where(
+            (ViewModel.model_uri == self.uri) &
+            (ViewModel.is_archived == (not archive))
+        )
 
-            for view_model in query:
-                if not view_model.archive(archive):
-                    transaction.rollback()
-                    return False
+        for view_model in query:
+            view_model.archive(archive)
 
-            status = super().archive(archive)
-            if not status:
-                transaction.rollback()
-
-            return status
+        return super().archive(archive)
 
     # -- C --
 
     @property
-    def comments(self) -> list:
+    def comments(self) -> List[Comment]:
         """
         Returns the list of comments of this object
         """

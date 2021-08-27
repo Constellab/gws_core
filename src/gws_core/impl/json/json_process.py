@@ -10,6 +10,7 @@ from .json_resource import JSONDict
 #
 # ####################################################################
 
+
 @ProcessDecorator("JSONImporter")
 class JSONImporter(FileImporter):
     input_specs = {'file': File}
@@ -23,6 +24,7 @@ class JSONImporter(FileImporter):
 # Exporter class
 #
 # ####################################################################
+
 
 @ProcessDecorator("JSONExporter")
 class JSONExporter(FileExporter):
@@ -40,6 +42,7 @@ class JSONExporter(FileExporter):
 #
 # ####################################################################
 
+
 @ProcessDecorator("JSONLoader")
 class JSONLoader(FileLoader):
     input_specs = {}
@@ -54,6 +57,7 @@ class JSONLoader(FileLoader):
 # Dumper class
 #
 # ####################################################################
+
 
 @ProcessDecorator("JSONDumper")
 class JSONDumper(FileDumper):

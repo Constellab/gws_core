@@ -41,7 +41,7 @@ class CommentService(BaseService):
     def fetch_object_comments(cls,
                               object_typing_name: str,
                               object_uri: str,
-                              page: int = 1,
+                              page: int = 0,
                               number_of_items_per_page: int = 20,
                               as_json=False) -> Union[List[Comment], List[dict]]:
 
@@ -63,6 +63,6 @@ class CommentService(BaseService):
             paginator = Paginator(
                 query, page=page, number_of_items_per_page=number_of_items_per_page)
             if as_json:
-                return paginator.to_json(shallow=True)
+                return paginator.to_json()
 
             return paginator

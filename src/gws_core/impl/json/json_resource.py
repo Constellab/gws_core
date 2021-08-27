@@ -1,9 +1,9 @@
 import json
 
-from ...resource.resource_decorator import ResourceDecorator
+from gws_core.resource.resource import Resource
 
 from ...core.model.model import Model
-from ...resource.resource import Resource
+from ...resource.resource_decorator import ResourceDecorator
 
 
 @ResourceDecorator("JSONDict")
@@ -13,7 +13,7 @@ class JSONDict(Resource):
 
     # -- E --
 
-    def _export(self, file_path: str, file_format: str = ".json", prettify: bool = False):
+    def export(self, file_path: str, file_format: str = ".json", prettify: bool = False):
         """
         Export to a give repository
 
@@ -23,22 +23,22 @@ class JSONDict(Resource):
 
         with open(file_path, "w") as f:
             if prettify:
-                json.dump(self.kv_data, f, indent=4)
+                json.dump(self.data, f, indent=4)
             else:
-                json.dump(self.kv_data, f)
+                json.dump(self.data, f)
 
     # -- G --
 
     def __getitem__(self, key):
-        return self.kv_data[key]
+        return self.data[key]
 
     def get(self, key, default=None):
-        return self.kv_data.get(key, default)
+        return self.data.get(key, default)
 
     # -- I --
 
     @classmethod
-    def _import(cls, file_path: str, file_format: str = ".json") -> any:
+    def import_resource(cls, file_path: str, file_format: str = ".json") -> any:
         """
         Import a give from repository
 
@@ -50,14 +50,14 @@ class JSONDict(Resource):
 
         with open(file_path, "r") as f:
             json_data = cls()
-            json_data.kv_data = json.load(f)
+            json_data.data = json.load(f)
 
         return json_data
 
     # -- J --
 
     @classmethod
-    def _join(cls, *args, **params) -> Model:
+    def join(cls, *args, **params) -> Model:
         """
         Join several resources
 
@@ -71,20 +71,9 @@ class JSONDict(Resource):
 
     # -- K --
 
-    @property
-    def kv_data(self):
-        if not 'kv_data' in self.data:
-            self.data["kv_data"] = {}
-
-        return self.data["kv_data"]
-
-    @kv_data.setter
-    def kv_data(self, kv_data: dict):
-        self.data["kv_data"] = kv_data
-
     # -- S --
 
-    def _select(self, **params) -> Model:
+    def select(self, **params) -> Model:
         """
         Select a part of the resource
 
@@ -101,14 +90,8 @@ class JSONDict(Resource):
 
     # -- T --
 
-    def to_json(self, stringify: bool = False, prettify: bool = False, **kwargs):
-        _json = super().to_json(**kwargs)
-        _json["data"]["content"] = self.kv_data
+    def to_json(self):
+        _json = {}
+        _json["content"] = self.data
 
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
+        return _json

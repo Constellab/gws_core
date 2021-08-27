@@ -3,36 +3,23 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import asyncio
 import time
-import unittest
 
-from gws_core import (Experiment, ExperimentStatus, GTest, Queue, QueueService,
-                      RobotService, Settings)
+from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
+                      QueueService, RobotService, Settings)
+
+from tests.base_test import BaseTest
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 
-class TestExperiment(unittest.TestCase):
+class TestExperiment(BaseTest):
 
-    @classmethod
-    def setUpClass(cls):
-        GTest.drop_tables()
-        GTest.create_tables()
-        GTest.init()
-
-    @classmethod
-    def tearDownClass(cls):
-        QueueService.deinit()
-        GTest.drop_tables()
-
-    def test_service(self):
+    async def test_service(self):
         GTest.print("ExperimentService")
-        proto = RobotService.create_nested_protocol()
-        experiment = Experiment(
-            protocol=proto, study=GTest.study, user=GTest.user)
-        experiment.save()
+        proto = RobotService.create_robot_world_travel()
+        experiment = ExperimentService.create_experiment_from_protocol(protocol=proto)
         c = Experiment.select().count()
         self.assertEqual(c, 1)
 
@@ -72,8 +59,6 @@ class TestExperiment(unittest.TestCase):
 
         print("Re-Run the same experiment ...")
         experiment.refresh()
-        time.sleep(1)
-        self.assertTrue(experiment.reset())
         self.assertTrue(_run())
         self.assertEqual(Experiment.select().count(), 1)
 

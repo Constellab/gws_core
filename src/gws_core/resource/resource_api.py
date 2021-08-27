@@ -16,7 +16,7 @@ from .resource_service import ResourceService
 @core_app.get("/resource-type/hierarchy", tags=["Resource"], summary="Get the resource type hierarchy")
 async def get_the_list_of_resource_types(page: Optional[int] = 1,
                                          number_of_items_per_page: Optional[int] = 20,
-                                         _: UserData = Depends(AuthService.check_user_access_token)) -> (dict, str,):
+                                         _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Get the resource type hierarchy
 
@@ -33,7 +33,7 @@ async def get_the_list_of_resource_types(page: Optional[int] = 1,
 @core_app.get("/resource-type", tags=["Resource"], summary="Get the list of resource types")
 async def get_the_list_of_resource_types(page: Optional[int] = 1,
                                          number_of_items_per_page: Optional[int] = 20,
-                                         _: UserData = Depends(AuthService.check_user_access_token)) -> (dict, str,):
+                                         _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve a list of resources. The list is paginated.
 
@@ -50,7 +50,7 @@ async def get_the_list_of_resource_types(page: Optional[int] = 1,
 @core_app.get("/resource/{typing_name}/{uri}", tags=["Resource"], summary="Get a resource")
 async def get_a_resource(typing_name: str,
                          uri: str,
-                         _: UserData = Depends(AuthService.check_user_access_token)) -> Union[dict, str]:
+                         _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve a resource
 
@@ -66,7 +66,7 @@ async def get_the_list_of_resources(typing_name: Optional[str] = None,
                                     experiment_uri: Optional[str] = None,
                                     page: Optional[int] = 1,
                                     number_of_items_per_page: Optional[int] = 20,
-                                    _: UserData = Depends(AuthService.check_user_access_token)) -> Union[dict, str]:
+                                    _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve the list of resources. The list is paginated.
 

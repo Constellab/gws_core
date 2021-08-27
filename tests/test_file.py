@@ -3,34 +3,26 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import unittest
 
-from gws_core import File, GTest, LocalFileStore, Settings
+from gws_core import File, FileResource, FileService, GTest, LocalFileStore
+
+from tests.base_test import BaseTest
 
 
-class TestFile(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        GTest.drop_tables()
-        GTest.create_tables()
-        GTest.init()
-
-    @classmethod
-    def tearDownClass(cls):
-        GTest.drop_tables()
+class TestFile(BaseTest):
 
     def test_file(self):
         GTest.print("File")
 
-        fs = LocalFileStore()
-        f = fs.create_file(name="my_file.txt")
-        f.save()
-        self.assertTrue(f.is_saved())
+        file_store: LocalFileStore = LocalFileStore()
+        file: File = file_store.create_file(name="my_file.txt")
+        file_resource: FileResource = FileService.create_file_resource(file=file)
+        self.assertTrue(file_resource.is_saved())
 
-        f.write("Hi.\n")
-        f.write("My name is John")
+        file: File = file_resource.get_resource()
+        file.write("Hi.\n")
+        file.write("My name is John")
 
-        text = f.read()
+        text = file.read()
         self.assertTrue(text, "Hi.\nMy name is John")
-        self.assertTrue(f.verify_hash())
+        self.assertTrue(file_resource.verify_hash())

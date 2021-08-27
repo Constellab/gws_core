@@ -25,11 +25,11 @@ def ResourceDecorator(unique_name: str, human_name: str = "", short_description:
 
     """
 
-    def decorator(resource_class: Type['Resource']):
-
-        if not issubclass(resource_class, Resource):
-            raise Exception(
-                f"The ResourceDecorator is used on class '{resource_class.__name__}' while this class is not a subclass of Resource")
+    def decorator(resource_class: Type[Resource]):
+        # TODO uncomment
+        # if not issubclass(resource_class, Resource):
+        #     raise Exception(
+        #         f"The ResourceDecorator is used on class '{resource_class.__name__}' while this class is not a subclass of Resource")
 
         register_typing_class(object_class=resource_class, object_type="RESOURCE", unique_name=unique_name,
                               human_name=human_name, short_description=short_description, hide=hide)

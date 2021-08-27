@@ -4,8 +4,8 @@
 # About us: https://gencovery.com
 
 
+from tests.base_test import BaseTest
 import time
-import unittest
 
 from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
                       Job, Queue, QueueService, RobotService, Settings)
@@ -14,7 +14,7 @@ settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 
-class TestQueue(unittest.TestCase):
+class TestQueue(BaseTest):
 
     @classmethod
     def setUpClass(cls):
@@ -34,20 +34,16 @@ class TestQueue(unittest.TestCase):
         self.assertEqual(Experiment.count_of_running_experiments(), 0)
         self.assertEqual(Queue.length(), 0)
 
-        proto1 = RobotService.create_nested_protocol()
-        experiment1 = Experiment(
-            protocol=proto1, study=GTest.study, user=GTest.user)
-        experiment1.save()
+        proto1 = RobotService.create_robot_world_travel()
+        experiment1 = ExperimentService.create_experiment_from_protocol(protocol=proto1)
         job1 = Job(user=GTest.user, experiment=experiment1)
         QueueService.add_job(job1)
 
         self.assertEqual(Queue.next(), job1)
         self.assertEqual(Queue.length(), 1)
 
-        proto2 = RobotService.create_nested_protocol()
-        experiment2 = Experiment(
-            protocol=proto2, study=GTest.study, user=GTest.user)
-        experiment2.save()
+        proto2 = RobotService.create_robot_world_travel()
+        experiment2 = ExperimentService.create_experiment_from_protocol(protocol=proto2)
         job2 = Job(user=GTest.user, experiment=experiment2)
         QueueService.add_job(job2)
 
@@ -58,10 +54,8 @@ class TestQueue(unittest.TestCase):
         self.assertEqual(Queue.next(), job2)
         self.assertEqual(Queue.length(), 1)
 
-        proto3 = RobotService.create_nested_protocol()
-        experiment3 = Experiment(
-            protocol=proto3, study=GTest.study, user=GTest.user)
-        experiment3.save()
+        proto3 = RobotService.create_robot_world_travel()
+        experiment3 = ExperimentService.create_experiment_from_protocol(protocol=proto3)
         job3 = Job(user=GTest.user, experiment=experiment3)
         QueueService.add_job(job3)
         self.assertEqual(Queue.next(), job2)
