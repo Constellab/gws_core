@@ -10,7 +10,7 @@ from ..config.config_params import ConfigParams
 from ..config.config_spec import ConfigSpecs
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ..io.io_types import IOSpecs
+from ..io.io_types import IOSpecs, IOSpecsHelper
 from ..processable.processable import Processable
 from ..progress_bar.progress_bar import ProgressBar
 
@@ -74,9 +74,6 @@ class Process(Processable):
         if spec_name not in self.output_specs:
             raise BadRequestException(f"The output spec does not have a spec named '{spec_name}'")
 
-        spec = self.output_specs[spec_name]
+        resource_types = IOSpecsHelper.io_spec_to_resource_types(self.output_specs[spec_name])
 
-        if isinstance(spec, tuple):
-            return spec[0]
-        else:
-            return spec
+        return resource_types[0]

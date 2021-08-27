@@ -47,7 +47,7 @@ class ProtocolService(BaseService):
             return paginator
 
     @classmethod
-    def create_process_from_type(cls, protocol_type: Type[Protocol], instance_name: str = None) -> ProcessModel:
+    def create_protocol_from_type(cls, protocol_type: Type[Protocol], instance_name: str = None) -> ProtocolModel:
         protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_type(
             protocol_type=protocol_type, instance_name=instance_name)
 
@@ -59,7 +59,7 @@ class ProtocolService(BaseService):
                                   connectors: list = None,
                                   interfaces: dict = None,
                                   outerfaces: dict = None,
-                                  instance_name: str = None) -> ProcessModel:
+                                  instance_name: str = None) -> ProtocolModel:
         protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_data(
             processes=processes,
             connectors=connectors,

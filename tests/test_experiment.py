@@ -9,6 +9,8 @@ from typing import List
 from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
                       ProcessModel, ProtocolModel, ResourceModel, RobotService,
                       Settings)
+from gws_core.impl.robot.robot import Robot
+from gws_core.processable.processable_model import ProcessableModel
 
 from tests.base_test import BaseTest
 
@@ -43,7 +45,6 @@ class TestExperiment(BaseTest):
         print("Create experiment_2 = experiment_1 ...")
         experiment2: Experiment = Experiment.get_by_uri_and_check(experiment1.uri)
 
-        protocol = experiment2.protocol
         self.assertEqual(experiment2.get_title(), "My exp title")
         self.assertEqual(experiment2.get_description(),
                          "This is my new experiment")
@@ -73,6 +74,19 @@ class TestExperiment(BaseTest):
         self.assertEqual(e2_bis.get_description(), "This is my new experiment")
         self.assertEqual(len(e2_bis.processes), 15)
         self.assertEqual(Experiment.select().count(), 1)
+
+        # Test the configuration on fly_1 process (west 2000)
+        fly_1: ProcessableModel = e2_bis.protocol.get_process('fly_1')
+        robot1: Robot = fly_1.input['robot'].get_resource()
+        robot2: Robot = fly_1.output['robot'].get_resource()
+        self.assertEqual(robot1.position[0], robot2.position[0] + 2000)
+
+        # Test the protocol (super_travel) config (weight of 10)
+        super_travel: ProtocolModel = e2_bis.protocol.get_process('super_travel')
+        eat_3: ProtocolModel = super_travel.get_process('eat_3')
+        robot1: Robot = eat_3.input['robot'].get_resource()
+        robot2: Robot = eat_3.output['robot'].get_resource()
+        self.assertEqual(robot1.weight, robot2.weight - 10)
 
     async def test_run_through_cli_and_re_run(self):
 

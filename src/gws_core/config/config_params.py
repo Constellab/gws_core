@@ -2,18 +2,19 @@
 
 from typing import Dict
 
-from ..config.config_spec import ConfigParamType
+from ..config.config_spec import ConfigValue
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 
 
-class ConfigParams(Dict[str, ConfigParamType]):
+# TODO voir avec ConfigValues, les 2 sont un peu similaire
+class ConfigParams(Dict[str, ConfigValue]):
     """Config send to the task when running a process
     """
 
     # specification of the config
 
-    def get_param(self, name: str) -> ConfigParamType:
+    def get_param(self, name: str) -> ConfigValue:
         """
         Returns the value of a parameter by its name
 

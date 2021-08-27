@@ -8,14 +8,15 @@ import os
 import unittest
 from copy import Error
 from unittest.suite import BaseTestSuite
+
 import click
 
+from ._sphynx.docgen import Docgen
 from .app import App
 from .core.db.db_manager import DbManager
 from .core.exception.exceptions import BadRequestException
 from .core.utils.logger import Logger
 from .core.utils.settings import Settings
-from ._sphynx.docgen import Docgen
 
 
 def _run(ctx, uri="", token="", test="",
@@ -80,7 +81,7 @@ def _run(ctx, uri="", token="", test="",
             test_suite.addTests(loader.discover(os.path.join(brick_dir, "./tests/"), pattern=test_file+".py"))
 
         if test_suite.countTestCases() == 0:
-            raise Error(f"No test file with name {test} found")
+            raise Error(f"No test file with name '{test}' found. Or the file does not contain tests")
 
         test_runner = unittest.TextTestRunner()
         test_runner.run(test_suite)

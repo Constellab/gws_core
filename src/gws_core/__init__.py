@@ -14,10 +14,10 @@ from .comment.comment_service import CommentService as CommentService
 from .config.config import Config as Config
 from .config.config_params import ConfigParams as ConfigParams
 from .config.config_service import ConfigService as ConfigService
-from .config.config_spec import ConfigParamType as ConfigParamType
 from .config.config_spec import ConfigSpec as ConfigSpec
 from .config.config_spec import ConfigSpecs as ConfigSpecs
 from .config.config_spec import ConfigSpecType as ConfigSpecType
+from .config.config_spec import ConfigValue as ConfigValue
 # Core
 # Core > Classes
 from .core.classes.expose import Expose as Expose
@@ -174,6 +174,10 @@ from .protocol.protocol import Protocol as Protocol
 from .protocol.protocol_decorator import ProtocolDecorator as ProtocolDecorator
 from .protocol.protocol_model import ProtocolModel as ProtocolModel
 from .protocol.protocol_service import ProtocolService as ProtocolService
+from .protocol.protocol_spec import ConnectorPartSpec as ConnectorPartSpec
+from .protocol.protocol_spec import ConnectorSpec as ConnectorSpec
+from .protocol.protocol_spec import InterfaceSpec as InterfaceSpec
+from .protocol.protocol_spec import ProcessableSpec as ProcessableSpec
 from .protocol.protocol_type import ProtocolType as ProtocolType
 # Resource
 from .resource.kv_store import KVStore as KVStore

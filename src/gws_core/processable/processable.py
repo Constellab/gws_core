@@ -7,6 +7,7 @@ from ..user.user_group import UserGroup
 
 class Processable(Base):
 
+    # Config spec of the processable at the class level
     config_specs: ConfigSpecs = {}
 
     # Provided at the Class level automatically by the Decorator

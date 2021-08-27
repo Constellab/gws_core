@@ -1,5 +1,5 @@
 
-from typing import Any, Type
+from typing import Any, Dict, Type
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -23,7 +23,7 @@ class Resource(Base):
     _human_name: str = None
     _short_description: str = None
 
-    def __init__(self, data: ResourceData = None):
+    def __init__(self, data: Dict = None):
 
         # check that the class level property _typing_name is set
         if self._typing_name == CONST_RESOURCE_TYPING_NAME and type(self) != Resource:  # pylint: disable=unidiomatic-typecheck
@@ -33,7 +33,7 @@ class Resource(Base):
         if data is None:
             self.data = ResourceData()
         else:
-            self.data = data
+            self.data = ResourceData(data)
 
     def delete_resource(self) -> None:
         pass

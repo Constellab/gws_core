@@ -12,7 +12,8 @@ from ..core.exception.exceptions import BadRequestException
 from ..model.typing_register_decorator import TypingDecorator
 from ..model.viewable import Viewable
 from .config_params import ConfigParams
-from .config_spec import ConfigSpecs
+from .config_spec import (ConfigSpecs, ConfigSpecsHelper, ConfigValue,
+                          ConfigValues)
 
 
 @final
@@ -153,7 +154,7 @@ class Config(Viewable):
     def params(self):
         return self.data["params"]
 
-    def set_param(self, name: str, value: Union[str, int, float, bool]):
+    def set_param(self, name: str, value: ConfigValue):
         """
         Sets the value of a parameter by its name
 
@@ -163,24 +164,14 @@ class Config(Viewable):
         :type: [str, int, float, bool, NoneType]
         """
 
-        if not name in self.specs:
-            raise BadRequestException(f"Parameter '{name}' does not exist.")
-
-        #param_t = self.specs[name]["type"]
-
-        try:
-            validator = Validator.from_specs(**self.specs[name])
-            value = validator.validate(value)
-        except Exception as err:
-            raise BadRequestException(
-                f"Invalid parameter value '{name}'. Error message: {err}") from err
+        value = ConfigSpecsHelper.check_config(name, value, self.specs)
 
         if not "params" in self.data:
             self.data["params"] = {}
 
         self.data["params"][name] = value
 
-    def set_params(self, params: dict):
+    def set_params(self, params: ConfigValues):
         """
         Set config parameters
         """

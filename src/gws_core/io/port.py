@@ -1,14 +1,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
-from typing import TYPE_CHECKING, List, Tuple, Type, final
+from typing import TYPE_CHECKING, List, Type, final
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.base import Base
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
-from .io_types import IOSpec, PortDict
+from .io_types import IOSpec, IOSpecsHelper, PortDict
 
 if TYPE_CHECKING:
     from ..processable.processable_model import ProcessableModel
@@ -239,27 +238,7 @@ class Port(Base):
         :type resource: Resource
         """
 
-        # if the type is a Union or Optional (equivalient to Union[x, None])
-        if hasattr(resource_types, "__args__") and isinstance(resource_types.__args__, tuple):
-            resource_types = resource_types.__args__
-        elif not isinstance(resource_types, Iterable):
-            resource_types = [resource_types]
-
-        checked_type: List[Type[Resource], None] = []
-
-        for res_t in resource_types:
-            # convert the NoneType to None
-            if res_t is type(None):
-                checked_type.append(None)
-                continue
-
-            # check that the type is a resource Resource
-            if res_t is not None and not issubclass(res_t, Resource):
-                raise BadRequestException(
-                    "Invalid port specs. The resources types must refer to a subclass of Resource")
-            checked_type.append(res_t)
-
-        self._resource_types = checked_type
+        self._resource_types = IOSpecsHelper.io_spec_to_resource_types(resource_types)
 
     @property
     def resource_model(self) -> ResourceModel:
@@ -299,15 +278,7 @@ class Port(Base):
         if self.is_optional and resource_type is None:
             return True
 
-        # check that the resource type is is subclass of one of the port resources types
-        for accepted_type in self._resource_types:
-            if accepted_type is None:
-                continue
-
-            if issubclass(resource_type, accepted_type):
-                return True
-
-        return False
+        return IOSpecsHelper.resource_type_is_compatible(resource_type, self._resource_types)
 
     def get_resource(self) -> Resource:
         return self.resource_model.get_resource()
@@ -384,11 +355,7 @@ class OutPort(Port):
     """
 
     def _are_compatible_types(self, other: 'InPort') -> bool:
-        for left_type in self.resource_types:
-            if other.resource_type_is_compatible(left_type):
-                return True
-
-        return False
+        return IOSpecsHelper.resources_types_are_compatible(self.resource_types, other.resource_types)
 
     def pipe(self, other: 'InPort', lazy: bool = False) -> Connector:
         """
