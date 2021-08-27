@@ -14,7 +14,7 @@ class TestPaginator(BaseTest):
 
     async def test_paginator(self):
 
-        protocol: ProtocolModel = RobotService.create_nested_protocol()
+        protocol: ProtocolModel = RobotService.create_robot_world_travel()
         ExperimentService.create_experiment_from_protocol(
             protocol, title="My title", description="My description")
 

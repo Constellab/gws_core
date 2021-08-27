@@ -27,7 +27,7 @@ class TestExperiment(BaseTest):
         # Create experiment 1
         # -------------------------------
         print("Create experiment 1")
-        proto1: ProtocolModel = RobotService.create_nested_protocol()
+        proto1: ProtocolModel = RobotService.create_robot_world_travel()
 
         experiment1: Experiment = ExperimentService.create_experiment_from_protocol(
             protocol=proto1, title="My exp title", description="This is my new experiment")
@@ -93,7 +93,7 @@ class TestExperiment(BaseTest):
         # experiment 3
         # -------------------------------
         print("Create experiment_3")
-        proto3 = RobotService.create_nested_protocol()
+        proto3 = RobotService.create_robot_world_travel()
         experiment3 = ExperimentService.create_experiment_from_protocol(protocol=proto3)
 
         print("Run experiment_3 through cli ...")

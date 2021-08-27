@@ -18,7 +18,7 @@ class TestExperiment(BaseTest):
 
     async def test_service(self):
         GTest.print("ExperimentService")
-        proto = RobotService.create_nested_protocol()
+        proto = RobotService.create_robot_world_travel()
         experiment = ExperimentService.create_experiment_from_protocol(protocol=proto)
         c = Experiment.select().count()
         self.assertEqual(c, 1)

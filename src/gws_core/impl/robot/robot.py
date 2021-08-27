@@ -13,7 +13,6 @@ from gws_core.resource.resource_data import ResourceData
 
 from ...process.process import Process
 from ...process.process_decorator import ProcessDecorator
-from ...process.process_model import ProcessModel
 from ...processable.processable_factory import ProcessableFactory
 from ...progress_bar.progress_bar import ProgressBar
 from ...protocol.protocol import ProcessableSpec, Protocol
@@ -185,51 +184,27 @@ class RobotAddOnCreate(Process):
         return {'addon': RobotAddOn()}
 
 
-def create_protocol():
-    facto: ProcessModel = ProcessableFactory.create_process_model_from_type(
-        process_type=RobotCreate)
-    move_1: ProcessModel = ProcessableFactory.create_process_model_from_type(
-        process_type=RobotMove)
-    eat_1: ProcessModel = ProcessableFactory.create_process_model_from_type(
-        process_type=RobotEat)
-    move_2: ProcessModel = ProcessableFactory.create_process_model_from_type(
-        process_type=RobotMove)
-    move_3: ProcessModel = ProcessableFactory.create_process_model_from_type(
-        process_type=RobotMove)
-    eat_2: ProcessModel = ProcessableFactory.create_process_model_from_type(
-        process_type=RobotEat)
-    wait_1: ProcessModel = ProcessableFactory.create_process_model_from_type(
-        process_type=RobotWait)
-    fly_1: ProcessModel = ProcessableFactory.create_process_model_from_type(
-        process_type=RobotFly)
+@ProtocolDecorator("RobotSimpleTravel")
+class RobotSimpleTravel(Protocol):
+    def configure_protocol(self, config_params: ConfigParams) -> None:
+        facto: ProcessableSpec = self.add_process(RobotCreate, 'facto')
+        move_1: ProcessableSpec = self.add_process(RobotMove, 'move_1')
+        eat_1: ProcessableSpec = self.add_process(RobotEat, 'eat_1')
+        move_2: ProcessableSpec = self.add_process(RobotMove, 'move_2')
+        move_3: ProcessableSpec = self.add_process(RobotMove, 'move_3')
+        eat_2: ProcessableSpec = self.add_process(RobotEat, 'eat_2')
+        wait_1: ProcessableSpec = self.add_process(RobotWait, 'wait_1')
+        fly_1: ProcessableSpec = self.add_process(RobotFly, 'fly_1')
 
-    proto: ProtocolModel = ProcessableFactory.create_protocol_model_from_data(
-        processes={
-            'facto': facto,
-            'move_1': move_1,
-            'eat_1': eat_1,
-            'move_2': move_2,
-            'move_3': move_3,
-            'eat_2': eat_2,
-            'fly_1': fly_1,
-            'wait_1': wait_1
-        },
-        connectors=[
-            facto >> 'robot' | move_1 << 'robot',
-            move_1 >> 'robot' | eat_1 << 'robot',
-            eat_1 >> 'robot' | wait_1 << 'robot',
-            wait_1 >> 'robot' | move_2 << 'robot',
-            move_2 >> 'robot' | move_3 << 'robot',
-            eat_1 >> 'robot' | eat_2 << 'robot',
-            eat_2 >> 'robot' | fly_1 << 'robot'
-        ],
-        interfaces={},
-        outerfaces={}
-    )
-
-    proto.save()
-
-    return proto
+        self.add_connectors([
+            (facto >> 'robot', move_1 << 'robot'),
+            (move_1 >> 'robot', eat_1 << 'robot'),
+            (eat_1 >> 'robot', wait_1 << 'robot'),
+            (wait_1 >> 'robot', move_2 << 'robot'),
+            (move_2 >> 'robot', move_3 << 'robot'),
+            (eat_1 >> 'robot', eat_2 << 'robot'),
+            (eat_2 >> 'robot', fly_1 << 'robot')
+        ])
 
 
 @ProtocolDecorator("RobotTravelProto")

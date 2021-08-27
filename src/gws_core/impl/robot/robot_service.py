@@ -8,14 +8,15 @@ from ...experiment.experiment_service import ExperimentService
 from ...experiment.queue_service import QueueService
 from ...processable.processable_factory import ProcessableFactory
 from ...protocol.protocol_model import ProtocolModel
-from .robot import RobotWorldTravelProto, create_protocol
+from .robot import RobotSimpleTravel, RobotWorldTravelProto
 
 
 class RobotService(BaseService):
 
     @classmethod
     def run_robot_travel(cls):
-        protocol: ProtocolModel = create_protocol()
+        protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_type(
+            protocol_type=RobotSimpleTravel)
         protocol.save_full()
         experiment = ExperimentService.create_experiment_from_protocol(protocol=protocol,
                                                                        title="The journey of Astro.",
@@ -25,14 +26,14 @@ class RobotService(BaseService):
 
     @classmethod
     def run_robot_super_travel(cls):
-        protocol: ProtocolModel = cls.create_nested_protocol()
+        protocol: ProtocolModel = cls.create_robot_world_travel()
         experiment = ExperimentService.create_experiment_from_protocol(
             protocol=protocol, title="The super journey of Astro.", description="This is the super journey of Astro.")
         QueueService.add_experiment_to_queue(experiment_uri=experiment.uri)
         return experiment
 
     @classmethod
-    def create_nested_protocol(cls) -> ProtocolModel:
+    def create_robot_world_travel(cls) -> ProtocolModel:
         protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_type(
             protocol_type=RobotWorldTravelProto)
         protocol.save_full()
