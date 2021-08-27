@@ -141,7 +141,8 @@ class UserService(BaseService):
     def get_all_users(cls):
         return list(User.select())
 
-        # Create the admin
+    # Create the admin
+    @classmethod
     def create_sysuser(cls):
         """ Create the system user """
         try:

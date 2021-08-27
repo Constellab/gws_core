@@ -3,14 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import importlib
-import inspect
-import os
-from typing import Dict, List, Tuple, Union
+
+from typing import Dict, List, Tuple, Type, Union
 
 from peewee import DatabaseProxy
 
-from ..core.classes.expose import Expose
 from ..core.classes.paginator import Paginator
 from ..core.decorator.transaction import Transaction
 from ..core.dto.rendering_dto import RenderingDTO
@@ -20,7 +17,6 @@ from ..core.exception.exceptions.not_found_exception import NotFoundException
 from ..core.model.model import Model
 from ..core.service.base_service import BaseService
 from ..core.utils.logger import Logger
-from ..core.utils.settings import Settings
 from ..core.utils.utils import Utils
 from ..process.process_model import ProcessModel
 from ..resource.resource_model import ResourceModel
@@ -184,7 +180,7 @@ class ModelService(BaseService):
 
     @classmethod
     def get_model_types(cls):
-        if not getattr(cls,'__model_types', None):
+        if not getattr(cls, '__model_types', None):
             cls.__model_types: List[Type[Model]] = Model.inheritors()
 
         return cls.__model_types
@@ -206,7 +202,7 @@ class ModelService(BaseService):
         return db_list, model_list
 
     # -- I --
-    
+
     # -- R --
 
     @classmethod

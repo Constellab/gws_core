@@ -23,9 +23,6 @@ class TestUser(BaseTest):
         user: User = UserService.get_sysuser()
         self.assertIsNotNone(user.id)
 
-        user: User = UserService.get_owner()
-        self.assertIsNotNone(user.id)
-
     async def test_user_create(self):
         """
         Test the user creation from a json

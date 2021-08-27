@@ -34,8 +34,8 @@ class FileImporter(Process):
         "type": str, "default": "", 'description': "The output file type. If defined, it is used to automatically format data output"}, }
 
     async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
-        inport_name = list(self.input.keys())[0]
-        outport_name = list(self.output.keys())[0]
+        inport_name = list(self.input_specs.keys())[0]
+        outport_name = list(self.output_specs.keys())[0]
         file: File = inputs[inport_name]
 
         model_t: Type[Resource] = None
@@ -79,8 +79,8 @@ class FileExporter(Process):
         else:
             file_store = LocalFileStore.get_default_instance()
 
-        inport_name = list(self.input.keys())[0]
-        outport_name = list(self.output.keys())[0]
+        inport_name = list(self.input_specs.keys())[0]
+        outport_name = list(self.output_specs.keys())[0]
         filename = config.get_param("file_name")
         file_type: Type[File] = self.get_default_output_spec_type("file")
         file: File = file_store.create_file(name=filename, file_type=file_type)
@@ -117,7 +117,7 @@ class FileLoader(Process):
          'description': "The output file type. If defined, it is used to automatically format data output"}, }
 
     async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
-        outport_name = list(self.output.keys())[0]
+        outport_name = list(self.output_specs.keys())[0]
         file_path = config.get_param("file_path")
 
         model_t: Type[Resource] = None
@@ -160,7 +160,7 @@ class FileDumper(Process):
 
     async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         file_path = config.get_param("file_path")
-        inport_name = list(self.input.keys())[0]
+        inport_name = list(self.input_specs.keys())[0]
         resource: Resource = inputs[inport_name]
 
         p = Path(file_path)
