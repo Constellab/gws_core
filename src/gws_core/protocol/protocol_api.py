@@ -42,9 +42,8 @@ async def get_the_list_of_process_grouped(_: UserData = Depends(AuthService.chec
     return ProtocolService.fetch_process_type_tree()
 
 
-@core_app.get("/protocol/{uri}/{typing_name}/progress-bar", tags=["Protocol"], summary="Get the progress bar of a protocol")
+@core_app.get("/protocol/{uri}/progress-bar", tags=["Protocol"], summary="Get the progress bar of a protocol")
 async def get_the_progress_bar_of_a_protocol(uri: str,
-                                             typing_name: Optional[str] = "gws_core.process.process.Process",
                                              _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve a process
@@ -52,8 +51,7 @@ async def get_the_progress_bar_of_a_protocol(uri: str,
     - **uri**: the uri of the process
     """
 
-    pbar = ProcessService.fetch_process_progress_bar(
-        uri=uri, process_typing_name=typing_name)
+    pbar = ProcessService.fetch_process_progress_bar(uri=uri)
     return pbar.to_json()
 
 
@@ -70,10 +68,8 @@ async def get_a_protocol(uri: str,
     return proto.to_json()
 
 
-@core_app.get("/protocol/{typing_name}", tags=["Protocol"], summary="Get the list of protocols")
-async def get_the_list_of_protocols(typing_name: Optional[str] = None,
-                                    experiment_uri: Optional[str] = None,
-                                    page: Optional[int] = 1,
+@core_app.get("/protocol", tags=["Protocol"], summary="Get the list of protocols")
+async def get_the_list_of_protocols(page: Optional[int] = 1,
                                     number_of_items_per_page: Optional[int] = 20,
                                     _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
@@ -87,8 +83,6 @@ async def get_the_list_of_protocols(typing_name: Optional[str] = None,
     """
 
     return ProtocolService.fetch_protocol_list(
-        typing_name=typing_name,
-        experiment_uri=experiment_uri,
         page=page,
         number_of_items_per_page=number_of_items_per_page,
         as_json=True

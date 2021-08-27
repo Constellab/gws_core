@@ -3,16 +3,19 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import json
-from typing import Union
+from typing import List, Union, final
 
-from gws_core.model.typing_register_decorator import TypingDecorator
+from gws_core.config.config_exceptions import MissingConfigsException
 
 from ..core.classes.validator import Validator
 from ..core.exception.exceptions import BadRequestException
+from ..model.typing_register_decorator import TypingDecorator
 from ..model.viewable import Viewable
+from .config_params import ConfigParams
+from .config_spec import ConfigSpecs
 
 
+@final
 @TypingDecorator(unique_name="Config", object_type="GWS_CORE", hide=True)
 class Config(Viewable):
     """
@@ -56,7 +59,7 @@ class Config(Viewable):
 
     # -- A --
 
-    def archive(self, tf: bool) -> bool:
+    def archive(self, archive: bool) -> 'Config':
         """
         Archive the config
 
@@ -66,16 +69,18 @@ class Config(Viewable):
         :rtype: `bool`
         """
 
-        from ..process.process import Process
+        from ..process.process_model import ProcessModel
 
-        some_processes_are_in_invalid_archive_state = Process.select().where(
-            (Process.config == self) & (Process.is_archived == (not tf))
+        # TODO a vérifier, une config peut être utilisé par plusieurs process?
+        some_processes_are_in_invalid_archive_state = ProcessModel.select().where(
+            (ProcessModel.config == self) & (
+                ProcessModel.is_archived == (not archive))
         ).count()
 
         if some_processes_are_in_invalid_archive_state:
-            return False
+            return None
 
-        return super().archive(tf)
+        return super().archive(archive)
 
     # -- C --
 
@@ -100,24 +105,35 @@ class Config(Viewable):
 
     # -- P --
 
-    @property
-    def params(self) -> dict:
+    def get_and_check_params(self) -> ConfigParams:
         """
-        Returns all the parameters
+        Returns all the parameters including default value if not provided
+
+        raises MissingConfigsException: If one or more mandatory params where not provided it raises a MissingConfigsException
 
         :return: The parameters
         :rtype: `dict`
         """
 
-        params = self.data["params"]
-        specs = self.data["specs"]
-        for k in specs:
-            if not k in params:
-                default = specs[k].get("default", None)
-                if default:
-                    params[k] = default
+        params = self.params
+        specs: ConfigSpecs = self.data["specs"]
+        missing_params: List[str] = []
 
-        return params
+        for key in specs:
+            # if the config was not set
+            if not key in params:
+
+                if "default" in specs[key]:
+                    params[key] = specs[key]["default"]
+                else:
+                    # if there is not default value the value is missing
+                    missing_params.append(key)
+
+        # If there is at least one missing param, raise an exception
+        if len(missing_params) > 0:
+            raise MissingConfigsException(missing_params)
+
+        return ConfigParams(params)
 
     def param_exists(self, name: str) -> bool:
         """
@@ -132,6 +148,10 @@ class Config(Viewable):
     # -- R --
 
     # -- S --
+
+    @property
+    def params(self):
+        return self.data["params"]
 
     def set_param(self, name: str, value: Union[str, int, float, bool]):
         """
@@ -192,31 +212,5 @@ class Config(Viewable):
                 "Cannot alter the specs of a saved config")
 
         self.data["specs"] = specs
-
-    # -- T --
-
-    def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
-        """
-        Returns JSON string or dictionnary representation of the model.
-
-        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
-        :type stringify: bool
-        :param prettify: If True, indent the JSON string. Defaults to False.
-        :type prettify: bool
-        :return: The representation
-        :rtype: dict, str
-        """
-
-        _json = super().to_json(shallow=shallow, **kwargs)
-        if shallow:
-            del _json["data"]
-
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
 
     # -- V --

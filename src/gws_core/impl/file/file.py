@@ -2,22 +2,21 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
+from __future__ import annotations
 
-import json
 import mimetypes
 import os
 import shutil
 from pathlib import Path
-
-from gws_core.model.typing_manager import TypingManager
-from peewee import CharField
+from typing import TYPE_CHECKING, Any, Type
 
 from ...core.exception.exceptions import BadRequestException
-from ...core.utils.settings import Settings
 from ...resource.resource import Resource
 from ...resource.resource_decorator import ResourceDecorator
 from ...resource.resource_set import ResourceSet
-from .file_store import FileStore, LocalFileStore
+
+if TYPE_CHECKING:
+    from .file_store import FileStore
 
 
 @ResourceDecorator("File")
@@ -26,19 +25,14 @@ class File(Resource):
     File class
     """
 
-    file_store_uri = CharField(null=True, index=True)
-    path = CharField(null=True, index=True, unique=True)
+    path = str
+    file_store_uri = str
     _mode = "t"
     _table_name = "gws_file"
-    __DOWNLOAD_URL = "https://lab.{}/core-api/file/{}/{}/download"
 
     # -- D --
-
-    def delete_instance(self, *args, **kwargs):
-        with self._db_manager.db.atomic():
-            status = super().delete_instance(*args, **kwargs)
-            if status:
-                shutil.rmtree(self.path)
+    def delete_resource(self,):
+        shutil.rmtree(self.path)
 
     @property
     def dir(self):
@@ -54,25 +48,6 @@ class File(Resource):
         return os.path.exists(self.path)
 
     # -- F --
-
-    @property
-    def file_store(self):
-        if self.file_store_uri:
-            resource: Resource = FileStore.get(
-                FileStore.uri == self.file_store_uri)
-            fs = TypingManager.get_object_with_typing_name(
-                resource.typing_name, resource.id)
-        else:
-            try:
-                fs = LocalFileStore.get_by_id(0)
-            except:
-                # create a default LocalFileStore
-                fs = LocalFileStore()
-                fs.save()
-            self.file_store_uri = fs.uri
-            self.save()
-
-        return fs
 
     # -- I --
 
@@ -106,6 +81,7 @@ class File(Resource):
             fs.add(self)
 
     def move_to_default_store(self):
+        from .file_store import LocalFileStore
         fs = LocalFileStore.get_default_instance()
         if not fs.contains(self):
             fs.add(self)
@@ -157,26 +133,11 @@ class File(Resource):
 
     # -- T --
 
-    def to_json(self, stringify: bool = False, prettify: bool = False, shallow: bool = True, **kwargs):
-        _json = super().to_json(**kwargs)
-        settings = Settings.retrieve()
-        host = settings.data.get("host", "0.0.0.0")
-        vhost = settings.data.get("virtual_host", host)
-        _json["url"] = File.__DOWNLOAD_URL.format(
-            vhost, self.typing_name, self.uri)
+    def to_json(self) -> dict:
+        _json = {}
 
-        if not shallow:
-            if self.is_json():
-                _json["data"]["content"] = json.loads(self.read())
-            else:
-                _json["data"]["content"] = self.read()
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
+        _json["path"] = self.path
+        return _json
 
     # -- W --
 
@@ -187,6 +148,16 @@ class File(Resource):
         m = "a+"+self._mode
         with self.open(m) as fp:
             fp.write(data)
+
+    def get_resource_model_type(cls) -> Type[Any]:
+        """Return the resource model associated with this Resource
+        //!\\ To overwrite only when you know what you are doing
+
+        :return: [description]
+        :rtype: Type[Any]
+        """
+        from .file_resource import FileResource
+        return FileResource
 
     # -- S --
 

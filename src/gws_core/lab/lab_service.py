@@ -14,7 +14,7 @@ class LabService(BaseService):
 
     @classmethod
     def get_lab_monitor_data(cls,
-                             page: int = 1,
+                             page: int = 0,
                              number_of_items_per_page: int = 20,
                              as_json: bool = False) -> Union[Paginator, dict]:
 

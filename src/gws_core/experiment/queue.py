@@ -2,7 +2,7 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-from peewee import BooleanField, ForeignKeyField, IntegerField
+from peewee import BooleanField, ForeignKeyField, IntegerField, ModelSelect
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
@@ -43,7 +43,6 @@ class Queue(Model):
     is_active = BooleanField(default=False)
     max_length = IntegerField(default=10)
     _queue_instance = None
-    # _is_singleton = True
     _table_name = "gws_queue"
     _instance: 'Queue' = None
 
@@ -56,7 +55,11 @@ class Queue(Model):
     @classmethod
     def get_instance(cls) -> 'Queue':
         if cls._instance is None:
-            cls._instance = Queue()
+            query: ModelSelect = Queue.select()
+            if query.count() > 0:
+                cls._instance = query.first()
+            else:
+                cls._instance = Queue()
 
         return cls._instance
 

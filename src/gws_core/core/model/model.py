@@ -7,24 +7,22 @@
 import hashlib
 import importlib
 import json
-import os
-import re
-import shutil
 import traceback
 import uuid
 from datetime import datetime
-from typing import Type, Union
+from typing import List, Type
 
 from fastapi.encoders import jsonable_encoder
+from gws_core.core.decorator.transaction import Transaction
+from gws_core.core.utils.utils import Utils
 from peewee import (AutoField, BigAutoField, BlobField, BooleanField,
-                    CharField, DateField, DateTimeField, Field,
-                    ForeignKeyField, ManyToManyField)
+                    CharField, DateTimeField, Field, ForeignKeyField,
+                    ManyToManyField)
 from peewee import Model as PeeweeModel
 from peewee import ModelSelect
 from playhouse.mysql_ext import Match
 
 from ..db.db_manager import DbManager
-from ..db.kv_store import KVStore
 from ..exception.exceptions import BadRequestException, NotFoundException
 from ..exception.gws_exceptions import GWSException
 from ..model.json_field import JSONField
@@ -76,8 +74,6 @@ class Model(Base, PeeweeModel):
     LAB_URI = None  # todo remove
 
     _data = None
-    _kv_store: KVStore = None
-    _is_singleton = False
     _is_removable = True
     _db_manager = DbManager
     _table_name = 'gws_model'
@@ -88,14 +84,11 @@ class Model(Base, PeeweeModel):
         super().__init__(*args, **kwargs)
         if not Model.LAB_URI:
             Model.LAB_URI = Settings.retrieve().get_data("uri")
-        if not self.id and self._is_singleton:
-            self.__init_singleton_in_place()
 
         if self.uri is None:
             self.uri = str(uuid.uuid4())
             if not self.data:
                 self.data = {}
-        self._kv_store = KVStore(self.get_kv_store_slot_path())
 
     # -- A --
 
@@ -109,7 +102,7 @@ class Model(Base, PeeweeModel):
             # "name": related_model.name
         }
 
-    def archive(self, archive: bool) -> bool:
+    def archive(self, archive: bool) -> 'Model':
         """
         Archive of Unarchive the model
 
@@ -120,58 +113,55 @@ class Model(Base, PeeweeModel):
         """
 
         if self.is_archived == archive:
-            return True
+            return self
         self.is_archived = archive
         cls = type(self)
         return self.save(only=[cls.is_archived])
 
-    # -- B --
-
-    @staticmethod
-    def barefy(data: dict, sort_keys=False):
-        if isinstance(data, dict):
-            data = json.dumps(data, sort_keys=sort_keys)
-        data = re.sub(
-            r"\"(([^\"]*_)?uri|save_datetime|creation_datetime|hash)\"\s*\:\s*\"([^\"]*)\"", r'"\1": ""', data)
-        return json.loads(data)
-
     # -- C --
 
-    def __init_singleton_in_place(self):
-        try:
-            # todo to fix the type
-            cls = type(self)
-            model = cls.get(cls.type == self.full_classname())
-        except Exception as _:
-            model = None
-
-        if model:
-            # /!\ Shallow copy all properties
-            for prop in model.property_names(Field):
-                val = getattr(model, prop)
-                setattr(self, prop, val)
-
     def _create_hash_object(self):
-        h = hashlib.blake2b()
-        h.update(Model.LAB_URI.encode())
+        hash_obj = hashlib.blake2b()
+        hash_obj.update(Model.LAB_URI.encode())
         exclusion_list = (ForeignKeyField, JSONField,
                           ManyToManyField, BlobField, AutoField, BigAutoField, )
+
         for prop in self.property_names(Field, exclude=exclusion_list):
-            if prop in ["id", "hash"]:
-                continue
-            val = getattr(self, prop)
-            h.update(str(val).encode())
+            try:
+                if prop in ["id", "hash"]:
+                    continue
+                val = getattr(self, prop)
+                hash_obj.update(str(val).encode())
+            except Exception as err:
+                Logger.error(f"Erreur during the hash of the field property '{prop}'. Object: '{val}'")
+                raise err
+
         for prop in self.property_names(JSONField):
-            val = getattr(self, prop)
-            h.update(json.dumps(val, sort_keys=True).encode())
+            try:
+                val = getattr(self, prop)
+                hash_obj.update(json.dumps(val, sort_keys=True).encode())
+            except Exception as err:
+                Logger.error(f"Erreur during the hash of the json field property '{prop}'. Object: '{val}'")
+                raise err
+
         for prop in self.property_names(BlobField):
-            val = getattr(self, prop)
-            h.update(val)
+            try:
+                val = getattr(self, prop)
+                hash_obj.update(val)
+            except Exception as err:
+                Logger.error(f"Erreur during the hash of the blob field property '{prop}'. Object: '{val}'")
+                raise err
+
         for prop in self.property_names(ForeignKeyField):
-            val = getattr(self, prop)
-            if isinstance(val, Model):
-                h.update(val.hash.encode())
-        return h
+            try:
+                val = getattr(self, prop)
+                if isinstance(val, Model):
+                    hash_obj.update(val.hash.encode())
+            except Exception as err:
+                Logger.error(f"Erreur during the hash of the foreign key property '{prop}'. Object: '{val}'")
+                raise err
+
+        return hash_obj
 
     def __compute_hash(self):
         hash_object = self._create_hash_object()
@@ -203,10 +193,6 @@ class Model(Base, PeeweeModel):
 
     # -- D --
 
-    def delete_instance(self, *args, **kwargs):
-        self.kv_store.remove()
-        return super().delete_instance(*args, **kwargs)
-
     @classmethod
     def drop_table(cls, *args, **kwargs):
         """
@@ -216,17 +202,11 @@ class Model(Base, PeeweeModel):
         if not cls.table_exists():
             return
 
-        # remove the table's path in one shot
-        slot_path = cls.__get_base_kv_store_path_of_table()
-        path = KVStore._create_full_dir_path(slot_path)
-        if os.path.exists(path):
-            shutil.rmtree(path)
-
         super().drop_table(*args, **kwargs)
 
     # -- E --
 
-    def __eq__(self, other: 'Model') -> bool:
+    def __eq__(self, other: object) -> bool:
         """
         Compares the model with another model. The models are equal if they are
         identical (same handle in memory) or have the same id in the database
@@ -256,7 +236,7 @@ class Model(Base, PeeweeModel):
         :rtype: instance of `gws.db.model.Model`
         """
 
-        model_type: Type[Model] = cls.get_model_type(type_str)
+        model_type: Type[Model] = Utils.get_model_type(type_str)
         if model_type is None:
             return None
         try:
@@ -275,7 +255,7 @@ class Model(Base, PeeweeModel):
             raise BadRequestException(
                 f"The relation {relation_name} does not exists")
         rel: dict = self.data["__relations"][relation_name]
-        model_type: Type[Model] = self.get_model_type(rel["type"])
+        model_type: Type[Model] = Utils.get_model_type(rel["type"])
         return model_type.get(model_type.uri == rel["uri"])
 
     @classmethod
@@ -301,35 +281,6 @@ class Model(Base, PeeweeModel):
         return cls._db_manager
 
     @classmethod
-    def get_model_type(cls, type_str: str = None) -> Type['Model']:
-        """
-        Get the type of a registered model using its litteral type
-
-        :param type: Litteral type (can be a slugyfied string)
-        :type type: str
-        :return: The type if the model is registered, None otherwise
-        :type: `str`
-        """
-
-        if type_str is None:
-            return None
-
-        tab = type_str.split(".")
-        n = len(tab)
-        module_name = ".".join(tab[0:n-1])
-        function_name = tab[n-1]
-        try:
-            module = importlib.import_module(module_name)
-            t = getattr(module, function_name, None)
-        except Exception as err:
-            traceback.print_exc()
-            Logger.error(
-                f"Model get_model_type An error occured. Error: {err}")
-            t = None
-
-        return t
-
-    @classmethod
     def get_by_uri(cls, uri: str) -> 'Model':
         try:
             return cls.get(cls.uri == uri)
@@ -337,7 +288,7 @@ class Model(Base, PeeweeModel):
             return None
 
     @classmethod
-    def get_by_uri_and_check(cls, uri: str) -> str:
+    def get_by_uri_and_check(cls, uri: str) -> 'Model':
         """Get by URI and throw 404 error if object not found
 
         :param uri: [description]
@@ -351,30 +302,6 @@ class Model(Base, PeeweeModel):
             raise NotFoundException(detail=GWSException.OBJECT_URI_NOT_FOUND.value,
                                     unique_code=GWSException.OBJECT_URI_NOT_FOUND.name,
                                     detail_args={"objectName": cls.classname(), "id": uri})
-
-    @classmethod
-    def __get_base_kv_store_path_of_table(cls) -> str:
-        """
-        Returns the base path of the KVStore
-
-        :return: The path of the KVStore
-        :rtype: str
-        """
-
-        return os.path.join(cls.get_table_name())
-
-    def get_kv_store_slot_path(self) -> str:
-        """
-        Returns the KVStore path of the model instance
-
-        :return: The slot path
-        :rtype: str
-        """
-
-        return os.path.join(
-            self.__get_base_kv_store_path_of_table(),
-            self.uri
-        )
 
     # -- H --
 
@@ -413,19 +340,6 @@ class Model(Base, PeeweeModel):
         return bool(self.id)
 
     # -- N --
-
-    # -- K --
-
-    @property
-    def kv_store(self) -> 'KVStore':
-        """
-        Returns the path of the KVStore of the model
-
-        :return: The path of the KVStore
-        :rtype: str
-        """
-
-        return self._kv_store
 
     # -- R --
 
@@ -480,7 +394,7 @@ class Model(Base, PeeweeModel):
         else:
             raise BadRequestException("The data must be a JSONable dictionary")
 
-    def save(self, *args, **kwargs) -> bool:
+    def save(self, *args, **kwargs) -> 'Model':
         """
         Sets the `data`
 
@@ -492,15 +406,13 @@ class Model(Base, PeeweeModel):
         self.save_datetime = datetime.now()
         self.hash = self.__compute_hash()
 
-        try:
-            return super().save(*args, **kwargs)
-        except Exception as err:
-            Logger.error(
-                f"Error while saving the model {self.full_classname()}")
-            raise err
+        super().save(*args, **kwargs)
+
+        return self
 
     @classmethod
-    def save_all(cls, model_list: list = None) -> bool:
+    @Transaction()
+    def save_all(cls, model_list: List['Model'] = None) -> List['Model']:
         """
         Automically and safely save a list of models in the database. If an error occurs
         during the operation, the whole transactions is rolled back.
@@ -510,73 +422,50 @@ class Model(Base, PeeweeModel):
         :return: True if all the model are successfully saved, False otherwise.
         :rtype: bool
         """
-        with cls.get_db_manager().db.atomic() as transaction:
-            try:
-                for model in model_list:
-                    model.save()
-            except Exception as err:
-                transaction.rollback()
-                raise BadRequestException(f"Error message: {err}") from err
+        for model in model_list:
+            model.save()
 
-        return True
+        return model_list
 
     # -- T --
-
-    def to_json(self, *, show_hash=False, bare: bool = False, stringify: bool = False, prettify: bool = False, jsonifiable_data_keys: list = None, **kwargs) -> Union[str, dict]:
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns a JSON string or dictionnary representation of the model.
-
-        :param show_hash: If True, returns the hash. Defaults to False
-        :type show_hash: `bool`
-        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
-        :type stringify: `bool`
-        :param prettify: If True, indent the JSON string. Defaults to False.
-        :type prettify: `bool`
-        :param jsonifiable_data_keys: If is empty, `data` is fully jsonified, otherwise only specified keys are jsonified
-        :type jsonifiable_data_keys: `list` of `str`
         :return: The representation
-        :rtype: `dict`, `str`
+        :rtype: `dict`
         """
 
-        if jsonifiable_data_keys is None:
-            jsonifiable_data_keys = []
-
         _json = {}
-        # jsonifiable_data_keys
-        if not isinstance(jsonifiable_data_keys, list):
-            jsonifiable_data_keys = []
+
         exclusion_list = (ForeignKeyField, ManyToManyField,
                           BlobField, AutoField, BigAutoField)
         for prop in self.property_names(Field, exclude=exclusion_list):
-            if prop in ["id"]:
+            # exclude properties form json
+            if prop in ["id", "hash", "data"]:
                 continue
             if prop.startswith("_"):
                 continue  # -> private or protected property
-            if prop == "data":
-                _json["data"] = {}
-                val = getattr(self, "data")
-                if len(jsonifiable_data_keys) == 0:
-                    _json["data"] = jsonable_encoder(val)
-                else:
-                    for k in jsonifiable_data_keys:
-                        if k in val:
-                            _json["data"][k] = jsonable_encoder(val[k])
-            else:
-                val = getattr(self, prop)
-                _json[prop] = jsonable_encoder(val)
-                if bare:
-                    if prop == "uri" or prop == "hash" or isinstance(val, (datetime, DateTimeField, DateField)):
-                        _json[prop] = ""
 
-        if not show_hash:
-            del _json["hash"]
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
+            val = getattr(self, prop)
+            _json[prop] = jsonable_encoder(val)
+
+        # convert the data to json
+        _json["data"] = self.data_to_json(deep=deep, **kwargs)
+
+        return _json
+
+    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
+        """
+        Returns a JSON string or dictionnary representation of the model data.
+        :return: The representation
+        :rtype: `dict`
+        """
+        _json = {}
+
+        val = getattr(self, "data")
+        _json = jsonable_encoder(val)
+
+        return _json
 
     # -- U --
 

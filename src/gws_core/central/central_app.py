@@ -82,11 +82,7 @@ def activate_user(uri: str, _: UserData = Depends(AuthCentral.check_central_api_
     - **uri**: the user uri
     """
 
-    try:
-        return __convert_user_to_dto(UserService.activate_user(uri))
-    except Exception as err:
-        raise BadRequestException(
-            "Cannot activate the user") from err
+    return __convert_user_to_dto(UserService.activate_user(uri))
 
 
 @central_app.get("/user/{uri}/deactivate", tags=["User management"])
@@ -97,11 +93,7 @@ def deactivate_user(uri: str, _: UserData = Depends(AuthCentral.check_central_ap
     - **uri**: the user uri
     """
 
-    try:
-        return __convert_user_to_dto(UserService.deactivate_user(uri))
-    except Exception as err:
-        raise BadRequestException(
-            "Cannot deactivate the user.") from err
+    return __convert_user_to_dto(UserService.deactivate_user(uri))
 
 
 @central_app.get("/user/{uri}", tags=["User management"])
@@ -112,11 +104,7 @@ def get_user(uri: str, _: UserData = Depends(AuthCentral.check_central_api_key))
     - **uri**: the user uri
     """
 
-    try:
-        return __convert_user_to_dto(UserService.get_user_by_uri(uri))
-    except Exception as err:
-        raise NotFoundException(
-            "Cannot get the user.") from err
+    return __convert_user_to_dto(UserService.get_user_by_uri(uri))
 
 
 @central_app.post("/user", tags=["User management"])
@@ -132,11 +120,7 @@ def create_user(user: UserData, _: UserData = Depends(AuthCentral.check_central_
     - **last_name**: The last name
     """
 
-    try:
-        return __convert_user_to_dto(UserService.create_user(user.dict()))
-    except Exception as err:
-        raise BadRequestException(
-            "Cannot create the user.") from err
+    return __convert_user_to_dto(UserService.create_user(user.dict()))
 
 
 @central_app.get("/user", tags=["User management"])
@@ -144,19 +128,16 @@ def get_users(_: UserData = Depends(AuthCentral.check_central_api_key)):
     """
     Get the all the users. Require central privilege.
     """
-    try:
-        HTTPHelper.is_http_context()
-        return __convert_users_to_dto(UserService.get_all_users())
-    except Exception as err:
-        raise NotFoundException(
-            "Cannot get the users.") from err
+    HTTPHelper.is_http_context()
+    return __convert_users_to_dto(UserService.get_all_users())
 
 
 @central_app.get("/db/{db_name}/dump", tags=["DB management"])
 def dump_db(db_name: str, _: UserData = Depends(AuthCentral.check_central_api_key)):
     output_file = MySQLService.dump_db(db_name)
-    file = File(path=output_file)
+    file = File()
     file.move_to_default_store()
+    file.path = output_file
     return file.to_json()
 
 

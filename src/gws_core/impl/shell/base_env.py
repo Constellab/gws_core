@@ -4,12 +4,14 @@
 # About us: https://gencovery.com
 
 import os
-import subprocess
-import tempfile
 
-from ...core.exception.exceptions import BadRequestException
-from ...core.model.sys_proc import SysProc
+from gws_core.config.config_params import ConfigParams
+from gws_core.process.process_io import ProcessIO
+
+from ...config.config import Config
+from ...io.io import Input, Output
 from ...process.process_decorator import ProcessDecorator
+from ...progress_bar.progress_bar import ProgressBar
 from .shell import Shell
 
 
@@ -77,14 +79,14 @@ class BaseEnvShell(Shell):
 
     # -- T --
 
-    async def task(self):
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         """
         Task entrypoint
         """
 
         if not self.is_installed():
             self.install()
-        return await super().task()
+        return await super().task(config=config, inputs=inputs, progress_bar=progress_bar)
 
     # -- U --
 

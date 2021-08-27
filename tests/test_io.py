@@ -5,8 +5,9 @@
 
 import unittest
 
-from gws_core import (Connector, GTest, Process, ProcessDecorator, Resource,
-                      ResourceDecorator)
+from gws_core import (ConfigParams, Connector, GTest, Process,
+                      ProcessableFactory, ProcessDecorator, ProcessIO,
+                      ProcessModel, ProgressBar, Resource, ResourceDecorator)
 
 
 @ResourceDecorator("Person")
@@ -25,7 +26,7 @@ class Create(Process):
     output_specs = {'create_person_out': Person}
     config_specs = {}
 
-    async def task(self):
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         return
 
 
@@ -35,7 +36,7 @@ class Move(Process):
     output_specs = {'move_person_out': Person}
     config_specs = {}
 
-    async def task(self):
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         return
 
 
@@ -45,18 +46,18 @@ class Drive(Process):
     output_specs = {'move_drive_out': Car}
     config_specs = {}
 
-    async def task(self):
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         return
 
 
 @ProcessDecorator("Jump")
 class Jump(Process):
     input_specs = {'jump_person_in_1': Person,
-                   'jump_person_in_2': Person, 'jump_person_in_2': Person}
+                   'jump_person_in_2': Person}
     output_specs = {'jump_person_out': Person}
     config_specs = {}
 
-    async def task(self):
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         return
 
 
@@ -75,9 +76,12 @@ class TestIO(unittest.TestCase):
     def test_connect(self):
         GTest.print("IO connect")
 
-        p0 = Create(instance_name="p0")
-        p1 = Move(instance_name="p1")
-        p2 = Move(instance_name="p2")
+        p0: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=Create, instance_name="p0")
+        p1: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=Move, instance_name="p1")
+        p2: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=Move, instance_name="p2")
 
         # create a chain
         port_connect = p0.out_port(
@@ -93,7 +97,8 @@ class TestIO(unittest.TestCase):
         self.assertIsInstance(port_connect, Connector)
 
         # assert error
-        p3 = Drive(instance_name="p3")
+        p3: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=Drive, instance_name="p3")
         self.assertRaises(Exception, p2.out_port(
             'move_person_out').pipe,  p3.in_port('move_drive_in'))
 
@@ -106,7 +111,8 @@ class TestIO(unittest.TestCase):
     def test_iterator(self):
         GTest.print("IO Iterator")
 
-        jump = Jump(instance_name="p3")
+        jump: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=Jump, instance_name="p3")
         for k in jump.input:
             print(k)
             print(jump.input[k])

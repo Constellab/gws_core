@@ -36,7 +36,7 @@ async def health_check() -> bool:
 
 class ProcessData(BaseModel):
     uri: str
-    type: str = "gws_core.process.process.Process"
+    type: str = "gws_core.process.process_model.Process"
     title: str = None
     instance_name: str
     config_specs: dict = {}

@@ -5,16 +5,15 @@
 
 from typing import List, Type, Union
 
-from gws_core.model.typing_manager import TypingManager
-from gws_core.protocol.protocol_type import ProtocolType
-
 from ..core.classes.paginator import Paginator
 from ..core.dto.typed_tree_dto import TypedTree
 from ..core.exception.exceptions import NotFoundException
 from ..core.service.base_service import BaseService
 from ..experiment.experiment import Experiment
+from ..process.processable_factory import ProcessableFactory
 from ..progress_bar.progress_bar import ProgressBar
-from .process import CONST_PROCESS_TYPING_NAME, Process
+from .process import Process
+from .process_model import ProcessModel
 from .process_type import ProcessType
 
 
@@ -23,61 +22,50 @@ class ProcessService(BaseService):
     # -- F --
 
     @classmethod
-    def fetch_process(cls, typing_name: str = CONST_PROCESS_TYPING_NAME, uri: str = "") -> Process:
-        return TypingManager.get_object_with_typing_name_and_uri(typing_name, uri)
+    def get_process_by_uri(cls, uri: str) -> ProcessModel:
+        return ProcessModel.get_by_uri(uri=uri)
 
     @classmethod
-    def fetch_process_progress_bar(cls, process_typing_name: str = CONST_PROCESS_TYPING_NAME, uri: str = "") -> ProgressBar:
+    def fetch_process_progress_bar(cls, uri: str) -> ProgressBar:
         try:
-            return ProgressBar.get_by_process_typing_name_and_process_uri(process_typing_name, uri)
+            return ProgressBar.get_by_process_uri(uri)
         except Exception:
             raise NotFoundException(
-                detail=f"No progress bar found with process_uri '{uri}' and process_type '{process_typing_name}'")
+                detail=f"No progress bar found with process_uri '{uri}'")
 
     @classmethod
     def fetch_process_list(cls,
-                           typing_name=CONST_PROCESS_TYPING_NAME,
                            experiment_uri: str = None,
-                           page: int = 1,
+                           page: int = 0,
                            number_of_items_per_page: int = 20,
-                           as_json=False) -> Union[Paginator, List[Process], List[dict]]:
-        model_type: Type[Process] = TypingManager.get_type_from_name(
-            typing_name)
+                           as_json=False) -> Union[Paginator, List[ProcessModel], List[dict]]:
 
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
 
-        if model_type is Process:
-            query = model_type.select_me().order_by(model_type.creation_datetime.desc())
-        else:
-            query = model_type.select_me().order_by(model_type.creation_datetime.desc())
+        query = ProcessModel.select().order_by(ProcessModel.creation_datetime.desc())
 
         if experiment_uri:
-            query = query.join(Experiment, on=(model_type.experiment_id == Experiment.id))\
+            query = query.join(Experiment, on=(ProcessModel.experiment_id == Experiment.id))\
                 .where(Experiment.uri == experiment_uri)
         paginator = Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
         if as_json:
-            return paginator.to_json(shallow=True)
+            return paginator.to_json()
         else:
             return paginator
 
     @classmethod
     def fetch_process_type_list(cls,
-                                page: int = 1,
-                                number_of_items_per_page: int = 20,
-                                as_json=False) -> Union[Paginator, dict]:
+                                page: int = 0,
+                                number_of_items_per_page: int = 20) -> Paginator[ProcessType]:
 
         query = ProcessType.get_types()
 
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
-        paginator = Paginator(
+        return Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
-        if as_json:
-            return paginator.to_json(shallow=True)
-        else:
-            return paginator
 
     @classmethod
     def fetch_process_type_tree(cls) -> List[TypedTree]:
@@ -85,7 +73,7 @@ class ProcessService(BaseService):
         Return all the process types grouped by module and submodules
         """
 
-        query = ProcessType.get_types()
+        query: List[ProcessType] = ProcessType.get_types()
 
         # create a fake main group to add processes in it
         tree: TypedTree = TypedTree('')
@@ -95,3 +83,12 @@ class ProcessService(BaseService):
                 process_type.get_model_types_array(), process_type.to_json())
 
         return tree.sub_trees
+
+    @classmethod
+    def create_process_from_type(cls, process_type: Type[Process], instance_name: str = None) -> ProcessModel:
+        process: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=process_type, instance_name=instance_name)
+
+        process.save_full()
+
+        return process

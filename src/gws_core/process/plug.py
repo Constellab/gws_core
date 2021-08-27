@@ -6,8 +6,15 @@
 import time
 from typing import Type
 
+from gws_core.config.config_params import ConfigParams
+from gws_core.core.utils.utils import Utils
+from gws_core.process.process_io import ProcessIO
+from gws_core.resource.resource import Resource
+
+from ..config.config import Config
 from ..core.model.model import Model
-from ..resource.resource import Resource
+from ..io.io import Input
+from ..progress_bar.progress_bar import ProgressBar
 from .process import Process
 from .process_decorator import ProcessDecorator
 
@@ -29,14 +36,14 @@ class Source(Process):
 
     _is_plug = True
 
-    async def task(self):
-        r_uri = self.get_param("resource_uri")
-        r_type = self.get_param("resource_type")
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
+        r_uri = config.get_param("resource_uri")
+        r_type = config.get_param("resource_type")
         if not r_uri or not r_type:
             return
-        model_type: Type[Model] = self.get_model_type(r_type)
+        model_type: Type[Model] = Utils.get_model_type(r_type)
         resource = model_type.get(model_type.uri == r_uri)
-        self.output["resource"] = resource
+        return {"resource": resource}
 
 
 @ProcessDecorator("Sink")
@@ -52,7 +59,7 @@ class Sink(Process):
     config_specs = {}
     _is_plug = True
 
-    async def task(self):
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
         pass
 
 
@@ -70,24 +77,23 @@ class FIFO2(Process):
     config_specs = {}
     _is_plug = True
 
-    def check_before_task(self):
-        res_1 = self.input['resource_1']
-        res_2 = self.input['resource_2']
+    def check_before_task(self, config: Config, inputs: Input) -> bool:
+        res_1 = inputs['resource_1']
+        res_2 = inputs['resource_2']
         is_ready = res_1 or res_2
         if not is_ready:
             return False
 
         return True
 
-    async def task(self):
-        resource = self.input["resource_1"]
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
+        resource = inputs["resource_1"]
         if resource:
-            self.output["resource"] = resource
-            return
+            return {"resource": resource}
 
-        resource = self.input["resource_2"]
+        resource = inputs["resource_2"]
         if resource:
-            self.output["resource"] = resource
+            return {"resource": resource}
 
 
 @ProcessDecorator("Switch2")
@@ -101,15 +107,14 @@ class Switch2(Process):
     input_specs = {'resource_1': (
         Resource, None, ), 'resource_2': (Resource, None, )}
     output_specs = {'resource': (Resource, )}
-    config_specs = {
-        "index": {"type": int, "default": 1, "min": 1, "max": 2, "Description": "The index of the input resource to switch on. Defaults to 1."}
-    }
+    config_specs = {"index": {"type": int, "default": 1, "min": 1, "max": 2,
+                              "Description": "The index of the input resource to switch on. Defaults to 1."}}
     _is_plug = True
 
-    async def task(self):
-        index = self.get_param("index")
-        resource = self.input[f"resource_{index}"]
-        self.output["resource"] = resource
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
+        index = config.get_param("index")
+        resource = inputs[f"resource_{index}"]
+        return {"resource": resource}
 
 
 @ProcessDecorator("Wait")
@@ -122,13 +127,12 @@ class Wait(Process):
 
     input_specs = {'resource': (Resource,)}
     output_specs = {'resource': (Resource,)}
-    config_specs = {
-        "waiting_time": {"type": float, "default": 3, "min": 0, "Description": "The waiting time in seconds. Defaults to 3 second."}
-    }
+    config_specs = {"waiting_time": {"type": float, "default": 3, "min": 0,
+                                     "Description": "The waiting time in seconds. Defaults to 3 second."}}
     _is_plug = True
 
-    async def task(self):
-        waiting_time = self.get_param("waiting_time")
+    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
+        waiting_time = config.get_param("waiting_time")
         time.sleep(waiting_time)
-        resource = self.input["resource"]
-        self.output["resource"] = resource
+        resource = inputs["resource"]
+        return {"resource": resource}

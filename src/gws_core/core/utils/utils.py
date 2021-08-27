@@ -2,18 +2,18 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-
-import re
+import importlib
 import inspect
 import os
 import random
+import re
 import string
-import importlib
 from typing import Any, List, Type
+
 from slugify import slugify as _slugify
 
-from ...core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from ..exception.exceptions.bad_request_exception import BadRequestException
+
 
 class Utils:
 
@@ -94,7 +94,7 @@ class Utils:
     def import_all_modules():
         brick_paths: List[str] = Utils.get_all_brick_paths()
         for path in brick_paths:
-            _, files = Utils.walk_dir( os.path.join(path,"src"))
+            _, files = Utils.walk_dir(os.path.join(path, "src"))
             for py_file in files:
                 parts = py_file.split("/src/")[-1].split("/")
                 parts[-1] = os.path.splitext(parts[-1])[0]  # remove .py extension
@@ -103,7 +103,7 @@ class Utils:
                     importlib.import_module(module_name)
                 except Exception as err:
                     raise BadRequestException(f"Cannot import module {module_name}.") from err
-                
+
     # -- S --
 
     @staticmethod
@@ -151,7 +151,7 @@ class Utils:
         files = []
         reg = re.compile(r"^[a-zA-Z].*\.py$")
 
-        def is_valid_dir(d)->bool:
+        def is_valid_dir(d) -> bool:
             return not d.startswith("_") and not "/_" in d
 
         for root, subdirs, subfiles in os.walk(path):
@@ -160,7 +160,28 @@ class Utils:
             # gather dirs
             for f in subfiles:
                 if reg.match(f):
-                    files = [ *files, os.path.join(root,f) ]
+                    files = [*files, os.path.join(root, f)]
 
             dirs = [*dirs, root]
         return dirs, files
+
+    @classmethod
+    def get_model_type(cls, type_str: str = None) -> Type[Any]:
+        """
+        Get the type of a registered model using its litteral type
+
+        :param type: Litteral type (can be a slugyfied string)
+        :type type: str
+        :return: The type if the model is registered, None otherwise
+        :type: `str`
+        """
+
+        if type_str is None:
+            return None
+
+        tab = type_str.split(".")
+        length = len(tab)
+        module_name = ".".join(tab[0:length-1])
+        function_name = tab[length-1]
+        module = importlib.import_module(module_name)
+        return getattr(module, function_name, None)

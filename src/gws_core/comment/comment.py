@@ -3,8 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import json
-from typing import Union
+from typing import final
 
 from peewee import CharField, ForeignKeyField
 
@@ -12,6 +11,7 @@ from ..core.model.model import Model
 from ..model.typing_register_decorator import TypingDecorator
 
 
+@final
 @TypingDecorator(unique_name="Comment", object_type="GWS_CORE", hide=True)
 class Comment(Model):
     """
@@ -49,7 +49,7 @@ class Comment(Model):
 
     # -- T --
 
-    def to_json(self, *, shallow=False, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns JSON string or dictionnary representation of the comment.
 
@@ -61,7 +61,7 @@ class Comment(Model):
         :rtype: dict, str
         """
 
-        _json = super().to_json(shallow=shallow, **kwargs)
+        _json = super().to_json(deep=deep, **kwargs)
         _json["object"] = {
             "uri": self.object_uri,
             "type": self.object_typing_name
@@ -72,13 +72,7 @@ class Comment(Model):
         del _json["object_uri"]
         del _json["object_typing_name"]
 
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
+        return _json
 
     class Meta:
         indexes = (

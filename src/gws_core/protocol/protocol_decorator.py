@@ -1,12 +1,11 @@
-from enum import Enum
 from typing import Callable, Type
 
 from ..model.typing_register_decorator import register_typing_class
-from ..process.process import PrrocessAllowedUser
-from .protocol import Protocol
+from ..protocol.protocol import Protocol
+from ..user.user_group import UserGroup
 
 
-def ProtocolDecorator(unique_name: str, allowed_user: PrrocessAllowedUser = PrrocessAllowedUser.ALL,
+def ProtocolDecorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER,
                       human_name: str = "", short_description: str = "", hide: bool = False) -> Callable:
     """ Decorator to be placed on all the protocols. A protocol not decorated will not be runnable.
     It define static information about the protocol
@@ -30,7 +29,7 @@ def ProtocolDecorator(unique_name: str, allowed_user: PrrocessAllowedUser = Prro
     def decorator(protocol_class: Type[Protocol]):
         if not issubclass(protocol_class, Protocol):
             raise Exception(
-                f"The ProtocolDecorator is used on the class: {protocol_class.__name} and this class is not a sub class of Protocol")
+                f"The ProtocolDecorator is used on the class: {protocol_class.__name__} and this class is not a sub class of Protocol")
 
         register_typing_class(object_class=protocol_class, object_type="PROTOCOL", unique_name=unique_name,
                               human_name=human_name, short_description=short_description, hide=hide)

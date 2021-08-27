@@ -8,6 +8,7 @@ import subprocess
 import traceback
 from typing import Any, Coroutine, Union
 
+from gws_core.protocol.protocol_service import ProtocolService
 from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
@@ -17,8 +18,8 @@ from ..core.service.base_service import BaseService
 from ..core.utils.http_helper import HTTPHelper
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
-from ..process.process import Process
-from ..protocol.protocol import Protocol
+from ..process.process_model import ProcessModel
+from ..protocol.protocol_model import ProtocolModel
 from ..study.study import Study
 from ..user.activity import Activity
 from ..user.activity_service import ActivityService
@@ -34,71 +35,57 @@ class ExperimentService(BaseService):
 
     @classmethod
     def create_empty_experiment(cls, experimentDTO: ExperimentDTO) -> Experiment:
-        try:
-            study = Study.get_default_instance()
-            proto = Protocol()
-            experiment = Experiment(protocol=proto, study=study,
-                                    user=CurrentUserService.get_and_check_current_user())
-
-            if experimentDTO.title:
-                experiment.set_title(experimentDTO.title)
-
-            if experimentDTO.description:
-                experiment.set_description(experimentDTO.description)
-
-            experiment.save()
-            return experiment
-        except Exception as err:
-            raise BadRequestException(
-                detail="Cannot create the experiment.") from err
+        return cls.create_experiment_from_protocol(protocol=ProtocolModel(), title=experimentDTO.title,
+                                                   description=experimentDTO.description)
 
     @classmethod
-    def create_experiment_from_process(cls, process: Process, title: str = "", description: str = "") -> Experiment:
-        proto = Protocol(processes={process.instance_name: process})
+    def create_experiment_from_process(
+            cls, process: ProcessModel, title: str = "", description: str = "") -> Experiment:
+        proto = ProtocolService.create_protocol_from_process(process=process)
 
         return cls.create_experiment_from_protocol(protocol=proto, title=title, description=description)
 
     @classmethod
-    def create_experiment_from_protocol(cls, protocol: Protocol, title: str = "", description: str = "") -> Experiment:
-        experiment = Experiment(protocol=protocol, study=Study.get_default_instance(),
-                                user=CurrentUserService.get_and_check_current_user())
+    def create_experiment_from_protocol(
+            cls, protocol: ProtocolModel, title: str = "", description: str = "") -> Experiment:
+        experiment = Experiment()
 
         experiment.set_title(title)
         experiment.set_description(description)
-        experiment.save()
+        experiment.study = Study.get_default_instance()
+        experiment.created_by = CurrentUserService.get_and_check_current_user()
+
+        experiment = experiment.save()
+
+        # Set the experiment for the protocol and childs and save them
+        protocol.set_experiment(experiment)
+        protocol.save_full()
         return experiment
 
     # -- F --
 
     @classmethod
-    def fetch_experiment(cls, uri=None) -> Union[Experiment, dict]:
-        try:
-            e = Experiment.get(Experiment.uri == uri)
-        except Exception as err:
-            raise NotFoundException(
-                detail=f"No experiment found with uri '{uri}'") from err
-
-        return e
+    def get_experiment_by_uri(cls, uri: str) -> Union[Experiment, dict]:
+        return Experiment.get_by_uri_and_check(uri)
 
     @classmethod
     def fetch_experiment_list(cls,
-                              page: int = 1,
-                              number_of_items_per_page: int = 20) -> Paginator:
+                              page: int = 0,
+                              number_of_items_per_page: int = 20) -> Paginator[Experiment]:
 
         number_of_items_per_page = cls.get_number_of_item_per_page(
             number_of_items_per_page)
 
         query = Experiment.select().order_by(Experiment.creation_datetime.desc())
 
-        paginator = Paginator(
+        paginator: Paginator[Experiment] = Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
-
         return paginator
 
     @classmethod
     def search(cls,
                search_text: str,
-               page: int = 1,
+               page: int = 0,
                number_of_items_per_page: int = 20,
                as_json: bool = False) -> Paginator:
 
@@ -109,7 +96,7 @@ class ExperimentService(BaseService):
         result = []
         for o in query:
             if as_json:
-                result.append(o.get_related().to_json(shallow=True))
+                result.append(o.get_related().to_json())
             else:
                 result.append(o.get_related())
 
@@ -117,7 +104,7 @@ class ExperimentService(BaseService):
             query, page=page, number_of_items_per_page=number_of_items_per_page)
         return {
             'data': result,
-            'paginator': paginator.paginator_dict()
+            'paginator': paginator._get_paginated_info()
         }
 
     # -- S --
@@ -179,30 +166,24 @@ class ExperimentService(BaseService):
 
     # -- U --
 
+    # TODO A TESTER ABSOLUMENT
     @classmethod
-    def update_experiment(cls, uri, experiment: ExperimentDTO) -> Experiment:
-        try:
-            experiment = Experiment.get(Experiment.uri == uri)
-            if not experiment.is_draft:
-                raise BadRequestException(
-                    detail=f"Experiment '{uri}' is not a draft")
+    def update_experiment(cls, uri, experiment_DTO: ExperimentDTO) -> Experiment:
+        experiment: Experiment = Experiment.get_by_uri_and_check(uri)
 
-            if experiment.graph:
-                proto = experiment.protocol
-                proto._build_from_dump(graph=experiment.graph, rebuild=True)
-                proto.save()
+        experiment.check_is_updatable()
 
-            if experiment.title:
-                experiment.set_title(experiment.title)
+        if experiment_DTO.graph:
+            ProtocolService.update_protocol_graph(protocol=experiment.protocol, graph=experiment_DTO.graph)
 
-            if experiment.description:
-                experiment.set_description(experiment.description)
+        if experiment_DTO.title:
+            experiment.set_title(experiment_DTO.title)
 
-            experiment.save()
-            return experiment
-        except Exception as err:
-            raise BadRequestException(
-                detail="Cannot update experiment") from err
+        if experiment_DTO.description:
+            experiment.set_description(experiment_DTO.description)
+
+        experiment.save()
+        return experiment
 
     # -- V --
 

@@ -3,15 +3,16 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import json
-from typing import Union
+from typing import final
 
 from peewee import BooleanField, CharField
 
+from ..core.classes.enum_field import EnumField
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
 from ..core.utils.utils import Utils
 from ..model.typing_register_decorator import TypingDecorator
+from ..user.user_group import UserGroup
 
 # ####################################################################
 #
@@ -19,6 +20,8 @@ from ..model.typing_register_decorator import TypingDecorator
 #
 # ####################################################################
 
+
+@final
 @TypingDecorator(unique_name="User", object_type="GWS_CORE", hide=True)
 class User(Model):
     """
@@ -40,19 +43,15 @@ class User(Model):
     :type is_console_authenticated: `bool`
     """
 
-    email = CharField(default=False, index=True)
-    group = CharField(default="user", index=True)
+    email: str = CharField(default=False, index=True)
+    first_name: str = CharField(default=False, index=True)
+    last_name: str = CharField(default=False, index=True)
+    group: UserGroup = EnumField(choices=UserGroup,
+                                 default=UserGroup.USER)
     is_active = BooleanField(default=True)
     console_token = CharField(default="")
     is_http_authenticated = BooleanField(default=False)
     is_console_authenticated = BooleanField(default=False)
-
-    SYSUSER_GROUP = "sysuser"  # privilege 0 (highest)
-    ADMIN_GROUP = "admin"      # privilege 1
-    OWNER_GROUP = "owner"      # privilege 2
-    USER_GOUP = "user"         # privilege 3
-
-    VALID_GROUPS = [USER_GOUP, ADMIN_GROUP, OWNER_GROUP, SYSUSER_GROUP]
 
     _is_removable = False
     _table_name = 'gws_user'
@@ -64,26 +63,26 @@ class User(Model):
 
     # -- A --
 
-    def archive(self, archive: bool) -> bool:
+    def archive(self, archive: bool) -> None:
         """
         Archive method. This method is deactivated. Always returns False.
         """
 
-        return False
+        return None
 
     # -- G --
 
     @classmethod
     def get_admin(cls):
-        return User.get(User.group == cls.ADMIN_GROUP)
+        return User.get(User.group == UserGroup.ADMIN)
 
     @classmethod
     def get_owner(cls):
-        return User.get(User.group == cls.OWNER_GROUP)
+        return User.get(User.group == UserGroup.OWNER)
 
     @classmethod
     def get_sysuser(cls):
-        return User.get(User.group == cls.SYSUSER_GROUP)
+        return User.get(User.group == UserGroup.SYSUSER)
 
     @classmethod
     def get_by_email(cls, email: str) -> 'User':
@@ -92,45 +91,40 @@ class User(Model):
     # -- F --
 
     @property
-    def first_name(self):
-        return self.data.get("first_name", "")
-
-    @property
     def full_name(self):
-        first_name = self.data.get("first_name", "")
-        last_name = self.data.get("last_name", "")
-        return " ".join([first_name, last_name]).strip()
+        return " ".join([self.first_name, self.last_name]).strip()
 
     # -- I --
 
     @property
     def is_admin(self):
-        return self.group == self.ADMIN_GROUP
+        return self.group == UserGroup.ADMIN
 
     @property
     def is_owner(self):
-        return self.group == self.OWNER_GROUP
+        return self.group == UserGroup.OWNER
 
     @property
     def is_sysuser(self):
-        return self.group == self.SYSUSER_GROUP
+        return self.group == UserGroup.SYSUSER
 
     @property
     def is_authenticated(self):
         # get fresh data from DB
-        user = User.get_by_id(self.id)
+        user: User = User.get_by_id(self.id)
         return user.is_http_authenticated or user.is_console_authenticated
 
     # -- L --
 
-    @property
-    def last_name(self):
-        return self.data.get("last_name", "")
+    def has_access(self, group: UserGroup) -> bool:
+        """return true if the user group is equal or higher than the group
+        """
+        return self.group <= group
 
     # -- S --
 
-    def save(self, *arg, **kwargs):
-        if not self.group in self.VALID_GROUPS:
+    def save(self, *arg, **kwargs) -> 'User':
+        if not UserGroup.has_value(self.group):
             raise BadRequestException("Invalid user group")
         if self.is_owner or self.is_admin or self.is_sysuser:
             if not self.is_active:
@@ -140,7 +134,7 @@ class User(Model):
 
     # -- T --
 
-    def to_json(self, *args, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[dict, str]:
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns a JSON string or dictionnary representation of the user.
 
@@ -152,14 +146,9 @@ class User(Model):
         :rtype: `dict`, `str`
         """
 
-        _json = super().to_json(*args, **kwargs)
+        _json = super().to_json(deep=deep, **kwargs)
         del _json["console_token"]
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
+
+        return _json
 
     # -- U --

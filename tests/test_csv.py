@@ -4,38 +4,31 @@
 # About us: https://gencovery.com
 
 import os
-from unittest import IsolatedAsyncioTestCase
 
 import pandas
 from gws_core import (CSVDumper, CSVExporter, CSVImporter, CSVLoader, CSVTable,
-                      Experiment, ExperimentService, GTest, Protocol, Settings,
-                      Study)
+                      Experiment, ExperimentService, File, GTest,
+                      ProcessableFactory, ProcessModel, ProtocolModel,
+                      ProtocolService, Settings, Study)
+
+from tests.base_test import BaseTest
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 
-class TestCSV(IsolatedAsyncioTestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        GTest.drop_tables()
-        GTest.create_tables()
-        GTest.init()
-
-    @classmethod
-    def tearDownClass(cls):
-        GTest.drop_tables()
+class TestCSV(BaseTest):
 
     def test_csv_data(self):
         GTest.print("CSVData")
 
-        d = CSVTable(table=[[1, 2, 3]], column_names=["a", "b", "c"])
-        print(d.table)
+        csv_table: CSVTable = CSVTable()
+        csv_table.set_data(table=[[1, 2, 3]], column_names=["a", "b", "c"])
+        print(csv_table.table)
 
-        d = CSVTable(table=[1, 2, 3], column_names=[
-                     "data"], row_names=["a", "b", "c"])
-        print(d.table)
+        csv_table.set_data(table=[1, 2, 3], column_names=[
+            "data"], row_names=["a", "b", "c"])
+        print(csv_table.table)
 
     def test_csv_data_load(self):
         GTest.print("CSVData load")
@@ -44,7 +37,7 @@ class TestCSV(IsolatedAsyncioTestCase):
         study.save()
 
         file = os.path.join(testdata_dir, "data.csv")
-        csv_data = CSVTable._import(file)
+        csv_data = CSVTable.import_resource(file)
 
         df = pandas.read_table(file)
 
@@ -61,13 +54,17 @@ class TestCSV(IsolatedAsyncioTestCase):
         i_file_path = os.path.join(testdata_dir, "data.csv")
         o_file_path = os.path.join(testdata_dir, "data_out.csv")
 
-        loader = CSVLoader()
-        dumper = CSVDumper()
+        loader: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            CSVLoader)
+        dumper: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            CSVDumper)
 
-        importer = CSVImporter()
-        exporter = CSVExporter()
+        importer: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            CSVImporter)
+        exporter: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            CSVExporter)
 
-        proto = Protocol(
+        proto: ProtocolModel = ProtocolService.create_protocol_from_data(
             processes={
                 "loader": loader,
                 "dumper": dumper,
@@ -99,7 +96,12 @@ class TestCSV(IsolatedAsyncioTestCase):
 
         print("Test CSV import/export")
 
-        csv_data = loader.output["data"]
+        # refresh the processes
+        importer = experiment.protocol.get_process("importer")
+        loader = experiment.protocol.get_process("loader")
+        dumper = experiment.protocol.get_process("dumper")
+        exporter = experiment.protocol.get_process("exporter")
+        csv_data: CSVTable = loader.output["data"].get_resource()
 
         i_df = pandas.read_table(i_file_path)
         o_df = pandas.read_table(o_file_path)
@@ -111,8 +113,8 @@ class TestCSV(IsolatedAsyncioTestCase):
             os.unlink(o_file_path)
         self.assertFalse(os.path.exists(o_file_path))
 
-        file = exporter.output["file"]
+        file: File = exporter.output["file"]
         self.assertTrue(os.path.exists(file.path))
 
-        o_csv_data = importer.output["data"]
+        o_csv_data: CSVTable = importer.output["data"].get_resource()
         self.assertTrue(csv_data.table.equals(o_csv_data.table))

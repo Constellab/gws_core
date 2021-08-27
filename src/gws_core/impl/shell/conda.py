@@ -73,7 +73,8 @@ class CondaEnvShell(BaseEnvShell):
             return
         if isinstance(cls.env_file_path, str):
             if not os.path.exists(cls.env_file_path):
-                raise BadRequestException(f"The dependency file '{cls.env_file_path}' does not exist")
+                raise BadRequestException(
+                    f"The dependency file '{cls.env_file_path}' does not exist")
         else:
             raise BadRequestException("Invalid env file path")
         cmd = [
@@ -82,16 +83,19 @@ class CondaEnvShell(BaseEnvShell):
             "touch READY",
         ]
         try:
-            ProgressBar.add_message_to_current("Installing the virtual environment ...")
+            ProgressBar.add_message_to_current(
+                "Installing the virtual environment ...")
             subprocess.check_call(
                 " ".join(cmd),
                 cwd=cls.get_env_dir(),
                 stderr=subprocess.DEVNULL,
                 shell=True
             )
-            ProgressBar.add_message_to_current("Virtual environment installed!")
+            ProgressBar.add_message_to_current(
+                "Virtual environment installed!")
         except Exception as err:
-            raise BadRequestException("Cannot install the virtual environment.") from err
+            raise BadRequestException(
+                "Cannot install the virtual environment.") from err
 
     # -- U --
 
@@ -105,7 +109,8 @@ class CondaEnvShell(BaseEnvShell):
             f"rm -rf {cls.get_env_dir()}"
         ]
         try:
-            ProgressBar.add_message_to_current("Removing the virtual environment ...")
+            ProgressBar.add_message_to_current(
+                "Removing the virtual environment ...")
             subprocess.check_call(
                 " ".join(cmd),
                 cwd=cls.get_env_dir(),
@@ -118,4 +123,5 @@ class CondaEnvShell(BaseEnvShell):
                 if os.path.exists(cls.get_env_dir()):
                     shutil.rmtree(cls.get_env_dir())
             except:
-                raise BadRequestException("Cannot remove the virtual environment.")
+                raise BadRequestException(
+                    "Cannot remove the virtual environment.")

@@ -5,7 +5,7 @@
 
 import unittest
 
-from gws_core import Comment, CommentService, File, GTest
+from gws_core import Comment, CommentService, File, GTest, ResourceModel
 
 
 class TestComment(unittest.TestCase):
@@ -22,19 +22,23 @@ class TestComment(unittest.TestCase):
 
     def test_comment(self):
         GTest.print("Comment")
-        f = File(path="./oui")
-        c1 = f.add_comment("The sky is blue")
-        c2 = f.add_comment(
+        file = File()
+        file.path = "./oui"
+        resource_model: ResourceModel = ResourceModel()
+        resource_model.resource = file
+
+        c1 = resource_model.add_comment("The sky is blue")
+        c2 = resource_model.add_comment(
             "The sky is blue and the ocean is also blue", reply_to=c1)
-        f.save()
+        resource_model.save()
         c3 = CommentService.add_comment(
-            object_uri=f.uri,
-            object_typing_name=f._typing_name,
+            object_uri=resource_model.uri,
+            object_typing_name=file._typing_name,
             message="I want to go to Paris"
         )
 
-        self.assertEqual(len(f.comments), 3)
-        for c in f.comments:
+        self.assertEqual(len(resource_model.comments), 3)
+        for c in resource_model.comments:
             if c == c1:
                 self.assertEqual(c.message, "The sky is blue")
             if c == c2:

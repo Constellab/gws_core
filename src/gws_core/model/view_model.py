@@ -3,13 +3,12 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import json
-from typing import Union
 
 from peewee import CharField
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
+from ..model.typing_manager import TypingManager
 from ..user.activity import Activity
 
 # ####################################################################
@@ -32,7 +31,7 @@ class ViewModel(Model):
     model_uri = CharField(index=True)
     model_type = CharField(index=True)
 
-    _model = None
+    _model: Model = None
     # transient view model are used to temprarily view part of a model (e.g. stream view)
     _is_transient = False
     _table_name = 'gws_view_model'
@@ -94,14 +93,13 @@ class ViewModel(Model):
         :rtype: `gws.db.model.Model`
         """
         # todo improve this method
-        from ..model.typing_manager import TypingManager
 
         if not self._model is None:
             return self._model
 
-        if self._model.typing_name is not None:
+        if self._model._typing_name is not None:
             self._model = TypingManager.get_object_with_typing_name(
-                self._model.typing_name, self._model.id)
+                self._model._typing_name, self._model.id)
         return self._model
 
     # -- P --
@@ -149,14 +147,14 @@ class ViewModel(Model):
             raise BadRequestException("Parameter must be a dictionnary")
         self.data["params"] = params
 
-    def set_model(self, model: None):
+    def set_model(self, model: Model = None):
         if not self.model_uri is None:
             raise BadRequestException("A model already exists")
         self._model = model
         if model.is_saved():
             self.model_uri = model.uri
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> 'ViewModel':
         """
         Saves the view model
         """
@@ -170,9 +168,8 @@ class ViewModel(Model):
                 raise BadRequestException(
                     "It is not allowed to change model of the ViewModel that is already saved")
 
-            if not self._model.save(*args, **kwargs):
-                raise BadRequestException(
-                    "Cannot save the vmodel. Please ensure that the model of the vmodel is saved before")
+            self._model.save(*args, **kwargs)
+
             self.model_uri = self._model.uri
             self.model_type = self._model.full_classname()
             return super().save(*args, **kwargs)
@@ -202,8 +199,7 @@ class ViewModel(Model):
         self.save()
 
     # -- V --
-
-    def to_json(self, *, stringify: bool = False, prettify: bool = False, **kwargs) -> Union[str, dict]:
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns JSON string or dictionnary representation of the model.
 
@@ -215,7 +211,7 @@ class ViewModel(Model):
         :rtype: dict, str
         """
 
-        _json = super().to_json(**kwargs)
+        _json = super().to_json(deep=deep, **kwargs)
         _json["model"] = {
             "uri": _json["model_uri"],
             "type": _json["model_type"],  # todo fix type
@@ -226,13 +222,8 @@ class ViewModel(Model):
         if not self.is_saved():
             _json["uri"] = ""
             _json["save_datetime"] = ""
-        if stringify:
-            if prettify:
-                return json.dumps(_json, indent=4)
-            else:
-                return json.dumps(_json)
-        else:
-            return _json
+
+        return _json
 
 
 # ####################################################################

@@ -6,14 +6,12 @@
 from typing import List, Type, Union
 
 from gws_core.model.typing_manager import TypingManager
-from pydantic.types import NoneBytes
 
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import NotFoundException
-from ..core.model.model import Model
 from ..core.service.base_service import BaseService
 from ..experiment.experiment import Experiment
-from ..resource.resource import CONST_RESOURCE_TYPING_NAME, Resource
+from .resource_model import CONST_RESOURCE_MODEL_TYPING_NAME, Resource
 from .resource_type import ResourceType
 
 
@@ -23,7 +21,7 @@ class ResourceService(BaseService):
 
     @classmethod
     def fetch_resource(cls,
-                       typing_name: str = CONST_RESOURCE_TYPING_NAME,
+                       typing_name: str = CONST_RESOURCE_MODEL_TYPING_NAME,
                        uri: str = "") -> Resource:
 
         try:
@@ -35,9 +33,9 @@ class ResourceService(BaseService):
 
     @classmethod
     def fetch_resource_list(cls,
-                            typing_name: str = CONST_RESOURCE_TYPING_NAME,
+                            typing_name: str = CONST_RESOURCE_MODEL_TYPING_NAME,
                             experiment_uri: str = None,
-                            page: int = 1, number_of_items_per_page: int = 20,
+                            page: int = 0, number_of_items_per_page: int = 20,
                             as_json=False) -> Union[Paginator, List[Resource], List[dict]]:
 
         model_type: Type[Resource] = TypingManager.get_type_from_name(
@@ -56,13 +54,13 @@ class ResourceService(BaseService):
         paginator = Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
         if as_json:
-            return paginator.to_json(shallow=True)
+            return paginator.to_json()
         else:
             return paginator
 
     @classmethod
     def fetch_resource_type_list(cls,
-                                 page: int = 1,
+                                 page: int = 0,
                                  number_of_items_per_page: int = 20,
                                  as_json=False) -> Union[Paginator, dict]:
 
@@ -72,7 +70,7 @@ class ResourceService(BaseService):
         paginator = Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
         if as_json:
-            return paginator.to_json(shallow=True)
+            return paginator.to_json()
         else:
             return paginator
 

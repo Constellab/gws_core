@@ -28,11 +28,11 @@ async def get_the_list_of_process_types(page: Optional[int] = 1,
     return ProcessService.fetch_process_type_list(
         page=page,
         number_of_items_per_page=number_of_items_per_page,
-        as_json=True
-    )
+    ).to_json()
 
 
-@core_app.get("/process-type/typedTree", tags=["Process"], summary="Get the list of process types grouped by python module")
+@core_app.get("/process-type/typedTree", tags=["Process"],
+              summary="Get the list of process types grouped by python module")
 async def get_the_list_of_process_grouped(_: UserData = Depends(AuthService.check_user_access_token)) -> List[TypedTree]:
     """
     Retrieve all the process types in TypedTree
@@ -41,33 +41,30 @@ async def get_the_list_of_process_grouped(_: UserData = Depends(AuthService.chec
     return ProcessService.fetch_process_type_tree()
 
 
-@core_app.get("/process/{type}/{uri}/progress-bar", tags=["Process"], summary="Get the progress bar of a process")
-async def get_the_progress_bar_of_a_process(type: str,
-                                            uri: str,
+@core_app.get("/process/{uri}/progress-bar", tags=["Process"], summary="Get the progress bar of a process")
+async def get_the_progress_bar_of_a_process(uri: str,
                                             _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve a process
 
-    - **uri**: the uri of the process (Default is `gws_core.process.process.Process`)
+    - **uri**: the uri of the process (Default is `gws_core.process.process_model.Process`)
     """
 
-    bar = ProcessService.fetch_process_progress_bar(
-        uri=uri, process_typing_name=type)
+    bar = ProcessService.fetch_process_progress_bar(uri=uri)
     return bar.to_json()
 
 
-@core_app.get("/process/{typing_name}/{uri}", tags=["Process"], summary="Get a process")
-async def get_a_process(typing_name: str,
-                        uri: str,
+@core_app.get("/process/{uri}", tags=["Process"], summary="Get a process")
+async def get_a_process(uri: str,
                         _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve a process
 
-    - **type**: the type of the process (Default is `gws_core.process.process.Process`)
+    - **type**: the type of the process (Default is `gws_core.process.process_model.Process`)
     - **uri**: the uri of the process
     """
 
-    proc = ProcessService.fetch_process(typing_name=typing_name, uri=uri)
+    proc = ProcessService.get_process_by_uri(uri=uri)
     return proc.to_json()
 
 
@@ -82,7 +79,7 @@ async def get_the_list_of_processes(type: str,
     """
     Retrieve a list of processes. The list is paginated.
 
-    - **type**: the type of the processes to fetch (Default is `gws_core.process.process.Process`)
+    - **type**: the type of the processes to fetch (Default is `gws_core.process.process_model.Process`)
     - **search_text**: text used to filter the results. The text is matched against to the `title` and the `description` using full-text search. If this parameter is given then the parameter `experiment_uri` is ignored.
     - **experiment_uri**: the uri of the experiment related to the processes. This parameter is ignored if `search_text` is given.
     - **page**: the page number

@@ -23,12 +23,12 @@ class TestTyping(unittest.TestCase):
     def test_typing(self):
         GTest.print("Model Typing")
 
-        _json = ProcessService.fetch_process_type_list(as_json=True)
-        self.assertTrue(len(_json["data"]) > 0)
+        process_types = ProcessService.fetch_process_type_list().to_json()
+        self.assertTrue(len(process_types["objects"]) > 0)
         #print("\n------- fetch_process_type_list -------\n")
         # print(_json["data"][0])
 
-        _json = ProtocolService.fetch_protocol_type_list(as_json=True)
-        self.assertTrue(len(_json["data"]) > 0)
+        protocol_types = ProtocolService.fetch_protocol_type_list().to_json()
+        self.assertTrue(len(protocol_types["objects"]) > 0)
         #print("\n------- fetch_protocol_type_list -------\n")
         # print(_json["data"][0])

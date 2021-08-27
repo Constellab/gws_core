@@ -52,12 +52,7 @@ class ExceptionHandler():
         else:
             unique_code = cls._generate_unique_code_from_exception()
 
-        detail: str = None
-        if exception.detail_args is not None and exception.detail is not None:
-            detail = cls._replace_detail_args(
-                exception.detail, exception.detail_args)
-        else:
-            detail = exception.detail
+        detail: str = exception.get_detail_with_args()
 
         route_info: str = f" - Route: {request.url}" if request is not None else ""
 

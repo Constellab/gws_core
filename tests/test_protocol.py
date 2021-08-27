@@ -3,49 +3,45 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import asyncio
 import json
 import os
-from unittest import IsolatedAsyncioTestCase
 
 from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
-                      Protocol, RobotCreate, RobotEat, RobotMove, RobotWait,
-                      Settings, Study)
+                      ProcessableFactory, ProcessModel, ProtocolModel,
+                      ProtocolService, RobotCreate, RobotEat, RobotMove,
+                      RobotWait, Settings)
+
+from tests.base_test import BaseTest
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 
-class TestProtocol(IsolatedAsyncioTestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        GTest.drop_tables()
-        GTest.create_tables()
-        GTest.init()
-
-    @classmethod
-    def tearDownClass(cls):
-        GTest.drop_tables()
+class TestProtocol(BaseTest):
 
     async def test_protocol(self):
         GTest.print("Protocol")
 
-        study = Study.get_by_id(1)
+        p0: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=RobotCreate)
+        p1: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=RobotMove)
+        p2: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=RobotEat)
+        p3: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=RobotMove)
+        p4: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=RobotMove)
+        p5: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=RobotEat)
+        p_wait: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=RobotWait)
 
-        p0 = RobotCreate()
-        p1 = RobotMove()
-        p2 = RobotEat()
-        p3 = RobotMove()
-        p4 = RobotMove()
-        p5 = RobotEat()
-        p_wait = RobotWait()
-
-        Q = Protocol.select()
+        Q = ProtocolModel.select()
         count = len(Q)
 
         # create a chain
-        proto = Protocol(
+        proto: ProtocolModel = ProtocolService.create_protocol_from_data(
             processes={
                 'p0': p0,
                 'p1': p1,
@@ -67,13 +63,11 @@ class TestProtocol(IsolatedAsyncioTestCase):
             outerfaces={}
         )
 
-        Q = Protocol.select()
+        Q = ProtocolModel.select()
         self.assertEqual(len(Q), count+1)
 
-        experiment: Experiment = Experiment(
-            protocol=proto, study=GTest.study, user=GTest.user)
-
-        experiment.save()
+        experiment: Experiment = ExperimentService.create_experiment_from_protocol(
+            protocol=proto)
 
         experiment = await ExperimentService.run_experiment(
             experiment=experiment, user=GTest.user)
@@ -83,20 +77,26 @@ class TestProtocol(IsolatedAsyncioTestCase):
 
     async def test_advanced_protocol(self):
         GTest.print("Advanced protocol")
-        p0 = RobotCreate(instance_name="p0")
-        p1 = RobotMove()
-        p2 = RobotEat()
-        p3 = RobotMove()
-        p4 = RobotMove()
-        p5 = RobotEat(instance_name="p5")
-        p_wait = RobotWait()
+        p0: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=RobotCreate, instance_name="p0")
+        p1: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=RobotMove)
+        p2: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=RobotEat)
+        p3: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=RobotMove)
+        p4: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=RobotMove)
+        p5: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=RobotEat, instance_name="p5")
+        p_wait: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=RobotWait)
 
-        Q = Protocol.select()
+        Q = ProtocolModel.select()
         count = len(Q)
 
         # create a chain
-        mini_proto = Protocol(
-            title="Mini travel",
+        mini_proto: ProtocolModel = ProtocolService.create_protocol_from_data(
             processes={
                 'p1': p1,
                 'p2': p2,
@@ -114,11 +114,10 @@ class TestProtocol(IsolatedAsyncioTestCase):
             outerfaces={'robot': p2.out_port('robot')}
         )
 
-        Q = Protocol.select()
+        Q = ProtocolModel.select()
         self.assertEqual(len(Q), count+1)
 
-        super_proto = Protocol(
-            title="Super travel",
+        super_proto: ProtocolModel = ProtocolService.create_protocol_from_data(
             processes={
                 "p0": p0,
                 "p5": p5,
@@ -130,102 +129,90 @@ class TestProtocol(IsolatedAsyncioTestCase):
             ]
         )
 
-        Q = Protocol.select()
-        self.assertEqual(Protocol.select().count(), count+2)
+        Q = ProtocolModel.select()
+        self.assertEqual(ProtocolModel.select().count(), count+2)
         self.assertEqual(len(Q), count+2)
 
-        # print("--- mini travel --- ")
-        # print(mini_proto.dumps(bare=True))
-
-        Q = Protocol.select()
-        self.assertEqual(Protocol.select().count(), count+2)
+        Q = ProtocolModel.select()
+        self.assertEqual(ProtocolModel.select().count(), count+2)
         self.assertEqual(len(Q), count+2)
 
-        # print("--- super travel --- ")
-        # print(super_proto.dumps(bare=True))
-
-        Q = Protocol.select()
-        self.assertEqual(Protocol.select().count(), count+2)
+        Q = ProtocolModel.select()
+        self.assertEqual(ProtocolModel.select().count(), count+2)
 
         p1 = mini_proto.get_process("p1")
-        mini_proto.is_interfaced_with(p1)
+        self.assertTrue(mini_proto.is_interfaced_with(p1))
         p2 = mini_proto.get_process("p2")
-        mini_proto.is_outerfaced_with(p2)
-
-        with open(os.path.join(testdata_dir, "mini_travel_graph.json"), "r") as f:
-            s1 = json.load(f)
-            s2 = json.loads(mini_proto.dumps(bare=True))
-            self.assertEqual(s1, s2)
+        self.assertTrue(mini_proto.is_outerfaced_with(p2))
 
         experiment: Experiment = ExperimentService.create_experiment_from_protocol(
             protocol=super_proto)
 
-        self.assertEqual(Protocol.select().count(), count+2)
+        self.assertEqual(ProtocolModel.select().count(), count+2)
 
         experiment = await ExperimentService.run_experiment(
             experiment=experiment, user=GTest.user)
 
-        mini_proto_reloaded = Protocol.get_by_id(mini_proto.id)
-        s3 = json.loads(mini_proto_reloaded.dumps(bare=True))
-        self.assertEqual(s3, s1)
-        Q = Protocol.select()
+        super_proto = ProtocolModel.get_by_id(super_proto.id)
+
+        Q = ProtocolModel.select()
         self.assertEqual(len(Q), count+2)
 
     async def test_graph_load(self):
         GTest.print("Load protocol graph")
 
-        with open(os.path.join(testdata_dir, "mini_travel_graph.json"), "r") as f:
+        super_proto: ProtocolModel
+        with open(os.path.join(testdata_dir, "super_proto_update.json"), "r") as f:
             s1 = json.load(f)
-            mini_proto = Protocol.from_graph(s1)
-            s2 = json.loads(mini_proto.dumps(bare=True))
-            self.assertEqual(s1, s2)
+            super_proto = ProtocolService.create_protocol_from_graph(s1)
 
-        p1 = mini_proto.get_process("p1")
-        self.assertTrue(mini_proto.is_interfaced_with(p1))
+        self.assertEqual(len(super_proto.processes), 4)
+        self.assertEqual(len(super_proto.connectors), 3)
+        self.assertTrue("mini_travel" in super_proto.processes)
 
-        p2 = mini_proto.get_process("p2")
-        self.assertTrue(mini_proto.is_outerfaced_with(p2))
+        mini_travel: ProtocolModel = super_proto.processes["mini_travel"]
+        # check mini travel
+        sub_p1 = mini_travel.get_process("p1")
+        self.assertTrue(mini_travel.is_interfaced_with(sub_p1))
 
-        p0 = RobotCreate(name="p0")
-        p5 = RobotEat(name="p5")
+        sub_p2 = mini_travel.get_process("p2")
+        self.assertTrue(mini_travel.is_outerfaced_with(sub_p2))
 
-        super_proto = Protocol(
-            processes={
-                "p0": p0,
-                "p5": p5,
-                "Mini travel": mini_proto
-            },
-            connectors=[
-                p0 >> 'robot' | mini_proto << 'robot',
-                mini_proto >> 'robot' | p5 << 'robot'
-            ]
-        )
-
-        experiment: Experiment = ExperimentService.create_experiment_from_protocol(
-            protocol=super_proto)
-
-        experiment = await ExperimentService.run_experiment(
-            experiment=experiment, user=GTest.user)
-
-        saved_mini_proto = Protocol.get(Protocol.id == mini_proto.id)
-        # load none bare
-        mini_proto2 = Protocol.from_graph(saved_mini_proto.graph)
-        self.assertTrue(mini_proto.graph, mini_proto2.graph)
-
-    def test_protocol_update(self):
+    # TODO improve test because it does not test connection create or deletion
+    async def test_protocol_update(self):
         GTest.print("Update protocol")
-        with open(os.path.join(testdata_dir, "mini_travel_graph.json"), "r") as f:
-            graph = json.load(f)
 
-        mini_proto = Protocol.from_graph(graph)
-        p = mini_proto.get_process("p1")
-        self.assertEqual(p.config.get_param("moving_step"), 0.1)
+        with open(os.path.join(testdata_dir, "super_proto.json"), "r") as f:
+            s1 = json.load(f)
+            super_proto = ProtocolService.create_protocol_from_graph(s1)
 
-        graph = mini_proto.dumps(as_dict=True)
-        graph["nodes"]["p1"]["config"]["data"]["params"] = {}
-        graph["nodes"]["p1"]["config"]["data"]["params"]["moving_step"] = 3.14
-        mini_proto2 = Protocol.from_graph(graph)
-        p2 = mini_proto2.get_process("p1")
-        self.assertEqual(mini_proto2, mini_proto)
-        self.assertEqual(p2.config, p.config)
-        self.assertEqual(p2.config.get_param("moving_step"), 3.14)
+        super_proto_db = ProtocolService.get_protocol_by_uri(super_proto.uri)
+
+        self.assertEqual(len(super_proto_db.processes), 2)
+        self.assertEqual(len(super_proto_db.connectors), 0)
+        self.assertTrue("p0" in super_proto_db.processes)
+        self.assertTrue("p5" in super_proto_db.processes)
+
+        # This file should add a mini travel sub protocol
+        with open(os.path.join(testdata_dir, "super_proto_update.json"), "r") as f:
+            s1 = json.load(f)
+            super_proto = ProtocolService.update_protocol_graph(super_proto_db, s1)
+
+        self.assertEqual(len(super_proto_db.processes), 4)
+        self.assertEqual(len(super_proto_db.connectors), 3)
+        self.assertTrue("mini_travel" in super_proto_db.processes)
+
+        mini_travel_db: ProtocolModel = super_proto_db.processes["mini_travel"]
+        # check mini travel
+        self.assertEqual(len(mini_travel_db.processes), 2)
+        self.assertEqual(len(mini_travel_db.connectors), 1)
+
+        # Rollback to first protocol
+        with open(os.path.join(testdata_dir, "super_proto.json"), "r") as f:
+            s1 = json.load(f)
+            super_proto = ProtocolService.update_protocol_graph(super_proto_db, s1)
+
+        self.assertEqual(len(super_proto_db.processes), 2)
+        self.assertEqual(len(super_proto_db.connectors), 0)
+        self.assertTrue("p0" in super_proto_db.processes)
+        self.assertTrue("p5" in super_proto_db.processes)

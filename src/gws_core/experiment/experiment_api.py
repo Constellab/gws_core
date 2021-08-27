@@ -102,7 +102,7 @@ async def get_an_experiment(uri: str,
     - **uri**: the uri of an experiment
     """
 
-    e = ExperimentService.fetch_experiment(uri=uri)
+    e = ExperimentService.get_experiment_by_uri(uri=uri)
     return e.to_json()
 
 
@@ -157,4 +157,4 @@ async def get_the_list_of_experiments(page: Optional[int] = 1,
         number_of_items_per_page=number_of_items_per_page,
     )
 
-    return experiments.to_json(shallow=True)
+    return experiments.to_json()

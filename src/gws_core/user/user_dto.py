@@ -1,5 +1,6 @@
 from typing import TypedDict
 
+from gws_core.user.user_group import UserGroup
 from pydantic import BaseModel
 
 
@@ -8,7 +9,7 @@ class UserData(BaseModel):
     email: str = ""
     first_name: str = ""
     last_name: str = ""
-    group: str = "user"
+    group: UserGroup
     is_active: bool
     is_admin: bool
     is_http_authenticated: bool = False

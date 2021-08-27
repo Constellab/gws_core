@@ -4,27 +4,19 @@
 # About us: https://gencovery.com
 
 import time
-from unittest import IsolatedAsyncioTestCase
+from typing import List
 
 from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
-                      Process, QueueService, Resource, RobotService, Settings)
+                      ProcessModel, ProtocolModel, ResourceModel, RobotService,
+                      Settings)
+
+from tests.base_test import BaseTest
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 
-class TestExperiment(IsolatedAsyncioTestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        GTest.drop_tables()
-        GTest.create_tables()
-        GTest.init()
-
-    @classmethod
-    def tearDownClass(cls):
-        QueueService.deinit()
-        GTest.drop_tables()
+class TestExperiment(BaseTest):
 
     async def test_run(self):
         GTest.print("Run Experiment")
@@ -33,34 +25,32 @@ class TestExperiment(IsolatedAsyncioTestCase):
         # Create experiment 1
         # -------------------------------
         print("Create experiment 1")
-        proto1 = RobotService.create_nested_protocol()
-        experiment1: Experiment = Experiment(
-            protocol=proto1, study=GTest.study, user=GTest.user)
-        proto_title = proto1.get_title()
-        experiment1.set_title("My exp title")
-        experiment1.set_description("This is my new experiment")
-        experiment1.save()
+        proto1: ProtocolModel = RobotService.create_nested_protocol()
+
+        experiment1: Experiment = ExperimentService.create_experiment_from_protocol(
+            protocol=proto1, title="My exp title", description="This is my new experiment")
 
         #self.assertEqual(e1.processes.count(), 18)
         #self.assertEqual(Process.select().count(), 18)
+
         self.assertEqual(len(experiment1.processes), 15)
-        self.assertEqual(Process.select().count(), 15)
-        self.assertEqual(Resource.select().count(), 0)
+        self.assertEqual(ProcessModel.select().count(), 15)
+        self.assertEqual(ResourceModel.select().count(), 0)
         self.assertEqual(Experiment.select().count(), 1)
 
         # Create experiment 2 = experiment 2
         # -------------------------------
         print("Create experiment_2 = experiment_1 ...")
-        experiment2: Experiment = Experiment.get(
-            Experiment.uri == experiment1.uri)
-        self.assertEqual(experiment2.protocol.get_title(), proto_title)
+        experiment2: Experiment = Experiment.get_by_uri_and_check(experiment1.uri)
+
+        protocol = experiment2.protocol
         self.assertEqual(experiment2.get_title(), "My exp title")
         self.assertEqual(experiment2.get_description(),
                          "This is my new experiment")
         self.assertEqual(experiment2, experiment1)
         self.assertEqual(len(experiment2.processes), 15)
-        self.assertEqual(Process.select().count(), 15)
-        self.assertEqual(Resource.select().count(), 0)
+        self.assertEqual(ProcessModel.select().count(), 15)
+        self.assertEqual(ResourceModel.select().count(), 0)
         self.assertEqual(Experiment.select().count(), 1)
 
         print("Run experiment_2 ...")
@@ -72,27 +62,25 @@ class TestExperiment(IsolatedAsyncioTestCase):
 
         Q1 = experiment1.resources
         Q2 = experiment2.resources
-        self.assertEqual(Resource.select().count(), 15)
+        self.assertEqual(ResourceModel.select().count(), 15)
         self.assertEqual(len(Q1), 15)
         self.assertEqual(len(Q2), 15)
-
-        time.sleep(2)
         self.assertEqual(experiment2.pid, 0)
 
         e2_bis: Experiment = Experiment.get(Experiment.uri == experiment1.uri)
-        self.assertEqual(e2_bis.protocol.get_title(), proto_title)
+
         self.assertEqual(e2_bis.get_title(), "My exp title")
         self.assertEqual(e2_bis.get_description(), "This is my new experiment")
         self.assertEqual(len(e2_bis.processes), 15)
         self.assertEqual(Experiment.select().count(), 1)
 
+    async def test_run_through_cli_and_re_run(self):
+
         # experiment 3
         # -------------------------------
         print("Create experiment_3")
         proto3 = RobotService.create_nested_protocol()
-        experiment3 = Experiment(
-            protocol=proto3, study=GTest.study, user=GTest.user)
-        experiment3.save()
+        experiment3 = ExperimentService.create_experiment_from_protocol(protocol=proto3)
 
         print("Run experiment_3 through cli ...")
         ExperimentService.run_through_cli(
@@ -103,8 +91,8 @@ class TestExperiment(IsolatedAsyncioTestCase):
         print(f"Experiment pid = {experiment3.pid}", )
 
         waiting_count = 0
-        experiment3: Experiment = Experiment.get(
-            Experiment.id == experiment3.id)
+        experiment3: Experiment = Experiment.get_by_uri_and_check(experiment3.uri)
+        print(experiment3.protocol)
         while experiment3.status != ExperimentStatus.SUCCESS:
             print("Waiting 3 secs the experiment to finish ...")
             time.sleep(3)
@@ -114,7 +102,7 @@ class TestExperiment(IsolatedAsyncioTestCase):
             waiting_count += 1
 
         self.assertEqual(Experiment.count_of_running_experiments(), 0)
-        experiment3 = Experiment.get(Experiment.id == experiment3.id)
+        experiment3: Experiment = Experiment.get_by_uri_and_check(experiment3.uri)
         self.assertEqual(experiment3.status, ExperimentStatus.SUCCESS)
         self.assertEqual(experiment3.pid, 0)
 
@@ -125,17 +113,17 @@ class TestExperiment(IsolatedAsyncioTestCase):
         def _test_archive(tf):
             OK = experiment3.archive(tf)
             self.assertTrue(OK)
-            Q = experiment3.resources
-            self.assertEqual(len(Q), 15)
-            for r in Q:
+            resources: List[ResourceModel] = experiment3.resources
+            self.assertEqual(len(resources), 15)
+            for r in resources:
                 self.assertEqual(r.is_archived, tf)
 
-            Q = experiment3.processes
+            processes: List[ProcessModel] = experiment3.processes
             #self.assertEqual( len(Q), 18)
-            self.assertEqual(len(Q), 15)
-            for p in Q:
-                self.assertEqual(p.is_archived, tf)
-                self.assertEqual(p.config.is_archived, tf)
+            self.assertEqual(len(processes), 15)
+            for process in processes:
+                self.assertEqual(process.is_archived, tf)
+                self.assertEqual(process.config.is_archived, tf)
 
         print("Archive experiment ...")
         _test_archive(True)
