@@ -24,7 +24,7 @@ from ..user.user import User
 
 class ExperimentStatus(Enum):
     DRAFT = "DRAFT"
-    # WAITING means that a linux process will be started to run the experiment
+    # WAITING means that a shell process will be started to run the experiment
     WAITING_FOR_CLI_PROCESS = "WAITING_FOR_CLI_PROCESS"
     RUNNING = "RUNNING"
     SUCCESS = "SUCCESS"
@@ -186,7 +186,7 @@ class Experiment(Viewable):
 
     @property
     def pid(self) -> int:
-        if not "pid" in self.data:
+        if "pid" not in self.data:
             return 0
         return self.data["pid"]
 
@@ -264,12 +264,11 @@ class Experiment(Viewable):
 
     def mark_as_started(self):
         self.protocol.set_experiment(self)
-        self.data["pid"] = 0
+        #self.data["pid"] = 0. /!\ Do not reset pid here, otherwise the experiment could not be stopped if started through cli !!!
         self.status = ExperimentStatus.RUNNING
         self.save()
 
     def mark_as_success(self):
-
         self.data["pid"] = 0
         self.status = ExperimentStatus.SUCCESS
         self.save()

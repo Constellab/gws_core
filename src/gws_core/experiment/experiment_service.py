@@ -149,12 +149,12 @@ class ExperimentService(BaseService):
         This is only possible if the experiment has been started through the cli
         """
 
-        if not HTTPHelper.is_http_context():
-            raise BadRequestException("The user must be in http context")
+        #if not HTTPHelper.is_http_context():
+        #    raise BadRequestException("The user must be in http context")
 
         if not experiment.pid:
-            return experiment
-
+            raise BadRequestException(
+                f"The experiment pid is {experiment.pid}")
         try:
             sproc = SysProc.from_pid(experiment.pid)
         except Exception as err:
