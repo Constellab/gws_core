@@ -12,10 +12,10 @@ from ..core.dto.typed_tree_dto import TypedTree
 from ..core.service.base_service import BaseService
 from ..process.process_model import ProcessModel
 from ..processable.processable_factory import ProcessableFactory
+from ..processable.sub_processable_factory import SubProcessFactoryUpdate
 from ..protocol.protocol_model import ProtocolModel
 from .protocol import Protocol
 from .protocol_type import ProtocolType
-from ..processable.sub_processable_factory import SubProcessFactoryUpdate
 
 
 class ProtocolService(BaseService):
@@ -47,35 +47,6 @@ class ProtocolService(BaseService):
             return paginator
 
     @classmethod
-    def fetch_protocol_type_list(cls,
-                                 page: int = 0,
-                                 number_of_items_per_page: int = 20) -> Paginator[ProtocolType]:
-
-        query = ProtocolType.get_types()
-
-        number_of_items_per_page = min(
-            number_of_items_per_page, cls._number_of_items_per_page)
-        return Paginator(
-            query, page=page, number_of_items_per_page=number_of_items_per_page)
-
-    @ classmethod
-    def fetch_process_type_tree(cls) -> List[TypedTree]:
-        """
-        Return all the process types grouped by module and submodules
-        """
-
-        query: List[ProtocolType] = ProtocolType.get_types()
-
-        # create a fake main group to add processes in it
-        tree: TypedTree = TypedTree('')
-
-        for process_type in query:
-            tree.add_object(
-                process_type.get_model_types_array(), process_type.to_json())
-
-        return tree.sub_trees
-
-    @ classmethod
     def create_process_from_type(cls, protocol_type: Type[Protocol], instance_name: str = None) -> ProcessModel:
         protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_type(
             protocol_type=protocol_type, instance_name=instance_name)
@@ -83,7 +54,7 @@ class ProtocolService(BaseService):
         protocol.save_full()
         return protocol
 
-    @ classmethod
+    @classmethod
     def create_protocol_from_data(cls, processes: dict = None,
                                   connectors: list = None,
                                   interfaces: dict = None,
@@ -99,7 +70,7 @@ class ProtocolService(BaseService):
         protocol.save_full()
         return protocol
 
-    @ classmethod
+    @classmethod
     def create_protocol_from_graph(cls, graph: dict) -> ProtocolModel:
         protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_graph(
             graph=graph)
@@ -107,7 +78,7 @@ class ProtocolService(BaseService):
         protocol.save_full()
         return protocol
 
-    @ classmethod
+    @classmethod
     def create_protocol_from_process(cls, process: ProcessModel) -> ProtocolModel:
         protocol: ProtocolModel = ProtocolService.create_protocol_from_data(
             processes={process.instance_name: process}, connectors=[], interfaces={}, outerfaces={})
@@ -115,7 +86,7 @@ class ProtocolService(BaseService):
         protocol.save_full()
         return protocol
 
-    @ classmethod
+    @classmethod
     def update_protocol_graph(cls, protocol: ProtocolModel, graph: dict) -> ProtocolModel:
         new_protocol: ProtocolModel = cls._update_protocol_graph_recur(
             protocol, graph)
@@ -123,7 +94,7 @@ class ProtocolService(BaseService):
         new_protocol.save_full()
         return new_protocol
 
-    @ classmethod
+    @classmethod
     def _update_protocol_graph_recur(cls, protocol: ProtocolModel, graph: dict) -> ProtocolModel:
 
         for process in protocol.processes.values():
@@ -145,7 +116,7 @@ class ProtocolService(BaseService):
 
         return protocol
 
-    @ classmethod
+    @classmethod
     def remove_orphan_process(cls, protocol: ProtocolModel, nodes: dict) -> None:
         """Method to remove the removed process when saving a new protocols
 
@@ -160,3 +131,38 @@ class ProtocolService(BaseService):
 
         for key in deleted_keys:
             protocol.delete_process(key)
+
+    ############################# PROTOCOL TYPE ###########################
+
+    @classmethod
+    def get_protocol_type(cls, uri: str) -> ProtocolType:
+        return ProtocolType.get_by_uri_and_check(uri)
+
+    @classmethod
+    def fetch_protocol_type_list(cls,
+                                 page: int = 0,
+                                 number_of_items_per_page: int = 20) -> Paginator[ProtocolType]:
+
+        query = ProtocolType.get_types()
+
+        number_of_items_per_page = min(
+            number_of_items_per_page, cls._number_of_items_per_page)
+        return Paginator(
+            query, page=page, number_of_items_per_page=number_of_items_per_page)
+
+    @classmethod
+    def fetch_process_type_tree(cls) -> List[TypedTree]:
+        """
+        Return all the process types grouped by module and submodules
+        """
+
+        query: List[ProtocolType] = ProtocolType.get_types()
+
+        # create a fake main group to add processes in it
+        tree: TypedTree = TypedTree('')
+
+        for process_type in query:
+            tree.add_object(
+                process_type.get_model_types_array(), process_type.to_json())
+
+        return tree.sub_trees
