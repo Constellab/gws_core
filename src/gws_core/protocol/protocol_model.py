@@ -252,8 +252,8 @@ class ProtocolModel(ProcessableModel):
             rhs_port_name: str = link["to"]["port"]
             rhs_proc: ProcessableModel = self._processes[proc_name]
 
-            connector: Connector = lhs_proc.out_port(lhs_port_name).pipe(
-                rhs_proc.in_port(rhs_port_name), lazy=True)
+            connector: Connector = Connector(out_port=lhs_proc.out_port(lhs_port_name),
+                                             in_port=rhs_proc.in_port(rhs_port_name), check_compatiblity=True)
             self._add_connector(connector)
 
     # -- C --

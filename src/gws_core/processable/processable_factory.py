@@ -113,7 +113,9 @@ class ProcessableFactory():
         for connector in create_config["connectors"]:
             from_proc: ProcessableModel = processes[connector["from_processable"]]
             to_proc: ProcessableModel = processes[connector["to_processable"]]
-            connectors.append(from_proc.out_port(connector["from_port"]).pipe(to_proc.in_port(connector["to_port"])))
+            connectors.append(Connector(
+                out_port=from_proc.out_port(connector["from_port"]),
+                in_port=to_proc.in_port(connector["to_port"])))
 
         # create the protocol from a statis protocol class
         return cls._build_protocol_model(

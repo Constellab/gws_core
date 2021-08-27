@@ -1,5 +1,7 @@
 from typing import final
 
+from gws_core.io.io_types import IOSpecsHelper
+
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..processable.processable_model import ProcessableModel
@@ -20,7 +22,7 @@ class Connector:
     in_port: InPort = None
     out_port: OutPort = None
 
-    def __init__(self, out_port: OutPort = None, in_port: InPort = None):
+    def __init__(self, out_port: OutPort, in_port: InPort, check_compatiblity: bool = True):
         if not isinstance(in_port, InPort):
             raise BadRequestException(
                 "The input port must be an instance of InPort")
@@ -28,6 +30,9 @@ class Connector:
         if not isinstance(out_port, OutPort):
             raise BadRequestException(
                 "The output port must be an instance of OutPort")
+
+        if in_port.is_left_connected:
+            raise BadRequestException("The right-hand side port is already connected")
 
         source_process = out_port.parent.parent
         target_process = in_port.parent.parent
@@ -40,14 +45,20 @@ class Connector:
             raise BadRequestException(
                 "The output port is not associated with a process")
 
-        # if not target_process.instance_name:
-        #    raise BadRequestException("The target process has no active name")
-        #
-        # if not source_process.instance_name:
-        #    raise BadRequestException("The soruce process has no active name")
+        # hard checking of port compatibility
+        if check_compatiblity and not IOSpecsHelper.resources_types_are_compatible(
+                out_port.resource_types, in_port.resource_types):
+            # TODO improve error
+            raise BadRequestException(
+                f"Invalid connection, port are imcompatible. Resources ({out_port.resource_types}) imcompatible with resource ({in_port.resource_types})")
 
         self.in_port = in_port
         self.out_port = out_port
+
+        # Add inport to the next of outport
+        out_port.add_next(in_port)
+        # Set outport as previous of inport
+        in_port.set_previous(out_port)
 
     # -- V --
     def to_json(self, deep: bool = False, **kwargs) -> dict:

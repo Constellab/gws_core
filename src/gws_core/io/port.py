@@ -11,7 +11,6 @@ from .io_types import IOSpec, IOSpecsHelper, PortDict
 
 if TYPE_CHECKING:
     from ..processable.processable_model import ProcessableModel
-    from .connector import Connector
     from .io import IO
 
 
@@ -168,6 +167,12 @@ class Port(Base):
     @property
     def prev(self) -> 'Port':
         return self._prev
+
+    def add_next(self, port: 'Port') -> None:
+        self._next.append(port)
+
+    def set_previous(self, port: 'Port') -> None:
+        self._prev = port
 
     @property
     def parent(self) -> IO:
@@ -353,51 +358,6 @@ class OutPort(Port):
     """
     OutPort class representing output port
     """
-
-    def _are_compatible_types(self, other: 'InPort') -> bool:
-        return IOSpecsHelper.resources_types_are_compatible(self.resource_types, other.resource_types)
-
-    def pipe(self, other: 'InPort', lazy: bool = False) -> Connector:
-        """
-        Connection operator.
-
-        Connect the output port to another (right-hand side) input port.
-        :return: The right-hand sode port
-        :rtype: Port
-        """
-
-        if not isinstance(other, InPort):
-            raise BadRequestException(
-                "The output port can only be connected to an input port")
-
-        if other.is_left_connected:
-            raise BadRequestException(
-                "The right-hand side port is already connected")
-
-        if self == other:
-            raise BadRequestException("Self connection not allowed")
-
-        if not lazy:
-            # hard checking of port compatibility
-            if not self._are_compatible_types(other):
-                raise BadRequestException(
-                    f"Invalid connection. {self.resource_types} is not a subclass of {other.resource_types}")
-
-        self._next.append(other)
-        other._prev = self
-
-        # Nested import to prevent cyclic dependency
-        from ..io.connector import Connector
-        return Connector(out_port=self, in_port=other)
-
-    def __or__(self, other: 'InPort'):
-        """
-        Connection operator.
-
-        Alias of :meth:`pipe`
-        """
-
-        return self.pipe(other)
 
     @property
     def name(self) -> str:

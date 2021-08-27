@@ -84,9 +84,7 @@ class TestIO(unittest.TestCase):
             process_type=Move, instance_name="p2")
 
         # create a chain
-        port_connect = p0.out_port(
-            'create_person_out') | p1.in_port('move_person_in')
-        p1 >> 'move_person_out' | p2 << 'move_person_in'
+        port_connect: Connector = Connector(p0.out_port('create_person_out'), p1.in_port('move_person_in'))
 
         out_port = p0.out_port('create_person_out')
         self.assertEqual(out_port.name, 'create_person_out')
@@ -99,8 +97,9 @@ class TestIO(unittest.TestCase):
         # assert error
         p3: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=Drive, instance_name="p3")
-        self.assertRaises(Exception, p2.out_port(
-            'move_person_out').pipe,  p3.in_port('move_drive_in'))
+
+        with self.assertRaises(Exception):
+            Connector(p2.out_port['move_person_out'], p3.in_port('move_drive_in'))
 
         self.assertEqual(port_connect.to_json(), {
             "from": {"node": "p0",  "port": "create_person_out"},
