@@ -11,7 +11,7 @@ from ..resource.resource_model import ResourceModel
 from .io_types import IOSpec, PortDict
 
 if TYPE_CHECKING:
-    from ..process.processable_model import ProcessableModel
+    from ..processable.processable_model import ProcessableModel
     from .connector import Connector
     from .io import IO
 

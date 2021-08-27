@@ -160,10 +160,11 @@ from .process.process_io import ProcessIO as ProcessIO
 from .process.process_model import ProcessModel as ProcessModel
 from .process.process_service import ProcessService as ProcessService
 from .process.process_type import ProcessType as ProcessType
-from .process.processable import Processable as Processable
-from .process.processable_factory import \
+# Processable
+from .processable.processable import Processable as Processable
+from .processable.processable_factory import \
     ProcessableFactory as ProcessableFactory
-from .process.processable_model import ProcessableModel as ProcessableModel
+from .processable.processable_model import ProcessableModel as ProcessableModel
 # Progress Bar
 from .progress_bar.progress_bar import ProgressBar as ProgressBar
 from .progress_bar.progress_bar_service import \

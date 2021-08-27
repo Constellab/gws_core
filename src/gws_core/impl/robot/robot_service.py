@@ -6,7 +6,7 @@
 from ...core.service.base_service import BaseService
 from ...experiment.experiment_service import ExperimentService
 from ...experiment.queue_service import QueueService
-from ...process.processable_factory import ProcessableFactory
+from ...processable.processable_factory import ProcessableFactory
 from ...protocol.protocol_model import ProtocolModel
 from .robot import RobotWorldTravelProto, create_protocol
 

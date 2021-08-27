@@ -9,15 +9,15 @@ from ..io.connector import Connector
 from ..model.typing_manager import TypingManager
 from ..process.process import Process
 from ..process.process_model import ProcessModel
-from ..process.processable import Processable
-from ..process.processable_model import ProcessableModel
 from ..progress_bar.progress_bar import ProgressBar
 from ..protocol.protocol import (CONST_PROTOCOL_TYPING_NAME, Protocol,
                                  ProtocolCreateConfig)
 from ..protocol.protocol_model import ProtocolModel
-from ..protocol.sub_processable_factory import SubProcessFactoryCreate
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
+from .processable import Processable
+from .processable_model import ProcessableModel
+from .sub_processable_factory import SubProcessFactoryCreate
 
 
 class ProcessableFactory():

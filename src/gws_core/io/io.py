@@ -17,7 +17,7 @@ from .io_types import IODict, IOSpec
 from .port import InPort, OutPort, Port
 
 if TYPE_CHECKING:
-    from ..process.processable_model import ProcessableModel
+    from ..processable.processable_model import ProcessableModel
 
 
 ####################################################################

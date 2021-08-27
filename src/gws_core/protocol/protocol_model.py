@@ -14,13 +14,13 @@ from ..io.io import Input, Output
 from ..io.ioface import Interface, Outerface
 from ..io.port import InPort, OutPort, Port
 from ..model.typing_register_decorator import TypingDecorator
-from ..process.processable_model import ProcessableModel
+from ..processable.processable_model import ProcessableModel
+from ..processable.sub_processable_factory import (SubProcessableFactory,
+                                                   SubProcessFactoryReadFromDb)
 from ..protocol.protocol import Protocol
 from ..resource.resource import Resource
 from ..user.activity import Activity
 from ..user.user import User
-from .sub_processable_factory import (SubProcessableFactory,
-                                      SubProcessFactoryReadFromDb)
 
 
 @TypingDecorator(unique_name="Protocol", object_type="GWS_CORE", hide=True)

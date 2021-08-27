@@ -9,8 +9,8 @@ from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..process.process import Process
 from ..process.process_model import ProcessModel
-from ..process.processable import Processable
-from ..process.processable_model import ProcessableModel
+from .processable import Processable
+from .processable_model import ProcessableModel
 
 
 class SubProcessableFactory():
@@ -57,7 +57,7 @@ class SubProcessableFactory():
                                 instance_name: str, config_dict: Dict) -> ProcessableModel:
         """Method to instantiate a new processable and configure it
         """
-        from ..process.processable_factory import ProcessableFactory
+        from ..processable.processable_factory import ProcessableFactory
 
         processable: ProcessableModel
         # if this is a process

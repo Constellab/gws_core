@@ -11,11 +11,11 @@ from ..core.classes.paginator import Paginator
 from ..core.dto.typed_tree_dto import TypedTree
 from ..core.service.base_service import BaseService
 from ..process.process_model import ProcessModel
-from ..process.processable_factory import ProcessableFactory
+from ..processable.processable_factory import ProcessableFactory
 from ..protocol.protocol_model import ProtocolModel
 from .protocol import Protocol
 from .protocol_type import ProtocolType
-from .sub_processable_factory import SubProcessFactoryUpdate
+from ..processable.sub_processable_factory import SubProcessFactoryUpdate
 
 
 class ProtocolService(BaseService):

@@ -11,7 +11,7 @@ from peewee import ModelSelect
 
 from ..core.utils.utils import Utils
 from ..model.typing import Typing, TypingObjectType
-from ..process.processable_factory import ProcessableFactory
+from ..processable.processable_factory import ProcessableFactory
 from ..protocol.protocol import Protocol
 from ..protocol.protocol_model import ProtocolModel
 

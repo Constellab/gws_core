@@ -2,8 +2,8 @@
 from typing import Dict, List, TypedDict
 
 from ..model.typing_register_decorator import TypingDecorator
-from ..process.processable import Processable
-from ..process.processable_model import ProcessableModel
+from ..processable.processable import Processable
+from ..processable.processable_model import ProcessableModel
 
 # Typing names generated for the class Process
 CONST_PROTOCOL_TYPING_NAME = "PROTOCOL.gws_core.Protocol"

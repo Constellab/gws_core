@@ -13,7 +13,7 @@ from gws_core.resource.resource_data import ResourceData
 from ...process.process import Process
 from ...process.process_decorator import ProcessDecorator
 from ...process.process_model import ProcessModel
-from ...process.processable_factory import ProcessableFactory
+from ...processable.processable_factory import ProcessableFactory
 from ...progress_bar.progress_bar import ProgressBar
 from ...protocol.protocol import Protocol, ProtocolCreateConfig
 from ...protocol.protocol_decorator import ProtocolDecorator

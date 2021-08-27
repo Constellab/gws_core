@@ -19,12 +19,12 @@ from ..io.io import Input, Output
 from ..io.port import InPort, OutPort
 from ..model.typing_manager import TypingManager
 from ..model.viewable import Viewable
-from ..process.processable import Processable
 from ..progress_bar.progress_bar import ProgressBar
 from ..resource.processable_resource import ProcessableResource
 from ..resource.resource_model import ResourceModel
 from ..user.user import User
-from .process_exception import ProcessableRunException
+from .processable import Processable
+from .processable_exception import ProcessableRunException
 
 if TYPE_CHECKING:
     from ..protocol.protocol_model import ProtocolModel

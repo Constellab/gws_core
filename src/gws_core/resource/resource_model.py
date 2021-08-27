@@ -20,7 +20,7 @@ from .processable_resource import ProcessableResource
 
 if TYPE_CHECKING:
     from ..experiment.experiment import Experiment
-    from ..process.processable_model import ProcessableModel
+    from ..processable.processable_model import ProcessableModel
 
 # Typing names generated for the class Resource
 CONST_RESOURCE_MODEL_TYPING_NAME = "GWS_CORE.gws_core.ResourceModel"

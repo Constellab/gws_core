@@ -10,7 +10,7 @@ from ..core.exception.gws_exceptions import GWSException
 
 if TYPE_CHECKING:
     from ..protocol.protocol_model import ProtocolModel
-    from .process_model import ProcessableModel
+    from .processable_model import ProcessableModel
 
 
 class ProcessableRunException(BadRequestException):

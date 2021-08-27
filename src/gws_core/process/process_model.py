@@ -15,7 +15,7 @@ from ..process.process_io import ProcessIO
 from ..resource.resource_data import ResourceData
 from ..resource.resource_model import ResourceModel
 from .process import Process
-from .processable_model import ProcessableModel
+from ..processable.processable_model import ProcessableModel
 
 
 @TypingDecorator(unique_name="Process", object_type="GWS_CORE", hide=True)

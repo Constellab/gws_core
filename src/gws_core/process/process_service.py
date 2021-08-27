@@ -10,7 +10,7 @@ from ..core.dto.typed_tree_dto import TypedTree
 from ..core.exception.exceptions import NotFoundException
 from ..core.service.base_service import BaseService
 from ..experiment.experiment import Experiment
-from ..process.processable_factory import ProcessableFactory
+from ..processable.processable_factory import ProcessableFactory
 from ..progress_bar.progress_bar import ProgressBar
 from .process import Process
 from .process_model import ProcessModel

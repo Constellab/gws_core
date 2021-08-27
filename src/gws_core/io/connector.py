@@ -2,7 +2,7 @@ from typing import final
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ..process.processable_model import ProcessableModel
+from ..processable.processable_model import ProcessableModel
 from .port import InPort, OutPort
 
 

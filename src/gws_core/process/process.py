@@ -11,7 +11,7 @@ from ..config.config_spec import ConfigSpecs
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..io.io_types import IOSpecs
-from ..process.processable import Processable
+from ..processable.processable import Processable
 from ..progress_bar.progress_bar import ProgressBar
 
 # Typing names generated for the class Process
