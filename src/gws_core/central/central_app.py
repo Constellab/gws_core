@@ -149,8 +149,8 @@ def __convert_user_to_dto(user: User) -> Dict:
         "email": user.email,
         "group": user.group,
         "is_active": user.is_active,
-        "first_name": user.data["first_name"],
-        "last_name": user.data["last_name"]
+        "first_name": user.first_name,
+        "last_name": user.last_name
     }
 
 
