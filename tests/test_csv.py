@@ -6,15 +6,38 @@
 import os
 
 import pandas
-from gws_core import (CSVDumper, CSVExporter, CSVImporter, CSVLoader, CSVTable,
-                      Experiment, ExperimentService, File, GTest,
-                      ProcessableFactory, ProcessModel, ProtocolModel,
-                      ProtocolService, Settings, Study)
+from gws_core import (ConfigParams, CSVDumper, CSVExporter, CSVImporter,
+                      CSVLoader, CSVTable, Experiment, ExperimentService, File,
+                      GTest, ProcessableFactory, ProcessModel, Protocol,
+                      ProtocolDecorator, ProtocolModel, ProtocolService,
+                      Settings, Study)
+from gws_core.protocol.protocol_spec import ProcessableSpec
 
 from tests.base_test import BaseTest
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
+
+i_file_path = os.path.join(testdata_dir, "data.csv")
+o_file_path = os.path.join(testdata_dir, "data_out.csv")
+
+
+@ProtocolDecorator("CSVProtocol")
+class CSVProtocol(Protocol):
+    def configure_protocol(self, config_params: ConfigParams) -> None:
+
+        loader: ProcessableSpec = self.add_process(CSVLoader, 'loader').configure("file_path", i_file_path)
+        dumper: ProcessableSpec = self.add_process(CSVDumper, 'dumper')\
+            .configure("file_path", o_file_path).configure("index", False)
+
+        importer: ProcessableSpec = self.add_process(CSVImporter, 'importer')
+        exporter: ProcessableSpec = self.add_process(CSVExporter, 'exporter').configure("index", False)
+
+        self.add_connectors([
+            (loader >> "data", dumper << "data"),
+            (loader >> "data", exporter << "data"),
+            (exporter >> "file", importer << "file"),
+        ])
 
 
 class TestCSV(BaseTest):
@@ -51,37 +74,7 @@ class TestCSV(BaseTest):
     async def test_loader_dumper(self):
         GTest.print("CSVData Loader and Dumper")
 
-        i_file_path = os.path.join(testdata_dir, "data.csv")
-        o_file_path = os.path.join(testdata_dir, "data_out.csv")
-
-        loader: ProcessModel = ProcessableFactory.create_process_model_from_type(
-            CSVLoader)
-        dumper: ProcessModel = ProcessableFactory.create_process_model_from_type(
-            CSVDumper)
-
-        importer: ProcessModel = ProcessableFactory.create_process_model_from_type(
-            CSVImporter)
-        exporter: ProcessModel = ProcessableFactory.create_process_model_from_type(
-            CSVExporter)
-
-        proto: ProtocolModel = ProtocolService.create_protocol_from_data(
-            processes={
-                "loader": loader,
-                "dumper": dumper,
-                "exporter": exporter,
-                "importer": importer,
-            },
-            connectors=[
-                loader >> "data" | dumper << "data",
-                loader >> "data" | exporter << "data",
-                exporter >> "file" | importer << "file",
-            ]
-        )
-
-        loader.set_param("file_path", i_file_path)
-        dumper.set_param("file_path", o_file_path)
-        dumper.set_param("index", False)
-        exporter.set_param("index", False)
+        proto: ProtocolModel = ProtocolService.create_protocol_from_type(CSVProtocol)
 
         experiment: Experiment = ExperimentService.create_experiment_from_protocol(
             protocol=proto)
@@ -96,11 +89,9 @@ class TestCSV(BaseTest):
 
         print("Test CSV import/export")
 
-        # refresh the processes
-        importer = experiment.protocol.get_process("importer")
-        loader = experiment.protocol.get_process("loader")
-        dumper = experiment.protocol.get_process("dumper")
-        exporter = experiment.protocol.get_process("exporter")
+        importer: ProcessModel = experiment.protocol.get_process("importer")
+        loader: ProcessModel = experiment.protocol.get_process("loader")
+        exporter: ProcessModel = experiment.protocol.get_process("exporter")
         csv_data: CSVTable = loader.output["data"].get_resource()
 
         i_df = pandas.read_table(i_file_path)
