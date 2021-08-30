@@ -123,7 +123,6 @@ class Port(Base):
         # if self._resource is None:
         #    return self.is_optional and (not self.is_connected)
 
-        # and self._resource.is_saved()
         return self.resource_model is not None
 
     @property
@@ -203,10 +202,6 @@ class Port(Base):
         for port in self._next:
             port.resource_model = self._resource_model
 
-    def __or__(self, other: 'Port'):
-        raise BadRequestException(
-            "Port cannot be . Use InPort or OutPort class")
-
     # -- R --
 
     def reset(self):
@@ -258,7 +253,7 @@ class Port(Base):
 
     # -- S --
     @resource_model.setter
-    def resource_model(self, resource: Resource) -> None:
+    def resource_model(self, resource_model: ResourceModel) -> None:
         """
         Sets the resource of the port.
 
@@ -266,10 +261,10 @@ class Port(Base):
         :type resource: ResourceModel
         """
 
-        if self.is_optional and resource is None:
+        if self.is_optional and resource_model is None:
             return
 
-        self._resource_model = resource
+        self._resource_model = resource_model
 
     # -- S --
     def resource_type_is_compatible(self, resource_type: Type[Resource]) -> bool:
@@ -342,10 +337,6 @@ class InPort(Port):
             if proc_input._ports[name] is self:
                 return name
         return None
-
-    def __or__(self, other: 'Port'):
-        raise BadRequestException(
-            "The input port cannot be connected on the right")
 
 
 # ####################################################################

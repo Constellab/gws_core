@@ -106,19 +106,21 @@ from .impl.json.json_process import JSONExporter as JSONExporter
 from .impl.json.json_process import JSONImporter as JSONImporter
 from .impl.json.json_process import JSONLoader as JSONLoader
 from .impl.json.json_resource import JSONDict as JSONDict
-from .impl.robot.robot import MegaRobot as MegaRobot
-from .impl.robot.robot import Robot as Robot
-from .impl.robot.robot import RobotAdd as RobotAdd
-from .impl.robot.robot import RobotAddOn as RobotAddOn
-from .impl.robot.robot import RobotAddOnCreate as RobotAddOnCreate
-from .impl.robot.robot import RobotCreate as RobotCreate
-from .impl.robot.robot import RobotEat as RobotEat
-from .impl.robot.robot import RobotMove as RobotMove
-from .impl.robot.robot import RobotSuperTravelProto as RobotSuperTravelProto
-from .impl.robot.robot import RobotTravelProto as RobotTravelProto
-from .impl.robot.robot import RobotWait as RobotWait
-from .impl.robot.robot import RobotWorldTravelProto as RobotWorldTravelProto
 # Impl > Robot
+from .impl.robot.robot_process import RobotAdd as RobotAdd
+from .impl.robot.robot_process import RobotAddOnCreate as RobotAddOnCreate
+from .impl.robot.robot_process import RobotCreate as RobotCreate
+from .impl.robot.robot_process import RobotEat as RobotEat
+from .impl.robot.robot_process import RobotMove as RobotMove
+from .impl.robot.robot_process import RobotWait as RobotWait
+from .impl.robot.robot_protocol import \
+    RobotSuperTravelProto as RobotSuperTravelProto
+from .impl.robot.robot_protocol import RobotTravelProto as RobotTravelProto
+from .impl.robot.robot_protocol import \
+    RobotWorldTravelProto as RobotWorldTravelProto
+from .impl.robot.robot_resource import MegaRobot as MegaRobot
+from .impl.robot.robot_resource import Robot as Robot
+from .impl.robot.robot_resource import RobotAddOn as RobotAddOn
 from .impl.robot.robot_service import RobotService as RobotService
 # Impl > S3
 from .impl.s3.base import BaseS3 as BaseS3

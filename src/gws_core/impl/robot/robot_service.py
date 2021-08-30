@@ -8,7 +8,7 @@ from ...experiment.experiment_service import ExperimentService
 from ...experiment.queue_service import QueueService
 from ...processable.processable_factory import ProcessableFactory
 from ...protocol.protocol_model import ProtocolModel
-from .robot import RobotSimpleTravel, RobotWorldTravelProto
+from .robot_protocol import RobotSimpleTravel, RobotWorldTravelProto
 
 
 class RobotService(BaseService):
