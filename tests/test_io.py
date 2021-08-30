@@ -27,7 +27,7 @@ class Create(Process):
     output_specs = {'create_person_out': Person}
     config_specs = {}
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         return
 
 
@@ -37,7 +37,7 @@ class Move(Process):
     output_specs = {'move_person_out': Person}
     config_specs = {}
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         return
 
 
@@ -47,7 +47,7 @@ class Drive(Process):
     output_specs = {'move_drive_out': Car}
     config_specs = {}
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         return
 
 
@@ -58,7 +58,7 @@ class Jump(Process):
     output_specs = {'jump_person_out': Person}
     config_specs = {}
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         return
 
 

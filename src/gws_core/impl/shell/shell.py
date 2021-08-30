@@ -130,7 +130,7 @@ class Shell(Process):
 
         return self.cwd.name
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         """
         Task entrypoint
         """
@@ -169,7 +169,7 @@ class Shell(Process):
             count = 0
             for line in iter(proc.stdout.readline, b''):
                 line = line.decode().strip()
-                ProgressBar.add_message_to_current(line)
+                progress_bar.add_message(line)
                 if not proc.is_alive():
                     break
 

@@ -117,8 +117,10 @@ class ProcessModel(ProcessableModel):
         Run the process and save its state in the database.
         """
 
+        # Set the progress bar
+        process.__progress_bar__ = self.progress_bar
         # Run the process task
-        process_output: ProcessOutputs = await process.task(config=config_params, inputs=process_inputs, progress_bar=self.progress_bar)
+        process_output: ProcessOutputs = await process.task(config=config_params, inputs=process_inputs)
 
         if process_output is None:
             process_output = {}

@@ -24,6 +24,9 @@ class Process(Processable):
     output_specs: IOSpecs = {}
     config_specs: ConfigSpecs = {}
 
+    # Instance of the progress bar, do not use
+    __progress_bar__: ProgressBar
+
     def __init__(self):
         """
         Constructor
@@ -50,7 +53,7 @@ class Process(Processable):
         return True
 
     @abstractmethod
-    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         """This must be overiwritten to perform the task of the process.
 
         This is where most of your code must go
@@ -61,8 +64,6 @@ class Process(Processable):
         :type inputs: Input
         :param outputs: [description]
         :type outputs: Output
-        :param progress_bar: [description]
-        :type progress_bar: ProgressBar
         """
         pass
 
@@ -77,3 +78,33 @@ class Process(Processable):
         resource_types = IOSpecsHelper.io_spec_to_resource_types(self.output_specs[spec_name])
 
         return resource_types[0]
+
+    @final
+    def update_progress_value(self, value: float, message: str = None):
+        """Update the progress value
+
+        :param value: value between 0 and 100 of the progress
+        :type value: float
+        :param message: if provided a message is stored on the progress
+        :type message: str
+        """
+        self.__check_progres_bar__()
+
+        self.__progress_bar__.set_value(value=value, message=message)
+
+    @final
+    def add_progress_message(self, message: str = None):
+        """Store a message in the progress
+
+        :param message: message to store in the progress
+        :type message: str
+        """
+        self.__check_progres_bar__()
+
+        self.__progress_bar__.add_message(message=message)
+
+    @final
+    def __check_progres_bar__(self) -> None:
+        if self.__progress_bar__ is None:
+            raise BadRequestException(
+                "The progress bar is not defined, it can't be used inside the check_before_task method")

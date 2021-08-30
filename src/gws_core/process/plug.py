@@ -34,7 +34,7 @@ class Source(Process):
 
     _is_plug = True
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         r_uri = config.get_param("resource_uri")
         r_type = config.get_param("resource_type")
         if not r_uri or not r_type:
@@ -57,7 +57,7 @@ class Sink(Process):
     config_specs = {}
     _is_plug = True
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         pass
 
 
@@ -84,7 +84,7 @@ class FIFO2(Process):
 
         return True
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         resource = inputs["resource_1"]
         if resource:
             return {"resource": resource}
@@ -109,7 +109,7 @@ class Switch2(Process):
                               "Description": "The index of the input resource to switch on. Defaults to 1."}}
     _is_plug = True
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         index = config.get_param("index")
         resource = inputs[f"resource_{index}"]
         return {"resource": resource}
@@ -129,7 +129,7 @@ class Wait(Process):
                                      "Description": "The waiting time in seconds. Defaults to 3 second."}}
     _is_plug = True
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         waiting_time = config.get_param("waiting_time")
         time.sleep(waiting_time)
         resource = inputs["resource"]

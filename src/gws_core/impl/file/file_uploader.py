@@ -33,7 +33,7 @@ class FileImporter(Process):
     config_specs = {'file_format': {"type": str, "default": None, 'description': "File format"}, 'output_type': {
         "type": str, "default": "", 'description': "The output file type. If defined, it is used to automatically format data output"}, }
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         inport_name = list(self.input_specs.keys())[0]
         outport_name = list(self.output_specs.keys())[0]
         file: File = inputs[inport_name]
@@ -71,7 +71,7 @@ class FileExporter(Process):
         'file_store_uri': {"type": str, "default": None, 'description': "URI of the file_store where the file must be exported"},
     }
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
 
         file_store: LocalFileStore
         if config.param_is_set('file_store_uri'):
@@ -116,7 +116,7 @@ class FileLoader(Process):
         {"type": str, "default": "",
          'description': "The output file type. If defined, it is used to automatically format data output"}, }
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         outport_name = list(self.output_specs.keys())[0]
         file_path = config.get_param("file_path")
 
@@ -158,7 +158,7 @@ class FileDumper(Process):
         'file_format': {"type": str, "default": None, 'description': "File format"},
     }
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         file_path = config.get_param("file_path")
         inport_name = list(self.input_specs.keys())[0]
         resource: Resource = inputs[inport_name]

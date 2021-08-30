@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 from abc import abstractmethod
+from logging import setLogRecordFactory
 from typing import TYPE_CHECKING, List, Type, Union, final
 
 from peewee import CharField, ForeignKeyField, IntegerField
@@ -313,7 +314,7 @@ class ProcessableModel(Viewable):
 
     async def _run_before_task(self):
         self._switch_to_current_progress_bar()
-        ProgressBar.add_message_to_current(
+        self.progress_bar.add_message(
             f"Running {self.full_classname()} ...")
         self.is_instance_running = True
         self.is_instance_finished = False
@@ -325,11 +326,11 @@ class ProcessableModel(Viewable):
         self.save()
 
     async def _run_after_task(self):
-        ProgressBar.add_message_to_current(
+        self.progress_bar.add_message(
             f"Task of {self.full_classname()} successfully finished!")
         self.is_instance_running = False
         self.is_instance_finished = True
-        self.progress_bar.stop()
+        self.progress_bar.stop('End of process')
 
         # Set the data output dict
         self.data["output"] = self.output.to_json()

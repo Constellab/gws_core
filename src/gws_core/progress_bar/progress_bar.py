@@ -45,16 +45,16 @@ class ProgressBar(Model):
 
     # -- A --
     @classmethod
-    def add_message_to_current(cls, message="Experiment under progress ...", show_info=False) -> None:
+    def add_message_to_current(cls, message: str) -> None:
         progress_bar: ProgressBar = cls.get_current_progress_bar()
 
         if progress_bar is None:
             Logger.progress(message=message)
             return
 
-        progress_bar.add_message(message=message, show_info=show_info)
+        progress_bar.add_message(message=message)
 
-    def add_message(self, message="Experiment under progress ...", show_info=False):
+    def add_message(self, message: str):
         dtime = jsonable_encoder(datetime.now())
         self.data["messages"].append({
             "text": message,
@@ -64,8 +64,7 @@ class ProgressBar(Model):
         if len(self.data["messages"]) > self._max_message_stack_length:
             self.data["messages"].pop(0)
 
-        if show_info:
-            Logger.progress(message)
+        Logger.progress(message)
 
     # -- C --
 
@@ -111,15 +110,6 @@ class ProgressBar(Model):
         return self.is_initialized and \
             self.data["value"] >= self.data["max_value"]
 
-    # -- P --
-
-    @property
-    def process(self) -> 'Process':
-        if not self.processable_typing_name:
-            return None
-
-        return TypingManager.get_object_with_typing_name_and_uri(self.processable_typing_name, self.process_uri)
-
     # -- R --
 
     def _init_data(self) -> None:
@@ -160,7 +150,7 @@ class ProgressBar(Model):
         self.add_message(message="Experiment started")
         self.save()
 
-    def stop(self, message="End of experiment!"):
+    def stop(self, message: str):
         _max = self.data["max_value"]
 
         if self.data["value"] < _max:
@@ -169,7 +159,7 @@ class ProgressBar(Model):
         self.data["remaining_time"] = 0.0
         self.save()
 
-    def set_value(self, value: float, message="Experiment under progress ...", show_info=False):
+    def set_value(self, value: float, message: str):
         """
         Increment the progress-bar value
         """
@@ -200,10 +190,12 @@ class ProgressBar(Model):
         self.data["average_speed"] = self.data["value"] / \
             self.data["elapsed_time"]
         self.data["remaining_time"] = self._compute_remaining_seconds()
-        self.add_message(message, show_info=show_info)
+
+        if message:
+            self.add_message(message)
 
         if self.data["value"] == _max:
-            self.stop()
+            self.stop('End of process')
         else:
             self.save()
 

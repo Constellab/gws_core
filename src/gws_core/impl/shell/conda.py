@@ -6,11 +6,12 @@
 import os
 import shutil
 import subprocess
-import tempfile
+from abc import abstractmethod
 
+from ...config.config_params import ConfigParams
 from ...core.exception.exceptions import BadRequestException
-from ...core.model.sys_proc import SysProc
 from ...process.process_decorator import ProcessDecorator
+from ...process.process_io import ProcessInputs, ProcessOutputs
 from ...progress_bar.progress_bar import ProgressBar
 from .base_env import BaseEnvShell
 
@@ -125,3 +126,17 @@ class CondaEnvShell(BaseEnvShell):
             except:
                 raise BadRequestException(
                     "Cannot remove the virtual environment.")
+
+    @abstractmethod
+    def gather_outputs(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+        """
+        This methods gathers the results of the shell process. It must be overloaded by subclasses.
+
+        It must be overloaded to capture the standard output (stdout) and the
+        output files generated in the current working directory (see `gws.Shell.cwd`)
+
+        :param stdout: The standard output of the shell process
+        :type stdout: `str`
+        """
+
+        pass

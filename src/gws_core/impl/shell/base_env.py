@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from abc import abstractmethod
 import os
 
 from ...config.config_params import ConfigParams
@@ -59,7 +60,7 @@ class BaseEnvShell(Shell):
         return os.path.join(cls.get_env_dir(), "READY")
 
     @classmethod
-    def is_installed(cls):
+    def is_installed(cls) -> bool:
         """
         Returns True if the virtual env is installed. False otherwise
         """
@@ -67,7 +68,7 @@ class BaseEnvShell(Shell):
         return os.path.exists(cls._get_ready_file_path())
 
     @classmethod
-    def install(cls):
+    def install(cls) -> None:
         """
         Installs the virtual env
         """
@@ -76,7 +77,7 @@ class BaseEnvShell(Shell):
 
     # -- T --
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         """
         Task entrypoint
         """
@@ -88,9 +89,23 @@ class BaseEnvShell(Shell):
     # -- U --
 
     @classmethod
-    def uninstall(cls):
+    def uninstall(cls) -> None:
         """
         Uninstalls the virtual env
+        """
+
+        pass
+
+    @abstractmethod
+    def gather_outputs(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+        """
+        This methods gathers the results of the shell process. It must be overloaded by subclasses.
+
+        It must be overloaded to capture the standard output (stdout) and the
+        output files generated in the current working directory (see `gws.Shell.cwd`)
+
+        :param stdout: The standard output of the shell process
+        :type stdout: `str`
         """
 
         pass

@@ -77,7 +77,7 @@ class RobotSugarCreate(Process):
     output_specs = {'sugar': RobotFood}
     config_specs = {}
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         print("Create sugar", flush=True)
         food: RobotFood = RobotFood()
         food.set_multiplicator(10)
@@ -93,7 +93,7 @@ class RobotWaitfood(Process):
     output_specs = {'food': RobotFood}
     config_specs = {}
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         print("Wait food", flush=True)
         time.sleep(3)
         return {'food': inputs['food']}
@@ -108,7 +108,7 @@ class RobotEmptyfood(Process):
     output_specs = {'food': Optional[RobotFood]}
     config_specs = {}
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         return {}
 
 

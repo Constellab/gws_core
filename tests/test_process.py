@@ -16,7 +16,7 @@ from tests.protocol_examples import TestSimpleProtocol
 
 @ProcessDecorator("ErrorProcess")
 class ErrorProcess(Process):
-    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         raise Exception("Error")
 
 
