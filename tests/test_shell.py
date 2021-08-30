@@ -18,11 +18,11 @@ class Echo(Shell):
     config_specs = {'name': {"type": str, "default": None, 'description': "The name to echo"}, 'save_stdout': {
         "type": bool, "default": False, 'description': "True to save the command output text. False otherwise"}, }
 
-    def build_command(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> list:
+    def build_command(self, config: ConfigParams, inputs: ProcessInputs) -> list:
         name = config.get_param("name")
         return ["echo", name]
 
-    def gather_outputs(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+    def gather_outputs(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         res = Resource()
         res.data["out"] = self._stdout
         return {"stdout": res}

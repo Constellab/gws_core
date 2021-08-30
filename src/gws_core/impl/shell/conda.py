@@ -128,7 +128,7 @@ class CondaEnvShell(BaseEnvShell):
                     "Cannot remove the virtual environment.")
 
     @abstractmethod
-    def gather_outputs(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+    def gather_outputs(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         """
         This methods gathers the results of the shell process. It must be overloaded by subclasses.
 

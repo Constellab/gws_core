@@ -7,9 +7,8 @@ import json
 import os
 
 from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
-                      ProtocolModel, ProtocolService, Settings)
-from gws_core.impl.robot.robot_resource import Robot, RobotFood
-from gws_core.process.process_model import ProcessModel
+                      ProcessModel, ProtocolModel, ProtocolService, Robot,
+                      RobotFood, Settings)
 
 from tests.base_test import BaseTest
 from tests.protocol_examples import (TestNestedProtocol,

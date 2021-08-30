@@ -7,7 +7,6 @@ from ...impl.robot.robot_resource import (MegaRobot, Robot, RobotAddOn,
 from ...process.process import Process
 from ...process.process_decorator import ProcessDecorator
 from ...process.process_io import ProcessInputs, ProcessOutputs
-from ...progress_bar.progress_bar import ProgressBar
 
 
 @ProcessDecorator("RobotCreate", human_name="Create robot", short_description="This process creates a robot")
@@ -106,7 +105,7 @@ class RobotFly(RobotMove):
 
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         print("Start flying ...")
-        return await super().task(config=config, inputs=inputs, progress_bar=progress_bar)
+        return await super().task(config=config, inputs=inputs)
 
 
 @ProcessDecorator("RobotAdd")

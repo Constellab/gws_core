@@ -7,7 +7,7 @@ import os
 
 from gws_core import (CondaEnvShell, ConfigParams, Experiment,
                       ExperimentService, GTest, ProcessDecorator, ProcessInputs,
-                      ProcessModel, ProcessService, ProgressBar, Resource)
+                      ProcessModel, ProcessService, Resource)
 from gws_core.process.process_io import ProcessOutputs
 
 from tests.base_test import BaseTest
@@ -22,10 +22,10 @@ class CondaEnvTester(CondaEnvShell):
     env_file_path = os.path.join(
         __cdir__, "testdata", "penv", "env_jwt_conda.yml")
 
-    def build_command(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> list:
+    def build_command(self, config: ConfigParams, inputs: ProcessInputs) -> list:
         return ["python", os.path.join(__cdir__, "testdata", "penv", "jwt_encode.py")]
 
-    def gather_outputs(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+    def gather_outputs(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         res = Resource()
         res.data["encoded_string"] = self._stdout
         return {"stdout": res}

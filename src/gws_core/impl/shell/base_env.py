@@ -3,13 +3,12 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from abc import abstractmethod
 import os
+from abc import abstractmethod
 
 from ...config.config_params import ConfigParams
 from ...process.process_decorator import ProcessDecorator
 from ...process.process_io import ProcessInputs, ProcessOutputs
-from ...progress_bar.progress_bar import ProgressBar
 from .shell import Shell
 
 
@@ -84,7 +83,7 @@ class BaseEnvShell(Shell):
 
         if not self.is_installed():
             self.install()
-        return await super().task(config=config, inputs=inputs, progress_bar=progress_bar)
+        return await super().task(config=config, inputs=inputs)
 
     # -- U --
 
@@ -97,7 +96,7 @@ class BaseEnvShell(Shell):
         pass
 
     @abstractmethod
-    def gather_outputs(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+    def gather_outputs(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         """
         This methods gathers the results of the shell process. It must be overloaded by subclasses.
 

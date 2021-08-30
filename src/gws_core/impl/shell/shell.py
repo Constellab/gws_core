@@ -39,7 +39,7 @@ class Shell(Process):
     _stdout_count = 0
     _STDOUT_MAX_CHAR_LENGHT = 1024*10
 
-    def build_command(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> list:
+    def build_command(self, config: ConfigParams, inputs: ProcessInputs) -> list:
         """
         Builds the user command to execute.
 
@@ -73,7 +73,7 @@ class Shell(Process):
             return user_cmd
 
     @abstractmethod
-    def gather_outputs(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
+    def gather_outputs(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         """
         This methods gathers the results of the shell process. It must be overloaded by subclasses.
 
@@ -137,8 +137,7 @@ class Shell(Process):
 
         outputs: ProcessOutputs
         try:
-            user_cmd = self.build_command(
-                config=config, inputs=inputs, progress_bar=progress_bar)
+            user_cmd = self.build_command(config=config, inputs=inputs)
             user_env = self.build_env()
 
             if not isinstance(user_env, dict):
@@ -169,7 +168,7 @@ class Shell(Process):
             count = 0
             for line in iter(proc.stdout.readline, b''):
                 line = line.decode().strip()
-                progress_bar.add_message(line)
+                self.add_progress_message(line)
                 if not proc.is_alive():
                     break
 
@@ -177,7 +176,7 @@ class Shell(Process):
                 count += 1
             # TODO à vérifier
             # self.data['cmd'] = cmd
-            outputs = self.gather_outputs(config=config, inputs=inputs, progress_bar=progress_bar)
+            outputs = self.gather_outputs(config=config, inputs=inputs)
 
             for resource in outputs.values():
                 if isinstance(resource, File):
