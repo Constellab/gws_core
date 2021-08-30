@@ -6,12 +6,14 @@ import inspect
 import zlib
 from typing import Dict, Type
 
+from gws_core.resource.resource import Resource
+
 from ..config.config_params import ConfigParams
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..model.typing_manager import TypingManager
 from ..model.typing_register_decorator import TypingDecorator
-from ..process.process_io import ProcessIO
+from ..process.process_io import ProcessInputs, ProcessOutputs
 from ..processable.processable_model import ProcessableModel
 from ..resource.resource_data import ResourceData
 from ..resource.resource_model import ResourceModel
@@ -93,7 +95,7 @@ class ProcessModel(ProcessableModel):
 
         # Get simpler object for to run the task
         config_params: ConfigParams = self.config.get_and_check_params()
-        process_inputs: ProcessIO = self.input.get_and_check_process_inputs()
+        process_inputs: ProcessInputs = self.input.get_and_check_process_inputs()
 
         is_ok = process.check_before_task(
             config=config_params, inputs=process_inputs)
@@ -110,30 +112,45 @@ class ProcessModel(ProcessableModel):
             self.progress_bar.stop(message=str(err))
             raise err
 
-    async def _run_task(self, process: Process, config_params: ConfigParams, process_inputs: ProcessIO) -> None:
+    async def _run_task(self, process: Process, config_params: ConfigParams, process_inputs: ProcessInputs) -> None:
         """
         Run the process and save its state in the database.
         """
 
         # Run the process task
-        process_output: ProcessIO = await process.task(config=config_params, inputs=process_inputs, progress_bar=self.progress_bar)
+        process_output: ProcessOutputs = await process.task(config=config_params, inputs=process_inputs, progress_bar=self.progress_bar)
 
-        if process_output is not None:
-            # if the output is a simple dict and not a ResourceData, create a Resource Data
-            if isinstance(process_output, dict) and not isinstance(process_output, ResourceData):
-                process_output = ResourceData(process_output)
+        if process_output is None:
+            process_output = {}
 
-            # create the ResourceModel
-            for key, value in process_output.items():
+        if not isinstance(process_output, dict):
+            raise BadRequestException('The process output is not a dictionary')
+
+        for key, port in self.output.ports.items():
+            resource_model: ResourceModel
+
+            # If the resource for the output port was provided
+            if key in process_output:
+
+                resource: Resource = process_output[key]
+
+                if not isinstance(resource, Resource):
+                    raise BadRequestException(
+                        f"The output '{key}' of type '{type(resource)}' is not a resource. It must extend the Resource class")
+
                 # Get the type of resource model to create for this resource
-                resource_model_type: Type[ResourceModel] = value.get_resource_model_type()
+                resource_model_type: Type[ResourceModel] = resource.get_resource_model_type()
                 if not issubclass(resource_model_type, ResourceModel):
                     raise BadRequestException(
-                        f"The method get_resource_model_type of resource {value.classname()} did not return a type that extend ResourceModel")
+                        f"The method get_resource_model_type of resource {resource.classname()} did not return a type that extend ResourceModel")
                 # create the resource model from the resource
-                resource_model: ResourceModel = resource_model_type.from_resource(value)
-                # save the resource model into the output
-                self.output.set_resource_model(key,  resource_model)
+                resource_model = resource_model_type.from_resource(resource)
+
+            else:
+                resource_model = None
+
+            # save the resource model into the output's port (even if it's None)
+            port.resource_model = resource_model
 
     async def _run_after_task(self):
 

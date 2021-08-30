@@ -121,6 +121,7 @@ from .impl.robot.robot_protocol import \
 from .impl.robot.robot_resource import MegaRobot as MegaRobot
 from .impl.robot.robot_resource import Robot as Robot
 from .impl.robot.robot_resource import RobotAddOn as RobotAddOn
+from .impl.robot.robot_resource import RobotFood as RobotFood
 from .impl.robot.robot_service import RobotService as RobotService
 # Impl > S3
 from .impl.s3.base import BaseS3 as BaseS3
@@ -158,7 +159,8 @@ from .process.plug import Switch2 as Switch2
 from .process.plug import Wait as Wait
 from .process.process import Process as Process
 from .process.process_decorator import ProcessDecorator as ProcessDecorator
-from .process.process_io import ProcessIO as ProcessIO
+from .process.process_io import ProcessInputs as ProcessInputs
+from .process.process_io import ProcessOutputs as ProcessOutputs
 from .process.process_model import ProcessModel as ProcessModel
 from .process.process_service import ProcessService as ProcessService
 from .process.process_type import ProcessType as ProcessType
@@ -199,5 +201,5 @@ from .user.credentials_dto import CredentialsDTO as CredentialsDTO
 from .user.current_user_service import CurrentUserService as CurrentUserService
 from .user.user import User as User
 from .user.user_dto import UserData as UserData
-from .user.user_group import UserGroup
+from .user.user_group import UserGroup as UserGroup
 from .user.user_service import UserService as UserService

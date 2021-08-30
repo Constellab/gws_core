@@ -27,6 +27,9 @@ class Port(Base):
     _next: List['Port'] = []
     _parent: IO
 
+    # Switch to true when the set_resource_model is set (even if it is set with a None value)
+    _resource_provided: bool = False
+
     def __init__(self, parent: IO, resource_types: IOSpec):
         self._resource_model = None
         self._prev = None
@@ -117,12 +120,14 @@ class Port(Base):
         """
 
         if self.is_optional:
-            return True
+            # If the port is connected but the set_resource was not called,
+            # the port is not ready
+            if self.is_left_connected and not self._resource_provided:
+                return False
+            else:
+                return True
 
-        # if self._resource is None:
-        #    return self.is_optional and (not self.is_connected)
-
-        return self.resource_model is not None
+        return self._resource_provided
 
     @property
     def is_optional(self) -> bool:
@@ -259,10 +264,8 @@ class Port(Base):
         :param resource: The input resource
         :type resource: ResourceModel
         """
-
-        if self.is_optional and resource_model is None:
-            return
-
+        # mark the resource as provided
+        self._resource_provided = True
         self._resource_model = resource_model
 
     # -- S --

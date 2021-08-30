@@ -7,7 +7,7 @@ import os
 
 from ...config.config_params import ConfigParams
 from ...process.process_decorator import ProcessDecorator
-from ...process.process_io import ProcessIO
+from ...process.process_io import ProcessInputs, ProcessOutputs
 from ...progress_bar.progress_bar import ProgressBar
 from .shell import Shell
 
@@ -76,7 +76,7 @@ class BaseEnvShell(Shell):
 
     # -- T --
 
-    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
         """
         Task entrypoint
         """

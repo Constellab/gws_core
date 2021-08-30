@@ -177,6 +177,11 @@ class ResourceModel(Viewable, Generic[ResourceType]):
 
     @classmethod
     def from_resource(cls, resource: Resource) -> 'ResourceModel':
+        """Create a new ResourceModel from a resource
+
+        :return: [description]
+        :rtype: [type]
+        """
         resource_model: ResourceModel = ResourceModel()
         resource_model.resource_typing_name = resource._typing_name
         resource_model._resource = resource  # set the resource into the resource model

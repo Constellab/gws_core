@@ -4,8 +4,9 @@
 # About us: https://gencovery.com
 
 from gws_core import (ConfigParams, Experiment, ExperimentService, GTest,
-                      ProcessDecorator, ProcessIO, ProcessModel,
+                      ProcessDecorator, ProcessInputs, ProcessModel,
                       ProcessService, ProgressBar, Resource, Shell)
+from gws_core.process.process_io import ProcessOutputs
 
 from tests.base_test import BaseTest
 
@@ -17,11 +18,11 @@ class Echo(Shell):
     config_specs = {'name': {"type": str, "default": None, 'description': "The name to echo"}, 'save_stdout': {
         "type": bool, "default": False, 'description': "True to save the command output text. False otherwise"}, }
 
-    def build_command(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> list:
+    def build_command(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> list:
         name = config.get_param("name")
         return ["echo", name]
 
-    def gather_outputs(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
+    def gather_outputs(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
         res = Resource()
         res.data["out"] = self._stdout
         return {"stdout": res}

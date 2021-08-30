@@ -3,7 +3,7 @@
 from abc import abstractmethod
 from typing import Type, final
 
-from gws_core.process.process_io import ProcessIO
+from gws_core.process.process_io import ProcessInputs, ProcessOutputs
 from gws_core.resource.resource import Resource
 
 from ..config.config_params import ConfigParams
@@ -36,7 +36,7 @@ class Process(Processable):
             raise BadRequestException(
                 f"The process {self.full_classname()} is not decorated with @ProcessDecorator, it can't be instantiate. Please decorate the process class with @ProcessDecorator")
 
-    def check_before_task(self, config: ConfigParams, inputs: ProcessIO) -> bool:
+    def check_before_task(self, config: ConfigParams, inputs: ProcessInputs) -> bool:
         """
         This can be overiwritten to perform custom check before running task.
 
@@ -50,7 +50,7 @@ class Process(Processable):
         return True
 
     @abstractmethod
-    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
         """This must be overiwritten to perform the task of the process.
 
         This is where most of your code must go

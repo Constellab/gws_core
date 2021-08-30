@@ -8,7 +8,7 @@ from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.base import Base
 from ..model.typing_manager import TypingManager
-from ..process.process_io import ProcessIO
+from ..process.process_io import ProcessInputs
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
 from .io_exception import (MissingInputResourcesException,
@@ -275,19 +275,20 @@ class Input(IO):
 
         return True
 
-    def get_and_check_process_inputs(self) -> ProcessIO:
+    def get_and_check_process_inputs(self) -> ProcessInputs:
         """Get the process inputs and check all the mandatory inputs are provided
 
         :return: [description]
         :rtype: ProcessIO
         """
         missing_resource: List[str] = []
-        process_io: ProcessIO = {}
+        process_io: ProcessInputs = ProcessInputs()
         for key, port in self.ports.items():
 
-            # check that is the port is mandatory it is provided
-            if port.is_empty and not port.is_optional:
-                missing_resource.append(key)
+            if port.is_empty:
+                # If the port is empty and not optional, add an error
+                if not port.is_optional:
+                    missing_resource.append(key)
                 continue
             process_io[key] = port.get_resource()
 

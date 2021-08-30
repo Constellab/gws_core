@@ -8,9 +8,13 @@ import os
 
 from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
                       ProtocolModel, ProtocolService, Settings)
+from gws_core.impl.robot.robot_resource import Robot, RobotFood
+from gws_core.process.process_model import ProcessModel
 
 from tests.base_test import BaseTest
-from tests.protocol_examples import TestNestedProtocol, TestSimpleProtocol
+from tests.protocol_examples import (TestNestedProtocol,
+                                     TestRobotwithSugarProtocol,
+                                     TestSimpleProtocol)
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -134,3 +138,41 @@ class TestProtocol(BaseTest):
         self.assertEqual(len(super_proto_db.connectors), 0)
         self.assertTrue("p0" in super_proto_db.processes)
         self.assertTrue("p5" in super_proto_db.processes)
+
+    async def test_optional_input(self):
+        """Test the optional input if different scenarios
+        1. It is connected and provided, so we wait for it
+        2. It is not connected
+        3. It is connected but not provided (None)
+        """
+        protocol: ProtocolModel = ProtocolService.create_protocol_from_type(TestRobotwithSugarProtocol)
+
+        experiment: Experiment = ExperimentService.create_experiment_from_protocol(
+            protocol=protocol)
+
+        experiment = await ExperimentService.run_experiment(
+            experiment=experiment, user=GTest.user)
+
+        eat_1: ProcessModel = experiment.protocol.get_process('eat_1')
+        food: RobotFood = eat_1.input.get_resource_model('food')
+
+        self.assertIsNotNone(food)
+
+        # check that the RobotEat used the sugar food.
+        # if yes, this will mean that the process eat waited for the food process to end
+        # even if the food input of eat is optional
+        robot_input: Robot = eat_1.input.get_resource_model('robot').get_resource()
+        robot_output: Robot = eat_1.output.get_resource_model('robot').get_resource()
+        self.assertEqual(robot_output.weight, robot_input.weight + (2 * 10))  # 2 = food weight, 10 sugar multiplicator
+
+        # Check that the eat_2 was called even if the food input (optional) is not plug
+        eat_2: ProcessModel = experiment.protocol.get_process('eat_2')
+        robot_output_2: Robot = eat_2.output.get_resource_model('robot').get_resource()
+        # If this doesn't work, this mean that the process eat_2 was not called because it misses an optional input
+        self.assertEqual(robot_output_2.weight, robot_output.weight + 5)  # 5 = food weight
+
+        # Check that eat 3 was called event if it is connected to empty_food and food input is None
+        eat_3: ProcessModel = experiment.protocol.get_process('eat_3')
+        robot_output_3: Robot = eat_3.output.get_resource_model('robot').get_resource()
+        # If this doesn't work, this mean that the process eat_2 was not called because it misses an optional input
+        self.assertEqual(robot_output_3.weight, robot_output_2.weight + 7)  # 7 = food weight

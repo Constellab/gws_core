@@ -10,7 +10,7 @@ from abc import abstractmethod
 from typing import Union
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.process.process_io import ProcessIO
+from gws_core.process.process_io import ProcessInputs, ProcessOutputs
 
 from ...core.exception.exceptions import BadRequestException
 from ...core.model.sys_proc import SysProc
@@ -39,7 +39,7 @@ class Shell(Process):
     _stdout_count = 0
     _STDOUT_MAX_CHAR_LENGHT = 1024*10
 
-    def build_command(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> list:
+    def build_command(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> list:
         """
         Builds the user command to execute.
 
@@ -73,7 +73,7 @@ class Shell(Process):
             return user_cmd
 
     @abstractmethod
-    def gather_outputs(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
+    def gather_outputs(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
         """
         This methods gathers the results of the shell process. It must be overloaded by subclasses.
 
@@ -130,12 +130,12 @@ class Shell(Process):
 
         return self.cwd.name
 
-    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
         """
         Task entrypoint
         """
 
-        outputs: ProcessIO
+        outputs: ProcessOutputs
         try:
             user_cmd = self.build_command(
                 config=config, inputs=inputs, progress_bar=progress_bar)

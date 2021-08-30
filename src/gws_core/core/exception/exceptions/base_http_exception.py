@@ -53,3 +53,6 @@ class BaseHTTPException(HTTPException):
                     "{{" + key + "}}", str(self.detail_args[key]))
 
         return replaced_detail
+
+    def __str__(self) -> str:
+        return self.get_detail_with_args()

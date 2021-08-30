@@ -8,10 +8,9 @@ from typing import Type
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.core.utils.utils import Utils
-from gws_core.process.process_io import ProcessIO
+from gws_core.process.process_io import ProcessInputs, ProcessOutputs
 from gws_core.resource.resource import Resource
 
-from ..config.config import Config
 from ..core.model.model import Model
 from ..progress_bar.progress_bar import ProgressBar
 from .process import Process
@@ -35,7 +34,7 @@ class Source(Process):
 
     _is_plug = True
 
-    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
         r_uri = config.get_param("resource_uri")
         r_type = config.get_param("resource_type")
         if not r_uri or not r_type:
@@ -58,7 +57,7 @@ class Sink(Process):
     config_specs = {}
     _is_plug = True
 
-    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
         pass
 
 
@@ -76,7 +75,7 @@ class FIFO2(Process):
     config_specs = {}
     _is_plug = True
 
-    def check_before_task(self, config: ConfigParams, inputs: ProcessIO) -> bool:
+    def check_before_task(self, config: ConfigParams, inputs: ProcessInputs) -> bool:
         res_1 = inputs['resource_1']
         res_2 = inputs['resource_2']
         is_ready = res_1 or res_2
@@ -85,7 +84,7 @@ class FIFO2(Process):
 
         return True
 
-    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
         resource = inputs["resource_1"]
         if resource:
             return {"resource": resource}
@@ -110,7 +109,7 @@ class Switch2(Process):
                               "Description": "The index of the input resource to switch on. Defaults to 1."}}
     _is_plug = True
 
-    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
         index = config.get_param("index")
         resource = inputs[f"resource_{index}"]
         return {"resource": resource}
@@ -130,7 +129,7 @@ class Wait(Process):
                                      "Description": "The waiting time in seconds. Defaults to 3 second."}}
     _is_plug = True
 
-    async def task(self, config: ConfigParams, inputs: ProcessIO, progress_bar: ProgressBar) -> ProcessIO:
+    async def task(self, config: ConfigParams, inputs: ProcessInputs, progress_bar: ProgressBar) -> ProcessOutputs:
         waiting_time = config.get_param("waiting_time")
         time.sleep(waiting_time)
         resource = inputs["resource"]

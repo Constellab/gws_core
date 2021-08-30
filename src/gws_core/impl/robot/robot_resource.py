@@ -47,3 +47,13 @@ class RobotAddOn(Resource):
 @ResourceDecorator("MegaRobot")
 class MegaRobot(Robot):
     pass
+
+
+@ResourceDecorator("RobotFood")
+class RobotFood(Resource):
+    @property
+    def multiplicator(self) -> int:
+        return self.data['multiplicator']
+
+    def set_multiplicator(self, val: int):
+        self.data['multiplicator'] = val

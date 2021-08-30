@@ -18,7 +18,7 @@ class ResourceData(Dict[str, ResourceDict]):
 
     def set_values(self, data: Dict[str, ResourceDict]) -> None:
         if not isinstance(data, dict):
-            raise BadRequestException(f"Can't instnatiate ResourceData with data {str(data)} because it is not a dict")
+            raise BadRequestException(f"Can't instantiate ResourceData with data {str(data)} because it is not a dict")
 
         for key, value in data.items():
             self[key] = value
