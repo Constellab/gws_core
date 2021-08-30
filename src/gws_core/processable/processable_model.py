@@ -203,17 +203,6 @@ class ProcessableModel(Viewable):
 
     # -- L --
 
-    def __lshift__(self, name: str) -> InPort:
-        """
-        Alias of :meth:`in_port`.
-        Returns the port of the input by its name
-
-        :return: The port
-        :rtype: InPort
-        """
-
-        return self.in_port(name)
-
     # -- O --
 
     @property
@@ -323,7 +312,7 @@ class ProcessableModel(Viewable):
             await asyncio.gather(*aws)
 
     async def _run_before_task(self):
-        self.__switch_to_current_progress_bar()
+        self._switch_to_current_progress_bar()
         ProgressBar.add_message_to_current(
             f"Running {self.full_classname()} ...")
         self.is_instance_running = True
@@ -360,17 +349,6 @@ class ProcessableModel(Viewable):
         """
         self.save()
 
-    def __rshift__(self, name: str) -> OutPort:
-        """
-        Alias of :meth:`out_port`.
-
-        Returns the port of the output by its name
-        :return: The port
-        :rtype: OutPort
-        """
-
-        return self.out_port(name)
-
     # -- S --
 
     def save_full(self) -> 'ProcessableModel':
@@ -391,7 +369,7 @@ class ProcessableModel(Viewable):
             self.parent_protocol_id = parent_protocol.id
         self._parent_protocol = parent_protocol
 
-    def __switch_to_current_progress_bar(self):
+    def _switch_to_current_progress_bar(self):
         """
         Swicth to the application to current progress bar.
 
