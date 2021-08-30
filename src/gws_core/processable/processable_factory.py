@@ -1,20 +1,21 @@
 
 
+from logging import exception
 from typing import Dict, List, Type
 
-from gws_core.config.config_spec import ConfigValues
-from gws_core.io.port import Port
-
 from ..config.config import Config
+from ..config.config_spec import ConfigValues
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..io.connector import Connector
+from ..io.port import Port
 from ..model.typing_manager import TypingManager
 from ..process.process import Process
 from ..process.process_model import ProcessModel
 from ..progress_bar.progress_bar import ProgressBar
 from ..protocol.protocol import (CONST_PROTOCOL_TYPING_NAME, Protocol,
                                  ProtocolCreateConfig)
+from ..protocol.protocol_exception import ProtocolBuildException
 from ..protocol.protocol_model import ProtocolModel
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
@@ -69,62 +70,73 @@ class ProcessableFactory():
     def create_protocol_model_from_type(cls, protocol_type: Type[Protocol],
                                         config_values: ConfigValues = None,
                                         instance_name: str = None) -> ProtocolModel:
-        if not issubclass(protocol_type, Protocol):
-            name = protocol_type.__name__ if protocol_type.__name__ is not None else str(
-                protocol_type)
-            raise BadRequestException(
-                f"The type {name} is not a Protocol. It must extend the Protcol class")
 
-        if not TypingManager.type_is_register(protocol_type):
-            raise BadRequestException(
-                f"The protocol {protocol_type.full_classname()} is not register. Did you add the @ProtocolDecorator decorator on your protocol class ?")
+        try:
+            if not issubclass(protocol_type, Protocol):
+                name = protocol_type.__name__ if protocol_type.__name__ is not None else str(
+                    protocol_type)
+                raise BadRequestException(
+                    f"The type {name} is not a Protocol. It must extend the Protcol class")
 
-        protocol_model: ProtocolModel = ProtocolModel()
-        protocol_model.set_protocol_type(protocol_type)
+            if not TypingManager.type_is_register(protocol_type):
+                raise BadRequestException(
+                    f"The protocol {protocol_type.full_classname()} is not register. Did you add the @ProtocolDecorator decorator on your protocol class ?")
 
-        config: Config = Config(specs=protocol_type.config_specs)
-        if config_values:
-            config.set_params(config_values)
+            protocol_model: ProtocolModel = ProtocolModel()
+            protocol_model.set_protocol_type(protocol_type)
 
-        cls._init_processable_model(processable_model=protocol_model, config=config, instance_name=instance_name)
+            config: Config = Config(specs=protocol_type.config_specs)
+            if config_values:
+                config.set_params(config_values)
 
-        protocol: Protocol = protocol_type()
-        protocol.configure_protocol(config.get_and_check_params())
-        create_config: ProtocolCreateConfig = protocol.get_create_config()
+            cls._init_processable_model(processable_model=protocol_model, config=config, instance_name=instance_name)
 
-        # Create the process and protocol (recursive)
-        processes: Dict[str, ProcessableModel] = {}
-        for key, proc in create_config["processable_specs"].items():
-            processes[key] = ProcessableFactory.create_processable_model_from_type(
-                proc.processable_type, proc.get_config_values(), proc.instance_name)
+            protocol: Protocol = protocol_type()
+            protocol.configure_protocol(config.get_and_check_params())
+            create_config: ProtocolCreateConfig = protocol.get_create_config()
 
-        # Set the protocol interfaces
-        interfaces: Dict[str, Port] = {}
-        for key, interface in create_config["interfaces"].items():
-            interfaces[key] = processes[interface["processable_instance_name"]].in_port(interface["port_name"])
+            # Create the process and protocol (recursive)
+            processes: Dict[str, ProcessableModel] = {}
+            for key, proc in create_config["processable_specs"].items():
+                try:
+                    processes[key] = ProcessableFactory.create_processable_model_from_type(
+                        proc.processable_type, proc.get_config_values(), proc.instance_name)
+                except ProtocolBuildException as err:
+                    raise err
+                except Exception as err:
+                    raise ProtocolBuildException.from_exception('Process', key, err)
 
-        # Set the protocol outerfaces
-        outerfaces: Dict[str, Port] = {}
-        for key, outerface in create_config["outerfaces"].items():
-            outerfaces[key] = processes[outerface["processable_instance_name"]].out_port(outerface["port_name"])
+            # Set the protocol interfaces
+            interfaces: Dict[str, Port] = {}
+            for key, interface in create_config["interfaces"].items():
+                interfaces[key] = processes[interface["processable_instance_name"]].in_port(interface["port_name"])
 
-        # Set the connectors
-        connectors: List[Connector] = []
-        for connector in create_config["connectors"]:
-            from_proc: ProcessableModel = processes[connector["from_processable"]]
-            to_proc: ProcessableModel = processes[connector["to_processable"]]
-            connectors.append(Connector(
-                out_port=from_proc.out_port(connector["from_port"]),
-                in_port=to_proc.in_port(connector["to_port"])))
+            # Set the protocol outerfaces
+            outerfaces: Dict[str, Port] = {}
+            for key, outerface in create_config["outerfaces"].items():
+                outerfaces[key] = processes[outerface["processable_instance_name"]].out_port(outerface["port_name"])
 
-        # create the protocol from a statis protocol class
-        return cls._build_protocol_model(
-            protocol_model=protocol_model,
-            processes=processes,
-            connectors=connectors,
-            interfaces=interfaces,
-            outerfaces=outerfaces
-        )
+            # Set the connectors
+            connectors: List[Connector] = []
+            for connector in create_config["connectors"]:
+                from_proc: ProcessableModel = processes[connector["from_processable"]]
+                to_proc: ProcessableModel = processes[connector["to_processable"]]
+                connectors.append(Connector(
+                    out_port=from_proc.out_port(connector["from_port"]),
+                    in_port=to_proc.in_port(connector["to_port"])))
+
+            # create the protocol from a statis protocol class
+            return cls._build_protocol_model(
+                protocol_model=protocol_model,
+                processes=processes,
+                connectors=connectors,
+                interfaces=interfaces,
+                outerfaces=outerfaces
+            )
+        except ProtocolBuildException as err:
+            raise ProtocolBuildException.from_build_exception(parent_instance_name=instance_name, exception=err)
+        except Exception as err:
+            raise ProtocolBuildException.from_exception('Protocol', instance_name, err)
 
     @classmethod
     def create_protocol_model_from_data(cls, processes: Dict[str, ProcessableModel] = None,

@@ -29,7 +29,7 @@ class ProcessableRunException(BadRequestException):
         self.processable_model = processable_model
         detail_arg: Dict = {"error": exception_detail, **self.get_process_args()}
         super().__init__(
-            GWSException.PROCESS_RUN_EXCEPTION.value,
+            GWSException.PROCESSABLE_RUN_EXCEPTION.value,
             unique_code=unique_code,
             detail_args=detail_arg)
 
@@ -46,7 +46,7 @@ class ProcessableRunException(BadRequestException):
         # create from a unknow exception
         else:
             return ProcessableRunException(processable_model=processable_model, exception_detail=str(exception),
-                                           unique_code=GWSException.PROCESS_RUN_EXCEPTION.name, exception=exception)
+                                           unique_code=GWSException.PROCESSABLE_RUN_EXCEPTION.name, exception=exception)
 
     def get_process_args(self) -> Dict:
         protocol: str
