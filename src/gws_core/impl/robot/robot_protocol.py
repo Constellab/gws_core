@@ -1,11 +1,8 @@
-from gws_core.config.config_params import ConfigParams
-from gws_core.impl.robot.robot_process import (RobotAdd, RobotAddOnCreate,
-                                               RobotCreate, RobotEat, RobotFly,
-                                               RobotMove, RobotWait)
-
+from ...config.config_params import ConfigParams
 from ...protocol.protocol import ProcessableSpec, Protocol
 from ...protocol.protocol_decorator import ProtocolDecorator
-from ...resource.resource_decorator import ResourceDecorator
+from .robot_process import (RobotAdd, RobotAddOnCreate, RobotCreate, RobotEat,
+                            RobotFly, RobotMove, RobotWait)
 
 
 @ProtocolDecorator("RobotSimpleTravel")

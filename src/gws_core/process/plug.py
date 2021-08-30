@@ -13,7 +13,6 @@ from gws_core.resource.resource import Resource
 
 from ..config.config import Config
 from ..core.model.model import Model
-from ..io.io import Input
 from ..progress_bar.progress_bar import ProgressBar
 from .process import Process
 from .process_decorator import ProcessDecorator
@@ -77,7 +76,7 @@ class FIFO2(Process):
     config_specs = {}
     _is_plug = True
 
-    def check_before_task(self, config: Config, inputs: Input) -> bool:
+    def check_before_task(self, config: ConfigParams, inputs: ProcessIO) -> bool:
         res_1 = inputs['resource_1']
         res_2 = inputs['resource_2']
         is_ready = res_1 or res_2

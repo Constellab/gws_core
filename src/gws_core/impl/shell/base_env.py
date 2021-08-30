@@ -5,12 +5,9 @@
 
 import os
 
-from gws_core.config.config_params import ConfigParams
-from gws_core.process.process_io import ProcessIO
-
-from ...config.config import Config
-from ...io.io import Input, Output
+from ...config.config_params import ConfigParams
 from ...process.process_decorator import ProcessDecorator
+from ...process.process_io import ProcessIO
 from ...progress_bar.progress_bar import ProgressBar
 from .shell import Shell
 

@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Type, final
 
-from ..core.exception.exceptions import BadRequestException
 from ..core.model.base import Base
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
@@ -291,7 +290,7 @@ class Port(Base):
         pass
 
     def to_json(self) -> PortDict:
-        _json = {}
+        _json: PortDict = {"resource": None, "specs": None}
 
         if self.resource_model:
             _json["resource"] = {

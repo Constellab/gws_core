@@ -1,6 +1,6 @@
 
 
-from typing import Dict, Type, TypedDict
+from typing import Any, Dict, Type, TypedDict
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -36,7 +36,7 @@ class TypingManager:
     _typings_name_cache: Dict[str, Type[Base]] = {}
 
     @classmethod
-    def get_type_from_name(cls, typing_name: str) -> Type[Base]:
+    def get_type_from_name(cls, typing_name: str) -> Type[Any]:
         if typing_name not in cls._typings_name_cache:
             typing: Typing = Typing.get_by_typing_name(typing_name).first()
 
@@ -51,11 +51,18 @@ class TypingManager:
     @classmethod
     def get_object_with_typing_name(cls, typing_name: str, object_id: int) -> Model:
         model_type: Type[Model] = cls.get_type_from_name(typing_name)
+        if not issubclass(model_type, Model):
+            raise BadRequestException(
+                f"Can't get the object of type {model_type} (typing name: {typing_name}) from the DB because it is not a Model")
         return model_type.get_by_id(object_id)
 
     @classmethod
     def get_object_with_typing_name_and_uri(cls, typing_name: str, uri: str) -> Model:
         model_type: Type[Model] = cls.get_type_from_name(typing_name)
+        if not issubclass(model_type, Model):
+            raise BadRequestException(
+                f"Can't get the object of type {model_type} (typing name: {typing_name}) from the DB because it is not a Model")
+
         return model_type.get_by_uri(uri)
 
     @classmethod

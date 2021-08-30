@@ -92,7 +92,7 @@ class TestCSV(BaseTest):
         importer: ProcessModel = experiment.protocol.get_process("importer")
         loader: ProcessModel = experiment.protocol.get_process("loader")
         exporter: ProcessModel = experiment.protocol.get_process("exporter")
-        csv_data: CSVTable = loader.output["data"].get_resource()
+        csv_data: CSVTable = loader.output.get_resource_model("data").get_resource()
 
         i_df = pandas.read_table(i_file_path)
         o_df = pandas.read_table(o_file_path)
@@ -104,8 +104,8 @@ class TestCSV(BaseTest):
             os.unlink(o_file_path)
         self.assertFalse(os.path.exists(o_file_path))
 
-        file: File = exporter.output["file"]
+        file: File = exporter.output.get_resource_model("file")
         self.assertTrue(os.path.exists(file.path))
 
-        o_csv_data: CSVTable = importer.output["data"].get_resource()
+        o_csv_data: CSVTable = importer.output.get_resource_model("data").get_resource()
         self.assertTrue(csv_data.table.equals(o_csv_data.table))

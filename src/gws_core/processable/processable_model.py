@@ -412,24 +412,6 @@ class ProcessableModel(Viewable):
                 "The protocol is already related to an experiment")
         self.experiment = experiment
 
-    def set_input(self, name: str, resource: 'ResourceModel'):
-        """
-        Sets the resource of an input port by its name.
-
-        :param name: The name of the input port
-        :type name: str
-        :param resource: A reources to assign to the port
-        :type resource: ResourceModel
-        """
-
-        if not isinstance(name, str):
-            raise BadRequestException("The name must be a string.")
-
-        # if not not isinstance(resource, ResourceModel):
-        #    raise BadRequestException("The resource must be an instance of ResourceModel.")
-
-        self._input[name] = resource
-
     def set_config(self, config: Config):
         """
         Sets the config of the process.

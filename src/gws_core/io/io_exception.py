@@ -1,5 +1,5 @@
 
-from typing import List, Tuple, Type
+from typing import List, Type
 
 from gws_core.core.exception.gws_exceptions import GWSException
 
@@ -17,9 +17,9 @@ class ResourceNotCompatibleException(BadRequestException):
 
     port_name: str
     resource_type: Type[Resource]
-    excepted_types: Tuple[Type[Resource]]
+    excepted_types: List[Type[Resource]]
 
-    def __init__(self, port_name: str, resource_type: Type[Resource],  excepted_types: Tuple[Type[Resource]]) -> None:
+    def __init__(self, port_name: str, resource_type: Type[Resource],  excepted_types: List[Type[Resource]]) -> None:
         self.port_name = port_name
         self.resource_type = resource_type
         self.excepted_types = excepted_types

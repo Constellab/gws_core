@@ -565,7 +565,7 @@ class ProtocolModel(ProcessableModel):
 
         for key, interface in self.interfaces.items():
             port = interface.target_port
-            port.resource_model = self.input[key]
+            port.resource_model = self.input.get_resource_model(key)
 
     def _set_outputs(self):
         """
@@ -574,7 +574,7 @@ class ProtocolModel(ProcessableModel):
 
         for key, outerface in self.outerfaces.items():
             port = outerface.source_port
-            self.output[key] = port.resource_model
+            self.output.set_resource_model(key, port.resource_model)
 
     def __set_input_specs(self, input_specs: Dict[str, Type[Resource]]):
         for key, spec in input_specs.items():
@@ -586,31 +586,31 @@ class ProtocolModel(ProcessableModel):
 
     def set_interfaces(self, interfaces: Dict[str, Port]):
         input_specs = {}
-        for k in interfaces:
-            input_specs[k] = interfaces[k].resource_types
+        for key in interfaces:
+            input_specs[key] = interfaces[key].resource_types
         if not input_specs:
             return
         self.__set_input_specs(input_specs)
         self._interfaces = {}
-        for k in interfaces:
-            source_port = self._input.ports[k]
-            self._interfaces[k] = Interface(
-                name=k, source_port=source_port, target_port=interfaces[k])
+        for key in interfaces:
+            source_port = self._input.get_port(key)
+            self._interfaces[key] = Interface(
+                name=key, source_port=source_port, target_port=interfaces[key])
 
         self._init_input_from_data()
 
     def set_outerfaces(self, outerfaces: Dict[str, Port]):
         output_specs = {}
-        for k in outerfaces:
-            output_specs[k] = outerfaces[k].resource_types
+        for key in outerfaces:
+            output_specs[key] = outerfaces[key].resource_types
         if not output_specs:
             return
         self.__set_output_specs(output_specs)
         self._outerfaces = {}
-        for k in outerfaces:
-            target_port = self._output.ports[k]
-            self._outerfaces[k] = Outerface(
-                name=k, target_port=target_port, source_port=outerfaces[k])
+        for key in outerfaces:
+            target_port = self._output.get_port(key)
+            self._outerfaces[key] = Outerface(
+                name=key, target_port=target_port, source_port=outerfaces[key])
 
         self._init_output_from_data()
 

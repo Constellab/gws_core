@@ -114,5 +114,4 @@ class TestIO(unittest.TestCase):
             process_type=Jump, instance_name="p3")
         for k in jump.input:
             print(k)
-            print(jump.input[k])
-            #self.assertEqual( jump.input[k] )
+            print(jump.input.get_resource_model(k))

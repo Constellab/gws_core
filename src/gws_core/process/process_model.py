@@ -12,10 +12,10 @@ from ..core.exception.exceptions.bad_request_exception import \
 from ..model.typing_manager import TypingManager
 from ..model.typing_register_decorator import TypingDecorator
 from ..process.process_io import ProcessIO
+from ..processable.processable_model import ProcessableModel
 from ..resource.resource_data import ResourceData
 from ..resource.resource_model import ResourceModel
 from .process import Process
-from ..processable.processable_model import ProcessableModel
 
 
 @TypingDecorator(unique_name="Process", object_type="GWS_CORE", hide=True)
@@ -133,7 +133,7 @@ class ProcessModel(ProcessableModel):
                 # create the resource model from the resource
                 resource_model: ResourceModel = resource_model_type.from_resource(value)
                 # save the resource model into the output
-                self.output[key] = resource_model
+                self.output.set_resource_model(key,  resource_model)
 
     async def _run_after_task(self):
 

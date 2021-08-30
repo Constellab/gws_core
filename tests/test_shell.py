@@ -44,5 +44,5 @@ class TestShell(BaseTest):
         # refresh the process
         proc = experiment.processes[0]
 
-        res: Resource = proc.output['stdout'].get_resource()
+        res: Resource = proc.output.get_resource_model('stdout').get_resource()
         self.assertEqual(res.data["out"], "Jhon Doe")

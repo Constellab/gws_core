@@ -50,7 +50,7 @@ class TestProcess(BaseTest):
         # refresh the process
         proc = experiment.processes[0]
 
-        result: Resource = proc.output["stdout"].get_resource()
+        result: Resource = proc.output.get_resource_model("stdout").get_resource()
         encoded_string = result.data["encoded_string"]
         self.assertEqual(
             encoded_string,

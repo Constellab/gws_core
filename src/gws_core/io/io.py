@@ -79,25 +79,6 @@ class IO(Base):
 
     # -- G --
 
-    def __getitem__(self, name: str) -> ResourceModel:
-        """
-        Bracket (getter) operator. Gets the content of a port by its name.
-
-        :param name: Name of the port
-        :type name: str
-        :return: The resource of the port
-        :rtype: ResourceModel
-        """
-
-        if not isinstance(name, str):
-            raise BadRequestException("The port name must be a string")
-
-        if self._ports.get(name, None) is None:
-            raise BadRequestException(
-                self.classname() + " port '" + name + "' not found")
-
-        return self._ports[name].resource_model
-
     def get_port_names(self) -> List[str]:
         """
         Returns the names of all the ports.
@@ -128,30 +109,10 @@ class IO(Base):
         :return: List of resources
         :rtype: list
         """
-
+        self._check_port_name(port_name)
         return self._ports[port_name]
 
-    def get_specs(self) -> Dict[str, Tuple[str]]:
-        specs: Dict[str, Tuple[Any]] = {}
-
-        for key, port in self._ports.items():
-            specs[key] = ()
-
-            for resource_type in port.resource_types:
-                if resource_type is None:
-                    specs[key] += (None,)
-                else:
-                    classname = resource_type._typing_name
-                    specs[key] += (classname,)
-
-        return specs
-
     # -- I --
-
-    # Creates iterator object
-    # Called when iteration is initialized
-    def __iter__(self):
-        return self._ports.__iter__()
 
     @property
     def is_ready(self) -> bool:
@@ -176,9 +137,6 @@ class IO(Base):
         return True
 
     # -- N --
-
-    def __next__(self):
-        return self._ports.__next__()
 
     def get_next_procs(self) -> List[ProcessableModel]:
         """
@@ -229,39 +187,28 @@ class IO(Base):
 
     # -- S --
 
-    def _set_item_without_check(self, name: str, resource_model: ResourceModel) -> None:
-        """Set the resource in the port without checking the port type
-
-        :param name: [description]
-        :type name: str
-        :param resource: [description]
-        :type resource: ResourceModel
-        :raises BadRequestException: [description]
-        :raises BadRequestException: [description]
+    def set_resource_model(self, port_name: str, resource_model: ResourceModel) -> None:
+        """Set the resource_model of a port
         """
-        self._check_port_name(name)
-
-        self._ports[name].resource_model = resource_model
-
-    def __setitem__(self, name: str, resource_model: ResourceModel) -> None:
-        """
-        Bracket (setter) operator. Sets the resource of a port by its name.
-        If check the type of the port
-
-        :param name: Name of the port
-        :type name: str
-        :param resource: The input resource
-        :type resource: ResourceModel
-        """
-
-        self._check_port_name(name)
-        port: Port = self._ports[name]
+        port: Port = self.get_port(port_name)
 
         resource_type: Type[Resource] = type(resource_model.get_resource())
         if not port.resource_type_is_compatible(resource_type):
-            raise ResourceNotCompatibleException(port_name=name, resource_type=resource_type,
+            raise ResourceNotCompatibleException(port_name=port_name, resource_type=resource_type,
                                                  excepted_types=port.resource_types)
 
+        port.resource_model = resource_model
+
+    def get_resource_model(self, port_name: str) -> ResourceModel:
+        """Get the resource_model of a port
+        """
+        port: Port = self.get_port(port_name)
+        return port.resource_model
+
+    def _set_resource_model_without_check(self, port_name: str, resource_model: ResourceModel) -> None:
+        """Set the resource in the port without checking the port type
+        """
+        port: Port = self.get_port(port_name)
         port.resource_model = resource_model
 
     def _check_port_name(self, name) -> None:
@@ -291,7 +238,7 @@ class IO(Base):
             if port_dict["resource"]["typing_name"] and port_dict["resource"]["uri"]:
                 resource: ResourceModel = TypingManager.get_object_with_typing_name_and_uri(
                     port_dict["resource"]["typing_name"], port_dict["resource"]["uri"])
-                self._set_item_without_check(key, resource)
+                self._set_resource_model_without_check(key, resource)
 
     def to_json(self) -> IODict:
         _json = {}
