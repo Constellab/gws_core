@@ -56,8 +56,7 @@ async def get_user_activity(user_uri: Optional[str] = None,
         activity_type=activity_type,
         page=page,
         number_of_items_per_page=number_of_items_per_page,
-        as_json=True
-    )
+    ).to_json()
 
 
 @core_app.post("/login", tags=["User"], summary="Login to the lab by requesting central")
@@ -86,6 +85,6 @@ def dev_login(authorization_header: Optional[str] = Header(default=None, alias="
 
 @core_app.get("/check-token", tags=["User"], summary="Check user's token")
 def check_token(current_user: UserData = Depends(AuthService.check_user_access_token)) -> str:
-    """Simple route to check the user's token (used in automatique dev login), returns the user's uri if valid
+    """Simple route to check the user's token (used in automatic dev login), returns the user's uri if valid
     """
     return current_user.uri

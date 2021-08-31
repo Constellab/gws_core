@@ -3,7 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Union
 
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import BadRequestException
@@ -77,8 +76,7 @@ class UserService(BaseService):
                             user_uri: str = None,
                             activity_type: str = None,
                             page: int = 0,
-                            number_of_items_per_page: int = 20,
-                            as_json=False) -> Union[Paginator, dict]:
+                            number_of_items_per_page: int = 20) -> Paginator[User]:
 
         query = Activity.select().order_by(Activity.creation_datetime.desc())
         if user_uri:
@@ -86,12 +84,8 @@ class UserService(BaseService):
         if activity_type:
             query = query.where(Activity.activity_type ==
                                 activity_type.upper())
-        paginator = Paginator(
+        return Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
-        if as_json:
-            return paginator.to_json()
-        else:
-            return paginator
 
     @classmethod
     def fetch_user(cls, uri: str) -> User:
@@ -100,16 +94,11 @@ class UserService(BaseService):
     @classmethod
     def fetch_user_list(cls,
                         page: int = 0,
-                        number_of_items_per_page: int = 20,
-                        as_json=False) -> Union[Paginator, dict]:
+                        number_of_items_per_page: int = 20) -> Paginator[User]:
 
         query = User.select().order_by(User.creation_datetime.desc())
-        paginator = Paginator(
+        return Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
-        if as_json:
-            return paginator.to_json()
-        else:
-            return paginator
 
     # -- G --
 
