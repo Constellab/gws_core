@@ -6,13 +6,11 @@
 import time
 from typing import Type
 
-from gws_core.config.config_params import ConfigParams
-from gws_core.core.utils.utils import Utils
-from gws_core.process.process_io import ProcessInputs, ProcessOutputs
-from gws_core.resource.resource import Resource
-
+from ..config.config_params import ConfigParams
 from ..core.model.model import Model
-from ..progress_bar.progress_bar import ProgressBar
+from ..core.utils.utils import Utils
+from ..process.process_io import ProcessInputs, ProcessOutputs
+from ..resource.resource import Resource
 from .process import Process
 from .process_decorator import ProcessDecorator
 

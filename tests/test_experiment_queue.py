@@ -5,8 +5,9 @@
 
 import time
 
-from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
-                      QueueService, RobotService, Settings)
+from gws_core import (Experiment, ExperimentService,
+                      ExperimentStatus, GTest, QueueService, RobotService,
+                      Settings)
 
 from tests.base_test import BaseTest
 
@@ -15,6 +16,8 @@ testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 
 class TestExperiment(BaseTest):
+
+    init_before_each_test: bool = True
 
     async def test_service(self):
         GTest.print("ExperimentService")

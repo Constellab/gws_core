@@ -6,7 +6,7 @@
 from gws_core import Config, GTest, RobotMove
 from gws_core.config.config_exceptions import MissingConfigsException
 from gws_core.process.process_model import ProcessModel
-from gws_core.process.processable_factory import ProcessableFactory
+from gws_core.processable.processable_factory import ProcessableFactory
 
 from tests.base_test import BaseTest
 

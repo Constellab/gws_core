@@ -5,12 +5,11 @@
 
 from typing import List, Union, final
 
-from gws_core.config.config_exceptions import MissingConfigsException
-
 from ..core.classes.validator import Validator
 from ..core.exception.exceptions import BadRequestException
 from ..model.typing_register_decorator import TypingDecorator
 from ..model.viewable import Viewable
+from .config_exceptions import MissingConfigsException
 from .config_params import ConfigParams
 from .config_spec import (ConfigSpecs, ConfigSpecsHelper, ConfigValue,
                           ConfigValues)

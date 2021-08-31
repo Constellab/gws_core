@@ -32,25 +32,3 @@ async def health_check() -> bool:
     """
 
     return True
-
-
-class ProcessData(BaseModel):
-    uri: str
-    type: str = "gws_core.process.process_model.Process"
-    title: str = None
-    instance_name: str
-    config_specs: dict = {}
-    input_specs: dict = {}
-    output_specs: dict = {}
-
-
-class ConfigData(BaseModel):
-    uri: str = None
-    type: str = "gws_core.config.config.Config"
-    params: dict = {}
-
-
-class ProtocolData(ProcessData):
-    type: str = "gws_core.protocol.protocol.Protocol"
-    interfaces: dict = {}
-    outerfaces: dict = {}

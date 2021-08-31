@@ -6,9 +6,10 @@
 import time
 from typing import List
 
-from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
-                      ProcessableModel, ProcessModel, ProtocolModel,
-                      ResourceModel, Robot, RobotService, Settings)
+from gws_core import (Experiment, ExperimentDTO, ExperimentService,
+                      ExperimentStatus, GTest, ProcessableModel, ProcessModel,
+                      ProtocolModel, ResourceModel, Robot, RobotService,
+                      Settings)
 
 from tests.base_test import BaseTest
 
@@ -17,6 +18,18 @@ testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 
 class TestExperiment(BaseTest):
+
+    init_before_each_test: bool = True
+
+    async def test_create_empty(self):
+        GTest.print("Create empty")
+        experiment_dto: ExperimentDTO = ExperimentDTO(title="Experiment title", description="Experiment description")
+        experiment = ExperimentService.create_empty_experiment(experiment_dto)
+
+        self.assertIsNotNone(experiment.id)
+        self.assertEqual(experiment.get_title(), 'Experiment title')
+        self.assertEqual(experiment.get_description(), 'Experiment description')
+        self.assertIsNotNone(experiment.protocol.id)
 
     async def test_run(self):
         GTest.print("Run Experiment")

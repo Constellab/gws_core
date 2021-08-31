@@ -3,14 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import inspect
 from typing import Any, Dict, List, Type, final
 
-from gws_core.config.config_spec import ConfigSpecs
-from gws_core.io.io_types import IOSpecs
 from peewee import ModelSelect
 
+from ..config.config_spec import ConfigSpecs
 from ..core.utils.utils import Utils
+from ..io.io_types import IOSpecs
 from ..model.typing import Typing, TypingObjectType
 from ..process.process import Process
 from ..resource.resource import Resource

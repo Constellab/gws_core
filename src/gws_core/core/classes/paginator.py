@@ -59,7 +59,7 @@ class Paginator(Generic[PaginatorType]):
         self.total_number_of_items = query.count()
         self.total_number_of_pages = int(self.total_number_of_items/self.number_of_items_per_page) + int(
             bool(self.total_number_of_items % self.number_of_items_per_page))
-        self.last_page = self.total_number_of_pages - 1
+        self.last_page = max(self.total_number_of_pages - 1, 0)
         self.first_page = 0
         self.next_page = min(self.page + 1, self.last_page)
         self.prev_page = max(self.page - 1, self.first_page)

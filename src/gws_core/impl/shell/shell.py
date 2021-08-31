@@ -9,15 +9,14 @@ import tempfile
 from abc import abstractmethod
 from typing import Union
 
-from gws_core.config.config_params import ConfigParams
-from gws_core.impl.file.file_service import FileService
-from gws_core.process.process_io import ProcessInputs, ProcessOutputs
+from ...config.config_params import ConfigParams
+from ...impl.file.file_service import FileService
+from ...process.process_io import ProcessInputs, ProcessOutputs
 
 from ...core.exception.exceptions import BadRequestException
 from ...core.model.sys_proc import SysProc
 from ...process.process import Process
 from ...process.process_decorator import ProcessDecorator
-from ...progress_bar.progress_bar import ProgressBar
 from ..file.file import File
 
 

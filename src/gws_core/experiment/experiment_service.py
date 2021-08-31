@@ -8,6 +8,7 @@ import subprocess
 import traceback
 from typing import Any, Coroutine, Union
 
+from gws_core.processable.processable_factory import ProcessableFactory
 from gws_core.protocol.protocol_service import ProtocolService
 from peewee import ModelSelect
 
@@ -15,7 +16,6 @@ from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import BadRequestException, NotFoundException
 from ..core.model.sys_proc import SysProc
 from ..core.service.base_service import BaseService
-from ..core.utils.http_helper import HTTPHelper
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
 from ..process.process_model import ProcessModel
@@ -35,7 +35,7 @@ class ExperimentService(BaseService):
 
     @classmethod
     def create_empty_experiment(cls, experimentDTO: ExperimentDTO) -> Experiment:
-        return cls.create_experiment_from_protocol(protocol=ProtocolModel(), title=experimentDTO.title,
+        return cls.create_experiment_from_protocol(protocol=ProcessableFactory.create_protocol_empty(), title=experimentDTO.title,
                                                    description=experimentDTO.description)
 
     @classmethod
@@ -136,7 +136,7 @@ class ExperimentService(BaseService):
         This is only possible if the experiment has been started through the cli
         """
 
-        #if not HTTPHelper.is_http_context():
+        # if not HTTPHelper.is_http_context():
         #    raise BadRequestException("The user must be in http context")
 
         if not experiment.pid:

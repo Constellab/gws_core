@@ -14,15 +14,37 @@ class BaseTest(IsolatedAsyncioTestCase):
     # default value of ignore keys when comparing json
     json_ignore_keys: List[str] = ["uri", "save_datetime", "creation_datetime"]
 
+    # If true the init and clear are called for each test,
+    # If False they are called before and after all the class tests
+    init_before_each_test: bool = False
+
     @classmethod
     def setUpClass(cls):
+        if not cls.init_before_each_test:
+            cls.init_before_test()
+
+    @classmethod
+    def tearDownClass(cls):
+        if not cls.init_before_each_test:
+            cls.clear_after_test()
+
+    def setUp(self) -> None:
+        if self.init_before_each_test:
+            self.init_before_test()
+
+    def tearDown(self) -> None:
+        if self.init_before_each_test:
+            self.clear_after_test()
+
+    @classmethod
+    def init_before_test(cls):
         print(f'Setup : {cls}')
         GTest.drop_tables()
         GTest.create_tables()
         GTest.init()
 
     @classmethod
-    def tearDownClass(cls):
+    def clear_after_test(cls):
         print(f'Tear down : {cls}')
         QueueService.deinit()
         GTest.drop_tables()

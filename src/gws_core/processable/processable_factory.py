@@ -139,6 +139,10 @@ class ProcessableFactory():
             raise ProtocolBuildException.from_exception('Protocol', instance_name, err)
 
     @classmethod
+    def create_protocol_empty(cls) -> ProtocolModel:
+        return cls.create_protocol_model_from_data()
+
+    @classmethod
     def create_protocol_model_from_data(cls, processes: Dict[str, ProcessableModel] = None,
                                         connectors: List[Connector] = None,
                                         interfaces: Dict[str, Port] = None,
