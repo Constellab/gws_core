@@ -57,7 +57,7 @@ class ExceptionHandler():
         route_info: str = f" - Route: {request.url}" if request is not None else ""
 
         Logger.info(
-            f"Handle exception - {unique_code}{route_info} - {exception.detail} - Instance id : {instance_id}")
+            f"Handle exception - {unique_code}{route_info} - {exception.get_detail_with_args()} - Instance id : {instance_id}")
 
         return ExceptionResponse(status_code=exception.status_code, code=unique_code,
                                  detail=detail,

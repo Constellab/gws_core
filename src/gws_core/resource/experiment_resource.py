@@ -1,7 +1,6 @@
 from peewee import CharField, IntegerField, ModelSelect
 
 from ..core.model.model import Model
-from ..model.typing_manager import TypingManager
 
 
 class ExperimentResource(Model):
@@ -22,8 +21,8 @@ class ExperimentResource(Model):
     # * Try to replace `experiment_id` and `resource_id` columns by foreign keys with `lazy_load=False`
 
     experiment_id = IntegerField(null=False, index=True)
-    resource_id = IntegerField(null=False, index=True)
-    resource_typing_name = CharField(null=False, index=True)
+    resource_model_id = IntegerField(null=False, index=True)
+    resource_model_typing_name = CharField(null=False, index=True)
     _table_name = "gws_experiment_resource"
 
     @property
@@ -32,7 +31,7 @@ class ExperimentResource(Model):
         Returns the resource
         """
         from .resource_model import ResourceModel
-        return ResourceModel.get_by_id(self.resource_id)
+        return ResourceModel.get_by_id(self.resource_model_id)
 
     @property
     def experiment(self):
@@ -44,12 +43,12 @@ class ExperimentResource(Model):
         return Experiment.get_by_id(self.experiment_id)
 
     @classmethod
-    def get_by_id_and_tying_name(cls, resource_id: int, typing_name: str) -> ModelSelect:
+    def get_by_id_and_tying_name(cls, resource_model_id: int, resource_model_typing_name: str) -> ModelSelect:
         return ExperimentResource.get(
-            (ExperimentResource.resource_id == resource_id) &
-            (ExperimentResource.resource_typing_name == typing_name))
+            (ExperimentResource.resource_model_id == resource_model_id) &
+            (ExperimentResource.resource_model_typing_name == resource_model_typing_name))
 
     class Meta:
         indexes = (
-            (("experiment_id", "resource_id", "resource_typing_name"), True),
+            (("experiment_id", "resource_model_id", "resource_model_typing_name"), True),
         )

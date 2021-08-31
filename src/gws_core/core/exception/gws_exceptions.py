@@ -17,7 +17,7 @@ class GWSException(Enum):
     MISSING_PROD_API_URL = "Missing production API URL"
     ERROR_DURING_DEV_LOGIN = "Error during login in development environment"
     CENTRAL_API_DEV_DISABLED = "The centrals routes are disabled in dev"
-    OBJECT_URI_NOT_FOUND = "{{objectName}} with id : '{{id}}' not found"
+    OBJECT_URI_NOT_FOUND = "{{objectName}} with uri : '{{id}}' not found"
     USER_NOT_ACTIVATED = "User not activated"
     RESOURCE_NOT_COMPATIBLE = "Trying to set an incompatible resource to port '{{port}}'. Resource type: '{{resource_type}}', excepted types : '{{expected_types}}'."
     MISSING_CONFIG_PARAMS = "The mandatory configs '{{config_names}}' are missing."

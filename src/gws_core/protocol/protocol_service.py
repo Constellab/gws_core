@@ -107,7 +107,9 @@ class ProtocolService(BaseService):
             graph=graph, sub_processable_factory=SubProcessFactoryUpdate())
 
         for key, processable in protocol.processes.items():
-            if isinstance(processable, ProtocolModel):
+
+            # If this is a sub protocol and it's graph is defined
+            if isinstance(processable, ProtocolModel) and 'graph' in graph["nodes"][key]['data']:
                 cls._update_protocol_graph_recur(
                     protocol=processable, graph=graph["nodes"][key]["data"]["graph"])
 

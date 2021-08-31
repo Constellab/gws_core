@@ -7,7 +7,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING, List, final
 
-from peewee import BooleanField, FloatField, ForeignKeyField, ModelSelect
+from peewee import BooleanField, FloatField, ForeignKeyField
 
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.transaction import Transaction
@@ -226,7 +226,7 @@ class Experiment(Viewable):
         self.save()
 
     def mark_as_started(self):
-        #self.data["pid"] = 0. /!\ Do not reset pid here, otherwise the experiment could not be stopped if started through cli !!!
+        # self.data["pid"] = 0. /!\ Do not reset pid here, otherwise the experiment could not be stopped if started through cli !!!
         self.status = ExperimentStatus.RUNNING
         self.save()
 

@@ -35,25 +35,30 @@ class ProcessService(BaseService):
 
     @classmethod
     def fetch_process_list(cls,
-                           experiment_uri: str = None,
                            page: int = 0,
-                           number_of_items_per_page: int = 20,
-                           as_json=False) -> Union[Paginator, List[ProcessModel], List[dict]]:
+                           number_of_items_per_page: int = 20) -> Paginator[ProcessModel]:
 
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
 
         query = ProcessModel.select().order_by(ProcessModel.creation_datetime.desc())
-
-        if experiment_uri:
-            query = query.join(Experiment, on=(ProcessModel.experiment_id == Experiment.id))\
-                .where(Experiment.uri == experiment_uri)
-        paginator = Paginator(
+        return Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
-        if as_json:
-            return paginator.to_json()
-        else:
-            return paginator
+
+    @classmethod
+    def create_process_from_type(cls, process_type: Type[Process], instance_name: str = None) -> ProcessModel:
+        process: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=process_type, instance_name=instance_name)
+
+        process.save_full()
+
+        return process
+
+        ############################# PROCESS TYPE ###########################
+
+    @classmethod
+    def get_process_type(cls, uri: str) -> ProcessType:
+        return ProcessType.get_by_uri_and_check(uri)
 
     @classmethod
     def fetch_process_type_list(cls,
@@ -83,12 +88,3 @@ class ProcessService(BaseService):
                 process_type.get_model_types_array(), process_type.to_json())
 
         return tree.sub_trees
-
-    @classmethod
-    def create_process_from_type(cls, process_type: Type[Process], instance_name: str = None) -> ProcessModel:
-        process: ProcessModel = ProcessableFactory.create_process_model_from_type(
-            process_type=process_type, instance_name=instance_name)
-
-        process.save_full()
-
-        return process

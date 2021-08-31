@@ -90,8 +90,8 @@ class ResourceModel(Viewable, Generic[ResourceType]):
 
         mapping = ExperimentResource(
             experiment_id=experiment.id,
-            resource_id=self.id,
-            resource_typing_name=self.resource_typing_name,
+            resource_model_id=self.id,
+            resource_model_typing_name=self.typing_name,
         )
         mapping.save()
         self._experiment = experiment
@@ -107,7 +107,7 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         if not self._process:
             try:
                 processable_resource: ProcessableResource = ProcessableResource.get_by_id_and_tying_name(
-                    self.id, self.resource_typing_name)
+                    self.id, self.typing_name)
                 self._process = processable_resource.process
             except Exception as _:
                 return None
@@ -129,8 +129,8 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         mapping = ProcessableResource(
             process_id=process.id,
             processable_typing_name=process.processable_typing_name,
-            resource_id=self.id,
-            resource_typing_name=self.resource_typing_name,
+            resource_model_id=self.id,
+            resource_model_typing_name=self.typing_name,
         )
         mapping.save()
         self._process = process
@@ -176,7 +176,7 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         ExperimentResource.drop_table()
 
     @classmethod
-    def from_resource(cls, resource: Resource) -> this:
+    def from_resource(cls, resource: Resource) -> ResourceModel:
         """Create a new ResourceModel from a resource
 
         :return: [description]
@@ -231,7 +231,7 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         """
 
         if deep:
-            return self.resource.to_json()
+            return self.get_resource().to_json()
         else:
             return {}
 

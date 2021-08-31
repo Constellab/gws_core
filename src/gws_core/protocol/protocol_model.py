@@ -625,6 +625,18 @@ class ProtocolModel(ProcessableModel):
         self.processes[instance_name].delete_instance()
         del self.processes[instance_name]
 
+    @Transaction()
+    def delete_instance(self, *args, **kwargs):
+        """Override delete instance to delete all the sub processes
+
+        :return: [description]
+        :rtype: [type]
+        """
+        for processable in self.processes.values():
+            processable.delete_instance(recursive=True, delete_nullable=True)
+
+        return super().delete_instance(*args, **kwargs)
+
     def is_protocol(self) -> bool:
         return True
 

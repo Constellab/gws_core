@@ -4,7 +4,6 @@ from __future__ import annotations
 import asyncio
 import inspect
 from abc import abstractmethod
-from logging import setLogRecordFactory
 from typing import TYPE_CHECKING, List, Type, Union, final
 
 from peewee import CharField, ForeignKeyField, IntegerField
@@ -45,7 +44,7 @@ class ProcessableModel(Viewable):
     parent_protocol_id = IntegerField(null=True, index=True)
     experiment: Experiment = ForeignKeyField(Experiment, null=True, index=True, backref="+")
     instance_name = CharField(null=True, index=True)
-    created_by = ForeignKeyField(User, null=False, index=True, backref='+')
+    created_by = ForeignKeyField(User, null=False, index=True, backref='+', )
     config = ForeignKeyField(Config, null=False, index=True, backref='+')
     progress_bar: ProgressBar = ForeignKeyField(
         ProgressBar, null=True, backref='+')
@@ -99,18 +98,6 @@ class ProcessableModel(Viewable):
 
         self.input.disconnect()
         self.output.disconnect()
-
-    # -- E --
-    # # todo voir si on garde
-    # @property
-    # def experiment(self) -> Experiment:
-    #     if not self._experiment and self.experiment_id:
-    #         from ..experiment.experiment import Experiment
-    #         self._experiment = Experiment.get_by_id(self.experiment_id)
-
-    #     return self._experiment
-
-    # -- G --
 
     def get_param(self, name: str) -> Union[str, int, float, bool, list, dict]:
         """
@@ -200,7 +187,21 @@ class ProcessableModel(Viewable):
             raise BadRequestException(f"The input port '{name}' is not found")
         return self.input._ports[name]
 
-    # -- J --
+    @Transaction()
+    def delete_instance(self, *args, **kwargs):
+        """Override delete instance to delete all the sub processes
+
+        :return: [description]
+        :rtype: [type]
+        """
+
+        result = super().delete_instance(*args, **kwargs)
+        if self.config:
+            self.config.delete_instance()
+        if self.progress_bar:
+            self.progress_bar.delete_instance()
+
+        return result
 
     # -- L --
 

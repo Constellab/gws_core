@@ -3,10 +3,12 @@
 from abc import abstractmethod
 from typing import Dict, Optional, Type
 
-from gws_core.model.typing_manager import TypingManager
+from pydantic.types import NoneBytes
 
+from ..config.config_spec import ConfigValues
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from ..model.typing_manager import TypingManager
 from ..process.process import Process
 from ..process.process_model import ProcessModel
 from .processable import Processable
@@ -54,28 +56,18 @@ class SubProcessableFactory():
             return ProtocolModel.get_by_uri_and_check(processable_uri)
 
     def _create_new_processable(self, processable_type: Type[Processable],
-                                instance_name: str, config_dict: Dict) -> ProcessableModel:
+                                instance_name: str, node_json: Dict) -> ProcessableModel:
         """Method to instantiate a new processable and configure it
         """
         from ..processable.processable_factory import ProcessableFactory
 
-        processable: ProcessableModel
-        # if this is a process
-        if issubclass(processable_type, Process):
-            processable = ProcessableFactory.create_process_model_from_type(
-                process_type=processable_type, instance_name=instance_name)
-        else:
-            # if this is a protocol
-            # create an empty protocol
-            processable = ProcessableFactory.create_protocol_model_from_type(
-                protocol_type=processable_type, instance_name=instance_name)
-
+        config_values: ConfigValues = NoneBytes
         # Configure the process
-        if config_dict.get('config'):
-            params = config_dict.get('config').get("data", {}).get("params", {})
-            processable.config.set_params(params)
+        if node_json.get('config'):
+            config_values = node_json.get('config').get("data", {}).get("params", {})
 
-        return processable
+        return ProcessableFactory.create_processable_model_from_type(
+            processable_type=processable_type, config_values=config_values, instance_name=instance_name)
 
 
 class SubProcessFactoryReadFromDb(SubProcessableFactory):
@@ -110,7 +102,7 @@ class SubProcessFactoryCreate(SubProcessableFactory):
                                  node_json: Dict) -> ProcessableModel:
 
         return self._create_new_processable(processable_type=processable_type, instance_name=instance_name,
-                                            config_dict=node_json)
+                                            node_json=node_json)
 
 
 class SubProcessFactoryUpdate(SubProcessableFactory):
@@ -126,7 +118,16 @@ class SubProcessFactoryUpdate(SubProcessableFactory):
                                  node_json: Dict) -> ProcessableModel:
 
         if processable_uri is not None:
-            return self._get_processable_from_db(processable_uri=processable_uri, processable_type=processable_type)
+            processable_model: ProcessableModel = self._get_processable_from_db(
+                processable_uri=processable_uri, processable_type=processable_type)
+
+            # Update the processable config
+            if node_json.get('config'):
+                params = node_json.get('config').get("data", {}).get("params", {})
+                processable_model.config.set_params(params)
+
+            return processable_model
+
         else:
             return self._create_new_processable(processable_type=processable_type, instance_name=instance_name,
-                                                config_dict=node_json)
+                                                node_json=node_json)

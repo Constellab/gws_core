@@ -174,6 +174,7 @@ class Config(Viewable):
         """
         Set config parameters
         """
+        self._clear_params()
 
         for k in params:
             self.set_param(k, params[k])
@@ -203,4 +204,15 @@ class Config(Viewable):
 
         self.data["specs"] = specs
 
-    # -- V --
+    def _clear_params(self):
+        self.data["params"] = {}
+
+    def param_is_set(self, name: str) -> bool:
+        """
+        Test if a parameter exists and is not none
+
+        :return: True if the parameter exists, False otherwise
+        :rtype: `bool`
+        """
+
+        return name in self.data["params"] and self.data["params"][name] is not None

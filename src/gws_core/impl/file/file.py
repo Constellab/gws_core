@@ -131,7 +131,8 @@ class File(Resource):
         with self.open(m) as fp:
             fp.write(data)
 
-    def get_resource_model_type(self) -> Type[Any]:
+    @classmethod
+    def get_resource_model_type(cls) -> Type[Any]:
         """Return the resource model associated with this Resource
         //!\\ To overwrite only when you know what you are doing
 

@@ -3,14 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import inspect
-from typing import Any, Dict, Type, final
+from typing import Any, Dict, final
 
 from peewee import ModelSelect
 
-from ..core.utils.utils import Utils
 from ..model.typing import Typing, TypingObjectType
-from ..resource.resource import Resource
 
 # ####################################################################
 #
@@ -46,15 +43,13 @@ class ResourceType(Typing):
         :return: The representation
         :rtype: `dict`, `str`
         """
-        _json: Dict[str, Any] = super().data_to_json(**kwargs)
 
-        # retrieve the process python type
-        model_t: Type[Resource] = Utils.get_model_type(self.model_type)
+        if not deep:
+            return None
 
-        # TODO To fix
-       # Other infos
-        _json["title"] = model_t._human_name
-        _json["description"] = model_t._short_description
-        _json["doc"] = inspect.getdoc(model_t)
+        _json = super().data_to_json(deep=deep, **kwargs)
+
+        # Other infos
+        _json["doc"] = self.get_model_type_doc()
 
         return _json

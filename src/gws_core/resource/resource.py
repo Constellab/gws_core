@@ -1,5 +1,6 @@
+from __future__ import annotations
 
-from typing import Any, Dict, Type
+from typing import TYPE_CHECKING, Any, Dict, Type
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -7,6 +8,9 @@ from ..core.model.base import Base
 from ..model.typing_register_decorator import TypingDecorator
 from .kv_store import KVStore
 from .resource_data import ResourceData
+
+if TYPE_CHECKING:
+    from .resource_model import ResourceModel
 
 # Typing names generated for the class Process
 CONST_RESOURCE_TYPING_NAME = "RESOURCE.gws_core.Resource"
@@ -81,7 +85,8 @@ class Resource(Base):
     def clone(self) -> 'Resource':
         return Resource(self.data.clone())
 
-    def get_resource_model_type(cls) -> Type[Any]:
+    @classmethod
+    def get_resource_model_type(cls) -> Type[ResourceModel]:
         """Return the resource model associated with this Resource
         //!\\ To overwrite only when you know what you are doing
 

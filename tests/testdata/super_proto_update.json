@@ -6,7 +6,7 @@
             "is_archived": false,
             "processable_typing_name": "PROCESS.gws_core.RobotCreate",
             "save_datetime": "2021-08-25T14:59:54",
-            "uri": null,
+            "uri": "p0_uri",
             "data": {
                 "title": "Create robot",
                 "description": "This process creates a robot",
@@ -161,7 +161,7 @@
             "is_archived": false,
             "processable_typing_name": "PROCESS.gws_core.RobotEat",
             "save_datetime": "2021-08-25T14:59:54",
-            "uri": null,
+            "uri": "p5_uri",
             "data": {
                 "title": "Eat process",
                 "description": "This process emulates the meal of the robot before its flight!",
@@ -188,7 +188,9 @@
                             "default": 3.14
                         }
                     },
-                    "params": {}
+                    "params": {
+                        "food_weight": 15
+                    }
                 }
             },
             "progress_bar": {
