@@ -4,7 +4,7 @@ from typing import TypedDict
 from jwt import decode, encode
 
 from ..core.utils.settings import Settings
-from .invalid_token_exception import InvalidTokenException
+from .user_exception import InvalidTokenException
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_SECONDS = 60 * 60 * 24 * 3        # 3 days

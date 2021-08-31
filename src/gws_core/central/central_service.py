@@ -15,7 +15,17 @@ from ..user.credentials_dto import CredentialsDTO
 class CentralService(BaseService):
 
     @classmethod
-    def check_api_key(cls, api_key: str):
+    def check_api_key(cls, api_key: str) -> bool:
+
+        settings: Settings = Settings.retrieve()
+
+        # In local env, we don't check the api key
+        if settings.get_lab_environment() == 'LOCAL':
+            return True
+
+        if settings.is_dev:
+            raise BadRequestException("The central routes are desactivated in dev environment")
+
         api_key = Settings.get_central_api_key()
         return api_key == api_key
 
@@ -25,34 +35,19 @@ class CentralService(BaseService):
         Check the credential of an email/password by calling central
         and return true if ok
         """
-        central_api_url: str = CentralService.__get_central_api_url(
+        central_api_url: str = CentralService._get_central_api_url(
             'auth/login')
         response = ExternalApiService.post(central_api_url, credentials.dict())
 
         return response.status_code == 201
 
     @classmethod
-    def __get_central_api_url(cls, route: str) -> str:
+    def _get_central_api_url(cls, route: str) -> str:
         """
         Build an URL to call the central API
         """
 
-        central_settings = CentralService.__get_central_settings()
-        return central_settings.get('api_url') + route
-
-    @classmethod
-    def __get_central_settings(cls) -> Dict:
-        """
-        Retrieve the central settings and throw error if the settings does not exists
-        """
-        settings = Settings.retrieve()
-        if not settings.get_variables().get("central_api_key"):
-            raise BadRequestException("The central setting does not exists")
-
-        if not settings.get_variables().get("central_api_url"):
-            raise BadRequestException("The central setting does not exists")
-
-        return {
-            "api_key": settings.get_variables().get("central_api_key"),
-            "api_url": settings.get_variables().get("central_api_url")
-        }
+        central_api_url = Settings.get_central_api_url()
+        if central_api_url is None:
+            raise BadRequestException('The CENTRAL_API_URL environment variable is not set')
+        return central_api_url + route

@@ -6,7 +6,7 @@ from fastapi.requests import Request
 from fastapi.security import OAuth2
 from fastapi.security.utils import get_authorization_scheme_param
 
-from .invalid_token_exception import InvalidTokenException
+from .user_exception import InvalidTokenException
 
 
 class OAuth2UserTokenBearerCookie(OAuth2):

@@ -22,13 +22,12 @@ from .activity import Activity
 from .activity_service import ActivityService
 from .credentials_dto import CredentialsDTO
 from .current_user_service import CurrentUserService
-from .invalid_token_exception import InvalidTokenException
 from .jwt_service import JWTService
 from .oauth2_user_cookie_scheme import oauth2_user_cookie_scheme
 from .user import User
 from .user_dto import UserData, UserDataDict
+from .user_exception import InvalidTokenException, WrongCredentialsException
 from .user_service import UserService
-from .wrong_credentials_exception import WrongCredentialsException
 
 
 class AuthService(BaseService):
@@ -37,8 +36,11 @@ class AuthService(BaseService):
     def login(cls, credentials: CredentialsDTO) -> JSONResponse:
 
         # Check if user exist in the lab
-        user: User = UserService.get_user_by_email(credentials.email)
-        if user is None:
+        user: User
+
+        try:
+            user = UserService.get_user_by_email(credentials.email)
+        except:
             raise WrongCredentialsException()
 
         # Check the user credentials
@@ -102,7 +104,7 @@ class AuthService(BaseService):
                 is_console_authenticated=db_user.is_console_authenticated
             )
         except Exception:
-            raise WrongCredentialsException()
+            raise InvalidTokenException()
 
     @classmethod
     def authenticate(cls, uri: str, console_token: str = "") -> bool:
@@ -200,7 +202,7 @@ class AuthService(BaseService):
             return cls.__unauthenticate_console(user)
 
     @classmethod
-    def dev_login(cls, token: str) -> Coroutine[Any, Any, str]:
+    def dev_login(cls, token: str) -> JSONResponse:
         """[summary]
         Log the user on the dev lab by calling the prod api
         Only allowed for the dev service
@@ -224,7 +226,7 @@ class AuthService(BaseService):
                                       unique_code=GWSException.FUNCTIONALITY_UNAVAILBLE_IN_PROD.name)
 
         # retrieve the prod api url
-        prod_api_url: str = settings.get_prod_api_url()
+        prod_api_url: str = settings.get_lab_prod_api_url()
 
         if prod_api_url is None:
             raise BadRequestException(detail=GWSException.MISSING_PROD_API_URL.value,

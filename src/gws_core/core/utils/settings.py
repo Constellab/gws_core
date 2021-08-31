@@ -40,6 +40,8 @@ class Settings(PeeweeModel):
 
     _table_name = "gws_settings"
 
+    _setting_instance: 'Settings' = None
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.data:
@@ -71,12 +73,12 @@ class Settings(PeeweeModel):
             settings.save()
 
     @classmethod
-    def get_prod_api_url(cls) -> str:
+    def get_lab_prod_api_url(cls) -> str:
 
-        if "PROD_API_URL" not in os.environ:
+        if "LAB_PROD_API_URL" not in os.environ:
             return None
 
-        return os.environ["PROD_API_URL"]
+        return os.environ["LAB_PROD_API_URL"]
 
     @classmethod
     def get_lab_environment(cls) -> Literal["PROD", "LOCAL"]:
@@ -105,7 +107,6 @@ class Settings(PeeweeModel):
 
         return os.environ["VIRTUAL_HOST"]
 
-    # TODO ets-ce qu'on garde comme ça ?
     @classmethod
     def get_central_api_key(cls) -> str:
         """Return the central api key
@@ -114,10 +115,23 @@ class Settings(PeeweeModel):
         :rtype: [type]
         """
 
-        if "API_KEY" not in os.environ:
+        if "CENTRAL_API_KEY" not in os.environ:
             return None
 
-        return os.environ["API_KEY"]
+        return os.environ["CENTRAL_API_KEY"]
+
+    @classmethod
+    def get_central_api_url(cls) -> str:
+        """Return the central api url
+
+        :return: [description]
+        :rtype: [type]
+        """
+
+        if "CENTRAL_API_URL" not in os.environ:
+            return None
+
+        return os.environ["CENTRAL_API_URL"]
 
     # -- A --
 
@@ -232,11 +246,15 @@ class Settings(PeeweeModel):
 
     @classmethod
     def retrieve(cls) -> 'Settings':
-        try:
-            return Settings.get_by_id(1)
-        except Exception as err:
-            raise Exception("Settings", "retrieve",
-                            "Cannot retrieve settings from the database") from err
+
+        if cls._setting_instance is None:
+            try:
+                cls._setting_instance = Settings.get_by_id(1)
+            except Exception as err:
+                raise Exception("Settings", "retrieve",
+                                "Cannot retrieve settings from the database") from err
+
+        return cls._setting_instance
 
     # -- S --
 

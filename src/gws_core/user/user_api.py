@@ -3,17 +3,16 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, Coroutine, Optional
+from typing import Optional
 
 from fastapi import Cookie, Depends, Header
 from starlette.responses import JSONResponse
 
-from ..core.exception.exceptions import UnauthorizedException
-from ..core.exception.gws_exceptions import GWSException
 from ..core_app import core_app
 from ..user.auth_service import AuthService
 from .credentials_dto import CredentialsDTO
 from .user_dto import UserData
+from .user_exception import InvalidTokenException
 from .user_service import UserService
 
 
@@ -72,7 +71,7 @@ def login(credentials: CredentialsDTO) -> JSONResponse:
 
 @core_app.post("/dev-login", tags=["User"], summary="Login to the dev lab using the prod token")
 def dev_login(authorization_header: Optional[str] = Header(default=None, alias="Authorization"),
-              authorization_cookie: Optional[str] = Cookie(default=None, alias="Authorization")) -> str:
+              authorization_cookie: Optional[str] = Cookie(default=None, alias="Authorization")) -> JSONResponse:
     """
     Log the user on the dev lab by calling the prod api
     """
@@ -80,8 +79,7 @@ def dev_login(authorization_header: Optional[str] = Header(default=None, alias="
     token: str = authorization_header or authorization_cookie
 
     if token is None:
-        raise UnauthorizedException(detail=GWSException.WRONG_CREDENTIALS.value,
-                                    unique_code=GWSException.WRONG_CREDENTIALS.name)
+        raise InvalidTokenException()
 
     return AuthService.dev_login(token)
 

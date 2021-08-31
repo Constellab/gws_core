@@ -9,6 +9,15 @@ from ..core.exception.exceptions import BaseHTTPException
 from ..core.exception.gws_exceptions import GWSException
 
 
+class WrongCredentialsException(BaseHTTPException):
+
+    def __init__(self) -> None:
+        super().__init__(
+            http_status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=GWSException.WRONG_CREDENTIALS.value,
+            unique_code=GWSException.WRONG_CREDENTIALS.name)
+
+
 class InvalidTokenException(BaseHTTPException):
 
     def __init__(self) -> None:
