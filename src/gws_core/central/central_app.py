@@ -7,6 +7,7 @@
 from typing import Dict, List
 
 from fastapi import Depends, FastAPI, HTTPException
+from gws_core.impl.file.file_service import FileService
 from gws_core.user.auth_service import AuthService
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException
@@ -136,8 +137,8 @@ def get_users(_: UserData = Depends(AuthCentral.check_central_api_key)):
 def dump_db(db_name: str, _: UserData = Depends(AuthCentral.check_central_api_key)):
     output_file = MySQLService.dump_db(db_name)
     file = File()
-    file.move_to_default_store()
     file.path = output_file
+    FileService.add_file_to_default_store(file, 'dump.sql')
     return file.to_json()
 
 

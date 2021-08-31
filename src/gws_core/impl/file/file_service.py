@@ -3,18 +3,21 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Optional, Union
+from typing import List, Optional
 
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
-from gws_core.impl.file.file import File
+from gws_core.core.exception.exceptions.not_found_exception import \
+    NotFoundException
 
+from ...core.classes.jsonable import Jsonable, ListJsonable
 from ...core.classes.paginator import Paginator
-from ...core.exception.exceptions import NotFoundException
 from ...core.service.base_service import BaseService
+from .file import File
 from .file_resource import FileResource
-from .file_store import FileStore, LocalFileStore
+from .file_store import FileStore
+from .local_file_store import LocalFileStore
 
 
 class FileService(BaseService):
@@ -35,34 +38,54 @@ class FileService(BaseService):
 
     @classmethod
     def download_file(cls, uri: str) -> FileResponse:
-        try:
-            file: FileResource = FileResource.get_by_uri_and_check(uri)
-            return FileResponse(file.path, media_type='application/octet-stream', filename=file.name)
-        except Exception as err:
-            raise NotFoundException(
-                detail=f"File not found with uri '{uri}'") from err
+        file_resource: FileResource = FileResource.get_by_uri_and_check(uri)
+        file: File = file_resource.get_resource()
+
+        file_store: FileStore = LocalFileStore.get_default_instance()
+        if not file_store.file_exists(file.name):
+            raise NotFoundException(f"The file '{file.name}' does not exists on the server. It has been deleted")
+
+        return FileResponse(file.path, media_type='application/octet-stream', filename=file.name)
 
     # -- U --
 
     @classmethod
-    async def upload_file(cls, files: List[UploadFile] = FastAPIFile(...)) -> Union[FileResource, List[FileResource]]:
+    async def upload_files(cls, files: List[UploadFile] = FastAPIFile(...)) -> Jsonable:
 
         file_store: FileStore = LocalFileStore.get_default_instance()
 
         if len(files) == 1:
             file = files[0]
-            return file_store.add(file.file, dest_file_name=file.filename)
+            return cls.upload_file_to_store(file, file_store)
         else:
-            result: List[FileResource] = []
-            # t = self.out_port("file_set").get_default_resource_type()
-            # file_set = t()
+            result: ListJsonable = ListJsonable()
             for file in files:
-                f = file_store.add(file.file, dest_file_name=file.filename)
-                result.append(f)
+                file_resource: FileResource = cls.upload_file_to_store(file, file_store)
+                result.append(file_resource)
 
             return result
+
+    @classmethod
+    def upload_file_to_store(cls, upload_file: UploadFile, store: FileStore) -> FileResource:
+        file: File = store.add_from_temp_file(upload_file.file, upload_file.filename)
+        return cls.create_file_resource(file)
 
     @classmethod
     def create_file_resource(cls, file: File) -> FileResource:
         file_resource: FileResource = FileResource.from_resource(file)
         return file_resource.save()
+
+    @classmethod
+    def add_file_to_default_store(cls, file: File, dest_file_name: str = None) -> FileResource:
+        file_store: LocalFileStore = LocalFileStore.get_default_instance()
+        return cls._add_file_to_store(file=file, store=file_store)
+
+    @classmethod
+    def add_file_to_store(cls, file: File, store_uri: str, dest_file_name: str = None) -> FileResource:
+        file_store: LocalFileStore = FileStore.get_by_uri_and_check(store_uri)
+        return cls._add_file_to_store(file=file, store=file_store)
+
+    @classmethod
+    def _add_file_to_store(cls, file: File, store: FileStore, dest_file_name: str = None) -> FileResource:
+        file: File = store.add_from_file(source_file=file, dest_file_name=dest_file_name)
+        return cls.create_file_resource(file)

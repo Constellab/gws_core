@@ -6,24 +6,34 @@
 import os
 
 from gws_core import File, GTest, LocalFileStore, Settings
+from gws_core.impl.file.file_store import FileStore
 
 from tests.base_test import BaseTest
 
 
 class TestLocalFileStore(BaseTest):
 
+    file_store_instance: FileStore = None
+
+    @classmethod
+    def tearDownClass(cls):
+        if cls.file_store_instance is not None:
+            cls.file_store_instance.delete_instance()
+        super().tearDownClass()
+
     def test_file_store(self):
         GTest.print("FileStore")
-        file_store = LocalFileStore()
+        file_store: FileStore = LocalFileStore()
+        TestLocalFileStore.file_store_instance = file_store
         settings = Settings.retrieve()
         testdata_dir = settings.get_variable("gws_core:testdata_dir")
         file_path = os.path.join(testdata_dir, "mini_travel_graph.json")
 
-        file: File = file_store.add(file_path)
-        self.assertTrue(file.exists())
+        file: File = file_store.add_from_path(file_path)
+        self.assertTrue(file_store.file_exists(file.name))
 
-        file = file_store.add(file_path)
-        self.assertTrue(file.exists())
+        file = file_store.add_from_path(file_path)
+        self.assertTrue(file_store.file_exists(file.name))
         self.assertTrue(file_store.contains(file))
 
         file2 = File()
@@ -31,6 +41,10 @@ class TestLocalFileStore(BaseTest):
         print(file2.path)
 
         self.assertFalse(file_store.contains(file2))
-        file2.move_to_store(file_store)
+        file2 = file_store.add_from_file(file2, 'mini_travel_graph.json')
         self.assertTrue(file_store.contains(file2))
         print(file2.path)
+
+        # Add a file with the same name
+        file_3 = file_store.add_from_path(file_path, 'mini_travel_graph.json')
+        self.assertTrue(file_store.contains(file_3))

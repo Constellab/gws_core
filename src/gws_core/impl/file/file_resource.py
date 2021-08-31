@@ -8,6 +8,7 @@ from ...model.typing_manager import TypingManager
 from ...model.typing_register_decorator import TypingDecorator
 from ...resource.resource_model import ResourceModel
 from .file import File
+from .file_helper import FileHelper
 
 
 @TypingDecorator(unique_name="FileResource", object_type="GWS_CORE", hide=True)
@@ -26,6 +27,7 @@ class FileResource(ResourceModel):
         file: File = resource_type(data=self.data)
         file.path = self.path
         file.file_store_uri = self.file_store_uri
+        return file
 
     # override the from resource  to set data to empty dict and set path from File
     @classmethod
@@ -36,5 +38,10 @@ class FileResource(ResourceModel):
         file_resource.data = {}
         file_resource.path = resource.path
         file_resource.file_store_uri = resource.file_store_uri
-
         return file_resource
+
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
+        _json = super().to_json(deep=deep,  **kwargs)
+
+        _json["filename"] = FileHelper.get_name_with_extension(self.path)
+        return _json

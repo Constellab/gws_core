@@ -2,12 +2,12 @@
 
 from typing import Any, Dict, Type, TypedDict
 
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
-from gws_core.core.model.model import Model
 from peewee import ModelSelect
 
+from ..core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 from ..core.model.base import Base
+from ..core.model.model import Model
 from ..core.utils.logger import Logger
 from ..core.utils.utils import Utils
 from ..model.typing import Typing, TypingObjectType, build_typing_unique_name

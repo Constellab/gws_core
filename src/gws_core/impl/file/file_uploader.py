@@ -14,10 +14,9 @@ from ...core.utils.utils import Utils
 from ...process.process import Process
 from ...process.process_decorator import ProcessDecorator
 from ...process.process_io import ProcessInputs, ProcessOutputs
-from ...progress_bar.progress_bar import ProgressBar
 from ...resource.resource import Resource
 from .file import File
-from .file_store import LocalFileStore
+from .local_file_store import LocalFileStore
 
 # ####################################################################
 #
@@ -83,7 +82,7 @@ class FileExporter(Process):
         outport_name = list(self.output_specs.keys())[0]
         filename = config.get_param("file_name")
         file_type: Type[File] = self.get_default_output_spec_type("file")
-        file: File = file_store.create_file(name=filename, file_type=file_type)
+        file: File = file_store.create_file(file_name=filename, file_type=file_type)
 
         if not os.path.exists(file.dir):
             os.makedirs(file.dir)

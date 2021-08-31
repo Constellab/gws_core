@@ -2,21 +2,19 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-from __future__ import annotations
 
 import mimetypes
 import os
 import shutil
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Type
+from typing import Any, Type
+
+from gws_core.impl.file.file_helper import FileHelper
 
 from ...core.exception.exceptions import BadRequestException
 from ...resource.resource import Resource
 from ...resource.resource_decorator import ResourceDecorator
 from ...resource.resource_set import ResourceSet
-
-if TYPE_CHECKING:
-    from .file_store import FileStore
 
 
 @ResourceDecorator("File")
@@ -25,8 +23,8 @@ class File(Resource):
     File class
     """
 
-    path = str
-    file_store_uri = str
+    path: str
+    file_store_uri: str
     _mode = "t"
     _table_name = "gws_file"
 
@@ -36,15 +34,15 @@ class File(Resource):
 
     @property
     def dir(self):
-        return Path(self.path).parent
+        return FileHelper.get_dir(self.path)
 
     # -- E --
 
     @property
     def extension(self):
-        return Path(self.path).suffix
+        return FileHelper.get_extension(self.path)
 
-    def exists(self):
+    def _exists(self):
         return os.path.exists(self.path)
 
     # -- F --
@@ -52,45 +50,29 @@ class File(Resource):
     # -- I --
 
     def is_json(self):
-        return self.extension in [".json"]
+        return FileHelper.is_json(self.path)
 
     def is_csv(self):
-        return self.extension in [".csv", ".tsv"]
+        return FileHelper.is_csv(self.path)
 
     def is_txt(self):
-        return self.extension in [".txt"]
+        return FileHelper.is_txt(self.path)
 
     def is_jpg(self):
-        return self.extension in [".jpg", ".jpeg"]
+        return FileHelper.is_jpg(self.path)
 
     def is_png(self):
-        return self.extension in [".png"]
+        return FileHelper.is_png(self.path)
 
     # -- M --
 
     @property
     def mime(self):
-        ext = self.extension
-        if ext:
-            return mimetypes.types_map[self.extension]
-        else:
-            return None
-
-    def move_to_store(self, fs: 'FileStore'):
-        if not fs.contains(self):
-            fs.add(self)
-
-    def move_to_default_store(self):
-        from .file_store import LocalFileStore
-        fs = LocalFileStore.get_default_instance()
-        if not fs.contains(self):
-            fs.add(self)
-
-    # -- N --
+        return FileHelper.get_mime(self.path)
 
     @property
     def name(self):
-        return Path(self.path).name
+        return FileHelper.get_name_with_extension(self.path)
 
     # -- O --
 
@@ -99,7 +81,7 @@ class File(Resource):
         Open the file
         """
 
-        if self.exists():
+        if self._exists():
             return open(self.path, mode)
         else:
             if not os.path.exists(self.dir):
@@ -149,7 +131,7 @@ class File(Resource):
         with self.open(m) as fp:
             fp.write(data)
 
-    def get_resource_model_type(cls) -> Type[Any]:
+    def get_resource_model_type(self) -> Type[Any]:
         """Return the resource model associated with this Resource
         //!\\ To overwrite only when you know what you are doing
 

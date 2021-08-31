@@ -176,7 +176,7 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         ExperimentResource.drop_table()
 
     @classmethod
-    def from_resource(cls, resource: Resource) -> 'ResourceModel':
+    def from_resource(cls, resource: Resource) -> this:
         """Create a new ResourceModel from a resource
 
         :return: [description]
@@ -199,7 +199,6 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         return cls.select(*args, **kwargs).where(cls.resource_typing_name == cls._typing_name)
 
     # -- T --
-    @final
     def to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns JSON string or dictionnary representation of the model.

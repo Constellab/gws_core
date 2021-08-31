@@ -95,11 +95,11 @@ from .impl.file.file import FileSet as FileSet
 from .impl.file.file_resource import FileResource as FileResource
 from .impl.file.file_service import FileService as FileService
 from .impl.file.file_store import FileStore as FileStore
-from .impl.file.file_store import LocalFileStore as LocalFileStore
 from .impl.file.file_uploader import FileDumper as FileDumper
 from .impl.file.file_uploader import FileExporter as FileExporter
 from .impl.file.file_uploader import FileImporter as FileImporter
 from .impl.file.file_uploader import FileLoader as FileLoader
+from .impl.file.local_file_store import LocalFileStore as LocalFileStore
 # Impl > JSON
 from .impl.json.json_process import JSONDumper as JSONDumper
 from .impl.json.json_process import JSONExporter as JSONExporter

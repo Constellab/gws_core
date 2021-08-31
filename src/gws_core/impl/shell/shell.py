@@ -10,6 +10,7 @@ from abc import abstractmethod
 from typing import Union
 
 from gws_core.config.config_params import ConfigParams
+from gws_core.impl.file.file_service import FileService
 from gws_core.process.process_io import ProcessInputs, ProcessOutputs
 
 from ...core.exception.exceptions import BadRequestException
@@ -178,9 +179,10 @@ class Shell(Process):
             # self.data['cmd'] = cmd
             outputs = self.gather_outputs(config=config, inputs=inputs)
 
+            # TODO c'est bizarre ça
             for resource in outputs.values():
                 if isinstance(resource, File):
-                    resource.move_to_default_store()
+                    FileService.add_file_to_default_store(resource)
 
                 self.cwd.cleanup()
                 self._tmp_dir = None

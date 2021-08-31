@@ -15,7 +15,7 @@ class TestFile(BaseTest):
         GTest.print("File")
 
         file_store: LocalFileStore = LocalFileStore()
-        file: File = file_store.create_file(name="my_file.txt")
+        file: File = file_store.create_file("my_file.txt")
         file_resource: FileResource = FileService.create_file_resource(file=file)
         self.assertTrue(file_resource.is_saved())
 
