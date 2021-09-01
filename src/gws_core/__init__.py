@@ -112,6 +112,7 @@ from .impl.robot.robot_process import RobotAddOnCreate as RobotAddOnCreate
 from .impl.robot.robot_process import RobotCreate as RobotCreate
 from .impl.robot.robot_process import RobotEat as RobotEat
 from .impl.robot.robot_process import RobotMove as RobotMove
+from .impl.robot.robot_process import RobotSugarCreate as RobotSugarCreate
 from .impl.robot.robot_process import RobotWait as RobotWait
 from .impl.robot.robot_protocol import \
     RobotSuperTravelProto as RobotSuperTravelProto

@@ -6,9 +6,9 @@ import time
 from typing import Optional
 
 from gws_core import (ConfigParams, Process, ProcessableSpec, ProcessDecorator,
-                      ProcessInputs, ProcessOutputs, ProgressBar, Protocol,
+                      ProcessInputs, ProcessOutputs, Protocol,
                       ProtocolDecorator, RobotCreate, RobotEat, RobotFood,
-                      RobotMove, RobotWait)
+                      RobotMove, RobotSugarCreate, RobotWait)
 
 # File for Tests containing examples of protocols
 
@@ -65,23 +65,6 @@ class TestNestedProtocol(Protocol):
             (p0 >> 'robot', mini_proto << 'robot'),
             (mini_proto >> 'robot', p5 << 'robot')
         ])
-
-
-@ProcessDecorator(unique_name="RobotSugarCreate", human_name="Create a sugar type of food",
-                  short_description="Create a sugar type of food")
-class RobotSugarCreate(Process):
-    """Process that create a sugar type of food and wait 3 secondes for it
-    used in TestRobotwithSugarProtocol
-    """
-    input_specs = {}
-    output_specs = {'sugar': RobotFood}
-    config_specs = {}
-
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
-        print("Create sugar", flush=True)
-        food: RobotFood = RobotFood()
-        food.set_multiplicator(10)
-        return {'sugar': food}
 
 
 @ProcessDecorator(unique_name="RobotWaitfood", human_name="Wait food",
