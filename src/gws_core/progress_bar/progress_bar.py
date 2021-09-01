@@ -234,8 +234,8 @@ class ProgressBar(Model):
         _json = super().to_json(deep=deep, **kwargs)
 
         _json["process"] = {
-            "uri": _json["process_uri"],
-            "typing_name": _json["processable_typing_name"],
+            "uri": self.process_uri,
+            "typing_name": self.processable_typing_name,
         }
 
         return _json

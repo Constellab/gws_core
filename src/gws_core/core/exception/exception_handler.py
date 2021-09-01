@@ -104,7 +104,7 @@ class ExceptionHandler():
             f"Unexcepted exception - {code}{route_info} - {str(exception)} - Instance id : {instance_id}")
         Logger.log_exception_stack_trace(exception)
 
-        response: ExceptionResponse = ExceptionResponse(status_code=status.HTTP_200_OK,
+        response: ExceptionResponse = ExceptionResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                                                         code=code,
                                                         detail=str(exception),
                                                         instance_id=instance_id)
