@@ -15,7 +15,6 @@ class Query(Generic[QueryType]):
     """
     Query class
     """
-    # Todo vérifier que ça fonctione encore bien, le cast a été enlevé
     @classmethod
     def format(cls, query: ModelSelect, view_params: dict = None, as_view: bool = False, as_json: bool = False,
                deep: bool = False):

@@ -6,6 +6,7 @@
 from typing import Any, Dict, List, Optional
 
 from fastapi import Depends
+from gws_core.core.classes.paginator import PaginatorDict
 from gws_core.core.dto.typed_tree_dto import TypedTree
 from gws_core.protocol.protocol_type import ProtocolType
 
@@ -79,7 +80,7 @@ async def add_processable(uri: str,
 @core_app.get("/protocol-type", tags=["Protocol"], summary="Get the list of protocol types")
 async def get_the_list_of_protocol_types(page: Optional[int] = 1,
                                          number_of_items_per_page: Optional[int] = 20,
-                                         _: UserData = Depends(AuthService.check_user_access_token)) -> Dict[str, Any]:
+                                         _: UserData = Depends(AuthService.check_user_access_token)) -> PaginatorDict:
     """
     Retrieve a list of protocols. The list is paginated.
 
@@ -99,6 +100,9 @@ async def get_the_list_of_process_grouped(_: UserData = Depends(AuthService.chec
     """
     Retrieve all the process types in TypedTree
     """
+
+    a = {}
+    print(a['lkj'])
 
     return ProtocolService.fetch_process_type_tree()
 

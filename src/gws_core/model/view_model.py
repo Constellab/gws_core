@@ -51,17 +51,6 @@ class ViewModel(Model):
 
     # -- D --
 
-    @property
-    def description(self) -> str:
-        """
-        Returns the description. Alias of :meth:`get_description`
-
-        :return: The description
-        :rtype: str
-        """
-        # Todo check
-        return self.get_description()
-
     # -- F --
 
     # -- G --

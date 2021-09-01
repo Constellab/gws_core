@@ -5,7 +5,7 @@
 
 from gws_core import (ConfigParams, Experiment, ExperimentService, GTest,
                       ProcessDecorator, ProcessInputs, ProcessModel,
-                      ProcessService, ProgressBar, Resource, Shell)
+                      ProcessService, Resource, Shell)
 from gws_core.process.process_io import ProcessOutputs
 
 from tests.base_test import BaseTest
@@ -35,7 +35,7 @@ class TestShell(BaseTest):
 
         proc: ProcessModel = ProcessService.create_process_from_type(
             process_type=Echo)
-        proc.set_param("name", "Jhon Doe")
+        proc.config.set_param("name", "Jhon Doe")
 
         experiment: Experiment = ExperimentService.create_experiment_from_process(
             process=proc)

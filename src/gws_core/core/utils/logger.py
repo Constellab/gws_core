@@ -9,6 +9,7 @@ from datetime import date, datetime
 from logging import Logger as PythonLogger
 from logging.handlers import TimedRotatingFileHandler
 from os import makedirs, path
+from sys import exc_info
 from typing import Literal
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
@@ -91,10 +92,9 @@ class Logger:
     def error(cls, message: str) -> None:
         cls._logger.error(cls._get_message("ERROR", message))
 
-    # todo fix method
     @classmethod
-    def log_exception_stack_trace(cls) -> None:
-        cls._logger.error(traceback.print_exc())
+    def log_exception_stack_trace(cls, exception: Exception) -> None:
+        cls._logger.exception(exception, exc_info=True)
 
     @classmethod
     def warning(cls, message: str) -> None:

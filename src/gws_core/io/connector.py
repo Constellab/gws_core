@@ -48,7 +48,6 @@ class Connector:
         # hard checking of port compatibility
         if check_compatiblity and not IOSpecsHelper.resources_types_are_compatible(
                 out_port.resource_types, in_port.resource_types):
-            # TODO improve error
             raise BadRequestException(
                 f"Invalid connection, port are imcompatible. Resources ({out_port.resource_types}) imcompatible with resource ({in_port.resource_types})")
 

@@ -9,12 +9,12 @@ import uuid
 from typing import Dict, List
 
 from fastapi import status
-from gws_core.core.classes.cors_config import CorsConfig
-from gws_core.core.utils.utils import Utils
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
 
+from ..classes.cors_config import CorsConfig
 from ..utils.logger import Logger
+from ..utils.utils import Utils
 from .exception_response import ExceptionResponse
 from .exceptions.base_http_exception import BaseHTTPException
 
@@ -94,6 +94,7 @@ class ExceptionHandler():
         Returns:
             ExceptionResponse -- [description]
         """
+
         instance_id: str = cls._get_instance_id()
         code = cls._generate_unique_code_from_exception()
 
@@ -101,8 +102,9 @@ class ExceptionHandler():
         route_info: str = f" - Route: {request.url}" if request is not None else ""
         Logger.error(
             f"Unexcepted exception - {code}{route_info} - {str(exception)} - Instance id : {instance_id}")
+        Logger.log_exception_stack_trace(exception)
 
-        response: ExceptionResponse = ExceptionResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        response: ExceptionResponse = ExceptionResponse(status_code=status.HTTP_200_OK,
                                                         code=code,
                                                         detail=str(exception),
                                                         instance_id=instance_id)
@@ -117,7 +119,7 @@ class ExceptionHandler():
             # See dotnet core for a recent discussion, where ultimately it was
             # decided to return CORS headers on server failures:
             # https://github.com/dotnet/aspnetcore/issues/2378
-            response = CorsConfig.configure_response_cors(request, response)
+            CorsConfig.configure_response_cors(request, response)
 
         return response
 

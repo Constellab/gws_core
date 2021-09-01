@@ -44,8 +44,8 @@ class ProcessableModel(Viewable):
     parent_protocol_id = IntegerField(null=True, index=True)
     experiment: Experiment = ForeignKeyField(Experiment, null=True, index=True, backref="+")
     instance_name = CharField(null=True, index=True)
-    created_by = ForeignKeyField(User, null=False, index=True, backref='+', )
-    config = ForeignKeyField(Config, null=False, index=True, backref='+')
+    created_by: User = ForeignKeyField(User, null=False, index=True, backref='+', )
+    config: Config = ForeignKeyField(Config, null=False, index=True, backref='+')
     progress_bar: ProgressBar = ForeignKeyField(
         ProgressBar, null=True, backref='+')
     processable_typing_name = CharField(null=False)
@@ -98,26 +98,6 @@ class ProcessableModel(Viewable):
 
         self.input.disconnect()
         self.output.disconnect()
-
-    def get_param(self, name: str) -> Union[str, int, float, bool, list, dict]:
-        """
-        Returns the value of a parameter of the process config by its name.
-
-        :return: The paremter value
-        :rtype: [str, int, float, bool]
-        """
-
-        return self.config.get_param(name)
-
-    def get_next_procs(self) -> list:
-        """
-        Returns the list of (right-hand side) processes connected to the IO ports.
-
-        :return: List of processes
-        :rtype: list
-        """
-
-        return self.output.get_next_procs()
 
     # -- H --
 
@@ -388,30 +368,6 @@ class ProcessableModel(Viewable):
             raise BadRequestException(
                 "The protocol is already related to an experiment")
         self.experiment = experiment
-
-    def set_config(self, config: Config):
-        """
-        Sets the config of the process.
-
-        :param config: A config to assign
-        :type config: Config
-        """
-
-        self.config = config
-        self.save()
-
-    def set_param(self, name: str, value: Union[str, int, float, bool]):
-        """
-        Sets the value of a config parameter.
-
-        :param name: Name of the parameter
-        :type name: str
-        :param value: A value to assign
-        :type value: [str, int, float, bool]
-        """
-
-        self.config.set_param(name, value)
-        self.config.save()
 
     # -- T --
 

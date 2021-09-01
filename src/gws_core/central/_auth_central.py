@@ -22,15 +22,6 @@ class AuthCentral:
         :raises UnauthorizedException: [description]
         """
 
-        # Todo check if necessary
-        # block central routes in dev mode
-        # settings: Settings = Settings.retrieve()
-        # if settings.is_dev:
-        #     raise BadRequestException(
-        #         detail=GWSException.CENTRAL_API_DEV_DISABLED.value,
-        #         unique_code=GWSException.CENTRAL_API_DEV_DISABLED.name
-        #     )
-
         is_authorized = CentralService.check_api_key(api_key)
         if not is_authorized:
             raise UnauthorizedException(

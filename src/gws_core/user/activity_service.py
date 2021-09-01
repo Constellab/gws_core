@@ -6,7 +6,7 @@ from .user import User
 
 class ActivityService:
 
-    # todo check l'*
+    # todo check le '*'
     @classmethod
     def add(self, activity_type: str, *, object_type=None, object_uri=None, user: User = None):
         Activity.add(

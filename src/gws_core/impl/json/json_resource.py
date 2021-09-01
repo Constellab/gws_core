@@ -1,4 +1,5 @@
 import json
+from typing import Any
 
 from gws_core.resource.resource import Resource
 
@@ -38,7 +39,7 @@ class JSONDict(Resource):
     # -- I --
 
     @classmethod
-    def import_resource(cls, file_path: str, file_format: str = ".json") -> any:
+    def import_resource(cls, file_path: str, file_format: str = ".json") -> Any:
         """
         Import a give from repository
 

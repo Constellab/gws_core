@@ -36,7 +36,7 @@ class Config(Viewable):
 
         if specs:
             if not isinstance(specs, dict):
-                raise BadRequestException(f"The specs must be a dictionnary")
+                raise BadRequestException("The specs must be a dictionnary")
 
             # convert type to str
 
@@ -68,18 +68,6 @@ class Config(Viewable):
         :return: True if successfully archived, False otherwise
         :rtype: `bool`
         """
-
-        from ..process.process_model import ProcessModel
-
-        # TODO a vérifier, une config peut être utilisé par plusieurs process?
-        some_processes_are_in_invalid_archive_state = ProcessModel.select().where(
-            (ProcessModel.config == self) & (
-                ProcessModel.is_archived == (not archive))
-        ).count()
-
-        if some_processes_are_in_invalid_archive_state:
-            return None
-
         return super().archive(archive)
 
     # -- C --

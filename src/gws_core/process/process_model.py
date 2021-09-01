@@ -180,7 +180,6 @@ class ProcessModel(ProcessableModel):
         :return: The representation
         :rtype: `dict`
         """
-        # TODO a tester, besoin du   {**_json, **self.data} ?
         _json: dict = super().data_to_json(deep=deep)
 
         return {**_json, **self.data}

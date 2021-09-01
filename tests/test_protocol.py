@@ -11,7 +11,6 @@ from gws_core import (Config, Experiment, ExperimentService, ExperimentStatus,
                       ProtocolService, Robot, RobotFood, Settings)
 from gws_core.impl.robot.robot_process import RobotMove
 from gws_core.model.typing import Typing
-from gws_core.model.typing_manager import TypingManager
 from gws_core.processable.processable_model import ProcessableModel
 
 from tests.base_test import BaseTest
