@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 
+from gws_core.core.decorator.json_ignore import JsonIgnore
 from peewee import CharField
 
 from ..core.exception.exceptions import BadRequestException
@@ -18,6 +19,7 @@ from ..user.activity import Activity
 # ####################################################################
 
 
+@JsonIgnore(["model_uri", "model_type"])
 class ViewModel(Model):
     """
     ViewModel class. A view model is parametrized representation of the orginal data
@@ -206,8 +208,6 @@ class ViewModel(Model):
             "type": _json["model_type"],  # todo fix type
             "rendering": self.render()
         }
-        del _json["model_uri"]
-        del _json["model_type"]
         if not self.is_saved():
             _json["uri"] = ""
             _json["save_datetime"] = ""

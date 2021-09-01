@@ -31,7 +31,7 @@ class ProcessType(Typing):
 
         _json: Dict[str, Any] = super().to_json(deep=deep, **kwargs)
 
-        # for compatibility
+        # TODO to remove | for compatibility
         _json["ptype"] = self.model_type
 
         if deep:

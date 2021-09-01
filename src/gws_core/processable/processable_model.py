@@ -6,6 +6,7 @@ import inspect
 from abc import abstractmethod
 from typing import TYPE_CHECKING, List, Type, Union, final
 
+from gws_core.core.decorator.json_ignore import JsonIgnore
 from peewee import CharField, ForeignKeyField, IntegerField
 from starlette_context import context
 
@@ -30,6 +31,7 @@ if TYPE_CHECKING:
     from ..protocol.protocol_model import ProtocolModel
 
 
+@JsonIgnore(["parent_protocol_id"])
 class ProcessableModel(Viewable):
     """Base abstract class for Process and Protocol
 
@@ -401,12 +403,6 @@ class ProcessableModel(Viewable):
         """
 
         _json = super().to_json(deep=deep, **kwargs)
-
-        del _json["parent_protocol_id"]
-        if "input" in _json["data"]:
-            del _json["data"]["input"]
-        if "output" in _json["data"]:
-            del _json["data"]["output"]
 
         _json["experiment"] = {
             "uri": (self.experiment.uri if self.experiment else "")}

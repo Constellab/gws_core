@@ -127,7 +127,7 @@ class ModelService(BaseService):
     # -- F --
 
     @classmethod
-    def fetch_model(cls, type_str: str, uri: str, as_json=False) -> Model:
+    def fetch_model(cls, type_str: str, uri: str) -> Model:
         """
         Fetch a model
 
@@ -139,7 +139,11 @@ class ModelService(BaseService):
         :rtype: instance of `gws.db.model.Model`
         """
 
-        return Model.fetch_model(type_str=type_str, uri=uri, as_json=as_json)
+        model_type: Type[Model] = Utils.get_model_type(type_str)
+        if model_type is None:
+            return None
+
+        return model_type.get_by_uri_and_check(uri)
 
     @classmethod
     def fetch_list_of_models(cls,

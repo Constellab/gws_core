@@ -182,4 +182,9 @@ class ProcessModel(ProcessableModel):
         """
         _json: dict = super().data_to_json(deep=deep)
 
-        return {**_json, **self.data}
+        if "input" in _json:
+            del _json["input"]
+        if "output" in _json:
+            del _json["output"]
+
+        return _json

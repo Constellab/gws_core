@@ -6,11 +6,12 @@
 import inspect
 from typing import Any, Dict, List, Literal, Type
 
-from gws_core.core.model.base import Base
 from peewee import BooleanField, CharField, ModelSelect
 
+from ..core.decorator.json_ignore import JsonIgnore
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from ..core.model.base import Base
 from ..core.model.model import Model
 from ..core.utils.utils import Utils
 
@@ -31,6 +32,7 @@ def build_typing_unique_name(object_type: str, brick_name: str, model_name: str)
     return object_type + SEPARATOR + brick_name + SEPARATOR + model_name
 
 
+@JsonIgnore(["model_type", "hide"])
 class Typing(Model):
     """
     Typing class. This class allows storing information on all the types of the models in the system.
