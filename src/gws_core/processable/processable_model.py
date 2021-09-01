@@ -315,8 +315,7 @@ class ProcessableModel(Viewable):
 
     async def _run_before_task(self):
         self._switch_to_current_progress_bar()
-        self.progress_bar.add_message(
-            f"Running {self.full_classname()} ...")
+        self.progress_bar.add_message("Start of process")
         self.is_instance_running = True
         self.is_instance_finished = False
 
@@ -327,8 +326,6 @@ class ProcessableModel(Viewable):
         self.save()
 
     async def _run_after_task(self):
-        self.progress_bar.add_message(
-            f"Task of {self.full_classname()} successfully finished!")
         self.is_instance_running = False
         self.is_instance_finished = True
         self.progress_bar.stop('End of process')

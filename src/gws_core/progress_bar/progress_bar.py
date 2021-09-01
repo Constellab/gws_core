@@ -147,7 +147,6 @@ class ProgressBar(Model):
         self.data["max_value"] = max_value
         self.data["start_time"] = time.perf_counter()
         self.data["current_time"] = self.data["start_time"]
-        self.add_message(message="Experiment started")
         self.save()
 
     def stop(self, message: str):
