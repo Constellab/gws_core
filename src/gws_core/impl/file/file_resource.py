@@ -44,4 +44,5 @@ class FileResource(ResourceModel):
         _json = super().to_json(deep=deep,  **kwargs)
 
         _json["filename"] = FileHelper.get_name_with_extension(self.path)
+        _json["is_file"] = True
         return _json

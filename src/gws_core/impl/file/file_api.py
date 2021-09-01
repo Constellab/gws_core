@@ -29,8 +29,9 @@ async def upload_a_file_or_list_of_files(files: List[UploadFile] = FastAPIFile(.
     return file.to_json()
 
 
-@core_app.get("/file/{uri}/download", tags=["Files"], summary="Download a file")
+@core_app.get("/file/{typing_name}/{uri}/download", tags=["Files"], summary="Download a file")
 async def download_a_file(uri: str,
+                          typing_name: str,
                           _: UserData = Depends(AuthService.check_user_access_token)) -> FileResponse:
     """
     Download a file

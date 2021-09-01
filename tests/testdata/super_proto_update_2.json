@@ -242,7 +242,7 @@
             "is_archived": false,
             "processable_typing_name": "PROTOCOL.gws_core.Protocol",
             "save_datetime": "2021-08-25T14:59:54",
-            "uri": null,
+            "uri": "mini_travel_uri",
             "data": {
                 "title": "",
                 "description": "",
@@ -255,7 +255,7 @@
                             "is_archived": false,
                             "processable_typing_name": "PROCESS.gws_core.RobotMove",
                             "save_datetime": "2021-08-25T14:59:54",
-                            "uri": null,
+                            "uri": "sub_p1_uri",
                             "data": {
                                 "title": "Move robot",
                                 "description": "This process emulates a short moving step of the robot",
@@ -294,7 +294,9 @@
                                             "description": "The moving direction"
                                         }
                                     },
-                                    "params": {}
+                                    "params": {
+                                        "moving_step": 20
+                                    }
                                 }
                             },
                             "progress_bar": {
@@ -339,102 +341,9 @@
                                     ]
                                 }
                             }
-                        },
-                        "p2": {
-                            "creation_datetime": "2021-08-25T14:59:54",
-                            "instance_name": "p2",
-                            "is_archived": false,
-                            "processable_typing_name": "PROCESS.gws_core.RobotEat",
-                            "save_datetime": "2021-08-25T14:59:54",
-                            "uri": null,
-                            "data": {
-                                "title": "Eat process",
-                                "description": "This process emulates the meal of the robot before its flight!",
-                                "doc": "Base class"
-                            },
-                            "experiment": {
-                                "uri": ""
-                            },
-                            "parent_protocol": {
-                                "uri": "02425bcd-e13a-43cf-9d2b-52c9398c3fb8"
-                            },
-                            "is_running": false,
-                            "is_finished": false,
-                            "is_protocol": false,
-                            "config": {
-                                "creation_datetime": "2021-08-25T14:59:54",
-                                "is_archived": false,
-                                "save_datetime": "2021-08-25T14:59:54",
-                                "uri": "c1b313f8-54b2-4840-883b-d92a2a1fd075",
-                                "data": {
-                                    "specs": {
-                                        "food_weight": {
-                                            "type": "float",
-                                            "default": 3.14
-                                        }
-                                    },
-                                    "params": {}
-                                }
-                            },
-                            "progress_bar": {
-                                "creation_datetime": "2021-08-25T14:59:54",
-                                "is_archived": false,
-                                "save_datetime": "2021-08-25T14:59:54",
-                                "uri": "7535f3b9-383b-4b3c-be4e-fe68d1c72d9c",
-                                "data": {
-                                    "value": 0.0,
-                                    "max_value": 0.0,
-                                    "average_speed": 0.0,
-                                    "start_time": 0.0,
-                                    "current_time": 0.0,
-                                    "elapsed_time": 0.0,
-                                    "remaining_time": 0.0,
-                                    "messages": []
-                                },
-                                "process": {
-                                    "uri": "cb47ac7a-94cf-4dc1-b2b9-79fd948bcc9b",
-                                    "typing_name": "PROCESS.gws_core.RobotEat"
-                                }
-                            },
-                            "input": {
-                                "robot": {
-                                    "resource": {
-                                        "uri": "",
-                                        "typing_name": ""
-                                    },
-                                    "specs": [
-                                        "RESOURCE.gws_core.Robot"
-                                    ]
-                                }
-                            },
-                            "output": {
-                                "robot": {
-                                    "resource": {
-                                        "uri": "",
-                                        "typing_name": ""
-                                    },
-                                    "specs": [
-                                        "RESOURCE.gws_core.Robot"
-                                    ]
-                                }
-                            }
                         }
                     },
                     "links": [
-                        {
-                            "from": {
-                                "node": "p1",
-                                "port": "robot"
-                            },
-                            "to": {
-                                "node": "p2",
-                                "port": "robot"
-                            },
-                            "resource": {
-                                "uri": "",
-                                "typing_name": ""
-                            }
-                        }
                     ],
                     "interfaces": {
                         "robot": {
@@ -454,21 +363,6 @@
                         }
                     },
                     "outerfaces": {
-                        "robot": {
-                            "name": "robot",
-                            "from": {
-                                "node": "p2",
-                                "port": "robot"
-                            },
-                            "to": {
-                                "node": ":parent:",
-                                "port": "robot"
-                            },
-                            "resource": {
-                                "uri": "",
-                                "typing_name": ""
-                            }
-                        }
                     },
                     "layout": {}
                 }
@@ -546,20 +440,6 @@
             },
             "to": {
                 "node": "mini_travel",
-                "port": "robot"
-            },
-            "resource": {
-                "uri": "",
-                "typing_name": ""
-            }
-        },
-        {
-            "from": {
-                "node": "mini_travel",
-                "port": "robot"
-            },
-            "to": {
-                "node": "p1",
                 "port": "robot"
             },
             "resource": {

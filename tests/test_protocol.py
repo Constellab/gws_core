@@ -9,6 +9,7 @@ import os
 from gws_core import (Config, Experiment, ExperimentService, ExperimentStatus,
                       GTest, ProcessModel, ProgressBar, ProtocolModel,
                       ProtocolService, Robot, RobotFood, Settings)
+from gws_core.processable.processable_model import ProcessableModel
 
 from tests.base_test import BaseTest
 from tests.protocol_examples import (TestNestedProtocol,
@@ -132,7 +133,7 @@ class TestProtocol(BaseTest):
         self.assertEqual(len(super_proto_db.connectors), 3)
         self.assertTrue("mini_travel" in super_proto_db.processes)
 
-        mini_travel_db: ProtocolModel = super_proto_db.processes["mini_travel"]
+        mini_travel_db: ProtocolModel = super_proto_db.get_process("mini_travel")
         # check mini travel
         self.assertEqual(len(mini_travel_db.processes), 2)
         self.assertEqual(len(mini_travel_db.connectors), 1)
@@ -151,9 +152,25 @@ class TestProtocol(BaseTest):
         self.assertEqual(Config.select().count(), 7)
         self.assertEqual(ProgressBar.select().count(), 7)
 
+        sub_p1: ProcessableModel = mini_travel_db.get_process('p1')
+        # Delete p2 of mini travel, update p1 config (of mini travel)
+        with open(os.path.join(testdata_dir, "super_proto_update_2.json"), "r") as file:
+            file_content: str = file.read().replace('p0_uri', p0.uri).replace('p5_uri', p5.uri)\
+                .replace('mini_travel_uri', mini_travel_db.uri).replace('sub_p1_uri', sub_p1.uri)
+            s1 = json.loads(file_content)
+            super_proto = ProtocolService.update_protocol_graph(super_proto_db, s1)
+
+        super_proto_db = ProtocolService.get_protocol_by_uri(super_proto.uri)
+        mini_travel_db: ProtocolModel = super_proto_db.get_process("mini_travel")
+        sub_p1: ProcessableModel = mini_travel_db.get_process("p1")
+
+        self.assertEqual(len(mini_travel_db.processes), 1)
+        self.assertEqual(sub_p1.config.get_param("moving_step"), 20)
+
         # Rollback to first protocol
         with open(os.path.join(testdata_dir, "super_proto.json"), "r") as file:
-            s1 = json.load(file)
+            file_content: str = file.read().replace('p0_uri', p0.uri).replace('p5_uri', p5.uri)
+            s1 = json.loads(file_content)
             super_proto = ProtocolService.update_protocol_graph(super_proto_db, s1)
 
         super_proto_db = ProtocolService.get_protocol_by_uri(super_proto.uri)
