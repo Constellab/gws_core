@@ -5,6 +5,10 @@
 
 from typing import List, Type, Union
 
+from gws_core.core.decorator.transaction import Transaction
+from gws_core.model.typing import Typing
+from gws_core.model.typing_manager import TypingManager
+from gws_core.processable.processable_model import ProcessableModel
 from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
@@ -29,8 +33,7 @@ class ProtocolService(BaseService):
     @classmethod
     def fetch_protocol_list(cls,
                             page: int = 0,
-                            number_of_items_per_page: int = 20,
-                            as_json=False) -> Union[Paginator, List[ProtocolModel], List[dict]]:
+                            number_of_items_per_page: int = 20) -> Paginator[ProtocolModel]:
 
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
@@ -39,12 +42,8 @@ class ProtocolService(BaseService):
         query: ModelSelect = ProtocolModel.select().order_by(
             model_type.creation_datetime.desc())
 
-        paginator = Paginator(
+        return Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
-        if as_json:
-            return paginator.to_json()
-        else:
-            return paginator
 
     @classmethod
     def create_protocol_from_type(cls, protocol_type: Type[Protocol], instance_name: str = None) -> ProtocolModel:
@@ -133,6 +132,30 @@ class ProtocolService(BaseService):
 
         for key in deleted_keys:
             protocol.delete_process(key)
+
+    @classmethod
+    @Transaction()
+    def add_processable_to_protocol(cls, protocol_uri: str, processable_typing_name: str) -> ProcessableModel:
+        protocol: ProtocolModel = ProtocolModel.get_by_uri_and_check(protocol_uri)
+
+        processable_typing: Typing = TypingManager.get_typing_from_name(processable_typing_name)
+
+        # get the instance name from type model name
+        instance_name: str = protocol.generate_unique_instance_name(processable_typing.model_name)
+
+        # create the processable
+        processable_model: ProcessableModel = ProcessableFactory.create_processable_model_from_type(
+            processable_type=processable_typing.get_type(), instance_name=instance_name)
+
+        protocol.add_processable(instance_name=instance_name, processable_model=processable_model)
+        # save the new processable
+        processable_model.save_full()
+
+        # Refresh the protocol graph and save
+        protocol.refresh_graph_from_dump()
+        protocol.save()
+
+        return processable_model
 
     ############################# PROTOCOL TYPE ###########################
 

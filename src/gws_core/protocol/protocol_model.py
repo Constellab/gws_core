@@ -57,7 +57,7 @@ class ProtocolModel(ProcessableModel):
 
     # -- A --
 
-    def add_process(self, name: str, process: ProcessableModel):
+    def add_processable(self, instance_name: str, processable_model: ProcessableModel) -> None:
         """
         Adds a process to the protocol.
 
@@ -68,9 +68,9 @@ class ProtocolModel(ProcessableModel):
         """
         # be sure to have loaded the protocol before adding a process
         self._load_from_graph()
-        self._add_process(name=name, process=process)
+        self._add_processable(instance_name=instance_name, processable_model=processable_model)
 
-    def _add_process(self, name: str, process: ProcessableModel):
+    def _add_processable(self, instance_name: str, processable_model: ProcessableModel) -> None:
         """
         Adds a process to the protocol.
 
@@ -82,25 +82,25 @@ class ProtocolModel(ProcessableModel):
 
         if self.is_instance_finished or self.is_instance_running:
             raise BadRequestException("The protocol has already been run")
-        if not isinstance(process, ProcessableModel):
+        if not isinstance(processable_model, ProcessableModel):
             raise BadRequestException(
-                f"The process '{name}' must be an instance of ProcessableModel")
-        if process.parent_protocol_id and self.id != process.parent_protocol_id:
+                f"The process '{instance_name}' must be an instance of ProcessableModel")
+        if processable_model.parent_protocol_id and self.id != processable_model.parent_protocol_id:
             raise BadRequestException(
-                f"The process instance '{name}' already belongs to another protocol")
-        if name in self._processes:
-            raise BadRequestException(f"Process name '{name}' already exists")
-        if process in self._processes.items():
-            raise BadRequestException(f"Process '{name}' duplicate")
+                f"The process instance '{instance_name}' already belongs to another protocol")
+        if instance_name in self._processes:
+            raise BadRequestException(f"Process name '{instance_name}' already exists")
+        if processable_model in self._processes.items():
+            raise BadRequestException(f"Process '{instance_name}' duplicate")
 
-        process.set_parent_protocol(self)
-        if self.experiment and process.experiment is None:
-            process.set_experiment(self.experiment)
-        process.instance_name = name
-        self._processes[name] = process
+        processable_model.set_parent_protocol(self)
+        if self.experiment and processable_model.experiment is None:
+            processable_model.set_experiment(self.experiment)
+        processable_model.instance_name = instance_name
+        self._processes[instance_name] = processable_model
 
     @Transaction()
-    def save_full(self) -> None:
+    def save_full(self) -> 'ProtocolModel':
         """Save the protocol, its progress bar, its config and all its processes
         """
         self.config.save()
@@ -111,6 +111,8 @@ class ProtocolModel(ProcessableModel):
         for process in self.processes.values():
             process.set_parent_protocol(self)
             process.save_full()
+
+        return self
 
     def add_connector(self, connector: Connector):
         """
@@ -209,7 +211,7 @@ class ProtocolModel(ProcessableModel):
                 self._processes[key].config.set_params(processable.config.params)
             # If it's a new process
             else:
-                self._add_process(key, processable)
+                self._add_processable(key, processable)
 
     def _init_interfaces_from_graph(self, interfaces_dict: Dict) -> None:
         # clear current interfaces
@@ -694,3 +696,16 @@ class ProtocolModel(ProcessableModel):
 
         for proc in self.processes.values():
             proc.check_user_privilege(user)
+
+    def generate_unique_instance_name(self, instance_name: str) -> str:
+        """ Generate a unique instance name from an instance_name
+        by adding _1 or _2... to the end of the instance name
+        """
+        if not instance_name in self.processes:
+            return instance_name
+
+        count: int = 1
+        while f"{instance_name}_{count}" in self.processes:
+            count += 1
+
+        return f"{instance_name}_{count}"

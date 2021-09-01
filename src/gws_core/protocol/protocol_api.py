@@ -49,9 +49,6 @@ async def get_the_list_of_protocols(page: Optional[int] = 1,
     """
     Retrieve a list of protocols. The list is paginated.
 
-    - **type**: the type of the processes to fetch
-    - **search_text**: text used to filter the results. The text is matched against to the `title` and the `description` using full-text search. If this parameter is given then the parameter `experiment_uri` is ignored.
-    - **experiment_uri**: the uri of the experiment related to the processes. This parameter is ignored if `search_text` is given.
     - **page**: the page number
     - **number_of_items_per_page**: the number of items per page (limited to 50)
     """
@@ -59,8 +56,22 @@ async def get_the_list_of_protocols(page: Optional[int] = 1,
     return ProtocolService.fetch_protocol_list(
         page=page,
         number_of_items_per_page=number_of_items_per_page,
-        as_json=True
-    )
+    ).to_json()
+
+
+@core_app.post("/protocol/{uri}/add-processable/{processable_typing_name}", tags=["Protocol"],
+               summary="Add a processable to a protocol")
+async def add_processable(uri: str,
+                          processable_typing_name: str,
+                          _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    """
+    Add a processable to a protocol
+    """
+
+    return ProtocolService.add_processable_to_protocol(
+        protocol_uri=uri,
+        processable_typing_name=processable_typing_name
+    ).to_json(deep=True)
 
 ############################# PROTOCOL TYPE ###########################
 

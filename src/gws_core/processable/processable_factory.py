@@ -189,7 +189,7 @@ class ProcessableFactory():
             if not isinstance(proc, ProcessableModel):
                 raise BadRequestException(
                     "The dictionnary of processes must contain instances of ProcessableModel")
-            protocol_model.add_process(name, proc)
+            protocol_model.add_processable(name, proc)
 
         # set connectors
         for conn in connectors:
@@ -260,6 +260,13 @@ class ProcessableFactory():
                 processable_type)
             raise BadRequestException(
                 f"The type {name} is not a Process nor a Protocol. It must extend the on of the classes")
+
+    @classmethod
+    def create_processable_model_from_typing_name(
+            cls, typing_name: str, config_values: ConfigValues = None, instance_name: str = None) -> ProcessModel:
+        processable_type: Type[Processable] = TypingManager.get_type_from_name(typing_name=typing_name)
+        return cls.create_processable_model_from_type(
+            processable_type=processable_type, config_values=config_values, instance_name=instance_name)
 
     @classmethod
     def _init_processable_model(

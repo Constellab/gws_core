@@ -33,10 +33,10 @@ class TypingManager:
     _tables_are_created: bool = False
 
     # use to cache the names to prevent request each time
-    _typings_name_cache: Dict[str, Type[Base]] = {}
+    _typings_name_cache: Dict[str, Typing] = {}
 
     @classmethod
-    def get_type_from_name(cls, typing_name: str) -> Type[Any]:
+    def get_typing_from_name(cls, typing_name: str) -> Typing:
         if typing_name not in cls._typings_name_cache:
             typing: Typing = Typing.get_by_typing_name(typing_name).first()
 
@@ -44,9 +44,13 @@ class TypingManager:
                 raise BadRequestException(
                     f"Can't find the typing with name {typing_name}, did you register the name with corresponding decorator ?")
 
-            cls._typings_name_cache[typing_name] = typing.get_type()
+            cls._typings_name_cache[typing_name] = typing
 
         return cls._typings_name_cache[typing_name]
+
+    @classmethod
+    def get_type_from_name(cls, typing_name: str) -> Type[Any]:
+        return cls.get_typing_from_name(typing_name).get_type()
 
     @classmethod
     def get_object_with_typing_name(cls, typing_name: str, object_id: int) -> Model:
@@ -67,7 +71,7 @@ class TypingManager:
 
     @classmethod
     def type_is_register(cls, model_type: Type[Base]) -> bool:
-        return Typing.get_by_model_type(model_type=model_type).count() > 0
+        return Typing.type_is_register(model_type=model_type)
 
     @classmethod
     def register_typing(

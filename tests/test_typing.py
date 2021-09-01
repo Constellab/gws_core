@@ -30,7 +30,7 @@ class TestTyping(BaseTest):
         """Test a get from a type and test convertion to json of a type that
         has mulitple spec and an optional spec
         """
-        eat_type: ProcessType = ProcessType.get_by_model_type(RobotEat).first()
+        eat_type: ProcessType = ProcessType.get_by_model_type(RobotEat)
 
         self.assertEqual(eat_type.get_type(), RobotEat)
 
@@ -41,7 +41,7 @@ class TestTyping(BaseTest):
         self.assert_json(eat_json['input_specs'], input_specs, None)
 
     async def test_protocol_type(self):
-        world_travel: ProtocolType = ProtocolType.get_by_model_type(RobotWorldTravelProto).first()
+        world_travel: ProtocolType = ProtocolType.get_by_model_type(RobotWorldTravelProto)
 
         self.assertEqual(world_travel.get_type(), RobotWorldTravelProto)
 
@@ -52,7 +52,7 @@ class TestTyping(BaseTest):
         self.assertTrue(len(world_travel_json['data']['graph']['links']) > 0)
 
     async def test_resource_type(self):
-        robot: ResourceType = ResourceType.get_by_model_type(Robot).first()
+        robot: ResourceType = ResourceType.get_by_model_type(Robot)
 
         self.assertEqual(robot.get_type(), Robot)
 

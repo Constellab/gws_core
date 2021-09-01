@@ -126,7 +126,15 @@ class Typing(Model):
             .order_by(cls.model_type.desc())
 
     @classmethod
-    def get_by_model_type(cls, model_type: Type[Base]) -> ModelSelect:
+    def get_by_model_type(cls, model_type: Type[Base]) -> 'Typing':
+        return cls._get_by_model_type(model_type).first()
+
+    @classmethod
+    def type_is_register(cls, model_type: Type[Base]) -> bool:
+        return cls._get_by_model_type(model_type).count() > 0
+
+    @classmethod
+    def _get_by_model_type(cls, model_type: Type[Base]) -> ModelSelect:
         return cls.select().where((cls.model_type == model_type.full_classname()))
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:

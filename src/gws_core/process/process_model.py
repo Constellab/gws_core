@@ -169,10 +169,10 @@ class ProcessModel(ProcessableModel):
     def is_protocol(self) -> bool:
         return False
 
-    def save_full(self) -> None:
+    def save_full(self) -> 'ProcessModel':
         self.config.save()
         self.progress_bar.save()
-        self.save()
+        return self.save()
 
     def data_to_json(self, deep: bool = False, **kwargs) -> dict:
         """
