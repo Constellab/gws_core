@@ -97,6 +97,9 @@ class Typing(Model):
     def _set_ancestors(self, ancestors: List[str]) -> None:
         self.data["ancestors"] = ancestors
 
+    def get_type(self) -> Type[Base]:
+        return Utils.get_model_type(self.model_type)
+
     @property
     def typing_name(self) -> str:
         return build_typing_unique_name(self.object_type, self.brick, self.model_name)
@@ -123,7 +126,7 @@ class Typing(Model):
             .order_by(cls.model_type.desc())
 
     @classmethod
-    def get_by_model_type(cls, model_type: Type[Model]) -> ModelSelect:
+    def get_by_model_type(cls, model_type: Type[Base]) -> ModelSelect:
         return cls.select().where((cls.model_type == model_type.full_classname()))
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:

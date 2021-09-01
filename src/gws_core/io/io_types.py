@@ -2,9 +2,8 @@
 
 from typing import Dict, Iterable, List, Type, TypedDict, Union
 
-from gws_core.core.exception.exceptions.bad_request_exception import \
+from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
-
 from ..resource.resource import Resource
 
 IOSpec = Union[Type[Resource], Iterable[Type[Resource]]]
@@ -27,6 +26,23 @@ IODict = Dict[str, PortDict]
 class IOSpecsHelper():
     """Class containing only class method to simplify IOSpecs management
     """
+
+    @classmethod
+    def io_specs_to_resource_types(cls, io_specs: IOSpecs) -> Dict[str, List[Type[Resource]]]:
+        """Convert all specs (IOSpecs) to list of resources
+
+        :param io_specs: [description]
+        :type io_specs: IOSpecs
+        :raises BadRequestException: [description]
+        :return: [description]
+        :rtype: Dict[str, List[Type[Resource]]]
+        """
+
+        specs: Dict[str, List[Type[Resource]]] = {}
+        for key, spec in io_specs.items():
+            specs[key] = cls.io_spec_to_resource_types(spec)
+
+        return specs
 
     @classmethod
     def io_spec_to_resource_types(cls, io_spec: IOSpec) -> List[Type[Resource]]:
@@ -96,3 +112,26 @@ class IOSpecsHelper():
                 return True
 
         return False
+
+    @classmethod
+    def io_specs_to_json(cls, io_specs: IOSpecs) -> Dict[str, List[str]]:
+        """to_json method for IOSpecs
+        """
+
+        # Convert the specs to a list of resources types
+        specs: Dict[str, List[Type[Resource]]] = cls.io_specs_to_resource_types(io_specs)
+
+        _json:  Dict[str, List[str]] = {}
+        for key, spec in specs.items():
+            resources_json: List[str] = []
+
+            for resource_type in spec:
+                if resource_type is None:
+                    resources_json.append(None)
+                else:
+                    # set the resource typing name as spec
+                    resources_json.append(resource_type._typing_name)
+
+            _json[key] = resources_json
+
+        return _json

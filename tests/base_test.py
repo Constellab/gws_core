@@ -49,7 +49,7 @@ class BaseTest(IsolatedAsyncioTestCase):
         QueueService.deinit()
         GTest.drop_tables()
 
-    def assert_json(self, json_1: Union[dict, list], json_2: Union[dict, list], ignore_keys: List[str]) -> None:
+    def assert_json(self, json_1: Union[dict, list], json_2: Union[dict, list], ignore_keys: List[str] = None) -> None:
         """Assert a json with possibility to ignore key
         """
         self._assert_json_recur(json_1, json_2, ignore_keys, "")
@@ -57,8 +57,8 @@ class BaseTest(IsolatedAsyncioTestCase):
     def _assert_json_recur(
             self, json_1: Union[dict, list],
             json_2: Union[dict, list],
-            ignore_keys: List[str],
-            cumulated_key: str) -> bool:
+            ignore_keys: List[str] = None,
+            cumulated_key: str = "") -> bool:
 
         # handle list
         if isinstance(json_1, list):
@@ -86,7 +86,7 @@ class BaseTest(IsolatedAsyncioTestCase):
                     f"Length of object different for key '{cumulated_key}'.")
 
             for key, value in json_1.items():
-                if key in ignore_keys:
+                if ignore_keys and key in ignore_keys:
                     continue
 
                 self._assert_json_recur(value, json_2[key], ignore_keys, f"{cumulated_key}.{key}")

@@ -44,7 +44,7 @@ class TypingManager:
                 raise BadRequestException(
                     f"Can't find the typing with name {typing_name}, did you register the name with corresponding decorator ?")
 
-            cls._typings_name_cache[typing_name] = Utils.get_model_type(typing.model_type)
+            cls._typings_name_cache[typing_name] = typing.get_type()
 
         return cls._typings_name_cache[typing_name]
 

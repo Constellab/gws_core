@@ -37,8 +37,8 @@ ConfigSpecs = Dict[str, ConfigSpec]
 
 class ConfigSpecsHelper():
 
-    @staticmethod
-    def check_config(name: str, value: ConfigValue, specs: ConfigSpecs) -> ConfigValue:
+    @classmethod
+    def check_config(cls, name: str, value: ConfigValue, specs: ConfigSpecs) -> ConfigValue:
         """Method that check a config value is compatible with the corresponding specs in the configs
         """
         if not name in specs:
@@ -50,3 +50,14 @@ class ConfigSpecsHelper():
         except Exception as err:
             raise BadRequestException(
                 f"Invalid parameter value '{name}'. Error message: {err}") from err
+
+    @classmethod
+    def config_specs_to_json(cls, config_specs: ConfigSpecs) -> Dict[str, Any]:
+        _json: Dict[str, Any] = {}
+        for key, spec in config_specs.items():
+            _json[key] = spec
+
+            # if the type is a real type, get the name of it
+            if "type" in spec and isinstance(spec["type"], type):
+                _json[key]["type"] = spec["type"].__name__
+        return _json

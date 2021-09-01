@@ -7,9 +7,9 @@ from typing import Any, Dict, List, Type, final
 
 from peewee import ModelSelect
 
-from ..config.config_spec import ConfigSpecs
+from ..config.config_spec import ConfigSpecs, ConfigSpecsHelper
 from ..core.utils.utils import Utils
-from ..io.io_types import IOSpecs
+from ..io.io_types import IOSpecs, IOSpecsHelper
 from ..model.typing import Typing, TypingObjectType
 from ..process.process import Process
 from ..resource.resource import Resource
@@ -39,40 +39,14 @@ class ProcessType(Typing):
             model_t: Type[Process] = Utils.get_model_type(self.model_type)
 
             # Handle the resource input specs
-            _json["input_specs"] = self._io_specs_to_json(model_t.input_specs)
+            _json["input_specs"] = IOSpecsHelper.io_specs_to_json(model_t.input_specs)
 
             # Handle the resource output specs
-            _json["output_specs"] = self._io_specs_to_json(model_t.output_specs)
+            _json["output_specs"] = IOSpecsHelper.io_specs_to_json(model_t.output_specs)
 
             # Handle the config specs
-            _json["config_specs"] = self._config_specs_to_json(model_t.config_specs)
+            _json["config_specs"] = ConfigSpecsHelper.config_specs_to_json(model_t.config_specs)
 
-        return _json
-
-    def _io_specs_to_json(self, specs: IOSpecs) -> dict:
-        _json = {}
-        for name in specs:
-            _json[name] = []
-            t_list: List[Type[Resource]] = specs[name]
-            if not isinstance(t_list, tuple):
-                t_list = (t_list, )
-
-            for resource_type in t_list:
-                if resource_type is None:
-                    _json[name].append(None)
-                else:
-                    # set the resource typing name as input_spec
-                    _json[name].append(
-                        resource_type._typing_name)
-
-        return _json
-
-    def _config_specs_to_json(self, specs: ConfigSpecs) -> Dict:
-        _json = {}
-        for key, spec in specs.items():
-            _json[key] = spec
-            if "type" in spec and isinstance(spec["type"], type):
-                _json[key]["type"] = spec["type"].__name__
         return _json
 
     def data_to_json(self, deep: bool = False, **kwargs) -> dict:
