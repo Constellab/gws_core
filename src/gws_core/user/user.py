@@ -136,20 +136,4 @@ class User(Model):
 
     # -- T --
 
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        """
-        Returns a JSON string or dictionnary representation of the user.
-
-        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
-        :type stringify: `bool`
-        :param prettify: If True, indent the JSON string. Defaults to False.
-        :type prettify: `bool`
-        :return: The representation
-        :rtype: `dict`, `str`
-        """
-
-        _json = super().to_json(deep=deep, **kwargs)
-
-        return _json
-
     # -- U --
