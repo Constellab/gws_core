@@ -8,10 +8,10 @@ from datetime import datetime
 from typing import final
 
 from fastapi.encoders import jsonable_encoder
-from gws_core.model.typing_manager import TypingManager
 from peewee import CharField
 from starlette_context import context
 
+from ..core.decorator.json_ignore import JsonIgnore
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
 from ..core.utils.http_helper import HTTPHelper
@@ -20,6 +20,7 @@ from ..model.typing_register_decorator import TypingDecorator
 
 
 @final
+@JsonIgnore(['process_uri', 'processable_typing_name'])
 @TypingDecorator(unique_name="ProgressBar", object_type="GWS_CORE", hide=True)
 class ProgressBar(Model):
     """
@@ -233,12 +234,9 @@ class ProgressBar(Model):
         _json = super().to_json(deep=deep, **kwargs)
 
         _json["process"] = {
-            "uri": _json["process_uri"],
-            "typing_name": _json["processable_typing_name"],
+            "uri": self.process_uri,
+            "typing_name": self.processable_typing_name,
         }
-
-        del _json["process_uri"]
-        del _json["processable_typing_name"]
 
         return _json
 

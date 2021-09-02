@@ -5,6 +5,7 @@
 
 from typing import final
 
+from gws_core.core.decorator.json_ignore import JsonIgnore
 from peewee import BooleanField, CharField
 
 from ..core.classes.enum_field import EnumField
@@ -22,6 +23,7 @@ from ..user.user_group import UserGroup
 
 
 @final
+@JsonIgnore(["is_http_authenticated", "is_console_authenticated", "console_token"])
 @TypingDecorator(unique_name="User", object_type="GWS_CORE", hide=True)
 class User(Model):
     """
@@ -147,7 +149,6 @@ class User(Model):
         """
 
         _json = super().to_json(deep=deep, **kwargs)
-        del _json["console_token"]
 
         return _json
 

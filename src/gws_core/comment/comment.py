@@ -7,11 +7,13 @@ from typing import final
 
 from peewee import CharField, ForeignKeyField
 
+from ..core.decorator.json_ignore import JsonIgnore
 from ..core.model.model import Model
 from ..model.typing_register_decorator import TypingDecorator
 
 
 @final
+@JsonIgnore(["object_uri", "object_typing_name"])
 @TypingDecorator(unique_name="Comment", object_type="GWS_CORE", hide=True)
 class Comment(Model):
     """
@@ -68,9 +70,6 @@ class Comment(Model):
         }
         _json["reply_to"] = {
             "uri": (self.reply_to.uri if self.reply_to else "")}
-
-        del _json["object_uri"]
-        del _json["object_typing_name"]
 
         return _json
 

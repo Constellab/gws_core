@@ -5,16 +5,12 @@
 # ####################################################################
 
 import hashlib
-import importlib
 import json
-import traceback
 import uuid
 from datetime import datetime
 from typing import List, Type
 
 from fastapi.encoders import jsonable_encoder
-from gws_core.core.decorator.transaction import Transaction
-from gws_core.core.utils.utils import Utils
 from peewee import (AutoField, BigAutoField, BlobField, BooleanField,
                     CharField, DateTimeField, Field, ForeignKeyField,
                     ManyToManyField)
@@ -23,11 +19,14 @@ from peewee import ModelSelect
 from playhouse.mysql_ext import Match
 
 from ..db.db_manager import DbManager
+from ..decorator.json_ignore import JsonIgnore
+from ..decorator.transaction import Transaction
 from ..exception.exceptions import BadRequestException, NotFoundException
 from ..exception.gws_exceptions import GWSException
 from ..model.json_field import JSONField
 from ..utils.logger import Logger
 from ..utils.settings import Settings
+from ..utils.utils import Utils
 from .base import Base
 
 # ####################################################################
@@ -41,6 +40,7 @@ def format_table_name(model: 'Model'):
     return model._table_name.lower()
 
 
+@JsonIgnore(["id", "hash"])
 class Model(Base, PeeweeModel):
     """
     Model class
@@ -79,6 +79,7 @@ class Model(Base, PeeweeModel):
     _table_name = 'gws_model'
     # Provided at the Class level automatically by the @TypingDecorator
     _typing_name: str = None
+    _json_ignore_fields: List[str] = []
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -220,33 +221,6 @@ class Model(Base, PeeweeModel):
         if not isinstance(other, Model):
             return False
         return (self is other) or ((self.id is not None) and (self.id == other.id))
-
-    # -- F --
-
-    @classmethod
-    def fetch_model(cls, type_str: str, uri: str, as_json=False) -> 'Model':
-        """
-        Fetch a model
-
-        :param type: The type of the model
-        :type type: `str`
-        :param uri: The uri of the model
-        :type uri: `str`
-        :return: A model
-        :rtype: instance of `gws.db.model.Model`
-        """
-
-        model_type: Type[Model] = Utils.get_model_type(type_str)
-        if model_type is None:
-            return None
-        try:
-            model: Model = model_type.get(model_type.uri == uri)
-            if as_json:
-                return model.to_json()
-            else:
-                return model
-        except Exception as _:
-            return None
 
     # -- G --
 
@@ -440,8 +414,11 @@ class Model(Base, PeeweeModel):
         exclusion_list = (ForeignKeyField, ManyToManyField,
                           BlobField, AutoField, BigAutoField)
         for prop in self.property_names(Field, exclude=exclusion_list):
-            # exclude properties form json
-            if prop in ["id", "hash", "data"]:
+            # if the value is json ignored
+            if self._json_ignore_fields and prop in self._json_ignore_fields:
+                continue
+            # exclude data, it is manager after
+            if prop == 'data':
                 continue
             if prop.startswith("_"):
                 continue  # -> private or protected property
