@@ -13,10 +13,19 @@ from pandas import DataFrame
 from ...core.exception.exceptions import BadRequestException
 from ...resource.resource import Resource
 from ...resource.resource_decorator import ResourceDecorator
+from ...resource.resource_serialized import ResourceSerialized
 
 
 @ResourceDecorator("CSVTable")
 class CSVTable(Resource):
+
+    table: DataFrame
+
+    def serialize(self) -> ResourceSerialized:
+        return ResourceSerialized(light_data=self.table.to_dict())
+
+    def deserialize(self, resource_serialized: ResourceSerialized) -> None:
+        self.set_data(DataFrame.from_dict(data=resource_serialized.light_data))
 
     def set_data(self, table: Union[DataFrame, np.ndarray] = None,
                  column_names=None, row_names=None) -> 'CSVTable':
@@ -36,7 +45,7 @@ class CSVTable(Resource):
                 raise BadRequestException(
                     "The table must be an instance of DataFrame or Numpy array")
 
-        self.data['table'] = table
+        self.table = table
         return self
 
     # -- C --
@@ -64,27 +73,11 @@ class CSVTable(Resource):
 
     # -- D --
 
-    @property
-    def dataframe(self) -> DataFrame:
-        """
-        Returns the inner pandas DataFrame
-
-        :return: The inner DataFrame
-        :rtype: pandas.DataFrame
-        """
-
-        return self.data['table']
-
-    @property
-    def table(self) -> DataFrame:
-        """
-        Alias of method `dataframe`
-        """
-        return self.data['table']
-
     # -- E --
 
-    def export(self, file_path: str, delimiter: str = "\t", header: bool=True, index: bool=True, file_format: str = None, **kwargs):
+    def export(
+            self, file_path: str, delimiter: str = "\t", header: bool = True, index: bool = True, file_format: str = None, **
+            kwargs):
         """
         Export to a repository
 

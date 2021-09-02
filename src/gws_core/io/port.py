@@ -282,8 +282,8 @@ class Port(Base):
 
         return IOSpecsHelper.resource_type_is_compatible(resource_type, self._resource_types)
 
-    def get_resource(self) -> Resource:
-        return self.resource_model.get_resource()
+    def get_resource(self, new_instance: bool = False) -> Resource:
+        return self.resource_model.get_resource(new_instance=new_instance)
 
     @property
     def name(self) -> str:

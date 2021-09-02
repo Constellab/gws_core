@@ -17,7 +17,7 @@ class RobotCreate(Process):
 
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         print("Create", flush=True)
-        robot: Robot = Robot()
+        robot: Robot = Robot.empty()
 
         return {'robot': robot}
 
@@ -32,24 +32,8 @@ class RobotMove(Process):
 
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         print(f"Moving {config.get_param('moving_step')}", flush=True)
-        robot = Robot()
-
-        pos = inputs['robot'].position.copy()
-        direction = config.get_param('direction')
-        if direction == "north":
-            pos[1] += config.get_param('moving_step')
-        elif direction == "south":
-            pos[1] -= config.get_param('moving_step')
-        elif direction == "west":
-            pos[0] -= config.get_param('moving_step')
-        elif direction == "east":
-            pos[0] += config.get_param('moving_step')
-
-        for i in range(0, 100):
-            self.update_progress_value(i, message=f"Moving iteration {i}")
-
-        robot.set_position(pos)
-        robot.set_weight(inputs['robot'].weight)
+        robot: Robot = inputs['robot']
+        robot.move(direction=config.get_param('direction'), moving_step=config.get_param('moving_step'))
         return {'robot': robot}
 
 
@@ -63,8 +47,7 @@ class RobotEat(Process):
     }
 
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
-        robot = Robot()
-        robot.set_position(inputs['robot'].position.copy())
+        robot: Robot = inputs['robot']
 
         multiplicator: int = 1
         if inputs.has_resource('food'):
@@ -72,13 +55,12 @@ class RobotEat(Process):
             multiplicator = food.multiplicator
 
         print(f"Eating {config.get_param('food_weight')} with multiplicator : {multiplicator}", flush=True)
-        robot.set_weight(inputs['robot'].weight +
-                         (config.get_param('food_weight') * multiplicator))
+        robot.weight += config.get_param('food_weight') * multiplicator
         return {'robot': robot}
 
 
-@ProcessDecorator("RobotWait", human_name="Wait process",
-                  short_description="This process emulates the resting time of the robot before its flight!")
+@ ProcessDecorator("RobotWait", human_name="Wait process",
+                   short_description="This process emulates the resting time of the robot before its flight!")
 class RobotWait(Process):
     input_specs = {'robot': Robot}
     output_specs = {'robot': Robot}
@@ -89,16 +71,12 @@ class RobotWait(Process):
 
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         print(f"Waiting {config.get_param('waiting_time')}", flush=True)
-        robot = Robot()
-        robot.set_position(inputs['robot'].position.copy())
-        robot.set_weight(inputs['robot'].weight)
-        robot.set_age(inputs['robot'].age)
         time.sleep(config.get_param('waiting_time'))
-        return {'robot': robot}
+        return {'robot': inputs['robot']}
 
 
-@ProcessDecorator("RobotFly", human_name="Fly process",
-                  short_description="This process emulates the fly of the robot. It inherites the Move process.")
+@ ProcessDecorator("RobotFly", human_name="Fly process",
+                   short_description="This process emulates the fly of the robot. It inherites the Move process.")
 class RobotFly(RobotMove):
     config_specs = {'moving_step': {"type": float, "default": 1000.0, "unit": "km"}, 'direction': {
         "type": str, "default": "west", "allowed_values": ["north", "south", "east", "west"], 'description': "The flying direction"}}
@@ -108,7 +86,7 @@ class RobotFly(RobotMove):
         return await super().task(config=config, inputs=inputs)
 
 
-@ProcessDecorator("RobotAdd")
+@ ProcessDecorator("RobotAdd")
 class RobotAdd(Process):
     input_specs = {'robot': Robot, 'addon': RobotAddOn}
     output_specs = {'mega_robot': MegaRobot}
@@ -116,14 +94,14 @@ class RobotAdd(Process):
 
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         print("Add robot addon...")
-        mega = MegaRobot()
-        mega.set_position(inputs['robot'].position.copy())
-        mega.set_weight(inputs['robot'].weight)
+
+        robot: Robot = inputs['robot']
+        mega = MegaRobot.from_robot(robot)
         return {'mega_robot':  mega}
 
 
-@ProcessDecorator(unique_name="RobotAddOnCreate", human_name="The travel of `Astro`",
-                  short_description="This is the travel of astro composed of several steps")
+@ ProcessDecorator(unique_name="RobotAddOnCreate", human_name="The travel of `Astro`",
+                   short_description="This is the travel of astro composed of several steps")
 class RobotAddOnCreate(Process):
     input_specs = {}
     output_specs = {'addon': RobotAddOn}
@@ -134,8 +112,8 @@ class RobotAddOnCreate(Process):
         return {'addon': RobotAddOn()}
 
 
-@ProcessDecorator(unique_name="RobotSugarCreate", human_name="Create a sugar type of food",
-                  short_description="Create a sugar type of food")
+@ ProcessDecorator(unique_name="RobotSugarCreate", human_name="Create a sugar type of food",
+                   short_description="Create a sugar type of food")
 class RobotSugarCreate(Process):
     """Process that create a sugar type of food and wait 3 secondes for it
     used in TestRobotwithSugarProtocol
@@ -147,5 +125,5 @@ class RobotSugarCreate(Process):
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         print("Create sugar", flush=True)
         food: RobotFood = RobotFood()
-        food.set_multiplicator(10)
+        food.multiplicator = 10
         return {'sugar': food}

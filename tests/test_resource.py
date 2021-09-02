@@ -4,37 +4,36 @@
 # About us: https://gencovery.com
 
 
-import copy
 import unittest
 
 from gws_core import (GTest, Process, ProcessDecorator, Resource,
                       ResourceDecorator, ResourceSet)
+from gws_core.resource.resource_serialized import ResourceSerialized
 
 
 @ResourceDecorator("Car")
 class Car(Resource):
-    @property
-    def name(self):
-        return self.data['name']
 
-    def set_name(self, name):
-        self.data['name'] = name
+    name: str
+    speed: int
 
-    @property
-    def speed(self):
-        return self.data['name']
+    def serialize(self) -> ResourceSerialized:
+        return ResourceSerialized(light_data={
+            "name": self.name,
+            "speed": self.speed
+        })
 
-    def set_speed(self, name):
-        self.data['name'] = name
+    def deserialize(self, resource_serialized: ResourceSerialized) -> None:
+        self.name = resource_serialized.light_data['name']
+        self.speed = resource_serialized.light_data['speed']
+
 
 # todo a checker
 
 
 @ProcessDecorator("Start")
 class Start(Process):
-    def run(self, params={}):
-        self._output = copy.deepcopy(self._input)
-        self._output.set_speed(params['speed'])
+    pass
 
 
 class TestResource(unittest.TestCase):

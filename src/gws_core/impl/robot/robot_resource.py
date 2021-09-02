@@ -1,59 +1,81 @@
 from typing import List
 
 from ...resource.resource import Resource
-from ...resource.resource_data import ResourceData
 from ...resource.resource_decorator import ResourceDecorator
+from ...resource.resource_serialized import ResourceSerialized
 
 
 @ResourceDecorator("Robot")
 class Robot(Resource):
-    def __init__(self, data: ResourceData = None):
-        super().__init__(data)
 
-        if self.data.is_empty():
-            self.data.set_values({
-                "age": 9,
-                "position": [0, 0],
-                "weight": 70
-            })
+    age: int
+    position: List[float]
+    weight: int
 
-    @property
-    def age(self) -> int:
-        return self.data['age']
+    @classmethod
+    def empty(cls) -> 'Robot':
+        robot: Robot = Robot()
+        # default values
+        robot.age = 9
+        robot.position = [0, 0]
+        robot.weight = 70
+        return robot
 
-    @property
-    def position(self) -> List[int]:
-        return self.data['position']
+    def serialize(self) -> ResourceSerialized:
+        return ResourceSerialized(light_data={
+            "age": self.age,
+            "position": self.position,
+            "weight": self.weight,
+        })
 
-    @property
-    def weight(self) -> int:
-        return self.data['weight']
+    def deserialize(self, resource_serialized: ResourceSerialized) -> None:
+        if resource_serialized.has_light_data():
+            self.age = resource_serialized.light_data["age"]
+            self.position = resource_serialized.light_data["position"]
+            self.weight = resource_serialized.light_data["weight"]
 
-    def set_position(self, val: List[int]):
-        self.data['position'] = val
-
-    def set_weight(self, val: int):
-        self.data['weight'] = val
-
-    def set_age(self, val: int):
-        self.data['age'] = val
+    def move(self, direction: str, moving_step: float):
+        if direction == "north":
+            self.position[1] += moving_step
+        elif direction == "south":
+            self.position[1] -= moving_step
+        elif direction == "west":
+            self.position[0] -= moving_step
+        elif direction == "east":
+            self.position[0] += moving_step
 
 
 @ResourceDecorator("RobotAddOn")
 class RobotAddOn(Resource):
-    pass
+    def serialize(self) -> ResourceSerialized:
+        return ResourceSerialized(light_data={})
+
+    def deserialize(self, resource_serialized: ResourceSerialized) -> None:
+        pass
 
 
 @ResourceDecorator("MegaRobot")
 class MegaRobot(Robot):
-    pass
+
+    @classmethod
+    def from_robot(cls, robot: Robot) -> 'MegaRobot':
+        mega = MegaRobot()
+        mega.position = robot.position
+        mega.weight = robot.weight
+        mega.age = robot.weight
+        return mega
 
 
 @ResourceDecorator("RobotFood")
 class RobotFood(Resource):
-    @property
-    def multiplicator(self) -> int:
-        return self.data['multiplicator']
 
-    def set_multiplicator(self, val: int):
-        self.data['multiplicator'] = val
+    multiplicator: int
+
+    def serialize(self) -> ResourceSerialized:
+        return ResourceSerialized(light_data={
+            "multiplicator": self.multiplicator,
+        })
+
+    def deserialize(self, resource_serialized: ResourceSerialized) -> None:
+        if resource_serialized.has_light_data():
+            self.multiplicator = resource_serialized.light_data['multiplicator']

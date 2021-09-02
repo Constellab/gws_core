@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 from __future__ import annotations
 
+import copy
 from typing import TYPE_CHECKING, Generic, Type, TypeVar, final
 
 from peewee import CharField, ModelSelect
@@ -17,6 +18,7 @@ from ..resource.resource import Resource
 from .experiment_resource import ExperimentResource
 from .kv_store import KVStore
 from .processable_resource import ProcessableResource
+from .resource_serialized import ResourceSerialized
 
 if TYPE_CHECKING:
     from ..experiment.experiment import Experiment
@@ -42,6 +44,9 @@ class ResourceModel(Viewable, Generic[ResourceType]):
 
     # typing name of the resource
     resource_typing_name = CharField(null=False)
+
+    # Path to the kv store if the kv exists for this resource model
+    kv_store_path: CharField(null=True)
 
     _process: ProcessableModel = None
     _experiment: Experiment = None
@@ -137,29 +142,45 @@ class ResourceModel(Viewable, Generic[ResourceType]):
 
     # -- R --
     @final
-    def get_resource(self) -> ResourceType:
+    def get_resource(self, new_instance: bool = False) -> ResourceType:
         """
         Returns the resource created from the data and resource_typing_name
+        if new_instance, it forces to rebuild the resource
         """
+        if new_instance:
+            return self._instantiate_resource(new_instance=new_instance)
+
         if self._resource is None:
-            self._resource = self._instantiate_resource()
+            self._resource = self._instantiate_resource(new_instance=new_instance)
 
         return self._resource
 
-    def _instantiate_resource(self) -> ResourceType:
+    def _instantiate_resource(self, new_instance: bool = False) -> ResourceType:
         """
         Create the Resource object from the resource_typing_name
         """
         resource_type: Type[ResourceType] = TypingManager.get_type_from_name(self.resource_typing_name)
-        return resource_type(data=self.data)
+
+        data: dict
+        if new_instance:
+            data = copy.deepcopy(self.data)
+        else:
+            data = self.data
+        # TODO handle KV STORE
+        resource_serialized: ResourceSerialized = ResourceSerialized(light_data=data)
+        resource: ResourceType = resource_type()
+        resource.deserialize(resource_serialized=resource_serialized)
+        return resource
 
     # -- S --
 
     def delete_instance(self, *args, **kwargs):
         resource: ResourceType = self.get_resource()
-        if resource.data_is_kv_store():
-            kv_store: KVStore = resource.data
-            kv_store.remove()
+
+        # TODO If there is a KVStore, delete it
+        # if resource.data_is_kv_store():
+        #     kv_store: KVStore = resource.data
+        #     kv_store.remove()
         return super().delete_instance(*args, **kwargs)
 
     @classmethod
@@ -179,16 +200,44 @@ class ResourceModel(Viewable, Generic[ResourceType]):
     def from_resource(cls, resource: Resource) -> ResourceModel:
         """Create a new ResourceModel from a resource
 
+        Don't set the resource here so it is regenerate on next get (avoid using same instance)
+
         :return: [description]
         :rtype: [type]
         """
         resource_model: ResourceModel = ResourceModel()
         resource_model.resource_typing_name = resource._typing_name
-        resource_model._resource = resource  # set the resource into the resource model
-        resource_model.data = resource.to_json()  # set the data
+        resource_model._resource = resource
+
+        resource_serialized: ResourceSerialized = cls._serialize_resource(resource)
+
+        # set the data
+        if resource_serialized.has_light_data():
+            resource_model.data = resource_serialized.light_data
+
+        # set the kv store
+        # TODO handle KVStore
+        if resource_serialized.has_kv_store():
+            resource_model.kv_store_path = resource_serialized.kv_store.file_path
+
         return resource_model
 
     # -- K --
+    @classmethod
+    def _serialize_resource(cls, resource: Resource) -> ResourceSerialized:
+        """Serialize a resource, check result and return serialized resource
+        """
+        resource_serialized: ResourceSerialized = resource.serialize()
+
+        if resource_serialized is None:
+            raise BadRequestException(
+                f"The serialisation method of resource '{resource.full_classname()}' returned None. It must return a 'ResourceSerialized' object.")
+
+        if not isinstance(resource_serialized, ResourceSerialized):
+            raise BadRequestException(
+                f"The serialisation method of resource '{resource.full_classname()}' did not return a 'ResourceSerialized' but a . It must return a 'ResourceSerialized' object.")
+
+        return resource_serialized
 
     @classmethod
     def select_me(cls, *args, **kwargs) -> ModelSelect:

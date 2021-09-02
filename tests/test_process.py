@@ -71,11 +71,8 @@ class TestProcess(BaseTest):
         elon: Robot = p0.output.get_resource_model('robot').get_resource()
 
         print(" \n------ Resource --------")
-        print(elon.to_json())
 
         self.assertEqual(elon.weight, 70)
-        self.assertEqual(elon, p1.input.get_resource_model('robot').get_resource())
-        self.assertTrue(elon is p1.input.get_resource_model('robot').get_resource())
 
         # check p1
         self.assertEqual(
@@ -84,16 +81,12 @@ class TestProcess(BaseTest):
         self.assertEqual(p1.output.get_resource_model('robot').get_resource().weight, elon.weight)
 
         # check p2
-        self.assertEqual(
-            p1.output.get_resource_model('robot'), p2.input.get_resource_model('robot'))
         self.assertEqual(p2.output.get_resource_model('robot').get_resource().position,
                          p2.input.get_resource_model('robot').get_resource().position)
         self.assertEqual(p2.output.get_resource_model('robot').get_resource().weight, p2.input.get_resource_model(
             'robot').get_resource().weight + p2.config.get_param('food_weight'))
 
         # check p3
-        self.assertEqual(
-            p_wait.output.get_resource_model('robot'), p3.input.get_resource_model('robot'))
         self.assertEqual(p3.output.get_resource_model('robot').get_resource().position[1], p3.input.get_resource_model(
             'robot').get_resource().position[1] + p3.config.get_param('moving_step'))
         self.assertEqual(p3.output.get_resource_model('robot').get_resource().weight,

@@ -2,6 +2,7 @@ import json
 from typing import Any
 
 from gws_core.resource.resource import Resource
+from gws_core.resource.resource_serialized import ResourceSerialized
 
 from ...core.model.model import Model
 from ...resource.resource_decorator import ResourceDecorator
@@ -12,7 +13,13 @@ class JSONDict(Resource):
 
     # -- A --
 
-    # -- E --
+    data: dict
+
+    def serialize(self) -> ResourceSerialized:
+        return ResourceSerialized(light_data=self.data)
+
+    def deserialize(self, resource_serialized: ResourceSerialized) -> None:
+        self.data = resource_serialized.light_data
 
     def export(self, file_path: str, file_format: str = ".json", prettify: bool = False):
         """
@@ -90,9 +97,3 @@ class JSONDict(Resource):
         self.data[key] = val
 
     # -- T --
-
-    def to_json(self):
-        _json = {}
-        _json["content"] = self.data
-
-        return _json

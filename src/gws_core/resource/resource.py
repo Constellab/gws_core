@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from abc import abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, Type
 
 from ..core.exception.exceptions.bad_request_exception import \
@@ -8,6 +9,7 @@ from ..core.model.base import Base
 from ..model.typing_register_decorator import TypingDecorator
 from .kv_store import KVStore
 from .resource_data import ResourceData
+from .resource_serialized import ResourceSerialized
 
 if TYPE_CHECKING:
     from .resource_model import ResourceModel
@@ -19,27 +21,34 @@ CONST_RESOURCE_TYPING_NAME = "RESOURCE.gws_core.Resource"
 @TypingDecorator(unique_name="Resource", object_type="RESOURCE")
 class Resource(Base):
 
-    data: ResourceData
-
     # Provided at the Class level automatically by the @ResourceDecorator
     # //!\\ Do not modify theses values
     _typing_name: str = None
     _human_name: str = None
     _short_description: str = None
 
-    def __init__(self, data: Dict = None):
-
+    def __init__(self):
         # check that the class level property _typing_name is set
         if self._typing_name == CONST_RESOURCE_TYPING_NAME and type(self) != Resource:  # pylint: disable=unidiomatic-typecheck
             raise BadRequestException(
                 f"The resource {self.full_classname()} is not decorated with @ResourceDecorator, it can't be instantiate. Please decorate the process class with @ResourceDecorator")
 
-        if data is None:
-            self.data = ResourceData()
-        else:
-            self.data = ResourceData(data)
+    @abstractmethod
+    def serialize(self) -> ResourceSerialized:
+        """Method to override to serialize the resource to save it
 
-    def delete_resource(self) -> None:
+        :return: [description]
+        :rtype: ResourceSerialized
+        """
+        pass
+
+    @abstractmethod
+    def deserialize(self, resource_serialized: ResourceSerialized) -> None:
+        """Method call after resource creation to init resource data
+
+        :param resource_serialized: [description]
+        :type resource_serialized: ResourceSerialized
+        """
         pass
 
     def export(self, file_path: str, file_format: str = None):
@@ -51,6 +60,7 @@ class Resource(Base):
         """
 
         # @ToDo: ensure that this method is only called by an Exporter
+        # TOdO do we need this ?
 
         pass
 
@@ -73,17 +83,7 @@ class Resource(Base):
 
         pass
 
-    def data_is_kv_store(self) -> bool:
-        return isinstance(self.data, KVStore)
-
     # -- T --
-
-    def to_json(self) -> dict:
-        return self.data.to_json()
-
-    # TODO est-ce qu'on appel le clone automatiquement avant un process pour éviter de modifier une resource utilié ailleurs ?
-    def clone(self) -> 'Resource':
-        return Resource(self.data.clone())
 
     @classmethod
     def get_resource_model_type(cls) -> Type[ResourceModel]:

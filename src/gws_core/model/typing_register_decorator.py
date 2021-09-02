@@ -2,8 +2,7 @@
 
 from typing import Any, Callable, Type
 
-from gws_core.model.typing import TypingObjectType
-
+from ..model.typing import TypingObjectType
 from .typing_manager import TypingManager
 
 
@@ -28,7 +27,9 @@ def TypingDecorator(unique_name: str, object_type: TypingObjectType, hide: bool 
 
 
 # Save the Typing to the TypingManager and set the _typing_name class property
-def register_typing_class(object_class: Type[Any], object_type: TypingObjectType, unique_name: str, human_name: str, short_description, hide: bool = False) -> None:
+def register_typing_class(
+        object_class: Type[Any],
+        object_type: TypingObjectType, unique_name: str, human_name: str, short_description, hide: bool = False) -> None:
     typing_name: str = TypingManager.register_typing(
         object_type=object_type,  unique_name=unique_name, object_class=object_class,
         human_name=human_name, short_description=short_description,  hide=hide)

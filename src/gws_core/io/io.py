@@ -290,7 +290,9 @@ class Input(IO):
                 if not port.is_optional:
                     missing_resource.append(key)
                 continue
-            process_io[key] = port.get_resource()
+            # get the port resource and force a new instance to prevent modifing the same
+            # resource on new task
+            process_io[key] = port.get_resource(new_instance=True)
 
         if len(missing_resource) > 0:
             raise MissingInputResourcesException(port_names=missing_resource)

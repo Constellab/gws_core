@@ -3,15 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import mimetypes
 import os
-import shutil
-from pathlib import Path
 from typing import Any, Type
 
-from gws_core.impl.file.file_helper import FileHelper
+from gws_core.resource.resource_serialized import ResourceSerialized
 
 from ...core.exception.exceptions import BadRequestException
+from ...impl.file.file_helper import FileHelper
 from ...resource.resource import Resource
 from ...resource.resource_decorator import ResourceDecorator
 from ...resource.resource_set import ResourceSet
@@ -28,9 +26,16 @@ class File(Resource):
     _mode = "t"
     _table_name = "gws_file"
 
-    # -- D --
-    def delete_resource(self,):
-        shutil.rmtree(self.path)
+    def serialize(self) -> ResourceSerialized:
+        return ResourceSerialized(light_data={
+            "path": self.path,
+            "file_store_uri": self.file_store_uri
+        })
+
+    def deserialize(self, resource_serialized: ResourceSerialized) -> None:
+        if resource_serialized.has_light_data():
+            self.path = resource_serialized.light_data['path']
+            self.file_store_uri = resource_serialized.light_data['file_store_uri']
 
     @property
     def dir(self):
