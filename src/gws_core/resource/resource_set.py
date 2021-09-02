@@ -9,8 +9,9 @@ from ..core.decorator.transaction import Transaction
 from ..core.exception.exceptions import BadRequestException
 from ..model.typing_manager import TypingManager
 from ..resource.resource import Resource
+from ..resource.resource_decorator import ResourceDecorator
 
-
+@ResourceDecorator("ResourceSet")
 class ResourceSet(Resource):
     """
     ResourceSet class
@@ -21,9 +22,6 @@ class ResourceSet(Resource):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.id is None:
-            self.data["set"] = {}
-            self._set = {}
         if self._set is None:
             self._set = {}
 

@@ -7,7 +7,7 @@ import os
 import unittest
 
 from gws_core import File, GTest, MySQLService
-
+from gws_core.core.db.db_manager import DbManager
 
 class TestMySQLDumpLoad(unittest.TestCase):
 
@@ -24,12 +24,13 @@ class TestMySQLDumpLoad(unittest.TestCase):
     def test_db_dump_load(self):
         GTest.print("MySQL dump and load")
 
-        if File.get_db_manager().is_sqlite_engine():
+        if DbManager.is_sqlite_engine():
             print("SQLite3 db detected: exit test, OK!")
             return
 
         # insert data in comment table
-        f = File(path="./oui")
+        f = File()
+        f.path = "./oui"
         c = f.add_comment("The sky is blue")
         f.add_comment("The sky is blue and the ocean is also blue", reply_to=c)
         f.save()
