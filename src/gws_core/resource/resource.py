@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from abc import abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, List, Type
 
 from gws_core.resource.kv_store import KVStore

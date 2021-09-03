@@ -13,7 +13,7 @@ from typing import List, Union
 from ...core.decorator.transaction import transaction
 from ...core.exception.exceptions import BadRequestException
 from ...core.utils.settings import Settings
-from .file_resource import File
+from .file_resource import FileResource
 from .file_helper import FileHelper
 from .file_resource_model import FileResourceModel
 from .file_store import FileStore
@@ -29,7 +29,7 @@ class LocalFileStore(FileStore):
         if not self.path:
             self.data["path"] = os.path.join(self.get_base_dir(), self.uri)
 
-    def add_from_path(self, source_file: str, dest_file_name: str = None) -> File:
+    def add_from_path(self, source_file: str, dest_file_name: str = None) -> FileResource:
         """
         Add a file from an external repository to a local store. Must be implemented by the child class.
 
@@ -44,7 +44,7 @@ class LocalFileStore(FileStore):
 
         return file
 
-    def add_from_file(self, source_file: File, dest_file_name: str = None) -> File:
+    def add_from_file(self, source_file: FileResource, dest_file_name: str = None) -> FileResource:
         """
         Add a file from an external repository to a local store. Must be implemented by the child class.
 
@@ -58,7 +58,9 @@ class LocalFileStore(FileStore):
             return source_file
         return self.add_from_path(source_file=source_file.path, dest_file_name=dest_file_name)
 
-    def add_from_temp_file(self, source_file: Union[IOBase, SpooledTemporaryFile], dest_file_name: str = None) -> File:
+    def add_from_temp_file(
+            self, source_file: Union[IOBase, SpooledTemporaryFile],
+            dest_file_name: str = None) -> FileResource:
         """
         Add a file from an external repository to a local store. Must be implemented by the child class.
 
@@ -100,12 +102,12 @@ class LocalFileStore(FileStore):
             if not os.path.exists(dir):
                 raise BadRequestException(f"Cannot create directory '{dir}'")
 
-    def create_file(self, file_type: type = None, file_name: str = None) -> File:
-        file: File
+    def create_file(self, file_type: type = None, file_name: str = None) -> FileResource:
+        file: FileResource
         if isinstance(file_type, type):
             file = file_type()
         else:
-            file = File()
+            file = FileResource()
         file.path = self._get_new_file_path(file_name)
         file.file_store_uri = self.uri
 
@@ -137,7 +139,7 @@ class LocalFileStore(FileStore):
             unique += 1
         return os.path.join(self.path, f"{file_name}_{unique}{extension}")
 
-    def contains(self, file: File) -> bool:
+    def contains(self, file: FileResource) -> bool:
         return self.path in file.path
 
     # -- D --

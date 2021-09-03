@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from gws_core import (BaseTestCase, File, FileResourceModel, FileService, GTest,
+from gws_core import (BaseTestCase, FileResource, FileResourceModel, FileService, GTest,
                       LocalFileStore)
 
 
@@ -14,11 +14,11 @@ class TestFile(BaseTestCase):
         GTest.print("File")
 
         file_store: LocalFileStore = LocalFileStore()
-        file: File = file_store.create_file("my_file.txt")
+        file: FileResource = file_store.create_file("my_file.txt")
         file_resource_model: FileResourceModel = FileService.create_file_resource(file=file)
         self.assertTrue(file_resource_model.is_saved())
 
-        file: File = file_resource_model.get_resource()
+        file: FileResource = file_resource_model.get_resource()
         file.write("Hi.\n")
         file.write("My name is John")
 

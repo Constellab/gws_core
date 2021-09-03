@@ -5,7 +5,7 @@
 
 import unittest
 
-from gws_core import Comment, CommentService, File, GTest, ResourceModel
+from gws_core import Comment, CommentService, FileResource, GTest, ResourceModel
 
 
 class TestComment(unittest.TestCase):
@@ -22,7 +22,7 @@ class TestComment(unittest.TestCase):
 
     def test_comment(self):
         GTest.print("Comment")
-        file = File()
+        file = FileResource()
         file.path = "./oui"
         resource_model: ResourceModel = ResourceModel()
         resource_model.resource = file

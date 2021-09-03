@@ -92,7 +92,7 @@ from .impl.csv.csv_process import CSVImporter as CSVImporter
 from .impl.csv.csv_process import CSVLoader as CSVLoader
 from .impl.csv.csv_resource import CSVTable as CSVTable
 # Impl > File
-from .impl.file.file_resource import File as File
+from .impl.file.file_resource import FileResource as FileResource
 from .impl.file.file_resource import FileSet as FileSet
 from .impl.file.file_resource_model import \
     FileResourceModel as FileResourceModel

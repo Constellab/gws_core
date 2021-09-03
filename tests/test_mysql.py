@@ -6,7 +6,7 @@
 import os
 import unittest
 
-from gws_core import File, FileResourceModel, FileService, GTest, MySQLService
+from gws_core import FileResource, FileResourceModel, FileService, GTest, MySQLService
 from gws_core.core.db.db_manager import DbManager
 
 
@@ -30,7 +30,7 @@ class TestMySQLDumpLoad(unittest.TestCase):
             return
 
         # insert data in comment table
-        f = File()
+        f = FileResource()
         f.path = "./oui"
         file_model: FileResourceModel = FileService.create_file_resource(file=f)
 

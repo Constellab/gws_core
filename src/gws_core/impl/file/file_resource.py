@@ -14,7 +14,7 @@ from ...resource.resource_set import ResourceSet
 
 
 @resource_decorator("File")
-class File(Resource):
+class FileResource(Resource):
     """
     File class
     """
@@ -99,19 +99,6 @@ class File(Resource):
                         f"Cannot create directory {self.dir}")
             return open(self.path, mode="w+")
 
-    # override the from resource  to set data to empty dict and set path from File
-    @classmethod
-    def from_resource(cls, resource: File) -> 'FileResource':
-        file_resource: FileResource = FileResource()
-        file_resource.resource_typing_name = resource._typing_name
-        file_resource._resource = resource  # set the resource into the resource model
-        file_resource.data = {}
-
-        serialized_data: SerializedResourceData = cls._serialize_resource_data(resource)
-        file_resource.path = serialized_data.light_dict["path"]
-        file_resource.file_store_uri = serialized_data.light_dict["file_store_uri"]
-        return file_resource
-
     # -- R --
 
     def read(self):
@@ -171,4 +158,4 @@ class File(Resource):
 
 
 class FileSet(ResourceSet):
-    _resource_types = (File, )
+    _resource_types = (FileResource, )
