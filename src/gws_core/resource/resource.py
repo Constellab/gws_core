@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, Type
+from typing import TYPE_CHECKING, Any, Dict, List, Type
 
 from gws_core.resource.kv_store import KVStore
 
@@ -32,6 +32,7 @@ class Resource(Base):
     _typing_name: str = None
     _human_name: str = None
     _short_description: str = None
+    _serializable_fields: List[str] = None
 
     def __init__(self):
         # check that the class level property _typing_name is set
@@ -39,7 +40,6 @@ class Resource(Base):
             raise BadRequestException(
                 f"The resource {self.full_classname()} is not decorated with @ResourceDecorator, it can't be instantiate. Please decorate the process class with @ResourceDecorator")
 
-    @abstractmethod
     def serialize_data(self) -> SerializedResourceData:
         """Method to override to serialize the resource to save it
 
@@ -49,8 +49,14 @@ class Resource(Base):
         :return: [description]
         :rtype: ResourceSerialized
         """
+        serialized_data: SerializedResourceData = {}
+        # Automatic serialization using the serialization_fields of the @resource_decorator
+        if self._serializable_fields and isinstance(self._serializable_fields, list):
+            for field in self._serializable_fields:
+                serialized_data[field] = getattr(self, field, None)
 
-    @abstractmethod
+        return serialized_data
+
     def deserialize_data(self, data: SerializedResourceData) -> None:
         """Method call after resource creation to init resource data
 
@@ -60,6 +66,10 @@ class Resource(Base):
         :param data: [description]
         :type data: SerializedResourceData
         """
+        # Automatic deserialization using the serialization_fields of the @resource_decorator
+        if self._serializable_fields and isinstance(self._serializable_fields, list):
+            for field in self._serializable_fields:
+                setattr(self, field, data.get(field, None))
 
     def export(self, file_path: str, file_format: str = None):
         """
