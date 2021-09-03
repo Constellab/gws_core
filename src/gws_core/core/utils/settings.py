@@ -208,7 +208,10 @@ class Settings(PeeweeModel):
         return os.path.join(self.get_data_dir(), "./filestore/")
 
     def get_kv_store_base_dir(self) -> str:
-        return os.path.join(self.get_data_dir(), "./kvstore/")
+        if self.is_test:
+            return os.path.join(self.get_data_dir(), "./kvstore_test/")
+        else:
+            return os.path.join(self.get_data_dir(), "./kvstore/")
 
     def get_variable(self, key) -> str:
         """ Returns a variable. Returns `None` if the variable does not exist """

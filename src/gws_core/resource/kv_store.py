@@ -5,12 +5,14 @@
 
 import os
 import shutil
+from operator import le
 from shelve import DbfilenameShelf
 from shelve import open as shelve_open
+from typing import Any, Dict
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.utils.settings import Settings
-from ..resource.resource_data import ResourceData, ResourceDict
+from ..impl.file.file_helper import FileHelper
 
 # ####################################################################
 #
@@ -19,104 +21,61 @@ from ..resource.resource_data import ResourceData, ResourceDict
 # ####################################################################
 
 
-class KVStore(ResourceData[ResourceDict]):
+class KVStore(Dict[str, Any]):
     """
     KVStore class representing a key-value object storage engine.
     This class allows serializing/deserializing huge objects on store.
     """
 
-    _base_dir: str = None
-    _slot_path: str = None
-    _file_name: str = 'data'
+    # When true the KVStore can't be update (but read), it a modification happens, it
+    # copies the file before updating the data
+    # It create a copy of the current file to _lock_copy_file_path
+    _lock: bool = False
+    _lock_copy_full_file_path: str = None
+
+    _full_file_path: str
 
     # For iterable, store the current index
     _iterable_index = 0
 
-    def __init__(self, slot_path: str):
+    # class level
+    _base_dir: str = None
+
+    def __init__(self, full_file_path: str):
         super().__init__()
-        while slot_path.startswith(".") or slot_path.startswith("/"):
-            slot_path = slot_path.strip(".").strip("/")
-
-        self._slot_path = slot_path
-
-    # -- A --
-
-    # -- D --
-
-    def __delitem__(self, key):
-        """ Delete a key """
-        kv_data = self._open_shelve()
-        if key in kv_data:
-            val = kv_data[key]
-            del kv_data[key]
-
-        kv_data.close()
-        return val
+        self._full_file_path = full_file_path
 
     @property
-    def dir_path(self) -> str:
-        """
-        Path of directory the KVStore object
-
-        :return: The connection path
-        :rtype: str
-        """
-
-        return self.create_full_dir_path(self._slot_path)
-
-    @classmethod
-    def create_full_dir_path(cls, slot_path):
-        return os.path.join(cls.get_base_dir(), slot_path)
-
-    # -- F --
-
-    @property
-    def file_path(self) -> str:
+    def full_file_path(self) -> str:
         """
         Path of DB file the KVStore object
 
-        :return: The connection path
+        :return: The connectiotn path
         :rtype: str
         :rtype: str
         """
 
-        return os.path.join(self.dir_path, self._file_name)
+        return self._full_file_path + '.db'
 
+    def get_full_path_wthout_extension(self) -> str:
+        return self._full_file_path
     # -- G --
 
     def get(self, key, default=None):
-        if not isinstance(key, str):
-            raise BadRequestException(
-                f"The key must be a string. The actual value is {key}")
-
-        if not os.path.exists(self.dir_path):
-            return default
+        self._check_key(key)
 
         kv_data = self._open_shelve()
-        val = kv_data.get(key)
+        val = kv_data.get(key, default=default)
         kv_data.close()
         return val
 
     def __getitem__(self, key):
-        if not isinstance(key, str):
-            raise BadRequestException(
-                f"The key must be a string. The actual value is {key}")
-
-        if not os.path.exists(self.dir_path):
-            raise BadRequestException(f"Key '{key}' does not exist")
+        self._check_key(key)
 
         kv_data = self._open_shelve()
         val = kv_data[key]
         kv_data.close()
         return val
-
-    @classmethod
-    def get_base_dir(cls):
-        if not cls._base_dir:
-            settings = Settings.retrieve()
-            cls._base_dir = settings.get_kv_store_base_dir()
-
-        return cls._base_dir
 
     # -- R --
 
@@ -125,10 +84,10 @@ class KVStore(ResourceData[ResourceDict]):
         Remove the store
         """
 
-        if not os.path.exists(self.dir_path):
+        if self.file_exists():
             return
 
-        shutil.rmtree(self.dir_path)
+        os.remove(self.full_file_path)
 
     # -- S --
 
@@ -141,16 +100,23 @@ class KVStore(ResourceData[ResourceDict]):
         :param value: The value of the object
         :type value: any
         """
-        if not isinstance(key, str):
-            raise BadRequestException(
-                f"The key must be a string. The actual value is {key}")
-
-        if not os.path.exists(self.dir_path):
-            os.makedirs(self.dir_path)
+        self.check_before_write(key)
 
         kv_data = self._open_shelve()
         kv_data[key] = value
         kv_data.close()
+
+    def __delitem__(self, key):
+        self.check_before_write(key)
+
+        """ Delete a key """
+        kv_data = self._open_shelve()
+        if key in kv_data:
+            val = kv_data[key]
+            del kv_data[key]
+
+        kv_data.close()
+        return val
 
     def __next__(self):
         kv_data = self._open_shelve()
@@ -175,8 +141,68 @@ class KVStore(ResourceData[ResourceDict]):
         return length
 
     def _open_shelve(self) -> DbfilenameShelf:
-        return shelve_open(self.file_path)
+        if not FileHelper.exists_on_os(self.get_base_dir()):
+            os.mkdir(self.get_base_dir())
 
-    # -- T --
-    def clone(self) -> 'KVStore':
-        return self
+        return shelve_open(self.get_full_path_wthout_extension())
+
+    def check_before_write(self, key: str) -> None:
+        self._check_key(key=key)
+        if self._lock:
+            self._copy_file(self._lock_copy_full_file_path)
+            self._unlock()
+
+    def check_before_read(self) -> None:
+        if not self.file_exists():
+            self._copy_file(self._lock_copy_full_file_path)
+            self._unlock()
+
+    def _unlock(self) -> None:
+        """Remove lock and update file path,
+        """
+        self._lock = False
+        self._full_file_path = self._lock_copy_full_file_path
+        self._lock_copy_full_file_path = None
+
+    def _copy_file(self, destination_path: str) -> None:
+        shutil.copyfile(self.full_file_path, self.get_full_file_path(destination_path))
+
+    def file_exists(self) -> bool:
+        return FileHelper.exists_on_os(self.full_file_path)
+
+    def lock(self, _lock_copy_file_path: str) -> None:
+        """ Lock the kv store, it can no longer be modified. If a modification happens, it
+            copies the file before updating the data, To copy the file is uses the _lock_copy_name
+
+        :return: [description]
+        :rtype: [type]
+        """
+        self._lock_copy_full_file_path = _lock_copy_file_path
+        self._lock = True
+
+    def _check_key(self, key: str) -> None:
+        if not isinstance(key, str):
+            raise BadRequestException(
+                f"The key must be a string. The actual value is {key}")
+
+    ################################# Class methods ################################
+
+    @classmethod
+    def get_base_dir(cls) -> str:
+        if not cls._base_dir:
+            settings = Settings.retrieve()
+            cls._base_dir = settings.get_kv_store_base_dir()
+
+        return cls._base_dir
+
+    @classmethod
+    def get_full_file_path(cls, file_name: str, with_extension: bool = True) -> str:
+        full_path: str = os.path.join(cls.get_base_dir(), file_name)
+        if with_extension:
+            full_path += '.db'
+
+        return full_path
+
+    @classmethod
+    def from_filename(cls, file_name: str) -> 'KVStore':
+        return KVStore(cls.get_full_file_path(file_name=file_name, with_extension=False))

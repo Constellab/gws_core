@@ -4,6 +4,8 @@
 # About us: https://gencovery.com
 
 
+import shutil
+
 from ...model.model_service import ModelService
 from ...study.study import Study
 from ...user.auth_service import AuthService
@@ -61,6 +63,14 @@ class GTest:
         """
 
         ModelService.drop_tables(models)
+
+    @classmethod
+    def delete_kv_store_folder(cls, models: list = None):
+        """
+        Drops tables
+        """
+        settings: Settings = Settings.retrieve()
+        shutil.rmtree(path=settings.get_kv_store_base_dir(), ignore_errors=True)
 
     @classmethod
     def print(cls, text):

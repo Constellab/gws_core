@@ -143,16 +143,16 @@ class LocalFileStore(FileStore):
     # -- D --
 
     @classmethod
-    def drop_table(cls):
+    def drop_table(cls, *args, **kwargs):
         cls.remove_all_files()
-        super().drop_table()
+        super().drop_table(*args, **kwargs)
 
-    def delete_instance(self):
+    def delete_instance(self, *args, **kwargs):
         if FileResourceModel.table_exists():
             FileResourceModel.delete().where(FileResourceModel.file_store_uri == self.uri).execute()
         if os.path.exists(self.path):
             shutil.rmtree(self.path)
-        super().delete_instance()
+        super().delete_instance(*args, **kwargs)
 
     # -- E --
 

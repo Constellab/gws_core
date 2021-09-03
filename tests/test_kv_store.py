@@ -3,30 +3,25 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import shelve
-import unittest
-
 from gws_core import GTest, KVStore
+from gws_core.impl.file.file_helper import FileHelper
+
+from tests.base_test import BaseTest
 
 
-class TestKVStore(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        GTest.drop_tables()
-        GTest.create_tables()
-
-    @classmethod
-    def tearDownClass(cls):
-        GTest.drop_tables()
+class TestKVStore(BaseTest):
 
     def test_store(self):
         GTest.print("KVStore")
 
-        s1 = KVStore('./store_test/s1')
+        s1 = KVStore.from_filename('s1')
+
+        # Test that the file is not created on kv store creation
+        self.assertFalse(FileHelper.exists_on_os(KVStore.get_full_file_path('s1')))
+
         s1['city'] = 'Tokyo'
         s1['name'] = 'Elon'
-        s2 = KVStore('./store_test/s1')
+        s2 = KVStore.from_filename('s1')
         self.assertEqual(s2['city'], 'Tokyo')
         self.assertEqual(s2['name'], 'Elon')
         s2['name'] = 'Musk'
@@ -69,7 +64,28 @@ class TestKVStore(unittest.TestCase):
         s2['name'] = 'Elon'
 
         # connect s2 to another file
-        s2 = KVStore('./store_test/s3')
+        s2 = KVStore.from_filename('s3')
         s2['name'] = 'Lee'
         self.assertEqual(s2['name'], 'Lee')
         self.assertEqual(s1['name'], 'Elon')
+
+    def test_lock(self):
+        test_lock = KVStore.from_filename('test_lock')
+        test_lock['city'] = 'Tokyo'
+        test_lock['name'] = 'Elon'
+
+        test_lock.lock('test_lock_2')
+
+        self.assertEqual(test_lock['city'], 'Tokyo')
+        # Test that the read did not create a copy of the file
+        self.assertFalse(FileHelper.exists_on_os(KVStore.get_full_file_path('test_lock_2')))
+
+        # Update the kvstore, it should create a new file
+        test_lock['city'] = 'London'
+        # check that the file was created
+        self.assertTrue(FileHelper.exists_on_os(KVStore.get_full_file_path('test_lock_2')))
+        self.assertEqual(test_lock['city'], 'London')
+
+        # Check that the first store was not updated
+        first_store = KVStore.from_filename('test_lock')
+        self.assertEqual(first_store['city'], 'Tokyo')

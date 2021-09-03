@@ -36,7 +36,7 @@ class FileHelper():
         :return: [description]
         :rtype: [type]
         """
-        return os.path.exists(cls.get_name(path))
+        return os.path.exists(cls.get_path(path))
 
     # -- F --
 
