@@ -43,6 +43,7 @@ class BaseTestCase(IsolatedAsyncioTestCase):
     @classmethod
     def init_before_test(cls):
         print(f'Setup : {cls}')
+        GTest.delete_kv_store_folder()
         GTest.drop_tables()
         GTest.create_tables()
         GTest.init()
@@ -50,6 +51,7 @@ class BaseTestCase(IsolatedAsyncioTestCase):
     @classmethod
     def clear_after_test(cls):
         print(f'Tear down : {cls}')
+        GTest.delete_kv_store_folder()
         QueueService.deinit()
         GTest.drop_tables()
 

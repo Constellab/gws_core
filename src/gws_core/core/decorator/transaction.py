@@ -21,16 +21,16 @@ class TransactionSignleton():
         return TransactionSignleton.count_transaction > 0
 
 
-def transaction(unique_transaction: bool = True) -> Callable:
+def transaction(nested_transaction: bool = False) -> Callable:
     """Decorator to place around a method to create a new transaction
     If the method raised an exception, the transaction is rollback
 
     If decorated with transaction is extended the transaction is still created. If the child
     method is decorated with transaction, it will create 2 transactions
 
-    :param unique_transaction: [description] if true only 1 transaction is created at the time and it wait the transaction
+    :param nested_transaction: [description] if False only 1 transaction is created at the time and it wait the transaction
     to finish before creating a new
-     If false, a transaction is created each time a method with the decorator is called (included )
+     If True, a transaction is created each time a method with the decorator is called (included )
     :type unique_transaction: bool
     """
     def decorator(func) -> Callable:
@@ -39,7 +39,7 @@ def transaction(unique_transaction: bool = True) -> Callable:
 
             # If we are in unique transaction mode and a transaction already exists,
             # don't create a transaction
-            if unique_transaction and TransactionSignleton.hasTransaction():
+            if not nested_transaction and TransactionSignleton.hasTransaction():
                 return func(*args, **kwargs)
 
             TransactionSignleton.increment()

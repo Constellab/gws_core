@@ -1,12 +1,13 @@
 
 
-from typing import Callable, Type
+from typing import Callable, List, Type
 
 from ..model.typing_register_decorator import register_typing_class
 from ..resource.resource import Resource
 
 
-def resource_decorator(unique_name: str, human_name: str = "", short_description: str = "", hide: bool = False) -> Callable:
+def resource_decorator(unique_name: str, human_name: str = "", short_description: str = "",
+                       serializable_fields: List[str] = None, hide: bool = False) -> Callable:
     """ Decorator to be placed on all the resourcees. A resource not decorated will not be runnable.
     It define static information about the resource
 
@@ -19,6 +20,8 @@ def resource_decorator(unique_name: str, human_name: str = "", short_description
     :type human_name: str, optional
     :param short_description: optional description that will be used in the interface when viewing the resourcees. Must not be longer than 100 caracters
     :type short_description: str, optional
+    :param serializable_fields: optional List of field to automatically serialize/deserialise on the resource
+    :type serializable_fields: str, optional
     :param hide: Only the resource will hide=False will be available in the interface, other will be hidden.
                 It is useful for resource that are not meant to be viewed in the interface (like abstract classes), defaults to False
     :type hide: bool, optional
@@ -32,6 +35,15 @@ def resource_decorator(unique_name: str, human_name: str = "", short_description
 
         register_typing_class(object_class=resource_class, object_type="RESOURCE", unique_name=unique_name,
                               human_name=human_name, short_description=short_description, hide=hide)
+
+        if serializable_fields and isinstance(serializable_fields, list):
+            # pylint: disable=protected-access
+            # save the fields to ignore in _serializable_fields class proprty
+            if resource_class._serializable_fields is None:
+                resource_class._serializable_fields = serializable_fields
+            else:
+                # for child classes, append the serializable field from parent fields
+                resource_class._serializable_fields = serializable_fields + resource_class._serializable_fields
 
         return resource_class
 

@@ -15,7 +15,7 @@ from ...process.process import Process
 from ...process.process_decorator import process_decorator
 from ...process.process_io import ProcessInputs, ProcessOutputs
 from ...resource.resource import Resource
-from .file_resource import File
+from .file_resource import FileResource
 from .local_file_store import LocalFileStore
 
 # ####################################################################
@@ -27,7 +27,7 @@ from .local_file_store import LocalFileStore
 
 @process_decorator("FileImporter")
 class FileImporter(Process):
-    input_specs = {'file': File}
+    input_specs = {'file': FileResource}
     output_specs = {"data": Resource}
     config_specs = {'file_format': {"type": str, "default": None, 'description': "File format"}, 'output_type': {
         "type": str, "default": "", 'description': "The output file type. If defined, it is used to automatically format data output"}, }
@@ -35,7 +35,7 @@ class FileImporter(Process):
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         inport_name = list(self.input_specs.keys())[0]
         outport_name = list(self.output_specs.keys())[0]
-        file: File = inputs[inport_name]
+        file: FileResource = inputs[inport_name]
 
         model_t: Type[Resource] = None
         if config.param_is_set("output_type"):
@@ -63,7 +63,7 @@ class FileExporter(Process):
     """
 
     input_specs = {"data": Resource}
-    output_specs = {'file': File}
+    output_specs = {'file': FileResource}
     config_specs = {
         'file_name': {"type": str, "default": 'file', 'description': "Destination file name in the store"},
         'file_format': {"type": str, "default": None, 'description': "File format"},
@@ -81,8 +81,8 @@ class FileExporter(Process):
         inport_name = list(self.input_specs.keys())[0]
         outport_name = list(self.output_specs.keys())[0]
         filename = config.get_param("file_name")
-        file_type: Type[File] = self.get_default_output_spec_type("file")
-        file: File = file_store.create_file(file_name=filename, file_type=file_type)
+        file_type: Type[FileResource] = self.get_default_output_spec_type("file")
+        file: FileResource = file_store.create_file(file_name=filename, file_type=file_type)
 
         if not os.path.exists(file.dir):
             os.makedirs(file.dir)

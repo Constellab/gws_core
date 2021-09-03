@@ -8,7 +8,8 @@ PathType = Union[str, Path]
 
 
 class FileHelper():
-    """Class containing only classmethod to simplify file management
+    """
+    Class containing only classmethod to simplify file management
     """
 
     @classmethod
@@ -36,7 +37,7 @@ class FileHelper():
         :return: [description]
         :rtype: [type]
         """
-        return os.path.exists(cls.get_name(path))
+        return os.path.exists(cls.get_path(path))
 
     # -- F --
 

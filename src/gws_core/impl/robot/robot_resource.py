@@ -4,7 +4,7 @@ from ...resource.resource import Resource, SerializedResourceData
 from ...resource.resource_decorator import resource_decorator
 
 
-@resource_decorator("Robot")
+@resource_decorator(unique_name="Robot", serializable_fields=['age', 'position', 'weight'])
 class Robot(Resource):
 
     age: int
@@ -19,19 +19,6 @@ class Robot(Resource):
         robot.position = [0, 0]
         robot.weight = 70
         return robot
-
-    def serialize_data(self) -> SerializedResourceData:
-        return {
-            "age": self.age,
-            "position": self.position,
-            "weight": self.weight,
-        }
-
-    def deserialize_data(self, data: SerializedResourceData) -> None:
-        if data:
-            self.age = data["age"]
-            self.position = data["position"]
-            self.weight = data["weight"]
 
     def move(self, direction: str, moving_step: float):
         if direction == "north":

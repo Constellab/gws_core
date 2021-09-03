@@ -11,7 +11,7 @@ from typing import Union
 from ...core.exception.exceptions import BadRequestException
 from ...core.model.model import Model
 from ...model.typing_register_decorator import typing_registrator
-from .file_resource import File
+from .file_resource import FileResource
 
 # ####################################################################
 #
@@ -31,7 +31,7 @@ class FileStore(Model):
 
     # -- A --
     @abstractmethod
-    def add_from_path(self, source_file: str, dest_file_name: str = None) -> File:
+    def add_from_path(self, source_file: str, dest_file_name: str = None) -> FileResource:
         """
         Add a file from an external repository to a local store. Must be implemented by the child class.
 
@@ -44,7 +44,7 @@ class FileStore(Model):
         raise BadRequestException('Not implemented')
 
     @abstractmethod
-    def add_from_file(self, source_file: File, dest_file_name: str = None) -> File:
+    def add_from_file(self, source_file: FileResource, dest_file_name: str = None) -> FileResource:
         """
         Add a file from an external repository to a local store. Must be implemented by the child class.
 
@@ -57,7 +57,9 @@ class FileStore(Model):
         raise BadRequestException('Not implemented')
 
     @abstractmethod
-    def add_from_temp_file(self, source_file: Union[IOBase, SpooledTemporaryFile], dest_file_name: str = None) -> File:
+    def add_from_temp_file(
+            self, source_file: Union[IOBase, SpooledTemporaryFile],
+            dest_file_name: str = None) -> FileResource:
         """
         Add a file from an external repository to a local store. Must be implemented by the child class.
 

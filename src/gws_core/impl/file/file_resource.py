@@ -14,7 +14,7 @@ from ...resource.resource_set import ResourceSet
 
 
 @resource_decorator("File")
-class File(Resource):
+class FileResource(Resource):
     """
     File class
     """
@@ -99,8 +99,6 @@ class File(Resource):
                         f"Cannot create directory {self.dir}")
             return open(self.path, mode="w+")
 
-    # -- P --
-
     # -- R --
 
     def read(self):
@@ -160,4 +158,4 @@ class File(Resource):
 
 
 class FileSet(ResourceSet):
-    _resource_types = (File, )
+    _resource_types = (FileResource, )

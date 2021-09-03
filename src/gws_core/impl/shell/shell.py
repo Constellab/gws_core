@@ -16,7 +16,7 @@ from ...impl.file.file_service import FileService
 from ...process.process import Process
 from ...process.process_decorator import process_decorator
 from ...process.process_io import ProcessInputs, ProcessOutputs
-from ..file.file_resource import File
+from ..file.file_resource import FileResource
 
 
 @process_decorator("Shell")

@@ -1,6 +1,6 @@
 
 from ...process.process_decorator import process_decorator
-from ..file.file_resource import File
+from ..file.file_resource import FileResource
 from ..file.file_uploader import (FileDumper, FileExporter, FileImporter,
                                   FileLoader)
 from .csv_resource import CSVTable
@@ -14,7 +14,7 @@ from .csv_resource import CSVTable
 
 @process_decorator(unique_name="CSVImporter")
 class CSVImporter(FileImporter):
-    input_specs = {'file': File}
+    input_specs = {'file': FileResource}
     output_specs = {'data': CSVTable}
     config_specs = {
         'file_format': {"type": str, "default": ".csv", 'description': "File format"},
@@ -33,7 +33,7 @@ class CSVImporter(FileImporter):
 @process_decorator(unique_name="CSVExporter")
 class CSVExporter(FileExporter):
     input_specs = {'data': CSVTable}
-    output_specs = {'file': File}
+    output_specs = {'file': FileResource}
     config_specs = {
         'file_name': {"type": str, "default": 'file.csv', 'description': "Destination file name in the store"},
         'file_format': {"type": str, "default": ".csv", 'description': "File format"},

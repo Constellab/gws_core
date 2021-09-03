@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import copy
-from typing import TYPE_CHECKING, Generic, Type, TypeVar, final
+from typing import TYPE_CHECKING, Generic, Optional, Type, TypeVar, final
 
 from peewee import CharField, ModelSelect
 
@@ -14,6 +14,7 @@ from ..core.exception.exceptions.bad_request_exception import \
 from ..model.typing_manager import TypingManager
 from ..model.typing_register_decorator import typing_registrator
 from ..model.viewable import Viewable
+from ..resource.kv_store import KVStore
 from ..resource.resource import Resource, SerializedResourceData
 from .experiment_resource import ExperimentResource
 from .processable_resource import ProcessableResource
@@ -44,7 +45,7 @@ class ResourceModel(Viewable, Generic[ResourceType]):
     resource_typing_name = CharField(null=False)
 
     # Path to the kv store if the kv exists for this resource model
-    kv_store_path: CharField(null=True)
+    kv_store_path = CharField(null=True)
 
     _process: ProcessableModel = None
     _experiment: Experiment = None
@@ -61,6 +62,7 @@ class ResourceModel(Viewable, Generic[ResourceType]):
 
         if self.typing_name is None:
             self.typing_name = self._typing_name
+
     # -- E --
 
     @property
@@ -153,31 +155,53 @@ class ResourceModel(Viewable, Generic[ResourceType]):
 
         return self._resource
 
+    @final
+    def get_kv_store(self) -> Optional[KVStore]:
+        if not self.kv_store_path:
+            return None
+
+        # Create the KVStore from the path
+        kv_store: KVStore = KVStore(self.kv_store_path)
+
+        # Lock the kvstore so the file can't be updated
+        kv_store.lock(KVStore.get_full_file_path(file_name=self.uri, with_extension=False))
+        return kv_store
+
+    @final
+    def get_kv_store_with_default(self) -> KVStore:
+        """Get the KVStore and create an empty one if it doesn't exist
+
+        :return: [description]
+        :rtype: KVStore
+        """
+        kv_store: Optional[KVStore] = self.get_kv_store()
+        if kv_store:
+            return kv_store
+        # if there is a default kv store to return
+        return KVStore.from_filename(self.uri)
+
     def _instantiate_resource(self, new_instance: bool = False) -> ResourceType:
         """
         Create the Resource object from the resource_typing_name
         """
         resource_type: Type[ResourceType] = TypingManager.get_type_from_name(self.resource_typing_name)
+        resource: ResourceType = resource_type(binary_store=self.get_kv_store_with_default())
 
+        # Set the data on the resource
         data: dict
         if new_instance:
             data = copy.deepcopy(self.data)
         else:
             data = self.data
-        # TODO handle KV STORE
-        resource: ResourceType = resource_type()
         resource.deserialize_data(data)
         return resource
 
     # -- S --
 
     def delete_instance(self, *args, **kwargs):
-        resource: ResourceType = self.get_resource()
-
-        # TODO If there is a KVStore, delete it
-        # if resource.data_is_kv_store():
-        #     kv_store: KVStore = resource.data
-        #     kv_store.remove()
+        kv_store: Optional[KVStore] = self.get_kv_store()
+        if kv_store:
+            kv_store.remove()
         return super().delete_instance(*args, **kwargs)
 
     @classmethod
@@ -204,7 +228,6 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         """
         resource_model: ResourceModel = ResourceModel()
         resource_model.resource_typing_name = resource._typing_name
-        resource_model._resource = resource
 
         serialized_data: SerializedResourceData = cls._serialize_resource_data(resource)
 
@@ -212,9 +235,22 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         resource_model.data = serialized_data
 
         # set the kv store
-        # TODO handle KVStore
-        # if resource_serialized.has_kv_store():
-        #     resource_model.kv_store_path = resource_serialized.kv_store.file_path
+        kv_store: KVStore = resource.binary_store
+
+        if kv_store is not None:
+
+            if not isinstance(kv_store, KVStore):
+                raise BadRequestException(
+                    f"The binary_store property of the resource {resource.full_classname()} is not an instance of KVStore")
+
+            # If the kv store file exists (this mean that we wrote on it)
+            if kv_store.file_exists():
+                # Save the kv store path on the resource
+                resource_model.kv_store_path = kv_store.get_full_path_wthout_extension()
+            else:
+                resource_model.kv_store_path = None
+        else:
+            resource_model.kv_store_path = None
 
         return resource_model
 
