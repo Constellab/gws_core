@@ -166,7 +166,7 @@ class ResourceModel(Viewable, Generic[ResourceType]):
             data = self.data
         # TODO handle KV STORE
         resource: ResourceType = resource_type()
-        resource.deserialize_data(self.data)
+        resource.deserialize_data(data)
         return resource
 
     # -- S --
