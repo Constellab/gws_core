@@ -2,12 +2,12 @@
 
 from typing import Type
 
+from gws_core.resource.resource import SerializedResourceData
 from peewee import CharField
 
 from ...model.typing_manager import TypingManager
 from ...model.typing_register_decorator import TypingDecorator
 from ...resource.resource_model import ResourceModel
-from ...resource.resource_serialized import ResourceSerialized
 from .file import File
 from .file_helper import FileHelper
 
@@ -27,10 +27,11 @@ class FileResource(ResourceModel):
         resource_type: Type[File] = TypingManager.get_type_from_name(self.resource_typing_name)
         file: File = resource_type()
 
-        file.deserialize(ResourceSerialized(light_data={"path": self.path, "file_store_uri": self.file_store_uri}))
+        file.deserialize({"path": self.path, "file_store_uri": self.file_store_uri})
         return file
 
     # override the from resource  to set data to empty dict and set path from File
+    # TODO handle kv store ?
     @classmethod
     def from_resource(cls, resource: File) -> 'FileResource':
         file_resource: FileResource = FileResource()
@@ -38,9 +39,9 @@ class FileResource(ResourceModel):
         file_resource._resource = resource  # set the resource into the resource model
         file_resource.data = {}
 
-        resource_serialized: ResourceSerialized = cls._serialize_resource(resource)
-        file_resource.path = resource_serialized.light_data["path"]
-        file_resource.file_store_uri = resource_serialized.light_data["file_store_uri"]
+        serialized_data: SerializedResourceData = cls._serialize_resource_data(resource)
+        file_resource.path = serialized_data.light_dict["path"]
+        file_resource.file_store_uri = serialized_data.light_dict["file_store_uri"]
         return file_resource
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:

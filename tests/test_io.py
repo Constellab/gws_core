@@ -3,22 +3,40 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import unittest
-
 from gws_core import (ConfigParams, Connector, GTest, Process,
                       ProcessableFactory, ProcessDecorator, ProcessInputs,
-                      ProcessModel, ProcessOutputs, ProgressBar, Resource,
-                      ResourceDecorator)
+                      ProcessModel, ProcessOutputs, Resource,
+                      ResourceDecorator, SerializedResourceData)
+
+from tests.base_test import BaseTest
 
 
 @ResourceDecorator("Person")
 class Person(Resource):
+    def serialize_data(self) -> SerializedResourceData:
+        return {}
+
+    def deserialize_data(self, data: SerializedResourceData) -> None:
+        pass
+
+
+@ResourceDecorator("Man")
+class Man(Person):
+    pass
+
+
+@ResourceDecorator("SuperMan")
+class SuperMan(Man):
     pass
 
 
 @ResourceDecorator("Car")
 class Car(Resource):
-    pass
+    def serialize_data(self) -> SerializedResourceData:
+        return {}
+
+    def deserialize_data(self, data: SerializedResourceData) -> None:
+        pass
 
 
 @ProcessDecorator("Create")
@@ -62,17 +80,7 @@ class Jump(Process):
         return
 
 
-class TestIO(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        GTest.drop_tables()
-        GTest.create_tables()
-        GTest.init()
-
-    @classmethod
-    def tearDownClass(cls):
-        GTest.drop_tables()
+class TestIO(BaseTest):
 
     def test_connect(self):
         GTest.print("IO connect")

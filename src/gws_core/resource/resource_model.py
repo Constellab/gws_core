@@ -14,11 +14,9 @@ from ..core.exception.exceptions.bad_request_exception import \
 from ..model.typing_manager import TypingManager
 from ..model.typing_register_decorator import TypingDecorator
 from ..model.viewable import Viewable
-from ..resource.resource import Resource
+from ..resource.resource import Resource, SerializedResourceData
 from .experiment_resource import ExperimentResource
-from .kv_store import KVStore
 from .processable_resource import ProcessableResource
-from .resource_serialized import ResourceSerialized
 
 if TYPE_CHECKING:
     from ..experiment.experiment import Experiment
@@ -167,9 +165,8 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         else:
             data = self.data
         # TODO handle KV STORE
-        resource_serialized: ResourceSerialized = ResourceSerialized(light_data=data)
         resource: ResourceType = resource_type()
-        resource.deserialize(resource_serialized=resource_serialized)
+        resource.deserialize_data(self.data)
         return resource
 
     # -- S --
@@ -209,35 +206,33 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         resource_model.resource_typing_name = resource._typing_name
         resource_model._resource = resource
 
-        resource_serialized: ResourceSerialized = cls._serialize_resource(resource)
+        serialized_data: SerializedResourceData = cls._serialize_resource_data(resource)
 
         # set the data
-        if resource_serialized.has_light_data():
-            resource_model.data = resource_serialized.light_data
+        resource_model.data = serialized_data
 
         # set the kv store
         # TODO handle KVStore
-        if resource_serialized.has_kv_store():
-            resource_model.kv_store_path = resource_serialized.kv_store.file_path
+        # if resource_serialized.has_kv_store():
+        #     resource_model.kv_store_path = resource_serialized.kv_store.file_path
 
         return resource_model
 
     # -- K --
     @classmethod
-    def _serialize_resource(cls, resource: Resource) -> ResourceSerialized:
+    def _serialize_resource_data(cls, resource: Resource) -> SerializedResourceData:
         """Serialize a resource, check result and return serialized resource
         """
-        resource_serialized: ResourceSerialized = resource.serialize()
+        serialized_data: SerializedResourceData = resource.serialize_data()
 
-        if resource_serialized is None:
+        if serialized_data is None:
+            return None
+
+        if not isinstance(serialized_data, dict):
             raise BadRequestException(
-                f"The serialisation method of resource '{resource.full_classname()}' returned None. It must return a 'ResourceSerialized' object.")
+                f"The serialisation_data method of resource '{resource.full_classname()}' did not return a Dictionary but a {type(serialized_data)}. It must return a 'ResourceSerialized' object.")
 
-        if not isinstance(resource_serialized, ResourceSerialized):
-            raise BadRequestException(
-                f"The serialisation method of resource '{resource.full_classname()}' did not return a 'ResourceSerialized' but a . It must return a 'ResourceSerialized' object.")
-
-        return resource_serialized
+        return serialized_data
 
     @classmethod
     def select_me(cls, *args, **kwargs) -> ModelSelect:

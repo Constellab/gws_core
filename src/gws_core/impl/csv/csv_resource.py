@@ -11,9 +11,8 @@ import pandas
 from pandas import DataFrame
 
 from ...core.exception.exceptions import BadRequestException
-from ...resource.resource import Resource
+from ...resource.resource import Resource, SerializedResourceData
 from ...resource.resource_decorator import ResourceDecorator
-from ...resource.resource_serialized import ResourceSerialized
 
 
 @ResourceDecorator("CSVTable")
@@ -21,11 +20,11 @@ class CSVTable(Resource):
 
     table: DataFrame
 
-    def serialize(self) -> ResourceSerialized:
-        return ResourceSerialized(light_data=self.table.to_dict())
+    def serialize_data(self) -> SerializedResourceData:
+        return self.table.to_dict()
 
-    def deserialize(self, resource_serialized: ResourceSerialized) -> None:
-        self.set_data(DataFrame.from_dict(data=resource_serialized.light_data))
+    def deserialize_data(self, data: SerializedResourceData) -> None:
+        self.set_data(DataFrame.from_dict(data=data))
 
     def set_data(self, table: Union[DataFrame, np.ndarray] = None,
                  column_names=None, row_names=None) -> 'CSVTable':

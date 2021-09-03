@@ -1,8 +1,7 @@
 from typing import List
 
-from ...resource.resource import Resource
+from ...resource.resource import Resource, SerializedResourceData
 from ...resource.resource_decorator import ResourceDecorator
-from ...resource.resource_serialized import ResourceSerialized
 
 
 @ResourceDecorator("Robot")
@@ -21,18 +20,18 @@ class Robot(Resource):
         robot.weight = 70
         return robot
 
-    def serialize(self) -> ResourceSerialized:
-        return ResourceSerialized(light_data={
+    def serialize_data(self) -> SerializedResourceData:
+        return {
             "age": self.age,
             "position": self.position,
             "weight": self.weight,
-        })
+        }
 
-    def deserialize(self, resource_serialized: ResourceSerialized) -> None:
-        if resource_serialized.has_light_data():
-            self.age = resource_serialized.light_data["age"]
-            self.position = resource_serialized.light_data["position"]
-            self.weight = resource_serialized.light_data["weight"]
+    def deserialize_data(self, data: SerializedResourceData) -> None:
+        if data:
+            self.age = data["age"]
+            self.position = data["position"]
+            self.weight = data["weight"]
 
     def move(self, direction: str, moving_step: float):
         if direction == "north":
@@ -47,10 +46,10 @@ class Robot(Resource):
 
 @ResourceDecorator("RobotAddOn")
 class RobotAddOn(Resource):
-    def serialize(self) -> ResourceSerialized:
-        return ResourceSerialized(light_data={})
+    def serialize_data(self) -> SerializedResourceData:
+        return {}
 
-    def deserialize(self, resource_serialized: ResourceSerialized) -> None:
+    def deserialize_data(self, data: SerializedResourceData) -> None:
         pass
 
 
@@ -71,11 +70,11 @@ class RobotFood(Resource):
 
     multiplicator: int
 
-    def serialize(self) -> ResourceSerialized:
-        return ResourceSerialized(light_data={
+    def serialize_data(self) -> SerializedResourceData:
+        return {
             "multiplicator": self.multiplicator,
-        })
+        }
 
-    def deserialize(self, resource_serialized: ResourceSerialized) -> None:
-        if resource_serialized.has_light_data():
-            self.multiplicator = resource_serialized.light_data['multiplicator']
+    def deserialize_data(self, data: SerializedResourceData) -> None:
+        if data:
+            self.multiplicator = data['multiplicator']

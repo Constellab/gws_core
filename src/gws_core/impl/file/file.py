@@ -6,11 +6,9 @@
 import os
 from typing import Any, Type
 
-from gws_core.resource.resource_serialized import ResourceSerialized
-
 from ...core.exception.exceptions import BadRequestException
 from ...impl.file.file_helper import FileHelper
-from ...resource.resource import Resource
+from ...resource.resource import Resource, SerializedResourceData
 from ...resource.resource_decorator import ResourceDecorator
 from ...resource.resource_set import ResourceSet
 
@@ -26,16 +24,16 @@ class File(Resource):
     _mode = "t"
     _table_name = "gws_file"
 
-    def serialize(self) -> ResourceSerialized:
-        return ResourceSerialized(light_data={
+    def serialize_data(self) -> SerializedResourceData:
+        return {
             "path": self.path,
             "file_store_uri": self.file_store_uri
-        })
+        }
 
-    def deserialize(self, resource_serialized: ResourceSerialized) -> None:
-        if resource_serialized.has_light_data():
-            self.path = resource_serialized.light_data['path']
-            self.file_store_uri = resource_serialized.light_data['file_store_uri']
+    def deserialize_data(self, data: SerializedResourceData) -> None:
+        if data:
+            self.path = data['path']
+            self.file_store_uri = data['file_store_uri']
 
     @property
     def dir(self):

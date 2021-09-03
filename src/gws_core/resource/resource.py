@@ -3,13 +3,12 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, Type
 
+from gws_core.resource.kv_store import KVStore
+
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.base import Base
 from ..model.typing_register_decorator import TypingDecorator
-from .kv_store import KVStore
-from .resource_data import ResourceData
-from .resource_serialized import ResourceSerialized
 
 if TYPE_CHECKING:
     from .resource_model import ResourceModel
@@ -18,8 +17,15 @@ if TYPE_CHECKING:
 CONST_RESOURCE_TYPING_NAME = "RESOURCE.gws_core.Resource"
 
 
+# Format of the serialized data of a resource to save data in the DB
+SerializedResourceData = Dict
+
+
 @TypingDecorator(unique_name="Resource", object_type="RESOURCE")
 class Resource(Base):
+
+    # To store big data. This will be store in a file on the server. It will not be searchable
+    kv_store: KVStore
 
     # Provided at the Class level automatically by the @ResourceDecorator
     # //!\\ Do not modify theses values
@@ -34,22 +40,26 @@ class Resource(Base):
                 f"The resource {self.full_classname()} is not decorated with @ResourceDecorator, it can't be instantiate. Please decorate the process class with @ResourceDecorator")
 
     @abstractmethod
-    def serialize(self) -> ResourceSerialized:
+    def serialize_data(self) -> SerializedResourceData:
         """Method to override to serialize the resource to save it
+
+        Return small data of the resource store in the database. This dictionnary must not be to big/
+        Information in the light data will be searchable  with a full text search
 
         :return: [description]
         :rtype: ResourceSerialized
         """
-        pass
 
     @abstractmethod
-    def deserialize(self, resource_serialized: ResourceSerialized) -> None:
+    def deserialize_data(self, data: SerializedResourceData) -> None:
         """Method call after resource creation to init resource data
 
-        :param resource_serialized: [description]
-        :type resource_serialized: ResourceSerialized
+        Small data of the resource store in the database. This dictionnary must not be to big/
+        Information in the light data will be searchable  with a full text search
+
+        :param data: [description]
+        :type data: SerializedResourceData
         """
-        pass
 
     def export(self, file_path: str, file_format: str = None):
         """
@@ -61,8 +71,6 @@ class Resource(Base):
 
         # @ToDo: ensure that this method is only called by an Exporter
         # TOdO do we need this ?
-
-        pass
 
     # -- G --
 
@@ -80,8 +88,6 @@ class Resource(Base):
         """
 
         # @ToDo: ensure that this method is only called by an Importer
-
-        pass
 
     # -- T --
 

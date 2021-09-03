@@ -7,8 +7,7 @@
 import unittest
 
 from gws_core import (GTest, Process, ProcessDecorator, Resource,
-                      ResourceDecorator, ResourceSet)
-from gws_core.resource.resource_serialized import ResourceSerialized
+                      ResourceDecorator, ResourceSet, SerializedResourceData)
 
 
 @ResourceDecorator("Car")
@@ -17,15 +16,15 @@ class Car(Resource):
     name: str
     speed: int
 
-    def serialize(self) -> ResourceSerialized:
-        return ResourceSerialized(light_data={
+    def serialize_data(self) -> SerializedResourceData:
+        return {
             "name": self.name,
             "speed": self.speed
-        })
+        }
 
-    def deserialize(self, resource_serialized: ResourceSerialized) -> None:
-        self.name = resource_serialized.light_data['name']
-        self.speed = resource_serialized.light_data['speed']
+    def deserialize_data(self, data: SerializedResourceData) -> None:
+        self.name = data['name']
+        self.speed = data['speed']
 
 
 # todo a checker

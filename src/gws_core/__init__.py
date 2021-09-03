@@ -184,9 +184,10 @@ from .protocol.protocol_spec import ConnectorSpec as ConnectorSpec
 from .protocol.protocol_spec import InterfaceSpec as InterfaceSpec
 from .protocol.protocol_spec import ProcessableSpec as ProcessableSpec
 from .protocol.protocol_type import ProtocolType as ProtocolType
-# Resource
 from .resource.kv_store import KVStore as KVStore
+# Resource
 from .resource.resource import Resource as Resource
+from .resource.resource import SerializedResourceData as SerializedResourceData
 from .resource.resource_decorator import ResourceDecorator as ResourceDecorator
 from .resource.resource_model import ResourceModel as ResourceModel
 from .resource.resource_service import ResourceService as ResourceService
