@@ -5,12 +5,11 @@
 
 import os
 
-from gws_core import (ConfigParams, Experiment, ExperimentService, GTest,
-                      PipEnvShell, process_decorator, ProcessInputs,
-                      ProcessModel, ProcessService, Resource)
+from gws_core import (BaseTestCase, ConfigParams, Experiment,
+                      ExperimentService, GTest, JSONDict, PipEnvShell,
+                      ProcessInputs, ProcessModel, ProcessService, Resource,
+                      process_decorator)
 from gws_core.process.process_io import ProcessOutputs
-
-from tests.base_test import BaseTest
 
 __cdir__ = os.path.abspath(os.path.dirname(__file__))
 
@@ -18,7 +17,7 @@ __cdir__ = os.path.abspath(os.path.dirname(__file__))
 @process_decorator("PipEnvTester")
 class PipEnvTester(PipEnvShell):
     input_specs = {}
-    output_specs = {'stdout': (Resource, )}
+    output_specs = {'stdout': (JSONDict, )}
     env_file_path = os.path.join(
         __cdir__, "testdata", "penv", "env_jwt_pip.txt")
 
@@ -26,17 +25,17 @@ class PipEnvTester(PipEnvShell):
         return ["python", os.path.join(__cdir__, "testdata", "penv", "jwt_encode.py")]
 
     def gather_outputs(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
-        res = Resource()
-        res.data["encoded_string"] = self._stdout
+        res = JSONDict()
+        res["encoded_string"] = self._stdout
         return {"stdout": res}
 
 
-class TestProcess(BaseTest):
+class TestProcess(BaseTestCase):
 
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
-        PipEnvTester.uninstall()
+        # PipEnvTester.uninstall()
 
     async def test_pipenv(self):
 
@@ -61,5 +60,5 @@ class TestProcess(BaseTest):
         self.assertTrue(PipEnvTester.is_installed())
         self.assertTrue(proc.is_finished)
 
-        PipEnvTester.uninstall()
-        self.assertFalse(PipEnvTester.is_installed())
+        # PipEnvTester.uninstall()
+        # self.assertFalse(PipEnvTester.is_installed())

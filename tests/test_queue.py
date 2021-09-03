@@ -4,17 +4,17 @@
 # About us: https://gencovery.com
 
 
-from tests.base_test import BaseTest
 import time
 
-from gws_core import (Experiment, ExperimentService, ExperimentStatus, GTest,
-                      Job, Queue, QueueService, RobotService, Settings)
+from gws_core import (BaseTestCase, Experiment, ExperimentService,
+                      ExperimentStatus, GTest, Job, Queue, QueueService,
+                      RobotService, Settings)
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 
-class TestQueue(BaseTest):
+class TestQueue(BaseTestCase):
 
     @classmethod
     def setUpClass(cls):

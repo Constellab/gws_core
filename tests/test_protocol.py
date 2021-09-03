@@ -6,14 +6,14 @@
 import json
 import os
 
-from gws_core import (Config, Experiment, ExperimentService, ExperimentStatus,
-                      GTest, ProcessModel, ProgressBar, ProtocolModel,
-                      ProtocolService, Robot, RobotFood, Settings)
+from gws_core import (BaseTestCase, Config, Experiment, ExperimentService,
+                      ExperimentStatus, GTest, ProcessModel, ProgressBar,
+                      ProtocolModel, ProtocolService, Robot, RobotFood,
+                      Settings)
 from gws_core.impl.robot.robot_process import RobotMove
 from gws_core.model.typing import Typing
 from gws_core.processable.processable_model import ProcessableModel
 
-from tests.base_test import BaseTest
 from tests.protocol_examples import (TestNestedProtocol,
                                      TestRobotwithSugarProtocol,
                                      TestSimpleProtocol)
@@ -22,7 +22,7 @@ settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 
-class TestProtocol(BaseTest):
+class TestProtocol(BaseTestCase):
 
     init_before_each_test: bool = True
 

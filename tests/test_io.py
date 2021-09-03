@@ -3,12 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import (ConfigParams, Connector, GTest, Process,
-                      ProcessableFactory, process_decorator, ProcessInputs,
-                      ProcessModel, ProcessOutputs, Resource,
-                      resource_decorator, SerializedResourceData)
-
-from tests.base_test import BaseTest
+from gws_core import (BaseTestCase, ConfigParams, Connector, GTest, Process,
+                      ProcessableFactory, ProcessInputs, ProcessModel,
+                      ProcessOutputs, Resource, SerializedResourceData,
+                      process_decorator, resource_decorator)
 
 
 @resource_decorator("Person")
@@ -80,7 +78,7 @@ class Jump(Process):
         return
 
 
-class TestIO(BaseTest):
+class TestIO(BaseTestCase):
 
     def test_connect(self):
         GTest.print("IO connect")
@@ -115,12 +113,3 @@ class TestIO(BaseTest):
             "to": {"node": "p1",  "port": "move_person_in"},
             'resource': {'uri': '', 'typing_name': ''}
         })
-
-    def test_iterator(self):
-        GTest.print("IO Iterator")
-
-        jump: ProcessModel = ProcessableFactory.create_process_model_from_type(
-            process_type=Jump, instance_name="p3")
-        for k in jump.input:
-            print(k)
-            print(jump.input.get_resource_model(k))

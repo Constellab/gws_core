@@ -4,25 +4,24 @@
 # About us: https://gencovery.com
 
 
-from gws_core import File, FileResource, FileService, GTest, LocalFileStore
+from gws_core import (BaseTestCase, File, FileResourceModel, FileService, GTest,
+                      LocalFileStore)
 
-from tests.base_test import BaseTest
 
-
-class TestFile(BaseTest):
+class TestFile(BaseTestCase):
 
     def test_file(self):
         GTest.print("File")
 
         file_store: LocalFileStore = LocalFileStore()
         file: File = file_store.create_file("my_file.txt")
-        file_resource: FileResource = FileService.create_file_resource(file=file)
-        self.assertTrue(file_resource.is_saved())
+        file_resource_model: FileResourceModel = FileService.create_file_resource(file=file)
+        self.assertTrue(file_resource_model.is_saved())
 
-        file: File = file_resource.get_resource()
+        file: File = file_resource_model.get_resource()
         file.write("Hi.\n")
         file.write("My name is John")
 
         text = file.read()
         self.assertTrue(text, "Hi.\nMy name is John")
-        self.assertTrue(file_resource.verify_hash())
+        self.assertTrue(file_resource_model.verify_hash())

@@ -6,14 +6,12 @@
 import os
 
 import pandas
-from gws_core import (ConfigParams, CSVDumper, CSVExporter, CSVImporter,
-                      CSVLoader, CSVTable, Experiment, ExperimentService, File,
-                      GTest, ProcessableFactory, ProcessModel, Protocol,
-                      protocol_decorator, ProtocolModel, ProtocolService,
-                      Settings, Study)
+from gws_core import (BaseTestCase, ConfigParams, CSVDumper, CSVExporter,
+                      CSVImporter, CSVLoader, CSVTable, Experiment,
+                      ExperimentService, File, GTest, ProcessableFactory,
+                      ProcessModel, Protocol, ProtocolModel, ProtocolService,
+                      Settings, Study, protocol_decorator)
 from gws_core.protocol.protocol_spec import ProcessableSpec
-
-from tests.base_test import BaseTest
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -40,7 +38,7 @@ class CSVProtocol(Protocol):
         ])
 
 
-class TestCSV(BaseTest):
+class TestCSV(BaseTestCase):
 
     def test_csv_data(self):
         GTest.print("CSVData")

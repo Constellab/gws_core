@@ -13,9 +13,9 @@ from typing import List, Union
 from ...core.decorator.transaction import transaction
 from ...core.exception.exceptions import BadRequestException
 from ...core.utils.settings import Settings
-from .file import File
+from .file_resource import File
 from .file_helper import FileHelper
-from .file_resource import FileResource
+from .file_resource_model import FileResourceModel
 from .file_store import FileStore
 
 
@@ -148,8 +148,8 @@ class LocalFileStore(FileStore):
         super().drop_table()
 
     def delete_instance(self):
-        if FileResource.table_exists():
-            FileResource.delete().where(FileResource.file_store_uri == self.uri).execute()
+        if FileResourceModel.table_exists():
+            FileResourceModel.delete().where(FileResourceModel.file_store_uri == self.uri).execute()
         if os.path.exists(self.path):
             shutil.rmtree(self.path)
         super().delete_instance()

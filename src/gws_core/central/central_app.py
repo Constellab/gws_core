@@ -16,7 +16,7 @@ from ..core.exception.exception_handler import ExceptionHandler
 from ..core.exception.exceptions import BadRequestException, NotFoundException
 from ..core.service.mysql_service import MySQLService
 from ..core.utils.http_helper import HTTPHelper
-from ..impl.file.file import File
+from ..impl.file.file_resource import File
 from ..user.user import User
 from ..user.user_dto import UserData
 from ..user.user_service import UserService

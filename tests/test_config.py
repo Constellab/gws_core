@@ -3,15 +3,14 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import Config, GTest, RobotMove
+from gws_core import Config, RobotMove
 from gws_core.config.config_exceptions import MissingConfigsException
 from gws_core.process.process_model import ProcessModel
 from gws_core.processable.processable_factory import ProcessableFactory
+from gws_core import GTest, BaseTestCase
 
-from tests.base_test import BaseTest
 
-
-class TestConfig(BaseTest):
+class TestConfig(BaseTestCase):
 
     def test_config(self):
         GTest.print("Config")

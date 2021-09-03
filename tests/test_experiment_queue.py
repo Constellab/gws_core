@@ -5,17 +5,15 @@
 
 import time
 
-from gws_core import (Experiment, ExperimentService,
+from gws_core import (BaseTestCase, Experiment, ExperimentService,
                       ExperimentStatus, GTest, QueueService, RobotService,
                       Settings)
-
-from tests.base_test import BaseTest
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 
-class TestExperiment(BaseTest):
+class TestExperiment(BaseTestCase):
 
     init_before_each_test: bool = True
 

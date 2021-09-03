@@ -13,6 +13,10 @@ class JSONDict(Resource):
 
     data: dict
 
+    def __init__(self, *args, **kwargs):
+        self.data = {}
+        super().__init__(*args, **kwargs)
+
     def serialize_data(self) -> SerializedResourceData:
         return self.data
 

@@ -5,16 +5,14 @@
 
 import json
 
-from gws_core import User, UserGroup, UserService
+from gws_core import BaseTestCase, User, UserGroup, UserService
 from gws_core.user.auth_service import AuthService
 from gws_core.user.jwt_service import JWTService
 from gws_core.user.user_dto import UserData, UserDataDict
 from starlette.responses import JSONResponse
 
-from tests.base_test import BaseTest
 
-
-class TestUser(BaseTest):
+class TestUser(BaseTestCase):
 
     async def test_sysuser_and_owner(self):
         """

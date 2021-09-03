@@ -10,14 +10,13 @@ from abc import abstractmethod
 from typing import Union
 
 from ...config.config_params import ConfigParams
-from ...impl.file.file_service import FileService
-from ...process.process_io import ProcessInputs, ProcessOutputs
-
 from ...core.exception.exceptions import BadRequestException
 from ...core.model.sys_proc import SysProc
+from ...impl.file.file_service import FileService
 from ...process.process import Process
 from ...process.process_decorator import process_decorator
-from ..file.file import File
+from ...process.process_io import ProcessInputs, ProcessOutputs
+from ..file.file_resource import File
 
 
 @process_decorator("Shell")
@@ -157,6 +156,8 @@ class Shell(Process):
             if not os.path.exists(self.working_dir):
                 os.makedirs(self.working_dir)
 
+            print(user_env)
+
             proc = SysProc.popen(
                 cmd,
                 cwd=self.working_dir,
@@ -179,12 +180,12 @@ class Shell(Process):
             outputs = self.gather_outputs(config=config, inputs=inputs)
 
             # TODO c'est bizarre ça
-            for resource in outputs.values():
-                if isinstance(resource, File):
-                    FileService.add_file_to_default_store(resource)
+            # for resource in outputs.values():
+            #    if isinstance(resource, File):
+            #        FileService.add_file_to_default_store(resource)
 
-                self.cwd.cleanup()
-                self._tmp_dir = None
+            self.cwd.cleanup()
+            self._tmp_dir = None
 
         except subprocess.CalledProcessError as err:
             self.cwd.cleanup()

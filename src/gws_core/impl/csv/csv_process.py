@@ -1,6 +1,6 @@
 
 from ...process.process_decorator import process_decorator
-from ..file.file import File
+from ..file.file_resource import File
 from ..file.file_uploader import (FileDumper, FileExporter, FileImporter,
                                   FileLoader)
 from .csv_resource import CSVTable

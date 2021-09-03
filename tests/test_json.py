@@ -6,15 +6,13 @@
 import json
 import os
 
-from gws_core import GTest, JSONDict, Settings
-
-from tests.base_test import BaseTest
+from gws_core import BaseTestCase, GTest, JSONDict, Settings
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 
-class TestJson(BaseTest):
+class TestJson(BaseTestCase):
 
     def test_json_data(self):
         GTest.print("JSONData")

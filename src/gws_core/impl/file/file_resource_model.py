@@ -1,0 +1,51 @@
+
+
+from typing import Type
+
+from gws_core.resource.resource import SerializedResourceData
+from peewee import CharField
+
+from ...model.typing_manager import TypingManager
+from ...model.typing_register_decorator import typing_registrator
+from ...resource.resource_model import ResourceModel
+from .file_resource import File
+from .file_helper import FileHelper
+
+
+@typing_registrator(unique_name="FileResourceModel", object_type="GWS_CORE", hide=True)
+class FileResourceModel(ResourceModel):
+    file_store_uri = CharField(null=True, index=True)
+    path = CharField(null=True, index=True, unique=True)
+
+    _resource: File
+    _table_name = "gws_file_resource"
+
+    def _instantiate_resource(self, new_instance: bool = False) -> File:
+        """
+        Create the Resource object from the resource_typing_name
+        """
+        resource_type: Type[File] = TypingManager.get_type_from_name(self.resource_typing_name)
+        file: File = resource_type()
+
+        file.deserialize_data({"path": self.path, "file_store_uri": self.file_store_uri})
+        return file
+
+    # override the from resource  to set data to empty dict and set path from File
+    # TODO handle kv store ?
+    @classmethod
+    def from_resource(cls, resource: File) -> 'FileResourceModel':
+        file_resource_model: FileResourceModel = FileResourceModel()
+        file_resource_model.resource_typing_name = resource._typing_name
+        file_resource_model._resource = resource  # set the resource into the resource model
+        file_resource_model.data = {}
+
+        serialized_data: SerializedResourceData = cls._serialize_resource_data(resource)
+        file_resource_model.path = serialized_data["path"]
+        file_resource_model.file_store_uri = serialized_data["file_store_uri"]
+        return file_resource_model
+
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
+        _json = super().to_json(deep=deep,  **kwargs)
+        _json["filename"] = FileHelper.get_name_with_extension(self.path)
+        _json["is_file"] = True
+        return _json

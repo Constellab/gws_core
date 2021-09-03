@@ -26,7 +26,6 @@ from .core.classes.paginator import PaginatorDict as PaginatorDict
 from .core.classes.path import URL as URL
 from .core.classes.path import Path as Path
 from .core.classes.query import Query as Query
-from .core.classes.unittest import GTest as GTest
 from .core.classes.validator import ArrayValidator as ArrayValidator
 from .core.classes.validator import BooleanValidator as BooleanValidator
 from .core.classes.validator import CharValidator as CharValidator
@@ -65,6 +64,9 @@ from .core.service.external_api_service import \
     ExternalApiService as ExternalApiService
 from .core.service.mysql_service import MySQLService as MySQLService
 from .core.service.settings_service import SettingsService as SettingsService
+from .core.test.base_test_case import BaseTestCase as BaseTestCase
+# Core > Test
+from .core.test.gtest import GTest as GTest
 # Core > Utils
 from .core.utils.event import EventListener as EventListener
 from .core.utils.http_helper import HTTPHelper as HTTPHelper
@@ -90,9 +92,10 @@ from .impl.csv.csv_process import CSVImporter as CSVImporter
 from .impl.csv.csv_process import CSVLoader as CSVLoader
 from .impl.csv.csv_resource import CSVTable as CSVTable
 # Impl > File
-from .impl.file.file import File as File
-from .impl.file.file import FileSet as FileSet
-from .impl.file.file_resource import FileResource as FileResource
+from .impl.file.file_resource import File as File
+from .impl.file.file_resource import FileSet as FileSet
+from .impl.file.file_resource_model import \
+    FileResourceModel as FileResourceModel
 from .impl.file.file_service import FileService as FileService
 from .impl.file.file_store import FileStore as FileStore
 from .impl.file.file_uploader import FileDumper as FileDumper
@@ -176,7 +179,8 @@ from .progress_bar.progress_bar_service import \
     ProgressBarService as ProgressBarService
 # Protocol
 from .protocol.protocol import Protocol as Protocol
-from .protocol.protocol_decorator import protocol_decorator as protocol_decorator
+from .protocol.protocol_decorator import \
+    protocol_decorator as protocol_decorator
 from .protocol.protocol_model import ProtocolModel as ProtocolModel
 from .protocol.protocol_service import ProtocolService as ProtocolService
 from .protocol.protocol_spec import ConnectorPartSpec as ConnectorPartSpec
@@ -188,7 +192,8 @@ from .resource.kv_store import KVStore as KVStore
 # Resource
 from .resource.resource import Resource as Resource
 from .resource.resource import SerializedResourceData as SerializedResourceData
-from .resource.resource_decorator import resource_decorator as resource_decorator
+from .resource.resource_decorator import \
+    resource_decorator as resource_decorator
 from .resource.resource_model import ResourceModel as ResourceModel
 from .resource.resource_service import ResourceService as ResourceService
 from .resource.resource_set import ResourceSet as ResourceSet

@@ -4,13 +4,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import (Experiment, ExperimentService, Paginator, PaginatorDict,
-                      ProtocolModel, RobotService)
-
-from tests.base_test import BaseTest
+from gws_core import (BaseTestCase, Experiment, ExperimentService, Paginator,
+                      PaginatorDict, ProtocolModel, RobotService)
 
 
-class TestPaginator(BaseTest):
+class TestPaginator(BaseTestCase):
 
     async def test_paginator(self):
 

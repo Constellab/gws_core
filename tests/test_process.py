@@ -3,14 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import (ConfigParams, Experiment, ExperimentService, GTest,
-                      Process, ProcessableFactory, process_decorator,
+from gws_core import (BaseTestCase, ConfigParams, Experiment,
+                      ExperimentService, GTest, Process, ProcessableFactory,
                       ProcessInputs, ProcessModel, ProcessOutputs, ProgressBar,
                       ProtocolModel, ProtocolService, ResourceModel, Robot,
-                      RobotCreate)
+                      RobotCreate, process_decorator)
 from gws_core.processable.processable_exception import ProcessableRunException
 
-from tests.base_test import BaseTest
 from tests.protocol_examples import TestSimpleProtocol
 
 
@@ -20,7 +19,7 @@ class ErrorProcess(Process):
         raise Exception("Error")
 
 
-class TestProcess(BaseTest):
+class TestProcess(BaseTestCase):
 
     def test_process_singleton(self):
         GTest.print("Process Singleton")

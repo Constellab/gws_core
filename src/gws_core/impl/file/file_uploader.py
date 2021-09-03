@@ -15,7 +15,7 @@ from ...process.process import Process
 from ...process.process_decorator import process_decorator
 from ...process.process_io import ProcessInputs, ProcessOutputs
 from ...resource.resource import Resource
-from .file import File
+from .file_resource import File
 from .local_file_store import LocalFileStore
 
 # ####################################################################

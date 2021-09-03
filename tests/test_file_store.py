@@ -5,13 +5,11 @@
 
 import os
 
-from gws_core import File, GTest, LocalFileStore, Settings
+from gws_core import BaseTestCase, File, GTest, LocalFileStore, Settings
 from gws_core.impl.file.file_store import FileStore
 
-from tests.base_test import BaseTest
 
-
-class TestLocalFileStore(BaseTest):
+class TestLocalFileStore(BaseTestCase):
 
     file_store_instance: FileStore = None
 

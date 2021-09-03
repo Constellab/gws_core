@@ -1,52 +1,163 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
+
+import os
+from typing import Any, Type
+
+from ...core.exception.exceptions import BadRequestException
+from ...impl.file.file_helper import FileHelper
+from ...resource.resource import Resource, SerializedResourceData
+from ...resource.resource_decorator import resource_decorator
+from ...resource.resource_set import ResourceSet
 
 
-from typing import Type
+@resource_decorator("File")
+class File(Resource):
+    """
+    File class
+    """
 
-from gws_core.resource.resource import SerializedResourceData
-from peewee import CharField
+    path: str
+    file_store_uri: str
+    _mode = "t"
+    _table_name = "gws_file"
 
-from ...model.typing_manager import TypingManager
-from ...model.typing_register_decorator import typing_registrator
-from ...resource.resource_model import ResourceModel
-from .file import File
-from .file_helper import FileHelper
+    def __init__(self, *args, **kwargs):
+        self.path = ""
+        self.file_store_uri = ""
+        super().__init__(*args, **kwargs)
 
+    def serialize_data(self) -> SerializedResourceData:
+        return {
+            "path": self.path,
+            "file_store_uri": self.file_store_uri
+        }
 
-@typing_registrator(unique_name="FileResource", object_type="GWS_CORE", hide=True)
-class FileResource(ResourceModel):
-    file_store_uri = CharField(null=True, index=True)
-    path = CharField(null=True, index=True, unique=True)
+    def deserialize_data(self, data: SerializedResourceData) -> None:
+        if data:
+            self.path = data['path']
+            self.file_store_uri = data['file_store_uri']
 
-    _resource: File
-    _table_name = "gws_file_resource"
+    @property
+    def dir(self):
+        return FileHelper.get_dir(self.path)
 
-    def _instantiate_resource(self, new_instance: bool = False) -> File:
+    # -- E --
+
+    @property
+    def extension(self):
+        return FileHelper.get_extension(self.path)
+
+    def _exists(self):
+        return os.path.exists(self.path)
+
+    # -- F --
+
+    # -- I --
+
+    def is_json(self):
+        return FileHelper.is_json(self.path)
+
+    def is_csv(self):
+        return FileHelper.is_csv(self.path)
+
+    def is_txt(self):
+        return FileHelper.is_txt(self.path)
+
+    def is_jpg(self):
+        return FileHelper.is_jpg(self.path)
+
+    def is_png(self):
+        return FileHelper.is_png(self.path)
+
+    # -- M --
+
+    @property
+    def mime(self):
+        return FileHelper.get_mime(self.path)
+
+    @property
+    def name(self):
+        return FileHelper.get_name_with_extension(self.path)
+
+    # -- O --
+
+    def open(self, mode: str):
         """
-        Create the Resource object from the resource_typing_name
+        Open the file
         """
-        resource_type: Type[File] = TypingManager.get_type_from_name(self.resource_typing_name)
-        file: File = resource_type()
 
-        file.deserialize({"path": self.path, "file_store_uri": self.file_store_uri})
-        return file
+        if self._exists():
+            return open(self.path, mode)
+        else:
+            if not os.path.exists(self.dir):
+                os.makedirs(self.dir)
+                if not os.path.exists(self.dir):
+                    raise BadRequestException(
+                        f"Cannot create directory {self.dir}")
+            return open(self.path, mode="w+")
 
-    # override the from resource  to set data to empty dict and set path from File
-    # TODO handle kv store ?
-    @classmethod
-    def from_resource(cls, resource: File) -> 'FileResource':
-        file_resource: FileResource = FileResource()
-        file_resource.resource_typing_name = resource._typing_name
-        file_resource._resource = resource  # set the resource into the resource model
-        file_resource.data = {}
+    # -- P --
 
-        serialized_data: SerializedResourceData = cls._serialize_resource_data(resource)
-        file_resource.path = serialized_data.light_dict["path"]
-        file_resource.file_store_uri = serialized_data.light_dict["file_store_uri"]
-        return file_resource
+    # -- R --
 
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        _json = super().to_json(deep=deep,  **kwargs)
+    def read(self):
+        m = "r+"+self._mode
+        with self.open(m) as fp:
+            data = fp.read()
+        return data
 
-        _json["filename"] = FileHelper.get_name_with_extension(self.path)
-        _json["is_file"] = True
+    def readline(self):
+        m = "r+"+self._mode
+        with self.open(m) as fp:
+            data = fp.readline()
+        return data
+
+    def readlines(self, n=-1):
+        m = "r+"+self._mode
+        with self.open(m) as fp:
+            data = fp.readlines(n)
+        return data
+
+    # -- T --
+
+    def to_json(self) -> dict:
+        _json = {}
+
+        _json["path"] = self.path
         return _json
+
+    # -- W --
+
+    def write(self, data: str, discard=False):
+        """
+        Write in the file
+        """
+        m = "a+"+self._mode
+        with self.open(m) as fp:
+            fp.write(data)
+
+    @classmethod
+    def get_resource_model_type(cls) -> Type[Any]:
+        """Return the resource model associated with this Resource
+        //!\\ To overwrite only when you know what you are doing
+
+        :return: [description]
+        :rtype: Type[Any]
+        """
+        from .file_resource_model import FileResourceModel
+        return FileResourceModel
+
+    # -- S --
+
+# ####################################################################
+#
+# FileSet class
+#
+# ####################################################################
+
+
+class FileSet(ResourceSet):
+    _resource_types = (File, )

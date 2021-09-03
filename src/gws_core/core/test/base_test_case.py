@@ -1,13 +1,17 @@
 
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 from typing import List, Union
 from unittest.async_case import IsolatedAsyncioTestCase
 
-from gws_core import GTest
-from gws_core.experiment.queue_service import QueueService
+from .gtest import GTest
+from ...experiment.queue_service import QueueService
 
 
-class BaseTest(IsolatedAsyncioTestCase):
+class BaseTestCase(IsolatedAsyncioTestCase):
     """Base class for test, contain method to ease testing and automatically init env and clear it after
     """
 

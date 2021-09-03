@@ -3,18 +3,16 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import (ConfigParams, Experiment, ExperimentService, GTest,
-                      process_decorator, ProcessInputs, ProcessModel,
-                      ProcessService, Resource, Shell)
+from gws_core import (BaseTestCase, ConfigParams, Experiment,
+                      ExperimentService, GTest, JSONDict, ProcessInputs,
+                      ProcessModel, ProcessService, Shell, process_decorator)
 from gws_core.process.process_io import ProcessOutputs
-
-from tests.base_test import BaseTest
 
 
 @process_decorator("Echo")
 class Echo(Shell):
     input_specs = {}
-    output_specs = {'stdout': Resource}
+    output_specs = {'stdout': JSONDict}
     config_specs = {'name': {"type": str, "default": None, 'description': "The name to echo"}, 'save_stdout': {
         "type": bool, "default": False, 'description': "True to save the command output text. False otherwise"}, }
 
@@ -23,12 +21,12 @@ class Echo(Shell):
         return ["echo", name]
 
     def gather_outputs(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
-        res = Resource()
-        res.data["out"] = self._stdout
+        res = JSONDict()
+        res["out"] = self._stdout
         return {"stdout": res}
 
 
-class TestShell(BaseTest):
+class TestShell(BaseTestCase):
 
     async def test_shell(self):
         GTest.print("Shell")

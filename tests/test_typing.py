@@ -5,17 +5,16 @@
 
 from typing import Dict
 
-from gws_core import GTest, ProcessService, ProtocolService, RobotEat
+from gws_core import (BaseTestCase, GTest, ProcessService, ProtocolService,
+                      RobotEat)
 from gws_core.impl.robot.robot_protocol import RobotWorldTravelProto
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.process.process_type import ProcessType
 from gws_core.protocol.protocol_type import ProtocolType
 from gws_core.resource.resource_type import ResourceType
 
-from tests.base_test import BaseTest
 
-
-class TestTyping(BaseTest):
+class TestTyping(BaseTestCase):
 
     async def test_typing(self):
         GTest.print("Model Typing")

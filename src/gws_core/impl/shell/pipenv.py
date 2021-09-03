@@ -99,7 +99,7 @@ class PipEnvShell(BaseEnvShell):
             subprocess.check_call(
                 " ".join(cmd),
                 cwd=cls.get_env_dir(),
-                stderr=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
                 stdout=subprocess.DEVNULL,
                 env=env,
                 shell=True

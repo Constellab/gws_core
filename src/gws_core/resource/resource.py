@@ -21,11 +21,20 @@ CONST_RESOURCE_TYPING_NAME = "RESOURCE.gws_core.Resource"
 SerializedResourceData = Dict
 
 
+class Store:
+    pass
+
+class FileStore(Store):
+    pass
+
+class KVStore(Store):
+    pass
+
 @typing_registrator(unique_name="Resource", object_type="RESOURCE")
 class Resource(Base):
 
     # To store big data. This will be store in a file on the server. It will not be searchable
-    kv_store: KVStore
+    kv_store: Store
 
     # Provided at the Class level automatically by the @ResourceDecorator
     # //!\\ Do not modify theses values
@@ -101,3 +110,5 @@ class Resource(Base):
         """
         from .resource_model import ResourceModel
         return ResourceModel
+
+    # -- V --

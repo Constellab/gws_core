@@ -5,12 +5,11 @@
 
 import os
 
-from gws_core import (CondaEnvShell, ConfigParams, Experiment,
-                      ExperimentService, GTest, process_decorator, ProcessInputs,
-                      ProcessModel, ProcessService, Resource)
+from gws_core import (BaseTestCase, CondaEnvShell, ConfigParams, Experiment,
+                      ExperimentService, GTest, JSONDict, ProcessInputs,
+                      ProcessModel, ProcessService, Resource,
+                      process_decorator)
 from gws_core.process.process_io import ProcessOutputs
-
-from tests.base_test import BaseTest
 
 __cdir__ = os.path.abspath(os.path.dirname(__file__))
 
@@ -18,7 +17,7 @@ __cdir__ = os.path.abspath(os.path.dirname(__file__))
 @process_decorator("CondaEnvTester")
 class CondaEnvTester(CondaEnvShell):
     input_specs = {}
-    output_specs = {'stdout': (Resource, )}
+    output_specs = {'stdout': (JSONDict, )}
     env_file_path = os.path.join(
         __cdir__, "testdata", "penv", "env_jwt_conda.yml")
 
@@ -26,12 +25,12 @@ class CondaEnvTester(CondaEnvShell):
         return ["python", os.path.join(__cdir__, "testdata", "penv", "jwt_encode.py")]
 
     def gather_outputs(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
-        res = Resource()
-        res.data["encoded_string"] = self._stdout
+        res = JSONDict()
+        res["encoded_string"] = self._stdout
         return {"stdout": res}
 
 
-class TestProcess(BaseTest):
+class TestProcess(BaseTestCase):
 
     @classmethod
     def tearDownClass(cls):

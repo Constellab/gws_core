@@ -11,7 +11,7 @@ from typing import Union
 from ...core.exception.exceptions import BadRequestException
 from ...core.model.model import Model
 from ...model.typing_register_decorator import typing_registrator
-from .file import File
+from .file_resource import File
 
 # ####################################################################
 #
