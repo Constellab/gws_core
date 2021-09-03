@@ -58,13 +58,13 @@ class TestExperiment(BaseTestCase):
         self.assertTrue(_run())
         self.assertEqual(Experiment.select().count(), 1)
 
-        print("Re-Run the same experiment ...")
+        print("Re-run the same experiment ...")
         experiment.refresh()
         self.assertTrue(_run())
         self.assertEqual(Experiment.select().count(), 1)
 
         print("")
-        print("Re-Run the same experiment after its validation...")
+        print("Re-run the same experiment after its validation...")
         time.sleep(1)
         experiment2: Experiment = Experiment.get(
             Experiment.id == experiment.id)

@@ -33,7 +33,7 @@ class TestShell(BaseTestCase):
 
         proc: ProcessModel = ProcessService.create_process_from_type(
             process_type=Echo)
-        proc.config.set_param("name", "Jhon Doe")
+        proc.config.set_param("name", "John Doe")
 
         experiment: Experiment = ExperimentService.create_experiment_from_process(
             process=proc)
@@ -44,4 +44,4 @@ class TestShell(BaseTestCase):
         proc = experiment.processes[0]
 
         res: Resource = proc.output.get_resource_model('stdout').get_resource()
-        self.assertEqual(res.data["out"], "Jhon Doe")
+        self.assertEqual(res.data["out"], "John Doe")

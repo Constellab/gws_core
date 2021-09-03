@@ -35,7 +35,7 @@ class TestProcess(BaseTestCase):
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
-        # PipEnvTester.uninstall()
+        PipEnvTester.uninstall()
 
     async def test_pipenv(self):
 
@@ -60,5 +60,5 @@ class TestProcess(BaseTestCase):
         self.assertTrue(PipEnvTester.is_installed())
         self.assertTrue(proc.is_finished)
 
-        # PipEnvTester.uninstall()
-        # self.assertFalse(PipEnvTester.is_installed())
+        PipEnvTester.uninstall()
+        self.assertFalse(PipEnvTester.is_installed())

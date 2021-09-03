@@ -61,10 +61,11 @@ class PipEnvShell(BaseEnvShell):
             del user_cmd[0]
         return ["pipenv", "run", "python", *user_cmd]
 
-    def build_env(self) -> dict:
+    def build_os_env(self) -> dict:
         env = os.environ.copy()
         pipfile_path = os.path.join(self.get_env_dir(), "Pipfile")
         env["PIPENV_PIPFILE"] = pipfile_path
+        env["PIPENV_VENV_IN_PROJECT"] = "enabled"
         return env
 
     # -- E --

@@ -48,15 +48,15 @@ class Shell(Process):
 
         return [""]
 
-    def build_env(self) -> dict:
+    def build_os_env(self) -> dict:
         """
-        Creates the list environment variables
+        Creates the OS environment variables that are passed to the shell command
 
-        :return: The environment variables
+        :return: The OS environment variables
         :rtype: `dict`
         """
 
-        return {}
+        return None
 
     def _format_command(self, user_cmd: list) -> Union[list, str]:
         """
@@ -137,11 +137,11 @@ class Shell(Process):
         outputs: ProcessOutputs
         try:
             user_cmd = self.build_command(config=config, inputs=inputs)
-            user_env = self.build_env()
+            user_env = self.build_os_env()
 
-            if not isinstance(user_env, dict):
+            if (user_env is not None) and (not isinstance(user_env, dict)):
                 raise BadRequestException(
-                    "Method 'build_env' must return a dictionnary")
+                    "Method 'build_os_env' must return a dictionnary")
 
             if not user_env:
                 user_env = None
@@ -155,8 +155,6 @@ class Shell(Process):
 
             if not os.path.exists(self.working_dir):
                 os.makedirs(self.working_dir)
-
-            print(user_env)
 
             proc = SysProc.popen(
                 cmd,
