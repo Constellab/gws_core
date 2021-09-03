@@ -8,6 +8,7 @@ import shutil
 from operator import le
 from shelve import DbfilenameShelf
 from shelve import open as shelve_open
+from time import time
 from typing import Any, Dict
 
 from ..core.exception.exceptions import BadRequestException
@@ -206,3 +207,13 @@ class KVStore(Dict[str, Any]):
     @classmethod
     def from_filename(cls, file_name: str) -> 'KVStore':
         return KVStore(cls.get_full_file_path(file_name=file_name, with_extension=False))
+
+    @classmethod
+    def empty(cls) -> 'KVStore':
+        """Create an new kv store and generate the file name automatically
+
+        :return: [description]
+        :rtype: [type]
+        """
+        generated_file_name: str = str(time()).replace('.', '')
+        return KVStore(cls.get_full_file_path(file_name=generated_file_name, with_extension=False))

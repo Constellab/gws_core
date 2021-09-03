@@ -184,10 +184,7 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         Create the Resource object from the resource_typing_name
         """
         resource_type: Type[ResourceType] = TypingManager.get_type_from_name(self.resource_typing_name)
-        resource: ResourceType = resource_type()
-
-        # Set the kv_store on the resource
-        resource.binary_store = self.get_kv_store_with_default()
+        resource: ResourceType = resource_type(binary_store=self.get_kv_store_with_default())
 
         # Set the data on the resource
         data: dict
@@ -239,16 +236,18 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         # set the kv store
         kv_store: KVStore = resource.binary_store
 
-        if kv_store:
+        if kv_store is not None:
 
             if not isinstance(kv_store, KVStore):
                 raise BadRequestException(
                     f"The binary_store property of the resource {resource.full_classname()} is not an instance of KVStore")
 
             # If the kv store file exists (this mean that we wrote on it)
-            if kv_store.file_exists:
+            if kv_store.file_exists():
                 # Save the kv store path on the resource
                 resource_model.kv_store_path = kv_store.get_full_path_wthout_extension()
+            else:
+                resource_model.kv_store_path = None
         else:
             resource_model.kv_store_path = None
 

@@ -11,6 +11,12 @@ from tests.base_test import BaseTest
 
 class TestKVStore(BaseTest):
 
+    def test_empty(self):
+        s1 = KVStore.empty()
+        s1['test'] = 'Super'
+        self.assertEqual(s1['test'], 'Super')
+        self.assertTrue(s1.file_exists())
+
     def test_store(self):
         GTest.print("KVStore")
 

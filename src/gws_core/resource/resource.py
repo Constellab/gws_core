@@ -34,11 +34,16 @@ class Resource(Base):
     _short_description: str = None
     _serializable_fields: List[str] = None
 
-    def __init__(self):
+    def __init__(self, binary_store: KVStore = None):
         # check that the class level property _typing_name is set
         if self._typing_name == CONST_RESOURCE_TYPING_NAME and type(self) != Resource:  # pylint: disable=unidiomatic-typecheck
             raise BadRequestException(
                 f"The resource {self.full_classname()} is not decorated with @ResourceDecorator, it can't be instantiate. Please decorate the process class with @ResourceDecorator")
+
+        if binary_store is None:
+            self.binary_store = KVStore.empty()
+        else:
+            self.binary_store = binary_store
 
     def serialize_data(self) -> SerializedResourceData:
         """Method to override to serialize the resource to save it
