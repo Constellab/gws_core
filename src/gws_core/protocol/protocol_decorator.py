@@ -5,8 +5,8 @@ from ..protocol.protocol import Protocol
 from ..user.user_group import UserGroup
 
 
-def ProtocolDecorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER,
-                      human_name: str = "", short_description: str = "", hide: bool = False) -> Callable:
+def protocol_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER,
+                       human_name: str = "", short_description: str = "", hide: bool = False) -> Callable:
     """ Decorator to be placed on all the protocols. A protocol not decorated will not be runnable.
     It define static information about the protocol
 

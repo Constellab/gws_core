@@ -12,10 +12,10 @@ from ..core.utils.utils import Utils
 from ..process.process_io import ProcessInputs, ProcessOutputs
 from ..resource.resource import Resource
 from .process import Process
-from .process_decorator import ProcessDecorator
+from .process_decorator import process_decorator
 
 
-@ProcessDecorator("Source")
+@process_decorator("Source")
 class Source(Process):
     """
     Source process.
@@ -42,7 +42,7 @@ class Source(Process):
         return {"resource": resource}
 
 
-@ProcessDecorator("Sink")
+@process_decorator("Sink")
 class Sink(Process):
     """
     Sink process.
@@ -59,7 +59,7 @@ class Sink(Process):
         pass
 
 
-@ProcessDecorator("FIFO2")
+@process_decorator("FIFO2")
 class FIFO2(Process):
     """
     FIFO2 process (with 2 input ports)
@@ -92,7 +92,7 @@ class FIFO2(Process):
             return {"resource": resource}
 
 
-@ProcessDecorator("Switch2")
+@process_decorator("Switch2")
 class Switch2(Process):
     """
     Switch process (with 2 input ports)
@@ -113,7 +113,7 @@ class Switch2(Process):
         return {"resource": resource}
 
 
-@ProcessDecorator("Wait")
+@process_decorator("Wait")
 class Wait(Process):
     """
     Wait process

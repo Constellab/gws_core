@@ -6,11 +6,11 @@
 
 import unittest
 
-from gws_core import (GTest, Process, ProcessDecorator, Resource,
-                      ResourceDecorator, ResourceSet, SerializedResourceData)
+from gws_core import (GTest, Process, process_decorator, Resource,
+                      resource_decorator, ResourceSet, SerializedResourceData)
 
 
-@ResourceDecorator("Car")
+@resource_decorator("Car")
 class Car(Resource):
 
     name: str
@@ -30,7 +30,7 @@ class Car(Resource):
 # todo a checker
 
 
-@ProcessDecorator("Start")
+@process_decorator("Start")
 class Start(Process):
     pass
 

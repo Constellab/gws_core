@@ -6,7 +6,7 @@
 import os
 
 from gws_core import (ConfigParams, Experiment, ExperimentService, GTest,
-                      PipEnvShell, ProcessDecorator, ProcessInputs,
+                      PipEnvShell, process_decorator, ProcessInputs,
                       ProcessModel, ProcessService, Resource)
 from gws_core.process.process_io import ProcessOutputs
 
@@ -15,7 +15,7 @@ from tests.base_test import BaseTest
 __cdir__ = os.path.abspath(os.path.dirname(__file__))
 
 
-@ProcessDecorator("PipEnvTester")
+@process_decorator("PipEnvTester")
 class PipEnvTester(PipEnvShell):
     input_specs = {}
     output_specs = {'stdout': (Resource, )}

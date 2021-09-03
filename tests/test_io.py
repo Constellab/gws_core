@@ -4,14 +4,14 @@
 # About us: https://gencovery.com
 
 from gws_core import (ConfigParams, Connector, GTest, Process,
-                      ProcessableFactory, ProcessDecorator, ProcessInputs,
+                      ProcessableFactory, process_decorator, ProcessInputs,
                       ProcessModel, ProcessOutputs, Resource,
-                      ResourceDecorator, SerializedResourceData)
+                      resource_decorator, SerializedResourceData)
 
 from tests.base_test import BaseTest
 
 
-@ResourceDecorator("Person")
+@resource_decorator("Person")
 class Person(Resource):
     def serialize_data(self) -> SerializedResourceData:
         return {}
@@ -20,17 +20,17 @@ class Person(Resource):
         pass
 
 
-@ResourceDecorator("Man")
+@resource_decorator("Man")
 class Man(Person):
     pass
 
 
-@ResourceDecorator("SuperMan")
+@resource_decorator("SuperMan")
 class SuperMan(Man):
     pass
 
 
-@ResourceDecorator("Car")
+@resource_decorator("Car")
 class Car(Resource):
     def serialize_data(self) -> SerializedResourceData:
         return {}
@@ -39,7 +39,7 @@ class Car(Resource):
         pass
 
 
-@ProcessDecorator("Create")
+@process_decorator("Create")
 class Create(Process):
     input_specs = {}
     output_specs = {'create_person_out': Person}
@@ -49,7 +49,7 @@ class Create(Process):
         return
 
 
-@ProcessDecorator("Move")
+@process_decorator("Move")
 class Move(Process):
     input_specs = {'move_person_in': Person}
     output_specs = {'move_person_out': Person}
@@ -59,7 +59,7 @@ class Move(Process):
         return
 
 
-@ProcessDecorator("Drive")
+@process_decorator("Drive")
 class Drive(Process):
     input_specs = {'move_drive_in': Car}
     output_specs = {'move_drive_out': Car}
@@ -69,7 +69,7 @@ class Drive(Process):
         return
 
 
-@ProcessDecorator("Jump")
+@process_decorator("Jump")
 class Jump(Process):
     input_specs = {'jump_person_in_1': Person,
                    'jump_person_in_2': Person}

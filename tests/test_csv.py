@@ -9,7 +9,7 @@ import pandas
 from gws_core import (ConfigParams, CSVDumper, CSVExporter, CSVImporter,
                       CSVLoader, CSVTable, Experiment, ExperimentService, File,
                       GTest, ProcessableFactory, ProcessModel, Protocol,
-                      ProtocolDecorator, ProtocolModel, ProtocolService,
+                      protocol_decorator, ProtocolModel, ProtocolService,
                       Settings, Study)
 from gws_core.protocol.protocol_spec import ProcessableSpec
 
@@ -22,7 +22,7 @@ i_file_path = os.path.join(testdata_dir, "data.csv")
 o_file_path = os.path.join(testdata_dir, "data_out.csv")
 
 
-@ProtocolDecorator("CSVProtocol")
+@protocol_decorator("CSVProtocol")
 class CSVProtocol(Protocol):
     def configure_protocol(self, config_params: ConfigParams) -> None:
 

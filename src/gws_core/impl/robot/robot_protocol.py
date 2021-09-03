@@ -1,11 +1,11 @@
 from ...config.config_params import ConfigParams
 from ...protocol.protocol import ProcessableSpec, Protocol
-from ...protocol.protocol_decorator import ProtocolDecorator
+from ...protocol.protocol_decorator import protocol_decorator
 from .robot_process import (RobotAdd, RobotAddOnCreate, RobotCreate, RobotEat,
                             RobotFly, RobotMove, RobotWait)
 
 
-@ProtocolDecorator("RobotSimpleTravel")
+@protocol_decorator("RobotSimpleTravel")
 class RobotSimpleTravel(Protocol):
     def configure_protocol(self, config_params: ConfigParams) -> None:
         facto: ProcessableSpec = self.add_process(RobotCreate, 'facto')
@@ -28,7 +28,7 @@ class RobotSimpleTravel(Protocol):
         ])
 
 
-@ProtocolDecorator("RobotTravelProto")
+@protocol_decorator("RobotTravelProto")
 class RobotTravelProto(Protocol):
 
     def configure_protocol(self, config_params: ConfigParams) -> None:
@@ -57,7 +57,7 @@ class RobotTravelProto(Protocol):
         self.add_outerface('robot', eat_2, 'robot')
 
 
-@ProtocolDecorator("RobotSuperTravelProto", human_name="The super travel of Astro")
+@protocol_decorator("RobotSuperTravelProto", human_name="The super travel of Astro")
 class RobotSuperTravelProto(Protocol):
     # config for the eat_3 process
     config_specs = {'third_eat': {"type": float, "default": 3.14}}
@@ -83,7 +83,7 @@ class RobotSuperTravelProto(Protocol):
         self.add_outerface('robot', eat_3, 'robot')
 
 
-@ProtocolDecorator("RobotWorldTravelProto", human_name="The world trip of Astro")
+@protocol_decorator("RobotWorldTravelProto", human_name="The world trip of Astro")
 class RobotWorldTravelProto(Protocol):
 
     def configure_protocol(self, config_params: ConfigParams) -> None:

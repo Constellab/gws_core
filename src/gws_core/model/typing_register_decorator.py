@@ -6,12 +6,11 @@ from ..model.typing import TypingObjectType
 from .typing_manager import TypingManager
 
 
-def TypingDecorator(unique_name: str, object_type: TypingObjectType, hide: bool = False) -> Callable:
+def typing_registrator(unique_name: str, object_type: TypingObjectType, hide: bool = False) -> Callable:
     """Decorator to register the class as a typing with a typing name
 
-    param name_unique: a unique name for this protocol in the brick. Only 1 protocol in the current brick can have this name.
+    param name_unique: a unique name for this type in the brick. Only 1 protocol in the current brick can have this name.
                         //!\\ DO NOT MODIFIED THIS NAME ONCE IS DEFINED //!\\
-                        It is used to instantiate the protocols
     :type name_unique: str
     :param object_type: typing object type
     :type object_type: TypingObjectType

@@ -11,17 +11,17 @@ from fastapi.encoders import jsonable_encoder
 from peewee import CharField
 from starlette_context import context
 
-from ..core.decorator.json_ignore import JsonIgnore
+from ..core.decorator.json_ignore import json_ignore
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
 from ..core.utils.http_helper import HTTPHelper
 from ..core.utils.logger import Logger
-from ..model.typing_register_decorator import TypingDecorator
+from ..model.typing_register_decorator import typing_registrator
 
 
 @final
-@JsonIgnore(['process_uri', 'processable_typing_name'])
-@TypingDecorator(unique_name="ProgressBar", object_type="GWS_CORE", hide=True)
+@json_ignore(['process_uri', 'processable_typing_name'])
+@typing_registrator(unique_name="ProgressBar", object_type="GWS_CORE", hide=True)
 class ProgressBar(Model):
     """
     ProgressBar class

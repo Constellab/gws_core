@@ -10,10 +10,10 @@ from typing import TYPE_CHECKING, List, final
 from peewee import BooleanField, FloatField, ForeignKeyField
 
 from ..core.classes.enum_field import EnumField
-from ..core.decorator.transaction import Transaction
+from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.sys_proc import SysProc
-from ..model.typing_register_decorator import TypingDecorator
+from ..model.typing_register_decorator import typing_registrator
 from ..model.viewable import Viewable
 from ..resource.experiment_resource import ExperimentResource
 from ..resource.resource_model import ResourceModel
@@ -36,7 +36,7 @@ class ExperimentStatus(Enum):
 
 
 @final
-@TypingDecorator(unique_name="Experiment", object_type="GWS_CORE", hide=True)
+@typing_registrator(unique_name="Experiment", object_type="GWS_CORE", hide=True)
 class Experiment(Viewable):
     """
     Experiment class.
@@ -70,7 +70,7 @@ class Experiment(Viewable):
 
     # -- A --
 
-    @Transaction()
+    @transaction()
     def archive(self, archive: bool, archive_resources=True) -> 'Experiment':
         """
         Archive the experiment
@@ -196,7 +196,7 @@ class Experiment(Viewable):
                 resources.append(rel.resource)  # is automatically casted
         return resources
 
-    @Transaction()
+    @transaction()
     def reset(self) -> 'Experiment':
         """
         Reset the experiment.
@@ -262,7 +262,7 @@ class Experiment(Viewable):
 
         self.data["description"] = description
 
-    @Transaction()
+    @transaction()
     def save(self, *args, **kwargs) -> 'Experiment':
         if not self.is_saved():
             Activity.add(
@@ -298,7 +298,7 @@ class Experiment(Viewable):
 
         return _json
 
-    @Transaction()
+    @transaction()
     def validate(self, user: User) -> None:
         """
         Validate the experiment

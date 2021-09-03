@@ -7,7 +7,7 @@
 from typing import List, Union
 
 from ..comment.comment import Comment
-from ..core.decorator.transaction import Transaction
+from ..core.decorator.transaction import transaction
 from ..core.model.model import Model
 from .view_model import ViewModel
 
@@ -50,7 +50,7 @@ class Viewable(Model):
         comment.save()
         return comment
 
-    @Transaction()
+    @transaction()
     def archive(self, archive: bool) -> 'Viewable':
         """
         Archive of Unarchive Viewable and all its ViewModels

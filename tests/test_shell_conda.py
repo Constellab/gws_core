@@ -6,7 +6,7 @@
 import os
 
 from gws_core import (CondaEnvShell, ConfigParams, Experiment,
-                      ExperimentService, GTest, ProcessDecorator, ProcessInputs,
+                      ExperimentService, GTest, process_decorator, ProcessInputs,
                       ProcessModel, ProcessService, Resource)
 from gws_core.process.process_io import ProcessOutputs
 
@@ -15,7 +15,7 @@ from tests.base_test import BaseTest
 __cdir__ = os.path.abspath(os.path.dirname(__file__))
 
 
-@ProcessDecorator("CondaEnvTester")
+@process_decorator("CondaEnvTester")
 class CondaEnvTester(CondaEnvShell):
     input_specs = {}
     output_specs = {'stdout': (Resource, )}

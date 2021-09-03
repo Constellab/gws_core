@@ -159,7 +159,7 @@ from .process.plug import Source as Source
 from .process.plug import Switch2 as Switch2
 from .process.plug import Wait as Wait
 from .process.process import Process as Process
-from .process.process_decorator import ProcessDecorator as ProcessDecorator
+from .process.process_decorator import process_decorator as process_decorator
 from .process.process_io import ProcessInputs as ProcessInputs
 from .process.process_io import ProcessOutputs as ProcessOutputs
 from .process.process_model import ProcessModel as ProcessModel
@@ -176,7 +176,7 @@ from .progress_bar.progress_bar_service import \
     ProgressBarService as ProgressBarService
 # Protocol
 from .protocol.protocol import Protocol as Protocol
-from .protocol.protocol_decorator import ProtocolDecorator as ProtocolDecorator
+from .protocol.protocol_decorator import protocol_decorator as protocol_decorator
 from .protocol.protocol_model import ProtocolModel as ProtocolModel
 from .protocol.protocol_service import ProtocolService as ProtocolService
 from .protocol.protocol_spec import ConnectorPartSpec as ConnectorPartSpec
@@ -188,7 +188,7 @@ from .resource.kv_store import KVStore as KVStore
 # Resource
 from .resource.resource import Resource as Resource
 from .resource.resource import SerializedResourceData as SerializedResourceData
-from .resource.resource_decorator import ResourceDecorator as ResourceDecorator
+from .resource.resource_decorator import resource_decorator as resource_decorator
 from .resource.resource_model import ResourceModel as ResourceModel
 from .resource.resource_service import ResourceService as ResourceService
 from .resource.resource_set import ResourceSet as ResourceSet

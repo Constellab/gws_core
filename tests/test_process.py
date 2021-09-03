@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 from gws_core import (ConfigParams, Experiment, ExperimentService, GTest,
-                      Process, ProcessableFactory, ProcessDecorator,
+                      Process, ProcessableFactory, process_decorator,
                       ProcessInputs, ProcessModel, ProcessOutputs, ProgressBar,
                       ProtocolModel, ProtocolService, ResourceModel, Robot,
                       RobotCreate)
@@ -14,7 +14,7 @@ from tests.base_test import BaseTest
 from tests.protocol_examples import TestSimpleProtocol
 
 
-@ProcessDecorator("ErrorProcess")
+@process_decorator("ErrorProcess")
 class ErrorProcess(Process):
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         raise Exception("Error")

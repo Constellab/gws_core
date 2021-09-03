@@ -4,14 +4,14 @@
 # About us: https://gencovery.com
 
 from gws_core import (ConfigParams, Experiment, ExperimentService, GTest,
-                      ProcessDecorator, ProcessInputs, ProcessModel,
+                      process_decorator, ProcessInputs, ProcessModel,
                       ProcessService, Resource, Shell)
 from gws_core.process.process_io import ProcessOutputs
 
 from tests.base_test import BaseTest
 
 
-@ProcessDecorator("Echo")
+@process_decorator("Echo")
 class Echo(Shell):
     input_specs = {}
     output_specs = {'stdout': Resource}

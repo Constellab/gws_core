@@ -10,7 +10,7 @@ from ..config.config_params import ConfigParams
 from ..config.config_spec import ConfigSpecs, ConfigValues
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ..model.typing_register_decorator import TypingDecorator
+from ..model.typing_register_decorator import typing_registrator
 from ..processable.processable import Processable
 from .protocol_spec import (ConnectorPartSpec, ConnectorSpec, InterfaceSpec,
                             ProcessableSpec)
@@ -28,7 +28,7 @@ class ProtocolCreateConfig(TypedDict):
     outerfaces: Dict[str, InterfaceSpec]
 
 
-@TypingDecorator(unique_name="Protocol", object_type="PROTOCOL", hide=True)
+@typing_registrator(unique_name="Protocol", object_type="PROTOCOL", hide=True)
 class Protocol(Processable):
 
     # Config spec of the processable at the class level

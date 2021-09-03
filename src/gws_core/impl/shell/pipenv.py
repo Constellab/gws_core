@@ -10,13 +10,13 @@ from abc import abstractmethod
 
 from ...config.config_params import ConfigParams
 from ...core.exception.exceptions import BadRequestException
-from ...process.process_decorator import ProcessDecorator
+from ...process.process_decorator import process_decorator
 from ...process.process_io import ProcessInputs, ProcessOutputs
 from ...progress_bar.progress_bar import ProgressBar
 from .base_env import BaseEnvShell
 
 
-@ProcessDecorator("PipEnvShell")
+@process_decorator("PipEnvShell")
 class PipEnvShell(BaseEnvShell):
     """
     PipEnvShell process.

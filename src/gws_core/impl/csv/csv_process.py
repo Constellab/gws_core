@@ -1,5 +1,5 @@
 
-from ...process.process_decorator import ProcessDecorator
+from ...process.process_decorator import process_decorator
 from ..file.file import File
 from ..file.file_uploader import (FileDumper, FileExporter, FileImporter,
                                   FileLoader)
@@ -12,7 +12,7 @@ from .csv_resource import CSVTable
 # ####################################################################
 
 
-@ProcessDecorator(unique_name="CSVImporter")
+@process_decorator(unique_name="CSVImporter")
 class CSVImporter(FileImporter):
     input_specs = {'file': File}
     output_specs = {'data': CSVTable}
@@ -30,7 +30,7 @@ class CSVImporter(FileImporter):
 # ####################################################################
 
 
-@ProcessDecorator(unique_name="CSVExporter")
+@process_decorator(unique_name="CSVExporter")
 class CSVExporter(FileExporter):
     input_specs = {'data': CSVTable}
     output_specs = {'file': File}
@@ -50,7 +50,7 @@ class CSVExporter(FileExporter):
 # ####################################################################
 
 
-@ProcessDecorator(unique_name="CSVLoader")
+@process_decorator(unique_name="CSVLoader")
 class CSVLoader(FileLoader):
     input_specs = {}
     output_specs = {'data': CSVTable}
@@ -69,7 +69,7 @@ class CSVLoader(FileLoader):
 # ####################################################################
 
 
-@ProcessDecorator(unique_name="CSVDumper")
+@process_decorator(unique_name="CSVDumper")
 class CSVDumper(FileDumper):
     input_specs = {'data': CSVTable}
     output_specs = {}

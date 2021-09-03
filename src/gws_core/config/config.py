@@ -7,7 +7,7 @@ from typing import List, Union, final
 
 from ..core.classes.validator import Validator
 from ..core.exception.exceptions import BadRequestException
-from ..model.typing_register_decorator import TypingDecorator
+from ..model.typing_register_decorator import typing_registrator
 from ..model.viewable import Viewable
 from .config_exceptions import MissingConfigsException
 from .config_params import ConfigParams
@@ -16,7 +16,7 @@ from .config_spec import (ConfigSpecs, ConfigSpecsHelper, ConfigValue,
 
 
 @final
-@TypingDecorator(unique_name="Config", object_type="GWS_CORE", hide=True)
+@typing_registrator(unique_name="Config", object_type="GWS_CORE", hide=True)
 class Config(Viewable):
     """
     Config class that represents the configuration of a process. A configuration is

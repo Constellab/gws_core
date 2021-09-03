@@ -21,7 +21,7 @@ class TransactionSignleton():
         return TransactionSignleton.count_transaction > 0
 
 
-def Transaction(unique_transaction: bool = True) -> Callable:
+def transaction(unique_transaction: bool = True) -> Callable:
     """Decorator to place around a method to create a new transaction
     If the method raised an exception, the transaction is rollback
 

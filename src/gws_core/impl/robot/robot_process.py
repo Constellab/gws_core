@@ -5,11 +5,11 @@ from ...config.config_params import ConfigParams
 from ...impl.robot.robot_resource import (MegaRobot, Robot, RobotAddOn,
                                           RobotFood)
 from ...process.process import Process
-from ...process.process_decorator import ProcessDecorator
+from ...process.process_decorator import process_decorator
 from ...process.process_io import ProcessInputs, ProcessOutputs
 
 
-@ProcessDecorator("RobotCreate", human_name="Create robot", short_description="This process creates a robot")
+@process_decorator("RobotCreate", human_name="Create robot", short_description="This process creates a robot")
 class RobotCreate(Process):
     input_specs = {}  # no required input
     output_specs = {'robot': Robot}
@@ -22,8 +22,8 @@ class RobotCreate(Process):
         return {'robot': robot}
 
 
-@ProcessDecorator("RobotMove", human_name="Move robot",
-                  short_description="This process emulates a short moving step of the robot")
+@process_decorator("RobotMove", human_name="Move robot",
+                   short_description="This process emulates a short moving step of the robot")
 class RobotMove(Process):
     input_specs = {'robot': Robot}  # just for testing
     output_specs = {'robot': Robot}
@@ -37,8 +37,8 @@ class RobotMove(Process):
         return {'robot': robot}
 
 
-@ProcessDecorator("RobotEat", human_name="Eat process",
-                  short_description="This process emulates the meal of the robot before its flight!")
+@process_decorator("RobotEat", human_name="Eat process",
+                   short_description="This process emulates the meal of the robot before its flight!")
 class RobotEat(Process):
     input_specs = {'robot': Robot, 'food': Optional[RobotFood]}
     output_specs = {'robot': Robot}
@@ -59,8 +59,8 @@ class RobotEat(Process):
         return {'robot': robot}
 
 
-@ ProcessDecorator("RobotWait", human_name="Wait process",
-                   short_description="This process emulates the resting time of the robot before its flight!")
+@ process_decorator("RobotWait", human_name="Wait process",
+                    short_description="This process emulates the resting time of the robot before its flight!")
 class RobotWait(Process):
     input_specs = {'robot': Robot}
     output_specs = {'robot': Robot}
@@ -75,8 +75,8 @@ class RobotWait(Process):
         return {'robot': inputs['robot']}
 
 
-@ ProcessDecorator("RobotFly", human_name="Fly process",
-                   short_description="This process emulates the fly of the robot. It inherites the Move process.")
+@ process_decorator("RobotFly", human_name="Fly process",
+                    short_description="This process emulates the fly of the robot. It inherites the Move process.")
 class RobotFly(RobotMove):
     config_specs = {'moving_step': {"type": float, "default": 1000.0, "unit": "km"}, 'direction': {
         "type": str, "default": "west", "allowed_values": ["north", "south", "east", "west"], 'description': "The flying direction"}}
@@ -86,7 +86,7 @@ class RobotFly(RobotMove):
         return await super().task(config=config, inputs=inputs)
 
 
-@ ProcessDecorator("RobotAdd")
+@ process_decorator("RobotAdd")
 class RobotAdd(Process):
     input_specs = {'robot': Robot, 'addon': RobotAddOn}
     output_specs = {'mega_robot': MegaRobot}
@@ -100,8 +100,8 @@ class RobotAdd(Process):
         return {'mega_robot':  mega}
 
 
-@ ProcessDecorator(unique_name="RobotAddOnCreate", human_name="The travel of `Astro`",
-                   short_description="This is the travel of astro composed of several steps")
+@ process_decorator(unique_name="RobotAddOnCreate", human_name="The travel of `Astro`",
+                    short_description="This is the travel of astro composed of several steps")
 class RobotAddOnCreate(Process):
     input_specs = {}
     output_specs = {'addon': RobotAddOn}
@@ -112,8 +112,8 @@ class RobotAddOnCreate(Process):
         return {'addon': RobotAddOn()}
 
 
-@ ProcessDecorator(unique_name="RobotSugarCreate", human_name="Create a sugar type of food",
-                   short_description="Create a sugar type of food")
+@ process_decorator(unique_name="RobotSugarCreate", human_name="Create a sugar type of food",
+                    short_description="Create a sugar type of food")
 class RobotSugarCreate(Process):
     """Process that create a sugar type of food and wait 3 secondes for it
     used in TestRobotwithSugarProtocol

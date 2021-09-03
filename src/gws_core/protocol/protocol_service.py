@@ -5,7 +5,7 @@
 
 from typing import List, Type, Union
 
-from gws_core.core.decorator.transaction import Transaction
+from gws_core.core.decorator.transaction import transaction
 from gws_core.model.typing import Typing
 from gws_core.model.typing_manager import TypingManager
 from gws_core.processable.processable_model import ProcessableModel
@@ -134,7 +134,7 @@ class ProtocolService(BaseService):
             protocol.delete_process(key)
 
     @classmethod
-    @Transaction()
+    @transaction()
     def add_processable_to_protocol(cls, protocol_uri: str, processable_typing_name: str) -> ProcessableModel:
         protocol: ProtocolModel = ProtocolModel.get_by_uri_and_check(protocol_uri)
 

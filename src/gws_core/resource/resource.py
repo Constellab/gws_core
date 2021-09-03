@@ -8,7 +8,7 @@ from gws_core.resource.kv_store import KVStore
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.base import Base
-from ..model.typing_register_decorator import TypingDecorator
+from ..model.typing_register_decorator import typing_registrator
 
 if TYPE_CHECKING:
     from .resource_model import ResourceModel
@@ -21,7 +21,7 @@ CONST_RESOURCE_TYPING_NAME = "RESOURCE.gws_core.Resource"
 SerializedResourceData = Dict
 
 
-@TypingDecorator(unique_name="Resource", object_type="RESOURCE")
+@typing_registrator(unique_name="Resource", object_type="RESOURCE")
 class Resource(Base):
 
     # To store big data. This will be store in a file on the server. It will not be searchable

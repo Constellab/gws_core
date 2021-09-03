@@ -7,12 +7,12 @@ import os
 from abc import abstractmethod
 
 from ...config.config_params import ConfigParams
-from ...process.process_decorator import ProcessDecorator
+from ...process.process_decorator import process_decorator
 from ...process.process_io import ProcessInputs, ProcessOutputs
 from .shell import Shell
 
 
-@ProcessDecorator("BaseEnvShell")
+@process_decorator("BaseEnvShell")
 class BaseEnvShell(Shell):
     """
     EnvShell process.

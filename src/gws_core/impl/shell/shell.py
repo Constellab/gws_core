@@ -16,11 +16,11 @@ from ...process.process_io import ProcessInputs, ProcessOutputs
 from ...core.exception.exceptions import BadRequestException
 from ...core.model.sys_proc import SysProc
 from ...process.process import Process
-from ...process.process_decorator import ProcessDecorator
+from ...process.process_decorator import process_decorator
 from ..file.file import File
 
 
-@ProcessDecorator("Shell")
+@process_decorator("Shell")
 class Shell(Process):
     """
     Shell process.

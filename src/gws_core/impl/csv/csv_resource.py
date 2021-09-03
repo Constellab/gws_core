@@ -12,10 +12,10 @@ from pandas import DataFrame
 
 from ...core.exception.exceptions import BadRequestException
 from ...resource.resource import Resource, SerializedResourceData
-from ...resource.resource_decorator import ResourceDecorator
+from ...resource.resource_decorator import resource_decorator
 
 
-@ResourceDecorator("CSVTable")
+@resource_decorator("CSVTable")
 class CSVTable(Resource):
 
     table: DataFrame

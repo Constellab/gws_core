@@ -12,7 +12,7 @@ from ..config.config_params import ConfigParams
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..model.typing_manager import TypingManager
-from ..model.typing_register_decorator import TypingDecorator
+from ..model.typing_register_decorator import typing_registrator
 from ..process.process_io import ProcessInputs, ProcessOutputs
 from ..processable.processable_model import ProcessableModel
 from ..resource.resource_data import ResourceData
@@ -20,7 +20,7 @@ from ..resource.resource_model import ResourceModel
 from .process import Process
 
 
-@TypingDecorator(unique_name="Process", object_type="GWS_CORE", hide=True)
+@typing_registrator(unique_name="Process", object_type="GWS_CORE", hide=True)
 class ProcessModel(ProcessableModel):
     """
     Process class.

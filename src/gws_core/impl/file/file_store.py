@@ -10,7 +10,7 @@ from typing import Union
 
 from ...core.exception.exceptions import BadRequestException
 from ...core.model.model import Model
-from ...model.typing_register_decorator import TypingDecorator
+from ...model.typing_register_decorator import typing_registrator
 from .file import File
 
 # ####################################################################
@@ -20,7 +20,7 @@ from .file import File
 # ####################################################################
 
 
-@TypingDecorator(unique_name="FileStore", object_type="GWS_CORE", hide=True)
+@typing_registrator(unique_name="FileStore", object_type="GWS_CORE", hide=True)
 class FileStore(Model):
     """
     FileStore class

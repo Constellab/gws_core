@@ -6,13 +6,13 @@ from gws_core.resource.resource import SerializedResourceData
 from peewee import CharField
 
 from ...model.typing_manager import TypingManager
-from ...model.typing_register_decorator import TypingDecorator
+from ...model.typing_register_decorator import typing_registrator
 from ...resource.resource_model import ResourceModel
 from .file import File
 from .file_helper import FileHelper
 
 
-@TypingDecorator(unique_name="FileResource", object_type="GWS_CORE", hide=True)
+@typing_registrator(unique_name="FileResource", object_type="GWS_CORE", hide=True)
 class FileResource(ResourceModel):
     file_store_uri = CharField(null=True, index=True)
     path = CharField(null=True, index=True, unique=True)

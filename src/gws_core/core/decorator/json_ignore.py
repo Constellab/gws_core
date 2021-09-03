@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     from ..model.model import Model
 
 
-def JsonIgnore(ignore_fields: List[str]) -> Callable:
+def json_ignore(ignore_fields: List[str]) -> Callable:
     """Class decorator to define a list of field that will be ignore during the to_json method
     This is manage by the model class. It must be a model and the to_json call the super to_json()
 

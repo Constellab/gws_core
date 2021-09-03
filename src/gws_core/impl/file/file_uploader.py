@@ -12,7 +12,7 @@ from typing import Type
 from ...config.config_params import ConfigParams
 from ...core.utils.utils import Utils
 from ...process.process import Process
-from ...process.process_decorator import ProcessDecorator
+from ...process.process_decorator import process_decorator
 from ...process.process_io import ProcessInputs, ProcessOutputs
 from ...resource.resource import Resource
 from .file import File
@@ -25,7 +25,7 @@ from .local_file_store import LocalFileStore
 # ####################################################################
 
 
-@ProcessDecorator("FileImporter")
+@process_decorator("FileImporter")
 class FileImporter(Process):
     input_specs = {'file': File}
     output_specs = {"data": Resource}
@@ -56,7 +56,7 @@ class FileImporter(Process):
 # Exporter class
 #
 # ####################################################################
-@ProcessDecorator("FileExporter")
+@process_decorator("FileExporter")
 class FileExporter(Process):
     """
     File exporter. The file is writen in a file store
@@ -104,7 +104,7 @@ class FileExporter(Process):
 # ####################################################################
 
 
-@ProcessDecorator("FileLoader")
+@process_decorator("FileLoader")
 class FileLoader(Process):
     input_specs = {}
     output_specs = {"data": Resource}
@@ -144,7 +144,7 @@ class FileLoader(Process):
 # ####################################################################
 
 
-@ProcessDecorator("FileDumper")
+@process_decorator("FileDumper")
 class FileDumper(Process):
     """
     Generic data exporter

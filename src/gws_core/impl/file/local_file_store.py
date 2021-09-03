@@ -10,7 +10,7 @@ from tempfile import SpooledTemporaryFile
 from time import time
 from typing import List, Union
 
-from ...core.decorator.transaction import Transaction
+from ...core.decorator.transaction import transaction
 from ...core.exception.exceptions import BadRequestException
 from ...core.utils.settings import Settings
 from .file import File
@@ -204,7 +204,7 @@ class LocalFileStore(FileStore):
     # -- R --
 
     @classmethod
-    @Transaction()
+    @transaction()
     def remove_all_files(cls):
         """
         Remove all the files from the FileStore

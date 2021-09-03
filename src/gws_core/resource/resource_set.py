@@ -5,13 +5,14 @@
 
 from typing import Dict
 
-from ..core.decorator.transaction import Transaction
+from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..model.typing_manager import TypingManager
 from ..resource.resource import Resource
-from ..resource.resource_decorator import ResourceDecorator
+from ..resource.resource_decorator import resource_decorator
 
-@ResourceDecorator("ResourceSet")
+
+@resource_decorator("ResourceSet")
 class ResourceSet(Resource):
     """
     ResourceSet class
@@ -70,7 +71,7 @@ class ResourceSet(Resource):
         return self.set.__next__()
 
     # -- R --
-    @Transaction()
+    @transaction()
     def remove(self) -> bool:
         for resource in self._set.values():
             resource.remove()
@@ -84,7 +85,7 @@ class ResourceSet(Resource):
                 f"The value must be an instance of {self._resource_types}. The actual value is a {type(val)}.")
         self.set[key] = val
 
-    @Transaction()
+    @transaction()
     def save(self, *args, **kwrags) -> 'ResourceSet':
         self.data["set"] = {}
         for key, resource in self._set.items():

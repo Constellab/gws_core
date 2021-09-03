@@ -9,11 +9,11 @@ from typing import Any, Type
 from ...core.exception.exceptions import BadRequestException
 from ...impl.file.file_helper import FileHelper
 from ...resource.resource import Resource, SerializedResourceData
-from ...resource.resource_decorator import ResourceDecorator
+from ...resource.resource_decorator import resource_decorator
 from ...resource.resource_set import ResourceSet
 
 
-@ResourceDecorator("File")
+@resource_decorator("File")
 class File(Resource):
     """
     File class

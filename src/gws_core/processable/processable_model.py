@@ -10,12 +10,12 @@ import inspect
 from abc import abstractmethod
 from typing import TYPE_CHECKING, List, Type, Union, final
 
-from gws_core.core.decorator.json_ignore import JsonIgnore
+from gws_core.core.decorator.json_ignore import json_ignore
 from peewee import CharField, ForeignKeyField, IntegerField
 from starlette_context import context
 
 from ..config.config import Config
-from ..core.decorator.transaction import Transaction
+from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from ..protocol.protocol_model import ProtocolModel
 
 
-@JsonIgnore(["parent_protocol_id"])
+@json_ignore(["parent_protocol_id"])
 class ProcessableModel(Viewable):
     """Base abstract class for Process and Protocol
 
@@ -76,7 +76,7 @@ class ProcessableModel(Viewable):
         self._output = Output(self)
 
     # -- A --
-    @Transaction()
+    @transaction()
     def archive(self, archive: bool, archive_resources=True) -> ProcessableModel:
         """
         Archive the process
@@ -173,7 +173,7 @@ class ProcessableModel(Viewable):
             raise BadRequestException(f"The input port '{name}' is not found")
         return self.input._ports[name]
 
-    @Transaction()
+    @transaction()
     def delete_instance(self, *args, **kwargs):
         """Override delete instance to delete all the sub processes
 
@@ -249,7 +249,7 @@ class ProcessableModel(Viewable):
             Q.append(o.resource)
         return Q
 
-    @Transaction()
+    @transaction()
     def reset(self) -> 'ProcessableModel':
         """
         Reset the process

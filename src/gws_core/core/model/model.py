@@ -19,8 +19,8 @@ from peewee import ModelSelect
 from playhouse.mysql_ext import Match
 
 from ..db.db_manager import DbManager
-from ..decorator.json_ignore import JsonIgnore
-from ..decorator.transaction import Transaction
+from ..decorator.json_ignore import json_ignore
+from ..decorator.transaction import transaction
 from ..exception.exceptions import BadRequestException, NotFoundException
 from ..exception.gws_exceptions import GWSException
 from ..model.json_field import JSONField
@@ -40,7 +40,7 @@ def format_table_name(model: 'Model'):
     return model._table_name.lower()
 
 
-@JsonIgnore(["id", "hash"])
+@json_ignore(["id", "hash"])
 class Model(Base, PeeweeModel):
     """
     Model class
@@ -385,7 +385,7 @@ class Model(Base, PeeweeModel):
         return self
 
     @classmethod
-    @Transaction()
+    @transaction()
     def save_all(cls, model_list: List['Model'] = None) -> List['Model']:
         """
         Automically and safely save a list of models in the database. If an error occurs

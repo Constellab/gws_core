@@ -7,8 +7,8 @@ from ..user.user_group import UserGroup
 from .process import Process
 
 
-def ProcessDecorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER,
-                     human_name: str = "", short_description: str = "", hide: bool = False) -> Callable:
+def process_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER,
+                      human_name: str = "", short_description: str = "", hide: bool = False) -> Callable:
     """ Decorator to be placed on all the processes. A process not decorated will not be runnable.
     It define static information about the process
 

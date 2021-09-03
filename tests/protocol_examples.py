@@ -5,15 +5,15 @@
 import time
 from typing import Optional
 
-from gws_core import (ConfigParams, Process, ProcessableSpec, ProcessDecorator,
+from gws_core import (ConfigParams, Process, ProcessableSpec, process_decorator,
                       ProcessInputs, ProcessOutputs, Protocol,
-                      ProtocolDecorator, RobotCreate, RobotEat, RobotFood,
+                      protocol_decorator, RobotCreate, RobotEat, RobotFood,
                       RobotMove, RobotSugarCreate, RobotWait)
 
 # File for Tests containing examples of protocols
 
 
-@ProtocolDecorator("TestSimpleProtocol")
+@protocol_decorator("TestSimpleProtocol")
 class TestSimpleProtocol(Protocol):
     def configure_protocol(self, config_params: ConfigParams) -> None:
         p0: ProcessableSpec = self.add_process(RobotCreate, 'p0')
@@ -34,7 +34,7 @@ class TestSimpleProtocol(Protocol):
         ])
 
 
-@ProtocolDecorator("TestSubProtocol")
+@protocol_decorator("TestSubProtocol")
 class TestSubProtocol(Protocol):
     def configure_protocol(self, config_params: ConfigParams) -> None:
         p1: ProcessableSpec = self.add_process(RobotMove, 'p1')
@@ -54,7 +54,7 @@ class TestSubProtocol(Protocol):
         self.add_outerface('robot',  p2, 'robot'),
 
 
-@ProtocolDecorator("TestNestedProtocol")
+@protocol_decorator("TestNestedProtocol")
 class TestNestedProtocol(Protocol):
     def configure_protocol(self, config_params: ConfigParams) -> None:
         p0: ProcessableSpec = self.add_process(RobotCreate, 'p0')
@@ -67,8 +67,8 @@ class TestNestedProtocol(Protocol):
         ])
 
 
-@ProcessDecorator(unique_name="RobotWaitfood", human_name="Wait food",
-                  short_description="Wait food")
+@process_decorator(unique_name="RobotWaitfood", human_name="Wait food",
+                   short_description="Wait food")
 class RobotWaitfood(Process):
     """Wait 3
     """
@@ -82,8 +82,8 @@ class RobotWaitfood(Process):
         return {'food': inputs['food']}
 
 
-@ProcessDecorator(unique_name="RobotEmptyfood", human_name="Empty food",
-                  short_description="Empty food")
+@process_decorator(unique_name="RobotEmptyfood", human_name="Empty food",
+                   short_description="Empty food")
 class RobotEmptyfood(Process):
     """Wait 3
     """
@@ -95,7 +95,7 @@ class RobotEmptyfood(Process):
         return {}
 
 
-@ProtocolDecorator("TestRobotwithSugarProtocol")
+@protocol_decorator("TestRobotwithSugarProtocol")
 class TestRobotwithSugarProtocol(Protocol):
     """This test protocol test that the Eat process works with 2 entries.
     It also test that the eat process will wait for the Food input even if it is optional

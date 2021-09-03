@@ -1,10 +1,10 @@
 from typing import List
 
 from ...resource.resource import Resource, SerializedResourceData
-from ...resource.resource_decorator import ResourceDecorator
+from ...resource.resource_decorator import resource_decorator
 
 
-@ResourceDecorator("Robot")
+@resource_decorator("Robot")
 class Robot(Resource):
 
     age: int
@@ -44,7 +44,7 @@ class Robot(Resource):
             self.position[0] += moving_step
 
 
-@ResourceDecorator("RobotAddOn")
+@resource_decorator("RobotAddOn")
 class RobotAddOn(Resource):
     def serialize_data(self) -> SerializedResourceData:
         return {}
@@ -53,7 +53,7 @@ class RobotAddOn(Resource):
         pass
 
 
-@ResourceDecorator("MegaRobot")
+@resource_decorator("MegaRobot")
 class MegaRobot(Robot):
 
     @classmethod
@@ -65,7 +65,7 @@ class MegaRobot(Robot):
         return mega
 
 
-@ResourceDecorator("RobotFood")
+@resource_decorator("RobotFood")
 class RobotFood(Resource):
 
     multiplicator: int

@@ -3,11 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from ..model.typing_register_decorator import TypingDecorator
+from ..model.typing_register_decorator import typing_registrator
 from ..model.viewable import Viewable
 
 
-@TypingDecorator(unique_name="Study", object_type="GWS_CORE", hide=True)
+@typing_registrator(unique_name="Study", object_type="GWS_CORE", hide=True)
 class Study(Viewable):
     """
     Study class.

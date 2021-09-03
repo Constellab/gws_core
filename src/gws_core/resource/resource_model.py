@@ -12,7 +12,7 @@ from peewee import CharField, ModelSelect
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..model.typing_manager import TypingManager
-from ..model.typing_register_decorator import TypingDecorator
+from ..model.typing_register_decorator import typing_registrator
 from ..model.viewable import Viewable
 from ..resource.resource import Resource, SerializedResourceData
 from .experiment_resource import ExperimentResource
@@ -29,7 +29,7 @@ ResourceType = TypeVar('ResourceType', bound=Resource)
 
 
 # Use the typing decorator to avoid circular dependency
-@TypingDecorator(unique_name="ResourceModel", object_type="GWS_CORE", hide=True)
+@typing_registrator(unique_name="ResourceModel", object_type="GWS_CORE", hide=True)
 class ResourceModel(Viewable, Generic[ResourceType]):
     """
     ResourceModel class.

@@ -6,7 +6,7 @@ from ..model.typing_register_decorator import register_typing_class
 from ..resource.resource import Resource
 
 
-def ResourceDecorator(unique_name: str, human_name: str = "", short_description: str = "", hide: bool = False) -> Callable:
+def resource_decorator(unique_name: str, human_name: str = "", short_description: str = "", hide: bool = False) -> Callable:
     """ Decorator to be placed on all the resourcees. A resource not decorated will not be runnable.
     It define static information about the resource
 

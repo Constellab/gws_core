@@ -9,7 +9,7 @@ from typing import Dict, List, Tuple, Type, Union
 from peewee import DatabaseProxy
 
 from ..core.classes.paginator import Paginator
-from ..core.decorator.transaction import Transaction
+from ..core.decorator.transaction import transaction
 from ..core.dto.rendering_dto import RenderingDTO
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -216,7 +216,7 @@ class ModelService(BaseService):
     # -- S --
 
     @classmethod
-    @Transaction()
+    @transaction()
     def save_all(cls, model_list: List[Model] = None) -> List[Model]:
         """
         Atomically and safely save a list of models in the database. If an error occurs

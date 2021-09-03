@@ -7,13 +7,13 @@ import asyncio
 import json
 from typing import Dict, List, Type, Union
 
-from ..core.decorator.transaction import Transaction
+from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..io.connector import Connector
 from ..io.io import Input, Output
 from ..io.ioface import Interface, Outerface
 from ..io.port import InPort, OutPort, Port
-from ..model.typing_register_decorator import TypingDecorator
+from ..model.typing_register_decorator import typing_registrator
 from ..processable.processable_model import ProcessableModel
 from ..processable.sub_processable_factory import (SubProcessableFactory,
                                                    SubProcessFactoryReadFromDb)
@@ -23,7 +23,7 @@ from ..user.activity import Activity
 from ..user.user import User
 
 
-@TypingDecorator(unique_name="Protocol", object_type="GWS_CORE", hide=True)
+@typing_registrator(unique_name="Protocol", object_type="GWS_CORE", hide=True)
 class ProtocolModel(ProcessableModel):
     """
     Protocol class.
@@ -99,7 +99,7 @@ class ProtocolModel(ProcessableModel):
         processable_model.instance_name = instance_name
         self._processes[instance_name] = processable_model
 
-    @Transaction()
+    @transaction()
     def save_full(self) -> 'ProtocolModel':
         """Save the protocol, its progress bar, its config and all its processes
         """
@@ -148,7 +148,7 @@ class ProtocolModel(ProcessableModel):
             raise BadRequestException("Duplicated connector")
         self._connectors.append(connector)
 
-    @Transaction()
+    @transaction()
     def archive(self, archive: bool, archive_resources=True) -> 'ProtocolModel':
         """
         Archive the protocol
@@ -456,7 +456,7 @@ class ProtocolModel(ProcessableModel):
 
     # -- R --
 
-    @Transaction()
+    @transaction()
     def reset(self) -> 'ProtocolModel':
         """
         Reset the protocol
@@ -540,7 +540,7 @@ class ProtocolModel(ProcessableModel):
         self.save(update_graph=True)
 
     # -- S --
-    @Transaction()
+    @transaction()
     def save(self, *args, update_graph=False, **kwargs) -> 'ProtocolModel':
         if not self.is_saved():
             Activity.add(
@@ -627,7 +627,7 @@ class ProtocolModel(ProcessableModel):
         self.processes[instance_name].delete_instance()
         del self.processes[instance_name]
 
-    @Transaction()
+    @transaction()
     def delete_instance(self, *args, **kwargs):
         """Override delete instance to delete all the sub processes
 

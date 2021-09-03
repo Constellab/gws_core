@@ -3,10 +3,10 @@ from typing import Any
 
 from ...core.model.model import Model
 from ...resource.resource import Resource, SerializedResourceData
-from ...resource.resource_decorator import ResourceDecorator
+from ...resource.resource_decorator import resource_decorator
 
 
-@ResourceDecorator("JSONDict")
+@resource_decorator("JSONDict")
 class JSONDict(Resource):
 
     # -- A --
