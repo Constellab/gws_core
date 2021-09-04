@@ -18,7 +18,7 @@ class RobotService(BaseService):
         protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_type(
             protocol_type=RobotSimpleTravel)
         protocol.save_full()
-        experiment = ExperimentService.create_experiment_from_protocol(protocol=protocol,
+        experiment = ExperimentService.create_experiment_from_protocol_model(protocol_model=protocol,
                                                                        title="The journey of Astro.",
                                                                        description="This is the journey of Astro.")
         QueueService.add_experiment_to_queue(experiment_uri=experiment.uri)
@@ -27,8 +27,8 @@ class RobotService(BaseService):
     @classmethod
     def run_robot_super_travel(cls):
         protocol: ProtocolModel = cls.create_robot_world_travel()
-        experiment = ExperimentService.create_experiment_from_protocol(
-            protocol=protocol, title="The super journey of Astro.", description="This is the super journey of Astro.")
+        experiment = ExperimentService.create_experiment_from_protocol_model(
+            protocol_model=protocol, title="The super journey of Astro.", description="This is the super journey of Astro.")
         QueueService.add_experiment_to_queue(experiment_uri=experiment.uri)
         return experiment
 

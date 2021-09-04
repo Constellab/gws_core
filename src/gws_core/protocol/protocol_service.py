@@ -11,6 +11,7 @@ from gws_core.model.typing_manager import TypingManager
 from gws_core.processable.processable_model import ProcessableModel
 from peewee import ModelSelect
 
+from ..core.exception.exceptions import BadRequestException
 from ..core.classes.paginator import Paginator
 from ..core.dto.typed_tree_dto import TypedTree
 from ..core.service.base_service import BaseService
@@ -78,60 +79,62 @@ class ProtocolService(BaseService):
         return protocol
 
     @classmethod
-    def create_protocol_from_process(cls, process: ProcessModel) -> ProtocolModel:
+    def create_protocol_from_process_model(cls, process_model: ProcessModel) -> ProtocolModel:
+        if not isinstance(process_model, ProcessModel):
+            raise BadRequestException("A PocessModel is required")
         protocol: ProtocolModel = ProtocolService.create_protocol_from_data(
-            processes={process.instance_name: process}, connectors=[], interfaces={}, outerfaces={})
+            processes={process_model.instance_name: process_model}, connectors=[], interfaces={}, outerfaces={})
 
         protocol.save_full()
         return protocol
 
     @classmethod
-    def update_protocol_graph(cls, protocol: ProtocolModel, graph: dict) -> ProtocolModel:
+    def update_protocol_graph(cls, protocol_model: ProtocolModel, graph: dict) -> ProtocolModel:
         new_protocol: ProtocolModel = cls._update_protocol_graph_recur(
-            protocol, graph)
+            protocol_model, graph)
 
         new_protocol.save_full()
         return new_protocol
 
     @classmethod
-    def _update_protocol_graph_recur(cls, protocol: ProtocolModel, graph: dict) -> ProtocolModel:
+    def _update_protocol_graph_recur(cls, protocol_model: ProtocolModel, graph: dict) -> ProtocolModel:
 
-        for process in protocol.processes.values():
+        for process in protocol_model.processes.values():
             # disconnect the port to prevent connection errors later
             process.disconnect()
 
-        cls.remove_orphan_process(protocol=protocol, nodes=graph["nodes"])
+        cls.remove_orphan_process(protocol_model=protocol_model, nodes=graph["nodes"])
 
-        protocol.build_from_graph(
+        protocol_model.build_from_graph(
             graph=graph, sub_processable_factory=SubProcessFactoryUpdate())
 
-        for key, processable in protocol.processes.items():
+        for key, processable in protocol_model.processes.items():
 
             # If this is a sub protocol and it's graph is defined
             if isinstance(processable, ProtocolModel) and 'graph' in graph["nodes"][key]['data']:
                 cls._update_protocol_graph_recur(
-                    protocol=processable, graph=graph["nodes"][key]["data"]["graph"])
+                    protocol_model=processable, graph=graph["nodes"][key]["data"]["graph"])
 
         # Init the connector afterward because its needs the child to init correctly
-        protocol.init_connectors_from_graph(graph["links"])
+        protocol_model.init_connectors_from_graph(graph["links"])
 
-        return protocol
+        return protocol_model
 
     @classmethod
-    def remove_orphan_process(cls, protocol: ProtocolModel, nodes: dict) -> None:
+    def remove_orphan_process(cls, protocol_model: ProtocolModel, nodes: dict) -> None:
         """Method to remove the removed process when saving a new protocols
 
         :param nodes: [description]
         :type nodes: Dict
         """
         deleted_keys = []
-        for key, process in protocol.processes.items():
+        for key, process in protocol_model.processes.items():
             # if the process is not in the Dict or its type has changed, remove it
             if not key in nodes or process.processable_typing_name != nodes[key].get("processable_typing_name"):
                 deleted_keys.append(key)
 
         for key in deleted_keys:
-            protocol.delete_process(key)
+            protocol_model.delete_process(key)
 
     @classmethod
     @transaction()

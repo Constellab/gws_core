@@ -5,7 +5,7 @@
 
 from gws_core import (BaseTestCase, ConfigParams, Experiment,
                       ExperimentService, GTest, JSONDict, ProcessInputs,
-                      ProcessModel, ProcessService, Shell, process_decorator)
+                      ProcessModel, ProcessService, Shell, Resource, process_decorator)
 from gws_core.process.process_io import ProcessOutputs
 
 
@@ -31,17 +31,16 @@ class TestShell(BaseTestCase):
     async def test_shell(self):
         GTest.print("Shell")
 
-        proc: ProcessModel = ProcessService.create_process_from_type(
+        proc_mdl: ProcessModel = ProcessService.create_process_from_type(
             process_type=Echo)
-        proc.config.set_param("name", "John Doe")
+        proc_mdl.config.set_param("name", "John Doe")
 
-        experiment: Experiment = ExperimentService.create_experiment_from_process(
-            process=proc)
+        experiment: Experiment = ExperimentService.create_experiment_from_process_model(
+            process_model=proc_mdl)
 
         experiment = await ExperimentService.run_experiment(experiment=experiment, user=GTest.user)
 
         # refresh the process
-        proc = experiment.processes[0]
-
-        res: Resource = proc.output.get_resource_model('stdout').get_resource()
+        proc_mdl = experiment.processes[0]
+        res: Resource = proc_mdl.output.get_resource_model('stdout').get_resource()
         self.assertEqual(res.data["out"], "John Doe")

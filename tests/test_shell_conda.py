@@ -39,12 +39,12 @@ class TestProcess(BaseTestCase):
 
     async def test_conda(self):
         GTest.print("Conda")
-        proc: ProcessModel = ProcessService.create_process_from_type(
+        proc_mdl: ProcessModel = ProcessService.create_process_from_type(
             process_type=CondaEnvTester)
         self.assertFalse(CondaEnvTester.is_installed())
 
-        experiment: Experiment = ExperimentService.create_experiment_from_process(
-            process=proc)
+        experiment: Experiment = ExperimentService.create_experiment_from_process_model(
+            process_model=proc_mdl)
         experiment = await ExperimentService.run_experiment(experiment=experiment, user=GTest.user)
 
         # refresh the process

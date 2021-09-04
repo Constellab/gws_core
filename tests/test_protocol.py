@@ -38,8 +38,8 @@ class TestProtocol(BaseTestCase):
         Q = ProtocolModel.select()
         self.assertEqual(len(Q), count+1)
 
-        experiment: Experiment = ExperimentService.create_experiment_from_protocol(
-            protocol=proto)
+        experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
+            protocol_model=proto)
 
         experiment = await ExperimentService.run_experiment(
             experiment=experiment, user=GTest.user)
@@ -72,8 +72,8 @@ class TestProtocol(BaseTestCase):
         p2 = mini_proto.get_process("p2")
         self.assertTrue(mini_proto.is_outerfaced_with(p2))
 
-        experiment: Experiment = ExperimentService.create_experiment_from_protocol(
-            protocol=super_proto)
+        experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
+            protocol_model=super_proto)
 
         self.assertEqual(ProtocolModel.select().count(), count+2)
 
@@ -210,8 +210,8 @@ class TestProtocol(BaseTestCase):
         """
         protocol: ProtocolModel = ProtocolService.create_protocol_from_type(TestRobotwithSugarProtocol)
 
-        experiment: Experiment = ExperimentService.create_experiment_from_protocol(
-            protocol=protocol)
+        experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
+            protocol_model=protocol)
 
         experiment = await ExperimentService.run_experiment(
             experiment=experiment, user=GTest.user)

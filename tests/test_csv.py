@@ -74,8 +74,8 @@ class TestCSV(BaseTestCase):
 
         proto: ProtocolModel = ProtocolService.create_protocol_from_type(CSVProtocol)
 
-        experiment: Experiment = ExperimentService.create_experiment_from_protocol(
-            protocol=proto)
+        experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
+            protocol_model=proto)
 
         if os.path.exists(o_file_path):
             os.unlink(o_file_path)

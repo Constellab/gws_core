@@ -51,8 +51,8 @@ class TestProcess(BaseTestCase):
 
         p2.config.set_param('food_weight', '5.6')
 
-        experiment: Experiment = ExperimentService.create_experiment_from_protocol(
-            protocol=proto)
+        experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
+            protocol_model=proto)
 
         self.assertEqual(experiment.created_by, GTest.user)
         self.assertEqual(experiment.study, GTest.study)
@@ -106,7 +106,7 @@ class TestProcess(BaseTestCase):
 
         p_error: ProcessModel = ProcessableFactory.create_process_model_from_type(process_type=ErrorProcess)
 
-        experiment: Experiment = ExperimentService.create_experiment_from_process(p_error)
+        experiment: Experiment = ExperimentService.create_experiment_from_process_model(p_error)
 
         with self.assertRaises(ProcessableRunException):
             await ExperimentService.run_experiment(

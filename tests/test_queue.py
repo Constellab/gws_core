@@ -35,7 +35,7 @@ class TestQueue(BaseTestCase):
         self.assertEqual(Queue.length(), 0)
 
         proto1 = RobotService.create_robot_world_travel()
-        experiment1 = ExperimentService.create_experiment_from_protocol(protocol=proto1)
+        experiment1 = ExperimentService.create_experiment_from_protocol_model(protocol_model=proto1)
         job1 = Job(user=GTest.user, experiment=experiment1)
         QueueService.add_job(job1)
 
@@ -43,7 +43,7 @@ class TestQueue(BaseTestCase):
         self.assertEqual(Queue.length(), 1)
 
         proto2 = RobotService.create_robot_world_travel()
-        experiment2 = ExperimentService.create_experiment_from_protocol(protocol=proto2)
+        experiment2 = ExperimentService.create_experiment_from_protocol_model(protocol_model=proto2)
         job2 = Job(user=GTest.user, experiment=experiment2)
         QueueService.add_job(job2)
 
@@ -55,7 +55,7 @@ class TestQueue(BaseTestCase):
         self.assertEqual(Queue.length(), 1)
 
         proto3 = RobotService.create_robot_world_travel()
-        experiment3 = ExperimentService.create_experiment_from_protocol(protocol=proto3)
+        experiment3 = ExperimentService.create_experiment_from_protocol_model(protocol_model=proto3)
         job3 = Job(user=GTest.user, experiment=experiment3)
         QueueService.add_job(job3)
         self.assertEqual(Queue.next(), job2)

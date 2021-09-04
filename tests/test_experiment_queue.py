@@ -20,7 +20,7 @@ class TestExperiment(BaseTestCase):
     async def test_service(self):
         GTest.print("ExperimentService")
         proto = RobotService.create_robot_world_travel()
-        experiment = ExperimentService.create_experiment_from_protocol(protocol=proto)
+        experiment = ExperimentService.create_experiment_from_protocol_model(protocol_model=proto)
         c = Experiment.select().count()
         self.assertEqual(c, 1)
 

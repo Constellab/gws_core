@@ -38,8 +38,8 @@ class TestExperiment(BaseTestCase):
         print("Create experiment 1")
         proto1: ProtocolModel = RobotService.create_robot_world_travel()
 
-        experiment1: Experiment = ExperimentService.create_experiment_from_protocol(
-            protocol=proto1, title="My exp title", description="This is my new experiment")
+        experiment1: Experiment = ExperimentService.create_experiment_from_protocol_model(
+            protocol_model=proto1, title="My exp title", description="This is my new experiment")
 
         #self.assertEqual(e1.processes.count(), 18)
         #self.assertEqual(Process.select().count(), 18)
@@ -103,7 +103,7 @@ class TestExperiment(BaseTestCase):
         # -------------------------------
         print("Create experiment_3")
         proto3 = RobotService.create_robot_world_travel()
-        experiment3 = ExperimentService.create_experiment_from_protocol(protocol=proto3)
+        experiment3 = ExperimentService.create_experiment_from_protocol_model(protocol_model=proto3)
 
         print("Run experiment_3 through cli ...")
         ExperimentService.run_through_cli(

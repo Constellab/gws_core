@@ -35,21 +35,23 @@ class ExperimentService(BaseService):
 
     @classmethod
     def create_empty_experiment(cls, experimentDTO: ExperimentDTO) -> Experiment:
-        return cls.create_experiment_from_protocol(protocol=ProcessableFactory.create_protocol_empty(), title=experimentDTO.title,
+        return cls.create_experiment_from_protocol_model(protocol_model=ProcessableFactory.create_protocol_empty(), title=experimentDTO.title,
                                                    description=experimentDTO.description)
 
     @classmethod
-    def create_experiment_from_process(
-            cls, process: ProcessModel, title: str = "", description: str = "") -> Experiment:
-        proto = ProtocolService.create_protocol_from_process(process=process)
-
-        return cls.create_experiment_from_protocol(protocol=proto, title=title, description=description)
+    def create_experiment_from_process_model(
+            cls, process_model: ProcessModel, title: str = "", description: str = "") -> Experiment:
+        if not isinstance(process_model, ProcessModel):
+            raise BadRequestException("An instance of ProcessModel is required")
+        proto = ProtocolService.create_protocol_from_process_model(process_model=process_model)
+        return cls.create_experiment_from_protocol_model(protocol_model=proto, title=title, description=description)
 
     @classmethod
-    def create_experiment_from_protocol(
-            cls, protocol: ProtocolModel, title: str = "", description: str = "") -> Experiment:
+    def create_experiment_from_protocol_model(
+            cls, protocol_model: ProtocolModel, title: str = "", description: str = "") -> Experiment:
+        if not isinstance(protocol_model, ProtocolModel):
+            raise BadRequestException("An instance of ProtocolModel is required")
         experiment = Experiment()
-
         experiment.set_title(title)
         experiment.set_description(description)
         experiment.study = Study.get_default_instance()
@@ -57,9 +59,9 @@ class ExperimentService(BaseService):
 
         experiment = experiment.save()
 
-        # Set the experiment for the protocol and childs and save them
-        protocol.set_experiment(experiment)
-        protocol.save_full()
+        # Set the experiment for the protocol_model and childs and save them
+        protocol_model.set_experiment(experiment)
+        protocol_model.save_full()
         return experiment
 
     # -- F --
@@ -174,7 +176,7 @@ class ExperimentService(BaseService):
         experiment.check_is_updatable()
 
         if experiment_DTO.graph:
-            ProtocolService.update_protocol_graph(protocol=experiment.protocol, graph=experiment_DTO.graph)
+            ProtocolService.update_protocol_graph(protocol_model=experiment.protocol, graph=experiment_DTO.graph)
 
         if experiment_DTO.title:
             experiment.set_title(experiment_DTO.title)
