@@ -1,3 +1,8 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
+
 from ...process.process_decorator import process_decorator
 from ..file.file_resource import FileResource
 from ..file.file_uploader import (FileDumper, FileExporter, FileImporter,

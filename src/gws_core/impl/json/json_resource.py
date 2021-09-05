@@ -1,17 +1,20 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
+
 import json
 from typing import Any
+from copy import deepcopy
 
 from ...core.model.model import Model
 from ...resource.resource import Resource, SerializedResourceData
 from ...resource.resource_decorator import resource_decorator
 
-
 @resource_decorator("JSONDict")
 class JSONDict(Resource):
 
-    # -- A --
-
-    data: dict
+    data: dict = None
 
     def __init__(self, *args, **kwargs):
         self.data = {}
@@ -21,7 +24,9 @@ class JSONDict(Resource):
         return self.data
 
     def deserialize_data(self, data: SerializedResourceData) -> None:
-        self.data = data
+        self.data = deepcopy(data)
+
+    # -- E --
 
     def export(self, file_path: str, file_format: str = ".json", prettify: bool = False):
         """
@@ -31,7 +36,7 @@ class JSONDict(Resource):
         :type file_path: File
         """
 
-        with open(file_path, "w") as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             if prettify:
                 json.dump(self.data, f, indent=4)
             else:
@@ -58,7 +63,7 @@ class JSONDict(Resource):
         :rtype any
         """
 
-        with open(file_path, "r") as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             json_data = cls()
             json_data.data = json.load(f)
 
@@ -66,34 +71,9 @@ class JSONDict(Resource):
 
     # -- J --
 
-    @classmethod
-    def join(cls, *args, **params) -> Model:
-        """
-        Join several resources
-
-        :param params: Joining parameters
-        :type params: dict
-        """
-
-        # @ToDo: ensure that this method is only called by an Joiner
-
-        pass
-
     # -- K --
 
     # -- S --
-
-    def select(self, **params) -> Model:
-        """
-        Select a part of the resource
-
-        :param params: Extraction parameters
-        :type params: dict
-        """
-
-        # @ToDo: ensure that this method is only called by an Selector
-
-        pass
 
     def __setitem__(self, key, val):
         self.data[key] = val

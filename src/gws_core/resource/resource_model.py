@@ -7,7 +7,7 @@ from __future__ import annotations
 import copy
 from typing import TYPE_CHECKING, Generic, Optional, Type, TypeVar, final
 
-from peewee import CharField, ModelSelect
+from peewee import CharField, ModelSelect, Field
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -27,7 +27,6 @@ if TYPE_CHECKING:
 CONST_RESOURCE_MODEL_TYPING_NAME = "GWS_CORE.gws_core.ResourceModel"
 
 ResourceType = TypeVar('ResourceType', bound=Resource)
-
 
 # Use the typing decorator to avoid circular dependency
 @typing_registrator(unique_name="ResourceModel", object_type="GWS_CORE", hide=True)
@@ -186,17 +185,21 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         """
         resource_type: Type[ResourceType] = TypingManager.get_type_from_name(self.resource_typing_name)
         resource: ResourceType = resource_type(binary_store=self.get_kv_store_with_default())
+        
+        self.send_fields_to_resource(resource, new_instance)  #synchronize the resource fields with the model fields
+        return resource
 
-        # Set the data on the resource
+    def send_fields_to_resource(self, resource, new_instance):
         data: dict
         if new_instance:
             data = copy.deepcopy(self.data)
         else:
             data = self.data
         resource.deserialize_data(data)
-        return resource
 
-    # -- S --
+    def receive_fields_from_resource(self, resource):
+        serialized_data: SerializedResourceData = self._serialize_resource_data(resource)
+        self.data = serialized_data
 
     def delete_instance(self, *args, **kwargs):
         kv_store: Optional[KVStore] = self.get_kv_store()
@@ -226,19 +229,27 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         :return: [description]
         :rtype: [type]
         """
-        resource_model: ResourceModel = ResourceModel()
+        # if resource._resource_model_type:
+        #     if isinstance(resource._resource_model_type, str):
+        #         resource_model_type: Type[ResourceType] = TypingManager.get_type_from_name(resource._resource_model_type)
+        #     elif isinstance(resource._resource_model_type, type):
+        #         resource_model_type = resource._resource_model_type
+        #     else:
+        #         raise BadRequestException("Invalid model_type type. A string and a type is required")
+        #     resource_model: ResourceModel = resource_model_type()
+        # else:
+        #     resource_model: ResourceModel = ResourceModel()
+
+        resource_model_type = resource.get_resource_model_type()
+        resource_model: ResourceModel = resource_model_type()
         resource_model.resource_typing_name = resource._typing_name
 
-        serialized_data: SerializedResourceData = cls._serialize_resource_data(resource)
-
-        # set the data
-        resource_model.data = serialized_data
+        #synchronize the model fields with the resource fields
+        resource_model.receive_fields_from_resource(resource)
 
         # set the kv store
         kv_store: KVStore = resource.binary_store
-
         if kv_store is not None:
-
             if not isinstance(kv_store, KVStore):
                 raise BadRequestException(
                     f"The binary_store property of the resource {resource.full_classname()} is not an instance of KVStore")

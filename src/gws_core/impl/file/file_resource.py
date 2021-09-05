@@ -11,9 +11,9 @@ from ...impl.file.file_helper import FileHelper
 from ...resource.resource import Resource, SerializedResourceData
 from ...resource.resource_decorator import resource_decorator
 from ...resource.resource_set import ResourceSet
+from .file_resource_model import FileResourceModel
 
-
-@resource_decorator("File")
+@resource_decorator("File", model=FileResourceModel)
 class FileResource(Resource):
     """
     File class
@@ -22,23 +22,11 @@ class FileResource(Resource):
     path: str
     file_store_uri: str
     _mode = "t"
-    _table_name = "gws_file"
 
     def __init__(self, *args, **kwargs):
         self.path = ""
         self.file_store_uri = ""
         super().__init__(*args, **kwargs)
-
-    def serialize_data(self) -> SerializedResourceData:
-        return {
-            "path": self.path,
-            "file_store_uri": self.file_store_uri
-        }
-
-    def deserialize_data(self, data: SerializedResourceData) -> None:
-        if data:
-            self.path = data['path']
-            self.file_store_uri = data['file_store_uri']
 
     @property
     def dir(self):

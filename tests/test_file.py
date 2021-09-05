@@ -14,14 +14,23 @@ class TestFile(BaseTestCase):
         GTest.print("File")
 
         file_store: LocalFileStore = LocalFileStore()
-        file: FileResource = file_store.create_file("my_file.txt")
-        file_resource_model: FileResourceModel = FileService.create_file_resource(file=file)
+        file_resource_1: FileResource = file_store.create_file("my_file.txt")
+        file_resource_model: FileResourceModel = FileService.create_file_resource(file=file_resource_1)
+        
         self.assertTrue(file_resource_model.is_saved())
+        self.assertEqual(file_resource_model.path, file_resource_1.path)
 
-        file: FileResource = file_resource_model.get_resource()
-        file.write("Hi.\n")
-        file.write("My name is John")
+        file_resource_2: FileResource = file_resource_model.get_resource()
+        file_resource_3: FileResource = file_resource_model.get_resource()
+        self.assertNotEqual(file_resource_1, file_resource_2)
+        self.assertEqual(file_resource_2, file_resource_3) # use cached data
 
-        text = file.read()
-        self.assertTrue(text, "Hi.\nMy name is John")
+        self.assertEqual(file_resource_1.path, file_resource_2.path)
+        self.assertEqual(file_resource_2.path, file_resource_3.path)
+        self.assertEqual(file_resource_model.path, file_resource_2.path)
+        file_resource_2.write("Hi.\n")
+        file_resource_2.write("My name is John")
+
+        text = file_resource_1.read()
+        self.assertEqual(text, "Hi.\nMy name is John")
         self.assertTrue(file_resource_model.verify_hash())

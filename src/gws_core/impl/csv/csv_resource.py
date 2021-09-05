@@ -20,6 +20,10 @@ class CSVTable(Resource):
 
     table: DataFrame
 
+    def __init__(self, *args, **kwargs):
+        self.table = DataFrame()
+        super().__init__(*args, **kwargs)
+
     def serialize_data(self) -> SerializedResourceData:
         return self.table.to_dict()
 

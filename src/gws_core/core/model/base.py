@@ -98,6 +98,7 @@ class Base:
 
         property_names = []
         member_list = inspect.getmembers(cls)
+
         for member in member_list:
             if not instance is None:
                 if not exclude is None:
@@ -135,3 +136,21 @@ class Base:
                 method_names.append(member[0])
 
         return method_names
+
+    @classmethod
+    def property_method_names(cls):
+        return cls.decorated_method_names(decorator_name="property")
+
+    @classmethod
+    def decorated_method_names(cls, decorator_name):
+        return list(cls.__decorated_method_names(decorator_name))
+
+    @classmethod
+    def __decorated_method_names(cls, decorator_name):
+        sourcelines = inspect.getsourcelines(cls)[0]
+        for i, line in enumerate(sourcelines):
+            line = line.strip()
+            if line.split('(')[0].strip() == '@' + decorator_name:  # leaving a bit out
+                next_line = sourcelines[i + 1]
+                name = next_line.split('def')[1].split('(')[0].strip()
+                yield(name)

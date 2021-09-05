@@ -4,7 +4,7 @@ from ...resource.resource import Resource, SerializedResourceData
 from ...resource.resource_decorator import resource_decorator
 
 
-@resource_decorator(unique_name="Robot", serializable_fields=['age', 'position', 'weight'])
+@resource_decorator(unique_name="Robot", serializable_data_fields=['age', 'position', 'weight'])
 class Robot(Resource):
 
     age: int

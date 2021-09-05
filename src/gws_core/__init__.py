@@ -84,7 +84,9 @@ from .experiment.experiment_service import \
 from .experiment.queue import Job as Job
 from .experiment.queue import Queue as Queue
 from .experiment.queue_service import QueueService as QueueService
-# Impl
+# Extension
+# Extension > ExtendedResource
+from .extension.extended_resource_model import ExtendedResourceModel as ExtendedResourceModel
 # Impl > CSV
 from .impl.csv.csv_process import CSVDumper as CSVDumper
 from .impl.csv.csv_process import CSVExporter as CSVExporter
@@ -210,3 +212,5 @@ from .user.user import User as User
 from .user.user_dto import UserData as UserData
 from .user.user_group import UserGroup as UserGroup
 from .user.user_service import UserService as UserService
+# Transction
+from .core.decorator.transaction import transaction

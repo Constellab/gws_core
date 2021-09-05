@@ -1,20 +1,19 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Type
+from typing import TYPE_CHECKING, Any, Dict, List, Type, Union
 
 from gws_core.resource.kv_store import KVStore
-
+from ..model.typing_manager import TypingManager
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.base import Base
 from ..model.typing_register_decorator import typing_registrator
 
 if TYPE_CHECKING:
-    from .resource_model import ResourceModel
+    from .resource_model import ResourceModel, ResourceType
 
 # Typing names generated for the class Process
 CONST_RESOURCE_TYPING_NAME = "RESOURCE.gws_core.Resource"
-
 
 # Format of the serialized data of a resource to save data in the DB
 SerializedResourceData = Dict
@@ -29,9 +28,10 @@ class Resource(Base):
     # Provided at the Class level automatically by the @ResourceDecorator
     # //!\\ Do not modify theses values
     _typing_name: str = None
+    _resource_model_type: Union(Type[ResourceModel], str) = None # use real typing_name string here because the ResourceModel cannot be imported!
     _human_name: str = None
     _short_description: str = None
-    _serializable_fields: List[str] = None
+    _serializable_data_fields: List[str] = None
 
     def __init__(self, binary_store: KVStore = None):
         # check that the class level property _typing_name is set
@@ -55,8 +55,8 @@ class Resource(Base):
         """
         serialized_data: SerializedResourceData = {}
         # Automatic serialization using the serialization_fields of the @resource_decorator
-        if self._serializable_fields and isinstance(self._serializable_fields, list):
-            for field in self._serializable_fields:
+        if self._serializable_data_fields and isinstance(self._serializable_data_fields, list):
+            for field in self._serializable_data_fields:
                 serialized_data[field] = getattr(self, field, None)
 
         return serialized_data
@@ -71,8 +71,8 @@ class Resource(Base):
         :type data: SerializedResourceData
         """
         # Automatic deserialization using the serialization_fields of the @resource_decorator
-        if self._serializable_fields and isinstance(self._serializable_fields, list):
-            for field in self._serializable_fields:
+        if self._serializable_data_fields and isinstance(self._serializable_data_fields, list):
+            for field in self._serializable_data_fields:
                 setattr(self, field, data.get(field, None))
 
     def export(self, file_path: str, file_format: str = None):
@@ -87,6 +87,11 @@ class Resource(Base):
         # TOdO do we need this ?
 
     # -- G --
+
+    # TODO: add method get(), select() to fetch de model from DB and return correspondin resource
+    # def select( predicat ):
+    #     model = self.
+    #     pass
 
     # -- I --
 
@@ -113,7 +118,17 @@ class Resource(Base):
         :return: [description]
         :rtype: Type[Any]
         """
-        from .resource_model import ResourceModel
-        return ResourceModel
+
+        if cls._resource_model_type:
+            if isinstance(cls._resource_model_type, type):
+                resource_model_type: Type[ResourceType] = cls._resource_model_type
+            elif isinstance(cls._resource_model_type, str):
+                resource_model_type: Type[ResourceType] = TypingManager.get_type_from_name(cls._resource_model_type)
+            else:
+                raise BadRequestException("Invalid resource model type property.")
+            return resource_model_type
+        else:
+            from .resource_model import ResourceModel
+            return ResourceModel
 
     # -- V --
