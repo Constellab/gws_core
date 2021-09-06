@@ -2,6 +2,7 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
+
 from __future__ import annotations
 
 import copy
@@ -146,6 +147,7 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         Returns the resource created from the data and resource_typing_name
         if new_instance, it forces to rebuild the resource
         """
+
         if new_instance:
             return self._instantiate_resource(new_instance=new_instance)
 

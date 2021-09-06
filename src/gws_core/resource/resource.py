@@ -31,7 +31,7 @@ class Resource(Base):
     _resource_model_type: Union(Type[ResourceModel], str) = None # use real typing_name string here because the ResourceModel cannot be imported!
     _human_name: str = None
     _short_description: str = None
-    _serializable_data_fields: List[str] = None
+    _serializable_fields: List[str] = None
 
     def __init__(self, binary_store: KVStore = None):
         # check that the class level property _typing_name is set
@@ -55,8 +55,8 @@ class Resource(Base):
         """
         serialized_data: SerializedResourceData = {}
         # Automatic serialization using the serialization_fields of the @resource_decorator
-        if self._serializable_data_fields and isinstance(self._serializable_data_fields, list):
-            for field in self._serializable_data_fields:
+        if self._serializable_fields and isinstance(self._serializable_fields, list):
+            for field in self._serializable_fields:
                 serialized_data[field] = getattr(self, field, None)
 
         return serialized_data
@@ -71,8 +71,8 @@ class Resource(Base):
         :type data: SerializedResourceData
         """
         # Automatic deserialization using the serialization_fields of the @resource_decorator
-        if self._serializable_data_fields and isinstance(self._serializable_data_fields, list):
-            for field in self._serializable_data_fields:
+        if self._serializable_fields and isinstance(self._serializable_fields, list):
+            for field in self._serializable_fields:
                 setattr(self, field, data.get(field, None))
 
     def export(self, file_path: str, file_format: str = None):

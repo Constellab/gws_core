@@ -23,8 +23,9 @@ from ..core.utils.utils import Utils
 SEPARATOR: str = "."
 
 # different object typed store in the typing table
-TypingObjectType = Literal["PROCESS", "RESOURCE", "PROTOCOL", "GWS_CORE"]
-available_object_types = ["PROCESS", "RESOURCE", "PROTOCOL", "GWS_CORE"]
+# TODO : allow object type of new bricks automatically
+TypingObjectType = Literal["PROCESS", "RESOURCE", "PROTOCOL", "GWS_CORE", "GWS_BIOTA"]
+available_object_types = ["PROCESS", "RESOURCE", "PROTOCOL", "GWS_CORE", "GWS_BIOTA"]
 
 
 # Simple method to build the typing  = object_type.brick.model_name
@@ -118,7 +119,7 @@ class Typing(Model):
             object_type, brick_name, model_name = typing_name.split(SEPARATOR)
         except:
             raise BadRequestException(
-                f"The typing name {typing_name} in invalid")
+                f"The typing name '{typing_name}' is invalid")
         return cls.get_by_brick_and_model_name(object_type, brick_name,  model_name)
 
     @classmethod

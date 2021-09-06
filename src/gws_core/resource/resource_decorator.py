@@ -1,4 +1,7 @@
-
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 from typing import Callable, List, Type
 
@@ -7,7 +10,7 @@ from ..resource.resource import Resource
 
 
 def resource_decorator(unique_name: str, human_name: str = "", short_description: str = "",
-                       serializable_data_fields: List[str] = None, model: type = None, hide: bool = False) -> Callable:
+                       serializable_fields: List[str] = None, model: type = None, hide: bool = False) -> Callable:
     """ Decorator to be placed on all the resourcees. A resource not decorated will not be runnable.
     It define static information about the resource
 
@@ -20,8 +23,8 @@ def resource_decorator(unique_name: str, human_name: str = "", short_description
     :type human_name: str, optional
     :param short_description: optional description that will be used in the interface when viewing the resourcees. Must not be longer than 100 caracters
     :type short_description: str, optional
-    :param serializable_data_fields: optional List of field to automatically serialize/deserialise on the resource
-    :type serializable_data_fields: str, optional
+    :param serializable_fields: optional List of field to automatically serialize/deserialise on the resource
+    :type serializable_fields: str, optional
     :param model: optional ResourceModel type
     :type model: type, optional
     :param hide: Only the resource will hide=False will be available in the interface, other will be hidden.
@@ -38,14 +41,14 @@ def resource_decorator(unique_name: str, human_name: str = "", short_description
         register_typing_class(object_class=resource_class, object_type="RESOURCE", unique_name=unique_name,
                               human_name=human_name, short_description=short_description, hide=hide)
 
-        if serializable_data_fields and isinstance(serializable_data_fields, list):
+        if serializable_fields and isinstance(serializable_fields, list):
             # pylint: disable=protected-access
-            # save the fields to ignore in _serializable_data_fields class proprty
-            if resource_class._serializable_data_fields is None:
-                resource_class._serializable_data_fields = serializable_data_fields
+            # save the fields to ignore in _serializable_fields class proprty
+            if resource_class._serializable_fields is None:
+                resource_class._serializable_fields = serializable_fields
             else:
                 # for child classes, append the serializable field from parent fields
-                resource_class._serializable_data_fields = serializable_data_fields + resource_class._serializable_data_fields
+                resource_class._serializable_fields = serializable_fields + resource_class._serializable_fields
 
         from .resource_model import ResourceModel
         if model:
