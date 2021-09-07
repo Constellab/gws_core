@@ -31,7 +31,7 @@ class TestShell(BaseTestCase):
     async def test_shell(self):
         GTest.print("Shell")
 
-        proc_mdl: ProcessModel = ProcessService.create_model_from_process_type(
+        proc_mdl: ProcessModel = ProcessService.create_process_model_from_type(
             process_type=Echo)
         proc_mdl.config.set_param("name", "John Doe")
 

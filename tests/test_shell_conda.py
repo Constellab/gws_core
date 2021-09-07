@@ -39,7 +39,7 @@ class TestProcess(BaseTestCase):
 
     async def test_conda(self):
         GTest.print("Conda")
-        proc_mdl: ProcessModel = ProcessService.create_model_from_process_type(
+        proc_mdl: ProcessModel = ProcessService.create_process_model_from_type(
             process_type=CondaEnvTester)
         self.assertFalse(CondaEnvTester.is_installed())
 

@@ -33,7 +33,7 @@ class TestProtocol(BaseTestCase):
         count = len(Q)
 
         # create a chain
-        proto: ProtocolModel = ProtocolService.create_protocol_from_type(TestSimpleProtocol)
+        proto: ProtocolModel = ProtocolService.create_protocol_model_from_type(TestSimpleProtocol)
 
         Q = ProtocolModel.select()
         self.assertEqual(len(Q), count+1)
@@ -53,7 +53,7 @@ class TestProtocol(BaseTestCase):
         Q = ProtocolModel.select()
         count = len(Q)
 
-        super_proto: ProtocolModel = ProtocolService.create_protocol_from_type(TestNestedProtocol)
+        super_proto: ProtocolModel = ProtocolService.create_protocol_model_from_type(TestNestedProtocol)
 
         Q = ProtocolModel.select()
         self.assertEqual(ProtocolModel.select().count(), count+2)
@@ -208,7 +208,7 @@ class TestProtocol(BaseTestCase):
         2. It is not connected
         3. It is connected but not provided (None)
         """
-        protocol: ProtocolModel = ProtocolService.create_protocol_from_type(TestRobotwithSugarProtocol)
+        protocol: ProtocolModel = ProtocolService.create_protocol_model_from_type(TestRobotwithSugarProtocol)
 
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
             protocol_model=protocol)

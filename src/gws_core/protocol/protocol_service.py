@@ -47,7 +47,7 @@ class ProtocolService(BaseService):
             query, page=page, number_of_items_per_page=number_of_items_per_page)
 
     @classmethod
-    def create_protocol_from_type(cls, protocol_type: Type[Protocol], instance_name: str = None) -> ProtocolModel:
+    def create_protocol_model_from_type(cls, protocol_type: Type[Protocol], instance_name: str = None) -> ProtocolModel:
         protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_type(
             protocol_type=protocol_type, instance_name=instance_name)
 

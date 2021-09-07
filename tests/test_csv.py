@@ -72,7 +72,7 @@ class TestCSV(BaseTestCase):
     async def test_loader_dumper(self):
         GTest.print("CSVData Loader and Dumper")
 
-        proto: ProtocolModel = ProtocolService.create_protocol_from_type(CSVProtocol)
+        proto: ProtocolModel = ProtocolService.create_protocol_model_from_type(CSVProtocol)
 
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
             protocol_model=proto)

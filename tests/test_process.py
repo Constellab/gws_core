@@ -37,7 +37,7 @@ class TestProcess(BaseTestCase):
     async def test_process(self):
         GTest.print("Process")
 
-        proto: ProtocolModel = ProtocolService.create_protocol_from_type(TestSimpleProtocol)
+        proto: ProtocolModel = ProtocolService.create_protocol_model_from_type(TestSimpleProtocol)
 
         p0: ProcessModel = proto.get_process('p0')
         p1: ProcessModel = proto.get_process('p1')
