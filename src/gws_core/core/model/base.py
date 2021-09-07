@@ -153,4 +153,5 @@ class Base:
             if line.split('(')[0].strip() == '@' + decorator_name:  # leaving a bit out
                 next_line = sourcelines[i + 1]
                 name = next_line.split('def')[1].split('(')[0].strip()
-                yield(name)
+                if name:
+                    yield(name)

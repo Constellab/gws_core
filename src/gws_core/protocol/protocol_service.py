@@ -55,7 +55,7 @@ class ProtocolService(BaseService):
         return protocol
 
     @classmethod
-    def create_protocol_from_data(cls, processes: dict = None,
+    def create_protocol_model_from_data(cls, processes: dict = None,
                                   connectors: list = None,
                                   interfaces: dict = None,
                                   outerfaces: dict = None,
@@ -71,7 +71,7 @@ class ProtocolService(BaseService):
         return protocol
 
     @classmethod
-    def create_protocol_from_graph(cls, graph: dict) -> ProtocolModel:
+    def create_protocol_model_from_graph(cls, graph: dict) -> ProtocolModel:
         protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_graph(
             graph=graph)
 
@@ -79,10 +79,10 @@ class ProtocolService(BaseService):
         return protocol
 
     @classmethod
-    def create_protocol_from_process_model(cls, process_model: ProcessModel) -> ProtocolModel:
+    def create_protocol_model_from_process_model(cls, process_model: ProcessModel) -> ProtocolModel:
         if not isinstance(process_model, ProcessModel):
             raise BadRequestException("A PocessModel is required")
-        protocol: ProtocolModel = ProtocolService.create_protocol_from_data(
+        protocol: ProtocolModel = ProtocolService.create_protocol_model_from_data(
             processes={process_model.instance_name: process_model}, connectors=[], interfaces={}, outerfaces={})
 
         protocol.save_full()

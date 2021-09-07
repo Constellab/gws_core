@@ -47,8 +47,9 @@ class ExtendedResourceModel(ResourceModel):
                 if hasattr(resource, prop): # synchronize existing fields declared on the resource
                     setattr(resource, prop, val)
                 else:
+                    pass
                     # TODO: add a param in the decorator to allow this behavior || or let it by default ?
-                    resource.__setattr__(prop, val) # create the resource field if it does not exists     
+                    #resource.__setattr__(prop, val) # create the resource field if it does not exists     
 
     def receive_fields_from_resource(self, resource):
         super().receive_fields_from_resource(resource)

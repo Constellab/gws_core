@@ -31,7 +31,7 @@ def process_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER
     def decorator(process_class: Type[Process]):
         if not issubclass(process_class, Process):
             raise Exception(
-                f"The ProcessDecorator is used on the class: {process_class.__name__} and this class is not a sub class of Process")
+                f"The process_decorator is used on the class: {process_class.__name__} and this class is not a sub class of Process")
 
         register_typing_class(object_class=process_class, object_type="PROCESS", unique_name=unique_name,
                               human_name=human_name, short_description=short_description, hide=hide)

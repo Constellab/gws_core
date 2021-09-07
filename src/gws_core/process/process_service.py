@@ -46,7 +46,7 @@ class ProcessService(BaseService):
             query, page=page, number_of_items_per_page=number_of_items_per_page)
 
     @classmethod
-    def create_process_from_type(cls, process_type: Type[Process], instance_name: str = None) -> ProcessModel:
+    def create_model_from_process_type(cls, process_type: Type[Process], instance_name: str = None) -> ProcessModel:
         process: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=process_type, instance_name=instance_name)
 

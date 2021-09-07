@@ -35,26 +35,30 @@ class ExperimentService(BaseService):
 
     @classmethod
     def create_empty_experiment(cls, experimentDTO: ExperimentDTO) -> Experiment:
-        return cls.create_experiment_from_protocol_model(protocol_model=ProcessableFactory.create_protocol_empty(), title=experimentDTO.title,
-                                                   description=experimentDTO.description)
+        return cls.create_experiment_from_protocol_model(
+            protocol_model=ProcessableFactory.create_protocol_empty(), 
+            study = None,
+            title=experimentDTO.title,
+            description=experimentDTO.description
+        )
 
     @classmethod
     def create_experiment_from_process_model(
-            cls, process_model: ProcessModel, title: str = "", description: str = "") -> Experiment:
+            cls, process_model: ProcessModel, study: Study = None, title: str = "", description: str = "") -> Experiment:
         if not isinstance(process_model, ProcessModel):
             raise BadRequestException("An instance of ProcessModel is required")
-        proto = ProtocolService.create_protocol_from_process_model(process_model=process_model)
-        return cls.create_experiment_from_protocol_model(protocol_model=proto, title=title, description=description)
+        proto = ProtocolService.create_protocol_model_from_process_model(process_model=process_model)
+        return cls.create_experiment_from_protocol_model(protocol_model=proto, study=study, title=title, description=description)
 
     @classmethod
     def create_experiment_from_protocol_model(
-            cls, protocol_model: ProtocolModel, title: str = "", description: str = "") -> Experiment:
+            cls, protocol_model: ProtocolModel, study: Study = None, title: str = "", description: str = "") -> Experiment:
         if not isinstance(protocol_model, ProtocolModel):
             raise BadRequestException("An instance of ProtocolModel is required")
         experiment = Experiment()
         experiment.set_title(title)
         experiment.set_description(description)
-        experiment.study = Study.get_default_instance()
+        experiment.study = Study.get_default_instance() if study is None else study
         experiment.created_by = CurrentUserService.get_and_check_current_user()
 
         experiment = experiment.save()

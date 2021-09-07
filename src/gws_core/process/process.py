@@ -40,7 +40,7 @@ class Process(Processable):
         # check that the class level property _typing_name is set
         if self._typing_name is None:
             raise BadRequestException(
-                f"The process {self.full_classname()} is not decorated with @ProcessDecorator, it can't be instantiate. Please decorate the process class with @ProcessDecorator")
+                f"The process {self.full_classname()} is not decorated with @process_decorator, it can't be instantiate. Please decorate the process class with @process_decorator")
 
     def check_before_task(self, config: ConfigParams, inputs: ProcessInputs) -> bool:
         """

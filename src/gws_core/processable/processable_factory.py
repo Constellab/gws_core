@@ -47,7 +47,7 @@ class ProcessableFactory():
 
         if not TypingManager.type_is_register(process_type):
             raise BadRequestException(
-                f"The process {process_type.full_classname()} is not register. Did you add the @ProcessDecorator decorator on your process class ?")
+                f"The process {process_type.full_classname()} is not register. Did you add the @process_decorator decorator on your process class ?")
 
         process_model: ProcessModel = ProcessModel()
         process_model.set_process_type(process_type._typing_name)

@@ -91,7 +91,7 @@ class TestProtocol(BaseTestCase):
         super_proto: ProtocolModel
         with open(os.path.join(testdata_dir, "super_proto_update.json"), "r") as f:
             s1 = json.load(f)
-            super_proto = ProtocolService.create_protocol_from_graph(s1)
+            super_proto = ProtocolService.create_protocol_model_from_graph(s1)
 
         self.assertEqual(len(super_proto.processes), 4)
         self.assertEqual(len(super_proto.connectors), 3)
@@ -110,7 +110,7 @@ class TestProtocol(BaseTestCase):
 
         with open(os.path.join(testdata_dir, "super_proto.json"), "r") as file:
             s1 = json.load(file)
-            super_proto = ProtocolService.create_protocol_from_graph(s1)
+            super_proto = ProtocolService.create_protocol_model_from_graph(s1)
 
         super_proto_db = ProtocolService.get_protocol_by_uri(super_proto.uri)
 

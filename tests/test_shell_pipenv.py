@@ -40,7 +40,7 @@ class TestProcess(BaseTestCase):
     async def test_pipenv(self):
 
         GTest.print("Pipenv")
-        proc_mdl: ProcessModel = ProcessService.create_process_from_type(
+        proc_mdl: ProcessModel = ProcessService.create_model_from_process_type(
             process_type=PipEnvTester)
         self.assertFalse(PipEnvTester.is_installed())
 
