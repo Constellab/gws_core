@@ -3,12 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 import time
-from typing import Optional
 
-from gws_core import (ConfigParams, Process, ProcessableSpec, process_decorator,
-                      ProcessInputs, ProcessOutputs, Protocol,
-                      protocol_decorator, RobotCreate, RobotEat, RobotFood,
-                      RobotMove, RobotSugarCreate, RobotWait)
+from gws_core import (ConfigParams, OptionalIn, Process, ProcessableSpec,
+                      ProcessInputs, ProcessOutputs, Protocol, RobotCreate,
+                      RobotEat, RobotFood, RobotMove, RobotSugarCreate,
+                      RobotWait, process_decorator, protocol_decorator)
 
 # File for Tests containing examples of protocols
 
@@ -88,7 +87,7 @@ class RobotEmptyfood(Process):
     """Wait 3
     """
     input_specs = {}
-    output_specs = {'food': Optional[RobotFood]}
+    output_specs = {'food': OptionalIn(RobotFood)}
     config_specs = {}
 
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:

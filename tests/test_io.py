@@ -8,14 +8,12 @@ from gws_core import (BaseTestCase, ConfigParams, Connector, GTest, Process,
                       ProcessableFactory, ProcessInputs, ProcessModel,
                       ProcessOutputs, Resource, SerializedResourceData,
                       process_decorator, resource_decorator)
-from gws_core.config.config_spec import ConfigSpecs
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.io.io_exception import ImcompatiblePortsException
-from gws_core.io.io_spec import SubClassesOut
-from gws_core.io.io_types import OptionalIn, UnmodifiedOut
+from gws_core.io.io_types import OptionalIn, SpecialTypeOut, UnmodifiedOut
 from gws_core.process.plug import FIFO2, Wait
 from gws_core.protocol.protocol import Protocol
 from gws_core.protocol.protocol_decorator import protocol_decorator
@@ -88,22 +86,24 @@ class Jump(Process):
     input_specs = {'jump_person_in_1': Person,
                    'jump_person_in_2': Person}
     output_specs = {'jump_person_out': Person,
-                    'jump_person_out_any': SubClassesOut[Person]}
+                    'jump_person_out_any': SpecialTypeOut(resource_types=Person, sub_class=True)}
     config_specs = {}
 
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         return
 
+
 @process_decorator("Multi")
 class Multi(Process):
     input_specs = {'resource_1': (Car, Person),
-                    'resource_2': [Car, Person]}
+                   'resource_2': [Car, Person]}
     output_specs = {'resource_1': (Car, Person),
                     'resource_2': [Car, Person]}
     config_specs = {}
 
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         return
+
 
 @process_decorator("Fly")
 class Fly(Process):
@@ -117,7 +117,7 @@ class Fly(Process):
 
 @process_decorator("OptionalProcess")
 class OptionalProcess(Process):
-    input_specs = {'first': OptionalIn[Person],
+    input_specs = {'first': OptionalIn(Person),
                    'second': [Person, None],
                    'third': Person}
     output_specs = {}
@@ -126,13 +126,24 @@ class OptionalProcess(Process):
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         return
 
-# This is to test the ExistingResource type
+# Use to check that 2 optional process can"t plug if types are not correct (even if both have None)
 
 
+@process_decorator("OptionalProcessOut")
+class OptionalProcessOut(Process):
+    input_specs = {}
+    output_specs = {'out': OptionalIn(Car)}
+    config_specs = {}
+
+    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+        return
+
+
+# This is to test the UnmodifiedOut type
 @process_decorator("Log")
 class Log(Process):
     input_specs = {'person': Person}
-    output_specs = {'samePerson': UnmodifiedOut[Person],
+    output_specs = {'samePerson': UnmodifiedOut(Person),
                     'otherPerson': Person}
     config_specs = {}
 
@@ -169,14 +180,16 @@ class Skippable(FIFO2):
 class TestSkippable(Protocol):
     def configure_protocol(self, config_params: ConfigParams) -> None:
         create1: ProcessableSpec = self.add_process(Create, 'create1')
-        wait: ProcessableSpec = self.add_process(Wait, 'wait').configure('waiting_time', 3)
+        wait: ProcessableSpec = self.add_process(Wait, 'wait').configure('waiting_time', '3')
         create2: ProcessableSpec = self.add_process(Create, 'create2')
         skippable: ProcessableSpec = self.add_process(Skippable, 'skippable')
+        move: ProcessableSpec = self.add_process(Move, 'move')
 
         self.add_connectors([
             (create1 >> 'create_person_out', wait << 'resource'),
             (wait >> 'resource', skippable << 'resource_1'),
             (create2 >> 'create_person_out', skippable << 'resource_2'),
+            (skippable >> 'resource', move << 'move_person_in'),
         ])
 
 
@@ -235,6 +248,8 @@ class TestIO(BaseTestCase):
         Connector(multi.out_port('resource_2'), jump.in_port('jump_person_in_2'))
 
     def test_optional(self):
+        """Test optional option and provide None to an optional object
+        """
         opt: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=OptionalProcess, instance_name="optional")
 
@@ -242,8 +257,14 @@ class TestIO(BaseTestCase):
         self.assertTrue(opt.in_port("second").is_optional)
         self.assertFalse(opt.in_port("third").is_optional)
 
+        opt_car: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=OptionalProcessOut, instance_name="optional2")
+
+        with self.assertRaises(ImcompatiblePortsException):
+            Connector(opt_car.out_port('out'), opt.in_port('first'))
+
     def test_sub_class_output(self):
-        """Test the SubClasses generic type
+        """Test the SubClasses option on output special type
         """
         jump: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=Jump, instance_name="jump")
@@ -254,7 +275,7 @@ class TestIO(BaseTestCase):
         with self.assertRaises(Exception):
             Connector(jump.out_port('jump_person_out'), fly.in_port('superman'))
 
-        # Test that you can plug a SubClasses[Person] to a Superman
+        # Test that you can plug a subclass of Person to a Superman
         Connector(jump.out_port('jump_person_out_any'), fly.in_port('superman'))
 
     async def test_unmodified_output(self):
@@ -274,6 +295,8 @@ class TestIO(BaseTestCase):
         self.assertNotEqual(person1, other_erson.id)
 
     async def test_skippable_input(self):
+        """Test the SkippableIn special type with FIFO, it also tests that FIFO work
+        (testing,SkippableIn but also UnmodifiableOut with subclass) """
         protocol: ProtocolModel = ProtocolService.create_protocol_from_type(TestSkippable)
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(protocol)
 

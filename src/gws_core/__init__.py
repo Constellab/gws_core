@@ -150,7 +150,6 @@ from .io.io_spec import InputSpecs as InputSpecs
 from .io.io_spec import OutputSpecs as OutputSpecs
 from .io.io_types import OptionalIn as OptionalIn
 from .io.io_types import SkippableIn as SkippableIn
-from .io.io_types import SubClassesOut as SubClassesOut
 from .io.io_types import UnmodifiedOut as UnmodifiedOut
 from .io.ioface import Interface as Interface
 from .io.ioface import IOface as IOface

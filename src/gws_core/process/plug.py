@@ -28,7 +28,7 @@ class Source(Process):
     """
 
     input_specs: InputSpecs = {}
-    output_specs: OutputSpecs = {'resource': UnmodifiedOut[Resource]}
+    output_specs: OutputSpecs = {'resource': UnmodifiedOut(Resource)}
     config_specs: ConfigSpecs = {
         'resource_uri': {"type": str, "default": None, 'description': "The uri of the resource"},
         'resource_typing_name': {"type": str, "default": None, 'description': "The type of the resource"},
@@ -68,9 +68,9 @@ class FIFO2(Process):
     The FIFO2 (First-In-First-Out) process sends to the output port the first resource received in an input port
     """
 
-    input_specs: InputSpecs = {'resource_1': SkippableIn[Resource],
-                               'resource_2': SkippableIn[Resource]}
-    output_specs: OutputSpecs = {'resource': UnmodifiedOut[Resource]}
+    input_specs: InputSpecs = {'resource_1': SkippableIn(Resource),
+                               'resource_2': SkippableIn(Resource)}
+    output_specs: OutputSpecs = {'resource': UnmodifiedOut(resource_types=Resource, sub_class=True)}
     config_specs: ConfigSpecs = {}
 
     def check_before_task(self, config: ConfigParams, inputs: ProcessInputs) -> bool:
@@ -101,9 +101,9 @@ class Switch2(Process):
     The Switch2 proccess sends to the output port the resource corresponding to the parameter `index`
     """
 
-    input_specs: InputSpecs = {'resource_1': SkippableIn[Resource],
-                               'resource_2': SkippableIn[Resource]}
-    output_specs: OutputSpecs = {'resource': UnmodifiedOut[Resource]}
+    input_specs: InputSpecs = {'resource_1': SkippableIn(Resource),
+                               'resource_2': SkippableIn(Resource)}
+    output_specs: OutputSpecs = {'resource': UnmodifiedOut(resource_types=Resource, sub_class=True)}
     config_specs: ConfigSpecs = {"index": {"type": int, "default": 1, "min": 1, "max": 2,
                                            "description": "The index of the input resource to switch on. Defaults to 1."}}
 
@@ -127,7 +127,7 @@ class Wait(Process):
     """
 
     input_specs: InputSpecs = {'resource': Resource}
-    output_specs: OutputSpecs = {'resource': UnmodifiedOut[Resource]}
+    output_specs: OutputSpecs = {'resource': UnmodifiedOut(resource_types=Resource, sub_class=True)}
     config_specs: ConfigSpecs = {"waiting_time": {"type": float, "default": 3, "min": 0,
                                                   "description": "The waiting time in seconds. Defaults to 3 second."}}
 

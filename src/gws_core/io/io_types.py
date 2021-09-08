@@ -2,65 +2,51 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-from inspect import isclass
-from typing import Any, Generic, Type, TypeVar, get_args
+from collections.abc import Iterable as IterableClass
+from typing import Iterable, Type, Union
 
+from gws_core.core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 from gws_core.resource.resource import Resource
 
-GenericResource = TypeVar('GenericResource', bound=Resource)
+ResourceType = Type[Resource]
+ResourceTypes = Union[ResourceType, Iterable[ResourceType]]
 
 
-class SpecialTypeIO(Generic[GenericResource]):
+class SpecialTypeIO:
+    resource_types: Iterable[ResourceType]
 
-    @classmethod
-    def is_class(cls, type_: Any) -> bool:
-        return hasattr(
-            type_, "__origin__") and isclass(
-            type_.__origin__) and issubclass(
-            type_.__origin__, cls._get_type())
+    def __init__(self, resource_types: ResourceTypes) -> None:
+        """[summary]
 
-    @classmethod
-    def extract_type(cls, type_: Type['SpecialTypeIO']) -> Type[Resource]:
-        return get_args(type_)[0]
+        :param resource_types: type of supported resource or resources
+        :type resource_types: Type[Union[Resource, Iterable[Resource]]]
+        :param sub_class: When true, it tells that the resource_types
+                are compatible with any child class of the provided resource type, defaults to False
+        :type sub_class: bool, optional
+        """
 
-    @classmethod
-    def _get_type(cls) -> Type['SpecialTypeIO']:
-        return SpecialTypeIO
+        if not isinstance(resource_types, IterableClass):
+            self.resource_types = [resource_types]
+        else:
+            self.resource_types = resource_types
+
+    def check_resource_types(self):
+        for resource_type in self.resource_types:
+            if not issubclass(resource_type, Resource):
+                raise BadRequestException(
+                    f"Invalid port specs. The type '{resource_type}' used inside the special type '{self.__name__}'' is not a resource")
 
 
-class SubClassesOut(SpecialTypeIO, Generic[GenericResource]):
-    """Special type to use in Output specs
-    This type can only be used in a output spec and tell that this is compatible
-    with any child type of the provided resource
-
-    :param Generic: [description]
-    :type Generic: [type]
-    :return: [description]
-    :rtype: [type]
+class SpecialTypeIn(SpecialTypeIO):
+    """Special type for input check sub classes to see the special types:
+     - SkippableIn
+     - OptionalIn
     """
-
-    @classmethod
-    def _get_type(cls) -> Type['SpecialTypeIO']:
-        return SubClassesOut
+    pass
 
 
-class UnmodifiedOut(SpecialTypeIO, Generic[GenericResource]):
-    """Special type to use in Output specs
-    This type tell the system that the output resource was not modified from the input resource
-    and it does not need to create a new resource
-
-    :param SpecialTypeIO: [description]
-    :type SpecialTypeIO: [type]
-    :return: [description]
-    :rtype: [type]
-    """
-
-    @classmethod
-    def _get_type(cls) -> Type['SpecialTypeIO']:
-        return UnmodifiedOut
-
-
-class SkippableIn(SpecialTypeIO, Generic[GenericResource]):
+class SkippableIn(SpecialTypeIn):
     """Special type to use in Input specs
     This type tell the system that the input is skippable. This mean that the process can be called
     even if this input was connected and the value no provided.
@@ -69,30 +55,40 @@ class SkippableIn(SpecialTypeIO, Generic[GenericResource]):
 
     Has no effect when there is only one input
 
-    :param SpecialTypeIO: [description]
-    :type SpecialTypeIO: [type]
-    :return: [description]
-    :rtype: [type]
     """
 
-    @classmethod
-    def _get_type(cls) -> Type['SpecialTypeIO']:
-        return SkippableIn
 
-
-class OptionalIn(SpecialTypeIO, Generic[GenericResource]):
+class OptionalIn(SpecialTypeIn):
     """Special type to use in Input specs
     This type tell the system that the input is optional.
     The input can be not connected and the process will still run (the input value will then be None)
     If the input is connected, the process will wait for the resource to run himself (this is the difference from SkippableIn)
     This is equivalent to [Resource, None]
-
-    :param SpecialTypeIO: [description]
-    :type SpecialTypeIO: [type]
-    :return: [description]
-    :rtype: [type]
     """
 
-    @classmethod
-    def _get_type(cls) -> Type['SpecialTypeIO']:
-        return OptionalIn
+
+class SpecialTypeOut(SpecialTypeIO):
+    """Special type for input check sub classes and constructor params to see the special types:
+     - UnmodifiedOut
+    """
+
+    sub_class: bool
+
+    def __init__(self, resource_types: ResourceTypes, sub_class: bool = False) -> None:
+        """[summary]
+
+        :param resource_types: [description]
+        :type resource_types: Type[Union[Resource, Iterable[Resource]]]
+        :param sub_class: When true, it tells that the resource_types
+                are compatible with any child class of the provided resource type, defaults to False
+        :type sub_class: bool, optional
+        """
+        super().__init__(resource_types=resource_types)
+        self.sub_class = sub_class
+
+
+class UnmodifiedOut(SpecialTypeOut):
+    """Special type to use in Output specs
+    This type tell the system that the output resource was not modified from the input resource
+    and it does not need to create a new resource after the task
+    """
