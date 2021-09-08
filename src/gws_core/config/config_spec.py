@@ -6,13 +6,11 @@ from gws_core.core.classes.validator import Validator
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 
-ConfigSpecType = Union[Type[str], Type[int], Type[float], Type[bool], Type[list], Type[dict]]
-
 ConfigValue = Union[str, int, float, bool, list, dict]
+ConfigSpecType = Type[ConfigValue]
 ConfigValues = Dict[str, ConfigValue]
 
 
-# TODO replace Optional with NotRequired when NotRequired works
 class ConfigSpec(TypedDict, total=False):
 
     # Type of the config value (string, float...)
@@ -30,6 +28,12 @@ class ConfigSpec(TypedDict, total=False):
 
    # Measure unit of the value (ex km)
     unit: Optional[str]
+
+    # ONLY FOR NUMERIC. The minimum value allowed
+    min: Optional[float]
+
+    # ONLY FOR NUMERIC. The maximum value allowed
+    max: Optional[float]
 
 
 ConfigSpecs = Dict[str, ConfigSpec]

@@ -68,8 +68,13 @@ class TestFile(BaseTestCase):
         write: ProcessModel = experiment.protocol.get_process('write')
 
         robot: Robot = create.out_port('robot').get_resource()
-        file: FileResource = write.out_port('file').get_resource()
+        file_model: FileResourceModel = write.out_port('file').resource_model
 
+        # check that the file model is create and valid
+        self.assertIsNotNone(file_model.id)
+        self.assertTrue(isinstance(file_model, FileResourceModel))
+
+        file: FileResource = file_model.get_resource()
         # check that the file was created
         self.assertTrue(file_store.file_exists(file.name))
 

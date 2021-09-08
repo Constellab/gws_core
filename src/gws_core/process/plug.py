@@ -105,7 +105,7 @@ class Switch2(Process):
                                'resource_2': SkippableIn[Resource]}
     output_specs: OutputSpecs = {'resource': UnmodifiedOut[Resource]}
     config_specs: ConfigSpecs = {"index": {"type": int, "default": 1, "min": 1, "max": 2,
-                                           "Description": "The index of the input resource to switch on. Defaults to 1."}}
+                                           "description": "The index of the input resource to switch on. Defaults to 1."}}
 
     def check_before_task(self, config: ConfigParams, inputs: ProcessInputs) -> bool:
         index = config.get_param("index")
@@ -129,7 +129,7 @@ class Wait(Process):
     input_specs: InputSpecs = {'resource': Resource}
     output_specs: OutputSpecs = {'resource': UnmodifiedOut[Resource]}
     config_specs: ConfigSpecs = {"waiting_time": {"type": float, "default": 3, "min": 0,
-                                                  "Description": "The waiting time in seconds. Defaults to 3 second."}}
+                                                  "description": "The waiting time in seconds. Defaults to 3 second."}}
 
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         waiting_time = config.get_param("waiting_time")

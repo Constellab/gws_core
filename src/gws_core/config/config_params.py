@@ -1,6 +1,6 @@
 
 
-from typing import Dict
+from typing import Any, Dict
 
 from ..config.config_spec import ConfigValue
 from ..core.exception.exceptions.bad_request_exception import \
@@ -13,7 +13,7 @@ class ConfigParams(Dict[str, ConfigValue]):
 
     # specification of the config
 
-    def get_param(self, name: str) -> ConfigValue:
+    def get_param(self, name: str) -> Any:
         """
         Returns the value of a parameter by its name
 
