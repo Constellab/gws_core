@@ -214,12 +214,18 @@ class IO(Base):
         port.resource_model = resource_model
 
     def _check_port_name(self, name) -> None:
-        if not isinstance(name, str):
-            raise BadRequestException("The port name must be a string")
 
-        if not name in self._ports:
-            raise BadRequestException(
-                self.classname() + " port '" + name + "' not found")
+        error: str = None
+        if not isinstance(name, str):
+            error = f"The port name must be a string. Actual value: '{name}'"
+
+        if not self.port_exists(name):
+            error = f"{self.classname()} port '{name}' not found"
+
+        if error:
+            if self.parent:
+                error += f" | Process : {self.parent.get_info()}"
+            raise BadRequestException(error)
 
     # -- V --
 

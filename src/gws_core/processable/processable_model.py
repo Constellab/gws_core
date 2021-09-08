@@ -165,13 +165,7 @@ class ProcessableModel(Viewable):
         :return: The port
         :rtype: InPort
         """
-
-        if not isinstance(name, str):
-            raise BadRequestException(
-                "The name of the input port must be a string")
-        if not self.input.port_exists(name):
-            raise BadRequestException(f"The input port '{name}' is not found")
-        return self.input._ports[name]
+        return self.input.get_port(name)
 
     @transaction()
     def delete_instance(self, *args, **kwargs):
@@ -223,12 +217,7 @@ class ProcessableModel(Viewable):
         :return: The port
         :rtype: OutPort
         """
-        if not isinstance(name, str):
-            raise BadRequestException(
-                "The name of the output port must be a string")
-        if not self.output.port_exists(name):
-            raise BadRequestException(f"The output port '{name}' is not found")
-        return self.output._ports[name]
+        return self.output.get_port(name)
 
     @property
     def parent_protocol(self) -> ProtocolModel:
@@ -454,3 +443,14 @@ class ProcessableModel(Viewable):
         if not user.has_access(process_type._allowed_user):
             raise UnauthorizedException(
                 f"You must be a {process_type._allowed_user} to run the process '{process_type.full_classname()}'")
+
+    def get_info(self) -> str:
+        """Return basic information for this processable (usefull for error message)
+        """
+
+        info: str = ""
+
+        if self.instance_name:
+            info += f"'{self.instance_name}' "
+
+        return f"{info} ({self._get_processable_type().classname()})"

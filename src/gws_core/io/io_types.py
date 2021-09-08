@@ -2,13 +2,12 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-from abc import abstractclassmethod
 from inspect import isclass
 from typing import Any, Generic, Type, TypeVar, get_args
 
 from gws_core.resource.resource import Resource
 
-GenericResource = TypeVar('GenericResource', bound=Type[Resource])
+GenericResource = TypeVar('GenericResource', bound=Resource)
 
 
 class SpecialTypeIO(Generic[GenericResource]):
@@ -66,6 +65,8 @@ class SkippableIn(SpecialTypeIO, Generic[GenericResource]):
     This type tell the system that the input is skippable. This mean that the process can be called
     even if this input was connected and the value no provided.
     With this you can run your process even if the input vaue was not received
+    //!\\ WARNING If an input is skipped, the input is not set, the inputs['name'] will raise a KeyError exception (different from None)
+
     Has no effect when there is only one input
 
     :param SpecialTypeIO: [description]
@@ -77,3 +78,21 @@ class SkippableIn(SpecialTypeIO, Generic[GenericResource]):
     @classmethod
     def _get_type(cls) -> Type['SpecialTypeIO']:
         return SkippableIn
+
+
+class OptionalIn(SpecialTypeIO, Generic[GenericResource]):
+    """Special type to use in Input specs
+    This type tell the system that the input is optional.
+    The input can be not connected and the process will still run (the input value will then be None)
+    If the input is connected, the process will wait for the resource to run himself (this is the difference from SkippableIn)
+    This is equivalent to [Resource, None]
+
+    :param SpecialTypeIO: [description]
+    :type SpecialTypeIO: [type]
+    :return: [description]
+    :rtype: [type]
+    """
+
+    @classmethod
+    def _get_type(cls) -> Type['SpecialTypeIO']:
+        return OptionalIn

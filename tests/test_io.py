@@ -3,17 +3,20 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Optional, Union
 
 from gws_core import (BaseTestCase, ConfigParams, Connector, GTest, Process,
                       ProcessableFactory, ProcessInputs, ProcessModel,
                       ProcessOutputs, Resource, SerializedResourceData,
                       process_decorator, resource_decorator)
+from gws_core.config.config_spec import ConfigSpecs
+from gws_core.core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.io.io_exception import ImcompatiblePortsException
 from gws_core.io.io_spec import SubClassesOut
-from gws_core.io.io_types import UnmodifiedOut
+from gws_core.io.io_types import OptionalIn, UnmodifiedOut
+from gws_core.process.plug import FIFO2, Wait
 from gws_core.protocol.protocol import Protocol
 from gws_core.protocol.protocol_decorator import protocol_decorator
 from gws_core.protocol.protocol_model import ProtocolModel
@@ -91,6 +94,16 @@ class Jump(Process):
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         return
 
+@process_decorator("Multi")
+class Multi(Process):
+    input_specs = {'resource_1': (Car, Person),
+                    'resource_2': [Car, Person]}
+    output_specs = {'resource_1': (Car, Person),
+                    'resource_2': [Car, Person]}
+    config_specs = {}
+
+    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+        return
 
 @process_decorator("Fly")
 class Fly(Process):
@@ -104,8 +117,8 @@ class Fly(Process):
 
 @process_decorator("OptionalProcess")
 class OptionalProcess(Process):
-    input_specs = {'first': Optional[Person],
-                   'second': Union[Person, None],
+    input_specs = {'first': OptionalIn[Person],
+                   'second': [Person, None],
                    'third': Person}
     output_specs = {}
     config_specs = {}
@@ -136,6 +149,34 @@ class TestPersonProtocol(Protocol):
 
         self.add_connectors([
             (create >> 'create_person_out', log << 'person')
+        ])
+
+
+@process_decorator(unique_name="FIFO2")
+class Skippable(FIFO2):
+    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+
+        resource1 = inputs.get("resource_1")
+        resource2 = inputs.get("resource_2")
+
+        if resource1 and resource2:
+            raise BadRequestException('The two resources are set and it should be only one because of Skippable')
+
+        return await super().task(config=config, inputs=inputs)
+
+
+@protocol_decorator("TestSkippable")
+class TestSkippable(Protocol):
+    def configure_protocol(self, config_params: ConfigParams) -> None:
+        create1: ProcessableSpec = self.add_process(Create, 'create1')
+        wait: ProcessableSpec = self.add_process(Wait, 'wait').configure('waiting_time', 3)
+        create2: ProcessableSpec = self.add_process(Create, 'create2')
+        skippable: ProcessableSpec = self.add_process(Skippable, 'skippable')
+
+        self.add_connectors([
+            (create1 >> 'create_person_out', wait << 'resource'),
+            (wait >> 'resource', skippable << 'resource_1'),
+            (create2 >> 'create_person_out', skippable << 'resource_2'),
         ])
 
 
@@ -175,6 +216,24 @@ class TestIO(BaseTestCase):
             'resource': {'uri': '', 'typing_name': ''}
         })
 
+    def test_multi(self):
+        """Test inputs and output with multi types
+        """
+        create: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=Create, instance_name="create")
+        multi: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=Multi, instance_name="multi")
+        jump: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=Jump, instance_name="move")
+
+        # Test that you can plug create to multi move_person_in
+        Connector(create.out_port('create_person_out'), multi.in_port('resource_1'))
+        Connector(create.out_port('create_person_out'), multi.in_port('resource_2'))
+
+        # Test that you can plug multi to moves
+        Connector(multi.out_port('resource_1'), jump.in_port('jump_person_in_1'))
+        Connector(multi.out_port('resource_2'), jump.in_port('jump_person_in_2'))
+
     def test_optional(self):
         opt: ProcessModel = ProcessableFactory.create_process_model_from_type(
             process_type=OptionalProcess, instance_name="optional")
@@ -195,7 +254,7 @@ class TestIO(BaseTestCase):
         with self.assertRaises(Exception):
             Connector(jump.out_port('jump_person_out'), fly.in_port('superman'))
 
-        # Test that you can plus a SubClasses[Person] to a Superman
+        # Test that you can plug a SubClasses[Person] to a Superman
         Connector(jump.out_port('jump_person_out_any'), fly.in_port('superman'))
 
     async def test_unmodified_output(self):
@@ -213,3 +272,17 @@ class TestIO(BaseTestCase):
 
         self.assertEqual(person1.id, same_person.id)
         self.assertNotEqual(person1, other_erson.id)
+
+    async def test_skippable_input(self):
+        protocol: ProtocolModel = ProtocolService.create_protocol_from_type(TestSkippable)
+        experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(protocol)
+
+        experiment = await ExperimentService.run_experiment(experiment)
+
+        create2: ProcessModel = experiment.protocol.get_process('create2')
+        skippable: ProcessModel = experiment.protocol.get_process('skippable')
+
+        create_2_r: ResourceModel = create2.out_port('create_person_out').resource_model
+        skippable_r: ResourceModel = skippable.out_port('resource').resource_model
+        # Check that this is the create_2 that passed through skippable process
+        self.assertEqual(create_2_r.id, skippable_r.id)

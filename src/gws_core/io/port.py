@@ -128,6 +128,10 @@ class Port(Base):
         :rtype: bool
         """
 
+        # If the type is skippable, the port is always ready
+        if self.is_skippable_in:
+            return True
+
         if self.is_optional:
             # If the port is connected but the set_resource was not called,
             # the port is not ready
@@ -141,13 +145,13 @@ class Port(Base):
     @property
     def is_optional(self) -> bool:
         """
-        Returns True if the resource in this port is optional, False otherwise
+        Returns True if the resource in this port is optional (optional or skippable), False otherwise
 
         :return: True if the resource is optional, False otherwise.
         :rtype: bool
         """
 
-        return self.resource_spec.is_optional()
+        return self.resource_spec.is_optional() or self.is_skippable_in
 
     @property
     def is_empty(self) -> bool:
@@ -161,6 +165,15 @@ class Port(Base):
         :rtype: bool
         """
         return self.resource_spec.is_unmodified_out()
+
+    @property
+    def is_skippable_in(self) -> bool:
+        """return true if the port type is SKippableIn
+
+        :return: [description]
+        :rtype: bool
+        """
+        return self.resource_spec.is_skippable_in()
 
     # -- G --
 
@@ -299,7 +312,7 @@ class Port(Base):
         if self.is_optional and resource_type is None:
             return True
 
-        return IOSpecsHelper.spec_is_compatible(resource_type, self._resource_spec)
+        return IOSpecsHelper.spec_is_compatible(resource_type, self._resource_spec.resource_spec)
 
     def get_resource(self, new_instance: bool = False) -> Resource:
         return self.resource_model.get_resource(new_instance=new_instance)

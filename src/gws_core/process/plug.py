@@ -6,9 +6,11 @@
 import time
 
 from ..config.config_params import ConfigParams
+from ..config.config_spec import ConfigSpecs
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ..io.io_types import UnmodifiedOut
+from ..io.io_spec import InputSpecs, OutputSpecs
+from ..io.io_types import SkippableIn, UnmodifiedOut
 from ..model.typing_manager import TypingManager
 from ..process.process_io import ProcessInputs, ProcessOutputs
 from ..resource.resource import Resource
@@ -17,7 +19,7 @@ from .process import Process
 from .process_decorator import process_decorator
 
 
-@process_decorator(unique_name="Source", is_plug=True)
+@process_decorator(unique_name="Source")
 class Source(Process):
     """
     Source process.
@@ -25,9 +27,9 @@ class Source(Process):
     A source process is used to load and transfer a resource. No more action is done.
     """
 
-    input_specs = {}
-    output_specs = {'resource': UnmodifiedOut[Resource]}
-    config_specs = {
+    input_specs: InputSpecs = {}
+    output_specs: OutputSpecs = {'resource': UnmodifiedOut[Resource]}
+    config_specs: ConfigSpecs = {
         'resource_uri': {"type": str, "default": None, 'description': "The uri of the resource"},
         'resource_typing_name': {"type": str, "default": None, 'description': "The type of the resource"},
     }
@@ -42,7 +44,7 @@ class Source(Process):
         return {"resource": resource_model.get_resource()}
 
 
-@process_decorator(unique_name="Sink", is_plug=True)
+@process_decorator(unique_name="Sink")
 class Sink(Process):
     """
     Sink process.
@@ -50,15 +52,15 @@ class Sink(Process):
     A sink process is used to recieve a resource. No action is done.
     """
 
-    input_specs = {'resource': Resource}
-    output_specs = {}
-    config_specs = {}
+    input_specs: InputSpecs = {'resource': Resource}
+    output_specs: OutputSpecs = {}
+    config_specs: ConfigSpecs = {}
 
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         pass
 
 
-@process_decorator(unique_name="FIFO2", is_plug=True)
+@process_decorator(unique_name="FIFO2")
 class FIFO2(Process):
     """
     FIFO2 process (with 2 input ports)
@@ -66,14 +68,14 @@ class FIFO2(Process):
     The FIFO2 (First-In-First-Out) process sends to the output port the first resource received in an input port
     """
 
-    input_specs = {'resource_1': (
-        Resource, None, ), 'resource_2': (Resource, None, )}
-    output_specs = {'resource': UnmodifiedOut[Resource]}
-    config_specs = {}
+    input_specs: InputSpecs = {'resource_1': SkippableIn[Resource],
+                               'resource_2': SkippableIn[Resource]}
+    output_specs: OutputSpecs = {'resource': UnmodifiedOut[Resource]}
+    config_specs: ConfigSpecs = {}
 
     def check_before_task(self, config: ConfigParams, inputs: ProcessInputs) -> bool:
-        res_1 = inputs['resource_1']
-        res_2 = inputs['resource_2']
+        res_1 = inputs.get('resource_1')
+        res_2 = inputs.get('resource_2')
         is_ready = res_1 or res_2
         if not is_ready:
             return False
@@ -81,16 +83,17 @@ class FIFO2(Process):
         return True
 
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
-        resource = inputs["resource_1"]
-        if resource:
-            return {"resource": resource}
 
-        resource = inputs["resource_2"]
-        if resource:
-            return {"resource": resource}
+        if inputs.has_resource("resource_1"):
+            return {"resource": inputs["resource_1"]}
+
+        if inputs.has_resource("resource_2"):
+            return {"resource": inputs["resource_2"]}
+
+        return None
 
 
-@process_decorator(unique_name="Switch2", is_plug=True)
+@process_decorator(unique_name="Switch2")
 class Switch2(Process):
     """
     Switch process (with 2 input ports)
@@ -98,11 +101,16 @@ class Switch2(Process):
     The Switch2 proccess sends to the output port the resource corresponding to the parameter `index`
     """
 
-    input_specs = {'resource_1': (
-        Resource, None, ), 'resource_2': (Resource, None, )}
-    output_specs = {'resource': UnmodifiedOut[Resource]}
-    config_specs = {"index": {"type": int, "default": 1, "min": 1, "max": 2,
-                              "Description": "The index of the input resource to switch on. Defaults to 1."}}
+    input_specs: InputSpecs = {'resource_1': SkippableIn[Resource],
+                               'resource_2': SkippableIn[Resource]}
+    output_specs: OutputSpecs = {'resource': UnmodifiedOut[Resource]}
+    config_specs: ConfigSpecs = {"index": {"type": int, "default": 1, "min": 1, "max": 2,
+                                           "Description": "The index of the input resource to switch on. Defaults to 1."}}
+
+    def check_before_task(self, config: ConfigParams, inputs: ProcessInputs) -> bool:
+        index = config.get_param("index")
+        # The switch is ready to execute if the correct input was set
+        return f"resource_{index}" in inputs
 
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         index = config.get_param("index")
@@ -110,7 +118,7 @@ class Switch2(Process):
         return {"resource": resource}
 
 
-@process_decorator(unique_name="Wait", is_plug=True)
+@process_decorator(unique_name="Wait")
 class Wait(Process):
     """
     Wait process
@@ -118,10 +126,10 @@ class Wait(Process):
     This proccess waits during a given time before continuing.
     """
 
-    input_specs = {'resource': (Resource,)}
-    output_specs = {'resource': UnmodifiedOut[Resource]}
-    config_specs = {"waiting_time": {"type": float, "default": 3, "min": 0,
-                                     "Description": "The waiting time in seconds. Defaults to 3 second."}}
+    input_specs: InputSpecs = {'resource': Resource}
+    output_specs: OutputSpecs = {'resource': UnmodifiedOut[Resource]}
+    config_specs: ConfigSpecs = {"waiting_time": {"type": float, "default": 3, "min": 0,
+                                                  "Description": "The waiting time in seconds. Defaults to 3 second."}}
 
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         waiting_time = config.get_param("waiting_time")

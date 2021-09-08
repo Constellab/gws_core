@@ -3,23 +3,26 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict, Iterable, List, Optional, Type, Union, get_args
+from typing import Dict, Iterable, List, Type, Union, get_args
+
+from gws_core.io import io_types
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..resource.resource import Resource
-from .io_types import UnmodifiedOut, SkippableIn, SpecialTypeIO, SubClassesOut
+from .io_types import (OptionalIn, SkippableIn, SpecialTypeIO, SubClassesOut,
+                       UnmodifiedOut)
 
 ResourceType = Type[Resource]
 
 
-InputSpecType = Union[ResourceType, Optional[ResourceType], SkippableIn[ResourceType]]
+InputSpecType = Type[Union[Resource, OptionalIn[Resource], SkippableIn[Resource]]]
 InputSpec = Union[InputSpecType, Iterable[InputSpecType]]
 InputSpecs = Dict[str, InputSpec]
 
-OutputSpecType = Union[ResourceType, SubClassesOut[ResourceType], UnmodifiedOut[ResourceType]]
-OutputSpec = Union[InputSpecType, Iterable[InputSpecType]]
-OutputSpecs = Dict[str, InputSpec]
+OutputSpecType = Type[Union[Resource, SubClassesOut[Resource], UnmodifiedOut[Resource]]]
+OutputSpec = Union[OutputSpecType, Iterable[OutputSpecType]]
+OutputSpecs = Dict[str, OutputSpec]
 
 IOSpecType = Union[InputSpecType, OutputSpecType]
 IOSpec = Union[IOSpecType, Iterable[IOSpecType]]
@@ -41,13 +44,16 @@ class IOSpecClass:
 
     def is_compatible_with_type(self, resource_type: Type[Resource]) -> bool:
         return IOSpecsHelper.spec_is_compatible(
-            resource_type=resource_type, expected_types=self.to_resource_types())
+            io_type=resource_type, expected_types=self.to_resource_types())
 
     def is_optional(self) -> bool:
-        return None in self.to_resource_types()
+        return OptionalIn.is_class(self.resource_spec) or None in self.to_resource_types()
 
     def is_unmodified_out(self) -> bool:
         return UnmodifiedOut.is_class(self.resource_spec)
+
+    def is_skippable_in(self) -> bool:
+        return SkippableIn.is_class(self.resource_spec)
 
 
 class IOSpecsHelper():
@@ -126,7 +132,7 @@ class IOSpecsHelper():
         return io_spec
 
     @classmethod
-    def spec_is_compatible(cls, resource_type: IOSpecType,
+    def spec_is_compatible(cls, io_type: IOSpecType,
                            expected_types: IOSpec,
                            exclude_none: bool = False) -> bool:
         """Check if a resource type is compataible with excpeted types
@@ -142,13 +148,20 @@ class IOSpecsHelper():
         """
 
         # Handle the generic SubClasss
-        if SubClassesOut.is_class(resource_type):
-            resource_type: Type[Resource] = SubClassesOut.extract_type(resource_type)
+        if SubClassesOut.is_class(io_type):
+            resource_type: Type[Resource] = SubClassesOut.extract_type(io_type)
             # check if type inside the SubClass is compatible with expected type
             # if not check if one of the expected type is compatible with SubClass
-            return cls.spec_is_compatible(resource_type=resource_type, expected_types=expected_types,
+            return cls.spec_is_compatible(io_type=resource_type, expected_types=expected_types,
                                           exclude_none=exclude_none) or cls.specs_are_compatible(
                 output_specs_1=expected_types, input_specs_2=[resource_type])
+
+        # Convert the io_type to resource type
+        resource_type: Type[Resource]
+        if SpecialTypeIO.is_class(io_type):
+            resource_type = SpecialTypeIO.extract_type(io_type)
+        else:
+            resource_type = io_type
 
         expected_r_types: List[ResourceType] = cls.io_spec_to_resource_types(expected_types)
         # check that the resource type is a subclass of one of the port resources types
