@@ -4,55 +4,37 @@
 # About us: https://gencovery.com
 
 
-import unittest
-
-from gws_core import (BaseTestCase, GTest, Process, Resource, ResourceSet,
-                      SerializedResourceData, process_decorator,
-                      resource_decorator)
-
-
-@resource_decorator("Car")
-class Car(Resource):
-    name: str
-    speed: int
-
-    def serialize_data(self) -> SerializedResourceData:
-        return {
-            "name": self.name,
-            "speed": self.speed
-        }
-
-    def deserialize_data(self, data: SerializedResourceData) -> None:
-        self.name = data['name']
-        self.speed = data['speed']
-
-
-# todo a checker
-@process_decorator("Start")
-class Start(Process):
-    pass
+from gws_core import BaseTestCase, GTest
+from gws_core.experiment.experiment import Experiment
+from gws_core.experiment.experiment_service import ExperimentService
+from gws_core.impl.robot.robot_process import RobotCreate
+from gws_core.impl.robot.robot_resource import Robot
+from gws_core.process.process_model import ProcessModel
+from gws_core.processable.processable_factory import ProcessableFactory
+from gws_core.resource.resource_model import ResourceModel
 
 
 class TestResource(BaseTestCase):
 
-    def test_resource(self):
+    async def test_resource(self):
         GTest.print("Resource")
 
-        c1 = Car()
-        c2 = Car()
+        process: ProcessModel = ProcessableFactory.create_process_model_from_type(
+            process_type=RobotCreate, instance_name="create")
+        experiment = ExperimentService.create_experiment_from_process_model(process)
 
-        # rs = ResourceSet()
-        # self.assertEqual(len(rs), 0)
+        experiment: Experiment = await ExperimentService.run_experiment(experiment)
 
-        # rs['c1'] = c1
-        # rs['c2'] = c2
-        # self.assertEqual(len(rs), 2)
+        create: ProcessModel = experiment.protocol.get_process('create')
 
-        # self.assertTrue(rs.save())
+        # Check that the resource model was generated
+        resource_model: ResourceModel = create.out_port('robot').resource_model
+        self.assertIsNotNone(resource_model.id)
+        self.assertTrue(isinstance(resource_model, ResourceModel))
 
-        # rs2 = ResourceSet.get_by_id(rs.id)
-        # self.assertEqual(rs, rs2)
-        # self.assertEqual(len(rs2), 2)
+        # Check that the resource is a Robot
+        robot: Robot = resource_model.get_resource()
+        self.assertTrue(isinstance(robot, Robot))
 
-        # self.assertEqual(rs2['c1'], c1)
-        # self.assertEqual(rs2['c2'], c2)
+        # Check the to_json
+        resource_model.to_json(deep=True)

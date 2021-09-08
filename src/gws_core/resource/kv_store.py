@@ -58,7 +58,7 @@ class KVStore(Dict[str, Any]):
 
         return self._full_file_path + '.db'
 
-    def get_full_path_wthout_extension(self) -> str:
+    def get_full_path_without_extension(self) -> str:
         return self._full_file_path
     # -- G --
 
@@ -145,7 +145,7 @@ class KVStore(Dict[str, Any]):
         if not FileHelper.exists_on_os(self.get_base_dir()):
             os.mkdir(self.get_base_dir())
 
-        return shelve_open(self.get_full_path_wthout_extension())
+        return shelve_open(self.get_full_path_without_extension())
 
     def check_before_write(self, key: str) -> None:
         self._check_key(key=key)

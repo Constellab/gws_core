@@ -8,12 +8,12 @@ from typing import Any, Type
 
 from ...core.exception.exceptions import BadRequestException
 from ...impl.file.file_helper import FileHelper
-from ...resource.resource import Resource, SerializedResourceData
+from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.resource_set import ResourceSet
-from .file_resource_model import FileResourceModel
 
-@resource_decorator("File", model=FileResourceModel)
+
+@resource_decorator("File")
 class FileResource(Resource):
     """
     File class

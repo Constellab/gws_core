@@ -3,10 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Dict, List, Type, Union
 
 from gws_core.resource.kv_store import KVStore
-from ..model.typing_manager import TypingManager
+
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.base import Base
+from ..model.typing_manager import TypingManager
 from ..model.typing_register_decorator import typing_registrator
 
 if TYPE_CHECKING:
@@ -28,7 +29,8 @@ class Resource(Base):
     # Provided at the Class level automatically by the @ResourceDecorator
     # //!\\ Do not modify theses values
     _typing_name: str = None
-    _resource_model_type: Union(Type[ResourceModel], str) = None # use real typing_name string here because the ResourceModel cannot be imported!
+    # use real typing_name string here because the ResourceModel cannot be imported!
+    _resource_model_type: Union(Type[ResourceModel], str) = None
     _human_name: str = None
     _short_description: str = None
     _serializable_fields: List[str] = None
@@ -108,6 +110,9 @@ class Resource(Base):
 
         # @ToDo: ensure that this method is only called by an Importer
 
+    def to_json(self) -> Dict:
+        return self.serialize_data()
+
     # -- T --
 
     @classmethod
@@ -118,17 +123,7 @@ class Resource(Base):
         :return: [description]
         :rtype: Type[Any]
         """
-
-        if cls._resource_model_type:
-            if isinstance(cls._resource_model_type, type):
-                resource_model_type: Type[ResourceType] = cls._resource_model_type
-            elif isinstance(cls._resource_model_type, str):
-                resource_model_type: Type[ResourceType] = TypingManager.get_type_from_name(cls._resource_model_type)
-            else:
-                raise BadRequestException("Invalid resource model type property.")
-            return resource_model_type
-        else:
-            from .resource_model import ResourceModel
-            return ResourceModel
+        from .resource_model import ResourceModel
+        return ResourceModel
 
     # -- V --

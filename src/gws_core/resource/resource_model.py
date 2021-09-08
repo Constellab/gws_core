@@ -8,7 +8,7 @@ from __future__ import annotations
 import copy
 from typing import TYPE_CHECKING, Generic, Optional, Type, TypeVar, final
 
-from peewee import CharField, ModelSelect, Field
+from peewee import CharField, ModelSelect
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -30,6 +30,8 @@ CONST_RESOURCE_MODEL_TYPING_NAME = "GWS_CORE.gws_core.ResourceModel"
 ResourceType = TypeVar('ResourceType', bound=Resource)
 
 # Use the typing decorator to avoid circular dependency
+
+
 @typing_registrator(unique_name="ResourceModel", object_type="GWS_CORE", hide=True)
 class ResourceModel(Viewable, Generic[ResourceType]):
     """
@@ -187,11 +189,11 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         """
         resource_type: Type[ResourceType] = TypingManager.get_type_from_name(self.resource_typing_name)
         resource: ResourceType = resource_type(binary_store=self.get_kv_store_with_default())
-        
-        self.send_fields_to_resource(resource, new_instance)  #synchronize the resource fields with the model fields
+
+        self.send_fields_to_resource(resource, new_instance)  # synchronize the resource fields with the model fields
         return resource
 
-    def send_fields_to_resource(self, resource, new_instance):
+    def send_fields_to_resource(self, resource: Resource, new_instance: bool):
         data: dict
         if new_instance:
             data = copy.deepcopy(self.data)
@@ -231,22 +233,11 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         :return: [description]
         :rtype: [type]
         """
-        # if resource._resource_model_type:
-        #     if isinstance(resource._resource_model_type, str):
-        #         resource_model_type: Type[ResourceType] = TypingManager.get_type_from_name(resource._resource_model_type)
-        #     elif isinstance(resource._resource_model_type, type):
-        #         resource_model_type = resource._resource_model_type
-        #     else:
-        #         raise BadRequestException("Invalid model_type type. A string and a type is required")
-        #     resource_model: ResourceModel = resource_model_type()
-        # else:
-        #     resource_model: ResourceModel = ResourceModel()
-
         resource_model_type = resource.get_resource_model_type()
         resource_model: ResourceModel = resource_model_type()
         resource_model.resource_typing_name = resource._typing_name
 
-        #synchronize the model fields with the resource fields
+        # synchronize the model fields with the resource fields
         resource_model.receive_fields_from_resource(resource)
 
         # set the kv store
@@ -259,7 +250,7 @@ class ResourceModel(Viewable, Generic[ResourceType]):
             # If the kv store file exists (this mean that we wrote on it)
             if kv_store.file_exists():
                 # Save the kv store path on the resource
-                resource_model.kv_store_path = kv_store.get_full_path_wthout_extension()
+                resource_model.kv_store_path = kv_store.get_full_path_without_extension()
             else:
                 resource_model.kv_store_path = None
         else:
