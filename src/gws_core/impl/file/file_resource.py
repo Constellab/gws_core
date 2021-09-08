@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 import os
-from typing import Any, Type
+from typing import Any, AnyStr, List, Type, final
 
 from ...core.exception.exceptions import BadRequestException
 from ...impl.file.file_helper import FileHelper
@@ -78,25 +78,24 @@ class FileResource(Resource):
             if not os.path.exists(self.dir):
                 os.makedirs(self.dir)
                 if not os.path.exists(self.dir):
-                    raise BadRequestException(
-                        f"Cannot create directory {self.dir}")
+                    raise BadRequestException(f"Cannot create directory {self.dir}")
             return open(self.path, mode="w+")
 
     # -- R --
 
-    def read(self):
+    def read(self) -> AnyStr:
         m = "r+"+self._mode
         with self.open(m) as fp:
             data = fp.read()
         return data
 
-    def readline(self):
+    def readline(self) -> AnyStr:
         m = "r+"+self._mode
         with self.open(m) as fp:
             data = fp.readline()
         return data
 
-    def readlines(self, n=-1):
+    def readlines(self, n=-1) -> List[AnyStr]:
         m = "r+"+self._mode
         with self.open(m) as fp:
             data = fp.readlines(n)
@@ -104,6 +103,7 @@ class FileResource(Resource):
 
     # -- T --
 
+    @final
     def to_json(self) -> dict:
         _json = {}
 

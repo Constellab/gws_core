@@ -78,6 +78,9 @@ class LocalFileStore(FileStore):
 
         return file
 
+    def create_empty(self, file_name: str) -> FileResource:
+        return self.create_file(file_name=file_name)
+
     def _copy_file(self, source: str, destination: str) -> None:
         """Copy a file from a path to another path
 

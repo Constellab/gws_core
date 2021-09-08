@@ -72,6 +72,10 @@ class FileStore(Model):
         raise BadRequestException('Not implemented')
 
     @abstractmethod
+    def create_empty(self, file_name: str) -> FileResource:
+        pass
+
+    @abstractmethod
     def file_exists(self, file_name: str) -> bool:
         pass
 

@@ -96,6 +96,7 @@ from .impl.csv.csv_process import CSVExporter as CSVExporter
 from .impl.csv.csv_process import CSVImporter as CSVImporter
 from .impl.csv.csv_process import CSVLoader as CSVLoader
 from .impl.csv.csv_resource import CSVTable as CSVTable
+from .impl.file.file_process import WriteToJsonFile as WriteToJsonFile
 # Impl > File
 from .impl.file.file_resource import FileResource as FileResource
 from .impl.file.file_resource import FileSet as FileSet
@@ -145,6 +146,8 @@ from .io.connector import Connector as Connector
 from .io.io import IO as IO
 from .io.io import Input as Input
 from .io.io import Output as Output
+from .io.io_spec import InputSpecs as InputSpecs
+from .io.io_spec import OutputSpecs as OutputSpecs
 from .io.io_types import OptionalIn as OptionalIn
 from .io.io_types import SkippableIn as SkippableIn
 from .io.io_types import SubClassesOut as SubClassesOut
