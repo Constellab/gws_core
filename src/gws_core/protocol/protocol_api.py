@@ -3,14 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from fastapi import Depends
 from gws_core.core.classes.paginator import PaginatorDict
 from gws_core.core.dto.typed_tree_dto import TypedTree
-from gws_core.core.model.model import Model
-from gws_core.protocol.protocol_type import ProtocolType
-from gws_core.user.user import User
 
 from ..core_app import core_app
 from ..process.process_service import ProcessService

@@ -12,7 +12,7 @@ from ..core.exception.exceptions import NotFoundException
 from ..core.service.base_service import BaseService
 from ..experiment.experiment import Experiment
 from .resource_model import Resource, ResourceModel
-from .resource_type import ResourceType
+from .resource_typing import ResourceTyping
 
 
 class ResourceService(BaseService):
@@ -63,9 +63,9 @@ class ResourceService(BaseService):
     @classmethod
     def fetch_resource_type_list(cls,
                                  page: int = 0,
-                                 number_of_items_per_page: int = 20) -> Paginator[ResourceType]:
+                                 number_of_items_per_page: int = 20) -> Paginator[ResourceTyping]:
 
-        query = ResourceType.get_types()
+        query = ResourceTyping.get_types()
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
         return Paginator(

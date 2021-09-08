@@ -40,8 +40,6 @@ class ResourceModel(Viewable, Generic[ResourceType]):
     :property process: The process that created he resource
     :type process: ProcessableModel
     """
-    # typing name of the resource model
-    typing_name = CharField(null=False)
 
     # typing name of the resource
     resource_typing_name = CharField(null=False)
@@ -61,9 +59,6 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         if self._typing_name == CONST_RESOURCE_MODEL_TYPING_NAME and type(self) != ResourceModel:  # pylint: disable=unidiomatic-typecheck
             raise BadRequestException(
                 f"The resource model {self.full_classname()} is not decorated with @TypingDecorator, it can't be instantiate. Please decorate the class with @TypingDecorator")
-
-        if self.typing_name is None:
-            self.typing_name = self._typing_name
 
     # -- E --
 
@@ -98,7 +93,7 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         mapping = ExperimentResource(
             experiment_id=experiment.id,
             resource_model_id=self.id,
-            resource_model_typing_name=self.typing_name,
+            resource_model_typing_name=self._typing_name,
         )
         mapping.save()
         self._experiment = experiment
@@ -114,7 +109,7 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         if not self._process:
             try:
                 processable_resource: ProcessableResource = ProcessableResource.get_by_id_and_tying_name(
-                    self.id, self.typing_name)
+                    self.id, self._typing_name)
                 self._process = processable_resource.process
             except Exception as _:
                 return None
@@ -137,10 +132,14 @@ class ResourceModel(Viewable, Generic[ResourceType]):
             process_id=process.id,
             processable_typing_name=process.processable_typing_name,
             resource_model_id=self.id,
-            resource_model_typing_name=self.typing_name,
+            resource_model_typing_name=self._typing_name,
         )
         mapping.save()
         self._process = process
+
+    @property
+    def typing_name(self) -> str:
+        return self._typing_name
 
     # -- R --
     @final
@@ -189,6 +188,8 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         """
         resource_type: Type[ResourceType] = TypingManager.get_type_from_name(self.resource_typing_name)
         resource: ResourceType = resource_type(binary_store=self.get_kv_store_with_default())
+        # Pass the model uri to the resource
+        resource._model_uri = self.uri
 
         self.send_fields_to_resource(resource, new_instance)  # synchronize the resource fields with the model fields
         return resource

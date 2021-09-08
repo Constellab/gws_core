@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Type, Union
-
-from gws_core.resource.kv_store import KVStore
+from typing import TYPE_CHECKING, Any, Dict, List, Type
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.base import Base
-from ..model.typing_manager import TypingManager
 from ..model.typing_register_decorator import typing_registrator
+from .kv_store import KVStore
 
 if TYPE_CHECKING:
-    from .resource_model import ResourceModel, ResourceType
+    from .resource_model import ResourceModel
 
 # Typing names generated for the class Process
 CONST_RESOURCE_TYPING_NAME = "RESOURCE.gws_core.Resource"
@@ -24,16 +22,15 @@ SerializedResourceData = Dict
 class Resource(Base):
 
     # To store big data. This will be store in a file on the server. It will not be searchable
-    kv_store: KVStore
+    binary_store: KVStore
 
     # Provided at the Class level automatically by the @ResourceDecorator
     # //!\\ Do not modify theses values
     _typing_name: str = None
-    # use real typing_name string here because the ResourceModel cannot be imported!
-    _resource_model_type: Union(Type[ResourceModel], str) = None
     _human_name: str = None
     _short_description: str = None
     _serializable_fields: List[str] = None
+    _model_uri: str = None
 
     def __init__(self, binary_store: KVStore = None):
         # check that the class level property _typing_name is set

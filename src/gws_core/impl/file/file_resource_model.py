@@ -3,16 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Type
 
 from peewee import CharField
 
-from ...model.typing_manager import TypingManager
-from ...model.typing_register_decorator import typing_registrator
-from ...resource.resource import SerializedResourceData
-from ...resource.resource_model import ResourceModel
-from .file_helper import FileHelper
 from ...extension.extended_resource_model import ExtendedResourceModel
+from ...model.typing_register_decorator import typing_registrator
+from .file_helper import FileHelper
+
 
 @typing_registrator(unique_name="FileResourceModel", object_type="GWS_CORE", hide=True)
 class FileResourceModel(ExtendedResourceModel):

@@ -3,20 +3,19 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, Dict, List, Type, final
+from typing import Any, Dict, Type, final
 
 from peewee import ModelSelect
 
-from ..config.config_spec import ConfigSpecs, ConfigSpecsHelper
+from ..config.config_spec import ConfigSpecsHelper
 from ..core.utils.utils import Utils
-from ..io.io_spec import IOSpecs, IOSpecsHelper
+from ..io.io_spec import IOSpecsHelper
 from ..model.typing import Typing, TypingObjectType
 from ..process.process import Process
-from ..resource.resource import Resource
 
 
 @final
-class ProcessType(Typing):
+class ProcessTyping(Typing):
     """
     ProcessType class.
     """

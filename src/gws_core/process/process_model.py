@@ -145,8 +145,15 @@ class ProcessModel(ProcessableModel):
                 if not issubclass(resource_model_type, ResourceModel):
                     raise BadRequestException(
                         f"The method get_resource_model_type of resource {resource.classname()} did not return a type that extend ResourceModel")
-                # create the resource model from the resource
-                resource_model = resource_model_type.from_resource(resource)
+
+                if port.is_unmodified_out:
+                    # If the port is mark as resource existing, we don't create a new resource
+                    # We use the same resource
+                    resource_model = TypingManager.get_object_with_typing_name_and_uri(
+                        typing_name=resource_model_type._typing_name, uri=resource._model_uri)
+                else:
+                    # create the resource model from the resource
+                    resource_model = resource_model_type.from_resource(resource)
 
             else:
                 resource_model = None
@@ -156,14 +163,13 @@ class ProcessModel(ProcessableModel):
 
     async def _run_after_task(self):
 
-        if not self._is_plug:
-            # Save the generated resource
-            res: Dict[str, ResourceModel] = self.output.get_resources()
-            for resource in res.values():
-                if resource is not None:
-                    resource.experiment = self.experiment
-                    resource.process = self
-                    resource.save()
+        # Save the generated resource
+        res: Dict[str, ResourceModel] = self.output.get_resources()
+        for resource in res.values():
+            if resource is not None and not resource.is_saved():
+                resource.experiment = self.experiment
+                resource.process = self
+                resource.save()
         await super()._run_after_task()
 
     def is_protocol(self) -> bool:

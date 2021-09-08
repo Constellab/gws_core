@@ -3,18 +3,17 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Type, Union
+from typing import List, Type
 
 from ..core.classes.paginator import Paginator
 from ..core.dto.typed_tree_dto import TypedTree
 from ..core.exception.exceptions import NotFoundException
 from ..core.service.base_service import BaseService
-from ..experiment.experiment import Experiment
 from ..processable.processable_factory import ProcessableFactory
 from ..progress_bar.progress_bar import ProgressBar
 from .process import Process
 from .process_model import ProcessModel
-from .process_type import ProcessType
+from .process_typing import ProcessTyping
 
 
 class ProcessService(BaseService):
@@ -57,15 +56,15 @@ class ProcessService(BaseService):
         ############################# PROCESS TYPE ###########################
 
     @classmethod
-    def get_process_type(cls, uri: str) -> ProcessType:
-        return ProcessType.get_by_uri_and_check(uri)
+    def get_process_type(cls, uri: str) -> ProcessTyping:
+        return ProcessTyping.get_by_uri_and_check(uri)
 
     @classmethod
     def fetch_process_type_list(cls,
                                 page: int = 0,
-                                number_of_items_per_page: int = 20) -> Paginator[ProcessType]:
+                                number_of_items_per_page: int = 20) -> Paginator[ProcessTyping]:
 
-        query = ProcessType.get_types()
+        query = ProcessTyping.get_types()
 
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
@@ -78,7 +77,7 @@ class ProcessService(BaseService):
         Return all the process types grouped by module and submodules
         """
 
-        query: List[ProcessType] = ProcessType.get_types()
+        query: List[ProcessTyping] = ProcessTyping.get_types()
 
         # create a fake main group to add processes in it
         tree: TypedTree = TypedTree('')

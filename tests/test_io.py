@@ -9,8 +9,17 @@ from gws_core import (BaseTestCase, ConfigParams, Connector, GTest, Process,
                       ProcessableFactory, ProcessInputs, ProcessModel,
                       ProcessOutputs, Resource, SerializedResourceData,
                       process_decorator, resource_decorator)
+from gws_core.experiment.experiment import Experiment
+from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.io.io_exception import ImcompatiblePortsException
-from gws_core.io.io_spec import SubClasses
+from gws_core.io.io_spec import SubClassesOut
+from gws_core.io.io_types import UumodifiedOut
+from gws_core.protocol.protocol import Protocol
+from gws_core.protocol.protocol_decorator import protocol_decorator
+from gws_core.protocol.protocol_model import ProtocolModel
+from gws_core.protocol.protocol_service import ProtocolService
+from gws_core.protocol.protocol_spec import ProcessableSpec
+from gws_core.resource.resource_model import ResourceModel
 
 
 @resource_decorator("Person")
@@ -48,7 +57,7 @@ class Create(Process):
     config_specs = {}
 
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
-        return
+        return {'create_person_out': Person()}
 
 
 @process_decorator("Move")
@@ -76,7 +85,7 @@ class Jump(Process):
     input_specs = {'jump_person_in_1': Person,
                    'jump_person_in_2': Person}
     output_specs = {'jump_person_out': Person,
-                    'jump_person_out_any': SubClasses[Person]}
+                    'jump_person_out_any': SubClassesOut[Person]}
     config_specs = {}
 
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
@@ -103,6 +112,31 @@ class OptionalProcess(Process):
 
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         return
+
+# This is to test the ExistingResource type
+
+
+@process_decorator("Log")
+class Log(Process):
+    input_specs = {'person': Person}
+    output_specs = {'samePerson': UumodifiedOut[Person],
+                    'otherPerson': Person}
+    config_specs = {}
+
+    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+        print('Log person')
+        return {'samePerson': inputs.get('person'), 'otherPerson': inputs.get('person')}
+
+
+@protocol_decorator("TestPersonProtocol")
+class TestPersonProtocol(Protocol):
+    def configure_protocol(self, config_params: ConfigParams) -> None:
+        create: ProcessableSpec = self.add_process(Create, 'create')
+        log: ProcessableSpec = self.add_process(Log, 'log')
+
+        self.add_connectors([
+            (create >> 'create_person_out', log << 'person')
+        ])
 
 
 class TestIO(BaseTestCase):
@@ -149,7 +183,7 @@ class TestIO(BaseTestCase):
         self.assertTrue(opt.in_port("second").is_optional)
         self.assertFalse(opt.in_port("third").is_optional)
 
-    def test_sub_class(self):
+    def test_sub_class_output(self):
         """Test the SubClasses generic type
         """
         jump: ProcessModel = ProcessableFactory.create_process_model_from_type(
@@ -163,3 +197,19 @@ class TestIO(BaseTestCase):
 
         # Test that you can plus a SubClasses[Person] to a Superman
         Connector(jump.out_port('jump_person_out_any'), fly.in_port('superman'))
+
+    async def test_unmodified_output(self):
+        """Test the UnmodifiableOut type. It tests that this is the same resource
+        on log input and log output
+        """
+        protocol: ProtocolModel = ProtocolService.create_protocol_from_type(TestPersonProtocol)
+        experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(protocol)
+
+        experiment = await ExperimentService.run_experiment(experiment)
+
+        person1: ResourceModel = experiment.protocol.get_process('create').out_port('create_person_out').resource_model
+        same_person: ResourceModel = experiment.protocol.get_process('log').out_port('samePerson').resource_model
+        other_erson: ResourceModel = experiment.protocol.get_process('log').out_port('otherPerson').resource_model
+
+        self.assertEqual(person1.id, same_person.id)
+        self.assertNotEqual(person1, other_erson.id)

@@ -153,6 +153,15 @@ class Port(Base):
     def is_empty(self) -> bool:
         return self._resource_model is None
 
+    @property
+    def is_unmodified_out(self) -> bool:
+        """return true if the port type is UnmodifiedOut
+
+        :return: [description]
+        :rtype: bool
+        """
+        return self.resource_spec.is_unmodified_out()
+
     # -- G --
 
     def get_next_procs(self) -> List[ProcessableModel]:
@@ -290,7 +299,7 @@ class Port(Base):
         if self.is_optional and resource_type is None:
             return True
 
-        return IOSpecsHelper.resource_type_is_compatible(resource_type, self._resource_spec)
+        return IOSpecsHelper.spec_is_compatible(resource_type, self._resource_spec)
 
     def get_resource(self, new_instance: bool = False) -> Resource:
         return self.resource_model.get_resource(new_instance=new_instance)

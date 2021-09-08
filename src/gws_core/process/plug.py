@@ -4,18 +4,20 @@
 # About us: https://gencovery.com
 
 import time
-from typing import Type
+
+from gws_core.core.exception.exceptions.bad_request_exception import \
+    BadRequestException
+from gws_core.model.typing_manager import TypingManager
+from gws_core.resource.resource_model import ResourceModel
 
 from ..config.config_params import ConfigParams
-from ..core.model.model import Model
-from ..core.utils.utils import Utils
 from ..process.process_io import ProcessInputs, ProcessOutputs
 from ..resource.resource import Resource
 from .process import Process
 from .process_decorator import process_decorator
 
 
-@process_decorator("Source")
+@process_decorator(unique_name="Source", is_plug=True)
 class Source(Process):
     """
     Source process.
@@ -27,22 +29,20 @@ class Source(Process):
     output_specs = {'resource': (Resource, )}
     config_specs = {
         'resource_uri': {"type": str, "default": None, 'description': "The uri of the resource"},
-        'resource_type': {"type": str, "default": None, 'description': "The type of the resource"},
+        'resource_typing_name': {"type": str, "default": None, 'description': "The type of the resource"},
     }
 
-    _is_plug = True
-
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
-        r_uri = config.get_param("resource_uri")
-        r_type = config.get_param("resource_type")
-        if not r_uri or not r_type:
-            return
-        model_type: Type[Model] = Utils.get_model_type(r_type)
-        resource = model_type.get(model_type.uri == r_uri)
-        return {"resource": resource}
+        r_uri: str = config.get_param("resource_uri")
+        r_typing_name: str = config.get_param("resource_typing_name")
+        if not r_uri or not r_typing_name:
+            raise BadRequestException('Source error, the resource uri or typing name is missing')
+        resource_model: ResourceModel = TypingManager.get_object_with_typing_name_and_uri(
+            typing_name=r_typing_name, uri=r_uri)
+        return {"resource": resource_model.get_resource()}
 
 
-@process_decorator("Sink")
+@process_decorator(unique_name="Sink", is_plug=True)
 class Sink(Process):
     """
     Sink process.
@@ -53,13 +53,12 @@ class Sink(Process):
     input_specs = {'resource': (Resource, )}
     output_specs = {}
     config_specs = {}
-    _is_plug = True
 
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         pass
 
 
-@process_decorator("FIFO2")
+@process_decorator(unique_name="FIFO2", is_plug=True)
 class FIFO2(Process):
     """
     FIFO2 process (with 2 input ports)
@@ -71,7 +70,6 @@ class FIFO2(Process):
         Resource, None, ), 'resource_2': (Resource, None, )}
     output_specs = {'resource': (Resource, )}
     config_specs = {}
-    _is_plug = True
 
     def check_before_task(self, config: ConfigParams, inputs: ProcessInputs) -> bool:
         res_1 = inputs['resource_1']
@@ -92,7 +90,7 @@ class FIFO2(Process):
             return {"resource": resource}
 
 
-@process_decorator("Switch2")
+@process_decorator(unique_name="Switch2", is_plug=True)
 class Switch2(Process):
     """
     Switch process (with 2 input ports)
@@ -105,7 +103,6 @@ class Switch2(Process):
     output_specs = {'resource': (Resource, )}
     config_specs = {"index": {"type": int, "default": 1, "min": 1, "max": 2,
                               "Description": "The index of the input resource to switch on. Defaults to 1."}}
-    _is_plug = True
 
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         index = config.get_param("index")
@@ -113,7 +110,7 @@ class Switch2(Process):
         return {"resource": resource}
 
 
-@process_decorator("Wait")
+@process_decorator(unique_name="Wait", is_plug=True)
 class Wait(Process):
     """
     Wait process
@@ -125,7 +122,6 @@ class Wait(Process):
     output_specs = {'resource': (Resource,)}
     config_specs = {"waiting_time": {"type": float, "default": 3, "min": 0,
                                      "Description": "The waiting time in seconds. Defaults to 3 second."}}
-    _is_plug = True
 
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         waiting_time = config.get_param("waiting_time")

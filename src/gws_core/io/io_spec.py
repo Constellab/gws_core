@@ -3,17 +3,27 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict, Iterable, List, Type, Union, get_args
+from typing import Dict, Iterable, List, Optional, Type, Union, get_args
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..resource.resource import Resource
-from .io_types import SubClasses
+from .io_types import UumodifiedOut, SkippableIn, SpecialTypeIO, SubClassesOut
 
-IOSpec = Union[Type[Resource], Iterable[Type[Resource]], SubClasses[Resource]]
+ResourceType = Type[Resource]
+
+
+InputSpecType = Union[ResourceType, Optional[ResourceType], SkippableIn[ResourceType]]
+InputSpec = Union[InputSpecType, Iterable[InputSpecType]]
+InputSpecs = Dict[str, InputSpec]
+
+OutputSpecType = Union[ResourceType, SubClassesOut[ResourceType], UumodifiedOut[ResourceType]]
+OutputSpec = Union[InputSpecType, Iterable[InputSpecType]]
+OutputSpecs = Dict[str, InputSpec]
+
+IOSpecType = Union[InputSpecType, OutputSpecType]
+IOSpec = Union[IOSpecType, Iterable[IOSpecType]]
 IOSpecs = Dict[str, IOSpec]
-
-PreProcessedResourceType = Union[Type[Resource], SubClasses[Resource], None]
 
 
 class IOSpecClass:
@@ -23,18 +33,21 @@ class IOSpecClass:
     def __init__(self, spec: IOSpec) -> None:
         self.resource_spec = spec
 
-    def to_resource_types(self) -> List[PreProcessedResourceType]:
+    def to_resource_types(self) -> List[ResourceType]:
         return IOSpecsHelper.io_spec_to_resource_types(self.resource_spec)
 
     def is_compatible_with_spec(self, spec: 'IOSpecClass') -> bool:
-        return IOSpecsHelper.resources_types_are_compatible(self.to_resource_types(), spec.to_resource_types())
+        return IOSpecsHelper.specs_are_compatible(self.resource_spec, spec.resource_spec)
 
     def is_compatible_with_type(self, resource_type: Type[Resource]) -> bool:
-        return IOSpecsHelper.resource_type_is_compatible(
+        return IOSpecsHelper.spec_is_compatible(
             resource_type=resource_type, expected_types=self.to_resource_types())
 
     def is_optional(self) -> bool:
         return None in self.to_resource_types()
+
+    def is_unmodified_out(self) -> bool:
+        return UumodifiedOut.is_class(self.resource_spec)
 
 
 class IOSpecsHelper():
@@ -42,7 +55,7 @@ class IOSpecsHelper():
     """
 
     @classmethod
-    def io_specs_to_resource_types(cls, io_specs: IOSpecs) -> Dict[str, List[Type[Resource]]]:
+    def io_specs_to_resource_types(cls, io_specs: IOSpecs) -> Dict[str, List[ResourceType]]:
         """Convert all specs (IOSpecs) to list of resources
 
         :param io_specs: [description]
@@ -52,15 +65,15 @@ class IOSpecsHelper():
         :rtype: Dict[str, List[Type[Resource]]]
         """
 
-        specs: Dict[str, List[Type[Resource]]] = {}
+        specs: Dict[str, List[ResourceType]] = {}
         for key, spec in io_specs.items():
             specs[key] = cls.io_spec_to_resource_types(spec)
 
         return specs
 
     @classmethod
-    def io_spec_to_resource_types(cls, io_spec: IOSpec) -> List[PreProcessedResourceType]:
-        """Convert a IOSpec to list of resources
+    def io_spec_to_resource_types(cls, io_spec: IOSpec) -> List[ResourceType]:
+        """Convert a IOSpec to list of resources types
         It also checks that the type is a Resource
         :param io_spec: [description]
         :type io_spec: IOSpec
@@ -68,39 +81,54 @@ class IOSpecsHelper():
         :rtype: List[Type[Resource]]
         """
 
-        if SubClasses.is_sub_class_type(io_spec):
-            io_spec = [io_spec]
-        # if the type is a Union or Optional (equivalient to Union[x, None])
-        elif hasattr(io_spec, "__args__") and isinstance(io_spec.__args__, tuple):
-            io_spec = get_args(io_spec)
-        elif not isinstance(io_spec, Iterable):
-            io_spec = [io_spec]
+        io_spec_list: List[IOSpecType] = cls.io_spec_to_list(io_spec)
 
-        resource_types: List[PreProcessedResourceType] = []
+        resource_types: List[ResourceType] = []
 
-        for res_t in io_spec:
+        for io_spec in io_spec_list:
             # convert the NoneType to None
-            if res_t is type(None) or res_t is None:
+            if io_spec is type(None) or io_spec is None:
                 resource_types.append(None)
                 continue
 
-            if SubClasses.is_sub_class_type(res_t):
+            if SpecialTypeIO.is_class(io_spec):
                 # Check that the type used in SubClass is a Resource
-                if not issubclass(SubClasses.extract_type(res_t), Resource):
+                if not issubclass(SpecialTypeIO.extract_type(io_spec), Resource):
                     raise BadRequestException(
-                        f"Invalid port specs. The type '{res_t}' used inside a SubClasses is not a resource")
+                        f"Invalid port specs. The type '{io_spec}' used inside the special type '{io_spec}'' is not a resource")
+                resource_types.append(SpecialTypeIO.extract_type(io_spec))
             else:
                 # check that the type is a Resource or a SubClasses
-                if not issubclass(res_t, Resource):
-                    raise BadRequestException(f"Invalid port specs. The type '{res_t}' is not a resource")
-            resource_types.append(res_t)
+                if not issubclass(io_spec, Resource):
+                    raise BadRequestException(f"Invalid port specs. The type '{io_spec}' is not a resource")
+                resource_types.append(io_spec)
 
         return resource_types
 
     @classmethod
-    def resource_type_is_compatible(cls, resource_type: PreProcessedResourceType,
-                                    expected_types: List[PreProcessedResourceType],
-                                    exclude_none: bool = False) -> bool:
+    def io_spec_to_list(cls, io_spec: IOSpec) -> List[IOSpecType]:
+        """Convert IOSpec to a list of types
+
+        :param io_spec: [description]
+        :type io_spec: IOSpec
+        :return: [description]
+        :rtype: List[IOSpecType]
+        """
+
+        if SpecialTypeIO.is_class(io_spec):
+            return [io_spec]
+        # if the type is a Union or Optional (equivalient to Union[x, None])
+        elif hasattr(io_spec, "__args__") and isinstance(io_spec.__args__, tuple):
+            return get_args(io_spec)
+        elif not isinstance(io_spec, Iterable):
+            return [io_spec]
+
+        return io_spec
+
+    @classmethod
+    def spec_is_compatible(cls, resource_type: IOSpecType,
+                           expected_types: IOSpec,
+                           exclude_none: bool = False) -> bool:
         """Check if a resource type is compataible with excpeted types
 
         :param resource_type: type to check
@@ -114,16 +142,17 @@ class IOSpecsHelper():
         """
 
         # Handle the generic SubClasss
-        if SubClasses.is_sub_class_type(resource_type):
-            resource_type: Type[Resource] = SubClasses.extract_type(resource_type)
+        if SubClassesOut.is_class(resource_type):
+            resource_type: Type[Resource] = SubClassesOut.extract_type(resource_type)
             # check if type inside the SubClass is compatible with expected type
             # if not check if one of the expected type is compatible with SubClass
-            return cls.resource_type_is_compatible(resource_type=resource_type, expected_types=expected_types,
-                                                   exclude_none=exclude_none) or cls.resources_types_are_compatible(
-                resources_types_1=expected_types, resources_types_2=[resource_type])
+            return cls.spec_is_compatible(resource_type=resource_type, expected_types=expected_types,
+                                          exclude_none=exclude_none) or cls.specs_are_compatible(
+                output_specs_1=expected_types, input_specs_2=[resource_type])
 
-        # check that the resource type is is subclass of one of the port resources types
-        for expected_type in expected_types:
+        expected_r_types: List[ResourceType] = cls.io_spec_to_resource_types(expected_types)
+        # check that the resource type is a subclass of one of the port resources types
+        for expected_type in expected_r_types:
             if resource_type is None and exclude_none:
                 continue
 
@@ -133,13 +162,15 @@ class IOSpecsHelper():
         return False
 
     @classmethod
-    def resources_types_are_compatible(
-            cls, resources_types_1: List[PreProcessedResourceType],
-            resources_types_2: List[PreProcessedResourceType]) -> bool:
+    def specs_are_compatible(
+            cls, output_specs_1: IOSpec,
+            input_specs_2: IOSpec) -> bool:
 
-        for resource_type in resources_types_1:
+        output_spec_list: List[IOSpecType] = cls.io_spec_to_list(output_specs_1)
+
+        for output_spec in output_spec_list:
             # compare the type and exclude the None
-            if cls.resource_type_is_compatible(resource_type, resources_types_2, True):
+            if cls.spec_is_compatible(output_spec, input_specs_2, True):
                 return True
 
         return False

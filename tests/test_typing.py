@@ -5,13 +5,10 @@
 
 from typing import Dict
 
-from gws_core import (BaseTestCase, GTest, ProcessService, ProtocolService,
-                      RobotEat)
+from gws_core import (BaseTestCase, GTest, ProcessService, ProcessTyping,
+                      ProtocolService, ProtocolTyping, ResourceTyping, RobotEat)
 from gws_core.impl.robot.robot_protocol import RobotWorldTravelProto
 from gws_core.impl.robot.robot_resource import Robot
-from gws_core.process.process_type import ProcessType
-from gws_core.protocol.protocol_type import ProtocolType
-from gws_core.resource.resource_type import ResourceType
 
 
 class TestTyping(BaseTestCase):
@@ -29,7 +26,7 @@ class TestTyping(BaseTestCase):
         """Test a get from a type and test convertion to json of a type that
         has mulitple spec and an optional spec
         """
-        eat_type: ProcessType = ProcessType.get_by_model_type(RobotEat)
+        eat_type: ProcessTyping = ProcessTyping.get_by_model_type(RobotEat)
 
         self.assertEqual(eat_type.get_type(), RobotEat)
 
@@ -40,7 +37,7 @@ class TestTyping(BaseTestCase):
         self.assert_json(eat_json['input_specs'], input_specs, None)
 
     async def test_protocol_type(self):
-        world_travel: ProtocolType = ProtocolType.get_by_model_type(RobotWorldTravelProto)
+        world_travel: ProtocolTyping = ProtocolTyping.get_by_model_type(RobotWorldTravelProto)
 
         self.assertEqual(world_travel.get_type(), RobotWorldTravelProto)
 
@@ -51,7 +48,7 @@ class TestTyping(BaseTestCase):
         self.assertTrue(len(world_travel_json['data']['graph']['links']) > 0)
 
     async def test_resource_type(self):
-        robot: ResourceType = ResourceType.get_by_model_type(Robot)
+        robot: ResourceTyping = ResourceTyping.get_by_model_type(Robot)
 
         self.assertEqual(robot.get_type(), Robot)
 

@@ -148,7 +148,7 @@ from .io.ioface import Outerface as Outerface
 from .io.port import InPort as InPort
 from .io.port import OutPort as OutPort
 from .io.port import Port as Port
-from .io.io_types import SubClasses as SubClasses
+from .io.io_types import SubClassesOut as SubClassesOut
 # Lab
 from .lab.lab_service import LabService as LabService
 from .lab.system import Monitor as Monitor
@@ -170,7 +170,7 @@ from .process.process_io import ProcessInputs as ProcessInputs
 from .process.process_io import ProcessOutputs as ProcessOutputs
 from .process.process_model import ProcessModel as ProcessModel
 from .process.process_service import ProcessService as ProcessService
-from .process.process_type import ProcessType as ProcessType
+from .process.process_typing import ProcessTyping as ProcessTyping
 # Processable
 from .processable.processable import Processable as Processable
 from .processable.processable_factory import \
@@ -190,7 +190,7 @@ from .protocol.protocol_spec import ConnectorPartSpec as ConnectorPartSpec
 from .protocol.protocol_spec import ConnectorSpec as ConnectorSpec
 from .protocol.protocol_spec import InterfaceSpec as InterfaceSpec
 from .protocol.protocol_spec import ProcessableSpec as ProcessableSpec
-from .protocol.protocol_type import ProtocolType as ProtocolType
+from .protocol.protocol_typing import ProtocolTyping as ProtocolTyping
 from .resource.kv_store import KVStore as KVStore
 # Resource
 from .resource.resource import Resource as Resource
@@ -200,7 +200,7 @@ from .resource.resource_decorator import \
 from .resource.resource_model import ResourceModel as ResourceModel
 from .resource.resource_service import ResourceService as ResourceService
 from .resource.resource_set import ResourceSet as ResourceSet
-from .resource.resource_type import ResourceType as ResourceType
+from .resource.resource_typing import ResourceTyping as ResourceTyping
 # Study
 from .study.study import Study as Study
 # User

@@ -13,7 +13,7 @@ from ..config.config_params import ConfigParams
 from ..config.config_spec import ConfigSpecs
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ..io.io_spec import IOSpecs, IOSpecsHelper
+from ..io.io_spec import InputSpecs, IOSpecs, IOSpecsHelper, OutputSpecs
 from ..processable.processable import Processable
 from ..progress_bar.progress_bar import ProgressBar
 
@@ -23,12 +23,15 @@ CONST_PROCESS_TYPING_NAME = "PROCESS.gws_core.Process"
 
 class Process(Processable):
 
-    input_specs: IOSpecs = {}
-    output_specs: IOSpecs = {}
+    input_specs: InputSpecs = {}
+    output_specs: OutputSpecs = {}
     config_specs: ConfigSpecs = {}
 
     # Instance of the progress bar, do not use
     __progress_bar__: ProgressBar
+
+    # Information provided by the @process_decorator, do not update
+    _is_plug: bool = False
 
     def __init__(self):
         """

@@ -3,24 +3,24 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Type, Union
+from typing import List, Type
 
-from gws_core.core.decorator.transaction import transaction
-from gws_core.model.typing import Typing
-from gws_core.model.typing_manager import TypingManager
-from gws_core.processable.processable_model import ProcessableModel
 from peewee import ModelSelect
 
-from ..core.exception.exceptions import BadRequestException
 from ..core.classes.paginator import Paginator
+from ..core.decorator.transaction import transaction
 from ..core.dto.typed_tree_dto import TypedTree
+from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
+from ..model.typing import Typing
+from ..model.typing_manager import TypingManager
 from ..process.process_model import ProcessModel
 from ..processable.processable_factory import ProcessableFactory
+from ..processable.processable_model import ProcessableModel
 from ..processable.sub_processable_factory import SubProcessFactoryUpdate
 from ..protocol.protocol_model import ProtocolModel
 from .protocol import Protocol
-from .protocol_type import ProtocolType
+from .protocol_typing import ProtocolTyping
 
 
 class ProtocolService(BaseService):
@@ -163,15 +163,15 @@ class ProtocolService(BaseService):
     ############################# PROTOCOL TYPE ###########################
 
     @classmethod
-    def get_protocol_type(cls, uri: str) -> ProtocolType:
-        return ProtocolType.get_by_uri_and_check(uri)
+    def get_protocol_type(cls, uri: str) -> ProtocolTyping:
+        return ProtocolTyping.get_by_uri_and_check(uri)
 
     @classmethod
     def fetch_protocol_type_list(cls,
                                  page: int = 0,
-                                 number_of_items_per_page: int = 20) -> Paginator[ProtocolType]:
+                                 number_of_items_per_page: int = 20) -> Paginator[ProtocolTyping]:
 
-        query = ProtocolType.get_types()
+        query = ProtocolTyping.get_types()
 
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
@@ -184,7 +184,7 @@ class ProtocolService(BaseService):
         Return all the process types grouped by module and submodules
         """
 
-        query: List[ProtocolType] = ProtocolType.get_types()
+        query: List[ProtocolTyping] = ProtocolTyping.get_types()
 
         # create a fake main group to add processes in it
         tree: TypedTree = TypedTree('')
