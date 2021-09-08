@@ -6,8 +6,6 @@ import inspect
 import zlib
 from typing import Dict, Type
 
-from gws_core.resource.resource import Resource
-
 from ..config.config_params import ConfigParams
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -15,7 +13,7 @@ from ..model.typing_manager import TypingManager
 from ..model.typing_register_decorator import typing_registrator
 from ..process.process_io import ProcessInputs, ProcessOutputs
 from ..processable.processable_model import ProcessableModel
-from ..resource.resource_data import ResourceData
+from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
 from .process import Process
 
@@ -32,8 +30,6 @@ class ProcessModel(ProcessableModel):
     :property config_specs: The specs of the config
     :type config_specs: dict
     """
-
-    _is_plug = False
 
     _table_name = 'gws_process'  # is locked for all processes
 

@@ -8,8 +8,7 @@ from .process import Process
 
 
 def process_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER,
-                      human_name: str = "", short_description: str = "",
-                      is_plug: bool = False, hide: bool = False) -> Callable:
+                      human_name: str = "", short_description: str = "", hide: bool = False) -> Callable:
     """ Decorator to be placed on all the processes. A process not decorated will not be runnable.
     It define static information about the process
 
@@ -24,9 +23,6 @@ def process_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER
     :type human_name: str, optional
     :param short_description: optional description that will be used in the interface when viewing the processes. Must not be longer than 100 caracters
     :type short_description: str, optional
-    :param is_plug: When set to true, it tells the process that the resources are just passing by. The process doesn't generate new resource but
-                    it references the same resource on the output
-    :type is_plug: bool, optional
     :param hide: Only the process with hide=False will be available in the interface(web platform), other will be hidden.
                 It is useful for process that are not meant to be viewed in the interface (like abstract classes), defaults to False
     :type hide: bool, optional
@@ -42,7 +38,6 @@ def process_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER
 
         # set the allowed user for the process
         process_class._allowed_user = allowed_user
-        process_class._is_plug = is_plug
 
         return process_class
     return decorator

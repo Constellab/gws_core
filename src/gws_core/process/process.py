@@ -30,9 +30,6 @@ class Process(Processable):
     # Instance of the progress bar, do not use
     __progress_bar__: ProgressBar
 
-    # Information provided by the @process_decorator, do not update
-    _is_plug: bool = False
-
     def __init__(self):
         """
         Constructor
