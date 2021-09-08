@@ -18,11 +18,12 @@ from ...resource.resource_decorator import resource_decorator
 @resource_decorator("CSVTable")
 class CSVTable(Resource):
 
-    table: DataFrame
+    table: DataFrame = None
 
     def __init__(self, *args, **kwargs):
-        self.table = DataFrame()
         super().__init__(*args, **kwargs)
+        if self.table is None:
+            self.table = DataFrame()
 
     def serialize_data(self) -> SerializedResourceData:
         return self.table.to_dict()

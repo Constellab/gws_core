@@ -19,14 +19,9 @@ class FileResource(Resource):
     File class
     """
 
-    path: str
-    file_store_uri: str
+    path: str = ""
+    file_store_uri: str = ""
     _mode = "t"
-
-    def __init__(self, *args, **kwargs):
-        self.path = ""
-        self.file_store_uri = ""
-        super().__init__(*args, **kwargs)
 
     @property
     def dir(self):
