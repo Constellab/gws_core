@@ -33,7 +33,7 @@ class IOSpecClass:
     def __init__(self, spec: IOSpec) -> None:
         self.resource_spec = spec
 
-    def to_resource_types(self) -> List[ResourceType]:
+    def to_resource_types(self) -> Iterable[ResourceType]:
         return IOSpecsHelper.io_spec_to_resource_types(self.resource_spec)
 
     def is_compatible_with_spec(self, spec: 'IOSpecClass') -> bool:
@@ -58,7 +58,7 @@ class IOSpecsHelper():
     """
 
     @classmethod
-    def io_specs_to_resource_types(cls, io_specs: IOSpecs) -> Dict[str, List[ResourceType]]:
+    def io_specs_to_resource_types(cls, io_specs: IOSpecs) -> Dict[str, Iterable[ResourceType]]:
         """Convert all specs (IOSpecs) to list of resources
 
         :param io_specs: [description]
@@ -68,7 +68,7 @@ class IOSpecsHelper():
         :rtype: Dict[str, List[Type[Resource]]]
         """
 
-        specs: Dict[str, List[ResourceType]] = {}
+        specs: Dict[str, Iterable[ResourceType]] = {}
         for key, spec in io_specs.items():
             specs[key] = cls.io_spec_to_resource_types(spec)
 
@@ -143,24 +143,24 @@ class IOSpecsHelper():
 
         # Handle the generic SubClasss
         if isinstance(io_type, SpecialTypeOut) and io_type.sub_class:
-            resource_types: Iterable[ResourceType] = io_type.resource_types
+            resource_types_1: Iterable[ResourceType] = io_type.resource_types
             # check if type inside the SubClass is compatible with expected type
             # if not check if one of the expected type is compatible with SubClass
             return cls.specs_are_compatible(
-                output_specs_1=resource_types, input_specs_2=expected_types) or cls.specs_are_compatible(
-                output_specs_1=expected_types, input_specs_2=resource_types)
+                output_specs_1=resource_types_1, input_specs_2=expected_types) or cls.specs_are_compatible(
+                output_specs_1=expected_types, input_specs_2=resource_types_1)
 
         # Convert the io_type to resource types
-        resource_types: List[ResourceType] = cls.io_spec_to_resource_types(io_type)
+        resource_types: Iterable[ResourceType] = cls.io_spec_to_resource_types(io_type)
 
-        expected_r_types: List[ResourceType] = cls.io_spec_to_resource_types(expected_types)
+        expected_r_types: Iterable[ResourceType] = cls.io_spec_to_resource_types(expected_types)
 
         return cls._resource_types_are_compatible(
             resource_types=resource_types, expected_types=expected_r_types, exclude_none=exclude_none)
 
     @classmethod
-    def _resource_types_are_compatible(cls, resource_types: List[Type[Resource]],
-                                       expected_types: List[Type[Resource]],
+    def _resource_types_are_compatible(cls, resource_types: Iterable[Type[Resource]],
+                                       expected_types: Iterable[Type[Resource]],
                                        exclude_none: bool = False) -> bool:
 
         for resource_type in resource_types:
@@ -172,7 +172,7 @@ class IOSpecsHelper():
 
     @classmethod
     def _resource_types_is_compatible(cls, resource_type: Type[Resource],
-                                      expected_types: List[Type[Resource]],
+                                      expected_types: Iterable[Type[Resource]],
                                       exclude_none: bool = False) -> bool:
 
         if resource_type is None and exclude_none:
@@ -190,7 +190,7 @@ class IOSpecsHelper():
             cls, output_specs_1: IOSpec,
             input_specs_2: IOSpec) -> bool:
 
-        output_spec_list: List[IOSpec] = cls.io_spec_to_list(output_specs_1)
+        output_spec_list: Iterable[IOSpec] = cls.io_spec_to_list(output_specs_1)
 
         for output_spec in output_spec_list:
             # compare the type and exclude the None
@@ -205,7 +205,7 @@ class IOSpecsHelper():
         """
 
         # Convert the specs to a list of resources types
-        specs: Dict[str, List[Type[Resource]]] = cls.io_specs_to_resource_types(io_specs)
+        specs: Dict[str, Iterable[Type[Resource]]] = cls.io_specs_to_resource_types(io_specs)
 
         _json:  Dict[str, List[str]] = {}
         for key, spec in specs.items():
