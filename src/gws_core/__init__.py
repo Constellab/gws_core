@@ -148,6 +148,7 @@ from .io.ioface import Outerface as Outerface
 from .io.port import InPort as InPort
 from .io.port import OutPort as OutPort
 from .io.port import Port as Port
+from .io.io_types import SubClasses as SubClasses
 # Lab
 from .lab.lab_service import LabService as LabService
 from .lab.system import Monitor as Monitor

@@ -9,7 +9,7 @@ from peewee import ModelSelect
 
 from ..config.config_spec import ConfigSpecs, ConfigSpecsHelper
 from ..core.utils.utils import Utils
-from ..io.io_types import IOSpecs, IOSpecsHelper
+from ..io.io_spec import IOSpecs, IOSpecsHelper
 from ..model.typing import Typing, TypingObjectType
 from ..process.process import Process
 from ..resource.resource import Resource

@@ -13,7 +13,7 @@ from ..config.config_params import ConfigParams
 from ..config.config_spec import ConfigSpecs
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ..io.io_types import IOSpecs, IOSpecsHelper
+from ..io.io_spec import IOSpecs, IOSpecsHelper
 from ..processable.processable import Processable
 from ..progress_bar.progress_bar import ProgressBar
 

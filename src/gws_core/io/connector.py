@@ -1,6 +1,7 @@
 from typing import final
 
-from gws_core.io.io_types import IOSpecsHelper
+from gws_core.io.io_exception import ImcompatiblePortsException
+from gws_core.io.io_spec import IOSpecsHelper
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -46,10 +47,8 @@ class Connector:
                 "The output port is not associated with a process")
 
         # hard checking of port compatibility
-        if check_compatiblity and not IOSpecsHelper.resources_types_are_compatible(
-                out_port.resource_types, in_port.resource_types):
-            raise BadRequestException(
-                f"Invalid connection, port are imcompatible. Resources ({out_port.resource_types}) imcompatible with resource ({in_port.resource_types})")
+        if check_compatiblity and not out_port.resource_spec.is_compatible_with_spec(in_port.resource_spec):
+            raise ImcompatiblePortsException(out_port=out_port, in_port=in_port)
 
         self.in_port = in_port
         self.out_port = out_port

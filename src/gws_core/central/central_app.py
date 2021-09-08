@@ -7,8 +7,6 @@
 from typing import Dict, List
 
 from fastapi import Depends, FastAPI, HTTPException
-from gws_core.impl.file.file_service import FileService
-from gws_core.user.auth_service import AuthService
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException
 
@@ -17,6 +15,8 @@ from ..core.exception.exceptions import BadRequestException, NotFoundException
 from ..core.service.mysql_service import MySQLService
 from ..core.utils.http_helper import HTTPHelper
 from ..impl.file.file_resource import FileResource
+from ..impl.file.file_service import FileService
+from ..user.auth_service import AuthService
 from ..user.user import User
 from ..user.user_dto import UserData
 from ..user.user_service import UserService

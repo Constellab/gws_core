@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Tuple, Type, final
+from typing import TYPE_CHECKING, Dict, List, Type, final
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -13,11 +13,13 @@ from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
 from .io_exception import (MissingInputResourcesException,
                            ResourceNotCompatibleException)
-from .io_types import IODict, IOSpec
-from .port import InPort, OutPort, Port
+from .io_spec import IOSpec
+from .port import InPort, OutPort, Port, PortDict
 
 if TYPE_CHECKING:
     from ..processable.processable_model import ProcessableModel
+
+IODict = Dict[str, PortDict]
 
 
 ####################################################################
@@ -51,7 +53,7 @@ class IO(Base):
 
     # -- C --
 
-    def create_port(self, name: str, resource_types: IOSpec):
+    def create_port(self, name: str, resource_spec: IOSpec):
         """
         Creates a port.
 
@@ -71,9 +73,9 @@ class IO(Base):
 
         port: Port
         if isinstance(self, Output):
-            port = OutPort(self, resource_types)
+            port = OutPort(self, resource_spec)
         else:
-            port = InPort(self, resource_types)
+            port = InPort(self, resource_spec)
 
         self._ports[name] = port
 
@@ -195,7 +197,7 @@ class IO(Base):
         resource_type: Type[Resource] = type(resource_model.get_resource())
         if not port.resource_type_is_compatible(resource_type):
             raise ResourceNotCompatibleException(port_name=port_name, resource_type=resource_type,
-                                                 excepted_types=port.resource_types)
+                                                 spec=port.resource_spec)
 
         port.resource_model = resource_model
 

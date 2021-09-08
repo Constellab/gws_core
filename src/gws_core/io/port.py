@@ -1,16 +1,30 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Type, final
+from typing import TYPE_CHECKING, List, Type, TypedDict, final
 
 from ..core.model.base import Base
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
-from .io_types import IOSpec, IOSpecsHelper, PortDict
+from .io_spec import IOSpec, IOSpecClass, IOSpecsHelper
 
 if TYPE_CHECKING:
     from ..processable.processable_model import ProcessableModel
     from .io import IO
+
+
+class PortResourceDict(TypedDict):
+    uri: str
+    typing_name: str
+
+
+class PortDict(TypedDict):
+    resource: PortResourceDict
+    specs: List[str]  # list of supported resource typing names
 
 
 class Port(Base):
@@ -22,7 +36,7 @@ class Port(Base):
     """
 
     _resource_model: ResourceModel = None
-    _resource_types: List[Type[Resource]] = None
+    _resource_spec: IOSpecClass = None
     _prev: 'Port' = None
     _next: List['Port'] = []
     _parent: IO
@@ -30,13 +44,13 @@ class Port(Base):
     # Switch to true when the set_resource_model is set (even if it is set with a None value)
     _resource_provided: bool = False
 
-    def __init__(self, parent: IO, resource_types: IOSpec):
+    def __init__(self, parent: IO, _resource_spec: IOSpec):
         self._resource_model = None
         self._prev = None
         self._next = []
         self._parent = parent
 
-        self.set_resource_types(resource_types)
+        self.set_resource_spec(_resource_spec)
 
     # -- D --
 
@@ -53,11 +67,6 @@ class Port(Base):
 
         self._prev = None
         self._next = []
-
-    # -- G --
-
-    def get_default_resource_type(self):
-        return self.resource_types[0]
 
     # -- I --
 
@@ -138,7 +147,7 @@ class Port(Base):
         :rtype: bool
         """
 
-        return None in self.resource_types
+        return self.resource_spec.is_optional()
 
     @property
     def is_empty(self) -> bool:
@@ -214,7 +223,7 @@ class Port(Base):
         #    port._resource = None
 
     @property
-    def resource_types(self) -> List[Type[Resource]]:
+    def resource_spec(self) -> IOSpecClass:
         """
         Returns the resource types of the port.
 
@@ -222,11 +231,12 @@ class Port(Base):
         :rtype: ResourceModel
         """
 
-        return self._resource_types
+        return self._resource_spec
 
     def get_resource_typing_names(self) -> List[str]:
+        # TODO fix a place under IOSpecClass and add support for SubClass
         specs: List[str] = []
-        for resource_type in self.resource_types:
+        for resource_type in self.resource_spec.to_resource_types():
             if resource_type is None:
                 specs.append(None)
             else:
@@ -234,7 +244,7 @@ class Port(Base):
         return specs
 
     # -- S --
-    def set_resource_types(self, resource_types: IOSpec):
+    def set_resource_spec(self, resource_spec: IOSpec):
         """
         Sets the resource_types of the port.
 
@@ -242,7 +252,7 @@ class Port(Base):
         :type resource: Resource
         """
 
-        self._resource_types = IOSpecsHelper.io_spec_to_resource_types(resource_types)
+        self._resource_spec = IOSpecClass(spec=resource_spec)
 
     @property
     def resource_model(self) -> ResourceModel:
@@ -280,7 +290,7 @@ class Port(Base):
         if self.is_optional and resource_type is None:
             return True
 
-        return IOSpecsHelper.resource_type_is_compatible(resource_type, self._resource_types)
+        return IOSpecsHelper.resource_type_is_compatible(resource_type, self._resource_spec)
 
     def get_resource(self, new_instance: bool = False) -> Resource:
         return self.resource_model.get_resource(new_instance=new_instance)
