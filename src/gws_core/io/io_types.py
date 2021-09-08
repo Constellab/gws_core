@@ -35,7 +35,7 @@ class SpecialTypeIO:
         for resource_type in self.resource_types:
             if not issubclass(resource_type, Resource):
                 raise BadRequestException(
-                    f"Invalid port specs. The type '{resource_type}' used inside the special type '{self.__name__}'' is not a resource")
+                    f"Invalid port specs. The type '{resource_type}' used inside the special type '{type(self).__name__}' is not a resource")
 
 
 class SpecialTypeIn(SpecialTypeIO):
@@ -43,7 +43,6 @@ class SpecialTypeIn(SpecialTypeIO):
      - SkippableIn
      - OptionalIn
     """
-    pass
 
 
 class SkippableIn(SpecialTypeIn):

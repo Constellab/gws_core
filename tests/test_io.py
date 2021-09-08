@@ -117,7 +117,7 @@ class Fly(Process):
 
 @process_decorator("OptionalProcess")
 class OptionalProcess(Process):
-    input_specs = {'first': OptionalIn(Person),
+    input_specs = {'first': OptionalIn([Person]),
                    'second': [Person, None],
                    'third': Person}
     output_specs = {}
@@ -282,7 +282,7 @@ class TestIO(BaseTestCase):
         """Test the UnmodifiableOut type. It tests that this is the same resource
         on log input and log output
         """
-        protocol: ProtocolModel = ProtocolService.create_protocol_from_type(TestPersonProtocol)
+        protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_type(TestPersonProtocol)
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(protocol)
 
         experiment = await ExperimentService.run_experiment(experiment)
@@ -297,7 +297,7 @@ class TestIO(BaseTestCase):
     async def test_skippable_input(self):
         """Test the SkippableIn special type with FIFO, it also tests that FIFO work
         (testing,SkippableIn but also UnmodifiableOut with subclass) """
-        protocol: ProtocolModel = ProtocolService.create_protocol_from_type(TestSkippable)
+        protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_type(TestSkippable)
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(protocol)
 
         experiment = await ExperimentService.run_experiment(experiment)
