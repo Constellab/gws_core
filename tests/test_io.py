@@ -13,7 +13,7 @@ from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.io.io_exception import ImcompatiblePortsException
 from gws_core.io.io_spec import SubClassesOut
-from gws_core.io.io_types import UumodifiedOut
+from gws_core.io.io_types import UnmodifiedOut
 from gws_core.protocol.protocol import Protocol
 from gws_core.protocol.protocol_decorator import protocol_decorator
 from gws_core.protocol.protocol_model import ProtocolModel
@@ -119,7 +119,7 @@ class OptionalProcess(Process):
 @process_decorator("Log")
 class Log(Process):
     input_specs = {'person': Person}
-    output_specs = {'samePerson': UumodifiedOut[Person],
+    output_specs = {'samePerson': UnmodifiedOut[Person],
                     'otherPerson': Person}
     config_specs = {}
 

@@ -8,7 +8,7 @@ from typing import Dict, Iterable, List, Optional, Type, Union, get_args
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..resource.resource import Resource
-from .io_types import UumodifiedOut, SkippableIn, SpecialTypeIO, SubClassesOut
+from .io_types import UnmodifiedOut, SkippableIn, SpecialTypeIO, SubClassesOut
 
 ResourceType = Type[Resource]
 
@@ -17,7 +17,7 @@ InputSpecType = Union[ResourceType, Optional[ResourceType], SkippableIn[Resource
 InputSpec = Union[InputSpecType, Iterable[InputSpecType]]
 InputSpecs = Dict[str, InputSpec]
 
-OutputSpecType = Union[ResourceType, SubClassesOut[ResourceType], UumodifiedOut[ResourceType]]
+OutputSpecType = Union[ResourceType, SubClassesOut[ResourceType], UnmodifiedOut[ResourceType]]
 OutputSpec = Union[InputSpecType, Iterable[InputSpecType]]
 OutputSpecs = Dict[str, InputSpec]
 
@@ -47,7 +47,7 @@ class IOSpecClass:
         return None in self.to_resource_types()
 
     def is_unmodified_out(self) -> bool:
-        return UumodifiedOut.is_class(self.resource_spec)
+        return UnmodifiedOut.is_class(self.resource_spec)
 
 
 class IOSpecsHelper():

@@ -5,14 +5,14 @@
 
 import time
 
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
-from gws_core.model.typing_manager import TypingManager
-from gws_core.resource.resource_model import ResourceModel
-
 from ..config.config_params import ConfigParams
+from ..core.exception.exceptions.bad_request_exception import \
+    BadRequestException
+from ..io.io_types import UnmodifiedOut
+from ..model.typing_manager import TypingManager
 from ..process.process_io import ProcessInputs, ProcessOutputs
 from ..resource.resource import Resource
+from ..resource.resource_model import ResourceModel
 from .process import Process
 from .process_decorator import process_decorator
 
@@ -26,7 +26,7 @@ class Source(Process):
     """
 
     input_specs = {}
-    output_specs = {'resource': (Resource, )}
+    output_specs = {'resource': UnmodifiedOut[Resource]}
     config_specs = {
         'resource_uri': {"type": str, "default": None, 'description': "The uri of the resource"},
         'resource_typing_name': {"type": str, "default": None, 'description': "The type of the resource"},
@@ -50,7 +50,7 @@ class Sink(Process):
     A sink process is used to recieve a resource. No action is done.
     """
 
-    input_specs = {'resource': (Resource, )}
+    input_specs = {'resource': Resource}
     output_specs = {}
     config_specs = {}
 
@@ -68,7 +68,7 @@ class FIFO2(Process):
 
     input_specs = {'resource_1': (
         Resource, None, ), 'resource_2': (Resource, None, )}
-    output_specs = {'resource': (Resource, )}
+    output_specs = {'resource': UnmodifiedOut[Resource]}
     config_specs = {}
 
     def check_before_task(self, config: ConfigParams, inputs: ProcessInputs) -> bool:
@@ -100,7 +100,7 @@ class Switch2(Process):
 
     input_specs = {'resource_1': (
         Resource, None, ), 'resource_2': (Resource, None, )}
-    output_specs = {'resource': (Resource, )}
+    output_specs = {'resource': UnmodifiedOut[Resource]}
     config_specs = {"index": {"type": int, "default": 1, "min": 1, "max": 2,
                               "Description": "The index of the input resource to switch on. Defaults to 1."}}
 
@@ -119,7 +119,7 @@ class Wait(Process):
     """
 
     input_specs = {'resource': (Resource,)}
-    output_specs = {'resource': (Resource,)}
+    output_specs = {'resource': UnmodifiedOut[Resource]}
     config_specs = {"waiting_time": {"type": float, "default": 3, "min": 0,
                                      "Description": "The waiting time in seconds. Defaults to 3 second."}}
 

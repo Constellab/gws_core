@@ -45,7 +45,7 @@ class SubClassesOut(SpecialTypeIO, Generic[GenericResource]):
         return SubClassesOut
 
 
-class UumodifiedOut(SpecialTypeIO, Generic[GenericResource]):
+class UnmodifiedOut(SpecialTypeIO, Generic[GenericResource]):
     """Special type to use in Output specs
     This type tell the system that the output resource was not modified from the input resource
     and it does not need to create a new resource
@@ -58,7 +58,7 @@ class UumodifiedOut(SpecialTypeIO, Generic[GenericResource]):
 
     @classmethod
     def _get_type(cls) -> Type['SpecialTypeIO']:
-        return UumodifiedOut
+        return UnmodifiedOut
 
 
 class SkippableIn(SpecialTypeIO, Generic[GenericResource]):
