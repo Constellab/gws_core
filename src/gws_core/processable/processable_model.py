@@ -8,9 +8,13 @@ from __future__ import annotations
 import asyncio
 import inspect
 from abc import abstractmethod
-from typing import TYPE_CHECKING, List, Type, Union, final
+from enum import Enum
+from typing import TYPE_CHECKING, List, Type, TypedDict, final
 
+from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.decorator.json_ignore import json_ignore
+from gws_core.core.exception.exception_handler import ExceptionHandler
+from gws_core.core.model.json_field import JSONField
 from peewee import CharField, ForeignKeyField, IntegerField
 from starlette_context import context
 
@@ -35,6 +39,19 @@ if TYPE_CHECKING:
     from ..protocol.protocol_model import ProtocolModel
 
 
+class ProcessableStatus(Enum):
+    DRAFT = "DRAFT"
+    RUNNING = "RUNNING"
+    SUCCESS = "SUCCESS"
+    ERROR = "ERROR"
+
+
+class ProcessableErrorInfo(TypedDict):
+    detail: str
+    unique_code: str
+    context: str
+
+
 @json_ignore(["parent_protocol_id"])
 class ProcessableModel(Viewable):
     """Base abstract class for Process and Protocol
@@ -55,9 +72,9 @@ class ProcessableModel(Viewable):
     progress_bar: ProgressBar = ForeignKeyField(
         ProgressBar, null=True, backref='+')
     processable_typing_name = CharField(null=False)
-
-    is_instance_running = False
-    is_instance_finished = False
+    status: ProcessableStatus = EnumField(choices=ProcessableStatus,
+                                          default=ProcessableStatus.DRAFT)
+    error_info: ProcessableErrorInfo = JSONField(null=True)
 
     _experiment: Experiment = None
     _parent_protocol: ProtocolModel = None
@@ -104,36 +121,6 @@ class ProcessableModel(Viewable):
 
         self.input.disconnect()
         self.output.disconnect()
-
-    # -- H --
-
-    # -- I --
-
-    @property
-    def is_running(self) -> bool:
-        if not self.progress_bar:
-            return False
-        progress_bar: ProgressBar = ProgressBar.get_by_id(self.progress_bar.id)
-        return progress_bar.is_running
-
-    @property
-    def is_finished(self) -> bool:
-        if not self.progress_bar:
-            return False
-        progress_bar: ProgressBar = ProgressBar.get_by_id(self.progress_bar.id)
-        return progress_bar.is_finished
-
-    @property
-    def is_ready(self) -> bool:
-        """
-        Returns True if the process is ready (i.e. all its ports are
-        ready or it has never been run before), False otherwise.
-
-        :return: True if the process is ready, False otherwise.
-        :rtype: bool
-        """
-
-        return (not self.is_instance_running and not self.is_instance_finished) and self.input.is_ready
 
     @property
     def input(self) -> Input:
@@ -249,7 +236,11 @@ class ProcessableModel(Viewable):
 
         if self.is_running:
             return None
+
         self.progress_bar.reset()
+
+        self.status = ProcessableStatus.DRAFT
+        self.error_info = None
         self._reset_io()
         return self.save()
 
@@ -271,14 +262,34 @@ class ProcessableModel(Viewable):
         try:
             await self._run()
         # Catch all exception and wrap them into a ProcessRunException to provide processable info
+        except ProcessableRunException as err:
+            # When catching an error from a child process
+            self.mark_as_error(
+                {
+                    "detail": err.exception_detail,
+                    "unique_code": err.unique_code,
+                    "context": err.context
+                })
+
+            # update the context to add this processable
+            err.update_context(self.get_instance_name_context())
+            raise err
         except Exception as err:
-            raise ProcessableRunException.from_exception(self, err)
+            # Create a new ProcessableRunException with correct info
+            exception: ProcessableRunException = ProcessableRunException.from_exception(self, err)
+            self.mark_as_error(
+                {
+                    "detail": exception.exception_detail,
+                    "unique_code": exception.unique_code,
+                    "context": None
+                })
+
+            raise exception
 
     @abstractmethod
     async def _run(self) -> None:
         """Function to run overrided by the sub classes
         """
-        pass
 
     async def _run_next_processes(self):
         self.output.propagate()
@@ -290,9 +301,7 @@ class ProcessableModel(Viewable):
 
     async def _run_before_task(self):
         self._switch_to_current_progress_bar()
-        self.progress_bar.add_message("Start of process")
-        self.is_instance_running = True
-        self.is_instance_finished = False
+        self.mark_as_started()
 
         # Set the data input dict
         self.data["input"] = self.input.to_json()
@@ -301,9 +310,7 @@ class ProcessableModel(Viewable):
         self.save()
 
     async def _run_after_task(self):
-        self.is_instance_running = False
-        self.is_instance_finished = True
-        self.progress_bar.stop('End of process')
+        self.mark_as_success()
 
         # Set the data output dict
         self.data["output"] = self.output.to_json()
@@ -454,3 +461,63 @@ class ProcessableModel(Viewable):
             info += f"'{self.instance_name}' "
 
         return f"{info} ({self._get_processable_type().classname()})"
+
+    def get_instance_name_context(self) -> str:
+        """ return the instance name in the context
+        """
+
+        # specific case for the main protocol (without parent)
+        if self.parent_protocol_id is None:
+            return "Main protocol"
+
+        return self.instance_name
+
+    ########################### STATUS MANAGEMENT ##################################
+
+    @property
+    def is_running(self) -> bool:
+        return self.status == ProcessableStatus.RUNNING
+
+    @property
+    def is_finished(self) -> bool:
+        return self.status == ProcessableStatus.SUCCESS or self.is_error
+
+    @property
+    def is_draft(self) -> bool:
+        return self.status == ProcessableStatus.DRAFT
+
+    @property
+    def is_updatable(self) -> bool:
+        return self.is_draft and not self.is_archived
+
+    @property
+    def is_error(self) -> bool:
+        return self.status == ProcessableStatus.ERROR
+
+    @property
+    def is_ready(self) -> bool:
+        """
+        Returns True if the process is ready (i.e. all its ports are
+        ready or it has never been run before), False otherwise.
+
+        :return: True if the process is ready, False otherwise.
+        :rtype: bool
+        """
+
+        return self.is_draft and self.input.is_ready
+
+    def mark_as_started(self):
+        self.progress_bar.add_message("Start of process")
+        self.status = ProcessableStatus.RUNNING
+        self.save()
+
+    def mark_as_success(self):
+        self.progress_bar.stop('End of process')
+        self.status = ProcessableStatus.SUCCESS
+        self.save()
+
+    def mark_as_error(self, error_info: ProcessableErrorInfo):
+        self.progress_bar.stop(error_info["detail"])
+        self.status = ProcessableStatus.ERROR
+        self.error_info = error_info
+        self.save()

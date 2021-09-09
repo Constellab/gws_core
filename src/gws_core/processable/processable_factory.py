@@ -23,7 +23,7 @@ from ..protocol.protocol_model import ProtocolModel
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
 from .processable import Processable
-from .processable_model import ProcessableModel
+from .processable_model import ProcessableModel, ProcessableStatus
 from .sub_processable_factory import SubProcessFactoryCreate
 
 
@@ -275,6 +275,7 @@ class ProcessableFactory():
     def _init_processable_model(
             cls, processable_model: ProcessableModel, config: Config, instance_name: str = None) -> None:
 
+        processable_model.status = ProcessableStatus.DRAFT
         # Set the config
         processable_model.config = config
 

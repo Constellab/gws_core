@@ -67,7 +67,7 @@ class IO(Base):
             raise BadRequestException(
                 "Invalid port specs. The port name must be a string")
 
-        if self._parent.is_instance_running or self._parent.is_instance_finished:
+        if not self._parent.is_updatable:
             raise BadRequestException(
                 "Cannot alter inputs/outputs of processes during or after running")
 
@@ -279,6 +279,15 @@ class Input(IO):
 
         for port in self._ports.values():
             if not port.is_left_connected:
+                return False
+
+        return True
+
+    def all_connected_port_values_provided(self) -> bool:
+        """Return true if all the ports that are connected, received a resource
+        """
+        for port in self.ports.values():
+            if port.is_left_connected and not port.resource_provided:
                 return False
 
         return True

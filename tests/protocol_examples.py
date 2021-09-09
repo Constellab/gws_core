@@ -123,3 +123,21 @@ class TestRobotwithSugarProtocol(Protocol):
             (empty_food >> 'food', eat_3 << 'food'),
             (eat_2 >> 'robot', eat_3 << 'robot'),
         ])
+
+
+@process_decorator("ErrorProcess")
+class ErrorProcess(Process):
+    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+        raise Exception("This is the error process")
+
+
+@protocol_decorator("TestSubProtocolError")
+class TestSubProtocolError(Protocol):
+    def configure_protocol(self, config_params: ConfigParams) -> None:
+        self.add_process(ErrorProcess, 'error')
+
+
+@protocol_decorator("TestProtocolError")
+class TestProtocolError(Protocol):
+    def configure_protocol(self, config_params: ConfigParams) -> None:
+        self.add_process(TestSubProtocolError, 'sub_proto')

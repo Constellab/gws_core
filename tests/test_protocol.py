@@ -10,11 +10,12 @@ from gws_core import (BaseTestCase, Config, Experiment, ExperimentService,
                       ExperimentStatus, GTest, ProcessModel, ProgressBar,
                       ProtocolModel, ProtocolService, Robot, RobotFood,
                       Settings)
+from gws_core.experiment.experiment_exception import ExperimentRunException
 from gws_core.impl.robot.robot_process import RobotMove
 from gws_core.model.typing import Typing
 from gws_core.processable.processable_model import ProcessableModel
 
-from tests.protocol_examples import (TestNestedProtocol,
+from tests.protocol_examples import (TestNestedProtocol, TestProtocolError,
                                      TestRobotwithSugarProtocol,
                                      TestSimpleProtocol)
 
@@ -239,3 +240,31 @@ class TestProtocol(BaseTestCase):
         robot_output_3: Robot = eat_3.output.get_resource_model('robot').get_resource()
         # If this doesn't work, this mean that the process eat_2 was not called because it misses an optional input
         self.assertEqual(robot_output_3.weight, robot_output_2.weight + 7)  # 7 = food weight
+
+    async def test_error_protocol(self):
+        GTest.print("Error Process")
+
+        protocol: ProtocolModel = ProtocolService.create_protocol_model_from_type(TestProtocolError)
+
+        experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(protocol)
+
+        with self.assertRaises(ExperimentRunException):
+            await ExperimentService.run_experiment(
+                experiment=experiment, user=GTest.user)
+
+        experiment = ExperimentService.get_experiment_by_uri(experiment.uri)
+
+        self.assertTrue(experiment.is_error)
+        self.assertIsNotNone(experiment.error_info)
+
+        protocol: ProtocolModel = experiment.protocol
+        self.assertTrue(protocol.is_error)
+        self.assertIsNotNone(protocol.error_info)
+
+        sub_protocol: ProtocolModel = protocol.get_process('sub_proto')
+        self.assertTrue(sub_protocol.is_error)
+        self.assertIsNotNone(sub_protocol.error_info)
+
+        sub_process: ProcessableModel = sub_protocol.get_process('error')
+        self.assertTrue(sub_process.is_error)
+        self.assertIsNotNone(sub_process.error_info)

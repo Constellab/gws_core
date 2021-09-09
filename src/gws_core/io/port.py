@@ -175,6 +175,14 @@ class Port(Base):
         """
         return self.resource_spec.is_skippable_in()
 
+    @property
+    def resource_provided(self) -> bool:
+        """
+        Returns True if the resource of the port was provided
+        """
+
+        return self._resource_provided
+
     # -- G --
 
     def get_next_procs(self) -> List[ProcessableModel]:

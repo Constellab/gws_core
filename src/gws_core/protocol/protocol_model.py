@@ -70,19 +70,9 @@ class ProtocolModel(ProcessableModel):
         """
         # be sure to have loaded the protocol before adding a process
         self._load_from_graph()
-        self._add_processable(instance_name=instance_name, processable_model=processable_model)
 
-    def _add_processable(self, instance_name: str, processable_model: ProcessableModel) -> None:
-        """
-        Adds a process to the protocol.
-
-        :param name: Unique name of the process
-        :type name: str
-        :param process: The process
-        :type process: Process
-        """
-
-        if self.is_instance_finished or self.is_instance_running:
+        # Perform checks on process
+        if not self.is_updatable:
             raise BadRequestException("The protocol has already been run")
         if not isinstance(processable_model, ProcessableModel):
             raise BadRequestException(
@@ -94,6 +84,18 @@ class ProtocolModel(ProcessableModel):
             raise BadRequestException(f"Process name '{instance_name}' already exists")
         if processable_model in self._processes.items():
             raise BadRequestException(f"Process '{instance_name}' duplicate")
+
+        self._add_processable(instance_name=instance_name, processable_model=processable_model)
+
+    def _add_processable(self, instance_name: str, processable_model: ProcessableModel) -> None:
+        """
+        Adds a process to the protocol.
+
+        :param name: Unique name of the process
+        :type name: str
+        :param process: The process
+        :type process: Process
+        """
 
         processable_model.set_parent_protocol(self)
         if self.experiment and processable_model.experiment is None:
@@ -137,7 +139,7 @@ class ProtocolModel(ProcessableModel):
         :type connector: Connector
         """
 
-        if self.is_instance_finished or self.is_instance_running:
+        if not self.is_updatable:
             raise BadRequestException("The protocol has already been run")
         if not isinstance(connector, Connector):
             raise BadRequestException(
@@ -293,6 +295,10 @@ class ProtocolModel(ProcessableModel):
         :return: The process
         :rtype": Process
         """
+
+        if name not in self.processes:
+            raise BadRequestException(
+                f"The protocol '{self.get_instance_name_context()}' does not have a process names '{name}'")
 
         return self.processes[name]
 
@@ -711,3 +717,12 @@ class ProtocolModel(ProcessableModel):
             count += 1
 
         return f"{instance_name}_{count}"
+
+    def get_protocol_chain_info(self) -> str:
+        """return a string with the information up to the main protocol
+        """
+
+        if self.parent_protocol_id is None:
+            return "Main protocol"
+
+        return f"{self.parent_protocol.get_protocol_chain_info()} > {self.instance_name}"

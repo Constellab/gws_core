@@ -3,20 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import (BaseTestCase, ConfigParams, Experiment,
-                      ExperimentService, GTest, Process, ProcessableFactory,
-                      ProcessInputs, ProcessModel, ProcessOutputs, ProgressBar,
-                      ProtocolModel, ProtocolService, ResourceModel, Robot,
-                      RobotCreate, process_decorator)
-from gws_core.processable.processable_exception import ProcessableRunException
+from gws_core import (BaseTestCase, Experiment, ExperimentService, GTest,
+                      ProcessableFactory, ProcessModel, ProtocolModel,
+                      ProtocolService, ResourceModel, Robot, RobotCreate)
 
 from tests.protocol_examples import TestSimpleProtocol
-
-
-@process_decorator("ErrorProcess")
-class ErrorProcess(Process):
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
-        raise Exception("Error")
 
 
 class TestProcess(BaseTestCase):
@@ -100,14 +91,3 @@ class TestProcess(BaseTestCase):
 
         print(" \n------ Experiment --------")
         print(experiment.to_json())
-
-    async def test_error_process(self):
-        GTest.print("Error Process")
-
-        p_error: ProcessModel = ProcessableFactory.create_process_model_from_type(process_type=ErrorProcess)
-
-        experiment: Experiment = ExperimentService.create_experiment_from_process_model(p_error)
-
-        with self.assertRaises(ProcessableRunException):
-            await ExperimentService.run_experiment(
-                experiment=experiment, user=GTest.user)

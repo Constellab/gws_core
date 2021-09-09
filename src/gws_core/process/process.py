@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 from abc import abstractmethod
-from typing import Type, final
+from typing import Optional, Type, TypedDict, Union, final
 
 from gws_core.process.process_io import ProcessInputs, ProcessOutputs
 from gws_core.resource.resource import Resource
@@ -19,6 +19,16 @@ from ..progress_bar.progress_bar import ProgressBar
 
 # Typing names generated for the class Process
 CONST_PROCESS_TYPING_NAME = "PROCESS.gws_core.Process"
+
+
+class CheckBeforeTaskResult(TypedDict, total=False):
+    # If True, everything is ok
+    # If False the task will not be executed after this check it might be run latter if they are some SKippableIn inputs
+    # If all the input values were provided and the check retuns False. the process will endup in error because it won't be run
+    result: bool
+
+    # If False a message can be provided to log the error message if the process will not be called
+    message: Optional[str]
 
 
 class Process(Processable):
@@ -42,18 +52,14 @@ class Process(Processable):
             raise BadRequestException(
                 f"The process {self.full_classname()} is not decorated with @process_decorator, it can't be instantiate. Please decorate the process class with @process_decorator")
 
-    def check_before_task(self, config: ConfigParams, inputs: ProcessInputs) -> bool:
+    def check_before_task(self, config: ConfigParams, inputs: ProcessInputs) -> CheckBeforeTaskResult:
         """
         This can be overiwritten to perform custom check before running task.
-
-        This method is systematically called before running the process task.
-        If `False` is returned, the process task will not be called; otherwise, the task will proceed normally.
-
-        :return: `True` if everything is OK, `False` otherwise. Defaults to `True`.
+        See doc of CheckBeforeTaskResult for more information
         :rtype: `bool`
         """
 
-        return True
+        return {"result": True, "message": None}
 
     @abstractmethod
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:

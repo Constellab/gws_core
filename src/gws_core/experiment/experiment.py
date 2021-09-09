@@ -5,13 +5,14 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import TYPE_CHECKING, List, final
+from typing import TYPE_CHECKING, List, TypedDict, final
 
 from peewee import BooleanField, FloatField, ForeignKeyField
 
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
+from ..core.model.json_field import JSONField
 from ..core.model.sys_proc import SysProc
 from ..model.typing_register_decorator import typing_registrator
 from ..model.viewable import Viewable
@@ -33,6 +34,12 @@ class ExperimentStatus(Enum):
     RUNNING = "RUNNING"
     SUCCESS = "SUCCESS"
     ERROR = "ERROR"
+
+
+class ExperimentErrorInfo(TypedDict):
+    detail: str
+    unique_code: str
+    context: str
 
 
 @final
@@ -62,6 +69,7 @@ class Experiment(Viewable):
     status: ExperimentStatus = EnumField(choices=ExperimentStatus,
                                          default=ExperimentStatus.DRAFT)
     is_validated = BooleanField(default=False, index=True)
+    error_info: ExperimentErrorInfo = JSONField(null=True)
 
     _table_name = 'gws_experiment'
 
@@ -120,18 +128,6 @@ class Experiment(Viewable):
         return self.data.get("description", "")
 
     # -- I --
-
-    @property
-    def is_finished(self) -> bool:
-        """Consider finished if the Experiment status is SUCCESS or ERROR
-        """
-        return self.status == ExperimentStatus.SUCCESS or self.status == ExperimentStatus.ERROR
-
-    @property
-    def is_running(self) -> bool:
-        """Consider running if the Experiment status is RUNNING or WAITING_FOR_CLI_PROCESS
-        """
-        return self.status == ExperimentStatus.RUNNING or self.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS
 
     @property
     def is_pid_alive(self) -> bool:
@@ -215,31 +211,6 @@ class Experiment(Viewable):
         self.score = None
         return self.save()
 
-    def mark_as_waiting_for_cli_process(self, pid: int):
-        """Mark that a process is created for the experiment, but it is not started yet
-
-        :param pid: pid of the linux process
-        :type pid: int
-        """
-        self.status = ExperimentStatus.WAITING_FOR_CLI_PROCESS
-        self.data["pid"] = pid
-        self.save()
-
-    def mark_as_started(self):
-        # self.data["pid"] = 0. /!\ Do not reset pid here, otherwise the experiment could not be stopped if started through cli !!!
-        self.status = ExperimentStatus.RUNNING
-        self.save()
-
-    def mark_as_success(self):
-        self.data["pid"] = 0
-        self.status = ExperimentStatus.SUCCESS
-        self.save()
-
-    def mark_as_error(self, error_message: str):
-        self.protocol.progress_bar.stop(error_message)
-        self.data["pid"] = 0
-        self.status = ExperimentStatus.ERROR
-        self.save()
     # -- S --
 
     def set_title(self, title: str) -> None:
@@ -323,6 +294,56 @@ class Experiment(Viewable):
     def check_user_privilege(self, user: User) -> None:
         return self.protocol.check_user_privilege(user)
 
+    # -- V --
+
+    ########################### STATUS MANAGEMENT ##################################
+
+    @property
+    def is_finished(self) -> bool:
+        """Consider finished if the Experiment status is SUCCESS or ERROR
+        """
+        return self.status == ExperimentStatus.SUCCESS or self.is_error
+
+    @property
+    def is_running(self) -> bool:
+        """Consider running if the Experiment status is RUNNING or WAITING_FOR_CLI_PROCESS
+        """
+        return self.status == ExperimentStatus.RUNNING or self.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS
+
+    @property
+    def is_error(self) -> bool:
+        """Consider running if the Experiment status is RUNNING or WAITING_FOR_CLI_PROCESS
+        """
+        return self.status == ExperimentStatus.ERROR
+
+    def mark_as_waiting_for_cli_process(self, pid: int):
+        """Mark that a process is created for the experiment, but it is not started yet
+
+        :param pid: pid of the linux process
+        :type pid: int
+        """
+        self.status = ExperimentStatus.WAITING_FOR_CLI_PROCESS
+        self.data["pid"] = pid
+        self.save()
+
+    def mark_as_started(self):
+        # self.data["pid"] = 0. /!\ Do not reset pid here, otherwise the experiment could not be stopped if started through cli !!!
+        self.status = ExperimentStatus.RUNNING
+        self.save()
+
+    def mark_as_success(self):
+        self.data["pid"] = 0
+        self.status = ExperimentStatus.SUCCESS
+        self.save()
+
+    def mark_as_error(self, error_info: ExperimentErrorInfo) -> None:
+        if self.is_error:
+            return
+        self.data["pid"] = 0
+        self.status = ExperimentStatus.ERROR
+        self.error_info = error_info
+        self.save()
+
     def check_is_runnable(self) -> None:
         """Throw an error if the experiment is not runnable
         """
@@ -355,5 +376,3 @@ class Experiment(Viewable):
         if self.is_archived:
             raise BadRequestException(
                 detail="Experiment is archived, please unachived it to update it")
-
-    # -- V --

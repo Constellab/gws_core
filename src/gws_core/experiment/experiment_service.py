@@ -8,6 +8,8 @@ import subprocess
 import traceback
 from typing import Any, Coroutine, Union
 
+from gws_core.core.exception.gws_exceptions import GWSException
+from gws_core.experiment.experiment_exception import ExperimentRunException
 from gws_core.processable.processable_factory import ProcessableFactory
 from gws_core.protocol.protocol_service import ProtocolService
 from peewee import ModelSelect
@@ -36,8 +38,8 @@ class ExperimentService(BaseService):
     @classmethod
     def create_empty_experiment(cls, experimentDTO: ExperimentDTO) -> Experiment:
         return cls.create_experiment_from_protocol_model(
-            protocol_model=ProcessableFactory.create_protocol_empty(), 
-            study = None,
+            protocol_model=ProcessableFactory.create_protocol_empty(),
+            study=None,
             title=experimentDTO.title,
             description=experimentDTO.description
         )
@@ -48,7 +50,8 @@ class ExperimentService(BaseService):
         if not isinstance(process_model, ProcessModel):
             raise BadRequestException("An instance of ProcessModel is required")
         proto = ProtocolService.create_protocol_model_from_process_model(process_model=process_model)
-        return cls.create_experiment_from_protocol_model(protocol_model=proto, study=study, title=title, description=description)
+        return cls.create_experiment_from_protocol_model(
+            protocol_model=proto, study=study, title=title, description=description)
 
     @classmethod
     def create_experiment_from_protocol_model(
@@ -168,11 +171,12 @@ class ExperimentService(BaseService):
             object_uri=experiment.uri
         )
 
-        experiment.mark_as_error("Experiment manually stopped by a user.")
+        # todo uniquify unique name
+        experiment.mark_as_error({"detail": GWSException.EXPERIMENT_STOPPED_MANUALLY.value,
+                                  "unique_code": GWSException.EXPERIMENT_STOPPED_MANUALLY.name, "context": None})
 
     # -- U --
 
-    # TODO A TESTER ABSOLUMENT
     @classmethod
     def update_experiment(cls, uri, experiment_DTO: ExperimentDTO) -> Experiment:
         experiment: Experiment = Experiment.get_by_uri_and_check(uri)
@@ -221,7 +225,7 @@ class ExperimentService(BaseService):
         # check user
         if not user:
             try:
-                user: User = CurrentUserService.get_and_check_current_user()
+                user = CurrentUserService.get_and_check_current_user()
             except:
                 raise BadRequestException("A user is required")
 
@@ -243,18 +247,17 @@ class ExperimentService(BaseService):
         try:
             experiment.mark_as_started()
 
-            await experiment.protocol._run()
+            await experiment.protocol.run()
 
             experiment.mark_as_success()
 
             return experiment
         except Exception as err:
-            # time.sleep(3)  # -> wait for 3 sec to prevent database lock!
-
-            # Gracefully stop the experiment and exit!
-            message = f"An error occured. Exception: {err}"
-            experiment.mark_as_error(message)
-            raise err
+            exception: ExperimentRunException = ExperimentRunException.from_exception(
+                experiment=experiment, exception=err)
+            experiment.mark_as_error({"detail": exception.get_detail_with_args(), "unique_code": exception.unique_code,
+                                      "context": exception.context})
+            raise exception
 
     @classmethod
     def run_through_cli(cls, experiment: Experiment, user=None):
@@ -318,7 +321,11 @@ class ExperimentService(BaseService):
             experiment.mark_as_waiting_for_cli_process(sproc.pid)
         except Exception as err:
             traceback.print_exc()
-            experiment.mark_as_error(f"An error occured. Exception: {err}")
+            exception: ExperimentRunException = ExperimentRunException.from_exception(
+                experiment=experiment, exception=err)
+            experiment.mark_as_error({"detail": exception.get_detail_with_args(), "unique_code": exception.unique_code,
+                                      "context": exception.context})
+            raise exception
 
     @classmethod
     def count_of_running_experiments(cls) -> int:

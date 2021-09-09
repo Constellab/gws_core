@@ -56,7 +56,7 @@ class ProtocolBuildException(BadRequestException):
                 instance_name=instance_name,
                 parent_instance_name=None,
                 exception_detail=str(exception),
-                unique_code=GWSException.PROCESSABLE_RUN_EXCEPTION.name,
+                unique_code=GWSException.PROTOCOL_BUILD_EXCEPTION.name,
                 exception=exception)
 
     # Build from a ProtocolBuildException to provide parent instance_name
@@ -67,7 +67,7 @@ class ProtocolBuildException(BadRequestException):
             instance_name=exception.instance_name_chain,
             parent_instance_name=parent_instance_name,
             exception_detail=exception.original_detail,
-            unique_code=GWSException.PROCESSABLE_RUN_EXCEPTION.name,
+            unique_code=GWSException.PROTOCOL_BUILD_EXCEPTION.name,
             exception=exception.original_exception)
 
     # Build the instance name with the parent instance name
@@ -80,7 +80,7 @@ class ProtocolBuildException(BadRequestException):
 
         return f"{parent_instance_name} > {instance_name_chain}"
 
-    def _get_error_message(self) -> str:
+    def _get_error_message(self,) -> str:
         if self.processable_type == 'Protocol':
             return GWSException.PROTOCOL_BUILD_EXCEPTION.value
         else:

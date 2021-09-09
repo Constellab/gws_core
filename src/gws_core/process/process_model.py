@@ -15,7 +15,7 @@ from ..process.process_io import ProcessInputs, ProcessOutputs
 from ..processable.processable_model import ProcessableModel
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
-from .process import Process
+from .process import CheckBeforeTaskResult, Process
 
 
 @typing_registrator(unique_name="Process", object_type="GWS_CORE", hide=True)
@@ -93,12 +93,15 @@ class ProcessModel(ProcessableModel):
         config_params: ConfigParams = self.config.get_and_check_params()
         process_inputs: ProcessInputs = self.input.get_and_check_process_inputs()
 
-        is_ok = process.check_before_task(
+        check_result: CheckBeforeTaskResult = process.check_before_task(
             config=config_params, inputs=process_inputs)
 
         # TODO qu'est-ce qu'on fait quand c'est false ? Pas de message d'erreur ?  On raise une exception ?
-        if isinstance(is_ok, bool) and not is_ok:
-            return
+        if isinstance(check_result, dict) and check_result.get('result') is False:
+            if self.input.all_connected_port_values_provided():
+                pass
+            else:
+                return
         try:
             await self._run_before_task()
             # run the task
