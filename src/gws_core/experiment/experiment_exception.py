@@ -29,7 +29,7 @@ class ExperimentRunException(BadRequestException):
     context: str
 
     def __init__(self, experiment: Experiment, exception_detail: str,
-                 unique_code: str, context: str, exception: Exception) -> None:
+                 unique_code: str, instance_id: str, context: str, exception: Exception) -> None:
         self.original_exception = exception
         self.experiment = experiment
         self.context = context
@@ -41,22 +41,25 @@ class ExperimentRunException(BadRequestException):
             GWSException.EXPERIMENT_RUN_EXCEPTION.value,
             unique_code=unique_code,
             detail_args=detail_arg,
-            from_exception=exception)
+            instance_id=instance_id)
 
     @staticmethod
     def from_exception(experiment: Experiment, exception: Exception) -> ExperimentRunException:
 
         unique_code: str
         context: str
+        instance_id: str
 
         # create from a know exception
         if isinstance(exception, ProcessableRunException):
             unique_code = exception.unique_code
             context = exception.context
+            instance_id = exception.instance_id
         else:
             unique_code = GWSException.EXPERIMENT_RUN_EXCEPTION.name
             context = None
+            instance_id = None
 
         return ExperimentRunException(
             experiment=experiment, exception_detail=str(exception),
-            unique_code=unique_code, context=context, exception=exception)
+            unique_code=unique_code, instance_id=instance_id, context=context, exception=exception)

@@ -1,10 +1,12 @@
 # LICENSE
-# This software is the exclusive property of Gencovery SAS. 
+# This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-
+import json
 from typing import Dict
+
 from fastapi.responses import JSONResponse
+
 
 class ExceptionResponse(JSONResponse):
     """
@@ -26,3 +28,6 @@ class ExceptionResponse(JSONResponse):
         super().__init__(status_code=status_code, content={
             "code": code, "status": status_code, "detail": detail, "instance_id": instance_id},
             headers=headers)
+
+    def get_json_body(self) -> dict:
+        return json.loads(self.body.decode('utf8').replace("'", '"'))

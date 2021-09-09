@@ -3,16 +3,22 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import inspect
+import os
+import uuid
+from typing import List
 
 from fastapi import status
-from gws_core.core.exception.exception_helper import ExceptionHelper
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
 
 from ..classes.cors_config import CorsConfig
 from ..utils.logger import Logger
+from ..utils.utils import Utils
 from .exception_response import ExceptionResponse
 from .exceptions.base_http_exception import BaseHTTPException
+
+CODE_SEPARATOR = '.'
 
 
 class ExceptionHandler():
@@ -39,12 +45,21 @@ class ExceptionHandler():
         """
         detail: str = exception.get_detail_with_args()
 
+        unique_code: str
+
+        if exception.unique_code is not None:
+            # If the unique code is provided, append the brick name to make it unique
+            unique_code = cls.get_unique_code_for_brick(exception.unique_code)
+        else:
+            # otherwise, generate an unique code
+            unique_code = cls.generate_unique_code_from_exception()
+
         route_info: str = f" - Route: {request.url}" if request is not None else ""
 
         Logger.info(
-            f"Handle exception - {exception.unique_code}{route_info} - {detail} - Instance id : {exception.instance_id}")
+            f"Handle exception - {unique_code}{route_info} - {detail} - Instance id : {exception.instance_id}")
 
-        return ExceptionResponse(status_code=exception.status_code, code=exception.unique_code,
+        return ExceptionResponse(status_code=exception.status_code, code=unique_code,
                                  detail=detail,
                                  instance_id=exception.instance_id, headers=exception.headers)
 
@@ -57,8 +72,8 @@ class ExceptionHandler():
         :return: [description]
         :rtype: ExceptionResponse
         """
-        instance_id: str = ExceptionHelper.generate_instance_id()
-        code = ExceptionHelper.generate_unique_code_from_exception()
+        instance_id: str = cls.generate_instance_id()
+        code = cls.generate_unique_code_from_exception()
 
         route_info: str = f" - Route: {request.url}" if request is not None else ""
         Logger.info(
@@ -80,8 +95,8 @@ class ExceptionHandler():
             ExceptionResponse -- [description]
         """
 
-        instance_id: str = ExceptionHelper.generate_instance_id()
-        code = ExceptionHelper.generate_unique_code_from_exception()
+        instance_id: str = cls.generate_instance_id()
+        code = cls.generate_unique_code_from_exception()
 
         # Log short information with instance id (the stack trace is automatically printed)
         route_info: str = f" - Route: {request.url}" if request is not None else ""
@@ -107,3 +122,59 @@ class ExceptionHandler():
             CorsConfig.configure_response_cors(request, response)
 
         return response
+
+    @classmethod
+    def generate_unique_code_from_exception(cls) -> str:
+        """Generate a unique exception code from the stack trace
+
+        :return: BRICK_NAME.FILE_NAME.METHOD_NAME
+        :rtype: str
+        """
+        trace: List = inspect.trace()
+        if not trace:
+            return ""
+
+        frame_info: inspect.FrameInfo = trace[-1]
+
+        if frame_info is None:
+            return ""
+
+        code = os.path.split(
+            frame_info.filename)[-1] + CODE_SEPARATOR + frame_info.function
+
+        return cls.get_unique_code_for_brick(code)
+
+    @classmethod
+    def get_unique_code_for_brick(cls, code: str) -> str:
+        """Convert the code to a unique code by adding the brick name before the code
+
+        :param code: exception code
+        :type code: str
+        :return: exception unique code
+        :rtype: str
+        """
+        return cls._get_brick_name() + CODE_SEPARATOR + code
+
+    @classmethod
+    def _get_brick_name(cls) -> str:
+        """Retrieve the brick name of the raised exception from the full filename
+        of the trace
+
+        :return: brick name
+        :rtype: str
+        """
+        trace: List = inspect.trace()
+        if not trace:
+            return ""
+
+        frame_info: inspect.FrameInfo = trace[-1]
+
+        return Utils.get_brick_name(frame_info[0])
+
+    @classmethod
+    def unique_code_separator(cls) -> str:
+        return CODE_SEPARATOR
+
+    @classmethod
+    def generate_instance_id(cls) -> str:
+        return str(uuid.uuid4())
