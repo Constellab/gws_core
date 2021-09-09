@@ -40,6 +40,7 @@ class ExperimentErrorInfo(TypedDict):
     detail: str
     unique_code: str
     context: str
+    instance_id: str
 
 
 @final

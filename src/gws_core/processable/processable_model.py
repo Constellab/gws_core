@@ -50,6 +50,7 @@ class ProcessableErrorInfo(TypedDict):
     detail: str
     unique_code: str
     context: str
+    instance_id: str
 
 
 @json_ignore(["parent_protocol_id"])
@@ -266,9 +267,10 @@ class ProcessableModel(Viewable):
             # When catching an error from a child process
             self.mark_as_error(
                 {
-                    "detail": err.exception_detail,
+                    "detail": err.get_detail_with_args(),
                     "unique_code": err.unique_code,
-                    "context": err.context
+                    "context": err.context,
+                    "instance_id": err.instance_id
                 })
 
             # update the context to add this processable
@@ -279,10 +281,13 @@ class ProcessableModel(Viewable):
             exception: ProcessableRunException = ProcessableRunException.from_exception(self, err)
             self.mark_as_error(
                 {
-                    "detail": exception.exception_detail,
+                    "detail": exception.get_detail_with_args(),
                     "unique_code": exception.unique_code,
-                    "context": None
+                    "context": None,
+                    "instance_id": exception.instance_id
                 })
+            # update the context to add this processable
+            exception.update_context(self.get_instance_name_context())
 
             raise exception
 

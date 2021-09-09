@@ -6,12 +6,16 @@ import inspect
 import zlib
 from typing import Dict, Type
 
+from gws_core.core import exception
+
 from ..config.config_params import ConfigParams
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..model.typing_manager import TypingManager
 from ..model.typing_register_decorator import typing_registrator
 from ..process.process_io import ProcessInputs, ProcessOutputs
+from ..processable.processable_exception import (
+    ProcessableCheckBeforeTaskStopException, ProcessableRunException)
 from ..processable.processable_model import ProcessableModel
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
@@ -93,23 +97,25 @@ class ProcessModel(ProcessableModel):
         config_params: ConfigParams = self.config.get_and_check_params()
         process_inputs: ProcessInputs = self.input.get_and_check_process_inputs()
 
-        check_result: CheckBeforeTaskResult = process.check_before_task(
-            config=config_params, inputs=process_inputs)
+        check_result: CheckBeforeTaskResult
+        try:
+            check_result = process.check_before_task(
+                config=config_params, inputs=process_inputs)
+        except Exception as err:
+            raise ProcessableRunException.from_exception(processable_model=self, exception=err,
+                                                         error_prefix='Error during check before task') from err
 
-        # TODO qu'est-ce qu'on fait quand c'est false ? Pas de message d'erreur ?  On raise une exception ?
+        # If the check before task retuned False
         if isinstance(check_result, dict) and check_result.get('result') is False:
             if self.input.all_connected_port_values_provided():
-                pass
+                raise ProcessableCheckBeforeTaskStopException(message=check_result.get('message'))
             else:
                 return
-        try:
-            await self._run_before_task()
-            # run the task
-            await self._run_task(process=process, config_params=config_params, process_inputs=process_inputs)
-            await self._run_after_task()
-        except Exception as err:
-            self.progress_bar.stop(message=str(err))
-            raise err
+
+        await self._run_before_task()
+        # run the task
+        await self._run_task(process=process, config_params=config_params, process_inputs=process_inputs)
+        await self._run_after_task()
 
     async def _run_task(self, process: Process, config_params: ConfigParams, process_inputs: ProcessInputs) -> None:
         """
@@ -118,8 +124,15 @@ class ProcessModel(ProcessableModel):
 
         # Set the progress bar
         process.__progress_bar__ = self.progress_bar
-        # Run the process task
-        process_output: ProcessOutputs = await process.task(config=config_params, inputs=process_inputs)
+
+        process_output: ProcessOutputs
+
+        try:
+            # Run the process task
+            process_output = await process.task(config=config_params, inputs=process_inputs)
+        except Exception as err:
+            raise ProcessableRunException.from_exception(processable_model=self, exception=err,
+                                                         error_prefix='Error during task') from err
 
         if process_output is None:
             process_output = {}

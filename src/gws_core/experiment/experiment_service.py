@@ -8,6 +8,9 @@ import subprocess
 import traceback
 from typing import Any, Coroutine, Union
 
+from gws_core.core.exception.exception_helper import ExceptionHelper
+from gws_core.core.exception.exceptions.base_http_exception import \
+    BaseHTTPException
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.experiment.experiment_exception import ExperimentRunException
 from gws_core.processable.processable_factory import ProcessableFactory
@@ -173,7 +176,9 @@ class ExperimentService(BaseService):
 
         # todo uniquify unique name
         experiment.mark_as_error({"detail": GWSException.EXPERIMENT_STOPPED_MANUALLY.value,
-                                  "unique_code": GWSException.EXPERIMENT_STOPPED_MANUALLY.name, "context": None})
+                                  "unique_code": ExceptionHelper.get_unique_code_for_brick(
+                                      GWSException.EXPERIMENT_STOPPED_MANUALLY.name),
+                                  "context": None, "instance_id": None})
 
     # -- U --
 
@@ -256,7 +261,7 @@ class ExperimentService(BaseService):
             exception: ExperimentRunException = ExperimentRunException.from_exception(
                 experiment=experiment, exception=err)
             experiment.mark_as_error({"detail": exception.get_detail_with_args(), "unique_code": exception.unique_code,
-                                      "context": exception.context})
+                                      "context": exception.context, "instance_id": exception.instance_id})
             raise exception
 
     @classmethod
@@ -324,7 +329,7 @@ class ExperimentService(BaseService):
             exception: ExperimentRunException = ExperimentRunException.from_exception(
                 experiment=experiment, exception=err)
             experiment.mark_as_error({"detail": exception.get_detail_with_args(), "unique_code": exception.unique_code,
-                                      "context": exception.context})
+                                      "context": exception.context, "instance_id": exception.instance_id})
             raise exception
 
     @classmethod

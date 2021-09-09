@@ -12,8 +12,6 @@ from typing import Any, List, Type
 
 from slugify import slugify as _slugify
 
-from ..exception.exceptions.bad_request_exception import BadRequestException
-
 
 class Utils:
 
@@ -32,8 +30,7 @@ class Utils:
         """
         module = inspect.getmodule(obj)
         if module is None:
-            raise BadRequestException(
-                f"Can't find python module of object {obj}")
+            raise Exception(f"Can't find python module of object {obj}")
         modules: List[str] = module.__name__.split('.')
         return modules[0]
 
@@ -64,8 +61,7 @@ class Utils:
         try:
             module = importlib.import_module(name)
         except Exception as err:
-            raise BadRequestException(
-                f"Can't import python module {name}") from err
+            raise Exception(f"Can't import python module {name}") from err
         return os.path.abspath(os.path.dirname(module.__file__))
 
     @classmethod
@@ -102,7 +98,7 @@ class Utils:
                 try:
                     importlib.import_module(module_name)
                 except Exception as err:
-                    raise BadRequestException(f"Cannot import module {module_name}.") from err
+                    raise Exception(f"Cannot import module {module_name}.") from err
 
     # -- S --
 

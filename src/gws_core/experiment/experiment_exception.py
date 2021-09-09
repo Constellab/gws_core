@@ -34,22 +34,29 @@ class ExperimentRunException(BadRequestException):
         self.experiment = experiment
         self.context = context
 
-        detail_arg: Dict = {"error": exception_detail, "context": context, "experiment": experiment.uri}
+        context_text: str = f"| {context}" if context is not None else ""
+
+        detail_arg: Dict = {"error": exception_detail, "context": context_text, "experiment": experiment.uri}
         super().__init__(
             GWSException.EXPERIMENT_RUN_EXCEPTION.value,
             unique_code=unique_code,
-            detail_args=detail_arg)
+            detail_args=detail_arg,
+            from_exception=exception)
 
     @staticmethod
     def from_exception(experiment: Experiment, exception: Exception) -> ExperimentRunException:
+
+        unique_code: str
+        context: str
+
         # create from a know exception
         if isinstance(exception, ProcessableRunException):
-            return ExperimentRunException(
-                experiment=experiment, exception_detail=exception.exception_detail,
-                unique_code=exception.unique_code, context=f"| {exception.context}", exception=exception)
-        # create from a unknow exception
+            unique_code = exception.unique_code
+            context = exception.context
         else:
-            return ExperimentRunException(experiment=experiment, exception_detail=str(exception),
-                                          unique_code=GWSException.EXPERIMENT_RUN_EXCEPTION.name,
-                                          context='',
-                                          exception=exception)
+            unique_code = GWSException.EXPERIMENT_RUN_EXCEPTION.name
+            context = None
+
+        return ExperimentRunException(
+            experiment=experiment, exception_detail=str(exception),
+            unique_code=unique_code, context=context, exception=exception)

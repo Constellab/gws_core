@@ -1,11 +1,14 @@
 # LICENSE
-# This software is the exclusive property of Gencovery SAS. 
+# This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
 from typing import Dict
+
 from fastapi import status
+
 from .base_http_exception import BaseHTTPException
+
 
 class ForbiddenException(BaseHTTPException):
     """
@@ -13,7 +16,7 @@ class ForbiddenException(BaseHTTPException):
     """
 
     def __init__(self, detail: str, unique_code: str = None,
-                 detail_args: Dict = None, headers: Dict = None) -> None:
+                 detail_args: Dict = None, headers: Dict = None, from_exception: 'BaseHTTPException' = None) -> None:
         """Throw a generic exception
 
         :param http_status_code: HTTP error code
@@ -30,6 +33,9 @@ class ForbiddenException(BaseHTTPException):
         :type detail_args: Dict, optional
         :param headers: if specific header need to be returned in the HTTP response, defaults to None
         :type headers: Dict, optional
+        :param from_exception: if specified the http_status_code, unique_code, headers and instance_id are copied from this exception
+                                Only the detail and detail agrs change
+        :type from_exception: BaseHTTPException, optional
         """
 
         super().__init__(
@@ -37,4 +43,5 @@ class ForbiddenException(BaseHTTPException):
             detail=detail,
             unique_code=unique_code,
             detail_args=detail_args,
-            headers=headers)
+            headers=headers,
+            from_exception=from_exception)

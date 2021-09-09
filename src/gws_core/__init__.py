@@ -172,6 +172,7 @@ from .process.plug import Sink as Sink
 from .process.plug import Source as Source
 from .process.plug import Switch2 as Switch2
 from .process.plug import Wait as Wait
+from .process.process import CheckBeforeTaskResult
 from .process.process import Process as Process
 from .process.process_decorator import process_decorator as process_decorator
 from .process.process_io import ProcessInputs as ProcessInputs
