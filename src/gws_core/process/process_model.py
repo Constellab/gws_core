@@ -31,21 +31,21 @@ from ..progress_bar.progress_bar import ProgressBar
 from ..resource.resource_model import ResourceModel
 from ..resource.task_resource import TaskResource
 from ..user.user import User
-from .processable import Processable
-from .processable_exception import ProcessableRunException
+from .process import Process
+from .process_exception import ProcessRunException
 
 if TYPE_CHECKING:
     from ..protocol.protocol_model import ProtocolModel
 
 
-class ProcessableStatus(Enum):
+class ProcessStatus(Enum):
     DRAFT = "DRAFT"
     RUNNING = "RUNNING"
     SUCCESS = "SUCCESS"
     ERROR = "ERROR"
 
 
-class ProcessableErrorInfo(TypedDict):
+class ProcessErrorInfo(TypedDict):
     detail: str
     unique_code: str
     context: str
@@ -53,7 +53,7 @@ class ProcessableErrorInfo(TypedDict):
 
 
 @json_ignore(["parent_protocol_id"])
-class ProcessableModel(Viewable):
+class ProcessModel(Viewable):
     """Base abstract class for Process and Protocol
 
     :param Viewable: [description]
@@ -71,10 +71,10 @@ class ProcessableModel(Viewable):
     config: Config = ForeignKeyField(Config, null=False, index=True, backref='+')
     progress_bar: ProgressBar = ForeignKeyField(
         ProgressBar, null=True, backref='+')
-    processable_typing_name = CharField(null=False)
-    status: ProcessableStatus = EnumField(choices=ProcessableStatus,
-                                          default=ProcessableStatus.DRAFT)
-    error_info: ProcessableErrorInfo = JSONField(null=True)
+    process_typing_name = CharField(null=False)
+    status: ProcessStatus = EnumField(choices=ProcessStatus,
+                                      default=ProcessStatus.DRAFT)
+    error_info: ProcessErrorInfo = JSONField(null=True)
 
     _experiment: Experiment = None
     _parent_protocol: ProtocolModel = None
@@ -94,7 +94,7 @@ class ProcessableModel(Viewable):
 
     # -- A --
     @transaction()
-    def archive(self, archive: bool, archive_resources=True) -> ProcessableModel:
+    def archive(self, archive: bool, archive_resources=True) -> ProcessModel:
         """
         Archive the process
         """
@@ -226,7 +226,7 @@ class ProcessableModel(Viewable):
         return Q
 
     @transaction()
-    def reset(self) -> 'ProcessableModel':
+    def reset(self) -> 'ProcessModel':
         """
         Reset the process
 
@@ -239,7 +239,7 @@ class ProcessableModel(Viewable):
 
         self.progress_bar.reset()
 
-        self.status = ProcessableStatus.DRAFT
+        self.status = ProcessStatus.DRAFT
         self.error_info = None
         self._reset_io()
         return self.save()
@@ -261,8 +261,8 @@ class ProcessableModel(Viewable):
 
         try:
             await self._run()
-        # Catch all exception and wrap them into a ProcessRunException to provide processable info
-        except ProcessableRunException as err:
+        # Catch all exception and wrap them into a ProcessRunException to provide process info
+        except ProcessRunException as err:
             # When catching an error from a child process
             self.mark_as_error(
                 {
@@ -272,12 +272,12 @@ class ProcessableModel(Viewable):
                     "instance_id": err.instance_id
                 })
 
-            # update the context to add this processable
+            # update the context to add this process
             err.update_context(self.get_instance_name_context())
             raise err
         except Exception as err:
-            # Create a new ProcessableRunException with correct info
-            exception: ProcessableRunException = ProcessableRunException.from_exception(self, err)
+            # Create a new processRunException with correct info
+            exception: ProcessRunException = ProcessRunException.from_exception(self, err)
             self.mark_as_error(
                 {
                     "detail": exception.get_detail_with_args(),
@@ -285,7 +285,7 @@ class ProcessableModel(Viewable):
                     "context": None,
                     "instance_id": exception.instance_id
                 })
-            # update the context to add this processable
+            # update the context to add this process
             exception.update_context(self.get_instance_name_context())
 
             raise exception
@@ -330,13 +330,13 @@ class ProcessableModel(Viewable):
         await self._run_next_processes()
 
     def save_after_task(self) -> None:
-        """Method called after the task to save the processable
+        """Method called after the task to save the process
         """
         self.save()
 
     # -- S --
 
-    def save_full(self) -> 'ProcessableModel':
+    def save_full(self) -> 'ProcessModel':
         """Function to run overrided by the sub classes
         """
         pass
@@ -377,17 +377,17 @@ class ProcessableModel(Viewable):
 
     # -- T --
 
-    def _get_processable_type(self) -> Type[Processable]:
-        return TypingManager.get_type_from_name(self.processable_typing_name)
+    def _get_process_type(self) -> Type[Process]:
+        return TypingManager.get_type_from_name(self.process_typing_name)
 
     def get_minimum_json(self) -> dict:
         """
-        Return the minium json to recognize this processable
+        Return the minium json to recognize this process
 
         """
         return {
             "uri": self.uri,
-            "processable_typing_name": self.processable_typing_name
+            "process_typing_name": self.process_typing_name
         }
 
     @abstractmethod
@@ -434,11 +434,11 @@ class ProcessableModel(Viewable):
         """
         _json: dict = {}
 
-        processable_type: Type[Processable] = TypingManager.get_type_from_name(
-            self.processable_typing_name)
-        _json["title"] = processable_type._human_name
-        _json["description"] = processable_type._short_description
-        _json["doc"] = inspect.getdoc(processable_type)
+        process_type: Type[Process] = TypingManager.get_type_from_name(
+            self.process_typing_name)
+        _json["title"] = process_type._human_name
+        _json["description"] = process_type._short_description
+        _json["doc"] = inspect.getdoc(process_type)
 
         return _json
 
@@ -449,14 +449,14 @@ class ProcessableModel(Viewable):
         :type user: User
         """
 
-        process_type: Type[Processable] = self._get_processable_type()
+        process_type: Type[Process] = self._get_process_type()
 
         if not user.has_access(process_type._allowed_user):
             raise UnauthorizedException(
                 f"You must be a {process_type._allowed_user} to run the process '{process_type.full_classname()}'")
 
     def get_info(self) -> str:
-        """Return basic information for this processable (usefull for error message)
+        """Return basic information for this process (usefull for error message)
         """
 
         info: str = ""
@@ -464,7 +464,7 @@ class ProcessableModel(Viewable):
         if self.instance_name:
             info += f"'{self.instance_name}' "
 
-        return f"{info} ({self._get_processable_type().classname()})"
+        return f"{info} ({self._get_process_type().classname()})"
 
     def get_instance_name_context(self) -> str:
         """ return the instance name in the context
@@ -480,15 +480,15 @@ class ProcessableModel(Viewable):
 
     @property
     def is_running(self) -> bool:
-        return self.status == ProcessableStatus.RUNNING
+        return self.status == ProcessStatus.RUNNING
 
     @property
     def is_finished(self) -> bool:
-        return self.status == ProcessableStatus.SUCCESS or self.is_error
+        return self.status == ProcessStatus.SUCCESS or self.is_error
 
     @property
     def is_draft(self) -> bool:
-        return self.status == ProcessableStatus.DRAFT
+        return self.status == ProcessStatus.DRAFT
 
     @property
     def is_updatable(self) -> bool:
@@ -496,7 +496,7 @@ class ProcessableModel(Viewable):
 
     @property
     def is_error(self) -> bool:
-        return self.status == ProcessableStatus.ERROR
+        return self.status == ProcessStatus.ERROR
 
     @property
     def is_ready(self) -> bool:
@@ -512,16 +512,16 @@ class ProcessableModel(Viewable):
 
     def mark_as_started(self):
         self.progress_bar.add_message("Start of process")
-        self.status = ProcessableStatus.RUNNING
+        self.status = ProcessStatus.RUNNING
         self.save()
 
     def mark_as_success(self):
         self.progress_bar.stop('End of process')
-        self.status = ProcessableStatus.SUCCESS
+        self.status = ProcessStatus.SUCCESS
         self.save()
 
-    def mark_as_error(self, error_info: ProcessableErrorInfo):
+    def mark_as_error(self, error_info: ProcessErrorInfo):
         self.progress_bar.stop(error_info["detail"])
-        self.status = ProcessableStatus.ERROR
+        self.status = ProcessStatus.ERROR
         self.error_info = error_info
         self.save()

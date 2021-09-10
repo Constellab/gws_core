@@ -168,11 +168,11 @@ from .model.typing import Typing as Typing
 from .model.view_model import ViewModel as ViewModel
 from .model.view_service import ViewService as ViewService
 from .model.viewable import Viewable as Viewable
-# Processable
-from .processable.processable import Processable as Processable
-from .processable.processable_factory import \
-    ProcessableFactory as ProcessableFactory
-from .processable.processable_model import ProcessableModel as ProcessableModel
+# Process
+from .process.process import Process as Process
+from .process.process_factory import \
+    ProcessFactory as ProcessFactory
+from .process.process_model import ProcessModel as ProcessModel
 # Progress Bar
 from .progress_bar.progress_bar import ProgressBar as ProgressBar
 from .progress_bar.progress_bar_service import \
@@ -186,7 +186,7 @@ from .protocol.protocol_service import ProtocolService as ProtocolService
 from .protocol.protocol_spec import ConnectorPartSpec as ConnectorPartSpec
 from .protocol.protocol_spec import ConnectorSpec as ConnectorSpec
 from .protocol.protocol_spec import InterfaceSpec as InterfaceSpec
-from .protocol.protocol_spec import ProcessableSpec as ProcessableSpec
+from .protocol.protocol_spec import ProcessSpec as ProcessSpec
 from .protocol.protocol_typing import ProtocolTyping as ProtocolTyping
 from .resource.kv_store import KVStore as KVStore
 # Resource

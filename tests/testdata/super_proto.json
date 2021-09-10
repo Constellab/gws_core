@@ -4,7 +4,7 @@
             "creation_datetime": "2021-08-25T14:59:54",
             "instance_name": "p0",
             "is_archived": false,
-            "processable_typing_name": "TASK.gws_core.RobotCreate",
+            "process_typing_name": "TASK.gws_core.RobotCreate",
             "save_datetime": "2021-08-25T14:59:54",
             "uri": "p0_uri",
             "data": {
@@ -68,7 +68,7 @@
             "creation_datetime": "2021-08-25T14:59:54",
             "instance_name": "p5",
             "is_archived": false,
-            "processable_typing_name": "TASK.gws_core.RobotEat",
+            "process_typing_name": "TASK.gws_core.RobotEat",
             "save_datetime": "2021-08-25T14:59:54",
             "uri": "p5_uri",
             "data": {

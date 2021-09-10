@@ -8,19 +8,19 @@ import subprocess
 import traceback
 from typing import Any, Coroutine, Union
 
-from gws_core.core.exception.gws_exceptions import GWSException
-from gws_core.experiment.experiment_exception import ExperimentRunException
-from gws_core.processable.processable_factory import ProcessableFactory
-from gws_core.protocol.protocol_service import ProtocolService
 from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import BadRequestException, NotFoundException
+from ..core.exception.gws_exceptions import GWSException
 from ..core.model.sys_proc import SysProc
 from ..core.service.base_service import BaseService
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
+from ..experiment.experiment_exception import ExperimentRunException
+from ..process.process_factory import ProcessFactory
 from ..protocol.protocol_model import ProtocolModel
+from ..protocol.protocol_service import ProtocolService
 from ..study.study import Study
 from ..task.task_model import TaskModel
 from ..user.activity import Activity
@@ -38,7 +38,7 @@ class ExperimentService(BaseService):
     @classmethod
     def create_empty_experiment(cls, experimentDTO: ExperimentDTO) -> Experiment:
         return cls.create_experiment_from_protocol_model(
-            protocol_model=ProcessableFactory.create_protocol_empty(),
+            protocol_model=ProcessFactory.create_protocol_empty(),
             study=None,
             title=experimentDTO.title,
             description=experimentDTO.description

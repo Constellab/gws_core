@@ -13,7 +13,7 @@ from ..resource.resource_model import ResourceModel
 from .io_spec import IOSpec, IOSpecClass, IOSpecsHelper
 
 if TYPE_CHECKING:
-    from ..processable.processable_model import ProcessableModel
+    from ..process.process_model import ProcessModel
     from .io import IO
 
 
@@ -185,7 +185,7 @@ class Port(Base):
 
     # -- G --
 
-    def get_next_procs(self) -> List[ProcessableModel]:
+    def get_next_procs(self) -> List[ProcessModel]:
         """
         Returns the list of right-hand side processes connected to the port.
 
@@ -227,7 +227,7 @@ class Port(Base):
         return self._parent
 
     @property
-    def process(self) -> ProcessableModel:
+    def process(self) -> ProcessModel:
         """
         Returns the parent Process of the Port.
 

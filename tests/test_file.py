@@ -7,7 +7,7 @@ import json
 
 from gws_core import (BaseTestCase, ConfigParams, Experiment,
                       ExperimentService, File, FileModel, FileService, GTest,
-                      LocalFileStore, ProcessableFactory, ProcessableSpec,
+                      LocalFileStore, ProcessFactory, ProcessSpec,
                       TaskModel, Protocol, ProtocolModel, Robot,
                       RobotCreate, WriteToJsonFile, protocol_decorator)
 from gws_core.impl.file.file_store import FileStore
@@ -16,8 +16,8 @@ from gws_core.impl.file.file_store import FileStore
 @protocol_decorator("RobotToFile")
 class RobotToFile(Protocol):
     def configure_protocol(self, config_params: ConfigParams) -> None:
-        create: ProcessableSpec = self.add_process(RobotCreate, 'create')
-        write: ProcessableSpec = self.add_process(WriteToJsonFile, 'write').configure('filename', 'robot')
+        create: ProcessSpec = self.add_process(RobotCreate, 'create')
+        write: ProcessSpec = self.add_process(WriteToJsonFile, 'write').configure('filename', 'robot')
 
         self.add_connectors([
             (create >> 'robot', write << 'resource'),
@@ -59,7 +59,7 @@ class TestFile(BaseTestCase):
         # Chekc that the file doesn't exist at the beginning
         self.assertFalse(file_store.file_exists('robot.json'))
 
-        protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_type(RobotToFile)
+        protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_type(RobotToFile)
 
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(protocol)
         experiment = await ExperimentService.run_experiment(experiment)

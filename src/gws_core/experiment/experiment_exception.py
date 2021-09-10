@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Dict
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.exception.gws_exceptions import GWSException
-from ..processable.processable_exception import ProcessableRunException
+from ..process.process_exception import ProcessRunException
 
 if TYPE_CHECKING:
     from .experiment import Experiment
@@ -51,7 +51,7 @@ class ExperimentRunException(BadRequestException):
         instance_id: str
 
         # create from a know exception
-        if isinstance(exception, ProcessableRunException):
+        if isinstance(exception, ProcessRunException):
             unique_code = exception.unique_code
             context = exception.context
             instance_id = exception.instance_id

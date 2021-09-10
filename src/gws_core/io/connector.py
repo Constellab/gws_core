@@ -4,7 +4,7 @@ from gws_core.io.io_exception import ImcompatiblePortsException
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ..processable.processable_model import ProcessableModel
+from ..process.process_model import ProcessModel
 from .port import InPort, OutPort
 
 
@@ -93,7 +93,7 @@ class Connector:
     # -- L --
 
     @property
-    def left_process(self) -> ProcessableModel:
+    def left_process(self) -> ProcessModel:
         """
         Returns the left-hand side process
 
@@ -107,7 +107,7 @@ class Connector:
     # -- O --
 
     @property
-    def right_process(self) -> ProcessableModel:
+    def right_process(self) -> ProcessModel:
         """
         Returns the right-hand side process
 

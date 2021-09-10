@@ -11,7 +11,7 @@ from ..config.config_spec import ConfigSpecs
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..io.io_spec import InputSpecs, IOSpecsHelper, OutputSpecs
-from ..processable.processable import Processable
+from ..process.process import Process
 from ..progress_bar.progress_bar import ProgressBar
 from ..resource.resource import Resource
 from ..task.task_io import TaskInputs, TaskOutputs
@@ -30,7 +30,7 @@ class CheckBeforeTaskResult(TypedDict, total=False):
     message: Optional[str]
 
 
-class Task(Processable):
+class Task(Process):
 
     input_specs: InputSpecs = {}
     output_specs: OutputSpecs = {}

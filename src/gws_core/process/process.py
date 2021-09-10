@@ -8,9 +8,9 @@ from ..core.model.base import Base
 from ..user.user_group import UserGroup
 
 
-class Processable(Base):
+class Process(Base):
 
-    # Config spec of the processable at the class level
+    # Config spec of the process at the class level
     config_specs: ConfigSpecs = {}
 
     # Provided at the Class level automatically by the Decorator

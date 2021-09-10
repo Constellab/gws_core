@@ -8,10 +8,10 @@ import os
 import pandas
 from gws_core import (BaseTestCase, ConfigParams, CSVDumper, CSVExporter,
                       CSVImporter, CSVLoader, CSVTable, Experiment,
-                      ExperimentService, File, GTest, ProcessableFactory,
+                      ExperimentService, File, GTest, ProcessFactory,
                       TaskModel, Protocol, ProtocolModel, ProtocolService,
                       Settings, Study, protocol_decorator)
-from gws_core.protocol.protocol_spec import ProcessableSpec
+from gws_core.protocol.protocol_spec import ProcessSpec
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -24,12 +24,12 @@ o_file_path = os.path.join(testdata_dir, "data_out.csv")
 class CSVProtocol(Protocol):
     def configure_protocol(self, config_params: ConfigParams) -> None:
 
-        loader: ProcessableSpec = self.add_process(CSVLoader, 'loader').configure("file_path", i_file_path)
-        dumper: ProcessableSpec = self.add_process(CSVDumper, 'dumper')\
+        loader: ProcessSpec = self.add_process(CSVLoader, 'loader').configure("file_path", i_file_path)
+        dumper: ProcessSpec = self.add_process(CSVDumper, 'dumper')\
             .configure("file_path", o_file_path).configure("index", False)
 
-        importer: ProcessableSpec = self.add_process(CSVImporter, 'importer')
-        exporter: ProcessableSpec = self.add_process(CSVExporter, 'exporter').configure("index", False)
+        importer: ProcessSpec = self.add_process(CSVImporter, 'importer')
+        exporter: ProcessSpec = self.add_process(CSVExporter, 'exporter').configure("index", False)
 
         self.add_connectors([
             (loader >> "data", dumper << "data"),

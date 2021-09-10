@@ -46,18 +46,18 @@ async def get_the_list_of_protocols(page: Optional[int] = 1,
     ).to_json()
 
 
-@core_app.post("/protocol/{uri}/add-processable/{processable_typing_name}", tags=["Protocol"],
-               summary="Add a processable to a protocol")
-async def add_processable(uri: str,
-                          processable_typing_name: str,
-                          _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+@core_app.post("/protocol/{uri}/add-process/{process_typing_name}", tags=["Protocol"],
+               summary="Add a process to a protocol")
+async def add_process(uri: str,
+                      process_typing_name: str,
+                      _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
-    Add a processable to a protocol
+    Add a process to a protocol
     """
 
-    return ProtocolService.add_processable_to_protocol(
+    return ProtocolService.add_process_to_protocol(
         protocol_uri=uri,
-        processable_typing_name=processable_typing_name
+        process_typing_name=process_typing_name
     ).to_json(deep=True)
 
 ############################# PROTOCOL TYPE ###########################

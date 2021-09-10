@@ -7,7 +7,7 @@ import json
 import os
 
 from gws_core import (BaseTestCase, Config, Experiment, ExperimentService,
-                      ExperimentStatus, GTest, ProcessableModel, ProgressBar,
+                      ExperimentStatus, GTest, ProcessModel, ProgressBar,
                       ProtocolModel, ProtocolService, Robot, RobotFood,
                       RobotMove, Settings, TaskModel, Typing)
 
@@ -150,7 +150,7 @@ class TestProtocol(BaseTestCase):
         self.assertEqual(Config.select().count(), 7)
         self.assertEqual(ProgressBar.select().count(), 7)
 
-        sub_p1: ProcessableModel = mini_travel_db.get_process('p1')
+        sub_p1: ProcessModel = mini_travel_db.get_process('p1')
         # Delete p2 of mini travel, update p1 config (of mini travel)
         with open(os.path.join(testdata_dir, "super_proto_update_2.json"), "r") as file:
             file_content: str = file.read().replace('p0_uri', p0.uri).replace('p5_uri', p5.uri)\
@@ -160,7 +160,7 @@ class TestProtocol(BaseTestCase):
 
         super_proto_db = ProtocolService.get_protocol_by_uri(super_proto.uri)
         mini_travel_db: ProtocolModel = super_proto_db.get_process("mini_travel")
-        sub_p1: ProcessableModel = mini_travel_db.get_process("p1")
+        sub_p1: ProcessModel = mini_travel_db.get_process("p1")
 
         self.assertEqual(len(mini_travel_db.processes), 1)
         self.assertEqual(sub_p1.config.get_param("moving_step"), 20)
@@ -188,14 +188,14 @@ class TestProtocol(BaseTestCase):
         self.assertEqual(Config.select().count(), 3)
         self.assertEqual(ProgressBar.select().count(), 3)
 
-        # Test adding a processable
+        # Test adding a process
         move_typing: Typing = Typing.get_by_model_type(RobotMove)
-        move: ProcessableModel = ProtocolService.add_processable_to_protocol(
+        move: ProcessModel = ProtocolService.add_process_to_protocol(
             super_proto_db.uri, move_typing.typing_name)
 
         super_proto_db = ProtocolService.get_protocol_by_uri(super_proto.uri)
 
-        move: ProcessableModel = super_proto_db.get_process(move.instance_name)
+        move: ProcessModel = super_proto_db.get_process(move.instance_name)
         self.assertIsNotNone(move.id)
 
     async def test_optional_input(self):

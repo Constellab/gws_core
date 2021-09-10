@@ -11,9 +11,9 @@ from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..model.typing_manager import TypingManager
 from ..model.typing_register_decorator import typing_registrator
-from ..processable.processable_exception import (CheckBeforeTaskStopException,
-                                                 ProcessableRunException)
-from ..processable.processable_model import ProcessableModel
+from ..process.process_exception import (CheckBeforeTaskStopException,
+                                         ProcessRunException)
+from ..process.process_model import ProcessModel
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
 from ..task.task_io import TaskInputs, TaskOutputs
@@ -21,7 +21,7 @@ from .task import CheckBeforeTaskResult, Task
 
 
 @typing_registrator(unique_name="Task", object_type="GWS_CORE", hide=True)
-class TaskModel(ProcessableModel):
+class TaskModel(ProcessModel):
     """
     Task model class.
 
@@ -42,11 +42,11 @@ class TaskModel(ProcessableModel):
 
         super().__init__(*args, **kwargs)
 
-        if self.processable_typing_name is not None:
+        if self.process_typing_name is not None:
             self._init_io()
 
     def _init_io(self):
-        task_type: Type[Task] = self._get_processable_type()
+        task_type: Type[Task] = self._get_process_type()
 
         # create the input ports from the Task input specs
         for k in task_type.input_specs:
@@ -71,18 +71,18 @@ class TaskModel(ProcessableModel):
 
         # /:\ Use the true object type (self.type)
         model_t: Type[TaskModel] = TypingManager.get_type_from_name(
-            self.processable_typing_name)
+            self.process_typing_name)
         source = inspect.getsource(model_t)
         return zlib.compress(source.encode())
 
     def set_task_type(self, typing_name: str) -> None:
-        self.processable_typing_name = typing_name
+        self.process_typing_name = typing_name
         self._init_io()
 
     # -- D --
 
     def _create_task_instance(self) -> Task:
-        return self._get_processable_type()()
+        return self._get_process_type()()
 
     async def _run(self) -> None:
         """
@@ -100,8 +100,8 @@ class TaskModel(ProcessableModel):
             check_result = task.check_before_run(
                 config=config_params, inputs=task_inputs)
         except Exception as err:
-            raise ProcessableRunException.from_exception(processable_model=self, exception=err,
-                                                         error_prefix='Error during check before task') from err
+            raise ProcessRunException.from_exception(process_model=self, exception=err,
+                                                     error_prefix='Error during check before task') from err
 
         # If the check before task retuned False
         if isinstance(check_result, dict) and check_result.get('result') is False:
@@ -129,8 +129,8 @@ class TaskModel(ProcessableModel):
             # Run the task task
             task_output = await task.run(config=config_params, inputs=task_inputs)
         except Exception as err:
-            raise ProcessableRunException.from_exception(processable_model=self, exception=err,
-                                                         error_prefix='Error during task') from err
+            raise ProcessRunException.from_exception(process_model=self, exception=err,
+                                                     error_prefix='Error during task') from err
 
         if task_output is None:
             task_output = {}

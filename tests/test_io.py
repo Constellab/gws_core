@@ -6,7 +6,7 @@
 
 from gws_core import (FIFO2, BadRequestException, BaseTestCase, ConfigParams,
                       Connector, Experiment, ExperimentService, GTest,
-                      OptionalIn, ProcessableFactory, ProcessableSpec,
+                      OptionalIn, ProcessFactory, ProcessSpec,
                       Protocol, ProtocolModel, Resource, ResourceModel,
                       SerializedResourceData, SpecialTypeOut, Task, TaskInputs,
                       TaskModel, TaskOutputs, UnmodifiedOut, Wait,
@@ -146,8 +146,8 @@ class Log(Task):
 @protocol_decorator("TestPersonProtocol")
 class TestPersonProtocol(Protocol):
     def configure_protocol(self, config_params: ConfigParams) -> None:
-        create: ProcessableSpec = self.add_process(Create, 'create')
-        log: ProcessableSpec = self.add_process(Log, 'log')
+        create: ProcessSpec = self.add_process(Create, 'create')
+        log: ProcessSpec = self.add_process(Log, 'log')
 
         self.add_connectors([
             (create >> 'create_person_out', log << 'person')
@@ -170,11 +170,11 @@ class Skippable(FIFO2):
 @protocol_decorator("TestSkippable")
 class TestSkippable(Protocol):
     def configure_protocol(self, config_params: ConfigParams) -> None:
-        create1: ProcessableSpec = self.add_process(Create, 'create1')
-        wait: ProcessableSpec = self.add_process(Wait, 'wait').configure('waiting_time', '3')
-        create2: ProcessableSpec = self.add_process(Create, 'create2')
-        skippable: ProcessableSpec = self.add_process(Skippable, 'skippable')
-        move: ProcessableSpec = self.add_process(Move, 'move')
+        create1: ProcessSpec = self.add_process(Create, 'create1')
+        wait: ProcessSpec = self.add_process(Wait, 'wait').configure('waiting_time', '3')
+        create2: ProcessSpec = self.add_process(Create, 'create2')
+        skippable: ProcessSpec = self.add_process(Skippable, 'skippable')
+        move: ProcessSpec = self.add_process(Move, 'move')
 
         self.add_connectors([
             (create1 >> 'create_person_out', wait << 'resource'),
@@ -189,11 +189,11 @@ class TestIO(BaseTestCase):
     def test_connect(self):
         GTest.print("IO connect")
 
-        p0: TaskModel = ProcessableFactory.create_task_model_from_type(
+        p0: TaskModel = ProcessFactory.create_task_model_from_type(
             task_type=Create, instance_name="p0")
-        p1: TaskModel = ProcessableFactory.create_task_model_from_type(
+        p1: TaskModel = ProcessFactory.create_task_model_from_type(
             task_type=Move, instance_name="p1")
-        p2: TaskModel = ProcessableFactory.create_task_model_from_type(
+        p2: TaskModel = ProcessFactory.create_task_model_from_type(
             task_type=Move, instance_name="p2")
 
         # create a chain
@@ -208,7 +208,7 @@ class TestIO(BaseTestCase):
         self.assertIsInstance(port_connect, Connector)
 
         # assert error
-        p3: TaskModel = ProcessableFactory.create_task_model_from_type(
+        p3: TaskModel = ProcessFactory.create_task_model_from_type(
             task_type=Drive, instance_name="p3")
 
         with self.assertRaises(ImcompatiblePortsException):
@@ -223,11 +223,11 @@ class TestIO(BaseTestCase):
     def test_multi(self):
         """Test inputs and output with multi types
         """
-        create: TaskModel = ProcessableFactory.create_task_model_from_type(
+        create: TaskModel = ProcessFactory.create_task_model_from_type(
             task_type=Create, instance_name="create")
-        multi: TaskModel = ProcessableFactory.create_task_model_from_type(
+        multi: TaskModel = ProcessFactory.create_task_model_from_type(
             task_type=Multi, instance_name="multi")
-        jump: TaskModel = ProcessableFactory.create_task_model_from_type(
+        jump: TaskModel = ProcessFactory.create_task_model_from_type(
             task_type=Jump, instance_name="move")
 
         # Test that you can plug create to multi move_person_in
@@ -241,14 +241,14 @@ class TestIO(BaseTestCase):
     def test_optional(self):
         """Test optional option and provide None to an optional object
         """
-        opt: TaskModel = ProcessableFactory.create_task_model_from_type(
+        opt: TaskModel = ProcessFactory.create_task_model_from_type(
             task_type=OptionalTask, instance_name="optional")
 
         self.assertTrue(opt.in_port("first").is_optional)
         self.assertTrue(opt.in_port("second").is_optional)
         self.assertFalse(opt.in_port("third").is_optional)
 
-        opt_car: TaskModel = ProcessableFactory.create_task_model_from_type(
+        opt_car: TaskModel = ProcessFactory.create_task_model_from_type(
             task_type=OptionalTaskOut, instance_name="optional2")
 
         with self.assertRaises(ImcompatiblePortsException):
@@ -257,9 +257,9 @@ class TestIO(BaseTestCase):
     def test_sub_class_output(self):
         """Test the SubClasses option on output special type
         """
-        jump: TaskModel = ProcessableFactory.create_task_model_from_type(
+        jump: TaskModel = ProcessFactory.create_task_model_from_type(
             task_type=Jump, instance_name="jump")
-        fly: TaskModel = ProcessableFactory.create_task_model_from_type(
+        fly: TaskModel = ProcessFactory.create_task_model_from_type(
             task_type=Fly, instance_name="fly")
 
         # Test that you can't plug a Person to a Superman
@@ -273,7 +273,7 @@ class TestIO(BaseTestCase):
         """Test the UnmodifiableOut type. It tests that this is the same resource
         on log input and log output
         """
-        protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_type(TestPersonProtocol)
+        protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_type(TestPersonProtocol)
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(protocol)
 
         experiment = await ExperimentService.run_experiment(experiment)
@@ -289,7 +289,7 @@ class TestIO(BaseTestCase):
     async def test_skippable_input(self):
         """Test the SkippableIn special type with FIFO, it also tests that FIFO work
         (testing,SkippableIn but also UnmodifiableOut with subclass) """
-        protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_type(TestSkippable)
+        protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_type(TestSkippable)
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(protocol)
 
         experiment = await ExperimentService.run_experiment(experiment)

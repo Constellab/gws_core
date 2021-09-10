@@ -5,8 +5,8 @@
 
 
 from gws_core import (BaseTestCase, CheckBeforeTaskResult, ConfigParams,
-                      Experiment, ExperimentService, GTest, ProcessableFactory,
-                      ProcessableModel, ProcessableSpec, Protocol,
+                      Experiment, ExperimentService, GTest, ProcessFactory,
+                      ProcessModel, ProcessSpec, Protocol,
                       ProtocolModel, ProtocolService, Resource, RobotMove,
                       Task, TaskInputs, TaskOutputs, protocol_decorator,
                       resource_decorator, task_decorator)
@@ -70,8 +70,8 @@ class NotRobotCreate(Task):
 @protocol_decorator("TestSubProtocolBuildError")
 class TestSubProtocolBuildError(Protocol):
     def configure_protocol(self, config_params: ConfigParams) -> None:
-        not_robot: ProcessableSpec = self.add_process(NotRobotCreate, 'not_robot')
-        move: ProcessableSpec = self.add_process(RobotMove, 'move')
+        not_robot: ProcessSpec = self.add_process(NotRobotCreate, 'not_robot')
+        move: ProcessSpec = self.add_process(RobotMove, 'move')
 
         self.add_connectors([
             (not_robot >> 'not_robot', move << 'robot')
@@ -81,7 +81,7 @@ class TestSubProtocolBuildError(Protocol):
 @protocol_decorator("TestNestedProtocol")
 class TestProtocolBuildError(Protocol):
     def configure_protocol(self, config_params: ConfigParams) -> None:
-        sub_proto: ProcessableSpec = self.add_process(TestSubProtocolBuildError, 'sub_proto')
+        sub_proto: ProcessSpec = self.add_process(TestSubProtocolBuildError, 'sub_proto')
 
 
 class TestProtocolError(BaseTestCase):
@@ -130,7 +130,7 @@ class TestProtocolError(BaseTestCase):
         self.assertEqual(sub_protocol.error_info['unique_code'], exception.unique_code)
 
         # Check that process is in error status
-        sub_process: ProcessableModel = sub_protocol.get_process('error')
+        sub_process: ProcessModel = sub_protocol.get_process('error')
         self.assertTrue(sub_process.is_error)
         self.assertIsNotNone(sub_process.error_info)
         self.assertEqual(sub_process.error_info['instance_id'], exception.instance_id)
@@ -166,7 +166,7 @@ class TestProtocolError(BaseTestCase):
         """
         exception: ProtocolBuildException
         try:
-            ProcessableFactory.create_protocol_model_from_type(TestProtocolBuildError)
+            ProcessFactory.create_protocol_model_from_type(TestProtocolBuildError)
         except ProtocolBuildException as err:
             exception = err
         else:

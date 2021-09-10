@@ -17,7 +17,7 @@ from .io_spec import IOSpec
 from .port import InPort, OutPort, Port, PortDict
 
 if TYPE_CHECKING:
-    from ..processable.processable_model import ProcessableModel
+    from ..process.process_model import ProcessModel
 
 IODict = Dict[str, PortDict]
 
@@ -34,10 +34,10 @@ class IO(Base):
     """
 
     _ports: Dict[str, Port] = {}
-    _parent: ProcessableModel
+    _parent: ProcessModel
     _counter = 0
 
-    def __init__(self, parent: ProcessableModel):
+    def __init__(self, parent: ProcessModel):
         self._parent = parent
         self._ports = dict()
 
@@ -136,7 +136,7 @@ class IO(Base):
 
     # -- N --
 
-    def get_next_procs(self) -> List[ProcessableModel]:
+    def get_next_procs(self) -> List[ProcessModel]:
         """
         Returns the list of (right-hand side) processes connected to the IO ports.
 
@@ -164,7 +164,7 @@ class IO(Base):
         return self._ports
 
     @property
-    def parent(self) -> ProcessableModel:
+    def parent(self) -> ProcessModel:
         """
         Returns the parent of the IO, i.e. the task that holds this IO.
 

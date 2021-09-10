@@ -263,7 +263,7 @@ class Experiment(Viewable):
             "study": {"uri": self.study.uri},
             "protocol": {
                 "uri": self.protocol_model.uri,
-                "typing_name": self.protocol_model.processable_typing_name
+                "typing_name": self.protocol_model.process_typing_name
             },
             "status": self.status
         })

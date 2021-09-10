@@ -298,7 +298,7 @@ class ResourceModel(Viewable, Generic[ResourceType]):
                 "experiment": {"uri": self.experiment.uri},
                 "task": {
                     "uri": self.task.uri,
-                    "typing_name": self.task.processable_typing_name,
+                    "typing_name": self.task.process_typing_name,
                 },
             })
 

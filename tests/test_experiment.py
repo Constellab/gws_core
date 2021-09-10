@@ -8,7 +8,7 @@ from typing import List
 
 from gws_core import (BaseTestCase, Experiment, ExperimentDTO,
                       ExperimentService, ExperimentStatus, GTest,
-                      ProcessableModel, ProtocolModel, ResourceModel, Robot,
+                      ProcessModel, ProtocolModel, ResourceModel, Robot,
                       RobotService, Settings, TaskModel)
 
 settings = Settings.retrieve()
@@ -82,7 +82,7 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(Experiment.select().count(), 1)
 
         # Test the configuration on fly_1 process (west 2000)
-        fly_1: ProcessableModel = e2_bis.protocol_model.get_process('fly_1')
+        fly_1: ProcessModel = e2_bis.protocol_model.get_process('fly_1')
         robot1: Robot = fly_1.input.get_resource_model('robot').get_resource()
         robot2: Robot = fly_1.output.get_resource_model('robot').get_resource()
         self.assertEqual(robot1.position[0], robot2.position[0] + 2000)
@@ -138,7 +138,7 @@ class TestExperiment(BaseTestCase):
             for r in resources:
                 self.assertEqual(r.is_archived, tf)
 
-            processes: List[ProcessableModel] = experiment3.task_models
+            processes: List[ProcessModel] = experiment3.task_models
             #self.assertEqual( len(Q), 18)
             self.assertEqual(len(processes), 15)
             for process in processes:

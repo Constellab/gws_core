@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 import time
 
-from gws_core import (ConfigParams, OptionalIn, Task, ProcessableSpec,
+from gws_core import (ConfigParams, OptionalIn, Task, ProcessSpec,
                       TaskInputs, TaskOutputs, Protocol, RobotCreate,
                       RobotEat, RobotFood, RobotMove, RobotSugarCreate,
                       RobotWait, task_decorator, protocol_decorator)
@@ -15,13 +15,13 @@ from gws_core import (ConfigParams, OptionalIn, Task, ProcessableSpec,
 @protocol_decorator("TestSimpleProtocol")
 class TestSimpleProtocol(Protocol):
     def configure_protocol(self, config_params: ConfigParams) -> None:
-        p0: ProcessableSpec = self.add_process(RobotCreate, 'p0')
-        p1: ProcessableSpec = self.add_process(RobotMove, 'p1')
-        p2: ProcessableSpec = self.add_process(RobotEat, 'p2')
-        p3: ProcessableSpec = self.add_process(RobotMove, 'p3')
-        p4: ProcessableSpec = self.add_process(RobotMove, 'p4')
-        p5: ProcessableSpec = self.add_process(RobotEat, 'p5')
-        p_wait: ProcessableSpec = self.add_process(RobotWait, 'p_wait')
+        p0: ProcessSpec = self.add_process(RobotCreate, 'p0')
+        p1: ProcessSpec = self.add_process(RobotMove, 'p1')
+        p2: ProcessSpec = self.add_process(RobotEat, 'p2')
+        p3: ProcessSpec = self.add_process(RobotMove, 'p3')
+        p4: ProcessSpec = self.add_process(RobotMove, 'p4')
+        p5: ProcessSpec = self.add_process(RobotEat, 'p5')
+        p_wait: ProcessSpec = self.add_process(RobotWait, 'p_wait')
 
         self.add_connectors([
             (p0 >> 'robot', p1 << 'robot'),
@@ -36,11 +36,11 @@ class TestSimpleProtocol(Protocol):
 @protocol_decorator("TestSubProtocol")
 class TestSubProtocol(Protocol):
     def configure_protocol(self, config_params: ConfigParams) -> None:
-        p1: ProcessableSpec = self.add_process(RobotMove, 'p1')
-        p2: ProcessableSpec = self.add_process(RobotEat, 'p2')
-        p3: ProcessableSpec = self.add_process(RobotMove, 'p3')
-        p4: ProcessableSpec = self.add_process(RobotMove, 'p4')
-        p_wait: ProcessableSpec = self.add_process(RobotWait, 'p_wait')
+        p1: ProcessSpec = self.add_process(RobotMove, 'p1')
+        p2: ProcessSpec = self.add_process(RobotEat, 'p2')
+        p3: ProcessSpec = self.add_process(RobotMove, 'p3')
+        p4: ProcessSpec = self.add_process(RobotMove, 'p4')
+        p_wait: ProcessSpec = self.add_process(RobotWait, 'p_wait')
 
         self.add_connectors([
             (p1 >> 'robot', p2 << 'robot'),
@@ -56,9 +56,9 @@ class TestSubProtocol(Protocol):
 @protocol_decorator("TestNestedProtocol")
 class TestNestedProtocol(Protocol):
     def configure_protocol(self, config_params: ConfigParams) -> None:
-        p0: ProcessableSpec = self.add_process(RobotCreate, 'p0')
-        p5: ProcessableSpec = self.add_process(RobotEat, 'p5')
-        mini_proto: ProcessableSpec = self.add_process(TestSubProtocol, 'mini_proto')
+        p0: ProcessSpec = self.add_process(RobotCreate, 'p0')
+        p5: ProcessSpec = self.add_process(RobotEat, 'p5')
+        mini_proto: ProcessSpec = self.add_process(TestSubProtocol, 'mini_proto')
 
         self.add_connectors([
             (p0 >> 'robot', mini_proto << 'robot'),
@@ -104,16 +104,16 @@ class TestRobotwithSugarProtocol(Protocol):
     """
 
     def configure_protocol(self, config_params: ConfigParams) -> None:
-        p0: ProcessableSpec = self.add_process(RobotCreate, 'p0')
-        sugar: ProcessableSpec = self.add_process(RobotSugarCreate, 'sugar')
-        wait_food: ProcessableSpec = self.add_process(RobotWaitfood, 'wait_food')
+        p0: ProcessSpec = self.add_process(RobotCreate, 'p0')
+        sugar: ProcessSpec = self.add_process(RobotSugarCreate, 'sugar')
+        wait_food: ProcessSpec = self.add_process(RobotWaitfood, 'wait_food')
         # Eat 1 need to wait for sugar and wait_food
-        eat_1: ProcessableSpec = self.add_process(RobotEat, 'eat_1').configure('food_weight', 2)
+        eat_1: ProcessSpec = self.add_process(RobotEat, 'eat_1').configure('food_weight', 2)
         # Eat_2 is called even if the food input is not connected
-        eat_2: ProcessableSpec = self.add_process(RobotEat, 'eat_2').configure('food_weight', 5)
+        eat_2: ProcessSpec = self.add_process(RobotEat, 'eat_2').configure('food_weight', 5)
         # Eat 3 is called event is the food input is connected but None
-        empty_food: ProcessableSpec = self.add_process(RobotEmptyfood, 'empty_food')
-        eat_3: ProcessableSpec = self.add_process(RobotEat, 'eat_3').configure('food_weight', 7)
+        empty_food: ProcessSpec = self.add_process(RobotEmptyfood, 'empty_food')
+        eat_3: ProcessSpec = self.add_process(RobotEat, 'eat_3').configure('food_weight', 7)
 
         self.add_connectors([
             (p0 >> 'robot', eat_1 << 'robot'),

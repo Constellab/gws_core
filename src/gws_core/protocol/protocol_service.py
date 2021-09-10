@@ -14,9 +14,9 @@ from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
 from ..model.typing import Typing
 from ..model.typing_manager import TypingManager
-from ..processable.processable_factory import ProcessableFactory
-from ..processable.processable_model import ProcessableModel
-from ..processable.sub_processable_factory import SubProcessFactoryUpdate
+from ..process.process_factory import ProcessFactory
+from ..process.process_model import ProcessModel
+from ..process.sub_process_factory import SubProcessFactoryUpdate
 from ..protocol.protocol_model import ProtocolModel
 from ..task.task_model import TaskModel
 from .protocol import Protocol
@@ -48,7 +48,7 @@ class ProtocolService(BaseService):
 
     @classmethod
     def create_protocol_model_from_type(cls, protocol_type: Type[Protocol], instance_name: str = None) -> ProtocolModel:
-        protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_type(
+        protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_type(
             protocol_type=protocol_type, instance_name=instance_name)
 
         protocol.save_full()
@@ -60,7 +60,7 @@ class ProtocolService(BaseService):
                                         interfaces: dict = None,
                                         outerfaces: dict = None,
                                         instance_name: str = None) -> ProtocolModel:
-        protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_data(
+        protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_data(
             processes=processes,
             connectors=connectors,
             interfaces=interfaces,
@@ -72,7 +72,7 @@ class ProtocolService(BaseService):
 
     @classmethod
     def create_protocol_model_from_graph(cls, graph: dict) -> ProtocolModel:
-        protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_graph(
+        protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_graph(
             graph=graph)
 
         protocol.save_full()
@@ -106,14 +106,14 @@ class ProtocolService(BaseService):
         cls.remove_orphan_process(protocol_model=protocol_model, nodes=graph["nodes"])
 
         protocol_model.build_from_graph(
-            graph=graph, sub_processable_factory=SubProcessFactoryUpdate())
+            graph=graph, sub_process_factory=SubProcessFactoryUpdate())
 
-        for key, processable in protocol_model.processes.items():
+        for key, process in protocol_model.processes.items():
 
             # If this is a sub protocol and it's graph is defined
-            if isinstance(processable, ProtocolModel) and 'graph' in graph["nodes"][key]['data']:
+            if isinstance(process, ProtocolModel) and 'graph' in graph["nodes"][key]['data']:
                 cls._update_protocol_graph_recur(
-                    protocol_model=processable, graph=graph["nodes"][key]["data"]["graph"])
+                    protocol_model=process, graph=graph["nodes"][key]["data"]["graph"])
 
         # Init the connector afterward because its needs the child to init correctly
         protocol_model.init_connectors_from_graph(graph["links"])
@@ -130,7 +130,7 @@ class ProtocolService(BaseService):
         deleted_keys = []
         for key, process in protocol_model.processes.items():
             # if the process is not in the Dict or its type has changed, remove it
-            if not key in nodes or process.processable_typing_name != nodes[key].get("processable_typing_name"):
+            if not key in nodes or process.process_typing_name != nodes[key].get("process_typing_name"):
                 deleted_keys.append(key)
 
         for key in deleted_keys:
@@ -138,27 +138,27 @@ class ProtocolService(BaseService):
 
     @classmethod
     @transaction()
-    def add_processable_to_protocol(cls, protocol_uri: str, processable_typing_name: str) -> ProcessableModel:
+    def add_process_to_protocol(cls, protocol_uri: str, process_typing_name: str) -> ProcessModel:
         protocol: ProtocolModel = ProtocolModel.get_by_uri_and_check(protocol_uri)
 
-        processable_typing: Typing = TypingManager.get_typing_from_name(processable_typing_name)
+        process_typing: Typing = TypingManager.get_typing_from_name(process_typing_name)
 
         # get the instance name from type model name
-        instance_name: str = protocol.generate_unique_instance_name(processable_typing.model_name)
+        instance_name: str = protocol.generate_unique_instance_name(process_typing.model_name)
 
-        # create the processable
-        processable_model: ProcessableModel = ProcessableFactory.create_processable_model_from_type(
-            processable_type=processable_typing.get_type(), instance_name=instance_name)
+        # create the process
+        process_model: ProcessModel = ProcessFactory.create_process_model_from_type(
+            process_type=process_typing.get_type(), instance_name=instance_name)
 
-        protocol.add_processable(instance_name=instance_name, processable_model=processable_model)
-        # save the new processable
-        processable_model.save_full()
+        protocol.add_process_model(instance_name=instance_name, process_model=process_model)
+        # save the new process
+        process_model.save_full()
 
         # Refresh the protocol graph and save
         protocol.refresh_graph_from_dump()
         protocol.save()
 
-        return processable_model
+        return process_model
 
     ############################# PROTOCOL TYPE ###########################
 

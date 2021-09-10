@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 from gws_core import (BaseTestCase, Experiment, ExperimentService, GTest,
-                      ProcessableFactory, ProtocolModel, ProtocolService,
+                      ProcessFactory, ProtocolModel, ProtocolService,
                       ResourceModel, Robot, RobotCreate, TaskModel)
 
 from tests.protocol_examples import TestSimpleProtocol
@@ -15,9 +15,9 @@ class TestTask(BaseTestCase):
     def test_task_singleton(self):
         GTest.print("Task Singleton")
 
-        p0: TaskModel = ProcessableFactory.create_task_model_from_type(
+        p0: TaskModel = ProcessFactory.create_task_model_from_type(
             task_type=RobotCreate)
-        p1: TaskModel = ProcessableFactory.create_task_model_from_type(
+        p1: TaskModel = ProcessFactory.create_task_model_from_type(
             task_type=RobotCreate)
         # p0.title = "First 'Create' task"
         # p0.description = "This is the description of the task"

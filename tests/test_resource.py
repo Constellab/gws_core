@@ -5,7 +5,7 @@
 
 
 from gws_core import (BaseTestCase, Experiment, ExperimentService, GTest,
-                      ProcessableFactory, ResourceModel, Robot, RobotCreate,
+                      ProcessFactory, ResourceModel, Robot, RobotCreate,
                       TaskModel)
 
 
@@ -14,7 +14,7 @@ class TestResource(BaseTestCase):
     async def test_resource(self):
         GTest.print("Resource")
 
-        task_model: TaskModel = ProcessableFactory.create_task_model_from_type(
+        task_model: TaskModel = ProcessFactory.create_task_model_from_type(
             task_type=RobotCreate, instance_name="create")
         experiment = ExperimentService.create_experiment_from_task_model(task_model)
 

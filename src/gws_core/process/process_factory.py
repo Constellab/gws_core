@@ -21,12 +21,12 @@ from ..task.task import Task
 from ..task.task_model import TaskModel
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
-from .processable import Processable
-from .processable_model import ProcessableModel, ProcessableStatus
-from .sub_processable_factory import SubProcessFactoryCreate
+from .process import Process
+from .process_model import ProcessModel, ProcessStatus
+from .sub_process_factory import SubProcessFactoryCreate
 
 
-class ProcessableFactory():
+class ProcessFactory():
     """Contains methods to instantiate TaskModel and ProtocolModel but it does not save the instances to the database,
     it only create th objects
     """
@@ -55,7 +55,7 @@ class ProcessableFactory():
         if config_values:
             config.set_params(config_values)
 
-        cls._init_processable_model(processable_model=task_model, config=config, instance_name=instance_name)
+        cls._init_process_model(process_model=task_model, config=config, instance_name=instance_name)
 
         return task_model
 
@@ -91,18 +91,18 @@ class ProcessableFactory():
             if config_values:
                 config.set_params(config_values)
 
-            cls._init_processable_model(processable_model=protocol_model, config=config, instance_name=instance_name)
+            cls._init_process_model(process_model=protocol_model, config=config, instance_name=instance_name)
 
             protocol: Protocol = protocol_type()
             protocol.configure_protocol(config.get_and_check_params())
             create_config: ProtocolCreateConfig = protocol.get_create_config()
 
             # Create the process and protocol (recursive)
-            processes: Dict[str, ProcessableModel] = {}
-            for key, proc in create_config["processable_specs"].items():
+            processes: Dict[str, ProcessModel] = {}
+            for key, proc in create_config["process_specs"].items():
                 try:
-                    processes[key] = ProcessableFactory.create_processable_model_from_type(
-                        proc.processable_type, proc.get_config_values(), proc.instance_name)
+                    processes[key] = ProcessFactory.create_process_model_from_type(
+                        proc.process_type, proc.get_config_values(), proc.instance_name)
                 except ProtocolBuildException as err:
                     raise err
                 except Exception as err:
@@ -111,18 +111,18 @@ class ProcessableFactory():
             # Set the protocol interfaces
             interfaces: Dict[str, Port] = {}
             for key, interface in create_config["interfaces"].items():
-                interfaces[key] = processes[interface["processable_instance_name"]].in_port(interface["port_name"])
+                interfaces[key] = processes[interface["process_instance_name"]].in_port(interface["port_name"])
 
             # Set the protocol outerfaces
             outerfaces: Dict[str, Port] = {}
             for key, outerface in create_config["outerfaces"].items():
-                outerfaces[key] = processes[outerface["processable_instance_name"]].out_port(outerface["port_name"])
+                outerfaces[key] = processes[outerface["process_instance_name"]].out_port(outerface["port_name"])
 
             # Set the connectors
             connectors: List[Connector] = []
             for connector in create_config["connectors"]:
-                from_proc: ProcessableModel = processes[connector["from_processable"]]
-                to_proc: ProcessableModel = processes[connector["to_processable"]]
+                from_proc: ProcessModel = processes[connector["from_process"]]
+                to_proc: ProcessModel = processes[connector["to_process"]]
                 connectors.append(Connector(
                     out_port=from_proc.out_port(connector["from_port"]),
                     in_port=to_proc.in_port(connector["to_port"])))
@@ -145,7 +145,7 @@ class ProcessableFactory():
         return cls.create_protocol_model_from_data()
 
     @classmethod
-    def create_protocol_model_from_data(cls, processes: Dict[str, ProcessableModel] = None,
+    def create_protocol_model_from_data(cls, processes: Dict[str, ProcessModel] = None,
                                         connectors: List[Connector] = None,
                                         interfaces: Dict[str, Port] = None,
                                         outerfaces: Dict[str, Port] = None,
@@ -153,10 +153,10 @@ class ProcessableFactory():
         protocol_model: ProtocolModel = ProtocolModel()
 
         # Use the Protocol default type because the protocol is not linked to a specific type
-        protocol_model.processable_typing_name = CONST_PROTOCOL_TYPING_NAME
+        protocol_model.process_typing_name = CONST_PROTOCOL_TYPING_NAME
 
-        cls._init_processable_model(
-            processable_model=protocol_model, config=Config({}), instance_name=instance_name)
+        cls._init_process_model(
+            process_model=protocol_model, config=Config({}), instance_name=instance_name)
 
         # create the protocol from a statis protocol class
         return cls._build_protocol_model(
@@ -168,7 +168,7 @@ class ProcessableFactory():
         )
 
     @classmethod
-    def _build_protocol_model(cls, protocol_model: ProtocolModel, processes: Dict[str, ProcessableModel] = None,
+    def _build_protocol_model(cls, protocol_model: ProtocolModel, processes: Dict[str, ProcessModel] = None,
                               connectors: List[Connector] = None,
                               interfaces: Dict[str, Port] = None,
                               outerfaces: Dict[str, Port] = None) -> ProtocolModel:
@@ -188,10 +188,10 @@ class ProcessableFactory():
         # set process
         for name in processes:
             proc = processes[name]
-            if not isinstance(proc, ProcessableModel):
+            if not isinstance(proc, ProcessModel):
                 raise BadRequestException(
-                    "The dictionnary of processes must contain instances of ProcessableModel")
-            protocol_model.add_processable(name, proc)
+                    "The dictionnary of processes must contain instances of ProcessModel")
+            protocol_model.add_process_model(name, proc)
 
         # set connectors
         for conn in connectors:
@@ -234,64 +234,64 @@ class ProcessableFactory():
         """
 
         protocol.build_from_graph(
-            graph=graph, sub_processable_factory=SubProcessFactoryCreate())
+            graph=graph, sub_process_factory=SubProcessFactoryCreate())
 
-        for key, processable in protocol.processes.items():
-            if isinstance(processable, ProtocolModel):
+        for key, process in protocol.processes.items():
+            if isinstance(process, ProtocolModel):
                 cls._create_protocol_model_from_graph_recur(
-                    protocol=processable, graph=graph["nodes"][key]["data"]["graph"])
+                    protocol=process, graph=graph["nodes"][key]["data"]["graph"])
 
         # Init the connector afterward because its needs the child to init correctly
         protocol.init_connectors_from_graph(graph["links"])
 
         return protocol
 
-    ############################################### PROCESSABLE #################################################
+    ############################################### PROCESS  #################################################
 
     @classmethod
-    def create_processable_model_from_type(
-            cls, processable_type: Type[Processable],
+    def create_process_model_from_type(
+            cls, process_type: Type[Process],
             config_values: ConfigValues = None,
             instance_name: str = None) -> TaskModel:
-        if issubclass(processable_type, Task):
-            return cls.create_task_model_from_type(processable_type, config_values, instance_name)
-        elif issubclass(processable_type, Protocol):
-            return cls.create_protocol_model_from_type(processable_type, config_values, instance_name)
+        if issubclass(process_type, Task):
+            return cls.create_task_model_from_type(process_type, config_values, instance_name)
+        elif issubclass(process_type, Protocol):
+            return cls.create_protocol_model_from_type(process_type, config_values, instance_name)
         else:
-            name = processable_type.__name__ if processable_type.__name__ is not None else str(
-                processable_type)
+            name = process_type.__name__ if process_type.__name__ is not None else str(
+                process_type)
             raise BadRequestException(
                 f"The type {name} is not a Process nor a Protocol. It must extend the on of the classes")
 
     @classmethod
-    def create_processable_model_from_typing_name(
+    def create_process_model_from_typing_name(
             cls, typing_name: str, config_values: ConfigValues = None, instance_name: str = None) -> TaskModel:
-        processable_type: Type[Processable] = TypingManager.get_type_from_name(typing_name=typing_name)
-        return cls.create_processable_model_from_type(
-            processable_type=processable_type, config_values=config_values, instance_name=instance_name)
+        process_type: Type[Process] = TypingManager.get_type_from_name(typing_name=typing_name)
+        return cls.create_process_model_from_type(
+            process_type=process_type, config_values=config_values, instance_name=instance_name)
 
     @classmethod
-    def _init_processable_model(
-            cls, processable_model: ProcessableModel, config: Config, instance_name: str = None) -> None:
+    def _init_process_model(
+            cls, process_model: ProcessModel, config: Config, instance_name: str = None) -> None:
 
-        processable_model.status = ProcessableStatus.DRAFT
+        process_model.status = ProcessStatus.DRAFT
         # Set the config
-        processable_model.config = config
+        process_model.config = config
 
         # Set the progress_bar
         progress_bar: ProgressBar = ProgressBar(
-            process_uri=processable_model.uri, processable_typing_name=processable_model.processable_typing_name)
-        processable_model.progress_bar = progress_bar
+            process_uri=process_model.uri, process_typing_name=process_model.process_typing_name)
+        process_model.progress_bar = progress_bar
 
         # set the created by
         user: User = CurrentUserService.get_current_user()
 
         if user is None:
             user = User.get_sysuser()
-        processable_model.created_by = user
+        process_model.created_by = user
 
         if instance_name is not None:
-            processable_model.instance_name = instance_name
+            process_model.instance_name = instance_name
         else:
             # Init the instance_name if it does not exists
-            processable_model.instance_name = processable_model.uri
+            process_model.instance_name = process_model.uri

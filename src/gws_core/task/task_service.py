@@ -8,7 +8,7 @@ from typing import List, Type
 from ..core.classes.paginator import Paginator
 from ..core.dto.typed_tree_dto import TypedTree
 from ..core.service.base_service import BaseService
-from ..processable.processable_factory import ProcessableFactory
+from ..process.process_factory import ProcessFactory
 from .task import Task
 from .task_model import TaskModel
 from .task_typing import TaskTyping
@@ -36,7 +36,7 @@ class TaskService(BaseService):
 
     @classmethod
     def create_task_model_from_type(cls, task_type: Type[Task], instance_name: str = None) -> TaskModel:
-        task: TaskModel = ProcessableFactory.create_task_model_from_type(
+        task: TaskModel = ProcessFactory.create_task_model_from_type(
             task_type=task_type, instance_name=instance_name)
 
         task.save_full()

@@ -10,7 +10,7 @@ from peewee import ModelSelect
 
 from ..core.utils.utils import Utils
 from ..model.typing import Typing, TypingObjectType
-from ..processable.processable_factory import ProcessableFactory
+from ..process.process_factory import ProcessFactory
 from ..protocol.protocol import Protocol
 from ..protocol.protocol_model import ProtocolModel
 
@@ -41,7 +41,7 @@ class ProtocolTyping(Typing):
 
         protocol_type: Type[Protocol] = Utils.get_model_type(self.model_type)
 
-        protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_type(
+        protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_type(
             protocol_type)
         _json["graph"] = protocol.dumps_data(minimize=False)
 

@@ -4,7 +4,7 @@
             "creation_datetime": "2021-08-25T14:59:54",
             "instance_name": "p0",
             "is_archived": false,
-            "processable_typing_name": "TASK.gws_core.RobotCreate",
+            "process_typing_name": "TASK.gws_core.RobotCreate",
             "save_datetime": "2021-08-25T14:59:54",
             "uri": "p0_uri",
             "data": {
@@ -68,7 +68,7 @@
             "creation_datetime": "2021-08-26T13:04:19",
             "instance_name": "p1",
             "is_archived": false,
-            "processable_typing_name": "TASK.gws_core.RobotMove",
+            "process_typing_name": "TASK.gws_core.RobotMove",
             "save_datetime": "2021-08-26T13:04:20",
             "uri": null,
             "data": {
@@ -159,7 +159,7 @@
             "creation_datetime": "2021-08-25T14:59:54",
             "instance_name": "p5",
             "is_archived": false,
-            "processable_typing_name": "TASK.gws_core.RobotEat",
+            "process_typing_name": "TASK.gws_core.RobotEat",
             "save_datetime": "2021-08-25T14:59:54",
             "uri": "p5_uri",
             "data": {
@@ -240,7 +240,7 @@
             "creation_datetime": "2021-08-25T14:59:54",
             "instance_name": "mini_travel",
             "is_archived": false,
-            "processable_typing_name": "PROTOCOL.gws_core.Protocol",
+            "process_typing_name": "PROTOCOL.gws_core.Protocol",
             "save_datetime": "2021-08-25T14:59:54",
             "uri": "mini_travel_uri",
             "data": {
@@ -253,7 +253,7 @@
                             "creation_datetime": "2021-08-25T14:59:54",
                             "instance_name": "p1",
                             "is_archived": false,
-                            "processable_typing_name": "TASK.gws_core.RobotMove",
+                            "process_typing_name": "TASK.gws_core.RobotMove",
                             "save_datetime": "2021-08-25T14:59:54",
                             "uri": "sub_p1_uri",
                             "data": {
