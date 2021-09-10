@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 from ...process.process_decorator import process_decorator
-from ..file.file_resource import FileResource
+from ..file.file import File
 from ..file.file_uploader import (FileDumper, FileExporter, FileImporter,
                                   FileLoader)
 from .json_resource import JSONDict
@@ -18,7 +18,7 @@ from .json_resource import JSONDict
 
 @process_decorator("JSONImporter")
 class JSONImporter(FileImporter):
-    input_specs = {'file': FileResource}
+    input_specs = {'file': File}
     output_specs = {'data': JSONDict}
     config_specs = {
         'file_format': {"type": str, "default": ".json", 'description': "File format"},
@@ -34,7 +34,7 @@ class JSONImporter(FileImporter):
 @process_decorator("JSONExporter")
 class JSONExporter(FileExporter):
     input_specs = {'data': JSONDict}
-    output_specs = {'file': FileResource}
+    output_specs = {'file': File}
     config_specs = {
         'file_name': {"type": str, "default": 'file.json', 'description': "Destination file name in the store"},
         'file_format': {"type": str, "default": ".json", 'description': "File format"},

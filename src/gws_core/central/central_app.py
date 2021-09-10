@@ -11,10 +11,9 @@ from pydantic import BaseModel
 from starlette.exceptions import HTTPException
 
 from ..core.exception.exception_handler import ExceptionHandler
-from ..core.exception.exceptions import BadRequestException, NotFoundException
 from ..core.service.mysql_service import MySQLService
 from ..core.utils.http_helper import HTTPHelper
-from ..impl.file.file_resource import FileResource
+from ..impl.file.file import File
 from ..impl.file.file_service import FileService
 from ..user.auth_service import AuthService
 from ..user.user import User
@@ -136,7 +135,7 @@ def get_users(_: UserData = Depends(AuthCentral.check_central_api_key)):
 @central_app.get("/db/{db_name}/dump", tags=["DB management"])
 def dump_db(db_name: str, _: UserData = Depends(AuthCentral.check_central_api_key)):
     output_file = MySQLService.dump_db(db_name)
-    file = FileResource()
+    file = File()
     file.path = output_file
     FileService.add_file_to_default_store(file, 'dump.sql')
     return file.to_json()

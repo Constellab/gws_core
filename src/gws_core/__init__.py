@@ -98,8 +98,8 @@ from .impl.csv.csv_process import CSVLoader as CSVLoader
 from .impl.csv.csv_resource import CSVTable as CSVTable
 from .impl.file.file_process import WriteToJsonFile as WriteToJsonFile
 # Impl > File
-from .impl.file.file_resource import FileResource as FileResource
-from .impl.file.file_resource import FileSet as FileSet
+from .impl.file.file import File as FileResource
+from .impl.file.file import FileSet as FileSet
 from .impl.file.file_resource_model import \
     FileResourceModel as FileResourceModel
 from .impl.file.file_service import FileService as FileService

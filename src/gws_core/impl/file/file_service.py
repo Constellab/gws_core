@@ -14,7 +14,7 @@ from gws_core.core.exception.exceptions.not_found_exception import \
 from ...core.classes.jsonable import Jsonable, ListJsonable
 from ...core.classes.paginator import Paginator
 from ...core.service.base_service import BaseService
-from .file_resource import FileResource
+from .file import File
 from .file_resource_model import FileResourceModel
 from .file_store import FileStore
 from .local_file_store import LocalFileStore
@@ -39,7 +39,7 @@ class FileService(BaseService):
     @classmethod
     def download_file(cls, uri: str) -> FileResponse:
         file_resource_model: FileResourceModel = FileResourceModel.get_by_uri_and_check(uri)
-        file: FileResource = file_resource_model.get_resource()
+        file: File = file_resource_model.get_resource()
 
         file_store: FileStore = LocalFileStore.get_default_instance()
         if not file_store.file_exists(file.name):
@@ -67,25 +67,25 @@ class FileService(BaseService):
 
     @classmethod
     def upload_file_to_store(cls, upload_file: UploadFile, store: FileStore) -> FileResourceModel:
-        file: FileResource = store.add_from_temp_file(upload_file.file, upload_file.filename)
+        file: File = store.add_from_temp_file(upload_file.file, upload_file.filename)
         return cls.create_file_resource(file)
 
     @classmethod
-    def create_file_resource(cls, file: FileResource) -> FileResourceModel:
+    def create_file_resource(cls, file: File) -> FileResourceModel:
         file_resource_model: FileResourceModel = FileResourceModel.from_resource(file)
         return file_resource_model.save()
 
     @classmethod
-    def add_file_to_default_store(cls, file: FileResource, dest_file_name: str = None) -> FileResourceModel:
+    def add_file_to_default_store(cls, file: File, dest_file_name: str = None) -> FileResourceModel:
         file_store: LocalFileStore = LocalFileStore.get_default_instance()
         return cls._add_file_to_store(file=file, store=file_store)
 
     @classmethod
-    def add_file_to_store(cls, file: FileResource, store_uri: str, dest_file_name: str = None) -> FileResourceModel:
+    def add_file_to_store(cls, file: File, store_uri: str, dest_file_name: str = None) -> FileResourceModel:
         file_store: LocalFileStore = FileStore.get_by_uri_and_check(store_uri)
         return cls._add_file_to_store(file=file, store=file_store)
 
     @classmethod
-    def _add_file_to_store(cls, file: FileResource, store: FileStore, dest_file_name: str = None) -> FileResourceModel:
-        file: FileResource = store.add_from_file(source_file=file, dest_file_name=dest_file_name)
+    def _add_file_to_store(cls, file: File, store: FileStore, dest_file_name: str = None) -> FileResourceModel:
+        file: File = store.add_from_file(source_file=file, dest_file_name=dest_file_name)
         return cls.create_file_resource(file)

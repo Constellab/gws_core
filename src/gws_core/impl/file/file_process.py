@@ -4,7 +4,7 @@ import json
 
 from ...config.config_params import ConfigParams
 from ...config.config_spec import ConfigSpecs
-from ...impl.file.file_resource import FileResource
+from ...impl.file.file import File
 from ...impl.file.file_store import FileStore
 from ...impl.file.local_file_store import LocalFileStore
 from ...io.io_spec import InputSpecs, OutputSpecs
@@ -18,13 +18,13 @@ from ...resource.resource import Resource
                    short_description="Simple process to write a resource json data to a file in local store")
 class WriteToJsonFile(Process):
     input_specs: InputSpecs = {'resource': Resource}
-    output_specs: OutputSpecs = {'file': FileResource}
+    output_specs: OutputSpecs = {'file': File}
     config_specs: ConfigSpecs = {'filename': {'type': str, 'description': 'Name of the file'}}
 
     async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
         file_store: FileStore = LocalFileStore.get_default_instance()
 
-        file: FileResource = file_store.create_empty(config.get_param('filename') + '.json')
+        file: File = file_store.create_empty(config.get_param('filename') + '.json')
 
         resource: Resource = inputs['resource']
         file.write(json.dumps(resource.to_json()))
