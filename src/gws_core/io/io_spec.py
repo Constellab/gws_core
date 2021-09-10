@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 from collections.abc import Iterable as IterableClass
+from inspect import isclass
 from typing import Dict, Iterable, List, Type, Union, get_args
 
 from ..core.exception.exceptions.bad_request_exception import \
@@ -14,11 +15,11 @@ from .io_types import (OptionalIn, SkippableIn, SpecialTypeIn, SpecialTypeIO,
 
 ResourceType = Type[Resource]
 
-# Specs for a process Input, a resource type, a list of resource type or a SpecialTypeIn (check SpecialTypeIn for more information)
+# Specs for a task Input, a resource type, a list of resource type or a SpecialTypeIn (check SpecialTypeIn for more information)
 InputSpec = Union[ResourceType, Iterable[ResourceType], SpecialTypeIn]
 InputSpecs = Dict[str, InputSpec]
 
-# Specs for a process Output, a resource type, a list of resource type or a SpecialTypeOut (check SpecialTypeOut for more information)
+# Specs for a task Output, a resource type, a list of resource type or a SpecialTypeOut (check SpecialTypeOut for more information)
 OutputSpec = Union[ResourceType, Iterable[ResourceType], SpecialTypeOut]
 OutputSpecs = Dict[str, OutputSpec]
 
@@ -51,6 +52,18 @@ class IOSpecClass:
 
     def is_skippable_in(self) -> bool:
         return isinstance(self.resource_spec, SkippableIn)
+
+    def get_resource_typing_names(self) -> List[str]:
+        specs: List[str] = []
+        for resource_type in self.to_resource_types():
+            if resource_type is None:
+                specs.append(None)
+            else:
+                specs.append(resource_type._typing_name)
+        return specs
+
+    def to_json(self) -> List[str]:
+        return self.get_resource_typing_names()
 
 
 class IOSpecsHelper():
@@ -88,20 +101,20 @@ class IOSpecsHelper():
 
         resource_types: List[ResourceType] = []
 
-        for io_spec in io_spec_list:
+        for spec in io_spec_list:
             # convert the NoneType to None
-            if io_spec is type(None) or io_spec is None:
+            if spec is type(None) or spec is None:
                 resource_types.append(None)
                 continue
 
-            if isinstance(io_spec, SpecialTypeIO):
-                io_spec.check_resource_types()
-                resource_types.append(*io_spec.resource_types)
+            if isinstance(spec, SpecialTypeIO):
+                spec.check_resource_types()
+                resource_types.append(*spec.resource_types)
             else:
                 # check that the type is a Resource or a SubClasses
-                if not issubclass(io_spec, Resource):
-                    raise BadRequestException(f"Invalid port specs. The type '{io_spec}' is not a resource")
-                resource_types.append(io_spec)
+                if not isclass(spec) or not issubclass(spec, Resource):
+                    raise BadRequestException(f"Invalid port specs. The type '{spec}' is not a resource")
+                resource_types.append(spec)
 
         return resource_types
 

@@ -4,7 +4,7 @@
             "creation_datetime": "2021-08-25T14:56:26.138535",
             "instance_name": "p1",
             "is_archived": false,
-            "processable_typing_name": "PROCESS.gws_core.RobotMove",
+            "process_typing_name": "TASK.gws_core.RobotMove",
             "save_datetime": "2021-08-25T14:56:26.410965",
             "uri": "ca81f0e4-8e8b-4e63-8eae-302c1b53de8e",
             "data": {
@@ -30,12 +30,12 @@
                     "specs": {
                         "moving_step": {
                             "type": "float",
-                            "default": 0.1,
+                            "default_value": 0.1,
                             "description": "The moving step of the robot"
                         },
                         "direction": {
                             "type": "str",
-                            "default": "north",
+                            "default_value": "north",
                             "allowed_values": [
                                 "north",
                                 "south",
@@ -45,7 +45,7 @@
                             "description": "The moving direction"
                         }
                     },
-                    "params": {}
+                    "values": {}
                 }
             },
             "progress_bar": {
@@ -65,10 +65,10 @@
                 },
                 "process": {
                     "uri": "ca81f0e4-8e8b-4e63-8eae-302c1b53de8e",
-                    "typing_name": "PROCESS.gws_core.RobotMove"
+                    "typing_name": "TASK.gws_core.RobotMove"
                 }
             },
-            "input": {
+            "inputs": {
                 "robot": {
                     "resource": {
                         "uri": "",
@@ -79,7 +79,7 @@
                     ]
                 }
             },
-            "output": {
+            "outputs": {
                 "robot": {
                     "resource": {
                         "uri": "",
@@ -95,7 +95,7 @@
             "creation_datetime": "2021-08-25T14:56:26.189436",
             "instance_name": "p2",
             "is_archived": false,
-            "processable_typing_name": "PROCESS.gws_core.RobotEat",
+            "process_typing_name": "TASK.gws_core.RobotEat",
             "save_datetime": "2021-08-25T14:56:26.432884",
             "uri": "8e707c7b-4ff1-4a08-9444-bc731c1c5c1f",
             "data": {
@@ -121,10 +121,10 @@
                     "specs": {
                         "food_weight": {
                             "type": "float",
-                            "default": 3.14
+                            "default_value": 3.14
                         }
                     },
-                    "params": {}
+                    "values": {}
                 }
             },
             "progress_bar": {
@@ -144,10 +144,10 @@
                 },
                 "process": {
                     "uri": "8e707c7b-4ff1-4a08-9444-bc731c1c5c1f",
-                    "typing_name": "PROCESS.gws_core.RobotEat"
+                    "typing_name": "TASK.gws_core.RobotEat"
                 }
             },
-            "input": {
+            "inputs": {
                 "robot": {
                     "resource": {
                         "uri": "",
@@ -158,7 +158,7 @@
                     ]
                 }
             },
-            "output": {
+            "outputs": {
                 "robot": {
                     "resource": {
                         "uri": "",
@@ -174,7 +174,7 @@
             "creation_datetime": "2021-08-25T14:56:26.237910",
             "instance_name": "p3",
             "is_archived": false,
-            "processable_typing_name": "PROCESS.gws_core.RobotMove",
+            "process_typing_name": "TASK.gws_core.RobotMove",
             "save_datetime": "2021-08-25T14:56:26.455068",
             "uri": "a835b998-5e80-43a8-985b-64007b93b7aa",
             "data": {
@@ -200,12 +200,12 @@
                     "specs": {
                         "moving_step": {
                             "type": "float",
-                            "default": 0.1,
+                            "default_value": 0.1,
                             "description": "The moving step of the robot"
                         },
                         "direction": {
                             "type": "str",
-                            "default": "north",
+                            "default_value": "north",
                             "allowed_values": [
                                 "north",
                                 "south",
@@ -215,7 +215,7 @@
                             "description": "The moving direction"
                         }
                     },
-                    "params": {}
+                    "values": {}
                 }
             },
             "progress_bar": {
@@ -235,10 +235,10 @@
                 },
                 "process": {
                     "uri": "a835b998-5e80-43a8-985b-64007b93b7aa",
-                    "typing_name": "PROCESS.gws_core.RobotMove"
+                    "typing_name": "TASK.gws_core.RobotMove"
                 }
             },
-            "input": {
+            "inputs": {
                 "robot": {
                     "resource": {
                         "uri": "",
@@ -249,7 +249,7 @@
                     ]
                 }
             },
-            "output": {
+            "outputs": {
                 "robot": {
                     "resource": {
                         "uri": "",
@@ -265,7 +265,7 @@
             "creation_datetime": "2021-08-25T14:56:26.280687",
             "instance_name": "p4",
             "is_archived": false,
-            "processable_typing_name": "PROCESS.gws_core.RobotMove",
+            "process_typing_name": "TASK.gws_core.RobotMove",
             "save_datetime": "2021-08-25T14:56:26.479956",
             "uri": "819527a5-3f07-41d6-b6b5-322248a437fd",
             "data": {
@@ -291,12 +291,12 @@
                     "specs": {
                         "moving_step": {
                             "type": "float",
-                            "default": 0.1,
+                            "default_value": 0.1,
                             "description": "The moving step of the robot"
                         },
                         "direction": {
                             "type": "str",
-                            "default": "north",
+                            "default_value": "north",
                             "allowed_values": [
                                 "north",
                                 "south",
@@ -306,7 +306,7 @@
                             "description": "The moving direction"
                         }
                     },
-                    "params": {}
+                    "values": {}
                 }
             },
             "progress_bar": {
@@ -326,10 +326,10 @@
                 },
                 "process": {
                     "uri": "819527a5-3f07-41d6-b6b5-322248a437fd",
-                    "typing_name": "PROCESS.gws_core.RobotMove"
+                    "typing_name": "TASK.gws_core.RobotMove"
                 }
             },
-            "input": {
+            "inputs": {
                 "robot": {
                     "resource": {
                         "uri": "",
@@ -340,7 +340,7 @@
                     ]
                 }
             },
-            "output": {
+            "outputs": {
                 "robot": {
                     "resource": {
                         "uri": "",
@@ -356,7 +356,7 @@
             "creation_datetime": "2021-08-25T14:56:26.323894",
             "instance_name": "p_wait",
             "is_archived": false,
-            "processable_typing_name": "PROCESS.gws_core.RobotWait",
+            "process_typing_name": "TASK.gws_core.RobotWait",
             "save_datetime": "2021-08-25T14:56:26.503639",
             "uri": "359f1040-c43c-4feb-ac91-55e9d580d48f",
             "data": {
@@ -382,10 +382,10 @@
                     "specs": {
                         "waiting_time": {
                             "type": "float",
-                            "default": 0.5
+                            "default_value": 0.5
                         }
                     },
-                    "params": {}
+                    "values": {}
                 }
             },
             "progress_bar": {
@@ -405,10 +405,10 @@
                 },
                 "process": {
                     "uri": "359f1040-c43c-4feb-ac91-55e9d580d48f",
-                    "typing_name": "PROCESS.gws_core.RobotWait"
+                    "typing_name": "TASK.gws_core.RobotWait"
                 }
             },
-            "input": {
+            "inputs": {
                 "robot": {
                     "resource": {
                         "uri": "",
@@ -419,7 +419,7 @@
                     ]
                 }
             },
-            "output": {
+            "outputs": {
                 "robot": {
                     "resource": {
                         "uri": "",

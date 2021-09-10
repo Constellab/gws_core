@@ -2,24 +2,28 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, List, Type, final
+from abc import abstractmethod
+from typing import TYPE_CHECKING, Dict, Generic, List, Type, TypeVar, final
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.base import Base
 from ..model.typing_manager import TypingManager
-from ..process.process_io import ProcessInputs
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
+from ..task.task_io import TaskInputs
 from .io_exception import (MissingInputResourcesException,
                            ResourceNotCompatibleException)
 from .io_spec import IOSpec
 from .port import InPort, OutPort, Port, PortDict
 
 if TYPE_CHECKING:
-    from ..processable.processable_model import ProcessableModel
+    from ..process.process_model import ProcessModel
 
 IODict = Dict[str, PortDict]
+
+# For generic Port type
+PortType = TypeVar('PortType', bound=Port)
 
 
 ####################################################################
@@ -27,17 +31,17 @@ IODict = Dict[str, PortDict]
 # IO class
 #
 # ####################################################################
-class IO(Base):
+class IO(Base, Generic[PortType]):
     """
     Base IO class. The IO class defines base functionalitie for the
     Input and Output classes. A IO is a set of ports.
     """
 
-    _ports: Dict[str, Port] = {}
-    _parent: ProcessableModel
+    _ports: Dict[str, PortType] = {}
+    _parent: ProcessModel
     _counter = 0
 
-    def __init__(self, parent: ProcessableModel):
+    def __init__(self, parent: ProcessModel):
         self._parent = parent
         self._ports = dict()
 
@@ -67,17 +71,12 @@ class IO(Base):
             raise BadRequestException(
                 "Invalid port specs. The port name must be a string")
 
-        if not self._parent.is_updatable:
-            raise BadRequestException(
-                "Cannot alter inputs/outputs of processes during or after running")
-
-        port: Port
-        if isinstance(self, Output):
-            port = OutPort(self, resource_spec)
-        else:
-            port = InPort(self, resource_spec)
-
+        port: PortType = self._create_port(resource_spec)
         self._ports[name] = port
+
+    @abstractmethod
+    def _create_port(self, resource_spec: IOSpec):
+        pass
 
     # -- G --
 
@@ -104,7 +103,7 @@ class IO(Base):
             resource_models[key] = port.resource_model
         return resource_models
 
-    def get_port(self, port_name: str) -> Port:
+    def get_port(self, port_name: str) -> PortType:
         """
         Returns the resources of all the ports.
 
@@ -140,7 +139,7 @@ class IO(Base):
 
     # -- N --
 
-    def get_next_procs(self) -> List[ProcessableModel]:
+    def get_next_procs(self) -> List[ProcessModel]:
         """
         Returns the list of (right-hand side) processes connected to the IO ports.
 
@@ -157,7 +156,7 @@ class IO(Base):
     # -- P --
 
     @property
-    def ports(self) -> Dict[str, Port]:
+    def ports(self) -> Dict[str, PortType]:
         """
         Returns the list of ports.
 
@@ -168,12 +167,12 @@ class IO(Base):
         return self._ports
 
     @property
-    def parent(self) -> ProcessableModel:
+    def parent(self) -> ProcessModel:
         """
-        Returns the parent of the IO, i.e. the process that holds this IO.
+        Returns the parent of the IO, i.e. the task that holds this IO.
 
-        :return: The parent process
-        :rtype: Process
+        :return: The parent task
+        :rtype: Task
         """
 
         return self._parent
@@ -192,7 +191,7 @@ class IO(Base):
     def set_resource_model(self, port_name: str, resource_model: ResourceModel) -> None:
         """Set the resource_model of a port
         """
-        port: Port = self.get_port(port_name)
+        port: PortType = self.get_port(port_name)
 
         resource_type: Type[Resource] = type(resource_model.get_resource())
         if not port.resource_type_is_compatible(resource_type):
@@ -204,13 +203,13 @@ class IO(Base):
     def get_resource_model(self, port_name: str) -> ResourceModel:
         """Get the resource_model of a port
         """
-        port: Port = self.get_port(port_name)
+        port: PortType = self.get_port(port_name)
         return port.resource_model
 
     def _set_resource_model_without_check(self, port_name: str, resource_model: ResourceModel) -> None:
         """Set the resource in the port without checking the port type
         """
-        port: Port = self.get_port(port_name)
+        port: PortType = self.get_port(port_name)
         port.resource_model = resource_model
 
     def _check_port_name(self, name) -> None:
@@ -224,7 +223,7 @@ class IO(Base):
 
         if error:
             if self.parent:
-                error += f" | Process : {self.parent.get_info()}"
+                error += f" | Task : {self.parent.get_info()}"
             raise BadRequestException(error)
 
     # -- V --
@@ -263,7 +262,7 @@ class IO(Base):
 
 
 @final
-class Input(IO):
+class Inputs(IO[InPort]):
     """
     Input class
     """
@@ -283,6 +282,9 @@ class Input(IO):
 
         return True
 
+    def _create_port(self, resource_spec: IOSpec) -> InPort:
+        return InPort(self, resource_spec)
+
     def all_connected_port_values_provided(self) -> bool:
         """Return true if all the ports that are connected, received a resource
         """
@@ -292,14 +294,14 @@ class Input(IO):
 
         return True
 
-    def get_and_check_process_inputs(self) -> ProcessInputs:
-        """Get the process inputs and check all the mandatory inputs are provided
+    def get_and_check_task_inputs(self) -> TaskInputs:
+        """Get the task inputs and check all the mandatory inputs are provided
 
         :return: [description]
         :rtype: ProcessIO
         """
         missing_resource: List[str] = []
-        process_io: ProcessInputs = ProcessInputs()
+        task_io: TaskInputs = TaskInputs()
         for key, port in self.ports.items():
 
             if port.is_empty:
@@ -309,12 +311,12 @@ class Input(IO):
                 continue
             # get the port resource and force a new instance to prevent modifing the same
             # resource on new task
-            process_io[key] = port.get_resource(new_instance=True)
+            task_io[key] = port.get_resource(new_instance=True)
 
         if len(missing_resource) > 0:
             raise MissingInputResourcesException(port_names=missing_resource)
 
-        return process_io
+        return task_io
 
 # ####################################################################
 #
@@ -324,10 +326,13 @@ class Input(IO):
 
 
 @final
-class Output(IO):
+class Outputs(IO[OutPort]):
     """
     Output class
     """
+
+    def _create_port(self, resource_spec: IOSpec) -> OutPort:
+        return OutPort(self, resource_spec)
 
     @property
     def is_connected(self) -> bool:

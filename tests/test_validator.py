@@ -3,9 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import math
 import unittest
 
 from gws_core import GTest, Validator
+from gws_core.core.classes.validator import (BoolValidator, DictValidator,
+                                             FloatValidator, IntValidator,
+                                             ListValidator, StrValidator)
 
 
 class TestValidator(unittest.TestCase):
@@ -13,143 +17,128 @@ class TestValidator(unittest.TestCase):
     def test_int_validator(self):
         GTest.print("Integrer Validator")
 
-        v = Validator.from_specs(type='int', default='5')
-        self.assertEqual(v.validate('3'), 3)
-        self.assertEqual(v.validate(3), 3)
-        self.assertEqual(v.validate(3.0), 3)
-        self.assertEqual(v.validate(None), 5)
-        self.assertRaises(Exception, v.validate, 'false')
-        self.assertRaises(Exception, v.validate, 'true')
-        self.assertRaises(Exception, v.validate, 'foo')
+        validator: Validator = IntValidator(default_value='5')
+        self.assertEqual(validator.validate('3'), 3)
+        self.assertEqual(validator.validate(3), 3)
+        self.assertEqual(validator.validate(3.0), 3)
+        self.assertEqual(validator.validate(None), 5)
+        self.assertRaises(Exception, validator.validate, 'false')
+        self.assertRaises(Exception, validator.validate, 'true')
+        self.assertRaises(Exception, validator.validate, 'foo')
 
-        v = Validator.from_specs(type=int, default='3.0')
-        self.assertEqual(v.validate(None), 3)
+        validator = IntValidator(default_value='3.0')
+        self.assertEqual(validator.validate(None), 3)
 
-        v = Validator.from_specs(
-            type=int, default='3.0', allowed_values=[3, 5])
-        self.assertEqual(v.validate(None), 3)
-        self.assertRaises(Exception, v.validate, 6)
+        validator = IntValidator(default_value='3.0', allowed_values=[3, 5])
+        self.assertEqual(validator.validate(None), 3)
+        self.assertRaises(Exception, validator.validate, 6)
 
         # invalid validator
-        self.assertRaises(Exception, Validator.from_specs,
-                          type=int, default='5.5')
-        self.assertRaises(Exception, Validator.from_specs,
-                          type=int, default='oui')
-        self.assertRaises(Exception, Validator.from_specs,
-                          type=int, default='"oui"')
-        #self.assertRaises(Exception, Validator.from_specs, type=int, default=3, allowed_values=[10, 12])
+        self.assertRaises(Exception, IntValidator, default_value='5.5')
+        self.assertRaises(Exception, IntValidator, default_value='oui')
+        self.assertRaises(Exception, IntValidator, default_value='"oui"')
 
     def test_str_validator(self):
         GTest.print("String Validator")
 
-        v = Validator.from_specs(type='str', default='5')
-        self.assertEqual(v.validate('4'), '4')
-        self.assertEqual(v.validate(None), '5')
-        self.assertEqual(v.validate('false'), 'false')
-        self.assertEqual(v.validate('foo'), 'foo')
-        self.assertRaises(Exception, v.validate, 4)
-        self.assertRaises(Exception, v.validate, True)
+        validator: Validator = StrValidator(default_value='5')
+        self.assertEqual(validator.validate('4'), '4')
+        self.assertEqual(validator.validate(None), '5')
+        self.assertEqual(validator.validate('false'), 'false')
+        self.assertEqual(validator.validate('foo'), 'foo')
+        self.assertRaises(Exception, validator.validate, 4)
+        self.assertRaises(Exception, validator.validate, True)
 
         # invalid validator
-        self.assertRaises(Exception, Validator.from_specs, type=str, default=5)
-        self.assertRaises(Exception, Validator.from_specs,
-                          type=str, default=True)
+        self.assertRaises(Exception, StrValidator,  default_value=5)
+        self.assertRaises(Exception, StrValidator,  default_value=True)
 
     def test_bool_validator(self):
         GTest.print("Boolean Validator")
 
-        v = Validator.from_specs(type=bool, default=True)
-        self.assertEqual(v.validate(False), False)
-        self.assertEqual(v.validate(True), True)
-        self.assertEqual(v.validate(None), True)
-        self.assertEqual(v.validate('true'), True)
-        self.assertEqual(v.validate('false'), False)
-        self.assertRaises(Exception, v.validate, 'foo')
-        self.assertRaises(Exception, v.validate, 4)
+        validator: Validator = BoolValidator(default_value=True)
+        self.assertEqual(validator.validate(False), False)
+        self.assertEqual(validator.validate(True), True)
+        self.assertEqual(validator.validate(None), True)
+        self.assertEqual(validator.validate('true'), True)
+        self.assertEqual(validator.validate('false'), False)
+        self.assertRaises(Exception, validator.validate, 'foo')
+        self.assertRaises(Exception, validator.validate, 4)
 
-        v = Validator.from_specs(type='bool', default='true')
-        self.assertEqual(v.validate(None), True)
+        validator = BoolValidator(default_value='true')
+        self.assertEqual(validator.validate(None), True)
 
-        v = Validator.from_specs(type=bool)
-        self.assertEqual(v.validate(None), None)
+        validator = BoolValidator()
+        self.assertEqual(validator.validate(None), None)
 
         # invalid validator
-        self.assertRaises(Exception, Validator.from_specs,
-                          type=bool, default='foo')
-        self.assertRaises(Exception, Validator.from_specs,
-                          type=bool, default=0)
+        self.assertRaises(Exception, BoolValidator, default_value='foo')
+        self.assertRaises(Exception, BoolValidator, default_value=0)
 
     def test_float_validator(self):
         GTest.print("Float Validator")
 
-        import math
+        validator: Validator = FloatValidator(default_value='8')
+        self.assertEqual(validator.validate(5.5), 5.5)
+        self.assertEqual(validator.validate(4.0), 4.0)
+        self.assertEqual(validator.validate(4), 4.0)
+        self.assertEqual(validator.validate('4'), 4.0)
+        self.assertEqual(validator.validate('4.8'), 4.8)
+        self.assertEqual(validator.validate('-4.8'), -4.8)
+        self.assertEqual(validator.validate(-7), -7.0)
+        self.assertEqual(validator.validate(None), 8)
+        self.assertEqual(validator.validate(math.inf), math.inf)
+        self.assertEqual(validator.validate('Infinity'), math.inf)
+        self.assertEqual(validator.validate('-Infinity'), -math.inf)
+        self.assertTrue(math.isnan(validator.validate('NaN')))
 
-        v = Validator.from_specs(type=float, default='8')
-        self.assertEqual(v.validate(5.5), 5.5)
-        self.assertEqual(v.validate(4.0), 4.0)
-        self.assertEqual(v.validate(4), 4.0)
-        self.assertEqual(v.validate('4'), 4.0)
-        self.assertEqual(v.validate('4.8'), 4.8)
-        self.assertEqual(v.validate('-4.8'), -4.8)
-        self.assertEqual(v.validate(-7), -7.0)
-        self.assertEqual(v.validate(None), 8)
-        self.assertEqual(v.validate(math.inf), math.inf)
-        self.assertEqual(v.validate('Infinity'), math.inf)
-        self.assertEqual(v.validate('-Infinity'), -math.inf)
-        self.assertTrue(math.isnan(v.validate('NaN')))
-
-        self.assertRaises(Exception, v.validate, 'oui')
-        self.assertRaises(Exception, v.validate, True)
-        self.assertRaises(Exception, v.validate, 'false')
-        self.assertRaises(Exception, v.validate, '[1,3]')
+        self.assertRaises(Exception, validator.validate, 'oui')
+        self.assertRaises(Exception, validator.validate, True)
+        self.assertRaises(Exception, validator.validate, 'false')
+        self.assertRaises(Exception, validator.validate, '[1,3]')
 
         # invalid validator
-        self.assertRaises(Exception, Validator.from_specs,
-                          type='float', default='foo')
+        self.assertRaises(Exception, FloatValidator, default_value='foo')
 
         # min constaint
-        v = Validator.from_specs(type=float, default='8', min=-5)
-        self.assertEqual(v.validate('-4.8'), -4.8)
-        self.assertRaises(Exception, v.validate, '-7')
+        validator = FloatValidator(default_value='8', min_value=-5)
+        self.assertEqual(validator.validate('-4.8'), -4.8)
+        self.assertRaises(Exception, validator.validate, '-7')
 
     def test_list_validator(self):
         GTest.print("List Validator")
 
-        v = Validator.from_specs(type='list', default='[1,2,"foo"]')
-        self.assertEqual(v.validate([5.5, 3]), [5.5, 3])
-        self.assertEqual(v.validate('[5.5,3]'), [5.5, 3])
-        self.assertEqual(v.validate('[5.5,3,["foo","bar"]]'), [
+        validator: Validator = ListValidator(default_value='[1,2,"foo"]')
+        self.assertEqual(validator.validate([5.5, 3]), [5.5, 3])
+        self.assertEqual(validator.validate('[5.5,3]'), [5.5, 3])
+        self.assertEqual(validator.validate('[5.5,3,["foo","bar"]]'), [
                          5.5, 3, ["foo", "bar"]])
-        self.assertEqual(v.validate('[5.5,3,{"foo":1.2}]'), [
+        self.assertEqual(validator.validate('[5.5,3,{"foo":1.2}]'), [
                          5.5, 3, {"foo": 1.2}])
-        self.assertEqual(v.validate(None), [1, 2, "foo"])
-        self.assertRaises(Exception, v.validate, 'oui')
-        self.assertRaises(Exception, v.validate, True)
-        self.assertRaises(Exception, v.validate, 'false')
-        self.assertRaises(Exception, v.validate, '5.5')
-        self.assertRaises(Exception, v.validate, '{"foo":1.2}')
+        self.assertEqual(validator.validate(None), [1, 2, "foo"])
+        self.assertRaises(Exception, validator.validate, 'oui')
+        self.assertRaises(Exception, validator.validate, True)
+        self.assertRaises(Exception, validator.validate, 'false')
+        self.assertRaises(Exception, validator.validate, '5.5')
+        self.assertRaises(Exception, validator.validate, '{"foo":1.2}')
 
         # invalid validator
-        self.assertRaises(Exception, Validator.from_specs,
-                          type=list, default='foo')
-        self.assertRaises(Exception, Validator.from_specs,
-                          type=list, default=True)
+        self.assertRaises(Exception, ListValidator, default_value='foo')
+        self.assertRaises(Exception, ListValidator, default_value=True)
 
     def test_dict_validator(self):
         GTest.print("Dict Validator")
 
-        v = Validator.from_specs(type='dict', default='{"foo":1.2}')
-        self.assertEqual(v.validate(None), {"foo": 1.2})
-        self.assertEqual(v.validate('{"foo":0.5}'), {"foo": 0.5})
-        self.assertRaises(Exception, v.validate, 'oui')
-        self.assertRaises(Exception, v.validate, True)
-        self.assertRaises(Exception, v.validate, 'false')
-        self.assertRaises(Exception, v.validate, '5.5')
-        self.assertRaises(Exception, v.validate, [5.5, 3])
-        self.assertRaises(Exception, v.validate, '[5.5,3]')
+        validator: Validator = DictValidator(default_value='{"foo":1.2}')
+        self.assertEqual(validator.validate(None), {"foo": 1.2})
+        self.assertEqual(validator.validate('{"foo":0.5}'), {"foo": 0.5})
+        self.assertRaises(Exception, validator.validate, 'oui')
+        self.assertRaises(Exception, validator.validate, True)
+        self.assertRaises(Exception, validator.validate, 'false')
+        self.assertRaises(Exception, validator.validate, '5.5')
+        self.assertRaises(Exception, validator.validate, [5.5, 3])
+        self.assertRaises(Exception, validator.validate, '[5.5,3]')
 
         # invalid validator
-        self.assertRaises(Exception, Validator.from_specs,
-                          type=list, default='foo')
-        self.assertRaises(Exception, Validator.from_specs,
-                          type=list, default=True)
+        self.assertRaises(Exception, DictValidator, default_value='foo')
+        self.assertRaises(Exception, DictValidator, default_value=True)

@@ -20,16 +20,15 @@ from ..model.typing_register_decorator import typing_registrator
 
 
 @final
-@json_ignore(['process_uri', 'processable_typing_name'])
-@typing_registrator(unique_name="ProgressBar", object_type="GWS_CORE", hide=True)
+@json_ignore(['process_uri', 'process_typing_name'])
+@typing_registrator(unique_name="ProgressBar", object_type="MODEL", hide=True)
 class ProgressBar(Model):
     """
     ProgressBar class
     """
 
     process_uri = CharField(null=True, index=True)
-    # -> unique index (process_uri, process_type) is created in Meta
-    processable_typing_name = CharField(null=True)
+    process_typing_name = CharField(null=True)
 
     _min_allowed_delta_time = 1.0
     _min_value = 0.0
@@ -235,13 +234,13 @@ class ProgressBar(Model):
 
         _json["process"] = {
             "uri": self.process_uri,
-            "typing_name": self.processable_typing_name,
+            "typing_name": self.process_typing_name,
         }
 
         return _json
 
     class Meta:
         indexes = (
-            # create a unique on process_uri, processable_typing_name
-            (('process_uri', 'processable_typing_name'), True),
+            # create a unique on process_uri, process_typing_name
+            (('process_uri', 'process_typing_name'), True),
         )

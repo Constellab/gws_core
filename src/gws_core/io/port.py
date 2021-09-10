@@ -13,7 +13,7 @@ from ..resource.resource_model import ResourceModel
 from .io_spec import IOSpec, IOSpecClass, IOSpecsHelper
 
 if TYPE_CHECKING:
-    from ..processable.processable_model import ProcessableModel
+    from ..process.process_model import ProcessModel
     from .io import IO
 
 
@@ -185,7 +185,7 @@ class Port(Base):
 
     # -- G --
 
-    def get_next_procs(self) -> List[ProcessableModel]:
+    def get_next_procs(self) -> List[ProcessModel]:
         """
         Returns the list of right-hand side processes connected to the port.
 
@@ -227,7 +227,7 @@ class Port(Base):
         return self._parent
 
     @property
-    def process(self) -> ProcessableModel:
+    def process(self) -> ProcessModel:
         """
         Returns the parent Process of the Port.
 
@@ -263,17 +263,8 @@ class Port(Base):
 
         return self._resource_spec
 
-    def get_resource_typing_names(self) -> List[str]:
-        # TODO fix a place under IOSpecClass and add support for SubClass
-        specs: List[str] = []
-        for resource_type in self.resource_spec.to_resource_types():
-            if resource_type is None:
-                specs.append(None)
-            else:
-                specs.append(resource_type._typing_name)
-        return specs
-
     # -- S --
+
     def set_resource_spec(self, resource_spec: IOSpec):
         """
         Sets the resource_types of the port.
@@ -346,8 +337,7 @@ class Port(Base):
                 "typing_name": ""
             }
 
-        _json["specs"] = self.get_resource_typing_names()
-
+        _json["specs"] = self.resource_spec.to_json()
         return _json
 
 
@@ -374,9 +364,9 @@ class InPort(Port):
         """
 
         proc = self.parent.parent
-        proc_input = proc.input
-        for name in proc_input._ports:
-            if proc_input._ports[name] is self:
+        proc_inputs = proc.inputs
+        for name in proc_inputs._ports:
+            if proc_inputs._ports[name] is self:
                 return name
         return None
 
@@ -402,8 +392,8 @@ class OutPort(Port):
         """
 
         proc = self.parent.parent
-        input = proc.output
-        for name in input._ports:
-            if input._ports[name] is self:
+        proc_outputs = proc.outputs
+        for name in proc_outputs._ports:
+            if proc_outputs._ports[name] is self:
                 return name
         return None

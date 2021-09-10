@@ -10,7 +10,8 @@ from ..resource.resource_model import ResourceModel
 from ..model.typing_register_decorator import typing_registrator
 #from .deferred_resource_field import DefferredResourceField
 
-@typing_registrator(unique_name="ExtendedResourceModel", object_type="GWS_CORE", hide=True)
+
+@typing_registrator(unique_name="ExtendedResourceModel", object_type="MODEL", hide=True)
 class ExtendedResourceModel(ResourceModel):
     """
     Extension to support models with extra db columns.
@@ -20,7 +21,7 @@ class ExtendedResourceModel(ResourceModel):
     """
 
     @staticmethod
-    def __process_field_value( value: Any ) -> Any:
+    def __process_field_value(value: Any) -> Any:
         if isinstance(value, ResourceModel):
             value = value.get_resource()
         else:
@@ -43,13 +44,13 @@ class ExtendedResourceModel(ResourceModel):
         ]
         for prop in prop_list:
             if not prop.startswith("_"):    # skip protected fields
-                val = ExtendedResourceModel.__process_field_value( getattr(self, prop) )
-                if hasattr(resource, prop): # synchronize existing fields declared on the resource
+                val = ExtendedResourceModel.__process_field_value(getattr(self, prop))
+                if hasattr(resource, prop):  # synchronize existing fields declared on the resource
                     setattr(resource, prop, val)
                 else:
                     pass
                     # TODO: add a param in the decorator to allow this behavior || or let it by default ?
-                    #resource.__setattr__(prop, val) # create the resource field if it does not exists     
+                    # resource.__setattr__(prop, val) # create the resource field if it does not exists
 
     def receive_fields_from_resource(self, resource):
         super().receive_fields_from_resource(resource)
@@ -60,6 +61,6 @@ class ExtendedResourceModel(ResourceModel):
         ]
         for prop in prop_list:
             if not prop.startswith("_"):    # skip protected fields
-                if hasattr(resource, prop): # only synchronize fields declared on the resource
-                    val = ExtendedResourceModel.__process_field_value( getattr(resource, prop) )
+                if hasattr(resource, prop):  # only synchronize fields declared on the resource
+                    val = ExtendedResourceModel.__process_field_value(getattr(resource, prop))
                     setattr(self, prop, val)

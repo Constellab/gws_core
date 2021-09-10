@@ -7,20 +7,20 @@ from typing import Any, Dict, Type, final
 
 from peewee import ModelSelect
 
-from ..config.config_spec import ConfigSpecsHelper
+from ..config.config_types import ConfigSpecsHelper
 from ..core.utils.utils import Utils
 from ..io.io_spec import IOSpecsHelper
 from ..model.typing import Typing, TypingObjectType
-from ..process.process import Process
+from ..task.task import Task
 
 
 @final
-class ProcessTyping(Typing):
+class TaskTyping(Typing):
     """
-    ProcessType class.
+    TaskTyping class.
     """
 
-    _object_type: TypingObjectType = "PROCESS"
+    _object_type: TypingObjectType = "TASK"
 
     @classmethod
     def get_types(cls) -> ModelSelect:
@@ -34,8 +34,8 @@ class ProcessTyping(Typing):
         _json["ptype"] = self.model_type
 
         if deep:
-            # retrieve the process python type
-            model_t: Type[Process] = Utils.get_model_type(self.model_type)
+            # retrieve the task python type
+            model_t: Type[Task] = Utils.get_model_type(self.model_type)
 
             # Handle the resource input specs
             _json["input_specs"] = IOSpecsHelper.io_specs_to_json(model_t.input_specs)
@@ -44,7 +44,7 @@ class ProcessTyping(Typing):
             _json["output_specs"] = IOSpecsHelper.io_specs_to_json(model_t.output_specs)
 
             # Handle the config specs
-            _json["config_specs"] = ConfigSpecsHelper.config_specs_to_json(model_t.config_specs)
+            _json["config_specs"] = ConfigSpecsHelper.check_config_specs(model_t.config_specs)
 
         return _json
 

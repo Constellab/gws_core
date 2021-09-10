@@ -1,7 +1,7 @@
 from typing import Type, TypedDict
 
-from ..config.config_spec import ConfigValue, ConfigValues
-from ..processable.processable import Processable
+from ..config.config_types import ConfigValue, ConfigValuesDict
+from ..process.process import Process
 
 
 class ConnectorPartSpec(TypedDict):
@@ -10,7 +10,7 @@ class ConnectorPartSpec(TypedDict):
     :param TypedDict: [description]
     :type TypedDict: [type]
     """
-    processable_instance_name: str
+    process_instance_name: str
     port_name: str
 
 
@@ -20,9 +20,9 @@ class ConnectorSpec(TypedDict):
     :param TypedDict: [description]
     :type TypedDict: [type]
     """
-    from_processable: str
+    from_process: str
     from_port: str
-    to_processable: str
+    to_process: str
     to_port: str
 
 
@@ -32,24 +32,24 @@ class InterfaceSpec(TypedDict):
     :param TypedDict: [description]
     :type TypedDict: [type]
     """
-    processable_instance_name: str
+    process_instance_name: str
     port_name: str
 
 
-class ProcessableSpec():
+class ProcessSpec():
 
     instance_name: str = None
-    processable_type: Type[Processable] = None
+    process_type: Type[Process] = None
 
-    _config: ConfigValues
+    _config: ConfigValuesDict
 
-    def __init__(self, instance_name: str, processable_type: Type[Processable]) -> None:
+    def __init__(self, instance_name: str, process_type: Type[Process]) -> None:
         self.instance_name = instance_name
-        self.processable_type = processable_type
+        self.process_type = process_type
         self._config = {}
 
-    def configure_all(self, config_values: ConfigValues) -> 'ProcessableSpec':
-        """Use to preconfigure the processable. The config must match the config specs of the processable
+    def configure_all(self, config_values: ConfigValuesDict) -> 'ProcessSpec':
+        """Use to preconfigure the process. The config must match the config specs of the process
 
         :param config_name: name of the configuration (the system checks that the config exists)
         :type config_name: str
@@ -65,8 +65,8 @@ class ProcessableSpec():
 
         return self
 
-    def configure(self, config_name: str, config_value: ConfigValue) -> 'ProcessableSpec':
-        """Use to preconfigure the processable. The config must match the config specs of the processable
+    def configure(self, config_name: str, config_value: ConfigValue) -> 'ProcessSpec':
+        """Use to preconfigure the process. The config must match the config specs of the process
 
         :param config_name: name of the configuration (the system checks that the config exists)
         :type config_name: str
@@ -85,9 +85,9 @@ class ProcessableSpec():
 
     def get_spec(self, name: str) -> ConnectorPartSpec:
         return {
-            "processable_instance_name": self.instance_name,
+            "process_instance_name": self.instance_name,
             "port_name": name,
         }
 
-    def get_config_values(self) -> ConfigValues:
+    def get_config_values(self) -> ConfigValuesDict:
         return self._config

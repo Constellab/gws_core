@@ -13,10 +13,10 @@ from ..core.exception.exceptions.base_http_exception import BaseHTTPException
 from ..core.exception.gws_exceptions import GWSException
 
 if TYPE_CHECKING:
-    from .processable_model import ProcessableModel
+    from .process_model import ProcessModel
 
 
-class ProcessableRunException(BadRequestException):
+class ProcessRunException(BadRequestException):
     """Generic exception to raised from another exception during the process run
     It show the original error and provided debug information about the process and experiment
 
@@ -27,9 +27,9 @@ class ProcessableRunException(BadRequestException):
     context: str
 
     original_exception: Exception
-    processable_model: ProcessableModel
+    process_model: ProcessModel
 
-    def __init__(self, processable_model: ProcessableModel, exception_detail: str,
+    def __init__(self, process_model: ProcessModel, exception_detail: str,
                  unique_code: str, exception: Exception) -> None:
         super().__init__(
             detail=exception_detail,
@@ -37,11 +37,11 @@ class ProcessableRunException(BadRequestException):
 
         self.context = None
         self.original_exception = exception
-        self.processable_model = processable_model
+        self.process_model = process_model
 
     @staticmethod
-    def from_exception(processable_model: ProcessableModel, exception: Exception,
-                       error_prefix: str = None) -> ProcessableRunException:
+    def from_exception(process_model: ProcessModel, exception: Exception,
+                       error_prefix: str = None) -> ProcessRunException:
 
         prefix_text: str = f"{error_prefix} | " if error_prefix is not None else ""
         unique_code: str
@@ -53,8 +53,8 @@ class ProcessableRunException(BadRequestException):
         else:
             unique_code = None
 
-        return ProcessableRunException(
-            processable_model=processable_model, exception_detail=prefix_text + str(exception),
+        return ProcessRunException(
+            process_model=process_model, exception_detail=prefix_text + str(exception),
             unique_code=unique_code, exception=exception)
 
     def update_context(self, context: str) -> None:
@@ -65,8 +65,8 @@ class ProcessableRunException(BadRequestException):
         self.context = context + ' > ' + self.context
 
 
-class ProcessableCheckBeforeTaskStopException(BadRequestException):
-    """Exception raised when the before task returned false and all the input of the process where provided
+class CheckBeforeTaskStopException(BadRequestException):
+    """Exception raised when the before task returned false and all the input of the task where provided
 
     :param BadRequestException: [description]
     :type BadRequestException: [type]
@@ -75,6 +75,6 @@ class ProcessableCheckBeforeTaskStopException(BadRequestException):
     """
 
     def __init__(self, message: str) -> None:
-        super().__init__(detail=GWSException.PROCESSABLE_CHECK_BEFORE_STOP.value,
-                         unique_code=GWSException.PROCESSABLE_CHECK_BEFORE_STOP.name,
+        super().__init__(detail=GWSException.TASK_CHECK_BEFORE_STOP.value,
+                         unique_code=GWSException.TASK_CHECK_BEFORE_STOP.name,
                          detail_args={"message": message})

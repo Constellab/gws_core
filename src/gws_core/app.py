@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from starlette_context.middleware.context_middleware import ContextMiddleware
 
-from gws_core.core.classes.cors_config import CorsConfig
+from .core.classes.cors_config import CorsConfig
 
 from ._core_app_importer import *
 from .central.central_app import central_app

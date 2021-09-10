@@ -6,7 +6,7 @@
 import os
 import unittest
 
-from gws_core import FileResource, FileResourceModel, FileService, GTest, MySQLService
+from gws_core import File, FileModel, FileService, GTest, MySQLService
 from gws_core.core.db.db_manager import DbManager
 
 
@@ -30,9 +30,9 @@ class TestMySQLDumpLoad(unittest.TestCase):
             return
 
         # insert data in comment table
-        f = FileResource()
+        f = File()
         f.path = "./oui"
-        file_model: FileResourceModel = FileService.create_file_resource(file=f)
+        file_model: FileModel = FileService.create_file_model(file=f)
 
         c = file_model.add_comment("The sky is blue")
         file_model.add_comment("The sky is blue and the ocean is also blue", reply_to=c)
@@ -44,12 +44,12 @@ class TestMySQLDumpLoad(unittest.TestCase):
         self.assertTrue(os.path.exists(output_file))
 
         GTest.drop_tables()
-        self.assertFalse(FileResourceModel.table_exists())
+        self.assertFalse(FileModel.table_exists())
 
         # load db
         MySQLService.load_db(
             "test_gws", local_file_path=output_file, force=True, wait=True)
-        self.assertTrue(FileResourceModel.table_exists())
+        self.assertTrue(FileModel.table_exists())
 
     def test_db_drop(self):
         pass

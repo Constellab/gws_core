@@ -12,12 +12,20 @@ from .comment.comment import Comment as Comment
 from .comment.comment_service import CommentService as CommentService
 # Config
 from .config.config import Config as Config
-from .config.config_params import ConfigParams as ConfigParams
 from .config.config_service import ConfigService as ConfigService
-from .config.config_spec import ConfigSpec as ConfigSpec
-from .config.config_spec import ConfigSpecs as ConfigSpecs
-from .config.config_spec import ConfigSpecType as ConfigSpecType
-from .config.config_spec import ConfigValue as ConfigValue
+from .config.config_types import ConfigSpecs as ConfigSpecs
+from .config.config_types import ConfigSpecType as ConfigSpecType
+from .config.config_types import ConfigValue as ConfigValue
+from .config.config_types import ConfigValues as ConfigValues
+from .config.config_types import ConfigValuesDict as ConfigValuesDict
+from .config.param_spec import BoolParam as BoolParam
+from .config.param_spec import DictParam as DictParam
+from .config.param_spec import FloatParam as FloatParam
+from .config.param_spec import IntParam as IntParam
+from .config.param_spec import ListParam as ListParam
+from .config.param_spec import NumericParam as NumericParam
+from .config.param_spec import ParamSpec as ParamSpec
+from .config.param_spec import StrParam as StrParam
 # Core
 # Core > Classes
 from .core.classes.expose import Expose as Expose
@@ -26,14 +34,14 @@ from .core.classes.paginator import PaginatorDict as PaginatorDict
 from .core.classes.path import URL as URL
 from .core.classes.path import Path as Path
 from .core.classes.query import Query as Query
-from .core.classes.validator import ArrayValidator as ArrayValidator
-from .core.classes.validator import BooleanValidator as BooleanValidator
-from .core.classes.validator import CharValidator as CharValidator
+from .core.classes.validator import BoolValidator as BoolValidator
+from .core.classes.validator import DictValidator as DictValidator
 from .core.classes.validator import FloatValidator as FloatValidator
-from .core.classes.validator import IntegerValidator as IntegerValidator
-from .core.classes.validator import JSONValidator as JSONValidator
+from .core.classes.validator import IntValidator as IntValidator
+from .core.classes.validator import ListValidator as ListValidator
 from .core.classes.validator import NumericValidator as NumericValidator
 from .core.classes.validator import PathValidator as PathValidator
+from .core.classes.validator import StrValidator as StrValidator
 from .core.classes.validator import URLValidator as URLValidator
 from .core.classes.validator import Validator as Validator
 from .core.classes.view import DictView as DictView
@@ -90,39 +98,30 @@ from .experiment.queue_service import QueueService as QueueService
 # Extension > ExtendedResource
 from .extension.extended_resource_model import \
     ExtendedResourceModel as ExtendedResourceModel
-# Impl > CSV
-from .impl.csv.csv_process import CSVDumper as CSVDumper
-from .impl.csv.csv_process import CSVExporter as CSVExporter
-from .impl.csv.csv_process import CSVImporter as CSVImporter
-from .impl.csv.csv_process import CSVLoader as CSVLoader
 from .impl.csv.csv_resource import CSVTable as CSVTable
-from .impl.file.file_process import WriteToJsonFile as WriteToJsonFile
+# Impl > CSV
+from .impl.csv.csv_tasks import CSVDumper as CSVDumper
+from .impl.csv.csv_tasks import CSVExporter as CSVExporter
+from .impl.csv.csv_tasks import CSVImporter as CSVImporter
+from .impl.csv.csv_tasks import CSVLoader as CSVLoader
 # Impl > File
-from .impl.file.file_resource import FileResource as FileResource
-from .impl.file.file_resource import FileSet as FileSet
-from .impl.file.file_resource_model import \
-    FileResourceModel as FileResourceModel
+from .impl.file.file import File as File
+from .impl.file.file import FileSet as FileSet
+from .impl.file.file_model import FileModel as FileModel
 from .impl.file.file_service import FileService as FileService
 from .impl.file.file_store import FileStore as FileStore
+from .impl.file.file_tasks import WriteToJsonFile as WriteToJsonFile
 from .impl.file.file_uploader import FileDumper as FileDumper
 from .impl.file.file_uploader import FileExporter as FileExporter
 from .impl.file.file_uploader import FileImporter as FileImporter
 from .impl.file.file_uploader import FileLoader as FileLoader
 from .impl.file.local_file_store import LocalFileStore as LocalFileStore
-# Impl > JSON
-from .impl.json.json_process import JSONDumper as JSONDumper
-from .impl.json.json_process import JSONExporter as JSONExporter
-from .impl.json.json_process import JSONImporter as JSONImporter
-from .impl.json.json_process import JSONLoader as JSONLoader
 from .impl.json.json_resource import JSONDict as JSONDict
-# Impl > Robot
-from .impl.robot.robot_process import RobotAdd as RobotAdd
-from .impl.robot.robot_process import RobotAddOnCreate as RobotAddOnCreate
-from .impl.robot.robot_process import RobotCreate as RobotCreate
-from .impl.robot.robot_process import RobotEat as RobotEat
-from .impl.robot.robot_process import RobotMove as RobotMove
-from .impl.robot.robot_process import RobotSugarCreate as RobotSugarCreate
-from .impl.robot.robot_process import RobotWait as RobotWait
+# Impl > JSON
+from .impl.json.json_tasks import JSONDumper as JSONDumper
+from .impl.json.json_tasks import JSONExporter as JSONExporter
+from .impl.json.json_tasks import JSONImporter as JSONImporter
+from .impl.json.json_tasks import JSONLoader as JSONLoader
 from .impl.robot.robot_protocol import \
     RobotSuperTravelProto as RobotSuperTravelProto
 from .impl.robot.robot_protocol import RobotTravelProto as RobotTravelProto
@@ -133,6 +132,14 @@ from .impl.robot.robot_resource import Robot as Robot
 from .impl.robot.robot_resource import RobotAddOn as RobotAddOn
 from .impl.robot.robot_resource import RobotFood as RobotFood
 from .impl.robot.robot_service import RobotService as RobotService
+# Impl > Robot
+from .impl.robot.robot_tasks import RobotAdd as RobotAdd
+from .impl.robot.robot_tasks import RobotAddOnCreate as RobotAddOnCreate
+from .impl.robot.robot_tasks import RobotCreate as RobotCreate
+from .impl.robot.robot_tasks import RobotEat as RobotEat
+from .impl.robot.robot_tasks import RobotMove as RobotMove
+from .impl.robot.robot_tasks import RobotSugarCreate as RobotSugarCreate
+from .impl.robot.robot_tasks import RobotWait as RobotWait
 # Impl > S3
 from .impl.s3.base import BaseS3 as BaseS3
 from .impl.s3.ovh import OVHS3 as OVHS3
@@ -144,12 +151,15 @@ from .impl.shell.shell import Shell as Shell
 # Io
 from .io.connector import Connector as Connector
 from .io.io import IO as IO
-from .io.io import Input as Input
-from .io.io import Output as Output
+from .io.io import Inputs as Inputs
+from .io.io import Outputs as Outputs
 from .io.io_spec import InputSpecs as InputSpecs
 from .io.io_spec import OutputSpecs as OutputSpecs
 from .io.io_types import OptionalIn as OptionalIn
 from .io.io_types import SkippableIn as SkippableIn
+from .io.io_types import SpecialTypeIn as SpecialTypeIn
+from .io.io_types import SpecialTypeIO as SpecialTypeIO
+from .io.io_types import SpecialTypeOut as SpecialTypeOut
 from .io.io_types import UnmodifiedOut as UnmodifiedOut
 from .io.ioface import Interface as Interface
 from .io.ioface import IOface as IOface
@@ -167,24 +177,9 @@ from .model.view_model import ViewModel as ViewModel
 from .model.view_service import ViewService as ViewService
 from .model.viewable import Viewable as Viewable
 # Process
-from .process.plug import FIFO2 as FIFO2
-from .process.plug import Sink as Sink
-from .process.plug import Source as Source
-from .process.plug import Switch2 as Switch2
-from .process.plug import Wait as Wait
-from .process.process import CheckBeforeTaskResult
 from .process.process import Process as Process
-from .process.process_decorator import process_decorator as process_decorator
-from .process.process_io import ProcessInputs as ProcessInputs
-from .process.process_io import ProcessOutputs as ProcessOutputs
+from .process.process_factory import ProcessFactory as ProcessFactory
 from .process.process_model import ProcessModel as ProcessModel
-from .process.process_service import ProcessService as ProcessService
-from .process.process_typing import ProcessTyping as ProcessTyping
-# Processable
-from .processable.processable import Processable as Processable
-from .processable.processable_factory import \
-    ProcessableFactory as ProcessableFactory
-from .processable.processable_model import ProcessableModel as ProcessableModel
 # Progress Bar
 from .progress_bar.progress_bar import ProgressBar as ProgressBar
 from .progress_bar.progress_bar_service import \
@@ -198,7 +193,7 @@ from .protocol.protocol_service import ProtocolService as ProtocolService
 from .protocol.protocol_spec import ConnectorPartSpec as ConnectorPartSpec
 from .protocol.protocol_spec import ConnectorSpec as ConnectorSpec
 from .protocol.protocol_spec import InterfaceSpec as InterfaceSpec
-from .protocol.protocol_spec import ProcessableSpec as ProcessableSpec
+from .protocol.protocol_spec import ProcessSpec as ProcessSpec
 from .protocol.protocol_typing import ProtocolTyping as ProtocolTyping
 from .resource.kv_store import KVStore as KVStore
 # Resource
@@ -212,6 +207,20 @@ from .resource.resource_set import ResourceSet as ResourceSet
 from .resource.resource_typing import ResourceTyping as ResourceTyping
 # Study
 from .study.study import Study as Study
+# Task
+from .task.plug import FIFO2 as FIFO2
+from .task.plug import Sink as Sink
+from .task.plug import Source as Source
+from .task.plug import Switch2 as Switch2
+from .task.plug import Wait as Wait
+from .task.task import CheckBeforeTaskResult as CheckBeforeTaskResult
+from .task.task import Task as Task
+from .task.task_decorator import task_decorator as task_decorator
+from .task.task_io import TaskInputs as TaskInputs
+from .task.task_io import TaskOutputs as TaskOutputs
+from .task.task_model import TaskModel as TaskModel
+from .task.task_service import TaskService as TaskService
+from .task.task_typing import TaskTyping as TaskTyping
 # User
 from .user.activity import Activity as Activity
 from .user.activity_service import ActivityService as ActivityService

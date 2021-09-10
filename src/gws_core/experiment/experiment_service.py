@@ -6,23 +6,26 @@
 import os
 import subprocess
 import traceback
-from typing import Any, Coroutine, Union
+from typing import Any, Coroutine, Type, Union
 
-from gws_core.core.exception.gws_exceptions import GWSException
-from gws_core.experiment.experiment_exception import ExperimentRunException
-from gws_core.processable.processable_factory import ProcessableFactory
-from gws_core.protocol.protocol_service import ProtocolService
+from gws_core.task.task_service import TaskService
 from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import BadRequestException, NotFoundException
+from ..core.exception.gws_exceptions import GWSException
 from ..core.model.sys_proc import SysProc
 from ..core.service.base_service import BaseService
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
-from ..process.process_model import ProcessModel
+from ..experiment.experiment_exception import ExperimentRunException
+from ..process.process_factory import ProcessFactory
+from ..protocol.protocol import Protocol
 from ..protocol.protocol_model import ProtocolModel
+from ..protocol.protocol_service import ProtocolService
 from ..study.study import Study
+from ..task.task import Task
+from ..task.task_model import TaskModel
 from ..user.activity import Activity
 from ..user.activity_service import ActivityService
 from ..user.current_user_service import CurrentUserService
@@ -38,18 +41,18 @@ class ExperimentService(BaseService):
     @classmethod
     def create_empty_experiment(cls, experimentDTO: ExperimentDTO) -> Experiment:
         return cls.create_experiment_from_protocol_model(
-            protocol_model=ProcessableFactory.create_protocol_empty(),
+            protocol_model=ProcessFactory.create_protocol_empty(),
             study=None,
             title=experimentDTO.title,
             description=experimentDTO.description
         )
 
     @classmethod
-    def create_experiment_from_process_model(
-            cls, process_model: ProcessModel, study: Study = None, title: str = "", description: str = "") -> Experiment:
-        if not isinstance(process_model, ProcessModel):
-            raise BadRequestException("An instance of ProcessModel is required")
-        proto = ProtocolService.create_protocol_model_from_process_model(process_model=process_model)
+    def create_experiment_from_task_model(
+            cls, task_model: TaskModel, study: Study = None, title: str = "", description: str = "") -> Experiment:
+        if not isinstance(task_model, TaskModel):
+            raise BadRequestException("An instance of TaskModel is required")
+        proto = ProtocolService.create_protocol_model_from_task_model(task_model=task_model)
         return cls.create_experiment_from_protocol_model(
             protocol_model=proto, study=study, title=title, description=description)
 
@@ -71,7 +74,25 @@ class ExperimentService(BaseService):
         protocol_model.save_full()
         return experiment
 
-    # -- F --
+    @classmethod
+    def create_experiment_from_protocol_type(
+            cls, protocol_type: Type[Protocol],
+            study: Study = None, title: str = "", description: str = "") -> Experiment:
+
+        protocol_model: ProtocolModel = ProtocolService.create_protocol_model_from_type(protocol_type=protocol_type)
+        return cls.create_experiment_from_protocol_model(
+            protocol_model=protocol_model, study=study, title=title, description=description)
+
+    @classmethod
+    def create_experiment_from_task_type(
+            cls, task_type: Type[Task],
+            study: Study = None, title: str = "", description: str = "") -> Experiment:
+
+        task_model: TaskModel = TaskService.create_task_model_from_type(task_type=task_type)
+        return cls.create_experiment_from_task_model(
+            task_model=task_model, study=study, title=title, description=description)
+
+        # -- F --
 
     @classmethod
     def get_experiment_by_uri(cls, uri: str) -> Union[Experiment, dict]:
@@ -171,10 +192,11 @@ class ExperimentService(BaseService):
             object_uri=experiment.uri
         )
 
-        # todo uniquify unique name
         experiment.mark_as_error({"detail": GWSException.EXPERIMENT_STOPPED_MANUALLY.value,
                                   "unique_code": GWSException.EXPERIMENT_STOPPED_MANUALLY.name,
                                   "context": None, "instance_id": None})
+
+        return experiment
 
     # -- U --
 
@@ -185,7 +207,7 @@ class ExperimentService(BaseService):
         experiment.check_is_updatable()
 
         if experiment_DTO.graph:
-            ProtocolService.update_protocol_graph(protocol_model=experiment.protocol, graph=experiment_DTO.graph)
+            ProtocolService.update_protocol_graph(protocol_model=experiment.protocol_model, graph=experiment_DTO.graph)
 
         if experiment_DTO.title:
             experiment.set_title(experiment_DTO.title)
@@ -248,7 +270,7 @@ class ExperimentService(BaseService):
         try:
             experiment.mark_as_started()
 
-            await experiment.protocol.run()
+            await experiment.protocol_model.run()
 
             experiment.mark_as_success()
 

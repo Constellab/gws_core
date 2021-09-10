@@ -7,7 +7,7 @@ from ..model.typing_register_decorator import typing_registrator
 from ..model.viewable import Viewable
 
 
-@typing_registrator(unique_name="Study", object_type="GWS_CORE", hide=True)
+@typing_registrator(unique_name="Study", object_type="MODEL", hide=True)
 class Study(Viewable):
     """
     Study class.

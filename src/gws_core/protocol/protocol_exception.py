@@ -14,11 +14,11 @@ class ProtocolBuildException(BadRequestException):
     original_exception: Exception
     original_detail: str
 
-    processable_type: Literal['Process', 'Protocol']
-    instance_name_chain: str  # all processable instance name up to Main Protocol
+    process_type: Literal['Task', 'Protocol']
+    instance_name_chain: str  # all process instance name up to Main Protocol
 
     def __init__(
-            self, processable_type: Literal['Process', 'Protocol'],
+            self, process_type: Literal['Task', 'Protocol'],
             instance_name: str,
             parent_instance_name: str,
             exception_detail: str,
@@ -26,7 +26,7 @@ class ProtocolBuildException(BadRequestException):
             exception: Exception) -> None:
         self.original_exception = exception
         self.original_detail = exception_detail
-        self.processable_type = processable_type
+        self.process_type = process_type
 
         # Build the instance name chain
         self.instance_name_chain = self._get_instance_name_chain(
@@ -38,12 +38,12 @@ class ProtocolBuildException(BadRequestException):
             detail_args=detail_arg)
 
     @staticmethod
-    def from_exception(processable_type: Literal['Process', 'Protocol'],
+    def from_exception(process_type: Literal['Task', 'Protocol'],
                        instance_name: str, exception: Exception) -> ProtocolBuildException:
         # create from a know exception
         if isinstance(exception, BaseHTTPException):
             return ProtocolBuildException(
-                processable_type=processable_type,
+                process_type=process_type,
                 instance_name=instance_name,
                 parent_instance_name=None,
                 exception_detail=exception.get_detail_with_args(),
@@ -52,7 +52,7 @@ class ProtocolBuildException(BadRequestException):
         # create from a unknow exception
         else:
             return ProtocolBuildException(
-                processable_type=processable_type,
+                process_type=process_type,
                 instance_name=instance_name,
                 parent_instance_name=None,
                 exception_detail=str(exception),
@@ -63,7 +63,7 @@ class ProtocolBuildException(BadRequestException):
     @staticmethod
     def from_build_exception(parent_instance_name: str, exception: ProtocolBuildException) -> ProtocolBuildException:
         return ProtocolBuildException(
-            processable_type=exception.processable_type,
+            process_type=exception.process_type,
             instance_name=exception.instance_name_chain,
             parent_instance_name=parent_instance_name,
             exception_detail=exception.original_detail,
@@ -81,7 +81,7 @@ class ProtocolBuildException(BadRequestException):
         return f"{parent_instance_name} > {instance_name_chain}"
 
     def _get_error_message(self,) -> str:
-        if self.processable_type == 'Protocol':
+        if self.process_type == 'Protocol':
             return GWSException.PROTOCOL_BUILD_EXCEPTION.value
         else:
-            return GWSException.PROCESS_BUILD_EXCEPTION.value
+            return GWSException.TASK_BUILD_EXCEPTION.value

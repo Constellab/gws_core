@@ -4,49 +4,49 @@
 # About us: https://gencovery.com
 
 
-from gws_core import (BaseTestCase, CheckBeforeTaskResult, ConfigParams,
-                      Experiment, ExperimentService, GTest, Process,
-                      ProcessableFactory, ProcessableModel, ProcessableSpec,
-                      ProcessInputs, ProcessOutputs, Protocol, ProtocolModel,
-                      ProtocolService, Resource, RobotMove, process_decorator,
-                      protocol_decorator, resource_decorator)
+from gws_core import (BaseTestCase, CheckBeforeTaskResult, ConfigValues,
+                      Experiment, ExperimentService, GTest, ProcessFactory,
+                      ProcessModel, ProcessSpec, Protocol,
+                      ProtocolModel, ProtocolService, Resource, RobotMove,
+                      Task, TaskInputs, TaskOutputs, protocol_decorator,
+                      resource_decorator, task_decorator)
 from gws_core.experiment.experiment_exception import ExperimentRunException
 from gws_core.protocol.protocol_exception import ProtocolBuildException
 
 
-#################### Error during the process task ################
-@process_decorator("ErrorProcess")
-class ErrorProcess(Process):
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
-        raise Exception("This is the error process")
+#################### Error during the task ################
+@task_decorator("ErrorTask")
+class ErrorTask(Task):
+    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
+        raise Exception("This is the error task")
 
 
 @protocol_decorator("TestSubErrorProtocol")
 class TestSubErrorProtocol(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
-        self.add_process(ErrorProcess, 'error')
+    def configure_protocol(self, config_params: ConfigValues) -> None:
+        self.add_process(ErrorTask, 'error')
 
 
 @protocol_decorator("TestErrorProtocol")
 class TestErrorProtocol(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self, config_params: ConfigValues) -> None:
         self.add_process(TestSubErrorProtocol, 'sub_proto')
 
 ############## Before task error ###################
 
 
-@process_decorator("CheckBeforeTaskError")
-class CheckBeforeTaskError(Process):
-    def check_before_task(self, config: ConfigParams, inputs: ProcessInputs) -> CheckBeforeTaskResult:
-        return {"result": False, "message": "We can't run this process"}
+@task_decorator("CheckBeforeTaskError")
+class CheckBeforeTaskError(Task):
+    def check_before_run(self, config: ConfigValues, inputs: TaskInputs) -> CheckBeforeTaskResult:
+        return {"result": False, "message": "We can't run this task"}
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
         pass
 
 
 @protocol_decorator("CheckBeforeTaskErrorProtocol")
 class CheckBeforeTaskErrorProtocol(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self, config_params: ConfigValues) -> None:
         self.add_process(CheckBeforeTaskError, 'error')
 
 #################### Error on protocol build ###########################
@@ -57,21 +57,21 @@ class NotRobot(Resource):
     pass
 
 
-@process_decorator("NotRobotCreate")
-class NotRobotCreate(Process):
+@task_decorator("NotRobotCreate")
+class NotRobotCreate(Task):
     input_specs = {}
     output_specs = {'not_robot': NotRobot}
     config_specs = {}
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
         return {'not_robot': NotRobot()}
 
 
 @protocol_decorator("TestSubProtocolBuildError")
 class TestSubProtocolBuildError(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
-        not_robot: ProcessableSpec = self.add_process(NotRobotCreate, 'not_robot')
-        move: ProcessableSpec = self.add_process(RobotMove, 'move')
+    def configure_protocol(self, config_params: ConfigValues) -> None:
+        not_robot: ProcessSpec = self.add_process(NotRobotCreate, 'not_robot')
+        move: ProcessSpec = self.add_process(RobotMove, 'move')
 
         self.add_connectors([
             (not_robot >> 'not_robot', move << 'robot')
@@ -80,15 +80,15 @@ class TestSubProtocolBuildError(Protocol):
 
 @protocol_decorator("TestNestedProtocol")
 class TestProtocolBuildError(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
-        sub_proto: ProcessableSpec = self.add_process(TestSubProtocolBuildError, 'sub_proto')
+    def configure_protocol(self, config_params: ConfigValues) -> None:
+        sub_proto: ProcessSpec = self.add_process(TestSubProtocolBuildError, 'sub_proto')
 
 
 class TestProtocolError(BaseTestCase):
 
-    async def test_error_on_process(self):
-        """Test an experiment with a process that throws an exception. Test that """
-        GTest.print("Error Process")
+    async def test_error_on_task(self):
+        """Test an experiment with a task that throws an exception """
+        GTest.print("Error Task")
 
         protocol: ProtocolModel = ProtocolService.create_protocol_model_from_type(TestErrorProtocol)
 
@@ -116,7 +116,7 @@ class TestProtocolError(BaseTestCase):
         self.assertEqual(experiment.error_info['context'], "Main protocol > sub_proto > error")
 
         # Check that main protocol is in error status
-        protocol: ProtocolModel = experiment.protocol
+        protocol: ProtocolModel = experiment.protocol_model
         self.assertTrue(protocol.is_error)
         self.assertIsNotNone(protocol.error_info)
         self.assertEqual(protocol.error_info['instance_id'], exception.instance_id)
@@ -130,7 +130,7 @@ class TestProtocolError(BaseTestCase):
         self.assertEqual(sub_protocol.error_info['unique_code'], exception.unique_code)
 
         # Check that process is in error status
-        sub_process: ProcessableModel = sub_protocol.get_process('error')
+        sub_process: ProcessModel = sub_protocol.get_process('error')
         self.assertTrue(sub_process.is_error)
         self.assertIsNotNone(sub_process.error_info)
         self.assertEqual(sub_process.error_info['instance_id'], exception.instance_id)
@@ -166,7 +166,7 @@ class TestProtocolError(BaseTestCase):
         """
         exception: ProtocolBuildException
         try:
-            ProcessableFactory.create_protocol_model_from_type(TestProtocolBuildError)
+            ProcessFactory.create_protocol_model_from_type(TestProtocolBuildError)
         except ProtocolBuildException as err:
             exception = err
         else:

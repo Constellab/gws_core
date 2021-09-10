@@ -1,11 +1,9 @@
 from typing import final
 
-from gws_core.io.io_exception import ImcompatiblePortsException
-from gws_core.io.io_spec import IOSpecsHelper
-
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ..processable.processable_model import ProcessableModel
+from ..process.process_model import ProcessModel
+from .io_exception import ImcompatiblePortsException
 from .port import InPort, OutPort
 
 
@@ -94,12 +92,12 @@ class Connector:
     # -- L --
 
     @property
-    def left_process(self) -> ProcessableModel:
+    def left_process(self) -> ProcessModel:
         """
         Returns the left-hand side process
 
         :return: The left-hand side process
-        :rtype: Process
+        :rtype: process
         """
         return self.out_port.parent.parent
 
@@ -108,11 +106,11 @@ class Connector:
     # -- O --
 
     @property
-    def right_process(self) -> ProcessableModel:
+    def right_process(self) -> ProcessModel:
         """
         Returns the right-hand side process
 
         :return: The right-hand side process
-        :rtype: Process
+        :rtype: process
         """
         return self.in_port.parent.parent

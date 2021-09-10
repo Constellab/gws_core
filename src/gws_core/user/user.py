@@ -5,10 +5,10 @@
 
 from typing import final
 
-from gws_core.core.decorator.json_ignore import json_ignore
 from peewee import BooleanField, CharField
 
 from ..core.classes.enum_field import EnumField
+from ..core.decorator.json_ignore import json_ignore
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
 from ..core.utils.utils import Utils
@@ -24,7 +24,7 @@ from ..user.user_group import UserGroup
 
 @final
 @json_ignore(["is_http_authenticated", "is_console_authenticated", "console_token"])
-@typing_registrator(unique_name="User", object_type="GWS_CORE", hide=True)
+@typing_registrator(unique_name="User", object_type="MODEL", hide=True)
 class User(Model):
     """
     User class

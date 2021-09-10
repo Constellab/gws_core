@@ -4,24 +4,24 @@
 # About us: https://gencovery.com
 import time
 
-from gws_core import (ConfigParams, OptionalIn, Process, ProcessableSpec,
-                      ProcessInputs, ProcessOutputs, Protocol, RobotCreate,
+from gws_core import (ConfigValues, OptionalIn, Task, ProcessSpec,
+                      TaskInputs, TaskOutputs, Protocol, RobotCreate,
                       RobotEat, RobotFood, RobotMove, RobotSugarCreate,
-                      RobotWait, process_decorator, protocol_decorator)
+                      RobotWait, task_decorator, protocol_decorator)
 
 # File for Tests containing examples of protocols
 
 
 @protocol_decorator("TestSimpleProtocol")
 class TestSimpleProtocol(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
-        p0: ProcessableSpec = self.add_process(RobotCreate, 'p0')
-        p1: ProcessableSpec = self.add_process(RobotMove, 'p1')
-        p2: ProcessableSpec = self.add_process(RobotEat, 'p2')
-        p3: ProcessableSpec = self.add_process(RobotMove, 'p3')
-        p4: ProcessableSpec = self.add_process(RobotMove, 'p4')
-        p5: ProcessableSpec = self.add_process(RobotEat, 'p5')
-        p_wait: ProcessableSpec = self.add_process(RobotWait, 'p_wait')
+    def configure_protocol(self, config_params: ConfigValues) -> None:
+        p0: ProcessSpec = self.add_process(RobotCreate, 'p0')
+        p1: ProcessSpec = self.add_process(RobotMove, 'p1')
+        p2: ProcessSpec = self.add_process(RobotEat, 'p2')
+        p3: ProcessSpec = self.add_process(RobotMove, 'p3')
+        p4: ProcessSpec = self.add_process(RobotMove, 'p4')
+        p5: ProcessSpec = self.add_process(RobotEat, 'p5')
+        p_wait: ProcessSpec = self.add_process(RobotWait, 'p_wait')
 
         self.add_connectors([
             (p0 >> 'robot', p1 << 'robot'),
@@ -35,12 +35,12 @@ class TestSimpleProtocol(Protocol):
 
 @protocol_decorator("TestSubProtocol")
 class TestSubProtocol(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
-        p1: ProcessableSpec = self.add_process(RobotMove, 'p1')
-        p2: ProcessableSpec = self.add_process(RobotEat, 'p2')
-        p3: ProcessableSpec = self.add_process(RobotMove, 'p3')
-        p4: ProcessableSpec = self.add_process(RobotMove, 'p4')
-        p_wait: ProcessableSpec = self.add_process(RobotWait, 'p_wait')
+    def configure_protocol(self, config_params: ConfigValues) -> None:
+        p1: ProcessSpec = self.add_process(RobotMove, 'p1')
+        p2: ProcessSpec = self.add_process(RobotEat, 'p2')
+        p3: ProcessSpec = self.add_process(RobotMove, 'p3')
+        p4: ProcessSpec = self.add_process(RobotMove, 'p4')
+        p_wait: ProcessSpec = self.add_process(RobotWait, 'p_wait')
 
         self.add_connectors([
             (p1 >> 'robot', p2 << 'robot'),
@@ -55,10 +55,10 @@ class TestSubProtocol(Protocol):
 
 @protocol_decorator("TestNestedProtocol")
 class TestNestedProtocol(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
-        p0: ProcessableSpec = self.add_process(RobotCreate, 'p0')
-        p5: ProcessableSpec = self.add_process(RobotEat, 'p5')
-        mini_proto: ProcessableSpec = self.add_process(TestSubProtocol, 'mini_proto')
+    def configure_protocol(self, config_params: ConfigValues) -> None:
+        p0: ProcessSpec = self.add_process(RobotCreate, 'p0')
+        p5: ProcessSpec = self.add_process(RobotEat, 'p5')
+        mini_proto: ProcessSpec = self.add_process(TestSubProtocol, 'mini_proto')
 
         self.add_connectors([
             (p0 >> 'robot', mini_proto << 'robot'),
@@ -66,54 +66,54 @@ class TestNestedProtocol(Protocol):
         ])
 
 
-@process_decorator(unique_name="RobotWaitfood", human_name="Wait food",
-                   short_description="Wait food")
-class RobotWaitfood(Process):
+@task_decorator(unique_name="RobotWaitfood", human_name="Wait food",
+                short_description="Wait food")
+class RobotWaitfood(Task):
     """Wait 3
     """
     input_specs = {'food': RobotFood}
     output_specs = {'food': RobotFood}
     config_specs = {}
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
         print("Wait food", flush=True)
         time.sleep(3)
         return {'food': inputs['food']}
 
 
-@process_decorator(unique_name="RobotEmptyfood", human_name="Empty food",
-                   short_description="Empty food")
-class RobotEmptyfood(Process):
+@task_decorator(unique_name="RobotEmptyfood", human_name="Empty food",
+                short_description="Empty food")
+class RobotEmptyfood(Task):
     """Wait 3
     """
     input_specs = {}
     output_specs = {'food': OptionalIn(RobotFood)}
     config_specs = {}
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
         return {}
 
 
 @protocol_decorator("TestRobotwithSugarProtocol")
 class TestRobotwithSugarProtocol(Protocol):
-    """This test protocol test that the Eat process works with 2 entries.
-    It also test that the eat process will wait for the Food input even if it is optional
+    """This test protocol test that the Eat task works with 2 entries.
+    It also test that the eat task will wait for the Food input even if it is optional
 
     :param Protocol: [description]
     :type Protocol: [type]
     """
 
-    def configure_protocol(self, config_params: ConfigParams) -> None:
-        p0: ProcessableSpec = self.add_process(RobotCreate, 'p0')
-        sugar: ProcessableSpec = self.add_process(RobotSugarCreate, 'sugar')
-        wait_food: ProcessableSpec = self.add_process(RobotWaitfood, 'wait_food')
+    def configure_protocol(self, config_params: ConfigValues) -> None:
+        p0: ProcessSpec = self.add_process(RobotCreate, 'p0')
+        sugar: ProcessSpec = self.add_process(RobotSugarCreate, 'sugar')
+        wait_food: ProcessSpec = self.add_process(RobotWaitfood, 'wait_food')
         # Eat 1 need to wait for sugar and wait_food
-        eat_1: ProcessableSpec = self.add_process(RobotEat, 'eat_1').configure('food_weight', 2)
+        eat_1: ProcessSpec = self.add_process(RobotEat, 'eat_1').configure('food_weight', 2)
         # Eat_2 is called even if the food input is not connected
-        eat_2: ProcessableSpec = self.add_process(RobotEat, 'eat_2').configure('food_weight', 5)
+        eat_2: ProcessSpec = self.add_process(RobotEat, 'eat_2').configure('food_weight', 5)
         # Eat 3 is called event is the food input is connected but None
-        empty_food: ProcessableSpec = self.add_process(RobotEmptyfood, 'empty_food')
-        eat_3: ProcessableSpec = self.add_process(RobotEat, 'eat_3').configure('food_weight', 7)
+        empty_food: ProcessSpec = self.add_process(RobotEmptyfood, 'empty_food')
+        eat_3: ProcessSpec = self.add_process(RobotEat, 'eat_3').configure('food_weight', 7)
 
         self.add_connectors([
             (p0 >> 'robot', eat_1 << 'robot'),

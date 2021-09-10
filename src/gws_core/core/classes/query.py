@@ -5,8 +5,9 @@
 
 from typing import Generic, TypeVar
 
-from gws_core.model.viewable import Viewable
 from peewee import ModelSelect
+
+from ...model.viewable import Viewable
 
 QueryType = TypeVar('QueryType', bound=Viewable)
 

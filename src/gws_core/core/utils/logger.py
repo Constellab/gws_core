@@ -4,17 +4,13 @@
 # About us: https://gencovery.com
 
 import logging
-import traceback
-from datetime import date, datetime
+from datetime import datetime
 from logging import Logger as PythonLogger
 from logging.handlers import TimedRotatingFileHandler
 from os import makedirs, path
-from sys import exc_info
 from typing import Literal
 
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
-
+from ..exception.exceptions.bad_request_exception import BadRequestException
 from .settings import Settings
 
 LOGGER_NAME = "gws"

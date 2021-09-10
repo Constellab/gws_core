@@ -14,8 +14,8 @@ from ...core.decorator.transaction import transaction
 from ...core.exception.exceptions import BadRequestException
 from ...core.utils.settings import Settings
 from .file_helper import FileHelper
-from .file_resource import FileResource
-from .file_resource_model import FileResourceModel
+from .file import File
+from .file_model import FileModel
 from .file_store import FileStore
 
 
@@ -29,7 +29,7 @@ class LocalFileStore(FileStore):
         if not self.path:
             self.data["path"] = os.path.join(self.get_base_dir(), self.uri)
 
-    def add_from_path(self, source_file: str, dest_file_name: str = None) -> FileResource:
+    def add_from_path(self, source_file: str, dest_file_name: str = None) -> File:
         """
         Add a file from an external repository to a local store. Must be implemented by the child class.
 
@@ -44,7 +44,7 @@ class LocalFileStore(FileStore):
 
         return file
 
-    def add_from_file(self, source_file: FileResource, dest_file_name: str = None) -> FileResource:
+    def add_from_file(self, source_file: File, dest_file_name: str = None) -> File:
         """
         Add a file from an external repository to a local store. Must be implemented by the child class.
 
@@ -60,7 +60,7 @@ class LocalFileStore(FileStore):
 
     def add_from_temp_file(
             self, source_file: Union[IOBase, SpooledTemporaryFile],
-            dest_file_name: str = None) -> FileResource:
+            dest_file_name: str = None) -> File:
         """
         Add a file from an external repository to a local store. Must be implemented by the child class.
 
@@ -78,7 +78,7 @@ class LocalFileStore(FileStore):
 
         return file
 
-    def create_empty(self, file_name: str) -> FileResource:
+    def create_empty(self, file_name: str) -> File:
         return self.create_file(file_name=file_name)
 
     def _copy_file(self, source: str, destination: str) -> None:
@@ -105,12 +105,12 @@ class LocalFileStore(FileStore):
             if not os.path.exists(dir):
                 raise BadRequestException(f"Cannot create directory '{dir}'")
 
-    def create_file(self, file_type: type = None, file_name: str = None) -> FileResource:
-        file: FileResource
+    def create_file(self, file_type: type = None, file_name: str = None) -> File:
+        file: File
         if isinstance(file_type, type):
             file = file_type()
         else:
-            file = FileResource()
+            file = File()
         file.path = self._get_new_file_path(file_name)
         file.file_store_uri = self.uri
 
@@ -142,7 +142,7 @@ class LocalFileStore(FileStore):
             unique += 1
         return os.path.join(self.path, f"{file_name}_{unique}{extension}")
 
-    def contains(self, file: FileResource) -> bool:
+    def contains(self, file: File) -> bool:
         return self.path in file.path
 
     # -- D --
@@ -153,8 +153,8 @@ class LocalFileStore(FileStore):
         super().drop_table(*args, **kwargs)
 
     def delete_instance(self, *args, **kwargs):
-        if FileResourceModel.table_exists():
-            FileResourceModel.delete().where(FileResourceModel.file_store_uri == self.uri).execute()
+        if FileModel.table_exists():
+            FileModel.delete().where(FileModel.file_store_uri == self.uri).execute()
         if os.path.exists(self.path):
             shutil.rmtree(self.path)
         super().delete_instance(*args, **kwargs)
