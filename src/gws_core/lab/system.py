@@ -31,7 +31,7 @@ def _system_monitor_tick(daemon):
 # ####################################################################
 
 
-@typing_registrator(unique_name="Monitor", object_type="GWS_CORE", hide=True)
+@typing_registrator(unique_name="Monitor", object_type="MODEL", hide=True)
 class Monitor(Model):
     """
     Lab Monitor class.

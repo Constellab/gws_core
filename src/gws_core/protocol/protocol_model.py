@@ -24,7 +24,7 @@ from ..user.activity import Activity
 from ..user.user import User
 
 
-@typing_registrator(unique_name="Protocol", object_type="GWS_CORE", hide=True)
+@typing_registrator(unique_name="Protocol", object_type="MODEL", hide=True)
 class ProtocolModel(ProcessModel):
     """
     Protocol class.

@@ -44,7 +44,7 @@ class ExperimentErrorInfo(TypedDict):
 
 
 @final
-@typing_registrator(unique_name="Experiment", object_type="GWS_CORE", hide=True)
+@typing_registrator(unique_name="Experiment", object_type="MODEL", hide=True)
 class Experiment(Viewable):
     """
     Experiment class.

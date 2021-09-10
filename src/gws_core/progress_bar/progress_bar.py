@@ -21,7 +21,7 @@ from ..model.typing_register_decorator import typing_registrator
 
 @final
 @json_ignore(['process_uri', 'process_typing_name'])
-@typing_registrator(unique_name="ProgressBar", object_type="GWS_CORE", hide=True)
+@typing_registrator(unique_name="ProgressBar", object_type="MODEL", hide=True)
 class ProgressBar(Model):
     """
     ProgressBar class

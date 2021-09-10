@@ -12,7 +12,7 @@ from ..user.user import User
 from .experiment import Experiment
 
 
-@typing_registrator(unique_name="Job", object_type="GWS_CORE", hide=True)
+@typing_registrator(unique_name="Job", object_type="MODEL", hide=True)
 class Job(Model):
     """
     Class representing queue job
@@ -28,7 +28,7 @@ class Job(Model):
     _table_name = "gws_queue_job"
 
 
-@typing_registrator(unique_name="Queue", object_type="GWS_CORE", hide=True)
+@typing_registrator(unique_name="Queue", object_type="MODEL", hide=True)
 class Queue(Model):
     """
     Singleton Class representing experiment queue

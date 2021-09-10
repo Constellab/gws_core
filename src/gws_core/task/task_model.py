@@ -20,7 +20,7 @@ from ..task.task_io import TaskInputs, TaskOutputs
 from .task import CheckBeforeTaskResult, Task
 
 
-@typing_registrator(unique_name="Task", object_type="GWS_CORE", hide=True)
+@typing_registrator(unique_name="Task", object_type="MODEL", hide=True)
 class TaskModel(ProcessModel):
     """
     Task model class.

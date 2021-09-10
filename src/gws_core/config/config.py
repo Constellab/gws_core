@@ -16,7 +16,7 @@ from .config_spec import (ConfigSpecs, ConfigSpecsHelper, ConfigValue,
 
 
 @final
-@typing_registrator(unique_name="Config", object_type="GWS_CORE", hide=True)
+@typing_registrator(unique_name="Config", object_type="MODEL", hide=True)
 class Config(Viewable):
     """
     Config class that represents the configuration of a process. A configuration is

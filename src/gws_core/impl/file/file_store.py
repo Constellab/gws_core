@@ -20,7 +20,7 @@ from .file import File
 # ####################################################################
 
 
-@typing_registrator(unique_name="FileStore", object_type="GWS_CORE", hide=True)
+@typing_registrator(unique_name="FileStore", object_type="MODEL", hide=True)
 class FileStore(Model):
     """
     FileStore class

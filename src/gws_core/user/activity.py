@@ -15,7 +15,7 @@ from .user import User
 
 
 @final
-@typing_registrator(unique_name="Activity", object_type="GWS_CORE", hide=True)
+@typing_registrator(unique_name="Activity", object_type="MODEL", hide=True)
 class Activity(Model):
     """
     (User) Activity class

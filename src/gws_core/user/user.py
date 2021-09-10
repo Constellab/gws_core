@@ -24,7 +24,7 @@ from ..user.user_group import UserGroup
 
 @final
 @json_ignore(["is_http_authenticated", "is_console_authenticated", "console_token"])
-@typing_registrator(unique_name="User", object_type="GWS_CORE", hide=True)
+@typing_registrator(unique_name="User", object_type="MODEL", hide=True)
 class User(Model):
     """
     User class

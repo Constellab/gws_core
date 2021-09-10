@@ -14,7 +14,7 @@ from ..model.typing_register_decorator import typing_registrator
 
 @final
 @json_ignore(["object_uri", "object_typing_name"])
-@typing_registrator(unique_name="Comment", object_type="GWS_CORE", hide=True)
+@typing_registrator(unique_name="Comment", object_type="MODEL", hide=True)
 class Comment(Model):
     """
     Comment class that represents generic object comments

@@ -25,14 +25,14 @@ if TYPE_CHECKING:
     from ..task.task_model import TaskModel
 
 # Typing names generated for the class Resource
-CONST_RESOURCE_MODEL_TYPING_NAME = "GWS_CORE.gws_core.ResourceModel"
+CONST_RESOURCE_MODEL_TYPING_NAME = "MODEL.gws_core.ResourceModel"
 
 ResourceType = TypeVar('ResourceType', bound=Resource)
 
 # Use the typing decorator to avoid circular dependency
 
 
-@typing_registrator(unique_name="ResourceModel", object_type="GWS_CORE", hide=True)
+@typing_registrator(unique_name="ResourceModel", object_type="MODEL", hide=True)
 class ResourceModel(Viewable, Generic[ResourceType]):
     """
     ResourceModel class.

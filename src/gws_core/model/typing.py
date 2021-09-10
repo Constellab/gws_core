@@ -24,8 +24,8 @@ SEPARATOR: str = "."
 
 # different object typed store in the typing table
 # TODO : allow object type of new bricks automatically
-TypingObjectType = Literal["TASK", "RESOURCE", "PROTOCOL", "GWS_CORE", "GWS_BIOTA"]
-available_object_types = ["TASK", "RESOURCE", "PROTOCOL", "GWS_CORE", "GWS_BIOTA"]
+TypingObjectType = Literal["TASK", "RESOURCE", "PROTOCOL", "MODEL"]
+available_object_types = ["TASK", "RESOURCE", "PROTOCOL", "MODEL"]
 
 
 # Simple method to build the typing  = object_type.brick.model_name
