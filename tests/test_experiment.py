@@ -83,15 +83,15 @@ class TestExperiment(BaseTestCase):
 
         # Test the configuration on fly_1 process (west 2000)
         fly_1: ProcessModel = e2_bis.protocol_model.get_process('fly_1')
-        robot1: Robot = fly_1.input.get_resource_model('robot').get_resource()
-        robot2: Robot = fly_1.output.get_resource_model('robot').get_resource()
+        robot1: Robot = fly_1.inputs.get_resource_model('robot').get_resource()
+        robot2: Robot = fly_1.outputs.get_resource_model('robot').get_resource()
         self.assertEqual(robot1.position[0], robot2.position[0] + 2000)
 
         # Test the protocol (super_travel) config (weight of 10)
         super_travel: ProtocolModel = e2_bis.protocol_model.get_process('super_travel')
         eat_3: ProtocolModel = super_travel.get_process('eat_3')
-        robot1: Robot = eat_3.input.get_resource_model('robot').get_resource()
-        robot2: Robot = eat_3.output.get_resource_model('robot').get_resource()
+        robot1: Robot = eat_3.inputs.get_resource_model('robot').get_resource()
+        robot2: Robot = eat_3.outputs.get_resource_model('robot').get_resource()
         self.assertEqual(robot1.weight, robot2.weight - 10)
 
     async def test_run_through_cli_and_re_run(self):

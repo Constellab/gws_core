@@ -262,7 +262,7 @@ class IO(Base, Generic[PortType]):
 
 
 @final
-class Input(IO[InPort]):
+class Inputs(IO[InPort]):
     """
     Input class
     """
@@ -326,7 +326,7 @@ class Input(IO[InPort]):
 
 
 @final
-class Output(IO[OutPort]):
+class Outputs(IO[OutPort]):
     """
     Output class
     """

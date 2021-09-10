@@ -50,7 +50,7 @@ class TestProcess(BaseTestCase):
         # refresh the task
         task_model: TaskModel = experiment.task_models[0]
 
-        result: Resource = task_model.output.get_resource_model("stdout").get_resource()
+        result: Resource = task_model.outputs.get_resource_model("stdout").get_resource()
         encoded_string = result.data["encoded_string"]
         self.assertEqual(
             encoded_string,

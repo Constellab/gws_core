@@ -10,7 +10,7 @@ from typing import Dict, List, Type, Union
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..io.connector import Connector
-from ..io.io import Input, Output
+from ..io.io import Inputs, Outputs
 from ..io.io_spec import IOSpecClass
 from ..io.ioface import Interface, Outerface
 from ..io.port import InPort, OutPort, Port
@@ -49,8 +49,8 @@ class ProtocolModel(ProcessModel):
 
         super().__init__(*args, **kwargs)
         self._is_loaded = self.id is None or not "graph" in self.data
-        self._input = Input(self)
-        self._output = Output(self)
+        self._inputs = Inputs(self)
+        self._outputs = Outputs(self)
         self._processes = {}
         self._interfaces = {}
         self._outerfaces = {}
@@ -226,7 +226,7 @@ class ProtocolModel(ProcessModel):
             proc_name: str = _to["node"]
             port_name: str = _to["port"]
             proc: ProcessModel = self._processes[proc_name]
-            port: Port = proc.input.ports[port_name]
+            port: Port = proc.inputs.ports[port_name]
             interfaces[key] = port
         self.set_interfaces(interfaces)
 
@@ -241,7 +241,7 @@ class ProtocolModel(ProcessModel):
             proc_name: str = _from["node"]
             port_name: str = _from["port"]
             proc: ProcessModel = self._processes[proc_name]
-            port: Port = proc.output.ports[port_name]
+            port: Port = proc.outputs.ports[port_name]
             outerfaces[key] = port
         self.set_outerfaces(outerfaces)
 
@@ -266,7 +266,7 @@ class ProtocolModel(ProcessModel):
 
     def disconnect(self):
         """
-        Disconnect the input, output, interfaces and outerfaces
+        Disconnect the inputs, outputs, interfaces and outerfaces
         """
 
         super().disconnect()
@@ -435,30 +435,30 @@ class ProtocolModel(ProcessModel):
                 self._connectors = []
 
     @property
-    def input(self) -> 'Input':
+    def inputs(self) -> 'Inputs':
         """
-        Returns input of the process.
+        Returns inputs of the process.
 
-        :return: The input
-        :rtype: Input
+        :return: The inputs
+        :rtype: Inputs
         """
         # load first the value if there are not loaded
         self._load_from_graph()
 
-        return super().input
+        return super().inputs
 
     @property
-    def output(self) -> 'Output':
+    def outputs(self) -> 'Outputs':
         """
-        Returns input of the process.
+        Returns outputs of the process.
 
-        :return: The input
-        :rtype: Input
+        :return: The outputs
+        :rtype: Outputs
         """
         # load first the value if there are not loaded
         self._load_from_graph()
 
-        return super().output
+        return super().outputs
 
     # -- R --
 
@@ -573,7 +573,7 @@ class ProtocolModel(ProcessModel):
 
         for key, interface in self.interfaces.items():
             port = interface.target_port
-            port.resource_model = self.input.get_resource_model(key)
+            port.resource_model = self.inputs.get_resource_model(key)
 
     def _set_outputs(self):
         """
@@ -582,15 +582,15 @@ class ProtocolModel(ProcessModel):
 
         for key, outerface in self.outerfaces.items():
             port = outerface.source_port
-            self.output.set_resource_model(key, port.resource_model)
+            self.outputs.set_resource_model(key, port.resource_model)
 
     def __set_input_specs(self, input_specs: Dict[str, IOSpecClass]):
         for key, spec in input_specs.items():
-            self._input.create_port(key, spec.resource_spec)
+            self._inputs.create_port(key, spec.resource_spec)
 
     def __set_output_specs(self, output_specs: Dict[str, IOSpecClass]):
         for key, spec in output_specs.items():
-            self._output.create_port(key, spec.resource_spec)
+            self._outputs.create_port(key, spec.resource_spec)
 
     def set_interfaces(self, interfaces: Dict[str, Port]):
         input_specs: Dict[str, IOSpecClass] = {}
@@ -601,11 +601,11 @@ class ProtocolModel(ProcessModel):
         self.__set_input_specs(input_specs)
         self._interfaces = {}
         for key in interfaces:
-            source_port = self._input.get_port(key)
+            source_port = self._inputs.get_port(key)
             self._interfaces[key] = Interface(
                 name=key, source_port=source_port, target_port=interfaces[key])
 
-        self._init_input_from_data()
+        self._init_inputs_from_data()
 
     def set_outerfaces(self, outerfaces: Dict[str, Port]):
         output_specs: Dict[str, IOSpecClass] = {}
@@ -616,11 +616,11 @@ class ProtocolModel(ProcessModel):
         self.__set_output_specs(output_specs)
         self._outerfaces = {}
         for key in outerfaces:
-            target_port = self._output.get_port(key)
+            target_port = self._outputs.get_port(key)
             self._outerfaces[key] = Outerface(
                 name=key, target_port=target_port, source_port=outerfaces[key])
 
-        self._init_output_from_data()
+        self._init_outputs_from_data()
 
     def set_protocol_type(self, protocol_type: Type[Protocol]) -> None:
         self.process_typing_name = protocol_type._typing_name

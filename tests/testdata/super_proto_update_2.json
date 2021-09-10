@@ -51,8 +51,8 @@
                     "typing_name": "TASK.gws_core.RobotCreate"
                 }
             },
-            "input": {},
-            "output": {
+            "inputs": {},
+            "outputs": {
                 "robot": {
                     "resource": {
                         "uri": "",
@@ -132,7 +132,7 @@
                     "typing_name": "TASK.gws_core.RobotMove"
                 }
             },
-            "input": {
+            "inputs": {
                 "robot": {
                     "resource": {
                         "uri": "",
@@ -143,7 +143,7 @@
                     ]
                 }
             },
-            "output": {
+            "outputs": {
                 "robot": {
                     "resource": {
                         "uri": "",
@@ -213,7 +213,7 @@
                     "typing_name": "TASK.gws_core.RobotEat"
                 }
             },
-            "input": {
+            "inputs": {
                 "robot": {
                     "resource": {
                         "uri": "",
@@ -224,7 +224,7 @@
                     ]
                 }
             },
-            "output": {
+            "outputs": {
                 "robot": {
                     "resource": {
                         "uri": "",
@@ -319,7 +319,7 @@
                                     "typing_name": "TASK.gws_core.RobotMove"
                                 }
                             },
-                            "input": {
+                            "inputs": {
                                 "robot": {
                                     "resource": {
                                         "uri": "",
@@ -330,7 +330,7 @@
                                     ]
                                 }
                             },
-                            "output": {
+                            "outputs": {
                                 "robot": {
                                     "resource": {
                                         "uri": "",
@@ -408,7 +408,7 @@
                     "typing_name": "PROTOCOL.gws_core.Protocol"
                 }
             },
-            "input": {
+            "inputs": {
                 "robot": {
                     "resource": {
                         "uri": "",
@@ -419,7 +419,7 @@
                     ]
                 }
             },
-            "output": {
+            "outputs": {
                 "robot": {
                     "resource": {
                         "uri": "",

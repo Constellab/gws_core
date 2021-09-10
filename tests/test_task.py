@@ -37,8 +37,8 @@ class TestTask(BaseTestCase):
         self.assertTrue(p0.created_by.is_sysuser)
         self.assertEqual(proto.created_by, GTest.user)
 
-        self.assertEqual(len(p1.output.get_next_procs()), 1)
-        self.assertEqual(len(p2.output.get_next_procs()), 2)
+        self.assertEqual(len(p1.outputs.get_next_procs()), 1)
+        self.assertEqual(len(p2.outputs.get_next_procs()), 2)
 
         p2.config.set_value('food_weight', '5.6')
 
@@ -58,7 +58,7 @@ class TestTask(BaseTestCase):
         p2: TaskModel = protocol.get_process("p2")
         p3: TaskModel = protocol.get_process("p3")
         p_wait: TaskModel = protocol.get_process("p_wait")
-        elon: Robot = p0.output.get_resource_model('robot').get_resource()
+        elon: Robot = p0.outputs.get_resource_model('robot').get_resource()
 
         print(" \n------ Resource --------")
 
@@ -66,23 +66,23 @@ class TestTask(BaseTestCase):
 
         # check p1
         self.assertEqual(
-            p1.output.get_resource_model('robot').get_resource().position[1],
+            p1.outputs.get_resource_model('robot').get_resource().position[1],
             elon.position[1] + p1.config.get_value('moving_step'))
-        self.assertEqual(p1.output.get_resource_model('robot').get_resource().weight, elon.weight)
+        self.assertEqual(p1.outputs.get_resource_model('robot').get_resource().weight, elon.weight)
 
         # check p2
-        self.assertEqual(p2.output.get_resource_model('robot').get_resource().position,
-                         p2.input.get_resource_model('robot').get_resource().position)
-        self.assertEqual(p2.output.get_resource_model('robot').get_resource().weight, p2.input.get_resource_model(
+        self.assertEqual(p2.outputs.get_resource_model('robot').get_resource().position,
+                         p2.inputs.get_resource_model('robot').get_resource().position)
+        self.assertEqual(p2.outputs.get_resource_model('robot').get_resource().weight, p2.inputs.get_resource_model(
             'robot').get_resource().weight + p2.config.get_value('food_weight'))
 
         # check p3
-        self.assertEqual(p3.output.get_resource_model('robot').get_resource().position[1], p3.input.get_resource_model(
+        self.assertEqual(p3.outputs.get_resource_model('robot').get_resource().position[1], p3.inputs.get_resource_model(
             'robot').get_resource().position[1] + p3.config.get_value('moving_step'))
-        self.assertEqual(p3.output.get_resource_model('robot').get_resource().weight,
-                         p3.input.get_resource_model('robot').get_resource().weight)
+        self.assertEqual(p3.outputs.get_resource_model('robot').get_resource().weight,
+                         p3.inputs.get_resource_model('robot').get_resource().weight)
 
-        res = ResourceModel.get_by_id(p3.output.get_resource_model('robot').id)
+        res = ResourceModel.get_by_id(p3.outputs.get_resource_model('robot').id)
         self.assertTrue(isinstance(res, ResourceModel))
 
         self.assertTrue(

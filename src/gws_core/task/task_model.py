@@ -50,17 +50,17 @@ class TaskModel(ProcessModel):
 
         # create the input ports from the Task input specs
         for k in task_type.input_specs:
-            self._input.create_port(k, task_type.input_specs[k])
+            self._inputs.create_port(k, task_type.input_specs[k])
 
         # set the resources to the ports
-        self._init_input_from_data()
+        self._init_inputs_from_data()
 
         # create the output ports from the Task output specs
         for k in task_type.output_specs:
-            self._output.create_port(k, task_type.output_specs[k])
+            self._outputs.create_port(k, task_type.output_specs[k])
 
         # set the resources to the ports
-        self._init_output_from_data()
+        self._init_outputs_from_data()
 
     # -- C --
 
@@ -93,7 +93,7 @@ class TaskModel(ProcessModel):
 
         # Get simpler object for to run the task
         config_params: ConfigValues = self.config.get_and_check_values()
-        task_inputs: TaskInputs = self.input.get_and_check_task_inputs()
+        task_inputs: TaskInputs = self.inputs.get_and_check_task_inputs()
 
         check_result: CheckBeforeTaskResult
         try:
@@ -105,7 +105,7 @@ class TaskModel(ProcessModel):
 
         # If the check before task retuned False
         if isinstance(check_result, dict) and check_result.get('result') is False:
-            if self.input.all_connected_port_values_provided():
+            if self.inputs.all_connected_port_values_provided():
                 raise CheckBeforeTaskStopException(message=check_result.get('message'))
             else:
                 return
@@ -138,7 +138,7 @@ class TaskModel(ProcessModel):
         if not isinstance(task_output, dict):
             raise BadRequestException('The task output is not a dictionary')
 
-        for key, port in self.output.ports.items():
+        for key, port in self.outputs.ports.items():
             resource_model: ResourceModel
 
             # If the resource for the output port was provided
@@ -174,7 +174,7 @@ class TaskModel(ProcessModel):
     async def _run_after_task(self):
 
         # Save the generated resource
-        res: Dict[str, ResourceModel] = self.output.get_resources()
+        res: Dict[str, ResourceModel] = self.outputs.get_resources()
         for resource in res.values():
             if resource is not None and not resource.is_saved():
                 resource.experiment = self.experiment
@@ -198,9 +198,9 @@ class TaskModel(ProcessModel):
         """
         _json: dict = super().data_to_json(deep=deep)
 
-        if "input" in _json:
-            del _json["input"]
-        if "output" in _json:
-            del _json["output"]
+        if "inputs" in _json:
+            del _json["inputs"]
+        if "outputs" in _json:
+            del _json["outputs"]
 
         return _json

@@ -16,8 +16,7 @@ from peewee import CharField, ForeignKeyField, IntegerField
 from starlette_context import context
 
 from ..config.config import Config
-from ..config.config_types import ConfigValues
-from ..config.config_types import ConfigValue, ConfigValuesDict
+from ..config.config_types import ConfigValue, ConfigValues, ConfigValuesDict
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.json_ignore import json_ignore
 from ..core.decorator.transaction import transaction
@@ -26,7 +25,7 @@ from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
 from ..core.model.json_field import JSONField
 from ..experiment.experiment import Experiment
-from ..io.io import Input, Output
+from ..io.io import Inputs, Outputs
 from ..io.port import InPort, OutPort
 from ..model.typing_manager import TypingManager
 from ..model.viewable import Viewable
@@ -81,8 +80,8 @@ class ProcessModel(Viewable):
 
     _experiment: Experiment = None
     _parent_protocol: ProtocolModel = None
-    _input: Input = None
-    _output: Output = None
+    _inputs: Inputs = None
+    _outputs: Outputs = None
     _is_removable = False
 
     def __init__(self, *args, **kwargs):
@@ -92,8 +91,8 @@ class ProcessModel(Viewable):
 
         super().__init__(*args, **kwargs)
 
-        self._input = Input(self)
-        self._output = Output(self)
+        self._inputs = Inputs(self)
+        self._outputs = Outputs(self)
 
     ################################# MODEL METHODS #############################
 
@@ -137,11 +136,11 @@ class ProcessModel(Viewable):
 
     def disconnect(self):
         """
-        Disconnect the input and output ports
+        Disconnect the inputs and outputs ports
         """
 
-        self.input.disconnect()
-        self.output.disconnect()
+        self.inputs.disconnect()
+        self.outputs.disconnect()
 
     @property
     def parent_protocol(self) -> ProtocolModel:
@@ -182,10 +181,10 @@ class ProcessModel(Viewable):
         return self.save()
 
     def _reset_io(self):
-        self.input.reset()
-        self.output.reset()
-        self.data["input"] = {}
-        self.data["output"] = {}
+        self.inputs.reset()
+        self.outputs.reset()
+        self.data["inputs"] = {}
+        self.data["outputs"] = {}
 
     def save_after_task(self) -> None:
         """Method called after the task to save the process
@@ -233,73 +232,73 @@ class ProcessModel(Viewable):
         except:
             pass
 
-    ################################# INPUT #############################
+    ################################# INPUTS #############################
 
     @property
-    def input(self) -> Input:
+    def inputs(self) -> Inputs:
         """
-        Returns input of the process.
+        Returns inputs of the process.
 
-        :return: The input
-        :rtype: Input
+        :return: The inputs
+        :rtype: Inputs
         """
 
-        if self._input.is_empty:
-            self._init_input_from_data()
-        return self._input
+        if self._inputs.is_empty:
+            self._init_inputs_from_data()
+        return self._inputs
 
-    def _init_input_from_data(self) -> None:
-        """Init the input object from the input in the data
+    def _init_inputs_from_data(self) -> None:
+        """Init the inputs object from the inputs in the data
             Init the resource if they exists
         """
-        if "input" not in self.data:
-            self.data["input"] = {}
+        if "inputs" not in self.data:
+            self.data["inputs"] = {}
             return
 
-        self._input.load_from_json(self.data["input"])
+        self._inputs.load_from_json(self.data["inputs"])
 
     def in_port(self, port_name: str) -> InPort:
         """
-        Returns the port of the input by its name.
+        Returns the port of the inputs by its name.
 
         :return: The port
         :rtype: InPort
         """
-        return self.input.get_port(port_name)
+        return self.inputs.get_port(port_name)
 
-    ################################# OUTPUT #############################
+    ################################# OUTPUTS #############################
 
     @property
-    def output(self) -> Output:
+    def outputs(self) -> Outputs:
         """
-        Returns output of the process.
+        Returns outputs of the process.
 
-        :return: The output
-        :rtype: Output
+        :return: The outputs
+        :rtype: Outputs
         """
 
-        if self._output.is_empty:
-            self._init_output_from_data()
-        return self._output
+        if self._outputs.is_empty:
+            self._init_outputs_from_data()
+        return self._outputs
 
-    def _init_output_from_data(self) -> None:
-        """Init the ouput object from the output in the data
+    def _init_outputs_from_data(self) -> None:
+        """Init the ouput object from the outputs in the data
             Init the resource if they exists
         """
-        if "output" not in self.data:
-            self.data["output"] = {}
+        if "outputs" not in self.data:
+            self.data["outputs"] = {}
             return
 
-        self._output.load_from_json(self.data["output"])
+        self._outputs.load_from_json(self.data["outputs"])
 
     def out_port(self, port_name: str) -> OutPort:
         """
-        Returns the port of the output by its name.
+        Returns the port of the outputs by its name.
 
         :return: The port
         :rtype: OutPort
         """
-        return self.output.get_port(port_name)
+        return self.outputs.get_port(port_name)
 
     ################################# RUN #########################
 
@@ -349,9 +348,9 @@ class ProcessModel(Viewable):
         """
 
     async def _run_next_processes(self):
-        self.output.propagate()
+        self.outputs.propagate()
         aws = []
-        for proc in self.output.get_next_procs():
+        for proc in self.outputs.get_next_procs():
             aws.append(proc.run())
         if len(aws):
             await asyncio.gather(*aws)
@@ -360,8 +359,8 @@ class ProcessModel(Viewable):
         self._switch_to_current_progress_bar()
         self.mark_as_started()
 
-        # Set the data input dict
-        self.data["input"] = self.input.to_json()
+        # Set the data inputs dict
+        self.data["inputs"] = self.inputs.to_json()
 
         self.progress_bar.start()
         self.save()
@@ -369,15 +368,15 @@ class ProcessModel(Viewable):
     async def _run_after_task(self):
         self.mark_as_success()
 
-        # Set the data output dict
-        self.data["output"] = self.output.to_json()
+        # Set the data outputs dict
+        self.data["outputs"] = self.outputs.to_json()
 
         # Save the process (to save the new data)
         self.save_after_task()
 
         # TODO a vérifier, mettre au moins un log quand c'est appelé ?
-        # ça veut dire qu'on a pas renseigné un output
-        if not self.output.is_ready:
+        # ça veut dire qu'on a pas renseigné un outputs
+        if not self.outputs.is_ready:
             return
 
         await self._run_next_processes()
@@ -496,8 +495,8 @@ class ProcessModel(Viewable):
         _json["progress_bar"] = self.progress_bar.to_json(
             deep=deep, **kwargs)
 
-        _json["input"] = self.input.to_json()
-        _json["output"] = self.output.to_json()
+        _json["inputs"] = self.inputs.to_json()
+        _json["outputs"] = self.outputs.to_json()
 
         return _json
 
@@ -549,7 +548,7 @@ class ProcessModel(Viewable):
         :rtype: bool
         """
 
-        return self.is_draft and self.input.is_ready
+        return self.is_draft and self.inputs.is_ready
 
     def mark_as_started(self):
         self.progress_bar.add_message("Start of process")

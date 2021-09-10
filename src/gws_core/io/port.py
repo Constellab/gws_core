@@ -364,9 +364,9 @@ class InPort(Port):
         """
 
         proc = self.parent.parent
-        proc_input = proc.input
-        for name in proc_input._ports:
-            if proc_input._ports[name] is self:
+        proc_inputs = proc.inputs
+        for name in proc_inputs._ports:
+            if proc_inputs._ports[name] is self:
                 return name
         return None
 
@@ -392,8 +392,8 @@ class OutPort(Port):
         """
 
         proc = self.parent.parent
-        input = proc.output
-        for name in input._ports:
-            if input._ports[name] is self:
+        proc_outputs = proc.outputs
+        for name in proc_outputs._ports:
+            if proc_outputs._ports[name] is self:
                 return name
         return None

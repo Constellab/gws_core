@@ -47,7 +47,7 @@ class TestProcess(BaseTestCase):
 
         proc = experiment.task_models[0]
 
-        result: Resource = proc.output.get_resource_model("stdout").get_resource()
+        result: Resource = proc.outputs.get_resource_model("stdout").get_resource()
         encoded_string = result.data["encoded_string"]
         self.assertEqual(
             encoded_string,

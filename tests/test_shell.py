@@ -42,5 +42,5 @@ class TestShell(BaseTestCase):
 
         # refresh the process
         proc_mdl = experiment.task_models[0]
-        res: Resource = proc_mdl.output.get_resource_model('stdout').get_resource()
+        res: Resource = proc_mdl.outputs.get_resource_model('stdout').get_resource()
         self.assertEqual(res.data["out"], "John Doe")

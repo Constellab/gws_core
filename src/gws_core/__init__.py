@@ -151,8 +151,8 @@ from .impl.shell.shell import Shell as Shell
 # Io
 from .io.connector import Connector as Connector
 from .io.io import IO as IO
-from .io.io import Input as Input
-from .io.io import Output as Output
+from .io.io import Inputs as Inputs
+from .io.io import Outputs as Outputs
 from .io.io_spec import InputSpecs as InputSpecs
 from .io.io_spec import OutputSpecs as OutputSpecs
 from .io.io_types import OptionalIn as OptionalIn
