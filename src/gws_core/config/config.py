@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Union, final
+from typing import Any, List, Union, final
 
 from ..core.classes.validator import Validator
 from ..core.exception.exceptions import BadRequestException
@@ -76,7 +76,7 @@ class Config(Viewable):
 
     # -- G --
 
-    def get_param(self, name: str) -> Union[str, int, float, bool, list, dict]:
+    def get_param(self, name: str) -> Any:
         """
         Returns the value of a parameter by its name
 

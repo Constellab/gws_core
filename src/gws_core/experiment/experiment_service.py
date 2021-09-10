@@ -6,8 +6,9 @@
 import os
 import subprocess
 import traceback
-from typing import Any, Coroutine, Union
+from typing import Any, Coroutine, Type, Union
 
+from gws_core.task.task_service import TaskService
 from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
@@ -19,9 +20,11 @@ from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
 from ..experiment.experiment_exception import ExperimentRunException
 from ..process.process_factory import ProcessFactory
+from ..protocol.protocol import Protocol
 from ..protocol.protocol_model import ProtocolModel
 from ..protocol.protocol_service import ProtocolService
 from ..study.study import Study
+from ..task.task import Task
 from ..task.task_model import TaskModel
 from ..user.activity import Activity
 from ..user.activity_service import ActivityService
@@ -71,7 +74,25 @@ class ExperimentService(BaseService):
         protocol_model.save_full()
         return experiment
 
-    # -- F --
+    @classmethod
+    def create_experiment_from_protocol_type(
+            cls, protocol_type: Type[Protocol],
+            study: Study = None, title: str = "", description: str = "") -> Experiment:
+
+        protocol_model: ProtocolModel = ProtocolService.create_protocol_model_from_type(protocol_type=protocol_type)
+        return cls.create_experiment_from_protocol_model(
+            protocol_model=protocol_model, study=study, title=title, description=description)
+
+    @classmethod
+    def create_experiment_from_task_type(
+            cls, task_type: Type[Task],
+            study: Study = None, title: str = "", description: str = "") -> Experiment:
+
+        task_model: TaskModel = TaskService.create_task_model_from_type(task_type=task_type)
+        return cls.create_experiment_from_task_model(
+            task_model=task_model, study=study, title=title, description=description)
+
+        # -- F --
 
     @classmethod
     def get_experiment_by_uri(cls, uri: str) -> Union[Experiment, dict]:
@@ -171,10 +192,11 @@ class ExperimentService(BaseService):
             object_uri=experiment.uri
         )
 
-        # todo uniquify unique name
         experiment.mark_as_error({"detail": GWSException.EXPERIMENT_STOPPED_MANUALLY.value,
                                   "unique_code": GWSException.EXPERIMENT_STOPPED_MANUALLY.name,
                                   "context": None, "instance_id": None})
+
+        return experiment
 
     # -- U --
 

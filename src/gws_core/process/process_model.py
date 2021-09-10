@@ -9,12 +9,15 @@ import asyncio
 import inspect
 from abc import abstractmethod
 from enum import Enum
-from typing import TYPE_CHECKING, List, Type, TypedDict, final
+from os import name
+from typing import TYPE_CHECKING, Any, List, Type, TypedDict, final
 
 from peewee import CharField, ForeignKeyField, IntegerField
 from starlette_context import context
 
 from ..config.config import Config
+from ..config.config_params import ConfigParams
+from ..config.config_spec import ConfigValue, ConfigValues
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.json_ignore import json_ignore
 from ..core.decorator.transaction import transaction
@@ -92,6 +95,8 @@ class ProcessModel(Viewable):
         self._input = Input(self)
         self._output = Output(self)
 
+    ################################# MODEL METHODS #############################
+
     # -- A --
     @transaction()
     def archive(self, archive: bool, archive_resources=True) -> ProcessModel:
@@ -112,48 +117,6 @@ class ProcessModel(Viewable):
 
         return self
 
-    # -- D --
-
-    def disconnect(self):
-        """
-        Disconnect the input and output ports
-        """
-
-        self.input.disconnect()
-        self.output.disconnect()
-
-    @property
-    def input(self) -> Input:
-        """
-        Returns input of the process.
-
-        :return: The input
-        :rtype: Input
-        """
-
-        if self._input.is_empty:
-            self._init_input_from_data()
-        return self._input
-
-    def _init_input_from_data(self) -> None:
-        """Init the input object from the input in the data
-            Init the resource if they exists
-        """
-        if "input" not in self.data:
-            self.data["input"] = {}
-            return
-
-        self._input.load_from_json(self.data["input"])
-
-    def in_port(self, name: str) -> InPort:
-        """
-        Returns the port of the input by its name.
-
-        :return: The port
-        :rtype: InPort
-        """
-        return self.input.get_port(name)
-
     @transaction()
     def delete_instance(self, *args, **kwargs):
         """Override delete instance to delete all the sub processes
@@ -170,41 +133,15 @@ class ProcessModel(Viewable):
 
         return result
 
-    # -- L --
+    # -- D --
 
-    # -- O --
-
-    @property
-    def output(self) -> Output:
+    def disconnect(self):
         """
-        Returns output of the process.
-
-        :return: The output
-        :rtype: Output
+        Disconnect the input and output ports
         """
 
-        if self._output.is_empty:
-            self._init_output_from_data()
-        return self._output
-
-    def _init_output_from_data(self) -> None:
-        """Init the ouput object from the output in the data
-            Init the resource if they exists
-        """
-        if "output" not in self.data:
-            self.data["output"] = {}
-            return
-
-        self._output.load_from_json(self.data["output"])
-
-    def out_port(self, name: str) -> OutPort:
-        """
-        Returns the port of the output by its name.
-
-        :return: The port
-        :rtype: OutPort
-        """
-        return self.output.get_port(name)
+        self.input.disconnect()
+        self.output.disconnect()
 
     @property
     def parent_protocol(self) -> ProtocolModel:
@@ -249,6 +186,122 @@ class ProcessModel(Viewable):
         self.output.reset()
         self.data["input"] = {}
         self.data["output"] = {}
+
+    def save_after_task(self) -> None:
+        """Method called after the task to save the process
+        """
+        self.save()
+
+    # -- S --
+
+    def save_full(self) -> 'ProcessModel':
+        """Function to run overrided by the sub classes
+        """
+        pass
+
+    def set_parent_protocol(self, parent_protocol: ProtocolModel) -> None:
+        """
+        Sets the parent protocol of the process
+        """
+
+        from ..protocol.protocol_model import ProtocolModel
+        if not isinstance(parent_protocol, ProtocolModel):
+            raise BadRequestException(
+                "An instance of ProtocolModel is required")
+        if parent_protocol.id:
+            self.parent_protocol_id = parent_protocol.id
+        self._parent_protocol = parent_protocol
+
+    def set_experiment(self, experiment: Experiment):
+        if not isinstance(experiment, Experiment):
+            raise BadRequestException("An instance of Experiment is required")
+
+        if self.experiment and self.experiment.id != self.experiment.id:
+            raise BadRequestException(
+                "The protocol is already related to an experiment")
+        self.experiment = experiment
+
+    def _switch_to_current_progress_bar(self):
+        """
+        Swicth to the application to current progress bar.
+
+        The current progress bar will be accessible everywhere (i.e. at the application level)
+        """
+
+        try:
+            context.data["progress_bar"] = self.progress_bar
+        except:
+            pass
+
+    ################################# INPUT #############################
+
+    @property
+    def input(self) -> Input:
+        """
+        Returns input of the process.
+
+        :return: The input
+        :rtype: Input
+        """
+
+        if self._input.is_empty:
+            self._init_input_from_data()
+        return self._input
+
+    def _init_input_from_data(self) -> None:
+        """Init the input object from the input in the data
+            Init the resource if they exists
+        """
+        if "input" not in self.data:
+            self.data["input"] = {}
+            return
+
+        self._input.load_from_json(self.data["input"])
+
+    def in_port(self, name: str) -> InPort:
+        """
+        Returns the port of the input by its name.
+
+        :return: The port
+        :rtype: InPort
+        """
+        return self.input.get_port(name)
+
+    ################################# OUTPUT #############################
+
+    @property
+    def output(self) -> Output:
+        """
+        Returns output of the process.
+
+        :return: The output
+        :rtype: Output
+        """
+
+        if self._output.is_empty:
+            self._init_output_from_data()
+        return self._output
+
+    def _init_output_from_data(self) -> None:
+        """Init the ouput object from the output in the data
+            Init the resource if they exists
+        """
+        if "output" not in self.data:
+            self.data["output"] = {}
+            return
+
+        self._output.load_from_json(self.data["output"])
+
+    def out_port(self, name: str) -> OutPort:
+        """
+        Returns the port of the output by its name.
+
+        :return: The port
+        :rtype: OutPort
+        """
+        return self.output.get_port(name)
+
+    ################################# RUN #########################
 
     @final
     async def run(self) -> None:
@@ -329,56 +382,82 @@ class ProcessModel(Viewable):
 
         await self._run_next_processes()
 
-    def save_after_task(self) -> None:
-        """Method called after the task to save the process
-        """
-        self.save()
+    def check_user_privilege(self, user: User) -> None:
+        """Throw an exception if the user cand execute the protocol
 
-    # -- S --
-
-    def save_full(self) -> 'ProcessModel':
-        """Function to run overrided by the sub classes
+        :param user: user
+        :type user: User
         """
+
+        process_type: Type[Process] = self._get_process_type()
+
+        if not user.has_access(process_type._allowed_user):
+            raise UnauthorizedException(
+                f"You must be a {process_type._allowed_user} to run the process '{process_type.full_classname()}'")
+
+    ################################# CONFIG #########################
+
+    def configure_param(self, param_name: str, value: ConfigValue) -> None:
+        """
+        Configure the value of a parameter by its name
+
+        :param name: The name of the parameter
+        :type: str
+        :param value: The value of the parameter (base type)
+        :type: Any
+        """
+
+        self.config.set_param(name=param_name, value=value)
+
+    def set_params(self, params: ConfigValues) -> None:
+        """
+        Configure the process model
+        """
+        self.config.set_params(params)
+
+    def get_config_value(self, param_name: str) -> Any:
+        """
+        Get a param value from the config
+        """
+        self.config.get_param(param_name)
+
+    def get_values(self) -> ConfigParams:
+        """
+        Get all params values from the config
+        """
+        self.config.get_and_check_params()
+
+    ########################### INFO #################################
+
+    @abstractmethod
+    def is_protocol(self) -> bool:
         pass
 
-    def set_parent_protocol(self, parent_protocol: ProtocolModel) -> None:
-        """
-        Sets the parent protocol of the process
-        """
-
-        from ..protocol.protocol_model import ProtocolModel
-        if not isinstance(parent_protocol, ProtocolModel):
-            raise BadRequestException(
-                "An instance of ProtocolModel is required")
-        if parent_protocol.id:
-            self.parent_protocol_id = parent_protocol.id
-        self._parent_protocol = parent_protocol
-
-    def _switch_to_current_progress_bar(self):
-        """
-        Swicth to the application to current progress bar.
-
-        The current progress bar will be accessible everywhere (i.e. at the application level)
+    def get_info(self) -> str:
+        """Return basic information for this process (usefull for error message)
         """
 
-        try:
-            context.data["progress_bar"] = self.progress_bar
-        except:
-            pass
+        info: str = ""
 
-    def set_experiment(self, experiment: Experiment):
-        if not isinstance(experiment, Experiment):
-            raise BadRequestException("An instance of Experiment is required")
+        if self.instance_name:
+            info += f"'{self.instance_name}' "
 
-        if self.experiment and self.experiment.id != self.experiment.id:
-            raise BadRequestException(
-                "The protocol is already related to an experiment")
-        self.experiment = experiment
+        return f"{info} ({self._get_process_type().classname()})"
 
-    # -- T --
+    def get_instance_name_context(self) -> str:
+        """ return the instance name in the context
+        """
+
+        # specific case for the main protocol (without parent)
+        if self.parent_protocol_id is None:
+            return "Main protocol"
+
+        return self.instance_name
 
     def _get_process_type(self) -> Type[Process]:
         return TypingManager.get_type_from_name(self.process_typing_name)
+
+    ########################### JSON #################################
 
     def get_minimum_json(self) -> dict:
         """
@@ -389,10 +468,6 @@ class ProcessModel(Viewable):
             "uri": self.uri,
             "process_typing_name": self.process_typing_name
         }
-
-    @abstractmethod
-    def is_protocol(self) -> bool:
-        pass
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:
         """
@@ -441,40 +516,6 @@ class ProcessModel(Viewable):
         _json["doc"] = inspect.getdoc(process_type)
 
         return _json
-
-    def check_user_privilege(self, user: User) -> None:
-        """Throw an exception if the user cand execute the protocol
-
-        :param user: user
-        :type user: User
-        """
-
-        process_type: Type[Process] = self._get_process_type()
-
-        if not user.has_access(process_type._allowed_user):
-            raise UnauthorizedException(
-                f"You must be a {process_type._allowed_user} to run the process '{process_type.full_classname()}'")
-
-    def get_info(self) -> str:
-        """Return basic information for this process (usefull for error message)
-        """
-
-        info: str = ""
-
-        if self.instance_name:
-            info += f"'{self.instance_name}' "
-
-        return f"{info} ({self._get_process_type().classname()})"
-
-    def get_instance_name_context(self) -> str:
-        """ return the instance name in the context
-        """
-
-        # specific case for the main protocol (without parent)
-        if self.parent_protocol_id is None:
-            return "Main protocol"
-
-        return self.instance_name
 
     ########################### STATUS MANAGEMENT ##################################
 
