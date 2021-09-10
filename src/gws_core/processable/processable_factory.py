@@ -3,7 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from logging import exception
 from typing import Dict, List, Type
 
 from ..config.config import Config
@@ -13,13 +12,13 @@ from ..core.exception.exceptions.bad_request_exception import \
 from ..io.connector import Connector
 from ..io.port import Port
 from ..model.typing_manager import TypingManager
-from ..process.process import Process
-from ..process.process_model import ProcessModel
 from ..progress_bar.progress_bar import ProgressBar
 from ..protocol.protocol import (CONST_PROTOCOL_TYPING_NAME, Protocol,
                                  ProtocolCreateConfig)
 from ..protocol.protocol_exception import ProtocolBuildException
 from ..protocol.protocol_model import ProtocolModel
+from ..task.task import Task
+from ..task.task_model import TaskModel
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
 from .processable import Processable
@@ -28,44 +27,44 @@ from .sub_processable_factory import SubProcessFactoryCreate
 
 
 class ProcessableFactory():
-    """Contains methods to instantiate ProcessModel and ProtocolModel but it does not save the instances to the database,
+    """Contains methods to instantiate TaskModel and ProtocolModel but it does not save the instances to the database,
     it only create th objects
     """
 
-    ############################################### PROCESS #################################################
+    ############################################### TASK #################################################
 
     @classmethod
-    def create_process_model_from_type(
-            cls, process_type: Type[Process],
+    def create_task_model_from_type(
+            cls, task_type: Type[Task],
             config_values: ConfigValues = None,
-            instance_name: str = None) -> ProcessModel:
-        if not issubclass(process_type, Process):
-            name = process_type.__name__ if process_type.__name__ is not None else str(
-                process_type)
+            instance_name: str = None) -> TaskModel:
+        if not issubclass(task_type, Task):
+            name = task_type.__name__ if task_type.__name__ is not None else str(
+                task_type)
             raise BadRequestException(
-                f"The type {name} is not a Process. It must extend the Process class")
+                f"The type {name} is not a Task. It must extend the Task class")
 
-        if not TypingManager.type_is_register(process_type):
+        if not TypingManager.type_is_register(task_type):
             raise BadRequestException(
-                f"The process {process_type.full_classname()} is not register. Did you add the @process_decorator decorator on your process class ?")
+                f"The task {task_type.full_classname()} is not register. Did you add the @task_decorator decorator on your task class ?")
 
-        process_model: ProcessModel = ProcessModel()
-        process_model.set_process_type(process_type._typing_name)
+        task_model: TaskModel = TaskModel()
+        task_model.set_task_type(task_type._typing_name)
 
-        config: Config = Config(specs=process_type.config_specs)
+        config: Config = Config(specs=task_type.config_specs)
         if config_values:
             config.set_params(config_values)
 
-        cls._init_processable_model(processable_model=process_model, config=config, instance_name=instance_name)
+        cls._init_processable_model(processable_model=task_model, config=config, instance_name=instance_name)
 
-        return process_model
+        return task_model
 
     @classmethod
-    def create_process_model_from_typing_name(
-            cls, typing_name: str, config_values: ConfigValues = None, instance_name: str = None) -> ProcessModel:
-        process_type: Type[Process] = TypingManager.get_type_from_name(typing_name=typing_name)
-        return cls.create_process_model_from_type(
-            process_type=process_type, config_values=config_values, instance_name=instance_name)
+    def create_task_model_from_typing_name(
+            cls, typing_name: str, config_values: ConfigValues = None, instance_name: str = None) -> TaskModel:
+        task_type: Type[Task] = TypingManager.get_type_from_name(typing_name=typing_name)
+        return cls.create_task_model_from_type(
+            task_type=task_type, config_values=config_values, instance_name=instance_name)
 
     ############################################### PROTOCOL #################################################
 
@@ -253,9 +252,9 @@ class ProcessableFactory():
     def create_processable_model_from_type(
             cls, processable_type: Type[Processable],
             config_values: ConfigValues = None,
-            instance_name: str = None) -> ProcessModel:
-        if issubclass(processable_type, Process):
-            return cls.create_process_model_from_type(processable_type, config_values, instance_name)
+            instance_name: str = None) -> TaskModel:
+        if issubclass(processable_type, Task):
+            return cls.create_task_model_from_type(processable_type, config_values, instance_name)
         elif issubclass(processable_type, Protocol):
             return cls.create_protocol_model_from_type(processable_type, config_values, instance_name)
         else:
@@ -266,7 +265,7 @@ class ProcessableFactory():
 
     @classmethod
     def create_processable_model_from_typing_name(
-            cls, typing_name: str, config_values: ConfigValues = None, instance_name: str = None) -> ProcessModel:
+            cls, typing_name: str, config_values: ConfigValues = None, instance_name: str = None) -> TaskModel:
         processable_type: Type[Processable] = TypingManager.get_type_from_name(typing_name=typing_name)
         return cls.create_processable_model_from_type(
             processable_type=processable_type, config_values=config_values, instance_name=instance_name)

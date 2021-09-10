@@ -11,26 +11,25 @@ from abc import abstractmethod
 from enum import Enum
 from typing import TYPE_CHECKING, List, Type, TypedDict, final
 
-from gws_core.core.classes.enum_field import EnumField
-from gws_core.core.decorator.json_ignore import json_ignore
-from gws_core.core.exception.exception_handler import ExceptionHandler
-from gws_core.core.model.json_field import JSONField
 from peewee import CharField, ForeignKeyField, IntegerField
 from starlette_context import context
 
 from ..config.config import Config
+from ..core.classes.enum_field import EnumField
+from ..core.decorator.json_ignore import json_ignore
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
+from ..core.model.json_field import JSONField
 from ..experiment.experiment import Experiment
 from ..io.io import Input, Output
 from ..io.port import InPort, OutPort
 from ..model.typing_manager import TypingManager
 from ..model.viewable import Viewable
 from ..progress_bar.progress_bar import ProgressBar
-from ..resource.processable_resource import ProcessableResource
 from ..resource.resource_model import ResourceModel
+from ..resource.task_resource import TaskResource
 from ..user.user import User
 from .processable import Processable
 from .processable_exception import ProcessableRunException
@@ -220,7 +219,7 @@ class ProcessableModel(Viewable):
 
     @property
     def resources(self) -> List[ResourceModel]:
-        Qrel: List[ProcessableResource] = ProcessableResource.select().where(ProcessableResource.process_id == self.id)
+        Qrel: List[TaskResource] = TaskResource.select().where(TaskResource.task_model_id == self.id)
         Q = []
         for o in Qrel:
             Q.append(o.resource)

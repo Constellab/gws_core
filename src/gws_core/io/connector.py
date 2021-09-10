@@ -1,7 +1,6 @@
 from typing import final
 
 from gws_core.io.io_exception import ImcompatiblePortsException
-from gws_core.io.io_spec import IOSpecsHelper
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -99,7 +98,7 @@ class Connector:
         Returns the left-hand side process
 
         :return: The left-hand side process
-        :rtype: Process
+        :rtype: process
         """
         return self.out_port.parent.parent
 
@@ -113,6 +112,6 @@ class Connector:
         Returns the right-hand side process
 
         :return: The right-hand side process
-        :rtype: Process
+        :rtype: process
         """
         return self.in_port.parent.parent

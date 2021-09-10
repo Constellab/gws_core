@@ -8,7 +8,7 @@ import json
 from gws_core import (BaseTestCase, ConfigParams, Experiment,
                       ExperimentService, File, FileModel, FileService, GTest,
                       LocalFileStore, ProcessableFactory, ProcessableSpec,
-                      ProcessModel, Protocol, ProtocolModel, Robot,
+                      TaskModel, Protocol, ProtocolModel, Robot,
                       RobotCreate, WriteToJsonFile, protocol_decorator)
 from gws_core.impl.file.file_store import FileStore
 
@@ -64,8 +64,8 @@ class TestFile(BaseTestCase):
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(protocol)
         experiment = await ExperimentService.run_experiment(experiment)
 
-        create: ProcessModel = experiment.protocol.get_process('create')
-        write: ProcessModel = experiment.protocol.get_process('write')
+        create: TaskModel = experiment.protocol_model.get_process('create')
+        write: TaskModel = experiment.protocol_model.get_process('write')
 
         robot: Robot = create.out_port('robot').get_resource()
         file_model: FileModel = write.out_port('file').resource_model

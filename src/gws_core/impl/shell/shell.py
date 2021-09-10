@@ -13,16 +13,16 @@ from ...config.config_params import ConfigParams
 from ...core.exception.exceptions import BadRequestException
 from ...core.model.sys_proc import SysProc
 from ...impl.file.file_service import FileService
-from ...process.process import Process
-from ...process.process_decorator import process_decorator
-from ...process.process_io import ProcessInputs, ProcessOutputs
+from ...task.task import Task
+from ...task.task_decorator import task_decorator
+from ...task.task_io import TaskInputs, TaskOutputs
 from ..file.file import File
 
 
-@process_decorator("Shell")
-class Shell(Process):
+@task_decorator("Shell")
+class Shell(Task):
     """
-    Shell process.
+    Shell task.
 
     This class is a proxy to run user shell commands through the Python method `subprocess.run`.
     """
@@ -38,7 +38,7 @@ class Shell(Process):
     _stdout_count = 0
     _STDOUT_MAX_CHAR_LENGHT = 1024*10
 
-    def build_command(self, config: ConfigParams, inputs: ProcessInputs) -> list:
+    def build_command(self, config: ConfigParams, inputs: TaskInputs) -> list:
         """
         Builds the user command to execute.
 
@@ -72,14 +72,14 @@ class Shell(Process):
             return user_cmd
 
     @abstractmethod
-    def gather_outputs(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    def gather_outputs(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """
-        This methods gathers the results of the shell process. It must be overloaded by subclasses.
+        This methods gathers the results of the shell task. It must be overloaded by subclasses.
 
         It must be overloaded to capture the standard output (stdout) and the
         output files generated in the current working directory (see `gws.Shell.cwd`)
 
-        :param stdout: The standard output of the shell process
+        :param stdout: The standard output of the shell task
         :type stdout: `str`
         """
 
@@ -87,7 +87,7 @@ class Shell(Process):
 
     def on_stdout_change(self, stdout_count: int = 0, stdout_line: str = "") -> tuple:
         """
-        This methods is triggered each time the stdout of the shell subprocess has changed.
+        This methods is triggered each time the stdout of the shell subtask has changed.
 
         It can be overloaded to update the progress bar for example.
 
@@ -107,7 +107,7 @@ class Shell(Process):
     def cwd(self) -> tempfile.TemporaryDirectory:
         """
         The temporary working directory where the shell command is executed.
-        This directory is removed at the end of the process
+        This directory is removed at the end of the task
 
         :return: a file-like object built with `tempfile.TemporaryDirectory`
         :rtype: `file object`
@@ -121,20 +121,20 @@ class Shell(Process):
     @property
     def working_dir(self) -> str:
         """
-        Returns the working dir of the shell process
+        Returns the working dir of the shell task
 
-        :return: The working dir oif the shell process
+        :return: The working dir oif the shell task
         :rtype: `srt`
         """
 
         return self.cwd.name
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """
         Task entrypoint
         """
 
-        outputs: ProcessOutputs
+        outputs: TaskOutputs
         try:
             user_cmd = self.build_command(config=config, inputs=inputs)
             user_env = self.build_os_env()
@@ -189,21 +189,21 @@ class Shell(Process):
             self.cwd.cleanup()
             self._tmp_dir = None
             raise BadRequestException(
-                f"An error occured while running the binary in shell process. Error: {err}") from err
+                f"An error occured while running the binary in shell task. Error: {err}") from err
         except Exception as err:
             self.cwd.cleanup()
             self._tmp_dir = None
             raise BadRequestException(
-                f"An error occured while running shell process. Error: {err}") from err
+                f"An error occured while running shell task. Error: {err}") from err
 
         return outputs
 
 
 class CondaShell(Shell):
     """
-    CondaShell process.
+    CondaShell task.
 
-    This class is a proxy to run user shell commands through the Python method `subprocess.run`.
+    This class is a proxy to run user shell commands through the Python method `subtask.run`.
     """
 
     _shell_mode = True

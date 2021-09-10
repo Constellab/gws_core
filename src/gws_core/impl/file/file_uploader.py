@@ -11,9 +11,9 @@ from typing import Type
 
 from ...config.config_params import ConfigParams
 from ...core.utils.utils import Utils
-from ...process.process import Process
-from ...process.process_decorator import process_decorator
-from ...process.process_io import ProcessInputs, ProcessOutputs
+from ...task.task import Task
+from ...task.task_decorator import task_decorator
+from ...task.task_io import TaskInputs, TaskOutputs
 from ...resource.resource import Resource
 from .file import File
 from .local_file_store import LocalFileStore
@@ -25,14 +25,14 @@ from .local_file_store import LocalFileStore
 # ####################################################################
 
 
-@process_decorator("FileImporter")
-class FileImporter(Process):
+@task_decorator("FileImporter")
+class FileImporter(Task):
     input_specs = {'file': File}
     output_specs = {"data": Resource}
     config_specs = {'file_format': {"type": str, "default": None, 'description': "File format"}, 'output_type': {
         "type": str, "default": "", 'description': "The output file type. If defined, it is used to automatically format data output"}, }
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         inport_name = list(self.input_specs.keys())[0]
         outport_name = list(self.output_specs.keys())[0]
         file: File = inputs[inport_name]
@@ -56,8 +56,8 @@ class FileImporter(Process):
 # Exporter class
 #
 # ####################################################################
-@process_decorator("FileExporter")
-class FileExporter(Process):
+@task_decorator("FileExporter")
+class FileExporter(Task):
     """
     File exporter. The file is writen in a file store
     """
@@ -70,7 +70,7 @@ class FileExporter(Process):
         'file_store_uri': {"type": str, "default": None, 'description': "URI of the file_store where the file must be exported"},
     }
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
         file_store: LocalFileStore
         if config.param_is_set('file_store_uri'):
@@ -104,8 +104,8 @@ class FileExporter(Process):
 # ####################################################################
 
 
-@process_decorator("FileLoader")
-class FileLoader(Process):
+@task_decorator("FileLoader")
+class FileLoader(Task):
     input_specs = {}
     output_specs = {"data": Resource}
     config_specs = {
@@ -115,7 +115,7 @@ class FileLoader(Process):
         {"type": str, "default": "",
          'description': "The output file type. If defined, it is used to automatically format data output"}, }
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         outport_name = list(self.output_specs.keys())[0]
         file_path = config.get_param("file_path")
 
@@ -144,8 +144,8 @@ class FileLoader(Process):
 # ####################################################################
 
 
-@process_decorator("FileDumper")
-class FileDumper(Process):
+@task_decorator("FileDumper")
+class FileDumper(Task):
     """
     Generic data exporter
     """
@@ -157,7 +157,7 @@ class FileDumper(Process):
         'file_format': {"type": str, "default": None, 'description': "File format"},
     }
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         file_path = config.get_param("file_path")
         inport_name = list(self.input_specs.keys())[0]
         resource: Resource = inputs[inport_name]

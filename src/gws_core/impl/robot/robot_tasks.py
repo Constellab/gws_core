@@ -4,49 +4,49 @@ from typing import Optional
 from ...config.config_params import ConfigParams
 from ...impl.robot.robot_resource import (MegaRobot, Robot, RobotAddOn,
                                           RobotFood)
-from ...process.process import Process
-from ...process.process_decorator import process_decorator
-from ...process.process_io import ProcessInputs, ProcessOutputs
+from ...task.task import Task
+from ...task.task_decorator import task_decorator
+from ...task.task_io import TaskInputs, TaskOutputs
 
 
-@process_decorator("RobotCreate", human_name="Create robot", short_description="This process creates a robot")
-class RobotCreate(Process):
+@task_decorator("RobotCreate", human_name="Create robot", short_description="This task creates a robot")
+class RobotCreate(Task):
     input_specs = {}  # no required input
     output_specs = {'robot': Robot}
     config_specs = {}
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print("Create", flush=True)
         robot: Robot = Robot.empty()
 
         return {'robot': robot}
 
 
-@process_decorator("RobotMove", human_name="Move robot",
-                   short_description="This process emulates a short moving step of the robot")
-class RobotMove(Process):
+@task_decorator("RobotMove", human_name="Move robot",
+                short_description="This task emulates a short moving step of the robot")
+class RobotMove(Task):
     input_specs = {'robot': Robot}  # just for testing
     output_specs = {'robot': Robot}
     config_specs = {'moving_step': {"type": float, "default": 0.1, 'description': "The moving step of the robot"}, 'direction': {
         "type": str, "default": "north", "allowed_values": ["north", "south", "east", "west"], 'description': "The moving direction"}}
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print(f"Moving {config.get_param('moving_step')}", flush=True)
         robot: Robot = inputs['robot']
         robot.move(direction=config.get_param('direction'), moving_step=config.get_param('moving_step'))
         return {'robot': robot}
 
 
-@process_decorator("RobotEat", human_name="Eat process",
-                   short_description="This process emulates the meal of the robot before its flight!")
-class RobotEat(Process):
+@task_decorator("RobotEat", human_name="Eat task",
+                short_description="This task emulates the meal of the robot before its flight!")
+class RobotEat(Task):
     input_specs = {'robot': Robot, 'food': Optional[RobotFood]}
     output_specs = {'robot': Robot}
     config_specs = {
         'food_weight': {"type": float, "default": 3.14}
     }
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         robot: Robot = inputs['robot']
 
         multiplicator: int = 1
@@ -59,9 +59,9 @@ class RobotEat(Process):
         return {'robot': robot}
 
 
-@ process_decorator("RobotWait", human_name="Wait process",
-                    short_description="This process emulates the resting time of the robot before its flight!")
-class RobotWait(Process):
+@ task_decorator("RobotWait", human_name="Wait task",
+                 short_description="This task emulates the resting time of the robot before its flight!")
+class RobotWait(Task):
     input_specs = {'robot': Robot}
     output_specs = {'robot': Robot}
     config_specs = {
@@ -69,30 +69,30 @@ class RobotWait(Process):
         'waiting_time': {"type": float, "default": 0.5}
     }
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print(f"Waiting {config.get_param('waiting_time')}", flush=True)
         time.sleep(config.get_param('waiting_time'))
         return {'robot': inputs['robot']}
 
 
-@ process_decorator("RobotFly", human_name="Fly process",
-                    short_description="This process emulates the fly of the robot. It inherites the Move process.")
+@ task_decorator("RobotFly", human_name="Fly task",
+                 short_description="This task emulates the fly of the robot. It inherites the Move task.")
 class RobotFly(RobotMove):
     config_specs = {'moving_step': {"type": float, "default": 1000.0, "unit": "km"}, 'direction': {
         "type": str, "default": "west", "allowed_values": ["north", "south", "east", "west"], 'description': "The flying direction"}}
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print("Start flying ...")
-        return await super().task(config=config, inputs=inputs)
+        return await super().run(config=config, inputs=inputs)
 
 
-@ process_decorator("RobotAdd")
-class RobotAdd(Process):
+@ task_decorator("RobotAdd")
+class RobotAdd(Task):
     input_specs = {'robot': Robot, 'addon': RobotAddOn}
     output_specs = {'mega_robot': MegaRobot}
     config_specs = {}
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print("Add robot addon...")
 
         robot: Robot = inputs['robot']
@@ -100,29 +100,29 @@ class RobotAdd(Process):
         return {'mega_robot':  mega}
 
 
-@ process_decorator(unique_name="RobotAddOnCreate", human_name="The travel of `Astro`",
-                    short_description="This is the travel of astro composed of several steps")
-class RobotAddOnCreate(Process):
+@ task_decorator(unique_name="RobotAddOnCreate", human_name="The travel of `Astro`",
+                 short_description="This is the travel of astro composed of several steps")
+class RobotAddOnCreate(Task):
     input_specs = {}
     output_specs = {'addon': RobotAddOn}
     config_specs = {}
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print("AddOn Create", flush=True)
         return {'addon': RobotAddOn()}
 
 
-@ process_decorator(unique_name="RobotSugarCreate", human_name="Create a sugar type of food",
-                    short_description="Create a sugar type of food")
-class RobotSugarCreate(Process):
-    """Process that create a sugar type of food and wait 3 secondes for it
+@ task_decorator(unique_name="RobotSugarCreate", human_name="Create a sugar type of food",
+                 short_description="Create a sugar type of food")
+class RobotSugarCreate(Task):
+    """Task that create a sugar type of food and wait 3 secondes for it
     used in TestRobotwithSugarProtocol
     """
     input_specs = {}
     output_specs = {'sugar': RobotFood}
     config_specs = {}
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print("Create sugar", flush=True)
         food: RobotFood = RobotFood()
         food.multiplicator = 10

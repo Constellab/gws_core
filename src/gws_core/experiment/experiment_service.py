@@ -20,9 +20,9 @@ from ..core.model.sys_proc import SysProc
 from ..core.service.base_service import BaseService
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
-from ..process.process_model import ProcessModel
 from ..protocol.protocol_model import ProtocolModel
 from ..study.study import Study
+from ..task.task_model import TaskModel
 from ..user.activity import Activity
 from ..user.activity_service import ActivityService
 from ..user.current_user_service import CurrentUserService
@@ -45,11 +45,11 @@ class ExperimentService(BaseService):
         )
 
     @classmethod
-    def create_experiment_from_process_model(
-            cls, process_model: ProcessModel, study: Study = None, title: str = "", description: str = "") -> Experiment:
-        if not isinstance(process_model, ProcessModel):
-            raise BadRequestException("An instance of ProcessModel is required")
-        proto = ProtocolService.create_protocol_model_from_process_model(process_model=process_model)
+    def create_experiment_from_task_model(
+            cls, task_model: TaskModel, study: Study = None, title: str = "", description: str = "") -> Experiment:
+        if not isinstance(task_model, TaskModel):
+            raise BadRequestException("An instance of TaskModel is required")
+        proto = ProtocolService.create_protocol_model_from_task_model(task_model=task_model)
         return cls.create_experiment_from_protocol_model(
             protocol_model=proto, study=study, title=title, description=description)
 
@@ -185,7 +185,7 @@ class ExperimentService(BaseService):
         experiment.check_is_updatable()
 
         if experiment_DTO.graph:
-            ProtocolService.update_protocol_graph(protocol_model=experiment.protocol, graph=experiment_DTO.graph)
+            ProtocolService.update_protocol_graph(protocol_model=experiment.protocol_model, graph=experiment_DTO.graph)
 
         if experiment_DTO.title:
             experiment.set_title(experiment_DTO.title)
@@ -248,7 +248,7 @@ class ExperimentService(BaseService):
         try:
             experiment.mark_as_started()
 
-            await experiment.protocol.run()
+            await experiment.protocol_model.run()
 
             experiment.mark_as_success()
 

@@ -8,7 +8,7 @@ from ..core.exception.exceptions.bad_request_exception import \
 
 
 class ConfigParams(Dict[str, ConfigValue]):
-    """Config send to the task when running a process
+    """Config send to the task when running a task
     """
 
     # specification of the config

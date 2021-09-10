@@ -11,7 +11,7 @@ from .kv_store import KVStore
 if TYPE_CHECKING:
     from .resource_model import ResourceModel
 
-# Typing names generated for the class Process
+# Typing names generated for the class resource
 CONST_RESOURCE_TYPING_NAME = "RESOURCE.gws_core.Resource"
 
 # Format of the serialized data of a resource to save data in the DB
@@ -36,7 +36,7 @@ class Resource(Base):
         # check that the class level property _typing_name is set
         if self._typing_name == CONST_RESOURCE_TYPING_NAME and type(self) != Resource:  # pylint: disable=unidiomatic-typecheck
             raise BadRequestException(
-                f"The resource {self.full_classname()} is not decorated with @ResourceDecorator, it can't be instantiate. Please decorate the process class with @ResourceDecorator")
+                f"The resource {self.full_classname()} is not decorated with @ResourceDecorator, it can't be instantiate. Please decorate the resource class with @ResourceDecorator")
 
         if binary_store is None:
             self.binary_store = KVStore.empty()

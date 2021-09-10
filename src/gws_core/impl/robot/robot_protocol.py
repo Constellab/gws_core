@@ -1,8 +1,8 @@
 from ...config.config_params import ConfigParams
 from ...protocol.protocol import ProcessableSpec, Protocol
 from ...protocol.protocol_decorator import protocol_decorator
-from .robot_process import (RobotAdd, RobotAddOnCreate, RobotCreate, RobotEat,
-                            RobotFly, RobotMove, RobotWait)
+from .robot_tasks import (RobotAdd, RobotAddOnCreate, RobotCreate, RobotEat,
+                          RobotFly, RobotMove, RobotWait)
 
 
 @protocol_decorator("RobotSimpleTravel")
@@ -59,7 +59,7 @@ class RobotTravelProto(Protocol):
 
 @protocol_decorator("RobotSuperTravelProto", human_name="The super travel of Astro")
 class RobotSuperTravelProto(Protocol):
-    # config for the eat_3 process
+    # config for the eat_3 task
     config_specs = {'third_eat': {"type": float, "default": 3.14}}
 
     def configure_protocol(self, config_params: ConfigParams) -> None:

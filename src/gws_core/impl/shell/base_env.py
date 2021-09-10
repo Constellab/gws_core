@@ -7,23 +7,23 @@ import os
 from abc import abstractmethod
 
 from ...config.config_params import ConfigParams
-from ...process.process_decorator import process_decorator
-from ...process.process_io import ProcessInputs, ProcessOutputs
+from ...task.task_decorator import task_decorator
+from ...task.task_io import TaskInputs, TaskOutputs
 from .shell import Shell
 
 
-@process_decorator("BaseEnvShell")
+@task_decorator("BaseEnvShell")
 class BaseEnvShell(Shell):
     """
-    EnvShell process.
+    EnvShell task.
 
     This class is a proxy to run user shell commands in virtual environments
 
     :property unique_env_name: The unique name of the virtual environment.
-        If `None`, a unique name is automtically defined for the Process.
-        The share virtual environments across diffrent process,
+        If `None`, a unique name is automtically defined for the Task.
+        The share virtual environments across diffrent task,
         it is recommended to set (freeze) the ```unique_env_name``` in a base class and let other
-        compatible processes inherit this base class.
+        compatible tasks inherit this base class.
     :type unique_env_name: `str`
     """
 
@@ -39,7 +39,7 @@ class BaseEnvShell(Shell):
     @classmethod
     def get_env_dir(cls) -> str:
         """
-        Returns the directory of the virtual env of the process class
+        Returns the directory of the virtual env of the task class
         """
 
         if not cls.unique_env_name:
@@ -76,14 +76,14 @@ class BaseEnvShell(Shell):
 
     # -- T --
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """
         Task entrypoint
         """
 
         if not self.is_installed():
             self.install()
-        return await super().task(config=config, inputs=inputs)
+        return await super().run(config=config, inputs=inputs)
 
     # -- U --
 
@@ -96,14 +96,14 @@ class BaseEnvShell(Shell):
         pass
 
     @abstractmethod
-    def gather_outputs(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    def gather_outputs(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """
-        This methods gathers the results of the shell process. It must be overloaded by subclasses.
+        This methods gathers the results of the shell task. It must be overloaded by subclasses.
 
         It must be overloaded to capture the standard output (stdout) and the
         output files generated in the current working directory (see `gws.Shell.cwd`)
 
-        :param stdout: The standard output of the shell process
+        :param stdout: The standard output of the shell task
         :type stdout: `str`
         """
 

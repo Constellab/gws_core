@@ -3,11 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import Config, RobotMove
+from gws_core import (BaseTestCase, Config, GTest, ProcessableFactory,
+                      RobotMove, TaskModel)
 from gws_core.config.config_exceptions import MissingConfigsException
-from gws_core.process.process_model import ProcessModel
 from gws_core.processable.processable_factory import ProcessableFactory
-from gws_core import GTest, BaseTestCase
 
 
 class TestConfig(BaseTestCase):
@@ -39,10 +38,10 @@ class TestConfig(BaseTestCase):
         config2: Config = Config.get_by_id(config.id)
         self.assertEqual(config2.data, config.data)
 
-    def test_process_config(self):
-        GTest.print("Process config")
+    def test_task_config(self):
+        GTest.print("Task config")
 
-        robotMove: ProcessModel = ProcessableFactory.create_process_model_from_type(
+        robotMove: TaskModel = ProcessableFactory.create_task_model_from_type(
             RobotMove)
         self.assertEqual(robotMove.config.get_param("moving_step"), 0.1)
         robotMove.config.set_param("moving_step", 0.3)

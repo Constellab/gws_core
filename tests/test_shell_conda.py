@@ -6,25 +6,23 @@
 import os
 
 from gws_core import (BaseTestCase, CondaEnvShell, ConfigParams, Experiment,
-                      ExperimentService, GTest, JSONDict, ProcessInputs,
-                      ProcessModel, ProcessService, Resource,
-                      process_decorator)
-from gws_core.process.process_io import ProcessOutputs
+                      ExperimentService, GTest, JSONDict, Resource, TaskInputs,
+                      TaskModel, TaskOutputs, TaskService, task_decorator)
 
 __cdir__ = os.path.abspath(os.path.dirname(__file__))
 
 
-@process_decorator("CondaEnvTester")
+@task_decorator("CondaEnvTester")
 class CondaEnvTester(CondaEnvShell):
     input_specs = {}
     output_specs = {'stdout': (JSONDict, )}
     env_file_path = os.path.join(
         __cdir__, "testdata", "penv", "env_jwt_conda.yml")
 
-    def build_command(self, config: ConfigParams, inputs: ProcessInputs) -> list:
+    def build_command(self, config: ConfigParams, inputs: TaskInputs) -> list:
         return ["python", os.path.join(__cdir__, "testdata", "penv", "jwt_encode.py")]
 
-    def gather_outputs(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    def gather_outputs(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         res = JSONDict()
         res["encoded_string"] = self._stdout
         return {"stdout": res}
@@ -39,16 +37,15 @@ class TestProcess(BaseTestCase):
 
     async def test_conda(self):
         GTest.print("Conda")
-        proc_mdl: ProcessModel = ProcessService.create_process_model_from_type(
-            process_type=CondaEnvTester)
+        proc_mdl: TaskModel = TaskService.create_task_model_from_type(
+            task_type=CondaEnvTester)
         self.assertFalse(CondaEnvTester.is_installed())
 
-        experiment: Experiment = ExperimentService.create_experiment_from_process_model(
-            process_model=proc_mdl)
+        experiment: Experiment = ExperimentService.create_experiment_from_task_model(
+            task_model=proc_mdl)
         experiment = await ExperimentService.run_experiment(experiment=experiment, user=GTest.user)
 
-        # refresh the process
-        proc = experiment.processes[0]
+        proc = experiment.task_models[0]
 
         result: Resource = proc.output.get_resource_model("stdout").get_resource()
         encoded_string = result.data["encoded_string"]

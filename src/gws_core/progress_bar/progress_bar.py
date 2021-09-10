@@ -28,7 +28,6 @@ class ProgressBar(Model):
     """
 
     process_uri = CharField(null=True, index=True)
-    # -> unique index (process_uri, process_type) is created in Meta
     processable_typing_name = CharField(null=True)
 
     _min_allowed_delta_time = 1.0

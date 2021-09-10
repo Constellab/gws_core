@@ -4,10 +4,7 @@
 # About us: https://gencovery.com
 
 from abc import abstractmethod
-from typing import Optional, Type, TypedDict, Union, final
-
-from gws_core.process.process_io import ProcessInputs, ProcessOutputs
-from gws_core.resource.resource import Resource
+from typing import Optional, Type, TypedDict, final
 
 from ..config.config_params import ConfigParams
 from ..config.config_spec import ConfigSpecs
@@ -16,22 +13,24 @@ from ..core.exception.exceptions.bad_request_exception import \
 from ..io.io_spec import InputSpecs, IOSpecsHelper, OutputSpecs
 from ..processable.processable import Processable
 from ..progress_bar.progress_bar import ProgressBar
+from ..resource.resource import Resource
+from ..task.task_io import TaskInputs, TaskOutputs
 
-# Typing names generated for the class Process
-CONST_PROCESS_TYPING_NAME = "PROCESS.gws_core.Process"
+# Typing names generated for the class Task
+CONST_TASK_TYPING_NAME = "TASK.gws_core.Task"
 
 
 class CheckBeforeTaskResult(TypedDict, total=False):
     # If True, everything is ok
     # If False the task will not be executed after this check it might be run latter if they are some SKippableIn inputs
-    # If all the input values were provided and the check retuns False. the process will endup in error because it won't be run
+    # If all the input values were provided and the check retuns False. the task will endup in error because it won't be run
     result: bool
 
-    # If False a message can be provided to log the error message if the process will not be called
+    # If False a message can be provided to log the error message if the task will not be called
     message: Optional[str]
 
 
-class Process(Processable):
+class Task(Processable):
 
     input_specs: InputSpecs = {}
     output_specs: OutputSpecs = {}
@@ -50,9 +49,9 @@ class Process(Processable):
         # check that the class level property _typing_name is set
         if self._typing_name is None:
             raise BadRequestException(
-                f"The process {self.full_classname()} is not decorated with @process_decorator, it can't be instantiate. Please decorate the process class with @process_decorator")
+                f"The task {self.full_classname()} is not decorated with @task_decorator, it can't be instantiate. Please decorate the task class with @task_decorator")
 
-    def check_before_task(self, config: ConfigParams, inputs: ProcessInputs) -> CheckBeforeTaskResult:
+    def check_before_run(self, config: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
         """
         This can be overiwritten to perform custom check before running task.
         See doc of CheckBeforeTaskResult for more information
@@ -62,8 +61,8 @@ class Process(Processable):
         return {"result": True, "message": None}
 
     @abstractmethod
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
-        """This must be overiwritten to perform the task of the process.
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        """This must be overiwritten to perform the task of the task.
 
         This is where most of your code must go
 

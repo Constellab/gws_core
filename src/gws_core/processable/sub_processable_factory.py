@@ -12,8 +12,8 @@ from ..config.config_spec import ConfigValues
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..model.typing_manager import TypingManager
-from ..process.process import Process
-from ..process.process_model import ProcessModel
+from ..task.task import Task
+from ..task.task_model import TaskModel
 from .processable import Processable
 from .processable_model import ProcessableModel
 
@@ -52,8 +52,8 @@ class SubProcessableFactory():
         """Method to retrieve the processable from the DB
         """
         # Instantiate a process
-        if issubclass(processable_type, Process):
-            return ProcessModel.get_by_uri_and_check(processable_uri)
+        if issubclass(processable_type, Task):
+            return TaskModel.get_by_uri_and_check(processable_uri)
         else:
             from ..protocol.protocol_model import ProtocolModel
             return ProtocolModel.get_by_uri_and_check(processable_uri)

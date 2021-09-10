@@ -18,11 +18,11 @@ from ..model.viewable import Viewable
 from ..resource.kv_store import KVStore
 from ..resource.resource import Resource, SerializedResourceData
 from .experiment_resource import ExperimentResource
-from .processable_resource import ProcessableResource
+from .task_resource import TaskResource
 
 if TYPE_CHECKING:
     from ..experiment.experiment import Experiment
-    from ..processable.processable_model import ProcessableModel
+    from ..task.task_model import TaskModel
 
 # Typing names generated for the class Resource
 CONST_RESOURCE_MODEL_TYPING_NAME = "GWS_CORE.gws_core.ResourceModel"
@@ -36,9 +36,6 @@ ResourceType = TypeVar('ResourceType', bound=Resource)
 class ResourceModel(Viewable, Generic[ResourceType]):
     """
     ResourceModel class.
-
-    :property process: The process that created he resource
-    :type process: ProcessableModel
     """
 
     # typing name of the resource
@@ -47,7 +44,7 @@ class ResourceModel(Viewable, Generic[ResourceType]):
     # Path to the kv store if the kv exists for this resource model
     kv_store_path = CharField(null=True)
 
-    _process: ProcessableModel = None
+    _task_model: TaskModel = None
     _experiment: Experiment = None
     _table_name = 'gws_resource'
     _resource: ResourceType = None
@@ -101,41 +98,40 @@ class ResourceModel(Viewable, Generic[ResourceType]):
     # -- P --
 
     @property
-    def process(self) -> ProcessableModel:
+    def task(self) -> TaskModel:
         """
-        Returns the parent process
+        Returns the parent task model
         """
 
-        if not self._process:
+        if not self._task_model:
             try:
-                processable_resource: ProcessableResource = ProcessableResource.get_by_id_and_tying_name(
+                task_resource: TaskResource = TaskResource.get_by_id_and_tying_name(
                     self.id, self._typing_name)
-                self._process = processable_resource.process
+                self._task_model = task_resource.task_model
             except Exception as _:
                 return None
 
-        return self._process
+        return self._task_model
 
-    @process.setter
-    def process(self, process: ProcessableModel):
+    @task.setter
+    def task(self, task: TaskModel):
         """
-        Set the parent process
+        Set the parent task
         """
 
-        if self.process:
+        if self.task:
             return
 
         if not self.id:
             self.save()
 
-        mapping = ProcessableResource(
-            process_id=process.id,
-            processable_typing_name=process.processable_typing_name,
+        mapping = TaskResource(
+            task_model_id=task.id,
             resource_model_id=self.id,
             resource_model_typing_name=self._typing_name,
         )
         mapping.save()
-        self._process = process
+        self._task_model = task
 
     @property
     def typing_name(self) -> str:
@@ -222,7 +218,7 @@ class ResourceModel(Viewable, Generic[ResourceType]):
             return
 
         super().drop_table(*args, **kwargs)
-        ProcessableResource.drop_table()
+        TaskResource.drop_table()
         ExperimentResource.drop_table()
 
     @classmethod
@@ -300,9 +296,9 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         if self.experiment:
             _json.update({
                 "experiment": {"uri": self.experiment.uri},
-                "process": {
-                    "uri": self.process.uri,
-                    "typing_name": self.process.processable_typing_name,
+                "task": {
+                    "uri": self.task.uri,
+                    "typing_name": self.task.processable_typing_name,
                 },
             })
 

@@ -7,12 +7,9 @@ import json
 import os
 
 from gws_core import (BaseTestCase, Config, Experiment, ExperimentService,
-                      ExperimentStatus, GTest, ProcessModel, ProgressBar,
+                      ExperimentStatus, GTest, ProcessableModel, ProgressBar,
                       ProtocolModel, ProtocolService, Robot, RobotFood,
-                      Settings)
-from gws_core.impl.robot.robot_process import RobotMove
-from gws_core.model.typing import Typing
-from gws_core.processable.processable_model import ProcessableModel
+                      RobotMove, Settings, TaskModel, Typing)
 
 from tests.protocol_examples import (TestNestedProtocol,
                                      TestRobotwithSugarProtocol,
@@ -41,10 +38,9 @@ class TestProtocol(BaseTestCase):
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
             protocol_model=proto)
 
-        experiment = await ExperimentService.run_experiment(
-            experiment=experiment, user=GTest.user)
+        experiment = await ExperimentService.run_experiment(experiment=experiment)
 
-        self.assertEqual(len(experiment.processes), 7)
+        self.assertEqual(len(experiment.task_models), 7)
         self.assertEqual(experiment.status, ExperimentStatus.SUCCESS)
 
     async def test_advanced_protocol(self):
@@ -119,8 +115,8 @@ class TestProtocol(BaseTestCase):
         self.assertTrue("p0" in super_proto_db.processes)
         self.assertTrue("p5" in super_proto_db.processes)
 
-        p0: ProcessModel = super_proto_db.get_process('p0')
-        p5: ProcessModel = super_proto_db.get_process('p5')
+        p0: TaskModel = super_proto_db.get_process('p0')
+        p5: TaskModel = super_proto_db.get_process('p5')
 
         # This file should add a mini travel sub protocol
         with open(os.path.join(testdata_dir, "super_proto_update.json"), "r") as file:
@@ -149,7 +145,7 @@ class TestProtocol(BaseTestCase):
         self.assertEqual(p5.config.get_param('food_weight'), 15)
 
         # Check the number of process, protocol, config and progress bar
-        self.assertEqual(ProcessModel.select().count(), 5)
+        self.assertEqual(TaskModel.select().count(), 5)
         self.assertEqual(ProtocolModel.select().count(), 2)
         self.assertEqual(Config.select().count(), 7)
         self.assertEqual(ProgressBar.select().count(), 7)
@@ -187,7 +183,7 @@ class TestProtocol(BaseTestCase):
         self.assertFalse(p5.config.param_is_set('food_weight'))
 
         # Check the number of process, protocol and config
-        self.assertEqual(ProcessModel.select().count(), 2)
+        self.assertEqual(TaskModel.select().count(), 2)
         self.assertEqual(ProtocolModel.select().count(), 1)
         self.assertEqual(Config.select().count(), 3)
         self.assertEqual(ProgressBar.select().count(), 3)
@@ -216,7 +212,7 @@ class TestProtocol(BaseTestCase):
         experiment = await ExperimentService.run_experiment(
             experiment=experiment, user=GTest.user)
 
-        eat_1: ProcessModel = experiment.protocol.get_process('eat_1')
+        eat_1: TaskModel = experiment.protocol_model.get_process('eat_1')
         food: RobotFood = eat_1.input.get_resource_model('food')
 
         self.assertIsNotNone(food)
@@ -229,13 +225,13 @@ class TestProtocol(BaseTestCase):
         self.assertEqual(robot_output.weight, robot_input.weight + (2 * 10))  # 2 = food weight, 10 sugar multiplicator
 
         # Check that the eat_2 was called even if the food input (optional) is not plug
-        eat_2: ProcessModel = experiment.protocol.get_process('eat_2')
+        eat_2: TaskModel = experiment.protocol_model.get_process('eat_2')
         robot_output_2: Robot = eat_2.output.get_resource_model('robot').get_resource()
         # If this doesn't work, this mean that the process eat_2 was not called because it misses an optional input
         self.assertEqual(robot_output_2.weight, robot_output.weight + 5)  # 5 = food weight
 
         # Check that eat 3 was called event if it is connected to empty_food and food input is None
-        eat_3: ProcessModel = experiment.protocol.get_process('eat_3')
+        eat_3: TaskModel = experiment.protocol_model.get_process('eat_3')
         robot_output_3: Robot = eat_3.output.get_resource_model('robot').get_resource()
         # If this doesn't work, this mean that the process eat_2 was not called because it misses an optional input
         self.assertEqual(robot_output_3.weight, robot_output_2.weight + 7)  # 7 = food weight

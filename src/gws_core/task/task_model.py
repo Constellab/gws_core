@@ -6,26 +6,24 @@ import inspect
 import zlib
 from typing import Dict, Type
 
-from gws_core.core import exception
-
 from ..config.config_params import ConfigParams
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..model.typing_manager import TypingManager
 from ..model.typing_register_decorator import typing_registrator
-from ..process.process_io import ProcessInputs, ProcessOutputs
-from ..processable.processable_exception import (
-    ProcessableCheckBeforeTaskStopException, ProcessableRunException)
+from ..processable.processable_exception import (CheckBeforeTaskStopException,
+                                                 ProcessableRunException)
 from ..processable.processable_model import ProcessableModel
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
-from .process import CheckBeforeTaskResult, Process
+from ..task.task_io import TaskInputs, TaskOutputs
+from .task import CheckBeforeTaskResult, Task
 
 
-@typing_registrator(unique_name="Process", object_type="GWS_CORE", hide=True)
-class ProcessModel(ProcessableModel):
+@typing_registrator(unique_name="Task", object_type="GWS_CORE", hide=True)
+class TaskModel(ProcessableModel):
     """
-    Process class.
+    Task model class.
 
     :property input_specs: The specs of the input
     :type input_specs: dict
@@ -35,7 +33,7 @@ class ProcessModel(ProcessableModel):
     :type config_specs: dict
     """
 
-    _table_name = 'gws_process'  # is locked for all processes
+    _table_name = 'gws_task'
 
     def __init__(self, *args, **kwargs):
         """
@@ -48,18 +46,18 @@ class ProcessModel(ProcessableModel):
             self._init_io()
 
     def _init_io(self):
-        process_type: Type[Process] = self._get_processable_type()
+        task_type: Type[Task] = self._get_processable_type()
 
-        # create the input ports from the Process input specs
-        for k in process_type.input_specs:
-            self._input.create_port(k, process_type.input_specs[k])
+        # create the input ports from the Task input specs
+        for k in task_type.input_specs:
+            self._input.create_port(k, task_type.input_specs[k])
 
         # set the resources to the ports
         self._init_input_from_data()
 
-        # create the output ports from the Process output specs
-        for k in process_type.output_specs:
-            self._output.create_port(k, process_type.output_specs[k])
+        # create the output ports from the Task output specs
+        for k in task_type.output_specs:
+            self._output.create_port(k, task_type.output_specs[k])
 
         # set the resources to the ports
         self._init_output_from_data()
@@ -68,39 +66,39 @@ class ProcessModel(ProcessableModel):
 
     def create_source_zip(self):
         """
-        Returns the zipped code source of the process
+        Returns the zipped code source of the task
         """
 
         # /:\ Use the true object type (self.type)
-        model_t: Type[ProcessModel] = TypingManager.get_type_from_name(
+        model_t: Type[TaskModel] = TypingManager.get_type_from_name(
             self.processable_typing_name)
         source = inspect.getsource(model_t)
         return zlib.compress(source.encode())
 
-    def set_process_type(self, typing_name: str) -> None:
+    def set_task_type(self, typing_name: str) -> None:
         self.processable_typing_name = typing_name
         self._init_io()
 
     # -- D --
 
-    def _create_processable_instance(self) -> Process:
+    def _create_task_instance(self) -> Task:
         return self._get_processable_type()()
 
     async def _run(self) -> None:
         """
-        Run the process and save its state in the database.
+        Run the task and save its state in the database.
         """
-        # Create the process instance to run the task
-        process: Process = self._create_processable_instance()
+        # Create the task instance to run the task
+        task: Task = self._create_task_instance()
 
         # Get simpler object for to run the task
         config_params: ConfigParams = self.config.get_and_check_params()
-        process_inputs: ProcessInputs = self.input.get_and_check_process_inputs()
+        task_inputs: TaskInputs = self.input.get_and_check_task_inputs()
 
         check_result: CheckBeforeTaskResult
         try:
-            check_result = process.check_before_task(
-                config=config_params, inputs=process_inputs)
+            check_result = task.check_before_run(
+                config=config_params, inputs=task_inputs)
         except Exception as err:
             raise ProcessableRunException.from_exception(processable_model=self, exception=err,
                                                          error_prefix='Error during check before task') from err
@@ -108,45 +106,45 @@ class ProcessModel(ProcessableModel):
         # If the check before task retuned False
         if isinstance(check_result, dict) and check_result.get('result') is False:
             if self.input.all_connected_port_values_provided():
-                raise ProcessableCheckBeforeTaskStopException(message=check_result.get('message'))
+                raise CheckBeforeTaskStopException(message=check_result.get('message'))
             else:
                 return
 
         await self._run_before_task()
         # run the task
-        await self._run_task(process=process, config_params=config_params, process_inputs=process_inputs)
+        await self._run_task(task=task, config_params=config_params, task_inputs=task_inputs)
         await self._run_after_task()
 
-    async def _run_task(self, process: Process, config_params: ConfigParams, process_inputs: ProcessInputs) -> None:
+    async def _run_task(self, task: Task, config_params: ConfigParams, task_inputs: TaskInputs) -> None:
         """
-        Run the process and save its state in the database.
+        Run the task and save its state in the database.
         """
 
         # Set the progress bar
-        process.__progress_bar__ = self.progress_bar
+        task.__progress_bar__ = self.progress_bar
 
-        process_output: ProcessOutputs
+        task_output: TaskOutputs
 
         try:
-            # Run the process task
-            process_output = await process.task(config=config_params, inputs=process_inputs)
+            # Run the task task
+            task_output = await task.run(config=config_params, inputs=task_inputs)
         except Exception as err:
             raise ProcessableRunException.from_exception(processable_model=self, exception=err,
                                                          error_prefix='Error during task') from err
 
-        if process_output is None:
-            process_output = {}
+        if task_output is None:
+            task_output = {}
 
-        if not isinstance(process_output, dict):
-            raise BadRequestException('The process output is not a dictionary')
+        if not isinstance(task_output, dict):
+            raise BadRequestException('The task output is not a dictionary')
 
         for key, port in self.output.ports.items():
             resource_model: ResourceModel
 
             # If the resource for the output port was provided
-            if key in process_output:
+            if key in task_output:
 
-                resource: Resource = process_output[key]
+                resource: Resource = task_output[key]
 
                 if not isinstance(resource, Resource):
                     raise BadRequestException(
@@ -180,14 +178,14 @@ class ProcessModel(ProcessableModel):
         for resource in res.values():
             if resource is not None and not resource.is_saved():
                 resource.experiment = self.experiment
-                resource.process = self
+                resource.task = self
                 resource.save()
         await super()._run_after_task()
 
     def is_protocol(self) -> bool:
         return False
 
-    def save_full(self) -> 'ProcessModel':
+    def save_full(self) -> 'TaskModel':
         self.config.save()
         self.progress_bar.save()
         return self.save()

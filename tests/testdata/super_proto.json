@@ -4,7 +4,7 @@
             "creation_datetime": "2021-08-25T14:59:54",
             "instance_name": "p0",
             "is_archived": false,
-            "processable_typing_name": "PROCESS.gws_core.RobotCreate",
+            "processable_typing_name": "TASK.gws_core.RobotCreate",
             "save_datetime": "2021-08-25T14:59:54",
             "uri": "p0_uri",
             "data": {
@@ -48,7 +48,7 @@
                 },
                 "process": {
                     "uri": "ede0db7f-9488-41b3-b151-e6b2d44a4b36",
-                    "typing_name": "PROCESS.gws_core.RobotCreate"
+                    "typing_name": "TASK.gws_core.RobotCreate"
                 }
             },
             "input": {},
@@ -68,7 +68,7 @@
             "creation_datetime": "2021-08-25T14:59:54",
             "instance_name": "p5",
             "is_archived": false,
-            "processable_typing_name": "PROCESS.gws_core.RobotEat",
+            "processable_typing_name": "TASK.gws_core.RobotEat",
             "save_datetime": "2021-08-25T14:59:54",
             "uri": "p5_uri",
             "data": {
@@ -117,7 +117,7 @@
                 },
                 "process": {
                     "uri": "b663dfaa-b4c6-4b18-954b-79f05cb810d2",
-                    "typing_name": "PROCESS.gws_core.RobotEat"
+                    "typing_name": "TASK.gws_core.RobotEat"
                 }
             },
             "input": {

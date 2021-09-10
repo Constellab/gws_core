@@ -9,7 +9,7 @@ import pandas
 from gws_core import (BaseTestCase, ConfigParams, CSVDumper, CSVExporter,
                       CSVImporter, CSVLoader, CSVTable, Experiment,
                       ExperimentService, File, GTest, ProcessableFactory,
-                      ProcessModel, Protocol, ProtocolModel, ProtocolService,
+                      TaskModel, Protocol, ProtocolModel, ProtocolService,
                       Settings, Study, protocol_decorator)
 from gws_core.protocol.protocol_spec import ProcessableSpec
 
@@ -87,9 +87,9 @@ class TestCSV(BaseTestCase):
 
         print("Test CSV import/export")
 
-        importer: ProcessModel = experiment.protocol.get_process("importer")
-        loader: ProcessModel = experiment.protocol.get_process("loader")
-        exporter: ProcessModel = experiment.protocol.get_process("exporter")
+        importer: TaskModel = experiment.protocol_model.get_process("importer")
+        loader: TaskModel = experiment.protocol_model.get_process("loader")
+        exporter: TaskModel = experiment.protocol_model.get_process("exporter")
         csv_data: CSVTable = loader.output.get_resource_model("data").get_resource()
 
         i_df = pandas.read_table(i_file_path)

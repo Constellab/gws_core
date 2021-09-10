@@ -24,8 +24,8 @@ SEPARATOR: str = "."
 
 # different object typed store in the typing table
 # TODO : allow object type of new bricks automatically
-TypingObjectType = Literal["PROCESS", "RESOURCE", "PROTOCOL", "GWS_CORE", "GWS_BIOTA"]
-available_object_types = ["PROCESS", "RESOURCE", "PROTOCOL", "GWS_CORE", "GWS_BIOTA"]
+TypingObjectType = Literal["TASK", "RESOURCE", "PROTOCOL", "GWS_CORE", "GWS_BIOTA"]
+available_object_types = ["TASK", "RESOURCE", "PROTOCOL", "GWS_CORE", "GWS_BIOTA"]
 
 
 # Simple method to build the typing  = object_type.brick.model_name
@@ -42,7 +42,7 @@ class Typing(Model):
     :type type: `str`
     :property super_type: The super type of the related model.
     :type super_type: `str`
-    :property root_type: The root type of the related process.
+    :property root_type: The root type of the related task.
     :type root_type: `str`
     """
 
@@ -150,7 +150,7 @@ class Typing(Model):
         """Return the python documentation of the model type
         """
 
-        # retrieve the process python type
+        # retrieve the task python type
         model_t: Type[Base] = Utils.get_model_type(self.model_type)
         return inspect.getdoc(model_t)
 

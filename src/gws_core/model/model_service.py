@@ -18,7 +18,7 @@ from ..core.model.model import Model
 from ..core.service.base_service import BaseService
 from ..core.utils.logger import Logger
 from ..core.utils.utils import Utils
-from ..process.process_model import ProcessModel
+from ..task.task_model import TaskModel
 from ..resource.resource_model import ResourceModel
 from .typing_manager import TypingManager
 from .view_model import ViewModel
@@ -234,7 +234,7 @@ class ModelService(BaseService):
 
         # 1) save processes
         for model in model_list:
-            if isinstance(model, ProcessModel):
+            if isinstance(model, TaskModel):
                 model.save()
 
         # 2) save resources

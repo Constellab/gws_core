@@ -47,9 +47,9 @@ class SpecialTypeIn(SpecialTypeIO):
 
 class SkippableIn(SpecialTypeIn):
     """Special type to use in Input specs
-    This type tell the system that the input is skippable. This mean that the process can be called
+    This type tell the system that the input is skippable. This mean that the task can be called
     even if this input was connected and the value no provided.
-    With this you can run your process even if the input vaue was not received
+    With this you can run your task even if the input vaue was not received
     //!\\ WARNING If an input is skipped, the input is not set, the inputs['name'] will raise a KeyError exception (different from None)
 
     Has no effect when there is only one input
@@ -60,8 +60,8 @@ class SkippableIn(SpecialTypeIn):
 class OptionalIn(SpecialTypeIn):
     """Special type to use in Input specs
     This type tell the system that the input is optional.
-    The input can be not connected and the process will still run (the input value will then be None)
-    If the input is connected, the process will wait for the resource to run himself (this is the difference from SkippableIn)
+    The input can be not connected and the task will still run (the input value will then be None)
+    If the input is connected, the task will wait for the resource to run himself (this is the difference from SkippableIn)
     This is equivalent to [Resource, None]
     """
 

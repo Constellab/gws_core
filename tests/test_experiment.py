@@ -8,8 +8,8 @@ from typing import List
 
 from gws_core import (BaseTestCase, Experiment, ExperimentDTO,
                       ExperimentService, ExperimentStatus, GTest,
-                      ProcessableModel, ProcessModel, ProtocolModel,
-                      ResourceModel, Robot, RobotService, Settings)
+                      ProcessableModel, ProtocolModel, ResourceModel, Robot,
+                      RobotService, Settings, TaskModel)
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -27,7 +27,7 @@ class TestExperiment(BaseTestCase):
         self.assertIsNotNone(experiment.id)
         self.assertEqual(experiment.get_title(), 'Experiment title')
         self.assertEqual(experiment.get_description(), 'Experiment description')
-        self.assertIsNotNone(experiment.protocol.id)
+        self.assertIsNotNone(experiment.protocol_model.id)
 
     async def test_run(self):
         GTest.print("Run Experiment")
@@ -41,11 +41,8 @@ class TestExperiment(BaseTestCase):
         experiment1: Experiment = ExperimentService.create_experiment_from_protocol_model(
             protocol_model=proto1, title="My exp title", description="This is my new experiment")
 
-        #self.assertEqual(e1.processes.count(), 18)
-        #self.assertEqual(Process.select().count(), 18)
-
-        self.assertEqual(len(experiment1.processes), 15)
-        self.assertEqual(ProcessModel.select().count(), 15)
+        self.assertEqual(len(experiment1.task_models), 15)
+        self.assertEqual(TaskModel.select().count(), 15)
         self.assertEqual(ResourceModel.select().count(), 0)
         self.assertEqual(Experiment.select().count(), 1)
 
@@ -58,8 +55,8 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(experiment2.get_description(),
                          "This is my new experiment")
         self.assertEqual(experiment2, experiment1)
-        self.assertEqual(len(experiment2.processes), 15)
-        self.assertEqual(ProcessModel.select().count(), 15)
+        self.assertEqual(len(experiment2.task_models), 15)
+        self.assertEqual(TaskModel.select().count(), 15)
         self.assertEqual(ResourceModel.select().count(), 0)
         self.assertEqual(Experiment.select().count(), 1)
 
@@ -67,7 +64,7 @@ class TestExperiment(BaseTestCase):
         experiment2 = await ExperimentService.run_experiment(experiment=experiment2, user=GTest.user)
 
         #self.assertEqual(e2.processes.count(), 18)
-        self.assertEqual(len(experiment2.processes), 15)
+        self.assertEqual(len(experiment2.task_models), 15)
         self.assertEqual(experiment2.status, ExperimentStatus.SUCCESS)
 
         Q1 = experiment1.resources
@@ -81,17 +78,17 @@ class TestExperiment(BaseTestCase):
 
         self.assertEqual(e2_bis.get_title(), "My exp title")
         self.assertEqual(e2_bis.get_description(), "This is my new experiment")
-        self.assertEqual(len(e2_bis.processes), 15)
+        self.assertEqual(len(e2_bis.task_models), 15)
         self.assertEqual(Experiment.select().count(), 1)
 
         # Test the configuration on fly_1 process (west 2000)
-        fly_1: ProcessableModel = e2_bis.protocol.get_process('fly_1')
+        fly_1: ProcessableModel = e2_bis.protocol_model.get_process('fly_1')
         robot1: Robot = fly_1.input.get_resource_model('robot').get_resource()
         robot2: Robot = fly_1.output.get_resource_model('robot').get_resource()
         self.assertEqual(robot1.position[0], robot2.position[0] + 2000)
 
         # Test the protocol (super_travel) config (weight of 10)
-        super_travel: ProtocolModel = e2_bis.protocol.get_process('super_travel')
+        super_travel: ProtocolModel = e2_bis.protocol_model.get_process('super_travel')
         eat_3: ProtocolModel = super_travel.get_process('eat_3')
         robot1: Robot = eat_3.input.get_resource_model('robot').get_resource()
         robot2: Robot = eat_3.output.get_resource_model('robot').get_resource()
@@ -115,7 +112,7 @@ class TestExperiment(BaseTestCase):
 
         waiting_count = 0
         experiment3: Experiment = Experiment.get_by_uri_and_check(experiment3.uri)
-        print(experiment3.protocol)
+        print(experiment3.protocol_model)
         while experiment3.status != ExperimentStatus.SUCCESS:
             print("Waiting 3 secs the experiment to finish ...")
             time.sleep(3)
@@ -141,7 +138,7 @@ class TestExperiment(BaseTestCase):
             for r in resources:
                 self.assertEqual(r.is_archived, tf)
 
-            processes: List[ProcessModel] = experiment3.processes
+            processes: List[ProcessableModel] = experiment3.task_models
             #self.assertEqual( len(Q), 18)
             self.assertEqual(len(processes), 15)
             for process in processes:

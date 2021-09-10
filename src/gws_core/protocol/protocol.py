@@ -15,7 +15,7 @@ from ..processable.processable import Processable
 from .protocol_spec import (ConnectorPartSpec, ConnectorSpec, InterfaceSpec,
                             ProcessableSpec)
 
-# Typing names generated for the class Process
+# Typing names generated for the class Protocol
 CONST_PROTOCOL_TYPING_NAME = "PROTOCOL.gws_core.Protocol"
 
 
@@ -96,9 +96,9 @@ class Protocol(Processable):
                     config_values: ConfigValues = None) -> ProcessableSpec:
         # Check if a process with the same instance name was registered
         if instance_name in self._processable_specs:
-            process_type: ProcessableSpec = self._processable_specs[instance_name]
+            process_spec: ProcessableSpec = self._processable_specs[instance_name]
             raise BadRequestException(
-                f"Can't add the process {processable_type.classname()} to the protocol. A process ({process_type.processable_type.classname()}) already exist with the same instance name '{instance_name}'.")
+                f"Can't add the process {processable_type.classname()} to the protocol. A process ({process_spec.processable_type.classname()}) already exist with the same instance name '{instance_name}'.")
 
         # Create the processable type wrapper
         processable_spec: ProcessableSpec = ProcessableSpec(

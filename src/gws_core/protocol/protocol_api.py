@@ -10,23 +10,10 @@ from gws_core.core.classes.paginator import PaginatorDict
 from gws_core.core.dto.typed_tree_dto import TypedTree
 
 from ..core_app import core_app
-from ..process.process_service import ProcessService
+from ..task.task_service import TaskService
 from ..user.auth_service import AuthService
 from ..user.user_dto import UserData
 from .protocol_service import ProtocolService
-
-
-@core_app.get("/protocol/{uri}/progress-bar", tags=["Protocol"], summary="Get the progress bar of a protocol")
-async def get_the_progress_bar_of_a_protocol(uri: str,
-                                             _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-    """
-    Retrieve a process
-
-    - **uri**: the uri of the process
-    """
-
-    pbar = ProcessService.fetch_process_progress_bar(uri=uri)
-    return pbar.to_json()
 
 
 @core_app.get("/protocol/{uri}", tags=["Protocol"], summary="Get a protocol")
@@ -100,7 +87,7 @@ async def get_the_list_of_process_grouped(_: UserData = Depends(AuthService.chec
     Retrieve all the process types in TypedTree
     """
 
-    return ProtocolService.fetch_process_type_tree()
+    return ProtocolService.fetch_protocol_type_tree()
 
 
 @core_app.get("/protocol-type/{uri}", tags=["Protocol"], summary="Get a protocol type detail")

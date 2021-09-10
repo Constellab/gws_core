@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from ...process.process_decorator import process_decorator
+from ...task.task_decorator import task_decorator
 from ..file.file import File
 from ..file.file_uploader import (FileDumper, FileExporter, FileImporter,
                                   FileLoader)
@@ -16,7 +16,7 @@ from .json_resource import JSONDict
 # ####################################################################
 
 
-@process_decorator("JSONImporter")
+@task_decorator("JSONImporter")
 class JSONImporter(FileImporter):
     input_specs = {'file': File}
     output_specs = {'data': JSONDict}
@@ -31,7 +31,7 @@ class JSONImporter(FileImporter):
 # ####################################################################
 
 
-@process_decorator("JSONExporter")
+@task_decorator("JSONExporter")
 class JSONExporter(FileExporter):
     input_specs = {'data': JSONDict}
     output_specs = {'file': File}
@@ -48,7 +48,7 @@ class JSONExporter(FileExporter):
 # ####################################################################
 
 
-@process_decorator("JSONLoader")
+@task_decorator("JSONLoader")
 class JSONLoader(FileLoader):
     input_specs = {}
     output_specs = {'data': JSONDict}
@@ -64,7 +64,7 @@ class JSONLoader(FileLoader):
 # ####################################################################
 
 
-@process_decorator("JSONDumper")
+@task_decorator("JSONDumper")
 class JSONDumper(FileDumper):
     input_specs = {'data': JSONDict}
     output_specs = {}

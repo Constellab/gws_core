@@ -14,11 +14,11 @@ from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
 from ..model.typing import Typing
 from ..model.typing_manager import TypingManager
-from ..process.process_model import ProcessModel
 from ..processable.processable_factory import ProcessableFactory
 from ..processable.processable_model import ProcessableModel
 from ..processable.sub_processable_factory import SubProcessFactoryUpdate
 from ..protocol.protocol_model import ProtocolModel
+from ..task.task_model import TaskModel
 from .protocol import Protocol
 from .protocol_typing import ProtocolTyping
 
@@ -56,10 +56,10 @@ class ProtocolService(BaseService):
 
     @classmethod
     def create_protocol_model_from_data(cls, processes: dict = None,
-                                  connectors: list = None,
-                                  interfaces: dict = None,
-                                  outerfaces: dict = None,
-                                  instance_name: str = None) -> ProtocolModel:
+                                        connectors: list = None,
+                                        interfaces: dict = None,
+                                        outerfaces: dict = None,
+                                        instance_name: str = None) -> ProtocolModel:
         protocol: ProtocolModel = ProcessableFactory.create_protocol_model_from_data(
             processes=processes,
             connectors=connectors,
@@ -79,11 +79,11 @@ class ProtocolService(BaseService):
         return protocol
 
     @classmethod
-    def create_protocol_model_from_process_model(cls, process_model: ProcessModel) -> ProtocolModel:
-        if not isinstance(process_model, ProcessModel):
+    def create_protocol_model_from_task_model(cls, task_model: TaskModel) -> ProtocolModel:
+        if not isinstance(task_model, TaskModel):
             raise BadRequestException("A PocessModel is required")
         protocol: ProtocolModel = ProtocolService.create_protocol_model_from_data(
-            processes={process_model.instance_name: process_model}, connectors=[], interfaces={}, outerfaces={})
+            processes={task_model.instance_name: task_model}, connectors=[], interfaces={}, outerfaces={})
 
         protocol.save_full()
         return protocol
@@ -179,18 +179,18 @@ class ProtocolService(BaseService):
             query, page=page, number_of_items_per_page=number_of_items_per_page)
 
     @classmethod
-    def fetch_process_type_tree(cls) -> List[TypedTree]:
+    def fetch_protocol_type_tree(cls) -> List[TypedTree]:
         """
-        Return all the process types grouped by module and submodules
+        Return all the protocol types grouped by module and submodules
         """
 
         query: List[ProtocolTyping] = ProtocolTyping.get_types()
 
-        # create a fake main group to add processes in it
+        # create a fake main group to add protocols in it
         tree: TypedTree = TypedTree('')
 
-        for process_type in query:
+        for protocol_type in query:
             tree.add_object(
-                process_type.get_model_types_array(), process_type.to_json())
+                protocol_type.get_model_types_array(), protocol_type.to_json())
 
         return tree.sub_trees

@@ -23,8 +23,8 @@ from ..user.activity import Activity
 from ..user.user import User
 
 if TYPE_CHECKING:
-    from ..process.process_model import ProcessModel
     from ..protocol.protocol_model import ProtocolModel
+    from ..task.task_model import TaskModel
 
 
 class ExperimentStatus(Enum):
@@ -92,7 +92,7 @@ class Experiment(Viewable):
             object_type=self.full_classname(),
             object_uri=self.uri
         )
-        self.protocol.archive(archive, archive_resources=archive_resources)
+        self.protocol_model.archive(archive, archive_resources=archive_resources)
 
         return super().archive(archive)
 
@@ -153,9 +153,9 @@ class Experiment(Viewable):
         return self.data["pid"]
 
     @property
-    def protocol(self) -> ProtocolModel:
+    def protocol_model(self) -> ProtocolModel:
         """
-        Returns the protocol model
+        Returns the main protocol model
         """
         from ..protocol.protocol_model import ProtocolModel
 
@@ -166,16 +166,16 @@ class Experiment(Viewable):
         return self._protocol
 
     @property
-    def processes(self) -> List[ProcessModel]:
+    def task_models(self) -> List[TaskModel]:
         """
-        Returns child processes.
+        Returns child process models.
         """
-        from ..process.process_model import ProcessModel
+        from ..task.task_model import TaskModel
         if not self.id:
             return []
 
-        return list(ProcessModel.select().where(
-            ProcessModel.experiment == self))
+        return list(TaskModel.select().where(
+            TaskModel.experiment == self))
 
     # -- R --
 
@@ -205,8 +205,8 @@ class Experiment(Viewable):
         if self.is_validated or self.is_archived:
             return None
 
-        if self.protocol:
-            self.protocol.reset()
+        if self.protocol_model:
+            self.protocol_model.reset()
 
         self.status = ExperimentStatus.DRAFT
         self.score = None
@@ -262,8 +262,8 @@ class Experiment(Viewable):
         _json.update({
             "study": {"uri": self.study.uri},
             "protocol": {
-                "uri": self.protocol.uri,
-                "typing_name": self.protocol.processable_typing_name
+                "uri": self.protocol_model.uri,
+                "typing_name": self.protocol_model.processable_typing_name
             },
             "status": self.status
         })
@@ -293,7 +293,7 @@ class Experiment(Viewable):
             )
 
     def check_user_privilege(self, user: User) -> None:
-        return self.protocol.check_user_privilege(user)
+        return self.protocol_model.check_user_privilege(user)
 
     # -- V --
 

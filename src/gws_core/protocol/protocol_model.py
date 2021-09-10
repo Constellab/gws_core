@@ -7,7 +7,7 @@ import asyncio
 import json
 from typing import Dict, List, Type, Union
 
-from gws_core.io.io_spec import IOSpec
+from gws_core.io.io_spec import IOSpec, IOSpecClass
 
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
@@ -586,16 +586,16 @@ class ProtocolModel(ProcessableModel):
             port = outerface.source_port
             self.output.set_resource_model(key, port.resource_model)
 
-    def __set_input_specs(self, input_specs: Dict[str, IOSpec]):
+    def __set_input_specs(self, input_specs: Dict[str, IOSpecClass]):
         for key, spec in input_specs.items():
-            self._input.create_port(key, spec)
+            self._input.create_port(key, spec.resource_spec)
 
-    def __set_output_specs(self, output_specs: Dict[str, IOSpec]):
+    def __set_output_specs(self, output_specs: Dict[str, IOSpecClass]):
         for key, spec in output_specs.items():
-            self._output.create_port(key, spec)
+            self._output.create_port(key, spec.resource_spec)
 
     def set_interfaces(self, interfaces: Dict[str, Port]):
-        input_specs = {}
+        input_specs: Dict[str, IOSpecClass] = {}
         for key in interfaces:
             input_specs[key] = interfaces[key].resource_spec
         if not input_specs:
@@ -610,7 +610,7 @@ class ProtocolModel(ProcessableModel):
         self._init_input_from_data()
 
     def set_outerfaces(self, outerfaces: Dict[str, Port]):
-        output_specs = {}
+        output_specs: Dict[str, IOSpecClass] = {}
         for key in outerfaces:
             output_specs[key] = outerfaces[key].resource_spec
         if not output_specs:

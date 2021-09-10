@@ -8,9 +8,9 @@ from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.base import Base
 from ..model.typing_manager import TypingManager
-from ..process.process_io import ProcessInputs
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
+from ..task.task_io import TaskInputs
 from .io_exception import (MissingInputResourcesException,
                            ResourceNotCompatibleException)
 from .io_spec import IOSpec
@@ -66,10 +66,6 @@ class IO(Base):
         if not isinstance(name, str):
             raise BadRequestException(
                 "Invalid port specs. The port name must be a string")
-
-        if not self._parent.is_updatable:
-            raise BadRequestException(
-                "Cannot alter inputs/outputs of processes during or after running")
 
         port: Port
         if isinstance(self, Output):
@@ -170,10 +166,10 @@ class IO(Base):
     @property
     def parent(self) -> ProcessableModel:
         """
-        Returns the parent of the IO, i.e. the process that holds this IO.
+        Returns the parent of the IO, i.e. the task that holds this IO.
 
-        :return: The parent process
-        :rtype: Process
+        :return: The parent task
+        :rtype: Task
         """
 
         return self._parent
@@ -224,7 +220,7 @@ class IO(Base):
 
         if error:
             if self.parent:
-                error += f" | Process : {self.parent.get_info()}"
+                error += f" | Task : {self.parent.get_info()}"
             raise BadRequestException(error)
 
     # -- V --
@@ -292,14 +288,14 @@ class Input(IO):
 
         return True
 
-    def get_and_check_process_inputs(self) -> ProcessInputs:
-        """Get the process inputs and check all the mandatory inputs are provided
+    def get_and_check_task_inputs(self) -> TaskInputs:
+        """Get the task inputs and check all the mandatory inputs are provided
 
         :return: [description]
         :rtype: ProcessIO
         """
         missing_resource: List[str] = []
-        process_io: ProcessInputs = ProcessInputs()
+        task_io: TaskInputs = TaskInputs()
         for key, port in self.ports.items():
 
             if port.is_empty:
@@ -309,12 +305,12 @@ class Input(IO):
                 continue
             # get the port resource and force a new instance to prevent modifing the same
             # resource on new task
-            process_io[key] = port.get_resource(new_instance=True)
+            task_io[key] = port.get_resource(new_instance=True)
 
         if len(missing_resource) > 0:
             raise MissingInputResourcesException(port_names=missing_resource)
 
-        return process_io
+        return task_io
 
 # ####################################################################
 #

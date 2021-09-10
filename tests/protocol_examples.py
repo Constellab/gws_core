@@ -4,10 +4,10 @@
 # About us: https://gencovery.com
 import time
 
-from gws_core import (ConfigParams, OptionalIn, Process, ProcessableSpec,
-                      ProcessInputs, ProcessOutputs, Protocol, RobotCreate,
+from gws_core import (ConfigParams, OptionalIn, Task, ProcessableSpec,
+                      TaskInputs, TaskOutputs, Protocol, RobotCreate,
                       RobotEat, RobotFood, RobotMove, RobotSugarCreate,
-                      RobotWait, process_decorator, protocol_decorator)
+                      RobotWait, task_decorator, protocol_decorator)
 
 # File for Tests containing examples of protocols
 
@@ -66,38 +66,38 @@ class TestNestedProtocol(Protocol):
         ])
 
 
-@process_decorator(unique_name="RobotWaitfood", human_name="Wait food",
-                   short_description="Wait food")
-class RobotWaitfood(Process):
+@task_decorator(unique_name="RobotWaitfood", human_name="Wait food",
+                short_description="Wait food")
+class RobotWaitfood(Task):
     """Wait 3
     """
     input_specs = {'food': RobotFood}
     output_specs = {'food': RobotFood}
     config_specs = {}
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print("Wait food", flush=True)
         time.sleep(3)
         return {'food': inputs['food']}
 
 
-@process_decorator(unique_name="RobotEmptyfood", human_name="Empty food",
-                   short_description="Empty food")
-class RobotEmptyfood(Process):
+@task_decorator(unique_name="RobotEmptyfood", human_name="Empty food",
+                short_description="Empty food")
+class RobotEmptyfood(Task):
     """Wait 3
     """
     input_specs = {}
     output_specs = {'food': OptionalIn(RobotFood)}
     config_specs = {}
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {}
 
 
 @protocol_decorator("TestRobotwithSugarProtocol")
 class TestRobotwithSugarProtocol(Protocol):
-    """This test protocol test that the Eat process works with 2 entries.
-    It also test that the eat process will wait for the Food input even if it is optional
+    """This test protocol test that the Eat task works with 2 entries.
+    It also test that the eat task will wait for the Food input even if it is optional
 
     :param Protocol: [description]
     :type Protocol: [type]

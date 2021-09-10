@@ -10,16 +10,16 @@ from abc import abstractmethod
 
 from ...config.config_params import ConfigParams
 from ...core.exception.exceptions import BadRequestException
-from ...process.process_decorator import process_decorator
-from ...process.process_io import ProcessInputs, ProcessOutputs
 from ...progress_bar.progress_bar import ProgressBar
+from ...task.task_decorator import task_decorator
+from ...task.task_io import TaskInputs, TaskOutputs
 from .base_env import BaseEnvShell
 
 
-@process_decorator("CondaEnvShell")
+@task_decorator("CondaEnvShell")
 class CondaEnvShell(BaseEnvShell):
     """
-    CondaEnvShell process.
+    CondaEnvShell task.
 
     This class allows to run python scripts in conda virtual environments. It rely on the awesome
     Conda containerization system to efficiently automate the management of your venvs.
@@ -128,14 +128,14 @@ class CondaEnvShell(BaseEnvShell):
                     "Cannot remove the virtual environment.")
 
     @abstractmethod
-    def gather_outputs(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    def gather_outputs(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """
-        This methods gathers the results of the shell process. It must be overloaded by subclasses.
+        This methods gathers the results of the shell task. It must be overloaded by subclasses.
 
         It must be overloaded to capture the standard output (stdout) and the
         output files generated in the current working directory (see `gws.Shell.cwd`)
 
-        :param stdout: The standard output of the shell process
+        :param stdout: The standard output of the shell task
         :type stdout: `str`
         """
 

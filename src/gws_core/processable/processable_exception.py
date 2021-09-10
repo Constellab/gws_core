@@ -65,8 +65,8 @@ class ProcessableRunException(BadRequestException):
         self.context = context + ' > ' + self.context
 
 
-class ProcessableCheckBeforeTaskStopException(BadRequestException):
-    """Exception raised when the before task returned false and all the input of the process where provided
+class CheckBeforeTaskStopException(BadRequestException):
+    """Exception raised when the before task returned false and all the input of the task where provided
 
     :param BadRequestException: [description]
     :type BadRequestException: [type]
@@ -75,6 +75,6 @@ class ProcessableCheckBeforeTaskStopException(BadRequestException):
     """
 
     def __init__(self, message: str) -> None:
-        super().__init__(detail=GWSException.PROCESSABLE_CHECK_BEFORE_STOP.value,
-                         unique_code=GWSException.PROCESSABLE_CHECK_BEFORE_STOP.name,
+        super().__init__(detail=GWSException.TASK_CHECK_BEFORE_STOP.value,
+                         unique_code=GWSException.TASK_CHECK_BEFORE_STOP.name,
                          detail_args={"message": message})

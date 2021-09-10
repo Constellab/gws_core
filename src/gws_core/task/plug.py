@@ -12,19 +12,19 @@ from ..core.exception.exceptions.bad_request_exception import \
 from ..io.io_spec import InputSpecs, OutputSpecs
 from ..io.io_types import SkippableIn, UnmodifiedOut
 from ..model.typing_manager import TypingManager
-from ..process.process_io import ProcessInputs, ProcessOutputs
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
-from .process import Process
-from .process_decorator import process_decorator
+from ..task.task_io import TaskInputs, TaskOutputs
+from .task import Task
+from .task_decorator import task_decorator
 
 
-@process_decorator(unique_name="Source")
-class Source(Process):
+@task_decorator(unique_name="Source")
+class Source(Task):
     """
-    Source process.
+    Source task.
 
-    A source process is used to load and transfer a resource. No more action is done.
+    A source task is used to load and transfer a resource. No more action is done.
     """
 
     input_specs: InputSpecs = {}
@@ -34,7 +34,7 @@ class Source(Process):
         'resource_typing_name': {"type": str, "default": None, 'description': "The type of the resource"},
     }
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         r_uri: str = config.get_param("resource_uri")
         r_typing_name: str = config.get_param("resource_typing_name")
         if not r_uri or not r_typing_name:
@@ -44,28 +44,28 @@ class Source(Process):
         return {"resource": resource_model.get_resource()}
 
 
-@process_decorator(unique_name="Sink")
-class Sink(Process):
+@task_decorator(unique_name="Sink")
+class Sink(Task):
     """
-    Sink process.
+    Sink task.
 
-    A sink process is used to recieve a resource. No action is done.
+    A sink task is used to recieve a resource. No action is done.
     """
 
     input_specs: InputSpecs = {'resource': Resource}
     output_specs: OutputSpecs = {}
     config_specs: ConfigSpecs = {}
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         pass
 
 
-@process_decorator(unique_name="FIFO2")
-class FIFO2(Process):
+@task_decorator(unique_name="FIFO2")
+class FIFO2(Task):
     """
-    FIFO2 process (with 2 input ports)
+    FIFO2 task (with 2 input ports)
 
-    The FIFO2 (First-In-First-Out) process sends to the output port the first resource received in an input port
+    The FIFO2 (First-In-First-Out) task sends to the output port the first resource received in an input port
     """
 
     input_specs: InputSpecs = {'resource_1': SkippableIn(Resource),
@@ -73,7 +73,7 @@ class FIFO2(Process):
     output_specs: OutputSpecs = {'resource': UnmodifiedOut(resource_types=Resource, sub_class=True)}
     config_specs: ConfigSpecs = {}
 
-    def check_before_task(self, config: ConfigParams, inputs: ProcessInputs) -> bool:
+    def check_before_run(self, config: ConfigParams, inputs: TaskInputs) -> bool:
         res_1 = inputs.get('resource_1')
         res_2 = inputs.get('resource_2')
         is_ready = res_1 or res_2
@@ -82,7 +82,7 @@ class FIFO2(Process):
 
         return True
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
         if inputs.has_resource("resource_1"):
             return {"resource": inputs["resource_1"]}
@@ -93,10 +93,10 @@ class FIFO2(Process):
         return None
 
 
-@process_decorator(unique_name="Switch2")
-class Switch2(Process):
+@task_decorator(unique_name="Switch2")
+class Switch2(Task):
     """
-    Switch process (with 2 input ports)
+    Switch task (with 2 input ports)
 
     The Switch2 proccess sends to the output port the resource corresponding to the parameter `index`
     """
@@ -107,21 +107,21 @@ class Switch2(Process):
     config_specs: ConfigSpecs = {"index": {"type": int, "default": 1, "min": 1, "max": 2,
                                            "description": "The index of the input resource to switch on. Defaults to 1."}}
 
-    def check_before_task(self, config: ConfigParams, inputs: ProcessInputs) -> bool:
+    def check_before_run(self, config: ConfigParams, inputs: TaskInputs) -> bool:
         index = config.get_param("index")
         # The switch is ready to execute if the correct input was set
         return f"resource_{index}" in inputs
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         index = config.get_param("index")
         resource = inputs[f"resource_{index}"]
         return {"resource": resource}
 
 
-@process_decorator(unique_name="Wait")
-class Wait(Process):
+@task_decorator(unique_name="Wait")
+class Wait(Task):
     """
-    Wait process
+    Wait task
 
     This proccess waits during a given time before continuing.
     """
@@ -131,7 +131,7 @@ class Wait(Process):
     config_specs: ConfigSpecs = {"waiting_time": {"type": float, "default": 3, "min": 0,
                                                   "description": "The waiting time in seconds. Defaults to 3 second."}}
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         waiting_time = config.get_param("waiting_time")
         time.sleep(waiting_time)
         resource = inputs["resource"]

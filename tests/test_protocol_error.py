@@ -5,26 +5,26 @@
 
 
 from gws_core import (BaseTestCase, CheckBeforeTaskResult, ConfigParams,
-                      Experiment, ExperimentService, GTest, Process,
-                      ProcessableFactory, ProcessableModel, ProcessableSpec,
-                      ProcessInputs, ProcessOutputs, Protocol, ProtocolModel,
-                      ProtocolService, Resource, RobotMove, process_decorator,
-                      protocol_decorator, resource_decorator)
+                      Experiment, ExperimentService, GTest, ProcessableFactory,
+                      ProcessableModel, ProcessableSpec, Protocol,
+                      ProtocolModel, ProtocolService, Resource, RobotMove,
+                      Task, TaskInputs, TaskOutputs, protocol_decorator,
+                      resource_decorator, task_decorator)
 from gws_core.experiment.experiment_exception import ExperimentRunException
 from gws_core.protocol.protocol_exception import ProtocolBuildException
 
 
-#################### Error during the process task ################
-@process_decorator("ErrorProcess")
-class ErrorProcess(Process):
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
-        raise Exception("This is the error process")
+#################### Error during the task ################
+@task_decorator("ErrorTask")
+class ErrorTask(Task):
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        raise Exception("This is the error task")
 
 
 @protocol_decorator("TestSubErrorProtocol")
 class TestSubErrorProtocol(Protocol):
     def configure_protocol(self, config_params: ConfigParams) -> None:
-        self.add_process(ErrorProcess, 'error')
+        self.add_process(ErrorTask, 'error')
 
 
 @protocol_decorator("TestErrorProtocol")
@@ -35,12 +35,12 @@ class TestErrorProtocol(Protocol):
 ############## Before task error ###################
 
 
-@process_decorator("CheckBeforeTaskError")
-class CheckBeforeTaskError(Process):
-    def check_before_task(self, config: ConfigParams, inputs: ProcessInputs) -> CheckBeforeTaskResult:
-        return {"result": False, "message": "We can't run this process"}
+@task_decorator("CheckBeforeTaskError")
+class CheckBeforeTaskError(Task):
+    def check_before_run(self, config: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
+        return {"result": False, "message": "We can't run this task"}
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         pass
 
 
@@ -57,13 +57,13 @@ class NotRobot(Resource):
     pass
 
 
-@process_decorator("NotRobotCreate")
-class NotRobotCreate(Process):
+@task_decorator("NotRobotCreate")
+class NotRobotCreate(Task):
     input_specs = {}
     output_specs = {'not_robot': NotRobot}
     config_specs = {}
 
-    async def task(self, config: ConfigParams, inputs: ProcessInputs) -> ProcessOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {'not_robot': NotRobot()}
 
 
@@ -86,9 +86,9 @@ class TestProtocolBuildError(Protocol):
 
 class TestProtocolError(BaseTestCase):
 
-    async def test_error_on_process(self):
-        """Test an experiment with a process that throws an exception. Test that """
-        GTest.print("Error Process")
+    async def test_error_on_task(self):
+        """Test an experiment with a task that throws an exception """
+        GTest.print("Error Task")
 
         protocol: ProtocolModel = ProtocolService.create_protocol_model_from_type(TestErrorProtocol)
 
@@ -116,7 +116,7 @@ class TestProtocolError(BaseTestCase):
         self.assertEqual(experiment.error_info['context'], "Main protocol > sub_proto > error")
 
         # Check that main protocol is in error status
-        protocol: ProtocolModel = experiment.protocol
+        protocol: ProtocolModel = experiment.protocol_model
         self.assertTrue(protocol.is_error)
         self.assertIsNotNone(protocol.error_info)
         self.assertEqual(protocol.error_info['instance_id'], exception.instance_id)

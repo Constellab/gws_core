@@ -4,14 +4,9 @@
 # About us: https://gencovery.com
 
 
-from gws_core import BaseTestCase, GTest
-from gws_core.experiment.experiment import Experiment
-from gws_core.experiment.experiment_service import ExperimentService
-from gws_core.impl.robot.robot_process import RobotCreate
-from gws_core.impl.robot.robot_resource import Robot
-from gws_core.process.process_model import ProcessModel
-from gws_core.processable.processable_factory import ProcessableFactory
-from gws_core.resource.resource_model import ResourceModel
+from gws_core import (BaseTestCase, Experiment, ExperimentService, GTest,
+                      ProcessableFactory, ResourceModel, Robot, RobotCreate,
+                      TaskModel)
 
 
 class TestResource(BaseTestCase):
@@ -19,13 +14,13 @@ class TestResource(BaseTestCase):
     async def test_resource(self):
         GTest.print("Resource")
 
-        process: ProcessModel = ProcessableFactory.create_process_model_from_type(
-            process_type=RobotCreate, instance_name="create")
-        experiment = ExperimentService.create_experiment_from_process_model(process)
+        task_model: TaskModel = ProcessableFactory.create_task_model_from_type(
+            task_type=RobotCreate, instance_name="create")
+        experiment = ExperimentService.create_experiment_from_task_model(task_model)
 
         experiment: Experiment = await ExperimentService.run_experiment(experiment)
 
-        create: ProcessModel = experiment.protocol.get_process('create')
+        create: TaskModel = experiment.protocol_model.get_process('create')
 
         # Check that the resource model was generated
         resource_model: ResourceModel = create.out_port('robot').resource_model

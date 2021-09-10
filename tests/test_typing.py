@@ -5,8 +5,8 @@
 
 from typing import Dict
 
-from gws_core import (BaseTestCase, GTest, ProcessService, ProcessTyping,
-                      ProtocolService, ProtocolTyping, ResourceTyping, RobotEat)
+from gws_core import (BaseTestCase, GTest, ProtocolService, ProtocolTyping,
+                      ResourceTyping, RobotEat, TaskService, TaskTyping)
 from gws_core.impl.robot.robot_protocol import RobotWorldTravelProto
 from gws_core.impl.robot.robot_resource import Robot
 
@@ -16,7 +16,7 @@ class TestTyping(BaseTestCase):
     async def test_typing(self):
         GTest.print("Model Typing")
 
-        process_types = ProcessService.fetch_process_type_list().to_json()
+        process_types = TaskService.fetch_task_typing_list().to_json()
         self.assertTrue(len(process_types["objects"]) > 0)
 
         protocol_types = ProtocolService.fetch_protocol_type_list().to_json()
@@ -26,14 +26,14 @@ class TestTyping(BaseTestCase):
         """Test a get from a type and test convertion to json of a type that
         has mulitple spec and an optional spec
         """
-        eat_type: ProcessTyping = ProcessTyping.get_by_model_type(RobotEat)
+        eat_type: TaskTyping = TaskTyping.get_by_model_type(RobotEat)
 
         self.assertEqual(eat_type.get_type(), RobotEat)
 
         eat_json: Dict = eat_type.to_json(deep=True)
 
         input_specs: Dict = {'robot': ['RESOURCE.gws_core.Robot'], 'food': ['RESOURCE.gws_core.RobotFood', None]}
-        self.assertEqual(eat_json['typing_name'], 'PROCESS.gws_core.RobotEat')
+        self.assertEqual(eat_json['typing_name'], 'TASK.gws_core.RobotEat')
         self.assert_json(eat_json['input_specs'], input_specs, None)
 
     async def test_protocol_type(self):
