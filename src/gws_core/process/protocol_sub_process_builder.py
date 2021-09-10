@@ -18,8 +18,8 @@ from .process import Process
 from .process_model import ProcessModel
 
 
-class SubProcessFactory():
-    """Factory used by the ProtocolModel builder to instantiate processs of Protocol form the node json Dict
+class ProtocolSubProcessBuilder():
+    """Builder used by the ProtocolModel build method to instantiate processs of Protocol form the node json Dict
     """
 
     def instantiate_process_from_json(self, node_json: Dict, instance_name: str) -> ProcessModel:
@@ -73,12 +73,9 @@ class SubProcessFactory():
             process_type=process_type, config_values=config_values, instance_name=instance_name)
 
 
-class SubProcessFactoryReadFromDb(SubProcessFactory):
+class SubProcessBuilderReadFromDb(ProtocolSubProcessBuilder):
     """Factory used when getting a protocol from the database,  it read the protocol's processes
     from the DB
-
-    :param SubProcessFactory: [description]
-    :type SubProcessFactory: [type]
     """
 
     def _instantiate_process(self, process_uri: Optional[str],
@@ -92,11 +89,8 @@ class SubProcessFactoryReadFromDb(SubProcessFactory):
         return self._get_process_from_db(process_uri=process_uri, process_type=process_type)
 
 
-class SubProcessFactoryCreate(SubProcessFactory):
+class SubProcessBuilderCreate(ProtocolSubProcessBuilder):
     """Factory used to force creation of a processes when building a protocol
-
-    :param SubProcessFactory: [description]
-    :type SubProcessFactory: [type]
     """
 
     def _instantiate_process(self, process_uri: Optional[str],
@@ -108,11 +102,8 @@ class SubProcessFactoryCreate(SubProcessFactory):
                                         node_json=node_json)
 
 
-class SubProcessFactoryUpdate(SubProcessFactory):
+class SubProcessBuilderUpdate(ProtocolSubProcessBuilder):
     """Factory used to get the processes or create a new one when building a protocol
-
-    :param SubProcessFactory: [description]
-    :type SubProcessFactory: [type]
     """
 
     def _instantiate_process(self, process_uri: Optional[str],

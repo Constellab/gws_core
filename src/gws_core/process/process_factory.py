@@ -23,7 +23,7 @@ from ..user.current_user_service import CurrentUserService
 from ..user.user import User
 from .process import Process
 from .process_model import ProcessModel, ProcessStatus
-from .sub_process_factory import SubProcessFactoryCreate
+from .protocol_sub_process_builder import SubProcessBuilderCreate
 
 
 class ProcessFactory():
@@ -234,7 +234,7 @@ class ProcessFactory():
         """
 
         protocol.build_from_graph(
-            graph=graph, sub_process_factory=SubProcessFactoryCreate())
+            graph=graph, sub_process_factory=SubProcessBuilderCreate())
 
         for key, process in protocol.processes.items():
             if isinstance(process, ProtocolModel):

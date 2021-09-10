@@ -16,7 +16,7 @@ from ..model.typing import Typing
 from ..model.typing_manager import TypingManager
 from ..process.process_factory import ProcessFactory
 from ..process.process_model import ProcessModel
-from ..process.sub_process_factory import SubProcessFactoryUpdate
+from ..process.protocol_sub_process_builder import SubProcessBuilderUpdate
 from ..protocol.protocol_model import ProtocolModel
 from ..task.task_model import TaskModel
 from .protocol import Protocol
@@ -106,7 +106,7 @@ class ProtocolService(BaseService):
         cls.remove_orphan_process(protocol_model=protocol_model, nodes=graph["nodes"])
 
         protocol_model.build_from_graph(
-            graph=graph, sub_process_factory=SubProcessFactoryUpdate())
+            graph=graph, sub_process_factory=SubProcessBuilderUpdate())
 
         for key, process in protocol_model.processes.items():
 

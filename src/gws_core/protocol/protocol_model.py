@@ -17,10 +17,9 @@ from ..io.ioface import Interface, Outerface
 from ..io.port import InPort, OutPort, Port
 from ..model.typing_register_decorator import typing_registrator
 from ..process.process_model import ProcessModel
-from ..process.sub_process_factory import (SubProcessFactory,
-                                           SubProcessFactoryReadFromDb)
+from ..process.protocol_sub_process_builder import (
+    ProtocolSubProcessBuilder, SubProcessBuilderReadFromDb)
 from ..protocol.protocol import Protocol
-from ..resource.resource import Resource
 from ..user.activity import Activity
 from ..user.user import User
 
@@ -173,11 +172,11 @@ class ProtocolModel(ProcessModel):
             return
 
         self.build_from_graph(
-            graph=self.data["graph"], sub_process_factory=SubProcessFactoryReadFromDb())
+            graph=self.data["graph"], sub_process_factory=SubProcessBuilderReadFromDb())
         self._is_loaded = True
 
     def build_from_graph(self, graph: Union[str, dict],
-                         sub_process_factory: SubProcessFactory) -> None:
+                         sub_process_factory: ProtocolSubProcessBuilder) -> None:
         """
         Construct a Protocol instance using a setting dump.
 
@@ -199,7 +198,7 @@ class ProtocolModel(ProcessModel):
         self._init_outerfaces_from_graph(graph["outerfaces"])
 
     def _init_processes_from_graph(self, nodes: Dict,
-                                   sub_process_factory: SubProcessFactory) -> None:
+                                   sub_process_factory: ProtocolSubProcessBuilder) -> None:
         # create nodes
         for key, node_json in nodes.items():
 
