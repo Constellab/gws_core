@@ -258,14 +258,14 @@ class ProcessModel(Viewable):
 
         self._input.load_from_json(self.data["input"])
 
-    def in_port(self, name: str) -> InPort:
+    def in_port(self, port_name: str) -> InPort:
         """
         Returns the port of the input by its name.
 
         :return: The port
         :rtype: InPort
         """
-        return self.input.get_port(name)
+        return self.input.get_port(port_name)
 
     ################################# OUTPUT #############################
 
@@ -292,14 +292,14 @@ class ProcessModel(Viewable):
 
         self._output.load_from_json(self.data["output"])
 
-    def out_port(self, name: str) -> OutPort:
+    def out_port(self, port_name: str) -> OutPort:
         """
         Returns the port of the output by its name.
 
         :return: The port
         :rtype: OutPort
         """
-        return self.output.get_port(name)
+        return self.output.get_port(port_name)
 
     ################################# RUN #########################
 
@@ -419,13 +419,13 @@ class ProcessModel(Viewable):
         """
         Get a param value from the config
         """
-        self.config.get_param(param_name)
+        return self.config.get_param(param_name)
 
     def get_values(self) -> ConfigParams:
         """
         Get all params values from the config
         """
-        self.config.get_and_check_params()
+        return self.config.get_and_check_params()
 
     ########################### INFO #################################
 

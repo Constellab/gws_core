@@ -263,17 +263,8 @@ class Port(Base):
 
         return self._resource_spec
 
-    def get_resource_typing_names(self) -> List[str]:
-        # TODO fix a place under IOSpecClass and add support for SubClass
-        specs: List[str] = []
-        for resource_type in self.resource_spec.to_resource_types():
-            if resource_type is None:
-                specs.append(None)
-            else:
-                specs.append(resource_type._typing_name)
-        return specs
-
     # -- S --
+
     def set_resource_spec(self, resource_spec: IOSpec):
         """
         Sets the resource_types of the port.
@@ -346,8 +337,7 @@ class Port(Base):
                 "typing_name": ""
             }
 
-        _json["specs"] = self.get_resource_typing_names()
-
+        _json["specs"] = self.resource_spec.to_json()
         return _json
 
 

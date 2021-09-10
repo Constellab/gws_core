@@ -53,6 +53,18 @@ class IOSpecClass:
     def is_skippable_in(self) -> bool:
         return isinstance(self.resource_spec, SkippableIn)
 
+    def get_resource_typing_names(self) -> List[str]:
+        specs: List[str] = []
+        for resource_type in self.to_resource_types():
+            if resource_type is None:
+                specs.append(None)
+            else:
+                specs.append(resource_type._typing_name)
+        return specs
+
+    def to_json(self) -> List[str]:
+        return self.get_resource_typing_names()
+
 
 class IOSpecsHelper():
     """Class containing only class method to simplify IOSpecs management

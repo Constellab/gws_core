@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, List, Type, final
+from abc import abstractmethod
+from typing import TYPE_CHECKING, Dict, Generic, List, Type, TypeVar, final
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -21,19 +22,22 @@ if TYPE_CHECKING:
 
 IODict = Dict[str, PortDict]
 
+# For generic Port type
+PortType = TypeVar('PortType', bound=Port)
+
 
 ####################################################################
 #
 # IO class
 #
 # ####################################################################
-class IO(Base):
+class IO(Base, Generic[PortType]):
     """
     Base IO class. The IO class defines base functionalitie for the
     Input and Output classes. A IO is a set of ports.
     """
 
-    _ports: Dict[str, Port] = {}
+    _ports: Dict[str, PortType] = {}
     _parent: ProcessModel
     _counter = 0
 
@@ -67,13 +71,12 @@ class IO(Base):
             raise BadRequestException(
                 "Invalid port specs. The port name must be a string")
 
-        port: Port
-        if isinstance(self, Output):
-            port = OutPort(self, resource_spec)
-        else:
-            port = InPort(self, resource_spec)
-
+        port: PortType = self._create_port(resource_spec)
         self._ports[name] = port
+
+    @abstractmethod
+    def _create_port(self, resource_spec: IOSpec):
+        pass
 
     # -- G --
 
@@ -100,7 +103,7 @@ class IO(Base):
             resource_models[key] = port.resource_model
         return resource_models
 
-    def get_port(self, port_name: str) -> Port:
+    def get_port(self, port_name: str) -> PortType:
         """
         Returns the resources of all the ports.
 
@@ -153,7 +156,7 @@ class IO(Base):
     # -- P --
 
     @property
-    def ports(self) -> Dict[str, Port]:
+    def ports(self) -> Dict[str, PortType]:
         """
         Returns the list of ports.
 
@@ -188,7 +191,7 @@ class IO(Base):
     def set_resource_model(self, port_name: str, resource_model: ResourceModel) -> None:
         """Set the resource_model of a port
         """
-        port: Port = self.get_port(port_name)
+        port: PortType = self.get_port(port_name)
 
         resource_type: Type[Resource] = type(resource_model.get_resource())
         if not port.resource_type_is_compatible(resource_type):
@@ -200,13 +203,13 @@ class IO(Base):
     def get_resource_model(self, port_name: str) -> ResourceModel:
         """Get the resource_model of a port
         """
-        port: Port = self.get_port(port_name)
+        port: PortType = self.get_port(port_name)
         return port.resource_model
 
     def _set_resource_model_without_check(self, port_name: str, resource_model: ResourceModel) -> None:
         """Set the resource in the port without checking the port type
         """
-        port: Port = self.get_port(port_name)
+        port: PortType = self.get_port(port_name)
         port.resource_model = resource_model
 
     def _check_port_name(self, name) -> None:
@@ -259,7 +262,7 @@ class IO(Base):
 
 
 @final
-class Input(IO):
+class Input(IO[InPort]):
     """
     Input class
     """
@@ -278,6 +281,9 @@ class Input(IO):
                 return False
 
         return True
+
+    def _create_port(self, resource_spec: IOSpec) -> InPort:
+        return InPort(self, resource_spec)
 
     def all_connected_port_values_provided(self) -> bool:
         """Return true if all the ports that are connected, received a resource
@@ -320,10 +326,13 @@ class Input(IO):
 
 
 @final
-class Output(IO):
+class Output(IO[OutPort]):
     """
     Output class
     """
+
+    def _create_port(self, resource_spec: IOSpec) -> OutPort:
+        return OutPort(self, resource_spec)
 
     @property
     def is_connected(self) -> bool:
