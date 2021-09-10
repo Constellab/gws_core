@@ -8,7 +8,7 @@ import os
 import pandas
 from gws_core import (BaseTestCase, ConfigParams, CSVDumper, CSVExporter,
                       CSVImporter, CSVLoader, CSVTable, Experiment,
-                      ExperimentService, FileResource, GTest, ProcessableFactory,
+                      ExperimentService, File, GTest, ProcessableFactory,
                       ProcessModel, Protocol, ProtocolModel, ProtocolService,
                       Settings, Study, protocol_decorator)
 from gws_core.protocol.protocol_spec import ProcessableSpec
@@ -102,7 +102,7 @@ class TestCSV(BaseTestCase):
             os.unlink(o_file_path)
         self.assertFalse(os.path.exists(o_file_path))
 
-        file: FileResource = exporter.output.get_resource_model("file")
+        file: File = exporter.output.get_resource_model("file")
         self.assertTrue(os.path.exists(file.path))
 
         o_csv_data: CSVTable = importer.output.get_resource_model("data").get_resource()

@@ -96,12 +96,12 @@ from .impl.csv.csv_process import CSVExporter as CSVExporter
 from .impl.csv.csv_process import CSVImporter as CSVImporter
 from .impl.csv.csv_process import CSVLoader as CSVLoader
 from .impl.csv.csv_resource import CSVTable as CSVTable
-from .impl.file.file_process import WriteToJsonFile as WriteToJsonFile
 # Impl > File
-from .impl.file.file import File as FileResource
+from .impl.file.file import File as File
 from .impl.file.file import FileSet as FileSet
-from .impl.file.file_resource_model import \
-    FileResourceModel as FileResourceModel
+from .impl.file.file_process import WriteToJsonFile as WriteToJsonFile
+from .impl.file.file_model import \
+    FileModel as FileModel
 from .impl.file.file_service import FileService as FileService
 from .impl.file.file_store import FileStore as FileStore
 from .impl.file.file_uploader import FileDumper as FileDumper

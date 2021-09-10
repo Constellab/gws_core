@@ -11,8 +11,8 @@ from ...model.typing_register_decorator import typing_registrator
 from .file_helper import FileHelper
 
 
-@typing_registrator(unique_name="FileResourceModel", object_type="GWS_CORE", hide=True)
-class FileResourceModel(ExtendedResourceModel):
+@typing_registrator(unique_name="FileModel", object_type="GWS_CORE", hide=True)
+class FileModel(ExtendedResourceModel):
     path = CharField(null=True, index=True, unique=True)
     file_store_uri = CharField(null=True, index=True)
     _table_name = "gws_file_resource"

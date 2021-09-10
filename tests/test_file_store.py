@@ -5,7 +5,7 @@
 
 import os
 
-from gws_core import (BaseTestCase, FileResource, GTest, LocalFileStore,
+from gws_core import (BaseTestCase, File, GTest, LocalFileStore,
                       Settings)
 from gws_core.impl.file.file_store import FileStore
 
@@ -22,14 +22,14 @@ class TestLocalFileStore(BaseTestCase):
         testdata_dir = settings.get_variable("gws_core:testdata_dir")
         file_path = os.path.join(testdata_dir, "mini_travel_graph.json")
 
-        file: FileResource = file_store.add_from_path(file_path)
+        file: File = file_store.add_from_path(file_path)
         self.assertTrue(file_store.file_exists(file.name))
 
         file = file_store.add_from_path(file_path)
         self.assertTrue(file_store.file_exists(file.name))
         self.assertTrue(file_store.contains(file))
 
-        file2 = FileResource()
+        file2 = File()
         file2.path = file_path
         print(file2.path)
 

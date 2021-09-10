@@ -15,7 +15,7 @@ from ...core.exception.exceptions import BadRequestException
 from ...core.utils.settings import Settings
 from .file_helper import FileHelper
 from .file import File
-from .file_resource_model import FileResourceModel
+from .file_model import FileModel
 from .file_store import FileStore
 
 
@@ -153,8 +153,8 @@ class LocalFileStore(FileStore):
         super().drop_table(*args, **kwargs)
 
     def delete_instance(self, *args, **kwargs):
-        if FileResourceModel.table_exists():
-            FileResourceModel.delete().where(FileResourceModel.file_store_uri == self.uri).execute()
+        if FileModel.table_exists():
+            FileModel.delete().where(FileModel.file_store_uri == self.uri).execute()
         if os.path.exists(self.path):
             shutil.rmtree(self.path)
         super().delete_instance(*args, **kwargs)

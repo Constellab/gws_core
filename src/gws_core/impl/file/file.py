@@ -128,8 +128,8 @@ class File(Resource):
         :return: [description]
         :rtype: Type[Any]
         """
-        from .file_resource_model import FileResourceModel
-        return FileResourceModel
+        from .file_model import FileModel
+        return FileModel
 
     # -- S --
 

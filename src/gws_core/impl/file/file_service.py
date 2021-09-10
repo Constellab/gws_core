@@ -15,7 +15,7 @@ from ...core.classes.jsonable import Jsonable, ListJsonable
 from ...core.classes.paginator import Paginator
 from ...core.service.base_service import BaseService
 from .file import File
-from .file_resource_model import FileResourceModel
+from .file_model import FileModel
 from .file_store import FileStore
 from .local_file_store import LocalFileStore
 
@@ -30,7 +30,7 @@ class FileService(BaseService):
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
 
-        query = FileResourceModel.select().order_by(FileResourceModel.creation_datetime.desc())
+        query = FileModel.select().order_by(FileModel.creation_datetime.desc())
         return Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
 
@@ -38,8 +38,8 @@ class FileService(BaseService):
 
     @classmethod
     def download_file(cls, uri: str) -> FileResponse:
-        file_resource_model: FileResourceModel = FileResourceModel.get_by_uri_and_check(uri)
-        file: File = file_resource_model.get_resource()
+        file_model: FileModel = FileModel.get_by_uri_and_check(uri)
+        file: File = file_model.get_resource()
 
         file_store: FileStore = LocalFileStore.get_default_instance()
         if not file_store.file_exists(file.name):
@@ -60,32 +60,32 @@ class FileService(BaseService):
         else:
             result: ListJsonable = ListJsonable()
             for file in files:
-                file_resource_model: FileResourceModel = cls.upload_file_to_store(file, file_store)
-                result.append(file_resource_model)
+                file_model: FileModel = cls.upload_file_to_store(file, file_store)
+                result.append(file_model)
 
             return result
 
     @classmethod
-    def upload_file_to_store(cls, upload_file: UploadFile, store: FileStore) -> FileResourceModel:
+    def upload_file_to_store(cls, upload_file: UploadFile, store: FileStore) -> FileModel:
         file: File = store.add_from_temp_file(upload_file.file, upload_file.filename)
-        return cls.create_file_resource(file)
+        return cls.create_file_model(file)
 
     @classmethod
-    def create_file_resource(cls, file: File) -> FileResourceModel:
-        file_resource_model: FileResourceModel = FileResourceModel.from_resource(file)
-        return file_resource_model.save()
+    def create_file_model(cls, file: File) -> FileModel:
+        file_model: FileModel = FileModel.from_resource(file)
+        return file_model.save()
 
     @classmethod
-    def add_file_to_default_store(cls, file: File, dest_file_name: str = None) -> FileResourceModel:
+    def add_file_to_default_store(cls, file: File, dest_file_name: str = None) -> FileModel:
         file_store: LocalFileStore = LocalFileStore.get_default_instance()
         return cls._add_file_to_store(file=file, store=file_store)
 
     @classmethod
-    def add_file_to_store(cls, file: File, store_uri: str, dest_file_name: str = None) -> FileResourceModel:
+    def add_file_to_store(cls, file: File, store_uri: str, dest_file_name: str = None) -> FileModel:
         file_store: LocalFileStore = FileStore.get_by_uri_and_check(store_uri)
         return cls._add_file_to_store(file=file, store=file_store)
 
     @classmethod
-    def _add_file_to_store(cls, file: File, store: FileStore, dest_file_name: str = None) -> FileResourceModel:
+    def _add_file_to_store(cls, file: File, store: FileStore, dest_file_name: str = None) -> FileModel:
         file: File = store.add_from_file(source_file=file, dest_file_name=dest_file_name)
-        return cls.create_file_resource(file)
+        return cls.create_file_model(file)
