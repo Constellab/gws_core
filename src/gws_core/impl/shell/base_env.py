@@ -6,7 +6,7 @@
 import os
 from abc import abstractmethod
 
-from ...config.config_params import ConfigParams
+from ...config.config_types import ConfigValues
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
 from .shell import Shell
@@ -76,7 +76,7 @@ class BaseEnvShell(Shell):
 
     # -- T --
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
         """
         Task entrypoint
         """
@@ -96,7 +96,7 @@ class BaseEnvShell(Shell):
         pass
 
     @abstractmethod
-    def gather_outputs(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def gather_outputs(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
         """
         This methods gathers the results of the shell task. It must be overloaded by subclasses.
 

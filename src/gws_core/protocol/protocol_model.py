@@ -210,7 +210,7 @@ class ProtocolModel(ProcessModel):
             if key in self._processes:
                 # update process info
                 self._processes[key].data = process_model.data
-                self._processes[key].config.set_params(process_model.config.params)
+                self._processes[key].config.set_values(process_model.config.get_values())
             # If it's a new process
             else:
                 self._add_process_model(key, process_model)

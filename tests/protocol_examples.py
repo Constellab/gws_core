@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 import time
 
-from gws_core import (ConfigParams, OptionalIn, Task, ProcessSpec,
+from gws_core import (ConfigValues, OptionalIn, Task, ProcessSpec,
                       TaskInputs, TaskOutputs, Protocol, RobotCreate,
                       RobotEat, RobotFood, RobotMove, RobotSugarCreate,
                       RobotWait, task_decorator, protocol_decorator)
@@ -14,7 +14,7 @@ from gws_core import (ConfigParams, OptionalIn, Task, ProcessSpec,
 
 @protocol_decorator("TestSimpleProtocol")
 class TestSimpleProtocol(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self, config_params: ConfigValues) -> None:
         p0: ProcessSpec = self.add_process(RobotCreate, 'p0')
         p1: ProcessSpec = self.add_process(RobotMove, 'p1')
         p2: ProcessSpec = self.add_process(RobotEat, 'p2')
@@ -35,7 +35,7 @@ class TestSimpleProtocol(Protocol):
 
 @protocol_decorator("TestSubProtocol")
 class TestSubProtocol(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self, config_params: ConfigValues) -> None:
         p1: ProcessSpec = self.add_process(RobotMove, 'p1')
         p2: ProcessSpec = self.add_process(RobotEat, 'p2')
         p3: ProcessSpec = self.add_process(RobotMove, 'p3')
@@ -55,7 +55,7 @@ class TestSubProtocol(Protocol):
 
 @protocol_decorator("TestNestedProtocol")
 class TestNestedProtocol(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self, config_params: ConfigValues) -> None:
         p0: ProcessSpec = self.add_process(RobotCreate, 'p0')
         p5: ProcessSpec = self.add_process(RobotEat, 'p5')
         mini_proto: ProcessSpec = self.add_process(TestSubProtocol, 'mini_proto')
@@ -75,7 +75,7 @@ class RobotWaitfood(Task):
     output_specs = {'food': RobotFood}
     config_specs = {}
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
         print("Wait food", flush=True)
         time.sleep(3)
         return {'food': inputs['food']}
@@ -90,7 +90,7 @@ class RobotEmptyfood(Task):
     output_specs = {'food': OptionalIn(RobotFood)}
     config_specs = {}
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
         return {}
 
 
@@ -103,7 +103,7 @@ class TestRobotwithSugarProtocol(Protocol):
     :type Protocol: [type]
     """
 
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self, config_params: ConfigValues) -> None:
         p0: ProcessSpec = self.add_process(RobotCreate, 'p0')
         sugar: ProcessSpec = self.add_process(RobotSugarCreate, 'sugar')
         wait_food: ProcessSpec = self.add_process(RobotWaitfood, 'wait_food')

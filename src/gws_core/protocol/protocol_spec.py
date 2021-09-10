@@ -1,6 +1,6 @@
 from typing import Type, TypedDict
 
-from ..config.config_spec import ConfigValue, ConfigValues
+from ..config.config_types import ConfigValue, ConfigValuesDict
 from ..process.process import Process
 
 
@@ -41,14 +41,14 @@ class ProcessSpec():
     instance_name: str = None
     process_type: Type[Process] = None
 
-    _config: ConfigValues
+    _config: ConfigValuesDict
 
     def __init__(self, instance_name: str, process_type: Type[Process]) -> None:
         self.instance_name = instance_name
         self.process_type = process_type
         self._config = {}
 
-    def configure_all(self, config_values: ConfigValues) -> 'ProcessSpec':
+    def configure_all(self, config_values: ConfigValuesDict) -> 'ProcessSpec':
         """Use to preconfigure the process. The config must match the config specs of the process
 
         :param config_name: name of the configuration (the system checks that the config exists)
@@ -89,5 +89,5 @@ class ProcessSpec():
             "port_name": name,
         }
 
-    def get_config_values(self) -> ConfigValues:
+    def get_config_values(self) -> ConfigValuesDict:
         return self._config

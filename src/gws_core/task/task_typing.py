@@ -7,7 +7,7 @@ from typing import Any, Dict, Type, final
 
 from peewee import ModelSelect
 
-from ..config.config_spec import ConfigSpecsHelper
+from ..config.config_types import ConfigSpecsHelper
 from ..core.utils.utils import Utils
 from ..io.io_spec import IOSpecsHelper
 from ..model.typing import Typing, TypingObjectType
@@ -44,7 +44,7 @@ class TaskTyping(Typing):
             _json["output_specs"] = IOSpecsHelper.io_specs_to_json(model_t.output_specs)
 
             # Handle the config specs
-            _json["config_specs"] = ConfigSpecsHelper.config_specs_to_json(model_t.config_specs)
+            _json["config_specs"] = ConfigSpecsHelper.check_config_specs(model_t.config_specs)
 
         return _json
 

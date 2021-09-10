@@ -16,8 +16,8 @@ from peewee import CharField, ForeignKeyField, IntegerField
 from starlette_context import context
 
 from ..config.config import Config
-from ..config.config_params import ConfigParams
-from ..config.config_spec import ConfigValue, ConfigValues
+from ..config.config_types import ConfigValues
+from ..config.config_types import ConfigValue, ConfigValuesDict
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.json_ignore import json_ignore
 from ..core.decorator.transaction import transaction
@@ -407,25 +407,25 @@ class ProcessModel(Viewable):
         :type: Any
         """
 
-        self.config.set_param(name=param_name, value=value)
+        self.config.set_value(param_name=param_name, value=value)
 
-    def set_params(self, params: ConfigValues) -> None:
+    def set_config_values(self, config_values: ConfigValuesDict) -> None:
         """
         Configure the process model
         """
-        self.config.set_params(params)
+        self.config.set_values(config_values)
 
     def get_config_value(self, param_name: str) -> Any:
         """
         Get a param value from the config
         """
-        return self.config.get_param(param_name)
+        return self.config.get_value(param_name)
 
-    def get_values(self) -> ConfigParams:
+    def get_config_values(self) -> ConfigValues:
         """
         Get all params values from the config
         """
-        return self.config.get_and_check_params()
+        return self.config.get_and_check_values()
 
     ########################### INFO #################################
 

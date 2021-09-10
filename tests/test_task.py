@@ -40,7 +40,7 @@ class TestTask(BaseTestCase):
         self.assertEqual(len(p1.output.get_next_procs()), 1)
         self.assertEqual(len(p2.output.get_next_procs()), 2)
 
-        p2.config.set_param('food_weight', '5.6')
+        p2.config.set_value('food_weight', '5.6')
 
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
             protocol_model=proto)
@@ -67,18 +67,18 @@ class TestTask(BaseTestCase):
         # check p1
         self.assertEqual(
             p1.output.get_resource_model('robot').get_resource().position[1],
-            elon.position[1] + p1.config.get_param('moving_step'))
+            elon.position[1] + p1.config.get_value('moving_step'))
         self.assertEqual(p1.output.get_resource_model('robot').get_resource().weight, elon.weight)
 
         # check p2
         self.assertEqual(p2.output.get_resource_model('robot').get_resource().position,
                          p2.input.get_resource_model('robot').get_resource().position)
         self.assertEqual(p2.output.get_resource_model('robot').get_resource().weight, p2.input.get_resource_model(
-            'robot').get_resource().weight + p2.config.get_param('food_weight'))
+            'robot').get_resource().weight + p2.config.get_value('food_weight'))
 
         # check p3
         self.assertEqual(p3.output.get_resource_model('robot').get_resource().position[1], p3.input.get_resource_model(
-            'robot').get_resource().position[1] + p3.config.get_param('moving_step'))
+            'robot').get_resource().position[1] + p3.config.get_value('moving_step'))
         self.assertEqual(p3.output.get_resource_model('robot').get_resource().weight,
                          p3.input.get_resource_model('robot').get_resource().weight)
 

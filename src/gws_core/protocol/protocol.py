@@ -6,8 +6,8 @@ from typing import Dict, List, Type, TypedDict, final
 
 from peewee import Tuple
 
-from ..config.config_params import ConfigParams
-from ..config.config_spec import ConfigSpecs, ConfigValues
+from ..config.config_types import ConfigValues
+from ..config.config_types import ConfigSpecs, ConfigValuesDict
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..model.typing_register_decorator import typing_registrator
@@ -63,7 +63,7 @@ class Protocol(Process):
         }
 
     @abstractmethod
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self, config_params: ConfigValues) -> None:
         """Extend this method to configure the protocol (
         In this method you can reate sub process, add connectors and configure interface and outerface
 
@@ -87,13 +87,13 @@ class Protocol(Process):
 
 
         :param config_params: [description]
-        :type config_params: ConfigParams
+        :type config_params: ConfigValues
         """
         pass
 
     @final
     def add_process(self, process_type: Type[Process], instance_name: str,
-                    config_values: ConfigValues = None) -> ProcessSpec:
+                    config_values: ConfigValuesDict = None) -> ProcessSpec:
         # Check if a process with the same instance name was registered
         if instance_name in self._process_specs:
             process_spec: ProcessSpec = self._process_specs[instance_name]

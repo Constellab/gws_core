@@ -2,16 +2,16 @@
 
 import json
 
-from ...config.config_params import ConfigParams
-from ...config.config_spec import ConfigSpecs
+from ...config.config_types import ConfigSpecs, ConfigValues
+from ...config.param_spec import StrParam
 from ...impl.file.file import File
 from ...impl.file.file_store import FileStore
 from ...impl.file.local_file_store import LocalFileStore
 from ...io.io_spec import InputSpecs, OutputSpecs
+from ...resource.resource import Resource
 from ...task.task import Task
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
-from ...resource.resource import Resource
 
 
 @task_decorator(unique_name="WriteToJsonFile", human_name="Write to file",
@@ -19,12 +19,12 @@ from ...resource.resource import Resource
 class WriteToJsonFile(Task):
     input_specs: InputSpecs = {'resource': Resource}
     output_specs: OutputSpecs = {'file': File}
-    config_specs: ConfigSpecs = {'filename': {'type': str, 'description': 'Name of the file'}}
+    config_specs: ConfigSpecs = {'filename': StrParam(description='Name of the file')}
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
         file_store: FileStore = LocalFileStore.get_default_instance()
 
-        file: File = file_store.create_empty(config.get_param('filename') + '.json')
+        file: File = file_store.create_empty(config.get_value('filename') + '.json')
 
         resource: Resource = inputs['resource']
         file.write(json.dumps(resource.to_json()))

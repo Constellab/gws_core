@@ -28,7 +28,7 @@
                 "uri": "e43cd305-167c-4662-bd70-b9edc7ebd136",
                 "data": {
                     "specs": {},
-                    "params": {}
+                    "values": {}
                 }
             },
             "progress_bar": {
@@ -94,10 +94,10 @@
                     "specs": {
                         "food_weight": {
                             "type": "float",
-                            "default": 3.14
+                            "default_value": 3.14
                         }
                     },
-                    "params": {}
+                    "values": {}
                 }
             },
             "progress_bar": {

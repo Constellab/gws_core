@@ -25,15 +25,15 @@ class Validator:
     It provides the construction :meth:`from_specs` to create usable basic validators.
 
     For example:
-        * ```Validator.from_specs(type=int, default=5) -> IntegerValidator(default=5)```
-        * ```Validator.from_specs(type=bool, default=True) -> BooleanValidator(default=True)```
-        * ```Validator.from_specs(type=float, default=5.5) -> FloatValidator(default=5.5)```
-        * ```Validator.from_specs(type=str, default='foo') -> CharValidator(default='foo')```
-        * ```Validator.from_specs(type=list, default=[1,"foo"]) -> ArrayValidator(default=[1,"foo"])```
-        * ```Validator.from_specs(type=dict, default={"foo":1}) -> JSONValidator(default={"foo":1})```
+        * ```Validator.from_specs(type=int, default_value=5) -> IntValidator(default_value=5)```
+        * ```Validator.from_specs(type=bool, default_value=True) -> BoolValidator(default_value=True)```
+        * ```Validator.from_specs(type=float, default_value=5.5) -> FloatValidator(default_value=5.5)```
+        * ```Validator.from_specs(type=str, default_value='foo') -> StrValidator(default_value='foo')```
+        * ```Validator.from_specs(type=list, default_value=[1,"foo"]) -> ListValidator(default_value=[1,"foo"])```
+        * ```Validator.from_specs(type=dict, default_value={"foo":1}) -> DictValidator(default_value={"foo":1})```
 
-    :property default: The default value returned by method :meth:`validate`
-    :type default: any
+    :property default_value: The default_value value returned by method :meth:`validate`
+    :type default_value: any
     :property type: The expected type of the value
     :type type: type
     """
@@ -44,9 +44,9 @@ class Validator:
 
     _valid_types = ['bool', 'int', 'float', 'str', 'list', 'dict']
 
-    def __init__(self, default: Any = None, type: ValidatorType = None, allowed_values: list = None, **kwargs):
-        if not type is None:
-            self._type = type
+    def __init__(self, default_value: Any = None, type_: ValidatorType = None, allowed_values: list = None, **kwargs):
+        if not type_ is None:
+            self._type = type_
 
         if not allowed_values is None:
             if isinstance(allowed_values, list):
@@ -55,12 +55,12 @@ class Validator:
                 raise BadRequestException(
                     "The parameter allowed_values must be a list")
 
-        if not default is None:
+        if not default_value is None:
             try:
-                self._default = self._validate(default)
+                self._default = self._validate(default_value)
             except Exception as err:
                 raise BadRequestException(
-                    f"The default value is not valid. Error message: {err}")
+                    f"The default_value value is not valid. Error message: {err}")
 
     @property
     def type(self) -> type:
@@ -79,7 +79,7 @@ class Validator:
         else:
             raise BadRequestException("Invalid type")
 
-    def validate(self, value: Union[bool, int, float, str, list, dict]) -> Union[bool, int, float, str, list, dict]:
+    def validate(self, value: Union[bool, int, float, str, list, dict]) -> Any:
         """
         Valitates a value.
 
@@ -87,12 +87,12 @@ class Validator:
         :param:value is serializable/deserilizable (using built-in Python methods :meth:`json.dumps`/:meth:`json.loads`).
 
         Usage:
-            * ```Validator.from_specs(type=int, default=5) -> IntegerValidator(default=5)```
-            * ```Validator.from_specs(type=bool, default=True) -> BooleanValidator(default=True)```
-            * ```Validator.from_specs(type=float, default=5.5) -> FloatValidator(default=5.5)```
-            * ```Validator.from_specs(type=str, default='foo') -> CharValidator(default='foo')```
-            * ```Validator.from_specs(type=list, default=[1,"foo"]) -> ArrayValidator(default=[1,"foo"])```
-            * ```Validator.from_specs(type=dict, default={"foo":1}) -> JSONValidator(default={"foo":1})```
+            * ```Validator.from_specs(type=int, default_value=5) -> IntValidator(default_value=5)```
+            * ```Validator.from_specs(type=bool, default_value=True) -> BoolValidator(default_value=True)```
+            * ```Validator.from_specs(type=float, default_value=5.5) -> FloatValidator(default_value=5.5)```
+            * ```Validator.from_specs(type=str, default_value='foo') -> StrValidator(default_value='foo')```
+            * ```Validator.from_specs(type=list, default_value=[1,"foo"]) -> ListValidator(default_value=[1,"foo"])```
+            * ```Validator.from_specs(type=dict, default_value={"foo":1}) -> DictValidator(default_value={"foo":1})```
 
         :param value: The value to validate
         :type value: An instance of `bool`, `int`, `float`, `str` or serilaizable `list`, `dict`
@@ -169,62 +169,17 @@ class Validator:
         else:
             raise BadRequestException(f"Invalid value {value}")
 
-    @staticmethod
-    def from_specs(type=None, default=None, **kwargs) -> 'Validator':
-        """
-        Constructs usable basic validators.
 
-        Usage
-            * ```Validator.from_specs(type='int', default=5) -> IntegerValidator(default=5)```
-            * ```Validator.from_specs(type=int, default=5) -> IntegerValidator(default=5)```
-            * ```Validator.from_specs(type='bool', default=True) -> BooleanValidator(default=True)```
-            * ```Validator.from_specs(type=bool, default=True) -> BooleanValidator(default=True)```
-            * ```Validator.from_specs(type='float', default=5.5) -> FloatValidator(default=5.5)```
-            * ```Validator.from_specs(type='str', default='foo') -> CharValidator(default='foo')```
-            * ```Validator.from_specs(type='list', default=[1,"foo"]) -> ArrayValidator(default=[1,"foo"])```
-            * ```Validator.from_specs(type='dict', default={"foo":1}) -> JSONValidator(default={"foo":1})```
-
-        :param type: The type used for validation
-        :type type: `type` or `str` in built-in types `bool`, `int`, `float`, `str`, `list`, `dict`
-        :param default: The default value to return, Defaults to `None`
-        :type default: any, An instance of :param:type
-        :param min: The minimum value allowed (for numeric only)
-        :type min: defaults to -inf
-        :param max: The maximum value allowed (for numeric only)
-        :type max: defaults to +inf
-        :param allowed_values: Allowed values
-        :type allowed_values: defaults to None
-        :return: The Validator corresponding to the :param:type
-        :rtype: subclass of `Validator`
-        """
-
-        if type == bool or type == 'bool':
-            return BooleanValidator(default=default, **kwargs)
-        elif type == int or type == 'int':
-            return IntegerValidator(default=default, **kwargs)
-        elif type == float or type == 'float':
-            return FloatValidator(default=default, **kwargs)
-        elif type == str or type == 'str':
-            return CharValidator(default=default, **kwargs)
-        elif type == list or type == 'list':
-            return ArrayValidator(default=default, **kwargs)
-        elif type == dict or type == 'dict':
-            return JSONValidator(default=default, **kwargs)
-        else:
-            raise BadRequestException(
-                "Invalid type. Valid types are (bool, int, float, str, list, dict).")
-
-
-class BooleanValidator(Validator):
+class BoolValidator(Validator):
     """
     Validator class.
 
     This validator allows validating serialized (or deserialized) boolean parameter values.
 
-    :property default: The default value returned by method :meth:`validate`
-    :type default: bool
+    :property default_value: The default_value value returned by method :meth:`validate`
+    :type default_value: bool
 
-    Usage: Let `validator = BooleanValidator(default=True)`, then
+    Usage: Let `validator = BoolValidator(default_value=True)`, then
         * `validator.validate(False) -> False`
         * `validator.validate(True) -> True`
         * `validator.validate(None) -> True if defaults to True`
@@ -236,9 +191,8 @@ class BooleanValidator(Validator):
 
     _type = bool
 
-    def __init__(self, default=None, allowed_values=None, **kwargs):
-        super().__init__(default=default, type=bool,
-                         allowed_values=allowed_values, **kwargs)
+    def __init__(self, default_value=None, **kwargs):
+        super().__init__(default_value=default_value, type_=bool, **kwargs)
 
 
 class NumericValidator(Validator):
@@ -247,14 +201,14 @@ class NumericValidator(Validator):
 
     This validator allows validating serialized (or deserialized) numerical parameter values.
 
-    :property default: The default value returned by method :meth:`validate`
-    :type default: int
-    :property min: The default value returned by method :meth:`validate`
-    :type min: int
-    :property max: The default value returned by method :meth:`validate`
-    :type max: int
+    :property default_value: The default_value value returned by method :meth:`validate`
+    :type default_value: int
+    :property min_value: The default_value value returned by method :meth:`validate`
+    :type min_value: int
+    :property max_value: The default_value value returned by method :meth:`validate`
+    :type max_value: int
 
-    Usage: Let `validator = IntegerValidator(default=5)`, then
+    Usage: Let `validator = IntValidator(default_value=5)`, then
         * `validator.validate('3') -> 3`
         * `validator.validate(3) -> 3)`
         * `validator.validate(3.0) -> 3`
@@ -264,48 +218,58 @@ class NumericValidator(Validator):
         * `validator.validate('foo') -> ValueError`
     """
 
-    _min = None
-    _max = None
+    _min_value = None
+    _max_value = None
     _include_min = True
     _include_max = True
 
-    def __init__(self, default=None, type=float, min=-math.inf, max=math.inf, include_min=False, include_max=False, allowed_values=None, **kwargs):
-        self._min = min
-        self._max = max
+    def __init__(self, default_value=None, type=float, min_value=-math.inf, max_value=math.inf, include_min=False,
+                 include_max=False, allowed_values=None, **kwargs):
+
+        if min_value is None:
+            self._min_value = -math.inf
+        else:
+            self._min_value = min_value
+
+        if max_value is None:
+            self._max_value = math.inf
+        else:
+            self._max_value = max_value
+
         self._include_min = include_min
         self._include_max = include_max
-        if math.isfinite(self._min):
+        if math.isfinite(self._min_value):
             self._include_min = True
 
-        if math.isfinite(self._max):
+        if math.isfinite(self._max_value):
             self._include_max = True
 
-        super().__init__(default=default, type=type,
+        super().__init__(default_value=default_value, type_=type,
                          allowed_values=allowed_values, **kwargs)
 
     def _validate(self, value):
         value = super()._validate(value)
-        if value < self._min or (value == self._min and not self._include_min):
+        if value < self._min_value or (value == self._min_value and not self._include_min):
             raise BadRequestException(
-                f"The value must be greater than {self._min}. The actual value is {value}")
+                f"The value must be greater than {self._min_value}. The actual value is {value}")
 
-        if value > self._max or (value == self._max and not self._include_max):
+        if value > self._max_value or (value == self._max_value and not self._include_max):
             raise BadRequestException(
-                f"The value must be less than {self._max}. The actual value is {value}")
+                f"The value must be less than {self._max_value}. The actual value is {value}")
 
         return value
 
 
-class IntegerValidator(NumericValidator):
+class IntValidator(NumericValidator):
     """
     Validator class
 
     This validator allows validating serialized (or deserialized) integer parameter values.
 
-    :property default: The default value returned by method :meth:`validate`
-    :type default: int
+    :property default_value: The default_value value returned by method :meth:`validate`
+    :type default_value: int
 
-    Usage: Let `validator = IntegerValidator(default=5)`, then
+    Usage: Let `validator = IntValidator(default_value=5)`, then
         * `validator.validate('3') -> 3`
         * `validator.validate(3) -> 3)`
         * `validator.validate(3.0) -> 3`
@@ -317,9 +281,10 @@ class IntegerValidator(NumericValidator):
 
     _type = int
 
-    def __init__(self, default=None, min=-math.inf, max=math.inf, include_min=True, include_max=True, allowed_values=None, **kwargs):
-        super().__init__(default=default, type=int, min=min, max=max, include_min=include_min,
-                         include_max=include_max, allowed_values=allowed_values, **kwargs)
+    def __init__(self, default_value=None, min_value=-math.inf, max_value=math.inf, include_min=True, include_max=True,
+                 allowed_values=None, **kwargs):
+        super().__init__(default_value=default_value, type=int, min_value=min_value, max_value=max_value,
+                         include_min=include_min, include_max=include_max, allowed_values=allowed_values, **kwargs)
         self._type = int
 
 
@@ -329,10 +294,10 @@ class FloatValidator(NumericValidator):
 
     This validator allows validating serialized (or deserialized) float parameter values.
 
-    :property default: The default value returned by method :meth:`validate`
-    :type default: float
+    :property default_value: The default_value value returned by method :meth:`validate`
+    :type default_value: float
 
-    Usage: Let `validator = FloatValidator(default=8)`, then
+    Usage: Let `validator = FloatValidator(default_value=8)`, then
         * `validator.validate(5.5) -> 5.5`
         * `validator.validate(4.0) -> 4.0`
         * `validator.validate(4) -> 4.0`
@@ -351,49 +316,50 @@ class FloatValidator(NumericValidator):
 
     _type = float
 
-    def __init__(self, default=None, min=-math.inf, max=math.inf, include_min=True, include_max=True, allowed_values=None, **kwargs):
-        super().__init__(default=default, type=float, min=min, max=max, include_min=include_min,
-                         include_max=include_max, allowed_values=allowed_values, **kwargs)
+    def __init__(self, default_value=None, min_value=-math.inf, max_value=math.inf, include_min=True, include_max=True,
+                 allowed_values=None, **kwargs):
+        super().__init__(default_value=default_value, type=float, min_value=min_value, max_value=max_value,
+                         include_min=include_min, include_max=include_max, allowed_values=allowed_values, **kwargs)
         self._type = float
 
 
-class CharValidator(Validator):
+class StrValidator(Validator):
     """
     Validator class
 
     This validator allows validating serialized (or deserialized) string parameter values.
 
-    :property default: The default value returned by method :meth:`validate`
-    :type default: str
+    :property default_value: The default_value value returned by method :meth:`validate`
+    :type default_value: str
 
     Usage:
-        * Let `validator = CharValidator(default='foo')` then
+        * Let `validator = StrValidator(default_value='foo')` then
             * `validator.validate('foo') -> 'foo'`
             * `validator.validate(None), 'foo'`
             * `validator.validate('false') -> 'false'`
             * `validator.validate(5) -> ValueError`
             * `validator.validate(True) -> ValueError`
-        * Let `validator = CharValidator(default='8')` then
+        * Let `validator = StrValidator(default_value='8')` then
             * `validator.validate(None) -> '8'`
     """
 
     _type = str
 
-    def __init__(self, default=None, allowed_values=None, **kwargs):
-        super().__init__(default=default, type=str, allowed_values=allowed_values, **kwargs)
+    def __init__(self, default_value=None, allowed_values=None, **kwargs):
+        super().__init__(default_value=default_value, type_=str, allowed_values=allowed_values, **kwargs)
 
 
-class ArrayValidator(Validator):
+class ListValidator(Validator):
     """
     Array validator.
 
     This validator allows validating serialized (or deserialized) array parameter values.
     A valid array is a serializable/deserializable list of (str, int, float, bool, array).
 
-    :property default: The default value returned by method :meth:`validate`
-    :type default: list
+    :property default_value: The default_value value returned by method :meth:`validate`
+    :type default_value: list
 
-    Usage: Let `validator = ArrayValidator(default='[1,2,"foo"]')`, then
+    Usage: Let `validator = ListValidator(default_value='[1,2,"foo"]')`, then
         * `validator.validate([5.5,3]) -> [5.5,3]`
         * `validator.validate('[5.5,3]') -> [5.5,3]`
         * `validator.validate('[5.5,3,["foo","bar"]]') -> [5.5,3,["foo","bar"]]`
@@ -408,21 +374,21 @@ class ArrayValidator(Validator):
 
     _type = list
 
-    def __init__(self, default=None, **kwargs):
-        super().__init__(default=default, type=list, **kwargs)
+    def __init__(self, default_value=None, **kwargs):
+        super().__init__(default_value=default_value, type_=list, **kwargs)
 
 
-class JSONValidator(Validator):
+class DictValidator(Validator):
     """
     Key-Value dictionnary validator.
 
     This validator allows validating serialized (or deserialized) JSON values.
     An valid JSON value is a serializable/deserializable key-value dictionnary.
 
-    :property default: The default value returned by method :meth:`validate`
-    :type default: dict
+    :property default_value: The default_value value returned by method :meth:`validate`
+    :type default_value: dict
 
-    Usage: Let `validator = JSONValidator(default='{"foo":1.2}')`, then
+    Usage: Let `validator = DictValidator(default_value='{"foo":1.2}')`, then
         * `validator.validate(None), {"foo":1.2}`
         * `validator.validate('{"foo":0.5}') -> {"foo":0.5}`
         * `validator.validate('{"foo":0.5,"bar":[1,2,3]}') -> {"foo":0.5,"bar":[1,2,3]}`
@@ -436,11 +402,11 @@ class JSONValidator(Validator):
 
     _type = dict
 
-    def __init__(self, default=None, **kwargs):
-        super().__init__(default=default, type=dict, **kwargs)
+    def __init__(self, default_value=None, **kwargs):
+        super().__init__(default_value=default_value, type_=dict, **kwargs)
 
 
-class URLValidator(CharValidator):
+class URLValidator(StrValidator):
     _type = URL
 
     def _validate(self, value):
@@ -461,5 +427,5 @@ class URLValidator(CharValidator):
             raise BadRequestException(f"The URL {value} is not valid")
 
 
-class PathValidator(CharValidator):
+class PathValidator(StrValidator):
     _type = Path

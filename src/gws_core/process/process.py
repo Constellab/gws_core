@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from ..config.config_spec import ConfigSpecs
+from ..config.config_types import ConfigSpecs
 from ..core.model.base import Base
 from ..user.user_group import UserGroup
 

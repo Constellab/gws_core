@@ -5,7 +5,7 @@
 
 import json
 
-from gws_core import (BaseTestCase, ConfigParams, Experiment,
+from gws_core import (BaseTestCase, ConfigValues, Experiment,
                       ExperimentService, File, FileModel, FileService, GTest,
                       LocalFileStore, ProcessFactory, ProcessSpec,
                       TaskModel, Protocol, ProtocolModel, Robot,
@@ -15,7 +15,7 @@ from gws_core.impl.file.file_store import FileStore
 
 @protocol_decorator("RobotToFile")
 class RobotToFile(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self, config_params: ConfigValues) -> None:
         create: ProcessSpec = self.add_process(RobotCreate, 'create')
         write: ProcessSpec = self.add_process(WriteToJsonFile, 'write').configure('filename', 'robot')
 

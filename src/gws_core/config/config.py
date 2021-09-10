@@ -3,16 +3,16 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, List, Union, final
+from typing import Any, List, final
 
-from ..core.classes.validator import Validator
+from gws_core.config.param_spec import ParamSpec
+
 from ..core.exception.exceptions import BadRequestException
 from ..model.typing_register_decorator import typing_registrator
 from ..model.viewable import Viewable
 from .config_exceptions import MissingConfigsException
-from .config_params import ConfigParams
-from .config_spec import (ConfigSpecs, ConfigSpecsHelper, ConfigValue,
-                          ConfigValues)
+from .config_types import (ConfigSpecs, ConfigSpecsHelper, ConfigValue,
+                           ConfigValues, ConfigValuesDict)
 
 
 @final
@@ -25,37 +25,16 @@ class Config(Viewable):
 
     _table_name = 'gws_config'
 
-    def __init__(self, *args, specs: dict = None, **kwargs):
+    _specs: ConfigSpecs = None
+
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         if not self.id:
             self.data = {
                 "specs": {},
-                "params": {}
+                "values": {}
             }
-
-        if specs:
-            if not isinstance(specs, dict):
-                raise BadRequestException("The specs must be a dictionnary")
-
-            # convert type to str
-
-            for k in specs:
-                if isinstance(specs[k]["type"], type):
-                    specs[k]["type"] = specs[k]["type"].__name__
-
-                default = specs[k].get("default", None)
-                if not default is None:
-                    #param_t = specs[k]["type"]
-                    try:
-                        validator = Validator.from_specs(**specs[k])
-                        default = validator.validate(default)
-                        specs[k]["default"] = default
-                    except Exception as err:
-                        raise BadRequestException(
-                            f"Invalid default config value. Error message: {err}") from err
-
-            self.set_specs(specs)
 
     # -- A --
 
@@ -76,52 +55,26 @@ class Config(Viewable):
 
     # -- G --
 
-    def get_param(self, name: str) -> Any:
-        """
-        Returns the value of a parameter by its name
+    ########################################## SPEC #####################################
 
-        :param name: The name of the parameter
-        :type: str
-        :return: The value of the parameter (base type)
-        :rtype: `str`, `int`, `float`, `bool`
-        """
-        if not name in self.specs:
-            raise BadRequestException(f"Parameter {name} does not exist")
+    def get_specs(self) -> ConfigSpecs:
+        if self._specs is None:
+            self._specs = ConfigSpecsHelper.config_specs_from_json(self.data["specs"])
 
-        default = self.specs[name].get("default", None)
-        return self.data.get("params", {}).get(name, default)
+        return self._specs
 
-    # -- P --
+    def set_specs(self, specs: ConfigSpecs) -> None:
+        ConfigSpecsHelper.check_config_specs(specs)
 
-    def get_and_check_params(self) -> ConfigParams:
-        """
-        Returns all the parameters including default value if not provided
+        self._specs = specs
+        self.data["specs"] = ConfigSpecsHelper.config_specs_to_json(specs)
 
-        raises MissingConfigsException: If one or more mandatory params where not provided it raises a MissingConfigsException
+    def get_spec(self, param_name: str) -> ParamSpec:
+        self._check_param(param_name)
 
-        :return: The parameters
-        :rtype: `dict`
-        """
+        return self.get_specs()[param_name]
 
-        params = self.params
-        specs: ConfigSpecs = self.data["specs"]
-        missing_params: List[str] = []
-
-        for key in specs:
-            # if the config was not set
-            if not key in params:
-
-                if "default" in specs[key]:
-                    params[key] = specs[key]["default"]
-                else:
-                    # if there is not default value the value is missing
-                    missing_params.append(key)
-
-        # If there is at least one missing param, raise an exception
-        if len(missing_params) > 0:
-            raise MissingConfigsException(missing_params)
-
-        return ConfigParams(params)
+    ########################################## PARAM  #####################################
 
     def param_exists(self, name: str) -> bool:
         """
@@ -133,15 +86,58 @@ class Config(Viewable):
 
         return name in self.data.get("specs", {})
 
-    # -- R --
+    def _check_param(self, param_name: str) -> None:
+        if not param_name in self.get_specs():
+            raise BadRequestException(f"Parameter {param_name} does not exist")
 
-    # -- S --
+    ########################################## VALUE #####################################
 
-    @property
-    def params(self):
-        return self.data["params"]
+    def get_values(self) -> ConfigValuesDict:
+        return self.data["values"]
 
-    def set_param(self, name: str, value: ConfigValue):
+    def get_value(self, param_name: str) -> Any:
+        """
+        Returns the value of a parameter by its name
+
+        :param name: The name of the parameter
+        :type: str
+        :return: The value of the parameter (base type)
+        :rtype: `str`, `int`, `float`, `bool`
+        """
+
+        default = self.get_spec(param_name).default_value
+        return self.data.get("values", {}).get(param_name, default)
+
+    def get_and_check_values(self) -> ConfigValues:
+        """
+        Returns all the parameters including default value if not provided
+
+        raises MissingConfigsException: If one or more mandatory params where not provided it raises a MissingConfigsException
+
+        :return: The parameters
+        :rtype: `dict`
+        """
+
+        values: ConfigValuesDict = self.get_values()
+        specs: ConfigSpecs = self.get_specs()
+        missing_params: List[str] = []
+
+        for key, spec in specs.items():
+            # if the config was not set
+            if not key in values:
+                if spec.optional:
+                    values[key] = spec.get_and_check_default_value()
+                else:
+                    # if there is not default value the value is missing
+                    missing_params.append(key)
+
+        # If there is at least one missing param, raise an exception
+        if len(missing_params) > 0:
+            raise MissingConfigsException(missing_params)
+
+        return ConfigValues(values)
+
+    def set_value(self, param_name: str, value: ConfigValue):
         """
         Sets the value of a parameter by its name
 
@@ -151,51 +147,22 @@ class Config(Viewable):
         :type: [str, int, float, bool, NoneType]
         """
 
-        value = ConfigSpecsHelper.check_config(name, value, self.specs)
+        value = self.get_spec(param_name).validate(value)
+        if not "values" in self.data:
+            self.data["values"] = {}
 
-        if not "params" in self.data:
-            self.data["params"] = {}
+        self.data["values"][param_name] = value
 
-        self.data["params"][name] = value
-
-    def set_params(self, params: ConfigValues):
+    def set_values(self, values: ConfigValuesDict):
         """
         Set config parameters
         """
-        self._clear_params()
+        self._clear_values()
 
-        for k in params:
-            self.set_param(k, params[k])
+        for k in values:
+            self.set_value(k, values[k])
 
-    @property
-    def specs(self) -> dict:
-        """
-        Returns config specs
-        """
-
-        return self.data["specs"]
-
-    def set_specs(self, specs: dict):
-        """
-        Sets the specs of the config (remove current parameters)
-
-        :param specs: The config specs
-        :type: dict
-        """
-
-        if not isinstance(specs, dict):
-            raise BadRequestException("The specs must be a dictionary.")
-
-        if self.id:
-            raise BadRequestException(
-                "Cannot alter the specs of a saved config")
-
-        self.data["specs"] = specs
-
-    def _clear_params(self):
-        self.data["params"] = {}
-
-    def param_is_set(self, name: str) -> bool:
+    def value_is_set(self, name: str) -> bool:
         """
         Test if a parameter exists and is not none
 
@@ -203,4 +170,7 @@ class Config(Viewable):
         :rtype: `bool`
         """
 
-        return name in self.data["params"] and self.data["params"][name] is not None
+        return name in self.data["values"] and self.data["values"][name] is not None
+
+    def _clear_values(self):
+        self.data["values"] = {}

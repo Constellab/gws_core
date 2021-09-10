@@ -12,12 +12,20 @@ from .comment.comment import Comment as Comment
 from .comment.comment_service import CommentService as CommentService
 # Config
 from .config.config import Config as Config
-from .config.config_params import ConfigParams as ConfigParams
 from .config.config_service import ConfigService as ConfigService
-from .config.config_spec import ConfigSpec as ConfigSpec
-from .config.config_spec import ConfigSpecs as ConfigSpecs
-from .config.config_spec import ConfigSpecType as ConfigSpecType
-from .config.config_spec import ConfigValue as ConfigValue
+from .config.config_types import ConfigSpecs as ConfigSpecs
+from .config.config_types import ConfigSpecType as ConfigSpecType
+from .config.config_types import ConfigValue as ConfigValue
+from .config.config_types import ConfigValues as ConfigValues
+from .config.config_types import ConfigValuesDict as ConfigValuesDict
+from .config.param_spec import BoolParam as BoolParam
+from .config.param_spec import DictParam as DictParam
+from .config.param_spec import FloatParam as FloatParam
+from .config.param_spec import IntParam as IntParam
+from .config.param_spec import ListParam as ListParam
+from .config.param_spec import NumericParam as NumericParam
+from .config.param_spec import ParamSpec as ParamSpec
+from .config.param_spec import StrParam as StrParam
 # Core
 # Core > Classes
 from .core.classes.expose import Expose as Expose
@@ -26,14 +34,14 @@ from .core.classes.paginator import PaginatorDict as PaginatorDict
 from .core.classes.path import URL as URL
 from .core.classes.path import Path as Path
 from .core.classes.query import Query as Query
-from .core.classes.validator import ArrayValidator as ArrayValidator
-from .core.classes.validator import BooleanValidator as BooleanValidator
-from .core.classes.validator import CharValidator as CharValidator
+from .core.classes.validator import BoolValidator as BoolValidator
+from .core.classes.validator import DictValidator as DictValidator
 from .core.classes.validator import FloatValidator as FloatValidator
-from .core.classes.validator import IntegerValidator as IntegerValidator
-from .core.classes.validator import JSONValidator as JSONValidator
+from .core.classes.validator import IntValidator as IntValidator
+from .core.classes.validator import ListValidator as ListValidator
 from .core.classes.validator import NumericValidator as NumericValidator
 from .core.classes.validator import PathValidator as PathValidator
+from .core.classes.validator import StrValidator as StrValidator
 from .core.classes.validator import URLValidator as URLValidator
 from .core.classes.validator import Validator as Validator
 from .core.classes.view import DictView as DictView
@@ -170,8 +178,7 @@ from .model.view_service import ViewService as ViewService
 from .model.viewable import Viewable as Viewable
 # Process
 from .process.process import Process as Process
-from .process.process_factory import \
-    ProcessFactory as ProcessFactory
+from .process.process_factory import ProcessFactory as ProcessFactory
 from .process.process_model import ProcessModel as ProcessModel
 # Progress Bar
 from .progress_bar.progress_bar import ProgressBar as ProgressBar

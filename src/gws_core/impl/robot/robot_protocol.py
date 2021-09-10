@@ -1,4 +1,6 @@
-from ...config.config_params import ConfigParams
+from gws_core.config.param_spec import FloatParam
+
+from ...config.config_types import ConfigValues
 from ...protocol.protocol import ProcessSpec, Protocol
 from ...protocol.protocol_decorator import protocol_decorator
 from .robot_tasks import (RobotAdd, RobotAddOnCreate, RobotCreate, RobotEat,
@@ -7,7 +9,7 @@ from .robot_tasks import (RobotAdd, RobotAddOnCreate, RobotCreate, RobotEat,
 
 @protocol_decorator("RobotSimpleTravel")
 class RobotSimpleTravel(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self, config_params: ConfigValues) -> None:
         facto: ProcessSpec = self.add_process(RobotCreate, 'facto')
         move_1: ProcessSpec = self.add_process(RobotMove, 'move_1')
         eat_1: ProcessSpec = self.add_process(RobotEat, 'eat_1')
@@ -31,7 +33,7 @@ class RobotSimpleTravel(Protocol):
 @protocol_decorator("RobotTravelProto")
 class RobotTravelProto(Protocol):
 
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self, config_params: ConfigValues) -> None:
         move_1: ProcessSpec = self.add_process(RobotMove, "move_1")
         eat_1: ProcessSpec = self.add_process(RobotEat, "eat_1")
         move_2: ProcessSpec = self.add_process(RobotMove, "move_2")
@@ -60,9 +62,9 @@ class RobotTravelProto(Protocol):
 @protocol_decorator("RobotSuperTravelProto", human_name="The super travel of Astro")
 class RobotSuperTravelProto(Protocol):
     # config for the eat_3 task
-    config_specs = {'third_eat': {"type": float, "default": 3.14}}
+    config_specs = {'third_eat': FloatParam(default_value=3.14)}
 
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self, config_params: ConfigValues) -> None:
         sub_travel: ProcessSpec = self.add_process(RobotTravelProto, 'sub_travel')
 
         move_4: ProcessSpec = self.add_process(RobotMove, "move_4")
@@ -86,14 +88,15 @@ class RobotSuperTravelProto(Protocol):
 @protocol_decorator("RobotWorldTravelProto", human_name="The world trip of Astro")
 class RobotWorldTravelProto(Protocol):
 
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self, config_params: ConfigValues) -> None:
 
-        super_travel: ProcessSpec = self.add_process(RobotSuperTravelProto, "super_travel")\
-            .configure('third_eat', 10)
+        super_travel: ProcessSpec = self.add_process(RobotSuperTravelProto, "super_travel").configure('third_eat', 10)
 
         facto: ProcessSpec = self.add_process(RobotCreate, "facto")
-        fly_1: ProcessSpec = self.add_process(RobotFly, "fly_1")\
-            .configure('moving_step', 2000).configure('direction', 'west')
+        fly_1: ProcessSpec = self.add_process(
+            RobotFly, "fly_1").configure(
+            'moving_step', 2000).configure(
+            'direction', 'west')
         wait_1: ProcessSpec = self.add_process(RobotWait, "wait_1")
 
         self.add_connectors([

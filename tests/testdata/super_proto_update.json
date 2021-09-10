@@ -28,7 +28,7 @@
                 "uri": "e43cd305-167c-4662-bd70-b9edc7ebd136",
                 "data": {
                     "specs": {},
-                    "params": {}
+                    "values": {}
                 }
             },
             "progress_bar": {
@@ -94,12 +94,12 @@
                     "specs": {
                         "moving_step": {
                             "type": "float",
-                            "default": 0.1,
+                            "default_value": 0.1,
                             "description": "The moving step of the robot"
                         },
                         "direction": {
                             "type": "str",
-                            "default": "north",
+                            "default_value": "north",
                             "allowed_values": [
                                 "north",
                                 "south",
@@ -109,7 +109,7 @@
                             "description": "The moving direction"
                         }
                     },
-                    "params": {}
+                    "values": {}
                 }
             },
             "progress_bar": {
@@ -185,10 +185,10 @@
                     "specs": {
                         "food_weight": {
                             "type": "float",
-                            "default": 3.14
+                            "default_value": 3.14
                         }
                     },
-                    "params": {
+                    "values": {
                         "food_weight": 15
                     }
                 }
@@ -279,12 +279,12 @@
                                     "specs": {
                                         "moving_step": {
                                             "type": "float",
-                                            "default": 0.1,
+                                            "default_value": 0.1,
                                             "description": "The moving step of the robot"
                                         },
                                         "direction": {
                                             "type": "str",
-                                            "default": "north",
+                                            "default_value": "north",
                                             "allowed_values": [
                                                 "north",
                                                 "south",
@@ -294,7 +294,7 @@
                                             "description": "The moving direction"
                                         }
                                     },
-                                    "params": {}
+                                    "values": {}
                                 }
                             },
                             "progress_bar": {
@@ -370,10 +370,10 @@
                                     "specs": {
                                         "food_weight": {
                                             "type": "float",
-                                            "default": 3.14
+                                            "default_value": 3.14
                                         }
                                     },
-                                    "params": {}
+                                    "values": {}
                                 }
                             },
                             "progress_bar": {
@@ -490,7 +490,7 @@
                 "data": {
                     "specs": {
                     },
-                    "params": {
+                    "values": {
                     }
                 }
             },

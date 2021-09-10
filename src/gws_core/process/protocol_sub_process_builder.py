@@ -8,7 +8,7 @@ from typing import Dict, Optional, Type
 
 from pydantic.types import NoneBytes
 
-from ..config.config_spec import ConfigValues
+from ..config.config_types import ConfigValuesDict
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..model.typing_manager import TypingManager
@@ -64,10 +64,10 @@ class ProtocolSubProcessBuilder():
         """
         from ..process.process_factory import ProcessFactory
 
-        config_values: ConfigValues = NoneBytes
+        config_values: ConfigValuesDict = NoneBytes
         # Configure the process
         if node_json.get('config'):
-            config_values = node_json.get('config').get("data", {}).get("params", {})
+            config_values = node_json.get('config').get("data", {}).get("values", {})
 
         return ProcessFactory.create_process_model_from_type(
             process_type=process_type, config_values=config_values, instance_name=instance_name)
@@ -117,8 +117,8 @@ class SubProcessBuilderUpdate(ProtocolSubProcessBuilder):
 
             # Update the process config
             if node_json.get('config'):
-                params = node_json.get('config').get("data", {}).get("params", {})
-                process_model.config.set_params(params)
+                params = node_json.get('config').get("data", {}).get("values", {})
+                process_model.config.set_values(params)
 
             return process_model
 

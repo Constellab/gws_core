@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from gws_core import (BaseTestCase, CheckBeforeTaskResult, ConfigParams,
+from gws_core import (BaseTestCase, CheckBeforeTaskResult, ConfigValues,
                       Experiment, ExperimentService, GTest, ProcessFactory,
                       ProcessModel, ProcessSpec, Protocol,
                       ProtocolModel, ProtocolService, Resource, RobotMove,
@@ -17,19 +17,19 @@ from gws_core.protocol.protocol_exception import ProtocolBuildException
 #################### Error during the task ################
 @task_decorator("ErrorTask")
 class ErrorTask(Task):
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
         raise Exception("This is the error task")
 
 
 @protocol_decorator("TestSubErrorProtocol")
 class TestSubErrorProtocol(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self, config_params: ConfigValues) -> None:
         self.add_process(ErrorTask, 'error')
 
 
 @protocol_decorator("TestErrorProtocol")
 class TestErrorProtocol(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self, config_params: ConfigValues) -> None:
         self.add_process(TestSubErrorProtocol, 'sub_proto')
 
 ############## Before task error ###################
@@ -37,16 +37,16 @@ class TestErrorProtocol(Protocol):
 
 @task_decorator("CheckBeforeTaskError")
 class CheckBeforeTaskError(Task):
-    def check_before_run(self, config: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
+    def check_before_run(self, config: ConfigValues, inputs: TaskInputs) -> CheckBeforeTaskResult:
         return {"result": False, "message": "We can't run this task"}
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
         pass
 
 
 @protocol_decorator("CheckBeforeTaskErrorProtocol")
 class CheckBeforeTaskErrorProtocol(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self, config_params: ConfigValues) -> None:
         self.add_process(CheckBeforeTaskError, 'error')
 
 #################### Error on protocol build ###########################
@@ -63,13 +63,13 @@ class NotRobotCreate(Task):
     output_specs = {'not_robot': NotRobot}
     config_specs = {}
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
         return {'not_robot': NotRobot()}
 
 
 @protocol_decorator("TestSubProtocolBuildError")
 class TestSubProtocolBuildError(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self, config_params: ConfigValues) -> None:
         not_robot: ProcessSpec = self.add_process(NotRobotCreate, 'not_robot')
         move: ProcessSpec = self.add_process(RobotMove, 'move')
 
@@ -80,7 +80,7 @@ class TestSubProtocolBuildError(Protocol):
 
 @protocol_decorator("TestNestedProtocol")
 class TestProtocolBuildError(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self, config_params: ConfigValues) -> None:
         sub_proto: ProcessSpec = self.add_process(TestSubProtocolBuildError, 'sub_proto')
 
 
