@@ -5,9 +5,9 @@
 from collections.abc import Iterable as IterableClass
 from typing import Iterable, Type, Union
 
-from gws_core.core.exception.exceptions.bad_request_exception import \
+from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from gws_core.resource.resource import Resource
+from ..resource.resource import Resource
 
 ResourceType = Type[Resource]
 ResourceTypes = Union[ResourceType, Iterable[ResourceType]]

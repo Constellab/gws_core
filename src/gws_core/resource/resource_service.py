@@ -5,12 +5,11 @@
 
 from typing import Type
 
-from gws_core.model.typing_manager import TypingManager
-
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import NotFoundException
 from ..core.service.base_service import BaseService
 from ..experiment.experiment import Experiment
+from ..model.typing_manager import TypingManager
 from .resource_model import Resource, ResourceModel
 from .resource_typing import ResourceTyping
 

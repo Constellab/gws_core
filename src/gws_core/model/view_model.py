@@ -4,9 +4,9 @@
 # About us: https://gencovery.com
 
 
-from gws_core.core.decorator.json_ignore import json_ignore
 from peewee import CharField
 
+from ..core.decorator.json_ignore import json_ignore
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
 from ..model.typing_manager import TypingManager

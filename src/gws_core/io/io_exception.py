@@ -3,11 +3,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Type
 
-from gws_core.io.io_spec import IOSpecClass
-
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.exception.gws_exceptions import GWSException
+from .io_spec import IOSpecClass
 
 if TYPE_CHECKING:
     from ..io.port import InPort, OutPort

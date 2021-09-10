@@ -6,11 +6,10 @@
 from typing import List, Optional
 
 from fastapi import Depends
-from gws_core.core.classes.paginator import PaginatorDict
-from gws_core.core.dto.typed_tree_dto import TypedTree
 
+from ..core.classes.paginator import PaginatorDict
+from ..core.dto.typed_tree_dto import TypedTree
 from ..core_app import core_app
-from ..task.task_service import TaskService
 from ..user.auth_service import AuthService
 from ..user.user_dto import UserData
 from .protocol_service import ProtocolService

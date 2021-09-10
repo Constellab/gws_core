@@ -3,10 +3,11 @@
 from typing import Any, List, Literal
 
 from fastapi.applications import FastAPI
-from gws_core.core.utils.settings import Settings
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
+
+from ..utils.settings import Settings
 
 
 class CorsConfig():

@@ -5,9 +5,9 @@
 
 
 from fastapi import Depends
-from gws_core.experiment.experiment import Experiment
 
 from ...core_app import core_app
+from ...experiment.experiment import Experiment
 from ...user.auth_service import AuthService
 from ...user.user_dto import UserData
 from .robot_service import RobotService
@@ -23,7 +23,8 @@ def run_astro_travel_experiment(_: UserData = Depends(AuthService.check_user_acc
     return experiment.to_json()
 
 
-@core_app.post("/run/astro-super-travel-experiment", tags=["Astro boy travels"], summary="Run supertravel experiment of astros")
+@core_app.post("/run/astro-super-travel-experiment", tags=["Astro boy travels"],
+               summary="Run supertravel experiment of astros")
 def run_astro_super_travel_experiment(_: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Run astrobot experiment. The default study is used.

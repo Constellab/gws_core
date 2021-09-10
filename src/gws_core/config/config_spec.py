@@ -2,8 +2,8 @@ from __future__ import annotations  # for Python 3.7-3.9
 
 from typing import Any, Dict, List, Optional, Type, TypedDict, Union
 
-from gws_core.core.classes.validator import Validator
-from gws_core.core.exception.exceptions.bad_request_exception import \
+from ..core.classes.validator import Validator
+from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 
 ConfigValue = Union[str, int, float, bool, list, dict]

@@ -7,12 +7,11 @@ import asyncio
 import json
 from typing import Dict, List, Type, Union
 
-from gws_core.io.io_spec import IOSpec, IOSpecClass
-
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..io.connector import Connector
 from ..io.io import Input, Output
+from ..io.io_spec import IOSpecClass
 from ..io.ioface import Interface, Outerface
 from ..io.port import InPort, OutPort, Port
 from ..model.typing_register_decorator import typing_registrator

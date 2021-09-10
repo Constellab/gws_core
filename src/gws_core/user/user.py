@@ -5,10 +5,10 @@
 
 from typing import final
 
-from gws_core.core.decorator.json_ignore import json_ignore
 from peewee import BooleanField, CharField
 
 from ..core.classes.enum_field import EnumField
+from ..core.decorator.json_ignore import json_ignore
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
 from ..core.utils.utils import Utils

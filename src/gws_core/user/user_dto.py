@@ -1,7 +1,8 @@
 from typing import TypedDict
 
-from gws_core.user.user_group import UserGroup
 from pydantic import BaseModel
+
+from ..user.user_group import UserGroup
 
 
 class UserData(BaseModel):

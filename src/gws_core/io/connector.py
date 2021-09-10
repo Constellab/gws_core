@@ -1,10 +1,9 @@
 from typing import final
 
-from gws_core.io.io_exception import ImcompatiblePortsException
-
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..process.process_model import ProcessModel
+from .io_exception import ImcompatiblePortsException
 from .port import InPort, OutPort
 
 

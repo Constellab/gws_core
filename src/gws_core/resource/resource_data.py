@@ -1,7 +1,7 @@
 import copy
 from typing import Dict, TypeVar
 
-from gws_core.core.exception.exceptions.bad_request_exception import \
+from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 
 ResourceDict = TypeVar('ResourceDict')

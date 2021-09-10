@@ -1,11 +1,11 @@
 import re
 from typing import Union
 
-from gws_core.core.utils.http_helper import HTTPHelper
 from starlette_context import context
 
 from ..core.exception.exceptions import (BadRequestException,
                                          UnauthorizedException)
+from ..core.utils.http_helper import HTTPHelper
 from .user import User
 
 
