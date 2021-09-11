@@ -46,6 +46,10 @@ class KVStore(Dict[str, Any]):
         super().__init__()
         self._full_file_path = full_file_path
 
+    def __contains__(self, key) -> int:
+        kv_data = self._open_shelve()
+        return kv_data.__contains__(key)
+        
     @property
     def full_file_path(self) -> str:
         """
