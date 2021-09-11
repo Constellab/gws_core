@@ -29,7 +29,7 @@ class JSONDict(Resource):
 
     # -- E --
 
-    def export(self, file_path: str, file_format: str = ".json", prettify: bool = False):
+    def export_to_path(self, file_path: str, file_format: str = ".json", prettify: bool = False):
         """
         Export to a give repository
 
