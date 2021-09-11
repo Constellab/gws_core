@@ -127,7 +127,7 @@ class TaskModel(ProcessModel):
 
         try:
             # Run the task task
-            task_output = await task.run(config=config_params, inputs=task_inputs)
+            task_output = await task.run(config_params, task_inputs)
         except Exception as err:
             raise ProcessRunException.from_exception(process_model=self, exception=err,
                                                      error_prefix='Error during task') from err
