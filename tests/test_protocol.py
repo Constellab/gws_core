@@ -213,25 +213,25 @@ class TestProtocol(BaseTestCase):
             experiment=experiment, user=GTest.user)
 
         eat_1: TaskModel = experiment.protocol_model.get_process('eat_1')
-        food: RobotFood = eat_1.input.get_resource_model('food')
+        food: RobotFood = eat_1.inputs.get_resource_model('food')
 
         self.assertIsNotNone(food)
 
         # check that the RobotEat used the sugar food.
         # if yes, this will mean that the process eat waited for the food process to end
         # even if the food input of eat is optional
-        robot_input: Robot = eat_1.input.get_resource_model('robot').get_resource()
-        robot_output: Robot = eat_1.output.get_resource_model('robot').get_resource()
+        robot_input: Robot = eat_1.inputs.get_resource_model('robot').get_resource()
+        robot_output: Robot = eat_1.outputs.get_resource_model('robot').get_resource()
         self.assertEqual(robot_output.weight, robot_input.weight + (2 * 10))  # 2 = food weight, 10 sugar multiplicator
 
         # Check that the eat_2 was called even if the food input (optional) is not plug
         eat_2: TaskModel = experiment.protocol_model.get_process('eat_2')
-        robot_output_2: Robot = eat_2.output.get_resource_model('robot').get_resource()
+        robot_output_2: Robot = eat_2.outputs.get_resource_model('robot').get_resource()
         # If this doesn't work, this mean that the process eat_2 was not called because it misses an optional input
         self.assertEqual(robot_output_2.weight, robot_output.weight + 5)  # 5 = food weight
 
         # Check that eat 3 was called event if it is connected to empty_food and food input is None
         eat_3: TaskModel = experiment.protocol_model.get_process('eat_3')
-        robot_output_3: Robot = eat_3.output.get_resource_model('robot').get_resource()
+        robot_output_3: Robot = eat_3.outputs.get_resource_model('robot').get_resource()
         # If this doesn't work, this mean that the process eat_2 was not called because it misses an optional input
         self.assertEqual(robot_output_3.weight, robot_output_2.weight + 7)  # 7 = food weight

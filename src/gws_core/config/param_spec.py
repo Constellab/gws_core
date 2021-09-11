@@ -85,11 +85,11 @@ class ParamSpec(Generic[ParamSpecType]):
             "optional": self.optional
         }
 
-        if self.default_value:
+        if self.default_value is not None:
             _json["default_value"] = self.default_value
-        if self.description:
+        if self.description is not None:
             _json["description"] = self.description
-        if self.unit:
+        if self.unit is not None:
             _json["unit"] = self.unit
         return _json
 
