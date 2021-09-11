@@ -11,8 +11,8 @@ from ..core.exception.exceptions import BadRequestException
 from ..model.typing_register_decorator import typing_registrator
 from ..model.viewable import Viewable
 from .config_exceptions import MissingConfigsException
-from .config_types import (ConfigSpecs, ConfigSpecsHelper, ConfigValue,
-                           ConfigValues, ConfigValuesDict)
+from .config_types import (ConfigParam, ConfigParams, ConfigParamsDict,
+                           ConfigSpecs, ConfigSpecsHelper)
 
 
 @final
@@ -92,7 +92,7 @@ class Config(Viewable):
 
     ########################################## VALUE #####################################
 
-    def get_values(self) -> ConfigValuesDict:
+    def get_values(self) -> ConfigParamsDict:
         return self.data["values"]
 
     def get_value(self, param_name: str) -> Any:
@@ -108,7 +108,7 @@ class Config(Viewable):
         default = self.get_spec(param_name).default_value
         return self.data.get("values", {}).get(param_name, default)
 
-    def get_and_check_values(self) -> ConfigValues:
+    def get_and_check_values(self) -> ConfigParams:
         """
         Returns all the parameters including default value if not provided
 
@@ -118,7 +118,7 @@ class Config(Viewable):
         :rtype: `dict`
         """
 
-        values: ConfigValuesDict = self.get_values()
+        values: ConfigParamsDict = self.get_values()
         specs: ConfigSpecs = self.get_specs()
         missing_params: List[str] = []
 
@@ -135,9 +135,9 @@ class Config(Viewable):
         if len(missing_params) > 0:
             raise MissingConfigsException(missing_params)
 
-        return ConfigValues(values)
+        return ConfigParams(values)
 
-    def set_value(self, param_name: str, value: ConfigValue):
+    def set_value(self, param_name: str, value: ConfigParam):
         """
         Sets the value of a parameter by its name
 
@@ -153,7 +153,7 @@ class Config(Viewable):
 
         self.data["values"][param_name] = value
 
-    def set_values(self, values: ConfigValuesDict):
+    def set_values(self, values: ConfigParamsDict):
         """
         Set config parameters
         """

@@ -8,7 +8,7 @@ from typing import Dict, Optional, Type
 
 from pydantic.types import NoneBytes
 
-from ..config.config_types import ConfigValuesDict
+from ..config.config_types import ConfigParamsDict
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..model.typing_manager import TypingManager
@@ -64,7 +64,7 @@ class ProtocolSubProcessBuilder():
         """
         from ..process.process_factory import ProcessFactory
 
-        config_values: ConfigValuesDict = NoneBytes
+        config_values: ConfigParamsDict = NoneBytes
         # Configure the process
         if node_json.get('config'):
             config_values = node_json.get('config').get("data", {}).get("values", {})

@@ -6,7 +6,7 @@ import inspect
 import zlib
 from typing import Dict, Type
 
-from ..config.config_types import ConfigValues
+from ..config.config_types import ConfigParams
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..model.typing_manager import TypingManager
@@ -92,7 +92,7 @@ class TaskModel(ProcessModel):
         task: Task = self._create_task_instance()
 
         # Get simpler object for to run the task
-        config_params: ConfigValues = self.config.get_and_check_values()
+        config_params: ConfigParams = self.config.get_and_check_values()
         task_inputs: TaskInputs = self.inputs.get_and_check_task_inputs()
 
         check_result: CheckBeforeTaskResult
@@ -115,7 +115,7 @@ class TaskModel(ProcessModel):
         await self._run_task(task=task, config_params=config_params, task_inputs=task_inputs)
         await self._run_after_task()
 
-    async def _run_task(self, task: Task, config_params: ConfigValues, task_inputs: TaskInputs) -> None:
+    async def _run_task(self, task: Task, config_params: ConfigParams, task_inputs: TaskInputs) -> None:
         """
         Run the task and save its state in the database.
         """

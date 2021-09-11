@@ -9,7 +9,7 @@ import tempfile
 from abc import abstractmethod
 from typing import Union
 
-from ...config.config_types import ConfigValues
+from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
 from ...core.model.sys_proc import SysProc
 from ...impl.file.file_service import FileService
@@ -38,7 +38,7 @@ class Shell(Task):
     _stdout_count = 0
     _STDOUT_MAX_CHAR_LENGHT = 1024*10
 
-    def build_command(self, config: ConfigValues, inputs: TaskInputs) -> list:
+    def build_command(self, config: ConfigParams, inputs: TaskInputs) -> list:
         """
         Builds the user command to execute.
 
@@ -72,7 +72,7 @@ class Shell(Task):
             return user_cmd
 
     @abstractmethod
-    def gather_outputs(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
+    def gather_outputs(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """
         This methods gathers the results of the shell task. It must be overloaded by subclasses.
 
@@ -129,7 +129,7 @@ class Shell(Task):
 
         return self.cwd.name
 
-    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """
         Task entrypoint
         """

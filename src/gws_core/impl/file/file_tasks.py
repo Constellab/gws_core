@@ -2,7 +2,7 @@
 
 import json
 
-from ...config.config_types import ConfigSpecs, ConfigValues
+from ...config.config_types import ConfigSpecs, ConfigParams
 from ...config.param_spec import StrParam
 from ...impl.file.file import File
 from ...impl.file.file_store import FileStore
@@ -21,7 +21,7 @@ class WriteToJsonFile(Task):
     output_specs: OutputSpecs = {'file': File}
     config_specs: ConfigSpecs = {'filename': StrParam(description='Name of the file')}
 
-    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         file_store: FileStore = LocalFileStore.get_default_instance()
 
         file: File = file_store.create_empty(config.get_value('filename') + '.json')

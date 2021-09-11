@@ -1,6 +1,6 @@
 from typing import Type, TypedDict
 
-from ..config.config_types import ConfigValue, ConfigValuesDict
+from ..config.config_types import ConfigParam, ConfigParamsDict
 from ..process.process import Process
 
 
@@ -41,20 +41,20 @@ class ProcessSpec():
     instance_name: str = None
     process_type: Type[Process] = None
 
-    _config: ConfigValuesDict
+    _config: ConfigParamsDict
 
     def __init__(self, instance_name: str, process_type: Type[Process]) -> None:
         self.instance_name = instance_name
         self.process_type = process_type
         self._config = {}
 
-    def configure_all(self, config_values: ConfigValuesDict) -> 'ProcessSpec':
+    def configure_all(self, config_values: ConfigParamsDict) -> 'ProcessSpec':
         """Use to preconfigure the process. The config must match the config specs of the process
 
         :param config_name: name of the configuration (the system checks that the config exists)
         :type config_name: str
         :param config_value: value of the configuration (the system checks that it is compatible with the spec)
-        :type config_value: ConfigValue
+        :type config_value: ConfigParam
         """
 
         if not config_values:
@@ -65,13 +65,13 @@ class ProcessSpec():
 
         return self
 
-    def configure(self, config_name: str, config_value: ConfigValue) -> 'ProcessSpec':
+    def configure(self, config_name: str, config_value: ConfigParam) -> 'ProcessSpec':
         """Use to preconfigure the process. The config must match the config specs of the process
 
         :param config_name: name of the configuration (the system checks that the config exists)
         :type config_name: str
         :param config_value: value of the configuration (the system checks that it is compatible with the spec)
-        :type config_value: ConfigValue
+        :type config_value: ConfigParam
         """
         self._config[config_name] = config_value
 
@@ -89,5 +89,5 @@ class ProcessSpec():
             "port_name": name,
         }
 
-    def get_config_values(self) -> ConfigValuesDict:
+    def get_config_values(self) -> ConfigParamsDict:
         return self._config

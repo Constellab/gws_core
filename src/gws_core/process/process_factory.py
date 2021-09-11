@@ -6,7 +6,7 @@
 from typing import Dict, List, Type
 
 from ..config.config import Config
-from ..config.config_types import ConfigValuesDict
+from ..config.config_types import ConfigParamsDict
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..io.connector import Connector
@@ -36,7 +36,7 @@ class ProcessFactory():
     @classmethod
     def create_task_model_from_type(
             cls, task_type: Type[Task],
-            config_values: ConfigValuesDict = None,
+            config_values: ConfigParamsDict = None,
             instance_name: str = None) -> TaskModel:
         if not issubclass(task_type, Task):
             name = task_type.__name__ if task_type.__name__ is not None else str(
@@ -62,7 +62,7 @@ class ProcessFactory():
 
     @classmethod
     def create_task_model_from_typing_name(
-            cls, typing_name: str, config_values: ConfigValuesDict = None, instance_name: str = None) -> TaskModel:
+            cls, typing_name: str, config_values: ConfigParamsDict = None, instance_name: str = None) -> TaskModel:
         task_type: Type[Task] = TypingManager.get_type_from_name(typing_name=typing_name)
         return cls.create_task_model_from_type(
             task_type=task_type, config_values=config_values, instance_name=instance_name)
@@ -71,7 +71,7 @@ class ProcessFactory():
 
     @classmethod
     def create_protocol_model_from_type(cls, protocol_type: Type[Protocol],
-                                        config_values: ConfigValuesDict = None,
+                                        config_values: ConfigParamsDict = None,
                                         instance_name: str = None) -> ProtocolModel:
 
         try:
@@ -253,7 +253,7 @@ class ProcessFactory():
     @classmethod
     def create_process_model_from_type(
             cls, process_type: Type[Process],
-            config_values: ConfigValuesDict = None,
+            config_values: ConfigParamsDict = None,
             instance_name: str = None) -> TaskModel:
         if issubclass(process_type, Task):
             return cls.create_task_model_from_type(process_type, config_values, instance_name)
@@ -267,7 +267,7 @@ class ProcessFactory():
 
     @classmethod
     def create_process_model_from_typing_name(
-            cls, typing_name: str, config_values: ConfigValuesDict = None, instance_name: str = None) -> TaskModel:
+            cls, typing_name: str, config_values: ConfigParamsDict = None, instance_name: str = None) -> TaskModel:
         process_type: Type[Process] = TypingManager.get_type_from_name(typing_name=typing_name)
         return cls.create_process_model_from_type(
             process_type=process_type, config_values=config_values, instance_name=instance_name)
