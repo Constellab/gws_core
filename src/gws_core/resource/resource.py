@@ -74,7 +74,7 @@ class Resource(Base):
             for field in self._serializable_fields:
                 setattr(self, field, data.get(field, None))
 
-    def export(self, file_path: str, file_format: str = None):
+    def export_to_path(self, file_path: str, file_format: str = None):
         """
         Export the resource to a repository
 
@@ -95,7 +95,7 @@ class Resource(Base):
     # -- I --
 
     @classmethod
-    def import_resource(cls, file_path: str, file_format: str = None) -> Any:
+    def import_from_path(cls, file_path: str, file_format: str = None) -> Any:
         """
         Import a resource from a repository. Must be overloaded by the child class.
 
