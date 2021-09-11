@@ -54,7 +54,7 @@ class JSONDict(Resource):
     # -- I --
 
     @classmethod
-    def import_resource(cls, file_path: str, file_format: str = ".json") -> Any:
+    def import_from_path(cls, file_path: str, file_format: str = ".json") -> Any:
         """
         Import a give from repository
 

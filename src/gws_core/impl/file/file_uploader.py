@@ -48,7 +48,7 @@ class FileImporter(Task):
             model_t = self.get_default_output_spec_type(outport_name)
 
         params = copy.deepcopy(config)
-        resource = model_t.import_resource(file.path, **params)
+        resource = model_t.import_from_path(file.path, **params)
         return {outport_name: resource}
 
 
@@ -95,7 +95,7 @@ class FileExporter(Task):
             params = config
 
         resource: Resource = inputs[inport_name]
-        resource.export(file.path, **params)
+        resource.export_to_path(file.path, **params)
         return {outport_name: file}
 
 # ####################################################################
@@ -135,7 +135,7 @@ class FileLoader(Task):
         else:
             params = config
 
-        resource = model_t.import_resource(file_path, **params)
+        resource = model_t.import_from_path(file_path, **params)
         return {outport_name: resource}
 
 # ####################################################################
@@ -174,4 +174,4 @@ class FileDumper(Task):
         else:
             params = config
 
-        resource.export(file_path, **params)
+        resource.export_to_path(file_path, **params)

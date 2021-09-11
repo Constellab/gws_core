@@ -60,7 +60,7 @@ class TestCSV(BaseTestCase):
         study.save()
 
         file = os.path.join(testdata_dir, "data.csv")
-        csv_data = CSVTable.import_resource(file)
+        csv_data = CSVTable.import_from_path(file)
 
         df = pandas.read_table(file)
 

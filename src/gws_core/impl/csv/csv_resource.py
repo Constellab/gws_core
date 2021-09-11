@@ -79,7 +79,7 @@ class CSVTable(Resource):
 
     # -- E --
 
-    def export(
+    def export_to_path(
             self, file_path: str, delimiter: str = "\t", header: bool = True, index: bool = True, file_format: str = None, **
             kwargs):
         """
@@ -134,7 +134,7 @@ class CSVTable(Resource):
     # -- I --
 
     @classmethod
-    def import_resource(cls, file_path: str, delimiter: str = "\t", header=0, index_col=None, file_format: str = None, **
+    def import_from_path(cls, file_path: str, delimiter: str = "\t", header=0, index_col=None, file_format: str = None, **
                         kwargs) -> 'CSVTable':
         """
         Import from a repository

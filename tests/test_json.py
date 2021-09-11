@@ -17,7 +17,7 @@ class TestJson(BaseTestCase):
     def test_json_data(self):
         GTest.print("JSONDict")
         file = os.path.join(testdata_dir, "mini_travel_graph.json")
-        json_dict: JSONDict = JSONDict.import_resource(file)
+        json_dict: JSONDict = JSONDict.import_from_path(file)
         _json = {}
         with open(file) as file:
             _json = json.load(file)
