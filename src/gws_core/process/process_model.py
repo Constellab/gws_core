@@ -409,7 +409,7 @@ class ProcessModel(Viewable):
         self.config.set_value(param_name=param_name, value=value)
 
     def set_config_values(self, config_values: ConfigParamsDict) -> None:
-to_json        """
+        """
         Configure the process model
         """
         self.config.set_values(config_values)
