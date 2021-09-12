@@ -73,51 +73,51 @@ class File(Resource):
         """
 
         if self._exists():
-            return open(self.path, mode)
+            return open(self.path, mode, encoding='utf-8')
         else:
             if not os.path.exists(self.dir):
                 os.makedirs(self.dir)
                 if not os.path.exists(self.dir):
                     raise BadRequestException(f"Cannot create directory {self.dir}")
-            return open(self.path, mode="w+")
+            return open(self.path, mode="w+", encoding='utf-8')
 
     # -- R --
 
     def read(self) -> AnyStr:
-        m = "r+"+self._mode
-        with self.open(m) as fp:
+        mode = "r+"+self._mode
+        with self.open(mode) as fp:
             data = fp.read()
         return data
 
     def readline(self) -> AnyStr:
-        m = "r+"+self._mode
-        with self.open(m) as fp:
+        mode = "r+"+self._mode
+        with self.open(mode) as fp:
             data = fp.readline()
         return data
 
     def readlines(self, n=-1) -> List[AnyStr]:
-        m = "r+"+self._mode
-        with self.open(m) as fp:
+        mode = "r+"+self._mode
+        with self.open(mode) as fp:
             data = fp.readlines(n)
         return data
 
     # -- T --
 
-    @final
-    def to_json(self) -> dict:
-        _json = {}
-
+    def to_json(self, deep: bool=False) -> dict:
+        _json = super().to_json()
         _json["path"] = self.path
+        if deep:
+            _json["content"] = self.read()
         return _json
 
     # -- W --
 
-    def write(self, data: str, discard=False):
+    def write(self, data: str):
         """
         Write in the file
         """
-        m = "a+"+self._mode
-        with self.open(m) as fp:
+        mode = "a+"+self._mode
+        with self.open(mode) as fp:
             fp.write(data)
 
     @classmethod
