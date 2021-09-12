@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from gws_core import (FIFO2, BadRequestException, BaseTestCase, ConfigValues,
+from gws_core import (FIFO2, BadRequestException, BaseTestCase, ConfigParams,
                       Connector, Experiment, ExperimentService, GTest,
                       OptionalIn, ProcessFactory, ProcessSpec,
                       Protocol, ProtocolModel, Resource, ResourceModel,
@@ -48,7 +48,7 @@ class Create(Task):
     output_specs = {'create_person_out': Person}
     config_specs = {}
 
-    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {'create_person_out': Person()}
 
 
@@ -58,7 +58,7 @@ class Move(Task):
     output_specs = {'move_person_out': Person}
     config_specs = {}
 
-    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return
 
 
@@ -68,7 +68,7 @@ class Drive(Task):
     output_specs = {'move_drive_out': Car}
     config_specs = {}
 
-    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return
 
 
@@ -80,7 +80,7 @@ class Jump(Task):
                     'jump_person_out_any': SpecialTypeOut(resource_types=Person, sub_class=True)}
     config_specs = {}
 
-    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return
 
 
@@ -92,7 +92,7 @@ class Multi(Task):
                     'resource_2': [Car, Person]}
     config_specs = {}
 
-    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return
 
 
@@ -102,7 +102,7 @@ class Fly(Task):
     output_specs = {}
     config_specs = {}
 
-    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return
 
 
@@ -114,7 +114,7 @@ class OptionalTask(Task):
     output_specs = {}
     config_specs = {}
 
-    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return
 
 # Use to check that 2 optional task can"t plug if types are not correct (even if both have None)
@@ -126,7 +126,7 @@ class OptionalTaskOut(Task):
     output_specs = {'out': OptionalIn(Car)}
     config_specs = {}
 
-    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return
 
 
@@ -138,14 +138,14 @@ class Log(Task):
                     'otherPerson': Person}
     config_specs = {}
 
-    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print('Log person')
         return {'samePerson': inputs.get('person'), 'otherPerson': inputs.get('person')}
 
 
 @protocol_decorator("TestPersonProtocol")
 class TestPersonProtocol(Protocol):
-    def configure_protocol(self, config_params: ConfigValues) -> None:
+    def configure_protocol(self, config_params: ConfigParams) -> None:
         create: ProcessSpec = self.add_process(Create, 'create')
         log: ProcessSpec = self.add_process(Log, 'log')
 
@@ -156,7 +156,7 @@ class TestPersonProtocol(Protocol):
 
 @task_decorator(unique_name="FIFO2")
 class Skippable(FIFO2):
-    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
         resource1 = inputs.get("resource_1")
         resource2 = inputs.get("resource_2")
@@ -169,7 +169,7 @@ class Skippable(FIFO2):
 
 @protocol_decorator("TestSkippable")
 class TestSkippable(Protocol):
-    def configure_protocol(self, config_params: ConfigValues) -> None:
+    def configure_protocol(self, config_params: ConfigParams) -> None:
         create1: ProcessSpec = self.add_process(Create, 'create1')
         wait: ProcessSpec = self.add_process(Wait, 'wait').configure('waiting_time', '3')
         create2: ProcessSpec = self.add_process(Create, 'create2')

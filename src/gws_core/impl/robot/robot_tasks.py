@@ -3,7 +3,7 @@ from typing import Optional
 
 from gws_core.config.param_spec import FloatParam, StrParam
 
-from ...config.config_types import ConfigValues
+from ...config.config_types import ConfigParams
 from ...impl.robot.robot_resource import (MegaRobot, Robot, RobotAddOn,
                                           RobotFood)
 from ...task.task import Task
@@ -17,7 +17,7 @@ class RobotCreate(Task):
     output_specs = {'robot': Robot}
     config_specs = {}
 
-    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print("Create", flush=True)
         robot: Robot = Robot.empty()
 
@@ -32,7 +32,7 @@ class RobotMove(Task):
     config_specs = {'moving_step': FloatParam(default_value=0.1, description="The moving step of the robot"), 'direction': StrParam(
         default_value="north", allowed_values=["north", "south", "east", "west"], description="The moving direction")}
 
-    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print(f"Moving {config.get_value('moving_step')}", flush=True)
         robot: Robot = inputs['robot']
         robot.move(direction=config.get_value('direction'), moving_step=config.get_value('moving_step'))
@@ -48,7 +48,7 @@ class RobotEat(Task):
         'food_weight': FloatParam(default_value=3.14)
     }
 
-    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         robot: Robot = inputs['robot']
 
         multiplicator: int = 1
@@ -71,7 +71,7 @@ class RobotWait(Task):
         'waiting_time': FloatParam(default_value=0.5)
     }
 
-    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print(f"Waiting {config.get_value('waiting_time')}", flush=True)
         time.sleep(config.get_value('waiting_time'))
         return {'robot': inputs['robot']}
@@ -83,7 +83,7 @@ class RobotFly(RobotMove):
     config_specs = {'moving_step': FloatParam(default_value=1000.0, unit="km"), 'direction': StrParam(
         default_value="west", allowed_values=["north", "south", "east", "west"], description="The flying direction")}
 
-    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print("Start flying ...")
         return await super().run(config=config, inputs=inputs)
 
@@ -94,7 +94,7 @@ class RobotAdd(Task):
     output_specs = {'mega_robot': MegaRobot}
     config_specs = {}
 
-    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print("Add robot addon...")
 
         robot: Robot = inputs['robot']
@@ -109,7 +109,7 @@ class RobotAddOnCreate(Task):
     output_specs = {'addon': RobotAddOn}
     config_specs = {}
 
-    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print("AddOn Create", flush=True)
         return {'addon': RobotAddOn()}
 
@@ -124,7 +124,7 @@ class RobotSugarCreate(Task):
     output_specs = {'sugar': RobotFood}
     config_specs = {}
 
-    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print("Create sugar", flush=True)
         food: RobotFood = RobotFood()
         food.multiplicator = 10

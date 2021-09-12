@@ -6,7 +6,7 @@
 from abc import abstractmethod
 from typing import Optional, Type, TypedDict, final
 
-from ..config.config_types import ConfigSpecs, ConfigValues
+from ..config.config_types import ConfigSpecs, ConfigParams
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..io.io_spec import InputSpecs, IOSpecsHelper, OutputSpecs
@@ -50,7 +50,7 @@ class Task(Process):
             raise BadRequestException(
                 f"The task {self.full_classname()} is not decorated with @task_decorator, it can't be instantiate. Please decorate the task class with @task_decorator")
 
-    def check_before_run(self, config: ConfigValues, inputs: TaskInputs) -> CheckBeforeTaskResult:
+    def check_before_run(self, config: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
         """
         This can be overiwritten to perform custom check before running task.
         See doc of CheckBeforeTaskResult for more information
@@ -60,7 +60,7 @@ class Task(Process):
         return {"result": True, "message": None}
 
     @abstractmethod
-    async def run(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """This must be overiwritten to perform the task of the task.
 
         This is where most of your code must go

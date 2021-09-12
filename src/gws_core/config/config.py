@@ -11,8 +11,8 @@ from ..core.exception.exceptions import BadRequestException
 from ..model.typing_register_decorator import typing_registrator
 from ..model.viewable import Viewable
 from .config_exceptions import MissingConfigsException
-from .config_types import (ConfigSpecs, ConfigSpecsHelper, ConfigValue,
-                           ConfigValues, ConfigValuesDict)
+from .config_types import (ConfigSpecs, ConfigSpecsHelper, ConfigParam,
+                           ConfigParams, ConfigValuesDict)
 
 
 @final
@@ -108,7 +108,7 @@ class Config(Viewable):
         default = self.get_spec(param_name).default_value
         return self.data.get("values", {}).get(param_name, default)
 
-    def get_and_check_values(self) -> ConfigValues:
+    def get_and_check_values(self) -> ConfigParams:
         """
         Returns all the parameters including default value if not provided
 
@@ -135,9 +135,9 @@ class Config(Viewable):
         if len(missing_params) > 0:
             raise MissingConfigsException(missing_params)
 
-        return ConfigValues(values)
+        return ConfigParams(values)
 
-    def set_value(self, param_name: str, value: ConfigValue):
+    def set_value(self, param_name: str, value: ConfigParam):
         """
         Sets the value of a parameter by its name
 

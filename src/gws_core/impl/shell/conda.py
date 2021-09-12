@@ -8,7 +8,7 @@ import shutil
 import subprocess
 from abc import abstractmethod
 
-from ...config.config_types import ConfigValues
+from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
 from ...progress_bar.progress_bar import ProgressBar
 from ...task.task_decorator import task_decorator
@@ -128,7 +128,7 @@ class CondaEnvShell(BaseEnvShell):
                     "Cannot remove the virtual environment.")
 
     @abstractmethod
-    def gather_outputs(self, config: ConfigValues, inputs: TaskInputs) -> TaskOutputs:
+    def gather_outputs(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """
         This methods gathers the results of the shell task. It must be overloaded by subclasses.
 

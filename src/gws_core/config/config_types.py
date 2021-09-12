@@ -9,12 +9,12 @@ from gws_core.config.param_spec import (BoolParam, DictParam, FloatParam,
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 
-ConfigValue = Union[str, int, float, bool, list, dict]
-ConfigSpecType = Type[ConfigValue]
-ConfigValuesDict = Dict[str, ConfigValue]
+ConfigParam = Union[str, int, float, bool, list, dict]
+ConfigSpecType = Type[ConfigParam]
+ConfigValuesDict = Dict[str, ConfigParam]
 
 
-class ConfigValues(Dict[str, ConfigValue]):
+class ConfigParams(Dict[str, ConfigParam]):
     """Config values send to the task
     """
 

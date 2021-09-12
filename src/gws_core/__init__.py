@@ -15,8 +15,8 @@ from .config.config import Config as Config
 from .config.config_service import ConfigService as ConfigService
 from .config.config_types import ConfigSpecs as ConfigSpecs
 from .config.config_types import ConfigSpecType as ConfigSpecType
-from .config.config_types import ConfigValue as ConfigValue
-from .config.config_types import ConfigValues as ConfigValues
+from .config.config_types import ConfigParam as ConfigParam
+from .config.config_types import ConfigParams as ConfigParams
 from .config.config_types import ConfigValuesDict as ConfigValuesDict
 from .config.param_spec import BoolParam as BoolParam
 from .config.param_spec import DictParam as DictParam

@@ -6,7 +6,7 @@ from typing import Dict, List, Type, TypedDict, final
 
 from peewee import Tuple
 
-from ..config.config_types import ConfigValues
+from ..config.config_types import ConfigParams
 from ..config.config_types import ConfigSpecs, ConfigValuesDict
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -63,7 +63,7 @@ class Protocol(Process):
         }
 
     @abstractmethod
-    def configure_protocol(self, config_params: ConfigValues) -> None:
+    def configure_protocol(self, config_params: ConfigParams) -> None:
         """Extend this method to configure the protocol (
         In this method you can reate sub process, add connectors and configure interface and outerface
 
@@ -87,7 +87,7 @@ class Protocol(Process):
 
 
         :param config_params: [description]
-        :type config_params: ConfigValues
+        :type config_params: ConfigParams
         """
         pass
 

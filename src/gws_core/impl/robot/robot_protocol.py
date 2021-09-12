@@ -1,6 +1,6 @@
 from gws_core.config.param_spec import FloatParam
 
-from ...config.config_types import ConfigValues
+from ...config.config_types import ConfigParams
 from ...protocol.protocol import ProcessSpec, Protocol
 from ...protocol.protocol_decorator import protocol_decorator
 from .robot_tasks import (RobotAdd, RobotAddOnCreate, RobotCreate, RobotEat,
@@ -9,7 +9,7 @@ from .robot_tasks import (RobotAdd, RobotAddOnCreate, RobotCreate, RobotEat,
 
 @protocol_decorator("RobotSimpleTravel")
 class RobotSimpleTravel(Protocol):
-    def configure_protocol(self, config_params: ConfigValues) -> None:
+    def configure_protocol(self, config_params: ConfigParams) -> None:
         facto: ProcessSpec = self.add_process(RobotCreate, 'facto')
         move_1: ProcessSpec = self.add_process(RobotMove, 'move_1')
         eat_1: ProcessSpec = self.add_process(RobotEat, 'eat_1')
@@ -33,7 +33,7 @@ class RobotSimpleTravel(Protocol):
 @protocol_decorator("RobotTravelProto")
 class RobotTravelProto(Protocol):
 
-    def configure_protocol(self, config_params: ConfigValues) -> None:
+    def configure_protocol(self, config_params: ConfigParams) -> None:
         move_1: ProcessSpec = self.add_process(RobotMove, "move_1")
         eat_1: ProcessSpec = self.add_process(RobotEat, "eat_1")
         move_2: ProcessSpec = self.add_process(RobotMove, "move_2")
@@ -64,7 +64,7 @@ class RobotSuperTravelProto(Protocol):
     # config for the eat_3 task
     config_specs = {'third_eat': FloatParam(default_value=3.14)}
 
-    def configure_protocol(self, config_params: ConfigValues) -> None:
+    def configure_protocol(self, config_params: ConfigParams) -> None:
         sub_travel: ProcessSpec = self.add_process(RobotTravelProto, 'sub_travel')
 
         move_4: ProcessSpec = self.add_process(RobotMove, "move_4")
@@ -88,7 +88,7 @@ class RobotSuperTravelProto(Protocol):
 @protocol_decorator("RobotWorldTravelProto", human_name="The world trip of Astro")
 class RobotWorldTravelProto(Protocol):
 
-    def configure_protocol(self, config_params: ConfigValues) -> None:
+    def configure_protocol(self, config_params: ConfigParams) -> None:
 
         super_travel: ProcessSpec = self.add_process(RobotSuperTravelProto, "super_travel").configure('third_eat', 10)
 
