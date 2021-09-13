@@ -4,7 +4,9 @@
 # About us: https://gencovery.com
 
 from ...resource.resource import Resource
+from ...resource.resource_decorator import resource_decorator
 
-@resource_decorator("VolatileResource")
+@resource_decorator("VolatileResource", hide=True)
 class VolatileResource(Resource):
+    """Volatile resource"""
     pass
