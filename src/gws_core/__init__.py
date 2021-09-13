@@ -140,6 +140,9 @@ from .impl.robot.robot_tasks import RobotEat as RobotEat
 from .impl.robot.robot_tasks import RobotMove as RobotMove
 from .impl.robot.robot_tasks import RobotSugarCreate as RobotSugarCreate
 from .impl.robot.robot_tasks import RobotWait as RobotWait
+# Impl > Volatile
+from .impl.volatile.volatile_resource import VolatileResource
+
 # Impl > S3
 from .impl.s3.base import BaseS3 as BaseS3
 from .impl.s3.ovh import OVHS3 as OVHS3
