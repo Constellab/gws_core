@@ -13,11 +13,11 @@ from .comment.comment_service import CommentService as CommentService
 # Config
 from .config.config import Config as Config
 from .config.config_service import ConfigService as ConfigService
-from .config.config_types import ConfigSpecs as ConfigSpecs
-from .config.config_types import ConfigSpecType as ConfigSpecType
 from .config.config_types import ConfigParam as ConfigParam
 from .config.config_types import ConfigParams as ConfigParams
 from .config.config_types import ConfigParamsDict as ConfigParamsDict
+from .config.config_types import ConfigSpecs as ConfigSpecs
+from .config.config_types import ConfigSpecType as ConfigSpecType
 from .config.param_spec import BoolParam as BoolParam
 from .config.param_spec import DictParam as DictParam
 from .config.param_spec import FloatParam as FloatParam
@@ -140,9 +140,6 @@ from .impl.robot.robot_tasks import RobotEat as RobotEat
 from .impl.robot.robot_tasks import RobotMove as RobotMove
 from .impl.robot.robot_tasks import RobotSugarCreate as RobotSugarCreate
 from .impl.robot.robot_tasks import RobotWait as RobotWait
-# Impl > Volatile
-from .impl.volatile.volatile_resource import VolatileResource
-
 # Impl > S3
 from .impl.s3.base import BaseS3 as BaseS3
 from .impl.s3.ovh import OVHS3 as OVHS3
@@ -151,6 +148,8 @@ from .impl.s3.swift import Swift as Swift
 from .impl.shell.conda import CondaEnvShell as CondaEnvShell
 from .impl.shell.pipenv import PipEnvShell as PipEnvShell
 from .impl.shell.shell import Shell as Shell
+# Impl > Volatile
+from .impl.volatile.volatile_resource import VolatileResource
 # Io
 from .io.connector import Connector as Connector
 from .io.io import IO as IO
@@ -224,6 +223,8 @@ from .task.task_io import TaskOutputs as TaskOutputs
 from .task.task_model import TaskModel as TaskModel
 from .task.task_service import TaskService as TaskService
 from .task.task_typing import TaskTyping as TaskTyping
+# Tester
+from .tester.task_tester import TaskTester
 # User
 from .user.activity import Activity as Activity
 from .user.activity_service import ActivityService as ActivityService
