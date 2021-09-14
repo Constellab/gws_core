@@ -72,16 +72,6 @@ class ProtocolModel(ProcessModel):
         # Perform checks on process
         if not self.is_updatable:
             raise BadRequestException("The protocol has already been run")
-        if not isinstance(process_model, ProcessModel):
-            raise BadRequestException(
-                f"The process '{instance_name}' must be an instance of ProcessModel")
-        if process_model.parent_protocol_id and self.id != process_model.parent_protocol_id:
-            raise BadRequestException(
-                f"The process instance '{instance_name}' already belongs to another protocol")
-        if instance_name in self._processes:
-            raise BadRequestException(f"Process name '{instance_name}' already exists")
-        if process_model in self._processes.items():
-            raise BadRequestException(f"Process '{instance_name}' duplicate")
 
         self._add_process_model(instance_name=instance_name, process_model=process_model)
 
@@ -94,6 +84,16 @@ class ProtocolModel(ProcessModel):
         :param process: The process
         :type process: Process
         """
+        if not isinstance(process_model, ProcessModel):
+            raise BadRequestException(
+                f"The process '{instance_name}' must be an instance of ProcessModel")
+        if process_model.parent_protocol_id and self.id != process_model.parent_protocol_id:
+            raise BadRequestException(
+                f"The process instance '{instance_name}' already belongs to another protocol")
+        if instance_name in self._processes:
+            raise BadRequestException(f"Process name '{instance_name}' already exists")
+        if process_model in self._processes.items():
+            raise BadRequestException(f"Process '{instance_name}' duplicate")
 
         process_model.set_parent_protocol(self)
         if self.experiment and process_model.experiment is None:
@@ -123,10 +123,13 @@ class ProtocolModel(ProcessModel):
         :param connector: The connector
         :type connector: Connector
         """
+        if not self.is_updatable:
+            raise BadRequestException("The protocol has already been run")
 
         # Be sure to have loaded the protocol before adding a connector
         self._load_from_graph()
         self._load_connectors()
+
         self._add_connector(connector)
 
     def _add_connector(self, connector: Connector):
@@ -137,8 +140,6 @@ class ProtocolModel(ProcessModel):
         :type connector: Connector
         """
 
-        if not self.is_updatable:
-            raise BadRequestException("The protocol has already been run")
         if not isinstance(connector, Connector):
             raise BadRequestException(
                 "The connector must be an instance of Connector")
