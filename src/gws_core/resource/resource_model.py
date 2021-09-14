@@ -293,6 +293,8 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         """
 
         _json = super().to_json(deep=deep, **kwargs)
+
+        _json["typing_name"] = self._typing_name
         if self.experiment:
             _json.update({
                 "experiment": {"uri": self.experiment.uri},
