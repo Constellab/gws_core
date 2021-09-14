@@ -5,14 +5,12 @@
 
 from typing import Any, List, final
 
-from gws_core.config.param_spec import ParamSpec
-
-from ..core.exception.exceptions import BadRequestException
 from ..model.typing_register_decorator import typing_registrator
 from ..model.viewable import Viewable
-from .config_exceptions import MissingConfigsException
+from .config_exceptions import MissingConfigsException, UnkownParamException
 from .config_types import (ConfigParam, ConfigParams, ConfigParamsDict,
                            ConfigSpecs, ConfigSpecsHelper)
+from .param_spec import ParamSpec
 
 
 @final
@@ -88,7 +86,7 @@ class Config(Viewable):
 
     def _check_param(self, param_name: str) -> None:
         if not param_name in self.get_specs():
-            raise BadRequestException(f"Parameter {param_name} does not exist")
+            raise UnkownParamException(param_name)
 
     ########################################## VALUE #####################################
 

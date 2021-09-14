@@ -16,7 +16,20 @@ class MissingConfigsException(BadRequestException):
         self.missing_params = missing_params
         super().__init__(detail=GWSException.MISSING_CONFIG_PARAMS.value,
                          unique_code=GWSException.MISSING_CONFIG_PARAMS.name,
-                         detail_args={"config_names": self.get_missing_params_text()})
+                         detail_args={"param_names": self.get_missing_params_text()})
 
     def get_missing_params_text(self) -> str:
         return ",".join(self.missing_params)
+
+
+class UnkownParamException(BadRequestException):
+    """Exception raised when a param is not defined in a config
+    """
+
+    param_name: str
+
+    def __init__(self, param_name: str) -> None:
+        self.param_name = param_name
+        super().__init__(detail=GWSException.UNKNOWN_CONFIG_PARAMS.value,
+                         unique_code=GWSException.UNKNOWN_CONFIG_PARAMS.name,
+                         detail_args={"param_name": self.param_name})
