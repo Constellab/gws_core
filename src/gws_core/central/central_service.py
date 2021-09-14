@@ -26,8 +26,8 @@ class CentralService(BaseService):
         if settings.is_dev:
             raise BadRequestException("The central routes are desactivated in dev environment")
 
-        api_key = Settings.get_central_api_key()
-        return api_key == api_key
+        central_api_key = Settings.get_central_api_key()
+        return central_api_key == api_key
 
     @classmethod
     def check_credentials(cls, credentials: CredentialsDTO) -> bool:
