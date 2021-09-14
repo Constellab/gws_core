@@ -90,4 +90,5 @@ class CorsConfig():
             raise Exception(
                 "Can't configure the lab, the environment variable 'VIRTUAL_HOST' is missing")
 
-        return ["*." + virtual_host]
+        return [cls._ALLOw_ANY_ORIGIN]
+        # return ["*." + virtual_host]
