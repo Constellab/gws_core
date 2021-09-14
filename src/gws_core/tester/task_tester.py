@@ -8,7 +8,7 @@ from typing import Dict, List, Type
 from gws_core.config.config import Config
 from gws_core.io.io import Inputs
 
-from ..config.config_types import ConfigParam, ConfigParams, ConfigParamsDict
+from ..config.config_types import ParamValue, ConfigParams, ConfigParamsDict
 from ..io.io_exception import MissingInputResourcesException
 from ..io.io_spec import IOSpecClass
 from ..resource.resource import Resource
@@ -59,10 +59,10 @@ class TaskTester():
         self._outputs = await task.run(config_params, inputs)
         return self._outputs
 
-    def add_param(self, param_name: str, config_param: ConfigParam) -> None:
+    def set_param(self, param_name: str, config_param: ParamValue) -> None:
         self._params[param_name] = config_param
 
-    def add_input(self, input_name: str, resource: Resource) -> None:
+    def set_input(self, input_name: str, resource: Resource) -> None:
         self._inputs[input_name] = resource
 
     def _instantiate_task(self) -> Task:

@@ -8,7 +8,7 @@ from typing import Any, List, final
 from ..model.typing_register_decorator import typing_registrator
 from ..model.viewable import Viewable
 from .config_exceptions import MissingConfigsException, UnkownParamException
-from .config_types import (ConfigParam, ConfigParams, ConfigParamsDict,
+from .config_types import (ParamValue, ConfigParams, ConfigParamsDict,
                            ConfigSpecs, ConfigSpecsHelper)
 from .param_spec import ParamSpec
 
@@ -135,7 +135,7 @@ class Config(Viewable):
 
         return ConfigParams(values)
 
-    def set_value(self, param_name: str, value: ConfigParam):
+    def set_value(self, param_name: str, value: ParamValue):
         """
         Sets the value of a parameter by its name
 

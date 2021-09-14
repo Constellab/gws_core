@@ -16,7 +16,7 @@ from peewee import CharField, ForeignKeyField, IntegerField
 from starlette_context import context
 
 from ..config.config import Config
-from ..config.config_types import ConfigParam, ConfigParams, ConfigParamsDict
+from ..config.config_types import ParamValue, ConfigParams, ConfigParamsDict
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.json_ignore import json_ignore
 from ..core.decorator.transaction import transaction
@@ -396,7 +396,7 @@ class ProcessModel(Viewable):
 
     ################################# CONFIG #########################
 
-    def configure_param(self, param_name: str, value: ConfigParam) -> None:
+    def configure_param(self, param_name: str, value: ParamValue) -> None:
         """
         Configure the value of a parameter by its name
 

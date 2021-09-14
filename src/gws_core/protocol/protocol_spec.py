@@ -1,6 +1,6 @@
 from typing import Type, TypedDict
 
-from ..config.config_types import ConfigParam, ConfigParamsDict
+from ..config.config_types import ParamValue, ConfigParamsDict
 from ..process.process import Process
 
 
@@ -65,7 +65,7 @@ class ProcessSpec():
 
         return self
 
-    def configure(self, config_name: str, config_value: ConfigParam) -> 'ProcessSpec':
+    def configure(self, config_name: str, config_value: ParamValue) -> 'ProcessSpec':
         """Use to preconfigure the process. The config must match the config specs of the process
 
         :param config_name: name of the configuration (the system checks that the config exists)

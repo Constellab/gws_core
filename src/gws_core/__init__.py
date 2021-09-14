@@ -13,11 +13,11 @@ from .comment.comment_service import CommentService as CommentService
 # Config
 from .config.config import Config as Config
 from .config.config_service import ConfigService as ConfigService
-from .config.config_types import ConfigParam as ConfigParam
+from .config.config_types import ParamValue as ParamValue
 from .config.config_types import ConfigParams as ConfigParams
 from .config.config_types import ConfigParamsDict as ConfigParamsDict
 from .config.config_types import ConfigSpecs as ConfigSpecs
-from .config.config_types import ConfigSpecType as ConfigSpecType
+from .config.config_types import ParamValueType as ParamValueType
 from .config.param_spec import BoolParam as BoolParam
 from .config.param_spec import DictParam as DictParam
 from .config.param_spec import FloatParam as FloatParam
