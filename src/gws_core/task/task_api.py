@@ -59,7 +59,7 @@ async def get_the_list_of_task_types(page: Optional[int] = 1,
     - **number_of_items_per_page**: the number of items per page. Defaults to 20.
     """
 
-    return TaskService.fetch_task_type_list(
+    return TaskService.fetch_task_typing_list(
         page=page,
         number_of_items_per_page=number_of_items_per_page,
     ).to_json()
@@ -72,7 +72,7 @@ async def get_the_list_of_task_grouped(_: UserData = Depends(AuthService.check_u
     Retrieve all the task types in TypedTree
     """
 
-    return TaskService.fetch_task_type_tree()
+    return TaskService.fetch_task_typing_tree()
 
 
 @core_app.get("/task-type/{uri}", tags=["Task"], summary="Get a task type detail")
@@ -84,4 +84,4 @@ async def get_protocol_type(uri: str,
     - **uri**: the uri of the task type
     """
 
-    return TaskService.get_task_type(uri=uri).to_json(deep=True)
+    return TaskService.get_task_typing(uri=uri).to_json(deep=True)

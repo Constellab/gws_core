@@ -12,8 +12,8 @@ from ..utils.settings import Settings
 
 class CorsConfig():
 
-    _ALLOw_ANY_ORIGIN = '*'
-    _ALLOw_CREDENTIALS = False
+    _ALLOW_ANY_ORIGIN = '*'
+    _ALLOW_CREDENTIALS = False
     _ALLOW_METHODS = ["*"]
     _ALLOW_HEADERS = ["*"]
 
@@ -28,7 +28,7 @@ class CorsConfig():
         app.add_middleware(
             CORSMiddleware,
             allow_origins=cls._get_allow_origins(),
-            allow_credentials=cls._ALLOw_CREDENTIALS,
+            allow_credentials=cls._ALLOW_CREDENTIALS,
             allow_methods=cls._ALLOW_METHODS,
             allow_headers=cls._ALLOW_HEADERS,
         )
@@ -70,7 +70,7 @@ class CorsConfig():
         return CORSMiddleware(
             app=cls._app,
             allow_origins=cls._get_allow_origins(),
-            allow_credentials=cls._ALLOw_CREDENTIALS,
+            allow_credentials=cls._ALLOW_CREDENTIALS,
             allow_methods=cls._ALLOW_METHODS,
             allow_headers=cls._ALLOW_HEADERS,
         )
@@ -81,7 +81,7 @@ class CorsConfig():
         lab_env: Literal["PROD", "LOCAL"] = Settings.get_lab_environment()
 
         if lab_env == "LOCAL":
-            return [cls._ALLOw_ANY_ORIGIN]
+            return [cls._ALLOW_ANY_ORIGIN]
 
         # In prod env we allow origin only from the virtual host (like tokyo.gencovery.io)
         virtual_host: str = Settings.get_virtual_host()
@@ -90,5 +90,6 @@ class CorsConfig():
             raise Exception(
                 "Can't configure the lab, the environment variable 'VIRTUAL_HOST' is missing")
 
-        return [cls._ALLOw_ANY_ORIGIN]
+        # TODO fix the CORS with virtual host
+        return [cls._ALLOW_ANY_ORIGIN]
         # return ["*." + virtual_host]

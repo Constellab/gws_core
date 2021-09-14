@@ -530,9 +530,10 @@ class ProcessModel(Viewable):
     def is_draft(self) -> bool:
         return self.status == ProcessStatus.DRAFT
 
+    # TODO a vérifier, faut appeler le is_validated de l'experiment ?
     @property
     def is_updatable(self) -> bool:
-        return self.is_draft and not self.is_archived
+        return not self.is_archived
 
     @property
     def is_error(self) -> bool:
