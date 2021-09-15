@@ -173,6 +173,7 @@ class ExceptionHandler():
         try:
             return Utils.get_brick_name(frame_info[0])
         except Exception as err:
+            Logger.error('Error when getting the brick of the exception')
             Logger.log_exception_stack_trace(err)
             return ""
 
