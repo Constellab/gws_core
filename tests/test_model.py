@@ -4,9 +4,8 @@
 # About us: https://gencovery.com
 
 
-import unittest
-
 from gws_core import GTest, JSONDict, JSONLoader, Model
+from gws_core.core.test.base_test_case import BaseTestCase
 from gws_core.model.typing_manager import TypingManager
 from peewee import CharField
 
@@ -22,18 +21,7 @@ class Person(Model):
     _table_name = 'test_person'
 
 
-class TestModel(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        GTest.drop_tables()
-        GTest.create_tables()
-        Person.create_table()
-
-    @classmethod
-    def tearDownClass(cls):
-        GTest.drop_tables()
-        Person.drop_table()
+class TestModel(BaseTestCase):
 
     def test_model(self):
         GTest.print("Model")
