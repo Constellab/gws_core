@@ -85,8 +85,8 @@ async def count_the_number_of_models(typing_name: str,
     return ModelService.count_model(typing_name=typing_name)
 
 
-@core_app.get("/model/{type}/{uri}", tags=["Models"], summary="Get a model")
-async def get_a_model(type: str,
+@core_app.get("/model/{typing_name}/{uri}", tags=["Models"], summary="Get a model")
+async def get_a_model(typing_name: str,
                       uri: str,
                       _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
@@ -96,12 +96,12 @@ async def get_a_model(type: str,
     - **uri**: the uri of the model to fetch.
     """
 
-    model = ModelService.fetch_model(typing_name=type, uri=uri)
+    model = ModelService.fetch_model(typing_name=typing_name, uri=uri)
     return model.to_json()
 
 
-@core_app.get("/model/{type}", tags=["Models"], summary="Get the list of models")
-async def get_the_list_of_models(type: str,
+@core_app.get("/model/{typing_name}", tags=["Models"], summary="Get the list of models")
+async def get_the_list_of_models(typing_name: str,
                                  page: Optional[int] = 1,
                                  number_of_items_per_page: Optional[int] = 20,
                                  _: UserData = Depends(AuthService.check_user_access_token)) -> PaginatorDict:
@@ -116,7 +116,7 @@ async def get_the_list_of_models(type: str,
     """
 
     return ModelService.fetch_list_of_models(
-        typing_name=type,
+        typing_name=typing_name,
         page=page,
         number_of_items_per_page=number_of_items_per_page,
     ).to_json()
