@@ -95,6 +95,8 @@ class ExceptionHandler():
             ExceptionResponse -- [description]
         """
 
+        Logger.log_exception_stack_trace(exception)
+
         instance_id: str = cls.generate_instance_id()
         code = cls.generate_unique_code_from_exception()
 
@@ -102,7 +104,6 @@ class ExceptionHandler():
         route_info: str = f" - Route: {request.url}" if request is not None else ""
         Logger.error(
             f"Unexcepted exception - {code}{route_info} - {str(exception)} - Instance id : {instance_id}")
-        Logger.log_exception_stack_trace(exception)
 
         response: ExceptionResponse = ExceptionResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                                                         code=code,
@@ -169,7 +170,11 @@ class ExceptionHandler():
 
         frame_info: inspect.FrameInfo = trace[-1]
 
-        return Utils.get_brick_name(frame_info[0])
+        try:
+            return Utils.get_brick_name(frame_info[0])
+        except Exception as err:
+            Logger.log_exception_stack_trace(err)
+            return ""
 
     @classmethod
     def unique_code_separator(cls) -> str:
