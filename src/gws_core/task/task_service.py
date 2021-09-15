@@ -5,6 +5,8 @@
 
 from typing import List, Type
 
+from gws_core.config.config_types import ConfigParamsDict
+
 from ..core.classes.paginator import Paginator
 from ..core.dto.typed_tree_dto import TypedTree
 from ..core.service.base_service import BaseService
@@ -35,9 +37,10 @@ class TaskService(BaseService):
             query, page=page, number_of_items_per_page=number_of_items_per_page)
 
     @classmethod
-    def create_task_model_from_type(cls, task_type: Type[Task], instance_name: str = None) -> TaskModel:
+    def create_task_model_from_type(cls, task_type: Type[Task], instance_name: str = None,
+                                    config_params: ConfigParamsDict = None) -> TaskModel:
         task: TaskModel = ProcessFactory.create_task_model_from_type(
-            task_type=task_type, instance_name=instance_name)
+            task_type=task_type, instance_name=instance_name, config_params=config_params)
 
         task.save_full()
 

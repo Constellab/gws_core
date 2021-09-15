@@ -64,13 +64,13 @@ class ProtocolSubProcessBuilder():
         """
         from ..process.process_factory import ProcessFactory
 
-        config_values: ConfigParamsDict = NoneBytes
+        config_params: ConfigParamsDict = {}
         # Configure the process
         if node_json.get('config'):
-            config_values = node_json.get('config').get("data", {}).get("values", {})
+            config_params = node_json.get('config').get("data", {}).get("values", {})
 
         return ProcessFactory.create_process_model_from_type(
-            process_type=process_type, config_values=config_values, instance_name=instance_name)
+            process_type=process_type, config_params=config_params, instance_name=instance_name)
 
 
 class SubProcessBuilderReadFromDb(ProtocolSubProcessBuilder):

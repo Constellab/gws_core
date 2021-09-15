@@ -71,7 +71,7 @@ class RobotSuperTravelProto(Protocol):
         fly_1: ProcessSpec = self.add_process(RobotFly, "fly_1")
         wait_2: ProcessSpec = self.add_process(RobotWait, "wait_2")
         eat_3: ProcessSpec = self.add_process(
-            RobotEat, "eat_3").configure(
+            RobotEat, "eat_3").set_param(
             'food_weight', config_params['third_eat'])
 
         self.add_connectors([
@@ -90,12 +90,12 @@ class RobotWorldTravelProto(Protocol):
 
     def configure_protocol(self, config_params: ConfigParams) -> None:
 
-        super_travel: ProcessSpec = self.add_process(RobotSuperTravelProto, "super_travel").configure('third_eat', 10)
+        super_travel: ProcessSpec = self.add_process(RobotSuperTravelProto, "super_travel").set_param('third_eat', 10)
 
         facto: ProcessSpec = self.add_process(RobotCreate, "facto")
         fly_1: ProcessSpec = self.add_process(
-            RobotFly, "fly_1").configure(
-            'moving_step', 2000).configure(
+            RobotFly, "fly_1").set_param(
+            'moving_step', 2000).set_param(
             'direction', 'west')
         wait_1: ProcessSpec = self.add_process(RobotWait, "wait_1")
 

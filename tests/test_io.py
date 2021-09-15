@@ -171,7 +171,7 @@ class Skippable(FIFO2):
 class TestSkippable(Protocol):
     def configure_protocol(self, config_params: ConfigParams) -> None:
         create1: ProcessSpec = self.add_process(Create, 'create1')
-        wait: ProcessSpec = self.add_process(Wait, 'wait').configure('waiting_time', '3')
+        wait: ProcessSpec = self.add_process(Wait, 'wait').set_param('waiting_time', '3')
         create2: ProcessSpec = self.add_process(Create, 'create2')
         skippable: ProcessSpec = self.add_process(Skippable, 'skippable')
         move: ProcessSpec = self.add_process(Move, 'move')

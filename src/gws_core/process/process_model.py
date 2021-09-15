@@ -396,7 +396,7 @@ class ProcessModel(Viewable):
 
     ################################# CONFIG #########################
 
-    def configure_param(self, param_name: str, value: ParamValue) -> None:
+    def set_param(self, param_name: str, value: ParamValue) -> None:
         """
         Configure the value of a parameter by its name
 
@@ -408,19 +408,19 @@ class ProcessModel(Viewable):
 
         self.config.set_value(param_name=param_name, value=value)
 
-    def set_config_values(self, config_values: ConfigParamsDict) -> None:
+    def set_config_params(self, config_params: ConfigParamsDict) -> None:
         """
         Configure the process model
         """
-        self.config.set_values(config_values)
+        self.config.set_values(config_params)
 
-    def get_config_value(self, param_name: str) -> Any:
+    def set_config_param(self, param_name: str) -> Any:
         """
         Get a param value from the config
         """
         return self.config.get_value(param_name)
 
-    def get_config_values(self) -> ConfigParams:
+    def get_config_params(self) -> ConfigParams:
         """
         Get all params values from the config
         """

@@ -251,7 +251,6 @@ class IntParam(NumericParam[int]):
     """int param
     """
 
-    @abstractmethod
     def get_type(self) -> Type[int]:
         return int
 
@@ -264,7 +263,6 @@ class FloatParam(NumericParam[float]):
     """int param
     """
 
-    @abstractmethod
     def get_type(self) -> Type[float]:
         return float
 

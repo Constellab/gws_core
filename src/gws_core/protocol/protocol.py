@@ -6,8 +6,7 @@ from typing import Dict, List, Type, TypedDict, final
 
 from peewee import Tuple
 
-from ..config.config_types import ConfigParams
-from ..config.config_types import ConfigSpecs, ConfigParamsDict
+from ..config.config_types import ConfigParams, ConfigParamsDict, ConfigSpecs
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..model.typing_register_decorator import typing_registrator
@@ -93,20 +92,33 @@ class Protocol(Process):
 
     @final
     def add_process(self, process_type: Type[Process], instance_name: str,
-                    config_values: ConfigParamsDict = None) -> ProcessSpec:
+                    config_params: ConfigParamsDict = None) -> ProcessSpec:
+        """Add a process to this protocol. The process_type can be a task or a protocol
+
+        :param process_type: [description]
+        :type process_type: Type[Process]
+        :param instance_name: [description]
+        :type instance_name: str
+        :param config_params: [description], defaults to None
+        :type config_params: ConfigParamsDict, optional
+        :raises BadRequestException: [description]
+        :return: [description]
+        :rtype: ProcessSpec
+        """
+
         # Check if a process with the same instance name was registered
         if instance_name in self._process_specs:
-            process_spec: ProcessSpec = self._process_specs[instance_name]
+            spec: ProcessSpec = self._process_specs[instance_name]
             raise BadRequestException(
-                f"Can't add the process {process_type.classname()} to the protocol. A process ({process_spec.process_type.classname()}) already exist with the same instance name '{instance_name}'.")
+                f"Can't add the process {process_type.classname()} to the protocol. A process ({spec.process_type.classname()}) already exist with the same instance name '{instance_name}'.")
 
         # Create the process type wrapper
         process_spec: ProcessSpec = ProcessSpec(
             instance_name=instance_name, process_type=process_type)
 
         # Set configuration if defined
-        if config_values:
-            process_spec.configure_all(config_values)
+        if config_params:
+            process_spec.set_params(config_params)
 
         # save the process spec in the dict
         self._process_specs[instance_name] = process_spec
@@ -116,11 +128,29 @@ class Protocol(Process):
 
     @final
     def add_connectors(self, connections: List[Tuple[ConnectorPartSpec,  ConnectorPartSpec]]) -> None:
+        """
+        Add the connexion between processes of the protocol
+        self.add_connectors([
+            (create >> 'robot', move << 'robot'),
+            (move >> 'robot', eat << 'robot'),
+        ])
+        :param connections: [description]
+        :type connections: List[Tuple[ConnectorPartSpec,  ConnectorPartSpec]]
+        """
+
         for connection in connections:
             self.add_connector(connection[0], connection[1])
 
     @final
     def add_connector(self, from_part: ConnectorPartSpec, to_part: ConnectorPartSpec) -> None:
+        """ Add the connexion between 2 processes of the protocol
+        self.add_connector(create >> 'robot', move << 'robot')
+
+        :param from_part: [description]
+        :type from_part: ConnectorPartSpec
+        :param to_part: [description]
+        :type to_part: ConnectorPartSpec
+        """
         self._connectors.append({
             "from_process": from_part["process_instance_name"],
             "from_port": from_part["port_name"],
@@ -129,7 +159,17 @@ class Protocol(Process):
         })
 
     @final
-    def add_interface(self, name: str, from_process: ProcessSpec, process_output_name: str) -> None:
+    def add_interface(self, name: str, from_process: ProcessSpec, process_input_name: str) -> None:
+        """Add an interface to link an input of the protocol to the input of one of the protocol's process
+
+        :param name: name of the interface
+        :type name: str
+        :param from_process: process that will be plugged to the interface
+        :type from_process: IProcess
+        :param process_input_name: name of the process input to plug
+        :type process_input_name: str
+        """
+
         # Check if the interface was already set
         if name in self._interfaces:
             raise BadRequestException(
@@ -137,11 +177,21 @@ class Protocol(Process):
 
         self._interfaces[name] = {
             "process_instance_name": from_process.instance_name,
-            "port_name": process_output_name
+            "port_name": process_input_name
         }
 
     @final
     def add_outerface(self, name: str, to_process: ProcessSpec, process_output_name: str) -> None:
+        """Add an outerface to link the output of one of the protocol's process to the output of the protocol
+
+        :param name: name of the interface
+        :type name: str
+        :param from_process: process that will be plugged to the interface
+        :type from_process: IProcess
+        :param process_ouput_name: name of the process output to plug
+        :type process_ouput_name: str
+        """
+
         # Check if the interface was already set
         if name in self._outerfaces:
             raise BadRequestException(

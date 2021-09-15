@@ -57,7 +57,7 @@ class IO(Base, Generic[PortType]):
 
     # -- C --
 
-    def create_port(self, name: str, resource_spec: IOSpec):
+    def create_port(self, name: str, resource_spec: IOSpec) -> PortType:
         """
         Creates a port.
 
@@ -73,6 +73,7 @@ class IO(Base, Generic[PortType]):
 
         port: PortType = self._create_port(resource_spec)
         self._ports[name] = port
+        return port
 
     @abstractmethod
     def _create_port(self, resource_spec: IOSpec):
@@ -223,7 +224,7 @@ class IO(Base, Generic[PortType]):
 
         if error:
             if self.parent:
-                error += f" | Task : {self.parent.get_info()}"
+                error += f" | Process : {self.parent.get_info()}"
             raise BadRequestException(error)
 
     # -- V --

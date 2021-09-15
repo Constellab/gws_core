@@ -1,6 +1,6 @@
 from typing import Type, TypedDict
 
-from ..config.config_types import ParamValue, ConfigParamsDict
+from ..config.config_types import ConfigParamsDict, ParamValue
 from ..process.process import Process
 
 
@@ -48,7 +48,7 @@ class ProcessSpec():
         self.process_type = process_type
         self._config = {}
 
-    def configure_all(self, config_values: ConfigParamsDict) -> 'ProcessSpec':
+    def set_params(self, config_params: ConfigParamsDict) -> 'ProcessSpec':
         """Use to preconfigure the process. The config must match the config specs of the process
 
         :param config_name: name of the configuration (the system checks that the config exists)
@@ -57,15 +57,15 @@ class ProcessSpec():
         :type config_value: ConfigParam
         """
 
-        if not config_values:
+        if not config_params:
             return self
 
-        for key, value in config_values.items():
-            self.configure(key, value)
+        for key, value in config_params.items():
+            self.set_param(key, value)
 
         return self
 
-    def configure(self, config_name: str, config_value: ParamValue) -> 'ProcessSpec':
+    def set_param(self, param_name: str, param_value: ParamValue) -> 'ProcessSpec':
         """Use to preconfigure the process. The config must match the config specs of the process
 
         :param config_name: name of the configuration (the system checks that the config exists)
@@ -73,7 +73,7 @@ class ProcessSpec():
         :param config_value: value of the configuration (the system checks that it is compatible with the spec)
         :type config_value: ConfigParam
         """
-        self._config[config_name] = config_value
+        self._config[param_name] = param_value
 
         return self
 
@@ -89,5 +89,5 @@ class ProcessSpec():
             "port_name": name,
         }
 
-    def get_config_values(self) -> ConfigParamsDict:
+    def get_config_params(self) -> ConfigParamsDict:
         return self._config

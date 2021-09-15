@@ -13,10 +13,10 @@ from .comment.comment_service import CommentService as CommentService
 # Config
 from .config.config import Config as Config
 from .config.config_service import ConfigService as ConfigService
-from .config.config_types import ParamValue as ParamValue
 from .config.config_types import ConfigParams as ConfigParams
 from .config.config_types import ConfigParamsDict as ConfigParamsDict
 from .config.config_types import ConfigSpecs as ConfigSpecs
+from .config.config_types import ParamValue as ParamValue
 from .config.config_types import ParamValueType as ParamValueType
 from .config.param_spec import BoolParam as BoolParam
 from .config.param_spec import DictParam as DictParam
@@ -89,6 +89,7 @@ from .core.utils.zip import Zip as Zip
 from .experiment.experiment import Experiment as Experiment
 from .experiment.experiment import ExperimentStatus as ExperimentStatus
 from .experiment.experiment_dto import ExperimentDTO as ExperimentDTO
+from .experiment.experiment_interface import IExperiment as IExperiment
 from .experiment.experiment_service import \
     ExperimentService as ExperimentService
 from .experiment.queue import Job as Job
@@ -181,6 +182,7 @@ from .model.viewable import Viewable as Viewable
 # Process
 from .process.process import Process as Process
 from .process.process_factory import ProcessFactory as ProcessFactory
+from .process.process_interface import IProcess as IProcess
 from .process.process_model import ProcessModel as ProcessModel
 # Progress Bar
 from .progress_bar.progress_bar import ProgressBar as ProgressBar
@@ -190,6 +192,7 @@ from .progress_bar.progress_bar_service import \
 from .protocol.protocol import Protocol as Protocol
 from .protocol.protocol_decorator import \
     protocol_decorator as protocol_decorator
+from .protocol.protocol_interface import IProtocol as IProtocol
 from .protocol.protocol_model import ProtocolModel as ProtocolModel
 from .protocol.protocol_service import ProtocolService as ProtocolService
 from .protocol.protocol_spec import ConnectorPartSpec as ConnectorPartSpec
@@ -218,13 +221,14 @@ from .task.plug import Wait as Wait
 from .task.task import CheckBeforeTaskResult as CheckBeforeTaskResult
 from .task.task import Task as Task
 from .task.task_decorator import task_decorator as task_decorator
+from .task.task_interface import ITask as ITask
 from .task.task_io import TaskInputs as TaskInputs
 from .task.task_io import TaskOutputs as TaskOutputs
 from .task.task_model import TaskModel as TaskModel
 from .task.task_service import TaskService as TaskService
 from .task.task_typing import TaskTyping as TaskTyping
 # Tester
-from .tester.task_tester import TaskTester
+from .tester.task_tester import TaskTester as TaskTester
 # User
 from .user.activity import Activity as Activity
 from .user.activity_service import ActivityService as ActivityService

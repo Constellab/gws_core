@@ -25,13 +25,13 @@ class CSVProtocol(Protocol):
     def configure_protocol(self, config_params: ConfigParams) -> None:
 
         loader: ProcessSpec = self.add_process(
-            CSVLoader, 'loader').configure(
+            CSVLoader, 'loader').set_param(
             "file_path", i_file_path)
         dumper: ProcessSpec = self.add_process(CSVDumper, 'dumper')\
-            .configure("file_path", o_file_path).configure("index", False)
+            .set_param("file_path", o_file_path).set_param("index", False)
 
         importer: ProcessSpec = self.add_process(CSVImporter, 'importer')
-        exporter: ProcessSpec = self.add_process(CSVExporter, 'exporter').configure("index", False)
+        exporter: ProcessSpec = self.add_process(CSVExporter, 'exporter').set_param("index", False)
 
         self.add_connectors([
             (loader >> "data", dumper << "data"),

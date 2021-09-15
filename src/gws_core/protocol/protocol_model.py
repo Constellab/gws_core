@@ -229,7 +229,7 @@ class ProtocolModel(ProcessModel):
             proc: ProcessModel = self._processes[proc_name]
             port: Port = proc.inputs.ports[port_name]
             interfaces[key] = port
-        self.set_interfaces(interfaces)
+        self.add_interfaces(interfaces)
 
     def _init_outerfaces_from_graph(self, outerfaces_dict: Dict) -> None:
         # clear current interfaces
@@ -244,7 +244,7 @@ class ProtocolModel(ProcessModel):
             proc: ProcessModel = self._processes[proc_name]
             port: Port = proc.outputs.ports[port_name]
             outerfaces[key] = port
-        self.set_outerfaces(outerfaces)
+        self.add_outerfaces(outerfaces)
 
     def init_connectors_from_graph(self, links) -> None:
         self._connectors = []
@@ -491,7 +491,7 @@ class ProtocolModel(ProcessModel):
     async def _run_before_task(self):
         if self.is_running or self.is_finished:
             return
-        self._set_inputs()
+        self._propagate_interfaces()
         if not self.experiment:
             raise BadRequestException("No experiment defined")
         await super()._run_before_task()
@@ -536,7 +536,7 @@ class ProtocolModel(ProcessModel):
             if not process.is_finished:
                 return
         # Good! The protocol task is finished!
-        self._set_outputs()
+        self._propagate_outerfaces()
 
         await super()._run_after_task()
 
@@ -567,7 +567,7 @@ class ProtocolModel(ProcessModel):
     def set_layout(self, layout: dict):
         self.data["layout"] = layout
 
-    def _set_inputs(self):
+    def _propagate_interfaces(self):
         """
         Propagate resources through interfaces
         """
@@ -576,7 +576,7 @@ class ProtocolModel(ProcessModel):
             port = interface.target_port
             port.resource_model = self.inputs.get_resource_model(key)
 
-    def _set_outputs(self):
+    def _propagate_outerfaces(self):
         """
         Propagate resources through outerfaces
         """
@@ -585,43 +585,29 @@ class ProtocolModel(ProcessModel):
             port = outerface.source_port
             self.outputs.set_resource_model(key, port.resource_model)
 
-    def __set_input_specs(self, input_specs: Dict[str, IOSpecClass]):
-        for key, spec in input_specs.items():
-            self._inputs.create_port(key, spec.resource_spec)
+    def add_interfaces(self, interfaces: Dict[str, InPort]) -> None:
+        for key, port in interfaces.items():
+            self.add_interface(key, port)
 
-    def __set_output_specs(self, output_specs: Dict[str, IOSpecClass]):
-        for key, spec in output_specs.items():
-            self._outputs.create_port(key, spec.resource_spec)
+    def add_interface(self, name: str,  target_port: InPort) -> None:
+        # Create the input's port
+        source_port: InPort = self._inputs.create_port(name, target_port.resource_spec.resource_spec)
 
-    def set_interfaces(self, interfaces: Dict[str, Port]):
-        input_specs: Dict[str, IOSpecClass] = {}
-        for key in interfaces:
-            input_specs[key] = interfaces[key].resource_spec
-        if not input_specs:
-            return
-        self.__set_input_specs(input_specs)
-        self._interfaces = {}
-        for key in interfaces:
-            source_port = self._inputs.get_port(key)
-            self._interfaces[key] = Interface(
-                name=key, source_port=source_port, target_port=interfaces[key])
+        # create the interface
+        self._interfaces[name] = Interface(
+            name=name, source_port=source_port, target_port=target_port)
 
-        self._init_inputs_from_data()
+    def add_outerfaces(self, outerfaces: Dict[str, OutPort]) -> None:
+        for key, port in outerfaces.items():
+            self.add_outerface(key, port)
 
-    def set_outerfaces(self, outerfaces: Dict[str, Port]):
-        output_specs: Dict[str, IOSpecClass] = {}
-        for key in outerfaces:
-            output_specs[key] = outerfaces[key].resource_spec
-        if not output_specs:
-            return
-        self.__set_output_specs(output_specs)
-        self._outerfaces = {}
-        for key in outerfaces:
-            target_port = self._outputs.get_port(key)
-            self._outerfaces[key] = Outerface(
-                name=key, target_port=target_port, source_port=outerfaces[key])
+    def add_outerface(self, name: str,  source_port: OutPort) -> None:
+        # Create the output's port
+        target_port: OutPort = self._outputs.create_port(name, source_port.resource_spec.resource_spec)
 
-        self._init_outputs_from_data()
+        # create the interface
+        self._outerfaces[name] = Outerface(
+            name=name, source_port=source_port, target_port=target_port)
 
     def set_protocol_type(self, protocol_type: Type[Protocol]) -> None:
         self.process_typing_name = protocol_type._typing_name

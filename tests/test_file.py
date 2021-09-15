@@ -17,7 +17,7 @@ from gws_core.impl.file.file_store import FileStore
 class RobotToFile(Protocol):
     def configure_protocol(self, config_params: ConfigParams) -> None:
         create: ProcessSpec = self.add_process(RobotCreate, 'create')
-        write: ProcessSpec = self.add_process(WriteToJsonFile, 'write').configure('filename', 'robot')
+        write: ProcessSpec = self.add_process(WriteToJsonFile, 'write').set_param('filename', 'robot')
 
         self.add_connectors([
             (create >> 'robot', write << 'resource'),

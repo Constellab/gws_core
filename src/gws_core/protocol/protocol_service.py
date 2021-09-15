@@ -7,6 +7,7 @@ from typing import List, Type
 
 from peewee import ModelSelect
 
+from ..config.config_types import ConfigParamsDict
 from ..core.classes.paginator import Paginator
 from ..core.decorator.transaction import transaction
 from ..core.dto.typed_tree_dto import TypedTree
@@ -47,9 +48,10 @@ class ProtocolService(BaseService):
             query, page=page, number_of_items_per_page=number_of_items_per_page)
 
     @classmethod
-    def create_protocol_model_from_type(cls, protocol_type: Type[Protocol], instance_name: str = None) -> ProtocolModel:
+    def create_protocol_model_from_type(cls, protocol_type: Type[Protocol], instance_name: str = None,
+                                        config_params: ConfigParamsDict = None) -> ProtocolModel:
         protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_type(
-            protocol_type=protocol_type, instance_name=instance_name)
+            protocol_type=protocol_type, instance_name=instance_name, config_params=config_params)
 
         protocol.save_full()
         return protocol
@@ -66,6 +68,13 @@ class ProtocolService(BaseService):
             interfaces=interfaces,
             outerfaces=outerfaces,
             instance_name=instance_name)
+
+        protocol.save_full()
+        return protocol
+
+    @classmethod
+    def create_empty_protocol(cls, instance_name: str = None) -> ProtocolModel:
+        protocol: ProtocolModel = ProcessFactory.create_protocol_empty(instance_name=instance_name)
 
         protocol.save_full()
         return protocol

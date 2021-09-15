@@ -108,12 +108,12 @@ class TestRobotwithSugarProtocol(Protocol):
         sugar: ProcessSpec = self.add_process(RobotSugarCreate, 'sugar')
         wait_food: ProcessSpec = self.add_process(RobotWaitfood, 'wait_food')
         # Eat 1 need to wait for sugar and wait_food
-        eat_1: ProcessSpec = self.add_process(RobotEat, 'eat_1').configure('food_weight', 2)
+        eat_1: ProcessSpec = self.add_process(RobotEat, 'eat_1').set_param('food_weight', 2)
         # Eat_2 is called even if the food input is not connected
-        eat_2: ProcessSpec = self.add_process(RobotEat, 'eat_2').configure('food_weight', 5)
+        eat_2: ProcessSpec = self.add_process(RobotEat, 'eat_2').set_param('food_weight', 5)
         # Eat 3 is called event is the food input is connected but None
         empty_food: ProcessSpec = self.add_process(RobotEmptyfood, 'empty_food')
-        eat_3: ProcessSpec = self.add_process(RobotEat, 'eat_3').configure('food_weight', 7)
+        eat_3: ProcessSpec = self.add_process(RobotEat, 'eat_3').set_param('food_weight', 7)
 
         self.add_connectors([
             (p0 >> 'robot', eat_1 << 'robot'),
