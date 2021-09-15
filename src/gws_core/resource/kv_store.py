@@ -49,7 +49,19 @@ class KVStore(Dict[str, Any]):
     def __contains__(self, key) -> int:
         kv_data = self._open_shelve()
         return kv_data.__contains__(key)
-        
+    
+    @property
+    def full_file_dir(self) -> str:
+        """
+        Path of DB file the KVStore object
+
+        :return: The connectiotn path
+        :rtype: str
+        :rtype: str
+        """
+
+        return os.path.dirname(self.full_file_path)
+
     @property
     def full_file_path(self) -> str:
         """
@@ -64,6 +76,7 @@ class KVStore(Dict[str, Any]):
 
     def get_full_path_without_extension(self) -> str:
         return self._full_file_path
+    
     # -- G --
 
     def get(self, key, default=None):
@@ -91,8 +104,8 @@ class KVStore(Dict[str, Any]):
 
         if self.file_exists():
             return
-
-        os.remove(self.full_file_path)
+        # os.remove(self.full_file_path)
+        os.remove(self.full_file_dir)
 
     # -- S --
 
@@ -146,8 +159,10 @@ class KVStore(Dict[str, Any]):
         return length
 
     def _open_shelve(self) -> DbfilenameShelf:
-        if not FileHelper.exists_on_os(self.get_base_dir()):
-            os.mkdir(self.get_base_dir())
+        # if not FileHelper.exists_on_os(self.get_base_dir()):
+        #     os.mkdir(self.get_base_dir())
+        if not FileHelper.exists_on_os(self.full_file_dir):
+            os.makedirs(self.full_file_dir)
 
         return shelve_open(self.get_full_path_without_extension())
 
@@ -170,7 +185,10 @@ class KVStore(Dict[str, Any]):
         self._lock_copy_full_file_path = None
 
     def _copy_file(self, destination_path: str) -> None:
-        shutil.copyfile(self.full_file_path, self.get_full_file_path(destination_path))
+        src_dir = self.full_file_dir
+        dest_dir = os.path.dirname(self.get_full_file_path(destination_path))
+        shutil.copytree(src_dir, dest_dir)
+        # shutil.copyfile(self.full_file_path, self.get_full_file_path(destination_path))
 
     def file_exists(self) -> bool:
         return FileHelper.exists_on_os(self.full_file_path)
@@ -202,7 +220,7 @@ class KVStore(Dict[str, Any]):
 
     @classmethod
     def get_full_file_path(cls, file_name: str, with_extension: bool = True) -> str:
-        full_path: str = os.path.join(cls.get_base_dir(), file_name)
+        full_path: str = os.path.join(cls.get_base_dir(), file_name, "store")
         if with_extension:
             full_path += '.db'
 
