@@ -271,14 +271,6 @@ class ResourceModel(Viewable, Generic[ResourceType]):
 
         return serialized_data
 
-    @classmethod
-    def select_me(cls, *args, **kwargs) -> ModelSelect:
-        """
-        Select objects by ensuring that the object-type is the same as the current model.
-        """
-
-        return cls.select(*args, **kwargs).where(cls.resource_typing_name == cls._typing_name)
-
     # -- T --
     def to_json(self, deep: bool = False, **kwargs) -> dict:
         """

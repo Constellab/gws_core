@@ -7,6 +7,7 @@
 from typing import Optional
 
 from fastapi import Depends
+from gws_core.core.classes.paginator import PaginatorDict
 
 from ..core.dto.rendering_dto import RenderingDTO
 from ..core.exception.exceptions import BadRequestException
@@ -16,10 +17,10 @@ from ..user.user_dto import UserData
 from .model_service import ModelService
 
 
-@core_app.post("/model/{type}/{uri}/archive", tags=["Models"], summary="Archive a model")
-async def archive_a_model(type: str,
+@core_app.post("/model/{typing_name}/{uri}/archive", tags=["Models"], summary="Archive a model")
+async def archive_a_model(typing_name: str,
                           uri: str,
-                          _: UserData = Depends(AuthService.check_user_access_token)) -> (dict, str,):
+                          _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Archive a Model
 
@@ -28,16 +29,16 @@ async def archive_a_model(type: str,
     """
 
     model = ModelService.archive_model(
-        type_str=type,
+        typing_name=typing_name,
         uri=uri
     )
     return model.to_json()
 
 
-@core_app.post("/model/{type}/{uri}/unarchive", tags=["Models"], summary="Unarchive a model")
-async def unarchive_a_model(type: str,
+@core_app.post("/model/{typing_name}/{uri}/unarchive", tags=["Models"], summary="Unarchive a model")
+async def unarchive_a_model(typing_name: str,
                             uri: str,
-                            _: UserData = Depends(AuthService.check_user_access_token)) -> (dict, str,):
+                            _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Unarchive a Model
 
@@ -46,38 +47,14 @@ async def unarchive_a_model(type: str,
     """
 
     model = ModelService.unarchive_model(
-        type=type,
+        typing_name=typing_name,
         uri=uri
     )
     return model.to_json()
 
 
-@core_app.post("/model/{type}/{uri}/create-view", tags=["Models"], summary="Create a view model of a model")
-async def create_a_view_model_of_a_model(type: str,
-                                         uri: str,
-                                         data: RenderingDTO,
-                                         _: UserData = Depends(AuthService.check_user_access_token)) -> (dict, str,):
-    """
-    View a Model
-
-    - **type**: the type of the model to view
-    - **uri**: the uri of the model to view
-    - **data**: the rendering data.
-    """
-
-    view_model = ModelService.create_view_model(
-        type_str=type,
-        uri=uri,
-        data=data
-    )
-    try:
-        return view_model.to_json()
-    except Exception as err:
-        raise BadRequestException(detail=f"Cannot render view.") from err
-
-
-@core_app.get("/model/{type}/{uri}/verify", tags=["Models"], summary="Verify model hash")
-async def verify_a_model_hash(type: str,
+@core_app.get("/model/{typing_name}/{uri}/verify", tags=["Models"], summary="Verify model hash")
+async def verify_a_model_hash(typing_name: str,
                               uri: str,
                               _: UserData = Depends(AuthService.check_user_access_token)) -> bool:
     """
@@ -93,12 +70,11 @@ async def verify_a_model_hash(type: str,
     - **return** `True` if the model hash is valid, `False` otherwise.
     """
 
-    tf = ModelService.verify_model_hash(type=type, uri=uri)
-    return tf
+    return ModelService.verify_model_hash(typing_name=typing_name, uri=uri)
 
 
-@core_app.get("/model/{type}/count", tags=["Models"], summary="Count the number of models")
-async def count_the_number_of_models(type: str,
+@core_app.get("/model/{typing_name}/count", tags=["Models"], summary="Count the number of models")
+async def count_the_number_of_models(typing_name: str,
                                      _: UserData = Depends(AuthService.check_user_access_token)) -> int:
     """
     Get the count of objects of a given type (models can be `Model` or `ViewModel`)
@@ -106,7 +82,7 @@ async def count_the_number_of_models(type: str,
     - **type**: the object type
     """
 
-    return ModelService.count_model(type=type)
+    return ModelService.count_model(typing_name=typing_name)
 
 
 @core_app.get("/model/{type}/{uri}", tags=["Models"], summary="Get a model")
@@ -120,16 +96,15 @@ async def get_a_model(type: str,
     - **uri**: the uri of the model to fetch.
     """
 
-    model = ModelService.fetch_model(type_str=type, uri=uri)
+    model = ModelService.fetch_model(typing_name=type, uri=uri)
     return model.to_json()
 
 
 @core_app.get("/model/{type}", tags=["Models"], summary="Get the list of models")
 async def get_the_list_of_models(type: str,
-                                 search_text: Optional[str] = "",
                                  page: Optional[int] = 1,
                                  number_of_items_per_page: Optional[int] = 20,
-                                 _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                                 _: UserData = Depends(AuthService.check_user_access_token)) -> PaginatorDict:
     """
     Get a list of Models
 
@@ -141,19 +116,7 @@ async def get_the_list_of_models(type: str,
     """
 
     return ModelService.fetch_list_of_models(
-        type_str=type,
-        search_text=search_text,
+        typing_name=type,
         page=page,
         number_of_items_per_page=number_of_items_per_page,
-        as_json=True
-    )
-
-
-@core_app.get("/model/exposed", tags=["Models"], summary="Get the list of exposed models")
-async def get_list_of_exposed_models(_: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-    """
-    Get a list of exposed Models
-    """
-
-    pass
-    # return ModelService.fetch_list_of_exposed_models(as_json=True)
+    ).to_json()

@@ -6,7 +6,7 @@
 
 import unittest
 
-from gws_core import GTest, JSONDict, JSONLoader, Model, ModelService
+from gws_core import GTest, JSONDict, JSONLoader, Model
 from gws_core.model.typing_manager import TypingManager
 from peewee import CharField
 
