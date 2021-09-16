@@ -16,7 +16,7 @@ from .robot_service import RobotService
 @core_app.post("/run/astro-travel-experiment", tags=["Astro boy travels"], summary="Run the travel experiment of astro")
 def run_astro_travel_experiment(_: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
-    Run astrobot experiment. The default study is used.
+    Run astrobot experiment.
     """
 
     experiment: Experiment = RobotService.run_robot_travel()
@@ -27,7 +27,7 @@ def run_astro_travel_experiment(_: UserData = Depends(AuthService.check_user_acc
                summary="Run supertravel experiment of astros")
 def run_astro_super_travel_experiment(_: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
-    Run astrobot experiment. The default study is used.
+    Run astrobot experiment.
     """
 
     experiment: Experiment = RobotService.run_robot_super_travel()

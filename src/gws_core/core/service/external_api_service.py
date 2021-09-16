@@ -16,11 +16,13 @@ class ExternalApiService:
     """
 
     @classmethod
-    def post(cls, url: str, body: Dict) -> Response:
+    def post(cls, url: str, body: Dict, headers: Dict[str, str] = None) -> Response:
         """
         Make an HTTP post request
         """
-        return requests.post(url, data=body)
+        if headers is None:
+            headers = {}
+        return requests.post(url, data=body, headers=headers)
 
     @classmethod
     def get(cls, url: str, headers: Dict[str, str] = None) -> Response:

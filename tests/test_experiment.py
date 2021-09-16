@@ -4,12 +4,15 @@
 # About us: https://gencovery.com
 
 import time
+import uuid
 from typing import List
 
 from gws_core import (BaseTestCase, Experiment, ExperimentDTO,
-                      ExperimentService, ExperimentStatus, GTest,
-                      ProcessModel, ProtocolModel, ResourceModel, Robot,
-                      RobotService, Settings, TaskModel)
+                      ExperimentService, ExperimentStatus, GTest, ProcessModel,
+                      ProtocolModel, ResourceModel, Robot, RobotService,
+                      Settings, TaskModel)
+from gws_core.core.utils.utils import Utils
+from gws_core.study.study_dto import StudyDto
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -21,13 +24,17 @@ class TestExperiment(BaseTestCase):
 
     async def test_create_empty(self):
         GTest.print("Create empty")
-        experiment_dto: ExperimentDTO = ExperimentDTO(title="Experiment title", description="Experiment description")
+
+        study_dto: StudyDto = StudyDto(uri=Utils.generate_uuid(), title="Study", description="Desc")
+        experiment_dto: ExperimentDTO = ExperimentDTO(
+            title="Experiment title", description="Experiment description", study=study_dto)
         experiment = ExperimentService.create_empty_experiment(experiment_dto)
 
         self.assertIsNotNone(experiment.id)
         self.assertEqual(experiment.get_title(), 'Experiment title')
         self.assertEqual(experiment.get_description(), 'Experiment description')
         self.assertIsNotNone(experiment.protocol_model.id)
+        self.assertEqual(experiment.study.uri, study_dto.uri)
 
     async def test_run(self):
         GTest.print("Run Experiment")

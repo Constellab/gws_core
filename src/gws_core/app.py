@@ -89,7 +89,6 @@ class App:
 
         ModelService.create_tables()
         ModelService.register_all_processes_and_resources()
-        Study.create_default_instance()
         UserService.create_sysuser()
 
         # Add static dirs for docs of git modules

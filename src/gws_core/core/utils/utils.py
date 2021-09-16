@@ -8,6 +8,7 @@ import os
 import random
 import re
 import string
+import uuid
 from typing import Any, List, Type
 
 from slugify import slugify as _slugify
@@ -181,3 +182,7 @@ class Utils:
         function_name = tab[length-1]
         module = importlib.import_module(module_name)
         return getattr(module, function_name, None)
+
+    @classmethod
+    def generate_uuid(cls) -> str:
+        return str(uuid.uuid4())

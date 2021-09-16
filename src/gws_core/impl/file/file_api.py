@@ -22,7 +22,6 @@ async def upload_a_file_or_list_of_files(files: List[UploadFile] = FastAPIFile(.
     """
     Upload files
 
-    - **study_uri**: the uri of the current study. If not given, the default **study** is used.
     """
 
     file = await FileService.upload_files(files=files)

@@ -7,7 +7,6 @@
 import shutil
 
 from ...model.model_service import ModelService
-from ...study.study import Study
 from ...user.auth_service import AuthService
 from ...user.user import User
 from ...user.user_service import UserService
@@ -23,7 +22,6 @@ class GTest:
     """
 
     user: User = None
-    study: Study = None
 
     @classmethod
     def init(cls, admin_user=False):
@@ -38,7 +36,6 @@ class GTest:
             raise BadRequestException(
                 "The unit tests can only be initialized in dev mode")
 
-        study = Study.get_default_instance()
         UserService.create_sysuser()
         user = User.get_sysuser()
         # refresh user information from DB
@@ -46,7 +43,6 @@ class GTest:
             uri=user.uri, console_token=user.console_token)
 
         cls.user = user
-        cls.study = study
 
     @classmethod
     def create_tables(cls, models: list = None):

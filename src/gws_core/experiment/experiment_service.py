@@ -6,12 +6,12 @@
 import os
 import subprocess
 import traceback
-from typing import Any, Coroutine, Type, Union
+from typing import Any, Coroutine, Dict, Type, Union
 
-from gws_core.task.task_service import TaskService
 from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
+from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException, NotFoundException
 from ..core.exception.gws_exceptions import GWSException
 from ..core.model.sys_proc import SysProc
@@ -24,8 +24,10 @@ from ..protocol.protocol import Protocol
 from ..protocol.protocol_model import ProtocolModel
 from ..protocol.protocol_service import ProtocolService
 from ..study.study import Study
+from ..study.study_service import StudyService
 from ..task.task import Task
 from ..task.task_model import TaskModel
+from ..task.task_service import TaskService
 from ..user.activity import Activity
 from ..user.activity_service import ActivityService
 from ..user.current_user_service import CurrentUserService
@@ -36,17 +38,22 @@ from .experiment_dto import ExperimentDTO
 
 class ExperimentService(BaseService):
 
-    # -- C --
+    ################################### CREATE ##############################
 
     @classmethod
     def create_empty_experiment(cls, experimentDTO: ExperimentDTO) -> Experiment:
+
+        # retrieve the study
+        study: Study = StudyService.get_or_create_study_from_dto(experimentDTO.study)
+
         return cls.create_experiment_from_protocol_model(
             protocol_model=ProcessFactory.create_protocol_empty(),
-            study=None,
+            study=study,
             title=experimentDTO.title,
             description=experimentDTO.description
         )
 
+    @transaction()
     @classmethod
     def create_experiment_from_task_model(
             cls, task_model: TaskModel, study: Study = None, title: str = "", description: str = "") -> Experiment:
@@ -57,6 +64,7 @@ class ExperimentService(BaseService):
             protocol_model=proto, study=study, title=title, description=description)
 
     @classmethod
+    @transaction()
     def create_experiment_from_protocol_model(
             cls, protocol_model: ProtocolModel, study: Study = None, title: str = "", description: str = "") -> Experiment:
         if not isinstance(protocol_model, ProtocolModel):
@@ -64,8 +72,8 @@ class ExperimentService(BaseService):
         experiment = Experiment()
         experiment.set_title(title)
         experiment.set_description(description)
-        experiment.study = Study.get_default_instance() if study is None else study
         experiment.created_by = CurrentUserService.get_and_check_current_user()
+        experiment.study = study
 
         experiment = experiment.save()
 
@@ -94,8 +102,61 @@ class ExperimentService(BaseService):
 
         # -- F --
 
+    ################################### UPDATE ##############################
+
     @classmethod
-    def get_experiment_by_uri(cls, uri: str) -> Union[Experiment, dict]:
+    def update_experiment(cls, uri, experiment_DTO: ExperimentDTO) -> Experiment:
+        experiment: Experiment = Experiment.get_by_uri_and_check(uri)
+
+        experiment.check_is_updatable()
+
+        experiment.set_title(experiment_DTO.title)
+        experiment.set_description(experiment_DTO.description)
+        experiment.study = StudyService.get_or_create_study_from_dto(experiment_DTO.study)
+
+        experiment.save()
+        return experiment
+
+    @classmethod
+    def update_experiment_protocol(cls, uri: str, protocol_graph: Dict) -> Experiment:
+        experiment: Experiment = Experiment.get_by_uri_and_check(uri)
+
+        experiment.check_is_updatable()
+        ProtocolService.update_protocol_graph(protocol_model=experiment.protocol_model, graph=protocol_graph)
+
+        experiment.save()
+        return experiment
+
+    @classmethod
+    def validate_experiment(cls, uri) -> Experiment:
+        experiment: Experiment = None
+        try:
+            experiment = Experiment.get(Experiment.uri == uri)
+        except Exception as err:
+            raise NotFoundException(
+                detail=f"Experiment '{uri}' not found") from err
+
+        try:
+            experiment.validate(
+                user=CurrentUserService.get_and_check_current_user())
+            return experiment
+        except Exception as err:
+            raise NotFoundException(
+                detail=f"Cannot validate experiment '{uri}'") from err
+
+    ################################### GET  ##############################
+
+    @classmethod
+    def count_of_running_experiments(cls) -> int:
+        """
+        :return: the count of experiment in progress or waiting for a cli process
+        :rtype: `int`
+        """
+
+        return Experiment.count_of_running_experiments()
+
+    @classmethod
+    def get_experiment_by_uri(cls, uri: str) -> Experiment:
         return Experiment.get_by_uri_and_check(uri)
 
     @classmethod
@@ -137,105 +198,7 @@ class ExperimentService(BaseService):
             'paginator': paginator._get_paginated_info()
         }
 
-    # -- S --
-
-    @classmethod
-    async def stop_experiment(cls, uri) -> Experiment:
-        experiment: Experiment = None
-
-        try:
-            experiment = Experiment.get(Experiment.uri == uri)
-        except Exception as err:
-            raise BadRequestException(
-                detail=f"Experiment '{uri}' not found") from err
-
-        experiment.check_is_stopable()
-
-        try:
-            cls._kill_experiment_pid(experiment)
-            return experiment
-        except Exception as err:
-            raise BadRequestException(
-                detail=f"Cannot kill experiment '{uri}'") from err
-
-    @classmethod
-    def _kill_experiment_pid(cls, experiment: Experiment) -> Experiment:
-        """
-        Kill the experiment through HTTP context if it is running
-
-        This is only possible if the experiment has been started through the cli
-        """
-
-        # if not HTTPHelper.is_http_context():
-        #    raise BadRequestException("The user must be in http context")
-
-        if not experiment.pid:
-            raise BadRequestException(
-                f"The experiment pid is {experiment.pid}")
-        try:
-            sproc = SysProc.from_pid(experiment.pid)
-        except Exception as err:
-            raise BadRequestException(
-                f"No such process found or its access is denied (pid = {experiment.pid}). Error: {err}") from err
-
-        try:
-            # Gracefully stops the experiment and exits!
-            sproc.kill()
-            sproc.wait()
-        except Exception as err:
-            raise BadRequestException(
-                f"Cannot kill the experiment (pid = {experiment.pid}). Error: {err}") from err
-
-        ActivityService.add(
-            Activity.STOP,
-            object_type=experiment.full_classname(),
-            object_uri=experiment.uri
-        )
-
-        experiment.mark_as_error({"detail": GWSException.EXPERIMENT_STOPPED_MANUALLY.value,
-                                  "unique_code": GWSException.EXPERIMENT_STOPPED_MANUALLY.name,
-                                  "context": None, "instance_id": None})
-
-        return experiment
-
-    # -- U --
-
-    @classmethod
-    def update_experiment(cls, uri, experiment_DTO: ExperimentDTO) -> Experiment:
-        experiment: Experiment = Experiment.get_by_uri_and_check(uri)
-
-        experiment.check_is_updatable()
-
-        if experiment_DTO.graph:
-            ProtocolService.update_protocol_graph(protocol_model=experiment.protocol_model, graph=experiment_DTO.graph)
-
-        if experiment_DTO.title:
-            experiment.set_title(experiment_DTO.title)
-
-        if experiment_DTO.description:
-            experiment.set_description(experiment_DTO.description)
-
-        experiment.save()
-        return experiment
-
-    # -- V --
-
-    @classmethod
-    def validate_experiment(cls, uri) -> Experiment:
-        experiment: Experiment = None
-        try:
-            experiment = Experiment.get(Experiment.uri == uri)
-        except Exception as err:
-            raise NotFoundException(
-                detail=f"Experiment '{uri}' not found") from err
-
-        try:
-            experiment.validate(
-                user=CurrentUserService.get_and_check_current_user())
-            return experiment
-        except Exception as err:
-            raise NotFoundException(
-                detail=f"Cannot validate experiment '{uri}'") from err
+    ################################### RUN ##############################
 
     @classmethod
     async def run_experiment(cls, experiment: Experiment, user: User = None) -> Coroutine[Any, Any, Experiment]:
@@ -351,10 +314,60 @@ class ExperimentService(BaseService):
             raise exception
 
     @classmethod
-    def count_of_running_experiments(cls) -> int:
+    def stop_experiment(cls, uri) -> Experiment:
+        experiment: Experiment = None
+
+        try:
+            experiment = Experiment.get(Experiment.uri == uri)
+        except Exception as err:
+            raise BadRequestException(
+                detail=f"Experiment '{uri}' not found") from err
+
+        experiment.check_is_stopable()
+
+        try:
+            cls._kill_experiment_pid(experiment)
+            return experiment
+        except Exception as err:
+            raise BadRequestException(
+                detail=f"Cannot kill experiment '{uri}'") from err
+
+    @classmethod
+    def _kill_experiment_pid(cls, experiment: Experiment) -> Experiment:
         """
-        :return: the count of experiment in progress or waiting for a cli process
-        :rtype: `int`
+        Kill the experiment through HTTP context if it is running
+
+        This is only possible if the experiment has been started through the cli
         """
 
-        return Experiment.count_of_running_experiments()
+        # if not HTTPHelper.is_http_context():
+        #    raise BadRequestException("The user must be in http context")
+
+        if not experiment.pid:
+            raise BadRequestException(
+                f"The experiment pid is {experiment.pid}")
+        try:
+            sproc = SysProc.from_pid(experiment.pid)
+        except Exception as err:
+            raise BadRequestException(
+                f"No such process found or its access is denied (pid = {experiment.pid}). Error: {err}") from err
+
+        try:
+            # Gracefully stops the experiment and exits!
+            sproc.kill()
+            sproc.wait()
+        except Exception as err:
+            raise BadRequestException(
+                f"Cannot kill the experiment (pid = {experiment.pid}). Error: {err}") from err
+
+        ActivityService.add(
+            Activity.STOP,
+            object_type=experiment.full_classname(),
+            object_uri=experiment.uri
+        )
+
+        experiment.mark_as_error({"detail": GWSException.EXPERIMENT_STOPPED_MANUALLY.value,
+                                  "unique_code": GWSException.EXPERIMENT_STOPPED_MANUALLY.name,
+                                  "context": None, "instance_id": None})
+
+        return experiment

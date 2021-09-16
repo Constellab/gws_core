@@ -8,9 +8,8 @@ import os
 import pandas
 from gws_core import (BaseTestCase, ConfigParams, CSVDumper, CSVExporter,
                       CSVImporter, CSVLoader, CSVTable, Experiment,
-                      ExperimentService, File, GTest, ProcessFactory, Protocol,
-                      ProtocolModel, ProtocolService, Settings, Study,
-                      TaskModel, protocol_decorator)
+                      ExperimentService, File, GTest, Protocol, ProtocolModel,
+                      ProtocolService, Settings, TaskModel, protocol_decorator)
 from gws_core.protocol.protocol_spec import ProcessSpec
 
 settings = Settings.retrieve()
@@ -55,9 +54,6 @@ class TestCSV(BaseTestCase):
 
     def test_csv_data_load(self):
         GTest.print("CSVData load")
-
-        study = Study(data={"title": "Default study", "Description": ""})
-        study.save()
 
         file = os.path.join(testdata_dir, "data.csv")
         csv_data = CSVTable.import_from_path(file)

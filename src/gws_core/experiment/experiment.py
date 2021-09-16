@@ -62,7 +62,7 @@ class Experiment(Viewable):
     :type is_validated: `bool`
     """
 
-    study = ForeignKeyField(
+    study: Study = ForeignKeyField(
         Study, null=True, index=True, backref='experiments')
 
     created_by = ForeignKeyField(
@@ -261,13 +261,15 @@ class Experiment(Viewable):
 
         _json = super().to_json(deep=deep, **kwargs)
         _json.update({
-            "study": {"uri": self.study.uri},
             "protocol": {
                 "uri": self.protocol_model.uri,
                 "typing_name": self.protocol_model.process_typing_name
             },
             "status": self.status
         })
+
+        if deep:
+            _json["study"] = self.study.to_json() if self.study is not None else None
 
         return _json
 

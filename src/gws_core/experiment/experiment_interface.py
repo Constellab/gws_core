@@ -6,6 +6,8 @@
 from inspect import isclass
 from typing import Type
 
+from ..study.study import Study
+
 from ..experiment.experiment_dto import ExperimentDTO
 from ..process.process import Process
 from ..protocol.protocol import Protocol
@@ -28,13 +30,15 @@ class IExperiment:
     _experiment: Experiment
     _protocol: IProtocol
 
-    def __init__(self, process_type: Type[Process] = None, title: str = '', description: str = ''):
+    def __init__(self, process_type: Type[Process] = None, study: Study = None, title: str = '', description: str = ''):
         """This create an experiment in the database with the provided Task or Protocol
 
         :param process_type: Can be the type of a Protocol or a Task.
                             If this is a task, it will be wrapped in a protocol
                             If none it will create an empty protocol in the experiment
         :type process_type: Type[Process]
+        :param study: experiment title, defaults to ''
+        :type study: str, optional
         :param title: experiment title, defaults to ''
         :type title: str, optional
         :param description: experiment description, defaults to ''

@@ -3,13 +3,12 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Optional
+from typing import Dict, Optional
 
 from fastapi import Depends
 
-from ..core.classes.paginator import Paginator
+from ..core.classes.paginator import PaginatorDict
 from ..core_app import core_app
-from ..model.model_service import ModelService
 from ..user.auth_service import AuthService
 from ..user.user_dto import UserData
 from .experiment import Experiment
@@ -19,13 +18,12 @@ from .queue_service import QueueService
 
 
 @core_app.get("/experiment/queue", tags=["Experiment"], summary="Get the queue of experiment")
-async def get_the_experiment_queue(_: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+def get_the_experiment_queue(_: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve the queue of experiment
     """
 
-    q = QueueService.get_queue()
-    return q.to_json()
+    return QueueService.get_queue().to_json()
 
 
 @core_app.post("/experiment/{uri}/start", tags=["Experiment"], summary="Start an experiment")
@@ -37,95 +35,76 @@ def start_an_experiment(uri: str,
     - **flow**: the flow object
     """
 
-    experiment = QueueService.add_experiment_to_queue(experiment_uri=uri)
-    return experiment.to_json()
+    return QueueService.add_experiment_to_queue(experiment_uri=uri).to_json()
 
 
 @core_app.post("/experiment/{uri}/stop", tags=["Experiment"], summary="Stop an experiment")
-async def stop_an_experiment(uri: str,
-                             _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+def stop_an_experiment(uri: str,
+                       _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Stop an experiment
 
     - **uri**: the experiment uri
     """
 
-    e = await ExperimentService.stop_experiment(uri=uri)
-    return e.to_json()
-
-
-@core_app.post("/experiment/{uri}/archive", tags=["Experiment"], summary="Archive an experiment")
-async def archive_an_experiment(uri: str,
-                                _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-    """
-    Archive an experiment
-
-    - **uri**: the uri of the experiment
-    """
-
-    e = ModelService.archive_model(object_type="experiment", object_uri=uri)
-    return e.to_json()
-
-
-@core_app.post("/experiment/{uri}/unarchive", tags=["Experiment"], summary="Unarchive an experiment")
-async def unarchive_an_experiment(uri: str,
-                                  _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-    """
-    Unarchive an experiment
-
-    - **uri**: the uri of the experiment
-    """
-
-    e = ModelService.unarchive_model(object_type="experiment", object_uri=uri)
-    return e.to_json()
+    return ExperimentService.stop_experiment(uri=uri).to_json(deep=True)
 
 
 @core_app.post("/experiment/{uri}/validate", tags=["Experiment"], summary="Validate an experiment")
-async def validate_an_experiment(uri: str,
-                                 _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+def validate_an_experiment(uri: str,
+                           _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Validate a protocol
 
     - **uri**: the uri of the experiment
     """
 
-    e = ExperimentService.validate_experiment(uri=uri)
-    return e.to_json()
+    return ExperimentService.validate_experiment(uri=uri).to_json(deep=True)
 
 
 @core_app.get("/experiment/{uri}", tags=["Experiment"], summary="Get an experiment")
-async def get_an_experiment(uri: str,
-                            _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+def get_an_experiment(uri: str,
+                      _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve an experiment
 
     - **uri**: the uri of an experiment
     """
 
-    e = ExperimentService.get_experiment_by_uri(uri=uri)
-    return e.to_json()
+    return ExperimentService.get_experiment_by_uri(uri=uri).to_json(deep=True)
+
+
+@core_app.put("/experiment/{uri}/protocol", tags=["Experiment"], summary="Update an experiment's protocol")
+def update_experiment_protocol(uri: str,
+                               protocol_graph: Dict,
+                               _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    """
+    Update an experiment
+
+    - **protocol_graph**: the new protocol graph
+    """
+
+    return ExperimentService.update_experiment_protocol(uri, protocol_graph).to_json(deep=True)
 
 
 @core_app.put("/experiment/{uri}", tags=["Experiment"], summary="Update an experiment")
-async def update_an_experiment(uri: str,
-                               experiment: ExperimentDTO,
-                               _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+def update_an_experiment(uri: str,
+                         experiment: ExperimentDTO,
+                         _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Update an experiment
 
     - **uri**: the uri of the experiment
     - **title**: the new title [optional]
     - **description**: the new description [optional]
-    - **flow**: the new protocol flow [optional]
     """
 
-    expeirment = ExperimentService.update_experiment(uri, experiment)
-    return expeirment.to_json()
+    return ExperimentService.update_experiment(uri, experiment).to_json(deep=True)
 
 
 @core_app.post("/experiment", tags=["Experiment"], summary="Create an experiment")
-async def create_an_experiment(experiment: ExperimentDTO,
-                               _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+def create_an_experiment(experiment: ExperimentDTO,
+                         _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Create an experiment.
 
@@ -135,15 +114,14 @@ async def create_an_experiment(experiment: ExperimentDTO,
     - **flow**: the protocol flow [optional]
     """
 
-    new_experiment: Experiment = ExperimentService.create_empty_experiment(
-        experiment)
-    return new_experiment.to_json()
+    return ExperimentService.create_empty_experiment(
+        experiment).to_json(deep=True)
 
 
 @core_app.get("/experiment", tags=["Experiment"], summary="Get the list of experiments")
-async def get_the_list_of_experiments(page: Optional[int] = 1,
-                                      number_of_items_per_page: Optional[int] = 20,
-                                      _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+def get_the_list_of_experiments(page: Optional[int] = 1,
+                                number_of_items_per_page: Optional[int] = 20,
+                                _: UserData = Depends(AuthService.check_user_access_token)) -> PaginatorDict:
     """
     Retrieve a list of experiments. The list is paginated.
 
@@ -152,9 +130,7 @@ async def get_the_list_of_experiments(page: Optional[int] = 1,
     - **number_of_items_per_page**: the number of items per page (limited to 50)
     """
 
-    experiments: Paginator = ExperimentService.fetch_experiment_list(
+    return ExperimentService.fetch_experiment_list(
         page=page,
         number_of_items_per_page=number_of_items_per_page,
-    )
-
-    return experiments.to_json()
+    ).to_json()

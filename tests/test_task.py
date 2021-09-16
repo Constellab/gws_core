@@ -46,7 +46,6 @@ class TestTask(BaseTestCase):
             protocol_model=proto)
 
         self.assertEqual(experiment.created_by, GTest.user)
-        self.assertEqual(experiment.study, GTest.study)
 
         experiment = await ExperimentService.run_experiment(
             experiment=experiment, user=GTest.user)

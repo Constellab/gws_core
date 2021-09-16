@@ -11,11 +11,9 @@ from peewee import DatabaseProxy
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ..core.exception.exceptions.not_found_exception import NotFoundException
 from ..core.model.model import Model
 from ..core.service.base_service import BaseService
 from ..core.utils.logger import Logger
-from ..core.utils.utils import Utils
 from .typing_manager import TypingManager
 
 
