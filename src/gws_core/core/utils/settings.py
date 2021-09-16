@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 import os
+from copy import deepcopy
 from typing import Literal
 
 from peewee import Model as PeeweeModel
@@ -274,6 +275,27 @@ class Settings(PeeweeModel):
     @property
     def version(self):
         return self.data.get("version", None)
+
+    def to_json(self) -> dict:
+
+        # get data and remove sensitive informations
+        data = deepcopy(self.data)
+        del data["environment"]["variables"]
+        del data["secret_key"]
+        del data["token"]
+        return {
+            "central_api_url": self.get_central_api_url(),
+            "lab_prod_api_url": self.get_lab_prod_api_url(),
+            "lab_environemnt": self.get_lab_environment(),
+            "virtual_host": self.get_virtual_host(),
+            "cwd": self.get_cwd(),
+            "lab_dir": self.get_lab_dir(),
+            "log_dir": self.get_log_dir(),
+            "data_dir": self.get_data_dir(),
+            "file_store_dir": self.get_file_store_dir(),
+            "kv_store_dir": self.get_kv_store_base_dir(),
+            "data": data
+        }
 
     class Meta:
         database = __SETTINGS_DB__
