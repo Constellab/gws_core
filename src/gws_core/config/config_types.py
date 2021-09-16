@@ -60,10 +60,6 @@ class ConfigSpecsHelper():
         if not isinstance(specs, dict):
             raise BadRequestException("The specs must be a dictionnary")
 
-        # Check all the default values
-        for spec in specs.values():
-            spec.check_default_value()
-
     @classmethod
     def config_specs_to_json(cls, specs: ConfigSpecs) -> Dict[str, Any]:
         """convert the config specs to json

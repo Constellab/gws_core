@@ -7,9 +7,10 @@ from typing import Any, List, final
 
 from ..model.typing_register_decorator import typing_registrator
 from ..model.viewable import Viewable
-from .config_exceptions import MissingConfigsException, UnkownParamException
-from .config_types import (ParamValue, ConfigParams, ConfigParamsDict,
-                           ConfigSpecs, ConfigSpecsHelper)
+from .config_exceptions import (InvalidParamValueException,
+                                MissingConfigsException, UnkownParamException)
+from .config_types import (ConfigParams, ConfigParamsDict, ConfigSpecs,
+                           ConfigSpecsHelper, ParamValue)
 from .param_spec import ParamSpec
 
 
@@ -124,7 +125,7 @@ class Config(Viewable):
             # if the config was not set
             if not key in values:
                 if spec.optional:
-                    values[key] = spec.get_and_check_default_value()
+                    values[key] = spec.get_default_value()
                 else:
                     # if there is not default value the value is missing
                     missing_params.append(key)
@@ -145,7 +146,11 @@ class Config(Viewable):
         :type: [str, int, float, bool, NoneType]
         """
 
-        value = self.get_spec(param_name).validate(value)
+        try:
+            value = self.get_spec(param_name).validate(value)
+        except Exception as err:
+            raise InvalidParamValueException(param_name, value, str(err))
+
         if not "values" in self.data:
             self.data["values"] = {}
 

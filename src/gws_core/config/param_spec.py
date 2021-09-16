@@ -44,21 +44,14 @@ class ParamSpec(Generic[ParamSpecType]):
         :param unit: Measure unit of the value (ex kg)
         :type unit: Optional[str]
         """
-        self.default_value = default_value
         self.description = description
         self.unit = unit
 
         # the param is optional if the default value is set or optional is set to True
         self.optional = default_value is not None or optional
+        self.default_value = self.validate(default_value)
 
-    def check_default_value(self) -> None:
-        if self.default_value is None:
-            return
-
-        self.default_value = self.validate(self.default_value)
-
-    def get_and_check_default_value(self) -> ParamSpecType:
-        self.check_default_value()
+    def get_default_value(self) -> ParamSpecType:
         return self.default_value
 
     @abstractmethod
@@ -94,6 +87,9 @@ class ParamSpec(Generic[ParamSpecType]):
         return _json
 
     def validate(self, value: Any) -> ParamSpecType:
+        if value is None:
+            return None
+
         return self.get_validator().validate(value)
 
 
@@ -121,15 +117,15 @@ class StrParam(ParamSpec[str]):
         :param unit: Measure unit of the value (ex kg)
         :type unit: Optional[str]
         """
-        super().__init__(default_value=default_value, optional=optional, description=description, unit=unit)
         self.allowed_values = allowed_values
+        super().__init__(default_value=default_value, optional=optional, description=description, unit=unit)
 
     @abstractmethod
     def get_type(self) -> Type[str]:
         return str
 
     def get_validator(self) -> Validator:
-        return StrValidator(default_value=self.default_value, allowed_values=self.allowed_values)
+        return StrValidator(allowed_values=self.allowed_values)
 
     def load_from_json(self, json_:  Dict[str, Any]) -> None:
         super().load_from_json(json_)
@@ -150,7 +146,7 @@ class BoolParam(ParamSpec[bool]):
         return bool
 
     def get_validator(self) -> Validator:
-        return BoolValidator(default_value=self.default_value)
+        return BoolValidator()
 
 
 class DictParam(ParamSpec[dict]):
@@ -162,7 +158,7 @@ class DictParam(ParamSpec[dict]):
         return dict
 
     def get_validator(self) -> Validator:
-        return DictValidator(default_value=self.default_value)
+        return DictValidator()
 
 
 class ListParam(ParamSpec[list]):
@@ -174,7 +170,7 @@ class ListParam(ParamSpec[list]):
         return list
 
     def get_validator(self) -> Validator:
-        return ListValidator(default_value=self.default_value)
+        return ListValidator()
 
 
 class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
@@ -215,10 +211,10 @@ class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
         :param unit: Measure unit of the value (ex kg)
         :type unit: Optional[str]
         """
-        super().__init__(default_value=default_value, optional=optional, description=description, unit=unit)
         self.allowed_values = allowed_values
         self.min_value = min_value
         self.max_value = max_value
+        super().__init__(default_value=default_value, optional=optional, description=description, unit=unit)
 
     @abstractmethod
     def get_type(self) -> Type[ParamSpecType]:
@@ -255,7 +251,7 @@ class IntParam(NumericParam[int]):
         return int
 
     def get_validator(self) -> Validator:
-        return IntValidator(default_value=self.default_value, allowed_values=self.allowed_values,
+        return IntValidator(allowed_values=self.allowed_values,
                             min_value=self.min_value, max_value=self.max_value)
 
 
@@ -267,5 +263,5 @@ class FloatParam(NumericParam[float]):
         return float
 
     def get_validator(self) -> Validator:
-        return FloatValidator(default_value=self.default_value, allowed_values=self.allowed_values,
+        return FloatValidator(allowed_values=self.allowed_values,
                               min_value=self.min_value, max_value=self.max_value)

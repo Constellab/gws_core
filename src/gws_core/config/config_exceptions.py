@@ -1,5 +1,5 @@
 
-from typing import List
+from typing import Any, List
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -33,3 +33,20 @@ class UnkownParamException(BadRequestException):
         super().__init__(detail=GWSException.UNKNOWN_CONFIG_PARAMS.value,
                          unique_code=GWSException.UNKNOWN_CONFIG_PARAMS.name,
                          detail_args={"param_name": self.param_name})
+
+
+class InvalidParamValueException(BadRequestException):
+    """Exception raised when the param value of a config is invalid
+    """
+
+    param_name: str
+    param_value: Any
+    error: str
+
+    def __init__(self, param_name: str, param_value: Any, error: str) -> None:
+        self.param_name = param_name
+        self.param_value = param_value
+        self.error = error
+        super().__init__(detail=GWSException.INVALID_PARAM_VALUE.value,
+                         unique_code=GWSException.INVALID_PARAM_VALUE.name,
+                         detail_args={"param_name": param_name, "param_value": str(param_value), "error": error})
