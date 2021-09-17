@@ -38,7 +38,7 @@ class Shell(Task):
     _stdout_count = 0
     _STDOUT_MAX_CHAR_LENGHT = 1024*10
 
-    def build_command(self, config: ConfigParams, inputs: TaskInputs) -> list:
+    def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
         """
         Builds the user command to execute.
 
@@ -72,7 +72,7 @@ class Shell(Task):
             return user_cmd
 
     @abstractmethod
-    def gather_outputs(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """
         This methods gathers the results of the shell task. It must be overloaded by subclasses.
 
@@ -129,14 +129,14 @@ class Shell(Task):
 
         return self.cwd.name
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """
         Task entrypoint
         """
 
         outputs: TaskOutputs
         try:
-            user_cmd = self.build_command(config=config, inputs=inputs)
+            user_cmd = self.build_command(params, inputs)
             user_env = self.build_os_env()
 
             if (user_env is not None) and (not isinstance(user_env, dict)):
@@ -173,15 +173,7 @@ class Shell(Task):
 
                 self.on_stdout_change(stdout_count=count, stdout_line=line)
                 count += 1
-            # TODO à vérifier
-            # self.data['cmd'] = cmd
-            outputs = self.gather_outputs(config=config, inputs=inputs)
-
-            # TODO c'est bizarre ça
-            # for resource in outputs.values():
-            #    if isinstance(resource, File):
-            #        FileService.add_file_to_default_store(resource)
-
+            outputs = self.gather_outputs(params, inputs)
             self.cwd.cleanup()
             self._tmp_dir = None
 
