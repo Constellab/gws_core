@@ -9,6 +9,7 @@ from math import exp
 from gws_core import (BaseTestCase, Experiment, ExperimentService,
                       ExperimentStatus, GTest, QueueService, RobotService,
                       Settings)
+from gws_core.study.study_dto import StudyDto
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -66,10 +67,9 @@ class TestExperiment(BaseTestCase):
 
         print("")
         print("Re-run the same experiment after its validation...")
-        time.sleep(1)
         experiment2: Experiment = Experiment.get(
             Experiment.id == experiment.id)
-        ExperimentService.validate_experiment(experiment2.uri)
+
+        ExperimentService.validate_experiment(experiment2.uri, GTest.default_study_dto())
         self.assertFalse(_run())
         self.assertEqual(Experiment.select().count(), 1)
-        time.sleep(3)

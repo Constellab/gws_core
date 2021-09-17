@@ -11,6 +11,8 @@ from typing import Any, Coroutine, Dict, Type, Union
 
 from peewee import ModelSelect
 
+from gws_core.study.study_dto import StudyDto
+
 from ..core.classes.paginator import Paginator
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException, NotFoundException
@@ -130,13 +132,16 @@ class ExperimentService(BaseService):
 
     @classmethod
     @transaction()
-    def validate_experiment(cls, uri: str, ) -> Experiment:
+    def validate_experiment(cls, uri: str, study_dto: StudyDto = None) -> Experiment:
         experiment: Experiment = Experiment.get_by_uri_and_check(uri)
 
-        user: User = CurrentUserService.get_and_check_current_user()
+        # set the study if it is provided
+        if study_dto is not None:
+            experiment.study = StudyService.get_or_create_study_from_dto(study_dto)
 
         experiment.validate()
 
+        user: User = CurrentUserService.get_and_check_current_user()
         ActivityService.add(Activity.VALIDATE_EXPERIMENT,
                             object_type=Experiment.full_classname(),
                             object_uri=experiment.uri,

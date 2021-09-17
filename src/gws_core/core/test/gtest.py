@@ -6,6 +6,8 @@
 
 import shutil
 
+from gws_core.study.study_dto import StudyDto
+
 from ...model.model_service import ModelService
 from ...user.auth_service import AuthService
 from ...user.user import User
@@ -67,6 +69,14 @@ class GTest:
         """
         settings: Settings = Settings.retrieve()
         shutil.rmtree(path=settings.get_kv_store_base_dir(), ignore_errors=True)
+
+    @classmethod
+    def default_study_dto(cls) -> StudyDto:
+        """
+        Get a default study DTO
+        """
+        return StudyDto(uri="3b4a462a-d2e2-4859-9837-9303b4a51889", title="Default study",
+                        description="Study description")
 
     @classmethod
     def print(cls, text):
