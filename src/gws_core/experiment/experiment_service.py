@@ -6,6 +6,7 @@
 import os
 import subprocess
 import traceback
+from math import exp
 from typing import Any, Coroutine, Dict, Type, Union
 
 from peewee import ModelSelect
@@ -128,21 +129,20 @@ class ExperimentService(BaseService):
         return experiment
 
     @classmethod
+    @transaction()
     def validate_experiment(cls, uri) -> Experiment:
-        experiment: Experiment = None
-        try:
-            experiment = Experiment.get(Experiment.uri == uri)
-        except Exception as err:
-            raise NotFoundException(
-                detail=f"Experiment '{uri}' not found") from err
+        experiment: Experiment = Experiment.get_by_uri_and_check(uri)
 
-        try:
-            experiment.validate(
-                user=CurrentUserService.get_and_check_current_user())
-            return experiment
-        except Exception as err:
-            raise NotFoundException(
-                detail=f"Cannot validate experiment '{uri}'") from err
+        user: User = CurrentUserService.get_and_check_current_user()
+
+        experiment.validate()
+
+        ActivityService.add(Activity.VALIDATE_EXPERIMENT,
+                            object_type=Experiment.full_classname(),
+                            object_uri=experiment.uri,
+                            user=user)
+
+        return experiment
 
     ################################### GET  ##############################
 

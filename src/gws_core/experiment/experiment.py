@@ -70,7 +70,7 @@ class Experiment(Viewable):
     score = FloatField(null=True, index=True)
     status: ExperimentStatus = EnumField(choices=ExperimentStatus,
                                          default=ExperimentStatus.DRAFT)
-    is_validated = BooleanField(default=False, index=True)
+    is_validated: bool = BooleanField(default=False, index=True)
     error_info: ExperimentErrorInfo = JSONField(null=True)
 
     _table_name = 'gws_experiment'
@@ -274,26 +274,21 @@ class Experiment(Viewable):
         return _json
 
     @transaction()
-    def validate(self, user: User) -> None:
+    def validate(self) -> None:
         """
         Validate the experiment
-
-        :param user: The user who validate the experiment
-        :type user: `gws.user.User`
         """
 
         if self.is_validated:
             return
         if self.is_running:
             raise BadRequestException("Can't validate a running experiment")
+
+        if self.study is None:
+            raise BadRequestException("The experiment must be linked to a study before validating it")
+
         self.is_validated = True
-        if self.save():
-            Activity.add(
-                Activity.VALIDATE,
-                object_type=self.full_classname(),
-                object_uri=self.uri,
-                user=user
-            )
+        self.save()
 
     def check_user_privilege(self, user: User) -> None:
         return self.protocol_model.check_user_privilege(user)

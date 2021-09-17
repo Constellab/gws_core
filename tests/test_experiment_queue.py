@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 import time
+from math import exp
 
 from gws_core import (BaseTestCase, Experiment, ExperimentService,
                       ExperimentStatus, GTest, QueueService, RobotService,
@@ -68,7 +69,7 @@ class TestExperiment(BaseTestCase):
         time.sleep(1)
         experiment2: Experiment = Experiment.get(
             Experiment.id == experiment.id)
-        experiment2.validate(user=GTest.user)
+        ExperimentService.validate_experiment(experiment2.uri)
         self.assertFalse(_run())
         self.assertEqual(Experiment.select().count(), 1)
         time.sleep(3)

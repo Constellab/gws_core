@@ -36,7 +36,7 @@ from .base import Base
 # ####################################################################
 
 
-def format_table_name(model: 'Model'):
+def format_table_name(model: Type['Model']) -> str:
     return model._table_name.lower()
 
 
@@ -244,7 +244,7 @@ class Model(Base, PeeweeModel):
         return format_table_name(cls)
 
     @classmethod
-    def get_db_manager(cls) -> DbManager:
+    def get_db_manager(cls) -> Type[DbManager]:
         """
         Returns the (current) DbManager of this model
 
