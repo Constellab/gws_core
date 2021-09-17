@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 from inspect import isclass
-from typing import Dict, List, Optional, Tuple, Type
+from typing import List, Optional, Tuple, Type
 
 from ..config.config_types import ConfigParamsDict
 from ..io.connector import Connector
@@ -29,8 +29,6 @@ class IProtocol(IProcess):
 
     _protocol_model: ProtocolModel
 
-    _processes: Dict[str, IProcess] = {}
-
     def __init__(self, protocol_model: ProtocolModel, parent_protocol: Optional['IProtocol']) -> None:
         super().__init__(process_model=protocol_model, parent_protocol=parent_protocol)
         self._protocol_model = protocol_model
@@ -46,24 +44,13 @@ class IProtocol(IProcess):
 
         i_process: IProcess
         if issubclass(process_type, Task):
-            i_process = self._add_task(process_type, instance_name, config_params)
+            i_process = self.add_task(process_type, instance_name, config_params)
         elif issubclass(process_type, Protocol):
-            i_process = self._add_protocol(process_type, instance_name, config_params)
-
-        self._processes[instance_name] = i_process
+            i_process = self.add_protocol(process_type, instance_name, config_params)
 
         return i_process
 
     def add_task(self, task_type: Type[Task], instance_name: str, config_params: ConfigParamsDict = None) -> ITask:
-        """Add a task to this
-        """
-        task: ITask = self._add_task(task_type, instance_name, config_params)
-
-        # save the task in the processes
-        self._processes[instance_name] = task
-        return task
-
-    def _add_task(self, task_type: Type[Task], instance_name: str, config_params: ConfigParamsDict = None) -> ITask:
         """Add a task to this
         """
         task_model: TaskModel = TaskService.create_task_model_from_type(
@@ -81,22 +68,12 @@ class IProtocol(IProcess):
         protocol_model: ProcessModel = ProtocolService.create_empty_protocol(instance_name)
         protocol: IProtocol = self._add_protocol_model(protocol_model, instance_name)
 
-        # save the protocol in the processes
-        self._processes[instance_name] = protocol
         return protocol
 
     def add_protocol(self, protocol_type: Type[Protocol],
                      instance_name: str, config_params: ConfigParamsDict = None) -> 'IProtocol':
         """Add a protocol from a protocol type
         """
-        protocol: IProtocol = self._add_protocol(protocol_type, instance_name, config_params)
-
-        # save the protocol in the processes
-        self._processes[instance_name] = protocol
-        return protocol
-
-    def _add_protocol(self, protocol_type: Type[Protocol],
-                      instance_name: str, config_params: ConfigParamsDict = None) -> 'IProtocol':
         protocol_model: ProcessModel = ProtocolService.create_protocol_model_from_type(
             protocol_type=protocol_type, instance_name=instance_name, config_params=config_params)
 
@@ -119,11 +96,12 @@ class IProtocol(IProcess):
         :return: [description]
         :rtype: IProcess
         """
-        if not instance_name in self._processes:
-            raise Exception(
-                f"The process with the name '{instance_name}' does not exists in this protocol, did you add it ?")
+        process: ProcessModel = self._protocol_model.get_process(instance_name)
 
-        return self._processes[instance_name]
+        if isinstance(process, ProtocolModel):
+            return IProtocol(process, self)
+        else:
+            return IProcess(process, self)
 
     def add_connector(self, out_port: OutPort, in_port: InPort) -> None:
         """Add a connector between to process of this protocol

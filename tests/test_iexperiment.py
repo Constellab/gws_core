@@ -47,3 +47,7 @@ class TestIExperiment(BaseTestCase):
         # Test that the RobotTravelProto worked
         robot_o = robot_travel.get_output('robot')
         self.assertIsInstance(robot_o, Robot)
+
+        # test that robot_travel has a sub process
+        move_1 = robot_travel.get_process('move_1')
+        self.assertIsNotNone(move_1)

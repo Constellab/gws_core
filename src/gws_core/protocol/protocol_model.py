@@ -297,7 +297,7 @@ class ProtocolModel(ProcessModel):
 
         if name not in self.processes:
             raise BadRequestException(
-                f"The protocol '{self.get_instance_name_context()}' does not have a process names '{name}'")
+                f"The protocol '{self.get_instance_name_context()}' does not have a process named '{name}'")
 
         return self.processes[name]
 
