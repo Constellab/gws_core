@@ -53,8 +53,8 @@ class ExperimentService(BaseService):
             description=experimentDTO.description
         )
 
-    @transaction()
     @classmethod
+    @transaction()
     def create_experiment_from_task_model(
             cls, task_model: TaskModel, study: Study = None, title: str = "", description: str = "") -> Experiment:
         if not isinstance(task_model, TaskModel):
