@@ -6,7 +6,7 @@
 from abc import abstractmethod
 from typing import Optional, Type, TypedDict, final
 
-from ..config.config_types import ConfigSpecs, ConfigParams
+from ..config.config_types import ConfigParams, ConfigSpecs
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..io.io_spec import InputSpecs, IOSpecsHelper, OutputSpecs
@@ -49,6 +49,7 @@ class Task(Process):
         if self._typing_name is None:
             raise BadRequestException(
                 f"The task {self.full_classname()} is not decorated with @task_decorator, it can't be instantiate. Please decorate the task class with @task_decorator")
+        self.__progress_bar__ = None
 
     def check_before_run(self, config: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
         """
@@ -84,10 +85,13 @@ class Task(Process):
 
         resource_types = IOSpecsHelper.io_spec_to_resource_types(self.output_specs[spec_name])
 
-        return resource_types[0]
+        # return first element
+        for resource_type in resource_types:
+            return resource_type
+        return None
 
     @final
-    def update_progress_value(self, value: float, message: str = None):
+    def update_progress_value(self, value: float, message: str = None) -> None:
         """Update the progress value
 
         :param value: value between 0 and 100 of the progress
@@ -100,7 +104,7 @@ class Task(Process):
         self.__progress_bar__.set_value(value=value, message=message)
 
     @final
-    def add_progress_message(self, message: str = None):
+    def add_progress_message(self, message: str = None) -> None:
         """Store a message in the progress
 
         :param message: message to store in the progress

@@ -48,8 +48,8 @@ class TestExperiment(BaseTestCase):
         experiment1: Experiment = ExperimentService.create_experiment_from_protocol_model(
             protocol_model=proto1, title="My exp title", description="This is my new experiment")
 
-        self.assertEqual(len(experiment1.task_models), 15)
-        self.assertEqual(TaskModel.select().count(), 15)
+        self.assertEqual(len(experiment1.task_models), 16)
+        self.assertEqual(TaskModel.select().count(), 16)
         self.assertEqual(ResourceModel.select().count(), 0)
         self.assertEqual(Experiment.select().count(), 1)
 
@@ -62,8 +62,8 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(experiment2.get_description(),
                          "This is my new experiment")
         self.assertEqual(experiment2, experiment1)
-        self.assertEqual(len(experiment2.task_models), 15)
-        self.assertEqual(TaskModel.select().count(), 15)
+        self.assertEqual(len(experiment2.task_models), 16)
+        self.assertEqual(TaskModel.select().count(), 16)
         self.assertEqual(ResourceModel.select().count(), 0)
         self.assertEqual(Experiment.select().count(), 1)
 
@@ -71,7 +71,7 @@ class TestExperiment(BaseTestCase):
         experiment2 = await ExperimentService.run_experiment(experiment=experiment2, user=GTest.user)
 
         #self.assertEqual(e2.processes.count(), 18)
-        self.assertEqual(len(experiment2.task_models), 15)
+        self.assertEqual(len(experiment2.task_models), 16)
         self.assertEqual(experiment2.status, ExperimentStatus.SUCCESS)
 
         Q1 = experiment1.resources
@@ -85,7 +85,7 @@ class TestExperiment(BaseTestCase):
 
         self.assertEqual(e2_bis.get_title(), "My exp title")
         self.assertEqual(e2_bis.get_description(), "This is my new experiment")
-        self.assertEqual(len(e2_bis.task_models), 15)
+        self.assertEqual(len(e2_bis.task_models), 16)
         self.assertEqual(Experiment.select().count(), 1)
 
         # Test the configuration on fly_1 process (west 2000)
@@ -147,7 +147,7 @@ class TestExperiment(BaseTestCase):
 
             processes: List[ProcessModel] = experiment3.task_models
             #self.assertEqual( len(Q), 18)
-            self.assertEqual(len(processes), 15)
+            self.assertEqual(len(processes), 16)
             for process in processes:
                 self.assertEqual(process.is_archived, tf)
                 self.assertEqual(process.config.is_archived, tf)
