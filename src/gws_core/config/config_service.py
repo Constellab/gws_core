@@ -3,51 +3,29 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Union
 
-from ..core.classes.paginator import Paginator
+from gws_core.config.config_types import ConfigParamsDict, ParamValue
+
 from ..core.service.base_service import BaseService
 from .config import Config
 
 
 class ConfigService(BaseService):
 
-    # -- F --
+    @classmethod
+    def update_config_params_with_uri(cls, uri: str, config_params: ConfigParamsDict) -> Config:
+        config: Config = Config.get_by_uri_and_check(uri)
+
+        return cls.update_config_params(config, config_params)
 
     @classmethod
-    def fetch_config_list(cls,
-                          search_text="",
-                          page: int = 0,
-                          number_of_items_per_page: int = 20,
-                          as_json=False) -> Union[Paginator, List[Config], List[dict]]:
+    def update_config_params(cls, config: Config, config_params: ConfigParamsDict) -> Config:
+        config.set_values(config_params)
 
-        number_of_items_per_page = min(
-            number_of_items_per_page, cls._number_of_items_per_page)
+        return config.save()
 
-        if search_text:
-            query = Config.search(search_text)
-            result = []
-            for o in query:
-                if as_json:
-                    result.append(o.get_related().to_json())
-                else:
-                    result.append(o.get_related())
+    @classmethod
+    def update_config_value(cls, config: Config, param_name: str, value: ParamValue) -> Config:
+        config.set_value(param_name, value)
 
-            paginator = Paginator(
-                query, page=page, number_of_items_per_page=number_of_items_per_page)
-            return {
-                'data': result,
-                'paginator': paginator._get_paginated_info()
-            }
-        else:
-            query = Config.select().order_by(Config.creation_datetime.desc())
-            paginator = Paginator(
-                query,
-                page=page,
-                number_of_items_per_page=number_of_items_per_page
-            )
-
-            if as_json:
-                return paginator.to_json()
-            else:
-                return paginator
+        return config.save()

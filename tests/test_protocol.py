@@ -190,7 +190,7 @@ class TestProtocol(BaseTestCase):
 
         # Test adding a process
         move_typing: Typing = Typing.get_by_model_type(RobotMove)
-        move: ProcessModel = ProtocolService.add_process_to_protocol(
+        move: ProcessModel = ProtocolService.add_process_to_protocol_uri(
             super_proto_db.uri, move_typing.typing_name)
 
         super_proto_db = ProtocolService.get_protocol_by_uri(super_proto.uri)

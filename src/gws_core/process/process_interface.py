@@ -6,7 +6,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Optional
 
-from ..config.config_types import ParamValue
+from gws_core.config.config_service import ConfigService
+
+from ..config.config_types import ConfigParams, ConfigParamsDict, ParamValue
 from ..io.port import InPort, OutPort
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
@@ -25,18 +27,21 @@ class IProcess:
         self._process_model = process_model
         self._parent_protocol = parent_protocol
 
-    def set_param(self, name: str, value: ParamValue) -> None:
+    def set_param(self, param_name: str, value: ParamValue) -> None:
         """Set the param value
-
-        :param name: [description]
-        :type name: str
-        :param value: [description]
-        :type value: ParamValue
         """
-        self._process_model.set_param(name, value)
+        ConfigService.update_config_value(self._process_model.config, param_name, value)
+
+    def set_config_params(self, config_params: ConfigParamsDict) -> None:
+        """Set the config param values
+        """
+        ConfigService.update_config_params(self._process_model.config, config_params)
 
     def get_param(self, name: str) -> Any:
-        return self._process_model.set_config_param(name)
+        return self._process_model.config.get_value(name)
+
+    def get_config_params(self) -> ConfigParams:
+        return self._process_model.config.get_and_check_values()
 
     def set_input(self, name: str, resource: Resource) -> None:
         """Set the resource of an input. If you want to manually set the input resource of a process
