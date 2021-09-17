@@ -45,8 +45,6 @@ class IO(Base, Generic[PortType]):
         self._parent = parent
         self._ports = dict()
 
-    # -- D --
-
     def disconnect(self):
         """
         Disconnect the IO
@@ -54,67 +52,6 @@ class IO(Base, Generic[PortType]):
 
         for port in self._ports.values():
             port.disconnect()
-
-    # -- C --
-
-    def create_port(self, name: str, resource_spec: IOSpec) -> PortType:
-        """
-        Creates a port.
-
-        :param name: Name of the port
-        :type name: str
-        :param resource_types: The expected type of the resource of the port
-        :type resource_types: type
-        """
-
-        if not isinstance(name, str):
-            raise BadRequestException(
-                "Invalid port specs. The port name must be a string")
-
-        port: PortType = self._create_port(resource_spec)
-        self._ports[name] = port
-        return port
-
-    @abstractmethod
-    def _create_port(self, resource_spec: IOSpec):
-        pass
-
-    # -- G --
-
-    def get_port_names(self) -> List[str]:
-        """
-        Returns the names of all the ports.
-
-        :return: List of names
-        :rtype: list
-        """
-
-        return list(self._ports.keys())
-
-    def get_resources(self) -> Dict[str, ResourceModel]:
-        """
-        Returns the resources of all the ports.
-
-        :return: List of resources
-        :rtype: list
-        """
-
-        resource_models: Dict[str, ResourceModel] = {}
-        for key, port in self._ports.items():
-            resource_models[key] = port.resource_model
-        return resource_models
-
-    def get_port(self, port_name: str) -> PortType:
-        """
-        Returns the resources of all the ports.
-
-        :return: List of resources
-        :rtype: list
-        """
-        self._check_port_name(port_name)
-        return self._ports[port_name]
-
-    # -- I --
 
     @property
     def is_ready(self) -> bool:
@@ -154,7 +91,22 @@ class IO(Base, Generic[PortType]):
                 next_proc.append(proc)
         return next_proc
 
-    # -- P --
+    @property
+    def parent(self) -> ProcessModel:
+        """
+        Returns the parent of the IO, i.e. the task that holds this IO.
+
+        :return: The parent task
+        :rtype: Task
+        """
+
+        return self._parent
+
+    def reset(self) -> None:
+        for port in self._ports.values():
+            port.reset()
+
+    ################################################### PORTS ########################################
 
     @property
     def ports(self) -> Dict[str, PortType]:
@@ -167,27 +119,84 @@ class IO(Base, Generic[PortType]):
 
         return self._ports
 
-    @property
-    def parent(self) -> ProcessModel:
+    def create_port(self, name: str, resource_spec: IOSpec) -> PortType:
         """
-        Returns the parent of the IO, i.e. the task that holds this IO.
+        Creates a port.
 
-        :return: The parent task
-        :rtype: Task
+        :param name: Name of the port
+        :type name: str
+        :param resource_types: The expected type of the resource of the port
+        :type resource_types: type
         """
 
-        return self._parent
+        if not isinstance(name, str):
+            raise BadRequestException(
+                "Invalid port specs. The port name must be a string")
+
+        port: PortType = self._create_port(resource_spec)
+        self._ports[name] = port
+        return port
+
+    @abstractmethod
+    def _create_port(self, resource_spec: IOSpec):
+        pass
+
+    # -- G --
+
+    def get_port_names(self) -> List[str]:
+        """
+        Returns the names of all the ports.
+
+        :return: List of names
+        :rtype: list
+        """
+
+        return list(self._ports.keys())
+
+    def get_port(self, port_name: str) -> PortType:
+        """
+        Returns the resources of all the ports.
+
+        :return: List of resources
+        :rtype: list
+        """
+        self._check_port_name(port_name)
+        return self._ports[port_name]
 
     def port_exists(self, name: str) -> bool:
         return name in self._ports
 
-    # -- R --
+    def remove_port(self, port_name: str) -> None:
+        self._check_port_name(port_name)
+        del self._ports[port_name]
 
-    def reset(self) -> None:
-        for port in self._ports.values():
-            port.reset()
+    def _check_port_name(self, name) -> None:
 
-    # -- S --
+        error: str = None
+        if not isinstance(name, str):
+            error = f"The port name must be a string. Actual value: '{name}'"
+
+        if not self.port_exists(name):
+            error = f"{self.classname()} port '{name}' not found"
+
+        if error:
+            if self.parent:
+                error += f" | Process : {self.parent.get_info()}"
+            raise BadRequestException(error)
+    ################################################### RESOURCE ########################################
+
+    def get_resources(self) -> Dict[str, ResourceModel]:
+        """
+        Returns the resources of all the ports.
+
+        :return: List of resources
+        :rtype: list
+        """
+
+        resource_models: Dict[str, ResourceModel] = {}
+        for key, port in self._ports.items():
+            resource_models[key] = port.resource_model
+        return resource_models
 
     def set_resource_model(self, port_name: str, resource_model: ResourceModel) -> None:
         """Set the resource_model of a port
@@ -213,21 +222,7 @@ class IO(Base, Generic[PortType]):
         port: PortType = self.get_port(port_name)
         port.resource_model = resource_model
 
-    def _check_port_name(self, name) -> None:
-
-        error: str = None
-        if not isinstance(name, str):
-            error = f"The port name must be a string. Actual value: '{name}'"
-
-        if not self.port_exists(name):
-            error = f"{self.classname()} port '{name}' not found"
-
-        if error:
-            if self.parent:
-                error += f" | Process : {self.parent.get_info()}"
-            raise BadRequestException(error)
-
-    # -- V --
+    ################################################### JSON ########################################
 
     def load_from_json(self, io_json: IODict) -> None:
         if input is None:

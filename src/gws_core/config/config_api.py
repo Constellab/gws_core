@@ -3,32 +3,22 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Optional
 
 from fastapi import Depends
 
+from ..config.config_types import ConfigParamsDict
 from ..core_app import core_app
 from ..user.auth_service import AuthService
 from ..user.user_dto import UserData
 from .config_service import ConfigService
 
 
-@core_app.get("/config", tags=["Configs"], summary="Get the list of configs")
-async def get_the_list_of_configs(search_text: Optional[str] = "",
-                                  page: Optional[int] = 1,
-                                  number_of_items_per_page: Optional[int] = 20,
-                                  _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+@core_app.put("/config/{uri}", tags=["Config"], summary="Update the config values")
+def get_the_experiment_queue(uri: str,
+                             config_params: ConfigParamsDict,
+                             _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
-    Retrieve a list of configs. The list is paginated.
-
-    - **search_text**: text used to filter the results. The text is matched against to the `title` and the `description` using full-text search.
-    - **page**: the page number
-    - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
+    Update the configuration params
     """
 
-    return ConfigService.fetch_config_list(
-        search_text=search_text,
-        page=page,
-        number_of_items_per_page=number_of_items_per_page,
-        as_json=True
-    )
+    return ConfigService.update_config_params_with_uri(uri, config_params).to_json(deep=True)

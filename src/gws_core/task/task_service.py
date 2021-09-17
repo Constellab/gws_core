@@ -22,7 +22,7 @@ class TaskService(BaseService):
 
     @classmethod
     def get_task_by_uri(cls, uri: str) -> TaskModel:
-        return TaskModel.get_by_uri(uri=uri)
+        return TaskModel.get_by_uri_and_check(uri=uri)
 
     @classmethod
     def fetch_task_list(cls,

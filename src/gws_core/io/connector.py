@@ -114,3 +114,8 @@ class Connector:
         :rtype: process
         """
         return self.in_port.parent.parent
+
+    def is_connected_to(self, process_model: ProcessModel) -> bool:
+        """return true if the connector is connected to the process model
+        """
+        return process_model in (self.left_process, self.right_process)

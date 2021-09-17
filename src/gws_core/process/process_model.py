@@ -16,7 +16,7 @@ from peewee import CharField, ForeignKeyField, IntegerField
 from starlette_context import context
 
 from ..config.config import Config
-from ..config.config_types import ParamValue, ConfigParams, ConfigParamsDict
+from ..config.config_types import ConfigParams, ConfigParamsDict, ParamValue
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.json_ignore import json_ignore
 from ..core.decorator.transaction import transaction
@@ -394,38 +394,6 @@ class ProcessModel(Viewable):
             raise UnauthorizedException(
                 f"You must be a {process_type._allowed_user} to run the process '{process_type.full_classname()}'")
 
-    ################################# CONFIG #########################
-
-    def set_param(self, param_name: str, value: ParamValue) -> None:
-        """
-        Configure the value of a parameter by its name
-
-        :param name: The name of the parameter
-        :type: str
-        :param value: The value of the parameter (base type)
-        :type: Any
-        """
-
-        self.config.set_value(param_name=param_name, value=value)
-
-    def set_config_params(self, config_params: ConfigParamsDict) -> None:
-        """
-        Configure the process model
-        """
-        self.config.set_values(config_params)
-
-    def set_config_param(self, param_name: str) -> Any:
-        """
-        Get a param value from the config
-        """
-        return self.config.get_value(param_name)
-
-    def get_config_params(self) -> ConfigParams:
-        """
-        Get all params values from the config
-        """
-        return self.config.get_and_check_values()
-
     ########################### INFO #################################
 
     @abstractmethod
@@ -497,6 +465,8 @@ class ProcessModel(Viewable):
 
         _json["inputs"] = self.inputs.to_json()
         _json["outputs"] = self.outputs.to_json()
+
+        _json["typing_name"] = self._typing_name
 
         return _json
 

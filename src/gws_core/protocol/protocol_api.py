@@ -54,7 +54,7 @@ async def add_process(uri: str,
     Add a process to a protocol
     """
 
-    return ProtocolService.add_process_to_protocol(
+    return ProtocolService.add_process_to_protocol_uri(
         protocol_uri=uri,
         process_typing_name=process_typing_name
     ).to_json(deep=True)
