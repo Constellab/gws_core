@@ -1,8 +1,8 @@
-from gws_core.config.param_spec import FloatParam
-
 from ...config.config_types import ConfigParams
+from ...config.param_spec import FloatParam
 from ...protocol.protocol import ProcessSpec, Protocol
 from ...protocol.protocol_decorator import protocol_decorator
+from ...task.plug import Sink
 from .robot_tasks import (RobotAdd, RobotAddOnCreate, RobotCreate, RobotEat,
                           RobotFly, RobotMove, RobotWait)
 
@@ -19,6 +19,10 @@ class RobotSimpleTravel(Protocol):
         wait_1: ProcessSpec = self.add_process(RobotWait, 'wait_1')
         fly_1: ProcessSpec = self.add_process(RobotFly, 'fly_1')
 
+        # define the protocol output
+        sink_1: ProcessSpec = self.add_process(Sink, 'sink_1')
+        sink_2: ProcessSpec = self.add_process(Sink, 'sink_2')
+
         self.add_connectors([
             (facto >> 'robot', move_1 << 'robot'),
             (move_1 >> 'robot', eat_1 << 'robot'),
@@ -26,7 +30,9 @@ class RobotSimpleTravel(Protocol):
             (wait_1 >> 'robot', move_2 << 'robot'),
             (move_2 >> 'robot', move_3 << 'robot'),
             (eat_1 >> 'robot', eat_2 << 'robot'),
-            (eat_2 >> 'robot', fly_1 << 'robot')
+            (eat_2 >> 'robot', fly_1 << 'robot'),
+            (fly_1 >> 'robot', sink_1 << 'resource'),
+            (move_3 >> 'robot', sink_2 << 'resource'),
         ])
 
 
@@ -99,8 +105,12 @@ class RobotWorldTravelProto(Protocol):
             'direction', 'west')
         wait_1: ProcessSpec = self.add_process(RobotWait, "wait_1")
 
+        # define the protocol output
+        sink_1: ProcessSpec = self.add_process(Sink, 'sink_1')
+
         self.add_connectors([
             (facto >> 'robot', super_travel << 'robot'),
             (super_travel >> 'robot', fly_1 << 'robot'),
-            (fly_1 >> 'robot', wait_1 << 'robot')
+            (fly_1 >> 'robot', wait_1 << 'robot'),
+            (wait_1 >> 'robot', sink_1 << 'resource')
         ])
