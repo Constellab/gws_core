@@ -36,9 +36,9 @@ class Source(Task):
         'resource_typing_name': StrParam(optional=True, description="The type of the resource"),
     }
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        r_uri: str = config.get_value("resource_uri")
-        r_typing_name: str = config.get_value("resource_typing_name")
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        r_uri: str = params.get_value("resource_uri")
+        r_typing_name: str = params.get_value("resource_typing_name")
         if not r_uri or not r_typing_name:
             raise BadRequestException('Source error, the resource uri or typing name is missing')
         resource_model: ResourceModel = TypingManager.get_object_with_typing_name_and_uri(
@@ -58,7 +58,7 @@ class Sink(Task):
     output_specs: OutputSpecs = {}
     config_specs: ConfigSpecs = {}
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         pass
 
 
@@ -75,7 +75,7 @@ class FIFO2(Task):
     output_specs: OutputSpecs = {'resource': UnmodifiedOut(resource_types=Resource, sub_class=True)}
     config_specs: ConfigSpecs = {}
 
-    def check_before_run(self, config: ConfigParams, inputs: TaskInputs) -> bool:
+    def check_before_run(self, params: ConfigParams, inputs: TaskInputs) -> bool:
         res_1 = inputs.get('resource_1')
         res_2 = inputs.get('resource_2')
         is_ready = res_1 or res_2
@@ -84,7 +84,7 @@ class FIFO2(Task):
 
         return True
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
         if inputs.has_resource("resource_1"):
             return {"resource": inputs["resource_1"]}
@@ -109,13 +109,13 @@ class Switch2(Task):
     config_specs: ConfigSpecs = {"index": IntParam(
         default_value=1, min_value=1, max_value=2, description="The index of the input resource to switch on. Defaults to 1.")}
 
-    def check_before_run(self, config: ConfigParams, inputs: TaskInputs) -> bool:
-        index = config.get_value("index")
+    def check_before_run(self, params: ConfigParams, inputs: TaskInputs) -> bool:
+        index = params.get_value("index")
         # The switch is ready to execute if the correct input was set
         return f"resource_{index}" in inputs
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        index = config.get_value("index")
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        index = params.get_value("index")
         resource = inputs[f"resource_{index}"]
         return {"resource": resource}
 
@@ -133,8 +133,8 @@ class Wait(Task):
     config_specs: ConfigSpecs = {"waiting_time": FloatParam(
         default_value=3, min_value=0, description="The waiting time in seconds. Defaults to 3 second.")}
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        waiting_time = config.get_value("waiting_time")
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        waiting_time = params.get_value("waiting_time")
         time.sleep(waiting_time)
         resource = inputs["resource"]
         return {"resource": resource}

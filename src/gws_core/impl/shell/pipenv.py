@@ -143,7 +143,7 @@ class PipEnvShell(BaseEnvShell):
                     "Cannot remove the virtual environment.")
 
     @abstractmethod
-    def gather_outputs(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """
         This methods gathers the results of the shell task. It must be overloaded by subclasses.
 

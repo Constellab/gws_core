@@ -21,10 +21,10 @@ class WriteToJsonFile(Task):
     output_specs: OutputSpecs = {'file': File}
     config_specs: ConfigSpecs = {'filename': StrParam(description='Name of the file')}
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         file_store: FileStore = LocalFileStore.get_default_instance()
 
-        file: File = file_store.create_empty(config.get_value('filename') + '.json')
+        file: File = file_store.create_empty(params.get_value('filename') + '.json')
 
         resource: Resource = inputs['resource']
         file.write(json.dumps(resource.to_json()))

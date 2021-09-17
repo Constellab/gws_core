@@ -16,7 +16,7 @@ from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 @task_decorator("TaskTesterProgress")
 class TaskTesterProgress(Task):
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         self.add_progress_message('Hello')
         self.update_progress_value(50, 'Hello 50%')
 

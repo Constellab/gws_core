@@ -17,7 +17,7 @@ from gws_core.protocol.protocol_exception import ProtocolBuildException
 #################### Error during the task ################
 @task_decorator("ErrorTask")
 class ErrorTask(Task):
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         raise Exception("This is the error task")
 
 
@@ -37,10 +37,10 @@ class TestErrorProtocol(Protocol):
 
 @task_decorator("CheckBeforeTaskError")
 class CheckBeforeTaskError(Task):
-    def check_before_run(self, config: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
+    def check_before_run(self, params: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
         return {"result": False, "message": "We can't run this task"}
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         pass
 
 
@@ -63,7 +63,7 @@ class NotRobotCreate(Task):
     output_specs = {'not_robot': NotRobot}
     config_specs = {}
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {'not_robot': NotRobot()}
 
 

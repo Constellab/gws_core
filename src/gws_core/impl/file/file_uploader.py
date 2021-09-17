@@ -33,21 +33,21 @@ class FileImporter(Task):
     config_specs = {'file_format': StrParam(optional=True, description="File format"), 'output_type': {StrParam(
         default_value="", description="The output file type. If defined, it is used to automatically format data output")}}
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         inport_name = list(self.input_specs.keys())[0]
         outport_name = list(self.output_specs.keys())[0]
         file: File = inputs[inport_name]
 
         model_t: Type[Resource] = None
-        if config.value_is_set("output_type"):
-            out_t = config.get_value("output_type")
+        if params.value_is_set("output_type"):
+            out_t = params.get_value("output_type")
             if out_t:
                 model_t = Utils.get_model_type(out_t)
 
         if not model_t:
             model_t = self.get_default_output_spec_type(outport_name)
 
-        params = copy.deepcopy(config)
+        params = copy.deepcopy(params)
         resource = model_t.import_from_path(file.path, **params)
         return {outport_name: resource}
 
@@ -71,28 +71,26 @@ class FileExporter(Task):
         'file_store_uri': StrParam(optional=True, description="URI of the file_store where the file must be exported"),
     }
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
         file_store: LocalFileStore
-        if config.value_is_set('file_store_uri'):
-            file_store = LocalFileStore.get_by_uri_and_check(config.get('file_store_uri'))
+        if params.value_is_set('file_store_uri'):
+            file_store = LocalFileStore.get_by_uri_and_check(params.get('file_store_uri'))
         else:
             file_store = LocalFileStore.get_default_instance()
 
         inport_name = list(self.input_specs.keys())[0]
         outport_name = list(self.output_specs.keys())[0]
-        filename = config.get_value("file_name")
+        filename = params.get_value("file_name")
         file_type: Type[File] = self.get_default_output_spec_type("file")
         file: File = file_store.create_file(file_name=filename, file_type=file_type)
 
         if not os.path.exists(file.dir):
             os.makedirs(file.dir)
 
-        if "file_name" in config:
-            params = copy.deepcopy(config)
+        params = copy.deepcopy(params)
+        if "file_name" in params:
             del params["file_name"]
-        else:
-            params = config
 
         resource: Resource = inputs[inport_name]
         resource.export_to_path(file.path, **params)
@@ -116,24 +114,22 @@ class FileLoader(Task):
         StrParam(default_value="",
                  description="The output file type. If defined, it is used to automatically format data output"), }
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         outport_name = list(self.output_specs.keys())[0]
-        file_path = config.get_value("file_path")
+        file_path = params.get_value("file_path")
 
         model_t: Type[Resource] = None
-        if config.value_is_set("output_type"):
-            out_t = config.get_value("output_type")
+        if params.value_is_set("output_type"):
+            out_t = params.get_value("output_type")
             if out_t:
                 model_t = Utils.get_model_type(out_t)
 
         if not model_t:
             model_t = self.get_default_output_spec_type(outport_name)
 
-        if "file_path" in config:
-            params = copy.deepcopy(config)
+        params = copy.deepcopy(params)
+        if "file_path" in params:
             del params["file_path"]
-        else:
-            params = config
 
         resource = model_t.import_from_path(file_path, **params)
         return {outport_name: resource}
@@ -158,8 +154,8 @@ class FileDumper(Task):
         'file_format': StrParam(optional=True, description="File format"),
     }
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        file_path = config.get_value("file_path")
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        file_path = params.get_value("file_path")
         inport_name = list(self.input_specs.keys())[0]
         resource: Resource = inputs[inport_name]
 
@@ -168,10 +164,8 @@ class FileDumper(Task):
         if not os.path.exists(parent_dir):
             os.makedirs(parent_dir)
 
-        if "file_path" in config:
-            params = copy.deepcopy(config)
+        params = copy.deepcopy(params)
+        if "file_path" in params:
             del params["file_path"]
-        else:
-            params = config
 
         resource.export_to_path(file_path, **params)

@@ -502,7 +502,7 @@ class ProcessModel(Viewable):
 
     @property
     def is_updatable(self) -> bool:
-        return not self.is_archived and (self.experiment is None or self.experiment.is_validated)
+        return not self.is_archived and (self.experiment is None or not self.experiment.is_validated)
 
     def check_is_updatable(self) -> None:
         if not self.is_updatable:

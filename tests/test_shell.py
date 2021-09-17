@@ -16,11 +16,11 @@ class Echo(Shell):
     config_specs = {'name': StrParam(optional=True, description="The name to echo"), 'save_stdout': BoolParam(
         default_value=False, description="True to save the command output text. False otherwise")}
 
-    def build_command(self, config: ConfigParams, inputs: TaskInputs) -> list:
-        name = config.get_value("name")
+    def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
+        name = params.get_value("name")
         return ["echo", name]
 
-    def gather_outputs(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         res = JSONDict()
         res["out"] = self._stdout
         return {"stdout": res}

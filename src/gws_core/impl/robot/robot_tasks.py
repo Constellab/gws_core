@@ -17,7 +17,7 @@ class RobotCreate(Task):
     output_specs = {'robot': Robot}
     config_specs = {}
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print("Create", flush=True)
         robot: Robot = Robot.empty()
 
@@ -32,10 +32,10 @@ class RobotMove(Task):
     config_specs = {'moving_step': FloatParam(default_value=0.1, description="The moving step of the robot"), 'direction': StrParam(
         default_value="north", allowed_values=["north", "south", "east", "west"], description="The moving direction")}
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        print(f"Moving {config.get_value('moving_step')}", flush=True)
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        print(f"Moving {params.get_value('moving_step')}", flush=True)
         robot: Robot = inputs['robot']
-        robot.move(direction=config.get_value('direction'), moving_step=config.get_value('moving_step'))
+        robot.move(direction=params.get_value('direction'), moving_step=params.get_value('moving_step'))
         return {'robot': robot}
 
 
@@ -48,7 +48,7 @@ class RobotEat(Task):
         'food_weight': FloatParam(default_value=3.14)
     }
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         robot: Robot = inputs['robot']
 
         multiplicator: int = 1
@@ -56,8 +56,8 @@ class RobotEat(Task):
             food: RobotFood = inputs['food']
             multiplicator = food.multiplicator
 
-        print(f"Eating {config.get_value('food_weight')} with multiplicator : {multiplicator}", flush=True)
-        robot.weight += config.get_value('food_weight') * multiplicator
+        print(f"Eating {params.get_value('food_weight')} with multiplicator : {multiplicator}", flush=True)
+        robot.weight += params.get_value('food_weight') * multiplicator
         return {'robot': robot}
 
 
@@ -71,9 +71,9 @@ class RobotWait(Task):
         'waiting_time': FloatParam(default_value=0.5)
     }
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        print(f"Waiting {config.get_value('waiting_time')}", flush=True)
-        time.sleep(config.get_value('waiting_time'))
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        print(f"Waiting {params.get_value('waiting_time')}", flush=True)
+        time.sleep(params.get_value('waiting_time'))
         return {'robot': inputs['robot']}
 
 
@@ -83,9 +83,9 @@ class RobotFly(RobotMove):
     config_specs = {'moving_step': FloatParam(default_value=1000.0, unit="km"), 'direction': StrParam(
         default_value="west", allowed_values=["north", "south", "east", "west"], description="The flying direction")}
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print("Start flying ...")
-        return await super().run(config, inputs)
+        return await super().run(params, inputs)
 
 
 @task_decorator("RobotAdd")
@@ -94,7 +94,7 @@ class RobotAdd(Task):
     output_specs = {'mega_robot': MegaRobot}
     config_specs = {}
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print("Add robot addon...")
 
         robot: Robot = inputs['robot']
@@ -109,7 +109,7 @@ class RobotAddOnCreate(Task):
     output_specs = {'addon': RobotAddOn}
     config_specs = {}
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print("AddOn Create", flush=True)
         return {'addon': RobotAddOn()}
 
@@ -124,7 +124,7 @@ class RobotSugarCreate(Task):
     output_specs = {'sugar': RobotFood}
     config_specs = {}
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print("Create sugar", flush=True)
         food: RobotFood = RobotFood()
         food.multiplicator = 10
