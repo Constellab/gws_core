@@ -76,14 +76,14 @@ class BaseEnvShell(Shell):
 
     # -- T --
 
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """
         Task entrypoint
         """
 
         if not self.is_installed():
             self.install()
-        return await super().run(config=config, inputs=inputs)
+        return await super().run(params, inputs)
 
     # -- U --
 

@@ -98,7 +98,7 @@ class TaskModel(ProcessModel):
         check_result: CheckBeforeTaskResult
         try:
             check_result = task.check_before_run(
-                config=config_params, inputs=task_inputs)
+                config_params, task_inputs)
         except Exception as err:
             raise ProcessRunException.from_exception(process_model=self, exception=err,
                                                      error_prefix='Error during check before task') from err

@@ -85,7 +85,7 @@ class RobotFly(RobotMove):
 
     async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         print("Start flying ...")
-        return await super().run(config=config, inputs=inputs)
+        return await super().run(config, inputs)
 
 
 @task_decorator("RobotAdd")

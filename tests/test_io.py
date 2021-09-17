@@ -156,7 +156,7 @@ class TestPersonProtocol(Protocol):
 
 @task_decorator(unique_name="FIFO2")
 class Skippable(FIFO2):
-    async def run(self, config: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
         resource1 = inputs.get("resource_1")
         resource2 = inputs.get("resource_2")
@@ -164,7 +164,7 @@ class Skippable(FIFO2):
         if resource1 and resource2:
             raise BadRequestException('The two resources are set and it should be only one because of Skippable')
 
-        return await super().run(config=config, inputs=inputs)
+        return await super().run(params, inputs)
 
 
 @protocol_decorator("TestSkippable")
