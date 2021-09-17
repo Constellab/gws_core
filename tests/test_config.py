@@ -69,3 +69,9 @@ class TestConfig(BaseTestCase):
 
         with self.assertRaises(MissingConfigsException):
             config.get_and_check_values()
+
+    def test_param_visibility(self):
+        FloatParam(default_value=1, visibility="protected")
+        FloatParam(optional=True, visibility="private")
+        self.assertRaises(Exception, FloatParam, visibility="protected")
+        self.assertRaises(Exception, FloatParam, visibility="wrong")

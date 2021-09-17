@@ -1,12 +1,22 @@
 
 from abc import abstractmethod
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
+from typing import Any, Dict, Generic, List, Literal, Optional, Type, TypeVar
+
+from gws_core.core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 
 from ..core.classes.validator import (BoolValidator, DictValidator,
                                       FloatValidator, IntValidator,
                                       ListValidator, StrValidator, Validator)
 
 ParamSpecType = TypeVar('ParamSpecType')
+
+
+# Visibility of a param
+# Public --> main param visible in the first config section in the interface
+# Protected --> considered as advanced param, it will be in the advanced section in the interface (it must have a default value or be optional)
+# Public --> private param, it will not be visible in the interface (it must have a default value or be optional)
+ParamSpecVisibilty = Literal["public", "protected", "private"]
 
 
 class ParamSpec(Generic[ParamSpecType]):
@@ -24,6 +34,12 @@ class ParamSpec(Generic[ParamSpecType]):
     default_value: Optional[ParamSpecType]
     optional: bool
 
+    # Visibility of the param, see doc on type ParamSpecVisibilty for more info
+    visibility: ParamSpecVisibilty
+
+    # Human readable name of the param, showed in the interface
+    human_name: Optional[str]
+
     # Description of the param, showed in the interface
     description: Optional[str]
 
@@ -31,24 +47,39 @@ class ParamSpec(Generic[ParamSpecType]):
     unit: Optional[str]
 
     def __init__(self, default_value: Optional[ParamSpecType] = None, optional: bool = False,
-                 description: Optional[str] = None, unit: Optional[str] = None) -> None:
+                 visibility: ParamSpecVisibilty = 'public',
+                 human_name: Optional[str] = None, description: Optional[str] = None,
+                 unit: Optional[str] = None) -> None:
         """
         :param default_value: Default value, if None, and optional is false, the config is mandatory
                         If a value is provided there is no need to set the optional
                         Setting optional to True, allows default None value
         :param optional: See default value
         :type optional: Optional[str]
+        :param visibility: Visibility of the param, see doc on type ParamSpecVisibilty for more info
+        :type visibility: ParamSpecVisibilty
         :type default: Optional[ConfigParamType]
+        :param human_name: Human readable name of the param, showed in the interface
+        :type human_name: Optional[str]
         :param description: Description of the param, showed in the interface
         :type description: Optional[str]
         :param unit: Measure unit of the value (ex kg)
         :type unit: Optional[str]
         """
+        self._check_visibility(visibility)
+        self.visibility = visibility
+        self.human_name = human_name
         self.description = description
         self.unit = unit
 
         # the param is optional if the default value is set or optional is set to True
         self.optional = default_value is not None or optional
+
+        # If the visibility is not public, the param must have a default value
+        if self.visibility != 'public' and not self.optional:
+            raise BadRequestException(
+                f"The '{self.get_type()}' parame visibility is set to {self.visibility} but the param is mandatory. It must have a default value of be optional")
+
         self.default_value = self.validate(default_value)
 
     def get_default_value(self) -> ParamSpecType:
@@ -69,6 +100,7 @@ class ParamSpec(Generic[ParamSpecType]):
     def load_from_json(self, json_:  Dict[str, Any]) -> None:
         self.default_value = json_.get("default_value")
         self.optional = json_.get("optional")
+        self.human_name = json_.get("human_name")
         self.description = json_.get("description")
         self.unit = json_.get("unit")
 
@@ -92,6 +124,12 @@ class ParamSpec(Generic[ParamSpecType]):
 
         return self.get_validator().validate(value)
 
+    def _check_visibility(self, visibility: ParamSpecVisibilty) -> None:
+        allowed_visibility: List[ParamSpecVisibilty] = ['public', 'protected', 'private']
+        if visibility not in allowed_visibility:
+            raise BadRequestException(
+                f"The visibilty '{visibility}' of the '{self.get_type()}' is incorrect. It must be one of the following values : {str(allowed_visibility)}")
+
 
 class StrParam(ParamSpec[str]):
     """String param
@@ -101,15 +139,23 @@ class StrParam(ParamSpec[str]):
     allowed_values: Optional[List[str]]
 
     def __init__(
-            self, default_value: Optional[str] = None, optional: bool = False,
+            self, default_value: Optional[str] = None,
+            optional: bool = False,
+            visibility: ParamSpecVisibilty = 'public',
+            human_name: Optional[str] = None,
             description: Optional[str] = None,
-            allowed_values: Optional[List[str]] = None, unit: Optional[str] = None) -> None:
+            allowed_values: Optional[List[str]] = None,
+            unit: Optional[str] = None) -> None:
         """
         :param default_value: Default value, if None, and optional is false, the config is mandatory
                         If a value is provided there is no need to set the optional
                         Setting optional to True, allows default None value
         :param optional: See default value
         :type optional: Optional[str]
+        :param visibility: Visibility of the param, see doc on type ParamSpecVisibilty for more info
+        :type visibility: ParamSpecVisibilty
+        :param human_name: Human readable name of the param, showed in the interface
+        :type human_name: Optional[str]
         :param description: Description of the param, showed in the interface
         :type description: Optional[str]
         :param allowed_values: If present, the param value must be in the array
@@ -118,7 +164,8 @@ class StrParam(ParamSpec[str]):
         :type unit: Optional[str]
         """
         self.allowed_values = allowed_values
-        super().__init__(default_value=default_value, optional=optional, description=description, unit=unit)
+        super().__init__(default_value=default_value, optional=optional,
+                         visibility=visibility, human_name=human_name, description=description, unit=unit)
 
     @abstractmethod
     def get_type(self) -> Type[str]:
@@ -189,6 +236,8 @@ class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
     def __init__(
             self, default_value: Optional[ParamSpecType] = None,
             optional: bool = False,
+            visibility: ParamSpecVisibilty = 'public',
+            human_name: Optional[str] = None,
             description: Optional[str] = None,
             allowed_values: Optional[List[ParamSpecType]] = None,
             min_value: Optional[ParamSpecType] = None,
@@ -200,6 +249,10 @@ class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
                         Setting optional to True, allows default None value
         :param optional: See default value
         :type optional: Optional[str]
+        :param visibility: Visibility of the param, see doc on type ParamSpecVisibilty for more info
+        :type visibility: ParamSpecVisibilty
+        :param human_name: Human readable name of the param, showed in the interface
+        :type human_name: Optional[str]
         :param description: Description of the param, showed in the interface
         :type description: Optional[str]
         :param allowed_values: If present, the param value must be in the array
@@ -214,7 +267,8 @@ class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
         self.allowed_values = allowed_values
         self.min_value = min_value
         self.max_value = max_value
-        super().__init__(default_value=default_value, optional=optional, description=description, unit=unit)
+        super().__init__(default_value=default_value, optional=optional,
+                         visibility=visibility, human_name=human_name, description=description, unit=unit)
 
     @abstractmethod
     def get_type(self) -> Type[ParamSpecType]:
