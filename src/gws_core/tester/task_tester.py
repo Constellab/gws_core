@@ -7,8 +7,9 @@ from typing import Dict, List, Type
 
 from gws_core.config.config import Config
 from gws_core.io.io import Inputs
+from gws_core.progress_bar.progress_bar import ProgressBar
 
-from ..config.config_types import ParamValue, ConfigParams, ConfigParamsDict
+from ..config.config_types import ConfigParams, ConfigParamsDict, ParamValue
 from ..io.io_exception import MissingInputResourcesException
 from ..io.io_spec import IOSpecClass
 from ..resource.resource import Resource
@@ -55,6 +56,9 @@ class TaskTester():
         config_params: ConfigParams = self._get_and_check_config()
         inputs: TaskInputs = self._get_and_check_input()
         task: Task = self._instantiate_task()
+
+        # set the progress bar
+        task.__progress_bar__ = ProgressBar()
 
         self._outputs = await task.run(config_params, inputs)
         return self._outputs
