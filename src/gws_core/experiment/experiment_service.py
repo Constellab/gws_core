@@ -130,7 +130,7 @@ class ExperimentService(BaseService):
 
     @classmethod
     @transaction()
-    def validate_experiment(cls, uri) -> Experiment:
+    def validate_experiment(cls, uri: str, ) -> Experiment:
         experiment: Experiment = Experiment.get_by_uri_and_check(uri)
 
         user: User = CurrentUserService.get_and_check_current_user()

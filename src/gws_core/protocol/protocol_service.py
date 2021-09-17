@@ -7,6 +7,7 @@ from typing import List, Tuple, Type
 
 from gws_core.io.connector import Connector
 from gws_core.io.port import InPort, OutPort
+from gws_core.process import process_model
 from gws_core.process.process import Process
 from peewee import ModelSelect
 
@@ -104,6 +105,7 @@ class ProtocolService(BaseService):
     ########################## UPDATE PROCESS #####################
     @classmethod
     def update_protocol_graph(cls, protocol_model: ProtocolModel, graph: dict) -> ProtocolModel:
+        protocol_model.check_is_updatable()
         new_protocol: ProtocolModel = cls._update_protocol_graph_recur(
             protocol_model, graph)
 
@@ -117,7 +119,7 @@ class ProtocolService(BaseService):
             # disconnect the port to prevent connection errors later
             process.disconnect()
 
-        cls.remove_orphan_process(protocol_model=protocol_model, nodes=graph["nodes"])
+        cls._remove_orphan_process(protocol_model=protocol_model, nodes=graph["nodes"])
 
         protocol_model.build_from_graph(
             graph=graph, sub_process_factory=SubProcessBuilderUpdate())
@@ -135,20 +137,20 @@ class ProtocolService(BaseService):
         return protocol_model
 
     @classmethod
-    def remove_orphan_process(cls, protocol_model: ProtocolModel, nodes: dict) -> None:
+    def _remove_orphan_process(cls, protocol_model: ProtocolModel, nodes: dict) -> None:
         """Method to remove the removed process when saving a new protocols
 
         :param nodes: [description]
         :type nodes: Dict
         """
-        deleted_keys = []
-        for key, process in protocol_model.processes.items():
+        process_names = []
+        for name, process in protocol_model.processes.items():
             # if the process is not in the Dict or its type has changed, remove it
-            if not key in nodes or process.process_typing_name != nodes[key].get("process_typing_name"):
-                deleted_keys.append(key)
+            if not name in nodes or process.process_typing_name != nodes[name].get("process_typing_name"):
+                process_names.append(name)
 
-        for key in deleted_keys:
-            protocol_model.remove_process(key)
+        for name in process_names:
+            cls.delete_process_of_protocol(protocol_model, name)
 
     @classmethod
     @transaction()
@@ -186,6 +188,7 @@ class ProtocolService(BaseService):
     @transaction()
     def add_process_model_to_protocol(cls, protocol_model: ProtocolModel, process_model: ProcessModel,
                                       instance_name: str) -> ProcessModel:
+        protocol_model.check_is_updatable()
         protocol_model.add_process_model(instance_name=instance_name, process_model=process_model)
         # save the new process
         process_model.save_full()
@@ -198,7 +201,7 @@ class ProtocolService(BaseService):
     @classmethod
     @transaction()
     def delete_process_of_protocol(cls, protocol_model: ProtocolModel, process_instance_name: str) -> None:
-
+        protocol_model.check_is_updatable()
         process_model: ProcessModel = protocol_model.get_process(process_instance_name)
 
         # delete the process form the DB
@@ -213,6 +216,7 @@ class ProtocolService(BaseService):
     @classmethod
     def add_connectors_to_protocol(
             cls, protocol_model: ProtocolModel, connectors: List[Tuple[OutPort, InPort]]) -> ProtocolModel:
+        protocol_model.check_is_updatable()
         for connector in connectors:
             new_connector: Connector = Connector(connector[0], connector[1])
             protocol_model.add_connector(new_connector)
@@ -221,6 +225,7 @@ class ProtocolService(BaseService):
     @classmethod
     def add_connector_to_protocol(
             cls, protocol_model: ProtocolModel, out_port: OutPort, in_port: InPort) -> ProtocolModel:
+        protocol_model.check_is_updatable()
         connector: Connector = Connector(out_port, in_port)
         protocol_model.add_connector(connector)
         return protocol_model.save(update_graph=True)
@@ -229,22 +234,26 @@ class ProtocolService(BaseService):
     @classmethod
     def add_interface_to_protocol(
             cls, protocol_model: ProtocolModel, name: str, in_port: InPort) -> ProtocolModel:
+        protocol_model.check_is_updatable()
         protocol_model.add_interface(name, in_port)
         return protocol_model.save(update_graph=True)
 
     @classmethod
     def add_outerface_to_protocol(
             cls, protocol_model: ProtocolModel, name: str, out_port: OutPort) -> ProtocolModel:
+        protocol_model.check_is_updatable()
         protocol_model.add_outerface(name, out_port)
         return protocol_model.save(update_graph=True)
 
     @classmethod
     def delete_interface_on_protocol(cls, protocol_model: ProtocolModel, interface_name: str) -> None:
+        protocol_model.check_is_updatable()
         protocol_model.remove_interface(interface_name)
         protocol_model.save(update_graph=True)
 
     @classmethod
     def delete_outerface_on_protocol(cls, protocol_model: ProtocolModel, outerface_name: str) -> None:
+        protocol_model.check_is_updatable()
         protocol_model.remove_outerface(outerface_name)
         protocol_model.save(update_graph=True)
 

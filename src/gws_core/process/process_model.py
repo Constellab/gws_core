@@ -504,6 +504,10 @@ class ProcessModel(Viewable):
     def is_updatable(self) -> bool:
         return not self.is_archived and (self.experiment is None or self.experiment.is_validated)
 
+    def check_is_updatable(self) -> None:
+        if not self.is_updatable:
+            raise BadRequestException("The protocol can't be modified")
+
     @property
     def is_error(self) -> bool:
         return self.status == ProcessStatus.ERROR

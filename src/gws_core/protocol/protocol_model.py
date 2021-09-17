@@ -273,10 +273,6 @@ class ProtocolModel(ProcessModel):
         # be sure to have loaded the protocol before adding a process
         self._load_from_graph()
 
-        # Perform checks on process
-        if not self.is_updatable:
-            raise BadRequestException("The protocol has already been run")
-
         self._add_process_model(instance_name=instance_name, process_model=process_model)
 
     def _add_process_model(self, instance_name: str, process_model: ProcessModel) -> None:
@@ -375,8 +371,6 @@ class ProtocolModel(ProcessModel):
         :param connector: The connector
         :type connector: Connector
         """
-        if not self.is_updatable:
-            raise BadRequestException("The protocol has already been run")
 
         # check the ports of the connector
         self._check_port(connector.in_port)
