@@ -11,7 +11,6 @@ from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..io.connector import Connector
 from ..io.io import Inputs, Outputs
-from ..io.io_spec import IOSpecClass
 from ..io.ioface import Interface, Outerface
 from ..io.port import InPort, OutPort, Port
 from ..model.typing_register_decorator import typing_registrator
@@ -131,15 +130,6 @@ class ProtocolModel(ProcessModel):
 
     def set_protocol_type(self, protocol_type: Type[Protocol]) -> None:
         self.process_typing_name = protocol_type._typing_name
-
-    # TODO to refactor
-    def delete_process(self, instance_name: str) -> None:
-        if not instance_name in self.processes:
-            raise BadRequestException(
-                f"The process with instance_name {instance_name} does not exist ")
-
-        self.processes[instance_name].delete_instance()
-        del self.processes[instance_name]
 
     @transaction()
     def delete_instance(self, *args, **kwargs):
@@ -342,11 +332,18 @@ class ProtocolModel(ProcessModel):
         :rtype": Process
         """
 
-        if name not in self.processes:
-            raise BadRequestException(
-                f"The protocol '{self.get_instance_name_context()}' does not have a process named '{name}'")
-
+        self._check_instance_name(name)
         return self.processes[name]
+
+    def remove_process(self, name: str) -> None:
+        self._check_instance_name(name)
+        self._delete_connectors_by_process(self.processes[name])
+        del self._processes[name]
+
+    def _check_instance_name(self, instance_name: str) -> None:
+        if instance_name not in self.processes:
+            raise BadRequestException(
+                f"The protocol '{self.get_instance_name_context()}' does not have a process named '{instance_name}'")
 
     ############################### CONNECTORS #################################
 
@@ -437,7 +434,24 @@ class ProtocolModel(ProcessModel):
                                              in_port=rhs_proc.in_port(rhs_port_name), check_compatiblity=True)
             self._add_connector(connector)
 
+    def _get_connectors_liked_to_process(self, process_model: ProcessModel) -> List[Connector]:
+        """return the list of connectors connected to a process (input or output)
+        """
+        connectors: List[Connector] = []
+
+        for connector in self.connectors:
+            if connector.is_connected_to(process_model):
+                connectors.append(connector)
+
+        return connectors
+
+    def _delete_connectors_by_process(self, process_model: ProcessModel) -> None:
+        """remove all the connectors connected to a process (input or output)
+        """
+        self._connectors = [item for item in self.connectors if not item.is_connected_to(process_model)]
+
     ############################### INPUTS #################################
+
     @property
     def inputs(self) -> 'Inputs':
         """
@@ -535,6 +549,16 @@ class ProtocolModel(ProcessModel):
             interface.reset()
         for outerface in self.outerfaces.values():
             outerface.reset()
+
+    def remove_interface(self, name: str) -> None:
+        if not name in self.interfaces:
+            raise BadRequestException(
+                f"The protocol '{self.get_instance_name_context()}' does not have an interface named '{name}'")
+
+        del self._interfaces[name]
+
+        # delete the corresponding input's port
+        self.inputs.remove_port(name)
     ############################### OUTERFACE #################################
 
     @property
@@ -595,6 +619,16 @@ class ProtocolModel(ProcessModel):
             port: OutPort = proc.outputs.ports[port_name]
             outerfaces[key] = port
         self.add_outerfaces(outerfaces)
+
+    def remove_outerface(self, name: str) -> None:
+        if not name in self._outerfaces:
+            raise BadRequestException(
+                f"The protocol '{self.get_instance_name_context()}' does not have an outerface named '{name}'")
+
+        del self._outerfaces[name]
+
+        # delete the corresponding output
+        self.outputs.remove_port(name)
 
     ############################### JSON #################################
 

@@ -6,12 +6,11 @@
 from inspect import isclass
 from typing import Type
 
-from ..study.study import Study
-
 from ..experiment.experiment_dto import ExperimentDTO
 from ..process.process import Process
 from ..protocol.protocol import Protocol
 from ..protocol.protocol_interface import IProtocol
+from ..study.study import Study
 from ..task.task import Task
 from .experiment import Experiment
 from .experiment_service import ExperimentService
@@ -63,7 +62,7 @@ class IExperiment:
                     protocol_type=process_type, title=title, description=description)
 
         # Init the IProtocol
-        self._protocol = IProtocol(self._experiment.protocol_model, None)
+        self._protocol = IProtocol(self._experiment.protocol_model)
 
     def get_protocol(self) -> IProtocol:
         """retrieve the main protocol of the experiment

@@ -33,7 +33,7 @@ class ProtocolService(BaseService):
 
     @classmethod
     def get_protocol_by_uri(cls, uri: str) -> ProtocolModel:
-        return ProtocolModel.get_by_uri(uri)
+        return ProtocolModel.get_by_uri_and_check(uri)
 
     @classmethod
     def fetch_protocol_list(cls,
@@ -148,7 +148,7 @@ class ProtocolService(BaseService):
                 deleted_keys.append(key)
 
         for key in deleted_keys:
-            protocol_model.delete_process(key)
+            protocol_model.remove_process(key)
 
     @classmethod
     @transaction()
@@ -195,9 +195,18 @@ class ProtocolService(BaseService):
 
         return process_model
 
-    # @classmethod
-    # @transaction()
-    # def delete_sub_process
+    @classmethod
+    @transaction()
+    def delete_process_of_protocol(cls, protocol_model: ProtocolModel, process_instance_name: str) -> None:
+
+        process_model: ProcessModel = protocol_model.get_process(process_instance_name)
+
+        # delete the process form the DB
+        process_model.delete_instance()
+
+        # delete the process from the parent protocol
+        protocol_model.remove_process(process_instance_name)
+        protocol_model.save(update_graph=True)
 
     ########################## CONNECTORS #####################
 
@@ -216,7 +225,7 @@ class ProtocolService(BaseService):
         protocol_model.add_connector(connector)
         return protocol_model.save(update_graph=True)
 
-    ########################## ADD INTERFACE OUTERFACE #####################
+    ########################## INTERFACE & OUTERFACE #####################
     @classmethod
     def add_interface_to_protocol(
             cls, protocol_model: ProtocolModel, name: str, in_port: InPort) -> ProtocolModel:
@@ -228,6 +237,16 @@ class ProtocolService(BaseService):
             cls, protocol_model: ProtocolModel, name: str, out_port: OutPort) -> ProtocolModel:
         protocol_model.add_outerface(name, out_port)
         return protocol_model.save(update_graph=True)
+
+    @classmethod
+    def delete_interface_on_protocol(cls, protocol_model: ProtocolModel, interface_name: str) -> None:
+        protocol_model.remove_interface(interface_name)
+        protocol_model.save(update_graph=True)
+
+    @classmethod
+    def delete_outerface_on_protocol(cls, protocol_model: ProtocolModel, outerface_name: str) -> None:
+        protocol_model.remove_outerface(outerface_name)
+        protocol_model.save(update_graph=True)
 
     ############################# PROTOCOL TYPE ###########################
 

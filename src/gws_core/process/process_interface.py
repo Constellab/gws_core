@@ -21,11 +21,27 @@ if TYPE_CHECKING:
 class IProcess:
 
     _process_model: ProcessModel
-    _parent_protocol: Optional[IProtocol]
 
-    def __init__(self, process_model: ProcessModel, parent_protocol: Optional[IProtocol]) -> None:
+    def __init__(self, process_model: ProcessModel) -> None:
         self._process_model = process_model
-        self._parent_protocol = parent_protocol
+
+    @property
+    def instance_name(self) -> str:
+        return self._process_model.instance_name
+
+    @property
+    def parent_protocol(self) -> Optional[IProtocol]:
+        """return the parent protocol of this process.
+        If this is the main protocol (the one linked to the experiment), it returns None
+        """
+        from ..protocol.protocol_interface import IProtocol
+
+        if self._process_model.parent_protocol is None:
+            raise Exception(f"The process '{self.instance_name}' does not have a parent protocol")
+
+        return IProtocol(self._process_model.parent_protocol)
+
+    ############################################### CONFIG #########################################
 
     def set_param(self, param_name: str, value: ParamValue) -> None:
         """Set the param value
@@ -42,6 +58,11 @@ class IProcess:
 
     def get_config_params(self) -> ConfigParams:
         return self._process_model.config.get_and_check_values()
+
+    def reset_config(self) -> None:
+        self.set_config_params({})
+
+    ############################################### INPUTS & OUTPUTS #########################################
 
     def set_input(self, name: str, resource: Resource) -> None:
         """Set the resource of an input. If you want to manually set the input resource of a process
@@ -74,16 +95,7 @@ class IProcess:
         """
         return self._process_model.outputs.get_resource_model(name).get_resource()
 
-    @property
-    def instance_name(self) -> str:
-        return self._process_model.instance_name
-
-    @property
-    def parent_protocol(self) -> Optional[IProtocol]:
-        """return the parent protocol of this process.
-        If this is the main protocol (the one linked to the experiment), it returns None
-        """
-        return self._parent_protocol
+    ############################################### PORTS #########################################
 
     def __lshift__(self, name: str) -> InPort:
         return self._process_model.in_port(name)
