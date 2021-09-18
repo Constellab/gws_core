@@ -130,10 +130,11 @@ class KVStore(Dict[str, Any]):
             :type dump_func: `Callable`
         """
 
-        if inspect.isfunction(dump_func):
+        if dump_func is not None:
+            if not inspect.isfunction(dump_func):
+                raise BadRequestException("The dump_func must be a callable")
             if not os.path.exists(self.full_file_dir):
                 os.makedirs(self.full_file_dir)
-
             path = os.path.join(self.full_file_dir, key+'.dump')
             dump_func(obj, path, *args, **kwargs)
             self[key] = path
@@ -160,7 +161,9 @@ class KVStore(Dict[str, Any]):
             :rtype: `any`
         """
 
-        if inspect.isfunction(load_func):
+        if load_func is not None:
+            if not inspect.isfunction(load_func):
+                raise BadRequestException("The dump_func must be a callable")
             path = self[key]
             data = load_func(path, *args, **kwargs)
             return data
