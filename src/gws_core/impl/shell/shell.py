@@ -6,6 +6,7 @@
 import os
 import subprocess
 import tempfile
+import time
 from abc import abstractmethod
 from typing import Union
 
@@ -85,7 +86,7 @@ class Shell(Task):
 
         pass
 
-    def on_stdout_change(self, stdout_count: int = 0, stdout_line: str = "") -> tuple:
+    def _on_stdout_change(self, stdout_count: int = 0, stdout_line: str = "") -> tuple:
         """
         This methods is triggered each time the stdout of the shell subtask has changed.
 
@@ -165,14 +166,28 @@ class Shell(Task):
             )
 
             count = 0
-            for line in iter(proc.stdout.readline, b''):
-                line = line.decode().strip()
-                self.add_progress_message(line)
-                if not proc.is_alive():
-                    break
+            tic_a = time.perf_counter()
+            lines = []
+            with open(os.path.join(self.working_dir, "task.log"), "w", encoding="utf-8") as fp:
+                for line in iter(proc.stdout.readline, b''):
+                    count += 1
+                    line = line.decode().strip()
+                    tic_b = time.perf_counter()
+                    lines.append(line)
+                    if tic_b - tic_a >= 1:      # save outputs every N sec in taskbar
+                        self.add_progress_message(f"STDOUT {count}: " + line)
+                        self._on_stdout_change(stdout_count=count, stdout_line=line)
+                        fp.writelines(lines)
+                        lines = []
+                        tic_a = time.perf_counter()
+                    if not proc.is_alive():
+                        break
 
-                self.on_stdout_change(stdout_count=count, stdout_line=line)
-                count += 1
+                if lines:
+                    self.add_progress_message(f"STDOUT {count}: " + line)
+                    self._on_stdout_change(stdout_count=count, stdout_line=line)
+                    fp.writelines(lines)
+
             outputs = self.gather_outputs(params, inputs)
             self.cwd.cleanup()
             self._tmp_dir = None

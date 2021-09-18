@@ -5,11 +5,12 @@
 
 import os
 import shutil
+import inspect
 from operator import le
 from shelve import DbfilenameShelf
 from shelve import open as shelve_open
 from time import time
-from typing import Any, Dict
+from typing import Any, Dict, Callable
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.utils.settings import Settings
@@ -108,6 +109,63 @@ class KVStore(Dict[str, Any]):
         os.remove(self.full_file_dir)
 
     # -- S --
+
+    def dump(self, key, obj: Any, dump_func: Callable=None, *args, **kwargs):
+        """ 
+            Serialize and dump any object in the store 
+
+            * If `dump_func` is `None`, it is serialized and dumped using python `Pickle` functionalities.
+            * If `dump_func` is callable, it is used to dump the `obj`.
+              In this case, the `dump_func` function must be `dump_func(obj, path, *args, **kwargs)`
+              The `args` and `kwargs` parmeters are passed to the `dump_func`
+              For exemple:
+              -----------
+              For complex object dumps, the `gws_core.Utils.Serializer.dump()` method could be used.
+
+            :param key: The key in the store
+            :type param: `str`
+            :param obj: The object to dump in the store
+            :type obj: `any`
+            :param dump_func: The user function to use to serialize the object
+            :type dump_func: `Callable`
+        """
+
+        if inspect.isfunction(dump_func):
+            if not os.path.exists(self.full_file_dir):
+                os.makedirs(self.full_file_dir)
+
+            path = os.path.join(self.full_file_dir, key+'.dump')
+            dump_func(obj, path, *args, **kwargs)
+            self[key] = path
+        else:
+            self[key] = obj
+
+    def load(self, key, load_func: Callable=None, *args, **kwargs) -> Any:
+        """ 
+            Seserialize and load any object in the store
+
+            * If `load_func` is `None`, it is deserialized and loaded using python `Pickle` functionalities.
+            * If `load_func` is callable, it is used to load the `obj`.
+              In this case, the `load_func` function must have be `obj = load_func(path: str, *args, **kwargs)`
+              The `args` and `kwargs` parmeters are passed to the `load_func`
+              For exemple:
+              -----------
+              For complex object loading, the `gws_core.Utils.Serializer.load()` method could be used.
+
+            :param key: The key in the store
+            :type param: `str`
+            :param load_func: The user function to use to deserialize the object
+            :type load_func: `Callable`
+            :return: The loaded object
+            :rtype: `any`
+        """
+
+        if inspect.isfunction(load_func):
+            path = self[key]
+            data = load_func(path, *args, **kwargs)
+            return data
+        else:
+            return self[key]
 
     def __setitem__(self, key, value):
         """
