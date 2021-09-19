@@ -55,6 +55,10 @@ class BaseTestCase(IsolatedAsyncioTestCase):
         QueueService.deinit()
         GTest.drop_tables()
 
+    @classmethod
+    def print(cls, text):
+        GTest.print(text)
+        
     def assert_json(self, json_1: Union[dict, list], json_2: Union[dict, list], ignore_keys: List[str] = None) -> None:
         """Assert a json with possibility to ignore key
         """
