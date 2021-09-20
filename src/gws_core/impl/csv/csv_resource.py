@@ -15,14 +15,14 @@ from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from .data_frame_r_field import DataFrameRField
 
+
 @resource_decorator("CSVTable")
 class CSVTable(Resource):
 
-    table: DataFrame  = DataFrameRField()
-
+    table: DataFrame = DataFrameRField()
 
     def set_table(self, table: Union[DataFrame, np.ndarray] = None,
-                 column_names=None, row_names=None) -> 'CSVTable':
+                  column_names=None, row_names=None) -> 'CSVTable':
         if table is None:
             table = DataFrame()
         else:
@@ -39,7 +39,7 @@ class CSVTable(Resource):
                 raise BadRequestException(
                     "The table must be an instance of DataFrame or Numpy array")
 
-        self.binary_store["table"] = table
+        self.table = table
         return self
 
     # -- C --
@@ -97,7 +97,7 @@ class CSVTable(Resource):
     def from_dict(cls, table: dict, orient='index', dtype=None, columns=None) -> 'CSVTable':
         dataframe = DataFrame.from_dict(table, orient, dtype, columns)
         res = cls()
-        res.binary_store["table"] = dataframe
+        res.set_table(dataframe)
         return res
 
     # -- G --
