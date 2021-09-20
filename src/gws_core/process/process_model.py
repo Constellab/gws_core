@@ -315,6 +315,10 @@ class ProcessModel(Viewable):
             await self._run()
         # Catch all exception and wrap them into a ProcessRunException to provide process info
         except ProcessRunException as err:
+            # if the process is already finished, just raise the exception
+            if self.is_finished:
+                raise err
+
             # When catching an error from a child process
             self.mark_as_error(
                 {
@@ -511,6 +515,10 @@ class ProcessModel(Viewable):
     @property
     def is_error(self) -> bool:
         return self.status == ProcessStatus.ERROR
+
+    @property
+    def is_success(self) -> bool:
+        return self.status == ProcessStatus.SUCCESS
 
     @property
     def is_ready(self) -> bool:

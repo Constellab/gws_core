@@ -6,17 +6,22 @@
 
 from gws_core import (BaseTestCase, CheckBeforeTaskResult, ConfigParams,
                       Experiment, ExperimentService, GTest, ProcessFactory,
-                      ProcessModel, ProcessSpec, Protocol,
-                      ProtocolModel, ProtocolService, Resource, RobotMove,
-                      Task, TaskInputs, TaskOutputs, protocol_decorator,
-                      resource_decorator, task_decorator)
+                      ProcessModel, ProcessSpec, Protocol, ProtocolModel,
+                      ProtocolService, Resource, RobotMove, Task, TaskInputs,
+                      TaskOutputs, protocol_decorator, resource_decorator,
+                      task_decorator)
 from gws_core.experiment.experiment_exception import ExperimentRunException
+from gws_core.impl.robot.robot_resource import Robot
+from gws_core.impl.robot.robot_tasks import RobotCreate
+from gws_core.io.io_spec import InputSpecs
 from gws_core.protocol.protocol_exception import ProtocolBuildException
 
 
 #################### Error during the task ################
 @task_decorator("ErrorTask")
 class ErrorTask(Task):
+    input_specs: InputSpecs = {'robot': Robot}
+
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         raise Exception("This is the error task")
 
@@ -24,7 +29,10 @@ class ErrorTask(Task):
 @protocol_decorator("TestSubErrorProtocol")
 class TestSubErrorProtocol(Protocol):
     def configure_protocol(self, config_params: ConfigParams) -> None:
-        self.add_process(ErrorTask, 'error')
+        create: ProcessSpec = self.add_process(RobotCreate, 'create')
+        error: ProcessSpec = self.add_process(ErrorTask, 'error')
+
+        self.add_connector(create >> 'robot', error << 'robot')
 
 
 @protocol_decorator("TestErrorProtocol")
@@ -81,7 +89,7 @@ class TestSubProtocolBuildError(Protocol):
 @protocol_decorator("TestNestedProtocol")
 class TestProtocolBuildError(Protocol):
     def configure_protocol(self, config_params: ConfigParams) -> None:
-        sub_proto: ProcessSpec = self.add_process(TestSubProtocolBuildError, 'sub_proto')
+        self.add_process(TestSubProtocolBuildError, 'sub_proto')
 
 
 class TestProtocolError(BaseTestCase):
@@ -103,7 +111,6 @@ class TestProtocolError(BaseTestCase):
         else:
             self.fail('Run experiment shoud have raise ExperimentRunException ')
 
-        print(exception)
         # Check that experiment is in error status
         experiment = ExperimentService.get_experiment_by_uri(experiment.uri)
         self.assertTrue(experiment.is_error)
@@ -129,12 +136,16 @@ class TestProtocolError(BaseTestCase):
         self.assertEqual(sub_protocol.error_info['instance_id'], exception.instance_id)
         self.assertEqual(sub_protocol.error_info['unique_code'], exception.unique_code)
 
+        # Check that the create process endup in sucess
+        create_process: ProcessModel = sub_protocol.get_process('create')
+        self.assertTrue(create_process.is_success)
+
         # Check that process is in error status
-        sub_process: ProcessModel = sub_protocol.get_process('error')
-        self.assertTrue(sub_process.is_error)
-        self.assertIsNotNone(sub_process.error_info)
-        self.assertEqual(sub_process.error_info['instance_id'], exception.instance_id)
-        self.assertEqual(sub_process.error_info['unique_code'], exception.unique_code)
+        error_process: ProcessModel = sub_protocol.get_process('error')
+        self.assertTrue(error_process.is_error)
+        self.assertIsNotNone(error_process.error_info)
+        self.assertEqual(error_process.error_info['instance_id'], exception.instance_id)
+        self.assertEqual(error_process.error_info['unique_code'], exception.unique_code)
 
     async def test_error_on_before_check(self):
         protocol: ProtocolModel = ProtocolService.create_protocol_model_from_type(CheckBeforeTaskErrorProtocol)
@@ -171,5 +182,3 @@ class TestProtocolError(BaseTestCase):
             exception = err
         else:
             self.fail('Run experiment shoud have raise ProtocolBuildException ')
-
-        print(exception)
