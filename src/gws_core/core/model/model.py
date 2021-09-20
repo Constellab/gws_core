@@ -8,7 +8,7 @@ import hashlib
 import json
 import uuid
 from datetime import datetime
-from typing import List, Type
+from typing import Any, Dict, List, Type
 
 from fastapi.encoders import jsonable_encoder
 from peewee import (AutoField, BigAutoField, BlobField, BooleanField,
@@ -69,7 +69,7 @@ class Model(Base, PeeweeModel):
     save_datetime = DateTimeField(index=True)
     is_archived = BooleanField(default=False, index=True)
     hash = CharField(null=True)
-    data = JSONField(null=True)
+    data: Dict[str, Any] = JSONField(null=True)
 
     LAB_URI = None  # todo remove
 

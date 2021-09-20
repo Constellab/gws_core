@@ -5,29 +5,16 @@
 
 import json
 from typing import Any
-from copy import deepcopy
 
-from ...core.model.model import Model
-from ...resource.resource import Resource, SerializedResourceData
+from ...resource.r_field import DictRField
+from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
+
 
 @resource_decorator("JSONDict")
 class JSONDict(Resource):
 
-    data: dict = None
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.data is None:
-            self.data = {}
-
-    def serialize_data(self) -> SerializedResourceData:
-        return self.data
-
-    def deserialize_data(self, data: SerializedResourceData) -> None:
-        self.data = deepcopy(data)
-
-    # -- E --
+    data: dict = DictRField()
 
     def export_to_path(self, file_path: str, file_format: str = ".json", prettify: bool = False):
         """

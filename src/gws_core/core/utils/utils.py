@@ -9,7 +9,7 @@ import random
 import re
 import string
 import uuid
-from typing import Any, List, Type
+from typing import Any, Dict, List, Tuple, Type
 
 from slugify import slugify as _slugify
 
@@ -186,3 +186,19 @@ class Utils:
     @classmethod
     def generate_uuid(cls) -> str:
         return str(uuid.uuid4())
+
+    @classmethod
+    def get_property_names_with_type(cls, class_type: type, type_: type) -> Dict[str, Any]:
+        properties: Dict[str, Any] = {}
+        member_list: List[Tuple[str, Any]] = inspect.getmembers(class_type)
+
+        for member in member_list:
+            member_value = member[1]
+            if not inspect.isfunction(member_value) and \
+                not inspect.ismethod(member_value) and \
+                not inspect.isclass(member_value) and \
+                    isinstance(member_value, type_):
+
+                properties[member[0]] = member[1]
+
+        return properties

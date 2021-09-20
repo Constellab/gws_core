@@ -2,11 +2,23 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-
+from typing import List
 
 from gws_core import (BaseTestCase, Experiment, ExperimentService, GTest,
                       ProcessFactory, ResourceModel, Robot, RobotCreate,
                       TaskModel)
+from gws_core.resource.r_field import IntRField, ListRField
+from gws_core.resource.resource import Resource
+from gws_core.resource.resource_decorator import resource_decorator
+
+
+@resource_decorator(unique_name="TestResourceFields")
+class TestResourceFields(Resource):
+
+    age: int = IntRField()
+    position: List[float] = ListRField()
+
+    weight: int = IntRField()
 
 
 class TestResource(BaseTestCase):
@@ -33,3 +45,22 @@ class TestResource(BaseTestCase):
 
         # Check the to_json
         resource_model.to_json(deep=True)
+
+    def test_2(self):
+        resource = TestResourceFields()
+        resource.position = [5, 2]
+        resource.age = 12
+        resource.weight = None
+
+        resource_model: ResourceModel = ResourceModel.from_resource(resource)
+
+        self.assertEqual(len(resource_model.data), 2)
+        self.assertIsNotNone(resource_model.kv_store_path)
+
+        # generate the resource from the resource model and check its values
+        new_resource: TestResourceFields = resource_model.get_resource(new_instance=True)
+
+        self.assertEqual(new_resource.age, 12)
+        self.assertIsNone(new_resource.weight)
+        self.assertEqual(new_resource.position[0], 5)
+        self.assertEqual(new_resource.position[1], 2)

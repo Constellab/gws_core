@@ -11,30 +11,15 @@ import pandas
 from pandas import DataFrame
 
 from ...core.exception.exceptions import BadRequestException
-from ...resource.resource import Resource, SerializedResourceData
+from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
+from .data_frame_r_field import DataFrameRField
 
 @resource_decorator("CSVTable")
 class CSVTable(Resource):
 
-    #table: DataFrame = None
+    table: DataFrame  = DataFrameRField()
 
-    # def __init__(self, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
-    #     if self.table is None:
-    #         self.table = DataFrame()
-
-    # def serialize_data(self) -> SerializedResourceData:
-    #     return self.table.to_dict()
-
-    # def deserialize_data(self, data: SerializedResourceData) -> None:
-    #     self.set_data(DataFrame.from_dict(data=data))
-
-    @property
-    def table(self) -> DataFrame:
-        if "table" not in self.binary_store:
-            self.binary_store["table"] = DataFrame()
-        return self.binary_store["table"]
 
     def set_table(self, table: Union[DataFrame, np.ndarray] = None,
                  column_names=None, row_names=None) -> 'CSVTable':
@@ -84,9 +69,8 @@ class CSVTable(Resource):
 
     # -- E --
 
-    def export_to_path(
-            self, file_path: str, delimiter: str = "\t", header: bool = True, index: bool = True, file_format: str = None, **
-            kwargs):
+    def export_to_path(self, file_path: str, delimiter: str = "\t", header: bool = True, index: bool = True,
+                       file_format: str = None, **kwargs):
         """
         Export to a repository
 
@@ -142,7 +126,7 @@ class CSVTable(Resource):
 
     @classmethod
     def import_from_path(cls, file_path: str, delimiter: str = "\t", header=0, index_col=None, file_format: str = None, **
-                        kwargs) -> 'CSVTable':
+                         kwargs) -> 'CSVTable':
         """
         Import from a repository
 

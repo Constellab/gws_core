@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List, Type
 
+from gws_core.core.utils.utils import Utils
+from gws_core.resource.r_field import RField
+
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.base import Base
@@ -14,65 +17,27 @@ if TYPE_CHECKING:
 # Typing names generated for the class resource
 CONST_RESOURCE_TYPING_NAME = "RESOURCE.gws_core.Resource"
 
-# Format of the serialized data of a resource to save data in the DB
-SerializedResourceData = Dict
-
 
 @typing_registrator(unique_name="Resource", object_type="RESOURCE")
 class Resource(Base):
-
-    # To store big data. This will be store in a file on the server. It will not be searchable
-    binary_store: KVStore
 
     # Provided at the Class level automatically by the @ResourceDecorator
     # //!\\ Do not modify theses values
     _typing_name: str = None
     _human_name: str = None
     _short_description: str = None
-    _serializable_fields: List[str] = None
     _model_uri: str = None
 
-    def __init__(self, binary_store: KVStore = None):
+    def __init__(self):
         # check that the class level property _typing_name is set
         if self._typing_name == CONST_RESOURCE_TYPING_NAME and type(self) != Resource:  # pylint: disable=unidiomatic-typecheck
             raise BadRequestException(
                 f"The resource {self.full_classname()} is not decorated with @ResourceDecorator, it can't be instantiate. Please decorate the resource class with @ResourceDecorator")
 
-        if binary_store is None:
-            self.binary_store = KVStore.empty()
-        else:
-            self.binary_store = binary_store
-
-    def serialize_data(self) -> SerializedResourceData:
-        """Method to override to serialize the resource to save it
-
-        Return small data of the resource store in the database. This dictionnary must not be to big/
-        Information in the light data will be searchable  with a full text search
-
-        :return: [description]
-        :rtype: ResourceSerialized
-        """
-        serialized_data: SerializedResourceData = {}
-        # Automatic serialization using the serialization_fields of the @resource_decorator
-        if self._serializable_fields and isinstance(self._serializable_fields, list):
-            for field in self._serializable_fields:
-                serialized_data[field] = getattr(self, field, None)
-
-        return serialized_data
-
-    def deserialize_data(self, data: SerializedResourceData) -> None:
-        """Method call after resource creation to init resource data
-
-        Small data of the resource store in the database. This dictionnary must not be to big/
-        Information in the light data will be searchable  with a full text search
-
-        :param data: [description]
-        :type data: SerializedResourceData
-        """
-        # Automatic deserialization using the serialization_fields of the @resource_decorator
-        if self._serializable_fields and isinstance(self._serializable_fields, list):
-            for field in self._serializable_fields:
-                setattr(self, field, data.get(field, None))
+        # Init default values of RFields
+        properties: Dict[str, RField] = Utils.get_property_names_with_type(type(self), RField)
+        for key, r_field in properties.items():
+            setattr(self, key, r_field.default_value)
 
     def export_to_path(self, file_path: str, file_format: str = None):
         """
@@ -108,7 +73,15 @@ class Resource(Base):
         # @ToDo: ensure that this method is only called by an Importer
 
     def to_json(self) -> Dict:
-        return self.serialize_data()
+        """By default the to_json dumps all the RFields values
+        """
+        properties: Dict[str, RField] = Utils.get_property_names_with_type(type(self), RField)
+
+        json_: dict = {}
+        for key, r_field in properties.items():
+            json_[key] = r_field.dump(getattr(self, key))
+
+        return json_
 
     # -- T --
 

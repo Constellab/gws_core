@@ -6,9 +6,12 @@
 from __future__ import annotations
 
 import copy
-from typing import TYPE_CHECKING, Generic, Optional, Type, TypeVar, final
+from typing import (TYPE_CHECKING, Any, Dict, Generic, Optional, Type, TypeVar,
+                    final)
 
-from peewee import CharField, ModelSelect
+from gws_core.core.utils.utils import Utils
+from gws_core.resource.r_field import RField
+from peewee import CharField
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -16,7 +19,7 @@ from ..model.typing_manager import TypingManager
 from ..model.typing_register_decorator import typing_registrator
 from ..model.viewable import Viewable
 from ..resource.kv_store import KVStore
-from ..resource.resource import Resource, SerializedResourceData
+from ..resource.resource import Resource
 from .experiment_resource import ExperimentResource
 from .task_resource import TaskResource
 
@@ -57,7 +60,7 @@ class ResourceModel(Viewable, Generic[ResourceType]):
             raise BadRequestException(
                 f"The resource model {self.full_classname()} is not decorated with @TypingDecorator, it can't be instantiate. Please decorate the class with @TypingDecorator")
 
-    # -- E --
+    ########################################## MODEL METHODS ######################################
 
     @property
     def experiment(self):
@@ -137,71 +140,6 @@ class ResourceModel(Viewable, Generic[ResourceType]):
     def typing_name(self) -> str:
         return self._typing_name
 
-    # -- R --
-    @final
-    def get_resource(self, new_instance: bool = False) -> ResourceType:
-        """
-        Returns the resource created from the data and resource_typing_name
-        if new_instance, it forces to rebuild the resource
-        """
-
-        if new_instance:
-            return self._instantiate_resource(new_instance=new_instance)
-
-        if self._resource is None:
-            self._resource = self._instantiate_resource(new_instance=new_instance)
-
-        return self._resource
-
-    @final
-    def get_kv_store(self) -> Optional[KVStore]:
-        if not self.kv_store_path:
-            return None
-
-        # Create the KVStore from the path
-        kv_store: KVStore = KVStore(self.kv_store_path)
-
-        # Lock the kvstore so the file can't be updated
-        kv_store.lock(KVStore.get_full_file_path(file_name=self.uri, with_extension=False))
-        return kv_store
-
-    @final
-    def get_kv_store_with_default(self) -> KVStore:
-        """Get the KVStore and create an empty one if it doesn't exist
-
-        :return: [description]
-        :rtype: KVStore
-        """
-        kv_store: Optional[KVStore] = self.get_kv_store()
-        if kv_store:
-            return kv_store
-        # if there is a default kv store to return
-        return KVStore.from_filename(self.uri)
-
-    def _instantiate_resource(self, new_instance: bool = False) -> ResourceType:
-        """
-        Create the Resource object from the resource_typing_name
-        """
-        resource_type: Type[ResourceType] = TypingManager.get_type_from_name(self.resource_typing_name)
-        resource: ResourceType = resource_type(binary_store=self.get_kv_store_with_default())
-        # Pass the model uri to the resource
-        resource._model_uri = self.uri
-
-        self.send_fields_to_resource(resource, new_instance)  # synchronize the resource fields with the model fields
-        return resource
-
-    def send_fields_to_resource(self, resource: Resource, new_instance: bool):
-        data: dict
-        if new_instance:
-            data = copy.deepcopy(self.data)
-        else:
-            data = self.data
-        resource.deserialize_data(data)
-
-    def receive_fields_from_resource(self, resource):
-        serialized_data: SerializedResourceData = self._serialize_resource_data(resource)
-        self.data = serialized_data
-
     def delete_instance(self, *args, **kwargs):
         kv_store: Optional[KVStore] = self.get_kv_store()
         if kv_store:
@@ -221,8 +159,36 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         TaskResource.drop_table()
         ExperimentResource.drop_table()
 
+    ########################################## RESOURCE ######################################
+    @final
+    def get_resource(self, new_instance: bool = False) -> ResourceType:
+        """
+        Returns the resource created from the data and resource_typing_name
+        if new_instance, it forces to rebuild the resource
+        """
+
+        if new_instance:
+            return self._instantiate_resource()
+
+        if self._resource is None:
+            self._resource = self._instantiate_resource()
+
+        return self._resource
+
+    def _instantiate_resource(self) -> ResourceType:
+        """
+        Create the Resource object from the resource_typing_name
+        """
+        resource_type: Type[ResourceType] = self._get_resource_type()
+        resource: ResourceType = resource_type()
+        # Pass the model uri to the resource
+        resource._model_uri = self.uri
+
+        self.send_fields_to_resource(resource)
+        return resource
+
     @classmethod
-    def from_resource(cls, resource: Resource) -> ResourceModel:
+    def from_resource(cls, resource: ResourceType) -> ResourceModel:
         """Create a new ResourceModel from a resource
 
         Don't set the resource here so it is regenerate on next get (avoid using same instance)
@@ -237,41 +203,97 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         # synchronize the model fields with the resource fields
         resource_model.receive_fields_from_resource(resource)
 
-        # set the kv store
-        kv_store: KVStore = resource.binary_store
-        if kv_store is not None:
-            if not isinstance(kv_store, KVStore):
-                raise BadRequestException(
-                    f"The binary_store property of the resource {resource.full_classname()} is not an instance of KVStore")
-
-            # If the kv store file exists (this mean that we wrote on it)
-            if kv_store.file_exists():
-                # Save the kv store path on the resource
-                resource_model.kv_store_path = kv_store.get_full_path_without_extension()
-            else:
-                resource_model.kv_store_path = None
-        else:
-            resource_model.kv_store_path = None
-
         return resource_model
 
-    # -- K --
-    @classmethod
-    def _serialize_resource_data(cls, resource: Resource) -> SerializedResourceData:
-        """Serialize a resource, check result and return serialized resource
-        """
-        serialized_data: SerializedResourceData = resource.serialize_data()
+    def send_fields_to_resource(self, resource: ResourceType):
+        """for each Rfield of the resource, set the value form the data or kvstore
 
-        if serialized_data is None:
+        :param resource: [description]
+        :type resource: ResourceType
+        """
+        properties: Dict[str, RField] = self._get_resource_r_fields(type(resource))
+
+        kv_store: KVStore = self.get_kv_store()
+
+        # for each Rfield of the resource, set the value form the data or kvstore
+        for key, r_field in properties.items():
+
+            loaded_value: Any = None
+            # If the property is searchable, it is stored in the DB
+            if r_field.searchable:
+                loaded_value = copy.deepcopy(r_field.load(self.data.get(key)))
+
+            elif kv_store is not None:
+                loaded_value = r_field.load(kv_store.get(key))
+
+            setattr(resource, key, loaded_value)
+
+    def receive_fields_from_resource(self, resource: ResourceType):
+        """for each Rfield of the resource, store its value to the data or kvstore
+
+        :param resource: [description]
+        :type resource: ResourceType
+        """
+        self.data = {}
+        kv_store: KVStore = None
+
+        properties: Dict[str, RField] = self._get_resource_r_fields(type(resource))
+
+        for key, r_field in properties.items():
+
+            value: Any = r_field.dump(getattr(resource, key))
+            # If the property is searchable, store it in the DB
+            if r_field.searchable:
+                self.data[key] = value
+
+            # Otherwise, store it in the kvstore
+            else:
+                # init kv store
+                if kv_store is None:
+                    kv_store = self._get_or_create_kv_store()
+                kv_store[key] = value
+
+    def _get_resource_r_fields(self, resource_type: Type[ResourceType]) -> Dict[str, RField]:
+        """Get the list of resource's r_fields,
+        the key is the property name, the value is the RField object
+        """
+        return Utils.get_property_names_with_type(resource_type, RField)
+
+    def _get_resource_type(self) -> Type[ResourceType]:
+        return TypingManager.get_type_from_name(self.resource_typing_name)
+
+    ########################################## KV STORE ######################################
+
+    @final
+    def get_kv_store(self) -> Optional[KVStore]:
+        if not self.kv_store_path:
             return None
 
-        if not isinstance(serialized_data, dict):
-            raise BadRequestException(
-                f"The serialisation_data method of resource '{resource.full_classname()}' did not return a Dictionary but a {type(serialized_data)}. It must return a 'ResourceSerialized' object.")
+        # Create the KVStore from the path
+        kv_store: KVStore = KVStore(self.kv_store_path)
 
-        return serialized_data
+        # Lock the kvstore so the file can't be updated
+        kv_store.lock(KVStore.get_full_file_path(file_name=self.uri, with_extension=False))
+        return kv_store
 
-    # -- T --
+    def _get_or_create_kv_store(self) -> KVStore:
+        """Get the KVStore and create an empty one if it doesn't exist
+
+        :return: [description]
+        :rtype: KVStore
+        """
+        kv_store: Optional[KVStore] = self.get_kv_store()
+        if kv_store:
+            return kv_store
+
+        # Create the KV store
+        kv_store: KVStore = KVStore.from_filename(self.uri)
+
+        self.kv_store_path = kv_store.get_full_path_without_extension()
+        return kv_store
+
+    ########################################## JSON ######################################
+
     def to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns JSON string or dictionnary representation of the model.
@@ -309,5 +331,3 @@ class ResourceModel(Viewable, Generic[ResourceType]):
             return self.get_resource().to_json()
         else:
             return {}
-
-    # -- V --

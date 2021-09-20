@@ -1,15 +1,17 @@
 from typing import List
 
-from ...resource.resource import Resource, SerializedResourceData
+from ...resource.r_field import FloatRField, IntRField, ListRField
+from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 
 
-@resource_decorator(unique_name="Robot", serializable_fields=['age', 'position', 'weight'])
+@resource_decorator(unique_name="Robot")
 class Robot(Resource):
 
-    age: int
-    position: List[float]
-    weight: int
+    age: int = IntRField()
+    position: List[float] = ListRField()
+
+    weight: float = FloatRField()
 
     @classmethod
     def empty(cls) -> 'Robot':
@@ -33,11 +35,7 @@ class Robot(Resource):
 
 @resource_decorator("RobotAddOn")
 class RobotAddOn(Resource):
-    def serialize_data(self) -> SerializedResourceData:
-        return {}
-
-    def deserialize_data(self, data: SerializedResourceData) -> None:
-        pass
+    pass
 
 
 @resource_decorator("MegaRobot")
@@ -48,20 +46,11 @@ class MegaRobot(Robot):
         mega = MegaRobot()
         mega.position = robot.position
         mega.weight = robot.weight
-        mega.age = robot.weight
+        mega.age = robot.age
         return mega
 
 
 @resource_decorator("RobotFood")
 class RobotFood(Resource):
 
-    multiplicator: int
-
-    def serialize_data(self) -> SerializedResourceData:
-        return {
-            "multiplicator": self.multiplicator,
-        }
-
-    def deserialize_data(self, data: SerializedResourceData) -> None:
-        if data:
-            self.multiplicator = data['multiplicator']
+    multiplicator: int = IntRField()

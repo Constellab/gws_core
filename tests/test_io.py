@@ -6,21 +6,17 @@
 
 from gws_core import (FIFO2, BadRequestException, BaseTestCase, ConfigParams,
                       Connector, Experiment, ExperimentService, GTest,
-                      OptionalIn, ProcessFactory, ProcessSpec,
-                      Protocol, ProtocolModel, Resource, ResourceModel,
-                      SerializedResourceData, SpecialTypeOut, Task, TaskInputs,
-                      TaskModel, TaskOutputs, UnmodifiedOut, Wait,
-                      protocol_decorator, resource_decorator, task_decorator)
+                      OptionalIn, ProcessFactory, ProcessSpec, Protocol,
+                      ProtocolModel, Resource, ResourceModel, SpecialTypeOut,
+                      Task, TaskInputs, TaskModel, TaskOutputs, UnmodifiedOut,
+                      Wait, protocol_decorator, resource_decorator,
+                      task_decorator)
 from gws_core.io.io_exception import ImcompatiblePortsException
 
 
 @resource_decorator("Person")
 class Person(Resource):
-    def serialize_data(self) -> SerializedResourceData:
-        return {}
-
-    def deserialize_data(self, data: SerializedResourceData) -> None:
-        pass
+    pass
 
 
 @resource_decorator("Man")
@@ -35,11 +31,7 @@ class SuperMan(Man):
 
 @resource_decorator("Car")
 class Car(Resource):
-    def serialize_data(self) -> SerializedResourceData:
-        return {}
-
-    def deserialize_data(self, data: SerializedResourceData) -> None:
-        pass
+    pass
 
 
 @task_decorator("Create")

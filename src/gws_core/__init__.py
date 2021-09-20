@@ -82,10 +82,10 @@ from .core.utils.event import EventListener as EventListener
 from .core.utils.http_helper import HTTPHelper as HTTPHelper
 from .core.utils.logger import Logger as Logger
 from .core.utils.requests import Requests as Requests
+from .core.utils.serializer import Serializer as Serializer
 from .core.utils.settings import Settings as Settings
 from .core.utils.utils import Utils as Utils
 from .core.utils.zip import Zip as Zip
-from .core.utils.serializer import Serializer as Serializer
 # Experiment
 from .experiment.experiment import Experiment as Experiment
 from .experiment.experiment import ExperimentStatus as ExperimentStatus
@@ -106,6 +106,7 @@ from .impl.csv.csv_tasks import CSVDumper as CSVDumper
 from .impl.csv.csv_tasks import CSVExporter as CSVExporter
 from .impl.csv.csv_tasks import CSVImporter as CSVImporter
 from .impl.csv.csv_tasks import CSVLoader as CSVLoader
+from .impl.csv.data_frame_r_field import DataFrameRField as DataFrameRField
 # Impl > File
 from .impl.file.file import File as File
 from .impl.file.file import FileSet as FileSet
@@ -202,9 +203,16 @@ from .protocol.protocol_spec import InterfaceSpec as InterfaceSpec
 from .protocol.protocol_spec import ProcessSpec as ProcessSpec
 from .protocol.protocol_typing import ProtocolTyping as ProtocolTyping
 from .resource.kv_store import KVStore as KVStore
+from .resource.r_field import BoolRField as BoolRField
+from .resource.r_field import DictRField as DictRField
+from .resource.r_field import FloatRField as FloatRField
+from .resource.r_field import IntRField as IntRField
+from .resource.r_field import ListRField as ListRField
+from .resource.r_field import PrimitiveRField as PrimitiveRField
+from .resource.r_field import RField as RField
+from .resource.r_field import StrRField as StrRField
 # Resource
 from .resource.resource import Resource as Resource
-from .resource.resource import SerializedResourceData as SerializedResourceData
 from .resource.resource_decorator import \
     resource_decorator as resource_decorator
 from .resource.resource_model import ResourceModel as ResourceModel
