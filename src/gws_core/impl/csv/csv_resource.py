@@ -14,24 +14,29 @@ from ...core.exception.exceptions import BadRequestException
 from ...resource.resource import Resource, SerializedResourceData
 from ...resource.resource_decorator import resource_decorator
 
-
 @resource_decorator("CSVTable")
 class CSVTable(Resource):
 
-    table: DataFrame = None
+    #table: DataFrame = None
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.table is None:
-            self.table = DataFrame()
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     if self.table is None:
+    #         self.table = DataFrame()
 
-    def serialize_data(self) -> SerializedResourceData:
-        return self.table.to_dict()
+    # def serialize_data(self) -> SerializedResourceData:
+    #     return self.table.to_dict()
 
-    def deserialize_data(self, data: SerializedResourceData) -> None:
-        self.set_data(DataFrame.from_dict(data=data))
+    # def deserialize_data(self, data: SerializedResourceData) -> None:
+    #     self.set_data(DataFrame.from_dict(data=data))
 
-    def set_data(self, table: Union[DataFrame, np.ndarray] = None,
+    @property
+    def table(self) -> DataFrame:
+        if "table" not in self.binary_store:
+            self.binary_store["table"] = DataFrame()
+        return self.binary_store["table"]
+
+    def set_table(self, table: Union[DataFrame, np.ndarray] = None,
                  column_names=None, row_names=None) -> 'CSVTable':
         if table is None:
             table = DataFrame()
@@ -49,7 +54,7 @@ class CSVTable(Resource):
                 raise BadRequestException(
                     "The table must be an instance of DataFrame or Numpy array")
 
-        self.table = table
+        self.binary_store["table"] = table
         return self
 
     # -- C --
@@ -106,8 +111,10 @@ class CSVTable(Resource):
 
     @classmethod
     def from_dict(cls, table: dict, orient='index', dtype=None, columns=None) -> 'CSVTable':
-        df = DataFrame.from_dict(table, orient, dtype, columns)
-        return cls(table=df)
+        dataframe = DataFrame.from_dict(table, orient, dtype, columns)
+        res = cls()
+        res.binary_store["table"] = dataframe
+        return res
 
     # -- G --
 
@@ -158,7 +165,7 @@ class CSVTable(Resource):
         else:
             raise BadRequestException(
                 "Cannot detect the file type using file extension. Valid file extensions are [.xls, .xlsx, .csv, .tsv, .txt, .tab].")
-        return cls().set_data(table=df)
+        return cls().set_table(table=df)
 
     # -- N --
 

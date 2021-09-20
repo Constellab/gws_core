@@ -63,7 +63,7 @@ class Utils:
             module = importlib.import_module(name)
         except Exception as err:
             raise Exception(f"Can't import python module {name}") from err
-        return os.path.abspath(os.path.dirname(module.__file__))
+        return os.path.join(os.path.abspath(os.path.dirname(module.__file__)), "../../")
 
     @classmethod
     def get_all_brick_paths(cls) -> List[str]:

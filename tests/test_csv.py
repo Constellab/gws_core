@@ -45,10 +45,10 @@ class TestCSV(BaseTestCase):
         GTest.print("CSVData")
 
         csv_table: CSVTable = CSVTable()
-        csv_table.set_data(table=[[1, 2, 3]], column_names=["a", "b", "c"])
+        csv_table.set_table(table=[[1, 2, 3]], column_names=["a", "b", "c"])
         print(csv_table.table)
 
-        csv_table.set_data(table=[1, 2, 3], column_names=[
+        csv_table.set_table(table=[1, 2, 3], column_names=[
             "data"], row_names=["a", "b", "c"])
         print(csv_table.table)
 
