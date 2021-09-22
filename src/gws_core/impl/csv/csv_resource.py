@@ -65,10 +65,6 @@ class CSVTable(Resource):
             lower_names = [x.lower() for x in self.column_names]
             return name.lower() in lower_names
 
-    # -- D --
-
-    # -- E --
-
     def export_to_path(self, file_path: str, delimiter: str = "\t", header: bool = True, index: bool = True,
                        file_format: str = None, **kwargs):
         """

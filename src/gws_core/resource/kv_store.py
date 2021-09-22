@@ -5,15 +5,15 @@
 
 import os
 import shutil
-import inspect
-from operator import le
+from pathlib import Path
 from shelve import DbfilenameShelf
 from shelve import open as shelve_open
 from time import time
-from typing import Any, Dict, Callable
+from typing import Any, Dict
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.utils.settings import Settings
+from ..core.utils.utils import Utils
 from ..impl.file.file_helper import FileHelper
 
 # ####################################################################
@@ -47,10 +47,10 @@ class KVStore(Dict[str, Any]):
         super().__init__()
         self._full_file_path = full_file_path
 
-    def __contains__(self, key) -> int:
+    def __contains__(self, key) -> bool:
         kv_data = self._open_shelve()
         return kv_data.__contains__(key)
-    
+
     @property
     def full_file_dir(self) -> str:
         """
@@ -77,8 +77,13 @@ class KVStore(Dict[str, Any]):
 
     def get_full_path_without_extension(self) -> str:
         return self._full_file_path
-    
-    # -- G --
+
+    def generate_new_file(self) -> Path:
+        """Generate a new eloty file in the directory of the kvstore
+        """
+        self._create_dir()
+        file_path: str = os.path.join(self.full_file_dir, Utils.generate_uuid())
+        return FileHelper.create_empty_file_if_not_exist(file_path)
 
     def get(self, key, default=None):
         self._check_key(key)
@@ -96,8 +101,6 @@ class KVStore(Dict[str, Any]):
         kv_data.close()
         return val
 
-    # -- R --
-
     def remove(self):
         """
         Remove the store
@@ -107,68 +110,6 @@ class KVStore(Dict[str, Any]):
             return
         # os.remove(self.full_file_path)
         os.remove(self.full_file_dir)
-
-    # -- S --
-
-    def dump(self, key, obj: Any, dump_func: Callable=None, *args, **kwargs):
-        """ 
-            Serialize and dump any object in the store 
-
-            * If `dump_func` is `None`, it is serialized and dumped using python `Pickle` functionalities.
-            * If `dump_func` is callable, it is used to dump the `obj`.
-              In this case, the `dump_func` function must be `dump_func(obj, path, *args, **kwargs)`
-              The `args` and `kwargs` parmeters are passed to the `dump_func`
-              For exemple:
-              -----------
-              For complex object dumps, the `gws_core.Utils.Serializer.dump()` method could be used.
-
-            :param key: The key in the store
-            :type param: `str`
-            :param obj: The object to dump in the store
-            :type obj: `any`
-            :param dump_func: The user function to use to serialize the object
-            :type dump_func: `Callable`
-        """
-
-        if dump_func is not None:
-            if not inspect.isfunction(dump_func):
-                raise BadRequestException("The dump_func must be a callable")
-            if not os.path.exists(self.full_file_dir):
-                os.makedirs(self.full_file_dir)
-            path = os.path.join(self.full_file_dir, key+'.dump')
-            dump_func(obj, path, *args, **kwargs)
-            self[key] = path
-        else:
-            self[key] = obj
-
-    def load(self, key, load_func: Callable=None, *args, **kwargs) -> Any:
-        """ 
-            Seserialize and load any object in the store
-
-            * If `load_func` is `None`, it is deserialized and loaded using python `Pickle` functionalities.
-            * If `load_func` is callable, it is used to load the `obj`.
-              In this case, the `load_func` function must have be `obj = load_func(path: str, *args, **kwargs)`
-              The `args` and `kwargs` parmeters are passed to the `load_func`
-              For exemple:
-              -----------
-              For complex object loading, the `gws_core.Utils.Serializer.load()` method could be used.
-
-            :param key: The key in the store
-            :type param: `str`
-            :param load_func: The user function to use to deserialize the object
-            :type load_func: `Callable`
-            :return: The loaded object
-            :rtype: `any`
-        """
-
-        if load_func is not None:
-            if not inspect.isfunction(load_func):
-                raise BadRequestException("The dump_func must be a callable")
-            path = self[key]
-            data = load_func(path, *args, **kwargs)
-            return data
-        else:
-            return self[key]
 
     def __setitem__(self, key, value):
         """
@@ -220,12 +161,13 @@ class KVStore(Dict[str, Any]):
         return length
 
     def _open_shelve(self) -> DbfilenameShelf:
-        # if not FileHelper.exists_on_os(self.get_base_dir()):
-        #     os.mkdir(self.get_base_dir())
-        if not FileHelper.exists_on_os(self.full_file_dir):
-            os.makedirs(self.full_file_dir)
+        self._create_dir()
 
         return shelve_open(self.get_full_path_without_extension())
+
+    def _create_dir(self) -> None:
+        if not FileHelper.exists_on_os(self.full_file_dir):
+            os.makedirs(self.full_file_dir)
 
     def check_before_write(self, key: str) -> None:
         self._check_key(key=key)

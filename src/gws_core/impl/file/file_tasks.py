@@ -27,6 +27,6 @@ class WriteToJsonFile(Task):
         file: File = file_store.create_empty(params.get_value('filename') + '.json')
 
         resource: Resource = inputs['resource']
-        file.write(json.dumps(resource.to_json()))
+        file.write(json.dumps(resource.view_as_dict()))
 
         return {"file": file}

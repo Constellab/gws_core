@@ -10,7 +10,8 @@ from typing import (TYPE_CHECKING, Any, Dict, Generic, Optional, Type, TypeVar,
                     final)
 
 from gws_core.core.utils.utils import Utils
-from gws_core.resource.r_field import RField
+from gws_core.impl.file.file_r_field import FileRField
+from gws_core.resource.r_field import BaseRField
 from peewee import CharField
 
 from ..core.exception.exceptions.bad_request_exception import \
@@ -206,58 +207,70 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         return resource_model
 
     def send_fields_to_resource(self, resource: ResourceType):
-        """for each Rfield of the resource, set the value form the data or kvstore
+        """for each BaseRField of the resource, set the value form the data or kvstore
 
         :param resource: [description]
         :type resource: ResourceType
         """
-        properties: Dict[str, RField] = self._get_resource_r_fields(type(resource))
+        properties: Dict[str, BaseRField] = self._get_resource_r_fields(type(resource))
 
         kv_store: KVStore = self.get_kv_store()
 
-        # for each Rfield of the resource, set the value form the data or kvstore
+        # for each BaseRField of the resource, set the value form the data or kvstore
         for key, r_field in properties.items():
 
             loaded_value: Any = None
             # If the property is searchable, it is stored in the DB
             if r_field.searchable:
-                loaded_value = copy.deepcopy(r_field.load(self.data.get(key)))
+                loaded_value = copy.deepcopy(r_field.deserialize(self.data.get(key)))
 
             elif kv_store is not None:
-                loaded_value = r_field.load(kv_store.get(key))
+                loaded_value = r_field.deserialize(kv_store.get(key))
 
             setattr(resource, key, loaded_value)
 
     def receive_fields_from_resource(self, resource: ResourceType):
-        """for each Rfield of the resource, store its value to the data or kvstore
+        """for each BaseRField of the resource, store its value to the data or kvstore
 
         :param resource: [description]
         :type resource: ResourceType
         """
         self.data = {}
-        kv_store: KVStore = None
+        # init the kvstore, the directory is not created until we write on the kvstore
+        kv_store: KVStore = self._get_or_create_kv_store()
 
-        properties: Dict[str, RField] = self._get_resource_r_fields(type(resource))
+        # get the r_fields of the resource
+        r_fields: Dict[str, BaseRField] = self._get_resource_r_fields(type(resource))
 
-        for key, r_field in properties.items():
+        for key, r_field in r_fields.items():
+            # get the attribute value corresponding to the r_field
+            r_field_value: Any = getattr(resource, key)
 
-            value: Any = r_field.dump(getattr(resource, key))
+            # specific case for the FileRField
+            if isinstance(r_field, FileRField):
+                # generate a new file path inside the kv store directory
+                file_path = kv_store.generate_new_file()
+
+                # dump the resource value into the file
+                r_field.dump_to_file(r_field_value, str(file_path))
+                # store the file path in the kv_store
+                kv_store[key] = file_path
+                continue
+
+            value: Any = r_field.serialize(r_field_value)
             # If the property is searchable, store it in the DB
             if r_field.searchable:
                 self.data[key] = value
 
             # Otherwise, store it in the kvstore
             else:
-                # init kv store
-                if kv_store is None:
-                    kv_store = self._get_or_create_kv_store()
                 kv_store[key] = value
 
-    def _get_resource_r_fields(self, resource_type: Type[ResourceType]) -> Dict[str, RField]:
+    def _get_resource_r_fields(self, resource_type: Type[ResourceType]) -> Dict[str, BaseRField]:
         """Get the list of resource's r_fields,
-        the key is the property name, the value is the RField object
+        the key is the property name, the value is the BaseRField object
         """
-        return Utils.get_property_names_with_type(resource_type, RField)
+        return Utils.get_property_names_with_type(resource_type, BaseRField)
 
     def _get_resource_type(self) -> Type[ResourceType]:
         return TypingManager.get_type_from_name(self.resource_typing_name)
@@ -287,7 +300,7 @@ class ResourceModel(Viewable, Generic[ResourceType]):
             return kv_store
 
         # Create the KV store
-        kv_store: KVStore = KVStore.from_filename(self.uri)
+        kv_store = KVStore.from_filename(self.uri)
 
         self.kv_store_path = kv_store.get_full_path_without_extension()
         return kv_store
@@ -328,6 +341,6 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         """
 
         if deep:
-            return self.get_resource().to_json()
+            return self.get_resource().view_as_dict()
         else:
             return {}

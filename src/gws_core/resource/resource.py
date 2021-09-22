@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Type
+from typing import TYPE_CHECKING, Any, Dict, Type
 
 from gws_core.core.utils.utils import Utils
-from gws_core.resource.r_field import RField
+from gws_core.resource.r_field import BaseRField
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.base import Base
 from ..model.typing_register_decorator import typing_registrator
-from .kv_store import KVStore
 
 if TYPE_CHECKING:
     from .resource_model import ResourceModel
@@ -34,10 +33,10 @@ class Resource(Base):
             raise BadRequestException(
                 f"The resource {self.full_classname()} is not decorated with @ResourceDecorator, it can't be instantiate. Please decorate the resource class with @ResourceDecorator")
 
-        # Init default values of RFields
-        properties: Dict[str, RField] = Utils.get_property_names_with_type(type(self), RField)
+        # Init default values of BaseRField
+        properties: Dict[str, BaseRField] = Utils.get_property_names_with_type(type(self), BaseRField)
         for key, r_field in properties.items():
-            setattr(self, key, r_field.default_value)
+            setattr(self, key, r_field.get_default_value())
 
     def export_to_path(self, file_path: str, file_format: str = None):
         """
@@ -72,14 +71,16 @@ class Resource(Base):
 
         # @ToDo: ensure that this method is only called by an Importer
 
-    def to_json(self) -> Dict:
-        """By default the to_json dumps all the RFields values
+    def view_as_dict(self) -> Dict:
+        """By default the view_as_dict dumps the RFields mark with, include_in_dict_view=True
+        This method is used to send the resource information back to the interface
         """
-        properties: Dict[str, RField] = Utils.get_property_names_with_type(type(self), RField)
+        properties: Dict[str, BaseRField] = Utils.get_property_names_with_type(type(self), BaseRField)
 
         json_: dict = {}
         for key, r_field in properties.items():
-            json_[key] = r_field.dump(getattr(self, key))
+            if r_field.include_in_dict_view:
+                json_[key] = r_field.serialize(getattr(self, key))
 
         return json_
 

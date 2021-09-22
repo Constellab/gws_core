@@ -10,7 +10,6 @@ class Robot(Resource):
 
     age: int = IntRField()
     position: List[float] = ListRField()
-
     weight: float = FloatRField()
 
     @classmethod

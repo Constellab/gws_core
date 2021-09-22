@@ -13,8 +13,8 @@ from typing import List, Union
 from ...core.decorator.transaction import transaction
 from ...core.exception.exceptions import BadRequestException
 from ...core.utils.settings import Settings
-from .file_helper import FileHelper
 from .file import File
+from .file_helper import FileHelper
 from .file_model import FileModel
 from .file_store import FileStore
 
@@ -78,7 +78,7 @@ class LocalFileStore(FileStore):
 
         return file
 
-    def create_empty(self, file_name: str) -> File:
+    def create_empty(self, file_name: str = None) -> File:
         return self.create_file(file_name=file_name)
 
     def _copy_file(self, source: str, destination: str) -> None:
@@ -111,13 +111,13 @@ class LocalFileStore(FileStore):
             file = file_type()
         else:
             file = File()
-        file.path = self._get_new_file_path(file_name)
+        file.path = self.get_new_file_path(file_name)
         file.file_store_uri = self.uri
 
         return file
 
-    def _get_new_file_path(self, dest_file_name: str = None) -> str:
-        """Generate a new file name
+    def get_new_file_path(self, dest_file_name: str = None) -> str:
+        """Generate the file path from file name and avoid duplicate
 
         :param dest_file_name: [description], defaults to None
         :type dest_file_name: str, optional

@@ -103,11 +103,10 @@ class File(Resource):
 
     # -- T --
 
-    def to_json(self, deep: bool=False) -> dict:
-        _json = super().to_json()
+    def view_as_dict(self) -> dict:
+        _json = super().view_as_dict()
         _json["path"] = self.path
-        if deep:
-            _json["content"] = self.read()
+        _json["content"] = self.read()
         return _json
 
     # -- W --

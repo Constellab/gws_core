@@ -39,9 +39,14 @@ class FileHelper():
         """
         return os.path.exists(cls.get_path(path))
 
-    # -- F --
+    @classmethod
+    def create_empty_file_if_not_exist(cls, file_path: PathType) -> Path:
+        path: Path = cls.get_path(file_path)
+        if cls.exists_on_os(path):
+            return path
 
-    # -- I --
+        path.touch()
+        return path
 
     @classmethod
     def is_json(cls, path: PathType):

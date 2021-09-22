@@ -6,6 +6,7 @@
 from gws_core import BaseTestCase, GTest, KVStore
 from gws_core.impl.file.file_helper import FileHelper
 
+
 class TestKVStore(BaseTestCase):
 
     def test_empty(self):
@@ -92,3 +93,9 @@ class TestKVStore(BaseTestCase):
         # Check that the first store was not updated
         first_store = KVStore.from_filename('test_lock')
         self.assertEqual(first_store['city'], 'Tokyo')
+
+    def test_generate_new_file(self):
+        kv_store = KVStore.from_filename('test_generate_new_file')
+
+        path = kv_store.generate_new_file()
+        FileHelper.exists_on_os(path)

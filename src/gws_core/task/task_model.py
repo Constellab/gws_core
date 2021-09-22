@@ -123,28 +123,28 @@ class TaskModel(ProcessModel):
         # Set the progress bar
         task.__progress_bar__ = self.progress_bar
 
-        task_output: TaskOutputs
+        task_outputs: TaskOutputs
 
         try:
             # Run the task task
-            task_output = await task.run(config_params, task_inputs)
+            task_outputs = await task.run(config_params, task_inputs)
         except Exception as err:
             raise ProcessRunException.from_exception(process_model=self, exception=err,
                                                      error_prefix='Error during task') from err
 
-        if task_output is None:
-            task_output = {}
+        if task_outputs is None:
+            task_outputs = {}
 
-        if not isinstance(task_output, dict):
+        if not isinstance(task_outputs, dict):
             raise BadRequestException('The task output is not a dictionary')
 
         for key, port in self.outputs.ports.items():
             resource_model: ResourceModel
 
             # If the resource for the output port was provided
-            if key in task_output:
+            if key in task_outputs:
 
-                resource: Resource = task_output[key]
+                resource: Resource = task_outputs[key]
 
                 if not isinstance(resource, Resource):
                     raise BadRequestException(

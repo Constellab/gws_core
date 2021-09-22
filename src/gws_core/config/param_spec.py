@@ -167,7 +167,6 @@ class StrParam(ParamSpec[str]):
         super().__init__(default_value=default_value, optional=optional,
                          visibility=visibility, human_name=human_name, description=description, unit=unit)
 
-    @abstractmethod
     def get_type(self) -> Type[str]:
         return str
 
@@ -188,7 +187,7 @@ class StrParam(ParamSpec[str]):
 class BoolParam(ParamSpec[bool]):
     """Boolean param
     """
-    @abstractmethod
+
     def get_type(self) -> Type[bool]:
         return bool
 
@@ -200,7 +199,6 @@ class DictParam(ParamSpec[dict]):
     """Any json dict param
     """
 
-    @abstractmethod
     def get_type(self) -> Type[dict]:
         return dict
 
@@ -212,7 +210,6 @@ class ListParam(ParamSpec[list]):
     """Any list param
     """
 
-    @abstractmethod
     def get_type(self) -> Type[list]:
         return list
 
