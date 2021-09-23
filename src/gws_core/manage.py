@@ -36,6 +36,8 @@ class SettingsLoader:
 
     @classmethod
     def _load_notebook(cls):
+        if not os.path.exists(cls.NOTEBOOK_DIR):
+            return
         dirs = os.listdir(cls.NOTEBOOK_DIR)
         for file_name in dirs:
             if file_name.startswith("_") or file_name.startswith("."):

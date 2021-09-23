@@ -306,19 +306,23 @@ class ListValidator(Validator):
         * `validator.validate('{"foo":1.2}') -> ValueError`
     """
 
-    def __init__(self, **kwargs):
+    must_be_deep_jsonable = True
+
+    def __init__(self, must_be_deep_jsonable=True, **kwargs):
         super().__init__(type_=list, **kwargs)
+        self.must_be_deep_jsonable = must_be_deep_jsonable
 
     def _validate(self, value):
         value: List = super()._validate(value)
 
         # Check if the value is serializable
-        if not self.is_serializable(value):
-            raise BadRequestException(f"The value {value} is not serializable.")
+        if self.must_be_deep_jsonable:
+            if not self.is_deep_jsonnable(value):
+                raise BadRequestException(f"The value {value} is not serializable.")
 
         return value
 
-    def is_serializable(self, value: List) -> bool:
+    def is_deep_jsonnable(self, value: List) -> bool:
         try:
             json.loads(json.dumps(value))
             return True
@@ -344,19 +348,23 @@ class DictValidator(Validator):
         * `validator.validate([5.5,3]) -> ValueError`
     """
 
-    def __init__(self, **kwargs):
+    must_be_deep_jsonable = True
+
+    def __init__(self, must_be_deep_jsonable=True, **kwargs):
         super().__init__(type_=dict, **kwargs)
+        self.must_be_deep_jsonable = must_be_deep_jsonable
 
     def _validate(self, value):
         value: Dict = super()._validate(value)
 
-        # Check if the value is serializable
-        if not self.is_serializable(value):
-            raise BadRequestException(f"The value {value} is not serializable.")
+        # Check if the value is jsonable
+        if self.must_be_deep_jsonable:
+            if not self.is_deep_jsonnable(value):
+                raise BadRequestException(f"The value {value} is not serializable.")
 
         return value
 
-    def is_serializable(self, value: List) -> bool:
+    def is_deep_jsonnable(self, value: List) -> bool:
         try:
             json.loads(json.dumps(value))
             return True
