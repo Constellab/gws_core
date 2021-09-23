@@ -76,6 +76,13 @@ class Utils:
                 brick_paths.append(data["path"])
         return brick_paths
 
+    @classmethod
+    def get_notebook_paths(cls) -> str:
+        """ Returns all the paths of all the brick used by the Application """
+        from ..utils.settings import Settings
+        settings = Settings.retrieve()
+        return settings.data["modules"]["notebook"]["path"]
+
         # if not getattr(cls,'__brick_paths', None):
         #     cls.__brick_paths = []
         #     brick_names = Utils.get_all_brick_names()

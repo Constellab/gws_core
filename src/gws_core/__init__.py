@@ -214,6 +214,7 @@ from .resource.r_field import ListRField as ListRField
 from .resource.r_field import PrimitiveRField as PrimitiveRField
 from .resource.r_field import RField as RField
 from .resource.r_field import StrRField as StrRField
+from .resource.r_field import UUIDRField as UUIDRField
 # Resource
 from .resource.resource import Resource as Resource
 from .resource.resource_decorator import \

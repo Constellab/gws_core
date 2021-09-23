@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import uuid
 from typing import TYPE_CHECKING, Any, Dict, Type
 
 from gws_core.core.utils.utils import Utils
-from gws_core.resource.r_field import BaseRField
+from gws_core.resource.r_field import BaseRField, UUIDRField
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -19,6 +20,8 @@ CONST_RESOURCE_TYPING_NAME = "RESOURCE.gws_core.Resource"
 
 @typing_registrator(unique_name="Resource", object_type="RESOURCE")
 class Resource(Base):
+
+    uid: str = UUIDRField(searchable=True)
 
     # Provided at the Class level automatically by the @ResourceDecorator
     # //!\\ Do not modify theses values

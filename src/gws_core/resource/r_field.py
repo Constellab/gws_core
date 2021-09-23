@@ -2,6 +2,7 @@
 from copy import deepcopy
 from inspect import isclass, isfunction
 from typing import Any, Callable, Dict, List, Type, Union
+import uuid
 
 from ..core.classes.validator import (BoolValidator, DictValidator,
                                       FloatValidator, IntValidator,
@@ -154,7 +155,7 @@ class PrimitiveRField(BaseRField):
                  default_value: Any = None,
                  include_in_dict_view: bool = True) -> None:
         """
-        :param validator: validator used on serialization and deserialization to verify r_field_valud type
+        :param validator: validator used on serialization and deserialization to verify r_field_value type
                           It also checks the default value
         :type validator: Validator
         :param searchable: if true, the field value is saved in the DB and could be search on a request
@@ -249,6 +250,24 @@ class StrRField(PrimitiveRField):
         """
         super().__init__(validator=StrValidator(), searchable=searchable,
                          default_value=default_value, include_in_dict_view=include_in_dict_view)
+            
+class UUIDRField(StrRField):
+
+    def __init__(self, searchable: bool = False, include_in_dict_view: bool = True) -> None:
+        """
+        :param searchable: if true, the field value is saved in the DB and could be search on a request
+                           Only small amount of data can be mark as searchable, defaults to False
+        :type searchable: bool, optional
+        :param default_value: default value of the resource attribute
+                              Support primitive value, Type of Callable function
+                              If type or callable, it will be called without parameter to initialise the default value, defaults to None
+        :type default_value: str, optional
+        :param include_in_dict_view: if true, this field we be included in the default dict view
+                              Do not mark huge fields as include in dict view, defaults to False
+        :type include_in_dict_view: bool, optional
+        """
+        super().__init__(searchable=searchable, include_in_dict_view=include_in_dict_view)
+        self._default_value = (lambda: str(uuid.uuid4()))
 
 
 class ListRField(PrimitiveRField):

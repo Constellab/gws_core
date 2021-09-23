@@ -3,12 +3,14 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import importlib
 import json
 import os
 import re
 import sys
-import importlib
+
 from .core.utils.settings import Settings
+
 
 class SettingsLoader:
     """
@@ -19,6 +21,7 @@ class SettingsLoader:
     """
 
     LAB_WORKSPACE_DIR = "/lab"
+    NOTEBOOK_DIR = os.path.join(LAB_WORKSPACE_DIR, "user/notebooks")
     all_settings = {
         "cwd": "",
         "modules": {},
@@ -27,9 +30,29 @@ class SettingsLoader:
     # -- L --
 
     @classmethod
-    def load_settings(cls, cwd: str = None):
+    def _load_bricks(cls, cwd: str = None):
         cls.parse_settings(cwd)
         cls.all_settings["cwd"] = cwd
+
+    @classmethod
+    def _load_notebook(cls):
+        dirs = os.listdir(cls.NOTEBOOK_DIR)
+        for file_name in dirs:
+            if file_name.startswith("_") or file_name.startswith("."):
+                continue
+            file_path = os.path.join(cls.NOTEBOOK_DIR, file_name)
+            if os.path.isdir(file_path):
+                sys.path.insert(0, file_path)
+
+        cls.all_settings["modules"]["notebook"] = {
+            "path": cls.NOTEBOOK_DIR,
+            "type": "notebook"
+        }
+
+    @classmethod
+    def load_settings(cls, cwd: str = None):
+        cls._load_bricks(cwd)
+        cls._load_notebook()
         Settings.init(cls.all_settings)
 
         # /!\ Ensure that all bricks' modules are loaded on Application startup
@@ -80,7 +103,7 @@ class SettingsLoader:
 
             # parse git packages
             cls._update_dict(cls.all_settings, settings_data)
-            git_env = settings_data["environment"].get("git",[])
+            git_env = settings_data["environment"].get("git", [])
             for channel in git_env:
                 for package in channel.get("packages"):
                     repo, _, _ = cls.parse_git_package(package)
@@ -99,7 +122,7 @@ class SettingsLoader:
                     "type": "brick,git"
                 }
 
-            pip_env = settings_data["environment"].get("pip",[])
+            pip_env = settings_data["environment"].get("pip", [])
             cls._read_pip_deps(pip_env)
         else:
             if cwd not in cls.all_settings["modules"]:
@@ -139,6 +162,7 @@ class SettingsLoader:
             else:
                 d[key] = value
         return d
+
 
 def load_settings(cwd):
     SettingsLoader.load_settings(cwd)
