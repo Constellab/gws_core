@@ -20,6 +20,8 @@ CONST_RESOURCE_TYPING_NAME = "RESOURCE.gws_core.Resource"
 
 @typing_registrator(unique_name="Resource", object_type="RESOURCE")
 class Resource(Base):
+    # Unique id generated for earch resource, used in equal method
+    id: str
 
     uid: str = UUIDRField(searchable=True)
 
@@ -40,6 +42,8 @@ class Resource(Base):
         properties: Dict[str, BaseRField] = Utils.get_property_names_with_type(type(self), BaseRField)
         for key, r_field in properties.items():
             setattr(self, key, r_field.get_default_value())
+
+        self.id = Utils.generate_uuid()
 
     def export_to_path(self, file_path: str, file_format: str = None):
         """
@@ -87,7 +91,10 @@ class Resource(Base):
 
         return json_
 
-    # -- T --
+    def __eq__(self, o: object) -> bool:
+        if not isinstance(o, Resource):
+            return False
+        return (self is o) or ((self.id is not None) and (self.id == o.id))
 
     @classmethod
     def get_resource_model_type(cls) -> Type[ResourceModel]:
@@ -99,5 +106,3 @@ class Resource(Base):
         """
         from .resource_model import ResourceModel
         return ResourceModel
-
-    # -- V --
