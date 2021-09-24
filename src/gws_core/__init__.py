@@ -205,6 +205,7 @@ from .protocol.protocol_spec import ConnectorSpec as ConnectorSpec
 from .protocol.protocol_spec import InterfaceSpec as InterfaceSpec
 from .protocol.protocol_spec import ProcessSpec as ProcessSpec
 from .protocol.protocol_typing import ProtocolTyping as ProtocolTyping
+# Resource
 from .resource.kv_store import KVStore as KVStore
 from .resource.r_field import BoolRField as BoolRField
 from .resource.r_field import DictRField as DictRField
@@ -215,7 +216,6 @@ from .resource.r_field import PrimitiveRField as PrimitiveRField
 from .resource.r_field import RField as RField
 from .resource.r_field import StrRField as StrRField
 from .resource.r_field import UUIDRField as UUIDRField
-# Resource
 from .resource.resource import Resource as Resource
 from .resource.resource_decorator import \
     resource_decorator as resource_decorator
@@ -223,6 +223,7 @@ from .resource.resource_model import ResourceModel as ResourceModel
 from .resource.resource_service import ResourceService as ResourceService
 from .resource.resource_set import ResourceSet as ResourceSet
 from .resource.resource_typing import ResourceTyping as ResourceTyping
+from .resource.view_decorator import view as view
 # Study
 from .study.study import Study as Study
 # Task

@@ -3,7 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Type
+import inspect
+from typing import Callable, List, Tuple, Type
+
+from gws_core.resource.view_decorator import (VIEW_META_DATA_ATTRIBUTE,
+                                              ResourceViewMetaData)
 
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import NotFoundException
@@ -15,8 +19,6 @@ from .resource_typing import ResourceTyping
 
 
 class ResourceService(BaseService):
-
-    # -- F --
 
     @classmethod
     def fetch_resource(cls,
@@ -69,3 +71,30 @@ class ResourceService(BaseService):
             number_of_items_per_page, cls._number_of_items_per_page)
         return Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
+
+    ################################# VIEW ###############################
+
+    @classmethod
+    def get_views_of_resource(cls, resource_typing_name: str) -> List[ResourceViewMetaData]:
+        resource_type: Type[Resource] = TypingManager.get_type_from_name(resource_typing_name)
+
+        return cls.get_view_of_resource_type(resource_type)
+
+    @classmethod
+    def get_view_of_resource_type(cls, resource_type: Type[Resource]) -> List[ResourceViewMetaData]:
+        funcs: List[Tuple[str, Callable]] = inspect.getmembers(
+            resource_type, predicate=inspect.isfunction)
+
+        view_meta_data: List[ResourceViewMetaData] = []
+
+        for func_tuple in funcs:
+            func: Callable = func_tuple[1]
+
+            # Check if the method is annotated with view
+            if hasattr(
+                    func, VIEW_META_DATA_ATTRIBUTE) and isinstance(
+                    getattr(func, VIEW_META_DATA_ATTRIBUTE),
+                    ResourceViewMetaData):
+                view_meta_data.append(getattr(func, VIEW_META_DATA_ATTRIBUTE))
+
+        return view_meta_data

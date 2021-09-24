@@ -1,8 +1,11 @@
 from typing import List
 
+from gws_core.config.param_spec import BoolParam, StrParam
+
 from ...resource.r_field import FloatRField, IntRField, ListRField
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
+from ...resource.view_decorator import view
 
 
 @resource_decorator(unique_name="Robot")
@@ -30,6 +33,10 @@ class Robot(Resource):
             self.position[0] -= moving_step
         elif direction == "east":
             self.position[0] += moving_step
+
+    @view()
+    def view_only_position(self) -> List[float]:
+        return self.position
 
 
 @resource_decorator("RobotAddOn")
