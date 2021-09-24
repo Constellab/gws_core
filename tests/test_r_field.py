@@ -69,9 +69,7 @@ class TestRField(BaseTestCase):
         r_field = DictRField(default_value=default_value)
 
         # Check that the default value returned a new instance
-        default_value_instance = r_field.get_default_value()
-        default_value_instance["test"] = 33
-        self.assertEqual(default_value["test"], 12)
+        self.assertFalse(default_value is r_field.get_default_value())
 
         self.assertEqual(r_field.get_default_value(), {"test": 12})
         self.assertEqual(r_field.serialize({"test": 12}), {"test": 12})
@@ -88,9 +86,7 @@ class TestRField(BaseTestCase):
         r_field = ListRField(default_value=default_value)
 
         # Check that the default value returned a new instance
-        default_value_instance = r_field.get_default_value()
-        default_value_instance[0] = 33
-        self.assertEqual(default_value[0], 1)
+        self.assertFalse(default_value is r_field.get_default_value())
 
         self.assertEqual(r_field.get_default_value(), default_value)
         self.assertEqual(r_field.serialize([1, 2]), [1, 2])
