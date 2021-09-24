@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import uuid
 from typing import TYPE_CHECKING, Any, Dict, Type
 
 from gws_core.core.utils.utils import Utils
@@ -86,6 +85,11 @@ class Resource(Base):
                 json_[key] = r_field.serialize(getattr(self, key))
 
         return json_
+
+    def __eq__(self, o: object) -> bool:
+        if not isinstance(o, Resource):
+            return False
+        return (self is o) or ((self.uid is not None) and (self.uid == o.uid))
 
     @classmethod
     def get_resource_model_type(cls) -> Type[ResourceModel]:
