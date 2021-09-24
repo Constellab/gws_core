@@ -57,11 +57,8 @@ class UserService(BaseService):
             data={
             }
         )
-        if user.save():
-            return User.get_by_uri(user.uri)
-        else:
-            raise BadRequestException(
-                "Cannot create the user")
+        user.save()
+        return User.get_by_uri(user.uri)
 
     # -- D --
 
