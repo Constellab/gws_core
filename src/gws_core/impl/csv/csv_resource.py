@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 from pathlib import Path
-from typing import Union
+from typing import Union, List
 
 import numpy as np
 import pandas
@@ -13,8 +13,10 @@ from pandas import DataFrame
 from ...core.exception.exceptions import BadRequestException
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
+from ...resource.view_decorator import view
+from ...view.line_2d_plot_view import Line2DPlotView
+from ...view.line_3d_plot_view import Line3DPlotView
 from .data_frame_r_field import DataFrameRField
-
 
 @resource_decorator("CSVTable")
 class CSVTable(Resource):
@@ -210,3 +212,13 @@ class CSVTable(Resource):
         return self.table.to_json()
 
     # -- V ---
+    
+    @view(human_name='Line2D', short_description='2D-line plot')
+    def view_as_2d_line_plot(self, x_column_name: str, y_column_names: List[str]):
+        _view = Line2DPlotView(self.table)
+        return _view.to_dict(x_column_name=x_column_name, y_column_names=y_column_names)
+
+    @view(human_name='Line3D', short_description='3D-line plot')
+    def view_as_3d_line_plot(self, x_column_name: str, y_column_name: str, z_column_names: List[str]):
+        _view = Line3DPlotView(self.table)
+        return _view.to_dict(x_column_name=x_column_name, y_column_name=y_column_name, z_column_names=z_column_names)
