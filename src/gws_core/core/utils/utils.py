@@ -9,7 +9,8 @@ import random
 import re
 import string
 import uuid
-from typing import Any, Dict, List, Tuple, Type
+from types import MappingProxyType
+from typing import Any, Callable, Dict, List, Tuple, Type
 
 from slugify import slugify as _slugify
 
@@ -195,7 +196,9 @@ class Utils:
         return str(uuid.uuid4())
 
     @classmethod
-    def get_property_names_with_type(cls, class_type: type, type_: type) -> Dict[str, Any]:
+    def get_property_names_of_type(cls, class_type: type, type_: type) -> Dict[str, Any]:
+        """return the property name and value of all property of a type
+        """
         properties: Dict[str, Any] = {}
         member_list: List[Tuple[str, Any]] = inspect.getmembers(class_type)
 
@@ -209,3 +212,25 @@ class Utils:
                 properties[member[0]] = member[1]
 
         return properties
+
+    @classmethod
+    def get_function_arguments(cls, func: Callable) -> Dict[str, type]:
+        """Function to get the arguments with type (Any if not provided) of a method or a function
+
+        :param func: [description]
+        :type func: Callable
+        :return: [description]
+        :rtype: Dict[str, type]
+        """
+
+        args_spec: inspect.FullArgSpec = inspect.getfullargspec(func)
+
+        arguments: Dict[str, type] = {}
+
+        for arg_name in args_spec[0]:
+            if arg_name in args_spec.annotations:
+                arguments[arg_name] = args_spec.annotations[arg_name]
+            else:
+                arguments[arg_name] = object
+
+        return arguments

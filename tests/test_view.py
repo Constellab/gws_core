@@ -1,24 +1,26 @@
 
 
-import inspect
 from typing import List
 
-from gws_core import (BaseTestCase, Resource, ResourceService, Robot,
+from gws_core import (BaseTestCase, Resource, ResourceService,
                       resource_decorator, view)
+from gws_core.config.param_spec import StrParam
 from gws_core.resource.view_decorator import ResourceViewMetaData
 
 
 @resource_decorator("ResourceViewTest")
 class ResourceViewTest(Resource):
 
-    @view(human_name='View for test', short_description='Description for test')
+    @view(human_name='View for test', short_description='Description for test',
+          specs={'test_str_param': StrParam(),
+                 'test_any_param': StrParam()})
     def view_test(self, test_str_param: str, test_any_param) -> str:
         return 'Test'
 
 
 class TestView(BaseTestCase):
 
-    def test_view(self,):
+    def test_view(self):
         views: List[ResourceViewMetaData] = ResourceService.get_view_of_resource_type(ResourceViewTest)
 
         self.assertEqual(len(views), 1)

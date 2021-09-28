@@ -36,7 +36,7 @@ class Resource(Base):
                 f"The resource {self.full_classname()} is not decorated with @ResourceDecorator, it can't be instantiate. Please decorate the resource class with @ResourceDecorator")
 
         # Init default values of BaseRField
-        properties: Dict[str, BaseRField] = Utils.get_property_names_with_type(type(self), BaseRField)
+        properties: Dict[str, BaseRField] = Utils.get_property_names_of_type(type(self), BaseRField)
         for key, r_field in properties.items():
             setattr(self, key, r_field.get_default_value())
 
@@ -77,7 +77,7 @@ class Resource(Base):
         """By default the view_as_dict dumps the RFields mark with, include_in_dict_view=True
         This method is used to send the resource information back to the interface
         """
-        properties: Dict[str, BaseRField] = Utils.get_property_names_with_type(type(self), BaseRField)
+        properties: Dict[str, BaseRField] = Utils.get_property_names_of_type(type(self), BaseRField)
 
         json_: dict = {}
         for key, r_field in properties.items():

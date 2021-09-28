@@ -270,7 +270,7 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         """Get the list of resource's r_fields,
         the key is the property name, the value is the BaseRField object
         """
-        return Utils.get_property_names_with_type(resource_type, BaseRField)
+        return Utils.get_property_names_of_type(resource_type, BaseRField)
 
     def _get_resource_type(self) -> Type[ResourceType]:
         return TypingManager.get_type_from_name(self.resource_typing_name)
