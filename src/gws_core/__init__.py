@@ -253,3 +253,8 @@ from .user.user import User as User
 from .user.user_dto import UserData as UserData
 from .user.user_group import UserGroup as UserGroup
 from .user.user_service import UserService as UserService
+# View
+from .view.csv_text_view import CSVTextView as CSVTextView
+from .view.raw_text_view import RawTextView as RawTextView
+from .view.line_2d_plot_view import Line2DPlotView as Line2DPlotView
+from .view.line_3d_plot_view import Line3DPlotView as Line3DPlotView
