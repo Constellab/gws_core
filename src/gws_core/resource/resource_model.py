@@ -331,6 +331,10 @@ class ResourceModel(Viewable, Generic[ResourceType]):
                 },
             })
 
+        resource: ResourceType = self.get_resource()
+        _json["resource_human_name"] = resource._human_name
+        _json["resource_short_description"] = resource._short_description
+
         return _json
 
     def data_to_json(self, deep: bool = False, **kwargs) -> dict:

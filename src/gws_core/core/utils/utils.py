@@ -9,7 +9,6 @@ import random
 import re
 import string
 import uuid
-from types import MappingProxyType
 from typing import Any, Callable, Dict, List, Tuple, Type
 
 from slugify import slugify as _slugify

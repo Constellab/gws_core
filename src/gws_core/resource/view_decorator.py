@@ -15,16 +15,26 @@ class ResourceViewMetaData():
     human_name: str
     short_description: str
     specs: ViewSpecs
+    default_view: bool
 
     def __init__(self, method_name: str, human_name: str,
-                 short_description: str, specs: ViewSpecs) -> None:
+                 short_description: str, specs: ViewSpecs,
+                 default_view: bool) -> None:
         self.method_name = method_name
         self.human_name = human_name
         self.short_description = short_description
         self.specs = specs
+        self.default_view = default_view
+
+    def clone(self) -> 'ResourceViewMetaData':
+        return ResourceViewMetaData(self.method_name, self.human_name, self.short_description, self.specs,
+                                    self.default_view)
+
+# TODO when default, check if the func as only default values
 
 
-def view(human_name: str = "", short_description: str = "", specs: ViewSpecs = None) -> Callable:
+def view(human_name: str = "", short_description: str = "", specs: ViewSpecs = None,
+         default_view: bool = False) -> Callable:
     if specs is None:
         specs = {}
 
@@ -56,7 +66,8 @@ def view(human_name: str = "", short_description: str = "", specs: ViewSpecs = N
                     f"View error. The @view decorator of the method '{func.__name__}' has a spec called '{arg_name}' but there is not argument in the function called with the same name")
 
         # Create the meta data object
-        view_meta_data: ResourceViewMetaData = ResourceViewMetaData(func.__name__, human_name, short_description, specs)
+        view_meta_data: ResourceViewMetaData = ResourceViewMetaData(
+            func.__name__, human_name, short_description, specs, default_view)
         # Store the meta data object into the view_meta_data_attribute of the function
         setattr(func, VIEW_META_DATA_ATTRIBUTE, view_meta_data)
 

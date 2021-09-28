@@ -3,22 +3,24 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import inspect
-from typing import Callable, List, Tuple, Type
-
-from gws_core.resource.view_decorator import (VIEW_META_DATA_ATTRIBUTE,
-                                              ResourceViewMetaData)
+from typing import Any, Callable, Dict, List, Type
 
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import NotFoundException
+from ..core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 from ..core.service.base_service import BaseService
 from ..experiment.experiment import Experiment
 from ..model.typing_manager import TypingManager
+from ..resource.view_decorator import ResourceViewMetaData
+from ..resource.view_helper import ViewHelper
 from .resource_model import Resource, ResourceModel
 from .resource_typing import ResourceTyping
 
 
 class ResourceService(BaseService):
+
+    ############################# RESOURCE MODEL ###########################
 
     @classmethod
     def fetch_resource(cls,
@@ -78,23 +80,31 @@ class ResourceService(BaseService):
     def get_views_of_resource(cls, resource_typing_name: str) -> List[ResourceViewMetaData]:
         resource_type: Type[Resource] = TypingManager.get_type_from_name(resource_typing_name)
 
-        return cls.get_view_of_resource_type(resource_type)
+        return cls.get_views_of_resource_type(resource_type)
 
     @classmethod
-    def get_view_of_resource_type(cls, resource_type: Type[Resource]) -> List[ResourceViewMetaData]:
-        funcs: List[Tuple[str, Callable]] = inspect.getmembers(
-            resource_type, predicate=inspect.isfunction)
+    def get_views_of_resource_type(cls, resource_type: Type[Resource]) -> List[ResourceViewMetaData]:
+        return ViewHelper.get_views_of_resource_type(resource_type)
 
-        view_meta_data: List[ResourceViewMetaData] = []
+    @classmethod
+    def call_view_on_resource_type(cls, resource_model_typing_name: str,
+                                   resource_model_uri: str,
+                                   view_name: str, config: Dict[str, Any]) -> Any:
 
-        for func_tuple in funcs:
-            func: Callable = func_tuple[1]
+        resource_model: ResourceModel = cls.fetch_resource(resource_model_typing_name, resource_model_uri)
 
-            # Check if the method is annotated with view
-            if hasattr(
-                    func, VIEW_META_DATA_ATTRIBUTE) and isinstance(
-                    getattr(func, VIEW_META_DATA_ATTRIBUTE),
-                    ResourceViewMetaData):
-                view_meta_data.append(getattr(func, VIEW_META_DATA_ATTRIBUTE))
+        resource: Resource = resource_model.get_resource()
+        return cls.call_view_on_resource(resource, view_name, config)
 
-        return view_meta_data
+    @classmethod
+    def call_view_on_resource(cls, resource: Resource,
+                              view_name: str, config: Dict[str, Any]) -> Any:
+
+        # check if the view exists
+        ViewHelper.check_view(type(resource), view_name)
+
+        view_func: Callable = getattr(resource, view_name)
+
+        if config is None:
+            config = {}
+        return view_func(**config)
