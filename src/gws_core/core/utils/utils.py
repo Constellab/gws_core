@@ -13,6 +13,8 @@ from typing import Any, Callable, Dict, List, Tuple, Type
 
 from slugify import slugify as _slugify
 
+from ..classes.func_meta_data import FuncArgMetaData, FuncArgsMetaData
+
 
 class Utils:
 
@@ -213,7 +215,7 @@ class Utils:
         return properties
 
     @classmethod
-    def get_function_arguments(cls, func: Callable) -> Dict[str, type]:
+    def get_function_arguments(cls, func: Callable) -> Dict[str, FuncArgMetaData]:
         """Function to get the arguments with type (Any if not provided) of a method or a function
 
         :param func: [description]
@@ -222,14 +224,12 @@ class Utils:
         :rtype: Dict[str, type]
         """
 
-        args_spec: inspect.FullArgSpec = inspect.getfullargspec(func)
+        parameters: Dict[str, inspect.Parameter] = inspect.signature(func).parameters
 
-        arguments: Dict[str, type] = {}
+        arguments: FuncArgsMetaData = FuncArgsMetaData(func.__name__)
 
-        for arg_name in args_spec[0]:
-            if arg_name in args_spec.annotations:
-                arguments[arg_name] = args_spec.annotations[arg_name]
-            else:
-                arguments[arg_name] = object
+        for arg_name, parameter in parameters.items():
+            arguments.add_arg(arg_name, FuncArgMetaData(arg_name=arg_name,
+                                                        default_value=parameter._default, type_=parameter._annotation))
 
         return arguments

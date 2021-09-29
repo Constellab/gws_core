@@ -3,6 +3,7 @@
 from typing import Callable, Dict
 
 from gws_core.config.param_spec import ParamSpec
+from gws_core.core.classes.func_meta_data import FuncArgsMetaData
 from gws_core.core.utils.utils import Utils
 
 ViewSpecs = Dict[str, ParamSpec]
@@ -30,8 +31,6 @@ class ResourceViewMetaData():
         return ResourceViewMetaData(self.method_name, self.human_name, self.short_description, self.specs,
                                     self.default_view)
 
-# TODO when default, check if the func as only default values
-
 
 def view(human_name: str = "", short_description: str = "", specs: ViewSpecs = None,
          default_view: bool = False) -> Callable:
@@ -39,20 +38,25 @@ def view(human_name: str = "", short_description: str = "", specs: ViewSpecs = N
         specs = {}
 
     def decorator(func: Callable) -> Callable:
-        func_args: Dict[str, type] = Utils.get_function_arguments(func)
+        func_args: FuncArgsMetaData = Utils.get_function_arguments(func)
 
-        if 'self' not in func_args:
+        if not func_args.is_method():
             raise Exception(
                 'The @view decorator must be unsed on a method (with self). It must not be used in a classmethod or a static method')
 
+        # if the view is mark as default, all the parameters must be optional
+        if default_view and not func_args.all_args_have_default():
+            raise Exception(
+                f"View error. The @view of method '{func_args.func_name}' is mark as default but the method has a mandatory argument. If the view is mark as default, all the method's arguments must have a default value")
+
         # Check that the function arg matches the view specs and the type are the same
-        for arg_name in func_args.keys():
+        for arg_name in func_args.args.keys():
             if arg_name == 'self':
                 continue
 
             if arg_name not in specs:
                 raise Exception(
-                    f"View error. The method '{func.__name__}' has an argument called '{arg_name}' but this argument is not defined in the specs of the @view decorator")
+                    f"View error. The method '{func_args.func_name}' has an argument called '{arg_name}' but this argument is not defined in the specs of the @view decorator")
 
             # view_param_type: type = specs[arg_name].get_type()
             # if arg_type != view_param_type:
@@ -60,10 +64,10 @@ def view(human_name: str = "", short_description: str = "", specs: ViewSpecs = N
             #         f"View error. The method '{func.__name__}' has an argument called '{arg_name}' of type '{arg_type}' but this type is not the same as the type defined in the specs of the view decorator '{view_param_type}'")
 
         # Check that the view specs mathces the args types
-        for spec_name, param_spec in specs.items():
-            if spec_name not in func_args:
+        for spec_name in specs.keys():
+            if spec_name not in func_args.args:
                 raise Exception(
-                    f"View error. The @view decorator of the method '{func.__name__}' has a spec called '{arg_name}' but there is not argument in the function called with the same name")
+                    f"View error. The @view decorator of the method '{func_args.func_name}' has a spec called '{spec_name}' but there is not argument in the function called with the same name")
 
         # Create the meta data object
         view_meta_data: ResourceViewMetaData = ResourceViewMetaData(
