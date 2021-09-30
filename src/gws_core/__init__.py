@@ -46,9 +46,6 @@ from .core.classes.validator import PathValidator as PathValidator
 from .core.classes.validator import StrValidator as StrValidator
 from .core.classes.validator import URLValidator as URLValidator
 from .core.classes.validator import Validator as Validator
-from .core.classes.view import DictView as DictView
-from .core.classes.view import TableView as TableView
-from .core.classes.view import View as View
 # Core > DB
 from .core.db.mysql import MySQLBase as MySQLBase
 from .core.db.mysql import MySQLDump as MySQLDump
@@ -102,13 +99,6 @@ from .experiment.queue_service import QueueService as QueueService
 # Extension > ExtendedResource
 from .extension.extended_resource_model import \
     ExtendedResourceModel as ExtendedResourceModel
-from .impl.csv.csv_resource import CSVTable as CSVTable
-# Impl > CSV
-from .impl.csv.csv_tasks import CSVDumper as CSVDumper
-from .impl.csv.csv_tasks import CSVExporter as CSVExporter
-from .impl.csv.csv_tasks import CSVImporter as CSVImporter
-from .impl.csv.csv_tasks import CSVLoader as CSVLoader
-from .impl.csv.data_frame_r_field import DataFrameRField as DataFrameRField
 # Impl > File
 from .impl.file.file import File as File
 from .impl.file.file import FileSet as FileSet
@@ -123,7 +113,7 @@ from .impl.file.file_uploader import FileImporter as FileImporter
 from .impl.file.file_uploader import FileLoader as FileLoader
 from .impl.file.local_file_store import LocalFileStore as LocalFileStore
 # Impl > JSON
-from .impl.json.json_resource import JSONDict as JSONDict
+from .impl.json.json_dict import JSONDict as JSONDict
 from .impl.json.json_tasks import JSONDumper as JSONDumper
 from .impl.json.json_tasks import JSONExporter as JSONExporter
 from .impl.json.json_tasks import JSONImporter as JSONImporter
@@ -154,6 +144,17 @@ from .impl.s3.swift import Swift as Swift
 from .impl.shell.conda import CondaEnvShell as CondaEnvShell
 from .impl.shell.pipenv import PipEnvShell as PipEnvShell
 from .impl.shell.shell import Shell as Shell
+from .impl.table.data_frame_r_field import DataFrameRField as DataFrameRField
+# Impl > Table
+from .impl.table.table import Table as Table
+from .impl.table.table_tasks import TableDumper as TableDumper
+from .impl.table.table_tasks import TableExporter as TableExporter
+from .impl.table.table_tasks import TableImporter as TableImporter
+from .impl.table.table_tasks import TableLoader as TableLoader
+from .impl.table.table_view import TableView as TableView
+# Impl > Text
+from .impl.text.text import Text as Text
+from .impl.text.text_view import TextView as TextView
 # Impl > Volatile
 from .impl.volatile.volatile_resource import VolatileResource
 # Io
@@ -223,6 +224,7 @@ from .resource.resource_model import ResourceModel as ResourceModel
 from .resource.resource_service import ResourceService as ResourceService
 from .resource.resource_set import ResourceSet as ResourceSet
 from .resource.resource_typing import ResourceTyping as ResourceTyping
+from .resource.view import View as View
 from .resource.view_decorator import view as view
 # Study
 from .study.study import Study as Study
@@ -253,8 +255,3 @@ from .user.user import User as User
 from .user.user_dto import UserData as UserData
 from .user.user_group import UserGroup as UserGroup
 from .user.user_service import UserService as UserService
-# View
-from .view.csv_text_view import CSVTextView as CSVTextView
-from .view.raw_text_view import RawTextView as RawTextView
-from .view.line_2d_plot_view import Line2DPlotView as Line2DPlotView
-from .view.line_3d_plot_view import Line3DPlotView as Line3DPlotView

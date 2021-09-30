@@ -1,33 +1,32 @@
 
 
 from typing import List
+
 from pandas import DataFrame
-from .view import View
+
+from ...resource.view import View
+
 
 class Line3DPlotView(View):
     """
-    Class 3D-line plot view
+    Class for 3D-line plot view
 
-    The 3D-line view model is:
-
+    The view model is:
     ```
     {
+        "type": "line-3d-plot",
         "series": [
             {
-                "name": "Series 1",
+                "title": str,
+                "subtitle": str,
                 "data": {
                     "x": List[Float],
                     "y": List[Float],
                     "z": List[Float]
-                }
-            },
-            {
-                "name": "Series 2",
-                "data": {
-                    "x": List[Float], Int
-                    "y": List[Float], Int
-                    "z": List[Float]
-                }
+                },
+                "x_label": str,
+                "y_label": str,
+                "z_label": str
             },
             ...
         ]
@@ -41,7 +40,9 @@ class Line3DPlotView(View):
     def __init__(self, data: DataFrame):
         super().__init__(type="line-3d-plot", data=data)
 
-    def to_dict(self, x_column_name: str, y_column_name: str, z_column_names: List[str], title: str=None, subtitle: str=None) -> dict:
+    def to_dict(
+            self, x_column_name: str, y_column_name: str, z_column_names: List[str],
+            title: str = None, subtitle: str = None) -> dict:
         series = []
         for z_column_name in z_column_names:
             series.append({

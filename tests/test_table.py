@@ -6,8 +6,8 @@
 import os
 
 import pandas
-from gws_core import (BaseTestCase, ConfigParams, CSVDumper, CSVExporter,
-                      CSVImporter, CSVLoader, CSVTable, Experiment,
+from gws_core import (BaseTestCase, ConfigParams, TableDumper, TableExporter,
+                      TableImporter, TableLoader, Table, Experiment,
                       ExperimentService, File, GTest, Protocol, ProtocolModel,
                       ProtocolService, Settings, TaskModel, protocol_decorator)
 from gws_core.protocol.protocol_spec import ProcessSpec
@@ -19,18 +19,18 @@ i_file_path = os.path.join(testdata_dir, "data.csv")
 o_file_path = os.path.join(testdata_dir, "data_out.csv")
 
 
-@protocol_decorator("CSVProtocol")
-class CSVProtocol(Protocol):
+@protocol_decorator("TableProtocol")
+class TableProtocol(Protocol):
     def configure_protocol(self, config_params: ConfigParams) -> None:
 
         loader: ProcessSpec = self.add_process(
-            CSVLoader, 'loader').set_param(
+            TableLoader, 'loader').set_param(
             "file_path", i_file_path)
-        dumper: ProcessSpec = self.add_process(CSVDumper, 'dumper')\
+        dumper: ProcessSpec = self.add_process(TableDumper, 'dumper')\
             .set_param("file_path", o_file_path).set_param("index", False)
 
-        importer: ProcessSpec = self.add_process(CSVImporter, 'importer')
-        exporter: ProcessSpec = self.add_process(CSVExporter, 'exporter').set_param("index", False)
+        importer: ProcessSpec = self.add_process(TableImporter, 'importer')
+        exporter: ProcessSpec = self.add_process(TableExporter, 'exporter').set_param("index", False)
 
         self.add_connectors([
             (loader >> "data", dumper << "data"),
@@ -39,38 +39,38 @@ class CSVProtocol(Protocol):
         ])
 
 
-class TestCSV(BaseTestCase):
+class TestTable(BaseTestCase):
 
-    def test_csv_data(self):
-        GTest.print("CSVData")
+    def test_table(self):
+        GTest.print("Table")
 
-        csv_table: CSVTable = CSVTable()
-        csv_table.set_table(table=[[1, 2, 3]], column_names=["a", "b", "c"])
-        print(csv_table.table)
+        table: Table = Table()
+        table.set_data(data=[[1, 2, 3]], column_names=["a", "b", "c"])
+        print(table.table)
 
-        csv_table.set_table(table=[1, 2, 3], column_names=[
+        table.set_data(data=[1, 2, 3], column_names=[
             "data"], row_names=["a", "b", "c"])
-        print(csv_table.table)
+        print(table.table)
 
-    def test_csv_data_load(self):
-        GTest.print("CSVData load")
+    def test_table_load(self):
+        GTest.print("Table load")
 
         file = os.path.join(testdata_dir, "data.csv")
-        csv_data = CSVTable.import_from_path(file)
+        table = Table.import_from_path(file)
 
         df = pandas.read_table(file)
 
-        print(csv_data.table)
+        print(table.table)
         print(df)
 
-        self.assertTrue(df.equals(csv_data.table))
-        self.assertEqual(csv_data.column_names, ["A", "B", "C", "D", "E"])
-        self.assertEqual(csv_data.row_names, [0, 1])
+        self.assertTrue(df.equals(table.table))
+        self.assertEqual(table.column_names, ["A", "B", "C", "D", "E"])
+        self.assertEqual(table.row_names, [0, 1])
 
     async def test_loader_dumper(self):
-        GTest.print("CSVData Loader and Dumper")
+        GTest.print("Table Loader and Dumper")
 
-        proto: ProtocolModel = ProtocolService.create_protocol_model_from_type(CSVProtocol)
+        proto: ProtocolModel = ProtocolService.create_protocol_model_from_type(TableProtocol)
 
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
             protocol_model=proto)
@@ -83,17 +83,17 @@ class TestCSV(BaseTestCase):
         experiment = await ExperimentService.run_experiment(
             experiment=experiment, user=GTest.user)
 
-        print("Test CSV import/export")
+        print("Test Table import/export")
 
         importer: TaskModel = experiment.protocol_model.get_process("importer")
         loader: TaskModel = experiment.protocol_model.get_process("loader")
         exporter: TaskModel = experiment.protocol_model.get_process("exporter")
-        csv_data: CSVTable = loader.outputs.get_resource_model("data").get_resource()
+        table: Table = loader.outputs.get_resource_model("data").get_resource()
 
         i_df = pandas.read_table(i_file_path)
         o_df = pandas.read_table(o_file_path)
 
-        self.assertTrue(i_df.equals(csv_data.table))
+        self.assertTrue(i_df.equals(table.table))
         self.assertTrue(i_df.equals(o_df))
 
         if os.path.exists(o_file_path):
@@ -103,5 +103,5 @@ class TestCSV(BaseTestCase):
         file: File = exporter.outputs.get_resource_model("file")
         self.assertTrue(os.path.exists(file.path))
 
-        o_csv_data: CSVTable = importer.outputs.get_resource_model("data").get_resource()
-        self.assertTrue(csv_data.table.equals(o_csv_data.table))
+        o_table: Table = importer.outputs.get_resource_model("data").get_resource()
+        self.assertTrue(table.table.equals(o_table.table))

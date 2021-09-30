@@ -5,7 +5,7 @@ from ...task.task_decorator import task_decorator
 from ..file.file import File
 from ..file.file_uploader import (FileDumper, FileExporter, FileImporter,
                                   FileLoader)
-from .csv_resource import CSVTable
+from .table import Table
 
 # ####################################################################
 #
@@ -14,10 +14,10 @@ from .csv_resource import CSVTable
 # ####################################################################
 
 
-@task_decorator(unique_name="CSVImporter")
-class CSVImporter(FileImporter):
+@task_decorator(unique_name="TableImporter")
+class TableImporter(FileImporter):
     input_specs = {'file': File}
-    output_specs = {'data': CSVTable}
+    output_specs = {'data': Table}
     config_specs = {
         'file_format': StrParam(default_value=".csv", description="File format"),
         'delimiter': StrParam(default_value='\t', description="Delimiter character. Only for parsing CSV files"),
@@ -32,9 +32,9 @@ class CSVImporter(FileImporter):
 # ####################################################################
 
 
-@task_decorator(unique_name="CSVExporter")
-class CSVExporter(FileExporter):
-    input_specs = {'data': CSVTable}
+@task_decorator(unique_name="TableExporter")
+class TableExporter(FileExporter):
+    input_specs = {'data': Table}
     output_specs = {'file': File}
     config_specs = {
         'file_name': StrParam(default_value='file.csv', description="Destination file name in the store"),
@@ -52,10 +52,10 @@ class CSVExporter(FileExporter):
 # ####################################################################
 
 
-@task_decorator(unique_name="CSVLoader")
-class CSVLoader(FileLoader):
+@task_decorator(unique_name="TableLoader")
+class TableLoader(FileLoader):
     input_specs = {}
-    output_specs = {'data': CSVTable}
+    output_specs = {'data': Table}
     config_specs = {
         'file_path': StrParam(optional=True, description="Location of the file to import"),
         'file_format': StrParam(default_value=".csv", description="File format"),
@@ -71,9 +71,9 @@ class CSVLoader(FileLoader):
 # ####################################################################
 
 
-@task_decorator(unique_name="CSVDumper")
-class CSVDumper(FileDumper):
-    input_specs = {'data': CSVTable}
+@task_decorator(unique_name="TableDumper")
+class TableDumper(FileDumper):
+    input_specs = {'data': Table}
     output_specs = {}
     config_specs = {
         'file_path': StrParam(optional=True, description="Destination of the exported file"),

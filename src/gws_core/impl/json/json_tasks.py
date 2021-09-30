@@ -8,7 +8,7 @@ from ...task.task_decorator import task_decorator
 from ..file.file import File
 from ..file.file_uploader import (FileDumper, FileExporter, FileImporter,
                                   FileLoader)
-from .json_resource import JSONDict
+from .json_dict import JSONDict
 
 # ####################################################################
 #
