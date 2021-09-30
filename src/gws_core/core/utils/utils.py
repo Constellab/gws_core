@@ -215,7 +215,7 @@ class Utils:
         return properties
 
     @classmethod
-    def get_function_arguments(cls, func: Callable) -> Dict[str, FuncArgMetaData]:
+    def get_function_arguments(cls, func: Callable) -> FuncArgsMetaData:
         """Function to get the arguments with type (Any if not provided) of a method or a function
 
         :param func: [description]

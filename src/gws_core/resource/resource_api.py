@@ -7,14 +7,33 @@ from re import S
 from typing import Any, Dict, List, Optional
 
 from fastapi import Depends
+from gws_core.core.classes.jsonable import ListJsonable
 from gws_core.core.classes.paginator import PaginatorDict
-from gws_core.resource.view_decorator import ResourceViewMetaData
 
 from ..core_app import core_app
 from ..user.auth_service import AuthService
 from ..user.user_dto import UserData
 from .resource_service import ResourceService
 
+############################# VIEW ###########################
+
+
+@core_app.get("/resource/{resource_typing_name}/views", tags=["Resource"],
+              summary="Get the list of view for a resource type")
+async def get_resource_type_views(resource_typing_name: str) -> list:
+    return ListJsonable(ResourceService.get_views_of_resource(resource_typing_name)).to_json()
+
+
+@core_app.post("/resource/{resource_typing_name}/{uri}/views/{view_name}", tags=["Resource"],
+               summary="Call the view name for a resource")
+async def call_view_on_resource(resource_typing_name: str,
+                                uri: str,
+                                view_name: str,
+                                config: Dict[str, Any]) -> Any:
+    return ResourceService.call_view_on_resource_type(resource_typing_name, uri, view_name, config)
+
+
+####################################### Resource Model ###################################
 
 @core_app.get("/resource/{resource_model_typing_name}/{uri}", tags=["Resource"], summary="Get a resource")
 async def get_a_resource(resource_model_typing_name: str,
@@ -70,20 +89,3 @@ async def get_the_list_of_resource_types(page: Optional[int] = 1,
         page=page,
         number_of_items_per_page=number_of_items_per_page,
     ).to_json()
-
-
-############################# VIEW ###########################
-
-@core_app.get("/resource/{resource_typing_name}/views", tags=["Resource"],
-              summary="Get the list of view for a resource type")
-async def get_resource_type_views(resource_typing_name: str) -> List[ResourceViewMetaData]:
-    return ResourceService.get_views_of_resource(resource_typing_name)
-
-
-@core_app.post("/resource/{resource_typing_name}/{uri}/views{view_name}", tags=["Resource"],
-               summary="Call the view name for a resource")
-async def call_view_on_resource(resource_typing_name: str,
-                                uri: str,
-                                view_name: str,
-                                config: Dict[str, Any]) -> Any:
-    return ResourceService.call_view_on_resource_type(resource_typing_name, uri, view_name, config)

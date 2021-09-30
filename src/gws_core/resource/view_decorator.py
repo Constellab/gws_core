@@ -4,6 +4,7 @@ from typing import Callable, Dict
 
 from gws_core.config.param_spec import ParamSpec
 from gws_core.core.classes.func_meta_data import FuncArgsMetaData
+from gws_core.core.classes.jsonable import DictJsonable
 from gws_core.core.utils.utils import Utils
 
 ViewSpecs = Dict[str, ParamSpec]
@@ -30,6 +31,15 @@ class ResourceViewMetaData():
     def clone(self) -> 'ResourceViewMetaData':
         return ResourceViewMetaData(self.method_name, self.human_name, self.short_description, self.specs,
                                     self.default_view)
+
+    def to_json(self) -> dict:
+        return {
+            "method_name": self.method_name,
+            "human_name": self.human_name,
+            "short_description": self.short_description,
+            "specs": DictJsonable(self.specs).to_json(),
+            "default_view": self.default_view,
+        }
 
 
 def view(human_name: str = "", short_description: str = "", specs: ViewSpecs = None,

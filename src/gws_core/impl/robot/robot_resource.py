@@ -1,6 +1,6 @@
 from typing import List
 
-from gws_core.config.param_spec import BoolParam, StrParam
+from gws_core.config.param_spec import StrParam
 
 from ...resource.r_field import FloatRField, IntRField, ListRField
 from ...resource.resource import Resource
@@ -34,8 +34,8 @@ class Robot(Resource):
         elif direction == "east":
             self.position[0] += moving_step
 
-    @view()
-    def view_only_position(self) -> List[float]:
+    @view(human_name="View position", specs={"test": StrParam(default_value="Nice")})
+    def view_only_position(self, test: str = "Nice") -> List[float]:
         return self.position
 
 
