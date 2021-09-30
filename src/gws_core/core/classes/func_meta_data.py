@@ -48,6 +48,18 @@ class FuncArgsMetaData():
     def add_arg(self, arg_name: str, meta_data: FuncArgMetaData) -> None:
         self.args[arg_name] = meta_data
 
+    def get_named_args(self) -> Dict[str, FuncArgMetaData]:
+        """return all argument except utility ones (['self', 'cls', 'args', 'kwargs'])
+
+        :return: [description]
+        :rtype: Dict[str, FuncArgMetaData]
+        """
+        args: Dict[str, FuncArgMetaData] = {}
+        for key, arg in self.args.items():
+            if key not in ['self', 'cls', 'args', 'kwargs']:
+                args[key] = arg
+        return args
+
     def all_args_have_default(self) -> bool:
         for arg_name, arg in self.args.items():
             if arg_name == 'self' or arg_name == 'cls':
@@ -61,3 +73,8 @@ class FuncArgsMetaData():
 
     def is_class_method(self) -> bool:
         return 'cls' in self.args
+
+    def contain_args(self) -> bool:
+        """return true if the function container args or kwargs argument
+        """
+        return 'args' in self.args or 'kwargs' in self.args

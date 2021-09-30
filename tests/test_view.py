@@ -17,9 +17,9 @@ class ResourceViewTest(Resource):
     def a_view_test(self) -> str:
         return 'Test sub'
 
-    @view(human_name='View for test', short_description='Description for test')
-    def z_view_test(self) -> str:
-        return 'Test sub'
+    @view(human_name='View for test', short_description='Description for test', specs={"test": StrParam()})
+    def z_view_test(self, **kwargs) -> str:
+        return kwargs.get('test')
 
 
 @resource_decorator("ResourceViewTestSub")
@@ -79,3 +79,9 @@ class TestView(BaseTestCase):
             resource, 'sub_view_test', {"test_str_param": "Bonjour ", "test_any_param": 12})
 
         self.assertEqual(result, "Bonjour 12")
+
+        # test view with kwargs
+        result = ResourceService.call_view_on_resource(
+            resource, 'z_view_test', {"test": "Bonjour"})
+
+        self.assertEqual(result, "Bonjour")
