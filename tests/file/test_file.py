@@ -38,8 +38,8 @@ class TestFile(BaseTestCase):
 
         file_2: File = file_model.get_resource()
         file_3: File = file_model.get_resource()
-        self.assertNotEqual(file_1, file_2)
-        self.assertEqual(file_2, file_3)  # use cached data
+        self.assertEqual(file_1, file_2)
+        self.assertEqual(file_2, file_3) 
 
         self.assertEqual(file_1.path, file_2.path)
         self.assertEqual(file_2.path, file_3.path)
