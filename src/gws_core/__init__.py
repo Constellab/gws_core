@@ -151,10 +151,18 @@ from .impl.table.table_tasks import TableDumper as TableDumper
 from .impl.table.table_tasks import TableExporter as TableExporter
 from .impl.table.table_tasks import TableImporter as TableImporter
 from .impl.table.table_tasks import TableLoader as TableLoader
-from .impl.table.table_view import TableView as TableView
+# Impl > TableView
+from .impl.table.view.table_view import TableView as TableView
+from .impl.table.view.lineplot_2d_view import LinePlot2DView as LinePlot2DView
+from .impl.table.view.lineplot_3d_view import LinePlot3DView as LinePlot3DView
+from .impl.table.view.scatterplot_2d_view import ScatterPlot2DView as ScatterPlot2DView
+from .impl.table.view.scatterplot_3d_view import ScatterPlot3DView as ScatterPlot3DView
+from .impl.table.view.histogram_view import HistogramView as HistogramView
+from .impl.table.view.heatmap_view import HeatmapView as HeatmapView
 # Impl > Text
 from .impl.text.text import Text as Text
-from .impl.text.text_view import TextView as TextView
+# Impl > TextView
+from .impl.text.view.text_view import TextView as TextView
 # Impl > Volatile
 from .impl.volatile.volatile_resource import VolatileResource
 # Io

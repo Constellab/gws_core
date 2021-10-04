@@ -4,22 +4,25 @@ from typing import List
 
 from pandas import DataFrame
 
-from ...resource.view import View
+from ....resource.view import View
+from .base_table_view import BaseTableView
 
 
-class Line2DPlotView(View):
+class ScatterPlot2DView(BaseTableView):
     """
-    Class 2D-line plot view
+    ScatterPlot3DView
 
-    The 2D-line view model is:
+    Show a set of columns as 2d-scatter plots.
 
+    The view model is:
+    ------------------
     ```
     {
         "type": "line-2d-plot",
+        "title": str,
+        "subtitle": str,
         "series": [
             {
-                "title": str,
-                "subtitle": str,
                 "data": {
                     "x": List[Float],
                     "y": List[Float]
@@ -33,25 +36,23 @@ class Line2DPlotView(View):
     ```
     """
 
+    _type: str = "scatter-plot-2d"
     _data: DataFrame
-
-    def __init__(self, data: DataFrame):
-        super().__init__(type="line-2d-plot", data=data)
 
     def to_dict(self, x_column_name: str, y_column_names: List[str], title: str = None, subtitle: str = None) -> dict:
         series = []
         for y_column_name in y_column_names:
             series.append({
-                "tile": title,
-                "subtile": subtitle,
                 "data": {
-                    "x": self._data[x_column_name].values.to_list(),
-                    "y": self._data[y_column_name].values.to_list(),
+                    "x": self._data[x_column_name].values.tolist(),
+                    "y": self._data[y_column_name].values.tolist(),
                 },
                 "x_label": x_column_name,
                 "y_label": y_column_name,
             })
         return {
             "type": self._type,
+            "title": title,
+            "subtitle": subtitle,
             "series": series
         }

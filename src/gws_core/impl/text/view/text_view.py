@@ -1,9 +1,11 @@
-from typing import Union
+from typing import Union, TYPE_CHECKING
 
-from ...core.exception.exceptions.bad_request_exception import \
+from ....core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ...resource.view import View
+from ....resource.view import View
 
+if TYPE_CHECKING:
+    from .resource_model import ResourceModel
 
 class TextView(View):
     """
@@ -20,16 +22,17 @@ class TextView(View):
     ```
     """
 
+    _type: str = "text-view"
     _data: str
     MAX_NUMBER_OF_CHARS_PER_PAGE = 3000
 
-    def __init__(self, data: Union[str, 'Text']):
-        from .text import Text
+    def check_and_clean_data(self, data: Union[str, 'Text']):
+        from ..text import Text
         if not isinstance(data, (str, Text,)):
             raise BadRequestException("The data must be a string or an intance of Text")
         if isinstance(data, Text):
             data = data.get_data()
-        super().__init__(type="text-view", data=data)
+        return data
 
     def _slice(self, from_char_index: int = 0, to_char_index: int = 3000) -> str:
         length = len(self._data)

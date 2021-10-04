@@ -4,21 +4,25 @@ from typing import List
 
 from pandas import DataFrame
 
-from ...resource.view import View
+from ....core.exception.exceptions.bad_request_exception import \
+    BadRequestException
+from .base_table_view import BaseTableView
 
-
-class Line3DPlotView(View):
+class ScatterPlot3DView(BaseTableView):
     """
-    Class for 3D-line plot view
+    ScatterPlot3DView
 
+    Show a set of columns as 3d-scatter plots.
+    
     The view model is:
+    ------------------
     ```
     {
         "type": "line-3d-plot",
+        "title": str,
+        "subtitle": str,
         "series": [
             {
-                "title": str,
-                "subtitle": str,
                 "data": {
                     "x": List[Float],
                     "y": List[Float],
@@ -34,11 +38,8 @@ class Line3DPlotView(View):
     ```
     """
 
-    _type: str
+    _type: str = "scatter-plot-3d"
     _data: DataFrame
-
-    def __init__(self, data: DataFrame):
-        super().__init__(type="line-3d-plot", data=data)
 
     def to_dict(
             self, x_column_name: str, y_column_name: str, z_column_names: List[str],
@@ -46,12 +47,10 @@ class Line3DPlotView(View):
         series = []
         for z_column_name in z_column_names:
             series.append({
-                "title": title,
-                "subtitle": subtitle,
                 "data": {
-                    "x": self._data[x_column_name].values.to_list(),
-                    "y": self._data[y_column_name].values.to_list(),
-                    "z": self._data[z_column_name].values.to_list(),
+                    "x": self._data[x_column_name].values.tolist(),
+                    "y": self._data[y_column_name].values.tolist(),
+                    "z": self._data[z_column_name].values.tolist(),
                 },
                 "x_label": x_column_name,
                 "y_label": y_column_name,
@@ -60,5 +59,7 @@ class Line3DPlotView(View):
 
         return {
             "type": self._type,
+            "title": title,
+            "subtitle": subtitle,
             "series": series
         }

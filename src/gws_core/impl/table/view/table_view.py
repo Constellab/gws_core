@@ -1,13 +1,12 @@
-from typing import List, Union
+from typing import List, Union, TYPE_CHECKING
 
 from pandas import DataFrame
 
-from ...core.exception.exceptions.bad_request_exception import \
+from ....core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ...resource.view import View
+from .base_table_view import BaseTableView
 
-
-class TableView(View):
+class TableView(BaseTableView):
     """
     Class table view.
 
@@ -22,17 +21,11 @@ class TableView(View):
     ```
     """
 
+    _type = "table-view"
     _data: DataFrame
+
     MAX_NUMBERS_OF_ROWS_PER_PAGE = 50
     MAX_NUMBERS_OF_COLUMNS_PER_PAGE = 50
-
-    def __init__(self, data: Union[DataFrame, 'Table']):
-        from .table import Table
-        if not isinstance(data, (DataFrame, Table,)):
-            raise BadRequestException("The data must be a pandas.DataFrame or Table resource")
-        if isinstance(data, Table):
-            data = data.get_data()
-        super().__init__(type="table-view", data=data)
 
     def _slice(self, from_row_index: int = 0, to_row_index: int = 49, from_column_index: int = 0, to_column_index: int = 49) -> dict:
         last_row_index = self._data.shape[0] - 1
@@ -74,7 +67,7 @@ class TableView(View):
         return {
             "type": self._type,
             "title": title,
-            "subtile": subtitle,
+            "subtitle": subtitle,
             "data": table,
             "row_page": row_page,
             "number_of_rows_per_page": number_of_rows_per_page,
