@@ -84,6 +84,8 @@ class ResourceService(BaseService):
 
     @classmethod
     def get_views_of_resource_type(cls, resource_type: Type[Resource]) -> List[ResourceViewMetaData]:
+        if not issubclass(resource_type, Resource):
+            raise BadRequestException("Can't find views of an object other than a Resource")
         return ViewHelper.get_views_of_resource_type(resource_type)
 
     @classmethod

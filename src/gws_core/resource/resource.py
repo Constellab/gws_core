@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, Type
 
-from gws_core.core.utils.utils import Utils
-from gws_core.resource.r_field import BaseRField, UUIDRField
-
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.base import Base
+from ..core.utils.utils import Utils
 from ..model.typing_register_decorator import typing_registrator
+from ..resource.r_field import BaseRField, UUIDRField
+from ..resource.view_decorator import view
 
 if TYPE_CHECKING:
     from .resource_model import ResourceModel
@@ -73,6 +73,7 @@ class Resource(Base):
 
         # @ToDo: ensure that this method is only called by an Importer
 
+    @view(human_name="View as JSON", short_description="View the complete resource as json", default_view=True)
     def view_as_dict(self) -> Dict:
         """By default the view_as_dict dumps the RFields mark with, include_in_dict_view=True
         This method is used to send the resource information back to the interface
