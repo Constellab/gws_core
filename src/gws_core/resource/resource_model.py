@@ -343,8 +343,4 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         :return: The representation
         :rtype: `dict`
         """
-
-        if deep:
-            return self.get_resource().view_as_dict()
-        else:
-            return {}
+        return {}

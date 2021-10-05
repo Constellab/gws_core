@@ -6,11 +6,15 @@
 import os
 from typing import Any, AnyStr, List, Type, final
 
+from gws_core.impl.json.json_view import JsonView
+from gws_core.impl.text.text_view import TextView
+
 from ...core.exception.exceptions import BadRequestException
 from ...impl.file.file_helper import FileHelper
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.resource_set import ResourceSet
+from ...resource.view_decorator import view
 
 
 @resource_decorator("File")
@@ -103,11 +107,18 @@ class File(Resource):
 
     # -- T --
 
+    @view(human_name="View as JSON", short_description="View the complete resource as json")
     def view_as_dict(self) -> dict:
         _json = super().view_as_dict()
         _json["path"] = self.path
         _json["content"] = self.read()
-        return _json
+        return JsonView(_json).to_dict()
+
+    @view(human_name="View file content", short_description="View the file content as string", default_view=True)
+    def view_content_as_str(self) -> dict:
+        content = self.read()
+
+        return TextView(content).to_dict()
 
     # -- W --
 

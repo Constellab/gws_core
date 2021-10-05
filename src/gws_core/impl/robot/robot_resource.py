@@ -1,6 +1,7 @@
 from typing import List
 
 from gws_core.config.param_spec import StrParam
+from gws_core.impl.json.json_view import JsonView
 
 from ...resource.r_field import FloatRField, IntRField, ListRField
 from ...resource.resource import Resource
@@ -34,9 +35,10 @@ class Robot(Resource):
         elif direction == "east":
             self.position[0] += moving_step
 
-    @view(human_name="View position", specs={"test": StrParam(default_value="Nice")})
-    def view_only_position(self, test: str = "Nice") -> List[float]:
-        return self.position
+    @view(human_name="View position", specs={"position": StrParam(default_value="latitude", allowed_values=['latitude', 'longitude'])})
+    def view_only_position(self, position: str) -> List[float]:
+        position_value = self.position[1] if position == 'latitude' else self.position[0]
+        return JsonView({"position": position, "value": position_value}).to_dict()
 
 
 @resource_decorator("RobotAddOn")

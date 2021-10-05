@@ -6,6 +6,7 @@ from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.base import Base
 from ..core.utils.utils import Utils
+from ..impl.json.json_view import JsonView
 from ..model.typing_register_decorator import typing_registrator
 from ..resource.r_field import BaseRField, UUIDRField
 from ..resource.view_decorator import view
@@ -85,7 +86,7 @@ class Resource(Base):
             if r_field.include_in_dict_view:
                 json_[key] = r_field.serialize(getattr(self, key))
 
-        return json_
+        return JsonView(json_).to_dict()
 
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, Resource):

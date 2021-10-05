@@ -3,7 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from re import S
 from typing import Any, Dict, List, Optional
 
 from fastapi import Depends
@@ -24,13 +23,13 @@ async def get_resource_type_views(resource_typing_name: str) -> list:
     return ListJsonable(ResourceService.get_views_of_resource(resource_typing_name)).to_json()
 
 
-@core_app.post("/resource/{resource_typing_name}/{uri}/views/{view_name}", tags=["Resource"],
+@core_app.post("/resource/{resource_model_typing_name}/{uri}/views/{view_name}", tags=["Resource"],
                summary="Call the view name for a resource")
-async def call_view_on_resource(resource_typing_name: str,
+async def call_view_on_resource(resource_model_typing_name: str,
                                 uri: str,
                                 view_name: str,
                                 config: Dict[str, Any]) -> Any:
-    return ResourceService.call_view_on_resource_type(resource_typing_name, uri, view_name, config)
+    return ResourceService.call_view_on_resource_type(resource_model_typing_name, uri, view_name, config)
 
 
 ####################################### Resource Model ###################################
