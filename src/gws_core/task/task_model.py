@@ -116,7 +116,7 @@ class TaskModel(ProcessModel):
 
         # execute the run after task method
         try:
-            task.run_after_task()
+            await task.run_after_task()
         except Exception as err:
             raise ProcessRunException.from_exception(process_model=self, exception=err,
                                                      error_prefix='Error during check before task') from err

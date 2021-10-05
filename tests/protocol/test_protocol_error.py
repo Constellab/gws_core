@@ -109,7 +109,7 @@ class TestProtocolError(BaseTestCase):
         except ExperimentRunException as err:
             exception = err
         else:
-            self.fail('Run experiment shoud have raise ExperimentRunException ')
+            self.fail('Run experiment shoud have raised ExperimentRunException')
 
         # Check that experiment is in error status
         experiment = ExperimentService.get_experiment_by_uri(experiment.uri)
@@ -159,7 +159,7 @@ class TestProtocolError(BaseTestCase):
         except ExperimentRunException as err:
             exception = err
         else:
-            self.fail('Run experiment shoud have raise ExperimentRunException ')
+            self.fail('Run experiment shoud have raised ExperimentRunException')
 
         # Check that experiment is in error status
         experiment = ExperimentService.get_experiment_by_uri(experiment.uri)
@@ -181,4 +181,4 @@ class TestProtocolError(BaseTestCase):
         except ProtocolBuildException as err:
             exception = err
         else:
-            self.fail('Run experiment shoud have raise ProtocolBuildException ')
+            self.fail('Run experiment shoud have raisedd ProtocolBuildException')

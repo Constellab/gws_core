@@ -3,11 +3,25 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core import (BaseTestCase, Experiment, ExperimentService, GTest,
-                      ProcessFactory, ProtocolModel, ProtocolService,
-                      ResourceModel, Robot, RobotCreate, TaskModel)
+from abc import abstractmethod
 
+from gws_core import (BaseTestCase, ConfigParams, Experiment,
+                      ExperimentService, GTest, ProcessFactory, ProtocolModel,
+                      ProtocolService, ResourceModel, Robot, RobotCreate, Task,
+                      TaskInputs, TaskModel, TaskOutputs, TaskTester,
+                      task_decorator)
+from gws_core.experiment.experiment_interface import IExperiment
 from tests.protocol_examples import TestSimpleProtocol
+
+
+@task_decorator(unique_name="RunAfterTask")
+class RunAfterTask(Task):
+    @abstractmethod
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        return None
+
+    async def run_after_task(self) -> None:
+        raise Exception('run_after_task')
 
 
 class TestTask(BaseTestCase):
@@ -90,3 +104,17 @@ class TestTask(BaseTestCase):
 
         print(" \n------ Experiment --------")
         print(experiment.to_json())
+
+    async def test_after_run(self):
+        """Test that the after run method is called
+        To test it, we check that it raised an exception
+        """
+
+        experiment: IExperiment = IExperiment(RunAfterTask)
+
+        try:
+            await experiment.run()
+        except Exception as err:
+            self.assertTrue('run_after_task' in str(err))
+        else:
+            self.fail('Run experiment shoud have raised Exception')
