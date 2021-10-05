@@ -1,49 +1,73 @@
 
 
-from typing import Callable, Dict
+from typing import Callable, Dict, Type
 
-from gws_core.config.param_spec import ParamSpec
-from gws_core.core.classes.func_meta_data import FuncArgsMetaData
-from gws_core.core.classes.jsonable import DictJsonable
-from gws_core.core.utils.utils import Utils
-
-ViewSpecs = Dict[str, ParamSpec]
+from ..core.classes.func_meta_data import FuncArgsMetaData
+from ..core.classes.jsonable import DictJsonable
+from ..core.utils.utils import Utils
+from .view import View
+from .view_types import ViewSpecs
 
 VIEW_META_DATA_ATTRIBUTE = '__view_mata_data'
 
 
 class ResourceViewMetaData():
     method_name: str
+    view_type: Type[View]
     human_name: str
     short_description: str
     specs: ViewSpecs
     default_view: bool
 
-    def __init__(self, method_name: str, human_name: str,
-                 short_description: str, specs: ViewSpecs,
-                 default_view: bool) -> None:
+    def __init__(self, method_name: str, view_type: Type[View],
+                 human_name: str, short_description: str,
+                 specs: ViewSpecs, default_view: bool) -> None:
         self.method_name = method_name
+        self.view_type = view_type
         self.human_name = human_name
         self.short_description = short_description
         self.specs = specs
         self.default_view = default_view
 
     def clone(self) -> 'ResourceViewMetaData':
-        return ResourceViewMetaData(self.method_name, self.human_name, self.short_description, self.specs,
-                                    self.default_view)
+        return ResourceViewMetaData(
+            self.method_name, self.view_type, self.human_name, self.short_description, self.specs, self.default_view)
 
     def to_json(self) -> dict:
+        print('AAA')
         return {
             "method_name": self.method_name,
+            "view_type": self.view_type._type,
             "human_name": self.human_name,
             "short_description": self.short_description,
-            "specs": DictJsonable(self.specs).to_json(),
+            "view_specs": DictJsonable(self.view_type._specs).to_json(),
+            "method_specs": DictJsonable(self.specs).to_json(),
             "default_view": self.default_view,
         }
 
 
-def view(human_name: str = "", short_description: str = "", specs: ViewSpecs = None,
-         default_view: bool = False) -> Callable:
+def view(view_type: Type[View], human_name: str = "", short_description: str = "",
+         specs: ViewSpecs = None,  default_view: bool = False) -> Callable:
+    """ Decorator the place one resource method to define it as a view.
+    Views a reference in the interfave when viewing a resource
+    It must return a View.
+
+    :param view_type: type of the view returned. If the method can return differents views (not recommended) use View type.
+    :type view_type: Type[View]
+    :param human_name: Human readable name for the view . Must not be longer than 20 caracters, defaults to ""
+    :type human_name: str, optional
+    :param short_description: Short description for the view. Must not be longer than 100 caracters, defaults to ""
+    :type short_description: str, optional
+    :param specs: Specification for the view. The parameters corresponding to the view are passed to the view method when calling it.
+     The user can provided values for the specs when calling the view, defaults to None
+    :type specs: ViewSpecs, optional
+    :param default_view: If true, this view is the one used by default. Chlid class default override the default of parent.
+    A default view must contains only optional specs, defaults to False
+    :type default_view: bool, optional
+    :return: [description]
+    :rtype: Callable
+    """
+
     if specs is None:
         specs = {}
 
@@ -79,7 +103,7 @@ def view(human_name: str = "", short_description: str = "", specs: ViewSpecs = N
 
         # Create the meta data object
         view_meta_data: ResourceViewMetaData = ResourceViewMetaData(
-            func.__name__, human_name, short_description, specs, default_view)
+            func.__name__, view_type, human_name, short_description, specs, default_view)
         # Store the meta data object into the view_meta_data_attribute of the function
         setattr(func, VIEW_META_DATA_ATTRIBUTE, view_meta_data)
 

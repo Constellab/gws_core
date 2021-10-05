@@ -25,7 +25,7 @@ class Text(Resource):
     def get_data(self):
         return self._data
 
-    @view(human_name='Text', short_description='View as text',
+    @view(view_type=TextView, human_name='Text', short_description='View as text',
           specs={
               "page": IntParam(default_value=1, min_value=0, human_name="Page to view"),
               "number_of_chars_per_page": IntParam(default_value=3000, min_value=1, max_value=3000, human_name="Number of chars per page"),

@@ -2,7 +2,7 @@
 
 import json
 
-from ...config.config_types import ConfigSpecs, ConfigParams
+from ...config.config_types import ConfigParams, ConfigSpecs
 from ...config.param_spec import StrParam
 from ...impl.file.file import File
 from ...impl.file.file_store import FileStore
@@ -27,6 +27,6 @@ class WriteToJsonFile(Task):
         file: File = file_store.create_empty(params.get_value('filename') + '.json')
 
         resource: Resource = inputs['resource']
-        file.write(json.dumps(resource.view_as_dict()))
+        file.write(json.dumps(resource.view_as_dict().to_dict()))
 
         return {"file": file}

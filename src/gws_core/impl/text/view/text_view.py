@@ -1,8 +1,16 @@
-from typing import Union
+from __future__ import annotations
 
+from typing import TYPE_CHECKING, Union
+
+from ....config.param_spec import IntParam
+from ....core.classes.paginator import PageInfo
 from ....core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ....resource.view import View
+from ....resource.view_types import ViewSpecs
+
+if TYPE_CHECKING:
+    from ..text import Text
 
 
 class TextView(View):
@@ -13,18 +21,18 @@ class TextView(View):
     ```
     {
         "type": "text-view"
-        "title": str
-        "subtitle": str
         "data": str
     }
     ```
     """
 
     _type: str = "text-view"
+    _specs: ViewSpecs = {"page": IntParam(default_value=1, min_value=1, human_name="Page number"), "page_size": IntParam(
+        default_value=10000, max_value=50000, min_value=1000, human_name="Number of caracters to display per page")}
     _data: str
-    MAX_NUMBER_OF_CHARS_PER_PAGE = 3000
+    MAX_NUMBER_OF_CHARS_PER_PAGE = 50000
 
-    def check_and_clean_data(self, data: Union[str, 'Text']):
+    def check_and_clean_data(self, data: Union[str, Text]):
         from ..text import Text
         if not isinstance(data, (str, Text,)):
             raise BadRequestException("The data must be a string or an intance of Text")
@@ -38,23 +46,13 @@ class TextView(View):
         to_char_index = min(min(to_char_index, from_char_index + self.MAX_NUMBER_OF_CHARS_PER_PAGE), length)
         return self._data[from_char_index:to_char_index]
 
-    def to_dict(self, page: int = 1, number_of_chars_per_page: int = 3000, title: str = None, subtitle: str = None) -> dict:
-        number_of_chars_per_page = min(self.MAX_NUMBER_OF_CHARS_PER_PAGE, number_of_chars_per_page)
-        from_char_index = (page-1)*number_of_chars_per_page
-        to_char_index = from_char_index + number_of_chars_per_page
+    def to_dict(self, page: int, page_size: int) -> dict:
         total_number_of_chars = len(self._data)
-        total_number_of_pages = int(len(self._data) / number_of_chars_per_page)
+        page_info: PageInfo = PageInfo(page, page_size, total_number_of_chars, self.MAX_NUMBER_OF_CHARS_PER_PAGE, 1)
 
-        text = self._slice(from_char_index=from_char_index, to_char_index=to_char_index)
+        text = self._slice(from_char_index=page_info.from_index, to_char_index=page_info.to_index)
         return {
             "type": self._type,
-            "title": title,
-            "subtile": subtitle,
             "data": text,
-            "page": page,
-            "number_of_chars_per_page": number_of_chars_per_page,
-            "total_number_of_pages": total_number_of_pages,
-            "from_char_index": from_char_index,
-            "to_char_index": to_char_index,
-            "total_number_of_chars": total_number_of_chars
+            **page_info.to_json(),
         }

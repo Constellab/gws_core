@@ -8,6 +8,7 @@ import unittest
 
 from gws_core import File, FileModel, FileService, GTest, MySQLService
 from gws_core.core.db.db_manager import DbManager
+from gws_core.impl.file.local_file_store import LocalFileStore
 
 
 class TestMySQLDumpLoad(unittest.TestCase):
@@ -30,8 +31,7 @@ class TestMySQLDumpLoad(unittest.TestCase):
             return
 
         # insert data in comment table
-        f = File()
-        f.path = "./oui"
+        f: File = LocalFileStore.get_default_instance().create_empty("./oui")
         file_model: FileModel = FileService.create_file_model(file=f)
 
         c = file_model.add_comment("The sky is blue")

@@ -1,10 +1,11 @@
-from typing import List, Union, TYPE_CHECKING
 
+from gws_core.config.param_spec import IntParam
+from gws_core.core.classes.paginator import PageInfo
+from gws_core.resource.view_types import ViewSpecs
 from pandas import DataFrame
 
-from ....core.exception.exceptions.bad_request_exception import \
-    BadRequestException
 from .base_table_view import BaseTableView
+
 
 class TableView(BaseTableView):
     """
@@ -14,14 +15,18 @@ class TableView(BaseTableView):
     ```
     {
         "type": "table-view"
-        "title": str
-        "subtitle": str
         "data": dict
     }
     ```
     """
 
     _type = "table-view"
+    _specs: ViewSpecs = {
+        "row_page": IntParam(default_value=1, human_name="Row page number"),
+        "row_page_size": IntParam(default_value=50, max_value=50, min_value=1, human_name="Number of rows per page"),
+        "column_page": IntParam(default_value=1, human_name="Row page number"),
+        "column_page_size": IntParam(default_value=50, max_value=50, min_value=1, human_name="Number of columns per page")
+    }
     _data: DataFrame
 
     MAX_NUMBERS_OF_ROWS_PER_PAGE = 50
@@ -45,40 +50,34 @@ class TableView(BaseTableView):
         return table
 
     def to_dict(self, row_page: int = 1, number_of_rows_per_page: int = 50, column_page: int = 1,
-                number_of_columns_per_page: int = 50, title: str = None, subtitle: str = None) -> dict:
-        number_of_rows_per_page = min(self.MAX_NUMBERS_OF_ROWS_PER_PAGE, number_of_rows_per_page)
-        number_of_columns_per_page = min(self.MAX_NUMBERS_OF_COLUMNS_PER_PAGE, number_of_columns_per_page)
-
-        from_row_index = (row_page-1)*number_of_rows_per_page
-        to_row_index = from_row_index + number_of_rows_per_page
-        from_column_index = (column_page-1)*number_of_columns_per_page
-        to_column_index = from_column_index + number_of_columns_per_page
-
-        table = self._slice(
-            from_row_index=from_row_index,
-            to_row_index=to_row_index,
-            from_column_index=from_column_index,
-            to_column_index=to_column_index
-        )
+                number_of_columns_per_page: int = 50) -> dict:
 
         total_number_of_rows = self._data.shape[0]
         total_number_of_columns = self._data.shape[1]
 
+        row_page_info: PageInfo = PageInfo(row_page, number_of_rows_per_page,
+                                           total_number_of_rows, self.MAX_NUMBERS_OF_ROWS_PER_PAGE, 1)
+        column_page_info: PageInfo = PageInfo(column_page, number_of_columns_per_page,
+                                              total_number_of_columns, self.MAX_NUMBERS_OF_COLUMNS_PER_PAGE, 1)
+
+        table = self._slice(
+            from_row_index=row_page_info.from_index,
+            to_row_index=row_page_info.to_index,
+            from_column_index=column_page_info.from_index,
+            to_column_index=column_page_info.to_index
+        )
+
         return {
             "type": self._type,
-            "title": title,
-            "subtitle": subtitle,
             "data": table,
             "row_page": row_page,
             "number_of_rows_per_page": number_of_rows_per_page,
             "column_page": column_page,
             "number_of_columns_per_page": number_of_columns_per_page,
-            "from_row_index": from_row_index,
-            "to_row_index": to_row_index,
+            "from_row_index": row_page_info.from_index,
+            "to_row_index": row_page_info.to_index,
             "total_number_of_rows": total_number_of_rows,
-            "from_column_index": from_column_index,
-            "to_column_index": to_column_index,
+            "from_column_index": column_page_info.from_index,
+            "to_column_index": column_page_info.to_index,
             "total_number_of_columns": total_number_of_columns,
-            "current_sheet": 0,
-            "total_number_of_sheets": 0
         }

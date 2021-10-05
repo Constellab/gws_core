@@ -30,15 +30,11 @@ class JSONDict(Resource):
             else:
                 json.dump(self.data, f)
 
-    # -- G --
-
     def __getitem__(self, key):
         return self.data[key]
 
     def get(self, key, default=None):
         return self.data.get(key, default)
-
-    # -- I --
 
     @classmethod
     def import_from_path(cls, file_path: str, file_format: str = ".json") -> Any:
@@ -57,13 +53,5 @@ class JSONDict(Resource):
 
         return json_data
 
-    # -- J --
-
-    # -- K --
-
-    # -- S --
-
     def __setitem__(self, key, val):
         self.data[key] = val
-
-    # -- T --

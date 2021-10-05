@@ -18,7 +18,7 @@ class PipEnvTester(PipEnvShell):
     input_specs = {}
     output_specs = {'stdout': (JSONDict, )}
     env_file_path = os.path.join(
-        __cdir__, "testdata", "penv", "env_jwt_pip.txt")
+        __cdir__, "../", "testdata", "penv", "env_jwt_pip.txt")
 
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
         return ["python", os.path.join(__cdir__, "testdata", "penv", "jwt_encode.py")]

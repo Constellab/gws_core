@@ -17,7 +17,7 @@ class CondaEnvTester(CondaEnvShell):
     input_specs = {}
     output_specs = {'stdout': (JSONDict, )}
     env_file_path = os.path.join(
-        __cdir__, "testdata", "penv", "env_jwt_conda.yml")
+        __cdir__, "../" "testdata", "penv", "env_jwt_conda.yml")
 
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
         return ["python", os.path.join(__cdir__, "testdata", "penv", "jwt_encode.py")]

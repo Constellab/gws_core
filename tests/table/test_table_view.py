@@ -1,10 +1,6 @@
-import inspect
 import os
-from typing import List
 
-from gws_core import (BaseTestCase, Resource, ResourceService, Robot, Settings,
-                      Table, TableView, resource_decorator, view)
-from pandas import DataFrame
+from gws_core import BaseTestCase, Settings, Table, TableView
 
 
 class TestTableView(BaseTestCase):

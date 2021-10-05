@@ -1,11 +1,10 @@
 
 
-from typing import List
+from typing import Any, List, Union
 
 import numpy
 from pandas import DataFrame
 
-from ....resource.view import View
 from .base_table_view import BaseTableView
 
 
@@ -21,8 +20,6 @@ class HistogramView(BaseTableView):
     ```
     {
         "type": "histogram",
-        "title": str,
-        "subtitle": str,
         "series": [
             {
                 "data": {
@@ -40,14 +37,28 @@ class HistogramView(BaseTableView):
     _type: str = "histogram"
     _data: DataFrame
 
-    def to_dict(self, column_names: List[str], nbins: int=10, density: bool=False, title: str = None, subtitle: str = None) -> dict:
-    
+    column_names: List[str]
+    nbins: int
+    density: bool
+
+    def __init__(self, data: Any, column_names: List[str], nbins: int = 10, density: bool = False):
+        super().__init__(data)
+        self.column_names = column_names
+        self.nbins = nbins
+        self.density = density
+
+    def get_nbins(self) -> Union[int, str]:
+        if self.nbins <= 0:
+            return "auto"
+        return self.nbins
+
+    def to_dict(self) -> dict:
+
         series = []
-        for column_name in column_names:
+        for column_name in self.column_names:
             col_data = self._data[column_name].values
-            if nbins <= 0:
-                nbins = "auto"
-            hist, bin_edges = numpy.histogram(col_data, bins=nbins, density=density)
+
+            hist, bin_edges = numpy.histogram(col_data, bins=self.get_nbins(), density=self.density)
             series.append({
                 "data": {
                     "hist": hist.tolist(),
@@ -57,7 +68,5 @@ class HistogramView(BaseTableView):
             })
         return {
             "type": self._type,
-            "title": title,
-            "subtitle": subtitle,
             "series": series
         }

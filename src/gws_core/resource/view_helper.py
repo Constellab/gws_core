@@ -1,15 +1,43 @@
 import inspect
-from typing import Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
-from gws_core.core.exception.exceptions.bad_request_exception import \
+from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
-
 from ..resource.resource import Resource
 from ..resource.view_decorator import (VIEW_META_DATA_ATTRIBUTE,
                                        ResourceViewMetaData)
+from .view import View
+from .view_types import ViewConfig
 
 
 class ViewHelper():
+
+    @classmethod
+    def call_view_on_resource(cls, resource: Resource,
+                              view_name: str, config: ViewConfig) -> Dict:
+        if config is None:
+            config = {"method_config": {}, "view_config": {}}
+
+        # Get the view object from the view method
+        view: View = cls.call_view_method(resource, view_name, config["method_config"])
+
+        # convert the view to dict using the config
+        return view.to_dict(**config["view_config"])
+
+    @classmethod
+    def call_view_method(cls, resource: Resource,
+                         view_name: str, config:  Dict[str, Any]) -> View:
+
+        # check if the view exists
+        ViewHelper.check_view(type(resource), view_name)
+
+        view_func: Callable = getattr(resource, view_name)
+
+        if config is None:
+            config = {}
+
+        # Get the view object from the view method
+        return view_func(**config)
 
     @classmethod
     def get_default_view_of_resource_type(cls, resource_type: Type[Resource]) -> Optional[ResourceViewMetaData]:

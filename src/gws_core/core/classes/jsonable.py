@@ -21,6 +21,11 @@ class ListJsonable(List[Jsonable]):
     :type List: [type]
     """
 
+    def __init__(self, data: List = None):
+        if data is None:
+            data = []
+        super().__init__(data)
+
     def to_json(self, **kwargs) -> List[dict]:
         _json = []
         for obj in self:
@@ -35,6 +40,11 @@ class DictJsonable(Dict[str, Jsonable]):
     :param List: [description]
     :type List: [type]
     """
+
+    def __init__(self, data: Dict = None):
+        if data is None:
+            data = {}
+        super().__init__(data)
 
     def to_json(self, **kwargs) -> Dict[str, dict]:
         _json = {}

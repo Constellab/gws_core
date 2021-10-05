@@ -1,6 +1,6 @@
 
 
-from typing import List
+from typing import Any, List
 
 from pandas import DataFrame
 
@@ -10,7 +10,7 @@ from .base_table_view import BaseTableView
 
 class ScatterPlot2DView(BaseTableView):
     """
-    ScatterPlot3DView
+    ScatterPlot2DView
 
     Show a set of columns as 2d-scatter plots.
 
@@ -19,8 +19,6 @@ class ScatterPlot2DView(BaseTableView):
     ```
     {
         "type": "line-2d-plot",
-        "title": str,
-        "subtitle": str,
         "series": [
             {
                 "data": {
@@ -39,20 +37,26 @@ class ScatterPlot2DView(BaseTableView):
     _type: str = "scatter-plot-2d"
     _data: DataFrame
 
-    def to_dict(self, x_column_name: str, y_column_names: List[str], title: str = None, subtitle: str = None) -> dict:
+    x_column_name: str
+    y_column_names: List[str]
+
+    def __init__(self, data: Any, x_column_name: str, y_column_names: List[str]):
+        super().__init__(data)
+        self.x_column_name = x_column_name
+        self.y_column_names = y_column_names
+
+    def to_dict(self) -> dict:
         series = []
-        for y_column_name in y_column_names:
+        for y_column_name in self.y_column_names:
             series.append({
                 "data": {
-                    "x": self._data[x_column_name].values.tolist(),
+                    "x": self._data[self.x_column_name].values.tolist(),
                     "y": self._data[y_column_name].values.tolist(),
                 },
-                "x_label": x_column_name,
+                "x_label": self.x_column_name,
                 "y_label": y_column_name,
             })
         return {
             "type": self._type,
-            "title": title,
-            "subtitle": subtitle,
             "series": series
         }

@@ -74,8 +74,8 @@ class Resource(Base):
 
         # @ToDo: ensure that this method is only called by an Importer
 
-    @view(human_name="View as JSON", short_description="View the complete resource as json", default_view=True)
-    def view_as_dict(self) -> Dict:
+    @view(view_type=JsonView, human_name="View as JSON", short_description="View the complete resource as json", default_view=True)
+    def view_as_dict(self) -> JsonView:
         """By default the view_as_dict dumps the RFields mark with, include_in_dict_view=True
         This method is used to send the resource information back to the interface
         """
@@ -86,7 +86,7 @@ class Resource(Base):
             if r_field.include_in_dict_view:
                 json_[key] = r_field.serialize(getattr(self, key))
 
-        return JsonView(json_).to_dict()
+        return JsonView(json_)
 
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, Resource):

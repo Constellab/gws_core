@@ -7,9 +7,9 @@ import json
 
 from gws_core import (BaseTestCase, ConfigParams, Experiment,
                       ExperimentService, File, FileModel, FileService, GTest,
-                      LocalFileStore, ProcessFactory, ProcessSpec,
-                      TaskModel, Protocol, ProtocolModel, Robot,
-                      RobotCreate, WriteToJsonFile, protocol_decorator)
+                      LocalFileStore, ProcessFactory, ProcessSpec, Protocol,
+                      ProtocolModel, Robot, RobotCreate, TaskModel,
+                      WriteToJsonFile, protocol_decorator)
 from gws_core.impl.file.file_store import FileStore
 
 
@@ -29,8 +29,7 @@ class TestFile(BaseTestCase):
     def test_file(self):
         GTest.print("File")
 
-        file_store: LocalFileStore = LocalFileStore()
-        file_1: File = file_store.create_file("my_file.txt")
+        file_1: File = LocalFileStore.get_default_instance().create_empty("my_file.txt")
         file_model: FileModel = FileService.create_file_model(file=file_1)
 
         self.assertTrue(file_model.is_saved())
@@ -39,7 +38,7 @@ class TestFile(BaseTestCase):
         file_2: File = file_model.get_resource()
         file_3: File = file_model.get_resource()
         self.assertEqual(file_1, file_2)
-        self.assertEqual(file_2, file_3) 
+        self.assertEqual(file_2, file_3)
 
         self.assertEqual(file_1.path, file_2.path)
         self.assertEqual(file_2.path, file_3.path)
@@ -80,4 +79,4 @@ class TestFile(BaseTestCase):
 
         # Check file content
         content: str = file.read()
-        self.assertEqual(content, json.dumps(robot.view_as_dict()))
+        self.assertEqual(content, json.dumps(robot.view_as_dict().to_dict()))

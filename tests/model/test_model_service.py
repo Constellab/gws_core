@@ -25,4 +25,4 @@ class TestModelService(BaseTestCase):
 
         # Test the find paginated
         resource_models: Paginator[ResourceModel] = ModelService.fetch_list_of_models(CONST_RESOURCE_MODEL_TYPING_NAME)
-        self.assertEqual(resource_models.total_number_of_items, 1)
+        self.assertEqual(resource_models.page_info.total_number_of_items, 1)

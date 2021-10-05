@@ -1,7 +1,5 @@
 
 
-from typing import List
-
 from pandas import DataFrame
 
 from .scatterplot_3d_view import ScatterPlot3DView

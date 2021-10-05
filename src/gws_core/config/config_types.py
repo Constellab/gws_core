@@ -2,12 +2,10 @@
 
 from typing import Any, Dict, Type, Union
 
-from gws_core.config.param_spec import (BoolParam, DictParam, FloatParam,
-                                        IntParam, ListParam, ParamSpec,
-                                        StrParam)
-
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from .param_spec import (BoolParam, DictParam, FloatParam, IntParam, ListParam,
+                         ParamSpec, StrParam)
 
 ParamValue = Union[str, int, float, bool, list, dict]
 ParamValueType = Type[ParamValue]

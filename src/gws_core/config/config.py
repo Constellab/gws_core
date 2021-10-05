@@ -5,6 +5,8 @@
 
 from typing import Any, List, final
 
+from gws_core.config.param_spec_helper import ParamSpecHelper
+
 from ..model.typing_register_decorator import typing_registrator
 from ..model.viewable import Viewable
 from .config_exceptions import (InvalidParamValueException,
@@ -119,22 +121,8 @@ class Config(Viewable):
 
         values: ConfigParamsDict = self.get_values()
         specs: ConfigSpecs = self.get_specs()
-        missing_params: List[str] = []
 
-        for key, spec in specs.items():
-            # if the config was not set
-            if not key in values:
-                if spec.optional:
-                    values[key] = spec.get_default_value()
-                else:
-                    # if there is not default value the value is missing
-                    missing_params.append(key)
-
-        # If there is at least one missing param, raise an exception
-        if len(missing_params) > 0:
-            raise MissingConfigsException(missing_params)
-
-        return ConfigParams(values)
+        return ConfigParams(ParamSpecHelper.get_and_check_values(specs, values))
 
     def set_value(self, param_name: str, value: ParamValue):
         """

@@ -10,17 +10,17 @@ import numpy as np
 import pandas
 from pandas import DataFrame
 
-from ...config.param_spec import IntParam, ListParam, StrParam, BoolParam
+from ...config.param_spec import BoolParam, IntParam, ListParam, StrParam
 from ...core.exception.exceptions import BadRequestException
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view
 from .data_frame_r_field import DataFrameRField
+from .view.histogram_view import HistogramView
 from .view.lineplot_2d_view import LinePlot2DView
 from .view.lineplot_3d_view import LinePlot3DView
 from .view.scatterplot_2d_view import ScatterPlot2DView
 from .view.scatterplot_3d_view import ScatterPlot3DView
-from .view.histogram_view import HistogramView
 from .view.table_view import TableView
 
 
@@ -209,111 +209,74 @@ class Table(Resource):
         return self._data.to_json()
 
     # -- V ---
-    
-    @view(human_name='Tabular', short_description='View as a table',
-          specs={
-              "number_of_rows_per_page": IntParam(default_value=50, min_value=5, max_value=50, human_name="Nb. rows per page"),
-              "column_page": IntParam(default_value=1, min_value=1, human_name="Column page"),
-              "number_of_columns_per_page": IntParam(default_value=50, min_value=5, max_value=50, human_name="Nb. columns per page"),
-              "title": StrParam(default_value="", human_name="Title", description="The table title"),
-              "subtitle": StrParam(default_value="", human_name="Subtitle", description="The table subtitle")
-          })
-    def view_as_table(self, *args, **kwargs) -> dict:
+
+    @view(view_type=TableView, human_name='Tabular', short_description='View as a table',
+          specs={})
+    def view_as_table(self) -> TableView:
         """
         View as table
         """
 
-        vw = TableView(self._data)
-        return vw.to_dict(*args, **kwargs)
+        return TableView(self._data)
 
-    @view(human_name='LinePlot2D', short_description='View columns as 2D-line plots',
+    @view(view_type=LinePlot2DView, human_name='LinePlot2D', short_description='View columns as 2D-line plots',
           specs={
               "x_column_name": StrParam(human_name="X-column name", description="The column to use as x-axis"),
-              "y_column_names": ListParam(human_name="Y-column names", description="List of columns to use as y-axis"),
-              "title": StrParam(default_value="", human_name="Title", description="The plot title"),
-              "subtitle": StrParam(default_value="", human_name="Subtitle", description="The plot subtitle")
+              "y_column_names": ListParam(human_name="Y-column names", description="List of columns to use as y-axis")
           })
-    def view_as_line_plot_2d(self, *args, **kwargs) -> dict:
+    def view_as_line_plot_2d(self, *args, **kwargs) -> LinePlot2DView:
         """
         View columns as 2D-line plots
         """
 
-        vw = LinePlot2DView(self._data)
-        return vw.to_dict(*args, **kwargs)
+        return LinePlot2DView(self._data, *args, **kwargs)
 
-    @view(human_name='LinePlot3D', short_description='View columns as 3D-line plots',
+    @view(view_type=LinePlot3DView, human_name='LinePlot3D', short_description='View columns as 3D-line plots',
           specs={
               "x_column_name": StrParam(human_name="X-column name", description="The column to use as x-axis"),
               "y_column_name": StrParam(human_name="Y-column name", description="The column to use as y-axis"),
               "z_column_names": ListParam(human_name="Z-column names", description="List of columns to use as z-axis"),
-              "title": StrParam(default_value="", human_name="Title", description="The plot title"),
-              "subtitle": StrParam(default_value="", human_name="Subtitle", description="The plot subtitle")
           })
-    def view_as_line_plot_3d(self, *args, **kwargs) -> dict:
+    def view_as_line_plot_3d(self, *args, **kwargs) -> LinePlot3DView:
         """
         View columns as 3D-line plots
         """
 
-        vw = LinePlot3DView(self._data)
-        return vw.to_dict(*args, **kwargs)
+        return LinePlot3DView(self._data, *args, **kwargs)
 
-    @view(human_name='ScatterPlot2D', short_description='View columns as 2D-scatter plots',
+    @view(view_type=ScatterPlot3DView, human_name='ScatterPlot3D', short_description='View columns as 3D-scatter plots',
           specs={
               "x_column_name": StrParam(human_name="X-column name", description="The column to use as x-axis"),
-              "y_column_names": ListParam(human_name="Y-column names", description="List of columns to use as y-axis"),
-              "title": StrParam(default_value="", human_name="Title", description="The plot title"),
-              "subtitle": StrParam(default_value="", human_name="Subtitle", description="The plot subtitle")
+              "y_column_names": ListParam(human_name="Y-column names", description="List of columns to use as y-axis")
           })
-    def view_as_scatter_plot_2d(self, *args, **kwargs) -> dict:
-        """
-        View columns as 2D-scatter plots
-        """
-
-        vw = ScatterPlot2DView(self._data)
-        return vw.to_dict(*args, **kwargs)
-
-    @view(human_name='ScatterPlot3D', short_description='View columns as 3D-scatter plots',
-          specs={
-              "x_column_name": StrParam(human_name="X-column name", description="The column to use as x-axis"),
-              "y_column_names": ListParam(human_name="Y-column names", description="List of columns to use as y-axis"),
-              "title": StrParam(default_value="", human_name="Title", description="The plot title"),
-              "subtitle": StrParam(default_value="", human_name="Subtitle", description="The plot subtitle")
-          })
-    def view_as_scatter_plot_3d(self, *args, **kwargs) -> dict:
+    def view_as_scatter_plot_3d(self, *args, **kwargs) -> ScatterPlot3DView:
         """
         View columns as 3D-scatter plots
         """
 
-        vw = ScatterPlot3DView(self._data)
-        return vw.to_dict(*args, **kwargs)
-    
-    @view(human_name='ScatterPlot2D', short_description='View columns as 2D-scatter plots',
+        return ScatterPlot3DView(self._data, *args, **kwargs)
+
+    @view(view_type=ScatterPlot2DView, human_name='ScatterPlot2D', short_description='View columns as 2D-scatter plots',
           specs={
               "x_column_name": StrParam(human_name="X-column name", description="The column to use as x-axis"),
-              "y_column_names": ListParam(human_name="Y-column names", description="List of columns to use as y-axis"),
-              "title": StrParam(default_value="", human_name="Title", description="The plot title"),
-              "subtitle": StrParam(default_value="", human_name="Subtitle", description="The plot subtitle")
+              "y_column_names": ListParam(human_name="Y-column names", description="List of columns to use as y-axis")
           })
-    def view_as_scatter_plot_2d(self, *args, **kwargs) -> dict:
+    def view_as_scatter_plot_2d(self, *args, **kwargs) -> ScatterPlot2DView:
         """
         View one or several columns as 2D-line plots
         """
 
-        vw = ScatterPlot2DView(self._data)
-        return vw.to_dict(*args, **kwargs)
+        return ScatterPlot2DView(self._data, *args, **kwargs)
 
-    @view(human_name='Histogram', short_description='View columns as 2D-line plots',
+    @view(view_type=HistogramView, human_name='Histogram', short_description='View columns as 2D-line plots',
           specs={
               "column_names": ListParam(human_name="Column names", description="List of columns to view"),
               "nbins": IntParam(default_value=10, min_value=0, human_name="Nbins", description="The number of bins. Set zero (0) for auto."),
-              "density": BoolParam(default_value=False, human_name="Density", description="True to pplot density"),
-              "title": StrParam(default_value="", human_name="Title", description="The plot title"),
-              "subtitle": StrParam(default_value="", human_name="Subtitle", description="The plot subtitle")
+              "density": BoolParam(default_value=False, human_name="Density", description="True to pplot density")
           })
-    def view_as_histogram(self, *args, **kwargs) -> dict:
+    def view_as_histogram(self, *args, **kwargs) -> HistogramView:
         """
         View columns as 2D-line plots
         """
 
-        vw = HistogramView(self._data)
-        return vw.to_dict(*args, **kwargs)
+        return HistogramView(self._data, *args, **kwargs)

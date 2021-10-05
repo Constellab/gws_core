@@ -5,6 +5,8 @@
 
 from typing import Any, Callable, Dict, List, Type
 
+from gws_core.resource.view_types import ViewConfig
+
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import NotFoundException
 from ..core.exception.exceptions.bad_request_exception import \
@@ -91,7 +93,7 @@ class ResourceService(BaseService):
     @classmethod
     def call_view_on_resource_type(cls, resource_model_typing_name: str,
                                    resource_model_uri: str,
-                                   view_name: str, config: Dict[str, Any]) -> Any:
+                                   view_name: str, config: ViewConfig) -> Any:
 
         resource_model: ResourceModel = cls.fetch_resource(resource_model_typing_name, resource_model_uri)
 
@@ -100,13 +102,6 @@ class ResourceService(BaseService):
 
     @classmethod
     def call_view_on_resource(cls, resource: Resource,
-                              view_name: str, config: Dict[str, Any]) -> Any:
+                              view_name: str, config: ViewConfig) -> Any:
 
-        # check if the view exists
-        ViewHelper.check_view(type(resource), view_name)
-
-        view_func: Callable = getattr(resource, view_name)
-
-        if config is None:
-            config = {}
-        return view_func(**config)
+        return ViewHelper.call_view_on_resource(resource, view_name, config)

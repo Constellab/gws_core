@@ -35,10 +35,11 @@ class Robot(Resource):
         elif direction == "east":
             self.position[0] += moving_step
 
-    @view(human_name="View position", specs={"position": StrParam(default_value="latitude", allowed_values=['latitude', 'longitude'])})
-    def view_only_position(self, position: str) -> List[float]:
+    @view(view_type=JsonView, human_name="View position",
+          specs={"position": StrParam(default_value="latitude", allowed_values=['latitude', 'longitude'])})
+    def view_only_position(self, position: str) -> JsonView:
         position_value = self.position[1] if position == 'latitude' else self.position[0]
-        return JsonView({"position": position, "value": position_value}).to_dict()
+        return JsonView({"position": position, "value": position_value})
 
 
 @resource_decorator("RobotAddOn")

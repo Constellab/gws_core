@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 import os
+from re import A
 from typing import Any, AnyStr, List, Type, final
 
 from ...core.exception.exceptions import BadRequestException
@@ -26,6 +27,10 @@ class File(Resource):
     path: str = ""
     file_store_uri: str = ""
     _mode = "t"
+
+    def __init__(self, path: str = ""):
+        super().__init__()
+        self.path = path
 
     @property
     def dir(self):
@@ -105,20 +110,18 @@ class File(Resource):
             data = fp.readlines(n)
         return data
 
-    # -- T --
-
-    @view(human_name="View as JSON", short_description="View the complete resource as json")
-    def view_as_dict(self) -> dict:
-        _json = super().view_as_dict()
+    @view(view_type=JsonView, human_name="View as JSON", short_description="View the complete resource as json")
+    def view_as_dict(self) -> JsonView:
+        _json = super().view_as_dict().to_dict()
         _json["path"] = self.path
         _json["content"] = self.read()
-        return JsonView(_json).to_dict()
+        return JsonView(_json)
 
-    @view(human_name="View file content", short_description="View the file content as string", default_view=True)
+    @view(view_type=TextView, human_name="View file content", short_description="View the file content as string", default_view=True)
     def view_content_as_str(self) -> dict:
         content = self.read()
 
-        return TextView(content).to_dict()
+        return TextView(content)
 
     # -- W --
 
