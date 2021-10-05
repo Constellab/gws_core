@@ -6,17 +6,17 @@
 import os
 from typing import Any, AnyStr, List, Type, final
 
-from gws_core.impl.json.json_view import JsonView
-from gws_core.impl.text.text_view import TextView
-
 from ...core.exception.exceptions import BadRequestException
 from ...impl.file.file_helper import FileHelper
+from ...impl.json.json_view import JsonView
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.resource_set import ResourceSet
 from ...resource.view_decorator import view
+from ..text.view.text_view import TextView
 
 
+@final
 @resource_decorator("File")
 class File(Resource):
     """

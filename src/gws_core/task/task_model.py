@@ -113,6 +113,14 @@ class TaskModel(ProcessModel):
         await self._run_before_task()
         # run the task
         await self._run_task(task=task, config_params=config_params, task_inputs=task_inputs)
+
+        # execute the run after task method
+        try:
+            task.run_after_task()
+        except Exception as err:
+            raise ProcessRunException.from_exception(process_model=self, exception=err,
+                                                     error_prefix='Error during check before task') from err
+
         await self._run_after_task()
 
     async def _run_task(self, task: Task, config_params: ConfigParams, task_inputs: TaskInputs) -> None:
@@ -138,6 +146,9 @@ class TaskModel(ProcessModel):
         if not isinstance(task_outputs, dict):
             raise BadRequestException('The task output is not a dictionary')
 
+        self._save_outputs(task_outputs)
+
+    def _save_outputs(self, task_outputs: TaskOutputs) -> None:
         for key, port in self.outputs.ports.items():
             resource_model: ResourceModel
 
@@ -157,7 +168,7 @@ class TaskModel(ProcessModel):
                         f"The method get_resource_model_type of resource {resource.classname()} did not return a type that extend ResourceModel")
 
                 if port.is_unmodified_out:
-                    # If the port is mark as resource existing, we don't create a new resource
+                    # If the port is mark as unmodified, we don't create a new resource
                     # We use the same resource
                     resource_model = TypingManager.get_object_with_typing_name_and_uri(
                         typing_name=resource_model_type._typing_name, uri=resource._model_uri)
@@ -165,22 +176,16 @@ class TaskModel(ProcessModel):
                     # create the resource model from the resource
                     resource_model = resource_model_type.from_resource(resource)
 
+                    # Add info and save resource model
+                    resource_model.experiment = self.experiment
+                    resource_model.task = self
+                    resource_model.save()
+
             else:
                 resource_model = None
 
             # save the resource model into the output's port (even if it's None)
             port.resource_model = resource_model
-
-    async def _run_after_task(self):
-
-        # Save the generated resource
-        res: Dict[str, ResourceModel] = self.outputs.get_resources()
-        for resource in res.values():
-            if resource is not None and not resource.is_saved():
-                resource.experiment = self.experiment
-                resource.task = self
-                resource.save()
-        await super()._run_after_task()
 
     def is_protocol(self) -> bool:
         return False

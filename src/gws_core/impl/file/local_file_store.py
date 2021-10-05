@@ -15,7 +15,6 @@ from ...core.exception.exceptions import BadRequestException
 from ...core.utils.settings import Settings
 from .file import File
 from .file_helper import FileHelper
-from .file_model import FileModel
 from .file_store import FileStore
 
 
@@ -125,7 +124,7 @@ class LocalFileStore(FileStore):
         :rtype: str
         """
         # if there is no file dest, generate a name
-        if dest_file_name is None:
+        if dest_file_name is None or len(dest_file_name) == 0:
             time_file_name: str = str(time()).replace('.', '')
             return os.path.join(self.path, time_file_name)
 
@@ -151,13 +150,6 @@ class LocalFileStore(FileStore):
     def drop_table(cls, *args, **kwargs):
         cls.remove_all_file_stores()
         super().drop_table(*args, **kwargs)
-
-    def delete_instance(self, *args, **kwargs):
-        if FileModel.table_exists():
-            FileModel.delete().where(FileModel.file_store_uri == self.uri).execute()
-        if os.path.exists(self.path):
-            shutil.rmtree(self.path)
-        super().delete_instance(*args, **kwargs)
 
     # -- E --
 

@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 
+from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.resource.resource_model import ResourceModel
 from peewee import CharField
 
@@ -33,3 +34,15 @@ class FileModel(ResourceModel):
         _json["filename"] = FileHelper.get_name_with_extension(self.path)
         _json["is_file"] = True
         return _json
+
+    @classmethod
+    def from_resource(cls, resource: File) -> ResourceModel:
+        """Create a new ResourceModel from a resource
+
+        :return: [description]
+        :rtype: [type]
+        """
+        # add the file to the local storage
+        file: File = LocalFileStore.get_default_instance().add_from_file(resource, resource.name)
+
+        return super().from_resource(file)

@@ -1,11 +1,9 @@
-from typing import Union, TYPE_CHECKING
+from typing import Union
 
 from ....core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ....resource.view import View
 
-if TYPE_CHECKING:
-    from .resource_model import ResourceModel
 
 class TextView(View):
     """

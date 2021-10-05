@@ -54,7 +54,7 @@ class TestResource(BaseTestCase):
 
         resource_model: ResourceModel = ResourceModel.from_resource(resource)
 
-        self.assertEqual(len(resource_model.data), 2)
+        self.assertEqual(len(resource_model.data), 3)
         self.assertIsNotNone(resource_model.kv_store_path)
 
         # generate the resource from the resource model and check its values

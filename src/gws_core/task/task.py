@@ -53,7 +53,7 @@ class Task(Process):
 
     def check_before_run(self, params: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
         """
-        This can be overiwritten to perform custom check before running task.
+        This can be overwritten to perform custom check before running task.
         See doc of CheckBeforeTaskResult for more information
         :rtype: `bool`
         """
@@ -72,6 +72,12 @@ class Task(Process):
         :type inputs: Input
         :param outputs: [description]
         :type outputs: Output
+        """
+
+    async def run_after_task(self) -> None:
+        """
+        This can be overwritten to perform action after the task run. This method is called after the
+        resource save. Temp object can be safely deleted here, the resources will still exist
         """
         pass
 
