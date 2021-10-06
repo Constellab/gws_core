@@ -1,4 +1,6 @@
-from typing import Any, Dict, TypedDict
+from typing import Any, Dict
+
+from typing_extensions import TypedDict
 
 from ..config.param_spec import ParamSpec
 

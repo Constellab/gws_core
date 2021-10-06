@@ -30,8 +30,8 @@ from .local_file_store import LocalFileStore
 class FileImporter(Task):
     input_specs = {'file': File}
     output_specs = {"data": Resource}
-    config_specs = {'file_format': StrParam(optional=True, description="File format"), 'output_type': {StrParam(
-        default_value="", description="The output file type. If defined, it is used to automatically format data output")}}
+    config_specs = {'file_format': StrParam(optional=True, short_description="File format"), 'output_type': {StrParam(
+        default_value="", short_description="The output file type. If defined, it is used to automatically format data output")}}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         inport_name = list(self.input_specs.keys())[0]
@@ -66,9 +66,9 @@ class FileExporter(Task):
     input_specs = {"data": Resource}
     output_specs = {'file': File}
     config_specs = {
-        'file_name': StrParam(default_value='file', description="Destination file name in the store"),
-        'file_format': StrParam(optional=True, description="File format"),
-        'file_store_uri': StrParam(optional=True, description="URI of the file_store where the file must be exported"),
+        'file_name': StrParam(default_value='file', short_description="Destination file name in the store"),
+        'file_format': StrParam(optional=True, short_description="File format"),
+        'file_store_uri': StrParam(optional=True, short_description="URI of the file_store where the file must be exported"),
     }
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -108,11 +108,12 @@ class FileLoader(Task):
     input_specs = {}
     output_specs = {"data": Resource}
     config_specs = {
-        'file_path': StrParam(optional=True, description="Location of the file to import"),
-        'file_format': StrParam(optional=True, description="File format"),
+        'file_path': StrParam(optional=True, short_description="Location of the file to import"),
+        'file_format': StrParam(optional=True, short_description="File format"),
         'output_type':
-        StrParam(default_value="",
-                 description="The output file type. If defined, it is used to automatically format data output"), }
+        StrParam(
+            default_value="",
+            short_description="The output file type. If defined, it is used to automatically format data output"), }
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         outport_name = list(self.output_specs.keys())[0]
@@ -150,8 +151,8 @@ class FileDumper(Task):
     input_specs = {"data": Resource}
     output_specs = {}
     config_specs = {
-        'file_path': StrParam(optional=True, description="Destination of the exported file"),
-        'file_format': StrParam(optional=True, description="File format"),
+        'file_path': StrParam(optional=True, short_description="Destination of the exported file"),
+        'file_format': StrParam(optional=True, short_description="File format"),
     }
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

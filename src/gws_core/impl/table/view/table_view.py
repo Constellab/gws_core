@@ -49,15 +49,15 @@ class TableView(BaseTableView):
 
         return table
 
-    def to_dict(self, row_page: int = 1, number_of_rows_per_page: int = 50, column_page: int = 1,
-                number_of_columns_per_page: int = 50) -> dict:
+    def to_dict(self, row_page: int = 1, row_page_size: int = 50, column_page: int = 1,
+                column_page_size: int = 50) -> dict:
 
         total_number_of_rows = self._data.shape[0]
         total_number_of_columns = self._data.shape[1]
 
-        row_page_info: PageInfo = PageInfo(row_page, number_of_rows_per_page,
+        row_page_info: PageInfo = PageInfo(row_page, row_page_size,
                                            total_number_of_rows, self.MAX_NUMBERS_OF_ROWS_PER_PAGE, 1)
-        column_page_info: PageInfo = PageInfo(column_page, number_of_columns_per_page,
+        column_page_info: PageInfo = PageInfo(column_page, column_page_size,
                                               total_number_of_columns, self.MAX_NUMBERS_OF_COLUMNS_PER_PAGE, 1)
 
         table = self._slice(
@@ -71,9 +71,9 @@ class TableView(BaseTableView):
             "type": self._type,
             "data": table,
             "row_page": row_page,
-            "number_of_rows_per_page": number_of_rows_per_page,
+            "number_of_rows_per_page": row_page_size,
             "column_page": column_page,
-            "number_of_columns_per_page": number_of_columns_per_page,
+            "number_of_columns_per_page": column_page_size,
             "from_row_index": row_page_info.from_index,
             "to_row_index": row_page_info.to_index,
             "total_number_of_rows": total_number_of_rows,

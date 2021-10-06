@@ -19,7 +19,7 @@ from ...task.task_io import TaskInputs, TaskOutputs
 class WriteToJsonFile(Task):
     input_specs: InputSpecs = {'resource': Resource}
     output_specs: OutputSpecs = {'file': File}
-    config_specs: ConfigSpecs = {'filename': StrParam(description='Name of the file')}
+    config_specs: ConfigSpecs = {'filename': StrParam(short_description='Name of the file')}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         file_store: FileStore = LocalFileStore.get_default_instance()

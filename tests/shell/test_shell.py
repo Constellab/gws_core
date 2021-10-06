@@ -13,8 +13,8 @@ from gws_core import (BaseTestCase, BoolParam, ConfigParams, Experiment,
 class Echo(Shell):
     input_specs = {}
     output_specs = {'stdout': JSONDict}
-    config_specs = {'name': StrParam(optional=True, description="The name to echo"), 'save_stdout': BoolParam(
-        default_value=False, description="True to save the command output text. False otherwise")}
+    config_specs = {'name': StrParam(optional=True, short_description="The name to echo"), 'save_stdout': BoolParam(
+        default_value=False, short_description="True to save the command output text. False otherwise")}
 
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
         name = params.get_value("name")

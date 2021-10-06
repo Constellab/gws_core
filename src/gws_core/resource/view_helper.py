@@ -15,7 +15,7 @@ class ViewHelper():
     @classmethod
     def call_view_on_resource(cls, resource: Resource,
                               view_name: str, config: ViewConfig) -> Dict:
-        if config is None:
+        if not config:
             config = {"method_config": {}, "view_config": {}}
 
         # Get the view object from the view method
@@ -37,7 +37,12 @@ class ViewHelper():
             config = {}
 
         # Get the view object from the view method
-        return view_func(**config)
+        view: View = view_func(**config)
+
+        if view is None or not isinstance(view, View):
+            raise Exception(f"The view method '{view_name}' didn't returned a View object")
+
+        return view
 
     @classmethod
     def get_default_view_of_resource_type(cls, resource_type: Type[Resource]) -> Optional[ResourceViewMetaData]:

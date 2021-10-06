@@ -22,7 +22,7 @@ class JSONImporter(FileImporter):
     input_specs = {'file': File}
     output_specs = {'data': JSONDict}
     config_specs = {
-        'file_format': StrParam(default_value=".json", description="File format"),
+        'file_format': StrParam(default_value=".json", short_description="File format"),
     }
 
 # ####################################################################
@@ -37,9 +37,9 @@ class JSONExporter(FileExporter):
     input_specs = {'data': JSONDict}
     output_specs = {'file': File}
     config_specs = {
-        'file_name': StrParam(default_value='file.json', description="Destination file name in the store"),
-        'file_format': StrParam(default_value=".json", description="File format"),
-        'prettify': BoolParam(default_value=False, description="True to indent and prettify the JSON file, False otherwise")
+        'file_name': StrParam(default_value='file.json', short_description="Destination file name in the store"),
+        'file_format': StrParam(default_value=".json", short_description="File format"),
+        'prettify': BoolParam(default_value=False, short_description="True to indent and prettify the JSON file, False otherwise")
     }
 
 # ####################################################################
@@ -54,8 +54,8 @@ class JSONLoader(FileLoader):
     input_specs = {}
     output_specs = {'data': JSONDict}
     config_specs = {
-        'file_path': StrParam(optional=True, description="Location of the file to import"),
-        'file_format': StrParam(default_value=".json", description="File format")
+        'file_path': StrParam(optional=True, short_description="Location of the file to import"),
+        'file_format': StrParam(default_value=".json", short_description="File format")
     }
 
 # ####################################################################
@@ -70,7 +70,7 @@ class JSONDumper(FileDumper):
     input_specs = {'data': JSONDict}
     output_specs = {}
     config_specs = {
-        'file_path': StrParam(optional=True, description="Destination of the exported file"),
-        'file_format': StrParam(default_value=".csv", description="File format"),
-        'prettify': BoolParam(default_value=False, description="True to indent and prettify the JSON file, False otherwise")
+        'file_path': StrParam(optional=True, short_description="Destination of the exported file"),
+        'file_format': StrParam(default_value=".csv", short_description="File format"),
+        'prettify': BoolParam(default_value=False, short_description="True to indent and prettify the JSON file, False otherwise")
     }

@@ -221,8 +221,8 @@ class Table(Resource):
 
     @view(view_type=LinePlot2DView, human_name='LinePlot2D', short_description='View columns as 2D-line plots',
           specs={
-              "x_column_name": StrParam(human_name="X-column name", description="The column to use as x-axis"),
-              "y_column_names": ListParam(human_name="Y-column names", description="List of columns to use as y-axis")
+              "x_column_name": StrParam(human_name="X-column name", short_description="The column to use as x-axis"),
+              "y_column_names": ListParam(human_name="Y-column names", short_description="List of columns to use as y-axis")
           })
     def view_as_line_plot_2d(self, *args, **kwargs) -> LinePlot2DView:
         """
@@ -233,9 +233,9 @@ class Table(Resource):
 
     @view(view_type=LinePlot3DView, human_name='LinePlot3D', short_description='View columns as 3D-line plots',
           specs={
-              "x_column_name": StrParam(human_name="X-column name", description="The column to use as x-axis"),
-              "y_column_name": StrParam(human_name="Y-column name", description="The column to use as y-axis"),
-              "z_column_names": ListParam(human_name="Z-column names", description="List of columns to use as z-axis"),
+              "x_column_name": StrParam(human_name="X-column name", short_description="The column to use as x-axis"),
+              "y_column_name": StrParam(human_name="Y-column name", short_description="The column to use as y-axis"),
+              "z_column_names": ListParam(human_name="Z-column names", short_description="List of columns to use as z-axis"),
           })
     def view_as_line_plot_3d(self, *args, **kwargs) -> LinePlot3DView:
         """
@@ -246,8 +246,8 @@ class Table(Resource):
 
     @view(view_type=ScatterPlot3DView, human_name='ScatterPlot3D', short_description='View columns as 3D-scatter plots',
           specs={
-              "x_column_name": StrParam(human_name="X-column name", description="The column to use as x-axis"),
-              "y_column_names": ListParam(human_name="Y-column names", description="List of columns to use as y-axis")
+              "x_column_name": StrParam(human_name="X-column name", short_description="The column to use as x-axis"),
+              "y_column_names": ListParam(human_name="Y-column names", short_description="List of columns to use as y-axis")
           })
     def view_as_scatter_plot_3d(self, *args, **kwargs) -> ScatterPlot3DView:
         """
@@ -258,8 +258,8 @@ class Table(Resource):
 
     @view(view_type=ScatterPlot2DView, human_name='ScatterPlot2D', short_description='View columns as 2D-scatter plots',
           specs={
-              "x_column_name": StrParam(human_name="X-column name", description="The column to use as x-axis"),
-              "y_column_names": ListParam(human_name="Y-column names", description="List of columns to use as y-axis")
+              "x_column_name": StrParam(human_name="X-column name", short_description="The column to use as x-axis"),
+              "y_column_names": ListParam(human_name="Y-column names", short_description="List of columns to use as y-axis")
           })
     def view_as_scatter_plot_2d(self, *args, **kwargs) -> ScatterPlot2DView:
         """
@@ -270,9 +270,9 @@ class Table(Resource):
 
     @view(view_type=HistogramView, human_name='Histogram', short_description='View columns as 2D-line plots',
           specs={
-              "column_names": ListParam(human_name="Column names", description="List of columns to view"),
-              "nbins": IntParam(default_value=10, min_value=0, human_name="Nbins", description="The number of bins. Set zero (0) for auto."),
-              "density": BoolParam(default_value=False, human_name="Density", description="True to pplot density")
+              "column_names": ListParam(human_name="Column names", short_description="List of columns to view"),
+              "nbins": IntParam(default_value=10, min_value=0, human_name="Nbins", short_description="The number of bins. Set zero (0) for auto."),
+              "density": BoolParam(default_value=False, human_name="Density", short_description="True to pplot density")
           })
     def view_as_histogram(self, *args, **kwargs) -> HistogramView:
         """

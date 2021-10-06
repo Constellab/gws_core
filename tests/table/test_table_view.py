@@ -23,6 +23,6 @@ class TestTableView(BaseTestCase):
         )
 
         self.assertEqual(
-            vw.to_dict(row_page=2, number_of_rows_per_page=3, column_page=2, number_of_columns_per_page=2)["data"],
+            vw.to_dict(row_page=2, row_page_size=3, column_page=2, column_page_size=2)["data"],
             table.to_table().iloc[3:6, 2:4].to_dict()
         )

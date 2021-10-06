@@ -32,8 +32,8 @@ class Source(Task):
     input_specs: InputSpecs = {}
     output_specs: OutputSpecs = {'resource': UnmodifiedOut(Resource)}
     config_specs: ConfigSpecs = {
-        'resource_uri': StrParam(optional=True, description="The uri of the resource"),
-        'resource_typing_name': StrParam(optional=True, description="The type of the resource"),
+        'resource_uri': StrParam(optional=True, short_description="The uri of the resource"),
+        'resource_typing_name': StrParam(optional=True, short_description="The type of the resource"),
     }
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -107,7 +107,7 @@ class Switch2(Task):
                                'resource_2': SkippableIn(Resource)}
     output_specs: OutputSpecs = {'resource': UnmodifiedOut(resource_types=Resource, sub_class=True)}
     config_specs: ConfigSpecs = {"index": IntParam(
-        default_value=1, min_value=1, max_value=2, description="The index of the input resource to switch on. Defaults to 1.")}
+        default_value=1, min_value=1, max_value=2, short_description="The index of the input resource to switch on. Defaults to 1.")}
 
     def check_before_run(self, params: ConfigParams, inputs: TaskInputs) -> bool:
         index = params.get_value("index")
@@ -131,7 +131,7 @@ class Wait(Task):
     input_specs: InputSpecs = {'resource': Resource}
     output_specs: OutputSpecs = {'resource': UnmodifiedOut(resource_types=Resource, sub_class=True)}
     config_specs: ConfigSpecs = {"waiting_time": FloatParam(
-        default_value=3, min_value=0, description="The waiting time in seconds. Defaults to 3 second.")}
+        default_value=3, min_value=0, short_description="The waiting time in seconds. Defaults to 3 second.")}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         waiting_time = params.get_value("waiting_time")

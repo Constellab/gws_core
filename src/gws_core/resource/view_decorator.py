@@ -34,7 +34,6 @@ class ResourceViewMetaData():
             self.method_name, self.view_type, self.human_name, self.short_description, self.specs, self.default_view)
 
     def to_json(self) -> dict:
-        print('AAA')
         return {
             "method_name": self.method_name,
             "view_type": self.view_type._type,
