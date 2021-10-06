@@ -156,6 +156,7 @@ class Table(Resource):
         else:
             raise BadRequestException(
                 "Cannot detect the file type using file extension. Valid file extensions are [.xls, .xlsx, .csv, .tsv, .txt, .tab].")
+
         return cls().set_data(data=df)
 
     # -- N --

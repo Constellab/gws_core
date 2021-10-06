@@ -27,8 +27,11 @@ class TextView(View):
     """
 
     _type: str = "text-view"
-    _specs: ViewSpecs = {"page": IntParam(default_value=1, min_value=1, human_name="Page number"), "page_size": IntParam(
-        default_value=10000, max_value=50000, min_value=1000, human_name="Number of caracters to display per page")}
+    _specs: ViewSpecs = {
+        "page": IntParam(default_value=1, min_value=1, human_name="Page number"),
+        "page_size": IntParam(
+            default_value=10000, max_value=50000, min_value=1000, human_name="Number of caracters to display per page")
+    }
     _data: str
     MAX_NUMBER_OF_CHARS_PER_PAGE = 50000
 

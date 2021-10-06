@@ -19,10 +19,10 @@ class TestTableView(BaseTestCase):
 
         self.assertEqual(
             vw.to_dict()["data"],
-            table.to_table().iloc[0:50, 0:4].to_dict()
+            table.to_table().iloc[0:49, 0:4].to_dict()
         )
 
         self.assertEqual(
-            vw.to_dict(row_page=2, row_page_size=3, column_page=2, column_page_size=2)["data"],
-            table.to_table().iloc[3:6, 2:4].to_dict()
+            vw.to_dict(from_row=3, number_of_rows_per_page=3, from_column=2, number_of_columns_per_page=2)["data"],
+            table.to_table().iloc[2:4, 1:2].to_dict()
         )
