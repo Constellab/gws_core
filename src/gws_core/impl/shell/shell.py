@@ -190,7 +190,6 @@ class Shell(Task):
                     fp.writelines(lines)
 
             outputs = self.gather_outputs(params, inputs)
-            self._clean_working_dir()
         except subprocess.CalledProcessError as err:
             self._clean_working_dir()
             raise BadRequestException(
