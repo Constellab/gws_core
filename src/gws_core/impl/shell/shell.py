@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 import os
+import shutil
 import subprocess
 import tempfile
 import time
@@ -13,6 +14,7 @@ from typing import Union
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
 from ...core.model.sys_proc import SysProc
+from ...core.utils.settings import Settings
 from ...impl.file.file_service import FileService
 from ...task.task import Task
 from ...task.task_decorator import task_decorator
@@ -32,12 +34,12 @@ class Shell(Task):
     output_specs = {}
     config_specs = {}
 
-    _out_type = "text"
-    _tmp_dir = None
-    _shell_mode = False
-    _stdout = ""
-    _stdout_count = 0
-    _STDOUT_MAX_CHAR_LENGHT = 1024*10
+    _out_type: str = "text"
+    _tmp_dir: str = None
+    _shell_mode: bool = False
+    _stdout: str = ""
+    _stdout_count: int = 0
+    _STDOUT_MAX_CHAR_LENGHT: int = 1024*10
 
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
         """
@@ -57,7 +59,7 @@ class Shell(Task):
         :rtype: `dict`
         """
 
-        return None
+        return {}
 
     def _format_command(self, user_cmd: list) -> Union[list, str]:
         """
@@ -105,21 +107,6 @@ class Shell(Task):
             self._stdout = self._stdout[-self._STDOUT_MAX_CHAR_LENGHT:]
 
     @property
-    def cwd(self) -> tempfile.TemporaryDirectory:
-        """
-        The temporary working directory where the shell command is executed.
-        This directory is removed at the end of the task
-
-        :return: a file-like object built with `tempfile.TemporaryDirectory`
-        :rtype: `file object`
-        """
-
-        if self._tmp_dir is None:
-            self._tmp_dir = tempfile.TemporaryDirectory()
-
-        return self._tmp_dir
-
-    @property
     def working_dir(self) -> str:
         """
         Returns the working dir of the shell task
@@ -128,7 +115,20 @@ class Shell(Task):
         :rtype: `srt`
         """
 
-        return self.cwd.name
+        if self._tmp_dir is None:
+            settings = Settings.retrieve()
+            self._tmp_dir = settings.make_temp_dir()
+
+        return self._tmp_dir
+
+    def _clean_working_dir(self):
+        """
+        Clean the working dir
+        """
+
+        if self._tmp_dir is not None:
+            shutil.rmtree(self._tmp_dir, ignore_errors=True)
+        self._tmp_dir = None
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """
@@ -168,6 +168,7 @@ class Shell(Task):
             count = 0
             tic_a = time.perf_counter()
             lines = []
+            line: str
             with open(os.path.join(self.working_dir, "task.log"), "w", encoding="utf-8") as fp:
                 for line in iter(proc.stdout.readline, b''):
                     count += 1
@@ -189,21 +190,25 @@ class Shell(Task):
                     fp.writelines(lines)
 
             outputs = self.gather_outputs(params, inputs)
-            self.cwd.cleanup()
-            self._tmp_dir = None
-
+            self._clean_working_dir()
         except subprocess.CalledProcessError as err:
-            self.cwd.cleanup()
-            self._tmp_dir = None
+            self._clean_working_dir()
             raise BadRequestException(
                 f"An error occured while running the binary in shell task. Error: {err}") from err
         except Exception as err:
-            self.cwd.cleanup()
-            self._tmp_dir = None
+            self._clean_working_dir()
             raise BadRequestException(
                 f"An error occured while running shell task. Error: {err}") from err
 
         return outputs
+
+    async def run_after_task(self) -> None:
+        """
+        This can be overwritten to perform action after the task run. This method is called after the
+        resource save. Temp object can be safely deleted here, the resources will still exist
+        """
+
+        self._clean_working_dir()
 
 
 class CondaShell(Shell):

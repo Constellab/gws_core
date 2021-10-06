@@ -4,6 +4,8 @@
 # About us: https://gencovery.com
 
 import os
+import tempfile
+import uuid
 from copy import deepcopy
 from typing import Literal
 
@@ -222,7 +224,18 @@ class Settings(PeeweeModel):
         """ Returns the variables dict """
         return self.data.get("variables", {})
 
-    # -- I --
+    def get_root_temp_dir(self) -> str:
+        """ Return the root temp dir """
+        mode = "prod" if self.is_prod else "dev"
+        app = "tests" if self.is_test else "app"
+        temp_dir = os.path.join(tempfile.gettempdir(), "gws", mode, app)
+        if not os.path.exists(temp_dir):
+            os.makedirs(temp_dir)
+        return temp_dir
+
+    def make_temp_dir(self) -> str:
+        """ Make a unique temp dir """
+        return tempfile.mkdtemp(dir=self.get_root_temp_dir())
 
     @property
     def is_prod(self) -> bool:

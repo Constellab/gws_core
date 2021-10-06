@@ -4,11 +4,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import shutil
 from typing import List, Union
 from unittest.async_case import IsolatedAsyncioTestCase
 
-from .gtest import GTest
 from ...experiment.queue_service import QueueService
+from ..utils.settings import Settings
+from .gtest import GTest
 
 
 class BaseTestCase(IsolatedAsyncioTestCase):
@@ -43,7 +45,7 @@ class BaseTestCase(IsolatedAsyncioTestCase):
     @classmethod
     def init_before_test(cls):
         print(f'Setup : {cls}')
-        GTest.delete_kv_store_folder()
+        GTest.delete_kv_store_and_temp_folder()
         GTest.drop_tables()
         GTest.create_tables()
         GTest.init()
@@ -51,14 +53,14 @@ class BaseTestCase(IsolatedAsyncioTestCase):
     @classmethod
     def clear_after_test(cls):
         print(f'Tear down : {cls}')
-        GTest.delete_kv_store_folder()
+        GTest.delete_kv_store_and_temp_folder()
         QueueService.deinit()
         GTest.drop_tables()
 
     @classmethod
     def print(cls, text):
         GTest.print(text)
-        
+
     def assert_json(self, json_1: Union[dict, list], json_2: Union[dict, list], ignore_keys: List[str] = None) -> None:
         """Assert a json with possibility to ignore key
         """
