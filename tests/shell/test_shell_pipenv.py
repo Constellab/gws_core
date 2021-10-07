@@ -8,20 +8,19 @@ import os
 from gws_core import (BaseTestCase, ConfigParams, Experiment,
                       ExperimentService, GTest, JSONDict, PipEnvShell,
                       Resource, TaskInputs, TaskModel, TaskOutputs,
-                      TaskService, task_decorator)
+                      TaskService, task_decorator, ShellEnvProxy, Settings)
 
-__cdir__ = os.path.abspath(os.path.dirname(__file__))
-
+settings = Settings.retrieve()
+test_datadir = settings.get_variable("gws_core:testdata_dir")
 
 @task_decorator("PipEnvTester")
 class PipEnvTester(PipEnvShell):
     input_specs = {}
     output_specs = {'stdout': (JSONDict, )}
-    env_file_path = os.path.join(
-        __cdir__, "../", "testdata", "penv", "env_jwt_pip.txt")
+    env_file_path = os.path.join(test_datadir, "penv", "env_jwt_pip.txt")
 
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
-        return ["python", os.path.join(__cdir__, "testdata", "penv", "jwt_encode.py")]
+        return ["python", os.path.join(test_datadir, "penv", "jwt_encode.py")]
 
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         res = JSONDict()
@@ -39,6 +38,7 @@ class TestProcess(BaseTestCase):
     async def test_pipenv(self):
 
         GTest.print("Pipenv")
+        PipEnvTester.uninstall()
         proc_mdl: TaskModel = TaskService.create_task_model_from_type(
             task_type=PipEnvTester)
         self.assertFalse(PipEnvTester.is_installed())
@@ -61,3 +61,16 @@ class TestProcess(BaseTestCase):
 
         PipEnvTester.uninstall()
         self.assertFalse(PipEnvTester.is_installed())
+
+    async def test_pipenv_proxy(self):
+        GTest.print("Pipenv proxy")
+
+        prox = ShellEnvProxy(PipEnvTester)
+        encoded_string = prox.check_output(
+            ["python", os.path.join(test_datadir, "penv", "jwt_encode.py")]
+        )
+        #print(result)
+        self.assertEqual(
+                encoded_string,
+                "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzb21lIjoicGF5bG9hZCJ9.Joh1R2dYzkRvDkqv3sygm5YyK8Gi4ShZqbhK2gxcs2U")
+

@@ -7,20 +7,19 @@ import os
 
 from gws_core import (BaseTestCase, CondaEnvShell, ConfigParams, Experiment,
                       ExperimentService, GTest, JSONDict, Resource, TaskInputs,
-                      TaskModel, TaskOutputs, TaskService, task_decorator)
+                      TaskModel, TaskOutputs, TaskService, task_decorator, Settings)
 
-__cdir__ = os.path.abspath(os.path.dirname(__file__))
-
+settings = Settings.retrieve()
+test_datadir = settings.get_variable("gws_core:testdata_dir")
 
 @task_decorator("CondaEnvTester")
 class CondaEnvTester(CondaEnvShell):
     input_specs = {}
     output_specs = {'stdout': (JSONDict, )}
-    env_file_path = os.path.join(
-        __cdir__, "../" "testdata", "penv", "env_jwt_conda.yml")
+    env_file_path = os.path.join(test_datadir, "penv", "env_jwt_conda.yml")
 
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
-        return ["python", os.path.join(__cdir__, "testdata", "penv", "jwt_encode.py")]
+        return ["python", os.path.join(test_datadir, "penv", "jwt_encode.py")]
 
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         res = JSONDict()

@@ -44,7 +44,12 @@ class BaseEnvShell(Shell):
 
         if not cls.unique_env_name:
             cls.unique_env_name = cls.full_classname()
-        return os.path.join(cls._GLOBAL_ENV_DIR, cls.unique_env_name)
+            
+        env_dir = os.path.join(cls._GLOBAL_ENV_DIR, cls.unique_env_name)
+        if not os.path.exists(env_dir):
+            os.makedirs(env_dir)
+
+        return env_dir
 
     # -- I --
 
