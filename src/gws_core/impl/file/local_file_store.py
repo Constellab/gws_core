@@ -4,11 +4,12 @@
 # About us: https://gencovery.com
 import os
 import shutil
+from inspect import isclass
 from io import IOBase
 from pathlib import Path
 from tempfile import SpooledTemporaryFile
 from time import time
-from typing import List, Union
+from typing import List, Type, Union
 
 from ...core.decorator.transaction import transaction
 from ...core.exception.exceptions import BadRequestException
@@ -28,40 +29,28 @@ class LocalFileStore(FileStore):
         if not self.path:
             self.data["path"] = os.path.join(self.get_base_dir(), self.uri)
 
-    def add_from_path(self, source_file: str, dest_file_name: str = None) -> File:
+    def add_from_path(self, source_file_path: str, dest_file_name: str = None, file_type: Type[File] = File) -> File:
         """
-        Add a file from an external repository to a local store. Must be implemented by the child class.
+        Add a file from an external repository to a local store.
 
         :param source_file: The source file
         :type source_file: `str` (file path),
         :return: The file object
         :rtype: gws.file.File.
         """
+        if dest_file_name is None:
+            dest_file_name = FileHelper.get_name_with_extension(source_file_path)
 
-        file = self.create_file(file_name=dest_file_name)
-        self._copy_file(source_file, file.path)
+        file = self._init_file(file_name=dest_file_name, file_type=file_type)
+        self._copy_file(source_file_path, file.path)
 
         return file
 
-    def add_from_file(self, source_file: File, dest_file_name: str = None) -> File:
-        """
-        Add a file from an external repository to a local store. Must be implemented by the child class.
-
-        :param source_file: The source file
-        :type source_file: `File`
-        :return: The file object
-        :rtype: gws.file.File.
-        """
-
-        if self.contains(source_file):
-            return source_file
-        return self.add_from_path(source_file=source_file.path, dest_file_name=dest_file_name)
-
     def add_from_temp_file(
             self, source_file: Union[IOBase, SpooledTemporaryFile],
-            dest_file_name: str = None) -> File:
+            dest_file_name: str = None, file_type: Type[File] = File) -> File:
         """
-        Add a file from an external repository to a local store. Must be implemented by the child class.
+        Add a file from an external repository to a local store.
 
         :param source_file: The source file
         :type source_file: `IOBase` or `SpooledTemporaryFile`
@@ -69,7 +58,7 @@ class LocalFileStore(FileStore):
         :rtype: gws.file.File.
         """
 
-        file = self.create_file(file_name=dest_file_name)
+        file = self._init_file(file_name=dest_file_name, file_type=file_type)
         self._init_dir(file.dir)
 
         with open(file.path, "wb") as buffer:
@@ -77,8 +66,13 @@ class LocalFileStore(FileStore):
 
         return file
 
-    def create_empty(self, file_name: str = None) -> File:
-        return self.create_file(file_name=file_name)
+    def create_empty(self, file_name: str = None, file_type: Type[File] = File) -> File:
+        file: File = self._init_file(file_name=file_name, file_type=file_type)
+
+        self._init_dir(file.dir)
+
+        open(file.path, 'a').close()
+        return file
 
     def _copy_file(self, source: str, destination: str) -> None:
         """Copy a file from a path to another path
@@ -95,21 +89,21 @@ class LocalFileStore(FileStore):
 
     # -- C --
 
-    def _init_dir(self, dir: str) -> None:
+    def _init_dir(self, dir_: str) -> None:
         """Create the directory if it doesn't exist
         """
         # copy disk file
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-            if not os.path.exists(dir):
-                raise BadRequestException(f"Cannot create directory '{dir}'")
+        if not os.path.exists(dir_):
+            os.makedirs(dir_)
+            if not os.path.exists(dir_):
+                raise BadRequestException(f"Cannot create directory '{dir_}'")
 
-    def create_file(self, file_type: type = None, file_name: str = None) -> File:
-        file: File
-        if isinstance(file_type, type):
-            file = file_type()
-        else:
-            file = File()
+    def _init_file(self, file_name: str = None, file_type: Type[File] = File) -> File:
+
+        if not isclass(file_type) or not issubclass(file_type, File):
+            raise BadRequestException(f"The file type '{str(file_type)}' is not a File class")
+
+        file: File = file_type()
         file.path = self.get_new_file_path(file_name)
         file.file_store_uri = self.uri
 
@@ -129,7 +123,7 @@ class LocalFileStore(FileStore):
             return os.path.join(self.path, time_file_name)
 
         #  create the file if another doesn't exists
-        if not self.file_exists(dest_file_name):
+        if not self.file_name_exists(dest_file_name):
             return os.path.join(self.path, dest_file_name)
 
         extension: str = FileHelper.get_extension(dest_file_name)
@@ -137,12 +131,22 @@ class LocalFileStore(FileStore):
 
         # If the file exists, find a unique name with a number
         unique: int = 1
-        while self.file_exists(f"{file_name}_{unique}{extension}"):
+        while self.file_name_exists(f"{file_name}_{unique}{extension}"):
             unique += 1
         return os.path.join(self.path, f"{file_name}_{unique}{extension}")
 
-    def contains(self, file: File) -> bool:
-        return self.path in file.path
+    def file_path_exists(self, file_path: str) -> bool:
+        # clean the file path
+        file_path = str(Path(file_path))
+
+        # Check that the file path is in the file store
+        if not file_path.startswith(self.get_base_dir()):
+            return False
+
+        return os.path.exists(file_path)
+
+    def _file_get_path_from_file_name(self, file_name: str) -> str:
+        return os.path.join(self.path, file_name)
 
     # -- D --
 
@@ -192,11 +196,11 @@ class LocalFileStore(FileStore):
     # -- G --
 
     @classmethod
-    def get_base_dir(cls):
+    def get_base_dir(cls) -> str:
         if not cls._base_dir:
             settings = Settings.retrieve()
             cls._base_dir = settings.get_file_store_dir()
-        return cls._base_dir
+        return str(Path(cls._base_dir))
 
     # -- R --
 
@@ -213,6 +217,3 @@ class LocalFileStore(FileStore):
         file_store_list: List[FileStore] = cls.select()
         for file_store in file_store_list:
             file_store.delete_instance()
-
-    def file_exists(self, file_name: str) -> bool:
-        return os.path.exists(os.path.join(self.path, file_name))

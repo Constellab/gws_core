@@ -95,7 +95,7 @@ class ProtocolService(BaseService):
     @classmethod
     def create_protocol_model_from_task_model(cls, task_model: TaskModel) -> ProtocolModel:
         if not isinstance(task_model, TaskModel):
-            raise BadRequestException("A PocessModel is required")
+            raise BadRequestException("A ProcessModel is required")
         protocol: ProtocolModel = ProtocolService.create_protocol_model_from_data(
             processes={task_model.instance_name: task_model}, connectors=[], interfaces={}, outerfaces={})
 

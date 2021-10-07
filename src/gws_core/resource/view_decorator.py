@@ -78,9 +78,11 @@ def view(view_type: Type[View], human_name: str = "", short_description: str = "
                 'The @view decorator must be unsed on a method (with self). It must not be used in a classmethod or a static method')
 
         # if the view is mark as default, all the parameters must be optional
-        if default_view and not func_args.all_args_have_default():
-            raise Exception(
-                f"View error. The @view of method '{func_args.func_name}' is mark as default but the method has a mandatory argument. If the view is mark as default, all the method's arguments must have a default value")
+        if default_view:
+            for key, spec in specs.items():
+                if not spec.optional:
+                    raise Exception(
+                        f"View error. The @view of method '{func_args.func_name}' is mark as default but the spec '{key}' is mandatory. If the view is mark as default, all the view specs must be optional or have a default value")
 
         # Check that the function arg matches the view specs and the type are the same
         for arg_name in func_args.get_named_args().keys():

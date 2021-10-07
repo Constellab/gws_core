@@ -38,7 +38,7 @@ class TestIExperiment(BaseTestCase):
 
         # test the get process
         robot_travel_2: IProtocol = protocol.get_process('robot_travel')
-        self.assertIsNotNone(robot_travel_2)
+        self.assertIsInstance(robot_travel_2, IProtocol)
 
         await experiment.run()
 
@@ -59,7 +59,7 @@ class TestIExperiment(BaseTestCase):
 
         # test that robot_travel has a sub process
         move_1 = robot_travel.get_process('move_1')
-        self.assertIsNotNone(move_1)
+        self.assertIsInstance(move_1, ITask)
 
     def test_iexperiment_remove(self):
         experiment: IExperiment = IExperiment(RobotSuperTravelProto)

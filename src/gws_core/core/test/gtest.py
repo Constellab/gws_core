@@ -26,7 +26,7 @@ class GTest:
     user: User = None
 
     @classmethod
-    def init(cls, admin_user=False):
+    def init(cls):
         """
         This function initializes objects for unit testing
         """
@@ -63,12 +63,15 @@ class GTest:
         ModelService.drop_tables(models)
 
     @classmethod
-    def delete_kv_store_and_temp_folder(cls):
+    def delete_data_and_temp_folder(cls):
         """
         Drops tables
         """
         settings: Settings = Settings.retrieve()
-        shutil.rmtree(path=settings.get_kv_store_base_dir(), ignore_errors=True)
+
+        if not settings.is_test:
+            raise Exception('Can only delete the data and temp folder in test env')
+        shutil.rmtree(path=settings.get_data_dir(), ignore_errors=True)
         shutil.rmtree(path=settings.get_root_temp_dir(), ignore_errors=True)
 
     @classmethod

@@ -83,7 +83,7 @@ class FileExporter(Task):
         outport_name = list(self.output_specs.keys())[0]
         filename = params.get_value("file_name")
         file_type: Type[File] = self.get_default_output_spec_type("file")
-        file: File = file_store.create_file(file_name=filename, file_type=file_type)
+        file: File = file_store.create_empty(file_name=filename, file_type=file_type)
 
         if not os.path.exists(file.dir):
             os.makedirs(file.dir)

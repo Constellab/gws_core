@@ -4,15 +4,18 @@
 # About us: https://gencovery.com
 
 
-from gws_core.impl.file.local_file_store import LocalFileStore
-from gws_core.resource.resource_model import ResourceModel
+from typing import final
+
 from peewee import CharField
 
 from ...model.typing_register_decorator import typing_registrator
+from ...resource.resource_model import ResourceModel
 from .file import File
 from .file_helper import FileHelper
+from .local_file_store import LocalFileStore
 
 
+@final
 @typing_registrator(unique_name="FileModel", object_type="MODEL", hide=True)
 class FileModel(ResourceModel):
     path = CharField(null=True, index=True, unique=True)

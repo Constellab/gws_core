@@ -3,9 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import json
 import os
-from re import A
-from typing import Any, AnyStr, List, Type, final
+from typing import Any, AnyStr, Dict, List, Type
+
+from gws_core.resource.any_view import AnyView
 
 from ...core.exception.exceptions import BadRequestException
 from ...impl.file.file_helper import FileHelper
@@ -13,15 +15,18 @@ from ...impl.json.json_view import JsonView
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.resource_set import ResourceSet
+from ...resource.view import View
 from ...resource.view_decorator import view
 from ..text.view.text_view import TextView
 
 
-@final
 @resource_decorator("File")
 class File(Resource):
     """
-    File class
+    File class.
+
+    /!\ The class that extend file can only have a path and  file_store_uri attributes. Other attributes will not be
+    provided when creating the resource
     """
 
     path: str = ""
@@ -91,7 +96,7 @@ class File(Resource):
             return open(self.path, mode="w+", encoding='utf-8')
 
     # -- R --
-
+    # TODO est-ce que le close est fait ?
     def read(self) -> AnyStr:
         mode = "r+"+self._mode
         with self.open(mode) as fp:
@@ -112,15 +117,40 @@ class File(Resource):
 
     @view(view_type=JsonView, human_name="View as JSON", short_description="View the complete resource as json")
     def view_as_dict(self) -> JsonView:
-        _json = super().view_as_dict().to_dict()
-        _json["path"] = self.path
-        _json["content"] = self.read()
-        return JsonView(_json)
+        content = self.read()
+        try:
+            json_: Any = json.loads(content)
+            return JsonView(json_)
+        except:
+            pass
 
-    @view(view_type=TextView, human_name="View file content", short_description="View the file content as string", default_view=True)
-    def view_content_as_str(self) -> dict:
+        # rollback to string view if not convertible to json
+        return self.view_content_as_str()
+
+    @view(view_type=View, human_name="View file content", short_description="View the file content as string")
+    def view_content_as_str(self) -> TextView:
+        content = self.read()
+        return TextView(content)
+
+    @view(view_type=View, human_name="Default view", short_description="View the file with automatic view", default_view=True)
+    def default_view(self) -> View:
         content = self.read()
 
+        if self.is_json():
+            try:
+                # try to load the json
+                json_: Any = json.loads(content)
+
+                # If the json, is a json of a view
+                if View.json_is_from_view(json_):
+                    return AnyView(json_)
+
+                # return content as json
+                return JsonView(json_)
+            except:
+                pass
+
+        # In the worse case, return the file content as string
         return TextView(content)
 
     # -- W --

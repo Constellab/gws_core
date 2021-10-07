@@ -3,11 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Optional
+from typing import List, Optional, Type
 
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
+from gws_core.impl.file.file_helper import FileHelper
+from gws_core.impl.table.file_table import FileTable
 
 from ...core.classes.jsonable import Jsonable, ListJsonable
 from ...core.classes.paginator import Paginator
@@ -41,7 +43,7 @@ class FileService(BaseService):
         file: File = file_model.get_resource()
 
         file_store: FileStore = LocalFileStore.get_default_instance()
-        if not file_store.file_exists(file.name):
+        if not file_store.file_name_exists(file.name):
             raise NotFoundException(f"The file '{file.name}' does not exists on the server. It has been deleted")
 
         return FileResponse(file.path, media_type='application/octet-stream', filename=file.name)
@@ -66,7 +68,15 @@ class FileService(BaseService):
 
     @classmethod
     def upload_file_to_store(cls, upload_file: UploadFile, store: FileStore) -> FileModel:
-        file: File = store.add_from_temp_file(upload_file.file, upload_file.filename)
+
+        file_type: Type[File]
+        if FileHelper.is_csv(upload_file.filename):
+            file_type = FileTable
+        else:
+            file_type = File
+
+        file: File = store.add_from_temp_file(upload_file.file, upload_file.filename, file_type)
+
         return cls.create_file_model(file)
 
     @classmethod
@@ -77,12 +87,12 @@ class FileService(BaseService):
     @classmethod
     def add_file_to_default_store(cls, file: File, dest_file_name: str = None) -> FileModel:
         file_store: LocalFileStore = LocalFileStore.get_default_instance()
-        return cls._add_file_to_store(file=file, store=file_store)
+        return cls._add_file_to_store(file=file, store=file_store, dest_file_name=dest_file_name)
 
     @classmethod
     def add_file_to_store(cls, file: File, store_uri: str, dest_file_name: str = None) -> FileModel:
         file_store: LocalFileStore = FileStore.get_by_uri_and_check(store_uri)
-        return cls._add_file_to_store(file=file, store=file_store)
+        return cls._add_file_to_store(file=file, store=file_store, dest_file_name=dest_file_name)
 
     @classmethod
     def _add_file_to_store(cls, file: File, store: FileStore, dest_file_name: str = None) -> FileModel:

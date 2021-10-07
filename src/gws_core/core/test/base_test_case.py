@@ -4,12 +4,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import shutil
 from typing import List, Union
 from unittest.async_case import IsolatedAsyncioTestCase
 
 from ...experiment.queue_service import QueueService
-from ..utils.settings import Settings
 from .gtest import GTest
 
 
@@ -45,7 +43,7 @@ class BaseTestCase(IsolatedAsyncioTestCase):
     @classmethod
     def init_before_test(cls):
         print(f'Setup : {cls}')
-        GTest.delete_kv_store_and_temp_folder()
+        GTest.delete_data_and_temp_folder()
         GTest.drop_tables()
         GTest.create_tables()
         GTest.init()
@@ -53,7 +51,7 @@ class BaseTestCase(IsolatedAsyncioTestCase):
     @classmethod
     def clear_after_test(cls):
         print(f'Tear down : {cls}')
-        GTest.delete_kv_store_and_temp_folder()
+        GTest.delete_data_and_temp_folder()
         QueueService.deinit()
         GTest.drop_tables()
 
