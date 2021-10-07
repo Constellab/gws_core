@@ -332,7 +332,7 @@ class ResourceModel(Viewable, Generic[ResourceType]):
             })
 
         resource: ResourceType = self.get_resource()
-        _json["resource_human_name"] = resource._human_name
+        _json["resource_human_name"] = resource._human_name or resource.__class__.__name__
         _json["resource_short_description"] = resource._short_description
 
         return _json

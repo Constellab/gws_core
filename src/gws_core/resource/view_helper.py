@@ -1,6 +1,8 @@
 import inspect
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
+from gws_core.config.param_spec_helper import ParamSpecHelper
+
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..resource.resource import Resource
@@ -21,23 +23,30 @@ class ViewHelper():
         # Get the view object from the view method
         view: View = cls.call_view_method(resource, view_name, config["method_config"])
 
-        # convert the view to dict using the config
-        return view.to_dict(**config["view_config"])
+        # check the view config and set default values
+        view_parameters = ParamSpecHelper.get_and_check_values(view._specs, config["view_config"])
 
+        # convert the view to dict using the config
+        return view.to_dict(**view_parameters)
+
+    # TODO check the config
     @classmethod
     def call_view_method(cls, resource: Resource,
                          view_name: str, config:  Dict[str, Any]) -> View:
 
         # check if the view exists
-        ViewHelper.check_view(type(resource), view_name)
+        view_metadata: ResourceViewMetaData = ViewHelper.get_and_check_view(type(resource), view_name)
 
-        view_func: Callable = getattr(resource, view_name)
-
+        # check the method config and set the default values
         if config is None:
             config = {}
+        method_parameters = ParamSpecHelper.get_and_check_values(view_metadata.specs, config)
+
+        # Get view method
+        view_method: Callable = getattr(resource, view_name)
 
         # Get the view object from the view method
-        view: View = view_func(**config)
+        view: View = view_method(**method_parameters)
 
         if view is None or not isinstance(view, View):
             raise Exception(f"The view method '{view_name}' didn't returned a View object")
@@ -56,13 +65,18 @@ class ViewHelper():
         return None
 
     @classmethod
-    def check_view(cls, resource_type: Type[Resource], view_name: str) -> None:
+    def get_and_check_view(cls, resource_type: Type[Resource], view_name: str) -> ResourceViewMetaData:
         # check that the method exists and is annotated with view
-        if (not hasattr(resource_type, view_name)) or cls._get_view_metadata(getattr(resource_type, view_name)) is None:
+        if not hasattr(resource_type, view_name):
             raise BadRequestException(f"The resource does not have a view named '{view_name}'")
 
+        view_metadata: ResourceViewMetaData = cls._get_view_function_metadata(getattr(resource_type, view_name))
+        if view_metadata is None:
+            raise BadRequestException(f"The resource does not have a view named '{view_name}'")
+        return view_metadata
+
     @classmethod
-    def _get_view_metadata(cls, func: Callable) -> ResourceViewMetaData:
+    def _get_view_function_metadata(cls, func: Callable) -> ResourceViewMetaData:
         """return the view method metadat if the func is a view, otherwise returns None
         """
         # Check if the method is annotated with view
@@ -101,7 +115,7 @@ class ViewHelper():
                     continue
 
                 # Check if the method is annotated with view
-                view_data: ResourceViewMetaData = cls._get_view_metadata(func)
+                view_data: ResourceViewMetaData = cls._get_view_function_metadata(func)
                 if view_data is not None:
                     view_meta_data[func_name] = view_data.clone()
 

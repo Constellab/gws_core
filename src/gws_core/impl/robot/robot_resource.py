@@ -13,7 +13,7 @@ from ..table.view.table_view import TableView
 from ..text.view.text_view import TextView
 
 
-@resource_decorator(unique_name="Robot")
+@resource_decorator(unique_name="Robot", human_name="Robot")
 class Robot(Resource):
 
     age: int = IntRField()
