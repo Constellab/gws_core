@@ -95,7 +95,7 @@ class File(Resource):
             return open(self.path, mode="w+", encoding='utf-8')
 
     # -- R --
-
+    # TODO est-ce que le close est fait ?
     def read(self) -> AnyStr:
         mode = "r+"+self._mode
         with self.open(mode) as fp:

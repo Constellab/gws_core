@@ -22,14 +22,14 @@ class TableView(BaseTableView):
 
     _type = "table-view"
     _specs: ViewSpecs = {
-        "row_page": IntParam(default_value=1, human_name="Row page number"),
-        "row_page_size": IntParam(default_value=50, max_value=50, min_value=1, human_name="Number of rows per page"),
-        "column_page": IntParam(default_value=1, human_name="Row page number"),
-        "column_page_size": IntParam(default_value=50, max_value=50, min_value=1, human_name="Number of columns per page")
+        "from_row": IntParam(default_value=1, human_name="From row"),
+        "number_of_rows_per_page": IntParam(default_value=50, max_value=100, min_value=1, human_name="Number of rows per page"),
+        "from_column": IntParam(default_value=1, human_name="From column"),
+        "number_of_columns_per_page": IntParam(default_value=50, max_value=50, min_value=1, human_name="Number of columns per page")
     }
     _data: DataFrame
 
-    MAX_NUMBERS_OF_ROWS_PER_PAGE = 50
+    MAX_NUMBERS_OF_ROWS_PER_PAGE = 100
     MAX_NUMBERS_OF_COLUMNS_PER_PAGE = 50
 
     def _slice(self, from_row_index: int = 0, to_row_index: int = 49, from_column_index: int = 0, to_column_index: int = 49) -> dict:
@@ -42,12 +42,13 @@ class TableView(BaseTableView):
             min(to_column_index, from_column_index + self.MAX_NUMBERS_OF_COLUMNS_PER_PAGE),
             last_column_index)
 
-        table = self._data.iloc[
+        # Remove NaN values to convert to jsonb
+        data_frame = self._data.fillna('')
+
+        return data_frame.iloc[
             from_row_index:to_row_index,
             from_column_index:to_column_index,
-        ].to_dict()
-
-        return table
+        ].to_dict('list')
 
     def to_dict(self, from_row: int = 1, number_of_rows_per_page: int = 50, from_column: int = 1,
                 number_of_columns_per_page: int = 50) -> dict:

@@ -9,6 +9,7 @@ from fastapi import Depends
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
+from gws_core.core.classes.paginator import PaginatorDict
 
 from ...core_app import core_app
 from ...user.auth_service import AuthService
@@ -46,7 +47,7 @@ async def download_a_file(uri: str,
 @core_app.get("/file", tags=["Files"], summary="Get the list of files")
 async def get_the_list_of_files(page: Optional[int] = 1,
                                 number_of_items_per_page: Optional[int] = 20,
-                                _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+                                _: UserData = Depends(AuthService.check_user_access_token)) -> PaginatorDict:
     """
     Retrieve a list of experiments. The list is paginated.
 

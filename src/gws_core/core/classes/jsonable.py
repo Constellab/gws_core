@@ -1,6 +1,6 @@
 
 from abc import abstractmethod
-from typing import Dict, List
+from typing import Any, Dict, List
 
 
 class Jsonable():
@@ -14,41 +14,48 @@ class Jsonable():
         pass
 
 
-class ListJsonable(List[Jsonable]):
+class ListJsonable(Jsonable):
     """Basic list that support to_json method
 
     :param List: [description]
     :type List: [type]
     """
 
-    def __init__(self, data: List = None):
-        if data is None:
-            data = []
-        super().__init__(data)
+    list: List[Jsonable]
 
-    def to_json(self, **kwargs) -> List[dict]:
+    def __init__(self, list_: List[Jsonable] = None):
+        if list_ is None:
+            list_ = []
+        self.list = list_
+
+    def to_json(self, **kwargs) -> List[Any]:
         _json = []
-        for obj in self:
+        for obj in self.list:
             _json.append(obj.to_json(**kwargs))
 
         return _json
 
+    def append(self, jsonable: Jsonable) -> None:
+        self.list.append(jsonable)
 
-class DictJsonable(Dict[str, Jsonable]):
+
+class DictJsonable(Jsonable):
     """Basic dict that support to_json method
 
     :param List: [description]
     :type List: [type]
     """
 
-    def __init__(self, data: Dict = None):
-        if data is None:
-            data = {}
-        super().__init__(data)
+    dict: Dict[str, Jsonable]
 
-    def to_json(self, **kwargs) -> Dict[str, dict]:
+    def __init__(self, dict_: Dict[str, Jsonable] = None):
+        if dict_ is None:
+            dict_ = {}
+        self.dict = dict_
+
+    def to_json(self, **kwargs) -> Dict[str, Any]:
         _json = {}
-        for key, obj in self.items():
+        for key, obj in self.dict.items():
             _json[key] = obj.to_json(**kwargs)
 
         return _json
