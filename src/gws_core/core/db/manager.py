@@ -53,7 +53,7 @@ class AbstractDbManager:
     
 
     @classmethod
-    def _init(cls, engine: str = None, test: bool = False):
+    def _init(cls, engine: str = None, test: bool = None):
         """ Initialize the DbManager """
 
         cls._db_name = cls.__TEST_DB_NAME if test else cls._DEFAULT_DB_NAME
@@ -64,7 +64,7 @@ class AbstractDbManager:
         if not cls._engine:
             cls._engine = cls._DEFAULT_DB_ENGINE
         if cls._engine == "sqlite3":
-            db_path = cls.get_sqlite3_db_path()
+            db_path = cls.get_sqlite3_db_path(test=test)
             _db = SqliteDatabase(db_path)
         elif cls._engine in ["mariadb", "mysql"]:
             _db = ReconnectMySQLDatabase(
@@ -167,12 +167,11 @@ class AbstractDbManager:
         return settings.get_maria_db_host(cls._db_name)
 
     @classmethod
-    def get_sqlite3_db_path(cls):
+    def get_sqlite3_db_path(cls, test: bool=None):
         """ Get the current current sqlite3 db path """
 
         settings = Settings.retrieve()
-        db_path = settings.get_sqlite3_db_path(cls._db_name)
-        return db_path
+        return settings.get_sqlite3_db_path(cls._db_name, test=test)
 
     # -- I --
 

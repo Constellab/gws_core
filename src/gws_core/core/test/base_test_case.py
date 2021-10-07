@@ -7,6 +7,7 @@
 from typing import List, Union
 from unittest.async_case import IsolatedAsyncioTestCase
 
+from ...core.db.db_manager import DbManager
 from ...experiment.queue_service import QueueService
 from .gtest import GTest
 
@@ -42,18 +43,19 @@ class BaseTestCase(IsolatedAsyncioTestCase):
 
     @classmethod
     def init_before_test(cls):
-        print(f'Setup : {cls}')
+        print(f'Setup: {cls}')
         GTest.delete_data_and_temp_folder()
+        DbManager.init_all_db(test=True)
         GTest.drop_tables()
         GTest.create_tables()
         GTest.init()
 
     @classmethod
     def clear_after_test(cls):
-        print(f'Tear down : {cls}')
-        GTest.delete_data_and_temp_folder()
+        print(f'Tear down: {cls}')
         QueueService.deinit()
         GTest.drop_tables()
+        GTest.delete_data_and_temp_folder()
 
     @classmethod
     def print(cls, text):
@@ -74,7 +76,7 @@ class BaseTestCase(IsolatedAsyncioTestCase):
         if isinstance(json_1, list):
             if not isinstance(json_2, list):
                 raise AssertionError(
-                    f"The seconde object is not a list for key '{cumulated_key}'.")
+                    f"The second object is not a list for key '{cumulated_key}'.")
 
             if len(json_1) != len(json_2):
                 raise AssertionError(
@@ -106,4 +108,4 @@ class BaseTestCase(IsolatedAsyncioTestCase):
         # Handle primitive value
         if json_1 != json_2:
             raise AssertionError(
-                f"Values differents for key '{cumulated_key}'. First : '{json_1}'. Seconde : '{json_2}'")
+                f"Values differents for key '{cumulated_key}'. First: '{json_1}'. Second: '{json_2}'")

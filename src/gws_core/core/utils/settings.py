@@ -144,8 +144,8 @@ class Settings(PeeweeModel):
 
     # -- G --
 
-    def get_sqlite3_db_path(self, db_name) -> str:
-        db_dir = os.path.join(self.get_data_dir(), db_name, "sqlite3")
+    def get_sqlite3_db_path(self, db_name, test: bool=None) -> str:
+        db_dir = os.path.join(self.get_data_dir(test=test), db_name, "sqlite3")
         if not os.path.exists(db_dir):
             os.makedirs(db_dir)
         db_path = os.path.join(db_dir, f"{db_name}.sqlite3")
@@ -196,7 +196,7 @@ class Settings(PeeweeModel):
 
         return "/logs"
 
-    def get_data_dir(self) -> str:
+    def get_data_dir(self, test:bool = None) -> str:
         """
         Get the default data directory.
         Depending on if the lab is in dev or prod mode, the appropriate directory is returned.
@@ -204,16 +204,19 @@ class Settings(PeeweeModel):
         :return: The default data directory
         :rtype: `str`
         """
-        if self.is_test:
+        if test is None:
+            test = self.is_test
+
+        if test:
             return "/data-test"
         else:
             return "/data"
 
-    def get_file_store_dir(self) -> str:
-        return os.path.join(self.get_data_dir(), "./filestore/")
+    def get_file_store_dir(self, test: bool=None) -> str:
+        return os.path.join(self.get_data_dir(test=test), "./filestore/")
 
-    def get_kv_store_base_dir(self) -> str:
-        return os.path.join(self.get_data_dir(), "./kvstore/")
+    def get_kv_store_base_dir(self, test: bool=None) -> str:
+        return os.path.join(self.get_data_dir(test=test), "./kvstore/")
 
     def get_variable(self, key) -> str:
         """ Returns a variable. Returns `None` if the variable does not exist """
