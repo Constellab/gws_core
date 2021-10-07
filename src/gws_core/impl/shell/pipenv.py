@@ -92,6 +92,7 @@ class PipEnvShell(BaseEnvShell):
             "pipenv install", "&&",
             "touch READY"
         ]
+
         try:
             ProgressBar.add_message_to_current(
                 "Installing the virtual environment ...")

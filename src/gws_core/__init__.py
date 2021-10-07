@@ -144,6 +144,7 @@ from .impl.s3.swift import Swift as Swift
 from .impl.shell.conda import CondaEnvShell as CondaEnvShell
 from .impl.shell.pipenv import PipEnvShell as PipEnvShell
 from .impl.shell.shell import Shell as Shell
+from .impl.shell.shell_env_proxy import ShellEnvProxy as ShellEnvProxy
 from .impl.table.data_frame_r_field import DataFrameRField as DataFrameRField
 # Impl > Table
 from .impl.table.table import Table as Table
