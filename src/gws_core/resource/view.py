@@ -1,5 +1,4 @@
 
-from abc import abstractmethod
 from typing import Any
 
 from .view_types import ViewSpecs
@@ -39,6 +38,23 @@ class View:
 
         return data
 
-    @abstractmethod
     def to_dict(self, **kwargs) -> dict:
         pass
+
+    @classmethod
+    def json_is_from_view(cls, json_: Any) -> bool:
+        """Method that return true is the provided json is a json of a view
+        """
+
+        if json_ is None or not isinstance(json_, dict):
+            return False
+
+        # check type
+        if "type" not in json_ or json_["type"] is None or not isinstance(json_["type"], str):
+            return False
+
+        # Check data
+        if "data" not in json_ or json_["data"] is None:
+            return False
+
+        return True
