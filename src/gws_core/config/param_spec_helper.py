@@ -20,6 +20,11 @@ class ParamSpecHelper():
         :rtype: `dict`
         """
 
+        if param_specs is None:
+            param_specs = {}
+        if param_values is None:
+            param_values = {}
+
         full_values: Dict[str, ParamValue] = {}
         missing_params: List[str] = []
 

@@ -53,7 +53,7 @@ class PageInfo():
         self.total_number_of_pages = int(self.total_number_of_items/self.number_of_items_per_page) + int(
             bool(self.total_number_of_items % self.number_of_items_per_page))
         self.first_page = first_page
-        self.last_page = max(self.total_number_of_pages - 1, self.first_page)
+        self.last_page = max(first_page + self.total_number_of_pages - 1, self.first_page)
         self.next_page = min(self.page + 1, self.last_page)
         self.prev_page = max(self.page - 1, self.first_page)
 
