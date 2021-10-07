@@ -171,8 +171,8 @@ class ProgressBar(Model):
             self.start()
             #raise BadRequestException("The progress bar has not started")
 
-        if value > _max:
-            value = _max
+        if value >= _max:
+            value = _max - 1 #prevent blocking the progress_bar
 
         if value < self._min_value:
             value = self._min_value
@@ -191,7 +191,8 @@ class ProgressBar(Model):
         self.data["remaining_time"] = self._compute_remaining_seconds()
 
         if message:
-            self.add_message(message)
+            perc = value/self.data["max_value"]
+            self.add_message("{:.1%}: {}".format(perc, message))
 
         if self.data["value"] == _max:
             self.stop('End of process')
