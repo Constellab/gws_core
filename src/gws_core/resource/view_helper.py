@@ -29,7 +29,6 @@ class ViewHelper():
         # convert the view to dict using the config
         return view.to_dict(**view_parameters)
 
-    # TODO check the config
     @classmethod
     def call_view_method(cls, resource: Resource,
                          view_name: str, config:  Dict[str, Any]) -> View:
