@@ -90,7 +90,7 @@ class IProtocol(IProcess):
         if isinstance(process, ProtocolModel):
             return IProtocol(process)
         else:
-            return IProcess(process)
+            return ITask(process)
 
     def delete_process(self, instance_name: str) -> None:
         ProtocolService.delete_process_of_protocol(self._protocol_model, instance_name)

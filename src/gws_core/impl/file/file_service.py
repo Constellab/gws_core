@@ -41,7 +41,7 @@ class FileService(BaseService):
         file: File = file_model.get_resource()
 
         file_store: FileStore = LocalFileStore.get_default_instance()
-        if not file_store.file_exists(file.name):
+        if not file_store.file_name_exists(file.name):
             raise NotFoundException(f"The file '{file.name}' does not exists on the server. It has been deleted")
 
         return FileResponse(file.path, media_type='application/octet-stream', filename=file.name)

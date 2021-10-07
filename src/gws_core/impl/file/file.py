@@ -4,8 +4,10 @@
 # About us: https://gencovery.com
 
 import os
-from re import A
-from typing import Any, AnyStr, List, Type, final
+from typing import Any, AnyStr, List, Type
+
+from gws_core.impl.table.view.table_view import TableView
+from gws_core.resource.view import View
 
 from ...core.exception.exceptions import BadRequestException
 from ...impl.file.file_helper import FileHelper
@@ -17,11 +19,13 @@ from ...resource.view_decorator import view
 from ..text.view.text_view import TextView
 
 
-@final
 @resource_decorator("File")
 class File(Resource):
     """
-    File class
+    File class.
+
+    /!\ The class that extend file can only have a path and  file_store_uri attributes. Other attributes will not be
+    provided when creating the resource
     """
 
     path: str = ""
@@ -117,11 +121,26 @@ class File(Resource):
         _json["content"] = self.read()
         return JsonView(_json)
 
-    @view(view_type=TextView, human_name="View file content", short_description="View the file content as string", default_view=True)
-    def view_content_as_str(self) -> dict:
+    @view(view_type=TextView, human_name="View file content", short_description="View the file content as string")
+    def view_content_as_str(self) -> TextView:
         content = self.read()
 
         return TextView(content)
+
+    @view(view_type=View, human_name="Default view", short_description="View the file with correct view", default_view=True)
+    def default_view(self) -> View:
+        content = self.read()
+
+        if self.is_csv:
+            return
+
+        return TextView(content)
+
+    @view(view_type=View, human_name="View as table", short_description="View as table")
+    def default_view(self) -> View:
+        content = self.read()
+
+        return TableView(content)
 
     # -- W --
 

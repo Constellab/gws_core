@@ -6,6 +6,8 @@
 from inspect import isclass
 from typing import Type
 
+from gws_core.study.study_dto import StudyDto
+
 from ..experiment.experiment_dto import ExperimentDTO
 from ..process.process import Process
 from ..protocol.protocol import Protocol
@@ -25,11 +27,11 @@ class IExperiment:
     :rtype: [type]
     """
 
-    _process_type: Type[Process]
     _experiment: Experiment
     _protocol: IProtocol
 
-    def __init__(self, process_type: Type[Process] = None, study: Study = None, title: str = '', description: str = ''):
+    def __init__(
+            self, protocol_type: Type[Protocol] = None, study: Study = None, title: str = '', description: str = ''):
         """This create an experiment in the database with the provided Task or Protocol
 
         :param process_type: Can be the type of a Protocol or a Task.
@@ -44,22 +46,19 @@ class IExperiment:
         :type description: str, optional
         :raises Exception: [description]
         """
-        self._process_type = process_type
 
-        if process_type is None:
+        if protocol_type is None:
+            study_dto: StudyDto = None
+            if study is not None:
+                study_dto = StudyDto(uri=study.uri, title=study.title, description=study.description)
             self._experiment = ExperimentService.create_empty_experiment(
-                ExperimentDTO(title=title, description=description))
+                ExperimentDTO(title=title, description=description, study=study_dto))
 
         else:
-            if not isclass(process_type) or not issubclass(process_type, Process):
-                raise Exception(f"The provided process_type '{str(process_type)}' is not a process")
-
-            if issubclass(process_type, Task):
-                self._experiment = ExperimentService.create_experiment_from_task_type(
-                    task_type=process_type, title=title, description=description)
-            elif issubclass(process_type, Protocol):
-                self._experiment = ExperimentService.create_experiment_from_protocol_type(
-                    protocol_type=process_type, title=title, description=description)
+            if not isclass(protocol_type) or not issubclass(protocol_type, Protocol):
+                raise Exception(f"The provided process_type '{str(protocol_type)}' is not a process")
+            self._experiment = ExperimentService.create_experiment_from_protocol_type(
+                protocol_type=protocol_type, title=title, description=description, study=study)
 
         # Init the IProtocol
         self._protocol = IProtocol(self._experiment.protocol_model)
