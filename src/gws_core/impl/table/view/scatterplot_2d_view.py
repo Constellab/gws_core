@@ -58,5 +58,5 @@ class ScatterPlot2DView(BaseTableView):
             })
         return {
             "type": self._type,
-            "series": series
+            "data": series
         }

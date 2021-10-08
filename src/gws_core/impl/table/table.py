@@ -273,7 +273,7 @@ class Table(Resource):
           specs={
               "column_names": ListParam(human_name="Column names", short_description="List of columns to view"),
               "nbins": IntParam(default_value=10, min_value=0, human_name="Nbins", short_description="The number of bins. Set zero (0) for auto."),
-              "density": BoolParam(default_value=False, human_name="Density", short_description="True to pplot density")
+              "density": BoolParam(default_value=False, human_name="Density", short_description="True to plot density")
           })
     def view_as_histogram(self, *args, **kwargs) -> HistogramView:
         """
