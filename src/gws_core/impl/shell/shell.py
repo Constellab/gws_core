@@ -209,20 +209,3 @@ class Shell(Task):
 
         self._clean_working_dir()
 
-
-class CondaShell(Shell):
-    """
-    CondaShell task.
-
-    This class is a proxy to run user shell commands through the Python method `subtask.run`.
-    """
-
-    _shell_mode = True
-
-    def _format_command(self, user_cmd: list) -> str:
-        if isinstance(user_cmd, list):
-            user_cmd = [str(c) for c in user_cmd]
-            user_cmd = ' '.join(user_cmd)
-
-        cmd = 'bash -c "source /opt/conda/etc/profile.d/conda.sh && conda activate base && ' + user_cmd + '"'
-        return cmd

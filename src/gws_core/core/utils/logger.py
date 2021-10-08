@@ -38,10 +38,11 @@ class Logger:
         (like when running a experiment in another process), defaults to False
         :type _is_experiment_process: bool, optional
         """
-        Logger._is_experiment_process = _is_experiment_process
-
         if Logger._logger is not None:
-            raise BadRequestException("The logger already exists")
+            return
+            #raise BadRequestException("The logger already exists")
+        
+        Logger._is_experiment_process = _is_experiment_process
 
         if level not in ["ERROR", "INFO", "DEBUG"]:
             raise BadRequestException(
