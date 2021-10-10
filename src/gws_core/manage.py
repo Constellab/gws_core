@@ -143,7 +143,7 @@ class SettingsLoader:
                 package = re.match(r"^([a-zA-Z]+).*", package)[1]
                 if package in sys.modules:
                     module = importlib.import_module(package)
-                    path = os.path.dirname(module.__path__)
+                    path = os.path.abspath(module.__file__)
                     file_path = os.path.join(path, "settings.json")
                     is_brick = os.path.exists(file_path)
                     if is_brick:
