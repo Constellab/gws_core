@@ -8,7 +8,7 @@ from ...resource.r_field import FloatRField, IntRField, ListRField
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view
-from ..json.json_view import JsonView
+from ..json.json_view import JSONView
 from ..table.view.table_view import TableView
 from ..text.view.text_view import TextView
 
@@ -39,11 +39,11 @@ class Robot(Resource):
         elif direction == "east":
             self.position[0] += moving_step
 
-    @view(view_type=JsonView, human_name="View position",
+    @view(view_type=JSONView, human_name="View position",
           specs={"position": StrParam(default_value="latitude", allowed_values=['latitude', 'longitude'])})
-    def view_only_position(self, position: str) -> JsonView:
+    def view_only_position(self, position: str) -> JSONView:
         position_value = self.position[1] if position == 'latitude' else self.position[0]
-        return JsonView({"position": position, "value": position_value})
+        return JSONView({"position": position, "value": position_value})
 
     @view(view_type=TableView, human_name="View as csv")
     def view_as_csv(self) -> TableView:

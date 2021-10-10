@@ -11,7 +11,7 @@ from gws_core.resource.any_view import AnyView
 
 from ...core.exception.exceptions import BadRequestException
 from ...impl.file.file_helper import FileHelper
-from ...impl.json.json_view import JsonView
+from ...impl.json.json_view import JSONView
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.resource_set import ResourceSet
@@ -115,12 +115,12 @@ class File(Resource):
             data = fp.readlines(n)
         return data
 
-    @view(view_type=JsonView, human_name="View as JSON", short_description="View the complete resource as json")
-    def view_as_dict(self) -> JsonView:
+    @view(view_type=JSONView, human_name="View as JSON", short_description="View the complete resource as json")
+    def view_as_dict(self) -> JSONView:
         content = self.read()
         try:
             json_: Any = json.loads(content)
-            return JsonView(json_)
+            return JSONView(json_)
         except:
             pass
 
@@ -146,7 +146,7 @@ class File(Resource):
                     return AnyView(json_)
 
                 # return content as json
-                return JsonView(json_)
+                return JSONView(json_)
             except:
                 pass
 

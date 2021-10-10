@@ -6,7 +6,7 @@ from ...core.exception.exceptions.bad_request_exception import \
 from ...resource.view import View
 
 
-class JsonView(View):
+class JSONView(View):
     """
     Class json view.
 

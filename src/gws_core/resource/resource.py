@@ -6,7 +6,7 @@ from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.base import Base
 from ..core.utils.utils import Utils
-from ..impl.json.json_view import JsonView
+from ..impl.json.json_view import JSONView
 from ..model.typing_register_decorator import typing_registrator
 from ..resource.r_field import BaseRField, UUIDRField
 from ..resource.view_decorator import view
@@ -74,8 +74,8 @@ class Resource(Base):
 
         # @ToDo: ensure that this method is only called by an Importer
 
-    @view(view_type=JsonView, human_name="View as JSON", short_description="View the complete resource as json", default_view=True)
-    def view_as_dict(self) -> JsonView:
+    @view(view_type=JSONView, human_name="View as JSON", short_description="View the complete resource as json", default_view=True)
+    def view_as_dict(self) -> JSONView:
         """By default the view_as_dict dumps the RFields mark with, include_in_dict_view=True
         This method is used to send the resource information back to the interface
         """
@@ -86,7 +86,7 @@ class Resource(Base):
             if r_field.include_in_dict_view:
                 json_[key] = r_field.serialize(getattr(self, key))
 
-        return JsonView(json_)
+        return JSONView(json_)
 
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, Resource):
