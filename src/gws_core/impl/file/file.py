@@ -116,7 +116,7 @@ class File(Resource):
         return data
 
     @view(view_type=JSONView, human_name="View as JSON", short_description="View the complete resource as json")
-    def view_as_dict(self) -> JSONView:
+    def view_as_json(self) -> JSONView:
         content = self.read()
         try:
             json_: Any = json.loads(content)

@@ -108,4 +108,4 @@ class TestFile(BaseTestCase):
 
         # Check file content
         content: str = file.read()
-        self.assertEqual(content, json.dumps(robot.view_as_dict().to_dict()))
+        self.assertEqual(content, json.dumps(robot.view_as_json().to_dict()))

@@ -138,7 +138,7 @@ def dump_db(db_name: str, _: UserData = Depends(AuthCentral.check_central_api_ke
     file = File()
     file.path = output_file
     FileService.add_file_to_default_store(file, 'dump.sql')
-    return file.view_as_dict()
+    return file.view_as_json().to_dict()
 
 
 def __convert_user_to_dto(user: User) -> Dict:

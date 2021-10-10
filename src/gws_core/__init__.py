@@ -118,6 +118,9 @@ from .impl.json.json_tasks import JSONDumper as JSONDumper
 from .impl.json.json_tasks import JSONExporter as JSONExporter
 from .impl.json.json_tasks import JSONImporter as JSONImporter
 from .impl.json.json_tasks import JSONLoader as JSONLoader
+# Impl > JSONView
+from .impl.json.json_view import JSONView as JSONView
+# Impl > Robot
 from .impl.robot.robot_protocol import \
     RobotSuperTravelProto as RobotSuperTravelProto
 from .impl.robot.robot_protocol import RobotTravelProto as RobotTravelProto
