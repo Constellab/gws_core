@@ -238,6 +238,8 @@ from .resource.resource_set import ResourceSet as ResourceSet
 from .resource.resource_typing import ResourceTyping as ResourceTyping
 from .resource.view import View as View
 from .resource.view_decorator import view as view
+from .resource.view_types import ViewSpecs
+
 # Study
 from .study.study import Study as Study
 # Task
