@@ -1,8 +1,8 @@
 
+import uuid
 from copy import deepcopy
 from inspect import isclass, isfunction
 from typing import Any, Callable, Dict, List, Type, Union
-import uuid
 
 from ..core.classes.validator import (BoolValidator, DictValidator,
                                       FloatValidator, IntValidator,
@@ -13,8 +13,9 @@ from ..core.exception.exceptions.bad_request_exception import \
 
 class BaseRField():
     """BaseRField, these fields must be used in resource attribute.
-    When a class attribute is instantiated with an RField, it will be automatically
-    save for output resource of a task and automatically initiated for input resource of a task
+    When a class attribute is instantiated with an RField,
+    the field will be automatically saved after the task run when the resource is on task outputs,
+    and the field will automatically be initialized with the saved value for input resources of a task
     """
 
     searchable: bool
@@ -250,7 +251,8 @@ class StrRField(PrimitiveRField):
         """
         super().__init__(validator=StrValidator(), searchable=searchable,
                          default_value=default_value, include_in_dict_view=include_in_dict_view)
-            
+
+
 class UUIDRField(StrRField):
 
     def __init__(self, searchable: bool = False, include_in_dict_view: bool = True) -> None:
@@ -267,7 +269,7 @@ class UUIDRField(StrRField):
         :type include_in_dict_view: bool, optional
         """
         default_value = str(uuid.uuid4())
-        super().__init__(default_value=default_value, searchable=searchable,include_in_dict_view=include_in_dict_view)
+        super().__init__(default_value=default_value, searchable=searchable, include_in_dict_view=include_in_dict_view)
 
 
 class ListRField(PrimitiveRField):

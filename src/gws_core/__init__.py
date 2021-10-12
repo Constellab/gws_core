@@ -240,12 +240,13 @@ from .resource.resource import Resource as Resource
 from .resource.resource_decorator import \
     resource_decorator as resource_decorator
 from .resource.resource_model import ResourceModel as ResourceModel
+from .resource.resource_r_field import ResourceRField as ResourceRField
 from .resource.resource_service import ResourceService as ResourceService
 from .resource.resource_set import ResourceSet as ResourceSet
 from .resource.resource_typing import ResourceTyping as ResourceTyping
 from .resource.view import View as View
 from .resource.view_decorator import view as view
-from .resource.view_types import ViewSpecs
+from .resource.view_types import ViewSpecs as ViewSpecs
 # Study
 from .study.study import Study as Study
 # Task
