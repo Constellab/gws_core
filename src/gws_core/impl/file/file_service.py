@@ -17,7 +17,7 @@ from ..table.file_table import FileTable
 from .file import File
 from .file_helper import FileHelper
 from .file_store import FileStore
-from .fs_node_model import FSNodeModel
+from .fs_node_model import FSNodeModel, FSNodeOrigin
 from .local_file_store import LocalFileStore
 
 
@@ -31,7 +31,9 @@ class FileService(BaseService):
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
 
-        query = FSNodeModel.select().order_by(FSNodeModel.creation_datetime.desc())
+        query = FSNodeModel.select().where(
+            FSNodeModel.origin == FSNodeOrigin.UPLOADED).order_by(
+            FSNodeModel.creation_datetime.desc())
         return Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
 
@@ -77,7 +79,9 @@ class FileService(BaseService):
 
         file: File = store.add_from_temp_file(upload_file.file, upload_file.filename, file_type)
 
-        return cls.create_file_model(file)
+        file_model: FSNodeModel = FSNodeModel.from_resource(file)
+        file_model.origin = FSNodeOrigin.UPLOADED
+        return file_model.save()
 
     @classmethod
     def create_file_model(cls, file: File) -> FSNodeModel:
