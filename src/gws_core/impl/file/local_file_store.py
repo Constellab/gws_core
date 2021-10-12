@@ -11,12 +11,16 @@ from tempfile import SpooledTemporaryFile
 from time import time
 from typing import List, Type, Union
 
+from genericpath import isdir
+from gws_core.impl.file.folder import Folder
+
 from ...core.decorator.transaction import transaction
 from ...core.exception.exceptions import BadRequestException
 from ...core.utils.settings import Settings
 from .file import File
 from .file_helper import FileHelper
 from .file_store import FileStore
+from .fs_node import FSNode
 
 
 class LocalFileStore(FileStore):
@@ -29,7 +33,7 @@ class LocalFileStore(FileStore):
         if not self.path:
             self.data["path"] = os.path.join(self.get_base_dir(), self.uri)
 
-    def add_from_path(self, source_file_path: str, dest_file_name: str = None, file_type: Type[File] = File) -> File:
+    def add_node_from_path(self, source_path: str, dest_name: str = None, node_type: Type[FSNode] = FSNode) -> FSNode:
         """
         Add a file from an external repository to a local store.
 
@@ -38,12 +42,11 @@ class LocalFileStore(FileStore):
         :return: The file object
         :rtype: gws.file.File.
         """
-        if dest_file_name is None:
-            dest_file_name = FileHelper.get_name_with_extension(source_file_path)
+        if dest_name is None:
+            dest_name = FileHelper.get_name_with_extension(source_path)
 
-        file = self._init_file(file_name=dest_file_name, file_type=file_type)
-        self._copy_file(source_file_path, file.path)
-
+        file = self._init_node(node_path=dest_name, node_type=node_type)
+        self._copy_node(source_path, file.path)
         return file
 
     def add_from_temp_file(
@@ -58,7 +61,7 @@ class LocalFileStore(FileStore):
         :rtype: gws.file.File.
         """
 
-        file = self._init_file(file_name=dest_file_name, file_type=file_type)
+        file: File = self._init_node(node_path=dest_file_name, node_type=file_type)
         self._init_dir(file.dir)
 
         with open(file.path, "wb") as buffer:
@@ -66,16 +69,22 @@ class LocalFileStore(FileStore):
 
         return file
 
-    def create_empty(self, file_name: str = None, file_type: Type[File] = File) -> File:
-        file: File = self._init_file(file_name=file_name, file_type=file_type)
+    def create_empty_file(self, file_name: str = None, file_type: Type[File] = File) -> File:
+        file: File = self._init_node(node_path=file_name, node_type=file_type)
 
         self._init_dir(file.dir)
 
         open(file.path, 'a').close()
         return file
 
-    def _copy_file(self, source: str, destination: str) -> None:
-        """Copy a file from a path to another path
+    def create_empty_folder(self, folder_name: str, folder_type: Type[Folder] = Folder) -> Folder:
+        folder: Folder = self._init_node(folder_name, folder_type)
+        self._init_dir(folder.path)
+
+        return folder
+
+    def _copy_node(self, source: str, destination: str) -> None:
+        """Copy a node from a path to another path
 
         :param source: [description]
         :type source: str
@@ -83,11 +92,11 @@ class LocalFileStore(FileStore):
         :type destination: str
         """
         self._init_dir(str(Path(destination).parent))
-        shutil.copy2(source, destination)
 
-    # -- B --
-
-    # -- C --
+        if(os.path.isdir(source)):
+            shutil.copytree(source, destination)
+        else:
+            shutil.copy2(source, destination)
 
     def _init_dir(self, dir_: str) -> None:
         """Create the directory if it doesn't exist
@@ -98,19 +107,19 @@ class LocalFileStore(FileStore):
             if not os.path.exists(dir_):
                 raise BadRequestException(f"Cannot create directory '{dir_}'")
 
-    def _init_file(self, file_name: str = None, file_type: Type[File] = File) -> File:
+    def _init_node(self, node_path: str = None, node_type: Type[FSNode] = FSNode) -> FSNode:
 
-        if not isclass(file_type) or not issubclass(file_type, File):
-            raise BadRequestException(f"The file type '{str(file_type)}' is not a File class")
+        if not isclass(node_type) or not issubclass(node_type, FSNode):
+            raise BadRequestException(f"The path type '{str(node_type)}' is not a FsNode class")
 
-        file: File = file_type()
-        file.path = self.get_new_file_path(file_name)
+        file: FSNode = node_type()
+        file.path = self.get_new_node_path(node_path)
         file.file_store_uri = self.uri
 
         return file
 
-    def get_new_file_path(self, dest_file_name: str = None) -> str:
-        """Generate the file path from file name and avoid duplicate
+    def get_new_node_path(self, dest_node_name: str = None) -> str:
+        """Generate the node path from node name and avoid duplicate
 
         :param dest_file_name: [description], defaults to None
         :type dest_file_name: str, optional
@@ -118,46 +127,40 @@ class LocalFileStore(FileStore):
         :rtype: str
         """
         # if there is no file dest, generate a name
-        if dest_file_name is None or len(dest_file_name) == 0:
+        if dest_node_name is None or len(dest_node_name) == 0:
             time_file_name: str = str(time()).replace('.', '')
             return os.path.join(self.path, time_file_name)
 
         #  create the file if another doesn't exists
-        if not self.file_name_exists(dest_file_name):
-            return os.path.join(self.path, dest_file_name)
+        if not self.node_name_exists(dest_node_name):
+            return os.path.join(self.path, dest_node_name)
 
-        extension: str = FileHelper.get_extension(dest_file_name)
-        file_name: str = FileHelper.get_name(dest_file_name)
+        extension: str = FileHelper.get_extension(dest_node_name)
+        file_name: str = FileHelper.get_name(dest_node_name)
 
         # If the file exists, find a unique name with a number
         unique: int = 1
-        while self.file_name_exists(f"{file_name}_{unique}{extension}"):
+        while self.node_name_exists(f"{file_name}_{unique}{extension}"):
             unique += 1
         return os.path.join(self.path, f"{file_name}_{unique}{extension}")
 
-    def file_path_exists(self, file_path: str) -> bool:
+    def node_path_exists(self, node_path: str) -> bool:
         # clean the file path
-        file_path = str(Path(file_path))
+        node_path = str(Path(node_path))
 
         # Check that the file path is in the file store
-        if not file_path.startswith(self.get_base_dir()):
+        if not node_path.startswith(self.get_base_dir()):
             return False
 
-        return os.path.exists(file_path)
+        return os.path.exists(node_path)
 
-    def _file_get_path_from_file_name(self, file_name: str) -> str:
-        return os.path.join(self.path, file_name)
-
-    # -- D --
+    def _get_path_from_node_name(self, node_name: str) -> str:
+        return os.path.join(self.path, node_name)
 
     @classmethod
     def drop_table(cls, *args, **kwargs):
         cls.remove_all_file_stores()
         super().drop_table(*args, **kwargs)
-
-    # -- E --
-
-    # -- G --
 
     @classmethod
     def get_default_instance(cls) -> 'LocalFileStore':
@@ -168,12 +171,6 @@ class LocalFileStore(FileStore):
             file_store.save()
         return file_store
 
-    # -- I --
-
-    # -- M --
-
-    # -- P --
-
     @property
     def path(self) -> str:
         """
@@ -181,8 +178,6 @@ class LocalFileStore(FileStore):
         """
 
         return super().path
-
-    # -- F --
 
     @path.setter
     def path(self, path: str) -> None:
@@ -193,16 +188,12 @@ class LocalFileStore(FileStore):
 
         raise BadRequestException("Cannot manually set LocalFileStore path")
 
-    # -- G --
-
     @classmethod
     def get_base_dir(cls) -> str:
         if not cls._base_dir:
             settings = Settings.retrieve()
             cls._base_dir = settings.get_file_store_dir()
         return str(Path(cls._base_dir))
-
-    # -- R --
 
     @classmethod
     @transaction()

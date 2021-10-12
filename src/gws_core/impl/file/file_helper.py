@@ -2,8 +2,7 @@
 import mimetypes
 import os
 from pathlib import Path
-from re import S
-from typing import Dict, List, Union
+from typing import List, Union
 
 PathType = Union[str, Path]
 
@@ -49,6 +48,15 @@ class FileHelper():
             return path
 
         path.touch()
+        return path
+
+    @classmethod
+    def create_dir_if_not_exist(cls, dir_path: PathType) -> Path:
+        path: Path = cls.get_path(dir_path)
+        if cls.exists_on_os(path):
+            return path
+
+        os.makedirs(path)
         return path
 
     @classmethod

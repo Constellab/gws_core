@@ -24,7 +24,7 @@ class WriteToJsonFile(Task):
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         file_store: FileStore = LocalFileStore.get_default_instance()
 
-        file: File = file_store.create_empty(params.get_value('filename') + '.json')
+        file: File = file_store.create_empty_file(params.get_value('filename') + '.json')
 
         resource: Resource = inputs['resource']
         file.write(json.dumps(resource.view_as_json().to_dict()))
