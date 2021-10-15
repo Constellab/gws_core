@@ -68,5 +68,5 @@ class HistogramView(BaseTableView):
             })
         return {
             "type": self._type,
-            "series": series
+            "data": series
         }
