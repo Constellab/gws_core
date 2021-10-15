@@ -35,13 +35,13 @@ class TextView(View):
     _data: str
     MAX_NUMBER_OF_CHARS_PER_PAGE = 50000
 
-    def check_and_clean_data(self, data: Union[str, Text]):
+    def check_and_set_data(self, data: Union[str, Text]):
         from ..text import Text
         if not isinstance(data, (str, Text,)):
             raise BadRequestException("The data must be a string or an intance of Text")
         if isinstance(data, Text):
             data = data.get_data()
-        return data
+        self._data = data
 
     def _slice(self, from_char_index: int = 0, to_char_index: int = 3000) -> str:
         length = len(self._data)
@@ -49,13 +49,13 @@ class TextView(View):
         to_char_index = min(min(to_char_index, from_char_index + self.MAX_NUMBER_OF_CHARS_PER_PAGE), length)
         return self._data[from_char_index:to_char_index]
 
-    def to_dict(self, page: int, page_size: int) -> dict:
+    def to_dict(self, page: int, page_size: int, **kwargs) -> dict:
         total_number_of_chars = len(self._data)
         page_info: PageInfo = PageInfo(page, page_size, total_number_of_chars, self.MAX_NUMBER_OF_CHARS_PER_PAGE, 1)
 
         text = self._slice(from_char_index=page_info.from_index, to_char_index=page_info.to_index)
         return {
-            "type": self._type,
+            **super().to_dict(**kwargs),
             "data": text,
             **page_info.to_json(),
         }

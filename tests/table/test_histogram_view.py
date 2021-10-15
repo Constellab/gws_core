@@ -11,9 +11,9 @@ class TestHistogramView(BaseTestCase):
         testdata_dir = settings.get_variable("gws_core:testdata_dir")
         file_path = os.path.join(testdata_dir, "iris.csv")
         table = Table.import_from_path(file_path, delimiter=",", head=0)
-        vw = HistogramView(table, ["petal.length", "petal.width"])
+        vw = HistogramView(table)
 
-        dic = vw.to_dict()
+        dic = vw.to_dict(column_names=["petal.length", "petal.width"])
 
         print(dic)
 

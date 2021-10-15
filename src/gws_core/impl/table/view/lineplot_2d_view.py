@@ -25,13 +25,15 @@ class LinePlot2DView(ScatterPlot2DView):
             {
                 "data": {
                     "x": List[Float],
-                    "y": List[Float]
+                    "y": List[Float],
                 },
-                "x_label": str,
-                "y_label": str,
+                "x_column_name": str,
+                "y_column_name": str,
             },
             ...
-        ]
+        ],
+        "x_label": str,
+        "y_label": str,
     }
     ```
     """

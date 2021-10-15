@@ -16,10 +16,10 @@ class BaseTableView(View):
     _type: str
     _data: DataFrame
 
-    def check_and_clean_data(self, data: Union[DataFrame, Table]):
+    def check_and_set_data(self, data: Union[DataFrame, Table]):
         from ..table import Table
         if not isinstance(data, (DataFrame, Table,)):
             raise BadRequestException("The data must be a pandas.DataFrame or Table resource")
         if isinstance(data, Table):
             data = data.get_data()
-        return data
+        self._data = data

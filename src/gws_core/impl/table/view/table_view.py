@@ -1,8 +1,10 @@
-
-from gws_core.config.param_spec import IntParam
-from gws_core.core.classes.paginator import PageInfo
-from gws_core.resource.view_types import ViewSpecs
+import numpy
+import pandas
 from pandas import DataFrame
+
+from ....config.param_spec import IntParam, StrParam
+from ....core.classes.paginator import PageInfo
+from ....resource.view_types import ViewSpecs
 
 from .base_table_view import BaseTableView
 
@@ -14,27 +16,28 @@ class TableView(BaseTableView):
     The view model is:
     ```
     {
-        "type": "table-view"
+        "type": "table"
         "data": dict
     }
     ```
     """
 
-    _type = "table-view"
+    _type = "table"
     _specs: ViewSpecs = {
         "from_row": IntParam(default_value=1, human_name="From row"),
         "number_of_rows_per_page": IntParam(default_value=50, max_value=100, min_value=1, human_name="Number of rows per page"),
         "from_column": IntParam(default_value=1, human_name="From column"),
-        "number_of_columns_per_page": IntParam(default_value=50, max_value=50, min_value=1, human_name="Number of columns per page")
+        "number_of_columns_per_page": IntParam(default_value=50, max_value=50, min_value=1, human_name="Number of columns per page"),
+        "scale": StrParam(default_value=None, optional=True, allowed_values=["log10", "log2"], visibility='protected', human_name="Scaling factor to apply"),
     }
     _data: DataFrame
 
     MAX_NUMBERS_OF_ROWS_PER_PAGE = 100
     MAX_NUMBERS_OF_COLUMNS_PER_PAGE = 50
-
-    def _slice(self, from_row_index: int = 0, to_row_index: int = 49, from_column_index: int = 0, to_column_index: int = 49) -> dict:
-        last_row_index = self._data.shape[0] - 1
-        last_column_index = self._data.shape[1] - 1
+    
+    def _slice(self, data, from_row_index: int = 0, to_row_index: int = 49, from_column_index: int = 0, to_column_index: int = 49, scale: str = "none") -> dict:
+        last_row_index = data.shape[0] - 1
+        last_column_index = data.shape[1] - 1
         from_row_index = min(max(from_row_index, 0), last_row_index)
         from_column_index = min(max(from_column_index, 0), last_column_index)
         to_row_index = min(min(to_row_index, from_row_index + self.MAX_NUMBERS_OF_ROWS_PER_PAGE), last_row_index)
@@ -42,16 +45,33 @@ class TableView(BaseTableView):
             min(to_column_index, from_column_index + self.MAX_NUMBERS_OF_COLUMNS_PER_PAGE),
             last_column_index)
 
-        # Remove NaN values to convert to jsonb
-        data_frame = self._data.fillna('')
-
+        if scale:
+            data = data.apply(pandas.to_numeric,errors='coerce')
+            if scale == "log10":
+                data = DataFrame(data=numpy.log10(data.values), index=data.index, columns=data.columns)
+            elif scale == "log2":
+                data = DataFrame(data=numpy.log2(data.values), index=data.index, columns=data.columns)
+      
+        # Remove NaN values to convert to json
+        data_frame: DataFrame = data.fillna('NaN')
+         
         return data_frame.iloc[
             from_row_index:to_row_index,
             from_column_index:to_column_index,
         ].to_dict('list')
 
+    def _slice_data(self, from_row_index: int = 0, to_row_index: int = 49, from_column_index: int = 0, to_column_index: int = 49, scale: str = "none") -> dict:
+        return self._slice(
+            self._data, 
+            from_row_index=from_row_index,
+            to_row_index=to_row_index,
+            from_column_index=from_column_index,
+            to_column_index=to_column_index,
+            scale=scale
+        )
+
     def to_dict(self, from_row: int = 1, number_of_rows_per_page: int = 50, from_column: int = 1,
-                number_of_columns_per_page: int = 50) -> dict:
+                number_of_columns_per_page: int = 50, scale: str = "none", **kwargs) -> dict:
 
         total_number_of_rows = self._data.shape[0]
         total_number_of_columns = self._data.shape[1]
@@ -61,16 +81,17 @@ class TableView(BaseTableView):
         to_row_index = from_row_index + number_of_rows_per_page - 1
         to_column_index = from_column_index + number_of_columns_per_page - 1
 
-        table = self._slice(
+        data = self._slice_data(
             from_row_index=from_row_index,
             to_row_index=to_row_index,
             from_column_index=from_column_index,
-            to_column_index=to_column_index
+            to_column_index=to_column_index,
+            scale=scale
         )
 
         return {
-            "type": self._type,
-            "data": table,
+            **super().to_dict(**kwargs),
+            "data": data,
             "from_row": from_row_index,
             "number_of_rows_per_page": number_of_rows_per_page,
             "from_column": from_column_index,
@@ -90,7 +111,7 @@ class TableView(BaseTableView):
     #     column_page_info: PageInfo = PageInfo(column_page, column_page_size,
     #                                           total_number_of_columns, self.MAX_NUMBERS_OF_COLUMNS_PER_PAGE, 1)
 
-    #     table = self._slice(
+    #     table = self._slice_data(
     #         from_row_index=row_page_info.from_index,
     #         to_row_index=row_page_info.to_index,
     #         from_column_index=column_page_info.from_index,

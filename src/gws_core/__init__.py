@@ -163,6 +163,8 @@ from .impl.table.view.scatterplot_2d_view import ScatterPlot2DView as ScatterPlo
 from .impl.table.view.scatterplot_3d_view import ScatterPlot3DView as ScatterPlot3DView
 from .impl.table.view.histogram_view import HistogramView as HistogramView
 from .impl.table.view.heatmap_view import HeatmapView as HeatmapView
+from .impl.table.view.barplot_view import BarPlotView as BarPlotView
+from .impl.table.view.boxplot_view import BoxPlotView as BoxPlotView
 # Impl > Text
 from .impl.text.text import Text as Text
 # Impl > TextView

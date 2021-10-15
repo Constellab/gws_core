@@ -5,6 +5,8 @@ from typing import Any, List, Union
 import numpy
 from pandas import DataFrame
 
+from ....resource.view import ViewSpecs
+from ....config.param_spec import IntParam, StrParam, ListParam, BoolParam
 from .base_table_view import BaseTableView
 
 
@@ -36,29 +38,23 @@ class HistogramView(BaseTableView):
 
     _type: str = "histogram"
     _data: DataFrame
+    _specs: ViewSpecs = {
+        "column_names": ListParam(human_name="Column names", short_description="List of columns to view"),
+        "nbins": IntParam(default_value=10, min_value=0, human_name="Nbins", short_description="The number of bins. Set zero (0) for auto."),
+        "density": BoolParam(default_value=False, human_name="Density", short_description="True to plot density"),
+        "x_label": StrParam(human_name="X-label", optional=True, visibility='protected', short_description="The x-axis label to display"),
+        "y_label": StrParam(human_name="Y-label", optional=True, visibility='protected', short_description="The y-axis label to display"),
+    }
 
-    column_names: List[str]
-    nbins: int
-    density: bool
-
-    def __init__(self, data: Any, column_names: List[str], nbins: int = 10, density: bool = False):
-        super().__init__(data)
-        self.column_names = column_names
-        self.nbins = nbins
-        self.density = density
-
-    def get_nbins(self) -> Union[int, str]:
-        if self.nbins <= 0:
-            return "auto"
-        return self.nbins
-
-    def to_dict(self) -> dict:
+    def to_dict(self, column_names: List[str], nbins: int = 10, density: bool = False, **kwargs) -> dict:
+        if nbins <= 0:
+            nbins = "auto"
 
         series = []
-        for column_name in self.column_names:
+        for column_name in column_names:
             col_data = self._data[column_name].values
 
-            hist, bin_edges = numpy.histogram(col_data, bins=self.get_nbins(), density=self.density)
+            hist, bin_edges = numpy.histogram(col_data, bins=nbins, density=density)
             series.append({
                 "data": {
                     "hist": hist.tolist(),
@@ -67,6 +63,6 @@ class HistogramView(BaseTableView):
                 "column_name": column_name,
             })
         return {
-            "type": self._type,
+            **super().to_dict(**kwargs),
             "series": series
         }

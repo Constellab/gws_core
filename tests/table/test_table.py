@@ -46,11 +46,11 @@ class TestTable(BaseTestCase):
 
         table: Table = Table()
         table.set_data(data=[[1, 2, 3]], column_names=["a", "b", "c"])
-        print(table.table)
+        print(table.get_data())
 
         table.set_data(data=[1, 2, 3], column_names=[
             "data"], row_names=["a", "b", "c"])
-        print(table.table)
+        print(table.get_data())
 
     def test_table_load(self):
         GTest.print("Table load")
@@ -60,10 +60,9 @@ class TestTable(BaseTestCase):
 
         df = pandas.read_table(file)
 
-        print(table.table)
         print(df)
 
-        self.assertTrue(df.equals(table.table))
+        self.assertTrue(df.equals(table.get_data()))
         self.assertEqual(table.column_names, ["A", "B", "C", "D", "E"])
         self.assertEqual(table.row_names, [0, 1])
 
@@ -93,7 +92,7 @@ class TestTable(BaseTestCase):
         i_df = pandas.read_table(i_file_path)
         o_df = pandas.read_table(o_file_path)
 
-        self.assertTrue(i_df.equals(table.table))
+        self.assertTrue(i_df.equals(table.get_data()))
         self.assertTrue(i_df.equals(o_df))
 
         if os.path.exists(o_file_path):
@@ -104,4 +103,4 @@ class TestTable(BaseTestCase):
         self.assertTrue(os.path.exists(file.path))
 
         o_table: Table = importer.outputs.get_resource_model("data").get_resource()
-        self.assertTrue(table.table.equals(o_table.table))
+        self.assertTrue(table.get_data().equals(o_table.get_data()))

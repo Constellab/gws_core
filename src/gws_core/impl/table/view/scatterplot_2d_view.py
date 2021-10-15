@@ -4,7 +4,9 @@ from typing import Any, List
 
 from pandas import DataFrame
 
-from ....resource.view import View
+from ....resource.view import ViewSpecs
+from ....config.param_spec import IntParam, StrParam, ListParam
+
 from .base_table_view import BaseTableView
 
 
@@ -25,38 +27,43 @@ class ScatterPlot2DView(BaseTableView):
                     "x": List[Float],
                     "y": List[Float]
                 },
-                "x_label": str,
-                "y_label": str,
+                "x_column_name": str,
+                "y_column_name": str,
             },
             ...
-        ]
+        ],
+        "x_label": str,
+        "y_label": str,
     }
     ```
     """
 
     _type: str = "scatter-plot-2d"
     _data: DataFrame
+    _specs: ViewSpecs = {
+        "x_column_name": StrParam(human_name="X-column name", short_description="The column to use as x-axis"),
+        "y_column_names": ListParam(human_name="Y-column names", short_description="List of columns to use as y-axis"),
+        "x_label": StrParam(human_name="X-label", optional=True, default_value=None, visibility='protected', short_description="The x-axis label to display"),
+        "y_label": StrParam(human_name="Y-label", optional=True, default_value=None, visibility='protected', short_description="The y-axis label to display"),
+    }
 
-    x_column_name: str
-    y_column_names: List[str]
+    def to_dict(self, x_column_name: str, y_column_names: List[str], x_label: str = None, y_label: str = None, **kwargs) -> dict:
+        if not x_label:
+            x_label = x_column_name
 
-    def __init__(self, data: Any, x_column_name: str, y_column_names: List[str]):
-        super().__init__(data)
-        self.x_column_name = x_column_name
-        self.y_column_names = y_column_names
-
-    def to_dict(self) -> dict:
         series = []
-        for y_column_name in self.y_column_names:
+        for y_column_name in y_column_names:
             series.append({
                 "data": {
-                    "x": self._data[self.x_column_name].values.tolist(),
+                    "x": self._data[x_column_name].values.tolist(),
                     "y": self._data[y_column_name].values.tolist(),
                 },
-                "x_label": self.x_column_name,
-                "y_label": y_column_name,
+                "x_column_name": x_column_name,
+                "y_column_name": y_column_name,
             })
         return {
-            "type": self._type,
-            "data": series
+            **super().to_dict(**kwargs),
+            "series": series,
+            "x_label": x_label,
+            "y_label": y_label,
         }

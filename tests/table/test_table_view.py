@@ -13,16 +13,18 @@ class TestTableView(BaseTestCase):
         vw = TableView(table)
 
         self.assertEqual(
-            vw._slice(from_row_index=4, to_row_index=21, from_column_index=1, to_column_index=4),
-            table.to_table().iloc[4:21, 1:4].to_dict()
+            vw._slice_data(from_row_index=4, to_row_index=21, from_column_index=1, to_column_index=4),
+            table.to_table().iloc[4:21, 1:4].to_dict('list')
         )
 
+        dic = vw.to_dict()
+        self.assertEqual(dic["type"], "table")
         self.assertEqual(
-            vw.to_dict()["data"],
-            table.to_table().iloc[0:49, 0:4].to_dict()
+            dic["data"],
+            table.to_table().iloc[0:49, 0:4].to_dict('list')
         )
 
         self.assertEqual(
             vw.to_dict(from_row=3, number_of_rows_per_page=3, from_column=2, number_of_columns_per_page=2)["data"],
-            table.to_table().iloc[2:4, 1:2].to_dict()
+            table.to_table().iloc[2:4, 1:2].to_dict('list')
         )
