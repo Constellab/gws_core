@@ -3,6 +3,9 @@
 from gws_core import (BoolRField, DataFrameRField, DictRField, FloatRField,
                       IntRField, KVStore, ListRField, StrRField)
 from gws_core.core.test.base_test_case import BaseTestCase
+from gws_core.impl.robot.robot_resource import Robot
+from gws_core.resource.resource_model import ResourceModel
+from gws_core.resource.resource_r_field import ResourceRField
 from pandas.core.frame import DataFrame
 
 
@@ -113,3 +116,17 @@ class TestRField(BaseTestCase):
         new_dataframe = r_field.load_from_file(path)
 
         self.assertEqual(value.to_dict(), new_dataframe.to_dict())
+
+    async def test_resource_r_field(self):
+        resource_model = ResourceModel.from_resource(Robot.empty())
+        resource_model.save()
+        robot: Robot = resource_model.get_resource()
+
+        r_field = ResourceRField()
+        resource_serialized = r_field.serialize(robot)
+        resource_deserilized: Robot = r_field.deserialize(resource_serialized)
+
+        self.assertEqual(robot._model_uri, resource_deserilized._model_uri)
+        self.assertEqual(robot.age, resource_deserilized.age)
+        self.assertEqual(robot.position, resource_deserilized.position)
+        self.assertEqual(robot.weight, resource_deserilized.weight)

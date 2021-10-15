@@ -6,7 +6,7 @@
 import os
 import unittest
 
-from gws_core import File, FileModel, FileService, GTest, MySQLService
+from gws_core import File, FSNodeModel, FileService, GTest, MySQLService
 from gws_core.core.db.db_manager import DbManager
 from gws_core.impl.file.local_file_store import LocalFileStore
 
@@ -31,8 +31,8 @@ class TestMySQLDumpLoad(unittest.TestCase):
             return
 
         # insert data in comment table
-        f: File = LocalFileStore.get_default_instance().create_empty("./oui")
-        file_model: FileModel = FileService.create_file_model(file=f)
+        f: File = LocalFileStore.get_default_instance().create_empty_file("./oui")
+        file_model: FSNodeModel = FileService.create_file_model(file=f)
 
         c = file_model.add_comment("The sky is blue")
         file_model.add_comment("The sky is blue and the ocean is also blue", reply_to=c)
@@ -44,12 +44,12 @@ class TestMySQLDumpLoad(unittest.TestCase):
         self.assertTrue(os.path.exists(output_file))
 
         GTest.drop_tables()
-        self.assertFalse(FileModel.table_exists())
+        self.assertFalse(FSNodeModel.table_exists())
 
         # load db
         MySQLService.load_db(
             "test_gws", local_file_path=output_file, force=True, wait=True)
-        self.assertTrue(FileModel.table_exists())
+        self.assertTrue(FSNodeModel.table_exists())
 
     def test_db_drop(self):
         pass

@@ -5,23 +5,22 @@
 
 import json
 import os
-from typing import Any, AnyStr, Dict, List, Type
-
-from gws_core.resource.any_view import AnyView
+from typing import Any, AnyStr, List
 
 from ...core.exception.exceptions import BadRequestException
 from ...impl.file.file_helper import FileHelper
 from ...impl.json.json_view import JSONView
-from ...resource.resource import Resource
+from ...resource.any_view import AnyView
 from ...resource.resource_decorator import resource_decorator
 from ...resource.resource_set import ResourceSet
 from ...resource.view import View
 from ...resource.view_decorator import view
 from ..text.view.text_view import TextView
+from .fs_node import FSNode
 
 
 @resource_decorator("File")
-class File(Resource):
+class File(FSNode):
     """
     File class.
 
@@ -29,30 +28,15 @@ class File(Resource):
     provided when creating the resource
     """
 
-    path: str = ""
-    file_store_uri: str = ""
     _mode = "t"
-
-    def __init__(self, path: str = ""):
-        super().__init__()
-        self.path = path
 
     @property
     def dir(self):
         return FileHelper.get_dir(self.path)
 
-    # -- E --
-
     @property
     def extension(self):
         return FileHelper.get_extension(self.path)
-
-    def _exists(self):
-        return os.path.exists(self.path)
-
-    # -- F --
-
-    # -- I --
 
     def is_json(self):
         return FileHelper.is_json(self.path)
@@ -68,8 +52,6 @@ class File(Resource):
 
     def is_png(self):
         return FileHelper.is_png(self.path)
-
-    # -- M --
 
     @property
     def mime(self):
@@ -95,7 +77,6 @@ class File(Resource):
                     raise BadRequestException(f"Cannot create directory {self.dir}")
             return open(self.path, mode="w+", encoding='utf-8')
 
-    # -- R --
     # TODO est-ce que le close est fait ?
     def read(self) -> AnyStr:
         mode = "r+"+self._mode
@@ -105,14 +86,14 @@ class File(Resource):
 
     def readline(self) -> AnyStr:
         mode = "r+"+self._mode
-        with self.open(mode) as fp:
-            data = fp.readline()
+        with self.open(mode) as file:
+            data = file.readline()
         return data
 
-    def readlines(self, n=-1) -> List[AnyStr]:
+    def readlines(self, hint=-1) -> List[AnyStr]:
         mode = "r+"+self._mode
-        with self.open(mode) as fp:
-            data = fp.readlines(n)
+        with self.open(mode) as file:
+            data = file.readlines(hint)
         return data
 
     @view(view_type=JSONView, human_name="View as JSON", short_description="View the complete resource as json")
@@ -153,8 +134,6 @@ class File(Resource):
         # In the worse case, return the file content as string
         return TextView(content)
 
-    # -- W --
-
     def write(self, data: str):
         """
         Write in the file
@@ -163,18 +142,6 @@ class File(Resource):
         with self.open(mode) as fp:
             fp.write(data)
 
-    @classmethod
-    def get_resource_model_type(cls) -> Type[Any]:
-        """Return the resource model associated with this Resource
-        //!\\ To overwrite only when you know what you are doing
-
-        :return: [description]
-        :rtype: Type[Any]
-        """
-        from .file_model import FileModel
-        return FileModel
-
-    # -- S --
 
 # ####################################################################
 #

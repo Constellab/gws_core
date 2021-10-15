@@ -9,6 +9,8 @@
 
 # Comments
 from gws_core import impl
+from gws_core.impl import file
+from gws_core.impl.file import folder
 
 from .comment.comment import Comment as Comment
 from .comment.comment_service import CommentService as CommentService
@@ -102,7 +104,7 @@ from .extension.extended_resource_model import \
 # Impl > File
 from .impl.file.file import File as File
 from .impl.file.file import FileSet as FileSet
-from .impl.file.file_model import FileModel as FileModel
+from .impl.file.file_helper import FileHelper as FileHelper
 from .impl.file.file_r_field import FileRField as FileRField
 from .impl.file.file_service import FileService as FileService
 from .impl.file.file_store import FileStore as FileStore
@@ -111,6 +113,9 @@ from .impl.file.file_uploader import FileDumper as FileDumper
 from .impl.file.file_uploader import FileExporter as FileExporter
 from .impl.file.file_uploader import FileImporter as FileImporter
 from .impl.file.file_uploader import FileLoader as FileLoader
+from .impl.file.folder import Folder as Folder
+from .impl.file.fs_node import FSNode as FSNode
+from .impl.file.fs_node_model import FSNodeModel as FSNodeModel
 from .impl.file.local_file_store import LocalFileStore as LocalFileStore
 # Impl > JSON
 from .impl.json.json_dict import JSONDict as JSONDict
@@ -155,8 +160,8 @@ from .impl.table.table_tasks import TableDumper as TableDumper
 from .impl.table.table_tasks import TableExporter as TableExporter
 from .impl.table.table_tasks import TableImporter as TableImporter
 from .impl.table.table_tasks import TableLoader as TableLoader
-# Impl > TableView
-from .impl.table.view.table_view import TableView as TableView
+from .impl.table.view.heatmap_view import HeatmapView as HeatmapView
+from .impl.table.view.histogram_view import HistogramView as HistogramView
 from .impl.table.view.lineplot_2d_view import LinePlot2DView as LinePlot2DView
 from .impl.table.view.lineplot_3d_view import LinePlot3DView as LinePlot3DView
 from .impl.table.view.scatterplot_2d_view import ScatterPlot2DView as ScatterPlot2DView
@@ -165,6 +170,8 @@ from .impl.table.view.histogram_view import HistogramView as HistogramView
 from .impl.table.view.heatmap_view import HeatmapView as HeatmapView
 from .impl.table.view.barplot_view import BarPlotView as BarPlotView
 from .impl.table.view.boxplot_view import BoxPlotView as BoxPlotView
+# Impl > TableView
+from .impl.table.view.table_view import TableView as TableView
 # Impl > Text
 from .impl.text.text import Text as Text
 # Impl > TextView
@@ -235,13 +242,13 @@ from .resource.resource import Resource as Resource
 from .resource.resource_decorator import \
     resource_decorator as resource_decorator
 from .resource.resource_model import ResourceModel as ResourceModel
+from .resource.resource_r_field import ResourceRField as ResourceRField
 from .resource.resource_service import ResourceService as ResourceService
 from .resource.resource_set import ResourceSet as ResourceSet
 from .resource.resource_typing import ResourceTyping as ResourceTyping
 from .resource.view import View as View
 from .resource.view_decorator import view as view
-from .resource.view_types import ViewSpecs
-
+from .resource.view_types import ViewSpecs as ViewSpecs
 # Study
 from .study.study import Study as Study
 # Task

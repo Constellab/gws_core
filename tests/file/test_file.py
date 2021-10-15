@@ -6,7 +6,7 @@
 import json
 import os
 
-from gws_core import (BaseTestCase, ConfigParams, File, FileModel, FileService,
+from gws_core import (BaseTestCase, ConfigParams, File, FSNodeModel, FileService,
                       GTest, LocalFileStore, Robot, RobotCreate, Task,
                       TaskInputs, TaskOutputs, WriteToJsonFile, task_decorator)
 from gws_core.core.utils.settings import Settings
@@ -34,11 +34,17 @@ class CreateFileTest(Task):
 
 class TestFile(BaseTestCase):
 
+    def test_file_attr(self):
+        file: File = LocalFileStore.get_default_instance().create_empty_file("test_attr.txt")
+        self.assertEqual(file.name, "test_attr.txt")
+        self.assertEqual(file.extension, ".txt")
+        self.assertEqual(file.is_txt(), True)
+
     def test_file(self):
         GTest.print("File")
 
-        file_1: File = LocalFileStore.get_default_instance().create_empty("my_file.txt")
-        file_model: FileModel = FileService.create_file_model(file=file_1)
+        file_1: File = LocalFileStore.get_default_instance().create_empty_file("my_file.txt")
+        file_model: FSNodeModel = FileService.create_file_model(file=file_1)
 
         self.assertTrue(file_model.is_saved())
         self.assertEqual(file_model.path, file_1.path)
@@ -69,11 +75,11 @@ class TestFile(BaseTestCase):
         file: File = process.get_output('file')
 
         file_store: LocalFileStore = LocalFileStore.get_default_instance()
-        self.assertTrue(file_store.file_exists(file))
+        self.assertTrue(file_store.node_exists(file))
         self.assertEqual(file.read(), 'Hello')
 
         # Check that the file model is saved and correct
-        file_model: FileModel = process._process_model.out_port('file').resource_model
+        file_model: FSNodeModel = process._process_model.out_port('file').resource_model
         self.assertTrue(file_model.is_saved())
         self.assertEqual(file.path, file_model.path)
 
@@ -83,7 +89,7 @@ class TestFile(BaseTestCase):
         file_store: FileStore = LocalFileStore.get_default_instance()
 
         # Chekc that the file doesn't exist at the beginning
-        self.assertFalse(file_store.file_name_exists('robot.json'))
+        self.assertFalse(file_store.node_name_exists('robot.json'))
 
         experiment: IExperiment = IExperiment()
         protocol: IProtocol = experiment.get_protocol()
@@ -96,15 +102,15 @@ class TestFile(BaseTestCase):
         await experiment.run()
 
         robot: Robot = create.get_output('robot')
-        file_model: FileModel = write._task_model.out_port('file').resource_model
+        file_model: FSNodeModel = write._task_model.out_port('file').resource_model
 
         # check that the file model is create and valid
         self.assertIsNotNone(file_model.id)
-        self.assertTrue(isinstance(file_model, FileModel))
+        self.assertTrue(isinstance(file_model, FSNodeModel))
 
         file: File = file_model.get_resource()
         # check that the file was created
-        self.assertTrue(file_store.file_name_exists(file.name))
+        self.assertTrue(file_store.node_name_exists(file.name))
 
         # Check file content
         content: str = file.read()

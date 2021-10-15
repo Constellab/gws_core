@@ -8,10 +8,13 @@ from io import IOBase
 from tempfile import SpooledTemporaryFile
 from typing import Type, Union
 
+from gws_core.impl.file.folder import Folder
+
 from ...core.exception.exceptions import BadRequestException
 from ...core.model.model import Model
 from ...model.typing_register_decorator import typing_registrator
 from .file import File
+from .fs_node import FSNode
 
 # ####################################################################
 #
@@ -31,7 +34,22 @@ class FileStore(Model):
 
     # -- A --
     @abstractmethod
-    def add_from_path(self, source_file_path: str, dest_file_name: str = None, file_type: Type[File] = File) -> File:
+    def add_node_from_path(self, source_path: str, dest_name: str = None, node_type: Type[FSNode] = FSNode) -> FSNode:
+        """Copy a node (file or directory) from the path to the store.
+
+        :param source_file_path: path of the file or directory to move to file store
+        :type source_file_path: str
+        :param dest_file_name: Name of the file or directory once in the store. If not provided, use the source node name (make it unique if already exists) defaults to None
+        :type dest_file_name: str, optional
+        :param file_type: type of the node to create, defaults to FsNode
+        :type node_type: Type[FsNode], optional
+        :rtype: File
+        """
+
+        raise BadRequestException('Not implemented')
+
+    def add_file_from_path(
+            self, source_file_path: str, dest_file_name: str = None, file_type: Type[File] = File) -> File:
         """Copy a file (from the path) to the store.
 
         :param source_file_path: path of the file to move to file store
@@ -42,10 +60,9 @@ class FileStore(Model):
         :type file_type: Type[File], optional
         :rtype: File
         """
+        return self.add_node_from_path(source_file_path, dest_file_name, file_type)
 
-        raise BadRequestException('Not implemented')
-
-    def add_from_file(self, source_file: File, dest_file_name: str = None) -> File:
+    def add_node(self, source_path: FSNode, dest_file_name: str = None) -> FSNode:
         """ Copy a file (from another file) to the store. Do nothing if the file is already in the store.
         :param source_file: file to move to file store
         :type source_file: File
@@ -54,10 +71,10 @@ class FileStore(Model):
         :rtype: File
         """
 
-        if self.file_exists(source_file):
-            return source_file
-        return self.add_from_path(source_file_path=source_file.path, dest_file_name=dest_file_name,
-                                  file_type=type(source_file))
+        if self.node_exists(source_path):
+            return source_path
+        return self.add_node_from_path(source_path=source_path.path, dest_name=dest_file_name,
+                                       node_type=type(source_path))
 
     @abstractmethod
     def add_from_temp_file(
@@ -79,19 +96,23 @@ class FileStore(Model):
         raise BadRequestException('Not implemented')
 
     @abstractmethod
-    def create_empty(self, file_name: str, file_type: Type[File] = File) -> File:
+    def create_empty_file(self, file_name: str, file_type: Type[File] = File) -> File:
         pass
 
-    def file_exists(self, file: File) -> bool:
-        return self.file_path_exists(file.path)
+    @abstractmethod
+    def create_empty_folder(self, folder_name: str, folder_type: Type[Folder] = Folder) -> Folder:
+        pass
 
-    def file_name_exists(self, file_name: str) -> bool:
-        path = self._file_get_path_from_file_name(file_name)
-        return self.file_path_exists(path)
+    def node_exists(self, node: FSNode) -> bool:
+        return self.node_path_exists(node.path)
+
+    def node_name_exists(self, node_name: str) -> bool:
+        path = self._get_path_from_node_name(node_name)
+        return self.node_path_exists(path)
 
     @abstractmethod
-    def file_path_exists(self, file_path: str) -> bool:
-        """ Return true if the file path exist in the store
+    def node_path_exists(self, node_path: str) -> bool:
+        """ Return true if the node path exist in the store
 
         :param file_name: [description]
         :type file_name: str
@@ -101,8 +122,8 @@ class FileStore(Model):
         raise BadRequestException('Not implemented')
 
     @abstractmethod
-    def _file_get_path_from_file_name(self, file_name: str) -> str:
-        """return the compolete path oa a file in the store
+    def _get_path_from_node_name(self, node_name: str) -> str:
+        """return the complete path of a node in the store
 
         :param file_name: [description]
         :type file_name: str
