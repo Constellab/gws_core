@@ -21,6 +21,8 @@ class ScatterPlot2DView(BaseTableView):
     ```
     {
         "type": "line-2d-plot",
+        "title": str,
+        "subtitle": str,
         "series": [
             {
                 "data": {

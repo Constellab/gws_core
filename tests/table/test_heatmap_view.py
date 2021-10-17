@@ -14,20 +14,20 @@ class TestHeatmapView(BaseTestCase):
         table = Table.import_from_path(file_path, delimiter=",", head=0)
         vw = HeatmapView(table)
 
-        dic = vw.to_dict()
+        dic = vw.to_dict(from_column=1, number_of_columns_per_page=4, scale="linear")
         self.assertEqual(dic["type"], "heatmap")
         self.assertEqual(
             dic["data"],
-            table.to_table().iloc[0:49, 0:4].to_dict('list')
+            table.to_table().iloc[0:50, 0:4].to_dict('list')
         )
 
-        data = table.get_data().iloc[0:49, 0:4]
+        data = table.get_data().iloc[0:50, 0:4]
         data = DataFrame(
             data=numpy.log10(data), 
             index=data.index, 
             columns=data.columns
         )
         self.assertEqual(
-            vw.to_dict(scale="log10")["data"],
+            vw.to_dict(from_column=1, number_of_columns_per_page=4, scale="log10")["data"],
             data.to_dict('list')
         )

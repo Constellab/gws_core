@@ -22,6 +22,8 @@ class HistogramView(BaseTableView):
     ```
     {
         "type": "histogram",
+        "title": str,
+        "subtitle": str,
         "series": [
             {
                 "data": {

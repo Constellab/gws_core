@@ -5,6 +5,8 @@ from typing import Any, List
 import numpy
 from pandas import DataFrame
 
+from ....config.param_spec import StrParam
+from ....resource.view_types import ViewSpecs
 from ....resource.view import View
 from .table_view import TableView
 
@@ -21,6 +23,8 @@ class HeatmapView(TableView):
     ```
     {
         "type": "heatmap",
+        "title": str,
+        "subtitle": str,
         "data": dict
     }
     ```
@@ -28,3 +32,6 @@ class HeatmapView(TableView):
 
     _type: str = "heatmap"
     _data: DataFrame
+    _specs: ViewSpecs = {
+        "scale": StrParam(default_value="linear", optional=True, allowed_values=["linear", "log10", "log2"], visibility='protected', human_name="Scaling factor to apply"),
+    }

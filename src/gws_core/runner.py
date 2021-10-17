@@ -11,7 +11,6 @@ from unittest.suite import BaseTestSuite
 
 import click
 
-from ._sphynx.docgen import Docgen
 from .app import App
 from .core.db.db_manager import DbManager
 from .core.exception.exceptions import BadRequestException
@@ -21,8 +20,7 @@ from .core.utils.settings import Settings
 
 def _run(ctx, uri="", token="", test="",
          cli=False, cli_test=False, runserver=False, runmode="dev",
-         ip="0.0.0.0", port="3000", docgen=False,
-         force=False, log_level: str = None, show_sql=False):
+         ip="0.0.0.0", port="3000", log_level: str = None, show_sql=False):
 
     is_test = bool(test or cli_test)
     is_prod = (runmode == "prod")
@@ -85,8 +83,6 @@ def _run(ctx, uri="", token="", test="",
 
         test_runner = unittest.TextTestRunner()
         test_runner.run(test_suite)
-    elif docgen:
-        Docgen.generate(settings, force=force)
     else:
         # only load gws environmenet
         pass
@@ -109,12 +105,9 @@ def _run(ctx, uri="", token="", test="",
 @click.option('--runmode', default="dev", help='Starting mode (dev or prod). Defaults to dev')
 @click.option('--ip', default="0.0.0.0", help='Server IP', show_default=True)
 @click.option('--port', default="3000", help='Server port', show_default=True)
-@click.option('--docgen', is_flag=True, help='Generates documentation')
-@click.option('--force', is_flag=True,
-              help='Forces documentation generation by removing any existing documentation (used if --docgen is given)')
 @click.option('--log_level', default="INFO", help='Level for the logs', show_default=True)
 @click.option('--show_sql', is_flag=True, help='Log sql queries in the console')
-def run(ctx, uri, token, test, cli, cli_test, runserver, runmode, ip, port, docgen, force, log_level, show_sql):
+def run(ctx, uri, token, test, cli, cli_test, runserver, runmode, ip, port, log_level, show_sql):
     _run(
         ctx,
         uri=uri,
@@ -126,8 +119,6 @@ def run(ctx, uri, token, test, cli, cli_test, runserver, runmode, ip, port, docg
         runmode=runmode,
         ip=ip,
         port=port,
-        docgen=docgen,
-        force=force,
         log_level=log_level,
         show_sql=show_sql
     )

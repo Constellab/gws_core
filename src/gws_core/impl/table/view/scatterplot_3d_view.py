@@ -20,6 +20,8 @@ class ScatterPlot3DView(BaseTableView):
     ```
     {
         "type": "line-3d-plot",
+        "title": str,
+        "subtitle": str,
         "series": [
             {
                 "data": {

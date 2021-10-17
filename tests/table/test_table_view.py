@@ -16,15 +16,16 @@ class TestTableView(BaseTestCase):
             vw._slice_data(from_row_index=4, to_row_index=21, from_column_index=1, to_column_index=4),
             table.to_table().iloc[4:21, 1:4].to_dict('list')
         )
-
+        
+        print(table)
         dic = vw.to_dict()
         self.assertEqual(dic["type"], "table")
         self.assertEqual(
             dic["data"],
-            table.to_table().iloc[0:49, 0:4].to_dict('list')
+            table.to_table().iloc[0:50, 0:5].to_dict('list')
         )
 
         self.assertEqual(
             vw.to_dict(from_row=3, number_of_rows_per_page=3, from_column=2, number_of_columns_per_page=2)["data"],
-            table.to_table().iloc[2:4, 1:2].to_dict('list')
+            table.to_table().iloc[2:5, 1:3].to_dict('list')
         )

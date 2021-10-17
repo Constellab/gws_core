@@ -17,7 +17,9 @@ class TableView(BaseTableView):
     ```
     {
         "type": "table"
-        "data": dict
+        "title": str,
+        "subtitle": str,
+        "data": dict,
     }
     ```
     """
@@ -35,11 +37,11 @@ class TableView(BaseTableView):
     MAX_NUMBERS_OF_ROWS_PER_PAGE = 100
     MAX_NUMBERS_OF_COLUMNS_PER_PAGE = 50
     
-    def _slice(self, data, from_row_index: int = 0, to_row_index: int = 49, from_column_index: int = 0, to_column_index: int = 49, scale: str = "none") -> dict:
-        last_row_index = data.shape[0] - 1
-        last_column_index = data.shape[1] - 1
-        from_row_index = min(max(from_row_index, 0), last_row_index)
-        from_column_index = min(max(from_column_index, 0), last_column_index)
+    def _slice(self, data, from_row_index: int = 0, to_row_index: int = 51, from_column_index: int = 0, to_column_index: int = 51, scale: str = None) -> dict:
+        last_row_index = data.shape[0]
+        last_column_index = data.shape[1]
+        from_row_index = min(max(from_row_index, 0), last_row_index-1)
+        from_column_index = min(max(from_column_index, 0), last_column_index-1)
         to_row_index = min(min(to_row_index, from_row_index + self.MAX_NUMBERS_OF_ROWS_PER_PAGE), last_row_index)
         to_column_index = min(
             min(to_column_index, from_column_index + self.MAX_NUMBERS_OF_COLUMNS_PER_PAGE),
@@ -53,14 +55,14 @@ class TableView(BaseTableView):
                 data = DataFrame(data=numpy.log2(data.values), index=data.index, columns=data.columns)
       
         # Remove NaN values to convert to json
-        data_frame: DataFrame = data.fillna('NaN')
+        # data_frame: DataFrame = data.fillna('NaN')
          
-        return data_frame.iloc[
+        return data.iloc[
             from_row_index:to_row_index,
             from_column_index:to_column_index,
         ].to_dict('list')
 
-    def _slice_data(self, from_row_index: int = 0, to_row_index: int = 49, from_column_index: int = 0, to_column_index: int = 49, scale: str = "none") -> dict:
+    def _slice_data(self, from_row_index: int = 0, to_row_index: int = 51, from_column_index: int = 0, to_column_index: int = 51, scale: str = None) -> dict:
         return self._slice(
             self._data, 
             from_row_index=from_row_index,
@@ -71,15 +73,15 @@ class TableView(BaseTableView):
         )
 
     def to_dict(self, from_row: int = 1, number_of_rows_per_page: int = 50, from_column: int = 1,
-                number_of_columns_per_page: int = 50, scale: str = "none", **kwargs) -> dict:
+                number_of_columns_per_page: int = 50, scale: str = None, **kwargs) -> dict:
 
         total_number_of_rows = self._data.shape[0]
         total_number_of_columns = self._data.shape[1]
 
         from_row_index = from_row - 1
         from_column_index = from_column - 1
-        to_row_index = from_row_index + number_of_rows_per_page - 1
-        to_column_index = from_column_index + number_of_columns_per_page - 1
+        to_row_index = from_row_index + number_of_rows_per_page
+        to_column_index = from_column_index + number_of_columns_per_page
 
         data = self._slice_data(
             from_row_index=from_row_index,
