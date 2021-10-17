@@ -31,7 +31,7 @@ class TableView(BaseTableView):
         "number_of_rows_per_page": IntParam(default_value=50, max_value=100, min_value=1, human_name="Number of rows per page"),
         "from_column": IntParam(default_value=1, human_name="From column"),
         "number_of_columns_per_page": IntParam(default_value=50, max_value=50, min_value=1, human_name="Number of columns per page"),
-        "scale": StrParam(default_value=None, optional=True, allowed_values=["log10", "log2"], visibility='protected', human_name="Scaling factor to apply"),
+        "scale": StrParam(default_value="none", optional=True, allowed_values=["none", "log10", "log2"], visibility='protected', human_name="Scaling factor to apply"),
     }
     _data: DataFrame
 
@@ -48,15 +48,28 @@ class TableView(BaseTableView):
             min(to_column_index, from_column_index + self.MAX_NUMBERS_OF_COLUMNS_PER_PAGE),
             last_column_index)
 
-        if scale:
-            data = data.apply(pandas.to_numeric,errors='coerce')
+        def _log10(x):
+            if isinstance(x, (float, int,)):
+                return numpy.log10(x)
+            else:
+                return x
+        def _log2(x):
+            if isinstance(x, (float, int,)):
+                return numpy.log2(x)
+            else:
+                return x
+
+        if scale and scale != "none":
+            data = data.apply(pandas.to_numeric,errors='ignore')
             if scale == "log10":
-                data = DataFrame(data=numpy.log10(data.values), index=data.index, columns=data.columns)
+                data = data.applymap(_log10)
+                #data = DataFrame(data=numpy.log10(data.values), index=data.index, columns=data.columns)
             elif scale == "log2":
-                data = DataFrame(data=numpy.log2(data.values), index=data.index, columns=data.columns)
+                data = data.applymap(_log2)
+                #data = DataFrame(data=numpy.log2(data.values), index=data.index, columns=data.columns)
       
         # Remove NaN values to convert to json
-        # data_frame: DataFrame = data.fillna('NaN')
+        data: DataFrame = data.fillna('NaN')
          
         return data.iloc[
             from_row_index:to_row_index,

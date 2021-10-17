@@ -31,3 +31,5 @@ class TestHeatmapView(BaseTestCase):
             vw.to_dict(from_column=1, number_of_columns_per_page=4, scale="log10")["data"],
             data.to_dict('list')
         )
+        
+        print(vw.to_dict(scale="log10"))
