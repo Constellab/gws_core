@@ -14,7 +14,7 @@ class TestBoxPlotView(BaseTestCase):
         
         vw = BoxPlotView(table)
         dic = vw.to_dict(column_names=["petal.length", "petal.width"])
-        self.assertEqual(dic["type"], "box-plot")
+        self.assertEqual(dic["type"], "box-plot-view")
         self.assertTrue(numpy.all(numpy.isclose(
             dic["series"][0]["data"]["min"],
             [1.0, 0.1],

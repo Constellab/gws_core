@@ -18,7 +18,7 @@ class BarPlotView(LinePlot2DView):
 
     ```
     {
-        "type": "bar-plot",
+        "type": "bar-plot-view",
         "title": str,
         "subtitle": str,
         "series": [
@@ -38,5 +38,5 @@ class BarPlotView(LinePlot2DView):
     ```
     """
 
-    _type: str="bar-plot"
+    _type: str="bar-plot-view"
     _data: DataFrame

@@ -19,7 +19,7 @@ class ScatterPlot3DView(BaseTableView):
     ------------------
     ```
     {
-        "type": "line-3d-plot",
+        "type": "scatter-plot-3d-view",
         "title": str,
         "subtitle": str,
         "series": [
@@ -42,7 +42,7 @@ class ScatterPlot3DView(BaseTableView):
     ```
     """
 
-    _type: str = "scatter-plot-3d"
+    _type: str = "scatter-plot-3d-view"
     _data: DataFrame
     _specs: ViewSpecs = {
         **BaseTableView._specs,

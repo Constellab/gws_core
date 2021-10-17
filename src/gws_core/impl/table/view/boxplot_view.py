@@ -19,7 +19,7 @@ class BoxPlotView(BaseTableView):
 
     ```
     {
-        "type": "box-plot",
+        "type": "box-plot-view",
         "title": str,
         "subtitle": str,
         "series": [
@@ -42,7 +42,7 @@ class BoxPlotView(BaseTableView):
     ```
     """
 
-    _type: str="box-plot"
+    _type: str="box-plot-view"
     _data: DataFrame
     _specs: ViewSpecs = {
         **BaseTableView._specs,

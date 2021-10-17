@@ -22,7 +22,7 @@ class HeatmapView(TableView):
 
     ```
     {
-        "type": "heatmap",
+        "type": "heatmap-view",
         "title": str,
         "subtitle": str,
         "data": dict
@@ -30,7 +30,7 @@ class HeatmapView(TableView):
     ```
     """
 
-    _type: str = "heatmap"
+    _type: str = "heatmap-view"
     _data: DataFrame
     _specs: ViewSpecs = {
         **TableView._specs,

@@ -15,7 +15,7 @@ class TestLinePlot2DView(BaseTestCase):
         dic = vw.to_dict(x_column_name="sepal.length",
                                y_column_names=["petal.length", "petal.width"],)
 
-        self.assertEqual(dic["type"], "line-plot-2d")
+        self.assertEqual(dic["type"], "line-plot-2d-view")
 
         self.assertEqual(dic["series"][0]["data"]["x"], table.get_data()["sepal.length"].values.tolist())
         self.assertEqual(dic["series"][0]["data"]["y"], table.get_data()["petal.length"].values.tolist())

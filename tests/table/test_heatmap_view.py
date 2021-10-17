@@ -15,7 +15,7 @@ class TestHeatmapView(BaseTestCase):
         vw = HeatmapView(table)
 
         dic = vw.to_dict(from_column=1, number_of_columns_per_page=4, scale="linear")
-        self.assertEqual(dic["type"], "heatmap")
+        self.assertEqual(dic["type"], "heatmap-view")
         self.assertEqual(
             dic["data"],
             table.to_table().iloc[0:50, 0:4].to_dict('list')

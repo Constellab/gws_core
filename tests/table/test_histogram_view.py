@@ -17,7 +17,7 @@ class TestHistogramView(BaseTestCase):
 
         print(dic)
 
-        self.assertEqual(dic["type"], "histogram")
+        self.assertEqual(dic["type"], "histogram-view")
 
         self.assertTrue(numpy.all(numpy.isclose(
             dic["series"][0]["data"]["hist"],

@@ -16,7 +16,7 @@ class LinePlot3DView(ScatterPlot3DView):
 
     ```
     {
-        "type": "line-plot-3d",
+        "type": "line-plot-3d-view",
         "title": str,
         "subtitle": str,
         "series": [
@@ -39,5 +39,5 @@ class LinePlot3DView(ScatterPlot3DView):
     ```
     """
 
-    _type: str = "line-plot-3d"
+    _type: str = "line-plot-3d-view"
     _data: DataFrame

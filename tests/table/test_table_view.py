@@ -19,7 +19,7 @@ class TestTableView(BaseTestCase):
         
         print(table)
         dic = vw.to_dict()
-        self.assertEqual(dic["type"], "table")
+        self.assertEqual(dic["type"], "table-view")
         self.assertEqual(
             dic["data"],
             table.to_table().iloc[0:50, 0:5].to_dict('list')

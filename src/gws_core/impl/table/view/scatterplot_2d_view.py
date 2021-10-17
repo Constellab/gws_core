@@ -20,7 +20,7 @@ class ScatterPlot2DView(BaseTableView):
     ------------------
     ```
     {
-        "type": "line-2d-plot",
+        "type": "scatter-plot-2d-view",
         "title": str,
         "subtitle": str,
         "series": [
@@ -40,7 +40,7 @@ class ScatterPlot2DView(BaseTableView):
     ```
     """
 
-    _type: str = "scatter-plot-2d"
+    _type: str = "scatter-plot-2d-view"
     _data: DataFrame
     _specs: ViewSpecs = {
         **BaseTableView._specs,

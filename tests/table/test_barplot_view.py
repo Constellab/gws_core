@@ -15,7 +15,7 @@ class TestBarPlotView(BaseTestCase):
         dic = vw.to_dict(x_column_name="sepal.length",
                                y_column_names=["petal.length", "petal.width"],)
 
-        self.assertEqual(dic["type"], "bar-plot")
+        self.assertEqual(dic["type"], "bar-plot-view")
         self.assertEqual(dic["title"], "Bar plot")
 
         self.assertEqual(dic["series"][0]["data"]["x"], table.get_data()["sepal.length"].values.tolist())

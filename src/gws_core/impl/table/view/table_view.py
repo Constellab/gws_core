@@ -24,7 +24,7 @@ class TableView(BaseTableView):
     ```
     """
 
-    _type = "table"
+    _type = "table-view"
     _specs: ViewSpecs = {
         **BaseTableView._specs,
         "from_row": IntParam(default_value=1, human_name="From row"),

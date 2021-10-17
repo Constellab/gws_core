@@ -16,7 +16,7 @@ class TestLinePlot3DView(BaseTestCase):
                                y_column_name="sepal.width",
                                z_column_names=["petal.length", "petal.width"])
 
-        self.assertEqual(dic["type"], "line-plot-3d")
+        self.assertEqual(dic["type"], "line-plot-3d-view")
 
         self.assertEqual(dic["series"][0]["data"]["x"], table.get_data()["sepal.length"].values.tolist())
         self.assertEqual(dic["series"][0]["data"]["y"], table.get_data()["sepal.width"].values.tolist())

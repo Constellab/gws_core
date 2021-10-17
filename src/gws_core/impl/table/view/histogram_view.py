@@ -21,7 +21,7 @@ class HistogramView(BaseTableView):
 
     ```
     {
-        "type": "histogram",
+        "type": "histogram-view",
         "title": str,
         "subtitle": str,
         "series": [
@@ -38,7 +38,7 @@ class HistogramView(BaseTableView):
     ```
     """
 
-    _type: str = "histogram"
+    _type: str = "histogram-view"
     _data: DataFrame
     _specs: ViewSpecs = {
         **BaseTableView._specs,
