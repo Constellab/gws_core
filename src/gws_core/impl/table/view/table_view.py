@@ -26,6 +26,7 @@ class TableView(BaseTableView):
 
     _type = "table"
     _specs: ViewSpecs = {
+        **BaseTableView._specs,
         "from_row": IntParam(default_value=1, human_name="From row"),
         "number_of_rows_per_page": IntParam(default_value=50, max_value=100, min_value=1, human_name="Number of rows per page"),
         "from_column": IntParam(default_value=1, human_name="From column"),

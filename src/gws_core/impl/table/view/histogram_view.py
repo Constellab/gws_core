@@ -41,16 +41,20 @@ class HistogramView(BaseTableView):
     _type: str = "histogram"
     _data: DataFrame
     _specs: ViewSpecs = {
-        "column_names": ListParam(human_name="Column names", short_description="List of columns to view"),
-        "nbins": IntParam(default_value=10, min_value=0, human_name="Nbins", short_description="The number of bins. Set zero (0) for auto."),
-        "density": BoolParam(default_value=False, human_name="Density", short_description="True to plot density"),
+        **BaseTableView._specs,
+        "column_names": ListParam(human_name="Column names", optional=True, short_description="List of columns to view"),
+        "nbins": IntParam(default_value=10, min_value=0, optional=True, human_name="Nbins", short_description="The number of bins. Set zero (0) for auto."),
+        "density": BoolParam(default_value=False, optional=True, human_name="Density", short_description="True to plot density"),
         "x_label": StrParam(human_name="X-label", optional=True, visibility='protected', short_description="The x-axis label to display"),
         "y_label": StrParam(human_name="Y-label", optional=True, visibility='protected', short_description="The y-axis label to display"),
     }
 
-    def to_dict(self, column_names: List[str], nbins: int = 10, density: bool = False, **kwargs) -> dict:
+    def to_dict(self, column_names: List[str] = None, nbins: int = 10, density: bool = False, **kwargs) -> dict:
         if nbins <= 0:
             nbins = "auto"
+        if not column_names:
+            n = min(self._data.shape[1], 50)
+            column_names = self._data.columns[0:n]
 
         series = []
         for column_name in column_names:

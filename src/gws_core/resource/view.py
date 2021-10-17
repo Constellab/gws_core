@@ -1,5 +1,7 @@
 
 from typing import Any
+from ..core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 from ..config.param_spec import StrParam
 from .view_types import ViewSpecs
 
@@ -33,12 +35,12 @@ class View:
         if self._specs is None:
             return
 
-        # for key, spec in self._specs.items():
-        #     if not spec.optional:
-        #         raise Exception(
-        #             f"The spec '{key}' of the view '{self.__class__.__name__}' is not optional. All the view specs must be optional or have a default value")
+        for key, spec in self._specs.items():
+            if not spec.optional:
+                raise Exception(
+                    f"The spec '{key}' of the view '{self.__class__.__name__}' is not optional. All the view specs must be optional or have a default value")
 
-    def check_and_set_data(self, data):
+    def check_and_set_data(self, data, *args, **kwargs):
         """
         Check the data and return.
 

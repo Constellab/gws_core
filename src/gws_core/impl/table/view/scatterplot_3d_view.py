@@ -45,21 +45,27 @@ class ScatterPlot3DView(BaseTableView):
     _type: str = "scatter-plot-3d"
     _data: DataFrame
     _specs: ViewSpecs = {
-        "x_column_name": StrParam(human_name="X-column name", short_description="The column to use as x-axis"),
-        "y_column_name": StrParam(human_name="Y-column name", short_description="The column to use as y-axis"),
-        "z_column_names": ListParam(human_name="Z-column names", short_description="List of columns to use as z-axis"),
+        **BaseTableView._specs,
+        "x_column_name": StrParam(human_name="X-column name", optional=True, short_description="The column to use as x-axis"),
+        "y_column_name": StrParam(human_name="Y-column name", optional=True, short_description="The column to use as y-axis"),
+        "z_column_names": ListParam(human_name="Z-column names", optional=True, short_description="List of columns to use as z-axis"),
         "x_label": StrParam(human_name="X-label", optional=True, visibility='protected', short_description="The x-axis label to display"),
         "y_label": StrParam(human_name="Y-label", optional=True, visibility='protected', short_description="The y-axis label to display"),
         "z_label": StrParam(human_name="Z-label", optional=True, visibility='protected', short_description="The z-axis label to display"),
     }
 
-    def to_dict(self, x_column_name: str, y_column_name: str, z_column_names: List[str], 
+    def to_dict(self, x_column_name: str = None, y_column_name: str = None, z_column_names: List[str] = None, 
                     x_label: str = None, y_label: str = None, z_label: str = None, **kwargs) -> dict:
         if not x_label:
             x_label = x_column_name
-
         if not y_label:
             y_label = y_column_name
+        if not x_column_name:
+            x_column_name = self._data.columns[0]
+        if not y_column_name:
+            y_column_name = self._data.columns[1]
+        if not z_column_names:
+            z_column_names = [ self._data.columns[2] ]
 
         series = []
         for z_column_name in z_column_names:

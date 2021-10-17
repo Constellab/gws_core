@@ -24,6 +24,7 @@ from .view.scatterplot_3d_view import ScatterPlot3DView
 from .view.barplot_view import BarPlotView
 from .view.boxplot_view import BoxPlotView
 from .view.table_view import TableView
+from .view.heatmap_view import HeatmapView
 
 
 @resource_decorator("Table")
@@ -213,17 +214,15 @@ class Table(Resource):
 
     # -- V ---
 
-    @view(view_type=TableView, default_view=True, human_name='Tabular', short_description='View as a table',
-          specs={})
-    def view_as_table(self) -> TableView:
+    @view(view_type=TableView, default_view=True, human_name='Tabular', short_description='View as a table', specs={})
+    def view_as_table(self, *args, **kwargs) -> TableView:
         """
         View as table
         """
 
-        return TableView(self._data)
+        return TableView(self._data, *args, **kwargs)
 
-    @view(view_type=LinePlot2DView, human_name='LinePlot2D', short_description='View columns as 2D-line plots',
-          specs={})
+    @view(view_type=LinePlot2DView, human_name='LinePlot2D', short_description='View columns as 2D-line plots', specs={})
     def view_as_line_plot_2d(self, *args, **kwargs) -> LinePlot2DView:
         """
         View columns as 2D-line plots
@@ -231,8 +230,7 @@ class Table(Resource):
 
         return LinePlot2DView(self._data, *args, **kwargs)
 
-    @view(view_type=LinePlot3DView, human_name='LinePlot3D', short_description='View columns as 3D-line plots',
-          specs={})
+    @view(view_type=LinePlot3DView, human_name='LinePlot3D', short_description='View columns as 3D-line plots', specs={})
     def view_as_line_plot_3d(self, *args, **kwargs) -> LinePlot3DView:
         """
         View columns as 3D-line plots
@@ -240,8 +238,7 @@ class Table(Resource):
 
         return LinePlot3DView(self._data, *args, **kwargs)
 
-    @view(view_type=ScatterPlot3DView, human_name='ScatterPlot3D', short_description='View columns as 3D-scatter plots',
-          specs={})
+    @view(view_type=ScatterPlot3DView, human_name='ScatterPlot3D', short_description='View columns as 3D-scatter plots', specs={})
     def view_as_scatter_plot_3d(self, *args, **kwargs) -> ScatterPlot3DView:
         """
         View columns as 3D-scatter plots
@@ -249,8 +246,7 @@ class Table(Resource):
 
         return ScatterPlot3DView(self._data, *args, **kwargs)
 
-    @view(view_type=ScatterPlot2DView, human_name='ScatterPlot2D', short_description='View columns as 2D-scatter plots',
-          specs={})
+    @view(view_type=ScatterPlot2DView, human_name='ScatterPlot2D', short_description='View columns as 2D-scatter plots', specs={})
     def view_as_scatter_plot_2d(self, *args, **kwargs) -> ScatterPlot2DView:
         """
         View one or several columns as 2D-line plots
@@ -258,8 +254,7 @@ class Table(Resource):
 
         return ScatterPlot2DView(self._data, *args, **kwargs)
 
-    @view(view_type=BarPlotView, human_name='BarPlot', short_description='View columns as 2D-bar plots',
-          specs={})
+    @view(view_type=BarPlotView, human_name='BarPlot', short_description='View columns as 2D-bar plots', specs={})
     def view_as_bar_plot(self, *args, **kwargs) -> BarPlotView:
         """
         View one or several columns as 2D-bar plots
@@ -267,14 +262,7 @@ class Table(Resource):
 
         return BarPlotView(self._data, *args, **kwargs)
     
-    @view(view_type=HistogramView, human_name='Histogram', short_description='View columns as 2D-line plots',
-          specs={
-              "column_names": ListParam(human_name="Column names", short_description="List of columns to view"),
-              "nbins": IntParam(default_value=10, min_value=0, human_name="Nbins", short_description="The number of bins. Set zero (0) for auto."),
-              "density": BoolParam(default_value=False, human_name="Density", short_description="True to plot density"),
-              "x_label": StrParam(human_name="X-label", optional=True, visibility='protected', short_description="The x-axis label to display"),
-              "y_label": StrParam(human_name="Y-label", optional=True, visibility='protected', short_description="The y-axis label to display"),
-          })
+    @view(view_type=HistogramView, human_name='Histogram', short_description='View columns as 2D-line plots', specs={})
     def view_as_histogram(self, *args, **kwargs) -> HistogramView:
         """
         View columns as 2D-line plots
@@ -282,15 +270,18 @@ class Table(Resource):
 
         return HistogramView(self._data, *args, **kwargs)
 
-    @view(view_type=BoxPlotView, human_name='BoxPlot', short_description='View columns as box plots',
-          specs={
-              "column_names": ListParam(human_name="Y-column names", short_description="List of columns to use as y-axis"),
-              "x_label": StrParam(human_name="X-label", optional=True, visibility='protected', short_description="The x-axis label to display"),
-              "y_label": StrParam(human_name="Y-label", optional=True, visibility='protected', short_description="The y-axis label to display"),
-          })
-    def view_as_bar_plot(self, *args, **kwargs) -> BarPlotView:
+    @view(view_type=BoxPlotView, human_name='BoxPlot', short_description='View columns as box plots', specs={})
+    def view_as_box_plot(self, *args, **kwargs) -> BarPlotView:
         """
-        View one or several columns as 2D-bar plots
+        View one or several columns as box plots
         """
 
-        return BarPlotView(self._data, *args, **kwargs)
+        return BoxPlotView(self._data, *args, **kwargs)
+
+    @view(view_type=HeatmapView, human_name='Heatmap', short_description='View table as heatmap', specs={})
+    def view_as_heatmap(self, *args, **kwargs) -> BarPlotView:
+        """
+        View the table as heatmap
+        """
+
+        return HeatmapView(self._data, *args, **kwargs)

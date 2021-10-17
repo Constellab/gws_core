@@ -43,15 +43,20 @@ class ScatterPlot2DView(BaseTableView):
     _type: str = "scatter-plot-2d"
     _data: DataFrame
     _specs: ViewSpecs = {
-        "x_column_name": StrParam(human_name="X-column name", short_description="The column to use as x-axis"),
-        "y_column_names": ListParam(human_name="Y-column names", short_description="List of columns to use as y-axis"),
+        **BaseTableView._specs,
+        "x_column_name": StrParam(human_name="X-column name", optional=True, default_value=None, short_description="The column to use as x-axis"),
+        "y_column_names": ListParam(human_name="Y-column names", optional=True, default_value=None, short_description="List of columns to use as y-axis"),
         "x_label": StrParam(human_name="X-label", optional=True, default_value=None, visibility='protected', short_description="The x-axis label to display"),
         "y_label": StrParam(human_name="Y-label", optional=True, default_value=None, visibility='protected', short_description="The y-axis label to display"),
     }
 
-    def to_dict(self, x_column_name: str, y_column_names: List[str], x_label: str = None, y_label: str = None, **kwargs) -> dict:
+    def to_dict(self, x_column_name: str =None, y_column_names: List[str] = None, x_label: str = None, y_label: str = None, **kwargs) -> dict:
         if not x_label:
             x_label = x_column_name
+        if not x_column_name:
+            x_column_name = self._data.columns[0]
+        if not y_column_names:
+            y_column_names = [ self._data.columns[1] ]
 
         series = []
         for y_column_name in y_column_names:

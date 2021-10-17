@@ -45,17 +45,20 @@ class BoxPlotView(BaseTableView):
     _type: str="box-plot"
     _data: DataFrame
     _specs: ViewSpecs = {
-        "column_names": ListParam(human_name="Column names", short_description="List of columns to plot"),
+        **BaseTableView._specs,
+        "column_names": ListParam(human_name="Column names", optional=True, short_description="List of columns to plot"),
         "x_tick_labels": ListParam(human_name="X-tick-labels", optional=True, visibility='protected', short_description="The labels of x-axis ticks"),
         "x_label": StrParam(human_name="X-label", optional=True, visibility='protected', short_description="The x-axis label to display"),
         "y_label": StrParam(human_name="Y-label", optional=True, visibility='protected', short_description="The y-axis label to display"),
     }
 
-    def to_dict(self, column_names: List[str], x_tick_labels: list = None, 
+    def to_dict(self, column_names: List[str] = None, x_tick_labels: list = None, 
                     x_label: str = None, y_label: str = None, **kwargs) -> dict:
         if not x_tick_labels:
             x_tick_labels = column_names
-
+        if not column_names:
+            n = min(self._data.shape[1], 50)
+            column_names = self._data.columns[0:n]
         series = []
         df = self._data[column_names]
         ymin = df.min()
