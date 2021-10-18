@@ -1,9 +1,7 @@
 
 
-from gws_core import ResourceModel, Robot
-from gws_core.core.classes.paginator import Paginator
-from gws_core.core.test.base_test_case import BaseTestCase
-from gws_core.model.model_service import ModelService
+from gws_core import (BaseTestCase, ModelService, Paginator, ResourceModel,
+                      Robot)
 from gws_core.resource.resource_model import CONST_RESOURCE_MODEL_TYPING_NAME
 
 

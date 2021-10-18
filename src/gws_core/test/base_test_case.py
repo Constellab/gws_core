@@ -7,8 +7,8 @@
 from typing import List, Union
 from unittest.async_case import IsolatedAsyncioTestCase
 
-from ...core.db.db_manager import DbManager
-from ...experiment.queue_service import QueueService
+from ..core.db.db_manager import DbManager
+from ..experiment.queue_service import QueueService
 from .gtest import GTest
 
 

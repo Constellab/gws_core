@@ -6,14 +6,13 @@
 
 import shutil
 
-from gws_core.study.study_dto import StudyDto
-
-from ...model.model_service import ModelService
-from ...user.auth_service import AuthService
-from ...user.user import User
-from ...user.user_service import UserService
-from ..exception.exceptions import BadRequestException
-from ..utils.settings import Settings
+from ..core.exception.exceptions import BadRequestException
+from ..core.utils.settings import Settings
+from ..model.model_service import ModelService
+from ..study.study_dto import StudyDto
+from ..user.auth_service import AuthService
+from ..user.user import User
+from ..user.user_service import UserService
 
 
 class GTest:

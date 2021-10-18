@@ -5,13 +5,11 @@
 
 from typing import Dict, List, Type
 
-from gws_core.config.config import Config
-from gws_core.io.io import Inputs
-from gws_core.progress_bar.progress_bar import ProgressBar
-
+from ..config.config import Config
 from ..config.config_types import ConfigParams, ConfigParamsDict, ParamValue
 from ..io.io_exception import MissingInputResourcesException
 from ..io.io_spec import IOSpecClass
+from ..progress_bar.progress_bar import ProgressBar
 from ..resource.resource import Resource
 from ..task.task import Task
 from ..task.task_io import TaskInputs, TaskOutputs

@@ -1,10 +1,7 @@
 from typing import Dict
 
-from gws_core.core.exception.exception_handler import ExceptionHandler
-from gws_core.core.exception.exception_response import ExceptionResponse
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
-from gws_core.core.test.base_test_case import BaseTestCase
+from gws_core import (BadRequestException, BaseTestCase, ExceptionHandler,
+                      ExceptionResponse)
 from starlette.exceptions import HTTPException
 
 

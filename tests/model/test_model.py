@@ -4,8 +4,7 @@
 # About us: https://gencovery.com
 
 
-from gws_core import GTest, JSONDict, JSONLoader, Model
-from gws_core.core.test.base_test_case import BaseTestCase
+from gws_core import BaseTestCase, GTest, JSONDict, JSONLoader, Model
 from gws_core.model.typing_manager import TypingManager
 from peewee import CharField
 

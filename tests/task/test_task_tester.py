@@ -1,16 +1,9 @@
 
 
-from gws_core import TaskTester
-from gws_core.config.config_types import ConfigParams
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
-from gws_core.core.test.base_test_case import BaseTestCase
-from gws_core.impl.robot.robot_resource import Robot
-from gws_core.impl.robot.robot_tasks import RobotMove
+from gws_core import (BadRequestException, BaseTestCase, ConfigParams, Robot,
+                      RobotMove, Task, TaskInputs, TaskOutputs, TaskTester,
+                      task_decorator)
 from gws_core.io.io_exception import MissingInputResourcesException
-from gws_core.task.task import Task
-from gws_core.task.task_decorator import task_decorator
-from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 
 @task_decorator("TaskTesterProgress")

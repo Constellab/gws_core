@@ -1,10 +1,9 @@
 
 import os
 
-from gws_core import (ConfigParams, FileHelper, FSNodeModel, Folder, IExperiment,
-                      IProcess, LocalFileStore, Settings, Task, TaskInputs,
-                      TaskOutputs, task_decorator)
-from gws_core.core.test.base_test_case import BaseTestCase
+from gws_core import (BaseTestCase, ConfigParams, FileHelper, Folder,
+                      FSNodeModel, IExperiment, IProcess, LocalFileStore,
+                      Settings, Task, TaskInputs, TaskOutputs, task_decorator)
 
 
 @task_decorator("CreateFolderTest")

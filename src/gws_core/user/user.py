@@ -13,7 +13,7 @@ from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
 from ..core.utils.utils import Utils
 from ..model.typing_register_decorator import typing_registrator
-from ..user.user_group import UserGroup
+from .user_group import UserGroup
 
 # ####################################################################
 #
@@ -75,15 +75,15 @@ class User(Model):
     # -- G --
 
     @classmethod
-    def get_admin(cls):
+    def get_admin(cls) -> 'User':
         return User.get(User.group == UserGroup.ADMIN)
 
     @classmethod
-    def get_owner(cls):
+    def get_owner(cls) -> 'User':
         return User.get(User.group == UserGroup.OWNER)
 
     @classmethod
-    def get_sysuser(cls):
+    def get_sysuser(cls) -> 'User':
         return User.get(User.group == UserGroup.SYSUSER)
 
     @classmethod

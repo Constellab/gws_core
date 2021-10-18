@@ -1,11 +1,8 @@
 
 
-from gws_core import (BoolRField, DataFrameRField, DictRField, FloatRField,
-                      IntRField, KVStore, ListRField, StrRField)
-from gws_core.core.test.base_test_case import BaseTestCase
-from gws_core.impl.robot.robot_resource import Robot
-from gws_core.resource.resource_model import ResourceModel
-from gws_core.resource.resource_r_field import ResourceRField
+from gws_core import (BaseTestCase, BoolRField, DataFrameRField, DictRField,
+                      FloatRField, IntRField, KVStore, ListRField,
+                      ResourceModel, ResourceRField, Robot, StrRField)
 from pandas.core.frame import DataFrame
 
 

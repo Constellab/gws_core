@@ -1,9 +1,6 @@
-from gws_core import (IExperiment, IProcess, IProtocol, ProtocolModel, Robot,
-                      RobotCreate, RobotMove, RobotTravelProto,
-                      RobotWorldTravelProto)
-from gws_core.core.test.base_test_case import BaseTestCase
-from gws_core.impl.robot.robot_protocol import RobotSuperTravelProto
-from gws_core.task.task_interface import ITask
+from gws_core import (BaseTestCase, IExperiment, IProcess, IProtocol, ITask,
+                      ProtocolModel, Robot, RobotCreate, RobotMove,
+                      RobotSuperTravelProto, RobotTravelProto)
 
 
 class TestIExperiment(BaseTestCase):

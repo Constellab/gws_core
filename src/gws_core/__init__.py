@@ -71,10 +71,6 @@ from .core.service.external_api_service import \
     ExternalApiService as ExternalApiService
 from .core.service.mysql_service import MySQLService as MySQLService
 from .core.service.settings_service import SettingsService as SettingsService
-from .core.test.base_test_case import BaseTestCase as BaseTestCase
-# Core > Test
-from .core.test.gtest import GTest as GTest
-from .core.test.task_tester import TaskTester as TaskTester
 # Core > Utils
 from .core.utils.event import EventListener as EventListener
 from .core.utils.http_helper import HTTPHelper as HTTPHelper
@@ -264,6 +260,10 @@ from .task.task_io import TaskOutputs as TaskOutputs
 from .task.task_model import TaskModel as TaskModel
 from .task.task_service import TaskService as TaskService
 from .task.task_typing import TaskTyping as TaskTyping
+# Core > Test
+from .test.base_test_case import BaseTestCase as BaseTestCase
+from .test.gtest import GTest as GTest
+from .test.task_tester import TaskTester as TaskTester
 # User
 from .user.activity import Activity as Activity
 from .user.activity_service import ActivityService as ActivityService
