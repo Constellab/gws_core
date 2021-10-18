@@ -23,8 +23,6 @@ class HeatmapView(TableView):
     ```
     {
         "type": "heatmap-view",
-        "title": str,
-        "subtitle": str,
         "data": dict
     }
     ```
@@ -34,5 +32,7 @@ class HeatmapView(TableView):
     _data: DataFrame
     _specs: ViewSpecs = {
         **TableView._specs,
-        "scale": StrParam(default_value="none", optional=True, allowed_values=["none", "log10", "log2"], visibility='protected', human_name="Scaling factor to apply"),
-    }
+        "scale":
+        StrParam(
+            default_value="none", optional=True, allowed_values=["none", "log10", "log2"],
+            visibility='protected', human_name="Scaling factor to apply"), }

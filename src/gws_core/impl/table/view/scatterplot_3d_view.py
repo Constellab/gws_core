@@ -20,8 +20,6 @@ class ScatterPlot3DView(BaseTableView):
     ```
     {
         "type": "scatter-plot-3d-view",
-        "title": str,
-        "subtitle": str,
         "series": [
             {
                 "data": {
@@ -57,7 +55,7 @@ class ScatterPlot3DView(BaseTableView):
     def to_dict(self, *args, **kwargs) -> dict:
         x_column_name = kwargs.get("x_column_name", self._data.columns[0])
         y_column_name = kwargs.get("y_column_name", self._data.columns[1])
-        z_column_names = kwargs.get("z_column_names", [ self._data.columns[2] ])
+        z_column_names = kwargs.get("z_column_names", [self._data.columns[2]])
         x_label = kwargs.get("x_label", x_column_name)
         y_label = kwargs.get("y_label", y_column_name)
         z_label = kwargs.get("y_label", "")

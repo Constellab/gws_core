@@ -17,8 +17,6 @@ class TableView(BaseTableView):
     ```
     {
         "type": "table"
-        "title": str,
-        "subtitle": str,
         "data": dict,
     }
     ```
@@ -37,8 +35,10 @@ class TableView(BaseTableView):
 
     MAX_NUMBERS_OF_ROWS_PER_PAGE = 100
     MAX_NUMBERS_OF_COLUMNS_PER_PAGE = 50
-    
-    def _slice(self, data, from_row_index: int = 0, to_row_index: int = 51, from_column_index: int = 0, to_column_index: int = 51, scale: str = None) -> dict:
+
+    def _slice(
+            self, data, from_row_index: int = 0, to_row_index: int = 51, from_column_index: int = 0, to_column_index: int = 51,
+            scale: str = None) -> dict:
         last_row_index = data.shape[0]
         last_column_index = data.shape[1]
         from_row_index = min(max(from_row_index, 0), last_row_index-1)
@@ -53,6 +53,7 @@ class TableView(BaseTableView):
                 return numpy.log10(x)
             else:
                 return x
+
         def _log2(x):
             if isinstance(x, (float, int,)):
                 return numpy.log2(x)
@@ -60,25 +61,27 @@ class TableView(BaseTableView):
                 return x
 
         if scale and scale != "none":
-            data = data.apply(pandas.to_numeric,errors='ignore')
+            data = data.apply(pandas.to_numeric, errors='ignore')
             if scale == "log10":
                 data = data.applymap(_log10)
                 #data = DataFrame(data=numpy.log10(data.values), index=data.index, columns=data.columns)
             elif scale == "log2":
                 data = data.applymap(_log2)
                 #data = DataFrame(data=numpy.log2(data.values), index=data.index, columns=data.columns)
-      
+
         # Remove NaN values to convert to json
         data: DataFrame = data.fillna('NaN')
-         
+
         return data.iloc[
             from_row_index:to_row_index,
             from_column_index:to_column_index,
         ].to_dict('list')
 
-    def _slice_data(self, from_row_index: int = 0, to_row_index: int = 51, from_column_index: int = 0, to_column_index: int = 51, scale: str = None) -> dict:
+    def _slice_data(
+            self, from_row_index: int = 0, to_row_index: int = 51, from_column_index: int = 0, to_column_index: int = 51,
+            scale: str = None) -> dict:
         return self._slice(
-            self._data, 
+            self._data,
             from_row_index=from_row_index,
             to_row_index=to_row_index,
             from_column_index=from_column_index,

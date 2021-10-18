@@ -20,8 +20,6 @@ class BoxPlotView(BaseTableView):
     ```
     {
         "type": "box-plot-view",
-        "title": str,
-        "subtitle": str,
         "series": [
             {
                 "data": {
@@ -42,7 +40,7 @@ class BoxPlotView(BaseTableView):
     ```
     """
 
-    _type: str="box-plot-view"
+    _type: str = "box-plot-view"
     _data: DataFrame
     _specs: ViewSpecs = {
         **BaseTableView._specs,
@@ -69,13 +67,13 @@ class BoxPlotView(BaseTableView):
         df = self._data[column_names]
         ymin = df.min()
         ymax = df.max()
-        quantile = df.quantile(q=[0.25,0.5,0.75])
+        quantile = df.quantile(q=[0.25, 0.5, 0.75])
         series = [{
             "data": {
                 "min": ymin.to_list(),
-                "q1": quantile.loc[0.25,:].to_list(),
-                "median": quantile.loc[0.5,:].to_list(),
-                "q3": quantile.loc[0.75,:].to_list(),
+                "q1": quantile.loc[0.25, :].to_list(),
+                "median": quantile.loc[0.5, :].to_list(),
+                "q3": quantile.loc[0.75, :].to_list(),
                 "max": ymax.to_list(),
             },
             "column_names": column_names,

@@ -19,8 +19,6 @@ class LinePlot2DView(ScatterPlot2DView):
     ```
     {
         "type": "line-2d-plot-view",
-        "title": str,
-        "subtitle": str,
         "series": [
             {
                 "data": {
@@ -38,5 +36,5 @@ class LinePlot2DView(ScatterPlot2DView):
     ```
     """
 
-    _type: str="line-plot-2d-view"
+    _type: str = "line-plot-2d-view"
     _data: DataFrame

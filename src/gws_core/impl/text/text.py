@@ -66,17 +66,11 @@ class Text(Resource):
 
         return cls().set_data(data=text)
 
-    @ view(view_type=TextView, human_name='Text', short_description='View as text',
-           specs={
-               "page": IntParam(default_value=1, min_value=0, human_name="Page to view"),
-               "number_of_chars_per_page": IntParam(default_value=3000, min_value=1, max_value=3000, human_name="Number of chars per page"),
-               "title": StrParam(default_value="", human_name="Title", short_description="The table title"),
-               "subtitle": StrParam(default_value="", human_name="Subtitle", short_description="The table subtitle")
-           })
-    def view_as_text(self, *args, **kwargs) -> dict:
+    @view(view_type=TextView, human_name='Text', short_description='View as text',
+          specs={})
+    def view_as_text(self) -> TextView:
         """
         View as table
         """
 
-        vw = TextView(self._data)
-        return vw.to_dict(*args, **kwargs)
+        return TextView(self._data)

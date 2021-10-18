@@ -1,8 +1,9 @@
 
 from typing import Any
+
+from ..config.param_spec import StrParam
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ..config.param_spec import StrParam
 from .view_types import ViewSpecs
 
 
@@ -13,19 +14,13 @@ class View:
     # Spec of the view. All the view spec must be optional or have a default value
     _specs: ViewSpecs = None
     _data: Any
-    _title: str
-    _subtitle: str
 
     _specs: ViewSpecs = {
-        "title": StrParam(default_value="", optional=True, human_name="Title"),
-        "subtitle": StrParam(default_value="", optional=True, human_name="Subtitle"),
     }
 
-    def __init__(self, data: Any, *args, title:str=None, subtitle:str=None, **kwargs):
+    def __init__(self, data: Any, *args, **kwargs):
         self.check_and_set_data(data, *args, **kwargs)
         self.__check_view_specs()
-        self._title = title
-        self._subtitle = subtitle
 
     def __check_view_specs(self) -> None:
         """This method checks that the view specs are ok
@@ -49,13 +44,9 @@ class View:
 
         self._data = data
 
-    def to_dict(self, *args, title: str=None, subtitle: str=None, **kwargs) -> dict:
-        title = title or self._title
-        subtitle = subtitle or self._subtitle
+    def to_dict(self, *args, **kwargs) -> dict:
         return {
             "type": self._type,
-            "title": title,
-            "subtitle": subtitle
         }
 
     @classmethod
