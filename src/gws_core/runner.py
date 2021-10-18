@@ -51,8 +51,6 @@ def _run(ctx, uri="", token="", test="",
         if App.is_running:
             raise BadRequestException("Cannot run tests while the Application is running.")
 
-    DbManager.init_all_db(test=is_test)
-
     if runserver:
         # start app
         App.start(ip=ip, port=port)

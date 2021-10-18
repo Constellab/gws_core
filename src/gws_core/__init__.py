@@ -192,8 +192,8 @@ from .io.port import InPort as InPort
 from .io.port import OutPort as OutPort
 from .io.port import Port as Port
 # Lab
-from .lab.lab_service import LabService as LabService
-from .lab.system import Monitor as Monitor
+from .lab.monitor import Monitor as Monitor
+from .lab.monitor_service import MonitorService as MonitorService
 # Model
 from .model.model_service import ModelService as ModelService
 from .model.typing import Typing as Typing

@@ -5,6 +5,7 @@
 
 from typing import final
 
+from gws_core.user.user_dto import UserDataDict
 from peewee import BooleanField, CharField
 
 from ..core.classes.enum_field import EnumField
@@ -137,3 +138,16 @@ class User(Model):
     # -- T --
 
     # -- U --
+
+    def to_user_data_dict(self) -> UserDataDict:
+        return {
+            "uri": self.uri,
+            "email": self.email,
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "group": self.group.value,
+            "is_active": self.is_active,
+            "is_admin": self.is_admin,
+            "is_http_authenticated": self.is_http_authenticated,
+            "is_console_authenticated": self.is_console_authenticated,
+        }

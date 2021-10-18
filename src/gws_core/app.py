@@ -10,19 +10,16 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from starlette_context.middleware.context_middleware import ContextMiddleware
 
-from .core.classes.cors_config import CorsConfig
-
 from ._core_app_importer import *
 from .central.central_app import central_app
+from .core.classes.cors_config import CorsConfig
 from .core.utils.logger import Logger
 from .core.utils.settings import Settings
 from .core.utils.utils import Utils
 from .core_app import core_app
 from .experiment.queue_service import QueueService
-from .lab.system import Monitor
-from .model.model_service import ModelService
-from .study.study import Study
-from .user.user_service import UserService
+from .lab.monitor import Monitor
+from .lab.system_service import SystemService
 
 app = FastAPI(docs_url=None)
 
@@ -87,9 +84,7 @@ class App:
         Starts FastAPI uvicorn
         """
 
-        ModelService.create_tables()
-        ModelService.register_all_processes_and_resources()
-        UserService.create_sysuser()
+        SystemService.init()
 
         # Add static dirs for docs of git modules
         # @ToDo: Add route or hooks to compile docs after
