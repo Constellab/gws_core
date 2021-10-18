@@ -54,18 +54,13 @@ class ScatterPlot3DView(BaseTableView):
         "z_label": StrParam(human_name="Z-label", optional=True, visibility='protected', short_description="The z-axis label to display"),
     }
 
-    def to_dict(self, x_column_name: str = None, y_column_name: str = None, z_column_names: List[str] = None, 
-                    x_label: str = None, y_label: str = None, z_label: str = None, **kwargs) -> dict:
-        if not x_label:
-            x_label = x_column_name
-        if not y_label:
-            y_label = y_column_name
-        if not x_column_name:
-            x_column_name = self._data.columns[0]
-        if not y_column_name:
-            y_column_name = self._data.columns[1]
-        if not z_column_names:
-            z_column_names = [ self._data.columns[2] ]
+    def to_dict(self, *args, **kwargs) -> dict:
+        x_column_name = kwargs.get("x_column_name", self._data.columns[0])
+        y_column_name = kwargs.get("y_column_name", self._data.columns[1])
+        z_column_names = kwargs.get("z_column_names", [ self._data.columns[2] ])
+        x_label = kwargs.get("x_label", x_column_name)
+        y_label = kwargs.get("y_label", y_column_name)
+        z_label = kwargs.get("y_label", "")
 
         series = []
         for z_column_name in z_column_names:

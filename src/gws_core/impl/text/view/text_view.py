@@ -50,7 +50,10 @@ class TextView(View):
         to_char_index = min(min(to_char_index, from_char_index + self.MAX_NUMBER_OF_CHARS_PER_PAGE), length)
         return self._data[from_char_index:to_char_index]
 
-    def to_dict(self, page: int, page_size: int, **kwargs) -> dict:
+    def to_dict(self, *args, **kwargs) -> dict:
+        page = kwargs.get("page", 1)
+        page_size = kwargs.get("page_size", 10000)
+
         total_number_of_chars = len(self._data)
         page_info: PageInfo = PageInfo(page, page_size, total_number_of_chars, self.MAX_NUMBER_OF_CHARS_PER_PAGE, 1)
 

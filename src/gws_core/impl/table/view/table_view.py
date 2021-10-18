@@ -86,8 +86,12 @@ class TableView(BaseTableView):
             scale=scale
         )
 
-    def to_dict(self, from_row: int = 1, number_of_rows_per_page: int = 50, from_column: int = 1,
-                number_of_columns_per_page: int = 50, scale: str = None, **kwargs) -> dict:
+    def to_dict(self, *args, **kwargs) -> dict:
+        from_row = kwargs.get("from_row", 1)
+        number_of_rows_per_page = kwargs.get("number_of_rows_per_page", 50)
+        from_column = kwargs.get("from_column", 1)
+        number_of_columns_per_page = kwargs.get("number_of_columns_per_page", 50)
+        scale = kwargs.get("scale", "none")
 
         total_number_of_rows = self._data.shape[0]
         total_number_of_columns = self._data.shape[1]

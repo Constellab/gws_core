@@ -49,7 +49,7 @@ class View:
 
         self._data = data
 
-    def to_dict(self, title: str=None, subtitle: str=None, **kwargs) -> dict:
+    def to_dict(self, *args, title: str=None, subtitle: str=None, **kwargs) -> dict:
         title = title or self._title
         subtitle = subtitle or self._subtitle
         return {

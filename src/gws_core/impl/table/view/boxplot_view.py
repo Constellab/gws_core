@@ -52,13 +52,19 @@ class BoxPlotView(BaseTableView):
         "y_label": StrParam(human_name="Y-label", optional=True, visibility='protected', short_description="The y-axis label to display"),
     }
 
-    def to_dict(self, column_names: List[str] = None, x_tick_labels: list = None, 
-                    x_label: str = None, y_label: str = None, **kwargs) -> dict:
+    def to_dict(self, *args, **kwargs) -> dict:
+
+        column_names = kwargs.get("column_names", [])
+        x_tick_labels = kwargs.get("x_tick_labels", None)
+        x_label = kwargs.get("x_label", "")
+        y_label = kwargs.get("y_label", "")
+
         if not x_tick_labels:
             x_tick_labels = column_names
         if not column_names:
             n = min(self._data.shape[1], 50)
             column_names = self._data.columns[0:n]
+
         series = []
         df = self._data[column_names]
         ymin = df.min()

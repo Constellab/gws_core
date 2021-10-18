@@ -49,7 +49,11 @@ class HistogramView(BaseTableView):
         "y_label": StrParam(human_name="Y-label", optional=True, visibility='protected', short_description="The y-axis label to display"),
     }
 
-    def to_dict(self, column_names: List[str] = None, nbins: int = 10, density: bool = False, **kwargs) -> dict:
+    def to_dict(self, *args, **kwargs) -> dict:
+        nbins = kwargs.get("nbins", 10)
+        column_names = kwargs.get("column_names", [])
+        density = kwargs.get("density", False)
+
         if nbins <= 0:
             nbins = "auto"
         if not column_names:
