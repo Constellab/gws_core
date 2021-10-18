@@ -8,10 +8,6 @@
 # pylint: disable=useless-import-alias
 
 # Comments
-from gws_core import impl
-from gws_core.impl import file
-from gws_core.impl.file import folder
-
 from .comment.comment import Comment as Comment
 from .comment.comment_service import CommentService as CommentService
 # Config
@@ -78,6 +74,7 @@ from .core.service.settings_service import SettingsService as SettingsService
 from .core.test.base_test_case import BaseTestCase as BaseTestCase
 # Core > Test
 from .core.test.gtest import GTest as GTest
+from .core.test.task_tester import TaskTester as TaskTester
 # Core > Utils
 from .core.utils.event import EventListener as EventListener
 from .core.utils.http_helper import HTTPHelper as HTTPHelper
@@ -160,16 +157,16 @@ from .impl.table.table_tasks import TableDumper as TableDumper
 from .impl.table.table_tasks import TableExporter as TableExporter
 from .impl.table.table_tasks import TableImporter as TableImporter
 from .impl.table.table_tasks import TableLoader as TableLoader
+from .impl.table.view.barplot_view import BarPlotView as BarPlotView
+from .impl.table.view.boxplot_view import BoxPlotView as BoxPlotView
 from .impl.table.view.heatmap_view import HeatmapView as HeatmapView
 from .impl.table.view.histogram_view import HistogramView as HistogramView
 from .impl.table.view.lineplot_2d_view import LinePlot2DView as LinePlot2DView
 from .impl.table.view.lineplot_3d_view import LinePlot3DView as LinePlot3DView
-from .impl.table.view.scatterplot_2d_view import ScatterPlot2DView as ScatterPlot2DView
-from .impl.table.view.scatterplot_3d_view import ScatterPlot3DView as ScatterPlot3DView
-from .impl.table.view.histogram_view import HistogramView as HistogramView
-from .impl.table.view.heatmap_view import HeatmapView as HeatmapView
-from .impl.table.view.barplot_view import BarPlotView as BarPlotView
-from .impl.table.view.boxplot_view import BoxPlotView as BoxPlotView
+from .impl.table.view.scatterplot_2d_view import \
+    ScatterPlot2DView as ScatterPlot2DView
+from .impl.table.view.scatterplot_3d_view import \
+    ScatterPlot3DView as ScatterPlot3DView
 # Impl > TableView
 from .impl.table.view.table_view import TableView as TableView
 # Impl > Text
@@ -177,7 +174,8 @@ from .impl.text.text import Text as Text
 # Impl > TextView
 from .impl.text.view.text_view import TextView as TextView
 # Impl > Volatile
-from .impl.volatile.volatile_resource import VolatileResource
+from .impl.volatile.volatile_resource import \
+    VolatileResource as VolatileResource
 # Io
 from .io.connector import Connector as Connector
 from .io.io import IO as IO
@@ -266,8 +264,6 @@ from .task.task_io import TaskOutputs as TaskOutputs
 from .task.task_model import TaskModel as TaskModel
 from .task.task_service import TaskService as TaskService
 from .task.task_typing import TaskTyping as TaskTyping
-# Tester
-from .tester.task_tester import TaskTester as TaskTester
 # User
 from .user.activity import Activity as Activity
 from .user.activity_service import ActivityService as ActivityService

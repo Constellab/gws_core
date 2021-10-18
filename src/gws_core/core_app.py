@@ -38,6 +38,6 @@ async def health_check() -> bool:
     return True
 
 
-@core_app.get("/settings", summary="Health check route")
-async def het_settings(_: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+@core_app.get("/settings", summary="Get settings")
+async def get_settings(_: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     return SettingsService.get_settings().to_json()
