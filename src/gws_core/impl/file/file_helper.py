@@ -1,6 +1,7 @@
 
 import mimetypes
 import os
+import shutil
 from pathlib import Path
 from typing import List, Union
 
@@ -115,3 +116,8 @@ class FileHelper():
                 max_delimiter_count = count
 
         return max_delimiter
+
+    @classmethod
+    def delete_dir(cls, dir_path: PathType, ignore_errors: bool = True) -> None:
+        path = cls.get_path(dir_path)
+        shutil.rmtree(path=path, ignore_errors=ignore_errors)

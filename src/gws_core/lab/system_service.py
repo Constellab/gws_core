@@ -6,6 +6,8 @@
 import shutil
 import sys
 
+from gws_core.impl.file.file_helper import FileHelper
+
 from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
 from ..core.utils.settings import Settings
@@ -62,16 +64,15 @@ class SystemService:
         ModelService.drop_tables()
 
     @classmethod
-    def delete_data_and_temp_folder(cls):
+    def delete_temp_folder(cls):
         """
         Drops tables
         """
         settings: Settings = Settings.retrieve()
 
         if settings.is_prod:
-            raise Exception('Cannot delete the data and temp folder in prod environment')
-        shutil.rmtree(path=settings.get_data_dir(), ignore_errors=True)
-        shutil.rmtree(path=settings.get_root_temp_dir(), ignore_errors=True)
+            raise Exception('Cannot delete the temp folder in prod environment')
+        FileHelper.delete_dir(settings.get_root_temp_dir())
 
     @classmethod
     def reset_dev_envionment(cls) -> None:
@@ -87,7 +88,7 @@ class SystemService:
 
         cls.deinit_queue_and_monitor()
 
-        cls.delete_data_and_temp_folder()
+        cls.delete_temp_folder()
         cls.drop_all_tables()
 
         cls.init()

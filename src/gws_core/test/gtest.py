@@ -6,6 +6,8 @@
 
 import shutil
 
+from gws_core.lab.system_service import SystemService
+
 from ..core.exception.exceptions import BadRequestException
 from ..core.utils.settings import Settings
 from ..model.model_service import ModelService
@@ -30,14 +32,13 @@ class GTest:
         This function initializes objects for unit testing
         """
 
-        ModelService.register_all_processes_and_resources()
-
         settings = Settings.retrieve()
         if not settings.is_dev:
             raise BadRequestException(
                 "The unit tests can only be initialized in dev mode")
 
-        UserService.create_sysuser()
+        SystemService.init()
+
         user = User.get_sysuser()
         # refresh user information from DB
         AuthService.authenticate(
@@ -71,7 +72,7 @@ class GTest:
         if not settings.is_test:
             raise Exception('Can only delete the data and temp folder in test env')
         shutil.rmtree(path=settings.get_data_dir(), ignore_errors=True)
-        shutil.rmtree(path=settings.get_root_temp_dir(), ignore_errors=True)
+        SystemService.delete_temp_folder()
 
     @classmethod
     def default_study_dto(cls) -> StudyDto:

@@ -47,7 +47,6 @@ class BaseTestCase(IsolatedAsyncioTestCase):
         GTest.delete_data_and_temp_folder()
         DbManager.init_all_db(test=True)
         GTest.drop_tables()
-        GTest.create_tables()
         GTest.init()
 
     @classmethod
