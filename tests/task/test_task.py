@@ -110,7 +110,8 @@ class TestTask(BaseTestCase):
         To test it, we check that it raised an exception
         """
 
-        experiment: IExperiment = IExperiment(RunAfterTask)
+        experiment: IExperiment = IExperiment()
+        experiment.get_protocol().add_process(RunAfterTask, 'run')
 
         try:
             await experiment.run()
