@@ -3,7 +3,8 @@ import mimetypes
 import os
 import shutil
 from pathlib import Path
-from typing import List, Union
+from re import A
+from typing import Any, Dict, List, Union
 
 PathType = Union[str, Path]
 
@@ -28,6 +29,10 @@ class FileHelper():
     @classmethod
     def get_name(cls, path: PathType):
         return cls.get_path(path).stem
+
+    @classmethod
+    def get_dir_name(cls, path: PathType):
+        return os.path.basename(path)
 
     @classmethod
     def get_name_with_extension(cls, path: PathType):
@@ -80,6 +85,14 @@ class FileHelper():
     def is_png(cls, path: PathType):
         return cls.get_extension(path) in [".png"]
 
+    @classmethod
+    def is_file(cls, path: PathType):
+        return os.path.isfile(path)
+
+    @classmethod
+    def is_dir(cls, path: PathType):
+        return os.path.isdir(path)
+
     # -- M --
 
     @classmethod
@@ -121,3 +134,19 @@ class FileHelper():
     def delete_dir(cls, dir_path: PathType, ignore_errors: bool = True) -> None:
         path = cls.get_path(dir_path)
         shutil.rmtree(path=path, ignore_errors=ignore_errors)
+
+    @classmethod
+    def get_dir_content_as_json(cls, path: PathType) -> Any:
+        if cls.is_file(path):
+            return cls.get_name_with_extension(path)
+
+        if cls.is_dir(path):
+            children: List[str] = os.listdir(path)
+            result: List[Any] = []
+
+            for child in children:
+                result.append(cls.get_dir_content_as_json(os.path.join(path, child)))
+            dir_name: str = cls.get_dir_name(path)
+            return {dir_name: result}
+
+        return None

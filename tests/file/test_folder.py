@@ -34,6 +34,9 @@ class TestFolder(BaseTestCase):
         self.assertTrue(folder.has_node('test.txt'))
         self.assertTrue(folder.has_node('sub_dir'))
 
+        # Test json view
+        self.assert_json(folder.view_as_json().to_dict()["data"], {"folder": [{"sub_dir": []}, 'test.txt']})
+
     async def test_folder_process(self):
         experiment: IExperiment = IExperiment()
         process: IProcess = experiment.get_protocol().add_process(CreateFolderTest, 'create_folder')
