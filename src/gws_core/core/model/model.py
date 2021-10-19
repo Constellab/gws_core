@@ -80,6 +80,7 @@ class Model(Base, PeeweeModel):
     # Provided at the Class level automatically by the @TypingDecorator
     _typing_name: str = None
     _json_ignore_fields: List[str] = []
+    _default_full_text_column = "data"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -188,9 +189,10 @@ class Model(Base, PeeweeModel):
         if cls.table_exists():
             return
         super().create_table(*args, **kwargs)
-        if cls.get_db_manager().is_mysql_engine():
-            cls.get_db_manager().db.execute_sql(
-                f"CREATE FULLTEXT INDEX data ON {cls.get_table_name()}(data)")
+        if cls._default_full_text_column:
+            if cls.get_db_manager().is_mysql_engine():
+                cls.get_db_manager().db.execute_sql(
+                    f"CREATE FULLTEXT INDEX {cls._default_full_text_column} ON {cls.get_table_name()}({cls._default_full_text_column})")
 
     # -- D --
 
@@ -353,7 +355,8 @@ class Model(Base, PeeweeModel):
         else:
             modifier = None
 
-        return cls.select().where(Match((cls.data), phrase, modifier=modifier))
+        field = getattr(cls,cls._default_full_text_column)
+        return cls.select().where(Match((field), phrase, modifier=modifier))
 
     def set_data(self, data: dict):
         """
