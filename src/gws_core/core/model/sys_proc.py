@@ -29,6 +29,9 @@ class SysProc:
     def is_alive(self) -> bool:
         return self._ps.is_running()
 
+    def is_zombie(self) -> bool:
+        return self._ps.status() == "zombie"
+
     def kill(self):
         self._ps.kill()
 

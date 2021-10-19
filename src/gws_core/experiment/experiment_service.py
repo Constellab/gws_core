@@ -203,6 +203,13 @@ class ExperimentService(BaseService):
             'paginator': paginator._get_paginated_info()
         }
 
+    @classmethod
+    def get_all_running_experiments(cls) -> List[Experiment]:
+        return list(
+            Experiment.select().where(
+                (Experiment.status == ExperimentStatus.RUNNING) |
+                (Experiment.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS)))
+
     ################################### RUN ##############################
 
     @classmethod
@@ -376,9 +383,6 @@ class ExperimentService(BaseService):
         This is only possible if the experiment has been started through the cli
         """
 
-        # if not HTTPHelper.is_http_context():
-        #    raise BadRequestException("The user must be in http context")
-
         if not experiment_pid:
             raise BadRequestException(
                 f"The experiment pid is {experiment_pid}")
@@ -387,6 +391,10 @@ class ExperimentService(BaseService):
         except Exception as err:
             raise BadRequestException(
                 f"No such process found or its access is denied (pid = {experiment_pid}). Error: {err}") from err
+
+        # Don't kill if the process is already a zombie
+        if sproc.is_zombie():
+            return
 
         try:
             # Gracefully stops the experiment and exits!
@@ -398,7 +406,7 @@ class ExperimentService(BaseService):
 
     @classmethod
     def stop_all_running_experiment(cls) -> None:
-        experiments: List[Experiment] = list(Experiment.select().where(Experiment.pid is not None))
+        experiments: List[Experiment] = cls.get_all_running_experiments()
         for experiment in experiments:
             try:
                 cls.stop_experiment(experiment.uri)
