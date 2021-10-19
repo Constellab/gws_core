@@ -77,3 +77,6 @@ class IExperiment:
         """Reset the status and the resources of the experiment, its protocols and tasks
         """
         self._experiment.reset()
+
+    def stop(self) -> None:
+        ExperimentService.stop_experiment(self._experiment.uri)

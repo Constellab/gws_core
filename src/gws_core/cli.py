@@ -4,14 +4,13 @@
 # About us: https://gencovery.com
 
 import asyncio
+
 import click
 
 from .core.exception.exception_handler import ExceptionHandler
 from .core.exception.exceptions import BadRequestException
-from .core.utils.settings import Settings
-from .experiment.experiment import Experiment
 from .experiment.experiment_service import ExperimentService
-from .user.user import User
+
 
 @click.command(context_settings=dict(
     ignore_unknown_options=True,
@@ -21,22 +20,9 @@ from .user.user import User
 @click.option('--experiment-uri', help='Experiment uri')
 @click.option('--user-uri', help='User uri')
 def run_experiment(ctx, experiment_uri, user_uri):
-
-    settings = Settings.retrieve()
     try:
-        user: User = User.get(User.uri == user_uri)
-    except Exception as err:
-        raise BadRequestException(
-            f"No user found with uri '{user_uri}'. Flags: is_prod={settings.is_prod}, is_test={settings.is_test}. Error: {err}") from err
-
-    if not user.is_authenticated:
-        raise BadRequestException("The user must be HTTP authenticated")
-
-    experiment: Experiment = Experiment.get_by_uri_and_check(experiment_uri)
-
-    try:
-        asyncio.run(ExperimentService.run_experiment(
-            experiment=experiment, user=user))
+        asyncio.run(ExperimentService.run_experiment_in_cli(
+            experiment_uri, user_uri))
     except Exception as err:
         ExceptionHandler.handle_exception(None, err)
         raise BadRequestException(

@@ -7,11 +7,11 @@ import os
 import subprocess
 import traceback
 from math import exp
-from typing import Any, Coroutine, Dict, Type, Union
-
-from peewee import ModelSelect
+from posix import listdir
+from typing import Any, Coroutine, Dict, List, Type, Union
 
 from gws_core.study.study_dto import StudyDto
+from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
 from ..core.decorator.transaction import transaction
@@ -203,7 +203,38 @@ class ExperimentService(BaseService):
             'paginator': paginator._get_paginated_info()
         }
 
+    @classmethod
+    def get_all_running_experiments(cls) -> List[Experiment]:
+        return list(
+            Experiment.select().where(
+                (Experiment.status == ExperimentStatus.RUNNING) |
+                (Experiment.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS)))
+
     ################################### RUN ##############################
+
+    @classmethod
+    async def run_experiment_in_cli(cls, experiment_uri: str, user_uri: str) -> None:
+        """Method called by the cli sub process to run the experiment
+        """
+        experiment: Experiment = Experiment.get_by_uri_and_check(experiment_uri)
+
+        try:
+            user: User = User.get_by_uri_and_check(user_uri)
+
+            if not user.is_authenticated:
+                raise BadRequestException("The user must be HTTP authenticated")
+
+            if experiment.status != ExperimentStatus.WAITING_FOR_CLI_PROCESS:
+                raise Exception(
+                    f"Cannot run the experiment {experiment.uri} as it status was changed before process could run it")
+
+        except Exception as err:
+            error_text = GWSException.EXPERIMENT_ERROR_BEFORE_RUN.value + str(err)
+            Logger.error(error_text)
+            experiment.mark_as_error({"detail": error_text,
+                                      "unique_code": GWSException.EXPERIMENT_ERROR_BEFORE_RUN.name,
+                                      "context": None, "instance_id": None})
+        await cls.run_experiment(experiment, user)
 
     @classmethod
     async def run_experiment(cls, experiment: Experiment, user: User = None) -> Coroutine[Any, Any, Experiment]:
@@ -251,7 +282,7 @@ class ExperimentService(BaseService):
             raise exception
 
     @classmethod
-    def run_through_cli(cls, experiment: Experiment, user=None):
+    def create_cli_process_for_experiment(cls, experiment: Experiment, user=None):
         """
         Run an experiment in a non-blocking way through the cli.
 
@@ -300,16 +331,17 @@ class ExperimentService(BaseService):
             cmd.append("dev")
 
         try:
-            Logger.info(
-                f"gws.experiment.Experiment run_through_cli {str(cmd)}")
-            Logger.info(
-                f"""The experiment logs are not shown in the console, because it is run in another linux process.
-                To view them check the logs marked as {Logger.get_sub_process_text()} in the today's log file : {Logger.get_file_path()}""")
             sproc = SysProc.popen(
                 cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
 
             # Mark that a process is created for the experiment, but it is not started yet
             experiment.mark_as_waiting_for_cli_process(sproc.pid)
+
+            Logger.info(
+                f"gws.experiment.Experiment run_through_cli {str(cmd)}")
+            Logger.info(
+                f"""The experiment logs are not shown in the console, because it is run in another linux process ({experiment.pid}).
+                To view them check the logs marked as {Logger.get_sub_process_text()} in the today's log file : {Logger.get_file_path()}""")
         except Exception as err:
             traceback.print_exc()
             exception: ExperimentRunException = ExperimentRunException.from_exception(
@@ -319,51 +351,17 @@ class ExperimentService(BaseService):
             raise exception
 
     @classmethod
-    def stop_experiment(cls, uri) -> Experiment:
-        experiment: Experiment = None
-
-        try:
-            experiment = Experiment.get(Experiment.uri == uri)
-        except Exception as err:
-            raise BadRequestException(
-                detail=f"Experiment '{uri}' not found") from err
+    def stop_experiment(cls, uri: str) -> Experiment:
+        experiment: Experiment = Experiment.get_by_uri_and_check(uri)
 
         experiment.check_is_stopable()
 
+        # try to kill the pid if possible
         try:
-            cls._kill_experiment_pid(experiment)
-            return experiment
+            if experiment.pid is not None:
+                cls._kill_experiment_pid(experiment.pid)
         except Exception as err:
-            raise BadRequestException(
-                detail=f"Cannot kill experiment '{uri}'") from err
-
-    @classmethod
-    def _kill_experiment_pid(cls, experiment: Experiment) -> Experiment:
-        """
-        Kill the experiment through HTTP context if it is running
-
-        This is only possible if the experiment has been started through the cli
-        """
-
-        # if not HTTPHelper.is_http_context():
-        #    raise BadRequestException("The user must be in http context")
-
-        if not experiment.pid:
-            raise BadRequestException(
-                f"The experiment pid is {experiment.pid}")
-        try:
-            sproc = SysProc.from_pid(experiment.pid)
-        except Exception as err:
-            raise BadRequestException(
-                f"No such process found or its access is denied (pid = {experiment.pid}). Error: {err}") from err
-
-        try:
-            # Gracefully stops the experiment and exits!
-            sproc.kill()
-            sproc.wait()
-        except Exception as err:
-            raise BadRequestException(
-                f"Cannot kill the experiment (pid = {experiment.pid}). Error: {err}") from err
+            Logger.error(str(err))
 
         ActivityService.add(
             Activity.STOP,
@@ -376,3 +374,41 @@ class ExperimentService(BaseService):
                                   "context": None, "instance_id": None})
 
         return experiment
+
+    @classmethod
+    def _kill_experiment_pid(cls, experiment_pid: int) -> None:
+        """
+        Kill the experiment through HTTP context if it is running
+
+        This is only possible if the experiment has been started through the cli
+        """
+
+        if not experiment_pid:
+            raise BadRequestException(
+                f"The experiment pid is {experiment_pid}")
+        try:
+            sproc = SysProc.from_pid(experiment_pid)
+        except Exception as err:
+            raise BadRequestException(
+                f"No such process found or its access is denied (pid = {experiment_pid}). Error: {err}") from err
+
+        # Don't kill if the process is already a zombie
+        if sproc.is_zombie():
+            return
+
+        try:
+            # Gracefully stops the experiment and exits!
+            sproc.kill()
+            sproc.wait()
+        except Exception as err:
+            raise BadRequestException(
+                f"Cannot kill the experiment (pid = {experiment_pid}). Error: {err}") from err
+
+    @classmethod
+    def stop_all_running_experiment(cls) -> None:
+        experiments: List[Experiment] = cls.get_all_running_experiments()
+        for experiment in experiments:
+            try:
+                cls.stop_experiment(experiment.uri)
+            except Exception as err:
+                Logger.error(f'Could not stop experiment {experiment.uri}. {str(err)}')

@@ -169,10 +169,6 @@ class ProcessModel(Viewable):
         :return: Returns True if is process is successfully reset;  False otherwise
         :rtype: `bool`
         """
-
-        if self.is_running:
-            return None
-
         self.progress_bar.reset()
 
         self.status = ProcessStatus.DRAFT

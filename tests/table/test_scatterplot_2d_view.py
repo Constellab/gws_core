@@ -13,10 +13,9 @@ class TestScatterPlot2DView(BaseTestCase):
         vw = ScatterPlot2DView(data=table)
 
         dic = vw.to_dict(x_column_name="sepal.length",
-                               y_column_names=["petal.length", "petal.width"], title="my title")
+                         y_column_names=["petal.length", "petal.width"], title="my title")
 
         self.assertEqual(dic["type"], "scatter-plot-2d-view")
-        self.assertEqual(dic["title"], "my title")
 
         self.assertEqual(dic["series"][0]["data"]["x"], table.get_data()["sepal.length"].values.tolist())
         self.assertEqual(dic["series"][0]["data"]["y"], table.get_data()["petal.length"].values.tolist())

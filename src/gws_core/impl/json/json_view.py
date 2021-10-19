@@ -22,7 +22,7 @@ class JSONView(View):
     _data: Any
 
     def __init__(self, data: Dict):
-        if not isinstance(data, (dict, list, bool, str, int, float)):
+        if data is not None and not isinstance(data, (dict, list, bool, str, int, float)):
             raise BadRequestException("The data must be a json (dictionary, list of primitive or primitive object)")
         super().__init__(data=data)
 

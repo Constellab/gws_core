@@ -208,3 +208,16 @@ class LocalFileStore(FileStore):
         file_store_list: List[FileStore] = cls.select()
         for file_store in file_store_list:
             file_store.delete_instance()
+
+    def delete_instance(self, *args, **kwargs):
+        """Override delete instance to delete all files
+
+        :return: [description]
+        :rtype: [type]
+        """
+
+        result = super().delete_instance(*args, **kwargs)
+
+        FileHelper.delete_dir(self.path)
+
+        return result

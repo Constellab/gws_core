@@ -65,8 +65,7 @@ class App:
         """
 
         cls.is_running = True
-        Monitor.init(daemon=True)
-        QueueService.init(daemon=True)
+        SystemService.init_queue_and_monitor()
 
     @classmethod
     def deinit(cls):
@@ -74,8 +73,7 @@ class App:
         Deinitialize the app
         """
 
-        Monitor.deinit()
-        QueueService.deinit()
+        SystemService.deinit_queue_and_monitor()
         cls.is_running = False
 
     @classmethod

@@ -95,8 +95,8 @@ class CondaEnvShell(BaseEnvShell):
             ProgressBar.add_message_to_current(
                 "Virtual environment installed!")
         except Exception as err:
-            raise BadRequestException(
-                "Cannot install the virtual environment.") from err
+
+            raise Exception( "Cannot install the virtual environment.") from err
 
     # -- U --
 

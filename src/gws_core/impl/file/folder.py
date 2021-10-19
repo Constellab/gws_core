@@ -2,11 +2,12 @@
 
 import os
 from pathlib import Path
-from posixpath import dirname
-from typing import List
+from typing import Any, List
 
-from ...impl.file.file_helper import FileHelper
 from ...resource.resource_decorator import resource_decorator
+from ...resource.view_decorator import view
+from ..json.json_view import JSONView
+from .file_helper import FileHelper
 from .fs_node import FSNode
 
 
@@ -40,3 +41,8 @@ class Folder(FSNode):
         """Get the path of a sub node, in the folder
         """
         return os.path.join(self.path, node_name)
+
+    @view(view_type=JSONView, human_name="View folder content", short_description="View the sub files and folders",
+          default_view=True)
+    def view_as_json(self) -> JSONView:
+        return JSONView(FileHelper.get_dir_content_as_json(self.path))
