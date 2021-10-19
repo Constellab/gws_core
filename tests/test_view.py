@@ -29,10 +29,10 @@ class ResourceViewTest(Resource):
 class ResourceViewTestSub(ResourceViewTest):
 
     @view(view_type=TextView, human_name='Sub View for test', short_description='Description for sub test',
-          specs={'test_str_param': StrParam(),
-                 'test_any_param': StrParam()},
+          specs={'test_str_param': StrParam(default_value='Hello'),
+                 'test_any_param': StrParam('Nice')},
           default_view=True)
-    def sub_view_test(self, test_str_param: str = 'Hello', test_any_param='Nice') -> TextView:
+    def sub_view_test(self, test_str_param: str, test_any_param) -> TextView:
         return TextView(test_str_param + str(test_any_param))
 
 
