@@ -18,7 +18,7 @@ class SysProc:
     This class that only exposes necessary functionalities to easily manage shell processes.
     """
 
-    _ps = None
+    _ps: psutil.Process = None
 
     @staticmethod
     def from_pid(pid) -> 'SysProc':

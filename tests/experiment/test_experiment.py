@@ -4,14 +4,13 @@
 # About us: https://gencovery.com
 
 import time
-import uuid
 from typing import List
 
 from gws_core import (BaseTestCase, Experiment, ExperimentDTO,
                       ExperimentService, ExperimentStatus, GTest, ProcessModel,
                       ProtocolModel, ResourceModel, Robot, RobotService,
-                      Settings, TaskModel)
-from gws_core.core.utils.utils import Utils
+                      RobotWorldTravelProto, Settings, TaskModel, Utils)
+from gws_core.process.process_model import ProcessStatus
 from gws_core.study.study_dto import StudyDto
 
 settings = Settings.retrieve()
@@ -79,7 +78,7 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(ResourceModel.select().count(), 15)
         self.assertEqual(len(Q1), 15)
         self.assertEqual(len(Q2), 15)
-        self.assertEqual(experiment2.pid, 0)
+        self.assertEqual(experiment2.pid, None)
 
         e2_bis: Experiment = Experiment.get(Experiment.uri == experiment1.uri)
 
@@ -101,7 +100,7 @@ class TestExperiment(BaseTestCase):
         robot2: Robot = eat_3.outputs.get_resource_model('robot').get_resource()
         self.assertEqual(robot1.weight, robot2.weight - 10)
 
-    async def test_run_through_cli_and_re_run(self):
+    async def test_run_through_cli(self):
 
         # experiment 3
         # -------------------------------
@@ -110,7 +109,7 @@ class TestExperiment(BaseTestCase):
         experiment3 = ExperimentService.create_experiment_from_protocol_model(protocol_model=proto3)
 
         print("Run experiment_3 through cli ...")
-        ExperimentService.run_through_cli(
+        ExperimentService.create_cli_process_for_experiment(
             experiment=experiment3, user=GTest.user)
         self.assertEqual(experiment3.status,
                          ExperimentStatus.WAITING_FOR_CLI_PROCESS)
@@ -131,7 +130,7 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(Experiment.count_of_running_experiments(), 0)
         experiment3: Experiment = Experiment.get_by_uri_and_check(experiment3.uri)
         self.assertEqual(experiment3.status, ExperimentStatus.SUCCESS)
-        self.assertEqual(experiment3.pid, 0)
+        self.assertEqual(experiment3.pid, None)
 
         Q = experiment3.resources
         self.assertEqual(len(Q), 15)
@@ -160,3 +159,34 @@ class TestExperiment(BaseTestCase):
 
         print("Archive experiment again...")
         _test_archive(True)
+
+    async def test_reset(self):
+        experiment: Experiment = ExperimentService.create_experiment_from_protocol_type(RobotWorldTravelProto)
+
+        experiment = await ExperimentService.run_experiment(experiment=experiment, user=GTest.user)
+
+        experiment.reset()
+        self.assertEqual(experiment.status, ExperimentStatus.DRAFT)
+
+        # check recursively all the status
+        self._check_process_reset(experiment.protocol_model)
+        # Same test with experiment from DB
+        self._check_process_reset(ExperimentService.get_experiment_by_uri(experiment.uri).protocol_model)
+
+    def _check_process_reset(self, process_model: ProcessModel) -> None:
+        self.assertEqual(process_model.status, ProcessStatus.DRAFT)
+        self.assertFalse(process_model.progress_bar.is_initialized)
+        self.assertIsNone(process_model.error_info)
+
+        for port in process_model.inputs.ports.values():
+            self.assertIsNone(port.resource_model)
+            self.assertFalse(port.resource_provided)
+
+        for port in process_model.outputs.ports.values():
+            self.assertIsNone(port.resource_model)
+            self.assertFalse(port.resource_provided)
+
+        # If this is a protocol, check the sub process
+        if isinstance(process_model, ProtocolModel):
+            for process in process_model.processes.values():
+                self._check_process_reset(process)

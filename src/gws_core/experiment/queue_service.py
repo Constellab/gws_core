@@ -103,7 +103,7 @@ class QueueService(BaseService):
             return
 
         try:
-            ExperimentService.run_through_cli(
+            ExperimentService.create_cli_process_for_experiment(
                 experiment=experiment, user=job.user)
         except Exception as err:
             Logger.error(

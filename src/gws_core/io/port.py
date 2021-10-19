@@ -249,8 +249,7 @@ class Port(Base):
 
     def reset(self):
         self._resource_model = None
-        # for port in self._next:
-        #    port._resource = None
+        self._resource_provided = False
 
     @property
     def resource_spec(self) -> IOSpecClass:

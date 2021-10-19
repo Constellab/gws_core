@@ -5,15 +5,17 @@
 
 import shutil
 
-from gws_core.core.db.db_manager import DbManager
-from gws_core.core.exception.exceptions.unauthorized_exception import \
+from ..core.db.db_manager import DbManager
+from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
-from gws_core.model.model_service import ModelService
-from gws_core.user.current_user_service import CurrentUserService
-from gws_core.user.user import User
-from gws_core.user.user_service import UserService
-
 from ..core.utils.settings import Settings
+from ..experiment.experiment_service import ExperimentService
+from ..experiment.queue_service import QueueService
+from ..model.model_service import ModelService
+from ..user.current_user_service import CurrentUserService
+from ..user.user import User
+from ..user.user_service import UserService
+from .monitor import Monitor
 
 
 class SystemService:
@@ -26,12 +28,19 @@ class SystemService:
          - register the processes and resources
          - create the sysuser if not exists
         """
-        settings: Settings = Settings.retrieve()
-        DbManager.init_all_db(test=settings.is_test)
-
         cls.create_all_tables()
         ModelService.register_all_processes_and_resources()
         UserService.create_sysuser()
+
+    @classmethod
+    def init_queue_and_monitor(cls) -> None:
+        Monitor.init(daemon=True)
+        QueueService.init(daemon=True)
+
+    @classmethod
+    def deinit_queue_and_monitor(cls) -> None:
+        Monitor.deinit()
+        QueueService.deinit()
 
     @classmethod
     def create_all_tables(cls):
@@ -73,9 +82,15 @@ class SystemService:
 
         user: User = CurrentUserService.get_and_check_current_user()
 
+        # Stop all running experiment
+        ExperimentService.stop_all_running_experiment()
+
+        cls.deinit_queue_and_monitor()
+
         cls.delete_data_and_temp_folder()
         cls.drop_all_tables()
 
         cls.init()
+        cls.init_queue_and_monitor()
 
         UserService.create_user_if_not_exists(user.to_user_data_dict())

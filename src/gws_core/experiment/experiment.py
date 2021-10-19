@@ -326,19 +326,18 @@ class Experiment(Viewable):
         self.save()
 
     def mark_as_started(self):
-        # self.data["pid"] = 0. /!\ Do not reset pid here, otherwise the experiment could not be stopped if started through cli !!!
         self.status = ExperimentStatus.RUNNING
         self.save()
 
     def mark_as_success(self):
-        self.data["pid"] = 0
+        self.data["pid"] = None
         self.status = ExperimentStatus.SUCCESS
         self.save()
 
     def mark_as_error(self, error_info: ExperimentErrorInfo) -> None:
         if self.is_error:
             return
-        self.data["pid"] = 0
+        self.data["pid"] = None
         self.status = ExperimentStatus.ERROR
         self.error_info = error_info
         self.save()
@@ -360,9 +359,8 @@ class Experiment(Viewable):
         """
 
         # check experiment status
-        if self.status != ExperimentStatus.RUNNING:
-            raise BadRequestException(
-                detail=f"Experiment '{self.uri}' is not running")
+        if not self.is_running:
+            raise BadRequestException(detail=f"Experiment '{self.uri}' is not running")
 
     def check_is_updatable(self) -> None:
         """Throw an error if the experiment is not updatable

@@ -459,10 +459,6 @@ class ProtocolModel(ProcessModel):
 
         return super().inputs
 
-    def _reset_io(self):
-        # > deactivated
-        pass
-
     ############################### OUTPUTS #################################
     @property
     def outputs(self) -> 'Outputs':
