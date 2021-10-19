@@ -4,8 +4,8 @@
 # About us: https://gencovery.com
 
 import shutil
+import sys
 
-from ..core.db.db_manager import DbManager
 from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
 from ..core.utils.settings import Settings
@@ -94,3 +94,12 @@ class SystemService:
         cls.init_queue_and_monitor()
 
         UserService.create_user_if_not_exists(user.to_user_data_dict())
+
+    @classmethod
+    def kill_process(cls) -> None:
+        settings: Settings = Settings.retrieve()
+
+        if not settings.is_dev:
+            raise UnauthorizedException('The kill method can only be called in dev environment')
+
+        sys.exit()

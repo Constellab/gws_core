@@ -15,3 +15,8 @@ async def get_the_lab_monitor_data(_: UserData = Depends(AuthService.check_user_
     """
 
     SystemService.reset_dev_envionment()
+
+
+@core_app.post("/system/kill", tags=["System"], summary="Stop the python process and the API")
+async def kill_process(_: UserData = Depends(AuthService.check_user_access_token)) -> None:
+    SystemService.kill_process()
