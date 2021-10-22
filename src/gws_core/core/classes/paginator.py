@@ -98,7 +98,8 @@ class Paginator(Generic[PaginatorType]):
             self.view_params = view_params
 
         self.query = query
-        self.paginated_query = query.paginate(page, number_of_items_per_page)
+        # add 1 to page because peewee starts with 1
+        self.paginated_query = query.paginate(page + 1, number_of_items_per_page)
         self.page_info = PageInfo(
             int(page),
             number_of_items_per_page, query.count(),

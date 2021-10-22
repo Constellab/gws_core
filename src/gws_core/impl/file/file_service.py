@@ -15,9 +15,7 @@ from ...core.classes.paginator import Paginator
 from ...core.exception.exceptions.not_found_exception import NotFoundException
 from ...core.service.base_service import BaseService
 from ...resource.resource_typing import FileTyping
-from ..table.file_table import FileTable
 from .file import File
-from .file_helper import FileHelper
 from .file_store import FileStore
 from .fs_node_model import FSNodeModel, FSNodeOrigin
 from .local_file_store import LocalFileStore
