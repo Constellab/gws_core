@@ -5,7 +5,7 @@
 
 from collections.abc import Iterable as IterableClass
 from inspect import isclass
-from typing import Dict, Iterable, List, Type, Union, get_args
+from typing import Dict, Iterable, List, Literal, Type, Union, get_args
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -234,3 +234,36 @@ class IOSpecsHelper():
             _json[key] = resources_json
 
         return _json
+
+    @classmethod
+    def check_input_specs(cls, input_specs: InputSpecs) -> None:
+        """Method to verify that input specs are valid
+        """
+        cls._check_io_spec_param(input_specs, 'input', SpecialTypeIn)
+
+    @classmethod
+    def check_output_specs(cls, output_specs: InputSpecs) -> None:
+        """Method to verify that output specs are valid
+        """
+        cls._check_io_spec_param(output_specs, 'output', SpecialTypeOut)
+
+    @classmethod
+    def _check_io_spec_param(cls, io_specs: IOSpecs,
+                             param_type: Literal['input', 'output'], special_type: Type[SpecialTypeIO]) -> None:
+        if not io_specs:
+            return
+
+        for key, item in io_specs.items():
+            params: Iterable[ResourceType]
+
+            if isinstance(item, special_type):
+                params = item.resource_types
+            elif not isinstance(item, IterableClass):
+                params = [item]
+            else:
+                params = item
+
+            for param in params:
+                if not isclass(param) or not issubclass(param, Resource):
+                    raise Exception(
+                        f"The {param_type} param of spec '{key}' is invalid. Expected a resource type, got {str(param)}")

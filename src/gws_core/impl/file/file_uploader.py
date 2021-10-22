@@ -9,8 +9,8 @@ import os
 from pathlib import Path
 from typing import Type
 
-from ...config.param_spec import StrParam
 from ...config.config_types import ConfigParams
+from ...config.param_spec import StrParam
 from ...core.utils.utils import Utils
 from ...resource.resource import Resource
 from ...task.task import Task
@@ -30,8 +30,8 @@ from .local_file_store import LocalFileStore
 class FileImporter(Task):
     input_specs = {'file': File}
     output_specs = {"data": Resource}
-    config_specs = {'file_format': StrParam(optional=True, short_description="File format"), 'output_type': {StrParam(
-        default_value="", short_description="The output file type. If defined, it is used to automatically format data output")}}
+    config_specs = {'file_format': StrParam(optional=True, short_description="File format"), 'output_type': StrParam(
+        default_value="", short_description="The output file type. If defined, it is used to automatically format data output")}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         inport_name = list(self.input_specs.keys())[0]

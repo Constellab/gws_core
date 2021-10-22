@@ -6,6 +6,9 @@
 
 from typing import Callable, Type
 
+from gws_core.config.param_spec_helper import ParamSpecHelper
+
+from ..io.io_spec import IOSpecsHelper
 from ..model.typing_register_decorator import register_typing_class
 from ..user.user_group import UserGroup
 from .task import Task
@@ -36,6 +39,16 @@ def task_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER,
         if not issubclass(task_class, Task):
             raise Exception(
                 f"The task_decorator is used on the class: {task_class.__name__} and this class is not a sub class of Task")
+
+        # Check the input, output and config specs
+        try:
+            IOSpecsHelper.check_input_specs(task_class.input_specs)
+            IOSpecsHelper.check_output_specs(task_class.output_specs)
+            ParamSpecHelper.check_config_specs(task_class.config_specs)
+
+        except Exception as err:
+            raise Exception(
+                f"Invalid specs for the task : {task_class.__name__}. {str(err)}")
 
         register_typing_class(object_class=task_class, object_type="TASK", unique_name=unique_name,
                               human_name=human_name, short_description=short_description, hide=hide)

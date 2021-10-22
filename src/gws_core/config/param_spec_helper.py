@@ -1,7 +1,7 @@
 from typing import Dict, List
 
 from gws_core.config.config_exceptions import MissingConfigsException
-from gws_core.config.config_types import ParamValue
+from gws_core.config.config_types import ConfigSpecs, ParamValue
 from gws_core.config.param_spec import ParamSpec
 
 
@@ -9,7 +9,7 @@ class ParamSpecHelper():
 
     @classmethod
     def get_and_check_values(
-            self, param_specs: Dict[str, ParamSpec],
+            cls, param_specs: Dict[str, ParamSpec],
             param_values: Dict[str, ParamValue]) -> Dict[str, ParamValue]:
         """
         Returns all the parameters including default value if not provided
@@ -44,3 +44,17 @@ class ParamSpecHelper():
             raise MissingConfigsException(missing_params)
 
         return full_values
+
+    @classmethod
+    def check_config_specs(cls, config_specs: ConfigSpecs) -> None:
+        """Check that the config specs are valid
+        """
+        if not config_specs:
+            return
+
+        if not isinstance(config_specs, dict):
+            raise Exception(f"The config specs must be a dictionary")
+
+        for key, item in config_specs.items():
+            if not isinstance(item, ParamSpec):
+                raise Exception(f"The config spec '{key}' is invalid, it must be a ParamSpec but got {str(item)}")
