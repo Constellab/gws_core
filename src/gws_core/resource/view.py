@@ -1,9 +1,6 @@
 
 from typing import Any
 
-from ..config.param_spec import StrParam
-from ..core.exception.exceptions.bad_request_exception import \
-    BadRequestException
 from .view_types import ViewSpecs
 
 

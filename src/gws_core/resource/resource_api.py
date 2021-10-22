@@ -10,7 +10,7 @@ from fastapi import Depends
 from ..core.classes.jsonable import ListJsonable
 from ..core.classes.paginator import PaginatorDict
 from ..core_app import core_app
-from ..resource.view_types import ViewConfig
+from ..resource.view_meta_data import ViewConfigValues
 from ..user.auth_service import AuthService
 from ..user.user_dto import UserData
 from .resource_service import ResourceService
@@ -29,8 +29,8 @@ async def get_resource_type_views(resource_typing_name: str) -> list:
 async def call_view_on_resource(resource_model_typing_name: str,
                                 uri: str,
                                 view_name: str,
-                                config: ViewConfig) -> Any:
-    return ResourceService.call_view_on_resource_type(resource_model_typing_name, uri, view_name, config)
+                                values: ViewConfigValues) -> Any:
+    return ResourceService.call_view_on_resource_type(resource_model_typing_name, uri, view_name, values)
 
 
 ####################################### Resource Model ###################################

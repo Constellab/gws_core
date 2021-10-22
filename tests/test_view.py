@@ -6,9 +6,9 @@ from gws_core import (BaseTestCase, Resource, ResourceService, StrParam,
                       TextView, resource_decorator, view)
 from gws_core.config.param_spec import StrParam
 from gws_core.resource.view import View
-from gws_core.resource.view_decorator import ResourceViewMetaData
 from gws_core.resource.view_helper import ViewHelper
-from gws_core.resource.view_types import ViewConfig
+from gws_core.resource.view_meta_data import (ResourceViewMetaData,
+                                              ViewConfigValues)
 
 
 @resource_decorator("ResourceViewTest")
@@ -87,20 +87,16 @@ class TestView(BaseTestCase):
 
     def test_test_complete_call_view(self):
         resource = ResourceViewTestSub()
-        config: ViewConfig = {
-            "method_config": {"test_str_param": "Bonjour ", "test_any_param": 12},
-            "view_config": {"page": 1, "page_size": 5000}}
         dict_: Dict = ViewHelper.call_view_on_resource(
-            resource, 'sub_view_test', config)
+            resource, 'sub_view_test', {"test_str_param": "Bonjour ", "test_any_param": 12},
+            {"page": 1, "page_size": 5000})
 
         self.assertEqual(dict_["type"], TextView._type)
         self.assertEqual(dict_["data"], "Bonjour 12")
 
         # Test with pagination
-        config = {
-            "method_config": {"test_str_param": "Bonjour ", "test_any_param": 12},
-            "view_config": {"page": 2, "page_size": 5}}
-        dict_ = ViewHelper.call_view_on_resource(
-            resource, 'sub_view_test', config)
+        dict_ = ViewHelper.call_view_on_resource(resource, 'sub_view_test',
+                                                 {"test_str_param": "Bonjour ", "test_any_param": 12},
+                                                 {"page": 2, "page_size": 5})
 
         self.assertEqual(dict_["data"], "ur 12")

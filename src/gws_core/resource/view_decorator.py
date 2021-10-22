@@ -1,48 +1,14 @@
 
 
-from typing import Callable, Dict, Type
+from typing import Callable, Type
 
 from ..core.classes.func_meta_data import FuncArgsMetaData
-from ..core.classes.jsonable import DictJsonable
 from ..core.utils.utils import Utils
 from .view import View
+from .view_meta_data import ResourceViewMetaData
 from .view_types import ViewSpecs
 
 VIEW_META_DATA_ATTRIBUTE = '__view_mata_data'
-
-
-class ResourceViewMetaData():
-    method_name: str
-    view_type: Type[View]
-    human_name: str
-    short_description: str
-    specs: ViewSpecs
-    default_view: bool
-
-    def __init__(self, method_name: str, view_type: Type[View],
-                 human_name: str, short_description: str,
-                 specs: ViewSpecs, default_view: bool) -> None:
-        self.method_name = method_name
-        self.view_type = view_type
-        self.human_name = human_name
-        self.short_description = short_description
-        self.specs = specs
-        self.default_view = default_view
-
-    def clone(self) -> 'ResourceViewMetaData':
-        return ResourceViewMetaData(
-            self.method_name, self.view_type, self.human_name, self.short_description, self.specs, self.default_view)
-
-    def to_json(self) -> dict:
-        return {
-            "method_name": self.method_name,
-            "view_type": self.view_type._type,
-            "human_name": self.human_name,
-            "short_description": self.short_description,
-            "view_specs": DictJsonable(self.view_type._specs).to_json(),
-            "method_specs": DictJsonable(self.specs).to_json(),
-            "default_view": self.default_view,
-        }
 
 
 def view(view_type: Type[View], human_name: str = "", short_description: str = "",

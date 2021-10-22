@@ -1,30 +1,26 @@
 import inspect
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
-from gws_core.config.param_spec_helper import ParamSpecHelper
-
+from ..config.param_spec_helper import ParamSpecHelper
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..resource.resource import Resource
-from ..resource.view_decorator import (VIEW_META_DATA_ATTRIBUTE,
-                                       ResourceViewMetaData)
+from ..resource.view_decorator import VIEW_META_DATA_ATTRIBUTE
 from .view import View
-from .view_types import ViewConfig
+from .view_meta_data import ResourceViewMetaData
 
 
 class ViewHelper():
 
     @classmethod
     def call_view_on_resource(cls, resource: Resource,
-                              view_name: str, config: ViewConfig) -> Dict:
-        if not config:
-            config = {"method_config": {}, "view_config": {}}
+                              view_name: str, method_config: Dict[str, Any], view_config: Dict[str, Any]) -> Dict:
 
         # Get the view object from the view method
-        view: View = cls.call_view_method(resource, view_name, config["method_config"])
+        view: View = cls.call_view_method(resource, view_name, method_config)
 
         # check the view config and set default values
-        view_parameters = ParamSpecHelper.get_and_check_values(view._specs, config["view_config"])
+        view_parameters = ParamSpecHelper.get_and_check_values(view._specs, view_config)
 
         # convert the view to dict using the config
         return view.to_dict(**view_parameters)
