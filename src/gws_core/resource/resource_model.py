@@ -12,7 +12,7 @@ from typing import (TYPE_CHECKING, Any, Dict, Generic, Optional, Type, TypeVar,
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.file.file_r_field import FileRField
 from gws_core.resource.r_field import BaseRField
-from peewee import CharField
+from peewee import CharField, ModelSelect
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -159,6 +159,10 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         super().drop_table(*args, **kwargs)
         TaskResource.drop_table()
         ExperimentResource.drop_table()
+
+    @classmethod
+    def select_by_resource_typing_name(cls, resource_typing_name: str) -> ModelSelect:
+        return cls.select_me().where(cls.resource_typing_name == resource_typing_name)
 
     ########################################## RESOURCE ######################################
     @final
@@ -332,8 +336,9 @@ class ResourceModel(Viewable, Generic[ResourceType]):
             })
 
         resource: ResourceType = self.get_resource()
-        _json["resource_human_name"] = resource._human_name or resource.__class__.__name__
-        _json["resource_short_description"] = resource._short_description
+        _json["resource_type_human_name"] = resource._human_name or resource.__class__.__name__
+        _json["resource_type_short_description"] = resource._short_description
+        _json["resource_human_name"] = resource.get_human_name()
 
         return _json
 

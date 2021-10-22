@@ -52,6 +52,12 @@ class Resource(Base):
         # @ToDo: ensure that this method is only called by an Exporter
         # TOdO do we need this ?
 
+    def get_human_name(self) -> str:
+        """Method that can be overrided. It must return a readable name that is usable when
+        showing the resource.
+        """
+        return self._human_name
+
     # -- G --
 
     # TODO: add method get(), select() to fetch de model from DB and return correspondin resource
@@ -72,8 +78,7 @@ class Resource(Base):
         :rtype any
         """
 
-        # @ToDo: ensure that this method is only called by an Importer
-
+    # @ToDo: ensure that this method is only called by an Importer
     @view(view_type=JSONView, human_name="View as JSON", short_description="View the complete resource as json", default_view=True)
     def view_as_json(self) -> JSONView:
         """By default the view_as_json dumps the RFields mark with, include_in_dict_view=True

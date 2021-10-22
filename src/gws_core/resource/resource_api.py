@@ -45,29 +45,26 @@ async def get_a_resource(resource_model_typing_name: str,
     - **uri**: the uri of the protocol
     """
 
-    return ResourceService.fetch_resource(
+    return ResourceService.get_resource_by_type_and_uri(
         resource_model_typing_name=resource_model_typing_name, uri=uri).to_json(
         deep=True)
 
 
 @core_app.get("/resource/{resource_typing_name}", tags=["Resource"], summary="Get the list of resources")
 async def get_the_list_of_resources(resource_typing_name: Optional[str] = None,
-                                    experiment_uri: Optional[str] = None,
                                     page: Optional[int] = 1,
                                     number_of_items_per_page: Optional[int] = 20,
                                     _: UserData = Depends(AuthService.check_user_access_token)) -> PaginatorDict:
     """
     Retrieve the list of resources from resource type. The list is paginated.
 
-     - **type**: the type of the processes to fetch
-    - **experiment_uri**: the uri of the experiment related to the processes. This parameter is ignored if `search_text` is given.
+    - **resource_typing_name**: typing name of the resource to fetch
     - **page**: the page number
     - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
     """
 
-    return ResourceService.fetch_resource_list(
+    return ResourceService.get_resources_of_type(
         resource_typing_name=resource_typing_name,
-        experiment_uri=experiment_uri,
         page=page,
         number_of_items_per_page=number_of_items_per_page,
     ).to_json()

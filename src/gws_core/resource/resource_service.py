@@ -25,9 +25,9 @@ class ResourceService(BaseService):
     ############################# RESOURCE MODEL ###########################
 
     @classmethod
-    def fetch_resource(cls,
-                       resource_model_typing_name: str,
-                       uri: str = "") -> ResourceModel:
+    def get_resource_by_type_and_uri(cls,
+                                     resource_model_typing_name: str,
+                                     uri: str = "") -> ResourceModel:
 
         try:
             return TypingManager.get_object_with_typing_name_and_uri(resource_model_typing_name, uri)
@@ -37,10 +37,9 @@ class ResourceService(BaseService):
                 detail=f"No resource found with uri '{uri}' and type '{resource_model_typing_name}'") from err
 
     @classmethod
-    def fetch_resource_list(cls,
-                            resource_typing_name: str,
-                            experiment_uri: str = None,
-                            page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
+    def get_resources_of_type(cls,
+                              resource_typing_name: str,
+                              page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
 
         # Retrieve the resource type
         resource_type: Type[Resource] = TypingManager.get_type_from_name(
@@ -53,13 +52,11 @@ class ResourceService(BaseService):
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
 
-        if resource_model_type is ResourceModel:
-            query = resource_model_type.select().order_by(resource_model_type.creation_datetime.desc())
-        else:
-            query = resource_model_type.select_me().order_by(resource_model_type.creation_datetime.desc())
-        if experiment_uri:
-            query = query.join(Experiment) \
-                .where(Experiment.uri == experiment_uri)
+        # Get the resource models and filter them with resource type
+        # TODO problem, it does select sub class of resource type.
+        query = resource_model_type.select_by_resource_typing_name(resource_typing_name)\
+            .order_by(resource_model_type.creation_datetime.desc())
+
         return Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
 
@@ -95,7 +92,7 @@ class ResourceService(BaseService):
                                    resource_model_uri: str,
                                    view_name: str, config: ViewConfig) -> Any:
 
-        resource_model: ResourceModel = cls.fetch_resource(resource_model_typing_name, resource_model_uri)
+        resource_model: ResourceModel = cls.get_resource_by_type_and_uri(resource_model_typing_name, resource_model_uri)
 
         resource: Resource = resource_model.get_resource()
         return cls.call_view_on_resource(resource, view_name, config)

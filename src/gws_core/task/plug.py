@@ -7,8 +7,7 @@ import time
 
 from gws_core.config.param_spec import FloatParam, IntParam, StrParam
 
-from ..config.config_types import ConfigParams
-from ..config.config_types import ConfigSpecs
+from ..config.config_types import ConfigParams, ConfigSpecs
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..io.io_spec import InputSpecs, OutputSpecs

@@ -6,7 +6,7 @@ from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 
 
-@resource_decorator("FsNode")
+@resource_decorator(unique_name="FsNode", hide=True)
 class FSNode(Resource):
     """
     Node class to manage resources that are stored in the server (as file or folder)
@@ -28,6 +28,9 @@ class FSNode(Resource):
     @property
     def name(self):
         return ''
+
+    def get_human_name(self) -> str:
+        return self.name
 
     @classmethod
     def get_resource_model_type(cls) -> Type[Any]:

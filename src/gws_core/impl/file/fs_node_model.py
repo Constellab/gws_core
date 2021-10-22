@@ -44,7 +44,6 @@ class FSNodeModel(ResourceModel):
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:
         _json = super().to_json(deep=deep,  **kwargs)
-        _json["name"] = FileHelper.get_path(self.path).name
         _json["is_file"] = True
         return _json
 

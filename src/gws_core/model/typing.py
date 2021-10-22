@@ -124,9 +124,11 @@ class Typing(Model):
 
     @classmethod
     def get_by_object_type(cls, object_type: TypingObjectType) -> ModelSelect:
+        """ Return all the visible typing name of a type.
+        """
         return cls.select()\
             .where((cls.object_type == object_type) & (cls.hide == False))\
-            .order_by(cls.model_type.desc())
+            .order_by(cls.human_name)
 
     @classmethod
     def get_by_model_type(cls, model_type: Type[Base]) -> 'Typing':
@@ -144,10 +146,9 @@ class Typing(Model):
     def get_children_typings(cls, typing_type: TypingObjectType,  base_type: Type[Base]) -> List['Typing']:
         """Retunr the list of typings that are a child class of the provided model_type
         """
-        all_typings: List[Typing] = list(cls.get_by_object_type(typing_type).order_by(cls.human_name))
+        all_typings: List[Typing] = list(cls.get_by_object_type(typing_type))
 
         typings = list(filter(lambda typing: issubclass(typing.get_type(), base_type), all_typings))
-        typings.sort(key=lambda typing: typing.human_name)  # sort array by human names
         return typings
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:
