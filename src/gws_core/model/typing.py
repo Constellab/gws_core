@@ -140,6 +140,16 @@ class Typing(Model):
     def _get_by_model_type(cls, model_type: Type[Base]) -> ModelSelect:
         return cls.select().where((cls.model_type == model_type.full_classname()))
 
+    @classmethod
+    def get_children_typings(cls, typing_type: TypingObjectType,  base_type: Type[Base]) -> List['Typing']:
+        """Retunr the list of typings that are a child class of the provided model_type
+        """
+        all_typings: List[Typing] = list(cls.get_by_object_type(typing_type).order_by(cls.human_name))
+
+        typings = list(filter(lambda typing: issubclass(typing.get_type(), base_type), all_typings))
+        typings.sort(key=lambda typing: typing.human_name)  # sort array by human names
+        return typings
+
     def to_json(self, deep: bool = False, **kwargs) -> dict:
         _json: Dict[str, Any] = super().to_json(deep=deep, **kwargs)
 

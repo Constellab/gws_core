@@ -17,6 +17,7 @@ def typing_registrator(unique_name: str, object_type: TypingObjectType, hide: bo
     :param hide: if True the typing class will not be shown to the user when retriving the typings, defaults to False
     :type hide: bool, optional
     """
+
     def decorator(object_class: Type[Any]):
         register_typing_class(object_class=object_class,
                               object_type=object_type, unique_name=unique_name,
@@ -29,6 +30,10 @@ def typing_registrator(unique_name: str, object_type: TypingObjectType, hide: bo
 def register_typing_class(
         object_class: Type[Any],
         object_type: TypingObjectType, unique_name: str, human_name: str, short_description, hide: bool = False) -> None:
+
+    if not human_name:
+        human_name = unique_name
+
     typing_name: str = TypingManager.register_typing(
         object_type=object_type,  unique_name=unique_name, object_class=object_class,
         human_name=human_name, short_description=short_description,  hide=hide)

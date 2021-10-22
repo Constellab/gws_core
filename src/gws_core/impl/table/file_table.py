@@ -1,3 +1,5 @@
+from typing import List
+
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.table.table import Table
 
@@ -22,6 +24,8 @@ class FileTable(File):
     :return: [description]
     :rtype: [type]
     """
+
+    supported_extensions: List[str] = ['xlsx', 'xls', 'csv', 'tsv']
 
     @view(view_type=TableView, human_name='Tabular', short_description='View as a table', default_view=True)
     def view_as_table(self) -> TableView:

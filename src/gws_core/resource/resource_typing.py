@@ -3,10 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, Dict, final
+from typing import Any, Dict, List, Type
 
 from peewee import ModelSelect
 
+from ..impl.file.file import File
 from ..model.typing import Typing, TypingObjectType
 
 # ####################################################################
@@ -16,7 +17,6 @@ from ..model.typing import Typing, TypingObjectType
 # ####################################################################
 
 
-@final
 class ResourceTyping(Typing):
     """
     ResourceType class.
@@ -51,5 +51,22 @@ class ResourceTyping(Typing):
 
         # Other infos
         _json["doc"] = self.get_model_type_doc()
+
+        return _json
+
+
+class FileTyping(ResourceTyping):
+
+    @classmethod
+    def get_typings(cls) -> List['ResourceTyping']:
+        return cls.get_children_typings(cls._object_type, File)
+
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
+        _json = super().to_json(deep, **kwargs)
+
+        file_type: Type[File] = self.get_type()
+
+        # Add the list of default extensions for the file
+        _json["supported_extensions"] = file_type.supported_extensions
 
         return _json

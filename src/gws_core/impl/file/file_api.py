@@ -3,12 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from fastapi import Depends
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
+from gws_core.core.classes.jsonable import ListJsonable
 from gws_core.core.classes.paginator import PaginatorDict
 
 from ...core_app import core_app
@@ -19,13 +20,17 @@ from .file_service import FileService
 
 @core_app.post("/file/upload", tags=["Files"], summary="Upload a file or a list of files")
 async def upload_a_file_or_list_of_files(files: List[UploadFile] = FastAPIFile(...),
+                                         typing_names: List[str] = None,
                                          _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-    """
-    Upload files
+    """[summary]
 
+    :param files: list of files to upload, defaults to FastAPIFile(...)
+    :type files: List[UploadFile], optional
+    :param typingNames: list of typing names for the files, defaults to None
+    :type typingNames: List[str], optional
     """
 
-    file = await FileService.upload_files(files=files)
+    file = await FileService.upload_files(files=files, typing_names=typing_names)
     return file.to_json()
 
 
@@ -60,3 +65,13 @@ async def get_the_list_of_files(page: Optional[int] = 1,
     return FileService.fetch_file_list(
         page=page,
         number_of_items_per_page=number_of_items_per_page).to_json()
+
+############################# FILE TYPE ###########################
+
+
+@core_app.get("/file-type", tags=["Files"], summary="Get the list of file types")
+async def get_the_list_of_file_types(_: UserData = Depends(AuthService.check_user_access_token)) -> List[Dict]:
+    """
+    Get the list of file types
+    """
+    return ListJsonable(FileService.get_file_types()).to_json()

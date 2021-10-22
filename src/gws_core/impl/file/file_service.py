@@ -8,11 +8,13 @@ from typing import List, Optional, Type
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
+from gws_core.model.typing_manager import TypingManager
 
 from ...core.classes.jsonable import Jsonable, ListJsonable
 from ...core.classes.paginator import Paginator
 from ...core.exception.exceptions.not_found_exception import NotFoundException
 from ...core.service.base_service import BaseService
+from ...resource.resource_typing import FileTyping
 from ..table.file_table import FileTable
 from .file import File
 from .file_helper import FileHelper
@@ -53,29 +55,21 @@ class FileService(BaseService):
     # -- U --
 
     @classmethod
-    async def upload_files(cls, files: List[UploadFile] = FastAPIFile(...)) -> Jsonable:
+    async def upload_files(cls, files: List[UploadFile] = FastAPIFile(...), typing_names: List[str] = None) -> Jsonable:
 
         file_store: FileStore = LocalFileStore.get_default_instance()
 
-        if len(files) == 1:
-            file = files[0]
-            return cls.upload_file_to_store(file, file_store)
-        else:
-            result: ListJsonable = ListJsonable()
-            for file in files:
-                file_model: FSNodeModel = cls.upload_file_to_store(file, file_store)
-                result.append(file_model)
+        result: ListJsonable = ListJsonable()
+        for index, file in enumerate(files):
+            file_model: FSNodeModel = cls.upload_file_to_store(file, typing_names[index], file_store)
+            result.append(file_model)
 
-            return result
+        return result
 
     @classmethod
-    def upload_file_to_store(cls, upload_file: UploadFile, store: FileStore) -> FSNodeModel:
+    def upload_file_to_store(cls, upload_file: UploadFile, typing_name: str, store: FileStore) -> FSNodeModel:
 
-        file_type: Type[File]
-        if FileHelper.is_csv(upload_file.filename):
-            file_type = FileTable
-        else:
-            file_type = File
+        file_type: Type[File] = TypingManager.get_type_from_name(typing_name)
 
         file: File = store.add_from_temp_file(upload_file.file, upload_file.filename, file_type)
 
@@ -102,3 +96,11 @@ class FileService(BaseService):
     def _add_file_to_store(cls, file: File, store: FileStore, dest_file_name: str = None) -> FSNodeModel:
         new_file: File = store.add_file_from_path(source_path=file, dest_file_name=dest_file_name)
         return cls.create_file_model(new_file)
+
+
+############################# FILE TYPE ###########################
+
+
+    @classmethod
+    def get_file_types(cls) -> List[FileTyping]:
+        return FileTyping.get_typings()
