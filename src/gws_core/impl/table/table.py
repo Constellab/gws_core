@@ -261,7 +261,7 @@ class Table(Resource):
         """
 
         return BarPlotView(self._data, *args, **kwargs)
-    
+
     @view(view_type=HistogramView, human_name='Histogram', short_description='View columns as 2D-line plots', specs={})
     def view_as_histogram(self, *args, **kwargs) -> HistogramView:
         """
@@ -271,7 +271,7 @@ class Table(Resource):
         return HistogramView(self._data, *args, **kwargs)
 
     @view(view_type=BoxPlotView, human_name='BoxPlot', short_description='View columns as box plots', specs={})
-    def view_as_box_plot(self, *args, **kwargs) -> BarPlotView:
+    def view_as_box_plot(self, *args, **kwargs) -> BoxPlotView:
         """
         View one or several columns as box plots
         """

@@ -3,9 +3,7 @@ import pandas
 from pandas import DataFrame
 
 from ....config.param_spec import IntParam, StrParam
-from ....core.classes.paginator import PageInfo
 from ....resource.view_types import ViewSpecs
-
 from .base_table_view import BaseTableView
 
 

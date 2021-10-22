@@ -17,7 +17,7 @@ class LinePlot3DView(ScatterPlot3DView):
     ```
     {
         "type": "line-plot-3d-view",
-        "series": [
+        "data": [
             {
                 "data": {
                     "x": List[Float],

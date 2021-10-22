@@ -5,8 +5,8 @@ from typing import Any, List, Union
 import numpy
 from pandas import DataFrame
 
+from ....config.param_spec import BoolParam, IntParam, ListParam, StrParam
 from ....resource.view import ViewSpecs
-from ....config.param_spec import IntParam, StrParam, ListParam, BoolParam
 from .base_table_view import BaseTableView
 
 
@@ -22,7 +22,7 @@ class HistogramView(BaseTableView):
     ```
     {
         "type": "histogram-view",
-        "series": [
+        "data": [
             {
                 "data": {
                     "hist": List[Float],
@@ -72,5 +72,5 @@ class HistogramView(BaseTableView):
             })
         return {
             **super().to_dict(**kwargs),
-            "series": series
+            "data": series
         }

@@ -19,7 +19,7 @@ class BarPlotView(LinePlot2DView):
     ```
     {
         "type": "bar-plot-view",
-        "series": [
+        "data": [
             {
                 "data": {
                     "x": List[Float],

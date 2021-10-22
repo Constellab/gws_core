@@ -19,7 +19,7 @@ class LinePlot2DView(ScatterPlot2DView):
     ```
     {
         "type": "line-2d-plot-view",
-        "series": [
+        "data": [
             {
                 "data": {
                     "x": List[Float],

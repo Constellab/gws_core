@@ -4,9 +4,8 @@ from typing import Any, List
 
 from pandas import DataFrame
 
+from ....config.param_spec import IntParam, ListParam, StrParam
 from ....resource.view import ViewSpecs
-from ....config.param_spec import IntParam, StrParam, ListParam
-
 from .base_table_view import BaseTableView
 
 
@@ -66,7 +65,7 @@ class ScatterPlot2DView(BaseTableView):
             })
         return {
             **super().to_dict(**kwargs),
-            "series": series,
+            "data": series,
             "x_label": x_label,
             "y_label": y_label,
         }

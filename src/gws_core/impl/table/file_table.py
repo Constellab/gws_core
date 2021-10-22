@@ -1,12 +1,11 @@
 from typing import List
 
-from gws_core.impl.file.file_helper import FileHelper
-from gws_core.impl.table.table import Table
-
-from ...config.param_spec import BoolParam, IntParam, ListParam, StrParam
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view
 from ..file.file import File
+from ..file.file_helper import FileHelper
+from ..table.table import Table
+from ..table.view.boxplot_view import BoxPlotView
 from .view.histogram_view import HistogramView
 from .view.lineplot_2d_view import LinePlot2DView
 from .view.lineplot_3d_view import LinePlot3DView
@@ -77,6 +76,14 @@ class FileTable(File):
         """
 
         return self._get_table_resource().view_as_histogram(*args, **kwargs)
+
+    @view(view_type=BoxPlotView, human_name='BoxPlot', short_description='View columns as box plots', specs={})
+    def view_as_box_plot(self, *args, **kwargs) -> BoxPlotView:
+        """
+        View one or several columns as box plots
+        """
+
+        return self._get_table_resource().view_as_box_plot(*args, **kwargs)
 
     def _get_table_resource(self) -> Table:
         # guess the delimiter
