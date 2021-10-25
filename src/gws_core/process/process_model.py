@@ -534,12 +534,12 @@ class ProcessModel(Viewable):
         self.save()
 
     def mark_as_success(self):
-        self.progress_bar.stop('End of process')
+        self.progress_bar.stop_success('End of process')
         self.status = ProcessStatus.SUCCESS
         self.save()
 
     def mark_as_error(self, error_info: ProcessErrorInfo):
-        self.progress_bar.stop(error_info["detail"])
+        self.progress_bar.stop_error(error_info["detail"])
         self.status = ProcessStatus.ERROR
         self.error_info = error_info
         self.save()

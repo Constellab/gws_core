@@ -10,7 +10,7 @@ from abc import abstractmethod
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
-from ...progress_bar.progress_bar import ProgressBar
+from ...progress_bar.progress_bar import ProgressBar, ProgressBarMessageType
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
 from .base_env import BaseEnvShell
@@ -92,11 +92,10 @@ class CondaEnvShell(BaseEnvShell):
                 stderr=subprocess.DEVNULL,
                 shell=True
             )
-            ProgressBar.add_message_to_current(
-                "Virtual environment installed!")
+            ProgressBar.add_message_to_current("Virtual environment installed!", ProgressBarMessageType.SUCCESS)
         except Exception as err:
 
-            raise Exception( "Cannot install the virtual environment.") from err
+            raise Exception("Cannot install the virtual environment.") from err
 
     # -- U --
 

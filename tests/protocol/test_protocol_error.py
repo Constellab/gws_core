@@ -136,7 +136,7 @@ class TestProtocolError(BaseTestCase):
         self.assertEqual(sub_protocol.error_info['instance_id'], exception.instance_id)
         self.assertEqual(sub_protocol.error_info['unique_code'], exception.unique_code)
 
-        # Check that the create process endup in sucess
+        # Check that the create process endup in success
         create_process: ProcessModel = sub_protocol.get_process('create')
         self.assertTrue(create_process.is_success)
 

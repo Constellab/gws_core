@@ -207,6 +207,8 @@ from .process.process_interface import IProcess as IProcess
 from .process.process_model import ProcessModel as ProcessModel
 # Progress Bar
 from .progress_bar.progress_bar import ProgressBar as ProgressBar
+from .progress_bar.progress_bar import \
+    ProgressBarMessageType as ProgressBarMessageType
 from .progress_bar.progress_bar_service import \
     ProgressBarService as ProgressBarService
 # Protocol

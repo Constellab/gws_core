@@ -110,7 +110,7 @@ class Model(Base, PeeweeModel):
 
         :param archive: True to archive, False to unarchive
         :type archive: `bool`
-        :return: True if sucessfully done, False otherwise
+        :return: True if successfully done, False otherwise
         :rtype: `bool`
         """
 
@@ -355,7 +355,7 @@ class Model(Base, PeeweeModel):
         else:
             modifier = None
 
-        field = getattr(cls,cls._default_full_text_column)
+        field = getattr(cls, cls._default_full_text_column)
         return cls.select().where(Match((field), phrase, modifier=modifier))
 
     def set_data(self, data: dict):

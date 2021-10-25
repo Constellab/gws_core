@@ -91,6 +91,10 @@ class TaskModel(ProcessModel):
         # Create the task instance to run the task
         task: Task = self._create_task_instance()
 
+        # Set the progress bar
+        task.__progress_bar__ = self.progress_bar
+        task.__status__ = 'CHECK_BEFORE_RUN'
+
         # Get simpler object for to run the task
         config_params: ConfigParams = self.config.get_and_check_values()
         task_inputs: TaskInputs = self.inputs.get_and_check_task_inputs()
@@ -116,6 +120,7 @@ class TaskModel(ProcessModel):
 
         # execute the run after task method
         try:
+            task.__status__ = 'RUN_AFTER_TASK'
             await task.run_after_task()
         except Exception as err:
             raise ProcessRunException.from_exception(process_model=self, exception=err,
@@ -128,10 +133,8 @@ class TaskModel(ProcessModel):
         Run the task and save its state in the database.
         """
 
-        # Set the progress bar
-        task.__progress_bar__ = self.progress_bar
-
         task_outputs: TaskOutputs
+        task.__status__ = 'RUN'
 
         try:
             # Run the task task

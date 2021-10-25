@@ -57,7 +57,7 @@ class Viewable(Model):
 
         :param tf: True to archive, False to unarchive
         :type tf: `bool`
-        :return: True if sucessfully done, False otherwise
+        :return: True if successfully done, False otherwise
         :rtype: `bool`
         """
 

@@ -176,7 +176,7 @@ class Shell(Task):
                     tic_b = time.perf_counter()
                     lines.append(line)
                     if tic_b - tic_a >= 1:      # save outputs every N sec in taskbar
-                        self.add_progress_message(f"STDOUT {count}: " + line)
+                        self.log_message(f"STDOUT {count}: " + line)
                         self._on_stdout_change(stdout_count=count, stdout_line=line)
                         fp.writelines(lines)
                         lines = []
@@ -185,7 +185,7 @@ class Shell(Task):
                         break
 
                 if lines:
-                    self.add_progress_message(f"STDOUT {count}: " + line)
+                    self.log_message(f"STDOUT {count}: " + line)
                     self._on_stdout_change(stdout_count=count, stdout_line=line)
                     fp.writelines(lines)
 
@@ -208,4 +208,3 @@ class Shell(Task):
         """
 
         self._clean_working_dir()
-
