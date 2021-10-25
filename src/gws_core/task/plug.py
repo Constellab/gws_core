@@ -6,9 +6,8 @@
 import time
 from typing import Type
 
-from gws_core.config.param_spec import FloatParam, IntParam, StrParam
-
 from ..config.config_types import ConfigParams, ConfigSpecs
+from ..config.param_spec import FloatParam, IntParam, StrParam
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..io.io_spec import InputSpecs, OutputSpecs
@@ -17,7 +16,7 @@ from ..model.typing_manager import TypingManager
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
 from ..task.task_io import TaskInputs, TaskOutputs
-from .task import Task
+from .task import CheckBeforeTaskResult, Task
 from .task_decorator import task_decorator
 
 
@@ -80,14 +79,14 @@ class FIFO2(Task):
     output_specs: OutputSpecs = {'resource': UnmodifiedOut(resource_types=Resource, sub_class=True)}
     config_specs: ConfigSpecs = {}
 
-    def check_before_run(self, params: ConfigParams, inputs: TaskInputs) -> bool:
+    def check_before_run(self, params: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
         res_1 = inputs.get('resource_1')
         res_2 = inputs.get('resource_2')
         is_ready = res_1 or res_2
         if not is_ready:
-            return False
+            return {"result": False}
 
-        return True
+        return {"result": True}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
@@ -114,10 +113,12 @@ class Switch2(Task):
     config_specs: ConfigSpecs = {"index": IntParam(
         default_value=1, min_value=1, max_value=2, short_description="The index of the input resource to switch on. Defaults to 1.")}
 
-    def check_before_run(self, params: ConfigParams, inputs: TaskInputs) -> bool:
+    def check_before_run(self, params: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
         index = params.get_value("index")
+
+        is_ready: bool = f"resource_{index}" in inputs
         # The switch is ready to execute if the correct input was set
-        return f"resource_{index}" in inputs
+        return {"result": is_ready}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         index = params.get_value("index")

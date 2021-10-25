@@ -151,7 +151,7 @@ class Port(Base):
         :rtype: bool
         """
 
-        return self.resource_spec.is_optional() or self.is_skippable_in
+        return self.resource_spec.is_optional()
 
     @property
     def is_empty(self) -> bool:

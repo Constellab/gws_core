@@ -11,7 +11,7 @@ from ..io.io_exception import MissingInputResourcesException
 from ..io.io_spec import IOSpecClass
 from ..progress_bar.progress_bar import ProgressBar
 from ..resource.resource import Resource
-from ..task.task import Task
+from ..task.task import CheckBeforeTaskResult, Task
 from ..task.task_io import TaskInputs, TaskOutputs
 
 
@@ -45,6 +45,18 @@ class TaskTester():
         else:
             self._inputs = inputs
 
+    def check_before_run(self) -> CheckBeforeTaskResult:
+        config_params: ConfigParams = self._get_and_check_config()
+
+        # get the input without checking them
+        inputs: TaskInputs = TaskInputs()
+        for key, item in self._inputs.items():
+            inputs[key] = item
+
+        task: Task = self._instantiate_task()
+
+        return task.check_before_run(config_params, inputs)
+
     async def run(self) -> TaskOutputs:
         """This method, checks the config, inputs and then run the task
 
@@ -54,9 +66,6 @@ class TaskTester():
         config_params: ConfigParams = self._get_and_check_config()
         inputs: TaskInputs = self._get_and_check_input()
         task: Task = self._instantiate_task()
-
-        # set the progress bar
-        task.__progress_bar__ = ProgressBar()
 
         self._outputs = await task.run(config_params, inputs)
         return self._outputs
@@ -71,7 +80,11 @@ class TaskTester():
         return self._outputs[output_name]
 
     def _instantiate_task(self) -> Task:
-        return self._task_type()
+        task: Task = self._task_type()
+
+        # set the progress bar
+        task.__progress_bar__ = ProgressBar()
+        return task
 
     def _get_and_check_input(self) -> TaskInputs:
         """Check and convert input to TaskInputs]

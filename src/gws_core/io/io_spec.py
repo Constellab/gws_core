@@ -45,7 +45,7 @@ class IOSpecClass:
             io_type=resource_type, expected_types=self.to_resource_types())
 
     def is_optional(self) -> bool:
-        return isinstance(self.resource_spec, OptionalIn) or None in self.to_resource_types()
+        return isinstance(self.resource_spec, OptionalIn) or None in self.to_resource_types() or self.is_skippable_in()
 
     def is_unmodified_out(self) -> bool:
         return isinstance(self.resource_spec, UnmodifiedOut)
