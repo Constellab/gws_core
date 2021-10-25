@@ -30,7 +30,7 @@ class Source(Task):
     """
 
     input_specs: InputSpecs = {}
-    output_specs: OutputSpecs = {'resource': UnmodifiedOut(Resource)}
+    output_specs: OutputSpecs = {'resource': UnmodifiedOut(Resource, sub_class=True)}
     config_specs: ConfigSpecs = {
         'resource_uri': StrParam(optional=True, short_description="The uri of the resource"),
         'resource_typing_name': StrParam(optional=True, short_description="The type of the resource"),
