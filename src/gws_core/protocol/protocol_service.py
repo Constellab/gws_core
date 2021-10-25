@@ -132,6 +132,7 @@ class ProtocolService(BaseService):
                     protocol_model=process, graph=graph["nodes"][key]["data"]["graph"])
 
         # Init the connector afterward because its needs the child to init correctly
+        protocol_model.disconnect_connectors()
         protocol_model.init_connectors_from_graph(graph["links"])
 
         return protocol_model

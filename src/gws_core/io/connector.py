@@ -56,6 +56,10 @@ class Connector:
         # Set outport as previous of inport
         in_port.set_previous(out_port)
 
+    def disconnect(self) -> None:
+        self.in_port.disconnect()
+        self.out_port.disconnect()
+
     # -- V --
     def to_json(self, deep: bool = False, **kwargs) -> dict:
         """

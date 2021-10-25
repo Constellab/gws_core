@@ -439,6 +439,11 @@ class ProtocolModel(ProcessModel):
 
         return connectors
 
+    def disconnect_connectors(self) -> None:
+        for connector in self.connectors:
+            connector.disconnect()
+        self._connectors = []
+
     def _delete_connectors_by_process(self, process_model: ProcessModel) -> None:
         """remove all the connectors connected to a process (input or output)
         """
