@@ -12,6 +12,7 @@ from starlette.exceptions import HTTPException
 
 from ..core.exception.exception_handler import ExceptionHandler
 from ..core.service.mysql_service import MySQLService
+from ..core.service.settings_service import SettingsService
 from ..core.utils.http_helper import HTTPHelper
 from ..impl.file.file import File
 from ..impl.file.file_service import FileService
@@ -130,6 +131,20 @@ def get_users(_: UserData = Depends(AuthCentral.check_central_api_key)):
     """
     HTTPHelper.is_http_context()
     return __convert_users_to_dto(UserService.get_all_users())
+
+
+@central_app.get("/settings", summary="Get settings")
+async def get_settings(_: UserData = Depends(AuthCentral.check_central_api_key)) -> dict:
+    return SettingsService.get_settings().to_json()
+
+
+@central_app.get("/health-check", summary="Health check route")
+async def health_check() -> bool:
+    """
+    Simple health check route
+    """
+
+    return True
 
 
 @central_app.get("/db/{db_name}/dump", tags=["DB management"])
