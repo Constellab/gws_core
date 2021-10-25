@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 import time
+from typing import Type
 
 from gws_core.config.param_spec import FloatParam, IntParam, StrParam
 
@@ -40,8 +41,13 @@ class Source(Task):
         r_typing_name: str = params.get_value("resource_typing_name")
         if not r_uri or not r_typing_name:
             raise BadRequestException('Source error, the resource uri or typing name is missing')
-        resource_model: ResourceModel = TypingManager.get_object_with_typing_name_and_uri(
-            typing_name=r_typing_name, uri=r_uri)
+
+        # retrieve the resource type
+        r_type: Type[Resource] = TypingManager.get_type_from_name(r_typing_name)
+
+        # retrieve the resource model based and uri and resource type
+        resource_model: ResourceModel = r_type.get_resource_model_type().get_by_uri_and_check(r_uri)
+
         return {"resource": resource_model.get_resource()}
 
 

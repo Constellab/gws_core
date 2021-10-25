@@ -67,6 +67,9 @@ class TaskTester():
     def set_input(self, input_name: str, resource: Resource) -> None:
         self._inputs[input_name] = resource
 
+    def get_output(self, output_name: str) -> Resource:
+        return self._outputs[output_name]
+
     def _instantiate_task(self) -> Task:
         return self._task_type()
 
