@@ -197,6 +197,7 @@ from .lab.monitor_service import MonitorService as MonitorService
 # Model
 from .model.model_service import ModelService as ModelService
 from .model.typing import Typing as Typing
+from .model.typing_manager import TypingManager as TypingManager
 from .model.view_model import ViewModel as ViewModel
 from .model.view_service import ViewService as ViewService
 from .model.viewable import Viewable as Viewable

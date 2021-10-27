@@ -4,10 +4,11 @@
 # About us: https://gencovery.com
 
 
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from fastapi import Depends
 from gws_core.core.classes.paginator import PaginatorDict
+from pydantic.main import BaseModel
 
 from ..core.dto.rendering_dto import RenderingDTO
 from ..core.exception.exceptions import BadRequestException
@@ -102,21 +103,48 @@ async def get_a_model(typing_name: str,
 
 @core_app.get("/model/{typing_name}", tags=["Models"], summary="Get the list of models")
 async def get_the_list_of_models(typing_name: str,
-                                 page: Optional[int] = 1,
+                                 page: Optional[int] = 0,
                                  number_of_items_per_page: Optional[int] = 20,
                                  _: UserData = Depends(AuthService.check_user_access_token)) -> PaginatorDict:
     """
     Get a list of Models
 
 
-    - **type**: the type of the models to fetch.
-    - **search_text**: text used to filter the results. The test is matched (using full-text search) against to the `title` and the `description`.
+    - **type**: the typing name of the model to fetch.
     - **page**: the page number
     - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
     """
 
     return ModelService.fetch_list_of_models(
         typing_name=typing_name,
+        page=page,
+        number_of_items_per_page=number_of_items_per_page,
+    ).to_json()
+
+
+class SearchBody(BaseModel):
+    search_text: str
+
+
+@core_app.post("/model/{typing_name}/search", tags=["Models"], summary="Search")
+async def search(typing_name: str,
+                 search: SearchBody,
+                 page: Optional[int] = 0,
+                 number_of_items_per_page: Optional[int] = 20,
+                 _: UserData = Depends(AuthService.check_user_access_token)) -> PaginatorDict:
+    """
+    Call search in a model
+
+
+    - **typing_name**: the typing name of the model  to fetch.
+    - **search_text**: text used to filter the results. The test is matched (using full-text search).
+    - **page**: the page number
+    - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
+    """
+
+    return ModelService.search(
+        typing_name=typing_name,
+        search_text=search.search_text,
         page=page,
         number_of_items_per_page=number_of_items_per_page,
     ).to_json()

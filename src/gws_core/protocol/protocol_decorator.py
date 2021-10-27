@@ -10,14 +10,14 @@ def protocol_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USE
     """ Decorator to be placed on all the protocols. A protocol not decorated will not be runnable.
     It define static information about the protocol
 
-    :param name_unique: a unique name for this protocol in the brick. Only 1 protocol in the current brick can have this name.
+    :param unique_name: a unique name for this protocol in the brick. Only 1 protocol in the current brick can have this name.
                         //!\\ DO NOT MODIFIED THIS NAME ONCE IS DEFINED //!\\
                         It is used to instantiate the protocols
-    :type name_unique: str
+    :type unique_name: str
     :param allowed_user: role needed to run the protocol. By default all user can run it. It Admin, the user need to be an admin of the lab to run the protocol
     :type allowed_user: ProtocolAllowedUser, optional
     :param human_name: optional name that will be used in the interface when viewing the protocols. Must not be longer than 20 caracters
-                        If not defined, the name_unique will be used
+                        If not defined, the unique_name will be used
     :type human_name: str, optional
     :param short_description: optional description that will be used in the interface when viewing the protocols. Must not be longer than 100 caracters
     :type short_description: str, optional
