@@ -32,7 +32,12 @@ class Table(Resource):
 
     _data: DataFrame = DataFrameRField()
 
-    def set_data(self, data: Union[DataFrame, np.ndarray] = None,
+    def __init__(self, data: Union[DataFrame, np.ndarray, list] = None,
+                 column_names=None, row_names=None):
+        super().__init__()
+        self._set_data(data, column_names, row_names)
+
+    def _set_data(self, data: Union[DataFrame, np.ndarray] = None,
                  column_names=None, row_names=None) -> 'Table':
         if data is None:
             data = DataFrame()
@@ -106,8 +111,7 @@ class Table(Resource):
     @classmethod
     def from_dict(cls, data: dict, orient='index', dtype=None, columns=None) -> 'Table':
         dataframe = DataFrame.from_dict(data, orient, dtype, columns)
-        res = cls()
-        res.set_data(dataframe)
+        res = cls(data=dataframe)
         return res
 
     # -- G --
@@ -133,6 +137,18 @@ class Table(Resource):
         return self._data.head(n)
 
     # -- I --
+
+    @property
+    def is_vector(self) -> bool:
+        return self.nb_rows == 1 or self.nb_columns == 1
+
+    @property
+    def is_column_vector(self) -> bool:
+        return self.nb_columns == 1
+
+    @property
+    def is_row_vector(self) -> bool:
+        return self.nb_rows == 1
 
     @classmethod
     def import_from_path(cls, file_path: str, delimiter: str = "\t", header=0, index_col=None, file_format: str = None, **
@@ -160,7 +176,7 @@ class Table(Resource):
             raise BadRequestException(
                 "Cannot detect the file type using file extension. Valid file extensions are [.xls, .xlsx, .csv, .tsv, .txt, .tab].")
 
-        return cls().set_data(data=df)
+        return cls(data=df)
 
     # -- N --
 
@@ -202,14 +218,20 @@ class Table(Resource):
     def __str__(self):
         return self._data.__str__()
 
-    def to_table(self):
+    def to_list(self) -> list:
+        return self.to_numpy().tolist()
+
+    def to_numpy(self) -> np.ndarray:
+        return self._data.to_numpy()
+
+    def to_table(self) -> DataFrame:
         return self._data
 
-    def to_csv(self, **kwargs):
+    def to_csv(self) -> str:
         return self._data.to_csv()
 
      # -- T --
-    def to_json(self, **kwargs) -> dict:
+    def to_json(self) -> dict:
         return self._data.to_json()
 
     # -- V ---

@@ -6,6 +6,8 @@
 import json
 from typing import Any
 
+from ...core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 from ...resource.r_field import DictRField
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
@@ -15,6 +17,15 @@ from ...resource.resource_decorator import resource_decorator
 class JSONDict(Resource):
 
     data: dict = DictRField()
+
+    def __init__(self, data: dict = None):
+        super().__init__()
+        if data is None:
+            data = {}
+        else:
+            if not isinstance(data, dict):
+                raise BadRequestException("The data must be an instance of dict")
+        self.data = data
 
     def export_to_path(self, file_path: str, file_format: str = ".json", prettify: bool = False):
         """

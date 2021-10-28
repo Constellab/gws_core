@@ -44,11 +44,10 @@ class TestTable(BaseTestCase):
     def test_table(self):
         GTest.print("Table")
 
-        table: Table = Table()
-        table.set_data(data=[[1, 2, 3]], column_names=["a", "b", "c"])
+        table: Table = Table(data=[[1, 2, 3]], column_names=["a", "b", "c"])
         print(table.get_data())
 
-        table.set_data(data=[1, 2, 3], column_names=[
+        table._set_data(data=[1, 2, 3], column_names=[
             "data"], row_names=["a", "b", "c"])
         print(table.get_data())
 

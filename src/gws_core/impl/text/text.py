@@ -16,7 +16,11 @@ from .view.text_view import TextView
 class Text(Resource):
     _data: str = RField()
 
-    def set_data(self, data: str) -> 'Text':
+    def __init__(self, data: str):
+        super().__init__(data)
+        self._set_data(data)
+        
+    def _set_data(self, data: str) -> 'Text':
         if data is None:
             data = ""
 
@@ -64,7 +68,7 @@ class Text(Resource):
         except Exception as err:
             raise BadRequestException("Cannot import the text") from err
 
-        return cls().set_data(data=text)
+        return cls(data=text)
 
     @view(view_type=TextView, human_name='Text', short_description='View as text',
           specs={})
