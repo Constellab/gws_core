@@ -17,18 +17,22 @@ class ConfigParams(ConfigParamsDict):
     """
 
     # specification of the config
-
-    def get_value(self, param_name: str) -> Any:
+    def get_value(self, param_name: str, default_value: Any = None) -> Any:
         """
-        Returns the value of a parameter by its name
+        Returns the value of a parameter by its name.
+
+        This is different from get method.
+        If the param doesn't exist or its value is None, it returns the default_value. It considers None as not defined.
+        The get method only returns the default value if the param does not exists. It considers None as defined
 
         :param name: The name of the parameter
         :type: str
         :return: The value of the parameter (base type)
         :rtype: `str`, `int`, `float`, `bool`
         """
-        if not param_name in self:
-            raise BadRequestException(f"Parameter {param_name} does not exist")
+
+        if not self.value_is_set(param_name):
+            return default_value
 
         return self[param_name]
 

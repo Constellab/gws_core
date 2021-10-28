@@ -3,28 +3,33 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import os
 from pathlib import Path
-from typing import List, Union
+from typing import Union
 
 import numpy as np
 import pandas
+from gws_core.config.config_types import ConfigParams
+from gws_core.impl.file.file import File
 from pandas import DataFrame
 
-from ...config.param_spec import BoolParam, IntParam, ListParam, StrParam
+from ...config.param_spec import BoolParam, IntParam, StrParam
 from ...core.exception.exceptions import BadRequestException
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view
+from ...task.exporter import export_to_path
+from ...task.importer import import_from_path
 from .data_frame_r_field import DataFrameRField
+from .view.barplot_view import BarPlotView
+from .view.boxplot_view import BoxPlotView
+from .view.heatmap_view import HeatmapView
 from .view.histogram_view import HistogramView
 from .view.lineplot_2d_view import LinePlot2DView
 from .view.lineplot_3d_view import LinePlot3DView
 from .view.scatterplot_2d_view import ScatterPlot2DView
 from .view.scatterplot_3d_view import ScatterPlot3DView
-from .view.barplot_view import BarPlotView
-from .view.boxplot_view import BoxPlotView
 from .view.table_view import TableView
-from .view.heatmap_view import HeatmapView
 
 
 @resource_decorator("Table")
@@ -84,27 +89,38 @@ class Table(Resource):
             lower_names = [x.lower() for x in self.column_names]
             return name.lower() in lower_names
 
-    def export_to_path(self, file_path: str, delimiter: str = "\t", header: bool = True, index: bool = True,
-                       file_format: str = None, **kwargs):
+    @export_to_path(specs={
+        'file_name': StrParam(default_value='file.csv', short_description="Destination file name in the store"),
+        'file_format': StrParam(default_value=".csv", short_description="File format"),
+        'delimiter': StrParam(default_value="\t", short_description="Delimiter character. Only for parsing CSV files"),
+        'header': IntParam(default_value=0, short_description="Write column names (header)"),
+        'index': BoolParam(default_value=True, short_description="Write row names (index)"),
+        'file_store_uri': StrParam(optional=True, short_description="URI of the file_store where the file must be exported"),
+    })
+    def export_to_path(self, dir_: str, config: ConfigParams) -> File:
         """
         Export to a repository
 
         :param file_path: The destination file path
         :type file_path: File
         """
+        file_path = os.path.join(dir_, config.get_value('file_name'))
 
+        file_format: str = config.get_value('file_format')
         file_extension = Path(file_path).suffix
         if file_extension in [".xls", ".xlsx"] or file_format in [".xls", ".xlsx"]:
             self._data.to_excel(file_path)
         elif file_extension in [".csv", ".tsv", ".txt", ".tab"] or file_format in [".csv", ".tsv", ".txt", ".tab"]:
             self._data.to_csv(
                 file_path,
-                sep=delimiter,
-                index=index
+                sep=config.get_value('delimiter'),
+                index=config.get_value('index')
             )
         else:
             raise BadRequestException(
                 "Cannot detect the file type using file extension. Valid file extensions are [.xls, .xlsx, .csv, .tsv, .txt, .tab].")
+
+        return File(file_path)
 
     # -- F --
 
@@ -151,8 +167,13 @@ class Table(Resource):
         return self.nb_rows == 1
 
     @classmethod
-    def import_from_path(cls, file_path: str, delimiter: str = "\t", header=0, index_col=None, file_format: str = None, **
-                         kwargs) -> 'Table':
+    @import_from_path(specs={
+        'file_format': StrParam(default_value=".csv", short_description="File format"),
+        'delimiter': StrParam(default_value='\t', short_description="Delimiter character. Only for parsing CSV files"),
+        'header': IntParam(default_value=0, short_description="Row number to use as the column names. Use None to prevent parsing column names. Only for parsing CSV files"),
+        'index': IntParam(optional=True, short_description="Column number to use as the row names. Use None to prevent parsing row names. Only for parsing CSV files"),
+    })
+    def import_from_path(cls, file: File, config: ConfigParams) -> 'Table':
         """
         Import from a repository
 
@@ -162,15 +183,15 @@ class Table(Resource):
         :rtype any
         """
 
-        file_extension = Path(file_path).suffix
-        if file_extension in [".xls", ".xlsx"] or file_format in [".xls", ".xlsx"]:
-            df = pandas.read_excel(file_path)
-        elif file_extension in [".csv", ".tsv", ".txt", ".tab"] or file_format in [".csv", ".tsv", ".txt", ".tab"]:
+        file_format: str = config.get_value('file_format')
+        if file.extension in [".xls", ".xlsx"] or file_format in [".xls", ".xlsx"]:
+            df = pandas.read_excel(file.path)
+        elif file.extension in [".csv", ".tsv", ".txt", ".tab"] or file_format in [".csv", ".tsv", ".txt", ".tab"]:
             df = pandas.read_table(
-                file_path,
-                sep=delimiter,
-                header=header,
-                index_col=index_col
+                file.path,
+                sep=config.get_value('delimiter'),
+                header=config.get_value('header'),
+                index_col=config.get_value('index')
             )
         else:
             raise BadRequestException(

@@ -4,7 +4,7 @@ from typing import Callable, Type
 
 from ..config.param_spec import ParamSpec
 from ..core.classes.func_meta_data import FuncArgsMetaData
-from ..core.utils.utils import Utils
+from ..core.utils.reflector_helper import ReflectorHelper
 from .view import View
 from .view_meta_data import ResourceViewMetaData
 from .view_types import ViewSpecs
@@ -38,7 +38,7 @@ def view(view_type: Type[View], human_name: str = "", short_description: str = "
         specs = {}
 
     def decorator(func: Callable) -> Callable:
-        func_args: FuncArgsMetaData = Utils.get_function_arguments(func)
+        func_args: FuncArgsMetaData = ReflectorHelper.get_function_arguments(func)
 
         if not func_args.is_method():
             raise Exception(
@@ -81,11 +81,11 @@ def view(view_type: Type[View], human_name: str = "", short_description: str = "
                         raise Exception(
                             f"View error. The @view decorator of the method '{func_args.func_name}' has a spec called '{spec_name}' that overide the spec of the view '{view_type}' but the types are imcompatible")
 
-                        # Create the meta data object
+        # Create the meta data object
         view_meta_data: ResourceViewMetaData = ResourceViewMetaData(
             func.__name__, view_type, human_name, short_description, specs, default_view)
         # Store the meta data object into the view_meta_data_attribute of the function
-        setattr(func, VIEW_META_DATA_ATTRIBUTE, view_meta_data)
+        ReflectorHelper.set_object_has_metadata(func, VIEW_META_DATA_ATTRIBUTE, view_meta_data)
 
         return func
 

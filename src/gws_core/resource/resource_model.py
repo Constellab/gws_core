@@ -9,17 +9,17 @@ import copy
 from typing import (TYPE_CHECKING, Any, Dict, Generic, Optional, Type, TypeVar,
                     final)
 
-from gws_core.core.utils.utils import Utils
-from gws_core.impl.file.file_r_field import FileRField
-from gws_core.resource.r_field import BaseRField
 from peewee import CharField, ModelSelect
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from ..core.utils.reflector_helper import ReflectorHelper
+from ..impl.file.file_r_field import FileRField
 from ..model.typing_manager import TypingManager
 from ..model.typing_register_decorator import typing_registrator
 from ..model.viewable import Viewable
 from ..resource.kv_store import KVStore
+from ..resource.r_field import BaseRField
 from ..resource.resource import Resource
 from .experiment_resource import ExperimentResource
 from .task_resource import TaskResource
@@ -274,7 +274,7 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         """Get the list of resource's r_fields,
         the key is the property name, the value is the BaseRField object
         """
-        return Utils.get_property_names_of_type(resource_type, BaseRField)
+        return ReflectorHelper.get_property_names_of_type(resource_type, BaseRField)
 
     def _get_resource_type(self) -> Type[ResourceType]:
         return TypingManager.get_type_from_name(self.resource_typing_name)

@@ -9,7 +9,7 @@ import random
 import re
 import string
 import uuid
-from typing import Any, Callable, Dict, List, Tuple, Type
+from typing import Any, Callable, Dict, List, Tuple, Type, Union
 
 from slugify import slugify as _slugify
 
@@ -196,40 +196,8 @@ class Utils:
     def generate_uuid(cls) -> str:
         return str(uuid.uuid4())
 
-    @classmethod
-    def get_property_names_of_type(cls, class_type: type, type_: type) -> Dict[str, Any]:
-        """return the property name and value of all property of a type
+    @staticmethod
+    def issubclass(__cls: type, __class_or_tuple:  Union[type, Tuple[Union[type, Tuple[Any, ...]], ...]]) -> bool:
+        """issubclass safe that check the input is a class and avoid exception
         """
-        properties: Dict[str, Any] = {}
-        member_list: List[Tuple[str, Any]] = inspect.getmembers(class_type)
-
-        for member in member_list:
-            member_value = member[1]
-            if not inspect.isfunction(member_value) and \
-                not inspect.ismethod(member_value) and \
-                not inspect.isclass(member_value) and \
-                    isinstance(member_value, type_):
-
-                properties[member[0]] = member[1]
-
-        return properties
-
-    @classmethod
-    def get_function_arguments(cls, func: Callable) -> FuncArgsMetaData:
-        """Function to get the arguments with type (Any if not provided) of a method or a function
-
-        :param func: [description]
-        :type func: Callable
-        :return: [description]
-        :rtype: Dict[str, type]
-        """
-
-        parameters: Dict[str, inspect.Parameter] = inspect.signature(func).parameters
-
-        arguments: FuncArgsMetaData = FuncArgsMetaData(func.__name__)
-
-        for arg_name, parameter in parameters.items():
-            arguments.add_arg(arg_name, FuncArgMetaData(arg_name=arg_name,
-                                                        default_value=parameter._default, type_=parameter._annotation))
-
-        return arguments
+        return inspect.isclass(__cls) and issubclass(__cls, __class_or_tuple)

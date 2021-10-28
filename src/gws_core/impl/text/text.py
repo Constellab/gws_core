@@ -3,12 +3,19 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from ...config.param_spec import IntParam, StrParam
+import os
+
+from gws_core.config.config_types import ConfigParams
+from gws_core.config.param_spec import StrParam
+from gws_core.impl.file.file import File
+
 from ...core.exception.exceptions import BadRequestException
 from ...resource.r_field import RField
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view
+from ...task.exporter import export_to_path
+from ...task.importer import import_from_path
 from .view.text_view import TextView
 
 
@@ -35,24 +42,33 @@ class Text(Resource):
 
     # -- E --
 
-    def export_to_path(self, file_path: str, encoding="utf-8", **kwargs):
+    @export_to_path(specs={
+        'file_name': StrParam(default_value='file.txt', short_description="Destination file name in the store"),
+        'encoding': StrParam(default_value='utf-8', short_description="Text encoding"),
+        'file_store_uri': StrParam(optional=True, short_description="URI of the file_store where the file must be exported"),
+    })
+    def export_to_path(self, dir_: str, config: ConfigParams) -> File:
         """
         Export to a repository
 
         :param file_path: The destination file path
         :type file_path: File
         """
+        file_path = os.path.join(dir_, config.get_value('file_name'))
 
         try:
-            with open(file_path, 'w+t', encoding=encoding) as fp:
+            with open(file_path, 'w+t', encoding=config.get_value('encoding')) as fp:
                 fp.write(self._data)
         except Exception as err:
             raise BadRequestException("Cannot export the text") from err
 
+        return File(file_path)
+
     # -- I --
 
     @classmethod
-    def import_from_path(cls, file_path: str, encoding="utf-8", **kwargs) -> 'Text':
+    @import_from_path(specs={'encoding': StrParam(default_value='utf-8', short_description="Text encoding")})
+    def import_from_path(cls, file: File, config: ConfigParams) -> 'Text':
         """
         Import from a repository
 
@@ -63,7 +79,7 @@ class Text(Resource):
         """
 
         try:
-            with open(file_path, 'r+t', encoding=encoding) as fp:
+            with open(file.path, 'r+t', encoding=config.get_value('encoding')) as fp:
                 text = fp.read()
         except Exception as err:
             raise BadRequestException("Cannot import the text") from err

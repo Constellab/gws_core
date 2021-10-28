@@ -1,10 +1,9 @@
 
-from gws_core.config.param_spec import BoolParam, IntParam, StrParam
-
+from ...config.param_spec import BoolParam, IntParam, StrParam
+from ...task.exporter import TaskExporter, exporter_decorator
+from ...task.importer import TaskImporter, importer_decorator
 from ...task.task_decorator import task_decorator
-from ..file.file import File
-from ..file.file_uploader import (FileDumper, FileExporter, FileImporter,
-                                  FileLoader)
+from ..file.file_uploader import FileDumper, FileLoader
 from .table import Table
 
 # ####################################################################
@@ -14,16 +13,9 @@ from .table import Table
 # ####################################################################
 
 
-@task_decorator(unique_name="TableImporter")
-class TableImporter(FileImporter):
-    input_specs = {'file': File}
-    output_specs = {'data': Table}
-    config_specs = {
-        'file_format': StrParam(default_value=".csv", short_description="File format"),
-        'delimiter': StrParam(default_value='\t', short_description="Delimiter character. Only for parsing CSV files"),
-        'header': IntParam(default_value=0, short_description="Row number to use as the column names. Use None to prevent parsing column names. Only for parsing CSV files"),
-        'index': IntParam(optional=True, short_description="Column number to use as the row names. Use None to prevent parsing row names. Only for parsing CSV files"),
-    }
+@importer_decorator(unique_name="TableImporter", resource_type=Table)
+class TableImporter(TaskImporter):
+    pass
 
 # ####################################################################
 #
@@ -32,19 +24,9 @@ class TableImporter(FileImporter):
 # ####################################################################
 
 
-@task_decorator(unique_name="TableExporter")
-class TableExporter(FileExporter):
-    input_specs = {'data': Table}
-    output_specs = {'file': File}
-    config_specs = {
-        'file_name': StrParam(default_value='file.csv', short_description="Destination file name in the store"),
-        'file_format': StrParam(default_value=".csv", short_description="File format"),
-        'delimiter': StrParam(default_value="\t", short_description="Delimiter character. Only for parsing CSV files"),
-        'header': IntParam(default_value=0, short_description="Write column names (header)"),
-        'index': BoolParam(default_value=True, short_description="Write row names (index)"),
-        'file_store_uri': StrParam(optional=True, short_description="URI of the file_store where the file must be exported"),
-    }
-
+@exporter_decorator(unique_name="TableExporter", resource_type=Table)
+class TableExporter(TaskExporter):
+    pass
 # ####################################################################
 #
 # Loader class

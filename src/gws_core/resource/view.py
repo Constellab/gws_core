@@ -46,7 +46,7 @@ class View:
             "type": self._type,
         }
 
-    def get_kwarg_value(self, kwargs_, key: str, default_value: Any) -> Any:
+    def get_param_value(self, kwargs_, key: str, default_value: Any) -> Any:
         if key not in kwargs_ or kwargs_[key] is None:
             return default_value
         return kwargs_[key]

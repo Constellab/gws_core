@@ -1,7 +1,7 @@
 from typing import Dict, List
 
 from gws_core.config.config_exceptions import MissingConfigsException
-from gws_core.config.config_types import ConfigSpecs, ParamValue
+from gws_core.config.config_types import ConfigParams, ConfigSpecs, ParamValue
 from gws_core.config.param_spec import ParamSpec
 
 
@@ -44,6 +44,20 @@ class ParamSpecHelper():
             raise MissingConfigsException(missing_params)
 
         return full_values
+
+    @classmethod
+    def get_config_params(cls, param_specs: Dict[str, ParamSpec],
+                          param_values: Dict[str, ParamValue]) -> ConfigParams:
+        """ Check the param_values with params_specs and return ConfigParams if ok. ConfigParams contains all value and default value if not provided
+
+        :param param_specs: [description]
+        :type param_specs: Dict[str, ParamSpec]
+        :param param_values: [description]
+        :type param_values: Dict[str, ParamValue]
+        :return: [description]
+        :rtype: ConfigParams
+        """
+        return ConfigParams(ParamSpecHelper.get_and_check_values(param_specs, param_values))
 
     @classmethod
     def check_config_specs(cls, config_specs: ConfigSpecs) -> None:

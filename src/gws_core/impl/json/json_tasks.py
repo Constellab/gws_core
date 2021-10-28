@@ -4,10 +4,10 @@
 # About us: https://gencovery.com
 
 from ...config.param_spec import BoolParam, StrParam
+from ...task.exporter import TaskExporter, exporter_decorator
+from ...task.importer import TaskImporter, importer_decorator
 from ...task.task_decorator import task_decorator
-from ..file.file import File
-from ..file.file_uploader import (FileDumper, FileExporter, FileImporter,
-                                  FileLoader)
+from ..file.file_uploader import FileDumper, FileLoader
 from .json_dict import JSONDict
 
 # ####################################################################
@@ -17,13 +17,9 @@ from .json_dict import JSONDict
 # ####################################################################
 
 
-@task_decorator("JSONImporter")
-class JSONImporter(FileImporter):
-    input_specs = {'file': File}
-    output_specs = {'data': JSONDict}
-    config_specs = {
-        'file_format': StrParam(default_value=".json", short_description="File format"),
-    }
+@importer_decorator(unique_name="JSONImporter", resource_type=JSONDict)
+class JSONImporter(TaskImporter):
+    pass
 
 # ####################################################################
 #
@@ -32,15 +28,9 @@ class JSONImporter(FileImporter):
 # ####################################################################
 
 
-@task_decorator("JSONExporter")
-class JSONExporter(FileExporter):
-    input_specs = {'data': JSONDict}
-    output_specs = {'file': File}
-    config_specs = {
-        'file_name': StrParam(default_value='file.json', short_description="Destination file name in the store"),
-        'file_format': StrParam(default_value=".json", short_description="File format"),
-        'prettify': BoolParam(default_value=False, short_description="True to indent and prettify the JSON file, False otherwise")
-    }
+@exporter_decorator("FileExporter", resource_type=JSONDict)
+class JSONExporter(TaskExporter):
+    pass
 
 # ####################################################################
 #

@@ -242,7 +242,7 @@ class IOSpecsHelper():
         cls._check_io_spec_param(input_specs, 'input', SpecialTypeIn)
 
     @classmethod
-    def check_output_specs(cls, output_specs: InputSpecs) -> None:
+    def check_output_specs(cls, output_specs: OutputSpecs) -> None:
         """Method to verify that output specs are valid
         """
         cls._check_io_spec_param(output_specs, 'output', SpecialTypeOut)

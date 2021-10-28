@@ -2,16 +2,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, Type
 
+from ..config.config_types import ConfigParams
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.base import Base
-from ..core.utils.utils import Utils
+from ..core.utils.reflector_helper import ReflectorHelper
 from ..impl.json.json_view import JSONView
 from ..model.typing_register_decorator import typing_registrator
 from ..resource.r_field import BaseRField, UUIDRField
 from ..resource.view_decorator import view
 
 if TYPE_CHECKING:
+    from ..impl.file.fs_node import FSNode
     from .resource_model import ResourceModel
 
 # Typing names generated for the class resource
@@ -37,11 +39,11 @@ class Resource(Base):
                 f"The resource {self.full_classname()} is not decorated with @ResourceDecorator, it can't be instantiate. Please decorate the resource class with @ResourceDecorator")
 
         # Init default values of BaseRField
-        properties: Dict[str, BaseRField] = Utils.get_property_names_of_type(type(self), BaseRField)
+        properties: Dict[str, BaseRField] = ReflectorHelper.get_property_names_of_type(type(self), BaseRField)
         for key, r_field in properties.items():
             setattr(self, key, r_field.get_default_value())
 
-    def export_to_path(self, file_path: str, file_format: str = None):
+    def export_to_path(self, dir_: str, config: ConfigParams) -> FSNode:
         """
         Export the resource to a repository
 
@@ -68,7 +70,7 @@ class Resource(Base):
     # -- I --
 
     @classmethod
-    def import_from_path(cls, file_path: str, file_format: str = None) -> Any:
+    def import_from_path(cls, fs_node: FSNode, config: ConfigParams) -> Any:
         """
         Import a resource from a repository. Must be overloaded by the child class.
 
@@ -84,7 +86,7 @@ class Resource(Base):
         """By default the view_as_json dumps the RFields mark with, include_in_dict_view=True
         This method is used to send the resource information back to the interface
         """
-        properties: Dict[str, BaseRField] = Utils.get_property_names_of_type(type(self), BaseRField)
+        properties: Dict[str, BaseRField] = ReflectorHelper.get_property_names_of_type(type(self), BaseRField)
 
         json_: dict = {}
         for key, r_field in properties.items():

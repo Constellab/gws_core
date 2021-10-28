@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 
+from inspect import isclass
 from typing import Callable, Type
 
 from gws_core.config.param_spec_helper import ParamSpecHelper
@@ -36,25 +37,33 @@ def task_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER,
 
     """
     def decorator(task_class: Type[Task]):
-        if not issubclass(task_class, Task):
-            raise Exception(
-                f"The task_decorator is used on the class: {task_class.__name__} and this class is not a sub class of Task")
-
-        # Check the input, output and config specs
-        try:
-            IOSpecsHelper.check_input_specs(task_class.input_specs)
-            IOSpecsHelper.check_output_specs(task_class.output_specs)
-            ParamSpecHelper.check_config_specs(task_class.config_specs)
-
-        except Exception as err:
-            raise Exception(
-                f"Invalid specs for the task : {task_class.__name__}. {str(err)}")
-
-        register_typing_class(object_class=task_class, object_type="TASK", unique_name=unique_name,
-                              human_name=human_name, short_description=short_description, hide=hide)
-
-        # set the allowed user for the task
-        task_class._allowed_user = allowed_user
+        decorate_task(task_class, unique_name=unique_name, allowed_user=allowed_user,
+                      human_name=human_name, short_description=short_description, hide=hide)
 
         return task_class
     return decorator
+
+
+def decorate_task(task_class: Type[Task], unique_name: str, allowed_user: UserGroup = UserGroup.USER,
+                  human_name: str = "", short_description: str = "", hide: bool = False):
+    """Method to decorate a task
+    """
+    if not isclass(task_class) or not issubclass(task_class, Task):
+        raise Exception(
+            f"The task_decorator is used on the class: {task_class.__name__} and this class is not a sub class of Task")
+
+        # Check the input, output and config specs
+    try:
+        IOSpecsHelper.check_input_specs(task_class.input_specs)
+        IOSpecsHelper.check_output_specs(task_class.output_specs)
+        ParamSpecHelper.check_config_specs(task_class.config_specs)
+
+    except Exception as err:
+        raise Exception(
+            f"Invalid specs for the task : {task_class.__name__}. {str(err)}")
+
+    register_typing_class(object_class=task_class, object_type="TASK", unique_name=unique_name,
+                          human_name=human_name, short_description=short_description, hide=hide)
+
+    # set the allowed user for the task
+    task_class._allowed_user = allowed_user

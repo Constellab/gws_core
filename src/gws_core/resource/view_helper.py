@@ -1,6 +1,8 @@
 import inspect
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
+from gws_core.core.utils.reflector_helper import ReflectorHelper
+
 from ..config.param_spec_helper import ParamSpecHelper
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -75,13 +77,7 @@ class ViewHelper():
         """return the view method metadat if the func is a view, otherwise returns None
         """
         # Check if the method is annotated with view
-        if hasattr(func, VIEW_META_DATA_ATTRIBUTE) and isinstance(
-                getattr(func, VIEW_META_DATA_ATTRIBUTE),
-                ResourceViewMetaData):
-
-            return getattr(func, VIEW_META_DATA_ATTRIBUTE)
-
-        return None
+        return ReflectorHelper.get_and_check_object_metadata(func, VIEW_META_DATA_ATTRIBUTE, ResourceViewMetaData)
 
     @classmethod
     def get_views_of_resource_type(cls, resource_type: Type[Resource]) -> List[ResourceViewMetaData]:

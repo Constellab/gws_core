@@ -1,10 +1,9 @@
 
-from gws_core.config.param_spec import BoolParam, IntParam, StrParam
-
+from ...config.param_spec import StrParam
+from ...task.exporter import TaskExporter, exporter_decorator
+from ...task.importer import TaskImporter, importer_decorator
 from ...task.task_decorator import task_decorator
-from ..file.file import File
-from ..file.file_uploader import (FileDumper, FileExporter, FileImporter,
-                                  FileLoader)
+from ..file.file_uploader import FileDumper, FileLoader
 from .text import Text
 
 # ####################################################################
@@ -14,13 +13,9 @@ from .text import Text
 # ####################################################################
 
 
-@task_decorator(unique_name="TextImporter")
-class TextImporter(FileImporter):
-    input_specs = {'file': File}
-    output_specs = {'data': Text}
-    config_specs = {
-        'encoding': StrParam(default_value='utf-8', short_description="Text encoding")
-    }
+@importer_decorator(unique_name="TextImporter", resource_type=Text)
+class TextImporter(TaskImporter):
+    pass
 
 # ####################################################################
 #
@@ -29,15 +24,9 @@ class TextImporter(FileImporter):
 # ####################################################################
 
 
-@task_decorator(unique_name="TextExporter")
-class TextExporter(FileExporter):
-    input_specs = {'data': Text}
-    output_specs = {'file': File}
-    config_specs = {
-        'file_name': StrParam(default_value='file.txt', short_description="Destination file name in the store"),
-        'encoding': StrParam(default_value='utf-8', short_description="Text encoding"),
-        'file_store_uri': StrParam(optional=True, short_description="URI of the file_store where the file must be exported"),
-    }
+@exporter_decorator(unique_name="TextExporter", resource_type=Text)
+class TextExporter(TaskExporter):
+    pass
 
 # ####################################################################
 #

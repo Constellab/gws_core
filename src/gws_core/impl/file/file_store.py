@@ -168,3 +168,8 @@ class FileStore(Model):
         """
 
         self.data["path"] = path
+
+    @classmethod
+    def get_default_instance(cls) -> 'FileStore':
+        from .local_file_store import LocalFileStore
+        return LocalFileStore.get_default_instance()

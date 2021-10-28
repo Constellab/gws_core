@@ -4,13 +4,22 @@
 # About us: https://gencovery.com
 
 import json
+import os
 from typing import Any
 
+<<<<<<< HEAD
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
+=======
+from ...config.config_types import ConfigParams
+from ...config.param_spec import BoolParam, StrParam
+from ...impl.file.file import File
+>>>>>>> (feat) add importer and exporter decorators and tasks
 from ...resource.r_field import DictRField
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
+from ...task.exporter import export_to_path
+from ...task.importer import import_from_path
 
 
 @resource_decorator("JSONDict")
@@ -18,6 +27,7 @@ class JSONDict(Resource):
 
     data: dict = DictRField()
 
+<<<<<<< HEAD
     def __init__(self, data: dict = None):
         super().__init__()
         if data is None:
@@ -28,18 +38,29 @@ class JSONDict(Resource):
         self.data = data
 
     def export_to_path(self, file_path: str, file_format: str = ".json", prettify: bool = False):
+=======
+    @export_to_path(specs={
+        'file_name': StrParam(default_value='file.json', short_description="Destination file name in the store"),
+        'file_format': StrParam(default_value=".json", short_description="File format"),
+        'prettify': BoolParam(default_value=False, short_description="True to indent and prettify the JSON file, False otherwise")
+    })
+    def export_to_path(self, dir_: str, config: ConfigParams) -> File:
+>>>>>>> (feat) add importer and exporter decorators and tasks
         """
         Export to a give repository
 
         :param file_path: The destination file path
         :type file_path: File
         """
+        file_path = os.path.join(dir_, config.get_value('file_name'))
 
         with open(file_path, "w", encoding="utf-8") as f:
-            if prettify:
+            if config.get_value('prettify'):
                 json.dump(self.data, f, indent=4)
             else:
                 json.dump(self.data, f)
+
+        return File(file_path)
 
     def __getitem__(self, key):
         return self.data[key]
@@ -48,7 +69,8 @@ class JSONDict(Resource):
         return self.data.get(key, default)
 
     @classmethod
-    def import_from_path(cls, file_path: str, file_format: str = ".json") -> Any:
+    @import_from_path(specs={'file_format': StrParam(default_value=".json", short_description="File format")})
+    def import_from_path(cls, file: File, config: ConfigParams) -> Any:
         """
         Import a give from repository
 
@@ -58,7 +80,7 @@ class JSONDict(Resource):
         :rtype any
         """
 
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file.path, "r", encoding="utf-8") as f:
             json_data = cls()
             json_data.data = json.load(f)
 

@@ -103,8 +103,6 @@ from .impl.file.file_service import FileService as FileService
 from .impl.file.file_store import FileStore as FileStore
 from .impl.file.file_tasks import WriteToJsonFile as WriteToJsonFile
 from .impl.file.file_uploader import FileDumper as FileDumper
-from .impl.file.file_uploader import FileExporter as FileExporter
-from .impl.file.file_uploader import FileImporter as FileImporter
 from .impl.file.file_uploader import FileLoader as FileLoader
 from .impl.file.folder import Folder as Folder
 from .impl.file.fs_node import FSNode as FSNode
@@ -250,6 +248,12 @@ from .resource.view_types import ViewSpecs as ViewSpecs
 # Study
 from .study.study import Study as Study
 # Task
+from .task.exporter import TaskExporter as TaskExporter
+from .task.exporter import export_to_path as export_to_path
+from .task.exporter import exporter_decorator as exporter_decorator
+from .task.importer import TaskImporter as TaskImporter
+from .task.importer import import_from_path as import_from_path
+from .task.importer import importer_decorator as importer_decorator
 from .task.plug import FIFO2 as FIFO2
 from .task.plug import Sink as Sink
 from .task.plug import Source as Source

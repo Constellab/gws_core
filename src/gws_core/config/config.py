@@ -122,7 +122,7 @@ class Config(Viewable):
         values: ConfigParamsDict = self.get_values()
         specs: ConfigSpecs = self.get_specs()
 
-        return ConfigParams(ParamSpecHelper.get_and_check_values(specs, values))
+        return ParamSpecHelper.get_config_params(specs, values)
 
     def set_value(self, param_name: str, value: ParamValue):
         """
