@@ -1,6 +1,7 @@
 
 from typing import Any
 
+from ..config.config_types import ConfigParams
 from .view_types import ViewSpecs
 
 
@@ -16,7 +17,7 @@ class View:
     }
 
     def __init__(self, data: Any, *args, **kwargs):
-        self.check_and_set_data(data, *args, **kwargs)
+        self.check_and_set_data(data)
         self.__check_view_specs()
 
     def __check_view_specs(self) -> None:
@@ -32,7 +33,7 @@ class View:
                 raise Exception(
                     f"The spec '{key}' of the view '{self.__class__.__name__}' is not optional. All the view specs must be optional or have a default value")
 
-    def check_and_set_data(self, data, *args, **kwargs):
+    def check_and_set_data(self, data):
         """
         Check the data and return.
 
@@ -41,15 +42,10 @@ class View:
 
         self._data = data
 
-    def to_dict(self, *args, **kwargs) -> dict:
+    def to_dict(self, config: ConfigParams) -> dict:
         return {
             "type": self._type,
         }
-
-    def get_param_value(self, kwargs_, key: str, default_value: Any) -> Any:
-        if key not in kwargs_ or kwargs_[key] is None:
-            return default_value
-        return kwargs_[key]
 
     @classmethod
     def json_is_from_view(cls, json_: Any) -> bool:

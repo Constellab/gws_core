@@ -3,6 +3,7 @@ from typing import Dict, List
 
 from pandas import DataFrame
 
+from ...config.config_types import ConfigParams
 from ...config.param_spec import StrParam
 from ...resource.r_field import FloatRField, IntRField, ListRField
 from ...resource.resource import Resource
@@ -41,17 +42,18 @@ class Robot(Resource):
 
     @view(view_type=JSONView, human_name="View position",
           specs={"position": StrParam(default_value="latitude", allowed_values=['latitude', 'longitude'])})
-    def view_only_position(self, position: str) -> JSONView:
+    def view_only_position(self, config: ConfigParams) -> JSONView:
+        position: str = config.get_value('position')
         position_value = self.position[1] if position == 'latitude' else self.position[0]
         return JSONView({"position": position, "value": position_value})
 
     @view(view_type=TableView, human_name="View as csv")
-    def view_as_csv(self) -> TableView:
+    def view_as_csv(self, config: ConfigParams) -> TableView:
         dataframe: DataFrame = DataFrame.from_dict(self.to_dict())
         return TableView(dataframe)
 
     @view(view_type=TextView, human_name="View as text")
-    def view_as_string(self) -> TextView:
+    def view_as_string(self, config: ConfigParams) -> TextView:
         str_ = json.dumps(self.to_dict())
         return TextView(str_)
 

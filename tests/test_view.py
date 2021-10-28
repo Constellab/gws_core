@@ -2,8 +2,9 @@
 
 from typing import Dict, List
 
-from gws_core import (BaseTestCase, IntParam, Resource, ResourceService,
-                      StrParam, TextView, resource_decorator, view)
+from gws_core import (BaseTestCase, ConfigParams, IntParam, Resource,
+                      ResourceService, StrParam, TextView, resource_decorator,
+                      view)
 from gws_core.config.param_spec import StrParam
 from gws_core.resource.view import View
 from gws_core.resource.view_helper import ViewHelper
@@ -15,13 +16,8 @@ class ResourceViewTest(Resource):
 
     @view(view_type=TextView, human_name='View for test', short_description='Description for test',
           default_view=True)
-    def a_view_test(self) -> TextView:
+    def a_view_test(self, config: ConfigParams) -> TextView:
         return TextView('Test sub')
-
-    @view(view_type=TextView, human_name='View for test', short_description='Description for test',
-          specs={"test": StrParam()})
-    def z_view_test(self, **kwargs) -> TextView:
-        return TextView(kwargs.get('test'))
 
 
 @resource_decorator("ResourceViewTestSub")
@@ -31,8 +27,8 @@ class ResourceViewTestSub(ResourceViewTest):
           specs={'test_str_param': StrParam(default_value='Hello'),
                  'test_any_param': StrParam('Nice')},
           default_view=True)
-    def sub_view_test(self, test_str_param: str, test_any_param) -> TextView:
-        return TextView(test_str_param + str(test_any_param))
+    def sub_view_test(self, config: ConfigParams) -> TextView:
+        return TextView(config.get_value('test_str_param') + config.get_value('test_any_param'))
 
 
 @resource_decorator("ResourceViewTestOveride")
@@ -40,7 +36,7 @@ class ResourceViewTestOveride(Resource):
 
     @view(view_type=TextView, human_name='View overide',
           specs={"page": IntParam(default_value=1, min_value=0, human_name="Page number", visibility='private')})
-    def a_view_test(self, **kwargs) -> TextView:
+    def a_view_test(self, config: ConfigParams) -> TextView:
         return TextView('Test sub')
 
 
@@ -49,7 +45,7 @@ class TestView(BaseTestCase):
     def test_view_def(self):
         views: List[ResourceViewMetaData] = ResourceService.get_views_of_resource_type(ResourceViewTest)
 
-        self.assertEqual(len(views), 3)
+        self.assertEqual(len(views), 2)
 
         # get the view of view_test method
         view_test: ResourceViewMetaData = [x for x in views if x.method_name == 'a_view_test'][0]
@@ -60,7 +56,7 @@ class TestView(BaseTestCase):
 
         # Test with inheritance
         views: List[ResourceViewMetaData] = ResourceService.get_views_of_resource_type(ResourceViewTestSub)
-        self.assertEqual(len(views), 4)
+        self.assertEqual(len(views), 3)
 
         # Test that the first view is the one of the child and this is the only default
         sub_view_test: ResourceViewMetaData = [x for x in views if x.method_name == 'sub_view_test'][0]
@@ -80,33 +76,14 @@ class TestView(BaseTestCase):
         default_view = ViewHelper.get_default_view_of_resource_type(ResourceViewTestSub)
         self.assertEqual(default_view.method_name, 'sub_view_test')
 
-    def test_call_view_method(self):
-        resource = ResourceViewTestSub()
-        view_: View = ViewHelper.call_view_method(
-            resource, 'sub_view_test', {"test_str_param": "Bonjour ", "test_any_param": 12})
-
-        self.assertEqual(view_._data, "Bonjour 12")
-
-        # test view with kwargs
-        view_ = ViewHelper.call_view_method(
-            resource, 'z_view_test', {"test": "Bonjour"})
-
-        self.assertEqual(view_._data, "Bonjour")
-
     def test_complete_call_view(self):
         resource = ResourceViewTestSub()
         dict_: Dict = ViewHelper.call_view_on_resource(
             resource, 'sub_view_test',
-            {"test_str_param": "Bonjour ", "test_any_param": 12, "page": 1, "page_size": 5000})
+            {"test_str_param": "Bonjour ", "test_any_param": '12', "page": 1, "page_size": 5000})
 
         self.assertEqual(dict_["type"], TextView._type)
         self.assertEqual(dict_["data"], "Bonjour 12")
-
-        # Test with pagination
-        dict_ = ViewHelper.call_view_on_resource(
-            resource, 'sub_view_test', {"test_str_param": "Bonjour ", "test_any_param": 12, "page": 2, "page_size": 5})
-
-        self.assertEqual(dict_["data"], "ur 12")
 
     def test_method_view_override_and_private(self):
         """Test a method view where spec override view specs and private visiblity"""

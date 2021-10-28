@@ -37,7 +37,7 @@ class ParamSpecHelper():
                     # if there is not default value the value is missing
                     missing_params.append(key)
             else:
-                full_values[key] = param_values[key]
+                full_values[key] = spec.validate(param_values[key])
 
         # If there is at least one missing param, raise an exception
         if len(missing_params) > 0:

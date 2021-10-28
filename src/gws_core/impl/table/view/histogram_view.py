@@ -1,10 +1,9 @@
 
 
-from typing import Any, List, Union
-
 import numpy
 from pandas import DataFrame
 
+from ....config.config_types import ConfigParams
 from ....config.param_spec import BoolParam, IntParam, ListParam, StrParam
 from ....resource.view import ViewSpecs
 from .base_table_view import BaseTableView
@@ -47,10 +46,10 @@ class HistogramView(BaseTableView):
         "y_label": StrParam(human_name="Y-label", optional=True, visibility='protected', short_description="The y-axis label to display"),
     }
 
-    def to_dict(self, *args, **kwargs) -> dict:
-        nbins = kwargs.get("nbins", 10)
-        column_names = kwargs.get("column_names", [])
-        density = kwargs.get("density", False)
+    def to_dict(self, config: ConfigParams) -> dict:
+        nbins = config.get_value("nbins")
+        column_names = config.get_value("column_names", [])
+        density = config.get_value("density")
 
         if nbins <= 0:
             nbins = "auto"
@@ -71,6 +70,6 @@ class HistogramView(BaseTableView):
                 "column_name": column_name,
             })
         return {
-            **super().to_dict(**kwargs),
+            **super().to_dict(config),
             "data": series
         }

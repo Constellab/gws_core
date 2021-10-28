@@ -1,10 +1,9 @@
 
 
-from typing import Any, List
-
 from pandas import DataFrame
 
-from ....config.param_spec import IntParam, ListParam, StrParam
+from ....config.config_types import ConfigParams
+from ....config.param_spec import ListParam, StrParam
 from ....resource.view import ViewSpecs
 from .base_table_view import BaseTableView
 
@@ -47,11 +46,11 @@ class ScatterPlot2DView(BaseTableView):
         "y_label": StrParam(human_name="Y-label", optional=True, default_value=None, visibility='protected', short_description="The y-axis label to display"),
     }
 
-    def to_dict(self, *args, **kwargs) -> dict:
-        x_column_name = self.get_param_value(kwargs, "x_column_name", self._data.columns[0])
-        y_column_names = self.get_param_value(kwargs, "y_column_names", [self._data.columns[1]])
-        x_label = self.get_param_value(kwargs, "x_label", x_column_name)
-        y_label = self.get_param_value(kwargs, "y_label", "")
+    def to_dict(self, config: ConfigParams) -> dict:
+        x_column_name = config.get_value("x_column_name", self._data.columns[0])
+        y_column_names = config.get_value("y_column_names", [self._data.columns[1]])
+        x_label = config.get_value("x_label", x_column_name)
+        y_label = config.get_value("y_label", "")
 
         series = []
         for y_column_name in y_column_names:
@@ -64,7 +63,7 @@ class ScatterPlot2DView(BaseTableView):
                 "y_column_name": y_column_name,
             })
         return {
-            **super().to_dict(**kwargs),
+            **super().to_dict(config),
             "data": series,
             "x_label": x_label,
             "y_label": y_label,

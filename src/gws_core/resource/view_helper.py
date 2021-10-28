@@ -1,11 +1,11 @@
 import inspect
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
-from gws_core.core.utils.reflector_helper import ReflectorHelper
-
+from ..config.config_types import ConfigParams
 from ..config.param_spec_helper import ParamSpecHelper
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from ..core.utils.reflector_helper import ReflectorHelper
 from ..resource.resource import Resource
 from ..resource.view_decorator import VIEW_META_DATA_ATTRIBUTE
 from .view import View
@@ -22,10 +22,10 @@ class ViewHelper():
         view: View = cls.call_view_method(resource, view_name, config)
 
         # check the view config and set default values
-        view_parameters = ParamSpecHelper.get_and_check_values(view._specs, config)
+        config_params: ConfigParams = ParamSpecHelper.get_config_params(view._specs, config)
 
         # convert the view to dict using the config
-        return view.to_dict(**view_parameters)
+        return view.to_dict(config_params)
 
     @classmethod
     def call_view_method(cls, resource: Resource,
@@ -37,13 +37,13 @@ class ViewHelper():
         # check the method config and set the default values
         if config is None:
             config = {}
-        method_parameters = ParamSpecHelper.get_and_check_values(view_metadata.specs, config)
+        config_params: ConfigParams = ParamSpecHelper.get_config_params(view_metadata.specs, config)
 
         # Get view method
         view_method: Callable = getattr(resource, view_name)
 
         # Get the view object from the view method
-        view: View = view_method(**method_parameters)
+        view: View = view_method(config_params)
 
         if view is None or not isinstance(view, View):
             raise Exception(f"The view method '{view_name}' didn't returned a View object")

@@ -51,23 +51,23 @@ def view(view_type: Type[View], human_name: str = "", short_description: str = "
                     raise Exception(
                         f"View error. The @view of method '{func_args.func_name}' is mark as default but the spec '{spec_name}' is mandatory. If the view is mark as default, all the view specs must be optional or have a default value")
 
-        # Check that the function arg matches the view specs and the type are the same
-        for arg_name in func_args.get_named_args().keys():
-            if arg_name not in specs:
-                raise Exception(
-                    f"View error. The method '{func_args.func_name}' has an argument called '{arg_name}' but this argument is not defined in the specs of the @view decorator")
+        # # Check that the function arg matches the view specs and the type are the same
+        # for arg_name in func_args.get_named_args().keys():
+        #     if arg_name not in specs:
+        #         raise Exception(
+        #             f"View error. The method '{func_args.func_name}' has an argument called '{arg_name}' but this argument is not defined in the specs of the @view decorator")
 
             # view_param_type: type = specs[arg_name].get_type()
             # if arg_type != view_param_type:
             #     raise Exception(
             #         f"View error. The method '{func.__name__}' has an argument called '{arg_name}' of type '{arg_type}' but this type is not the same as the type defined in the specs of the view decorator '{view_param_type}'")
 
-        # Check that the view specs matches the args types (only is the function does not have an arg or kwargs)
-        if not func_args.contain_args():
-            for spec_name in specs.keys():
-                if spec_name not in func_args.args:
-                    raise Exception(
-                        f"View error. The @view decorator of the method '{func_args.func_name}' has a spec called '{spec_name}' but there is not argument in the function called with the same name")
+        # # Check that the view specs matches the args types (only is the function does not have an arg or kwargs)
+        # if not func_args.contain_args():
+        #     for spec_name in specs.keys():
+        #         if spec_name not in func_args.args:
+        #             raise Exception(
+        #                 f"View error. The @view decorator of the method '{func_args.func_name}' has a spec called '{spec_name}' but there is not argument in the function called with the same name")
 
         # If method spec overrides view spec, check the type
         view_specs: ViewSpecs = view_type._specs

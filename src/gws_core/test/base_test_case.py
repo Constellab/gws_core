@@ -7,6 +7,8 @@
 from typing import List, Union
 from unittest.async_case import IsolatedAsyncioTestCase
 
+from gws_core.core.utils.settings import Settings
+
 from ..core.db.db_manager import DbManager
 from ..experiment.queue_service import QueueService
 from .gtest import GTest
@@ -59,6 +61,9 @@ class BaseTestCase(IsolatedAsyncioTestCase):
     @classmethod
     def print(cls, text):
         GTest.print(text)
+
+    def get_test_data_dir(self) -> str:
+        return Settings.retrieve().get_variable("gws_core:testdata_dir")
 
     def assert_json(self, json_1: Union[dict, list], json_2: Union[dict, list], ignore_keys: List[str] = None) -> None:
         """Assert a json with possibility to ignore key

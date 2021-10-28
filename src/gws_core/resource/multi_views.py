@@ -1,8 +1,24 @@
 
 
-from typing import Any, Dict, List
+from typing import List, TypedDict
 
+from ..config.config_types import ConfigParams, ConfigParamsDict
+from ..config.param_spec_helper import ParamSpecHelper
 from .view import View
+
+
+class ViewGrid(TypedDict):
+    view: View
+    config_params: ConfigParams
+    colspan: int
+    rowspan: int
+
+
+class EmptyView(View):
+    _type = "empty-view"
+
+    def __init__(self):
+        super().__init__(None)
 
 
 class MultiViews(View):
@@ -12,8 +28,8 @@ class MultiViews(View):
     ```
     {
         "type": "multi-view"
-        "data": list[{
-          "view_dict": {},
+        "data": [{
+          "view": {},
           "colspan": colspan,
           "rowspan": rowspan,
         }],
@@ -21,7 +37,7 @@ class MultiViews(View):
     ```
     """
 
-    _views_dict: List[dict]
+    _sub_views: List[ViewGrid]
     _type = "multi-view"
     _nb_of_columns: int
 
@@ -33,14 +49,16 @@ class MultiViews(View):
         """
         super().__init__(None, *args, **kwargs)
         self._check_number(nb_of_columns, 'Number of columns')
-        self._views_dict = []
+        self._sub_views = []
         self._nb_of_columns = nb_of_columns
 
-    def add_view(self, view_dict: Dict[str, Any], colspan: int = 1, rowspan: int = 1) -> None:
+    def add_view(self, view: View, params: ConfigParamsDict = None, colspan: int = 1, rowspan: int = 1) -> None:
         """Add a view to the multi view
 
-        :param view_dict: dict of a view. Dictionary of a view from to_dict method
-        :type view_dict: Dict[str, Any]
+        :param view: view
+        :type view: Dict[str, Any]
+        :param params: values for the config of the view
+        :type params: Dict[str, Any]
         :param colspan: Nb of columns taken by the view in the grid, defaults to 1
         :type colspan: int, optional
         :param rowspan: Nb of rows taken by the view in the grid, defaults to 1
@@ -48,8 +66,13 @@ class MultiViews(View):
         :raises Exception: [description]
         """
 
-        if not self.json_is_from_view(view_dict):
-            raise Exception('[MultiViews] the povided dictionary if not a view dictionary')
+        if not isinstance(view, View):
+            raise Exception('[MultiViews] the view input is not a View')
+
+        if isinstance(view, MultiViews):
+            raise Exception('[MultiViews] cannot create nested MultiViews')
+
+        config_params: ConfigParams = ParamSpecHelper.get_config_params(view._specs, params)
 
         self._check_number(colspan, 'Colums span')
         self._check_number(rowspan, 'Rows span')
@@ -57,9 +80,10 @@ class MultiViews(View):
         if colspan > self._nb_of_columns:
             raise Exception('[MultiViews] the colums span must not be bigger than the number of columns')
 
-        self._views_dict.append(
+        self._sub_views.append(
             {
-                "view": view_dict,
+                "view": view,
+                "config_params": config_params,
                 "colspan": colspan,
                 "rowspan": rowspan,
             }
@@ -73,19 +97,29 @@ class MultiViews(View):
           :param rowspan: Nb of rows taken by the empty block, defaults to 1
           :type rowspan: int, optional
         """
-        self._views_dict.append(
+        self._sub_views.append(
             {
-                "view": {"type": "empty-view"},
+                "view": EmptyView(),
+                "config_params": ConfigParams(),
                 "colspan": colspan,
                 "rowspan": rowspan,
             }
         )
 
-    def to_dict(self, *args, **kwargs) -> dict:
+    def to_dict(self, config: ConfigParams) -> dict:
+        views_dict: List[dict] = []
+        for sub_view in self._sub_views:
+            view_dict = sub_view["view"].to_dict(sub_view["config_params"])
+            views_dict.append({
+                "view": view_dict,
+                "colspan": sub_view["colspan"],
+                "rowspan": sub_view["rowspan"],
+            })
+
         return {
             "type": self._type,
             "nb_of_columns": self._nb_of_columns,
-            "data": self._views_dict
+            "data": views_dict
         }
 
     def _check_number(self, nb: int, name: str) -> None:

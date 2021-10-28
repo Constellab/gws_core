@@ -1,5 +1,6 @@
 import numpy
 import pandas
+from gws_core.config.config_types import ConfigParams
 from pandas import DataFrame
 
 from ....config.param_spec import IntParam, StrParam
@@ -87,20 +88,20 @@ class TableView(BaseTableView):
             scale=scale
         )
 
-    def to_dict(self, *args, **kwargs) -> dict:
-        from_row = kwargs.get("from_row", 1)
-        number_of_rows_per_page = kwargs.get("number_of_rows_per_page", 50)
-        from_column = kwargs.get("from_column", 1)
-        number_of_columns_per_page = kwargs.get("number_of_columns_per_page", 50)
-        scale = kwargs.get("scale", "none")
+    def to_dict(self, config: ConfigParams) -> dict:
+        from_row: int = config.get("from_row")
+        number_of_rows_per_page: int = config.get("number_of_rows_per_page")
+        from_column: int = config.get("from_column")
+        number_of_columns_per_page: int = config.get("number_of_columns_per_page")
+        scale = config.get("scale")
 
         total_number_of_rows = self._data.shape[0]
         total_number_of_columns = self._data.shape[1]
 
-        from_row_index = from_row - 1
-        from_column_index = from_column - 1
-        to_row_index = from_row_index + number_of_rows_per_page
-        to_column_index = from_column_index + number_of_columns_per_page
+        from_row_index: int = from_row - 1
+        from_column_index: int = from_column - 1
+        to_row_index: int = from_row_index + number_of_rows_per_page
+        to_column_index: int = from_column_index + number_of_columns_per_page
 
         data = self._slice_data(
             from_row_index=from_row_index,
@@ -111,7 +112,7 @@ class TableView(BaseTableView):
         )
 
         return {
-            **super().to_dict(**kwargs),
+            **super().to_dict(config),
             "data": data,
             "from_row": from_row_index,
             "number_of_rows_per_page": number_of_rows_per_page,

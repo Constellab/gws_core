@@ -5,11 +5,10 @@
 
 import os
 
-from gws_core.config.config_types import ConfigParams
-from gws_core.config.param_spec import StrParam
-from gws_core.impl.file.file import File
-
+from ...config.config_types import ConfigParams
+from ...config.param_spec import StrParam
 from ...core.exception.exceptions import BadRequestException
+from ...impl.file.file import File
 from ...resource.r_field import RField
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
@@ -88,7 +87,7 @@ class Text(Resource):
 
     @view(view_type=TextView, human_name='Text', short_description='View as text',
           specs={})
-    def view_as_text(self) -> TextView:
+    def view_as_text(self, config: ConfigParams) -> TextView:
         """
         View as table
         """

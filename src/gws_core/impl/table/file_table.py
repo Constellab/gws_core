@@ -1,5 +1,6 @@
 from typing import List
 
+from gws_core.config.config_types import ConfigParams
 from gws_core.resource import multi_views
 from gws_core.resource.multi_views import MultiViews
 
@@ -30,80 +31,80 @@ class FileTable(File):
     supported_extensions: List[str] = ['xlsx', 'xls', 'csv', 'tsv']
 
     @view(view_type=TableView, human_name='Tabular', short_description='View as a table', default_view=True)
-    def view_as_table(self) -> TableView:
+    def view_as_table(self, config: ConfigParams) -> TableView:
         """
         View as table
         """
 
-        return self._get_table_resource().view_as_table()
+        return self._get_table_resource().view_as_table(config)
 
     @view(view_type=LinePlot2DView, human_name='LinePlot2D', short_description='View columns as 2D-line plots', specs={})
-    def view_as_line_plot_2d(self, *args, **kwargs) -> LinePlot2DView:
+    def view_as_line_plot_2d(self, config: ConfigParams) -> LinePlot2DView:
         """
         View columns as 2D-line plots
         """
 
-        return self._get_table_resource().view_as_line_plot_2d(*args, **kwargs)
+        return self._get_table_resource().view_as_line_plot_2d(config)
 
     @view(view_type=LinePlot3DView, human_name='LinePlot3D', short_description='View columns as 3D-line plots', specs={})
-    def view_as_line_plot_3d(self, *args, **kwargs) -> LinePlot3DView:
+    def view_as_line_plot_3d(self, config: ConfigParams) -> LinePlot3DView:
         """
         View columns as 3D-line plots
         """
 
-        return self._get_table_resource().view_as_line_plot_3d(*args, **kwargs)
+        return self._get_table_resource().view_as_line_plot_3d(config)
 
     @view(view_type=ScatterPlot3DView, human_name='ScatterPlot3D', short_description='View columns as 3D-scatter plots',
           specs={})
-    def view_as_scatter_plot_3d(self, *args, **kwargs) -> ScatterPlot3DView:
+    def view_as_scatter_plot_3d(self, config: ConfigParams) -> ScatterPlot3DView:
         """
         View columns as 3D-scatter plots
         """
 
-        return self._get_table_resource().view_as_scatter_plot_3d(*args, **kwargs)
+        return self._get_table_resource().view_as_scatter_plot_3d(config)
 
     @view(view_type=ScatterPlot2DView, human_name='ScatterPlot2D', short_description='View columns as 2D-scatter plots',
           specs={})
-    def view_as_scatter_plot_2d(self, *args, **kwargs) -> ScatterPlot2DView:
+    def view_as_scatter_plot_2d(self, config: ConfigParams) -> ScatterPlot2DView:
         """
         View one or several columns as 2D-line plots
         """
 
-        return self._get_table_resource().view_as_scatter_plot_2d(*args, **kwargs)
+        return self._get_table_resource().view_as_scatter_plot_2d(config)
 
     @view(view_type=HistogramView, human_name='Histogram', short_description='View columns as 2D-line plots',
           specs={})
-    def view_as_histogram(self, *args, **kwargs) -> HistogramView:
+    def view_as_histogram(self, config: ConfigParams) -> HistogramView:
         """
         View columns as 2D-line plots
         """
 
-        return self._get_table_resource().view_as_histogram(*args, **kwargs)
+        return self._get_table_resource().view_as_histogram(config)
 
     @view(view_type=BoxPlotView, human_name='BoxPlot', short_description='View columns as box plots', specs={})
-    def view_as_box_plot(self, *args, **kwargs) -> BoxPlotView:
+    def view_as_box_plot(self, config: ConfigParams) -> BoxPlotView:
         """
         View one or several columns as box plots
         """
 
-        return self._get_table_resource().view_as_box_plot(*args, **kwargs)
+        return self._get_table_resource().view_as_box_plot(config)
 
     @view(view_type=MultiViews, human_name='Multi view', short_description='Multi view', specs={})
-    def view_as_multi_views(self, *args, **kwargs) -> MultiViews:
+    def view_as_multi_views(self, config: ConfigParams) -> MultiViews:
         """
         View one or several columns as box plots
         """
 
         multi_views: MultiViews = MultiViews(nb_of_columns=4)
-        multi_views.add_view(self.view_as_scatter_plot_2d().to_dict(), 3, 1)
-        multi_views.add_view(self.view_as_line_plot_2d().to_dict(), 1, 3)
+        multi_views.add_view(self.view_as_scatter_plot_2d(config), {}, 3, 1)
+        multi_views.add_view(self.view_as_line_plot_2d(config), {}, 1, 3)
         multi_views.add_empty_block(2, 2)
         # multi_views.add_view(self.view_as_table().to_dict(), 2, 2)
-        multi_views.add_view(self.view_as_json().to_dict(), 1, 2)
+        multi_views.add_view(self.view_as_json(config), {}, 1, 2)
 
         return multi_views
 
     def _get_table_resource(self) -> Table:
         # guess the delimiter
         delimiter = FileHelper.detect_csv_delimiter(self.read())
-        return Table.import_from_path(file_path=self.path, delimiter=delimiter)
+        return Table.import_from_path(self, ConfigParams(delimiter=delimiter, header=0))

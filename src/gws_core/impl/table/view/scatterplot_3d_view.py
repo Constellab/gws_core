@@ -1,10 +1,9 @@
 
 
-from typing import Any, List
-
 from pandas import DataFrame
 
-from ....config.param_spec import IntParam, ListParam, StrParam
+from ....config.config_types import ConfigParams
+from ....config.param_spec import ListParam, StrParam
 from ....resource.view import ViewSpecs
 from .base_table_view import BaseTableView
 
@@ -52,13 +51,13 @@ class ScatterPlot3DView(BaseTableView):
         "z_label": StrParam(human_name="Z-label", optional=True, visibility='protected', short_description="The z-axis label to display"),
     }
 
-    def to_dict(self, *args, **kwargs) -> dict:
-        x_column_name = kwargs.get("x_column_name", self._data.columns[0])
-        y_column_name = kwargs.get("y_column_name", self._data.columns[1])
-        z_column_names = kwargs.get("z_column_names", [self._data.columns[2]])
-        x_label = kwargs.get("x_label", x_column_name)
-        y_label = kwargs.get("y_label", y_column_name)
-        z_label = kwargs.get("y_label", "")
+    def to_dict(self, config: ConfigParams) -> dict:
+        x_column_name = config.get_value("x_column_name", self._data.columns[0])
+        y_column_name = config.get_value("y_column_name", self._data.columns[1])
+        z_column_names = config.get_value("z_column_names", [self._data.columns[2]])
+        x_label = config.get_value("x_label", x_column_name)
+        y_label = config.get_value("y_label", y_column_name)
+        z_label = config.get_value("y_label", "")
 
         series = []
         for z_column_name in z_column_names:
@@ -74,7 +73,7 @@ class ScatterPlot3DView(BaseTableView):
             })
 
         return {
-            **super().to_dict(**kwargs),
+            **super().to_dict(config),
             "data": series,
             "x_label": x_label,
             "y_label": y_label,

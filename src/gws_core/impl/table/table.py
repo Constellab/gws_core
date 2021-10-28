@@ -9,12 +9,12 @@ from typing import Union
 
 import numpy as np
 import pandas
-from gws_core.config.config_types import ConfigParams
-from gws_core.impl.file.file import File
 from pandas import DataFrame
 
+from ...config.config_types import ConfigParams
 from ...config.param_spec import BoolParam, IntParam, StrParam
 from ...core.exception.exceptions import BadRequestException
+from ...impl.file.file import File
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view
@@ -258,73 +258,73 @@ class Table(Resource):
     # -- V ---
 
     @view(view_type=TableView, default_view=True, human_name='Tabular', short_description='View as a table', specs={})
-    def view_as_table(self, *args, **kwargs) -> TableView:
+    def view_as_table(self, config: ConfigParams) -> TableView:
         """
         View as table
         """
 
-        return TableView(self._data, *args, **kwargs)
+        return TableView(self._data)
 
     @view(view_type=LinePlot2DView, human_name='LinePlot2D', short_description='View columns as 2D-line plots', specs={})
-    def view_as_line_plot_2d(self, *args, **kwargs) -> LinePlot2DView:
+    def view_as_line_plot_2d(self, config: ConfigParams) -> LinePlot2DView:
         """
         View columns as 2D-line plots
         """
 
-        return LinePlot2DView(self._data, *args, **kwargs)
+        return LinePlot2DView(self._data)
 
     @view(view_type=LinePlot3DView, human_name='LinePlot3D', short_description='View columns as 3D-line plots', specs={})
-    def view_as_line_plot_3d(self, *args, **kwargs) -> LinePlot3DView:
+    def view_as_line_plot_3d(self, config: ConfigParams) -> LinePlot3DView:
         """
         View columns as 3D-line plots
         """
 
-        return LinePlot3DView(self._data, *args, **kwargs)
+        return LinePlot3DView(self._data)
 
     @view(view_type=ScatterPlot3DView, human_name='ScatterPlot3D', short_description='View columns as 3D-scatter plots', specs={})
-    def view_as_scatter_plot_3d(self, *args, **kwargs) -> ScatterPlot3DView:
+    def view_as_scatter_plot_3d(self, config: ConfigParams) -> ScatterPlot3DView:
         """
         View columns as 3D-scatter plots
         """
 
-        return ScatterPlot3DView(self._data, *args, **kwargs)
+        return ScatterPlot3DView(self._data)
 
     @view(view_type=ScatterPlot2DView, human_name='ScatterPlot2D', short_description='View columns as 2D-scatter plots', specs={})
-    def view_as_scatter_plot_2d(self, *args, **kwargs) -> ScatterPlot2DView:
+    def view_as_scatter_plot_2d(self, config: ConfigParams) -> ScatterPlot2DView:
         """
         View one or several columns as 2D-line plots
         """
 
-        return ScatterPlot2DView(self._data, *args, **kwargs)
+        return ScatterPlot2DView(self._data)
 
     @view(view_type=BarPlotView, human_name='BarPlot', short_description='View columns as 2D-bar plots', specs={})
-    def view_as_bar_plot(self, *args, **kwargs) -> BarPlotView:
+    def view_as_bar_plot(self, config: ConfigParams) -> BarPlotView:
         """
         View one or several columns as 2D-bar plots
         """
 
-        return BarPlotView(self._data, *args, **kwargs)
+        return BarPlotView(self._data)
 
     @view(view_type=HistogramView, human_name='Histogram', short_description='View columns as 2D-line plots', specs={})
-    def view_as_histogram(self, *args, **kwargs) -> HistogramView:
+    def view_as_histogram(self, config: ConfigParams) -> HistogramView:
         """
         View columns as 2D-line plots
         """
 
-        return HistogramView(self._data, *args, **kwargs)
+        return HistogramView(self._data)
 
     @view(view_type=BoxPlotView, human_name='BoxPlot', short_description='View columns as box plots', specs={})
-    def view_as_box_plot(self, *args, **kwargs) -> BoxPlotView:
+    def view_as_box_plot(self, config: ConfigParams) -> BoxPlotView:
         """
         View one or several columns as box plots
         """
 
-        return BoxPlotView(self._data, *args, **kwargs)
+        return BoxPlotView(self._data)
 
     @view(view_type=HeatmapView, human_name='Heatmap', short_description='View table as heatmap', specs={})
-    def view_as_heatmap(self, *args, **kwargs) -> BarPlotView:
+    def view_as_heatmap(self, config: ConfigParams) -> BarPlotView:
         """
         View the table as heatmap
         """
 
-        return HeatmapView(self._data, *args, **kwargs)
+        return HeatmapView(self._data)

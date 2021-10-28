@@ -1,6 +1,7 @@
 
 from typing import Any, Dict
 
+from ...config.config_types import ConfigParams
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ...resource.view import View
@@ -26,7 +27,7 @@ class JSONView(View):
             raise BadRequestException("The data must be a json (dictionary, list of primitive or primitive object)")
         super().__init__(data=data)
 
-    def to_dict(self) -> dict:
+    def to_dict(self, config: ConfigParams) -> dict:
         return {
             "type": self._type,
             "data": self._data,

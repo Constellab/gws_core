@@ -7,6 +7,7 @@ import json
 import os
 from typing import Any, AnyStr, List
 
+from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
 from ...impl.file.file_helper import FileHelper
 from ...impl.json.json_view import JSONView
@@ -100,7 +101,7 @@ class File(FSNode):
         return data
 
     @view(view_type=JSONView, human_name="View as JSON", short_description="View the complete resource as json")
-    def view_as_json(self) -> JSONView:
+    def view_as_json(self, config: ConfigParams) -> JSONView:
         content = self.read()
         try:
             json_: Any = json.loads(content)
@@ -109,15 +110,15 @@ class File(FSNode):
             pass
 
         # rollback to string view if not convertible to json
-        return self.view_content_as_str()
+        return self.view_content_as_str(config)
 
     @view(view_type=View, human_name="View file content", short_description="View the file content as string")
-    def view_content_as_str(self) -> TextView:
+    def view_content_as_str(self, config: ConfigParams) -> TextView:
         content = self.read()
         return TextView(content)
 
     @view(view_type=View, human_name="Default view", short_description="View the file with automatic view", default_view=True)
-    def default_view(self) -> View:
+    def default_view(self, config: ConfigParams) -> View:
         content = self.read()
 
         if self.is_json():

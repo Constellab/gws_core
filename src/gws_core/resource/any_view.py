@@ -2,7 +2,8 @@
 
 from typing import Dict
 
-from gws_core.resource.view import View
+from ..config.config_types import ConfigParams
+from ..resource.view import View
 
 
 class AnyView(View):
@@ -16,5 +17,5 @@ class AnyView(View):
         self._type = view_json.get("type")
         self._view_json = view_json
 
-    def to_dict(self) -> dict:
+    def to_dict(self, config: ConfigParams) -> dict:
         return self._view_json

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Union
 
+from ....config.config_types import ConfigParams
 from ....config.param_spec import IntParam
 from ....core.classes.paginator import PageInfo
 from ....core.exception.exceptions.bad_request_exception import \
@@ -50,16 +51,16 @@ class TextView(View):
         to_char_index = min(min(to_char_index, from_char_index + self.MAX_NUMBER_OF_CHARS_PER_PAGE), length)
         return self._data[from_char_index:to_char_index]
 
-    def to_dict(self, *args, **kwargs) -> dict:
-        page = kwargs.get("page", 1)
-        page_size = kwargs.get("page_size", 10000)
+    def to_dict(self, config: ConfigParams) -> dict:
+        page = config.get_value("page")
+        page_size = config.get_value("page_size")
 
         total_number_of_chars = len(self._data)
         page_info: PageInfo = PageInfo(page, page_size, total_number_of_chars, self.MAX_NUMBER_OF_CHARS_PER_PAGE, 1)
 
         text = self._slice(from_char_index=page_info.from_index, to_char_index=page_info.to_index)
         return {
-            **super().to_dict(**kwargs),
+            **super().to_dict(config),
             "data": text,
             **page_info.to_json(),
         }
