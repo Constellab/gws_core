@@ -149,6 +149,15 @@ class ModelService(BaseService):
         model: Model = TypingManager.get_object_with_typing_name_and_uri(typing_name, uri)
         return model.verify_hash()
 
+    @classmethod
+    def search(cls, typing_name: str, search_text: str,
+               page: int = 0, number_of_items_per_page: int = 20) -> Paginator[Model]:
+        base_type: Type[Model] = TypingManager.get_type_from_name(typing_name)
+
+        query = base_type.search(search_text)
+        return Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page,
+                         nb_max_of_items_per_page=cls._number_of_items_per_page)
+
     ############################################ DB ######################################
 
     @classmethod

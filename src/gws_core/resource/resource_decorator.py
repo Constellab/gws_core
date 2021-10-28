@@ -14,12 +14,12 @@ def resource_decorator(unique_name: str, human_name: str = "", short_description
     """ Decorator to be placed on all the resourcees. A resource not decorated will not be runnable.
     It define static information about the resource
 
-    :param name_unique: a unique name for this resource in the brick. Only 1 resource in the current brick can have this name.
+    :param unique_name: a unique name for this resource in the brick. Only 1 resource in the current brick can have this name.
                         //!\\ DO NOT MODIFIED THIS NAME ONCE IS DEFINED //!\\
                         It is used to instantiate the resourcees
-    :type name_unique: str
+    :type unique_name: str
     :param human_name: optional name that will be used in the interface when viewing the resourcees. Must not be longer than 20 caracters
-                        If not defined, the name_unique will be used
+                        If not defined, the unique_name will be used
     :type human_name: str, optional
     :param short_description: optional description that will be used in the interface when viewing the resourcees. Must not be longer than 100 caracters
     :type short_description: str, optional

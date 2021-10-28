@@ -86,11 +86,10 @@ class Paginator(Generic[PaginatorType]):
     query: Query
     paginated_query: Any
 
-    _MAX_NUMBER_OF_ITEMS_PER_PAGE = 100
-
     def __init__(self, query: ModelSelect,
                  page: int = 0,
                  number_of_items_per_page: int = 20,
+                 nb_max_of_items_per_page: int = 100,
                  view_params: dict = None):
         if not view_params:
             self.view_params = {}
@@ -103,7 +102,7 @@ class Paginator(Generic[PaginatorType]):
         self.page_info = PageInfo(
             int(page),
             number_of_items_per_page, query.count(),
-            Paginator._MAX_NUMBER_OF_ITEMS_PER_PAGE)
+            nb_max_of_items_per_page)
 
     def _get_paginated_info(self) -> PaginatorDict:
         return {
