@@ -7,14 +7,11 @@ import json
 import os
 from typing import Any
 
-<<<<<<< HEAD
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
-=======
 from ...config.config_types import ConfigParams
 from ...config.param_spec import BoolParam, StrParam
 from ...impl.file.file import File
->>>>>>> (feat) add importer and exporter decorators and tasks
 from ...resource.r_field import DictRField
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
@@ -27,7 +24,6 @@ class JSONDict(Resource):
 
     data: dict = DictRField()
 
-<<<<<<< HEAD
     def __init__(self, data: dict = None):
         super().__init__()
         if data is None:
@@ -37,15 +33,12 @@ class JSONDict(Resource):
                 raise BadRequestException("The data must be an instance of dict")
         self.data = data
 
-    def export_to_path(self, file_path: str, file_format: str = ".json", prettify: bool = False):
-=======
     @export_to_path(specs={
         'file_name': StrParam(default_value='file.json', short_description="Destination file name in the store"),
         'file_format': StrParam(default_value=".json", short_description="File format"),
         'prettify': BoolParam(default_value=False, short_description="True to indent and prettify the JSON file, False otherwise")
     })
     def export_to_path(self, dir_: str, config: ConfigParams) -> File:
->>>>>>> (feat) add importer and exporter decorators and tasks
         """
         Export to a give repository
 
