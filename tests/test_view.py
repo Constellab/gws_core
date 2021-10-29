@@ -2,13 +2,12 @@
 
 from typing import Dict, List
 
-from gws_core import (BaseTestCase, Resource, ResourceService, StrParam,
-                      TextView, resource_decorator, view)
+from gws_core import (BaseTestCase, IntParam, Resource, ResourceService,
+                      StrParam, TextView, resource_decorator, view)
 from gws_core.config.param_spec import StrParam
 from gws_core.resource.view import View
 from gws_core.resource.view_helper import ViewHelper
-from gws_core.resource.view_meta_data import (ResourceViewMetaData,
-                                              ViewConfigValues)
+from gws_core.resource.view_meta_data import ResourceViewMetaData
 
 
 @resource_decorator("ResourceViewTest")
@@ -34,6 +33,15 @@ class ResourceViewTestSub(ResourceViewTest):
           default_view=True)
     def sub_view_test(self, test_str_param: str, test_any_param) -> TextView:
         return TextView(test_str_param + str(test_any_param))
+
+
+@resource_decorator("ResourceViewTestOveride")
+class ResourceViewTestOveride(Resource):
+
+    @view(view_type=TextView, human_name='View overide',
+          specs={"page": IntParam(default_value=1, min_value=0, human_name="Page number", visibility='private')})
+    def a_view_test(self, **kwargs) -> TextView:
+        return TextView('Test sub')
 
 
 class TestView(BaseTestCase):
@@ -85,18 +93,29 @@ class TestView(BaseTestCase):
 
         self.assertEqual(view_._data, "Bonjour")
 
-    def test_test_complete_call_view(self):
+    def test_complete_call_view(self):
         resource = ResourceViewTestSub()
         dict_: Dict = ViewHelper.call_view_on_resource(
-            resource, 'sub_view_test', {"test_str_param": "Bonjour ", "test_any_param": 12},
-            {"page": 1, "page_size": 5000})
+            resource, 'sub_view_test',
+            {"test_str_param": "Bonjour ", "test_any_param": 12, "page": 1, "page_size": 5000})
 
         self.assertEqual(dict_["type"], TextView._type)
         self.assertEqual(dict_["data"], "Bonjour 12")
 
         # Test with pagination
-        dict_ = ViewHelper.call_view_on_resource(resource, 'sub_view_test',
-                                                 {"test_str_param": "Bonjour ", "test_any_param": 12},
-                                                 {"page": 2, "page_size": 5})
+        dict_ = ViewHelper.call_view_on_resource(
+            resource, 'sub_view_test', {"test_str_param": "Bonjour ", "test_any_param": 12, "page": 2, "page_size": 5})
 
         self.assertEqual(dict_["data"], "ur 12")
+
+    def test_method_view_override_and_private(self):
+        """Test a method view where spec override view specs and private visiblity"""
+
+        view_meta_data: ResourceViewMetaData = ViewHelper.get_and_check_view(ResourceViewTestOveride, 'a_view_test')
+
+        self.assertTrue('page' in view_meta_data.view_type._specs)
+        self.assertTrue('page' in view_meta_data.specs)
+        json_ = view_meta_data.merge_visible_specs()
+
+        # if the page was overrided and the private is working, the page should not be in the json
+        self.assertFalse('page' in json_)

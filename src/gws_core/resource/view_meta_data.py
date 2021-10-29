@@ -40,41 +40,17 @@ class ResourceViewMetaData():
             "view_type": self.view_type._type,
             "human_name": self.human_name,
             "short_description": self.short_description,
-            "specs": self.merge_view_method_specs(),
+            "specs": self.merge_visible_specs(),
             "default_view": self.default_view,
         }
 
-    def merge_view_method_specs(self) -> ViewConfig:
-        json_ = {}
+    def merge_visible_specs(self) -> ViewConfig:
+        """Merge the view and method specs and return only visible specs"""
+        json_: ViewSpecs = {**self.view_type._specs, **self.specs}
 
-        for key, item in self.specs.items():
-            json_[METHOD_SPEC_PREFIX + key] = item.to_json()
-
-        for key, item in self.view_type._specs.items():
-            json_[VIEW_SPEC_PREFIX + key] = item.to_json()
-
-        return json_
-
-
-class ViewConfigValues(BaseModel):
-
-    config_values: Dict[str, Any]
-
-    def get_view_config_values(self) -> Dict[str, Any]:
-        return self._get_config_values(VIEW_SPEC_PREFIX)
-
-    def get_method_config_values(self) -> Dict[str, Any]:
-        return self._get_config_values(METHOD_SPEC_PREFIX)
-
-    def _get_config_values(self, prefix: str) -> Dict[str, Any]:
-        if not self.config_values:
-            return {}
-
-        config: Dict[str, Any] = {}
-
-        for key, item in self.config_values.items():
-            if key.startswith(prefix):
-                config_name = key[len(prefix):]
-                config[config_name] = item
-
-        return config
+        visible_json = {}
+        for key, spec in json_.items():
+            if spec.visibility == 'private':
+                continue
+            visible_json[key] = spec.to_json()
+        return visible_json

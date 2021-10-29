@@ -61,7 +61,6 @@ class ParamSpec(Generic[ParamSpecType]):
         :param unit: Measure unit of the value (ex kg)
         :type unit: Optional[str]
         """
-        self._check_visibility(visibility)
         self.visibility = visibility
         self.human_name = human_name
         self.short_description = short_description
@@ -69,11 +68,7 @@ class ParamSpec(Generic[ParamSpecType]):
 
         # the param is optional if the default value is set or optional is set to True
         self.optional = default_value is not None or optional
-
-        # If the visibility is not public, the param must have a default value
-        if self.visibility != 'public' and not self.optional:
-            raise BadRequestException(
-                f"The '{self.get_type()}' parame visibility is set to {self.visibility} but the param is mandatory. It must have a default value of be optional")
+        self._check_visibility(visibility)
 
         self.default_value = self.validate(default_value)
 
@@ -98,11 +93,13 @@ class ParamSpec(Generic[ParamSpecType]):
         self.human_name = json_.get("human_name")
         self.short_description = json_.get("short_description")
         self.unit = json_.get("unit")
+        self.visibility = json_.get("visibility")
 
     def to_json(self) -> Dict[str, Any]:
         _json: Dict[str, Any] = {
             "type": self.get_type().__name__,
-            "optional": self.optional
+            "optional": self.optional,
+            "visibility": self.visibility
         }
 
         if self.default_value is not None:
@@ -126,6 +123,11 @@ class ParamSpec(Generic[ParamSpecType]):
         if visibility not in allowed_visibility:
             raise BadRequestException(
                 f"The visibilty '{visibility}' of the '{self.get_type()}' is incorrect. It must be one of the following values : {str(allowed_visibility)}")
+
+        # If the visibility is not public, the param must have a default value
+        if self.visibility != 'public' and not self.optional:
+            raise BadRequestException(
+                f"The '{self.get_type()}' parame visibility is set to {self.visibility} but the param is mandatory. It must have a default value of be optional if the visiblity is not public")
 
 
 class StrParam(ParamSpec[str]):

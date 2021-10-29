@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, List, final
+from typing import Any, Dict, List, final
 
 from gws_core.config.param_spec_helper import ParamSpecHelper
 
@@ -165,3 +165,17 @@ class Config(Viewable):
 
     def _clear_values(self):
         self.data["values"] = {}
+
+    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
+        data: Dict = super().data_to_json(deep=deep, **kwargs)
+
+        # return all the spec but the private specs
+        specs: ConfigSpecs = self.get_specs()
+        json_specs: dict = {}
+        for key, spec in specs.items():
+            if spec.visibility == 'private':
+                continue
+            json_specs[key] = spec.to_json()
+
+        data["specs"] = json_specs
+        return data

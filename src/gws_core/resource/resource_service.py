@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, List, Type
+from typing import Any, Dict, List, Type
 
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import NotFoundException
@@ -14,7 +14,7 @@ from ..model.typing_manager import TypingManager
 from ..resource.view_helper import ViewHelper
 from .resource_model import Resource, ResourceModel
 from .resource_typing import ResourceTyping
-from .view_meta_data import ResourceViewMetaData, ViewConfigValues
+from .view_meta_data import ResourceViewMetaData
 
 
 class ResourceService(BaseService):
@@ -87,17 +87,15 @@ class ResourceService(BaseService):
     @classmethod
     def call_view_on_resource_type(cls, resource_model_typing_name: str,
                                    resource_model_uri: str,
-                                   view_name: str, config: ViewConfigValues) -> Any:
+                                   view_name: str, config_values: Dict[str, Any]) -> Any:
 
         resource_model: ResourceModel = cls.get_resource_by_type_and_uri(resource_model_typing_name, resource_model_uri)
 
         resource: Resource = resource_model.get_resource()
-        return cls.call_view_on_resource(resource, view_name, config)
+        return cls.call_view_on_resource(resource, view_name, config_values)
 
     @classmethod
     def call_view_on_resource(cls, resource: Resource,
-                              view_name: str, config: ViewConfigValues) -> Any:
+                              view_name: str, config_values: Dict[str, Any]) -> Any:
 
-        return ViewHelper.call_view_on_resource(
-            resource, view_name, config.get_method_config_values(),
-            config.get_view_config_values())
+        return ViewHelper.call_view_on_resource(resource, view_name, config_values)

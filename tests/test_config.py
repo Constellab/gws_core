@@ -26,7 +26,7 @@ class TestConfig(BaseTestCase):
 
         self.assert_json(config.data, {
             "specs": {
-                'moving_step': {"type": "float", "default_value": 0.1, "optional": True}
+                'moving_step': {"type": "float", "default_value": 0.1, "optional": True, "visibility": "public"}
             },
             "values": {
                 'moving_step': 4.5
@@ -85,7 +85,15 @@ class TestConfig(BaseTestCase):
             config.get_and_check_values()
 
     def test_param_visibility(self):
-        FloatParam(default_value=1, visibility="protected")
-        FloatParam(optional=True, visibility="private")
+        float_1 = FloatParam(default_value=1, visibility="protected")
+        float_2 = FloatParam(optional=True, visibility="private")
         self.assertRaises(Exception, FloatParam, visibility="protected")
         self.assertRaises(Exception, FloatParam, visibility="wrong")
+
+        # Test that the config private are not returned in json
+        config: Config = Config()
+        config.set_specs({'float_1': float_1, 'float_2': float_2})
+
+        json_ = config.data_to_json()
+        self.assertTrue('float_1' in json_['specs'])
+        self.assertFalse('float_2' in json_['specs'])
