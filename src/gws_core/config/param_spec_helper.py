@@ -53,8 +53,8 @@ class ParamSpecHelper():
             return
 
         if not isinstance(config_specs, dict):
-            raise Exception(f"The config specs must be a dictionary")
+            raise Exception("The config specs must be a dictionary")
 
         for key, item in config_specs.items():
             if not isinstance(item, ParamSpec):
-                raise Exception(f"The config spec '{key}' is invalid, it must be a ParamSpec but got {str(item)}")
+                raise Exception(f"The config spec '{key}' is invalid, it must be a ParamSpec but got {type(item)}")

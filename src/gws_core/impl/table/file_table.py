@@ -1,5 +1,8 @@
 from typing import List
 
+from gws_core.resource import multi_views
+from gws_core.resource.multi_views import MultiViews
+
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view
 from ..file.file import File
@@ -84,6 +87,21 @@ class FileTable(File):
         """
 
         return self._get_table_resource().view_as_box_plot(*args, **kwargs)
+
+    @view(view_type=MultiViews, human_name='Multi view', short_description='Multi view', specs={})
+    def view_as_multi_views(self, *args, **kwargs) -> MultiViews:
+        """
+        View one or several columns as box plots
+        """
+
+        multi_views: MultiViews = MultiViews(nb_of_columns=4)
+        multi_views.add_view(self.view_as_scatter_plot_2d().to_dict(), 3, 1)
+        multi_views.add_view(self.view_as_line_plot_2d().to_dict(), 1, 3)
+        multi_views.add_empty_block(2, 2)
+        # multi_views.add_view(self.view_as_table().to_dict(), 2, 2)
+        multi_views.add_view(self.view_as_json().to_dict(), 1, 2)
+
+        return multi_views
 
     def _get_table_resource(self) -> Table:
         # guess the delimiter

@@ -4,14 +4,12 @@
 # About us: https://gencovery.com
 
 
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from fastapi import Depends
 from gws_core.core.classes.paginator import PaginatorDict
 from pydantic.main import BaseModel
 
-from ..core.dto.rendering_dto import RenderingDTO
-from ..core.exception.exceptions import BadRequestException
 from ..core_app import core_app
 from ..user.auth_service import AuthService
 from ..user.user_dto import UserData

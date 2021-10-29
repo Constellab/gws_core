@@ -46,6 +46,11 @@ class View:
             "type": self._type,
         }
 
+    def get_kwarg_value(self, kwargs_, key: str, default_value: Any) -> Any:
+        if key not in kwargs_ or kwargs_[key] is None:
+            return default_value
+        return kwargs_[key]
+
     @classmethod
     def json_is_from_view(cls, json_: Any) -> bool:
         """Method that return true is the provided json is a json of a view
