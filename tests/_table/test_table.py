@@ -49,14 +49,14 @@ class TestTable(BaseTestCase):
         )
         self.assertTrue(os.path.exists(file_path))
         outputs = await tester.run()
-        table = outputs["data"]
+        table = outputs["resource"]
         df = pandas.read_table(file_path)
         self.assertTrue(df.equals(table.get_data()))
 
         # exporter
         tester = TaskTester(
             params={},
-            inputs = {'data': table},
+            inputs = {'resource': table},
             task_type=TableExporter
         )
         outputs = await tester.run()

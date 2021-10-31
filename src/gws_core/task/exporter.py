@@ -64,7 +64,7 @@ def export_to_path(specs: ConfigSpecs = None, fs_node_type: Type[FSNode] = File)
 def exporter_decorator(
         unique_name: str, resource_type: Type[Resource],
         allowed_user: UserGroup = UserGroup.USER,) -> Callable:
-    """ Decorator to place on a TaskExporter instead of task_decorator. This decorator works with @export_to_path and it will
+    """ Decorator to place on a ResourceExporter instead of task_decorator. This decorator works with @export_to_path and it will
     generate a Task which takes a resource as Input and generate a File. This task will call the export_to_path method of the resource with the config?
     :param unique_name: a unique name for this task in the brick. Only 1 task in the current brick can have this name.
                         //!\\ DO NOT MODIFIED THIS NAME ONCE IS DEFINED //!\\
@@ -77,11 +77,11 @@ def exporter_decorator(
     :return: [description]
     :rtype: Callable
     """
-    def decorator(task_class: Type[TaskExporter]):
+    def decorator(task_class: Type[ResourceExporter]):
 
-        if not isclass(task_class) or not issubclass(task_class, TaskExporter):
+        if not isclass(task_class) or not issubclass(task_class, ResourceExporter):
             raise Exception(
-                f"The exporter_decorator is used on the class: {task_class.__name__} and this class is not a sub class of TaskExporter")
+                f"The exporter_decorator is used on the class: {task_class.__name__} and this class is not a sub class of ResourceExporter")
 
         meta_data: ExportToPathMetaData = ReflectorHelper.get_and_check_object_metadata(
             resource_type.import_from_path, EXPORT_TO_PATH_META_DATA_ATTRIBUTE, dict)
@@ -92,7 +92,7 @@ def exporter_decorator(
         # set the task config using the config in import_from_path method
         task_class.config_specs = meta_data['specs']
 
-        task_class.input_specs = {'data': resource_type}
+        task_class.input_specs = {'resource': resource_type}
         task_class.output_specs = {'file': meta_data['fs_node_type']}
 
         # register the task and set the human_name and short_description dynamically based on resource
@@ -103,11 +103,11 @@ def exporter_decorator(
     return decorator
 
 
-@task_decorator("TaskExporter", hide=True)
-class TaskExporter(Task):
+@task_decorator("ResourceExporter", hide=True)
+class ResourceExporter(Task):
     """Generic task that take a file as input and return a resource
     """
-    input_specs = {"data": Resource}
+    input_specs = {"resource": Resource}
     output_specs = {'file': FSNode}
 
     @final
@@ -128,7 +128,7 @@ class TaskExporter(Task):
         self.__temp_dir: str = Settings.retrieve().make_temp_dir()
 
         # retrieve resource and export it to path
-        data: Resource = inputs.get('data')
+        data: Resource = inputs.get('resource')
         fs_node: FSNode = data.export_to_path(self.__temp_dir, params)
 
         # add the node to the store

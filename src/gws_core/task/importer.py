@@ -60,7 +60,7 @@ def import_from_path(specs: ConfigSpecs = None, fs_node_type: Type[FSNode] = Fil
 def importer_decorator(
         unique_name: str, resource_type: Type[Resource],
         allowed_user: UserGroup = UserGroup.USER) -> Callable:
-    """ Decorator to place on a TaskImporter instead of task_decorator. This decorator works with @import_from_path and it will generate a Task
+    """ Decorator to place on a ResourceImporter instead of task_decorator. This decorator works with @import_from_path and it will generate a Task
     which takes a file as Input and return the resource of type resource_type. This task will call the import_from_path method of the resource with the config.
     :param unique_name: a unique name for this task in the brick. Only 1 task in the current brick can have this name.
                         //!\\ DO NOT MODIFIED THIS NAME ONCE IS DEFINED //!\\
@@ -73,11 +73,11 @@ def importer_decorator(
     :return: [description]
     :rtype: Callable
     """
-    def decorator(task_class: Type[TaskImporter]):
+    def decorator(task_class: Type[ResourceImporter]):
 
-        if not isclass(task_class) or not issubclass(task_class, TaskImporter):
+        if not isclass(task_class) or not issubclass(task_class, ResourceImporter):
             raise Exception(
-                f"The importer_decorator is used on the class: {task_class.__name__} and this class is not a sub class of TaskImporter")
+                f"The importer_decorator is used on the class: {task_class.__name__} and this class is not a sub class of ResourceImporter")
 
         meta_data: ImportFromPathMetaData = ReflectorHelper.get_and_check_object_metadata(
             resource_type.import_from_path, IMPORT_FROM_PATH_META_DATA_ATTRIBUTE, dict)
@@ -89,7 +89,7 @@ def importer_decorator(
         task_class.config_specs = meta_data['specs']
 
         task_class.input_specs = {'file': meta_data['fs_node_type']}
-        task_class.output_specs = {'data': resource_type}
+        task_class.output_specs = {'resource': resource_type}
 
         # set resource type in task
         task_class._resource_type = resource_type
@@ -102,12 +102,12 @@ def importer_decorator(
     return decorator
 
 
-@task_decorator("TaskImporter", hide=True)
-class TaskImporter(Task):
+@task_decorator("ResourceImporter", hide=True)
+class ResourceImporter(Task):
     """Generic task that take a file as input and return a resource
     """
     input_specs = {'file': FSNode}
-    output_specs = {"data": Resource}
+    output_specs = {"resource": Resource}
 
     # Do not modify, this is provided by the importer_decorator
     _resource_type: Type[Resource]
@@ -120,7 +120,7 @@ class TaskImporter(Task):
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         fs_node: FSNode = inputs.get('file')
         resource: Resource = self._resource_type.import_from_path(fs_node, params)
-        return {'data': resource}
+        return {'resource': resource}
 
     @final
     async def run_after_task(self) -> None:

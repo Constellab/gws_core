@@ -1,7 +1,7 @@
 
 from ...config.param_spec import BoolParam, IntParam, StrParam, ListParam
-from ...task.exporter import TaskExporter, exporter_decorator
-from ...task.importer import TaskImporter, importer_decorator
+from ...task.exporter import ResourceExporter, exporter_decorator
+from ...task.importer import ResourceImporter, importer_decorator
 from ...task.task_decorator import task_decorator
 from ..file.file import File
 from .table import Table
@@ -13,7 +13,7 @@ from .table import Table
 # ####################################################################
 
 @importer_decorator(unique_name="TableImporter", resource_type=Table)
-class TableImporter(TaskImporter):
+class TableImporter(ResourceImporter):
     pass
 
 # ####################################################################
@@ -23,5 +23,5 @@ class TableImporter(TaskImporter):
 # ####################################################################
 
 @exporter_decorator(unique_name="TableExporter", resource_type=Table)
-class TableExporter(TaskExporter):
+class TableExporter(ResourceExporter):
     pass

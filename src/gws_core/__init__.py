@@ -242,10 +242,10 @@ from .resource.view_types import ViewSpecs as ViewSpecs
 # Study
 from .study.study import Study as Study
 # Task
-from .task.exporter import TaskExporter as TaskExporter
+from .task.exporter import ResourceExporter as ResourceExporter
 from .task.exporter import export_to_path as export_to_path
 from .task.exporter import exporter_decorator as exporter_decorator
-from .task.importer import TaskImporter as TaskImporter
+from .task.importer import ResourceImporter as ResourceImporter
 from .task.importer import import_from_path as import_from_path
 from .task.importer import importer_decorator as importer_decorator
 from .task.plug import FIFO2 as FIFO2

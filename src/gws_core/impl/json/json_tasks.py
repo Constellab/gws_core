@@ -4,8 +4,8 @@
 # About us: https://gencovery.com
 
 from ...config.param_spec import BoolParam, StrParam
-from ...task.exporter import TaskExporter, exporter_decorator
-from ...task.importer import TaskImporter, importer_decorator
+from ...task.exporter import ResourceExporter, exporter_decorator
+from ...task.importer import ResourceImporter, importer_decorator
 from ...task.task_decorator import task_decorator
 from .json_dict import JSONDict
 
@@ -17,7 +17,7 @@ from .json_dict import JSONDict
 
 
 @importer_decorator(unique_name="JSONImporter", resource_type=JSONDict)
-class JSONImporter(TaskImporter):
+class JSONImporter(ResourceImporter):
     pass
 
 # ####################################################################
@@ -28,5 +28,5 @@ class JSONImporter(TaskImporter):
 
 
 @exporter_decorator("FileExporter", resource_type=JSONDict)
-class JSONExporter(TaskExporter):
+class JSONExporter(ResourceExporter):
     pass
