@@ -64,7 +64,7 @@ class TestFile(BaseTestCase):
         self.assertEqual(text, "Hi.\nMy name is John")
         self.assertTrue(file_model.verify_hash())
 
-    async def test__process_file(self):
+    async def test_process_file(self):
         """Test that a generated file of a task is moved to file store and check content
         """
         experiment: IExperiment = IExperiment()
@@ -114,4 +114,5 @@ class TestFile(BaseTestCase):
 
         # Check file content
         content: str = file.read()
-        self.assertEqual(content, json.dumps(robot.view_as_json().to_dict()))
+        params = ConfigParams()
+        self.assertEqual(content, json.dumps(robot.view_as_json(params).to_dict()))

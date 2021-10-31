@@ -60,11 +60,6 @@ class Resource(Base):
 
     # -- G --
 
-    # TODO: add method get(), select() to fetch de model from DB and return correspondin resource
-    # def select( predicat ):
-    #     model = self.
-    #     pass
-
     # -- I --
 
     @classmethod
@@ -79,7 +74,6 @@ class Resource(Base):
         """
         pass
 
-    # @ToDo: ensure that this method is only called by an Importer
     @view(view_type=JSONView, human_name="View as JSON", short_description="View the complete resource as json", default_view=True)
     def view_as_json(self, params: ConfigParams) -> JSONView:
         """By default the view_as_json dumps the RFields mark with, include_in_dict_view=True

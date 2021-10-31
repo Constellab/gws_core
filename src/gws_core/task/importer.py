@@ -15,7 +15,7 @@ from ..task.task_decorator import decorate_task, task_decorator
 from ..task.task_io import TaskInputs, TaskOutputs
 from ..user.user_group import UserGroup
 
-IMPORT_FROM_PATH_META_DATA_ATTRIBUTE = '__import_from_path_mata_data'
+IMPORT_FROM_PATH_META_DATA_ATTRIBUTE = '__import_from_path_meta_data'
 
 
 class ImportFromPathMetaData(TypedDict):
@@ -92,7 +92,7 @@ def importer_decorator(
         task_class.output_specs = {'data': resource_type}
 
         # set resource type in task
-        task_class.__resource_type = resource_type
+        task_class._resource_type = resource_type
 
         # register the task and set the human_name and short_description dynamically based on resource
         decorate_task(task_class, unique_name, human_name=resource_type._human_name + ' importer',
@@ -106,11 +106,11 @@ def importer_decorator(
 class TaskImporter(Task):
     """Generic task that take a file as input and return a resource
     """
-    input_specs = {'fs_node': FSNode}
+    input_specs = {'file': FSNode}
     output_specs = {"data": Resource}
 
     # Do not modify, this is provided by the importer_decorator
-    __resource_type: Type[Resource]
+    _resource_type: Type[Resource]
 
     @final
     def check_before_run(self, params: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
@@ -119,7 +119,7 @@ class TaskImporter(Task):
     @final
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         fs_node: FSNode = inputs.get('file')
-        resource: Resource = self.__resource_type.import_from_path(fs_node, params)
+        resource: Resource = self._resource_type.import_from_path(fs_node, params)
         return {'data': resource}
 
     @final

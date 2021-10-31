@@ -45,7 +45,7 @@ class BaseTestCase(IsolatedAsyncioTestCase):
 
     @classmethod
     def init_before_test(cls):
-        print(f'Setup: {cls}')
+        #print(f'Setup: {cls}')
         GTest.delete_data_and_temp_folder()
         DbManager.init_all_db(test=True)
         GTest.drop_tables()
@@ -53,7 +53,7 @@ class BaseTestCase(IsolatedAsyncioTestCase):
 
     @classmethod
     def clear_after_test(cls):
-        print(f'Tear down: {cls}')
+        #print(f'Tear down: {cls}')
         QueueService.deinit()
         GTest.drop_tables()
         GTest.delete_data_and_temp_folder()

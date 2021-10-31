@@ -30,12 +30,17 @@ class TestFolder(BaseTestCase):
         folder.create_empty_file_if_not_exist('test.txt')
         folder.create_dir_if_not_exist('sub_dir')
 
-        self.assertEqual(folder.list_dir(), ['sub_dir', 'test.txt'])
+        list_ = folder.list_dir()
+        list_.sort()
+        self.assertEqual(list_, ['sub_dir', 'test.txt'])
         self.assertTrue(folder.has_node('test.txt'))
         self.assertTrue(folder.has_node('sub_dir'))
 
         # Test json view
-        self.assert_json(folder.view_as_json().to_dict()["data"], {"folder": [{"sub_dir": []}, 'test.txt']})
+        params = ConfigParams()
+        vw = folder.view_as_json(params)
+        dic_ = vw.to_dict(params)
+        self.assert_json(dic_["data"], {"folder": ['test.txt', {"sub_dir": []}]})
 
     async def test_folder_process(self):
         experiment: IExperiment = IExperiment()

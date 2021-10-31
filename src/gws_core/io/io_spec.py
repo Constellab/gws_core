@@ -47,7 +47,7 @@ class IOSpecClass:
     def is_optional(self) -> bool:
         return isinstance(self.resource_spec, OptionalIn) or None in self.to_resource_types() or self.is_skippable_in()
 
-    def is_unmodified_out(self) -> bool:
+    def is_constant_out(self) -> bool:
         return isinstance(self.resource_spec, ConstantOut)
 
     def is_skippable_in(self) -> bool:

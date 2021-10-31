@@ -45,10 +45,10 @@ class JSONDict(Resource):
         :param dest_dir: The destination directory
         :type dest_dir: str
         """
-        file_path = os.path.join(dest_dir, params.get_value('file_name'))
+        file_path = os.path.join(dest_dir, params.get_value('file_name', 'file.json'))
 
         with open(file_path, "w", encoding="utf-8") as f:
-            if params.get_value('prettify'):
+            if params.get_value('prettify', False):
                 json.dump(self.data, f, indent=4)
             else:
                 json.dump(self.data, f)

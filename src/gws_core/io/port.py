@@ -158,13 +158,13 @@ class Port(Base):
         return self._resource_model is None
 
     @property
-    def is_unmodified_out(self) -> bool:
+    def is_constant_out(self) -> bool:
         """return true if the port type is ConstantOut
 
         :return: [description]
         :rtype: bool
         """
-        return self.resource_spec.is_unmodified_out()
+        return self.resource_spec.is_constant_out()
 
     @property
     def is_skippable_in(self) -> bool:

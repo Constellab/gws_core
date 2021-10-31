@@ -170,7 +170,7 @@ class TaskModel(ProcessModel):
                     raise BadRequestException(
                         f"The method get_resource_model_type of resource {resource.classname()} did not return a type that extend ResourceModel")
 
-                if port.is_unmodified_out:
+                if port.is_constant_out:
                     # If the port is mark as unmodified, we don't create a new resource
                     # We use the same resource
                     resource_model = TypingManager.get_object_with_typing_name_and_uri(

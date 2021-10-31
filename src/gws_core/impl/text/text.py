@@ -23,13 +23,12 @@ class Text(Resource):
     _data: str = RField()
 
     def __init__(self, data: str):
-        super().__init__(data)
+        super().__init__()
         self._set_data(data)
         
     def _set_data(self, data: str) -> 'Text':
         if data is None:
             data = ""
-
         if not isinstance(data, str):
             raise BadRequestException(
                 "The data must be a string")
@@ -53,10 +52,10 @@ class Text(Resource):
         :param file_path: The destination file path
         :type file_path: File
         """
-        file_path = os.path.join(dir_, params.get_value('file_name'))
+        file_path = os.path.join(dir_, params.get_value('file_name', 'file.txt'))
 
         try:
-            with open(file_path, 'w+t', encoding=params.get_value('encoding')) as fp:
+            with open(file_path, 'w+t', encoding=params.get_value('encoding', 'utf-8')) as fp:
                 fp.write(self._data)
         except Exception as err:
             raise BadRequestException("Cannot export the text") from err
@@ -78,7 +77,7 @@ class Text(Resource):
         """
 
         try:
-            with open(file.path, 'r+t', encoding=params.get_value('encoding')) as fp:
+            with open(file.path, 'r+t', encoding=params.get_value('encoding', 'utf-8')) as fp:
                 text = fp.read()
         except Exception as err:
             raise BadRequestException("Cannot import the text") from err

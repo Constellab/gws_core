@@ -19,7 +19,7 @@ from ..task.task_decorator import decorate_task, task_decorator
 from ..task.task_io import TaskInputs, TaskOutputs
 from ..user.user_group import UserGroup
 
-EXPORT_TO_PATH_META_DATA_ATTRIBUTE = '__import_from_path_mata_data'
+EXPORT_TO_PATH_META_DATA_ATTRIBUTE = '__import_from_path_meta_data'
 
 
 class ExportToPathMetaData(TypedDict):
@@ -93,7 +93,7 @@ def exporter_decorator(
         task_class.config_specs = meta_data['specs']
 
         task_class.input_specs = {'data': resource_type}
-        task_class.output_specs = {'fs_node': meta_data['fs_node_type']}
+        task_class.output_specs = {'file': meta_data['fs_node_type']}
 
         # register the task and set the human_name and short_description dynamically based on resource
         decorate_task(task_class, unique_name, human_name=resource_type._human_name + ' exporter',
@@ -108,7 +108,7 @@ class TaskExporter(Task):
     """Generic task that take a file as input and return a resource
     """
     input_specs = {"data": Resource}
-    output_specs = {'fs_node': FSNode}
+    output_specs = {'file': FSNode}
 
     @final
     def check_before_run(self, params: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
@@ -125,19 +125,18 @@ class TaskExporter(Task):
             file_store = FileStore.get_default_instance()
 
         # Create a new temp_dir to create the file here
-        temp_dir: str = Settings.retrieve().make_temp_dir()
+        self.__temp_dir: str = Settings.retrieve().make_temp_dir()
 
         # retrieve resource and export it to path
         data: Resource = inputs.get('data')
-        fs_node: FSNode = data.export_to_path(temp_dir, params)
+        fs_node: FSNode = data.export_to_path(self.__temp_dir, params)
 
         # add the node to the store
         file_store.add_node(fs_node)
-
-        # delete temp dir
-        FileHelper.delete_dir(temp_dir)
-        return {'fs_node': fs_node}
+        return {'file': fs_node}
 
     @final
     async def run_after_task(self) -> None:
+        # delete temp dir
+        FileHelper.delete_dir(self.__temp_dir)
         pass

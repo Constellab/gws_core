@@ -12,7 +12,7 @@ import pandas
 from pandas import DataFrame
 
 from ...config.config_types import ConfigParams
-from ...config.param_spec import BoolParam, IntParam, StrParam
+from ...config.param_spec import BoolParam, IntParam, StrParam, ListParam
 from ...core.exception.exceptions import BadRequestException
 from ...impl.file.file import File
 from ...resource.resource import Resource
@@ -92,9 +92,9 @@ class Table(Resource):
     @export_to_path(specs={
         'file_name': StrParam(default_value='file.csv', short_description="Destination file name in the store"),
         'file_format': StrParam(default_value=".csv", short_description="File format"),
-        'delimiter': StrParam(default_value="\t", short_description="Delimiter character. Only for parsing CSV files"),
-        'header': IntParam(default_value=0, short_description="Write column names (header)"),
-        'index': BoolParam(default_value=True, short_description="Write row names (index)"),
+        'delimiter': StrParam(default_value="\t", short_description="Delimiter character. Only for CSV files"),
+        'write_header': BoolParam(default_value=True, short_description="True to write column names (header), False otherwise"),
+        'write_index': BoolParam(default_value=True, short_description="True to write row names (index), False otherwise"),
         'file_store_uri': StrParam(optional=True, short_description="URI of the file_store where the file must be exported"),
     })
     def export_to_path(self, dest_dir: str, params: ConfigParams) -> File:
@@ -104,17 +104,18 @@ class Table(Resource):
         :param dest_dir: The destination directory
         :type dest_dir: str
         """
-        file_path = os.path.join(dest_dir, params.get_value('file_name'))
+        file_path = os.path.join(dest_dir, params.get_value('file_name', 'file.csv'))
 
-        file_format: str = params.get_value('file_format')
+        file_format: str = params.get_value('file_format', ".csv")
         file_extension = Path(file_path).suffix
         if file_extension in [".xls", ".xlsx"] or file_format in [".xls", ".xlsx"]:
             self._data.to_excel(file_path)
         elif file_extension in [".csv", ".tsv", ".txt", ".tab"] or file_format in [".csv", ".tsv", ".txt", ".tab"]:
             self._data.to_csv(
                 file_path,
-                sep=params.get_value('delimiter'),
-                index=params.get_value('index')
+                sep=params.get_value('delimiter', "\t"),
+                header=params.get_value('write_header', True),
+                index=params.get_value('write_index', True)
             )
         else:
             raise BadRequestException(
@@ -169,9 +170,9 @@ class Table(Resource):
     @classmethod
     @import_from_path(specs={
         'file_format': StrParam(default_value=".csv", short_description="File format"),
-        'delimiter': StrParam(default_value='\t', short_description="Delimiter character. Only for parsing CSV files"),
-        'header': IntParam(default_value=0, short_description="Row number to use as the column names. Use None to prevent parsing column names. Only for parsing CSV files"),
-        'index': IntParam(optional=True, short_description="Column number to use as the row names. Use None to prevent parsing row names. Only for parsing CSV files"),
+        'delimiter': StrParam(default_value="\t", short_description="Delimiter character. Only for parsing CSV files"),
+        'header': IntParam(default_value=0, short_description="Row number to use as the column names. Use None to prevent parsing column names. Only for CSV files"),
+        'index_columns': ListParam(optional=True, short_description="Columns to use as the row names. Use None to prevent parsing row names. Only for CSV files"),
     })
     def import_from_path(cls, file: File, params: ConfigParams) -> 'Table':
         """
@@ -183,15 +184,15 @@ class Table(Resource):
         :rtype any
         """
 
-        file_format: str = params.get_value('file_format')
+        file_format: str = params.get_value('file_format', ".csv")
         if file.extension in [".xls", ".xlsx"] or file_format in [".xls", ".xlsx"]:
             df = pandas.read_excel(file.path)
         elif file.extension in [".csv", ".tsv", ".txt", ".tab"] or file_format in [".csv", ".tsv", ".txt", ".tab"]:
             df = pandas.read_table(
                 file.path,
-                sep=params.get_value('delimiter'),
-                header=params.get_value('header'),
-                index_col=params.get_value('index')
+                sep=params.get_value('delimiter', "\t"),
+                header=params.get_value('header', 0),
+                index_col=params.get_value('index_columns')
             )
         else:
             raise BadRequestException(
