@@ -330,14 +330,14 @@ class Experiment(Viewable):
         self.save()
 
     def mark_as_success(self):
-        self.data["pid"] = None
+        self.data["pid"] = 0
         self.status = ExperimentStatus.SUCCESS
         self.save()
 
     def mark_as_error(self, error_info: ExperimentErrorInfo) -> None:
         if self.is_error:
             return
-        self.data["pid"] = None
+        self.data["pid"] = 0
         self.status = ExperimentStatus.ERROR
         self.error_info = error_info
         self.save()
