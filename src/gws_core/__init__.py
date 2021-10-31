@@ -266,6 +266,7 @@ from .task.task_typing import TaskTyping as TaskTyping
 from .test.base_test_case import BaseTestCase as BaseTestCase
 from .test.gtest import GTest as GTest
 from .test.task_tester import TaskTester as TaskTester
+from .test.view_tester import ViewTester as ViewTester
 # Core > Notebook
 from .notebook.notebook import Notebook as Notebook
 # User
