@@ -43,16 +43,14 @@ class Resource(Base):
         for key, r_field in properties.items():
             setattr(self, key, r_field.get_default_value())
 
-    def export_to_path(self, dir_: str, config: ConfigParams) -> FSNode:
+    def export_to_path(self, dest_dir: str, params: ConfigParams) -> FSNode:
         """
         Export the resource to a repository
 
-        :param file_path: The destination file path
-        :type file_path: str
+        :param dest_dir: The destination directory
+        :type dest_dir: str
         """
-
-        # @ToDo: ensure that this method is only called by an Exporter
-        # TOdO do we need this ?
+        pass
 
     def get_human_name(self) -> str:
         """Method that can be overrided. It must return a readable name that is usable when
@@ -70,7 +68,7 @@ class Resource(Base):
     # -- I --
 
     @classmethod
-    def import_from_path(cls, fs_node: FSNode, config: ConfigParams) -> Any:
+    def import_from_path(cls, fs_node: FSNode, params: ConfigParams) -> Any:
         """
         Import a resource from a repository. Must be overloaded by the child class.
 
@@ -79,10 +77,11 @@ class Resource(Base):
         :returns: the parsed data
         :rtype any
         """
+        pass
 
     # @ToDo: ensure that this method is only called by an Importer
     @view(view_type=JSONView, human_name="View as JSON", short_description="View the complete resource as json", default_view=True)
-    def view_as_json(self, config: ConfigParams) -> JSONView:
+    def view_as_json(self, params: ConfigParams) -> JSONView:
         """By default the view_as_json dumps the RFields mark with, include_in_dict_view=True
         This method is used to send the resource information back to the interface
         """

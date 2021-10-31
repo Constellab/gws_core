@@ -14,7 +14,7 @@ from gws_core import (ConfigParams, OptionalIn, ProcessSpec, Protocol,
 
 @protocol_decorator("TestSimpleProtocol")
 class TestSimpleProtocol(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self, params: ConfigParams) -> None:
         p0: ProcessSpec = self.add_process(RobotCreate, 'p0')
         p1: ProcessSpec = self.add_process(RobotMove, 'p1')
         p2: ProcessSpec = self.add_process(RobotEat, 'p2')
@@ -35,7 +35,7 @@ class TestSimpleProtocol(Protocol):
 
 @protocol_decorator("TestSubProtocol")
 class TestSubProtocol(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self, params: ConfigParams) -> None:
         p1: ProcessSpec = self.add_process(RobotMove, 'p1')
         p2: ProcessSpec = self.add_process(RobotEat, 'p2')
         p3: ProcessSpec = self.add_process(RobotMove, 'p3')
@@ -55,7 +55,7 @@ class TestSubProtocol(Protocol):
 
 @protocol_decorator("TestNestedProtocol")
 class TestNestedProtocol(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self, params: ConfigParams) -> None:
         p0: ProcessSpec = self.add_process(RobotCreate, 'p0')
         p5: ProcessSpec = self.add_process(RobotEat, 'p5')
         mini_proto: ProcessSpec = self.add_process(TestSubProtocol, 'mini_proto')
@@ -66,9 +66,9 @@ class TestNestedProtocol(Protocol):
         ])
 
 
-@task_decorator(unique_name="RobotWaitfood", human_name="Wait food",
+@task_decorator(unique_name="RobotWaitFood", human_name="Wait food",
                 short_description="Wait food")
-class RobotWaitfood(Task):
+class RobotWaitFood(Task):
     """Wait 3
     """
     input_specs = {'food': RobotFood}
@@ -81,21 +81,21 @@ class RobotWaitfood(Task):
         return {'food': inputs['food']}
 
 
-@task_decorator(unique_name="RobotEmptyfood", human_name="Empty food",
+@task_decorator(unique_name="RobotEmptyFood", human_name="Empty food",
                 short_description="Empty food")
-class RobotEmptyfood(Task):
+class RobotEmptyFood(Task):
     """Wait 3
     """
     input_specs = {}
-    output_specs = {'food': OptionalIn(RobotFood)}
+    output_specs = {'food': RobotFood}
     config_specs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {}
 
 
-@protocol_decorator("TestRobotwithSugarProtocol")
-class TestRobotwithSugarProtocol(Protocol):
+@protocol_decorator("TestRobotWithSugarProtocol")
+class TestRobotWithSugarProtocol(Protocol):
     """This test protocol test that the Eat task works with 2 entries.
     It also test that the eat task will wait for the Food input even if it is optional
 
@@ -103,16 +103,16 @@ class TestRobotwithSugarProtocol(Protocol):
     :type Protocol: [type]
     """
 
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self, params: ConfigParams) -> None:
         p0: ProcessSpec = self.add_process(RobotCreate, 'p0')
         sugar: ProcessSpec = self.add_process(RobotSugarCreate, 'sugar')
-        wait_food: ProcessSpec = self.add_process(RobotWaitfood, 'wait_food')
+        wait_food: ProcessSpec = self.add_process(RobotWaitFood, 'wait_food')
         # Eat 1 need to wait for sugar and wait_food
         eat_1: ProcessSpec = self.add_process(RobotEat, 'eat_1').set_param('food_weight', 2)
         # Eat_2 is called even if the food input is not connected
         eat_2: ProcessSpec = self.add_process(RobotEat, 'eat_2').set_param('food_weight', 5)
         # Eat 3 is called event is the food input is connected but None
-        empty_food: ProcessSpec = self.add_process(RobotEmptyfood, 'empty_food')
+        empty_food: ProcessSpec = self.add_process(RobotEmptyFood, 'empty_food')
         eat_3: ProcessSpec = self.add_process(RobotEat, 'eat_3').set_param('food_weight', 7)
 
         self.add_connectors([

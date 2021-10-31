@@ -38,17 +38,17 @@ class JSONDict(Resource):
         'file_format': StrParam(default_value=".json", short_description="File format"),
         'prettify': BoolParam(default_value=False, short_description="True to indent and prettify the JSON file, False otherwise")
     })
-    def export_to_path(self, dir_: str, config: ConfigParams) -> File:
+    def export_to_path(self, dest_dir: str, params: ConfigParams) -> File:
         """
         Export to a give repository
 
-        :param file_path: The destination file path
-        :type file_path: File
+        :param dest_dir: The destination directory
+        :type dest_dir: str
         """
-        file_path = os.path.join(dir_, config.get_value('file_name'))
+        file_path = os.path.join(dest_dir, params.get_value('file_name'))
 
         with open(file_path, "w", encoding="utf-8") as f:
-            if config.get_value('prettify'):
+            if params.get_value('prettify'):
                 json.dump(self.data, f, indent=4)
             else:
                 json.dump(self.data, f)
@@ -63,7 +63,7 @@ class JSONDict(Resource):
 
     @classmethod
     @import_from_path(specs={'file_format': StrParam(default_value=".json", short_description="File format")})
-    def import_from_path(cls, file: File, config: ConfigParams) -> Any:
+    def import_from_path(cls, file: File, params: ConfigParams) -> Any:
         """
         Import a give from repository
 

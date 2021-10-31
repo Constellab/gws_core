@@ -112,9 +112,5 @@ class TestTask(BaseTestCase):
         experiment: IExperiment = IExperiment()
         experiment.get_protocol().add_process(RunAfterTask, 'run')
 
-        try:
+        with self.assertRaises(Exception):
             await experiment.run()
-        except Exception as err:
-            self.assertTrue('run_after_task' in str(err))
-        else:
-            self.fail('Run experiment shoud have raised Exception')

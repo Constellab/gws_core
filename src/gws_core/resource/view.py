@@ -42,7 +42,7 @@ class View:
 
         self._data = data
 
-    def to_dict(self, config: ConfigParams) -> dict:
+    def to_dict(self, params: ConfigParams) -> dict:
         return {
             "type": self._type,
         }

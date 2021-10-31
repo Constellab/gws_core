@@ -8,7 +8,7 @@ from gws_core import (FIFO2, BadRequestException, BaseTestCase, ConfigParams,
                       Connector, Experiment, ExperimentService, GTest,
                       OptionalIn, ProcessFactory, ProcessSpec, Protocol,
                       ProtocolModel, Resource, ResourceModel, SpecialTypeOut,
-                      Task, TaskInputs, TaskModel, TaskOutputs, UnmodifiedOut,
+                      Task, TaskInputs, TaskModel, TaskOutputs, ConstantOut,
                       Wait, protocol_decorator, resource_decorator,
                       task_decorator)
 from gws_core.io.io_exception import ImcompatiblePortsException
@@ -101,7 +101,7 @@ class Fly(Task):
 @task_decorator("OptionalTask")
 class OptionalTask(Task):
     input_specs = {'first': OptionalIn([Person]),
-                   'second': [Person, None],
+                   'second': OptionalIn(Person),
                    'third': Person}
     output_specs = {}
     config_specs = {}
@@ -115,18 +115,18 @@ class OptionalTask(Task):
 @task_decorator("OptionalTaskOut")
 class OptionalTaskOut(Task):
     input_specs = {}
-    output_specs = {'out': OptionalIn(Car)}
+    output_specs = {'out': Car}
     config_specs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return
 
 
-# This is to test the UnmodifiedOut type
+# This is to test the ConstantOut type
 @task_decorator("Log")
 class Log(Task):
     input_specs = {'person': Person}
-    output_specs = {'samePerson': UnmodifiedOut(Person),
+    output_specs = {'samePerson': ConstantOut(Person),
                     'otherPerson': Person}
     config_specs = {}
 

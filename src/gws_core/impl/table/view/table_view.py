@@ -88,12 +88,12 @@ class TableView(BaseTableView):
             scale=scale
         )
 
-    def to_dict(self, config: ConfigParams) -> dict:
-        from_row: int = config.get("from_row")
-        number_of_rows_per_page: int = config.get("number_of_rows_per_page")
-        from_column: int = config.get("from_column")
-        number_of_columns_per_page: int = config.get("number_of_columns_per_page")
-        scale = config.get("scale")
+    def to_dict(self, params: ConfigParams) -> dict:
+        from_row: int = params.get("from_row")
+        number_of_rows_per_page: int = params.get("number_of_rows_per_page")
+        from_column: int = params.get("from_column")
+        number_of_columns_per_page: int = params.get("number_of_columns_per_page")
+        scale = params.get("scale")
 
         total_number_of_rows = self._data.shape[0]
         total_number_of_columns = self._data.shape[1]
@@ -112,7 +112,7 @@ class TableView(BaseTableView):
         )
 
         return {
-            **super().to_dict(config),
+            **super().to_dict(params),
             "data": data,
             "from_row": from_row_index,
             "number_of_rows_per_page": number_of_rows_per_page,

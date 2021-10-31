@@ -51,13 +51,13 @@ class ScatterPlot3DView(BaseTableView):
         "z_label": StrParam(human_name="Z-label", optional=True, visibility='protected', short_description="The z-axis label to display"),
     }
 
-    def to_dict(self, config: ConfigParams) -> dict:
-        x_column_name = config.get_value("x_column_name", self._data.columns[0])
-        y_column_name = config.get_value("y_column_name", self._data.columns[1])
-        z_column_names = config.get_value("z_column_names", [self._data.columns[2]])
-        x_label = config.get_value("x_label", x_column_name)
-        y_label = config.get_value("y_label", y_column_name)
-        z_label = config.get_value("y_label", "")
+    def to_dict(self, params: ConfigParams) -> dict:
+        x_column_name = params.get_value("x_column_name", self._data.columns[0])
+        y_column_name = params.get_value("y_column_name", self._data.columns[1])
+        z_column_names = params.get_value("z_column_names", [self._data.columns[2]])
+        x_label = params.get_value("x_label", x_column_name)
+        y_label = params.get_value("y_label", y_column_name)
+        z_label = params.get_value("y_label", "")
 
         series = []
         for z_column_name in z_column_names:
@@ -73,7 +73,7 @@ class ScatterPlot3DView(BaseTableView):
             })
 
         return {
-            **super().to_dict(config),
+            **super().to_dict(params),
             "data": series,
             "x_label": x_label,
             "y_label": y_label,

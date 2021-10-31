@@ -17,5 +17,5 @@ class AnyView(View):
         self._type = view_json.get("type")
         self._view_json = view_json
 
-    def to_dict(self, config: ConfigParams) -> dict:
+    def to_dict(self, params: ConfigParams) -> dict:
         return self._view_json

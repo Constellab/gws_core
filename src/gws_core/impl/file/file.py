@@ -101,7 +101,7 @@ class File(FSNode):
         return data
 
     @view(view_type=JSONView, human_name="View as JSON", short_description="View the complete resource as json")
-    def view_as_json(self, config: ConfigParams) -> JSONView:
+    def view_as_json(self, params: ConfigParams) -> JSONView:
         content = self.read()
         try:
             json_: Any = json.loads(content)
@@ -110,15 +110,15 @@ class File(FSNode):
             pass
 
         # rollback to string view if not convertible to json
-        return self.view_content_as_str(config)
+        return self.view_content_as_str(params)
 
     @view(view_type=View, human_name="View file content", short_description="View the file content as string")
-    def view_content_as_str(self, config: ConfigParams) -> TextView:
+    def view_content_as_str(self, params: ConfigParams) -> TextView:
         content = self.read()
         return TextView(content)
 
     @view(view_type=View, human_name="Default view", short_description="View the file with automatic view", default_view=True)
-    def default_view(self, config: ConfigParams) -> View:
+    def default_view(self, params: ConfigParams) -> View:
         content = self.read()
 
         if self.is_json():

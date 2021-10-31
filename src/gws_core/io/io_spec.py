@@ -11,7 +11,7 @@ from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..resource.resource import Resource
 from .io_types import (OptionalIn, SkippableIn, SpecialTypeIn, SpecialTypeIO,
-                       SpecialTypeOut, UnmodifiedOut)
+                       SpecialTypeOut, ConstantOut)
 
 ResourceType = Type[Resource]
 
@@ -48,7 +48,7 @@ class IOSpecClass:
         return isinstance(self.resource_spec, OptionalIn) or None in self.to_resource_types() or self.is_skippable_in()
 
     def is_unmodified_out(self) -> bool:
-        return isinstance(self.resource_spec, UnmodifiedOut)
+        return isinstance(self.resource_spec, ConstantOut)
 
     def is_skippable_in(self) -> bool:
         return isinstance(self.resource_spec, SkippableIn)

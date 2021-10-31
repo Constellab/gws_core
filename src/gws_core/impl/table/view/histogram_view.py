@@ -46,10 +46,10 @@ class HistogramView(BaseTableView):
         "y_label": StrParam(human_name="Y-label", optional=True, visibility='protected', short_description="The y-axis label to display"),
     }
 
-    def to_dict(self, config: ConfigParams) -> dict:
-        nbins = config.get_value("nbins")
-        column_names = config.get_value("column_names", [])
-        density = config.get_value("density")
+    def to_dict(self, params: ConfigParams) -> dict:
+        nbins = params.get_value("nbins")
+        column_names = params.get_value("column_names", [])
+        density = params.get_value("density")
 
         if nbins <= 0:
             nbins = "auto"
@@ -70,6 +70,6 @@ class HistogramView(BaseTableView):
                 "column_name": column_name,
             })
         return {
-            **super().to_dict(config),
+            **super().to_dict(params),
             "data": series
         }

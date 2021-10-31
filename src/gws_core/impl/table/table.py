@@ -97,24 +97,24 @@ class Table(Resource):
         'index': BoolParam(default_value=True, short_description="Write row names (index)"),
         'file_store_uri': StrParam(optional=True, short_description="URI of the file_store where the file must be exported"),
     })
-    def export_to_path(self, dir_: str, config: ConfigParams) -> File:
+    def export_to_path(self, dest_dir: str, params: ConfigParams) -> File:
         """
         Export to a repository
 
-        :param file_path: The destination file path
-        :type file_path: File
+        :param dest_dir: The destination directory
+        :type dest_dir: str
         """
-        file_path = os.path.join(dir_, config.get_value('file_name'))
+        file_path = os.path.join(dest_dir, params.get_value('file_name'))
 
-        file_format: str = config.get_value('file_format')
+        file_format: str = params.get_value('file_format')
         file_extension = Path(file_path).suffix
         if file_extension in [".xls", ".xlsx"] or file_format in [".xls", ".xlsx"]:
             self._data.to_excel(file_path)
         elif file_extension in [".csv", ".tsv", ".txt", ".tab"] or file_format in [".csv", ".tsv", ".txt", ".tab"]:
             self._data.to_csv(
                 file_path,
-                sep=config.get_value('delimiter'),
-                index=config.get_value('index')
+                sep=params.get_value('delimiter'),
+                index=params.get_value('index')
             )
         else:
             raise BadRequestException(
@@ -173,7 +173,7 @@ class Table(Resource):
         'header': IntParam(default_value=0, short_description="Row number to use as the column names. Use None to prevent parsing column names. Only for parsing CSV files"),
         'index': IntParam(optional=True, short_description="Column number to use as the row names. Use None to prevent parsing row names. Only for parsing CSV files"),
     })
-    def import_from_path(cls, file: File, config: ConfigParams) -> 'Table':
+    def import_from_path(cls, file: File, params: ConfigParams) -> 'Table':
         """
         Import from a repository
 
@@ -183,15 +183,15 @@ class Table(Resource):
         :rtype any
         """
 
-        file_format: str = config.get_value('file_format')
+        file_format: str = params.get_value('file_format')
         if file.extension in [".xls", ".xlsx"] or file_format in [".xls", ".xlsx"]:
             df = pandas.read_excel(file.path)
         elif file.extension in [".csv", ".tsv", ".txt", ".tab"] or file_format in [".csv", ".tsv", ".txt", ".tab"]:
             df = pandas.read_table(
                 file.path,
-                sep=config.get_value('delimiter'),
-                header=config.get_value('header'),
-                index_col=config.get_value('index')
+                sep=params.get_value('delimiter'),
+                header=params.get_value('header'),
+                index_col=params.get_value('index')
             )
         else:
             raise BadRequestException(
@@ -258,7 +258,7 @@ class Table(Resource):
     # -- V ---
 
     @view(view_type=TableView, default_view=True, human_name='Tabular', short_description='View as a table', specs={})
-    def view_as_table(self, config: ConfigParams) -> TableView:
+    def view_as_table(self, params: ConfigParams) -> TableView:
         """
         View as table
         """
@@ -266,7 +266,7 @@ class Table(Resource):
         return TableView(self._data)
 
     @view(view_type=LinePlot2DView, human_name='LinePlot2D', short_description='View columns as 2D-line plots', specs={})
-    def view_as_line_plot_2d(self, config: ConfigParams) -> LinePlot2DView:
+    def view_as_line_plot_2d(self, params: ConfigParams) -> LinePlot2DView:
         """
         View columns as 2D-line plots
         """
@@ -274,7 +274,7 @@ class Table(Resource):
         return LinePlot2DView(self._data)
 
     @view(view_type=LinePlot3DView, human_name='LinePlot3D', short_description='View columns as 3D-line plots', specs={})
-    def view_as_line_plot_3d(self, config: ConfigParams) -> LinePlot3DView:
+    def view_as_line_plot_3d(self, params: ConfigParams) -> LinePlot3DView:
         """
         View columns as 3D-line plots
         """
@@ -282,7 +282,7 @@ class Table(Resource):
         return LinePlot3DView(self._data)
 
     @view(view_type=ScatterPlot3DView, human_name='ScatterPlot3D', short_description='View columns as 3D-scatter plots', specs={})
-    def view_as_scatter_plot_3d(self, config: ConfigParams) -> ScatterPlot3DView:
+    def view_as_scatter_plot_3d(self, params: ConfigParams) -> ScatterPlot3DView:
         """
         View columns as 3D-scatter plots
         """
@@ -290,7 +290,7 @@ class Table(Resource):
         return ScatterPlot3DView(self._data)
 
     @view(view_type=ScatterPlot2DView, human_name='ScatterPlot2D', short_description='View columns as 2D-scatter plots', specs={})
-    def view_as_scatter_plot_2d(self, config: ConfigParams) -> ScatterPlot2DView:
+    def view_as_scatter_plot_2d(self, params: ConfigParams) -> ScatterPlot2DView:
         """
         View one or several columns as 2D-line plots
         """
@@ -298,7 +298,7 @@ class Table(Resource):
         return ScatterPlot2DView(self._data)
 
     @view(view_type=BarPlotView, human_name='BarPlot', short_description='View columns as 2D-bar plots', specs={})
-    def view_as_bar_plot(self, config: ConfigParams) -> BarPlotView:
+    def view_as_bar_plot(self, params: ConfigParams) -> BarPlotView:
         """
         View one or several columns as 2D-bar plots
         """
@@ -306,7 +306,7 @@ class Table(Resource):
         return BarPlotView(self._data)
 
     @view(view_type=HistogramView, human_name='Histogram', short_description='View columns as 2D-line plots', specs={})
-    def view_as_histogram(self, config: ConfigParams) -> HistogramView:
+    def view_as_histogram(self, params: ConfigParams) -> HistogramView:
         """
         View columns as 2D-line plots
         """
@@ -314,7 +314,7 @@ class Table(Resource):
         return HistogramView(self._data)
 
     @view(view_type=BoxPlotView, human_name='BoxPlot', short_description='View columns as box plots', specs={})
-    def view_as_box_plot(self, config: ConfigParams) -> BoxPlotView:
+    def view_as_box_plot(self, params: ConfigParams) -> BoxPlotView:
         """
         View one or several columns as box plots
         """
@@ -322,7 +322,7 @@ class Table(Resource):
         return BoxPlotView(self._data)
 
     @view(view_type=HeatmapView, human_name='Heatmap', short_description='View table as heatmap', specs={})
-    def view_as_heatmap(self, config: ConfigParams) -> BarPlotView:
+    def view_as_heatmap(self, params: ConfigParams) -> BarPlotView:
         """
         View the table as heatmap
         """

@@ -159,7 +159,7 @@ class Port(Base):
 
     @property
     def is_unmodified_out(self) -> bool:
-        """return true if the port type is UnmodifiedOut
+        """return true if the port type is ConstantOut
 
         :return: [description]
         :rtype: bool

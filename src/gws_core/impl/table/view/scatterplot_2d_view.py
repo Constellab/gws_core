@@ -46,11 +46,11 @@ class ScatterPlot2DView(BaseTableView):
         "y_label": StrParam(human_name="Y-label", optional=True, default_value=None, visibility='protected', short_description="The y-axis label to display"),
     }
 
-    def to_dict(self, config: ConfigParams) -> dict:
-        x_column_name = config.get_value("x_column_name", self._data.columns[0])
-        y_column_names = config.get_value("y_column_names", [self._data.columns[1]])
-        x_label = config.get_value("x_label", x_column_name)
-        y_label = config.get_value("y_label", "")
+    def to_dict(self, params: ConfigParams) -> dict:
+        x_column_name = params.get_value("x_column_name", self._data.columns[0])
+        y_column_names = params.get_value("y_column_names", [self._data.columns[1]])
+        x_label = params.get_value("x_label", x_column_name)
+        y_label = params.get_value("y_label", "")
 
         series = []
         for y_column_name in y_column_names:
@@ -63,7 +63,7 @@ class ScatterPlot2DView(BaseTableView):
                 "y_column_name": y_column_name,
             })
         return {
-            **super().to_dict(config),
+            **super().to_dict(params),
             "data": series,
             "x_label": x_label,
             "y_label": y_label,

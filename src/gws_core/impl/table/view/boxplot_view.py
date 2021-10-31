@@ -50,12 +50,12 @@ class BoxPlotView(BaseTableView):
         "y_label": StrParam(human_name="Y-label", optional=True, visibility='protected', short_description="The y-axis label to display"),
     }
 
-    def to_dict(self, config: ConfigParams) -> dict:
+    def to_dict(self, params: ConfigParams) -> dict:
 
-        column_names = config.get_value("column_names", [])
-        x_tick_labels = config.get_value("x_tick_labels", None)
-        x_label = config.get_value("x_label", "")
-        y_label = config.get_value("y_label", "")
+        column_names = params.get_value("column_names", [])
+        x_tick_labels = params.get_value("x_tick_labels", None)
+        x_label = params.get_value("x_label", "")
+        y_label = params.get_value("y_label", "")
 
         if not x_tick_labels:
             x_tick_labels = column_names
@@ -94,7 +94,7 @@ class BoxPlotView(BaseTableView):
                     },
                     "column_name": column_name})
         return {
-            **super().to_dict(config),
+            **super().to_dict(params),
             "data": series,
             "x_tick_labels": x_tick_labels,
             "x_label": x_label,

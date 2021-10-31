@@ -51,16 +51,16 @@ class TextView(View):
         to_char_index = min(min(to_char_index, from_char_index + self.MAX_NUMBER_OF_CHARS_PER_PAGE), length)
         return self._data[from_char_index:to_char_index]
 
-    def to_dict(self, config: ConfigParams) -> dict:
-        page = config.get_value("page")
-        page_size = config.get_value("page_size")
+    def to_dict(self, params: ConfigParams) -> dict:
+        page = params.get_value("page")
+        page_size = params.get_value("page_size")
 
         total_number_of_chars = len(self._data)
         page_info: PageInfo = PageInfo(page, page_size, total_number_of_chars, self.MAX_NUMBER_OF_CHARS_PER_PAGE, 1)
 
         text = self._slice(from_char_index=page_info.from_index, to_char_index=page_info.to_index)
         return {
-            **super().to_dict(config),
+            **super().to_dict(params),
             "data": text,
             **page_info.to_json(),
         }

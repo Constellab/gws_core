@@ -24,7 +24,7 @@ from ...task.task_io import TaskInputs, TaskOutputs
 # ####################################################################
 
 
-@ task_decorator("FileLoader")
+@task_decorator("FileLoader")
 class FileLoader(Task):
     input_specs = {}
     output_specs = {"data": Resource}
@@ -63,7 +63,7 @@ class FileLoader(Task):
 # ####################################################################
 
 
-@ task_decorator("FileDumper")
+@task_decorator("FileDumper")
 class FileDumper(Task):
     """
     Generic data exporter

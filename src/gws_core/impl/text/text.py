@@ -46,17 +46,17 @@ class Text(Resource):
         'encoding': StrParam(default_value='utf-8', short_description="Text encoding"),
         'file_store_uri': StrParam(optional=True, short_description="URI of the file_store where the file must be exported"),
     })
-    def export_to_path(self, dir_: str, config: ConfigParams) -> File:
+    def export_to_path(self, dir_: str, params: ConfigParams) -> File:
         """
         Export to a repository
 
         :param file_path: The destination file path
         :type file_path: File
         """
-        file_path = os.path.join(dir_, config.get_value('file_name'))
+        file_path = os.path.join(dir_, params.get_value('file_name'))
 
         try:
-            with open(file_path, 'w+t', encoding=config.get_value('encoding')) as fp:
+            with open(file_path, 'w+t', encoding=params.get_value('encoding')) as fp:
                 fp.write(self._data)
         except Exception as err:
             raise BadRequestException("Cannot export the text") from err
@@ -67,7 +67,7 @@ class Text(Resource):
 
     @classmethod
     @import_from_path(specs={'encoding': StrParam(default_value='utf-8', short_description="Text encoding")})
-    def import_from_path(cls, file: File, config: ConfigParams) -> 'Text':
+    def import_from_path(cls, file: File, params: ConfigParams) -> 'Text':
         """
         Import from a repository
 
@@ -78,7 +78,7 @@ class Text(Resource):
         """
 
         try:
-            with open(file.path, 'r+t', encoding=config.get_value('encoding')) as fp:
+            with open(file.path, 'r+t', encoding=params.get_value('encoding')) as fp:
                 text = fp.read()
         except Exception as err:
             raise BadRequestException("Cannot import the text") from err
@@ -87,7 +87,7 @@ class Text(Resource):
 
     @view(view_type=TextView, human_name='Text', short_description='View as text',
           specs={})
-    def view_as_text(self, config: ConfigParams) -> TextView:
+    def view_as_text(self, params: ConfigParams) -> TextView:
         """
         View as table
         """

@@ -68,7 +68,7 @@ class OptionalIn(SpecialTypeIn):
 
 class SpecialTypeOut(SpecialTypeIO):
     """Special type for input check sub classes and constructor params to see the special types:
-     - UnmodifiedOut
+     - ConstantOut
     """
 
     sub_class: bool
@@ -86,8 +86,8 @@ class SpecialTypeOut(SpecialTypeIO):
         self.sub_class = sub_class
 
 
-class UnmodifiedOut(SpecialTypeOut):
+class ConstantOut(SpecialTypeOut):
     """Special type to use in Output specs
-    This type tell the system that the output resource was not modified from the input resource
+    This type tells the system that the output resource was not modified from the input resource
     and it does not need to create a new resource after the task
     """

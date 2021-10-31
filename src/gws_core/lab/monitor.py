@@ -6,7 +6,7 @@
 import threading
 
 import psutil
-from peewee import FloatField
+from peewee import DecimalField
 
 from ..core.model.model import Model
 from ..model.typing_register_decorator import typing_registrator
@@ -39,18 +39,18 @@ class Monitor(Model):
     This class provides functionalities for real-time monitoring the server status
     (e.g. cpu usage, disk usage, memory, network transactions)
     """
-    cpu_count = FloatField()
-    cpu_percent = FloatField(index=True)
-    disk_total = FloatField()
-    disk_usage_used = FloatField(index=True)
-    disk_usage_free = FloatField(index=True)
-    disk_usage_percent = FloatField(index=True)
-    swap_memory_total = FloatField(index=True)
-    swap_memory_used = FloatField(index=True)
-    swap_memory_free = FloatField(index=True)
-    swap_memory_percent = FloatField(index=True)
-    net_io_bytes_sent = FloatField(index=True)
-    net_io_bytes_recv = FloatField(index=True)
+    cpu_count = DecimalField()
+    cpu_percent = DecimalField(index=True)
+    disk_total = DecimalField()
+    disk_usage_used = DecimalField(index=True)
+    disk_usage_free = DecimalField(index=True)
+    disk_usage_percent = DecimalField(index=True)
+    swap_memory_total = DecimalField(index=True)
+    swap_memory_used = DecimalField(index=True)
+    swap_memory_free = DecimalField(index=True)
+    swap_memory_percent = DecimalField(index=True)
+    net_io_bytes_sent = DecimalField(index=True)
+    net_io_bytes_recv = DecimalField(index=True)
     _table_name = 'gws_lab_monitor'
     _is_init = False
 

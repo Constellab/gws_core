@@ -106,7 +106,7 @@ class MultiViews(View):
             }
         )
 
-    def to_dict(self, config: ConfigParams) -> dict:
+    def to_dict(self, params: ConfigParams) -> dict:
         views_dict: List[dict] = []
         for sub_view in self._sub_views:
             view_dict = sub_view["view"].to_dict(sub_view["config_params"])

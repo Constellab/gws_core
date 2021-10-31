@@ -27,7 +27,7 @@ class JSONView(View):
             raise BadRequestException("The data must be a json (dictionary, list of primitive or primitive object)")
         super().__init__(data=data)
 
-    def to_dict(self, config: ConfigParams) -> dict:
+    def to_dict(self, params: ConfigParams) -> dict:
         return {
             "type": self._type,
             "data": self._data,

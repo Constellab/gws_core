@@ -119,7 +119,7 @@ class RobotAddOnCreate(Task):
                 short_description="Create a sugar type of food")
 class RobotSugarCreate(Task):
     """Task that create a sugar type of food and wait 3 secondes for it
-    used in TestRobotwithSugarProtocol
+    used in TestRobotWithSugarProtocol
     """
     input_specs = {}
     output_specs = {'sugar': RobotFood}

@@ -12,7 +12,7 @@ from gws_core import (BaseTestCase, Config, Experiment, ExperimentService,
                       RobotMove, Settings, TaskModel, Typing)
 
 from tests.protocol_examples import (TestNestedProtocol,
-                                     TestRobotwithSugarProtocol,
+                                     TestRobotWithSugarProtocol,
                                      TestSimpleProtocol)
 
 settings = Settings.retrieve()
@@ -204,7 +204,7 @@ class TestProtocol(BaseTestCase):
         2. It is not connected
         3. It is connected but not provided (None)
         """
-        protocol: ProtocolModel = ProtocolService.create_protocol_model_from_type(TestRobotwithSugarProtocol)
+        protocol: ProtocolModel = ProtocolService.create_protocol_model_from_type(TestRobotWithSugarProtocol)
 
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
             protocol_model=protocol)

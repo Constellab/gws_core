@@ -182,7 +182,7 @@ from .io.io_types import SkippableIn as SkippableIn
 from .io.io_types import SpecialTypeIn as SpecialTypeIn
 from .io.io_types import SpecialTypeIO as SpecialTypeIO
 from .io.io_types import SpecialTypeOut as SpecialTypeOut
-from .io.io_types import UnmodifiedOut as UnmodifiedOut
+from .io.io_types import ConstantOut as ConstantOut
 from .io.ioface import Interface as Interface
 from .io.ioface import IOface as IOface
 from .io.ioface import Outerface as Outerface

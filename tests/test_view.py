@@ -16,7 +16,7 @@ class ResourceViewTest(Resource):
 
     @view(view_type=TextView, human_name='View for test', short_description='Description for test',
           default_view=True)
-    def a_view_test(self, config: ConfigParams) -> TextView:
+    def a_view_test(self, params: ConfigParams) -> TextView:
         return TextView('Test sub')
 
 
@@ -27,8 +27,8 @@ class ResourceViewTestSub(ResourceViewTest):
           specs={'test_str_param': StrParam(default_value='Hello'),
                  'test_any_param': StrParam('Nice')},
           default_view=True)
-    def sub_view_test(self, config: ConfigParams) -> TextView:
-        return TextView(config.get_value('test_str_param') + config.get_value('test_any_param'))
+    def sub_view_test(self, params: ConfigParams) -> TextView:
+        return TextView(params.get_value('test_str_param') + params.get_value('test_any_param'))
 
 
 @resource_decorator("ResourceViewTestOveride")
@@ -36,7 +36,7 @@ class ResourceViewTestOveride(Resource):
 
     @view(view_type=TextView, human_name='View overide',
           specs={"page": IntParam(default_value=1, min_value=0, human_name="Page number", visibility='private')})
-    def a_view_test(self, config: ConfigParams) -> TextView:
+    def a_view_test(self, params: ConfigParams) -> TextView:
         return TextView('Test sub')
 
 

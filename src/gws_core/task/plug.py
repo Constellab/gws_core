@@ -11,7 +11,7 @@ from ..config.param_spec import FloatParam, IntParam, StrParam
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..io.io_spec import InputSpecs, OutputSpecs
-from ..io.io_types import SkippableIn, UnmodifiedOut
+from ..io.io_types import SkippableIn, ConstantOut
 from ..model.typing_manager import TypingManager
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
@@ -29,7 +29,7 @@ class Source(Task):
     """
 
     input_specs: InputSpecs = {}
-    output_specs: OutputSpecs = {'resource': UnmodifiedOut(Resource, sub_class=True)}
+    output_specs: OutputSpecs = {'resource': ConstantOut(Resource, sub_class=True)}
     config_specs: ConfigSpecs = {
         'resource_uri': StrParam(optional=True, short_description="The uri of the resource"),
         'resource_typing_name': StrParam(optional=True, short_description="The type of the resource"),
@@ -76,7 +76,7 @@ class FIFO2(Task):
 
     input_specs: InputSpecs = {'resource_1': SkippableIn(Resource),
                                'resource_2': SkippableIn(Resource)}
-    output_specs: OutputSpecs = {'resource': UnmodifiedOut(resource_types=Resource, sub_class=True)}
+    output_specs: OutputSpecs = {'resource': ConstantOut(resource_types=Resource, sub_class=True)}
     config_specs: ConfigSpecs = {}
 
     def check_before_run(self, params: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
@@ -109,7 +109,7 @@ class Switch2(Task):
 
     input_specs: InputSpecs = {'resource_1': SkippableIn(Resource),
                                'resource_2': SkippableIn(Resource)}
-    output_specs: OutputSpecs = {'resource': UnmodifiedOut(resource_types=Resource, sub_class=True)}
+    output_specs: OutputSpecs = {'resource': ConstantOut(resource_types=Resource, sub_class=True)}
     config_specs: ConfigSpecs = {"index": IntParam(
         default_value=1, min_value=1, max_value=2, short_description="The index of the input resource to switch on. Defaults to 1.")}
 
@@ -135,7 +135,7 @@ class Wait(Task):
     """
 
     input_specs: InputSpecs = {'resource': Resource}
-    output_specs: OutputSpecs = {'resource': UnmodifiedOut(resource_types=Resource, sub_class=True)}
+    output_specs: OutputSpecs = {'resource': ConstantOut(resource_types=Resource, sub_class=True)}
     config_specs: ConfigSpecs = {"waiting_time": FloatParam(
         default_value=3, min_value=0, short_description="The waiting time in seconds. Defaults to 3 second.")}
 
