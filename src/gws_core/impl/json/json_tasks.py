@@ -27,6 +27,6 @@ class JSONImporter(ResourceImporter):
 # ####################################################################
 
 
-@exporter_decorator("FileExporter", resource_type=JSONDict)
+@exporter_decorator("JSONExporter", resource_type=JSONDict)
 class JSONExporter(ResourceExporter):
     pass
