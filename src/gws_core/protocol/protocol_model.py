@@ -207,7 +207,7 @@ class ProtocolModel(ProcessModel):
             await self._run_task()
             await self._run_after_task()
         except Exception as err:
-            self.progress_bar.stop_error(message=str(err))
+            self.progress_bar.stop_error(str(err))
             raise err
 
     async def _run_task(self) -> None:
