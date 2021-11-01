@@ -8,7 +8,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING, List, TypedDict, final
 
-from peewee import BooleanField, DecimalField, ForeignKeyField
+from peewee import BooleanField, DoubleField, ForeignKeyField
 
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.transaction import transaction
@@ -67,7 +67,7 @@ class Experiment(Viewable):
 
     created_by = ForeignKeyField(
         User, null=True, index=True, backref='created_experiments')
-    score = DecimalField(null=True, index=True)
+    score = DoubleField(null=True, index=True)
     status: ExperimentStatus = EnumField(choices=ExperimentStatus,
                                          default=ExperimentStatus.DRAFT)
     is_validated: bool = BooleanField(default=False, index=True)
