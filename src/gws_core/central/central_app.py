@@ -83,7 +83,7 @@ def activate_user(uri: str, _: UserData = Depends(AuthCentral.check_central_api_
     - **uri**: the user uri
     """
 
-    return __convert_user_to_dto(UserService.activate_user(uri))
+    return _convert_user_to_dto(UserService.activate_user(uri))
 
 
 @central_app.get("/user/{uri}/deactivate", tags=["User management"])
@@ -94,7 +94,7 @@ def deactivate_user(uri: str, _: UserData = Depends(AuthCentral.check_central_ap
     - **uri**: the user uri
     """
 
-    return __convert_user_to_dto(UserService.deactivate_user(uri))
+    return _convert_user_to_dto(UserService.deactivate_user(uri))
 
 
 @central_app.get("/user/{uri}", tags=["User management"])
@@ -105,7 +105,7 @@ def get_user(uri: str, _: UserData = Depends(AuthCentral.check_central_api_key))
     - **uri**: the user uri
     """
 
-    return __convert_user_to_dto(UserService.get_user_by_uri(uri))
+    return _convert_user_to_dto(UserService.get_user_by_uri(uri))
 
 
 @central_app.post("/user", tags=["User management"])
@@ -121,7 +121,7 @@ def create_user(user: UserData, _: UserData = Depends(AuthCentral.check_central_
     - **last_name**: The last name
     """
 
-    return __convert_user_to_dto(UserService.create_user(user.dict()))
+    return _convert_user_to_dto(UserService.create_user(user.dict()))
 
 
 @central_app.get("/user", tags=["User management"])
@@ -130,7 +130,7 @@ def get_users(_: UserData = Depends(AuthCentral.check_central_api_key)):
     Get the all the users. Require central privilege.
     """
     HTTPHelper.is_http_context()
-    return __convert_users_to_dto(UserService.get_all_users())
+    return _convert_users_to_dto(UserService.get_all_users())
 
 
 @central_app.get("/settings", summary="Get settings")
@@ -156,7 +156,7 @@ def dump_db(db_name: str, _: UserData = Depends(AuthCentral.check_central_api_ke
     return file.view_as_json().to_dict()
 
 
-def __convert_user_to_dto(user: User) -> Dict:
+def _convert_user_to_dto(user: User) -> Dict:
     if user is None:
         return None
     return {
@@ -169,5 +169,5 @@ def __convert_user_to_dto(user: User) -> Dict:
     }
 
 
-def __convert_users_to_dto(users: List[User]) -> List[Dict]:
-    return list(map(__convert_user_to_dto, users))
+def _convert_users_to_dto(users: List[User]) -> List[Dict]:
+    return list(map(_convert_user_to_dto, users))

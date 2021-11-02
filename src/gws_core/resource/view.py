@@ -18,9 +18,9 @@ class View:
 
     def __init__(self, data: Any, *args, **kwargs):
         self.check_and_set_data(data)
-        self.__check_view_specs()
+        self._check_view_specs()
 
-    def __check_view_specs(self) -> None:
+    def _check_view_specs(self) -> None:
         """This method checks that the view specs are ok
 
         :raises Exception: [description]

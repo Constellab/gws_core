@@ -65,7 +65,7 @@ class Typing(Model):
                 f"The type {self.object_type} is not authorized in Typing, possible values: {available_object_types}")
 
         if not self.data.get("ancestors"):
-            self._set_ancestors(self.__get_hierarchy_table())
+            self._set_ancestors(self._get_hierarchy_table())
 
     # -- G --
 
@@ -76,7 +76,7 @@ class Typing(Model):
 
         return self.model_type.split('.')
 
-    def __get_hierarchy_table(self) -> List[str]:
+    def _get_hierarchy_table(self) -> List[str]:
         model_t: Model = Utils.get_model_type(self.model_type)
         mro: List[Model] = inspect.getmro(model_t)
 
@@ -92,7 +92,7 @@ class Typing(Model):
         Update the model type and the ancestors, then save into the DB
         """
         self.model_type = model_type
-        self._set_ancestors(self.__get_hierarchy_table())
+        self._set_ancestors(self._get_hierarchy_table())
 
         self.save()
         return self

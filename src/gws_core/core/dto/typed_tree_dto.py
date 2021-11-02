@@ -33,7 +33,7 @@ class TypedTree():
             self.sub_trees.append(process_ordered)
         else:
             # add proces recursively
-            sub_module: TypedTree = self.__get_submodule_with_type_part(
+            sub_module: TypedTree = self._get_submodule_with_type_part(
                 types[0])
             if sub_module is None:
                 sub_module = TypedTree(types[0])
@@ -42,7 +42,7 @@ class TypedTree():
             sub_module.add_object(types[1::], obj)
 
     # return the sub module with type part if it exists
-    def __get_submodule_with_type_part(self, type_part: str) -> Optional['TypedTree']:
+    def _get_submodule_with_type_part(self, type_part: str) -> Optional['TypedTree']:
         for sub_module in self.sub_trees:
             if sub_module.type_part == type_part:
                 return sub_module

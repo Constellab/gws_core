@@ -197,9 +197,9 @@ class AuthService(BaseService):
         if not user.is_active:
             return False
         if HTTPHelper.is_http_context():
-            return cls.__unauthenticate_http(user)
+            return cls._unauthenticate_http(user)
         else:
-            return cls.__unauthenticate_console(user)
+            return cls._unauthenticate_console(user)
 
     @classmethod
     def dev_login(cls, token: str) -> JSONResponse:
@@ -258,7 +258,7 @@ class AuthService(BaseService):
         return cls.generate_user_access_token(userdb.uri)
 
     @classmethod
-    def __unauthenticate_http(cls, user: User) -> bool:
+    def _unauthenticate_http(cls, user: User) -> bool:
 
         if not user.is_http_authenticated:
             CurrentUserService.set_current_user(None)
@@ -278,7 +278,7 @@ class AuthService(BaseService):
                 return False
 
     @classmethod
-    def __unauthenticate_console(cls, user: User) -> bool:
+    def _unauthenticate_console(cls, user: User) -> bool:
 
         if not user.is_console_authenticated:
             CurrentUserService.set_current_user(None)
