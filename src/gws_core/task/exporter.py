@@ -1,6 +1,5 @@
 
 
-from inspect import isclass
 from typing import Callable, Type, TypedDict, final
 
 from ..config.config_types import ConfigParams, ConfigSpecs
@@ -8,6 +7,7 @@ from ..config.param_spec_helper import ParamSpecHelper
 from ..core.utils.decorator_helper import DecoratorHelper
 from ..core.utils.reflector_helper import ReflectorHelper
 from ..core.utils.settings import Settings
+from ..core.utils.utils import Utils
 from ..impl.file.file import File
 from ..impl.file.file_helper import FileHelper
 from ..impl.file.file_store import FileStore
@@ -19,15 +19,17 @@ from ..task.task_decorator import decorate_task, task_decorator
 from ..task.task_io import TaskInputs, TaskOutputs
 from ..user.user_group import UserGroup
 
-EXPORT_TO_PATH_META_DATA_ATTRIBUTE = '__import_from_path_meta_data'
+EXPORT_TO_PATH_META_DATA_ATTRIBUTE = '_import_from_path_meta_data'
 
 
 class ExportToPathMetaData(TypedDict):
     specs: ConfigSpecs
     fs_node_type: Type[FSNode]
+    inherit_specs: bool
 
 
-def export_to_path(specs: ConfigSpecs = None, fs_node_type: Type[FSNode] = File) -> Callable:
+def export_to_path(specs: ConfigSpecs = None, fs_node_type: Type[FSNode] = File,
+                   inherit_specs: bool = True) -> Callable:
     """ Decorator to place on the export_to_path method of a Resource. This works with @exporter_decorator and it allow to
         generate a Task which takes a resource as Input and generate a File. The task will call the export_to_path with the config
 
@@ -35,6 +37,8 @@ def export_to_path(specs: ConfigSpecs = None, fs_node_type: Type[FSNode] = File)
     :type specs: ConfigSpecs
     :param fs_node_type: type of the node (File or Folder) generated
     :type fs_node_type: ConfigSpecs
+    :param inherit_specs: If true the specs are merge with the parent spec. If false parent specs is ignored.
+    :type inherit_specs: bool
     :return: [description]
     :rtype: Callable
     """
@@ -47,12 +51,12 @@ def export_to_path(specs: ConfigSpecs = None, fs_node_type: Type[FSNode] = File)
 
         DecoratorHelper.check_method_decorator(func)
 
-        # Check that the annotated method is called import_from_path
+        # Check that the annotated method is called export_to_path
         if func.__name__ != 'export_to_path':
             raise Exception("The export_to_path decorator must be placed on a method called export_to_path")
 
         # Create the meta data object
-        meta_data: ExportToPathMetaData = {"specs": specs, "fs_node_type": fs_node_type}
+        meta_data: ExportToPathMetaData = {"specs": specs, "fs_node_type": fs_node_type, "inherit_specs": inherit_specs}
         # Store the meta data object into the view_meta_data_attribute of the function
         ReflectorHelper.set_object_has_metadata(func, EXPORT_TO_PATH_META_DATA_ATTRIBUTE, meta_data)
 
@@ -70,7 +74,7 @@ def exporter_decorator(
                         //!\\ DO NOT MODIFIED THIS NAME ONCE IS DEFINED //!\\
                         It is used to instantiate the tasks
     :type unique_name: str
-    :param resource_type: type of the resource to generate from the file. The resource must define the import_from_path method
+    :param resource_type: type of the resource to generate from the file. The resource must define the export_to_path method
     :type resource_type: ProtocolAllowedUser, optional
     :param allowed_user: role needed to run the task. By default all user can run it. It Admin, the user need to be an admin of the lab to run the task
     :type allowed_user: ProtocolAllowedUser, optional
@@ -79,18 +83,27 @@ def exporter_decorator(
     """
     def decorator(task_class: Type[ResourceExporter]):
 
-        if not isclass(task_class) or not issubclass(task_class, ResourceExporter):
+        if not Utils.issubclass(task_class, ResourceExporter):
             raise Exception(
                 f"The exporter_decorator is used on the class: {task_class.__name__} and this class is not a sub class of ResourceExporter")
 
+        parent_class: Type[Task] = task_class.__base__
+        if not Utils.issubclass(parent_class, Task):
+            raise Exception(
+                f"The first parent class of {task_class.__name__} must be a Task")
+
         meta_data: ExportToPathMetaData = ReflectorHelper.get_and_check_object_metadata(
-            resource_type.import_from_path, EXPORT_TO_PATH_META_DATA_ATTRIBUTE, dict)
+            resource_type.export_to_path, EXPORT_TO_PATH_META_DATA_ATTRIBUTE, dict)
         if meta_data is None:
             raise Exception(
-                f"The importer decorator is link to resource {resource_type.classname()} but the export_to_path method of the resource is not decoated with @export_to_path decorator")
+                f"The exporter decorator is link to resource {resource_type.classname()} but the export_to_path method of the resource is not decoated with @export_to_path decorator")
 
-        # set the task config using the config in import_from_path method
-        task_class.config_specs = meta_data['specs']
+        # set the task config using the config in export to path method
+        specs: ConfigSpecs = meta_data['specs']
+        if meta_data['inherit_specs']:
+            task_class.config_specs = {**parent_class.config_specs, **specs}
+        else:
+            task_class.config_specs = specs
 
         task_class.input_specs = {'resource': resource_type}
         task_class.output_specs = {'file': meta_data['fs_node_type']}

@@ -10,11 +10,8 @@ class View:
     _type: str = 'view'
 
     # Spec of the view. All the view spec must be optional or have a default value
-    _specs: ViewSpecs = None
+    _specs: ViewSpecs = {}
     _data: Any
-
-    _specs: ViewSpecs = {
-    }
 
     def __init__(self, data: Any, *args, **kwargs):
         self.check_and_set_data(data)

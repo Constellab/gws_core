@@ -9,7 +9,7 @@ from .view import View
 from .view_meta_data import ResourceViewMetaData
 from .view_types import ViewSpecs
 
-VIEW_META_DATA_ATTRIBUTE = '__view_mata_data'
+VIEW_META_DATA_ATTRIBUTE = '_view_mata_data'
 
 
 def view(view_type: Type[View], human_name: str = "", short_description: str = "",

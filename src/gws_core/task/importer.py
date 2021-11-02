@@ -1,12 +1,12 @@
 
 
-from inspect import isclass
 from typing import Callable, Type, TypedDict, final
 
 from ..config.config_types import ConfigParams, ConfigSpecs
 from ..config.param_spec_helper import ParamSpecHelper
 from ..core.utils.decorator_helper import DecoratorHelper
 from ..core.utils.reflector_helper import ReflectorHelper
+from ..core.utils.utils import Utils
 from ..impl.file.file import File
 from ..impl.file.fs_node import FSNode
 from ..resource.resource import Resource
@@ -15,15 +15,17 @@ from ..task.task_decorator import decorate_task, task_decorator
 from ..task.task_io import TaskInputs, TaskOutputs
 from ..user.user_group import UserGroup
 
-IMPORT_FROM_PATH_META_DATA_ATTRIBUTE = '__import_from_path_meta_data'
+IMPORT_FROM_PATH_META_DATA_ATTRIBUTE = '_import_from_path_meta_data'
 
 
 class ImportFromPathMetaData(TypedDict):
     specs: ConfigSpecs
     fs_node_type: Type[FSNode]
+    inherit_specs: bool
 
 
-def import_from_path(specs: ConfigSpecs = None, fs_node_type: Type[FSNode] = File) -> Callable:
+def import_from_path(specs: ConfigSpecs = None, fs_node_type: Type[FSNode] = File,
+                     inherit_specs: bool = True) -> Callable:
     """ Decorator to place on the import_from_path method of a Resource. This works with @importer_decorator and it allow to
         generate a Task which takes a file as Input and return the resource. The task will call the import_from_path with the config
 
@@ -31,6 +33,8 @@ def import_from_path(specs: ConfigSpecs = None, fs_node_type: Type[FSNode] = Fil
     :type specs: ConfigSpecs
     :param fs_node_type: Type of the node (file of folder) required to import the path
     :type fs_node_type: ConfigSpecs
+    :param inherit_specs: If true the specs are merge with the parent spec. If false parent specs is ignored.
+    :type inherit_specs: bool
     :return: [description]
     :rtype: Callable
     """
@@ -48,7 +52,8 @@ def import_from_path(specs: ConfigSpecs = None, fs_node_type: Type[FSNode] = Fil
             raise Exception("The import_from_path decorator must be placed on a method called import_from_path")
 
         # Create the meta data object
-        meta_data: ImportFromPathMetaData = {"specs": specs, "fs_node_type": fs_node_type}
+        meta_data: ImportFromPathMetaData = {"specs": specs,
+                                             "fs_node_type": fs_node_type, "inherit_specs": inherit_specs}
         # Store the meta data object into the view_meta_data_attribute of the function
         ReflectorHelper.set_object_has_metadata(func, IMPORT_FROM_PATH_META_DATA_ATTRIBUTE, meta_data)
 
@@ -75,9 +80,14 @@ def importer_decorator(
     """
     def decorator(task_class: Type[ResourceImporter]):
 
-        if not isclass(task_class) or not issubclass(task_class, ResourceImporter):
+        if not Utils.issubclass(task_class, ResourceImporter):
             raise Exception(
                 f"The importer_decorator is used on the class: {task_class.__name__} and this class is not a sub class of ResourceImporter")
+
+        parent_class: Type[Task] = task_class.__base__
+        if not Utils.issubclass(parent_class, Task):
+            raise Exception(
+                f"The first parent class of {task_class.__name__} must be a Task")
 
         meta_data: ImportFromPathMetaData = ReflectorHelper.get_and_check_object_metadata(
             resource_type.import_from_path, IMPORT_FROM_PATH_META_DATA_ATTRIBUTE, dict)
@@ -86,7 +96,11 @@ def importer_decorator(
                 f"The importer decorator is link to resource {resource_type.classname()} but the import_from_path method of the resource is not decoated with @import_from_path decorator")
 
         # set the task config using the config in import_from_path method
-        task_class.config_specs = meta_data['specs']
+        specs: ConfigSpecs = meta_data['specs']
+        if meta_data['inherit_specs']:
+            task_class.config_specs = {**parent_class.config_specs, **specs}
+        else:
+            task_class.config_specs = specs
 
         task_class.input_specs = {'file': meta_data['fs_node_type']}
         task_class.output_specs = {'resource': resource_type}
