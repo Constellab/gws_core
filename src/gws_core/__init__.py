@@ -8,6 +8,8 @@
 # pylint: disable=useless-import-alias
 
 # Comments
+from gws_core import impl
+
 from .comment.comment import Comment as Comment
 from .comment.comment_service import CommentService as CommentService
 # Config
@@ -143,8 +145,10 @@ from .impl.shell.shell_env_proxy import ShellEnvProxy as ShellEnvProxy
 from .impl.table.data_frame_r_field import DataFrameRField as DataFrameRField
 # Impl > Table
 from .impl.table.table import Table as Table
+from .impl.table.table_file import TableFile as TableFile
 from .impl.table.table_tasks import TableExporter as TableExporter
 from .impl.table.table_tasks import TableImporter as TableImporter
+# Impl > TableView
 from .impl.table.view.barplot_view import BarPlotView as BarPlotView
 from .impl.table.view.boxplot_view import BoxPlotView as BoxPlotView
 from .impl.table.view.heatmap_view import HeatmapView as HeatmapView
@@ -155,7 +159,6 @@ from .impl.table.view.scatterplot_2d_view import \
     ScatterPlot2DView as ScatterPlot2DView
 from .impl.table.view.scatterplot_3d_view import \
     ScatterPlot3DView as ScatterPlot3DView
-# Impl > TableView
 from .impl.table.view.table_view import TableView as TableView
 # Impl > Text
 from .impl.text.text import Text as Text
@@ -171,12 +174,12 @@ from .io.io import Inputs as Inputs
 from .io.io import Outputs as Outputs
 from .io.io_spec import InputSpecs as InputSpecs
 from .io.io_spec import OutputSpecs as OutputSpecs
+from .io.io_types import ConstantOut as ConstantOut
 from .io.io_types import OptionalIn as OptionalIn
 from .io.io_types import SkippableIn as SkippableIn
 from .io.io_types import SpecialTypeIn as SpecialTypeIn
 from .io.io_types import SpecialTypeIO as SpecialTypeIO
 from .io.io_types import SpecialTypeOut as SpecialTypeOut
-from .io.io_types import ConstantOut as ConstantOut
 from .io.ioface import Interface as Interface
 from .io.ioface import IOface as IOface
 from .io.ioface import Outerface as Outerface
@@ -193,6 +196,8 @@ from .model.typing_manager import TypingManager as TypingManager
 from .model.view_model import ViewModel as ViewModel
 from .model.view_service import ViewService as ViewService
 from .model.viewable import Viewable as Viewable
+# Core > Notebook
+from .notebook.notebook import Notebook as Notebook
 # Process
 from .process.process import Process as Process
 from .process.process_factory import ProcessFactory as ProcessFactory
@@ -267,8 +272,6 @@ from .test.base_test_case import BaseTestCase as BaseTestCase
 from .test.gtest import GTest as GTest
 from .test.task_tester import TaskTester as TaskTester
 from .test.view_tester import ViewTester as ViewTester
-# Core > Notebook
-from .notebook.notebook import Notebook as Notebook
 # User
 from .user.activity import Activity as Activity
 from .user.activity_service import ActivityService as ActivityService

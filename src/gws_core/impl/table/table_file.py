@@ -18,8 +18,8 @@ from .view.scatterplot_3d_view import ScatterPlot3DView
 from .view.table_view import TableView
 
 
-@resource_decorator("FileTable")
-class FileTable(File):
+@resource_decorator("TableFile")
+class TableFile(File):
     """Specific file to .csv and .tsv files. This file contains the sames view as the Table resource.
 
     :param File: [description]
