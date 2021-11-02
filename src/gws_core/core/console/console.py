@@ -25,11 +25,15 @@ class Console:
     user: User = None
 
     @classmethod
-    def init(cls, user: User=None):
+    def init(cls, clean_db: bool=False, user: User=None):
         """
         This function initializes objects for unit testing
         """
 
+        if clean_db:
+            cls.drop_tables()
+            cls.create_tables()
+            
         settings = Settings.retrieve()
         if not settings.is_dev:
             raise BadRequestException(

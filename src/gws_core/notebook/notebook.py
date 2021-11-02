@@ -31,4 +31,3 @@ class Notebook(Console):
             raise BadRequestException("Authentication failed!")
 
         cls.user = user
-
