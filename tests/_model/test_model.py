@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from gws_core import BaseTestCase, GTest, JSONDict, JSONLoader, Model
+from gws_core import BaseTestCase, GTest, JSONDict, Model
 from gws_core.model.typing_manager import TypingManager
 from peewee import CharField
 
@@ -64,5 +64,4 @@ class TestModel(BaseTestCase):
         GTest.print("Model Registering")
         self.assertTrue(len(TypingManager.get_typings()) > 0)
 
-        self.assertIsNotNone(JSONLoader._typing_name)
         self.assertIsNotNone(JSONDict._typing_name)
