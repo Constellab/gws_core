@@ -40,7 +40,7 @@ class TestFolder(BaseTestCase):
         params = ConfigParams()
         vw = folder.view_as_json(params)
         dic_ = vw.to_dict(params)
-        self.assert_json(dic_["data"], {"folder": ['test.txt', {"sub_dir": []}]})
+        self.assert_json(dic_["data"], {"folder": [{"sub_dir": []}, 'test.txt']})
 
     async def test_folder_process(self):
         experiment: IExperiment = IExperiment()

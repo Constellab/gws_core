@@ -9,9 +9,10 @@ from typing import Dict, Iterable, List, Literal, Type, Union, get_args
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from ..core.utils.utils import Utils
 from ..resource.resource import Resource
-from .io_types import (OptionalIn, SkippableIn, SpecialTypeIn, SpecialTypeIO,
-                       SpecialTypeOut, ConstantOut)
+from .io_types import (ConstantOut, OptionalIn, SkippableIn, SpecialTypeIn,
+                       SpecialTypeIO, SpecialTypeOut)
 
 ResourceType = Type[Resource]
 
@@ -45,7 +46,7 @@ class IOSpecClass:
             io_type=resource_type, expected_types=self.to_resource_types())
 
     def is_optional(self) -> bool:
-        return isinstance(self.resource_spec, OptionalIn) or None in self.to_resource_types() or self.is_skippable_in()
+        return isinstance(self.resource_spec, OptionalIn) or None in self.to_resource_types()
 
     def is_constant_out(self) -> bool:
         return isinstance(self.resource_spec, ConstantOut)
@@ -264,6 +265,6 @@ class IOSpecsHelper():
                 params = item
 
             for param in params:
-                if not isclass(param) or not issubclass(param, Resource):
+                if param is not None and not Utils.issubclass(param, Resource):
                     raise Exception(
                         f"The {param_type} param of spec '{key}' is invalid. Expected a resource type, got {str(param)}")

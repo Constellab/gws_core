@@ -54,6 +54,7 @@ class TaskTester():
             inputs[key] = item
 
         task: Task = self._instantiate_task()
+        task.__status__ = 'CHECK_BEFORE_RUN'
 
         return task.check_before_run(config_params, inputs)
 
@@ -66,9 +67,16 @@ class TaskTester():
         config_params: ConfigParams = self._get_and_check_config()
         inputs: TaskInputs = self._get_and_check_input()
         task: Task = self._instantiate_task()
+        task.__status__ = 'RUN'
 
         self._outputs = await task.run(config_params, inputs)
         return self._outputs
+
+    async def run_after_task(self) -> None:
+        task: Task = self._instantiate_task()
+        task.__status__ = 'RUN_AFTER_TASK'
+
+        self._outputs = await task.run_after_task()
 
     def set_param(self, param_name: str, config_param: ParamValue) -> None:
         self._params[param_name] = config_param

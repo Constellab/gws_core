@@ -78,7 +78,7 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(ResourceModel.select().count(), 15)
         self.assertEqual(len(Q1), 15)
         self.assertEqual(len(Q2), 15)
-        self.assertEqual(experiment2.pid, None)
+        self.assertEqual(experiment2.pid, 0)
 
         e2_bis: Experiment = Experiment.get(Experiment.uri == experiment1.uri)
 
@@ -130,7 +130,7 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(Experiment.count_of_running_experiments(), 0)
         experiment3: Experiment = Experiment.get_by_uri_and_check(experiment3.uri)
         self.assertEqual(experiment3.status, ExperimentStatus.SUCCESS)
-        self.assertEqual(experiment3.pid, None)
+        self.assertEqual(experiment3.pid, 0)
 
         Q = experiment3.resources
         self.assertEqual(len(Q), 15)

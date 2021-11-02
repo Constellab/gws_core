@@ -63,5 +63,4 @@ class TestModel(BaseTestCase):
     def test_model_registrering(self):
         GTest.print("Model Registering")
         self.assertTrue(len(TypingManager.get_typings()) > 0)
-
         self.assertIsNotNone(JSONDict._typing_name)

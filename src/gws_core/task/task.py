@@ -82,7 +82,6 @@ class Task(Process):
         This can be overwritten to perform action after the task run. This method is called after the
         resource save. Temp object can be safely deleted here, the resources will still exist
         """
-        pass
 
     @final
     def get_default_output_spec_type(self, spec_name: str) -> Type[Resource]:

@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 from collections.abc import Iterable as IterableClass
-from typing import Iterable, Type, Union
+from typing import Iterable, List, Type, Union
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -14,7 +14,7 @@ ResourceTypes = Union[ResourceType, Iterable[ResourceType]]
 
 
 class SpecialTypeIO:
-    resource_types: Iterable[ResourceType]
+    resource_types: List[ResourceType]
 
     def __init__(self, resource_types: ResourceTypes) -> None:
         """[summary]
@@ -26,10 +26,12 @@ class SpecialTypeIO:
         :type sub_class: bool, optional
         """
 
+        self.resource_types = []
         if not isinstance(resource_types, IterableClass):
-            self.resource_types = [resource_types]
+            self.resource_types.append(resource_types)
         else:
-            self.resource_types = resource_types
+            for r_type in resource_types:
+                self.resource_types.append(r_type)
 
     def check_resource_types(self):
         for resource_type in self.resource_types:
@@ -45,7 +47,16 @@ class SpecialTypeIn(SpecialTypeIO):
     """
 
 
-class SkippableIn(SpecialTypeIn):
+class OptionalIn(SpecialTypeIn):
+    """Special type to use in Input specs
+    This type tell the system that the input is optional.
+    The input can be not connected and the task will still run (the input value will then be None)
+    If the input is connected, the task will wait for the resource to run himself (this is the difference from SkippableIn)
+    This is equivalent to [Resource, None]
+    """
+
+
+class SkippableIn(OptionalIn):
     """Special type to use in Input specs
     This type tell the system that the input is skippable. This mean that the task can be called
     even if this input was connected and the value no provided.
@@ -54,15 +65,6 @@ class SkippableIn(SpecialTypeIn):
 
     Has no effect when there is only one input
 
-    """
-
-
-class OptionalIn(SpecialTypeIn):
-    """Special type to use in Input specs
-    This type tell the system that the input is optional.
-    The input can be not connected and the task will still run (the input value will then be None)
-    If the input is connected, the task will wait for the resource to run himself (this is the difference from SkippableIn)
-    This is equivalent to [Resource, None]
     """
 
 

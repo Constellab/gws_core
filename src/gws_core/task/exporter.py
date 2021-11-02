@@ -139,4 +139,3 @@ class ResourceExporter(Task):
     async def run_after_task(self) -> None:
         # delete temp dir
         FileHelper.delete_dir(self.__temp_dir)
-        pass

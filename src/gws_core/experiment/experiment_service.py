@@ -358,7 +358,7 @@ class ExperimentService(BaseService):
 
         # try to kill the pid if possible
         try:
-            if experiment.pid is not None:
+            if experiment.pid != 0:
                 cls._kill_experiment_pid(experiment.pid)
         except Exception as err:
             Logger.error(str(err))
@@ -366,7 +366,7 @@ class ExperimentService(BaseService):
         ActivityService.add(
             Activity.STOP,
             object_type=experiment.full_classname(),
-            object_uri=experiment.uri
+            object_uri=experiment.urip
         )
 
         experiment.mark_as_error({"detail": GWSException.EXPERIMENT_STOPPED_MANUALLY.value,
@@ -383,7 +383,7 @@ class ExperimentService(BaseService):
         This is only possible if the experiment has been started through the cli
         """
 
-        if not experiment_pid:
+        if not experiment_pid or experiment_pid == 0:
             raise BadRequestException(
                 f"The experiment pid is {experiment_pid}")
         try:
