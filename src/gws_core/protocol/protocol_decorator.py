@@ -1,5 +1,7 @@
 from typing import Callable, Type
 
+from ..brick.brick_service import BrickService
+from ..core.utils.utils import Utils
 from ..model.typing_register_decorator import register_typing_class
 from ..protocol.protocol import Protocol
 from ..user.user_group import UserGroup
@@ -27,9 +29,11 @@ def protocol_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USE
 
     """
     def decorator(protocol_class: Type[Protocol]):
-        if not issubclass(protocol_class, Protocol):
-            raise Exception(
+        if not Utils.issubclass(protocol_class, Protocol):
+            BrickService.log_brick_error(
+                protocol_class,
                 f"The ProtocolDecorator is used on the class: {protocol_class.__name__} and this class is not a sub class of Protocol")
+            return protocol_class
 
         register_typing_class(object_class=protocol_class, object_type="PROTOCOL", unique_name=unique_name,
                               human_name=human_name, short_description=short_description, hide=hide)

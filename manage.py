@@ -13,7 +13,8 @@ if 'gws_core' not in sys.modules:
     else:
         raise Exception("Cannot find the core brick")
 
-from gws_core import runner, manage
+from gws_core import manage, runner
+
 if __name__ == "__main__":
     __cdir__ = os.path.dirname(os.path.abspath(__file__))
     manage.load_settings(__cdir__)

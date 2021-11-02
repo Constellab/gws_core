@@ -2,6 +2,8 @@
 
 from typing import Callable, Type, TypedDict, final
 
+from gws_core.brick.brick_service import BrickService
+
 from ..config.config_types import ConfigParams, ConfigSpecs
 from ..config.param_spec_helper import ParamSpecHelper
 from ..core.utils.decorator_helper import DecoratorHelper
@@ -41,22 +43,23 @@ def import_from_path(specs: ConfigSpecs = None, fs_node_type: Type[FSNode] = Fil
     if specs is None:
         specs = {}
 
-    ParamSpecHelper.check_config_specs(specs)
-
     def decorator(func: Callable) -> Callable:
 
-        DecoratorHelper.check_method_decorator(func)
+        try:
+            ParamSpecHelper.check_config_specs(specs)
+            DecoratorHelper.check_method_decorator(func)
 
-        # Check that the annotated method is called import_from_path
-        if func.__name__ != 'import_from_path':
-            raise Exception("The import_from_path decorator must be placed on a method called import_from_path")
+            # Check that the annotated method is called import_from_path
+            if func.__name__ != 'import_from_path':
+                raise Exception("The import_from_path decorator must be placed on a method called import_from_path")
 
-        # Create the meta data object
-        meta_data: ImportFromPathMetaData = {"specs": specs,
-                                             "fs_node_type": fs_node_type, "inherit_specs": inherit_specs}
-        # Store the meta data object into the view_meta_data_attribute of the function
-        ReflectorHelper.set_object_has_metadata(func, IMPORT_FROM_PATH_META_DATA_ATTRIBUTE, meta_data)
-
+            # Create the meta data object
+            meta_data: ImportFromPathMetaData = {"specs": specs,
+                                                 "fs_node_type": fs_node_type, "inherit_specs": inherit_specs}
+            # Store the meta data object into the view_meta_data_attribute of the function
+            ReflectorHelper.set_object_has_metadata(func, IMPORT_FROM_PATH_META_DATA_ATTRIBUTE, meta_data)
+        except Exception as err:
+            BrickService.log_brick_error(func, str(err))
         return func
 
     return decorator
@@ -80,37 +83,39 @@ def importer_decorator(
     """
     def decorator(task_class: Type[ResourceImporter]):
 
-        if not Utils.issubclass(task_class, ResourceImporter):
-            raise Exception(
-                f"The importer_decorator is used on the class: {task_class.__name__} and this class is not a sub class of ResourceImporter")
+        try:
+            if not Utils.issubclass(task_class, ResourceImporter):
+                raise Exception(
+                    f"The importer_decorator is used on the class: {task_class.__name__} and this class is not a sub class of ResourceImporter")
 
-        parent_class: Type[Task] = task_class.__base__
-        if not Utils.issubclass(parent_class, Task):
-            raise Exception(
-                f"The first parent class of {task_class.__name__} must be a Task")
+            parent_class: Type[Task] = task_class.__base__
+            if not Utils.issubclass(parent_class, Task):
+                raise Exception(f"The first parent class of {task_class.__name__} must be a Task")
 
-        meta_data: ImportFromPathMetaData = ReflectorHelper.get_and_check_object_metadata(
-            resource_type.import_from_path, IMPORT_FROM_PATH_META_DATA_ATTRIBUTE, dict)
-        if meta_data is None:
-            raise Exception(
-                f"The importer decorator is link to resource {resource_type.classname()} but the import_from_path method of the resource is not decoated with @import_from_path decorator")
+            meta_data: ImportFromPathMetaData = ReflectorHelper.get_and_check_object_metadata(
+                resource_type.import_from_path, IMPORT_FROM_PATH_META_DATA_ATTRIBUTE, dict)
+            if meta_data is None:
+                raise Exception(
+                    f"The importer decorator is link to resource {resource_type.classname()} but the import_from_path method of the resource is not decoated with @import_from_path decorator")
 
-        # set the task config using the config in import_from_path method
-        specs: ConfigSpecs = meta_data['specs']
-        if meta_data['inherit_specs']:
-            task_class.config_specs = {**parent_class.config_specs, **specs}
-        else:
-            task_class.config_specs = specs
+            # set the task config using the config in import_from_path method
+            specs: ConfigSpecs = meta_data['specs']
+            if meta_data['inherit_specs']:
+                task_class.config_specs = {**parent_class.config_specs, **specs}
+            else:
+                task_class.config_specs = specs
 
-        task_class.input_specs = {'file': meta_data['fs_node_type']}
-        task_class.output_specs = {'resource': resource_type}
+            task_class.input_specs = {'file': meta_data['fs_node_type']}
+            task_class.output_specs = {'resource': resource_type}
 
-        # set resource type in task
-        task_class._resource_type = resource_type
+            # set resource type in task
+            task_class._resource_type = resource_type
 
-        # register the task and set the human_name and short_description dynamically based on resource
-        decorate_task(task_class, unique_name, human_name=resource_type._human_name + ' importer',
-                      short_description=f"Import file to {resource_type._human_name}", allowed_user=allowed_user)
+            # register the task and set the human_name and short_description dynamically based on resource
+            decorate_task(task_class, unique_name, human_name=resource_type._human_name + ' importer',
+                          short_description=f"Import file to {resource_type._human_name}", allowed_user=allowed_user)
+        except Exception as err:
+            BrickService.log_brick_error(task_class, str(err))
 
         return task_class
     return decorator

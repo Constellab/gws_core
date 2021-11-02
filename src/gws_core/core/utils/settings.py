@@ -5,9 +5,8 @@
 
 import os
 import tempfile
-import uuid
 from copy import deepcopy
-from typing import Literal
+from typing import Dict, Literal, TypedDict
 
 from peewee import Model as PeeweeModel
 from peewee import SqliteDatabase
@@ -20,6 +19,11 @@ if not os.path.exists(__SETTINGS_DIR__):
     os.makedirs(__SETTINGS_DIR__)
 __SETTINGS_DB__ = SqliteDatabase(
     os.path.join(__SETTINGS_DIR__, "settings.sqlite3"))
+
+
+class ModuleInfo(TypedDict):
+    path: str
+    type: str
 
 # app settings
 
@@ -144,7 +148,7 @@ class Settings(PeeweeModel):
 
     # -- G --
 
-    def get_sqlite3_db_path(self, db_name, test: bool=None) -> str:
+    def get_sqlite3_db_path(self, db_name, test: bool = None) -> str:
         db_dir = os.path.join(self.get_data_dir(test=test), db_name, "sqlite3")
         if not os.path.exists(db_dir):
             os.makedirs(db_dir)
@@ -196,7 +200,7 @@ class Settings(PeeweeModel):
 
         return "/logs"
 
-    def get_data_dir(self, test:bool = None) -> str:
+    def get_data_dir(self, test: bool = None) -> str:
         """
         Get the default data directory.
         Depending on if the lab is in dev or prod mode, the appropriate directory is returned.
@@ -212,10 +216,10 @@ class Settings(PeeweeModel):
         else:
             return "/data"
 
-    def get_file_store_dir(self, test: bool=None) -> str:
+    def get_file_store_dir(self, test: bool = None) -> str:
         return os.path.join(self.get_data_dir(test=test), "./filestore/")
 
-    def get_kv_store_base_dir(self, test: bool=None) -> str:
+    def get_kv_store_base_dir(self, test: bool = None) -> str:
         return os.path.join(self.get_data_dir(test=test), "./kvstore/")
 
     def get_variable(self, key) -> str:
@@ -238,6 +242,9 @@ class Settings(PeeweeModel):
     def make_temp_dir(self) -> str:
         """ Make a unique temp dir """
         return tempfile.mkdtemp(dir=self.get_root_temp_dir())
+
+    def get_modules(self) -> Dict[str, ModuleInfo]:
+        return self.data["modules"]
 
     @property
     def is_prod(self) -> bool:

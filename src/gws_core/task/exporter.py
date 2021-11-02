@@ -2,6 +2,7 @@
 
 from typing import Callable, Type, TypedDict, final
 
+from ..brick.brick_service import BrickService
 from ..config.config_types import ConfigParams, ConfigSpecs
 from ..config.param_spec_helper import ParamSpecHelper
 from ..core.utils.decorator_helper import DecoratorHelper
@@ -45,20 +46,23 @@ def export_to_path(specs: ConfigSpecs = None, fs_node_type: Type[FSNode] = File,
     if specs is None:
         specs = {}
 
-    ParamSpecHelper.check_config_specs(specs)
-
     def decorator(func: Callable) -> Callable:
 
-        DecoratorHelper.check_method_decorator(func)
+        try:
+            ParamSpecHelper.check_config_specs(specs)
+            DecoratorHelper.check_method_decorator(func)
 
-        # Check that the annotated method is called export_to_path
-        if func.__name__ != 'export_to_path':
-            raise Exception("The export_to_path decorator must be placed on a method called export_to_path")
+            # Check that the annotated method is called export_to_path
+            if func.__name__ != 'export_to_path':
+                raise Exception("The export_to_path decorator must be placed on a method called export_to_path")
 
-        # Create the meta data object
-        meta_data: ExportToPathMetaData = {"specs": specs, "fs_node_type": fs_node_type, "inherit_specs": inherit_specs}
-        # Store the meta data object into the view_meta_data_attribute of the function
-        ReflectorHelper.set_object_has_metadata(func, EXPORT_TO_PATH_META_DATA_ATTRIBUTE, meta_data)
+            # Create the meta data object
+            meta_data: ExportToPathMetaData = {"specs": specs,
+                                               "fs_node_type": fs_node_type, "inherit_specs": inherit_specs}
+            # Store the meta data object into the view_meta_data_attribute of the function
+            ReflectorHelper.set_object_has_metadata(func, EXPORT_TO_PATH_META_DATA_ATTRIBUTE, meta_data)
+        except Exception as err:
+            BrickService.log_brick_error(func, str(err))
 
         return func
 
@@ -83,34 +87,36 @@ def exporter_decorator(
     """
     def decorator(task_class: Type[ResourceExporter]):
 
-        if not Utils.issubclass(task_class, ResourceExporter):
-            raise Exception(
-                f"The exporter_decorator is used on the class: {task_class.__name__} and this class is not a sub class of ResourceExporter")
+        try:
+            if not Utils.issubclass(task_class, ResourceExporter):
+                raise Exception(
+                    f"The exporter_decorator is used on the class: {task_class.__name__} and this class is not a sub class of ResourceExporter")
 
-        parent_class: Type[Task] = task_class.__base__
-        if not Utils.issubclass(parent_class, Task):
-            raise Exception(
-                f"The first parent class of {task_class.__name__} must be a Task")
+            parent_class: Type[Task] = task_class.__base__
+            if not Utils.issubclass(parent_class, Task):
+                raise Exception(f"The first parent class of {task_class.__name__} must be a Task")
 
-        meta_data: ExportToPathMetaData = ReflectorHelper.get_and_check_object_metadata(
-            resource_type.export_to_path, EXPORT_TO_PATH_META_DATA_ATTRIBUTE, dict)
-        if meta_data is None:
-            raise Exception(
-                f"The exporter decorator is link to resource {resource_type.classname()} but the export_to_path method of the resource is not decoated with @export_to_path decorator")
+            meta_data: ExportToPathMetaData = ReflectorHelper.get_and_check_object_metadata(
+                resource_type.export_to_path, EXPORT_TO_PATH_META_DATA_ATTRIBUTE, dict)
+            if meta_data is None:
+                raise Exception(
+                    f"The exporter decorator is link to resource {resource_type.classname()} but the export_to_path method of the resource is not decoated with @export_to_path decorator")
 
-        # set the task config using the config in export to path method
-        specs: ConfigSpecs = meta_data['specs']
-        if meta_data['inherit_specs']:
-            task_class.config_specs = {**parent_class.config_specs, **specs}
-        else:
-            task_class.config_specs = specs
+            # set the task config using the config in export to path method
+            specs: ConfigSpecs = meta_data['specs']
+            if meta_data['inherit_specs']:
+                task_class.config_specs = {**parent_class.config_specs, **specs}
+            else:
+                task_class.config_specs = specs
 
-        task_class.input_specs = {'resource': resource_type}
-        task_class.output_specs = {'file': meta_data['fs_node_type']}
+            task_class.input_specs = {'resource': resource_type}
+            task_class.output_specs = {'file': meta_data['fs_node_type']}
 
-        # register the task and set the human_name and short_description dynamically based on resource
-        decorate_task(task_class, unique_name, human_name=resource_type._human_name + ' exporter',
-                      short_description=f"Export {resource_type._human_name} to a file", allowed_user=allowed_user)
+            # register the task and set the human_name and short_description dynamically based on resource
+            decorate_task(task_class, unique_name, human_name=resource_type._human_name + ' exporter',
+                          short_description=f"Export {resource_type._human_name} to a file", allowed_user=allowed_user)
+        except Exception as err:
+            BrickService.log_brick_error(task_class, str(err))
 
         return task_class
     return decorator

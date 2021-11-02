@@ -2,6 +2,8 @@
 
 from typing import Callable, Type
 
+from gws_core.brick.brick_service import BrickService
+
 from ..config.param_spec import ParamSpec
 from ..core.classes.func_meta_data import FuncArgsMetaData
 from ..core.utils.reflector_helper import ReflectorHelper
@@ -41,15 +43,19 @@ def view(view_type: Type[View], human_name: str = "", short_description: str = "
         func_args: FuncArgsMetaData = ReflectorHelper.get_function_arguments(func)
 
         if not func_args.is_method():
-            raise Exception(
+            BrickService.log_brick_error(
+                func,
                 'The @view decorator must be unsed on a method (with self). It must not be used in a classmethod or a static method')
+            return func
 
         # if the view is mark as default, all the parameters must be optional
         if default_view:
             for spec_name, spec in specs.items():
                 if not spec.optional:
-                    raise Exception(
+                    BrickService.log_brick_error(
+                        func,
                         f"View error. The @view of method '{func_args.func_name}' is mark as default but the spec '{spec_name}' is mandatory. If the view is mark as default, all the view specs must be optional or have a default value")
+                    return func
 
         # # Check that the function arg matches the view specs and the type are the same
         # for arg_name in func_args.get_named_args().keys():
@@ -69,7 +75,7 @@ def view(view_type: Type[View], human_name: str = "", short_description: str = "
         #             raise Exception(
         #                 f"View error. The @view decorator of the method '{func_args.func_name}' has a spec called '{spec_name}' but there is not argument in the function called with the same name")
 
-        # If method spec overrides view spec, check the type
+        # If method spec overides view spec, check the type
         view_specs: ViewSpecs = view_type._specs
         if len(specs) > 0 and len(view_specs) > 0:
             for spec_name, method_spec in specs.items():
@@ -78,7 +84,8 @@ def view(view_type: Type[View], human_name: str = "", short_description: str = "
                     view_spec: ParamSpec = view_specs[spec_name]
                     # the method spec must be a sub class of the view spec
                     if not isinstance(method_spec, type(view_spec)):
-                        raise Exception(
+                        BrickService.log_brick_error(
+                            func,
                             f"View error. The @view decorator of the method '{func_args.func_name}' has a spec called '{spec_name}' that overide the spec of the view '{view_type}' but the types are imcompatible")
 
         # Create the meta data object

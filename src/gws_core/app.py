@@ -10,15 +10,14 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from starlette_context.middleware.context_middleware import ContextMiddleware
 
+from gws_core.brick.brick_helper import BrickHelper
+
 from ._core_app_importer import *
 from .central.central_app import central_app
 from .core.classes.cors_config import CorsConfig
 from .core.utils.logger import Logger
 from .core.utils.settings import Settings
-from .core.utils.utils import Utils
 from .core_app import core_app
-from .experiment.queue_service import QueueService
-from .lab.monitor import Monitor
 from .lab.system_service import SystemService
 
 app = FastAPI(docs_url=None)
@@ -87,12 +86,12 @@ class App:
         # Add static dirs for docs of git modules
         # @ToDo: Add route or hooks to compile docs after
         settings: Settings = Settings.retrieve()
-        brick_paths = Utils.get_all_brick_paths()
+        bricks_info = BrickHelper.get_all_bricks()
         Logger.info(
             f"Starting server in {('prod' if settings.is_prod else 'dev')} mode ...")
-        for path in brick_paths:
-            name = path.strip("/").split("/")[-1]
-            documention_path = os.path.join(path, "./docs/html/build")
+        for brick_info in bricks_info.values():
+            name = brick_info["path"].strip("/").split("/")[-1]
+            documention_path = os.path.join(brick_info["path"], "./docs/html/build")
             if not os.path.exists(documention_path):
                 os.makedirs(documention_path)
             cls.app.mount(

@@ -4,11 +4,11 @@
 # About us: https://gencovery.com
 
 
-from inspect import isclass
 from typing import Callable, Type
 
-from gws_core.config.param_spec_helper import ParamSpecHelper
-
+from ..brick.brick_service import BrickService
+from ..config.param_spec_helper import ParamSpecHelper
+from ..core.utils.utils import Utils
 from ..io.io_spec import IOSpecsHelper
 from ..model.typing_register_decorator import register_typing_class
 from ..user.user_group import UserGroup
@@ -48,9 +48,11 @@ def decorate_task(task_class: Type[Task], unique_name: str, allowed_user: UserGr
                   human_name: str = "", short_description: str = "", hide: bool = False):
     """Method to decorate a task
     """
-    if not isclass(task_class) or not issubclass(task_class, Task):
-        raise Exception(
+    if not Utils.issubclass(task_class, Task):
+        BrickService.log_brick_error(
+            task_class,
             f"The task_decorator is used on the class: {task_class.__name__} and this class is not a sub class of Task")
+        return
 
         # Check the input, output and config specs
     try:
@@ -59,8 +61,9 @@ def decorate_task(task_class: Type[Task], unique_name: str, allowed_user: UserGr
         ParamSpecHelper.check_config_specs(task_class.config_specs)
 
     except Exception as err:
-        raise Exception(
-            f"Invalid specs for the task : {task_class.__name__}. {str(err)}")
+        BrickService.log_brick_error(
+            task_class, f"Invalid specs for the task : {task_class.__name__}. {str(err)}")
+        return
 
     register_typing_class(object_class=task_class, object_type="TASK", unique_name=unique_name,
                           human_name=human_name, short_description=short_description, hide=hide)

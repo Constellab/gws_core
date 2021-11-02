@@ -9,6 +9,7 @@ import os
 import re
 import sys
 
+from .brick.brick_service import BrickService
 from .core.utils.settings import Settings
 
 
@@ -59,8 +60,7 @@ class SettingsLoader:
 
         # /!\ Ensure that all bricks' modules are loaded on Application startup
         # Is important to be able to traverse all Bricks/Model/Object inheritors
-        from .core.utils.utils import Utils
-        Utils.import_all_modules()
+        BrickService.import_all_modules()
 
     # -- P --
 

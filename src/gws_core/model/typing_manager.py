@@ -4,6 +4,7 @@ from typing import Any, Dict, Type, TypedDict
 
 from peewee import ModelSelect
 
+from ..brick.brick_helper import BrickHelper
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.base import Base
@@ -87,7 +88,7 @@ class TypingManager:
             raise Exception(
                 f"""Trying to register the type {name} but it is not a subclass of Base""")
 
-        brick_name: str = Utils.get_brick_name(object_class)
+        brick_name: str = BrickHelper.get_brick_name(object_class)
 
         if not object_type in cls._typings:
             cls._typings[object_type] = {}

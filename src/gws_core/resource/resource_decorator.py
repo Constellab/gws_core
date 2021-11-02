@@ -3,8 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Callable, List, Type
+from typing import Callable, Type
 
+from ..brick.brick_service import BrickService
+from ..core.utils.utils import Utils
 from ..model.typing_register_decorator import register_typing_class
 from ..resource.resource import Resource
 
@@ -30,9 +32,11 @@ def resource_decorator(unique_name: str, human_name: str = "", short_description
     """
 
     def decorator(resource_class: Type[Resource]):
-        if not issubclass(resource_class, Resource):
-            raise Exception(
+        if not Utils.issubclass(resource_class, Resource):
+            BrickService.log_brick_error(
+                resource_class,
                 f"The ResourceDecorator is used on class '{resource_class.__name__}' while this class is not a subclass of Resource")
+            return resource_class
 
         register_typing_class(object_class=resource_class, object_type="RESOURCE", unique_name=unique_name,
                               human_name=human_name, short_description=short_description, hide=hide)

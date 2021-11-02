@@ -3,21 +3,21 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import shutil
 import sys
 
-from gws_core.impl.file.file_helper import FileHelper
-
+from ..brick.brick_service import BrickService
 from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
 from ..core.utils.settings import Settings
 from ..experiment.experiment_service import ExperimentService
 from ..experiment.queue_service import QueueService
+from ..impl.file.file_helper import FileHelper
 from ..model.model_service import ModelService
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
 from ..user.user_service import UserService
 from .monitor import Monitor
+from .system_status import SystemStatus
 
 
 class SystemService:
@@ -33,6 +33,9 @@ class SystemService:
         cls.create_all_tables()
         ModelService.register_all_processes_and_resources()
         UserService.create_sysuser()
+        SystemStatus.app_is_initialized = True
+
+        BrickService.init()
 
     @classmethod
     def init_queue_and_monitor(cls) -> None:

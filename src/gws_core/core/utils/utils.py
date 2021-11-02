@@ -9,11 +9,9 @@ import random
 import re
 import string
 import uuid
-from typing import Any, Callable, Dict, List, Tuple, Type, Union
+from typing import Any, List, Tuple, Type, Union
 
 from slugify import slugify as _slugify
-
-from ..classes.func_meta_data import FuncArgMetaData, FuncArgsMetaData
 
 
 class Utils:
@@ -23,94 +21,12 @@ class Utils:
     def generate_random_chars(size=6, chars=string.ascii_uppercase + string.ascii_lowercase + string.digits) -> str:
         return ''.join(random.choice(chars) for _ in range(size))
 
-    @staticmethod
-    def get_brick_name(obj: Any) -> str:
-        """Methode to return a brick of any object
-
-        :param obj: class, method...
-        :type obj: Any
-        :rtype: str
-        """
-        module = inspect.getmodule(obj)
-        if module is None:
-            raise Exception(f"Can't find python module of object {obj}")
-        modules: List[str] = module.__name__.split('.')
-        return modules[0]
-
-    @classmethod
-    def get_all_brick_names(cls) -> List[str]:
-        """ Returns the names of all the bricks used by the Application """
-        from ..utils.settings import Settings
-        settings = Settings.retrieve()
-        brick_names: List[str] = []
-        for name, data in settings.data["modules"].items():
-            if "brick" in data["type"]:
-                brick_names.append(name)
-        return brick_names
-
-        # from ...core.model.base import Base
-        # if not getattr(cls,'__brick_names', None):
-        #     subclasses: List[Type[Base]] = Base.inheritors()
-        #     cls.__brick_names: List[str] = []
-        #     for subclass in subclasses:
-        #         top_pkg = subclass.module_name().split('.')[0]
-        #         if top_pkg not in cls.__brick_names:
-        #             cls.__brick_names.append(top_pkg)
-        # return cls.__brick_names
-
-    @staticmethod
-    def get_brick_path(obj: Any) -> str:
-        name = Utils.get_brick_name(obj)
-        try:
-            module = importlib.import_module(name)
-        except Exception as err:
-            raise Exception(f"Can't import python module {name}") from err
-        return os.path.join(os.path.abspath(os.path.dirname(module.__file__)), "../../")
-
-    @classmethod
-    def get_all_brick_paths(cls) -> List[str]:
-        """ Returns all the paths of all the brick used by the Application """
-        from ..utils.settings import Settings
-        settings = Settings.retrieve()
-        brick_paths: List[str] = []
-        for _, data in settings.data["modules"].items():
-            if "brick" in data["type"]:
-                brick_paths.append(data["path"])
-        return brick_paths
-
     @classmethod
     def get_notebook_paths(cls) -> str:
         """ Returns all the paths of all the brick used by the Application """
         from ..utils.settings import Settings
         settings = Settings.retrieve()
         return settings.data["modules"]["notebook"]["path"]
-
-        # if not getattr(cls,'__brick_paths', None):
-        #     cls.__brick_paths = []
-        #     brick_names = Utils.get_all_brick_names()
-        #     for name in brick_names:
-        #         module = importlib.import_module(name)
-        #         p = os.path.abspath(os.path.dirname(module.__file__))
-        #         cls.__brick_paths.append(p)
-        # return cls.__brick_paths
-
-    # -- I --
-
-    @staticmethod
-    def import_all_modules():
-        brick_paths: List[str] = Utils.get_all_brick_paths()
-        for path in brick_paths:
-            _, files = Utils.walk_dir(os.path.join(path, "src"))
-            for py_file in files:
-                parts = py_file.split("/src/")[-1].split("/")
-                parts[-1] = os.path.splitext(parts[-1])[0]  # remove .py extension
-                module_name = ".".join(parts)
-                try:
-                    importlib.import_module(module_name)
-                except Exception as err:
-                    raise Exception(f"Cannot import module {module_name}.") from err
-
-    # -- S --
 
     @staticmethod
     def slugify(text: str, snakefy: bool = False, to_lower: bool = True) -> str:
@@ -152,7 +68,7 @@ class Utils:
     # -- W --
 
     @staticmethod
-    def walk_dir(path):
+    def walk_dir(path) -> Tuple[List[str], List[str]]:
         dirs = []
         files = []
         reg = re.compile(r"^[a-zA-Z].*\.py$")

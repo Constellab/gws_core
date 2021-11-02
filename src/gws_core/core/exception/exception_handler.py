@@ -12,6 +12,7 @@ from fastapi import status
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
 
+from ...brick.brick_helper import BrickHelper
 from ..classes.cors_config import CorsConfig
 from ..utils.logger import Logger
 from ..utils.utils import Utils
@@ -171,7 +172,7 @@ class ExceptionHandler():
         frame_info: inspect.FrameInfo = trace[-1]
 
         try:
-            return Utils.get_brick_name(frame_info[0])
+            return BrickHelper.get_brick_name(frame_info[0])
         except Exception as err:
             Logger.error('Error when getting the brick of the exception raiser')
             Logger.log_exception_stack_trace(err)
