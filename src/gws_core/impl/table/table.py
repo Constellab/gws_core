@@ -256,6 +256,18 @@ class Table(Resource):
     def to_json(self) -> dict:
         return self._data.to_json()
 
+    def tail(self, n=5) -> DataFrame:
+        """
+        Returns the last n rows for the columns ant targets.
+
+        :param n: Number of rows
+        :param n: int
+        :return: The `panda.DataFrame` objects representing the n first rows of the `data`
+        :rtype: pandas.DataFrame
+        """
+
+        return self._data.tail(n)
+
     # -- V ---
 
     @view(view_type=TableView, default_view=True, human_name='Tabular', short_description='View as a table', specs={})
