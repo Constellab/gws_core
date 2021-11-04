@@ -33,5 +33,6 @@
     "python.linting.mypyPath": "/usr/local/bin/mypy",
     "python.linting.mypyArgs": [
         "--config-file=${workspaceFolder}/.mypy.ini"
-    ]
+    ],
+    "autoDocstring.docstringFormat": "sphinx"
 }
