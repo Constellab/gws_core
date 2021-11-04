@@ -14,11 +14,16 @@ class FileHelper():
     Class containing only classmethod to simplify file management
     """
 
-    csv_dilimiters: List[str] = ['\t', ',', ';']
+    LARGE_SIZE_IN_BYTES = 20*1e6   # 20 MB
+    CSV_DELIMITERS: List[str] = ['\t', ',', ';']
 
     @classmethod
     def get_dir(cls, path: PathType) -> Path:
         return cls.get_path(path).parent
+
+    @classmethod
+    def get_size(cls, path: PathType) -> int:
+        return os.path.getsize(path)
 
     # -- E --
 
@@ -64,6 +69,10 @@ class FileHelper():
 
         os.makedirs(path)
         return path
+
+    @classmethod
+    def is_large(cls, path: PathType):
+        return cls.get_size(path) > cls.LARGE_SIZE_IN_BYTES
 
     @classmethod
     def is_json(cls, path: PathType):
@@ -122,7 +131,7 @@ class FileHelper():
         # use a sub csv to improve speed
         sub_csv = csv_str[0:10000]
 
-        for delimiter in cls.csv_dilimiters:
+        for delimiter in cls.CSV_DELIMITERS:
             count: int = sub_csv.count(delimiter)
             if(count > max_delimiter_count):
                 max_delimiter = delimiter

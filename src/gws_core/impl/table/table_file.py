@@ -1,3 +1,8 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
+
 from typing import List
 
 from gws_core.config.config_types import ConfigParams
@@ -106,5 +111,6 @@ class TableFile(File):
 
     def _get_table_resource(self) -> Table:
         # guess the delimiter
-        delimiter = FileHelper.detect_csv_delimiter(self.read())
+        max_nb_chars = 10000
+        delimiter = FileHelper.detect_csv_delimiter(self.read(size=max_nb_chars))
         return Table.import_from_path(self, ConfigParams(delimiter=delimiter, header=0))

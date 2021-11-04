@@ -35,12 +35,19 @@ class File(FSNode):
     supported_extensions: List[str] = []
 
     @property
+    def size(self):
+        return FileHelper.get_size(self.path)
+
+    @property
     def dir(self):
         return FileHelper.get_dir(self.path)
 
     @property
     def extension(self):
         return FileHelper.get_extension(self.path)
+
+    def is_large(self):
+        return FileHelper.is_large(self.path)
 
     def is_json(self):
         return FileHelper.is_json(self.path)
@@ -81,24 +88,40 @@ class File(FSNode):
                     raise BadRequestException(f"Cannot create directory {self.dir}")
             return open(self.path, mode="w+", encoding='utf-8')
 
-    # TODO est-ce que le close est fait ?
-    def read(self) -> AnyStr:
+    def read_part(self, from_line: int=1, to_line:int = 10) -> AnyStr:
+        text = ""
         mode = "r+"+self._mode
         with self.open(mode) as fp:
-            data = fp.read()
+            for index, line in enumerate(fp):
+                if index >= from_line-1 and index <= to_line-1:
+                    text += line
+                if to_line > to_line-1:
+                    break
+        return text
+
+    def _read_all(self, size: int=-1) -> AnyStr:
+        mode = "r+"+self._mode
+        with self.open(mode) as fp:
+            data = fp.read(size)
         return data
 
-    def readline(self) -> AnyStr:
-        mode = "r+"+self._mode
-        with self.open(mode) as file:
-            data = file.readline()
-        return data
+    def read(self, size: int=-1) -> AnyStr:
+        if self.is_large() and size == -1:
+            return self.read_part()
+        else:
+            return self._read_all(size=-1)
+   
+    # def readline(self) -> AnyStr:
+    #     mode = "r+"+self._mode
+    #     with self.open(mode) as file:
+    #         data = file.readline()
+    #     return data
 
-    def readlines(self, hint=-1) -> List[AnyStr]:
-        mode = "r+"+self._mode
-        with self.open(mode) as file:
-            data = file.readlines(hint)
-        return data
+    # def readlines(self, hint=-1) -> List[AnyStr]:
+    #     mode = "r+"+self._mode
+    #     with self.open(mode) as file:
+    #         data = file.readlines(hint)
+    #     return data
 
     @view(view_type=JSONView, human_name="View as JSON", short_description="View the complete resource as json")
     def view_as_json(self, params: ConfigParams) -> JSONView:
