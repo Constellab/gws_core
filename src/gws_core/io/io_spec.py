@@ -5,7 +5,8 @@
 
 from collections.abc import Iterable as IterableClass
 from inspect import isclass
-from typing import Dict, Iterable, List, Literal, Type, Union, get_args
+from typing import (Dict, Iterable, List, Literal, Type, TypedDict, Union,
+                    get_args)
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -26,6 +27,12 @@ OutputSpecs = Dict[str, OutputSpec]
 
 IOSpec = Union[InputSpec, OutputSpec]
 IOSpecs = Dict[str, IOSpec]
+
+
+class ResourceTypeJson(TypedDict):
+    typing_name: str
+    human_name: str
+    short_description: str
 
 
 class IOSpecClass:
@@ -54,17 +61,16 @@ class IOSpecClass:
     def is_skippable_in(self) -> bool:
         return isinstance(self.resource_spec, SkippableIn)
 
-    def get_resource_typing_names(self) -> List[str]:
-        specs: List[str] = []
+    def to_json(self) -> List[ResourceTypeJson]:
+        specs: List[ResourceTypeJson] = []
         for resource_type in self.to_resource_types():
             if resource_type is None:
-                specs.append(None)
+                specs.append({"typing_name": None, "human_name": None, 'short_description': None})
             else:
-                specs.append(resource_type._typing_name)
+                specs.append(
+                    {"typing_name": resource_type._typing_name, "human_name": resource_type._human_name,
+                     'short_description': resource_type._short_description})
         return specs
-
-    def to_json(self) -> List[str]:
-        return self.get_resource_typing_names()
 
 
 class IOSpecsHelper():
@@ -214,27 +220,14 @@ class IOSpecsHelper():
         return False
 
     @classmethod
-    def io_specs_to_json(cls, io_specs: IOSpecs) -> Dict[str, List[str]]:
+    def io_specs_to_json(cls, io_specs: IOSpecs) -> Dict[str, List[ResourceTypeJson]]:
         """to_json method for IOSpecs
         """
 
-        # Convert the specs to a list of resources types
-        specs: Dict[str, Iterable[Type[Resource]]] = cls.io_specs_to_resource_types(io_specs)
-
-        _json:  Dict[str, List[str]] = {}
-        for key, spec in specs.items():
-            resources_json: List[str] = []
-
-            for resource_type in spec:
-                if resource_type is None:
-                    resources_json.append(None)
-                else:
-                    # set the resource typing name as spec
-                    resources_json.append(resource_type._typing_name)
-
-            _json[key] = resources_json
-
-        return _json
+        json_:  Dict[str, List[ResourceTypeJson]] = {}
+        for key, spec in io_specs.items():
+            json_[key] = IOSpecClass(spec).to_json()
+        return json_
 
     @classmethod
     def check_input_specs(cls, input_specs: InputSpecs) -> None:
