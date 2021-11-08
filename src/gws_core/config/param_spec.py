@@ -1,4 +1,3 @@
-
 from abc import abstractmethod
 from typing import Any, Dict, Generic, List, Literal, Optional, Type, TypeVar
 
@@ -9,7 +8,7 @@ from ..core.classes.validator import (BoolValidator, DictValidator,
                                       FloatValidator, IntValidator,
                                       ListValidator, StrValidator, Validator)
 
-ParamSpecType = TypeVar('ParamSpecType')
+ParamSpecType = TypeVar("ParamSpecType")
 
 
 # Visibility of a param
@@ -20,8 +19,7 @@ ParamSpecVisibilty = Literal["public", "protected", "private"]
 
 
 class ParamSpec(Generic[ParamSpecType]):
-    """Main abstract class for the spec of config params
-    """
+    """Main abstract class for the spec of config params"""
 
     # Default value, if None, and optional is false, the config is mandatory
     # If a value is provided there is no need to set the optional
@@ -41,10 +39,15 @@ class ParamSpec(Generic[ParamSpecType]):
     # Measure unit of the value (ex kg)
     unit: Optional[str]
 
-    def __init__(self, default_value: Optional[ParamSpecType] = None, optional: bool = False,
-                 visibility: ParamSpecVisibilty = 'public',
-                 human_name: Optional[str] = None, short_description: Optional[str] = None,
-                 unit: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        default_value: Optional[ParamSpecType] = None,
+        optional: bool = False,
+        visibility: ParamSpecVisibilty = "public",
+        human_name: Optional[str] = None,
+        short_description: Optional[str] = None,
+        unit: Optional[str] = None,
+    ) -> None:
         """
         :param default_value: Default value, if None, and optional is false, the config is mandatory
                         If a value is provided there is no need to set the optional
@@ -84,10 +87,10 @@ class ParamSpec(Generic[ParamSpecType]):
         pass
 
     @classmethod
-    def empty(cls) -> 'ParamSpec':
+    def empty(cls) -> "ParamSpec":
         return cls()
 
-    def load_from_json(self, json_:  Dict[str, Any]) -> None:
+    def load_from_json(self, json_: Dict[str, Any]) -> None:
         self.default_value = json_.get("default_value")
         self.optional = json_.get("optional")
         self.human_name = json_.get("human_name")
@@ -99,7 +102,7 @@ class ParamSpec(Generic[ParamSpecType]):
         _json: Dict[str, Any] = {
             "type": self.get_type().__name__,
             "optional": self.optional,
-            "visibility": self.visibility
+            "visibility": self.visibility,
         }
 
         if self.default_value is not None:
@@ -119,32 +122,39 @@ class ParamSpec(Generic[ParamSpecType]):
         return self.get_validator().validate(value)
 
     def _check_visibility(self, visibility: ParamSpecVisibilty) -> None:
-        allowed_visibility: List[ParamSpecVisibilty] = ['public', 'protected', 'private']
+        allowed_visibility: List[ParamSpecVisibilty] = [
+            "public",
+            "protected",
+            "private",
+        ]
         if visibility not in allowed_visibility:
             raise BadRequestException(
-                f"The visibilty '{visibility}' of the '{self.get_type()}' is incorrect. It must be one of the following values : {str(allowed_visibility)}")
+                f"The visibilty '{visibility}' of the '{self.get_type()}' is incorrect. It must be one of the following values : {str(allowed_visibility)}"
+            )
 
         # If the visibility is not public, the param must have a default value
-        if self.visibility != 'public' and not self.optional:
+        if self.visibility != "public" and not self.optional:
             raise BadRequestException(
-                f"The '{self.get_type()}' parame visibility is set to {self.visibility} but the param is mandatory. It must have a default value of be optional if the visiblity is not public")
+                f"The '{self.get_type()}' parame visibility is set to {self.visibility} but the param is mandatory. It must have a default value of be optional if the visiblity is not public"
+            )
 
 
 class StrParam(ParamSpec[str]):
-    """String param
-    """
+    """String param"""
 
     #  If present, the value must be in the array
     allowed_values: Optional[List[str]]
 
     def __init__(
-            self, default_value: Optional[str] = None,
-            optional: bool = False,
-            visibility: ParamSpecVisibilty = 'public',
-            human_name: Optional[str] = None,
-            short_description: Optional[str] = None,
-            allowed_values: Optional[List[str]] = None,
-            unit: Optional[str] = None) -> None:
+        self,
+        default_value: Optional[str] = None,
+        optional: bool = False,
+        visibility: ParamSpecVisibilty = "public",
+        human_name: Optional[str] = None,
+        short_description: Optional[str] = None,
+        allowed_values: Optional[List[str]] = None,
+        unit: Optional[str] = None,
+    ) -> None:
         """
         :param default_value: Default value, if None, and optional is false, the config is mandatory
                         If a value is provided there is no need to set the optional
@@ -163,8 +173,14 @@ class StrParam(ParamSpec[str]):
         :type unit: Optional[str]
         """
         self.allowed_values = allowed_values
-        super().__init__(default_value=default_value, optional=optional,
-                         visibility=visibility, human_name=human_name, short_description=short_description, unit=unit)
+        super().__init__(
+            default_value=default_value,
+            optional=optional,
+            visibility=visibility,
+            human_name=human_name,
+            short_description=short_description,
+            unit=unit,
+        )
 
     def get_type(self) -> Type[str]:
         return str
@@ -172,7 +188,7 @@ class StrParam(ParamSpec[str]):
     def get_validator(self) -> Validator:
         return StrValidator(allowed_values=self.allowed_values)
 
-    def load_from_json(self, json_:  Dict[str, Any]) -> None:
+    def load_from_json(self, json_: Dict[str, Any]) -> None:
         super().load_from_json(json_)
         self.allowed_values = json_.get("allowed_values")
 
@@ -184,8 +200,7 @@ class StrParam(ParamSpec[str]):
 
 
 class BoolParam(ParamSpec[bool]):
-    """Boolean param
-    """
+    """Boolean param"""
 
     def get_type(self) -> Type[bool]:
         return bool
@@ -195,8 +210,7 @@ class BoolParam(ParamSpec[bool]):
 
 
 class DictParam(ParamSpec[dict]):
-    """Any json dict param
-    """
+    """Any json dict param"""
 
     def get_type(self) -> Type[dict]:
         return dict
@@ -206,8 +220,7 @@ class DictParam(ParamSpec[dict]):
 
 
 class ListParam(ParamSpec[list]):
-    """Any list param
-    """
+    """Any list param"""
 
     def get_type(self) -> Type[list]:
         return list
@@ -217,8 +230,7 @@ class ListParam(ParamSpec[list]):
 
 
 class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
-    """Abstract numerci param class (int or float)
-    """
+    """Abstract numerci param class (int or float)"""
 
     # If present, the value must be in the array
     allowed_values: Optional[List[ParamSpecType]]
@@ -230,15 +242,17 @@ class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
     max_value: Optional[ParamSpecType]
 
     def __init__(
-            self, default_value: Optional[ParamSpecType] = None,
-            optional: bool = False,
-            visibility: ParamSpecVisibilty = 'public',
-            human_name: Optional[str] = None,
-            short_description: Optional[str] = None,
-            allowed_values: Optional[List[ParamSpecType]] = None,
-            min_value: Optional[ParamSpecType] = None,
-            max_value: Optional[ParamSpecType] = None,
-            unit: Optional[str] = None) -> None:
+        self,
+        default_value: Optional[ParamSpecType] = None,
+        optional: bool = False,
+        visibility: ParamSpecVisibilty = "public",
+        human_name: Optional[str] = None,
+        short_description: Optional[str] = None,
+        allowed_values: Optional[List[ParamSpecType]] = None,
+        min_value: Optional[ParamSpecType] = None,
+        max_value: Optional[ParamSpecType] = None,
+        unit: Optional[str] = None,
+    ) -> None:
         """
         :param default_value: Default value, if None, and optional is false, the config is mandatory
                         If a value is provided there is no need to set the optional
@@ -263,8 +277,14 @@ class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
         self.allowed_values = allowed_values
         self.min_value = min_value
         self.max_value = max_value
-        super().__init__(default_value=default_value, optional=optional,
-                         visibility=visibility, human_name=human_name, short_description=short_description, unit=unit)
+        super().__init__(
+            default_value=default_value,
+            optional=optional,
+            visibility=visibility,
+            human_name=human_name,
+            short_description=short_description,
+            unit=unit,
+        )
 
     @abstractmethod
     def get_type(self) -> Type[ParamSpecType]:
@@ -274,7 +294,7 @@ class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
     def get_validator(self) -> Validator:
         pass
 
-    def load_from_json(self, json_:  Dict[str, Any]) -> None:
+    def load_from_json(self, json_: Dict[str, Any]) -> None:
         super().load_from_json(json_)
         self.allowed_values = json_.get("allowed_values")
         self.min_value = json_.get("min_value")
@@ -294,24 +314,62 @@ class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
 
 
 class IntParam(NumericParam[int]):
-    """int param
-    """
+    """int param"""
 
     def get_type(self) -> Type[int]:
         return int
 
     def get_validator(self) -> Validator:
-        return IntValidator(allowed_values=self.allowed_values,
-                            min_value=self.min_value, max_value=self.max_value)
+        return IntValidator(
+            allowed_values=self.allowed_values,
+            min_value=self.min_value,
+            max_value=self.max_value,
+        )
 
 
 class FloatParam(NumericParam[float]):
-    """int param
-    """
+    """int param"""
 
     def get_type(self) -> Type[float]:
         return float
 
     def get_validator(self) -> Validator:
-        return FloatValidator(allowed_values=self.allowed_values,
-                              min_value=self.min_value, max_value=self.max_value)
+        return FloatValidator(
+            allowed_values=self.allowed_values,
+            min_value=self.min_value,
+            max_value=self.max_value,
+        )
+
+
+class ParamSet(ParamSpec[str]):
+
+    param_set: Dict[str, ParamSpec] = None
+
+    def __init__(
+        self,
+        param_set: Dict[str, ParamSpec],
+        optional: bool = False,
+        visibility: ParamSpecVisibilty = "public",
+        human_name: Optional[str] = None,
+        short_description: Optional[str] = None,
+        max_number_of_occurences=False
+    ):
+        """
+        :param optional: See default value
+        :type optional: Optional[str]
+        :param visibility: Visibility of the param, see doc on type ParamSpecVisibilty for more info
+        :type visibility: ParamSpecVisibilty
+        :param human_name: Human readable name of the param, showed in the interface
+        :type human_name: Optional[str]
+        :param short_description: Description of the param, showed in the interface
+        :type short_description: Optional[str]
+        """
+
+        super().__init__(
+            optional=optional,
+            visibility=visibility,
+            human_name=human_name,
+            short_description=short_description,
+        )
+        self.max_number_of_occurences = max_number_of_occurences
+        self.param_set = param_set

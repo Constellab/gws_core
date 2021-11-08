@@ -1,4 +1,3 @@
-
 # LICENSE
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
@@ -12,7 +11,7 @@ from typing import Any, Dict, List, Literal, Type, Union
 from ..exception.exceptions import BadRequestException
 from .path import URL, Path
 
-ValidatorType = Literal['bool', 'int', 'float', 'str', 'list', 'dict']
+ValidatorType = Literal["bool", "int", "float", "str", "list", "dict"]
 
 
 class Validator:
@@ -31,9 +30,11 @@ class Validator:
     _type: Type = None
     _allowed_values: list = None
 
-    _valid_types = ['bool', 'int', 'float', 'str', 'list', 'dict']
+    _valid_types = ["bool", "int", "float", "str", "list", "dict"]
 
-    def __init__(self, type_: ValidatorType = None, allowed_values: list = None, **kwargs):
+    def __init__(
+        self, type_: ValidatorType = None, allowed_values: list = None, **kwargs
+    ):
         self.set_type(type_)
 
         if not allowed_values is None:
@@ -43,17 +44,17 @@ class Validator:
                 raise BadRequestException("The parameter allowed_values must be a list")
 
     def set_type(self, type_: Union[str, Type]) -> None:
-        if type_ == bool or type_ == 'bool':
+        if type_ == bool or type_ == "bool":
             self._type = bool
-        elif type_ == int or type_ == 'int':
+        elif type_ == int or type_ == "int":
             self._type = int
-        elif type_ == float or type_ == 'float':
+        elif type_ == float or type_ == "float":
             self._type = float
-        elif type_ == str or type_ == 'str':
+        elif type_ == str or type_ == "str":
             self._type = str
-        elif type_ == list or type_ == 'list':
+        elif type_ == list or type_ == "list":
             self._type = list
-        elif type_ == dict or type_ == 'dict':
+        elif type_ == dict or type_ == "dict":
             self._type = dict
         else:
             raise BadRequestException("Invalid type")
@@ -83,7 +84,8 @@ class Validator:
     def _validate(self, value):
         if not isinstance(self._type, type):
             raise BadRequestException(
-                f"The validator is not well configured. Invalid type {self._type}.")
+                f"The validator is not well configured. Invalid type {self._type}."
+            )
 
         # If the value as the correct type
         if type(value) == self._type:
@@ -93,21 +95,25 @@ class Validator:
             value = self._from_str(value)
 
             if type(value) != self._type:
-                raise BadRequestException(f"The value {value} is of type {type(value)} but it expected a {self._type}")
+                raise BadRequestException(
+                    f"The value {value} is of type {type(value)} but it expected a {self._type}"
+                )
 
             return value
         else:
-            raise BadRequestException(f"The value {value} is of type {type(value)} but it expected a {self._type}")
+            raise BadRequestException(
+                f"The value {value} is of type {type(value)} but it expected a {self._type}"
+            )
 
     def _check_allowed_values(self, value: Any) -> None:
-        """Check that the value is within the allow values if allowed value are provided
-        """
+        """Check that the value is within the allow values if allowed value are provided"""
         if self._allowed_values is not None and len(self._allowed_values):
             if value in self._allowed_values:
                 return
             else:
                 raise BadRequestException(
-                    f"Invalid value '{value}'. Allowed values are {self._allowed_values}")
+                    f"Invalid value '{value}'. Allowed values are {self._allowed_values}"
+                )
 
     def _from_str(self, str_value: str) -> Any:
         try:
@@ -156,8 +162,16 @@ class NumericValidator(Validator):
     _include_min = True
     _include_max = True
 
-    def __init__(self, type_=float, min_value=-math.inf, max_value=math.inf, include_min=False,
-                 include_max=False, allowed_values=None, **kwargs):
+    def __init__(
+        self,
+        type_=float,
+        min_value=-math.inf,
+        max_value=math.inf,
+        include_min=False,
+        include_max=False,
+        allowed_values=None,
+        **kwargs,
+    ):
 
         if min_value is None:
             self._min_value = -math.inf
@@ -177,40 +191,53 @@ class NumericValidator(Validator):
         if math.isfinite(self._max_value):
             self._include_max = True
 
-        super().__init__(type_=type_,
-                         allowed_values=allowed_values, **kwargs)
+        super().__init__(type_=type_, allowed_values=allowed_values, **kwargs)
 
     def _validate(self, value):
-        if not isinstance(value, bool) and isinstance(value, (int, float)) and self._type in (int, float):
-            is_valid = (self._type(value) == value)
+        if (
+            not isinstance(value, bool)
+            and isinstance(value, (int, float))
+            and self._type in (int, float)
+        ):
+            is_valid = self._type(value) == value
             if not is_valid:
                 raise BadRequestException(
-                    f"The value {value} cannot be casted to the class {self._type} with floating point alteration.")
+                    f"The value {value} cannot be casted to the class {self._type} with floating point alteration."
+                )
 
             value = self._type(value)
 
         value = super()._validate(value)
 
-        if value < self._min_value or (value == self._min_value and not self._include_min):
+        if value < self._min_value or (
+            value == self._min_value and not self._include_min
+        ):
             raise BadRequestException(
-                f"The value must be greater than {self._min_value}. The actual value is {value}")
+                f"The value must be greater than {self._min_value}. The actual value is {value}"
+            )
 
-        if value > self._max_value or (value == self._max_value and not self._include_max):
+        if value > self._max_value or (
+            value == self._max_value and not self._include_max
+        ):
             raise BadRequestException(
-                f"The value must be less than {self._max_value}. The actual value is {value}")
+                f"The value must be less than {self._max_value}. The actual value is {value}"
+            )
 
         return value
 
     def _from_str(self, str_value: str) -> Any:
         value = super()._from_str(str_value)
 
-        if isinstance(value, bool) or not isinstance(value,  (int, float)):
-            raise BadRequestException(f"Expected a numeric value but got a '{type(value)}'")
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise BadRequestException(
+                f"Expected a numeric value but got a '{type(value)}'"
+            )
 
         is_valid = math.isnan(value) or (self._type(value) == value)
         if not is_valid:
             raise BadRequestException(
-                f"The value {value} cannot be casted to the class {self._type} with floating point alteration.")
+                f"The value {value} cannot be casted to the class {self._type} with floating point alteration."
+            )
 
         return self._type(value)
 
@@ -230,10 +257,24 @@ class IntValidator(NumericValidator):
         * `validator.validate('foo') -> ValueError`
     """
 
-    def __init__(self, min_value=-math.inf, max_value=math.inf, include_min=True, include_max=True,
-                 allowed_values=None, **kwargs):
-        super().__init__(type_=int, min_value=min_value, max_value=max_value,
-                         include_min=include_min, include_max=include_max, allowed_values=allowed_values, **kwargs)
+    def __init__(
+        self,
+        min_value=-math.inf,
+        max_value=math.inf,
+        include_min=True,
+        include_max=True,
+        allowed_values=None,
+        **kwargs,
+    ):
+        super().__init__(
+            type_=int,
+            min_value=min_value,
+            max_value=max_value,
+            include_min=include_min,
+            include_max=include_max,
+            allowed_values=allowed_values,
+            **kwargs,
+        )
         self._type = int
 
 
@@ -259,10 +300,24 @@ class FloatValidator(NumericValidator):
         * `validator.validate('nan') -> ValueError`
     """
 
-    def __init__(self, min_value=-math.inf, max_value=math.inf, include_min=True, include_max=True,
-                 allowed_values=None, **kwargs):
-        super().__init__(type_=float, min_value=min_value, max_value=max_value,
-                         include_min=include_min, include_max=include_max, allowed_values=allowed_values, **kwargs)
+    def __init__(
+        self,
+        min_value=-math.inf,
+        max_value=math.inf,
+        include_min=True,
+        include_max=True,
+        allowed_values=None,
+        **kwargs,
+    ):
+        super().__init__(
+            type_=float,
+            min_value=min_value,
+            max_value=max_value,
+            include_min=include_min,
+            include_max=include_max,
+            allowed_values=allowed_values,
+            **kwargs,
+        )
         self._type = float
 
 
@@ -378,15 +433,17 @@ class URLValidator(StrValidator):
     def _validate(self, value):
         value = super()._validate(value)
         regex = re.compile(
-            r'^(?:http|ftp)s?://'  # http:// or https://
+            r"^(?:http|ftp)s?://"  # http:// or https://
             # domain...
-            r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'
-            r'localhost|'  # localhost...
-            r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
-            r'(?::\d+)?'  # optional port
-            r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+            r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|"
+            r"localhost|"  # localhost...
+            r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"  # ...or ip
+            r"(?::\d+)?"  # optional port
+            r"(?:/?|[/?]\S+)$",
+            re.IGNORECASE,
+        )
 
-        valid = (re.match(regex, value) is not None)
+        valid = re.match(regex, value) is not None
         if valid == True:
             return value
         else:

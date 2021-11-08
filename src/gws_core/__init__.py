@@ -143,11 +143,15 @@ from .impl.shell.pipenv import PipEnvShell as PipEnvShell
 from .impl.shell.shell import Shell as Shell
 from .impl.shell.shell_env_proxy import ShellEnvProxy as ShellEnvProxy
 from .impl.table.data_frame_r_field import DataFrameRField as DataFrameRField
-# Impl > Table
+from .impl.table.helper.table_aggregator_helper import TableAggregatorHelper
+from .impl.table.helper.table_filter_helper import TableFilterHelper
 from .impl.table.table import Table as Table
 from .impl.table.table_file import TableFile as TableFile
 from .impl.table.table_tasks import TableExporter as TableExporter
 from .impl.table.table_tasks import TableImporter as TableImporter
+from .impl.table.transformers.table_aggregator import TableAggregator
+from .impl.table.transformers.table_filter import TableFilter
+from .impl.table.transformers.table_scaler import TableScaler
 # Impl > TableView
 from .impl.table.view.barplot_view import BarPlotView as BarPlotView
 from .impl.table.view.boxplot_view import BoxPlotView as BoxPlotView
@@ -282,3 +286,5 @@ from .user.user import User as User
 from .user.user_dto import UserData as UserData
 from .user.user_group import UserGroup as UserGroup
 from .user.user_service import UserService as UserService
+
+# Impl > Table

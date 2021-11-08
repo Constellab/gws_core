@@ -63,10 +63,8 @@ class TableView(BaseTableView):
             data = data.apply(pandas.to_numeric, errors='ignore')
             if scale == "log10":
                 data = data.applymap(_log10)
-                #data = DataFrame(data=numpy.log10(data.values), index=data.index, columns=data.columns)
             elif scale == "log2":
                 data = data.applymap(_log2)
-                #data = DataFrame(data=numpy.log2(data.values), index=data.index, columns=data.columns)
 
         # Remove NaN values to convert to json
         data: DataFrame = data.fillna('NaN')

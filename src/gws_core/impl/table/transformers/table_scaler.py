@@ -3,10 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from ...config.param_spec import BoolParam, IntParam, StrParam, ListParam
-from ...task.task_decorator import task_decorator
-from ..file.file import File
-from ...task.task import Task
+from ....config.param_spec import BoolParam, IntParam, ListParam, StrParam
+from ....task.task import Task
+from ....task.task_decorator import task_decorator
+from ...file.file import File
 
 # ####################################################################
 #
@@ -14,6 +14,10 @@ from ...task.task import Task
 #
 # ####################################################################
 
-@task_decorator(unique_name="TableScaler")
+
+@task_decorator(
+    unique_name="TableScaler",
+    short_description="Scales the numeric values of the table",
+)
 class TableScaler(Task):
     pass
