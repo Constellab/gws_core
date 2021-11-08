@@ -41,7 +41,7 @@ class Logger:
         if Logger._logger is not None:
             return
             #raise BadRequestException("The logger already exists")
-        
+
         Logger._is_experiment_process = _is_experiment_process
 
         if level not in ["ERROR", "INFO", "DEBUG"]:
@@ -86,7 +86,9 @@ class Logger:
     # -- E --
 
     @classmethod
-    def error(cls, message: str) -> None:
+    def error(cls, message: str, truncate=False) -> None:
+        if truncate and len(message) > 90:
+            message = message[0:60] + " ... " + message[-20:-1] + " [truncated]"
         cls._logger.error(cls._get_message("ERROR", message))
 
     @classmethod
@@ -94,21 +96,29 @@ class Logger:
         cls._logger.exception(exception, exc_info=True)
 
     @classmethod
-    def warning(cls, message: str) -> None:
+    def warning(cls, message: str, truncate=False) -> None:
+        if truncate and len(message) > 90:
+            message = message[0:60] + " ... " + message[-20:-1] + " [truncated]"
         cls._logger.warning(cls._get_message("WARNING", message))
 
     @classmethod
-    def info(cls, message: str) -> None:
+    def info(cls, message: str, truncate=False) -> None:
+        if truncate and len(message) > 90:
+            message = message[0:60] + " ... " + message[-20:-1] + " [truncated]"
         cls._logger.info(cls._get_message("INFO", message))
 
     @classmethod
-    def debug(cls, message: str) -> None:
+    def debug(cls, message: str, truncate=False) -> None:
+        if truncate and len(message) > 90:
+            message = message[0:60] + " ... " + message[-20:-1] + " [truncated]"
         cls._logger.debug(cls._get_message("DEBUG", message))
 
     # -- P --
 
     @classmethod
-    def progress(cls, message: str) -> None:
+    def progress(cls, message: str, truncate=False) -> None:
+        if truncate and len(message) > 90:
+            message = message[0:60] + " ... " + message[-20:-1] + " [truncated]"
         cls._logger.info(cls._get_message("PROGRESS", message))
 
     # -- F --
