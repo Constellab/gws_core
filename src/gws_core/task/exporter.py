@@ -100,7 +100,7 @@ def exporter_decorator(
                 resource_type.export_to_path, EXPORT_TO_PATH_META_DATA_ATTRIBUTE, dict)
             if meta_data is None:
                 raise Exception(
-                    f"The exporter decorator is link to resource {resource_type.classname()} but the export_to_path method of the resource is not decoated with @export_to_path decorator")
+                    f"The exporter decorator is link to resource {resource_type.classname()} but the export_to_path method of the resource is not decorated with @export_to_path decorator")
 
             # set the task config using the config in export to path method
             specs: ConfigSpecs = meta_data['specs']

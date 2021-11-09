@@ -96,7 +96,7 @@ def importer_decorator(
                 resource_type.import_from_path, IMPORT_FROM_PATH_META_DATA_ATTRIBUTE, dict)
             if meta_data is None:
                 raise Exception(
-                    f"The importer decorator is link to resource {resource_type.classname()} but the import_from_path method of the resource is not decoated with @import_from_path decorator")
+                    f"The importer decorator is link to resource {resource_type.classname()} but the import_from_path method of the resource is not decorated with @import_from_path decorator")
 
             # set the task config using the config in import_from_path method
             specs: ConfigSpecs = meta_data['specs']
