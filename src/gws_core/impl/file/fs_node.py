@@ -29,9 +29,6 @@ class FSNode(Resource):
     def name(self):
         return ''
 
-    def get_human_name(self) -> str:
-        return self.name
-
     @classmethod
     def get_resource_model_type(cls) -> Type[Any]:
         """Return the resource model associated with this Resource

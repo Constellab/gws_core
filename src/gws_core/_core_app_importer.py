@@ -17,5 +17,6 @@ from .progress_bar.progress_bar_api import *
 from .protocol.protocol_api import *
 from .resource.resource_api import *
 from .study.study_api import *
+from .tag.tag_api import *
 from .task.task_api import *
 from .user.user_api import *

@@ -250,6 +250,9 @@ from .resource.view_decorator import view as view
 from .resource.view_types import ViewSpecs as ViewSpecs
 # Study
 from .study.study import Study as Study
+# Tag
+from .tag.tag import Tag as Tag
+from .tag.tag import TagHelper as TagHelper
 # Task
 from .task.exporter import ResourceExporter as ResourceExporter
 from .task.exporter import export_to_path as export_to_path

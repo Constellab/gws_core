@@ -52,12 +52,6 @@ class Resource(Base):
         """
         pass
 
-    def get_human_name(self) -> str:
-        """Method that can be overrided. It must return a readable name that is usable when
-        showing the resource.
-        """
-        return self._human_name
-
     # -- G --
 
     # -- I --

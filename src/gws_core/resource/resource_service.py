@@ -5,6 +5,9 @@
 
 from typing import Any, Dict, List, Type
 
+from gws_core.core.decorator.transaction import transaction
+from gws_core.tag.tag_service import TagService
+
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import NotFoundException
 from ..core.exception.exceptions.bad_request_exception import \
@@ -24,7 +27,7 @@ class ResourceService(BaseService):
     @classmethod
     def get_resource_by_type_and_uri(cls,
                                      resource_model_typing_name: str,
-                                     uri: str = "") -> ResourceModel:
+                                     uri: str) -> ResourceModel:
 
         try:
             return TypingManager.get_object_with_typing_name_and_uri(resource_model_typing_name, uri)

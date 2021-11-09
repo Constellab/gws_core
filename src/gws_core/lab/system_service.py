@@ -5,6 +5,8 @@
 
 import sys
 
+from gws_core.tag.tag_service import TagService
+
 from ..brick.brick_service import BrickService
 from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
@@ -36,6 +38,7 @@ class SystemService:
         SystemStatus.app_is_initialized = True
 
         BrickService.init()
+        TagService.init_default_tags()
 
     @classmethod
     def init_queue_and_monitor(cls) -> None:

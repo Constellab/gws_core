@@ -9,6 +9,7 @@ import copy
 from typing import (TYPE_CHECKING, Any, Dict, Generic, Optional, Type, TypeVar,
                     final)
 
+from gws_core.tag.tag import TagHelper
 from peewee import CharField, ModelSelect
 
 from ..core.exception.exceptions.bad_request_exception import \
@@ -21,6 +22,7 @@ from ..model.viewable import Viewable
 from ..resource.kv_store import KVStore
 from ..resource.r_field import BaseRField
 from ..resource.resource import Resource
+from ..tag.taggable_model import TaggableModel
 from .experiment_resource import ExperimentResource
 from .task_resource import TaskResource
 
@@ -37,10 +39,12 @@ ResourceType = TypeVar('ResourceType', bound=Resource)
 
 
 @typing_registrator(unique_name="ResourceModel", object_type="MODEL", hide=True)
-class ResourceModel(Viewable, Generic[ResourceType]):
+class ResourceModel(Viewable, TaggableModel, Generic[ResourceType]):
     """
     ResourceModel class.
     """
+
+    # tags = CharField(null=True)
 
     # typing name of the resource
     resource_typing_name = CharField(null=False)
@@ -163,8 +167,8 @@ class ResourceModel(Viewable, Generic[ResourceType]):
     @classmethod
     def select_by_resource_typing_name(cls, resource_typing_name: str) -> ModelSelect:
         return cls.select_me().where(cls.resource_typing_name == resource_typing_name)
-
     ########################################## RESOURCE ######################################
+
     @final
     def get_resource(self, new_instance: bool = False) -> ResourceType:
         """
@@ -326,6 +330,7 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         _json = super().to_json(deep=deep, **kwargs)
 
         _json["typing_name"] = self._typing_name
+        _json["tags"] = self.get_tags_json()
         if self.experiment:
             _json.update({
                 "experiment": {"uri": self.experiment.uri},
@@ -338,7 +343,7 @@ class ResourceModel(Viewable, Generic[ResourceType]):
         resource: ResourceType = self.get_resource()
         _json["resource_type_human_name"] = resource._human_name or resource.__class__.__name__
         _json["resource_type_short_description"] = resource._short_description
-        _json["resource_human_name"] = resource.get_human_name()
+        _json["resource_human_name"] = _json["resource_type_human_name"]
 
         return _json
 
