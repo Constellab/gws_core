@@ -6,7 +6,6 @@
 import os
 import shutil
 import subprocess
-import tempfile
 import time
 from abc import abstractmethod
 from typing import Union
@@ -15,11 +14,9 @@ from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
 from ...core.model.sys_proc import SysProc
 from ...core.utils.settings import Settings
-from ...impl.file.file_service import FileService
 from ...task.task import Task
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
-from ..file.file import File
 
 
 @task_decorator("Shell")
@@ -192,11 +189,11 @@ class Shell(Task):
             outputs = self.gather_outputs(params, inputs)
         except subprocess.CalledProcessError as err:
             self._clean_working_dir()
-            raise BadRequestException(
+            raise Exception(
                 f"An error occured while running the binary in shell task. Error: {err}") from err
         except Exception as err:
             self._clean_working_dir()
-            raise BadRequestException(
+            raise Exception(
                 f"An error occured while running shell task. Error: {err}") from err
 
         return outputs
