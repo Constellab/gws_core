@@ -123,7 +123,7 @@ class CondaEnvShell(BaseEnvShell):
                 if os.path.exists(cls.get_env_dir()):
                     shutil.rmtree(cls.get_env_dir())
             except:
-                raise BadRequestException(
+                raise Exception(
                     "Cannot remove the virtual environment.")
 
     @abstractmethod

@@ -109,7 +109,7 @@ class PipEnvShell(BaseEnvShell):
             ProgressBar.add_message_to_current(
                 "Virtual environment installed!")
         except Exception as err:
-            raise BadRequestException(
+            raise Exception(
                 "Cannot install the virtual environment.") from err
 
     @classmethod
@@ -140,7 +140,7 @@ class PipEnvShell(BaseEnvShell):
                 if os.path.exists(cls.get_env_dir()):
                     shutil.rmtree(cls.get_env_dir())
             except:
-                raise BadRequestException(
+                raise Exception(
                     "Cannot remove the virtual environment.")
 
     @abstractmethod
