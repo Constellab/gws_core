@@ -15,7 +15,8 @@ VIEW_META_DATA_ATTRIBUTE = '_view_mata_data'
 
 
 def view(view_type: Type[View], human_name: str = "", short_description: str = "",
-         specs: ViewSpecs = None,  default_view: bool = False) -> Callable:
+         specs: ViewSpecs = None,  default_view: bool = False,
+         hide: bool = False) -> Callable:
     """ Decorator the place one resource method to define it as a view.
     Views a reference in the interfave when viewing a resource
     It must return a View.
@@ -32,6 +33,9 @@ def view(view_type: Type[View], human_name: str = "", short_description: str = "
     :param default_view: If true, this view is the one used by default. Chlid class default override the default of parent.
     A default view must contains only optional specs, defaults to False
     :type default_view: bool, optional
+    :param hide: If true the view will not be listed in the interface.
+                It is useful when you overrided a class and you don't wan't to activate this view anymore, defaults to False
+    :type hide: bool, optional
     :return: [description]
     :rtype: Callable
     """
@@ -50,6 +54,12 @@ def view(view_type: Type[View], human_name: str = "", short_description: str = "
 
         # if the view is mark as default, all the parameters must be optional
         if default_view:
+            if hide:
+                BrickService.log_brick_error(
+                    func,
+                    f"View error. The @view of method '{func_args.func_name}' is mark as default and hide. The default view can't be hidden")
+                return func
+
             for spec_name, spec in specs.items():
                 if not spec.optional:
                     BrickService.log_brick_error(
@@ -90,7 +100,7 @@ def view(view_type: Type[View], human_name: str = "", short_description: str = "
 
         # Create the meta data object
         view_meta_data: ResourceViewMetaData = ResourceViewMetaData(
-            func.__name__, view_type, human_name, short_description, specs, default_view)
+            func.__name__, view_type, human_name, short_description, specs, default_view, hide)
         # Store the meta data object into the view_meta_data_attribute of the function
         ReflectorHelper.set_object_has_metadata(func, VIEW_META_DATA_ATTRIBUTE, view_meta_data)
 

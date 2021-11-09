@@ -51,17 +51,6 @@ class ViewHelper():
         return view
 
     @classmethod
-    def get_default_view_of_resource_type(cls, resource_type: Type[Resource]) -> Optional[ResourceViewMetaData]:
-
-        view_meta_data: List[ResourceViewMetaData] = cls.get_views_of_resource_type(resource_type)
-
-        for view in view_meta_data:
-            if view.default_view:
-                return view
-
-        return None
-
-    @classmethod
     def get_and_check_view(cls, resource_type: Type[Resource], view_name: str) -> ResourceViewMetaData:
         # check that the method exists and is annotated with view
         if not hasattr(resource_type, view_name):
@@ -73,50 +62,96 @@ class ViewHelper():
         return view_metadata
 
     @classmethod
-    def _get_view_function_metadata(cls, func: Callable) -> ResourceViewMetaData:
-        """return the view method metadat if the func is a view, otherwise returns None
-        """
-        # Check if the method is annotated with view
-        return ReflectorHelper.get_and_check_object_metadata(func, VIEW_META_DATA_ATTRIBUTE, ResourceViewMetaData)
-
-    @classmethod
     def get_views_of_resource_type(cls, resource_type: Type[Resource]) -> List[ResourceViewMetaData]:
-        """return all the view meta (wwith method as key name) orderer from
+        """return all the visible view meta (wwith method as key name) orderer from the parent class to the child classes
 
         :param resource_type: [description]
         :type resource_type: Type[Resource]
         :return: [description]
         :rtype: Dict[str, ResourceViewMetaData]
         """
-        class_hierarchy: List[Type[Resource]] = cls._get_class_hierarchy(resource_type)
 
-        resource_type.__base__
         view_meta_data: Dict[str, ResourceViewMetaData] = {}
-        last_default: str = None
+
+        funcs: List[Tuple[str, Callable]] = cls._get_class_view_functions(resource_type)
+
+        for func_tuple in funcs:
+            func_name: str = func_tuple[0]
+            func: Callable = func_tuple[1]
+
+            # Check if the method is annotated with view
+            view_data: ResourceViewMetaData = cls._get_view_function_metadata(func)
+
+            # skip hidden views
+            if view_data is None or view_data.hide:
+                continue
+
+            # create or override the information
+            view_meta_data[func_name] = view_data.clone()
+
+            # force default to false, it is set afterward
+            view_meta_data[func_name].default_view = False
+
+        # retrieve the default view and set it
+        default_view: ResourceViewMetaData = cls.get_default_view_of_resource_type(resource_type)
+        if default_view is not None and not default_view.hide:
+            view_meta_data[default_view.method_name] = default_view
+
+        return list(view_meta_data.values())
+
+    @classmethod
+    def get_default_view_of_resource_type(cls, resource_type: Type[Resource]) -> Optional[ResourceViewMetaData]:
+        """ Method to get the default view of a resource type. It iterates from the parent class to the children and returns
+        the last view found
+
+        :param resource_type: [description]
+        :type resource_type: Type[Resource]
+        :return: [description]
+        :rtype: Optional[ResourceViewMetaData]
+        """
+
+        class_hierarchy: List[Type[Resource]] = cls._get_class_hierarchy(resource_type)
+        last_default_name: str = None
+        view_meta_data: Dict[str, ResourceViewMetaData] = {}
 
         for class_ in class_hierarchy:
-            funcs: List[Tuple[str, Callable]] = inspect.getmembers(class_, predicate=inspect.isfunction)
+            funcs: List[Tuple[str, Callable]] = cls._get_class_view_functions(class_)
 
             for func_tuple in funcs:
                 func_name: str = func_tuple[0]
                 func: Callable = func_tuple[1]
 
-                # if the function was already added, continue
-                if func_name in view_meta_data:
-                    continue
-
                 # Check if the method is annotated with view
                 view_data: ResourceViewMetaData = cls._get_view_function_metadata(func)
-                if view_data is not None:
-                    view_meta_data[func_name] = view_data.clone()
 
-                    # if the view is a default, consider this one as the default and not the previous one
-                    if view_data.default_view:
-                        if last_default is not None:
-                            view_meta_data[last_default].default_view = False
-                        last_default = func_name
+                # if the function was already added, refresh the value (it can be overriden by the child class and continue
+                if func_name in view_meta_data:
+                    view_meta_data[func_name] = view_data
+                    continue
 
-        return list(view_meta_data.values())
+                # if the view is a default, consider this one as the default and not the previous one
+                if view_data.default_view and not view_data.hide:
+                    last_default_name = func_name
+
+                # save the view to skip the function next time we encounter it
+                view_meta_data[func_name] = view_data
+
+        return view_meta_data[last_default_name]
+
+    @classmethod
+    def _get_class_view_functions(cls, class_: Callable) -> List[Tuple[str, Callable]]:
+        """return all the function that have a view meta data information
+        """
+        return inspect.getmembers(
+            class_, predicate=lambda func: inspect.isfunction(func) and cls._get_view_function_metadata(func) is
+            not None)
+
+    @classmethod
+    def _get_view_function_metadata(cls, func: Callable) -> ResourceViewMetaData:
+        """return the view method metadat if the func is a view, otherwise returns None
+        """
+        # Check if the method is annotated with view
+        return ReflectorHelper.get_and_check_object_metadata(func, VIEW_META_DATA_ATTRIBUTE, ResourceViewMetaData)
 
     @classmethod
     def _get_class_hierarchy(cls, resource_type: Type[Resource]) -> List[Type[Resource]]:

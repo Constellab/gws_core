@@ -2,11 +2,9 @@
 
 from typing import Dict, List
 
-from gws_core import (BaseTestCase, ConfigParams, IntParam, Resource,
+from gws_core import (BaseTestCase, ConfigParams, IntParam, JSONView, Resource,
                       ResourceService, StrParam, TextView, resource_decorator,
                       view)
-from gws_core.config.param_spec import StrParam
-from gws_core.resource.view import View
 from gws_core.resource.view_helper import ViewHelper
 from gws_core.resource.view_meta_data import ResourceViewMetaData
 
@@ -31,13 +29,33 @@ class ResourceViewTestSub(ResourceViewTest):
         return TextView(params.get_value('test_str_param') + params.get_value('test_any_param'))
 
 
-@resource_decorator("ResourceViewTestOveride")
-class ResourceViewTestOveride(Resource):
+@resource_decorator("ResourceViewTestOverideParent")
+class ResourceViewTestOverideParent(Resource):
 
     @view(view_type=TextView, human_name='View overide',
           specs={"page": IntParam(default_value=1, min_value=0, human_name="Page number", visibility='private')})
     def a_view_test(self, params: ConfigParams) -> TextView:
         return TextView('Test sub')
+
+
+@resource_decorator("ResourceViewTestOveride")
+class ResourceViewTestOveride(ResourceViewTestOverideParent):
+
+    @view(view_type=TextView, human_name='View overide',
+          specs={"page": IntParam(default_value=1, min_value=0, human_name="Page number", visibility='public')})
+    def a_view_test(self, params: ConfigParams) -> TextView:
+        return TextView('Test sub')
+
+    @view(view_type=TextView, hide=True)
+    def view_as_json(self, params: ConfigParams) -> JSONView:
+        """Disable the view
+
+        :param params: [description]
+        :type params: ConfigParams
+        :return: [description]
+        :rtype: JSONView
+        """
+        pass
 
 
 class TestView(BaseTestCase):
@@ -85,10 +103,24 @@ class TestView(BaseTestCase):
         self.assertEqual(dict_["type"], TextView._type)
         self.assertEqual(dict_["data"], "Bonjour 12")
 
-    def test_method_view_override_and_private(self):
+    def test_method_view_override_and_hide(self):
+        """Test that the spec of a view are overrided but the children method. And check if hide param in view decorator works
+        """
+
+        views: List[ResourceViewMetaData] = ViewHelper.get_views_of_resource_type(ResourceViewTestOveride)
+
+        view_test: ResourceViewMetaData = [x for x in views if x.method_name == 'a_view_test'][0]
+        # the child class should have overwritten the page parameter to make is visible
+        self.assertEqual(view_test.specs['page'].visibility, 'public')
+
+        # the view as json should be hidden and not returned by the list view
+        self.assertEqual(len([x for x in views if x.method_name == 'view_as_json']), 0)
+
+    def test_view_spec_override_and_private(self):
         """Test a method view where spec override view specs and private visiblity"""
 
-        view_meta_data: ResourceViewMetaData = ViewHelper.get_and_check_view(ResourceViewTestOveride, 'a_view_test')
+        view_meta_data: ResourceViewMetaData = ViewHelper.get_and_check_view(
+            ResourceViewTestOverideParent, 'a_view_test')
 
         self.assertTrue('page' in view_meta_data.view_type._specs)
         self.assertTrue('page' in view_meta_data.specs)
