@@ -20,6 +20,7 @@ from ..model.viewable import Viewable
 from ..resource.experiment_resource import ExperimentResource
 from ..resource.resource_model import ResourceModel
 from ..study.study import Study
+from ..tag.taggable_model import TaggableModel
 from ..user.activity import Activity
 from ..user.user import User
 
@@ -46,7 +47,7 @@ class ExperimentErrorInfo(TypedDict):
 
 @final
 @typing_registrator(unique_name="Experiment", object_type="MODEL", hide=True)
-class Experiment(Viewable):
+class Experiment(Viewable, TaggableModel):
     """
     Experiment class.
 
@@ -260,6 +261,8 @@ class Experiment(Viewable):
         """
 
         _json = super().to_json(deep=deep, **kwargs)
+
+        _json["tags"] = self.get_tags_json()
         _json.update({
             "protocol": {
                 "uri": self.protocol_model.uri,

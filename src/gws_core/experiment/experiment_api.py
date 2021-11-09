@@ -3,10 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from fastapi import Depends
+from gws_core.experiment.experiment import Experiment
 from gws_core.study.study_dto import StudyDto
+from gws_core.tag.tag import Tag
+from gws_core.tag.tag_service import TagService
 
 from ..core.classes.paginator import PaginatorDict
 from ..core_app import core_app
@@ -141,3 +144,12 @@ def stop_an_experiment(uri: str,
     """
 
     return ExperimentService.stop_experiment(uri=uri).to_json(deep=True)
+
+###################################### RUN ################################
+
+
+@core_app.put("/experiment/{uri}/tags", tags=["Experiment"], summary="Update experiment tags")
+def stop_an_experiment(uri: str,
+                       tags: List[Tag],
+                       _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    return TagService.save_tags_to_model(Experiment._typing_name, uri, tags)
