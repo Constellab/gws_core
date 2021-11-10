@@ -83,19 +83,23 @@ class CondaEnvShell(BaseEnvShell):
             f"conda env create -f {cls.env_file_path} --force --prefix ./.venv", "&&",
             "touch READY",
         ]
+
+        res: subprocess.CompletedProcess
         try:
             ProgressBar.add_message_to_current(
                 "Installing the virtual environment ...")
-            subprocess.check_call(
+            res = subprocess.run(
                 " ".join(cmd),
                 cwd=cls.get_env_dir(),
-                stderr=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
                 shell=True
             )
-            ProgressBar.add_message_to_current("Virtual environment installed!", ProgressBarMessageType.SUCCESS)
         except Exception as err:
-
             raise Exception("Cannot install the virtual environment.") from err
+
+        if res.returncode != 0:
+            raise Exception(f"Cannot install the virtual environment. Error : {res.stderr}")
+        ProgressBar.add_message_to_current("Virtual environment installed!", ProgressBarMessageType.SUCCESS)
 
     # -- U --
 
