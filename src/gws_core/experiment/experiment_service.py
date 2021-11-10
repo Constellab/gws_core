@@ -332,7 +332,7 @@ class ExperimentService(BaseService):
 
         try:
             sproc = SysProc.popen(
-                cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL, shell=True,
+                " ".join(cmd), stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL, shell=True,
                 executable='/bin/bash')
 
             # Mark that a process is created for the experiment, but it is not started yet
