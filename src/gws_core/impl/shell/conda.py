@@ -79,10 +79,15 @@ class CondaEnvShell(BaseEnvShell):
         else:
             raise BadRequestException("Invalid env file path")
         cmd = [
-            'bash -c "source /opt/conda/etc/profile.d/conda.sh"', "&&",
+            # 'bash -c "source /opt/conda/etc/profile.d/conda.sh"', "&&",
             f"conda env create -f {cls.env_file_path} --force --prefix ./.venv", "&&",
             "touch READY",
         ]
+
+        # cmd = [
+        #     'bash -c "source /opt/conda/etc/profile.d/conda.sh"', "&&",
+        #     f"conda --help"
+        # ]
 
         res: subprocess.CompletedProcess
         try:
