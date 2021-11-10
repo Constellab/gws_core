@@ -332,8 +332,7 @@ class ExperimentService(BaseService):
 
         try:
             sproc = SysProc.popen(
-                " ".join(cmd), stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL, shell=True,
-                executable='/bin/bash')
+                cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
 
             # Mark that a process is created for the experiment, but it is not started yet
             experiment.mark_as_waiting_for_cli_process(sproc.pid)
