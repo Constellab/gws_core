@@ -9,14 +9,12 @@ import asyncio
 import inspect
 from abc import abstractmethod
 from enum import Enum
-from os import name
-from typing import TYPE_CHECKING, Any, List, Type, TypedDict, final
+from typing import TYPE_CHECKING, List, Type, TypedDict, final
 
 from peewee import CharField, ForeignKeyField, IntegerField
 from starlette_context import context
 
 from ..config.config import Config
-from ..config.config_types import ConfigParams, ConfigParamsDict, ParamValue
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.json_ignore import json_ignore
 from ..core.decorator.transaction import transaction
@@ -24,6 +22,7 @@ from ..core.exception.exceptions import BadRequestException
 from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
 from ..core.model.json_field import JSONField
+from ..core.utils.logger import Logger
 from ..experiment.experiment import Experiment
 from ..io.io import Inputs, Outputs
 from ..io.port import InPort, OutPort
@@ -328,6 +327,7 @@ class ProcessModel(Viewable):
             err.update_context(self.get_instance_name_context())
             raise err
         except Exception as err:
+            Logger.log_exception_stack_trace(err)
             # Create a new processRunException with correct info
             exception: ProcessRunException = ProcessRunException.from_exception(self, err)
             self.mark_as_error(
