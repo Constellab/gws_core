@@ -92,7 +92,8 @@ class CondaEnvShell(BaseEnvShell):
                 " ".join(cmd),
                 cwd=cls.get_env_dir(),
                 stderr=subprocess.PIPE,
-                shell=True
+                shell=True,
+                executable='/bin/bash'
             )
         except Exception as err:
             raise Exception("Cannot install the virtual environment.") from err
