@@ -367,7 +367,7 @@ class ExperimentService(BaseService):
         ActivityService.add(
             Activity.STOP,
             object_type=experiment.full_classname(),
-            object_uri=experiment.urip
+            object_uri=experiment.uri
         )
 
         experiment.mark_as_error({"detail": GWSException.EXPERIMENT_STOPPED_MANUALLY.value,
