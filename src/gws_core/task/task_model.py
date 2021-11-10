@@ -4,11 +4,12 @@
 # About us: https://gencovery.com
 import inspect
 import zlib
-from typing import Dict, Type
+from typing import Type
 
 from ..config.config_types import ConfigParams
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from ..core.utils.logger import Logger
 from ..model.typing_manager import TypingManager
 from ..model.typing_register_decorator import typing_registrator
 from ..process.process_exception import (CheckBeforeTaskStopException,
@@ -104,6 +105,7 @@ class TaskModel(ProcessModel):
             check_result = task.check_before_run(
                 config_params, task_inputs)
         except Exception as err:
+            Logger.log_exception_stack_trace(err)
             raise ProcessRunException.from_exception(process_model=self, exception=err,
                                                      error_prefix='Error during check before task') from err
 
@@ -123,8 +125,10 @@ class TaskModel(ProcessModel):
             task._status_ = 'RUN_AFTER_TASK'
             await task.run_after_task()
         except Exception as err:
+            if not isinstance(err, ProcessRunException):
+                Logger.log_exception_stack_trace(err)
             raise ProcessRunException.from_exception(process_model=self, exception=err,
-                                                     error_prefix='Error during check before task') from err
+                                                     error_prefix='Error during check after task') from err
 
         await self._run_after_task()
 
@@ -140,6 +144,7 @@ class TaskModel(ProcessModel):
             # Run the task task
             task_outputs = await task.run(config_params, task_inputs)
         except Exception as err:
+            Logger.log_exception_stack_trace(err)
             raise ProcessRunException.from_exception(process_model=self, exception=err,
                                                      error_prefix='Error during task') from err
 
