@@ -39,7 +39,7 @@ class Source(Task):
         r_uri: str = params.get_value("resource_uri")
         r_typing_name: str = params.get_value("resource_typing_name")
         if not r_uri or not r_typing_name:
-            raise BadRequestException('Source error, the resource uri or typing name is missing')
+            raise BadRequestException('Source error, the resource was not provided')
 
         # retrieve the resource type
         r_type: Type[Resource] = TypingManager.get_type_from_name(r_typing_name)

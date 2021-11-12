@@ -104,6 +104,8 @@ class ViewHelper():
         """ Method to get the default view of a resource type. It iterates from the parent class to the children and returns
         the last view found
 
+        This method will not work on very werid case when the default view is set on a method, then deactivate by children then reset
+
         :param resource_type: [description]
         :type resource_type: Type[Resource]
         :return: [description]

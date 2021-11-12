@@ -9,7 +9,6 @@ import copy
 from typing import (TYPE_CHECKING, Any, Dict, Generic, Optional, Type, TypeVar,
                     final)
 
-from gws_core.tag.tag import TagHelper
 from peewee import CharField, ModelSelect
 
 from ..core.exception.exceptions.bad_request_exception import \
@@ -167,6 +166,16 @@ class ResourceModel(Viewable, TaggableModel, Generic[ResourceType]):
     @classmethod
     def select_by_resource_typing_name(cls, resource_typing_name: str) -> ModelSelect:
         return cls.select_me().where(cls.resource_typing_name == resource_typing_name)
+
+    # @classmethod
+    # def create_table(cls, *args, **kwargs):
+    #     if cls.table_exists():
+    #         return
+    #     super().create_table(*args, **kwargs)
+    #     if cls.get_db_manager().is_mysql_engine():
+    #         cls.get_db_manager().db.execute_sql(
+    #             f"CREATE FULLTEXT INDEX TAG_INDEX ON {cls.get_table_name()}(tags)")
+
     ########################################## RESOURCE ######################################
 
     @final
