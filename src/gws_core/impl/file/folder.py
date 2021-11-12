@@ -46,4 +46,7 @@ class Folder(FSNode):
     @view(view_type=JSONView, human_name="View folder content", short_description="View the sub files and folders",
           default_view=True)
     def view_as_json(self, params: ConfigParams) -> JSONView:
-        return JSONView(FileHelper.get_dir_content_as_json(self.path))
+        return JSONView({
+            "path": self.path,
+            "content": FileHelper.get_dir_content_as_json(self.path)
+        })
