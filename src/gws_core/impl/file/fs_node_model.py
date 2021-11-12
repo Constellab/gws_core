@@ -8,7 +8,6 @@ from enum import Enum
 from typing import final
 
 from gws_core.core.classes.enum_field import EnumField
-from gws_core.impl.file.file_helper import FileHelper
 from peewee import CharField
 
 from ...model.typing_register_decorator import typing_registrator

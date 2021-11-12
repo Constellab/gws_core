@@ -9,6 +9,7 @@ import copy
 from typing import (TYPE_CHECKING, Any, Dict, Generic, Optional, Type, TypeVar,
                     final)
 
+from gws_core.core.utils.logger import Logger
 from peewee import CharField, ModelSelect
 
 from ..core.exception.exceptions.bad_request_exception import \
@@ -221,6 +222,16 @@ class ResourceModel(Viewable, TaggableModel, Generic[ResourceType]):
         # synchronize the model fields with the resource fields
         resource_model.receive_fields_from_resource(resource)
 
+        # set the tag name if the name exist
+        name: str = None
+        try:
+            name = resource.get_name()
+        except Exception as err:
+            Logger.error(f'Error while getting the name of the resource {type(resource)}. Err : {str(err)}')
+            Logger.log_exception_stack_trace(err)
+        if name:
+            resource_model.set_name_tag(name)
+
         return resource_model
 
     def send_fields_to_resource(self, resource: ResourceType):
@@ -349,10 +360,11 @@ class ResourceModel(Viewable, TaggableModel, Generic[ResourceType]):
                 },
             })
 
-        resource: ResourceType = self.get_resource()
+        resource: Type[Resource] = self._get_resource_type()
         _json["resource_type_human_name"] = resource._human_name or resource.__class__.__name__
         _json["resource_type_short_description"] = resource._short_description
         _json["resource_human_name"] = _json["resource_type_human_name"]
+        _json["name"] = self.get_name_tag() or _json["resource_type_human_name"]
 
         return _json
 

@@ -87,6 +87,16 @@ class Resource(Base):
             return False
         return (self is o) or ((self.uid is not None) and (self.uid == o.uid))
 
+    def get_name(self) -> str:
+        """You can redifine this method to set a name of the resource.
+        When saving the resource the name will ba saved in the tags automatically
+        This can be useful to distinguish this resource from another one or to search for the resource
+
+        :return: [description]
+        :rtype: [type]
+        """
+        return None
+
     @classmethod
     def get_resource_model_type(cls) -> Type[ResourceModel]:
         """Return the resource model associated with this Resource

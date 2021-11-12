@@ -43,6 +43,9 @@ class Folder(FSNode):
         """
         return os.path.join(self.path, node_name)
 
+    def get_name(self) -> str:
+        return self.name
+
     @view(view_type=JSONView, human_name="View folder content", short_description="View the sub files and folders",
           default_view=True)
     def view_as_json(self, params: ConfigParams) -> JSONView:

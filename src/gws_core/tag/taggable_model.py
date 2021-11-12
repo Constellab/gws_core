@@ -1,11 +1,12 @@
 
 
-from typing import Dict, List
+import re
+from typing import Dict, List, Optional
 
 from peewee import CharField
 from peewee import Model as PeeweeModel
 
-from .tag import Tag, TagHelper
+from .tag import Tag, TagHelper, default_tags
 
 
 class TaggableModel(PeeweeModel):
@@ -21,6 +22,13 @@ class TaggableModel(PeeweeModel):
     def set_tags(self, tags: List[Tag]) -> None:
         self.tags = TagHelper.tags_to_str(tags)
 
+    def get_tag_value(self, tag_key: str) -> Optional[str]:
+        tags = [x for x in self.get_tags() if x.key == tag_key]
+        if len(tags) > 0:
+            return tags[0].value
+
+        return None
+
     def get_tags_json(self) -> List[Dict]:
         list_ = []
         for tag in self.get_tags():
@@ -32,3 +40,11 @@ class TaggableModel(PeeweeModel):
         """return true if the tag key and value already exist in the model
         """
         return tag in self.get_tags()
+
+    ################################### SPECIAL TAGS ############################
+
+    def set_name_tag(self, name: str) -> None:
+        self.add_or_replace_tag("name", name)
+
+    def get_name_tag(self) -> Optional[str]:
+        return self.get_tag_value("name")

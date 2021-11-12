@@ -25,10 +25,6 @@ class FSNode(Resource):
     def _exists(self):
         return os.path.exists(self.path)
 
-    @property
-    def name(self):
-        return ''
-
     @classmethod
     def get_resource_model_type(cls) -> Type[Any]:
         """Return the resource model associated with this Resource

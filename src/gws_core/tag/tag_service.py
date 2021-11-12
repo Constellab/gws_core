@@ -7,7 +7,7 @@ from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.model import Model
 from ..model.typing_manager import TypingManager
-from .tag import Tag
+from .tag import Tag, default_tags
 from .tag_model import TagModel
 from .taggable_model import TaggableModel
 
@@ -21,9 +21,8 @@ class TagService():
         if TagModel.select().count() > 0:
             return
 
-        TagModel.create('status', ['SUCCESS', 'WARNING', 'ERROR']).save()
-        TagModel.create('type', ['DATA', 'ARRAY', 'EXPERIMENT', 'JSON']).save()
-        TagModel.create('name', []).save()
+        for key, value in default_tags.items():
+            TagModel.create(key, value).save()
 
     @classmethod
     def register_tag(cls, tag_key: str, tag_value: str) -> TagModel:
