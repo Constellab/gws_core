@@ -1,12 +1,11 @@
-from abc import abstractmethod
+from abc import abstractclassmethod, abstractmethod
 from typing import Any, Dict, Generic, List, Literal, Optional, Type, TypeVar
-
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
 
 from ..core.classes.validator import (BoolValidator, DictValidator,
                                       FloatValidator, IntValidator,
                                       ListValidator, StrValidator, Validator)
+from ..core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 
 ParamSpecType = TypeVar("ParamSpecType")
 
@@ -79,28 +78,12 @@ class ParamSpec(Generic[ParamSpecType]):
         return self.default_value
 
     @abstractmethod
-    def get_type(self) -> Type[ParamSpecType]:
+    def _get_validator(self) -> Validator:
         pass
-
-    @abstractmethod
-    def get_validator(self) -> Validator:
-        pass
-
-    @classmethod
-    def empty(cls) -> "ParamSpec":
-        return cls()
-
-    def load_from_json(self, json_: Dict[str, Any]) -> None:
-        self.default_value = json_.get("default_value")
-        self.optional = json_.get("optional")
-        self.human_name = json_.get("human_name")
-        self.short_description = json_.get("short_description")
-        self.unit = json_.get("unit")
-        self.visibility = json_.get("visibility")
 
     def to_json(self) -> Dict[str, Any]:
         _json: Dict[str, Any] = {
-            "type": self.get_type().__name__,
+            "type": self.get_str_type(),
             "optional": self.optional,
             "visibility": self.visibility,
         }
@@ -119,7 +102,7 @@ class ParamSpec(Generic[ParamSpecType]):
         if value is None:
             return None
 
-        return self.get_validator().validate(value)
+        return self._get_validator().validate(value)
 
     def _check_visibility(self, visibility: ParamSpecVisibilty) -> None:
         allowed_visibility: List[ParamSpecVisibilty] = [
@@ -129,14 +112,61 @@ class ParamSpec(Generic[ParamSpecType]):
         ]
         if visibility not in allowed_visibility:
             raise BadRequestException(
-                f"The visibilty '{visibility}' of the '{self.get_type()}' is incorrect. It must be one of the following values : {str(allowed_visibility)}"
+                f"The visibilty '{visibility}' of the '{self.get_str_type()}' param is incorrect. It must be one of the following values : {str(allowed_visibility)}"
             )
 
         # If the visibility is not public, the param must have a default value
         if self.visibility != "public" and not self.optional:
             raise BadRequestException(
-                f"The '{self.get_type()}' parame visibility is set to {self.visibility} but the param is mandatory. It must have a default value of be optional if the visiblity is not public"
+                f"The '{self.get_str_type()}' param visibility is set to {self.visibility} but the param is mandatory. It must have a default value of be optional if the visiblity is not public"
             )
+
+    ################################# CLASS METHODS ###############################
+
+    @abstractclassmethod
+    def get_str_type(cls) -> str:
+        pass
+
+    @classmethod
+    def empty(cls) -> "ParamSpec":
+        return cls()
+
+    @classmethod
+    def create_from_json(cls, json_: Dict[str, Any]) -> "ParamSpec":
+        config_param_type: Type[ParamSpec] = cls._get_param_spec_class_type(json_["type"])
+        return config_param_type._load_from_json(json_)
+
+    @classmethod
+    def _load_from_json(cls, json_: Dict[str, Any]) -> "ParamSpec":
+        param_spec = cls.empty()
+        param_spec.default_value = json_.get("default_value")
+        param_spec.optional = json_.get("optional")
+        param_spec.human_name = json_.get("human_name")
+        param_spec.short_description = json_.get("short_description")
+        param_spec.unit = json_.get("unit")
+        param_spec.visibility = json_.get("visibility")
+        return param_spec
+
+    @classmethod
+    def _get_param_spec_class_type(cls, type_: str) -> Type["ParamSpec"]:
+        """Get the class type of ConfigParam base on type
+        """
+        if type_ == 'bool':
+            return BoolParam
+        elif type_ == 'int':
+            return IntParam
+        elif type_ == 'float':
+            return FloatParam
+        elif type_ == 'str':
+            return StrParam
+        elif type_ == 'list':
+            return ListParam
+        # elif type_ == 'dict':
+        #     return DictParam
+        elif type_ == 'param_set':
+            return ParamSet
+        else:
+            raise BadRequestException("Invalid type")
 
 
 class StrParam(ParamSpec[str]):
@@ -182,15 +212,8 @@ class StrParam(ParamSpec[str]):
             unit=unit,
         )
 
-    def get_type(self) -> Type[str]:
-        return str
-
-    def get_validator(self) -> Validator:
+    def _get_validator(self) -> Validator:
         return StrValidator(allowed_values=self.allowed_values)
-
-    def load_from_json(self, json_: Dict[str, Any]) -> None:
-        super().load_from_json(json_)
-        self.allowed_values = json_.get("allowed_values")
 
     def to_json(self) -> Dict[str, Any]:
         json_: Dict[str, Any] = super().to_json()
@@ -198,35 +221,48 @@ class StrParam(ParamSpec[str]):
             json_["allowed_values"] = self.allowed_values
         return json_
 
+    @classmethod
+    def get_str_type(cls) -> str:
+        return 'str'
+
+    @classmethod
+    def _load_from_json(cls, json_: Dict[str, Any]) -> "StrParam":
+        param_spec: StrParam = super()._load_from_json(json_)
+        param_spec.allowed_values = json_.get("allowed_values")
+        return param_spec
+
 
 class BoolParam(ParamSpec[bool]):
     """Boolean param"""
 
-    def get_type(self) -> Type[bool]:
-        return bool
-
-    def get_validator(self) -> Validator:
+    def _get_validator(self) -> Validator:
         return BoolValidator()
 
+    @classmethod
+    def get_str_type(cls) -> str:
+        return 'bool'
 
-class DictParam(ParamSpec[dict]):
-    """Any json dict param"""
 
-    def get_type(self) -> Type[dict]:
-        return dict
+# class DictParam(ParamSpec[dict]):
+#     """Any json dict param"""
 
-    def get_validator(self) -> Validator:
-        return DictValidator()
+#     def _get_validator(self) -> Validator:
+#         return DictValidator()
+
+#     @classmethod
+#     def get_str_type(cls) -> str:
+#         return 'dict'
 
 
 class ListParam(ParamSpec[list]):
     """Any list param"""
 
-    def get_type(self) -> Type[list]:
-        return list
-
-    def get_validator(self) -> Validator:
+    def _get_validator(self) -> Validator:
         return ListValidator()
+
+    @classmethod
+    def get_str_type(cls) -> str:
+        return 'list'
 
 
 class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
@@ -287,18 +323,8 @@ class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
         )
 
     @abstractmethod
-    def get_type(self) -> Type[ParamSpecType]:
+    def _get_validator(self) -> Validator:
         pass
-
-    @abstractmethod
-    def get_validator(self) -> Validator:
-        pass
-
-    def load_from_json(self, json_: Dict[str, Any]) -> None:
-        super().load_from_json(json_)
-        self.allowed_values = json_.get("allowed_values")
-        self.min_value = json_.get("min_value")
-        self.max_value = json_.get("max_value")
 
     def to_json(self) -> Dict[str, Any]:
         json_: Dict[str, Any] = super().to_json()
@@ -312,64 +338,142 @@ class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
 
         return json_
 
+    @classmethod
+    def get_str_type(cls) -> str:
+        pass
+
+    @classmethod
+    def _load_from_json(cls, json_: Dict[str, Any]) -> "NumericParam":
+        param_spec: NumericParam = super()._load_from_json(json_)
+        param_spec.allowed_values = json_.get("allowed_values")
+        param_spec.min_value = json_.get("min_value")
+        param_spec.max_value = json_.get("max_value")
+        return param_spec
+
 
 class IntParam(NumericParam[int]):
     """int param"""
 
-    def get_type(self) -> Type[int]:
-        return int
-
-    def get_validator(self) -> Validator:
+    def _get_validator(self) -> Validator:
         return IntValidator(
             allowed_values=self.allowed_values,
             min_value=self.min_value,
             max_value=self.max_value,
         )
 
+    @classmethod
+    def get_str_type(cls) -> str:
+        return "int"
+
 
 class FloatParam(NumericParam[float]):
-    """int param"""
+    """float param"""
 
-    def get_type(self) -> Type[float]:
-        return float
-
-    def get_validator(self) -> Validator:
+    def _get_validator(self) -> Validator:
         return FloatValidator(
             allowed_values=self.allowed_values,
             min_value=self.min_value,
             max_value=self.max_value,
         )
 
+    @classmethod
+    def get_str_type(cls) -> str:
+        return "float"
 
-class ParamSet(ParamSpec[str]):
+
+class ParamSet(ParamSpec[list]):
+    """ ParamSet. Use to define a group of parameters that can be added multiple times. This will
+    provided a list of dictionary as values : List[Dict[str, Any]]
+
+    """
 
     param_set: Dict[str, ParamSpec] = None
+    max_number_of_occurrences: int
 
     def __init__(
         self,
-        param_set: Dict[str, ParamSpec],
+        param_set: Dict[str, ParamSpec] = None,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
         human_name: Optional[str] = None,
         short_description: Optional[str] = None,
-        max_number_of_occurences=False
+        max_number_of_occurrences: int = -1
     ):
         """
-        :param optional: See default value
+        :param optional: It true, the param_set can have 0 occurence, the value will then be an empty array [].
         :type optional: Optional[str]
-        :param visibility: Visibility of the param, see doc on type ParamSpecVisibilty for more info
+        :param visibility: Visibility of the param. It override all child spec visibility. see doc on type ParamSpecVisibilty for more info
         :type visibility: ParamSpecVisibilty
         :param human_name: Human readable name of the param, showed in the interface
         :type human_name: Optional[str]
         :param short_description: Description of the param, showed in the interface
         :type short_description: Optional[str]
+        :param max_number_of_occurrences: Nb max of occurence of values the params. If negative, there is no limit.
+        :type max_number_of_occurrences: Optional[str]
         """
+        self.max_number_of_occurrences = max_number_of_occurrences
 
+        if param_set is None:
+            param_set = {}
+        self.param_set = param_set
         super().__init__(
+            default_value=[],
             optional=optional,
             visibility=visibility,
             human_name=human_name,
             short_description=short_description,
         )
-        self.max_number_of_occurences = max_number_of_occurences
-        self.param_set = param_set
+
+    def _get_validator(self) -> Validator:
+        """ There is not assigne validator, instead the validate method has been overrided
+        """
+        return None
+
+    def validate(self, value: List[Dict[str, Any]]) -> ParamSpecType:
+        if value is None:
+            return None
+        list_validator = ListValidator(max_number_of_occurrences=self.max_number_of_occurrences)
+        dict_validator = DictValidator()
+
+        # global validation of the list
+        list_: List[Dict[str, Any]] = list_validator.validate(value)
+        index = 0
+        for dict_ in list_:
+            # Valid on dict of param set
+            list_[index] = dict_validator.validate(dict_)
+
+            # validate each value of the param set by retreiving the corresponding param_spec
+            for key, spec in self.param_set.items():
+                value: Any = dict_.get(key)
+
+                dict_[key] = spec.validate(value)
+
+            index = index + 1
+
+        return list_
+
+    def to_json(self) -> Dict[str, Any]:
+        json_: Dict[str, Any] = super().to_json()
+
+        json_["max_number_of_occurrences"] = self.max_number_of_occurrences
+        json_["param_set"] = {}
+
+        for key, spec in self.param_set.items():
+            json_["param_set"][key] = spec.to_json()
+
+        return json_
+
+    @classmethod
+    def get_str_type(cls) -> str:
+        return "param_set"
+
+    @classmethod
+    def _load_from_json(cls, json_: Dict[str, Any]) -> "ParamSet":
+        param_spec: ParamSet = super()._load_from_json(json_)
+        param_spec.max_number_of_occurrences = json_.get("max_number_of_occurrences")
+        param_spec.param_set = {}
+
+        for key, param in json_["param_set"].items():
+            param_spec.param_set[key] = ParamSpec.create_from_json(param)
+
+        return param_spec
