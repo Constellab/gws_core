@@ -7,7 +7,7 @@ import os
 
 from gws_core import (BaseTestCase, ConfigParams, Experiment,
                       ExperimentService, File, GTest, JSONDict, PipEnvShell,
-                      Resource, Settings, ShellEnvProxy, TaskInputs, TaskModel,
+                      Resource, Settings, ShellProxy, TaskInputs, TaskModel,
                       TaskOutputs, TaskService, task_decorator)
 
 settings = Settings.retrieve()
@@ -65,7 +65,7 @@ class TestProcess(BaseTestCase):
     async def test_pipenv_proxy(self):
         GTest.print("Pipenv proxy")
 
-        prox = ShellEnvProxy(PipEnvTester)
+        prox = ShellProxy(PipEnvTester)
         encoded_string = prox.check_output(
             ["python", os.path.join(__cdir__, "penv", "jwt_encode.py")]
         )

@@ -20,8 +20,8 @@ from .config.config_types import ConfigParamsDict as ConfigParamsDict
 from .config.config_types import ConfigSpecs as ConfigSpecs
 from .config.config_types import ParamValue as ParamValue
 from .config.config_types import ParamValueType as ParamValueType
-from .config.param_spec import BoolParam as BoolParam
 # from .config.param_spec import DictParam as DictParam
+from .config.param_spec import BoolParam as BoolParam
 from .config.param_spec import FloatParam as FloatParam
 from .config.param_spec import IntParam as IntParam
 from .config.param_spec import ListParam as ListParam
@@ -138,11 +138,10 @@ from .impl.robot.robot_tasks import RobotWait as RobotWait
 from .impl.s3.base import BaseS3 as BaseS3
 from .impl.s3.ovh import OVHS3 as OVHS3
 from .impl.s3.swift import Swift as Swift
-# Impl > Shell
 from .impl.shell.conda import CondaEnvShell as CondaEnvShell
 from .impl.shell.pipenv import PipEnvShell as PipEnvShell
 from .impl.shell.shell import Shell as Shell
-from .impl.shell.shell_env_proxy import ShellEnvProxy as ShellEnvProxy
+from .impl.shell.shell_proxy import ShellProxy as ShellProxy
 from .impl.table.data_frame_r_field import DataFrameRField as DataFrameRField
 from .impl.table.helper.table_aggregator_helper import \
     TableAggregatorHelper as TableAggregatorHelper
@@ -293,5 +292,8 @@ from .user.user import User as User
 from .user.user_dto import UserData as UserData
 from .user.user_group import UserGroup as UserGroup
 from .user.user_service import UserService as UserService
+
+# Impl > Shell
+
 
 # Impl > Table
