@@ -9,7 +9,7 @@ import regex
 from pandas import DataFrame
 
 from ....config.config_types import ConfigParams, ConfigSpecs
-from ....config.param_spec import (BoolParam, DictParam, FloatParam, IntParam,
+from ....config.param_spec import (BoolParam, FloatParam, IntParam,
                                    ListParam, ParamSet, StrParam)
 from ....io.io_spec import InputSpecs, OutputSpecs
 from ....task.task import Task

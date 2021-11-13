@@ -4,8 +4,7 @@ from typing import Any, Dict, Type, Union
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from .param_spec import (BoolParam, DictParam, FloatParam, IntParam, ListParam,
-                         ParamSpec, StrParam)
+from .param_spec import ParamSpec
 
 ParamValue = Union[str, int, float, bool, list, dict]
 ParamValueType = Type[ParamValue]
@@ -78,33 +77,5 @@ class ConfigSpecsHelper():
         """
         config_specs: ConfigSpecs = {}
         for key, value in dict.items():
-            config_specs[key] = cls.param_spec_from_json(value)
+            config_specs[key] = ParamSpec.create_from_json(value)
         return config_specs
-
-    @classmethod
-    def param_spec_from_json(cls, dict: Dict[str, Any]) -> ParamSpec:
-        """Create a config param from a json
-        """
-        config_param_type: Type[ParamSpec] = cls._get_param_spec_class_type(dict["type"])
-        config_param: ParamSpec = config_param_type.empty()
-        config_param.load_from_json(dict)
-        return config_param
-
-    @classmethod
-    def _get_param_spec_class_type(cls, type_: str) -> Type[ParamSpec]:
-        """Get the class type of ConfigParam base on type
-        """
-        if type_ == 'bool':
-            return BoolParam
-        elif type_ == 'int':
-            return IntParam
-        elif type_ == 'float':
-            return FloatParam
-        elif type_ == 'str':
-            return StrParam
-        elif type_ == 'list':
-            return ListParam
-        elif type_ == 'dict':
-            return DictParam
-        else:
-            raise BadRequestException("Invalid type")

@@ -32,9 +32,7 @@ class Validator:
 
     _valid_types = ["bool", "int", "float", "str", "list", "dict"]
 
-    def __init__(
-        self, type_: ValidatorType = None, allowed_values: list = None, **kwargs
-    ):
+    def __init__(self, type_: ValidatorType = None, allowed_values: list = None):
         self.set_type(type_)
 
         if not allowed_values is None:
@@ -137,8 +135,8 @@ class BoolValidator(Validator):
         * `validator.validate(4) -> ValueError`
     """
 
-    def __init__(self, **kwargs):
-        super().__init__(type_=bool, **kwargs)
+    def __init__(self):
+        super().__init__(type_=bool, allowed_values=None)
 
 
 class NumericValidator(Validator):
@@ -169,8 +167,7 @@ class NumericValidator(Validator):
         max_value=math.inf,
         include_min=False,
         include_max=False,
-        allowed_values=None,
-        **kwargs,
+        allowed_values: list = None,
     ):
 
         if min_value is None:
@@ -191,7 +188,7 @@ class NumericValidator(Validator):
         if math.isfinite(self._max_value):
             self._include_max = True
 
-        super().__init__(type_=type_, allowed_values=allowed_values, **kwargs)
+        super().__init__(type_=type_, allowed_values=allowed_values)
 
     def _validate(self, value):
         if (
@@ -263,8 +260,7 @@ class IntValidator(NumericValidator):
         max_value=math.inf,
         include_min=True,
         include_max=True,
-        allowed_values=None,
-        **kwargs,
+        allowed_values: List[int] = None,
     ):
         super().__init__(
             type_=int,
@@ -273,7 +269,6 @@ class IntValidator(NumericValidator):
             include_min=include_min,
             include_max=include_max,
             allowed_values=allowed_values,
-            **kwargs,
         )
         self._type = int
 
@@ -306,8 +301,7 @@ class FloatValidator(NumericValidator):
         max_value=math.inf,
         include_min=True,
         include_max=True,
-        allowed_values=None,
-        **kwargs,
+        allowed_values: List[float] = None,
     ):
         super().__init__(
             type_=float,
@@ -316,7 +310,6 @@ class FloatValidator(NumericValidator):
             include_min=include_min,
             include_max=include_max,
             allowed_values=allowed_values,
-            **kwargs,
         )
         self._type = float
 
@@ -335,8 +328,8 @@ class StrValidator(Validator):
             * `validator.validate(True) -> ValueError`
     """
 
-    def __init__(self, allowed_values=None, **kwargs):
-        super().__init__(type_=str, allowed_values=allowed_values, **kwargs)
+    def __init__(self, allowed_values: List[str] = None):
+        super().__init__(type_=str, allowed_values=allowed_values)
 
     def _from_str(self, str_value: str) -> str:
         return str_value
@@ -361,11 +354,17 @@ class ListValidator(Validator):
         * `validator.validate('{"foo":1.2}') -> ValueError`
     """
 
-    must_be_deep_jsonable = True
+    must_be_deep_jsonable: bool
+    min_number_of_occurrences: int = True
+    max_number_of_occurrences: int = True
 
-    def __init__(self, must_be_deep_jsonable=True, **kwargs):
-        super().__init__(type_=list, **kwargs)
+    def __init__(
+            self, must_be_deep_jsonable=True, min_number_of_occurrences: int = -1, max_number_of_occurrences: int = -1,
+            allowed_values: list = None):
+        super().__init__(type_=list, allowed_values=allowed_values)
         self.must_be_deep_jsonable = must_be_deep_jsonable
+        self.min_number_of_occurrences = min_number_of_occurrences
+        self.max_number_of_occurrences = max_number_of_occurrences
 
     def _validate(self, value):
         value: List = super()._validate(value)
@@ -374,6 +373,14 @@ class ListValidator(Validator):
         if self.must_be_deep_jsonable:
             if not self.is_deep_jsonnable(value):
                 raise BadRequestException(f"The value {value} is not serializable.")
+
+        if self.min_number_of_occurrences >= 0 and len(value) < self.min_number_of_occurrences:
+            raise BadRequestException(
+                f"The list contains {len(value)} elements but the minimum number of elements is {self.min_number_of_occurrences}.")
+
+        if self.max_number_of_occurrences >= 0 and len(value) > self.max_number_of_occurrences:
+            raise BadRequestException(
+                f"The list contains {len(value)} elements but the maximum number of elements is {self.max_number_of_occurrences}.")
 
         return value
 
@@ -405,8 +412,8 @@ class DictValidator(Validator):
 
     must_be_deep_jsonable = True
 
-    def __init__(self, must_be_deep_jsonable=True, **kwargs):
-        super().__init__(type_=dict, **kwargs)
+    def __init__(self, must_be_deep_jsonable=True):
+        super().__init__(type_=dict, allowed_values=None)
         self.must_be_deep_jsonable = must_be_deep_jsonable
 
     def _validate(self, value):

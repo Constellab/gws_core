@@ -6,7 +6,9 @@
 from typing import Any, Dict, List, Type
 
 from gws_core.core.decorator.transaction import transaction
+from gws_core.resource.resource_search_dto import ResourceSearchDTO
 from gws_core.tag.tag_service import TagService
+from playhouse.mysql_ext import Match
 
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import NotFoundException
@@ -102,3 +104,23 @@ class ResourceService(BaseService):
                               view_name: str, config_values: Dict[str, Any]) -> Any:
 
         return ViewHelper.call_view_on_resource(resource, view_name, config_values)
+
+    ############################# SEARCH ###########################
+
+    @classmethod
+    def search(cls, search: ResourceSearchDTO,
+               page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
+        # model_select = ResourceModel.select().where(Match((ResourceModel.tags), searchText))
+        expression = None
+
+        for tag in search.tags:
+            new_expresion = (ResourceModel.tags.contains(str(tag)))
+            if expression is not None:
+                expression = expression & new_expresion
+            else:
+                expression = new_expresion
+
+        model_select = ResourceModel.select().where(expression)
+
+        return Paginator(
+            model_select, page=page, number_of_items_per_page=number_of_items_per_page)

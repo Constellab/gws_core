@@ -37,20 +37,6 @@ class TestConfig(BaseTestCase):
         config2: Config = Config.get_by_id(config.id)
         self.assertEqual(config2.data, config.data)
 
-    def test_param_to_json(self):
-        param: IntParam = IntParam(default_value=1, human_name="Test", short_description="Description",
-                                   min_value=1, max_value=10, allowed_values=[1, 2], unit='km')
-        dict_ = param.to_json()
-
-        self.assertEqual(dict_["type"], "int")
-        self.assertEqual(dict_["default_value"], 1)
-        self.assertEqual(dict_["human_name"], "Test")
-        self.assertEqual(dict_["short_description"], "Description")
-        self.assertEqual(dict_["min_value"], 1)
-        self.assertEqual(dict_["max_value"], 10)
-        self.assertEqual(dict_["allowed_values"], [1, 2])
-        self.assertEqual(dict_["unit"], "km")
-
     def test_task_config(self):
         GTest.print("Task config")
 

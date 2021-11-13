@@ -6,6 +6,13 @@ from pydantic.main import BaseModel
 KEY_VALUE_SEPARATOR: str = ':'
 TAGS_SEPARATOR = ','
 
+# List of default tag with values
+default_tags = {
+    "status": ['SUCCESS', 'WARNING', 'ERROR'],
+    "type": ['DATA', 'ARRAY', 'EXPERIMENT', 'JSON'],
+    "name": []
+}
+
 
 class Tag(BaseModel):
     key: str

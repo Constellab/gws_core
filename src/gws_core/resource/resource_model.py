@@ -9,7 +9,7 @@ import copy
 from typing import (TYPE_CHECKING, Any, Dict, Generic, Optional, Type, TypeVar,
                     final)
 
-from gws_core.tag.tag import TagHelper
+from gws_core.core.utils.logger import Logger
 from peewee import CharField, ModelSelect
 
 from ..core.exception.exceptions.bad_request_exception import \
@@ -167,6 +167,16 @@ class ResourceModel(Viewable, TaggableModel, Generic[ResourceType]):
     @classmethod
     def select_by_resource_typing_name(cls, resource_typing_name: str) -> ModelSelect:
         return cls.select_me().where(cls.resource_typing_name == resource_typing_name)
+
+    # @classmethod
+    # def create_table(cls, *args, **kwargs):
+    #     if cls.table_exists():
+    #         return
+    #     super().create_table(*args, **kwargs)
+    #     if cls.get_db_manager().is_mysql_engine():
+    #         cls.get_db_manager().db.execute_sql(
+    #             f"CREATE FULLTEXT INDEX TAG_INDEX ON {cls.get_table_name()}(tags)")
+
     ########################################## RESOURCE ######################################
 
     @final
@@ -211,6 +221,16 @@ class ResourceModel(Viewable, TaggableModel, Generic[ResourceType]):
 
         # synchronize the model fields with the resource fields
         resource_model.receive_fields_from_resource(resource)
+
+        # set the tag name if the name exist
+        name: str = None
+        try:
+            name = resource.get_name()
+        except Exception as err:
+            Logger.error(f'Error while getting the name of the resource {type(resource)}. Err : {str(err)}')
+            Logger.log_exception_stack_trace(err)
+        if name:
+            resource_model.set_name_tag(name)
 
         return resource_model
 
@@ -340,10 +360,11 @@ class ResourceModel(Viewable, TaggableModel, Generic[ResourceType]):
                 },
             })
 
-        resource: ResourceType = self.get_resource()
+        resource: Type[Resource] = self._get_resource_type()
         _json["resource_type_human_name"] = resource._human_name or resource.__class__.__name__
         _json["resource_type_short_description"] = resource._short_description
         _json["resource_human_name"] = _json["resource_type_human_name"]
+        _json["name"] = self.get_name_tag() or _json["resource_type_human_name"]
 
         return _json
 

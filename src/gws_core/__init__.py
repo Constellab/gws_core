@@ -21,11 +21,12 @@ from .config.config_types import ConfigSpecs as ConfigSpecs
 from .config.config_types import ParamValue as ParamValue
 from .config.config_types import ParamValueType as ParamValueType
 from .config.param_spec import BoolParam as BoolParam
-from .config.param_spec import DictParam as DictParam
+# from .config.param_spec import DictParam as DictParam
 from .config.param_spec import FloatParam as FloatParam
 from .config.param_spec import IntParam as IntParam
 from .config.param_spec import ListParam as ListParam
 from .config.param_spec import NumericParam as NumericParam
+from .config.param_spec import ParamSet as ParamSet
 from .config.param_spec import ParamSpec as ParamSpec
 from .config.param_spec import StrParam as StrParam
 # Core
@@ -143,15 +144,18 @@ from .impl.shell.pipenv import PipEnvShell as PipEnvShell
 from .impl.shell.shell import Shell as Shell
 from .impl.shell.shell_env_proxy import ShellEnvProxy as ShellEnvProxy
 from .impl.table.data_frame_r_field import DataFrameRField as DataFrameRField
-from .impl.table.helper.table_aggregator_helper import TableAggregatorHelper
-from .impl.table.helper.table_filter_helper import TableFilterHelper
+from .impl.table.helper.table_aggregator_helper import \
+    TableAggregatorHelper as TableAggregatorHelper
+from .impl.table.helper.table_filter_helper import \
+    TableFilterHelper as TableFilterHelper
 from .impl.table.table import Table as Table
 from .impl.table.table_file import TableFile as TableFile
 from .impl.table.table_tasks import TableExporter as TableExporter
 from .impl.table.table_tasks import TableImporter as TableImporter
-from .impl.table.transformers.table_aggregator import TableAggregator
-from .impl.table.transformers.table_filter import TableFilter
-from .impl.table.transformers.table_scaler import TableScaler
+from .impl.table.transformers.table_aggregator import \
+    TableAggregator as TableAggregator
+from .impl.table.transformers.table_filter import TableFilter as TableFilter
+from .impl.table.transformers.table_scaler import TableScaler as TableScaler
 # Impl > TableView
 from .impl.table.view.barplot_view import BarPlotView as BarPlotView
 from .impl.table.view.boxplot_view import BoxPlotView as BoxPlotView

@@ -72,6 +72,9 @@ class File(FSNode):
     def name(self):
         return FileHelper.get_name_with_extension(self.path)
 
+    def get_name(self) -> str:
+        return self.name
+
     # -- O --
 
     def open(self, mode: str):
@@ -88,7 +91,7 @@ class File(FSNode):
                     raise BadRequestException(f"Cannot create directory {self.dir}")
             return open(self.path, mode="w+", encoding='utf-8')
 
-    def read_part(self, from_line: int=1, to_line:int = 10) -> AnyStr:
+    def read_part(self, from_line: int = 1, to_line: int = 10) -> AnyStr:
         text = ""
         mode = "r+"+self._mode
         with self.open(mode) as fp:
@@ -99,18 +102,18 @@ class File(FSNode):
                     break
         return text
 
-    def _read_all(self, size: int=-1) -> AnyStr:
+    def _read_all(self, size: int = -1) -> AnyStr:
         mode = "r+"+self._mode
         with self.open(mode) as fp:
             data = fp.read(size)
         return data
 
-    def read(self, size: int=-1) -> AnyStr:
+    def read(self, size: int = -1) -> AnyStr:
         if self.is_large() and size == -1:
             return self.read_part()
         else:
             return self._read_all(size=-1)
-   
+
     # def readline(self) -> AnyStr:
     #     mode = "r+"+self._mode
     #     with self.open(mode) as file:
