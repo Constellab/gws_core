@@ -29,14 +29,14 @@ class TestTableFilterHelper(BaseTestCase):
 
         # filter by row name
         df = TableFilterHelper.filter_by_axis_names(
-            data=table.get_data(), axis="row", pattern="L.*a$"
+            data=table.get_data(), axis="row", value="L.*a$"
         )
         self.assertEqual(df.index.tolist(), ["Lea", "Laura"])
         self.assertEqual(df.columns.tolist(), ["Age", "Sex", "City", "Weight"])
 
         # filter by column name
         df = TableFilterHelper.filter_by_axis_names(
-            data=table.get_data(), axis="column", pattern="Cit*"
+            data=table.get_data(), axis="column", value="Cit*"
         )
         self.assertEqual(df.index.tolist(), ["Luc", "Lea", "Laura", "Leon"])
         self.assertEqual(df.columns.tolist(), ["City"])
@@ -95,13 +95,13 @@ class TestTableFilterHelper(BaseTestCase):
         self.assertTrue(df.empty)
 
         df = TableFilterHelper.filter_text_data(
-            data=table.get_data(), column_name="Sex", comp="==", text="M"
+            data=table.get_data(), column_name="Sex", comp="==", value="M"
         )
         self.assertEqual(df.index.tolist(), ["Luc", "Leon"])
         self.assertEqual(df.columns.tolist(), ["Age", "Sex", "City", "Weight"])
 
         df = TableFilterHelper.filter_text_data(
-            data=table.get_data(), column_name="Sex", comp="!=", text="M"
+            data=table.get_data(), column_name="Sex", comp="!=", value="M"
         )
         self.assertEqual(df.index.tolist(), ["Lea", "Laura"])
         self.assertEqual(df.columns.tolist(), ["Age", "Sex", "City", "Weight"])

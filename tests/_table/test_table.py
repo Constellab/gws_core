@@ -38,32 +38,6 @@ class TestTable(BaseTestCase):
         self.assertEqual(table.column_names, ["A", "B", "C", "D", "E"])
         self.assertEqual(table.row_names, [0, 1])
 
-    async def test_multi_index_table(self):
-        GTest.print("Multi Index Table")
-
-        file = File(path=os.path.join(testdata_dir, "multi_index_data.csv"))
-        tester = TaskTester(
-            params={"header": 0, "index_columns": ["Name"]},
-            inputs={"file": file},
-            task_type=TableImporter,
-        )
-        outputs = await tester.run()
-        table = outputs["resource"]
-        print(table)
-
-        # filter columns
-        tester = TaskTester(
-            params={"column_names": ["Ag*"], "row_names": ["L.*a$"]},
-            inputs={"table": table},
-            task_type=TableFilter,
-        )
-        outputs = await tester.run()
-        filtered_table = outputs["table"]
-        self.assertEqual(filtered_table.column_names, ["Age"])
-        self.assertEqual(filtered_table.row_names, ["Lea", "Laura"])
-
-        print(filtered_table)
-
     async def test_importer_exporter(self):
         # importer
         file_path = os.path.join(testdata_dir, "data.csv")

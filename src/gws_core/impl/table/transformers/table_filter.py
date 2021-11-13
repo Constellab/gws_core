@@ -9,8 +9,8 @@ import regex
 from pandas import DataFrame
 
 from ....config.config_types import ConfigParams, ConfigSpecs
-from ....config.param_spec import (BoolParam, FloatParam, IntParam,
-                                   ListParam, ParamSet, StrParam)
+from ....config.param_spec import (BoolParam, FloatParam, IntParam, ListParam,
+                                   ParamSet, StrParam)
 from ....io.io_spec import InputSpecs, OutputSpecs
 from ....task.task import Task
 from ....task.task_decorator import task_decorator
@@ -42,14 +42,14 @@ class TableFilter(Task):
                     allowed_values=TableFilterHelper.VALID_AXIS_NAMES,
                     short_description="The axis whose name is searched",
                 ),
-                "text": StrParam(
+                "value": StrParam(
                     human_name="Searched text pattern",
                     short_description="The row or column names are matched against the pattern",
                 ),
             },
             human_name="Axis names filter",
             short_description="Filter using rows or columns name patterns",
-            max_number_of_occurences=True
+            max_number_of_occurrences=3
         ),
         "aggregation_filter": ParamSet(
             {
@@ -76,7 +76,7 @@ class TableFilter(Task):
             optional=True,
             human_name="Numeric aggregation criterion",
             short_description="Filter axis validating a numeric criterion after aggregation",
-            max_number_of_occurences=True
+            max_number_of_occurrences=3
         ),
         "numeric_data_filter": ParamSet(
             {
@@ -97,7 +97,7 @@ class TableFilter(Task):
             optional=True,
             human_name="Numeric data criterion",
             short_description="Filter data (along an axis) validating a numeric criterion",
-            max_number_of_occurences=True
+            max_number_of_occurrences=3
         ),
         "text_data_filter": ParamSet(
             {
@@ -110,7 +110,7 @@ class TableFilter(Task):
                     allowed_values=TableFilterHelper.VALID_TEXT_COMPARATORS,
                     short_description="Comparator",
                 ),
-                "text": StrParam(
+                "value": StrParam(
                     human_name="Searched text (pattern)",
                     short_description="Searched text (pattern)",
                 ),
@@ -118,7 +118,7 @@ class TableFilter(Task):
             optional=True,
             human_name="Text data criterion",
             short_description="Filter data (along an axis) validating a text criterion",
-            max_number_of_occurences=True
+            max_number_of_occurrences=3
         ),
     }
 
@@ -127,7 +127,7 @@ class TableFilter(Task):
 
         for _filter in params["axis_name_filter"]:
             data = TableFilterHelper.filter_by_axis_names(
-                data=data, axis=_filter["axis_type"], pattern=_filter["text"]
+                data=data, axis=_filter["axis_type"], value=_filter["value"]
             )
 
         for _filter in params["aggregation_filter"]:
@@ -135,7 +135,7 @@ class TableFilter(Task):
                 data=data,
                 direction=_filter["direction"],
                 func=_filter["function"],
-                comp=_filter["comp"],
+                comp=_filter["comparator"],
                 value=_filter["value"],
             )
 
@@ -152,7 +152,7 @@ class TableFilter(Task):
                 data=data,
                 column_name=_filter["column_name"],
                 comp=_filter["comparator"],
-                text=_filter["text"],
+                value=_filter["value"],
             )
 
         return {"table": Table(data=data)}

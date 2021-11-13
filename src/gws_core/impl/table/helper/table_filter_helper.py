@@ -41,15 +41,15 @@ class TableFilterHelper:
             )
 
     @classmethod
-    def filter_by_axis_names(cls, data: DataFrame, axis: str, pattern: str):
+    def filter_by_axis_names(cls, data: DataFrame, axis: str, value: str):
         cls._check_axis_name(axis)
-        if pattern is None:
+        if value is None:
             return data
-        if isinstance(pattern, str):
+        if isinstance(value, str):
             if axis == "row":
-                return data.filter(regex=pattern, axis=0)
+                return data.filter(regex=value, axis=0)
             else:
-                return data.filter(regex=pattern, axis=1)
+                return data.filter(regex=value, axis=1)
         else:
             raise BadRequestException("A string is required")
 
@@ -117,7 +117,7 @@ class TableFilterHelper:
 
     @classmethod
     def filter_text_data(
-            cls, data: DataFrame, column_name: str, comp: str, text: str) -> DataFrame:
+            cls, data: DataFrame, column_name: str, comp: str, value: str) -> DataFrame:
 
         cls._check_text_comparator(comp)
         tab: DataFrame = data.filter(regex=column_name, axis=1)
@@ -127,9 +127,9 @@ class TableFilterHelper:
         tab = tab.applymap(to_text)
 
         if comp == "==":
-            tab = tab == text
+            tab = tab == value
         elif comp == "!=":
-            tab = tab != text
+            tab = tab != value
 
         tab = tab.all(axis="columns")
         data = data.loc[tab, :]
