@@ -39,8 +39,9 @@ class ProgressBar(Model):
     process_uri = CharField(null=True, index=True)
     process_typing_name = CharField(null=True)
 
-    _min_allowed_delta_time = 1.0
-    _min_value = 0.0
+    _MIN_ALLOWED_DELTA_TIME = 1.0
+    _MAX_VALUE = 100.0
+    _MIN_VALUE = 0.0
 
     _is_removable = False
     _table_name = "gws_process_progress_bar"
@@ -69,8 +70,8 @@ class ProgressBar(Model):
 
     def _init_data(self) -> None:
         self.data = {
-            "value": 0.0,
-            "max_value": 0.0,
+            "value": self._MIN_VALUE,
+            "max_value": self._MAX_VALUE,
             "average_speed": 0.0,
             "start_time": 0.0,
             "current_time": 0.0,
@@ -111,20 +112,16 @@ class ProgressBar(Model):
             "text": message,
             "datetime": dtime
         })
-
         if len(self.data["messages"]) > self._max_message_stack_length:
             self.data["messages"].pop(0)
-
         self._log_message(message, type_)
         self.save()
 
     def start(self, max_value: float = 100.0):
         if max_value <= 0.0:
             raise BadRequestException("Invalid max value")
-
         if self.data["start_time"] > 0.0:
             raise BadRequestException("The progress bar has already started")
-
         self.data["max_value"] = max_value
         self.data["start_time"] = time.perf_counter()
         self.data["current_time"] = self.data["start_time"]
@@ -144,10 +141,8 @@ class ProgressBar(Model):
 
     def _stop(self) -> None:
         _max = self.data["max_value"]
-
         if self.data["value"] < _max:
             self._update_progress_value(_max)
-
         self.data["remaining_time"] = 0.0
 
     def update_progress(self, value: float, message: str) -> None:
@@ -158,15 +153,13 @@ class ProgressBar(Model):
         # check if we update the progres
         current_time = time.perf_counter()
         delta_time = current_time - self.data["current_time"]
-        if delta_time < self._min_allowed_delta_time and value < self.get_max_value():
+        if delta_time < self._MIN_ALLOWED_DELTA_TIME and value < self.get_max_value():
             return
-
         value = self._update_progress_value(value)
-
         if message:
-            perc = value/self.get_max_value()
-            self.add_message("{:.1%}: {}".format(perc, message), ProgressBarMessageType.PROGRESS)
-
+            #perc = value/self.get_max_value()
+            perc = value
+            self.add_message("{:1.1f}%: {}".format(perc, message), ProgressBarMessageType.PROGRESS)
         self.save()
 
     @property
@@ -179,21 +172,14 @@ class ProgressBar(Model):
         return self.data["max_value"]
 
     def _update_progress_value(self, value: float) -> float:
-        if value == self._min_value:
-            value = self._min_value + 1e-6
-
         _max = self.data["max_value"]
         if _max == 0.0:
             self.start()
-
-        # if value >= _max:
-        #     value = _max - 1  # prevent blocking the progress_bar
-
-        if value < self._min_value:
-            value = self._min_value
-
+        #if value >= self._MAX_VALUE:
+        #     value = self._MAX_VALUE - 1e-6  # prevent blocking the progress_bar
+        if value < self._MIN_VALUE:
+            value = self._MIN_VALUE
         current_time = time.perf_counter()
-
         self.data["value"] = value
         self.data["current_time"] = current_time
         self.data["elapsed_time"] = current_time - self.data["start_time"]
@@ -254,6 +240,8 @@ class ProgressBar(Model):
             Logger.error(message)
         elif type_ == ProgressBarMessageType.WARNING:
             Logger.warning(message)
+        elif type_ == ProgressBarMessageType.PROGRESS:
+            Logger.progress(message)
 
     @classmethod
     def get_by_process_uri(cls, process_uri: str) -> 'ProgressBar':

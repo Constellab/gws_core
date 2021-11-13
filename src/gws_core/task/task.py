@@ -14,6 +14,7 @@ from ..process.process import Process
 from ..progress_bar.progress_bar import ProgressBar, ProgressBarMessageType
 from ..resource.resource import Resource
 from ..task.task_io import TaskInputs, TaskOutputs
+from ..core.utils.logger import Logger
 
 # Typing names generated for the class Task
 CONST_TASK_TYPING_NAME = "TASK.gws_core.Task"
