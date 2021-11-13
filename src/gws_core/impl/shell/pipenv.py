@@ -10,7 +10,7 @@ from abc import abstractmethod
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
-from ...progress_bar.progress_bar import ProgressBar
+from ...progress_bar.progress_bar import ProgressBar, ProgressBarMessageType
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
 from .base_env import BaseEnvShell
@@ -46,6 +46,7 @@ class PipEnvShell(BaseEnvShell):
     """
 
     env_file_path: str
+    _shell_mode = True
 
     # -- B --
 
@@ -57,9 +58,13 @@ class PipEnvShell(BaseEnvShell):
         :rtype: `list`
         """
 
+        if isinstance(user_cmd, list):
+            user_cmd = [str(c) for c in user_cmd]
         if user_cmd[0] in ["python", "python2", "python3"]:
             del user_cmd[0]
-        return ["pipenv", "run", "python", *user_cmd]
+        user_cmd = ["pipenv", "run", "python", *user_cmd]
+        cmd = " ".join(user_cmd)
+        return cmd
 
     def build_os_env(self) -> dict:
         env = os.environ.copy()
@@ -94,23 +99,23 @@ class PipEnvShell(BaseEnvShell):
         ]
 
         try:
-            ProgressBar.add_message_to_current(
-                "Installing the virtual environment ...")
+            ProgressBar.add_message_to_current("Installing the virtual environment ...")
             env = os.environ.copy()
             env["PIPENV_VENV_IN_PROJECT"] = "enabled"
-            subprocess.check_call(
+            res = subprocess.run(
                 " ".join(cmd),
                 cwd=cls.get_env_dir(),
                 stderr=subprocess.PIPE,
-                stdout=subprocess.DEVNULL,
                 env=env,
                 shell=True
             )
-            ProgressBar.add_message_to_current(
-                "Virtual environment installed!")
+            ProgressBar.add_message_to_current("Virtual environment installed!", ProgressBarMessageType.SUCCESS)
         except Exception as err:
             raise Exception(
                 "Cannot install the virtual environment.") from err
+
+        if res.returncode != 0:
+            raise Exception(f"Cannot install the virtual environment. Error: {res.stderr}")
 
     @classmethod
     def uninstall(cls):
@@ -121,16 +126,15 @@ class PipEnvShell(BaseEnvShell):
             "cd ..", "&&",
             f"rm -rf {cls.get_env_dir()}"
         ]
+
         try:
-            ProgressBar.add_message_to_current(
-                "Removing the virtual environment ...")
+            ProgressBar.add_message_to_current("Removing the virtual environment ...")
             env = os.environ.copy()
             env["PIPENV_VENV_IN_PROJECT"] = "enabled"
-            subprocess.check_call(
+            res = subprocess.run(
                 " ".join(cmd),
                 cwd=cls.get_env_dir(),
                 stderr=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL,
                 env=env,
                 shell=True
             )
@@ -140,8 +144,10 @@ class PipEnvShell(BaseEnvShell):
                 if os.path.exists(cls.get_env_dir()):
                     shutil.rmtree(cls.get_env_dir())
             except:
-                raise Exception(
-                    "Cannot remove the virtual environment.")
+                raise Exception("Cannot remove the virtual environment.")
+
+        if res.returncode != 0:
+            raise Exception(f"Cannot remove the virtual environment. Error: {res.stderr}")
 
     @abstractmethod
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

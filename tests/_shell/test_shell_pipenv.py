@@ -6,26 +6,27 @@
 import os
 
 from gws_core import (BaseTestCase, ConfigParams, Experiment,
-                      ExperimentService, GTest, JSONDict, PipEnvShell,
-                      Resource, TaskInputs, TaskModel, TaskOutputs,
-                      TaskService, task_decorator, ShellEnvProxy, Settings)
+                      ExperimentService, File, GTest, JSONDict, PipEnvShell,
+                      Resource, Settings, ShellEnvProxy, TaskInputs, TaskModel,
+                      TaskOutputs, TaskService, task_decorator)
 
 settings = Settings.retrieve()
 test_datadir = settings.get_variable("gws_core:testdata_dir")
+__cdir__ = os.path.dirname(os.path.realpath(__file__))
+
 
 @task_decorator("PipEnvTester")
 class PipEnvTester(PipEnvShell):
     input_specs = {}
-    output_specs = {'stdout': (JSONDict, )}
-    env_file_path = os.path.join(test_datadir, "penv", "env_jwt_pip.txt")
+    output_specs = {'file': (File, )}
+    env_file_path = os.path.join(__cdir__, "penv", "env_jwt_pip.txt")
 
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
-        return ["python", os.path.join(test_datadir, "penv", "jwt_encode.py")]
+        return ["python", os.path.join(__cdir__, "penv", "jwt_encode.py"), ">", "out.txt"]
 
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        res = JSONDict()
-        res["encoded_string"] = self._stdout
-        return {"stdout": res}
+        file = File(path=os.path.join(self.working_dir, "out.txt"))
+        return {"file": file}
 
 
 class TestProcess(BaseTestCase):
@@ -50,10 +51,9 @@ class TestProcess(BaseTestCase):
         # refresh the task
         task_model: TaskModel = experiment.task_models[0]
 
-        result: Resource = task_model.outputs.get_resource_model("stdout").get_resource()
-        encoded_string = result.data["encoded_string"]
+        file: Resource = task_model.outputs.get_resource_model("file").get_resource()
         self.assertEqual(
-            encoded_string,
+            file.read().strip(),
             "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzb21lIjoicGF5bG9hZCJ9.Joh1R2dYzkRvDkqv3sygm5YyK8Gi4ShZqbhK2gxcs2U")
 
         self.assertTrue(PipEnvTester.is_installed())
@@ -67,10 +67,9 @@ class TestProcess(BaseTestCase):
 
         prox = ShellEnvProxy(PipEnvTester)
         encoded_string = prox.check_output(
-            ["python", os.path.join(test_datadir, "penv", "jwt_encode.py")]
+            ["python", os.path.join(__cdir__, "penv", "jwt_encode.py")]
         )
-        #print(result)
+        # print(result)
         self.assertEqual(
-                encoded_string,
-                "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzb21lIjoicGF5bG9hZCJ9.Joh1R2dYzkRvDkqv3sygm5YyK8Gi4ShZqbhK2gxcs2U")
-
+            encoded_string,
+            "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzb21lIjoicGF5bG9hZCJ9.Joh1R2dYzkRvDkqv3sygm5YyK8Gi4ShZqbhK2gxcs2U")

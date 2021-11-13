@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 import os
+import shlex
 import shutil
 import subprocess
 import time
@@ -12,7 +13,7 @@ from typing import Union
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
-from ...core.model.sys_proc import SysProc
+#from ...core.model.sys_proc import SysProc
 from ...core.utils.settings import Settings
 from ...task.task import Task
 from ...task.task_decorator import task_decorator
@@ -31,12 +32,9 @@ class Shell(Task):
     output_specs = {}
     config_specs = {}
 
-    _out_type: str = "text"
     _tmp_dir: str = None
     _shell_mode: bool = False
     _stdout: str = ""
-    _stdout_count: int = 0
-    _STDOUT_MAX_CHAR_LENGHT: int = 1024*10
 
     def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
         """
@@ -67,7 +65,7 @@ class Shell(Task):
         """
 
         if self._shell_mode:
-            return " && ".join(user_cmd)
+            return " ".join(user_cmd)
         else:
             return user_cmd
 
@@ -84,24 +82,6 @@ class Shell(Task):
         """
 
         pass
-
-    def _on_stdout_change(self, stdout_count: int = 0, stdout_line: str = "") -> tuple:
-        """
-        This methods is triggered each time the stdout of the shell subtask has changed.
-
-        It can be overloaded to update the progress bar for example.
-
-        :param stdout_count: The current count of stdout lines
-        :type stdout_count: `int`
-        :param stdout_line: The last standard output line
-        :type stdout_line: `str`
-
-        """
-
-        self._stdout_count = stdout_count
-        self._stdout += stdout_line
-        if len(self._stdout) > self._STDOUT_MAX_CHAR_LENGHT:
-            self._stdout = self._stdout[-self._STDOUT_MAX_CHAR_LENGHT:]
 
     @property
     def working_dir(self) -> str:
@@ -154,46 +134,37 @@ class Shell(Task):
             if not os.path.exists(self.working_dir):
                 os.makedirs(self.working_dir)
 
-            proc = SysProc.popen(
+            # proc = SysProc.popen(
+            proc = subprocess.Popen(
                 cmd,
                 cwd=self.working_dir,
                 env=user_env,
                 shell=self._shell_mode,
-                stdout=subprocess.PIPE
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
             )
 
-            count = 0
             tic_a = time.perf_counter()
-            lines = []
-            line: str
-            with open(os.path.join(self.working_dir, "task.log"), "w", encoding="utf-8") as fp:
-                for line in iter(proc.stdout.readline, b''):
-                    count += 1
-                    line = line.decode().strip()
-                    tic_b = time.perf_counter()
-                    lines.append(line)
-                    if tic_b - tic_a >= 1:      # save outputs every N sec in taskbar
-                        self.log_message(f"STDOUT {count}: " + line)
-                        self._on_stdout_change(stdout_count=count, stdout_line=line)
-                        fp.writelines(lines)
-                        lines = []
-                        tic_a = time.perf_counter()
-                    if not proc.is_alive():
-                        break
+            stdout: list = []
+            for line in iter(proc.stdout.readline, b''):
+                stdout.append(line.decode().strip())
+                tic_b = time.perf_counter()
+                if tic_b - tic_a >= 1:      # save outputs every N sec in taskbar
+                    self.log_info_message("\n".join(stdout))
+                    tic_a = time.perf_counter()
+                    stdout = []
 
-                if lines:
-                    self.log_message(f"STDOUT {count}: " + line)
-                    self._on_stdout_change(stdout_count=count, stdout_line=line)
-                    fp.writelines(lines)
+            if stdout:
+                self.log_info_message("\n".join(stdout))
 
             outputs = self.gather_outputs(params, inputs)
         except subprocess.CalledProcessError as err:
             self._clean_working_dir()
-            raise Exception(
+            raise BadRequestException(
                 f"An error occured while running the binary in shell task. Error: {err}") from err
         except Exception as err:
             self._clean_working_dir()
-            raise Exception(
+            raise BadRequestException(
                 f"An error occured while running shell task. Error: {err}") from err
 
         return outputs
@@ -205,3 +176,12 @@ class Shell(Task):
         """
 
         self._clean_working_dir()
+
+    @staticmethod
+    def quote(string: str) -> str:
+        """
+        Return a shell-escaped version of the string (using native python function `shlex.quote()`).
+        The returned value is a string that can safely be used as one token in a shell command line,
+        for cases where you cannot use a list.
+        """
+        return shlex.quote(string)

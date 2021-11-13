@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 import os
+import shlex
 import shutil
 import subprocess
 from abc import abstractmethod
@@ -55,7 +56,7 @@ class CondaEnvShell(BaseEnvShell):
     def _format_command(self, user_cmd: list) -> str:
         if isinstance(user_cmd, list):
             user_cmd = [str(c) for c in user_cmd]
-            user_cmd = ' '.join(user_cmd)
+            user_cmd = " ".join(user_cmd)
         venv_dir = os.path.join(self.get_env_dir(), "./.venv")
         cmd = f'bash -c "source /opt/conda/etc/profile.d/conda.sh && conda activate {venv_dir} && {user_cmd}"'
         return cmd
@@ -64,7 +65,7 @@ class CondaEnvShell(BaseEnvShell):
 
     # -- I --
 
-    @classmethod
+    @ classmethod
     def install(cls):
         """
         Install the virtual env
@@ -79,64 +80,62 @@ class CondaEnvShell(BaseEnvShell):
         else:
             raise BadRequestException("Invalid env file path")
         cmd = [
-            'bash /opt/conda/etc/profile.d/conda.sh', "&&",
+            'bash -c "source /opt/conda/etc/profile.d/conda.sh"', "&&",
             f"conda env create -f {cls.env_file_path} --force --prefix ./.venv", "&&",
             "touch READY",
         ]
 
-        # cmd = [
-        #     'bash -c "source /opt/conda/etc/profile.d/conda.sh"', "&&",
-        #     f"conda --help"
-        # ]
-
         res: subprocess.CompletedProcess
         try:
-            ProgressBar.add_message_to_current(
-                "Installing the virtual environment ...")
+            ProgressBar.add_message_to_current("Installing the virtual environment ...")
             res = subprocess.run(
                 " ".join(cmd),
                 cwd=cls.get_env_dir(),
                 stderr=subprocess.PIPE,
-                shell=True,
-                executable='/bin/bash'
+                shell=True
             )
+            ProgressBar.add_message_to_current("Virtual environment installed!")
         except Exception as err:
             raise Exception("Cannot install the virtual environment.") from err
 
         if res.returncode != 0:
-            raise Exception(f"Cannot install the virtual environment. Error : {res.stderr}")
+            raise Exception(f"Cannot install the virtual environment. Error: {res.stderr}")
         ProgressBar.add_message_to_current("Virtual environment installed!", ProgressBarMessageType.SUCCESS)
 
     # -- U --
 
-    @classmethod
+    @ classmethod
     def uninstall(cls):
         if not cls.is_installed():
             return
         cmd = [
+            'bash -c "source /opt/conda/etc/profile.d/conda.sh"', "&&",
             "conda remove -y --prefix .venv --all", "&&",
             "cd ..", "&&",
             f"rm -rf {cls.get_env_dir()}"
         ]
+
+        res: subprocess.CompletedProcess
         try:
-            ProgressBar.add_message_to_current(
-                "Removing the virtual environment ...")
-            subprocess.check_call(
+            ProgressBar.add_message_to_current("Removing the virtual environment ...")
+            res = subprocess.run(
                 " ".join(cmd),
                 cwd=cls.get_env_dir(),
-                stderr=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
                 shell=True
             )
-            ProgressBar.add_message_to_current("Virtual environment removed!")
-        except:
+            ProgressBar.add_message_to_current("Virtual environment removed!", ProgressBarMessageType.SUCCESS)
+        except Exception as err:
             try:
                 if os.path.exists(cls.get_env_dir()):
                     shutil.rmtree(cls.get_env_dir())
-            except:
-                raise Exception(
-                    "Cannot remove the virtual environment.")
+            except Exception as err:
+                raise Exception("Cannot remove the virtual environment.") from err
 
-    @abstractmethod
+        if res.returncode != 0:
+            raise Exception(f"Cannot remove the virtual environment. Error: {res.stderr}")
+
+    @ abstractmethod
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         """
         This methods gathers the results of the shell task. It must be overloaded by subclasses.

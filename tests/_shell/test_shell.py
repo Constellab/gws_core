@@ -3,44 +3,42 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import os
+
 from gws_core import (BaseTestCase, BoolParam, ConfigParams, Experiment,
-                      ExperimentService, GTest, JSONDict, Resource, Shell,
+                      ExperimentService, File, GTest, Resource, Shell,
                       StrParam, TaskInputs, TaskModel, TaskOutputs,
-                      TaskService, task_decorator)
+                      TaskService, TaskTester, task_decorator)
 
 
 @task_decorator("Echo")
 class Echo(Shell):
     input_specs = {}
-    output_specs = {'stdout': JSONDict}
-    config_specs = {'name': StrParam(optional=True, short_description="The name to echo"), 'save_stdout': BoolParam(
-        default_value=False, short_description="True to save the command output text. False otherwise")}
+    output_specs = {'file': File}
+    config_specs = {
+        'name': StrParam(optional=True, short_description="The name to echo"),
+    }
+    _shell_mode = True
 
-    def build_command(self, params: ConfigParams, inputs: TaskInputs) -> list:
+    def build_command(self, params: ConfigParams, __: TaskInputs) -> list:
         name = params.get_value("name")
-        return ["echo", name]
+        return [f"echo \"{name}\" > echo.txt"]
 
-    def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        res = JSONDict()
-        res["out"] = self._stdout
-        return {"stdout": res}
+    def gather_outputs(self, _: ConfigParams, __: TaskInputs) -> TaskOutputs:
+        path = os.path.join(self.working_dir, "echo.txt")
+        file = File(path=path)
+        return {"file": file}
 
 
 class TestShell(BaseTestCase):
 
     async def test_shell(self):
         GTest.print("Shell")
-
-        proc_mdl: TaskModel = TaskService.create_task_model_from_type(
-            task_type=Echo)
-        proc_mdl.config.set_value("name", "John Doe")
-
-        experiment: Experiment = ExperimentService.create_experiment_from_task_model(
-            task_model=proc_mdl)
-
-        experiment = await ExperimentService.run_experiment(experiment=experiment, user=GTest.user)
-
-        # refresh the process
-        proc_mdl = experiment.task_models[0]
-        res: Resource = proc_mdl.outputs.get_resource_model('stdout').get_resource()
-        self.assertEqual(res.data["out"], "John Doe")
+        tester = TaskTester(
+            inputs={},
+            params={"name": "John Doe"},
+            task_type=Echo
+        )
+        outputs = await tester.run()
+        file = outputs["file"]
+        self.assertEqual(file.read().strip(), "John Doe")
