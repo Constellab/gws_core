@@ -6,6 +6,7 @@
 import os
 from pathlib import Path
 from typing import Union
+from typing import List
 
 import numpy as np
 import pandas
@@ -268,6 +269,30 @@ class Table(Resource):
 
         return self._data.tail(n)
 
+    def select_by_row_indexes(self, indexes: List[int]) -> 'Table':
+        if not isinstance(indexes, list):
+            raise BadRequestException("The indexes must be a list of integers")
+        data = self._data.iloc[indexes, :]
+        return type(self)(data=data)
+
+    def select_by_column_indexes(self, indexes: List[int]) -> 'Table':
+        if not isinstance(indexes, list):
+            raise BadRequestException("The indexes must be a list of integers")
+        data = self._data.iloc[:, indexes]
+        return type(self)(data=data)
+
+    def select_by_row_name(self, name_regex: str) -> 'Table':
+        if not isinstance(name_regex, str):
+            raise BadRequestException("The name must be a string")
+        data = self._data.filter(regex=name_regex, axis=0)
+        return type(self)(data=data)
+
+    def select_by_column_name(self, name_regex: str) -> 'Table':
+        if not isinstance(name_regex, str):
+            raise BadRequestException("The name must be a string")
+        data = self._data.filter(regex=name_regex, axis=1)
+        return type(self)(data=data)
+        
     # -- V ---
 
     @view(view_type=TableView, default_view=True, human_name='Tabular', short_description='View as a table', specs={})

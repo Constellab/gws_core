@@ -26,6 +26,32 @@ class TestTable(BaseTestCase):
         )
         print(table.get_data())
 
+    def test_table_select(self):
+        GTest.print("Table select")
+
+        table: Table = Table(
+            data=[[1, 2, 3], [3, 4, 6], [3, 7, 6]], 
+            column_names=["London", "Lisboa", "Beijin"],
+            row_names=["NY", "Tokyo", "Paris"]
+        )
+        t = table.select_by_row_indexes([1,2])
+        self.assertEqual(t.column_names, ["London", "Lisboa", "Beijin"])
+        self.assertEqual(t.row_names, ["Tokyo", "Paris"])
+
+        t = table.select_by_column_indexes([0,2])
+        self.assertEqual(t.column_names, ["London", "Beijin"])
+        self.assertEqual(t.row_names, ["NY", "Tokyo", "Paris"])
+
+        t = table.select_by_row_name("Toky.*")
+        self.assertEqual(t.column_names, ["London", "Lisboa", "Beijin"])
+        self.assertEqual(t.row_names, ["Tokyo"])
+
+        t = table.select_by_column_name("L.*")
+        self.assertEqual(t.column_names, ["London", "Lisboa"])
+        self.assertEqual(t.row_names, ["NY", "Tokyo", "Paris"])
+ 
+        print(t)
+  
     def test_table_import(self):
         GTest.print("Table load")
 

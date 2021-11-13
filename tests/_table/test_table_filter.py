@@ -33,7 +33,7 @@ class TestTableFilter(BaseTestCase):
         # filter columns
         tester = TaskTester(
             params={
-                "axis_name_filter": [{"axis_type": "column", "value": "Ag*"}]
+                "axis_name_filter": [{"axis_type": "column", "value": "Ag.*"}]
             },
             inputs={"table": table},
             task_type=TableFilter,
@@ -48,7 +48,7 @@ class TestTableFilter(BaseTestCase):
         tester = TaskTester(
             params={
                 "axis_name_filter": [
-                    {"axis_type": "column", "value": "Ag*"},
+                    {"axis_type": "column", "value": "Ag.*"},
                     {"axis_type": "row", "value": "Luc|Lea"}
                 ]
             },

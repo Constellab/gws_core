@@ -36,7 +36,7 @@ class TestTableFilterHelper(BaseTestCase):
 
         # filter by column name
         df = TableFilterHelper.filter_by_axis_names(
-            data=table.get_data(), axis="column", value="Cit*"
+            data=table.get_data(), axis="column", value="Cit.*"
         )
         self.assertEqual(df.index.tolist(), ["Luc", "Lea", "Laura", "Leon"])
         self.assertEqual(df.columns.tolist(), ["City"])
