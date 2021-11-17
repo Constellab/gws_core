@@ -269,7 +269,6 @@ class Experiment(Viewable, TaggableModel):
                 "uri": self.protocol_model.uri,
                 "typing_name": self.protocol_model.process_typing_name
             },
-            "status": self.status
         })
 
         if deep:

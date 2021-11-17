@@ -158,7 +158,7 @@ class ExperimentService(BaseService):
         # Save the experiment in central
         CentralService.save_experiment(experiment.study.uri, experiment.to_json())
 
-        return Experiment
+        return experiment
 
     ################################### GET  ##############################
 

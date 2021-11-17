@@ -22,7 +22,7 @@ class ExternalApiService:
         """
         if headers is None:
             headers = {}
-        return requests.post(url, data=body, headers=headers)
+        return requests.post(url, json=body, headers=headers)
 
     @classmethod
     def put(cls, url: str, body: Dict, headers: Dict[str, str] = None) -> Response:
@@ -31,7 +31,7 @@ class ExternalApiService:
         """
         if headers is None:
             headers = {}
-        return requests.put(url, data=body, headers=headers)
+        return requests.put(url, json=body, headers=headers)
 
     @classmethod
     def get(cls, url: str, headers: Dict[str, str] = None) -> Response:
