@@ -23,7 +23,7 @@ class CentralService(BaseService):
     _api_key_header_key: str = 'Authorization'
     _api_key_header_prefix: str = 'api-key '
     # Key to set the user in the request
-    _user_id_header_key: str = 'User '
+    _user_id_header_key: str = 'User'
 
     @classmethod
     def check_api_key(cls, api_key: str) -> bool:
