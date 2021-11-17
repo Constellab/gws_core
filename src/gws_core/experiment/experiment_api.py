@@ -89,7 +89,7 @@ def validate_an_experiment(uri: str,
     - **uri**: the uri of the experiment
     """
 
-    return ExperimentService.validate_experiment(uri=uri, study_dto=study_dto).to_json(deep=True)
+    return ExperimentService.validate_experiment_send_to_central(uri=uri, study_dto=study_dto).to_json(deep=True)
 
 
 @core_app.put("/experiment/{uri}/protocol", tags=["Experiment"], summary="Update an experiment's protocol")

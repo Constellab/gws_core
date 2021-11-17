@@ -10,6 +10,7 @@ from math import exp
 from posix import listdir
 from typing import Any, Coroutine, Dict, List, Type, Union
 
+from gws_core.central.central_service import CentralService
 from gws_core.study.study_dto import StudyDto
 from peewee import ModelSelect
 
@@ -148,6 +149,16 @@ class ExperimentService(BaseService):
                             user=user)
 
         return experiment
+
+    @classmethod
+    @transaction()
+    def validate_experiment_send_to_central(cls, uri: str, study_dto: StudyDto = None) -> Experiment:
+        experiment = cls.validate_experiment(uri, study_dto)
+
+        # Save the experiment in central
+        CentralService.save_experiment(experiment.study.uri, experiment.to_json())
+
+        return Experiment
 
     ################################### GET  ##############################
 

@@ -31,3 +31,4 @@ class GWSException(Enum):
     EXPERIMENT_STOPPED_MANUALLY = "Experiment manually stopped by a user."
     EXPERIMENT_ERROR_BEFORE_RUN = "Error before running the experiment."
     TASK_CHECK_BEFORE_STOP = "Check before task returned false. Reason: {{message}}"
+    EXPERIMENT_VALIDATE_RUNNING = "Can't validate a running experiment"
