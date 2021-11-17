@@ -3,10 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from peewee import BooleanField, CharField
+from peewee import BooleanField, CharField, ForeignKeyField
 
 from ..model.typing_register_decorator import typing_registrator
 from ..model.viewable import Viewable
+from ..user.user import User
 
 
 @typing_registrator(unique_name="Study", object_type="MODEL", hide=True)
@@ -16,6 +17,7 @@ class Study(Viewable):
     """
     title: str = CharField(null=False)
     description: str = CharField(null=False)
+    owner: User = ForeignKeyField(User, null=False)
 
     _table_name = 'gws_study'
 

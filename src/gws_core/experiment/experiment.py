@@ -8,6 +8,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING, List, TypedDict, final
 
+from gws_core.core.exception.gws_exceptions import GWSException
 from peewee import BooleanField, DoubleField, ForeignKeyField
 
 from ..core.classes.enum_field import EnumField
@@ -268,7 +269,6 @@ class Experiment(Viewable, TaggableModel):
                 "uri": self.protocol_model.uri,
                 "typing_name": self.protocol_model.process_typing_name
             },
-            "status": self.status
         })
 
         if deep:
@@ -285,7 +285,8 @@ class Experiment(Viewable, TaggableModel):
         if self.is_validated:
             return
         if self.is_running:
-            raise BadRequestException("Can't validate a running experiment")
+            raise BadRequestException(GWSException.EXPERIMENT_VALIDATE_RUNNING.value,
+                                      unique_code=GWSException.EXPERIMENT_VALIDATE_RUNNING.name)
 
         if self.study is None:
             raise BadRequestException("The experiment must be linked to a study before validating it")

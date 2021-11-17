@@ -22,7 +22,16 @@ class ExternalApiService:
         """
         if headers is None:
             headers = {}
-        return requests.post(url, data=body, headers=headers)
+        return requests.post(url, json=body, headers=headers)
+
+    @classmethod
+    def put(cls, url: str, body: Dict, headers: Dict[str, str] = None) -> Response:
+        """
+        Make an HTTP put request
+        """
+        if headers is None:
+            headers = {}
+        return requests.put(url, json=body, headers=headers)
 
     @classmethod
     def get(cls, url: str, headers: Dict[str, str] = None) -> Response:
@@ -32,3 +41,12 @@ class ExternalApiService:
         if headers is None:
             headers = {}
         return requests.get(url, headers=headers)
+
+    @classmethod
+    def delete(cls, url: str, headers: Dict[str, str] = None) -> Response:
+        """
+        Make an HTTP get request
+        """
+        if headers is None:
+            headers = {}
+        return requests.delete(url, headers=headers)

@@ -20,7 +20,10 @@ class CentralService(BaseService):
 
     # external lab route on central
     _external_labs_route: str = 'external-labs'
-    _api_key_header: str = 'api-key'
+    _api_key_header_key: str = 'Authorization'
+    _api_key_header_prefix: str = 'api-key '
+    # Key to set the user in the request
+    _user_id_header_key: str = 'User'
 
     @classmethod
     def check_api_key(cls, api_key: str) -> bool:
@@ -56,13 +59,22 @@ class CentralService(BaseService):
         """
         user: User = CurrentUserService.get_and_check_current_user()
         central_api_url: str = cls._get_central_api_url(f"{cls._external_labs_route}/user/{user.uri}/studies")
-        response = ExternalApiService.get(central_api_url, cls._get_api_key_header())
+        response = ExternalApiService.get(central_api_url, cls._get_request_header())
 
         if response.status_code != 200:
-            Logger.error(f"Can't retrieve studies for the user {user.uri}, {user.email}")
-            raise BadRequestException(f"Can't retrieve studies for current user")
+            Logger.error(f"Can't retrieve studies for the user {user.uri}, {user.email}. Error : {response.text}")
+            raise BadRequestException("Can't retrieve studies for current user")
 
         return response.json()
+
+    @classmethod
+    def save_experiment(cls, study_uri: str, experiment: dict) -> None:
+        central_api_url: str = cls._get_central_api_url(f"{cls._external_labs_route}/study/{study_uri}/add-experiment")
+        response = ExternalApiService.put(central_api_url, experiment, cls._get_request_header())
+
+        if response.status_code != 200:
+            Logger.error(f"Can't save the experiment in central. Error : {response.text}")
+            raise BadRequestException("Can't save the experiment in central")
 
     @classmethod
     def _get_central_api_url(cls, route: str) -> str:
@@ -76,8 +88,16 @@ class CentralService(BaseService):
         return central_api_url + route
 
     @classmethod
-    def _get_api_key_header(cls) -> Dict[str, str]:
+    def _get_request_header(cls) -> Dict[str, str]:
         """
-        Return the api key header to authenticate to central api
+        Return the header for a request to central, with Api key and User if exists
         """
-        return {cls._api_key_header: Settings.get_central_api_key()}
+        # Header with the Api Key
+        headers = {cls._api_key_header_key: cls._api_key_header_prefix + Settings.get_central_api_key()}
+
+        user: User = CurrentUserService.get_current_user()
+
+        if user:
+            headers[cls._user_id_header_key] = user.uri
+
+        return headers
