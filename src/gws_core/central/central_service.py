@@ -20,7 +20,8 @@ class CentralService(BaseService):
 
     # external lab route on central
     _external_labs_route: str = 'external-labs'
-    _api_key_header: str = 'api-key'
+    _api_key_header_key: str = 'Authorization'
+    _api_key_header_prefix: str = 'api-key '
 
     @classmethod
     def check_api_key(cls, api_key: str) -> bool:
@@ -59,8 +60,8 @@ class CentralService(BaseService):
         response = ExternalApiService.get(central_api_url, cls._get_api_key_header())
 
         if response.status_code != 200:
-            Logger.error(f"Can't retrieve studies for the user {user.uri}, {user.email}")
-            raise BadRequestException(f"Can't retrieve studies for current user")
+            Logger.error(f"Can't retrieve studies for the user {user.uri}, {user.email}. Error : {response.text}")
+            raise BadRequestException("Can't retrieve studies for current user")
 
         return response.json()
 
@@ -80,4 +81,4 @@ class CentralService(BaseService):
         """
         Return the api key header to authenticate to central api
         """
-        return {cls._api_key_header: Settings.get_central_api_key()}
+        return {cls._api_key_header_key: cls._api_key_header_prefix + Settings.get_central_api_key()}

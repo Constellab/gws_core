@@ -1,6 +1,9 @@
 
 from typing import List
 
+from gws_core.core.utils.logger import Logger
+from gws_core.user.current_user_service import CurrentUserService
+from gws_core.user.user import User
 from pydantic.errors import NotNoneError
 
 from ..central.central_service import CentralService
@@ -30,7 +33,8 @@ class StudyService(BaseService):
         central_studies: List[CentralStudy]
         try:
             central_studies = CentralService.get_current_user_studies()
-        except:
+        except Exception as err:
+            Logger.log_exception_stack_trace(err)
             return []
 
         studies_dto: List[StudyDto] = []
@@ -64,4 +68,5 @@ class StudyService(BaseService):
         study.uri = study_dto.uri
         study.title = study_dto.title
         study.description = study_dto.description
+        study.owner = CurrentUserService.get_and_check_current_user()
         return study.save()
