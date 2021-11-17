@@ -141,7 +141,6 @@ class Shell(Task):
                 env=user_env,
                 shell=self._shell_mode,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
             )
 
             tic_a = time.perf_counter()
@@ -153,7 +152,6 @@ class Shell(Task):
                     self.log_info_message("\n".join(stdout))
                     tic_a = time.perf_counter()
                     stdout = []
-
             if stdout:
                 self.log_info_message("\n".join(stdout))
 
