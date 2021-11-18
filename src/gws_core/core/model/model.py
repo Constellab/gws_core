@@ -37,7 +37,7 @@ from .base import Base
 
 
 def format_table_name(model: Type['Model']) -> str:
-    return model._table_name.lower()
+    return model._table_name.lower() if hasattr(model, "_table_name") else None
 
 
 @json_ignore(["id", "hash"])
@@ -76,7 +76,6 @@ class Model(Base, PeeweeModel):
     _data = None
     _is_removable = True
     _db_manager = DbManager
-    _table_name = 'gws_model'
     # Provided at the Class level automatically by the @TypingDecorator
     _typing_name: str = None
     _json_ignore_fields: List[str] = []
@@ -186,7 +185,7 @@ class Model(Base, PeeweeModel):
         Create model table
         """
 
-        if cls.table_exists():
+        if not hasattr(cls, "_table_name") or cls.table_exists():
             return
         super().create_table(*args, **kwargs)
         if cls._default_full_text_column:
