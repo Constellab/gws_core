@@ -60,7 +60,6 @@ class Model(BaseModel, PeeweeModel):
     """
 
     id = CharField(primary_key=True, max_length=36)
-    # id = CharField(null=True, index=True, unique=True)
     creation_datetime = DateTimeField(default=datetime.now)
     save_datetime = DateTimeField()
     is_archived = BooleanField(default=False, index=True)

@@ -418,3 +418,19 @@ class ExperimentService(BaseService):
                 cls.stop_experiment(experiment.id)
             except Exception as err:
                 Logger.error(f'Could not stop experiment {experiment.id}. {str(err)}')
+
+    ################################### COPY  ##############################
+
+    @classmethod
+    @transaction()
+    def copy_experiment(cls, experiment_id: str) -> ProtocolModel:
+        """ Copy the experiment into a new draft experiment
+        """
+        experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
+
+        return cls.create_experiment_from_protocol_model(
+            protocol_model=ProtocolService.copy_protocol(experiment.protocol_model),
+            study=experiment.study,
+            title=experiment.get_title() + " copy",
+            description=experiment.get_description()
+        )

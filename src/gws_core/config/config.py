@@ -158,3 +158,11 @@ class Config(Model):
 
         data["specs"] = json_specs
         return data
+
+    def copy(self) -> 'Config':
+        """Copy the config to a new Config with a new Id
+        """
+
+        new_config: Config = Config()
+        new_config.data = self.data
+        return new_config

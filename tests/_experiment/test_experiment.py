@@ -18,7 +18,6 @@ from gws_core.impl.robot.robot_protocol import (CreateSimpleRobot,
 from gws_core.io.io_spec import IOSpecClass
 from gws_core.process.process_model import ProcessStatus
 from gws_core.study.study_dto import StudyDto
-from gws_core.task.task_input_model import TaskInputModel
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -223,3 +222,22 @@ class TestExperiment(BaseTestCase):
 
         with self.assertRaises(ResourceUsedInAnotherExperimentException):
             experiment.reset()
+
+    async def test_protocol_copy(self):
+
+        experiment: Experiment = ExperimentService.create_experiment_from_protocol_type(RobotWorldTravelProto)
+
+        await ExperimentService.run_experiment(experiment)
+
+        protocol_count = ProtocolModel.select().count()
+        task_model = TaskModel.select().count()
+        resource_count = ResourceModel.select().count()
+
+        experiment_copy = ExperimentService.copy_experiment(experiment.id)
+
+        self.assertEqual(ProtocolModel.select().count(), protocol_count * 2)
+        self.assertEqual(TaskModel.select().count(), task_model * 2)
+        self.assertEqual(ResourceModel.select().count(), resource_count)
+
+        await ExperimentService.run_experiment(experiment_copy)
+        self.assertEqual(ResourceModel.select().count(), resource_count * 2)

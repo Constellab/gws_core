@@ -277,3 +277,11 @@ class ProtocolService(BaseService):
                 protocol_type.get_model_types_array(), protocol_type.to_json())
 
         return tree.sub_trees
+
+    @classmethod
+    @transaction()
+    def copy_protocol(cls, protocol_model: ProtocolModel) -> ProtocolModel:
+        new_protocol_model: ProtocolModel = ProcessFactory.copy_protocol(protocol_model)
+        new_protocol_model.save_full()
+        new_protocol_model.reset()
+        return new_protocol_model

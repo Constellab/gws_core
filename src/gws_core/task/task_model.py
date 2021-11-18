@@ -49,7 +49,7 @@ class TaskModel(ProcessModel):
             self._init_io()
 
     def _init_io(self):
-        task_type: Type[Task] = self._get_process_type()
+        task_type: Type[Task] = self.get_process_type()
 
         # create the input ports from the Task input specs
         for k in task_type.input_specs:
@@ -81,7 +81,7 @@ class TaskModel(ProcessModel):
         self._init_io()
 
     def _create_task_instance(self) -> Task:
-        return self._get_process_type()()
+        return self.get_process_type()()
 
     def is_protocol(self) -> bool:
         return False
@@ -130,7 +130,7 @@ class TaskModel(ProcessModel):
         params: ConfigParamsDict = self.config.get_values()
         inputs: Dict[str, Resource] = self.inputs.get_resources(new_instance=True)
 
-        task_runner: TaskRunner = TaskRunner(self._get_process_type(), params, inputs)
+        task_runner: TaskRunner = TaskRunner(self.get_process_type(), params, inputs)
         task_runner.set_progress_bar(self.progress_bar)
 
         check_result: CheckBeforeTaskResult

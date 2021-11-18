@@ -97,16 +97,13 @@ class ProtocolModel(ProcessModel):
     def reset(self) -> 'ProtocolModel':
         """
         Reset the protocol
-
-        :return: Returns True if is protocol is successfully reset;  False otherwise
-        :rtype: `bool`
         """
 
         super().reset()
         for process in self.processes.values():
             process.reset()
         self._reset_iofaces()
-        return self.save()
+        return self.save(update_graph=True)
 
     # -- S --
     @transaction()

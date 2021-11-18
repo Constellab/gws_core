@@ -9,9 +9,9 @@ import asyncio
 import inspect
 from abc import abstractmethod
 from enum import Enum
-from typing import TYPE_CHECKING, List, Type, TypedDict, final
+from typing import TYPE_CHECKING, Type, TypedDict, final
 
-from peewee import CharField, ForeignKeyField, IntegerField
+from peewee import CharField, ForeignKeyField
 from starlette_context import context
 
 from ..config.config import Config
@@ -35,7 +35,6 @@ from .process_exception import ProcessRunException
 
 if TYPE_CHECKING:
     from ..protocol.protocol_model import ProtocolModel
-    from ..resource.resource_model import ResourceModel
 
 
 class ProcessStatus(Enum):
@@ -63,7 +62,7 @@ class ProcessModel(Model):
     parent_protocol_id = CharField(max_length=36, null=True, index=True)
     experiment: Experiment = ForeignKeyField(Experiment, null=True, index=True, backref="+")
     instance_name = CharField(null=True)
-    created_by: User = ForeignKeyField(User, null=False, backref='+', )
+    created_by: User = ForeignKeyField(User, null=False, backref='+')
     config: Config = ForeignKeyField(Config, null=False, backref='+')
     progress_bar: ProgressBar = ForeignKeyField(
         ProgressBar, null=True, backref='+')
@@ -362,7 +361,7 @@ class ProcessModel(Model):
         :type user: User
         """
 
-        process_type: Type[Process] = self._get_process_type()
+        process_type: Type[Process] = self.get_process_type()
 
         if not user.has_access(process_type._allowed_user):
             raise UnauthorizedException(
@@ -383,7 +382,7 @@ class ProcessModel(Model):
         if self.instance_name:
             info += f"'{self.instance_name}' "
 
-        return f"{info} ({self._get_process_type().classname()})"
+        return f"{info} ({self.get_process_type().classname()})"
 
     def get_instance_name_context(self) -> str:
         """ return the instance name in the context
@@ -395,7 +394,7 @@ class ProcessModel(Model):
 
         return self.instance_name
 
-    def _get_process_type(self) -> Type[Process]:
+    def get_process_type(self) -> Type[Process]:
         return TypingManager.get_type_from_name(self.process_typing_name)
 
     ########################### JSON #################################
