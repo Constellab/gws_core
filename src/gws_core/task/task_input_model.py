@@ -3,7 +3,6 @@
 from typing import List
 
 from peewee import BooleanField, CharField, CompositeKey, ForeignKeyField
-from peewee import Model as PeeweeModel
 from peewee import ModelDelete, ModelSelect
 
 from ..core.model.base_model import BaseModel

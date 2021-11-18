@@ -14,7 +14,7 @@ class TestPlug(BaseTestCase):
         robot_model: ResourceModel = ResourceModel.from_resource(robot)
         robot_model.save()
 
-        task_tester = TaskRunner(Source, {'resource_uri': robot_model.uri, 'resource_typing_name': Robot._typing_name})
+        task_tester = TaskRunner(Source, {'resource_uri': robot_model.uri})
 
         outputs: TaskOutputs = await task_tester.run()
 

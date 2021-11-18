@@ -43,7 +43,6 @@ class ProgressBar(Model):
     _MAX_VALUE = 100.0
     _MIN_VALUE = 0.0
 
-    _is_removable = False
     _table_name = "gws_process_progress_bar"
     _max_message_stack_length = 64
 
@@ -175,7 +174,7 @@ class ProgressBar(Model):
         _max = self.data["max_value"]
         if _max == 0.0:
             self.start()
-        #if value >= self._MAX_VALUE:
+        # if value >= self._MAX_VALUE:
         #     value = self._MAX_VALUE - 1e-6  # prevent blocking the progress_bar
         if value < self._MIN_VALUE:
             value = self._MIN_VALUE

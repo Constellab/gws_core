@@ -67,9 +67,6 @@ class Model(BaseModel, PeeweeModel):
     hash = CharField(null=True)
     data: Dict[str, Any] = JSONField(null=True)
 
-    _data = None
-    _is_removable = True
-    _db_manager = DbManager
     # Provided at the Class level automatically by the @TypingDecorator
     _typing_name: str = None
     _json_ignore_fields: List[str] = []

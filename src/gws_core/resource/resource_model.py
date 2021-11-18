@@ -69,6 +69,8 @@ class ResourceModel(Model, TaggableModel, Generic[ResourceType]):
 
     fs_node_model: FSNodeModel = ForeignKeyField(FSNodeModel, null=True, index=True, backref="+")
 
+    # _default_full_text_column = "data,tags"
+
     _table_name = 'gws_resource'
     _resource: ResourceType = None
 
@@ -104,8 +106,6 @@ class ResourceModel(Model, TaggableModel, Generic[ResourceType]):
             return
 
         super().drop_table(*args, **kwargs)
-        # TaskResource.drop_table()
-        # ExperimentResource.drop_table()
 
     @classmethod
     def select_by_resource_typing_name(cls, resource_typing_name: str) -> ModelSelect:

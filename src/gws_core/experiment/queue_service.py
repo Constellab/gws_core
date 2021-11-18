@@ -144,9 +144,9 @@ class QueueService(BaseService):
 
             try:
                 experiment.reset()
-            except:
+            except Exception as err:
                 # printing stack trace
-                traceback.print_exc()
+                Logger.log_exception_stack_trace(err)
                 raise BadRequestException(
                     f"Error while resetting experiment {experiment.uri} before adding it to the queue")
 

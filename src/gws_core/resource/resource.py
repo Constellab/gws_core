@@ -14,7 +14,6 @@ from ..resource.view_decorator import view
 
 if TYPE_CHECKING:
     from ..impl.file.fs_node import FSNode
-    from .resource_model import ResourceModel
 
 # Typing names generated for the class resource
 CONST_RESOURCE_TYPING_NAME = "RESOURCE.gws_core.Resource"

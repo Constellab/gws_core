@@ -10,7 +10,6 @@ from gws_core import (BaseTestCase, Config, Experiment, ExperimentService,
                       ExperimentStatus, GTest, ProcessModel, ProgressBar,
                       ProtocolModel, ProtocolService, Robot, RobotFood,
                       RobotMove, Settings, TaskModel, Typing)
-
 from tests.protocol_examples import (TestNestedProtocol,
                                      TestRobotWithSugarProtocol,
                                      TestSimpleProtocol)
@@ -209,8 +208,7 @@ class TestProtocol(BaseTestCase):
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
             protocol_model=protocol)
 
-        experiment = await ExperimentService.run_experiment(
-            experiment=experiment, user=GTest.user)
+        experiment = await ExperimentService.run_experiment(experiment=experiment)
 
         eat_1: TaskModel = experiment.protocol_model.get_process('eat_1')
         food: RobotFood = eat_1.inputs.get_resource_model('food')
@@ -229,9 +227,3 @@ class TestProtocol(BaseTestCase):
         robot_output_2: Robot = eat_2.outputs.get_resource_model('robot').get_resource()
         # If this doesn't work, this mean that the process eat_2 was not called because it misses an optional input
         self.assertEqual(robot_output_2.weight, robot_output.weight + 5)  # 5 = food weight
-
-        # Check that eat 3 was called event if it is connected to empty_food and food input is None
-        eat_3: TaskModel = experiment.protocol_model.get_process('eat_3')
-        robot_output_3: Robot = eat_3.outputs.get_resource_model('robot').get_resource()
-        # If this doesn't work, this mean that the process eat_2 was not called because it misses an optional input
-        self.assertEqual(robot_output_3.weight, robot_output_2.weight + 7)  # 7 = food weight

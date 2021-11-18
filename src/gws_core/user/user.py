@@ -56,7 +56,6 @@ class User(Model):
     is_http_authenticated = BooleanField(default=False)
     is_console_authenticated = BooleanField(default=False)
 
-    _is_removable = False
     _table_name = 'gws_user'
 
     def __init__(self, *args, **kwargs):

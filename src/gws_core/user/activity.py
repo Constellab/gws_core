@@ -26,7 +26,6 @@ class Activity(Model):
     object_type = CharField(null=True, index=True)
     object_uri = CharField(null=True, index=True)
 
-    _is_removable = False
     _table_name = "gws_user_activity"
 
     CREATE = "CREATE"

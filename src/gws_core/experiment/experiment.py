@@ -219,12 +219,12 @@ class Experiment(Model, TaggableModel):
             raise ResourceUsedInAnotherExperimentException(
                 other_experiment.resource_model.uri, other_experiment.experiment.get_short_name())
 
+        if self.protocol_model:
+            self.protocol_model.reset()
+
         # Delete all the resources previously generated to clear the DB
         for output_resource in output_resources:
             output_resource.delete_instance()
-
-        if self.protocol_model:
-            self.protocol_model.reset()
 
         self.status = ExperimentStatus.DRAFT
         self.score = None

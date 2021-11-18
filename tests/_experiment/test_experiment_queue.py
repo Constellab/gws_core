@@ -9,6 +9,7 @@ from math import exp
 from gws_core import (BaseTestCase, Experiment, ExperimentService,
                       ExperimentStatus, GTest, QueueService, RobotService,
                       Settings)
+from gws_core.impl.robot.robot_protocol import CreateSimpleRobot
 from gws_core.study.study_dto import StudyDto
 
 settings = Settings.retrieve()
@@ -21,10 +22,9 @@ class TestExperiment(BaseTestCase):
 
     async def test_service(self):
         GTest.print("ExperimentService")
-        proto = RobotService.create_robot_world_travel()
-        experiment = ExperimentService.create_experiment_from_protocol_model(protocol_model=proto)
-        c = Experiment.select().count()
-        self.assertEqual(c, 1)
+        experiment = ExperimentService.create_experiment_from_protocol_type(CreateSimpleRobot)
+        count = Experiment.select().count()
+        self.assertEqual(count, 1)
 
         QueueService.init(tick_interval=3, daemon=False)  # tick each 3 second
 

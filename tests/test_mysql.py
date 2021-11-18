@@ -8,6 +8,7 @@ import unittest
 
 from gws_core import (BaseTestCase, File, FileService, FSNodeModel, GTest,
                       LocalFileStore, MySQLService)
+from gws_core.comment.comment_service import CommentService
 from gws_core.core.db.db_manager import DbManager
 
 
@@ -21,11 +22,12 @@ class TestMySQLDumpLoad(BaseTestCase):
             return
 
         # insert data in comment table
-        f: File = LocalFileStore.get_default_instance().create_empty_file("./oui")
-        file_model: FSNodeModel = FileService.create_file_model(file=f)
+        file: File = LocalFileStore.get_default_instance().create_empty_file("./oui")
+        file_model: FSNodeModel = FileService.create_file_model(file=file)
 
-        c = file_model.add_comment("The sky is blue")
-        file_model.add_comment("The sky is blue and the ocean is also blue", reply_to=c)
+        comment = CommentService.add_comment_to_model(file_model, "The sky is blue")
+        CommentService.add_comment_to_model(
+            file_model, "The sky is blue and the ocean is also blue", reply_to_uri=comment.uri)
         file_model.save()
 
         # dump db

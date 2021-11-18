@@ -76,7 +76,6 @@ class ProcessModel(Model):
     _parent_protocol: ProtocolModel = None
     _inputs: Inputs = None
     _outputs: Outputs = None
-    _is_removable = False
 
     def __init__(self, *args, **kwargs):
         """
