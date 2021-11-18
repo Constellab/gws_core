@@ -266,12 +266,12 @@ from .task.task_interface import ITask as ITask
 from .task.task_io import TaskInputs as TaskInputs
 from .task.task_io import TaskOutputs as TaskOutputs
 from .task.task_model import TaskModel as TaskModel
+from .task.task_runner import TaskRunner as TaskRunner
 from .task.task_service import TaskService as TaskService
 from .task.task_typing import TaskTyping as TaskTyping
 # Core > Test
 from .test.base_test_case import BaseTestCase as BaseTestCase
 from .test.gtest import GTest as GTest
-from .test.task_tester import TaskTester as TaskTester
 from .test.view_tester import ViewTester as ViewTester
 # User
 from .user.activity import Activity as Activity

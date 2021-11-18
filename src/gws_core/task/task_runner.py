@@ -7,16 +7,17 @@ from typing import Dict, List, Type
 
 from ..config.config import Config
 from ..config.config_types import ConfigParams, ConfigParamsDict, ParamValue
-from ..io.io_exception import MissingInputResourcesException
-from ..io.io_spec import IOSpecClass
+from ..io.io_exception import (InvalidOutputsException,
+                               MissingInputResourcesException)
+from ..io.io_spec import IOSpecClass, IOSpecsHelper
 from ..progress_bar.progress_bar import ProgressBar
 from ..resource.resource import Resource
 from ..task.task import CheckBeforeTaskResult, Task
 from ..task.task_io import TaskInputs, TaskOutputs
 
 
-class TaskTester():
-    """This class is meant to be used in unit tests to test a Task
+class TaskRunner():
+    """This is used to run a Task. It can be used in unit test to test a Task.
 
     Simply provide the task type, config params and inputs. then you can call the run method to test your task
     and check outputs
@@ -32,6 +33,9 @@ class TaskTester():
     _inputs: Dict[str, Resource]
     _outputs: TaskOutputs
 
+    _task: Task
+    _progress_bar: ProgressBar
+
     def __init__(self, task_type: Type[Task], params: ConfigParamsDict = None, inputs: Dict[str, Resource] = None):
         self._task_type = task_type
 
@@ -45,15 +49,22 @@ class TaskTester():
         else:
             self._inputs = inputs
 
+        self._task = None
+        self._outputs = None
+        self._progress_bar = None
+
     def check_before_run(self) -> CheckBeforeTaskResult:
+        """This method check the config and inputs and then execute the check before run of the task
+
+        :return: [description]
+        :rtype: CheckBeforeTaskResult
+        """
         config_params: ConfigParams = self._get_and_check_config()
 
         # get the input without checking them
-        inputs: TaskInputs = TaskInputs()
-        for key, item in self._inputs.items():
-            inputs[key] = item
+        inputs: TaskInputs = self._get_and_check_input()
 
-        task: Task = self._instantiate_task()
+        task: Task = self._get_task_instance()
         task._status_ = 'CHECK_BEFORE_RUN'
 
         return task.check_before_run(config_params, inputs)
@@ -66,17 +77,18 @@ class TaskTester():
         """
         config_params: ConfigParams = self._get_and_check_config()
         inputs: TaskInputs = self._get_and_check_input()
-        task: Task = self._instantiate_task()
+        task: Task = self._get_task_instance()
         task._status_ = 'RUN'
 
-        self._outputs = await task.run(config_params, inputs)
-        return self._outputs
+        task_outputs: TaskOutputs = await task.run(config_params, inputs)
+
+        return self._check_outputs(task_outputs)
 
     async def run_after_task(self) -> None:
-        task: Task = self._instantiate_task()
+        task: Task = self._get_task_instance()
         task._status_ = 'RUN_AFTER_TASK'
 
-        self._outputs = await task.run_after_task()
+        await task.run_after_task()
 
     def set_param(self, param_name: str, config_param: ParamValue) -> None:
         self._params[param_name] = config_param
@@ -87,12 +99,20 @@ class TaskTester():
     def get_output(self, output_name: str) -> Resource:
         return self._outputs[output_name]
 
-    def _instantiate_task(self) -> Task:
-        task: Task = self._task_type()
+    def get_outputs(self) -> TaskOutputs:
+        return self._outputs
 
-        # set the progress bar
-        task._progress_bar_ = ProgressBar()
-        return task
+    def _get_task_instance(self) -> Task:
+        # create the task only if it doesn't exists
+        if self._task is None:
+            self._task = self._task_type()
+
+            if self._progress_bar is None:
+                self._progress_bar = ProgressBar()
+
+            self._task._progress_bar_ = self._progress_bar
+
+        return self._task
 
     def _get_and_check_input(self) -> TaskInputs:
         """Check and convert input to TaskInputs]
@@ -135,3 +155,54 @@ class TaskTester():
         config.set_specs(self._task_type.config_specs)
         config.set_values(self._params)
         return config.get_and_check_values()
+
+    def _check_outputs(self, task_outputs: TaskOutputs) -> TaskOutputs:
+        """Method that check if the task outputs
+
+        :param task_outputs: outputs to check
+        :type task_outputs: TaskOutputs
+        :raises InvalidOutputException: raised if the output are invalid
+        """
+
+        if task_outputs is None:
+            task_outputs = {}
+
+        if not isinstance(task_outputs, dict):
+            raise Exception('The task output is not a dictionary')
+
+        error_text: str = ''
+
+        verified_outputs: TaskOutputs = {}
+
+        for key, spec in self._task_type.output_specs.items():
+            # If the resource for the output port was provided
+            if key in task_outputs:
+                resource: Resource = task_outputs[key]
+
+                if resource is None:
+                    error_text = error_text + f"The output '{key}' is None."
+
+                if not isinstance(resource, Resource):
+                    error_text = error_text + \
+                        f"The output '{key}' of type '{type(resource)}' is not a resource. It must extend the Resource class"
+
+                if not IOSpecsHelper.spec_is_compatible(type(resource), spec):
+                    error_text = error_text + \
+                        f"The output '{key}' of type '{type(resource)}' is not a compatble with the output specs."
+
+                verified_outputs[key] = resource
+
+            # If the output is missing
+            else:
+                error_text = error_text + f"The output '{key}' was not provided."
+
+        # save the verified outputs before thowing an error
+        self._outputs = verified_outputs
+
+        if error_text and len(error_text) > 0:
+            raise InvalidOutputsException(error_text)
+
+        return self._outputs
+
+    def set_progress_bar(self, progress_bar: ProgressBar) -> None:
+        self._progress_bar = progress_bar

@@ -188,7 +188,7 @@ class IO(Base, Generic[PortType]):
 
     def get_resource_models(self) -> Dict[str, ResourceModel]:
         """
-        Returns the resources of all the ports.
+        Returns the resource models of all the ports.
 
         :return: List of resources
         :rtype: list
@@ -216,6 +216,22 @@ class IO(Base, Generic[PortType]):
         """
         port: PortType = self.get_port(port_name)
         return port.resource_model
+
+    def get_resources(self, new_instance: bool = False) -> Dict[str, Resource]:
+        """
+        Returns the resources of all the ports.
+
+        :return: List of resources
+        :rtype: list
+        """
+
+        resources: Dict[str, Resource] = {}
+        for key, port in self._ports.items():
+            if port.is_empty:
+                resources[key] = None
+            else:
+                resources[key] = port.get_resource(new_instance)
+        return resources
 
     ################################################### JSON ########################################
 
@@ -280,30 +296,6 @@ class Inputs(IO[InPort]):
                 return False
 
         return True
-
-    def get_and_check_task_inputs(self) -> TaskInputs:
-        """Get the task inputs and check all the mandatory inputs are provided
-
-        :return: [description]
-        :rtype: ProcessIO
-        """
-        missing_resource: List[str] = []
-        task_io: TaskInputs = TaskInputs()
-        for key, port in self.ports.items():
-
-            if port.is_empty:
-                # If the port is empty and not optional, add an error
-                if not port.is_optional:
-                    missing_resource.append(key)
-                continue
-            # get the port resource and force a new instance to prevent modifing the same
-            # resource on new task
-            task_io[key] = port.get_resource(new_instance=True)
-
-        if len(missing_resource) > 0:
-            raise MissingInputResourcesException(port_names=missing_resource)
-
-        return task_io
 
 # ####################################################################
 #

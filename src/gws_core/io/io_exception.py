@@ -71,7 +71,7 @@ class ImcompatiblePortsException(BadRequestException):
                          "in_port_name": in_port.name, "in_port_types": in_port.resource_spec.to_resource_types()})
 
 
-class InvalidOutputException(Exception):
+class InvalidOutputsException(Exception):
     pass
 
 

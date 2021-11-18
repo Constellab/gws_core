@@ -336,7 +336,7 @@ class ProcessModel(Model):
         if len(aws):
             await asyncio.gather(*aws)
 
-    async def _run_before_task(self):
+    async def _run_before_task(self) -> None:
         self._switch_to_current_progress_bar()
         self.mark_as_started()
 
@@ -355,8 +355,6 @@ class ProcessModel(Model):
         # Save the process (to save the new data)
         self.save_after_task()
 
-        # TODO a vérifier, mettre au moins un log quand c'est appelé ?
-        # ça veut dire qu'on a pas renseigné un outputs
         if not self.outputs.is_ready:
             return
 

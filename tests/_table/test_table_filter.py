@@ -9,7 +9,7 @@ from gws_core import (BaseTestCase, BoolParam, ConfigParams, Experiment,
                       ExperimentService, File, GTest, JSONDict, Resource,
                       Settings, Shell, StrParam, Table, TableFilter,
                       TableImporter, TaskInputs, TaskModel, TaskOutputs,
-                      TaskTester, task_decorator)
+                      TaskRunner, task_decorator)
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -21,7 +21,7 @@ class TestTableFilter(BaseTestCase):
         GTest.print("Multi Index Table")
 
         file = File(path=os.path.join(testdata_dir, "multi_index_data.csv"))
-        tester = TaskTester(
+        tester = TaskRunner(
             params={"header": 0, "index_columns": ["Name"]},
             inputs={"file": file},
             task_type=TableImporter,
@@ -31,7 +31,7 @@ class TestTableFilter(BaseTestCase):
         print(table)
 
         # filter columns
-        tester = TaskTester(
+        tester = TaskRunner(
             params={
                 "axis_name_filter": [{"axis_type": "column", "value": "Ag.*"}]
             },
@@ -45,7 +45,7 @@ class TestTableFilter(BaseTestCase):
         print(filtered_table)
 
         # filter columns and rows
-        tester = TaskTester(
+        tester = TaskRunner(
             params={
                 "axis_name_filter": [
                     {"axis_type": "column", "value": "Ag.*"},
@@ -61,7 +61,7 @@ class TestTableFilter(BaseTestCase):
         self.assertEqual(filtered_table.row_names, ["Luc", "Lea"])
 
         # filter aggregation
-        tester = TaskTester(
+        tester = TaskRunner(
             params={
                 "aggregation_filter": [
                     {"direction": "horizontal", "function": "var", "comparator": ">=", "value": 50},
@@ -76,7 +76,7 @@ class TestTableFilter(BaseTestCase):
         self.assertEqual(filtered_table.column_names, ["Age", "Sex", "City", "Weight"])
 
         # filter numeric data
-        tester = TaskTester(
+        tester = TaskRunner(
             params={
                 "numeric_data_filter": [
                     {"column_name": "Age|Weight", "comparator": ">=", "value": 30},
@@ -91,7 +91,7 @@ class TestTableFilter(BaseTestCase):
         self.assertEqual(filtered_table.column_names, ["Age", "Sex", "City", "Weight"])
 
         # filter str data
-        tester = TaskTester(
+        tester = TaskRunner(
             params={
                 "text_data_filter": [
                     {"column_name": "Sex", "comparator": "!=", "value": "M"},
