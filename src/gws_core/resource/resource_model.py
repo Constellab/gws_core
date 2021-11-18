@@ -175,8 +175,8 @@ class ResourceModel(Model, TaggableModel, Generic[ResourceType]):
         """
         resource_type: Type[ResourceType] = self._get_resource_type()
         resource: ResourceType = resource_type()
-        # Pass the model uri to the resource
-        resource._model_uri = self.uri
+        # Pass the model id to the resource
+        resource._model_id = self.id
 
         self.send_fields_to_resource(resource)
         return resource
@@ -199,7 +199,7 @@ class ResourceModel(Model, TaggableModel, Generic[ResourceType]):
             node: FSNode = LocalFileStore.get_default_instance().add_node(resource, resource.get_name())
             fs_node_model: FSNodeModel = FSNodeModel()
             fs_node_model.path = node.path
-            fs_node_model.file_store_uri = node.file_store_uri
+            fs_node_model.file_store_id = node.file_store_id
             resource_model.fs_node_model = fs_node_model
             resource = node
 
@@ -298,7 +298,7 @@ class ResourceModel(Model, TaggableModel, Generic[ResourceType]):
         kv_store: KVStore = KVStore(self.kv_store_path)
 
         # Lock the kvstore so the file can't be updated
-        kv_store.lock(KVStore.get_full_file_path(file_name=self.uri, with_extension=False))
+        kv_store.lock(KVStore.get_full_file_path(file_name=self.id, with_extension=False))
         return kv_store
 
     def _get_or_create_kv_store(self) -> KVStore:
@@ -312,7 +312,7 @@ class ResourceModel(Model, TaggableModel, Generic[ResourceType]):
             return kv_store
 
         # Create the KV store
-        kv_store = KVStore.from_filename(self.uri)
+        kv_store = KVStore.from_filename(self.id)
 
         self.kv_store_path = kv_store.get_full_path_without_extension()
         return kv_store
@@ -337,9 +337,9 @@ class ResourceModel(Model, TaggableModel, Generic[ResourceType]):
         _json["tags"] = self.get_tags_json()
         if self.experiment:
             _json.update({
-                "experiment": {"uri": self.experiment.uri},
+                "experiment": {"id": self.experiment.id},
                 "task": {
-                    "uri": self.task_model.uri,
+                    "id": self.task_model.id,
                     "typing_name": self.task_model.process_typing_name,
                 },
             })

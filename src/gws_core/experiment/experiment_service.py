@@ -109,8 +109,8 @@ class ExperimentService(BaseService):
     ################################### UPDATE ##############################
 
     @classmethod
-    def update_experiment(cls, uri, experiment_DTO: ExperimentDTO) -> Experiment:
-        experiment: Experiment = Experiment.get_by_uri_and_check(uri)
+    def update_experiment(cls, id, experiment_DTO: ExperimentDTO) -> Experiment:
+        experiment: Experiment = Experiment.get_by_id_and_check(id)
 
         experiment.check_is_updatable()
 
@@ -122,8 +122,8 @@ class ExperimentService(BaseService):
         return experiment
 
     @classmethod
-    def update_experiment_protocol(cls, uri: str, protocol_graph: Dict) -> Experiment:
-        experiment: Experiment = Experiment.get_by_uri_and_check(uri)
+    def update_experiment_protocol(cls, id: str, protocol_graph: Dict) -> Experiment:
+        experiment: Experiment = Experiment.get_by_id_and_check(id)
 
         experiment.check_is_updatable()
         ProtocolService.update_protocol_graph(protocol_model=experiment.protocol_model, graph=protocol_graph)
@@ -133,8 +133,8 @@ class ExperimentService(BaseService):
 
     @classmethod
     @transaction()
-    def validate_experiment(cls, uri: str, study_dto: StudyDto = None) -> Experiment:
-        experiment: Experiment = Experiment.get_by_uri_and_check(uri)
+    def validate_experiment(cls, id: str, study_dto: StudyDto = None) -> Experiment:
+        experiment: Experiment = Experiment.get_by_id_and_check(id)
 
         # set the study if it is provided
         if study_dto is not None:
@@ -145,18 +145,18 @@ class ExperimentService(BaseService):
         user: User = CurrentUserService.get_and_check_current_user()
         ActivityService.add(Activity.VALIDATE_EXPERIMENT,
                             object_type=Experiment.full_classname(),
-                            object_uri=experiment.uri,
+                            object_id=experiment.id,
                             user=user)
 
         return experiment
 
     @classmethod
     @transaction()
-    def validate_experiment_send_to_central(cls, uri: str, study_dto: StudyDto = None) -> Experiment:
-        experiment = cls.validate_experiment(uri, study_dto)
+    def validate_experiment_send_to_central(cls, id: str, study_dto: StudyDto = None) -> Experiment:
+        experiment = cls.validate_experiment(id, study_dto)
 
         # Save the experiment in central
-        CentralService.save_experiment(experiment.study.uri, experiment.to_json())
+        CentralService.save_experiment(experiment.study.id, experiment.to_json())
 
         return experiment
 
@@ -172,8 +172,8 @@ class ExperimentService(BaseService):
         return Experiment.count_of_running_experiments()
 
     @classmethod
-    def get_experiment_by_uri(cls, uri: str) -> Experiment:
-        return Experiment.get_by_uri_and_check(uri)
+    def get_experiment_by_id(cls, id: str) -> Experiment:
+        return Experiment.get_by_id_and_check(id)
 
     @classmethod
     def fetch_experiment_list(cls,
@@ -224,20 +224,20 @@ class ExperimentService(BaseService):
     ################################### RUN ##############################
 
     @classmethod
-    async def run_experiment_in_cli(cls, experiment_uri: str, user_uri: str) -> None:
+    async def run_experiment_in_cli(cls, experiment_id: str, user_id: str) -> None:
         """Method called by the cli sub process to run the experiment
         """
-        experiment: Experiment = Experiment.get_by_uri_and_check(experiment_uri)
+        experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
 
         try:
-            user: User = User.get_by_uri_and_check(user_uri)
+            user: User = User.get_by_id_and_check(user_id)
 
             if not user.is_authenticated:
                 raise BadRequestException("The user must be HTTP authenticated")
 
             if experiment.status != ExperimentStatus.WAITING_FOR_CLI_PROCESS:
                 raise Exception(
-                    f"Cannot run the experiment {experiment.uri} as it status was changed before process could run it")
+                    f"Cannot run the experiment {experiment.id} as it status was changed before process could run it")
 
         except Exception as err:
             error_text = GWSException.EXPERIMENT_ERROR_BEFORE_RUN.value + str(err)
@@ -268,12 +268,12 @@ class ExperimentService(BaseService):
         # check experiment status
         experiment.check_is_runnable()
 
-        Logger.info(f"Running experiment : {experiment.uri}")
+        Logger.info(f"Running experiment : {experiment.id}")
 
         ActivityService.add(
             Activity.START,
             object_type=experiment.full_classname(),
-            object_uri=experiment.uri,
+            object_id=experiment.id,
             user=user
         )
 
@@ -321,15 +321,15 @@ class ExperimentService(BaseService):
 
         if experiment.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS:
             raise BadRequestException(
-                f"A CLI process was already created to run the experiment {experiment.uri}")
+                f"A CLI process was already created to run the experiment {experiment.id}")
 
         cmd = [
             "python3",
             os.path.join(cwd_dir, "manage.py"),
             "--cli",
             "gws_core.cli.run_experiment",
-            "--experiment-uri", experiment.uri,
-            "--user-uri", user.uri
+            "--experiment-id", experiment.id,
+            "--user-id", user.id
         ]
 
         if settings.is_test:
@@ -362,8 +362,8 @@ class ExperimentService(BaseService):
             raise exception
 
     @classmethod
-    def stop_experiment(cls, uri: str) -> Experiment:
-        experiment: Experiment = Experiment.get_by_uri_and_check(uri)
+    def stop_experiment(cls, id: str) -> Experiment:
+        experiment: Experiment = Experiment.get_by_id_and_check(id)
 
         experiment.check_is_stopable()
 
@@ -377,7 +377,7 @@ class ExperimentService(BaseService):
         ActivityService.add(
             Activity.STOP,
             object_type=experiment.full_classname(),
-            object_uri=experiment.uri
+            object_id=experiment.id
         )
 
         experiment.mark_as_error({"detail": GWSException.EXPERIMENT_STOPPED_MANUALLY.value,
@@ -420,6 +420,6 @@ class ExperimentService(BaseService):
         experiments: List[Experiment] = cls.get_all_running_experiments()
         for experiment in experiments:
             try:
-                cls.stop_experiment(experiment.uri)
+                cls.stop_experiment(experiment.id)
             except Exception as err:
-                Logger.error(f'Could not stop experiment {experiment.uri}. {str(err)}')
+                Logger.error(f'Could not stop experiment {experiment.id}. {str(err)}')

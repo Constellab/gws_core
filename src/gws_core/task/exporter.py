@@ -138,8 +138,8 @@ class ResourceExporter(Task):
 
         # Retrieve the file store
         file_store: FileStore
-        if params.value_is_set('file_store_uri'):
-            file_store = LocalFileStore.get_by_uri_and_check(params.get('file_store_uri'))
+        if params.value_is_set('file_store_id'):
+            file_store = LocalFileStore.get_by_id_and_check(params.get('file_store_id'))
         else:
             file_store = FileStore.get_default_instance()
 

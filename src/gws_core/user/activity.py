@@ -24,7 +24,7 @@ class Activity(Model):
     user = ForeignKeyField(User, null=False, index=True)
     activity_type = CharField(null=False, index=True)
     object_type = CharField(null=True, index=True)
-    object_uri = CharField(null=True, index=True)
+    object_id = CharField(null=True, index=True)
 
     _table_name = "gws_user_activity"
 
@@ -49,14 +49,14 @@ class Activity(Model):
         return None
 
     @classmethod
-    def add(cls, activity_type: str, *, object_type: str = None, object_uri: str = None, user: User = None):
+    def add(cls, activity_type: str, *, object_type: str = None, object_id: str = None, user: User = None):
         if user is None:
             user = CurrentUserService.get_and_check_current_user()
         activity = Activity(
             user=user,
             activity_type=activity_type,
             object_type=object_type,
-            object_uri=object_uri
+            object_id=object_id
         )
         activity.save()
 
@@ -76,7 +76,7 @@ class Activity(Model):
 
         _json = super().to_json(deep=deep, **kwargs)
         _json["user"] = {
-            "uri": self.user.uri,
+            "id": self.user.id,
             "first_name": self.user.first_name,
             "last_name": self.user.last_name
         }

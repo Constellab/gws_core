@@ -15,30 +15,30 @@ from ..user.user_dto import UserData
 from .protocol_service import ProtocolService
 
 
-@core_app.get("/protocol/{uri}", tags=["Protocol"], summary="Get a protocol")
-async def get_a_protocol(uri: str,
+@core_app.get("/protocol/{id}", tags=["Protocol"], summary="Get a protocol")
+async def get_a_protocol(id: str,
                          _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve a protocol
 
-    - **uri**: the uri of the protocol
+    - **id**: the id of the protocol
     """
 
-    proto = ProtocolService.get_protocol_by_uri(uri=uri)
+    proto = ProtocolService.get_protocol_by_id(id=id)
     return proto.to_json(deep=True)
 
 
-@core_app.post("/protocol/{uri}/add-process/{process_typing_name}", tags=["Protocol"],
+@core_app.post("/protocol/{id}/add-process/{process_typing_name}", tags=["Protocol"],
                summary="Add a process to a protocol")
-async def add_process(uri: str,
+async def add_process(id: str,
                       process_typing_name: str,
                       _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Add a process to a protocol
     """
 
-    return ProtocolService.add_process_to_protocol_uri(
-        protocol_uri=uri,
+    return ProtocolService.add_process_to_protocol_id(
+        protocol_id=id,
         process_typing_name=process_typing_name
     ).to_json(deep=True)
 
@@ -72,13 +72,13 @@ async def get_the_list_of_process_grouped(_: UserData = Depends(AuthService.chec
     return ProtocolService.fetch_protocol_type_tree()
 
 
-@core_app.get("/protocol-type/{uri}", tags=["Protocol"], summary="Get a protocol type detail")
-async def get_protocol_type(uri: str,
+@core_app.get("/protocol-type/{id}", tags=["Protocol"], summary="Get a protocol type detail")
+async def get_protocol_type(id: str,
                             _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve a protocol type
 
-    - **uri**: the uri of the protocol type
+    - **id**: the id of the protocol type
     """
 
-    return ProtocolService.get_protocol_type(uri=uri).to_json(deep=True)
+    return ProtocolService.get_protocol_type(id=id).to_json(deep=True)

@@ -66,7 +66,7 @@ class Monitor(Model):
 
     @classmethod
     def get_last(cls):
-        return Monitor.select().order_by(Monitor.id.desc()).get()
+        return Monitor.select().order_by(Monitor.creation_datetime.desc()).get()
 
     @classmethod
     def _tick(cls):

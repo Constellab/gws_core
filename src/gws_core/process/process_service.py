@@ -11,8 +11,8 @@ from ..process.process_model import ProcessModel
 class ProcessService(BaseService):
 
     @classmethod
-    def delete_process_from_uri(cls, typing_name: str, uri: str) -> None:
-        process_model: ProcessModel = cls._get_process_model(typing_name, uri)
+    def delete_process_from_id(cls, typing_name: str, id: str) -> None:
+        process_model: ProcessModel = cls._get_process_model(typing_name, id)
 
         cls.delete_process_model(process_model)
 
@@ -22,5 +22,5 @@ class ProcessService(BaseService):
         process_model.delete_instance()
 
     @classmethod
-    def _get_process_model(cls, typing_name: str, uri: str) -> ProcessModel:
-        return TypingManager.get_object_with_typing_name_and_uri(typing_name, uri)
+    def _get_process_model(cls, typing_name: str, id: str) -> ProcessModel:
+        return TypingManager.get_object_with_typing_name_and_id(typing_name, id)

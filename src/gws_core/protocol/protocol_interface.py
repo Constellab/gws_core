@@ -155,6 +155,6 @@ class IProtocol(IProcess):
     ############################################### CLASS METHODS ####################################
 
     @classmethod
-    def get_by_uri(cls, uri: str) -> 'IProtocol':
-        protocol_model: ProtocolModel = ProtocolService.get_protocol_by_uri(uri)
+    def get_by_id(cls, id: str) -> 'IProtocol':
+        protocol_model: ProtocolModel = ProtocolService.get_protocol_by_id(id)
         return IProtocol(protocol_model)

@@ -23,26 +23,26 @@ async def get_resource_type_views(resource_typing_name: str) -> list:
     return ListJsonable(ResourceService.get_views_of_resource(resource_typing_name)).to_json()
 
 
-@core_app.post("/resource/{uri}/views/{view_name}", tags=["Resource"],
+@core_app.post("/resource/{id}/views/{view_name}", tags=["Resource"],
                summary="Call the view name for a resource")
-async def call_view_on_resource(uri: str,
+async def call_view_on_resource(id: str,
                                 view_name: str,
                                 values: Dict[str, Any]) -> Any:
-    return ResourceService.call_view_on_resource_type(uri, view_name, values)
+    return ResourceService.call_view_on_resource_type(id, view_name, values)
 
 
 ####################################### Resource Model ###################################
 
-@core_app.get("/resource/{uri}", tags=["Resource"], summary="Get a resource")
-async def get_a_resource(uri: str,
+@core_app.get("/resource/{id}", tags=["Resource"], summary="Get a resource")
+async def get_a_resource(id: str,
                          _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
-    Retrieve a ResourceModel from a ResourceModel URI
+    Retrieve a ResourceModel from a ResourceModel ID
 
-    - **uri**: the uri of the protocol
+    - **id**: the id of the protocol
     """
 
-    return ResourceService.get_resource_by_uri(uri=uri).to_json(
+    return ResourceService.get_resource_by_id(id=id).to_json(
         deep=True)
 
 

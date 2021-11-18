@@ -93,7 +93,7 @@ class Experiment(Model, TaggableModel):
         Activity.add(
             Activity.ARCHIVE,
             object_type=self.full_classname(),
-            object_uri=self.uri
+            object_id=self.id
         )
         self.protocol_model.archive(archive, archive_resources=archive_resources)
 
@@ -174,7 +174,7 @@ class Experiment(Model, TaggableModel):
         Returns child process models.
         """
         from ..task.task_model import TaskModel
-        if not self.id:
+        if not self.is_saved():
             return []
 
         return list(TaskModel.select().where(
@@ -188,7 +188,7 @@ class Experiment(Model, TaggableModel):
         Returns child resources.
         """
 
-        if not self.id:
+        if not self.is_saved():
             return []
 
         return list(ResourceModel.select().where(ResourceModel.experiment == self))
@@ -211,13 +211,13 @@ class Experiment(Model, TaggableModel):
 
         # Check if any resource of this experiment is used in another one
         output_resources: List[ResourceModel] = list(ResourceModel.get_by_experiment(self.id))
-        output_resource_ids: List[int] = list(map(lambda x: x.id, output_resources))
+        output_resource_ids: List[str] = list(map(lambda x: x.id, output_resources))
 
         other_experiment: TaskInputModel = TaskInputModel.get_other_experiments(output_resource_ids, self.id).first()
 
         if other_experiment is not None:
             raise ResourceUsedInAnotherExperimentException(
-                other_experiment.resource_model.uri, other_experiment.experiment.get_short_name())
+                other_experiment.resource_model.id, other_experiment.experiment.get_short_name())
 
         if self.protocol_model:
             self.protocol_model.reset()
@@ -266,7 +266,7 @@ class Experiment(Model, TaggableModel):
             Activity.add(
                 Activity.CREATE,
                 object_type=self.full_classname(),
-                object_uri=self.uri
+                object_id=self.id
             )
         return super().save(*args, **kwargs)
 
@@ -289,7 +289,7 @@ class Experiment(Model, TaggableModel):
         _json["tags"] = self.get_tags_json()
         _json.update({
             "protocol": {
-                "uri": self.protocol_model.uri,
+                "id": self.protocol_model.id,
                 "typing_name": self.protocol_model.process_typing_name
             },
         })
@@ -387,7 +387,7 @@ class Experiment(Model, TaggableModel):
 
         # check experiment status
         if not self.is_running:
-            raise BadRequestException(detail=f"Experiment '{self.uri}' is not running")
+            raise BadRequestException(detail=f"Experiment '{self.id}' is not running")
 
     def check_is_updatable(self) -> None:
         """Throw an error if the experiment is not updatable

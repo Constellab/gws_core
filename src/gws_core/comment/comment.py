@@ -13,22 +13,22 @@ from ..model.typing_register_decorator import typing_registrator
 
 
 @final
-@json_ignore(["object_uri", "object_typing_name"])
+@json_ignore(["object_id", "object_typing_name"])
 @typing_registrator(unique_name="Comment", object_type="MODEL", hide=True)
 class Comment(Model):
     """
     Comment class that represents generic object comments
 
-    :property object_uri: The uri of the Viewable object to comment
-    :type object_uri: `str`
+    :property object_id: The id of the Viewable object to comment
+    :type object_id: `str`
     :property object_typing_name: The type of the Viewable object to comment
     :type object_typing_name: `str`
     :property reply_to: The parent comment. It not `None` if this comment is the reply to another comment. It is `None` otherwise
     :type reply_to: `gws.comment.Comment`
     """
 
-    object_uri = CharField(null=False, index=True)
-    # -> non-unique index (object_uri, object_typing_name) is created in Meta
+    object_id = CharField(null=False, index=True)
+    # -> non-unique index (object_id, object_typing_name) is created in Meta
     object_typing_name = CharField(null=False)
     reply_to = ForeignKeyField('self', null=True, backref='+')
     _table_name = "gws_comment"
@@ -65,16 +65,16 @@ class Comment(Model):
 
         _json = super().to_json(deep=deep, **kwargs)
         _json["object"] = {
-            "uri": self.object_uri,
+            "id": self.object_id,
             "type": self.object_typing_name
         }
         _json["reply_to"] = {
-            "uri": (self.reply_to.uri if self.reply_to else "")}
+            "id": (self.reply_to.id if self.reply_to else "")}
 
         return _json
 
     class Meta:
         indexes = (
-            # create a non-unique index on object_uri, object_typing_name
-            (('object_uri', 'object_typing_name'), False),
+            # create a non-unique index on object_id, object_typing_name
+            (('object_id', 'object_typing_name'), False),
         )

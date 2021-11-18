@@ -55,4 +55,4 @@ class OAuth2UserTokenBearerCookie(OAuth2):
 
 
 oauth2_user_cookie_scheme = OAuth2UserTokenBearerCookie(
-    tokenUrl="/user/login/{uri}/{token}")
+    tokenUrl="/user/login/{id}/{token}")

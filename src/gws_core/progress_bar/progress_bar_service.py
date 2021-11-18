@@ -11,5 +11,5 @@ from .progress_bar import ProgressBar
 class ProgressBarService(BaseService):
 
     @classmethod
-    def fetch_progress_bar(cls, uri: str) -> ProgressBar:
-        return ProgressBar.get_by_uri_and_check(uri)
+    def fetch_progress_bar(cls, id: str) -> ProgressBar:
+        return ProgressBar.get_by_id_and_check(id)

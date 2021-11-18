@@ -58,18 +58,18 @@ class CentralService(BaseService):
         Call the central api to get the list of study for the current user
         """
         user: User = CurrentUserService.get_and_check_current_user()
-        central_api_url: str = cls._get_central_api_url(f"{cls._external_labs_route}/user/{user.uri}/studies")
+        central_api_url: str = cls._get_central_api_url(f"{cls._external_labs_route}/user/{user.id}/studies")
         response = ExternalApiService.get(central_api_url, cls._get_request_header())
 
         if response.status_code != 200:
-            Logger.error(f"Can't retrieve studies for the user {user.uri}, {user.email}. Error : {response.text}")
+            Logger.error(f"Can't retrieve studies for the user {user.id}, {user.email}. Error : {response.text}")
             raise BadRequestException("Can't retrieve studies for current user")
 
         return response.json()
 
     @classmethod
-    def save_experiment(cls, study_uri: str, experiment: dict) -> None:
-        central_api_url: str = cls._get_central_api_url(f"{cls._external_labs_route}/study/{study_uri}/add-experiment")
+    def save_experiment(cls, study_id: str, experiment: dict) -> None:
+        central_api_url: str = cls._get_central_api_url(f"{cls._external_labs_route}/study/{study_id}/add-experiment")
         response = ExternalApiService.put(central_api_url, experiment, cls._get_request_header())
 
         if response.status_code != 200:
@@ -98,6 +98,6 @@ class CentralService(BaseService):
         user: User = CurrentUserService.get_current_user()
 
         if user:
-            headers[cls._user_id_header_key] = user.uri
+            headers[cls._user_id_header_key] = user.id
 
         return headers

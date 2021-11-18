@@ -8,10 +8,10 @@ class ActivityService:
 
     # todo check le '*'
     @classmethod
-    def add(self, activity_type: str, *, object_type=None, object_uri=None, user: User = None):
+    def add(self, activity_type: str, *, object_type=None, object_id=None, user: User = None):
         Activity.add(
             activity_type=activity_type,
             object_type=object_type,
-            object_uri=object_uri,
+            object_id=object_id,
             user=user,
         )

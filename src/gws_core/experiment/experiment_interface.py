@@ -50,7 +50,7 @@ class IExperiment:
         if protocol_type is None:
             study_dto: StudyDto = None
             if study is not None:
-                study_dto = StudyDto(uri=study.uri, title=study.title, description=study.description)
+                study_dto = StudyDto(id=study.id, title=study.title, description=study.description)
             self._experiment = ExperimentService.create_empty_experiment(
                 ExperimentDTO(title=title, description=description, study=study_dto))
 
@@ -79,4 +79,4 @@ class IExperiment:
         self._experiment.reset()
 
     def stop(self) -> None:
-        ExperimentService.stop_experiment(self._experiment.uri)
+        ExperimentService.stop_experiment(self._experiment.id)

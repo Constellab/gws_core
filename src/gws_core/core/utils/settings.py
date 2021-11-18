@@ -75,8 +75,8 @@ class Settings(PeeweeModel):
             # random token by default (security)
             token = Utils.generate_random_chars(128)
             settings.set_data("token", token)
-            # default uri
-            settings.set_data("uri", "")
+            # default id
+            settings.set_data("id", "")
             settings.save()
 
     @classmethod

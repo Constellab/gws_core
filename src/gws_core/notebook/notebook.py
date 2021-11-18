@@ -9,6 +9,7 @@ from ..user.user import User
 from ..core.exception.exceptions import BadRequestException
 from ..user.auth_service import AuthService
 
+
 class Notebook(Console):
     """
     Notebook class.
@@ -23,10 +24,10 @@ class Notebook(Console):
             user = User.get(User.email == email)
         except:
             raise BadRequestException("User not found. Authentication failed!")
-        
+
         try:
             AuthService.authenticate(
-                uri=user.uri, console_token=user.console_token)
+                id=user.id, console_token=user.console_token)
         except:
             raise BadRequestException("Authentication failed!")
 

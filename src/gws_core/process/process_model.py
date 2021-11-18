@@ -60,7 +60,7 @@ class ProcessModel(Model):
     :type Viewable: [type]
     """
 
-    parent_protocol_id = IntegerField(null=True, index=True)
+    parent_protocol_id = CharField(max_length=36, null=True, index=True)
     experiment: Experiment = ForeignKeyField(Experiment, null=True, index=True, backref="+")
     instance_name = CharField(null=True)
     created_by: User = ForeignKeyField(User, null=False, backref='+', )
@@ -406,7 +406,7 @@ class ProcessModel(Model):
 
         """
         return {
-            "uri": self.uri,
+            "id": self.id,
             "process_typing_name": self.process_typing_name
         }
 
@@ -425,9 +425,9 @@ class ProcessModel(Model):
         _json = super().to_json(deep=deep, **kwargs)
 
         _json["experiment"] = {
-            "uri": (self.experiment.uri if self.experiment else "")}
+            "id": (self.experiment.id if self.experiment else "")}
         _json["parent_protocol"] = {
-            "uri": (self.parent_protocol.uri if self.parent_protocol_id else "")}
+            "id": (self.parent_protocol.id if self.parent_protocol_id else "")}
         _json["is_running"] = self.progress_bar.is_running
         _json["is_finished"] = self.progress_bar.is_finished
         _json["is_protocol"] = self.is_protocol()

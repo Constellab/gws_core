@@ -22,7 +22,7 @@ class FSNodeModel(Model):
     :type Model: [type]
     """
     path = CharField(null=True, unique=True)
-    file_store_uri = CharField(null=True, index=True)
+    file_store_id = CharField(null=True, index=True)
     _table_name = "gws_fs_node"
 
     def delete_instance(self, *args, **kwargs):
@@ -33,4 +33,4 @@ class FSNodeModel(Model):
         return super().delete_instance(*args, **kwargs)
 
     def get_file_store(self) -> FileStore:
-        return FileStore.get_by_uri_and_check(self.file_store_uri)
+        return FileStore.get_by_id_and_check(self.file_store_id)

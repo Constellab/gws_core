@@ -21,8 +21,8 @@ class TaskService(BaseService):
     # -- F --
 
     @classmethod
-    def get_task_by_uri(cls, uri: str) -> TaskModel:
-        return TaskModel.get_by_uri_and_check(uri=uri)
+    def get_task_by_id(cls, id: str) -> TaskModel:
+        return TaskModel.get_by_id_and_check(id=id)
 
     @classmethod
     def create_task_model_from_type(cls, task_type: Type[Task], instance_name: str = None,
@@ -37,8 +37,8 @@ class TaskService(BaseService):
         ############################# TASK TYPE ###########################
 
     @classmethod
-    def get_task_typing(cls, uri: str) -> TaskTyping:
-        return TaskTyping.get_by_uri_and_check(uri)
+    def get_task_typing(cls, id: str) -> TaskTyping:
+        return TaskTyping.get_by_id_and_check(id)
 
     @classmethod
     def fetch_task_typing_list(cls,

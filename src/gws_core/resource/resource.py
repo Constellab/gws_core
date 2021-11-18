@@ -29,7 +29,7 @@ class Resource(Base):
     _typing_name: str = None
     _human_name: str = None
     _short_description: str = None
-    _model_uri: str = None
+    _model_id: str = None
 
     def __init__(self):
         # check that the class level property _typing_name is set

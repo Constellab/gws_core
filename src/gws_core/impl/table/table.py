@@ -44,7 +44,7 @@ class Table(Resource):
         self._set_data(data, column_names, row_names)
 
     def _set_data(self, data: Union[DataFrame, np.ndarray] = None,
-                 column_names=None, row_names=None) -> 'Table':
+                  column_names=None, row_names=None) -> 'Table':
         if data is None:
             data = DataFrame()
         else:
@@ -96,7 +96,7 @@ class Table(Resource):
         'delimiter': StrParam(default_value="\t", short_description="Delimiter character. Only for CSV files"),
         'write_header': BoolParam(default_value=True, short_description="True to write column names (header), False otherwise"),
         'write_index': BoolParam(default_value=True, short_description="True to write row names (index), False otherwise"),
-        'file_store_uri': StrParam(optional=True, short_description="URI of the file_store where the file must be exported"),
+        'file_store_id': StrParam(optional=True, short_description="ID of the file_store where the file must be exported"),
     })
     def export_to_path(self, dest_dir: str, params: ConfigParams) -> File:
         """
@@ -292,7 +292,7 @@ class Table(Resource):
             raise BadRequestException("The name must be a string")
         data = self._data.filter(regex=name_regex, axis=1)
         return type(self)(data=data)
-        
+
     # -- V ---
 
     @view(view_type=TableView, default_view=True, human_name='Tabular', short_description='View as a table', specs={})

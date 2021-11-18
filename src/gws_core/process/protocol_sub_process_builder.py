@@ -23,7 +23,7 @@ class ProtocolSubProcessBuilder():
     """
 
     def instantiate_process_from_json(self, node_json: Dict, instance_name: str) -> ProcessModel:
-        proc_uri: str = node_json.get("uri", None)
+        proc_id: str = node_json.get("id", None)
 
         proc_type_str: str = node_json["process_typing_name"]
         proc_type: Type[Process] = TypingManager.get_type_from_name(proc_type_str)
@@ -33,13 +33,13 @@ class ProtocolSubProcessBuilder():
                 f"Process {proc_type_str} is not defined. Please ensure that the corresponding brick is loaded.")
 
         # create the process instance
-        return self._instantiate_process(process_uri=proc_uri,
+        return self._instantiate_process(process_id=proc_id,
                                          process_type=proc_type,
                                          instance_name=instance_name,
                                          node_json=node_json)
 
     @abstractmethod
-    def _instantiate_process(self, process_uri: Optional[str],
+    def _instantiate_process(self, process_id: Optional[str],
                              process_type: Type[Process],
                              instance_name: str,
                              node_json: Dict) -> ProcessModel:
@@ -47,16 +47,16 @@ class ProtocolSubProcessBuilder():
         """
         pass
 
-    def _get_process_from_db(self, process_uri: Optional[str],
+    def _get_process_from_db(self, process_id: Optional[str],
                              process_type: Type[Process]) -> ProcessModel:
         """Method to retrieve the process from the DB
         """
         # Instantiate a process
         if issubclass(process_type, Task):
-            return TaskModel.get_by_uri_and_check(process_uri)
+            return TaskModel.get_by_id_and_check(process_id)
         else:
             from ..protocol.protocol_model import ProtocolModel
-            return ProtocolModel.get_by_uri_and_check(process_uri)
+            return ProtocolModel.get_by_id_and_check(process_id)
 
     def _create_new_process(self, process_type: Type[Process],
                             instance_name: str, node_json: Dict) -> ProcessModel:
@@ -78,22 +78,22 @@ class SubProcessBuilderReadFromDb(ProtocolSubProcessBuilder):
     from the DB
     """
 
-    def _instantiate_process(self, process_uri: Optional[str],
+    def _instantiate_process(self, process_id: Optional[str],
                              process_type: Type[Process],
                              instance_name: str,
                              node_json: Dict) -> ProcessModel:
-        if process_uri is None:
+        if process_id is None:
             raise BadRequestException(
-                f"Cannot instantiate the process {instance_name} because it does not have an uri")
+                f"Cannot instantiate the process {instance_name} because it does not have an id")
 
-        return self._get_process_from_db(process_uri=process_uri, process_type=process_type)
+        return self._get_process_from_db(process_id=process_id, process_type=process_type)
 
 
 class SubProcessBuilderCreate(ProtocolSubProcessBuilder):
     """Factory used to force creation of a processes when building a protocol
     """
 
-    def _instantiate_process(self, process_uri: Optional[str],
+    def _instantiate_process(self, process_id: Optional[str],
                              process_type: Type[Process],
                              instance_name: str,
                              node_json: Dict) -> ProcessModel:
@@ -106,14 +106,14 @@ class SubProcessBuilderUpdate(ProtocolSubProcessBuilder):
     """Factory used to get the processes or create a new one when building a protocol
     """
 
-    def _instantiate_process(self, process_uri: Optional[str],
+    def _instantiate_process(self, process_id: Optional[str],
                              process_type: Type[Process],
                              instance_name: str,
                              node_json: Dict) -> ProcessModel:
 
-        if process_uri is not None:
+        if process_id is not None:
             process_model: ProcessModel = self._get_process_from_db(
-                process_uri=process_uri, process_type=process_type)
+                process_id=process_id, process_type=process_type)
 
             # Update the process config
             if node_json.get('config'):

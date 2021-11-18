@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 class PortDict(TypedDict):
-    resource_uri: str
+    resource_id: str
     specs: List[ResourceTypeJson]  # list of supported resource typing names
 
 
@@ -306,12 +306,12 @@ class Port(Base):
         """
 
     def to_json(self) -> PortDict:
-        _json: PortDict = {"resource_uri": None, "specs": None}
+        _json: PortDict = {"resource_id": None, "specs": None}
 
         if self.resource_model:
-            _json["resource_uri"] = self.resource_model.uri
+            _json["resource_id"] = self.resource_model.id
         else:
-            _json["resource_uri"] = ""
+            _json["resource_id"] = ""
 
         _json["specs"] = self.resource_spec.to_json()
         return _json

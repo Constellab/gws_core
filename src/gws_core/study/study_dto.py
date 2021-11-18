@@ -13,11 +13,11 @@ class CentralStudy(TypedDict):
 
 class StudyDto(BaseModel):
 
-    uri: str = None
+    id: str = None
     title: str = None
     description: str = None
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, StudyDto):
             return False
-        return self.uri == other.uri
+        return self.id == other.id

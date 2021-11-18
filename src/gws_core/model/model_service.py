@@ -39,19 +39,19 @@ class ModelService(BaseService):
     # -- F --
 
     @classmethod
-    def fetch_model(cls, typing_name: str, uri: str) -> Model:
+    def fetch_model(cls, typing_name: str, id: str) -> Model:
         """
         Fetch a model
 
         :param type: The type of the model
         :type type: `str`
-        :param uri: The uri of the model
-        :type uri: `str`
+        :param id: The id of the model
+        :type id: `str`
         :return: A model
         :rtype: instance of `gws.db.model.Model`
         """
 
-        return TypingManager.get_object_with_typing_name_and_uri(typing_name, uri)
+        return TypingManager.get_object_with_typing_name_and_id(typing_name, id)
 
     @classmethod
     def fetch_list_of_models(cls,
@@ -86,31 +86,31 @@ class ModelService(BaseService):
         TypingManager.save_object_types_in_db()
 
     @classmethod
-    def archive_model(cls, typing_name: str, uri: str) -> Model:
-        return cls._set_archive(typing_name, uri, True)
+    def archive_model(cls, typing_name: str, id: str) -> Model:
+        return cls._set_archive(typing_name, id, True)
 
     @classmethod
-    def unarchive_model(cls, typing_name: str, uri: str) -> Model:
-        return cls._set_archive(typing_name, uri, False)
+    def unarchive_model(cls, typing_name: str, id: str) -> Model:
+        return cls._set_archive(typing_name, id, False)
 
     @classmethod
-    def _set_archive(cls, typing_name: str, uri: str, archive: bool) -> Model:
-        model: Model = TypingManager.get_object_with_typing_name_and_uri(typing_name, uri)
+    def _set_archive(cls, typing_name: str, id: str, archive: bool) -> Model:
+        model: Model = TypingManager.get_object_with_typing_name_and_id(typing_name, id)
 
         return model.archive(archive)
 
     @classmethod
-    def verify_model_hash(cls, typing_name: str, uri: str) -> bool:
+    def verify_model_hash(cls, typing_name: str, id: str) -> bool:
         """
         Verify model hash
 
         :param type: The type of the model
         :type type: `str`
-        :param uri: The uri of the model
-        :type uri: `str`
+        :param id: The id of the model
+        :type id: `str`
         :return: True if the hash is valid, False otherwise
         :rtype: `bool`
         """
 
-        model: Model = TypingManager.get_object_with_typing_name_and_uri(typing_name, uri)
+        model: Model = TypingManager.get_object_with_typing_name_and_id(typing_name, id)
         return model.verify_hash()

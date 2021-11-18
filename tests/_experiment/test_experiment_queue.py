@@ -31,7 +31,7 @@ class TestExperiment(BaseTestCase):
         def _run() -> bool:
             try:
                 QueueService.add_experiment_to_queue(
-                    experiment_uri=experiment.uri)
+                    experiment_id=experiment.id)
             except Exception as err:
                 print(err)
                 return False
@@ -70,6 +70,6 @@ class TestExperiment(BaseTestCase):
         experiment2: Experiment = Experiment.get(
             Experiment.id == experiment.id)
 
-        ExperimentService.validate_experiment(experiment2.uri, GTest.default_study_dto())
+        ExperimentService.validate_experiment(experiment2.id, GTest.default_study_dto())
         self.assertFalse(_run())
         self.assertEqual(Experiment.select().count(), 1)

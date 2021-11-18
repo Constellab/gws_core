@@ -244,8 +244,8 @@ class IO(Base, Generic[PortType]):
             port_type: Type[PortType] = self._get_port_type()
             port: PortType = port_type.load_from_json(port_dict, self)
 
-            if port_dict["resource_uri"]:
-                resource_model: ResourceModel = ResourceModel.get_by_uri_and_check(port_dict["resource_uri"])
+            if port_dict["resource_id"]:
+                resource_model: ResourceModel = ResourceModel.get_by_id_and_check(port_dict["resource_id"])
                 port.resource_model = resource_model
 
             self.add_port(key, port)

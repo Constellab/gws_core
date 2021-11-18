@@ -20,22 +20,22 @@ class UserService(BaseService):
     # -- A --
 
     @classmethod
-    def activate_user(cls, uri) -> User:
-        return cls.set_user_status(uri, {"is_active": True})
+    def activate_user(cls, id) -> User:
+        return cls.set_user_status(id, {"is_active": True})
 
     # -- C --
 
     @classmethod
     def create_user(cls, user: UserDataDict) -> User:
 
-        if cls.user_exists(user["uri"]):
+        if cls.user_exists(user["id"]):
             raise BadRequestException("The user already exists")
 
         return cls._create_user(user)
 
     @classmethod
     def create_user_if_not_exists(cls, user: UserDataDict) -> User:
-        db_user: User = cls.get_user_by_uri(user["uri"])
+        db_user: User = cls.get_user_by_id(user["id"])
         if db_user is not None:
             return db_user
 
@@ -48,7 +48,6 @@ class UserService(BaseService):
             raise BadRequestException("Cannot create sysuser")
 
         user = User(
-            uri=data['uri'],
             email=data['email'],
             first_name=data['first_name'],
             last_name=data['last_name'],
@@ -57,27 +56,29 @@ class UserService(BaseService):
             data={
             }
         )
+        # set the id later to mark the user as not saved
+        user.id = data['id']
         user.save()
-        return User.get_by_uri(user.uri)
+        return User.get_by_id(user.id)
 
     # -- D --
 
     @classmethod
-    def deactivate_user(cls, uri) -> User:
-        return cls.set_user_status(uri, {"is_active": False})
+    def deactivate_user(cls, id) -> User:
+        return cls.set_user_status(id, {"is_active": False})
 
     # -- F --
 
     @classmethod
     def fecth_activity_list(cls,
-                            user_uri: str = None,
+                            user_id: str = None,
                             activity_type: str = None,
                             page: int = 0,
                             number_of_items_per_page: int = 20) -> Paginator[User]:
 
         query = Activity.select().order_by(Activity.creation_datetime.desc())
-        if user_uri:
-            query = query.join(User).where(User.uri == user_uri)
+        if user_id:
+            query = query.join(User).where(User.id == user_id)
         if activity_type:
             query = query.where(Activity.activity_type ==
                                 activity_type.upper())
@@ -85,8 +86,8 @@ class UserService(BaseService):
             query, page=page, number_of_items_per_page=number_of_items_per_page)
 
     @classmethod
-    def fetch_user(cls, uri: str) -> User:
-        return User.get_by_uri(uri)
+    def fetch_user(cls, id: str) -> User:
+        return User.get_by_id(id)
 
     @classmethod
     def fetch_user_list(cls,
@@ -100,8 +101,8 @@ class UserService(BaseService):
     # -- G --
 
     @classmethod
-    def get_user_by_uri(cls, uri: str) -> User:
-        return User.get_by_uri(uri)
+    def get_user_by_id(cls, id: str) -> User:
+        return User.get_by_id(id)
 
     @classmethod
     def get_user_by_email(cls, email: str) -> User:
@@ -110,8 +111,8 @@ class UserService(BaseService):
     # -- S --
 
     @classmethod
-    def set_user_status(cls, uri, data) -> User:
-        user = User.get_by_uri(uri)
+    def set_user_status(cls, id, data) -> User:
+        user = User.get_by_id(id)
         if user is None:
             raise BadRequestException("User not found")
         if "is_active" in data:
@@ -158,5 +159,5 @@ class UserService(BaseService):
         return User.get_sysuser()
 
     @classmethod
-    def user_exists(cls, uri: str) -> bool:
-        return cls.get_user_by_uri(uri) is not None
+    def user_exists(cls, id: str) -> bool:
+        return cls.get_user_by_id(id) is not None

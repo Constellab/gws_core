@@ -27,7 +27,7 @@ class TestMySQLDumpLoad(BaseTestCase):
 
         comment = CommentService.add_comment_to_model(file_model, "The sky is blue")
         CommentService.add_comment_to_model(
-            file_model, "The sky is blue and the ocean is also blue", reply_to_uri=comment.uri)
+            file_model, "The sky is blue and the ocean is also blue", reply_to_id=comment.id)
         file_model.save()
 
         # dump db

@@ -46,8 +46,8 @@ class FileService(BaseService):
     # -- D --
 
     @classmethod
-    def download_file(cls, uri: str) -> FileResponse:
-        resource_model: ResourceModel = ResourceModel.get_by_uri_and_check(uri)
+    def download_file(cls, id: str) -> FileResponse:
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(id)
         resource: Resource = resource_model.get_resource()
 
         if not isinstance(resource, File):
@@ -96,8 +96,8 @@ class FileService(BaseService):
         return cls._add_file_to_store(file=file, store=file_store, dest_file_name=dest_file_name)
 
     @classmethod
-    def add_file_to_store(cls, file: File, store_uri: str, dest_file_name: str = None) -> ResourceModel:
-        file_store: LocalFileStore = FileStore.get_by_uri_and_check(store_uri)
+    def add_file_to_store(cls, file: File, store_id: str, dest_file_name: str = None) -> ResourceModel:
+        file_store: LocalFileStore = FileStore.get_by_id_and_check(store_id)
         return cls._add_file_to_store(file=file, store=file_store, dest_file_name=dest_file_name)
 
     @classmethod
@@ -106,16 +106,16 @@ class FileService(BaseService):
         return cls.create_file_model(new_file)
 
     @classmethod
-    def delete_file(cls, file_uri: str) -> None:
-        resource_model: ResourceModel = ResourceModel.get_by_uri_and_check(file_uri)
+    def delete_file(cls, file_id: str) -> None:
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(file_id)
 
         cls._check_before_file_update(resource_model)
 
         resource_model.delete_instance()
 
     @classmethod
-    def update_file_type(cls, file_uri: str, file_typing_name: str) -> ResourceModel:
-        resource_model: ResourceModel = ResourceModel.get_by_uri_and_check(file_uri)
+    def update_file_type(cls, file_id: str, file_typing_name: str) -> ResourceModel:
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(file_id)
 
         cls._check_before_file_update(resource_model)
 
@@ -140,7 +140,7 @@ class FileService(BaseService):
         if task_input:
             raise BadRequestException(GWSException.FILE_USED_ERROR.value,
                                       unique_code=GWSException.FILE_USED_ERROR.value,
-                                      detail_args={"experiment_uri": task_input.experiment.get_short_name()})
+                                      detail_args={"experiment_id": task_input.experiment.get_short_name()})
 
 
 ############################# FILE TYPE ###########################

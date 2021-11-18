@@ -48,11 +48,11 @@ class AuthService(BaseService):
         if not credentials_valid:
             raise WrongCredentialsException()
 
-        return cls.generate_user_access_token(user.uri)
+        return cls.generate_user_access_token(user.id)
 
     @classmethod
-    def generate_user_access_token(cls, uri: str) -> JSONResponse:
-        user: User = UserService.fetch_user(uri)
+    def generate_user_access_token(cls, id: str) -> JSONResponse:
+        user: User = UserService.fetch_user(id)
         if not user:
             raise UnauthorizedException(
                 detail=GWSException.WRONG_CREDENTIALS_USER_NOT_FOUND.value,
@@ -66,7 +66,7 @@ class AuthService(BaseService):
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        access_token = JWTService.create_jwt(user_uri=user.uri)
+        access_token = JWTService.create_jwt(user_id=user.id)
 
         content = {"access_token": access_token, "token_type": "Bearer"}
         response = JSONResponse(content=content)
@@ -86,14 +86,14 @@ class AuthService(BaseService):
     def check_user_access_token(cls, token: str = Depends(oauth2_user_cookie_scheme)) -> UserData:
 
         try:
-            user_uri: str = JWTService.check_user_access_token(token)
+            user_id: str = JWTService.check_user_access_token(token)
 
-            db_user: User = User.get(User.uri == user_uri)
-            if not cls.authenticate(uri=db_user.uri):
+            db_user: User = User.get(User.id == user_id)
+            if not cls.authenticate(id=db_user.id):
                 raise InvalidTokenException()
 
             return UserData(
-                uri=db_user.uri,
+                id=db_user.id,
                 email=db_user.email,
                 first_name=db_user.first_name,
                 last_name=db_user.last_name,
@@ -107,22 +107,22 @@ class AuthService(BaseService):
             raise InvalidTokenException()
 
     @classmethod
-    def authenticate(cls, uri: str, console_token: str = "") -> bool:
+    def authenticate(cls, id: str, console_token: str = "") -> bool:
         """
         Authenticate a user
 
-        :param uri: The uri of the user to authenticate
-        :type uri: `str`
+        :param id: The id of the user to authenticate
+        :type id: `str`
         :param console_token: The console token. This token is only used if the for console contexts
         :type console_token: `str`
         :return: True if the user is successfully autheticated, False otherwise
         :rtype: `bool`
         """
         try:
-            user: User = User.get(User.uri == uri)
+            user: User = User.get(User.id == id)
         except Exception as err:
             raise BadRequestException(
-                f"User not found with uri {uri}") from err
+                f"User not found with id {id}") from err
         if not user.is_active:
             return False
         if HTTPHelper.is_http_context():
@@ -180,20 +180,20 @@ class AuthService(BaseService):
                 return False
 
     @classmethod
-    def unauthenticate(cls, uri: str) -> bool:
+    def unauthenticate(cls, id: str) -> bool:
         """
         Unauthenticate a user
 
-        :param uri: The uri of the user to unauthenticate
-        :type uri: `str`
+        :param id: The id of the user to unauthenticate
+        :type id: `str`
         :return: True if the user is successfully unautheticated, False otherwise
         :rtype: `bool`
         """
         try:
-            user = User.get(User.uri == uri)
+            user = User.get(User.id == id)
         except Exception as err:
             raise BadRequestException(
-                f"User not found with uri {uri}") from err
+                f"User not found with id {id}") from err
         if not user.is_active:
             return False
         if HTTPHelper.is_http_context():
@@ -255,7 +255,7 @@ class AuthService(BaseService):
         userdb: User = UserService.create_user_if_not_exists(user)
 
         # The user's prod token is valid, we can return the token for the development environment
-        return cls.generate_user_access_token(userdb.uri)
+        return cls.generate_user_access_token(userdb.id)
 
     @classmethod
     def _unauthenticate_http(cls, user: User) -> bool:

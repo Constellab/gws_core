@@ -29,9 +29,9 @@ class ResourceService(BaseService):
     ############################# RESOURCE MODEL ###########################
 
     @classmethod
-    def get_resource_by_uri(cls,
-                            uri: str) -> ResourceModel:
-        return ResourceModel.get_by_uri_and_check(uri)
+    def get_resource_by_id(cls,
+                           id: str) -> ResourceModel:
+        return ResourceModel.get_by_id_and_check(id)
 
     @classmethod
     def get_resources_of_type(cls,
@@ -78,10 +78,10 @@ class ResourceService(BaseService):
         return ViewHelper.get_views_of_resource_type(resource_type)
 
     @classmethod
-    def call_view_on_resource_type(cls, resource_model_uri: str,
+    def call_view_on_resource_type(cls, resource_model_id: str,
                                    view_name: str, config_values: Dict[str, Any]) -> Any:
 
-        resource_model: ResourceModel = cls.get_resource_by_uri(resource_model_uri)
+        resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
 
         resource: Resource = resource_model.get_resource()
         return cls.call_view_on_resource(resource, view_name, config_values)
@@ -105,13 +105,11 @@ class ResourceService(BaseService):
             for tag in tags:
                 expression_builder.add_expression(ResourceModel.tags.contains(str(tag)))
 
-        if search.experiment_uri:
-            experiment: Experiment = ExperimentService.get_experiment_by_uri(search.experiment_uri)
-            expression_builder.add_expression(ResourceModel.experiment == experiment)
+        if search.experiment_id:
+            expression_builder.add_expression(ResourceModel.experiment == search.experiment_id)
 
-        if search.task_uri:
-            task_model: TaskModel = TaskModel.get_by_uri_and_check(search.task_uri)
-            expression_builder.add_expression(ResourceModel.task_model == task_model)
+        if search.task_id:
+            expression_builder.add_expression(ResourceModel.task_model == search.task_id)
 
         if search.origin:
             expression_builder.add_expression(ResourceModel.origin == search.origin)

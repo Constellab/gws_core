@@ -39,9 +39,9 @@ class TestFileService(BaseTestCase):
         file: File = File(os.path.join(self.get_test_data_dir(), 'iris.csv'))
 
         resource_model: ResourceModel = FileService.create_file_model(file)
-        FileService.delete_file(resource_model.uri)
+        FileService.delete_file(resource_model.id)
 
-        self.assertIsNone(ResourceModel.get_by_uri(resource_model.uri))
+        self.assertIsNone(ResourceModel.get_by_id(resource_model.id))
 
     def test_update_type(self):
         file: File = File(os.path.join(self.get_test_data_dir(), 'iris.csv'))
@@ -50,7 +50,7 @@ class TestFileService(BaseTestCase):
         self.assertIsInstance(resource_model.get_resource(), File)
         self.assertNotIsInstance(resource_model.get_resource(), TableFile)
 
-        FileService.update_file_type(resource_model.uri, TableFile._typing_name)
+        FileService.update_file_type(resource_model.id, TableFile._typing_name)
 
-        resource_model: ResourceModel = ResourceModel.get_by_uri_and_check(resource_model.uri)
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_model.id)
         self.assertIsInstance(resource_model.get_resource(), TableFile)

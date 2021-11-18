@@ -73,11 +73,11 @@ class TestResourceModel(BaseTestCase):
         self.assertEqual(paginator['total_number_of_items'], 1)
 
         # Search on Experiment
-        paginator = ResourceService.search(ResourceSearchDTO(experiment_uri=experiment._experiment.uri)).to_json()
+        paginator = ResourceService.search(ResourceSearchDTO(experiment_id=experiment._experiment.id)).to_json()
         self.assertEqual(paginator['total_number_of_items'], 1)
 
         # Search on Task
-        paginator = ResourceService.search(ResourceSearchDTO(task_uri=task._task_model.uri)).to_json()
+        paginator = ResourceService.search(ResourceSearchDTO(task_id=task._task_model.id)).to_json()
         self.assertEqual(paginator['total_number_of_items'], 1)
 
         # Search on Data with full text

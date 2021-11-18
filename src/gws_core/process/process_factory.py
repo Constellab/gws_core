@@ -282,7 +282,7 @@ class ProcessFactory():
 
         # Set the progress_bar
         progress_bar: ProgressBar = ProgressBar(
-            process_uri=process_model.uri, process_typing_name=process_model.process_typing_name)
+            process_id=process_model.id, process_typing_name=process_model.process_typing_name)
         process_model.progress_bar = progress_bar
 
         # set the created by
@@ -296,4 +296,4 @@ class ProcessFactory():
             process_model.instance_name = instance_name
         else:
             # Init the instance_name if it does not exists
-            process_model.instance_name = process_model.uri
+            process_model.instance_name = process_model.id

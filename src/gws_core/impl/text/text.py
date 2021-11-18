@@ -25,7 +25,7 @@ class Text(Resource):
     def __init__(self, data: str):
         super().__init__()
         self._set_data(data)
-        
+
     def _set_data(self, data: str) -> 'Text':
         if data is None:
             data = ""
@@ -43,7 +43,7 @@ class Text(Resource):
     @export_to_path(specs={
         'file_name': StrParam(default_value='file.txt', short_description="Destination file name in the store"),
         'encoding': StrParam(default_value='utf-8', short_description="Text encoding"),
-        'file_store_uri': StrParam(optional=True, short_description="URI of the file_store where the file must be exported"),
+        'file_store_id': StrParam(optional=True, short_description="ID of the file_store where the file must be exported"),
     })
     def export_to_path(self, dir_: str, params: ConfigParams) -> File:
         """

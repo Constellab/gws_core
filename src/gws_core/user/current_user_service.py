@@ -59,7 +59,7 @@ class CurrentUserService:
         else:
             if isinstance(user, dict):
                 try:
-                    user = User.get(User.uri == user.uri)
+                    user = User.get(User.id == user.id)
                 except Exception as err:
                     raise BadRequestException("Invalid current user") from err
 

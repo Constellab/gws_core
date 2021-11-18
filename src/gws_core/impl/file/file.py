@@ -24,7 +24,7 @@ class File(FSNode):
     """
     File class.
 
-    /!\ The class that extend file can only have a path and  file_store_uri attributes. Other attributes will not be
+    /!\ The class that extend file can only have a path and  file_store_id attributes. Other attributes will not be
     provided when creating the resource
     """
 
@@ -170,4 +170,3 @@ class File(FSNode):
         mode = "a+"+self._mode
         with self.open(mode) as fp:
             fp.write(data)
-

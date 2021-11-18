@@ -34,18 +34,18 @@ async def upload_a_file_or_list_of_files(files: List[UploadFile] = FastAPIFile(.
     return file.to_json()
 
 
-@core_app.get("/file/{typing_name}/{uri}/download", tags=["Files"], summary="Download a file")
-async def download_a_file(uri: str,
+@core_app.get("/file/{typing_name}/{id}/download", tags=["Files"], summary="Download a file")
+async def download_a_file(id: str,
                           typing_name: str,
                           _: UserData = Depends(AuthService.check_user_access_token)) -> FileResponse:
     """
     Download a file
 
     - **type**: the type of the file to download
-    - **uri**: the uri of the file to download
+    - **id**: the id of the file to download
     """
 
-    file_response = FileService.download_file(uri=uri)
+    file_response = FileService.download_file(id=id)
     return file_response
 
 
@@ -67,25 +67,25 @@ async def get_the_list_of_files(page: Optional[int] = 1,
         number_of_items_per_page=number_of_items_per_page).to_json()
 
 
-@core_app.delete("/file/{uri}", tags=["Files"], summary="Delete a file")
-async def delete_file(uri: str,
+@core_app.delete("/file/{id}", tags=["Files"], summary="Delete a file")
+async def delete_file(id: str,
                       _: UserData = Depends(AuthService.check_user_access_token)) -> None:
     """
     Delete a file.
     """
 
-    return FileService.delete_file(uri)
+    return FileService.delete_file(id)
 
 
-@core_app.put("/file/{uri}/type/{resource_typing_name}", tags=["Files"], summary="Update file type")
-async def update_file_type(uri: str,
+@core_app.put("/file/{id}/type/{resource_typing_name}", tags=["Files"], summary="Update file type")
+async def update_file_type(id: str,
                            resource_typing_name: str,
                            _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
     """
     Update a file.
     """
 
-    return FileService.update_file_type(uri, resource_typing_name).to_json()
+    return FileService.update_file_type(id, resource_typing_name).to_json()
 
 ############################# FILE TYPE ###########################
 

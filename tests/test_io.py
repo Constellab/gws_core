@@ -208,7 +208,7 @@ class TestIO(BaseTestCase):
         self.assertEqual(port_connect.to_json(), {
             "from": {"node": "p0",  "port": "create_person_out"},
             "to": {"node": "p1",  "port": "move_person_in"},
-            'resource_uri': ''
+            'resource_id': ''
         })
 
     def test_multi(self):

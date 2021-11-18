@@ -11,7 +11,7 @@ class ResourceSearchDTO(BaseModel):
 
     tags: Optional[str]
     origin: Optional[ResourceOrigin]
-    experiment_uri: Optional[str]
-    task_uri: Optional[str]
+    experiment_id: Optional[str]
+    task_id: Optional[str]
     resource_typing_name: Optional[str]
     data: Optional[str]

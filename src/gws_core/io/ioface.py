@@ -47,9 +47,9 @@ class IOface:
     # -- T --
 
     def to_json(self, deep: bool = False) -> dict:
-        r_uri = ""
+        r_id = ""
         if self.source_port.resource_model:
-            r_uri = self.source_port.resource_model.uri
+            r_id = self.source_port.resource_model.id
 
         return {
             "name": self.name,
@@ -61,7 +61,7 @@ class IOface:
                 "node": self.target_port.process.instance_name,
                 "port": self.target_port.name,
             },
-            "resource_uri":  r_uri,
+            "resource_id":  r_id,
         }
 
 

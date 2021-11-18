@@ -114,7 +114,7 @@ class TaskModel(ProcessModel):
 
     @property
     def resources(self) -> List[ResourceModel]:
-        if not self.id:
+        if not self.is_saved():
             return []
 
         return list(ResourceModel.select().where(ResourceModel.task_model == self))
@@ -230,7 +230,7 @@ class TaskModel(ProcessModel):
             if port.is_constant_out:
                 # If the port is mark as unmodified, we don't create a new resource
                 # We use the same resource
-                resource_model = ResourceModel.get_by_uri_and_check(resource._model_uri)
+                resource_model = ResourceModel.get_by_id_and_check(resource._model_id)
             else:
                 # create the resource model from the resource
                 resource_model = ResourceModel.from_resource(resource)

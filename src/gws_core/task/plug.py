@@ -31,16 +31,16 @@ class Source(Task):
     input_specs: InputSpecs = {}
     output_specs: OutputSpecs = {'resource': ConstantOut(Resource, sub_class=True)}
     config_specs: ConfigSpecs = {
-        'resource_uri': StrParam(optional=True, short_description="The uri of the resource"),
+        'resource_id': StrParam(optional=True, short_description="The id of the resource"),
     }
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        r_uri: str = params.get_value("resource_uri")
-        if not r_uri:
+        r_id: str = params.get_value("resource_id")
+        if not r_id:
             raise BadRequestException('Source error, the resource was not provided')
 
-        # retrieve the resource model based and uri and resource type
-        resource_model: ResourceModel = ResourceModel.get_by_uri_and_check(r_uri)
+        # retrieve the resource model based and id and resource type
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(r_id)
 
         return {"resource": resource_model.get_resource()}
 

@@ -88,11 +88,11 @@ class Queue(Model):
                 "Invalid argument. An instance of gws.queue.Jobs is required")
         job.save()
         queue = cls.get_instance()
-        if job.uri in queue.data["jobs"]:
+        if job.id in queue.data["jobs"]:
             return
         if len(queue.data["jobs"]) > queue.max_length:
             raise BadRequestException("The maximum number of jobs is reached")
-        queue.data["jobs"].append(job.uri)
+        queue.data["jobs"].append(job.id)
         queue.save()
 
         return queue
@@ -107,8 +107,8 @@ class Queue(Model):
             raise BadRequestException(
                 "Invalid argument. An instance of gws.queue.Job is required")
         queue = cls.get_instance()
-        if job.uri in queue.data["jobs"]:
-            queue.data["jobs"].remove(job.uri)
+        if job.id in queue.data["jobs"]:
+            queue.data["jobs"].remove(job.id)
             queue.save()
 
     # -- L --
@@ -125,9 +125,9 @@ class Queue(Model):
         queue = cls.get_instance()
         if not queue.data["jobs"]:
             return None
-        uri = queue.data["jobs"][0]
+        id = queue.data["jobs"][0]
         try:
-            return Job.get(Job.uri == uri)
+            return Job.get(Job.id == id)
         except:
             print("Oprhan job")
             # orphan job => discard it from the queue

@@ -140,7 +140,7 @@ class User(Model):
 
     def to_user_data_dict(self) -> UserDataDict:
         return {
-            "uri": self.uri,
+            "id": self.id,
             "email": self.email,
             "first_name": self.first_name,
             "last_name": self.last_name,

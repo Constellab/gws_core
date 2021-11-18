@@ -14,12 +14,12 @@ class TestPlug(BaseTestCase):
         robot_model: ResourceModel = ResourceModel.from_resource(robot)
         robot_model.save()
 
-        task_tester = TaskRunner(Source, {'resource_uri': robot_model.uri})
+        task_tester = TaskRunner(Source, {'resource_id': robot_model.id})
 
         outputs: TaskOutputs = await task_tester.run()
 
         robot_o: Robot = outputs['resource']
-        self.assertEqual(robot_o._model_uri, robot_model.uri)
+        self.assertEqual(robot_o._model_id, robot_model.id)
 
     async def test_switch(self):
         """Test the switch2 task

@@ -39,6 +39,6 @@ class TestProgressBar(BaseTestCase):
         self.assertTrue(progress_bar.is_finished)
 
         # test that the progress bar was correcly save
-        progress_bar_db: ProgressBar = ProgressBar.get_by_uri_and_check(progress_bar.uri)
+        progress_bar_db: ProgressBar = ProgressBar.get_by_id_and_check(progress_bar.id)
         self.assertEqual(len(progress_bar_db.messages), 3)
         self.assertTrue(progress_bar_db.is_finished)

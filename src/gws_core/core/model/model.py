@@ -16,7 +16,7 @@ from peewee import (AutoField, BigAutoField, BlobField, BooleanField,
                     CharField, DateTimeField, Field, ForeignKeyField,
                     ForeignKeyMetadata, ManyToManyField)
 from peewee import Model as PeeweeModel
-from peewee import ModelSelect
+from peewee import ModelSelect, UUIDField
 from playhouse.mysql_ext import Match
 
 from ..db.db_manager import DbManager
@@ -43,8 +43,8 @@ class Model(BaseModel, PeeweeModel):
 
     :property id: The id of the model (in database)
     :type id: `int`
-    :property uri: The unique resource identifier of the model
-    :type uri: `str`
+    :property id: The unique resource identifier of the model
+    :type id: `str`
     :property type: The type of the python Object (the full class name)
     :type type: `str`
     :property creation_datetime: The creation datetime of the model
@@ -59,8 +59,8 @@ class Model(BaseModel, PeeweeModel):
     :type hash: `str`
     """
 
-    id = AutoField(primary_key=True)
-    uri = CharField(null=True, index=True, unique=True)
+    id = CharField(primary_key=True, max_length=36)
+    # id = CharField(null=True, index=True, unique=True)
     creation_datetime = DateTimeField(default=datetime.now)
     save_datetime = DateTimeField()
     is_archived = BooleanField(default=False, index=True)
@@ -69,16 +69,23 @@ class Model(BaseModel, PeeweeModel):
 
     # Provided at the Class level automatically by the @TypingDecorator
     _typing_name: str = None
+
     _json_ignore_fields: List[str] = []
     _default_full_text_column = "data"
+    _is_saved: bool = False
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        if self.uri is None:
-            self.uri = str(uuid.uuid4())
+        # If there is not id, we consider the model as not saved and generate an id
+        if self.id is None:
+            self.id = str(uuid.uuid4())
+            # self.id = str(uuid.uuid4())
+            self._is_saved = False
             if not self.data:
                 self.data = {}
+        else:
+            self._is_saved = True
 
     # -- A --
 
@@ -87,7 +94,7 @@ class Model(BaseModel, PeeweeModel):
         if "__relations" not in self.data:
             self.data["__relations"] = {}
         self.data["__relations"][relation_name] = {
-            "uri": related_model.uri,
+            "id": related_model.id,
             "type": related_model.full_classname(),
             # "name": related_model.name
         }
@@ -190,30 +197,30 @@ class Model(BaseModel, PeeweeModel):
                 f"The relation {relation_name} does not exists")
         rel: dict = self.data["__relations"][relation_name]
         model_type: Type[Model] = Utils.get_model_type(rel["type"])
-        return model_type.get(model_type.uri == rel["uri"])
+        return model_type.get(model_type.id == rel["id"])
 
     @classmethod
-    def get_by_uri(cls, uri: str) -> 'Model':
+    def get_by_id(cls, id: str) -> 'Model':
         try:
-            return cls.get(cls.uri == uri)
+            return cls.get(cls.id == id)
         except:
             return None
 
     @classmethod
-    def get_by_uri_and_check(cls, uri: str) -> 'Model':
-        """Get by URI and throw 404 error if object not found
+    def get_by_id_and_check(cls, id: str) -> 'Model':
+        """Get by ID and throw 404 error if object not found
 
-        :param uri: [description]
-        :type uri: str
+        :param id: [description]
+        :type id: str
         :return: [description]
         :rtype: str
         """
         try:
-            return cls.get(cls.uri == uri)
+            return cls.get(cls.id == id)
         except:
-            raise NotFoundException(detail=GWSException.OBJECT_URI_NOT_FOUND.value,
-                                    unique_code=GWSException.OBJECT_URI_NOT_FOUND.name,
-                                    detail_args={"objectName": cls.classname(), "id": uri})
+            raise NotFoundException(detail=GWSException.OBJECT_ID_NOT_FOUND.value,
+                                    unique_code=GWSException.OBJECT_ID_NOT_FOUND.name,
+                                    detail_args={"objectName": cls.classname(), "id": id})
 
     # -- H --
 
@@ -239,7 +246,7 @@ class Model(BaseModel, PeeweeModel):
         :rtype: bool
         """
 
-        return bool(self.id)
+        return self._is_saved
 
     def refresh(self) -> None:
         """
@@ -247,7 +254,7 @@ class Model(BaseModel, PeeweeModel):
         """
 
         cls = type(self)
-        if self.id:
+        if self.is_saved():
             db_object = cls.get_by_id(self.id)
             for prop in db_object.property_names(Field):
                 db_val = getattr(db_object, prop)
@@ -305,7 +312,11 @@ class Model(BaseModel, PeeweeModel):
         self.save_datetime = datetime.now()
         self.hash = self.__compute_hash()
 
-        super().save(*args, **kwargs)
+        # set the force insert to true if the object was not created
+        force_insert: bool = not self.is_saved()
+
+        super().save(*args, force_insert=force_insert, **kwargs)
+        self._is_saved = True
 
         return self
 

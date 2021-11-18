@@ -46,7 +46,7 @@ class Console:
 
         # refresh user information from DB
         AuthService.authenticate(
-            uri=user.uri, console_token=user.console_token)
+            id=user.id, console_token=user.console_token)
 
         cls.user = user
 
@@ -83,7 +83,7 @@ class Console:
         """
         Get a default study DTO
         """
-        return StudyDto(uri="3b4a462a-d2e2-4859-9837-9303b4a51889", title="Default study",
+        return StudyDto(id="3b4a462a-d2e2-4859-9837-9303b4a51889", title="Default study",
                         description="Study description")
 
     @classmethod

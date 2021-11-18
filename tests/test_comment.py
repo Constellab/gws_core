@@ -17,7 +17,7 @@ class TestComment(BaseTestCase):
 
         comment1 = CommentService.add_comment_to_model(resource_model, "The sky is blue")
         CommentService.add_comment_to_model(
-            resource_model, "The sky is blue and the ocean is also blue", reply_to_uri=comment1.uri)
+            resource_model, "The sky is blue and the ocean is also blue", reply_to_id=comment1.id)
         CommentService.add_comment_to_model(resource_model, message="I want to go to Paris")
 
         page: PaginatorDict = CommentService.get_model_comments(resource_model).to_json()
