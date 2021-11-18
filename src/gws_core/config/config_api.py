@@ -13,12 +13,12 @@ from ..user.user_dto import UserData
 from .config_service import ConfigService
 
 
-@core_app.put("/config/{uri}", tags=["Config"], summary="Update the config values")
-def get_the_experiment_queue(uri: str,
+@core_app.put("/config/{id}", tags=["Config"], summary="Update the config values")
+def get_the_experiment_queue(id: str,
                              config_params: ConfigParamsDict,
                              _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Update the configuration params
     """
 
-    return ConfigService.update_config_params_with_uri(uri, config_params).to_json(deep=True)
+    return ConfigService.update_config_params_with_id(id, config_params).to_json(deep=True)

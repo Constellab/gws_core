@@ -9,9 +9,9 @@ import asyncio
 import inspect
 from abc import abstractmethod
 from enum import Enum
-from typing import TYPE_CHECKING, List, Type, TypedDict, final
+from typing import TYPE_CHECKING, Type, TypedDict, final
 
-from peewee import CharField, ForeignKeyField, IntegerField
+from peewee import CharField, ForeignKeyField
 from starlette_context import context
 
 from ..config.config import Config
@@ -22,15 +22,13 @@ from ..core.exception.exceptions import BadRequestException
 from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
 from ..core.model.json_field import JSONField
+from ..core.model.model import Model
 from ..core.utils.logger import Logger
 from ..experiment.experiment import Experiment
 from ..io.io import Inputs, Outputs
 from ..io.port import InPort, OutPort
 from ..model.typing_manager import TypingManager
-from ..model.viewable import Viewable
 from ..progress_bar.progress_bar import ProgressBar
-from ..resource.resource_model import ResourceModel
-from ..resource.task_resource import TaskResource
 from ..user.user import User
 from .process import Process
 from .process_exception import ProcessRunException
@@ -54,22 +52,18 @@ class ProcessErrorInfo(TypedDict):
 
 
 @json_ignore(["parent_protocol_id"])
-class ProcessModel(Viewable):
+class ProcessModel(Model):
     """Base abstract class for Process and Protocol
 
     :param Viewable: [description]
     :type Viewable: [type]
     """
 
-    # @ToDo:
-    # ------
-    # Try to replace `protocol_id` and `experiment_id` by foreign keys with `lazy_load=False`
-
-    parent_protocol_id = IntegerField(null=True, index=True)
+    parent_protocol_id = CharField(max_length=36, null=True, index=True)
     experiment: Experiment = ForeignKeyField(Experiment, null=True, index=True, backref="+")
-    instance_name = CharField(null=True, index=True)
-    created_by: User = ForeignKeyField(User, null=False, index=True, backref='+', )
-    config: Config = ForeignKeyField(Config, null=False, index=True, backref='+')
+    instance_name = CharField(null=True)
+    created_by: User = ForeignKeyField(User, null=False, backref='+')
+    config: Config = ForeignKeyField(Config, null=False, backref='+')
     progress_bar: ProgressBar = ForeignKeyField(
         ProgressBar, null=True, backref='+')
     process_typing_name = CharField(null=False)
@@ -81,7 +75,6 @@ class ProcessModel(Viewable):
     _parent_protocol: ProtocolModel = None
     _inputs: Inputs = None
     _outputs: Outputs = None
-    _is_removable = False
 
     def __init__(self, *args, **kwargs):
         """
@@ -105,15 +98,7 @@ class ProcessModel(Viewable):
         if self.is_archived == archive:
             return self
 
-        super().archive(archive)
-
-        # -> try to archive the config if possible!
-        self.config.archive(archive)
-        if archive_resources:
-            for resource in self.resources:
-                resource.archive(archive)
-
-        return self
+        return super().archive(archive)
 
     @transaction()
     def delete_instance(self, *args, **kwargs):
@@ -149,16 +134,6 @@ class ProcessModel(Viewable):
             self._parent_protocol = ProtocolModel.get_by_id(self.parent_protocol_id)
 
         return self._parent_protocol
-
-    # -- R --
-
-    @property
-    def resources(self) -> List[ResourceModel]:
-        Qrel: List[TaskResource] = TaskResource.select().where(TaskResource.task_model_id == self.id)
-        Q = []
-        for o in Qrel:
-            Q.append(o.resource)
-        return Q
 
     @transaction()
     def reset(self) -> 'ProcessModel':
@@ -355,7 +330,7 @@ class ProcessModel(Viewable):
         if len(aws):
             await asyncio.gather(*aws)
 
-    async def _run_before_task(self):
+    async def _run_before_task(self) -> None:
         self._switch_to_current_progress_bar()
         self.mark_as_started()
 
@@ -374,8 +349,6 @@ class ProcessModel(Viewable):
         # Save the process (to save the new data)
         self.save_after_task()
 
-        # TODO a vérifier, mettre au moins un log quand c'est appelé ?
-        # ça veut dire qu'on a pas renseigné un outputs
         if not self.outputs.is_ready:
             return
 
@@ -388,7 +361,7 @@ class ProcessModel(Viewable):
         :type user: User
         """
 
-        process_type: Type[Process] = self._get_process_type()
+        process_type: Type[Process] = self.get_process_type()
 
         if not user.has_access(process_type._allowed_user):
             raise UnauthorizedException(
@@ -409,7 +382,7 @@ class ProcessModel(Viewable):
         if self.instance_name:
             info += f"'{self.instance_name}' "
 
-        return f"{info} ({self._get_process_type().classname()})"
+        return f"{info} ({self.get_process_type().classname()})"
 
     def get_instance_name_context(self) -> str:
         """ return the instance name in the context
@@ -421,7 +394,7 @@ class ProcessModel(Viewable):
 
         return self.instance_name
 
-    def _get_process_type(self) -> Type[Process]:
+    def get_process_type(self) -> Type[Process]:
         return TypingManager.get_type_from_name(self.process_typing_name)
 
     ########################### JSON #################################
@@ -432,7 +405,7 @@ class ProcessModel(Viewable):
 
         """
         return {
-            "uri": self.uri,
+            "id": self.id,
             "process_typing_name": self.process_typing_name
         }
 
@@ -451,9 +424,9 @@ class ProcessModel(Viewable):
         _json = super().to_json(deep=deep, **kwargs)
 
         _json["experiment"] = {
-            "uri": (self.experiment.uri if self.experiment else "")}
+            "id": (self.experiment.id if self.experiment else "")}
         _json["parent_protocol"] = {
-            "uri": (self.parent_protocol.uri if self.parent_protocol_id else "")}
+            "id": (self.parent_protocol.id if self.parent_protocol_id else "")}
         _json["is_running"] = self.progress_bar.is_running
         _json["is_finished"] = self.progress_bar.is_finished
         _json["is_protocol"] = self.is_protocol()

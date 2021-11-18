@@ -27,7 +27,7 @@ class TestProgressBar(BaseTestCase):
         self.assertEqual(messages['text'], 'Hello')
         self.assertIsNotNone(messages['datetime'])
 
-        sleep(ProgressBar._min_allowed_delta_time)
+        sleep(ProgressBar._MIN_ALLOWED_DELTA_TIME)
         # Test progress message
         progress_bar.update_progress(25, 'New progress')
         progress_message = progress_bar.messages[1]
@@ -39,6 +39,6 @@ class TestProgressBar(BaseTestCase):
         self.assertTrue(progress_bar.is_finished)
 
         # test that the progress bar was correcly save
-        progress_bar_db: ProgressBar = ProgressBar.get_by_uri_and_check(progress_bar.uri)
+        progress_bar_db: ProgressBar = ProgressBar.get_by_id_and_check(progress_bar.id)
         self.assertEqual(len(progress_bar_db.messages), 3)
         self.assertTrue(progress_bar_db.is_finished)

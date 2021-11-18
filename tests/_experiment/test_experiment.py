@@ -10,6 +10,12 @@ from gws_core import (BaseTestCase, Experiment, ExperimentDTO,
                       ExperimentService, ExperimentStatus, GTest, ProcessModel,
                       ProtocolModel, ResourceModel, Robot, RobotService,
                       RobotWorldTravelProto, Settings, TaskModel, Utils)
+from gws_core.experiment.experiment_exception import \
+    ResourceUsedInAnotherExperimentException
+from gws_core.experiment.experiment_interface import IExperiment
+from gws_core.impl.robot.robot_protocol import (CreateSimpleRobot,
+                                                MoveSimpleRobot)
+from gws_core.io.io_spec import IOSpecClass
 from gws_core.process.process_model import ProcessStatus
 from gws_core.study.study_dto import StudyDto
 
@@ -24,7 +30,7 @@ class TestExperiment(BaseTestCase):
     async def test_create_empty(self):
         GTest.print("Create empty")
 
-        study_dto: StudyDto = StudyDto(uri=Utils.generate_uuid(), title="Study", description="Desc")
+        study_dto: StudyDto = StudyDto(id=Utils.generate_uuid(), title="Study", description="Desc")
         experiment_dto: ExperimentDTO = ExperimentDTO(
             title="Experiment title", description="Experiment description", study=study_dto)
         experiment = ExperimentService.create_empty_experiment(experiment_dto)
@@ -33,7 +39,7 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(experiment.get_title(), 'Experiment title')
         self.assertEqual(experiment.get_description(), 'Experiment description')
         self.assertIsNotNone(experiment.protocol_model.id)
-        self.assertEqual(experiment.study.uri, study_dto.uri)
+        self.assertEqual(experiment.study.id, study_dto.id)
 
     async def test_run(self):
         GTest.print("Run Experiment")
@@ -55,7 +61,7 @@ class TestExperiment(BaseTestCase):
         # Create experiment 2 = experiment 2
         # -------------------------------
         print("Create experiment_2 = experiment_1 ...")
-        experiment2: Experiment = Experiment.get_by_uri_and_check(experiment1.uri)
+        experiment2: Experiment = Experiment.get_by_id_and_check(experiment1.id)
 
         self.assertEqual(experiment2.get_title(), "My exp title")
         self.assertEqual(experiment2.get_description(),
@@ -73,14 +79,13 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(len(experiment2.task_models), 16)
         self.assertEqual(experiment2.status, ExperimentStatus.SUCCESS)
 
-        Q1 = experiment1.resources
-        Q2 = experiment2.resources
         self.assertEqual(ResourceModel.select().count(), 15)
-        self.assertEqual(len(Q1), 15)
-        self.assertEqual(len(Q2), 15)
+        self.assertEqual(len(experiment1.resources), 15)
+        self.assertEqual(len(experiment2.resources), 15)
+        self.assertEqual(ResourceModel.get_by_experiment(experiment1.id).count(), 15)
         self.assertEqual(experiment2.pid, 0)
 
-        e2_bis: Experiment = Experiment.get(Experiment.uri == experiment1.uri)
+        e2_bis: Experiment = ExperimentService.get_experiment_by_id(experiment1.id)
 
         self.assertEqual(e2_bis.get_title(), "My exp title")
         self.assertEqual(e2_bis.get_description(), "This is my new experiment")
@@ -92,6 +97,11 @@ class TestExperiment(BaseTestCase):
         robot1: Robot = fly_1.inputs.get_resource_model('robot').get_resource()
         robot2: Robot = fly_1.outputs.get_resource_model('robot').get_resource()
         self.assertEqual(robot1.position[0], robot2.position[0] + 2000)
+
+        # Check if the port resource spec was correctly loaded
+        spec: IOSpecClass = fly_1.inputs.get_port('robot').resource_spec
+        self.assertIsInstance(spec, IOSpecClass)
+        self.assertEqual(spec.to_resource_types(), [Robot])
 
         # Test the protocol (super_travel) config (weight of 10)
         super_travel: ProtocolModel = e2_bis.protocol_model.get_process('super_travel')
@@ -117,7 +127,7 @@ class TestExperiment(BaseTestCase):
         print(f"Experiment pid = {experiment3.pid}", )
 
         waiting_count = 0
-        experiment3: Experiment = Experiment.get_by_uri_and_check(experiment3.uri)
+        experiment3: Experiment = Experiment.get_by_id_and_check(experiment3.id)
         print(experiment3.protocol_model)
         while experiment3.status != ExperimentStatus.SUCCESS:
             print("Waiting 3 secs the experiment to finish ...")
@@ -128,7 +138,7 @@ class TestExperiment(BaseTestCase):
             waiting_count += 1
 
         self.assertEqual(Experiment.count_of_running_experiments(), 0)
-        experiment3: Experiment = Experiment.get_by_uri_and_check(experiment3.uri)
+        experiment3: Experiment = Experiment.get_by_id_and_check(experiment3.id)
         self.assertEqual(experiment3.status, ExperimentStatus.SUCCESS)
         self.assertEqual(experiment3.pid, 0)
 
@@ -163,19 +173,24 @@ class TestExperiment(BaseTestCase):
     async def test_reset(self):
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_type(RobotWorldTravelProto)
 
-        experiment = await ExperimentService.run_experiment(experiment=experiment, user=GTest.user)
+        experiment = await ExperimentService.run_experiment(experiment=experiment)
 
         experiment.reset()
+
         self.assertEqual(experiment.status, ExperimentStatus.DRAFT)
+        # Check that all the resources were deleted
+        self.assertEqual(ResourceModel.select().count(), 0)
 
         # check recursively all the status
         self._check_process_reset(experiment.protocol_model)
         # Same test with experiment from DB
-        self._check_process_reset(ExperimentService.get_experiment_by_uri(experiment.uri).protocol_model)
+        self._check_process_reset(ExperimentService.get_experiment_by_id(experiment.id).protocol_model)
 
     def _check_process_reset(self, process_model: ProcessModel) -> None:
         self.assertEqual(process_model.status, ProcessStatus.DRAFT)
-        self.assertFalse(process_model.progress_bar.is_initialized)
+        self.assertTrue(process_model.progress_bar.is_initialized)
+        self.assertFalse(process_model.progress_bar.is_running)
+        self.assertFalse(process_model.progress_bar.is_finished)
         self.assertIsNone(process_model.error_info)
 
         for port in process_model.inputs.ports.values():
@@ -190,3 +205,39 @@ class TestExperiment(BaseTestCase):
         if isinstance(process_model, ProtocolModel):
             for process in process_model.processes.values():
                 self._check_process_reset(process)
+
+    async def test_reset_error(self):
+        """ Test that we can't reset an experiment if one of its resource is used by another experiment
+        """
+        experiment: IExperiment = IExperiment(CreateSimpleRobot)
+        await experiment.run()
+
+        # Retrieve the robot
+        resource = experiment.get_protocol().get_process('facto').get_output('robot')
+
+        # Create a new experiment that uses the previously generated robot
+        experiment2: IExperiment = IExperiment(MoveSimpleRobot)
+        experiment2.get_protocol().get_process('source').set_param('resource_id', resource._model_id)
+        await experiment2.run()
+
+        with self.assertRaises(ResourceUsedInAnotherExperimentException):
+            experiment.reset()
+
+    async def test_protocol_copy(self):
+
+        experiment: Experiment = ExperimentService.create_experiment_from_protocol_type(RobotWorldTravelProto)
+
+        await ExperimentService.run_experiment(experiment)
+
+        protocol_count = ProtocolModel.select().count()
+        task_model = TaskModel.select().count()
+        resource_count = ResourceModel.select().count()
+
+        experiment_copy = ExperimentService.copy_experiment(experiment.id)
+
+        self.assertEqual(ProtocolModel.select().count(), protocol_count * 2)
+        self.assertEqual(TaskModel.select().count(), task_model * 2)
+        self.assertEqual(ResourceModel.select().count(), resource_count)
+
+        await ExperimentService.run_experiment(experiment_copy)
+        self.assertEqual(ResourceModel.select().count(), resource_count * 2)

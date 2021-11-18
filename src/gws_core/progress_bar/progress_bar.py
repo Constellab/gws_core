@@ -29,28 +29,27 @@ class ProgressBarMessageType(str, Enum):
 
 
 @final
-@json_ignore(['process_uri', 'process_typing_name'])
+@json_ignore(['process_id', 'process_typing_name'])
 @typing_registrator(unique_name="ProgressBar", object_type="MODEL", hide=True)
 class ProgressBar(Model):
     """
     ProgressBar class
     """
 
-    process_uri = CharField(null=True, index=True)
+    process_id = CharField(null=True, index=True)
     process_typing_name = CharField(null=True)
 
     _MIN_ALLOWED_DELTA_TIME = 1.0
     _MAX_VALUE = 100.0
     _MIN_VALUE = 0.0
 
-    _is_removable = False
     _table_name = "gws_process_progress_bar"
     _max_message_stack_length = 64
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        if not self.id:
+        if not self.is_saved():
             self._init_data()
 
     @property
@@ -175,7 +174,7 @@ class ProgressBar(Model):
         _max = self.data["max_value"]
         if _max == 0.0:
             self.start()
-        #if value >= self._MAX_VALUE:
+        # if value >= self._MAX_VALUE:
         #     value = self._MAX_VALUE - 1e-6  # prevent blocking the progress_bar
         if value < self._MIN_VALUE:
             value = self._MIN_VALUE
@@ -214,7 +213,7 @@ class ProgressBar(Model):
         _json = super().to_json(deep=deep, **kwargs)
 
         _json["process"] = {
-            "uri": self.process_uri,
+            "id": self.process_id,
             "typing_name": self.process_typing_name,
         }
 
@@ -244,8 +243,8 @@ class ProgressBar(Model):
             Logger.progress(message)
 
     @classmethod
-    def get_by_process_uri(cls, process_uri: str) -> 'ProgressBar':
-        return ProgressBar.get(ProgressBar.process_uri == process_uri)
+    def get_by_process_id(cls, process_id: str) -> 'ProgressBar':
+        return ProgressBar.get(ProgressBar.process_id == process_id)
 
     @classmethod
     def get_current_progress_bar(cls) -> 'ProgressBar':
@@ -260,6 +259,6 @@ class ProgressBar(Model):
 
     class Meta:
         indexes = (
-            # create a unique on process_uri, process_typing_name
-            (('process_uri', 'process_typing_name'), True),
+            # create a unique on process_id, process_typing_name
+            (('process_id', 'process_typing_name'), True),
         )

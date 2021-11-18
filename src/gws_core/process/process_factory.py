@@ -282,7 +282,7 @@ class ProcessFactory():
 
         # Set the progress_bar
         progress_bar: ProgressBar = ProgressBar(
-            process_uri=process_model.uri, process_typing_name=process_model.process_typing_name)
+            process_id=process_model.id, process_typing_name=process_model.process_typing_name)
         process_model.progress_bar = progress_bar
 
         # set the created by
@@ -296,4 +296,50 @@ class ProcessFactory():
             process_model.instance_name = instance_name
         else:
             # Init the instance_name if it does not exists
-            process_model.instance_name = process_model.uri
+            process_model.instance_name = process_model.id
+
+    ############################################### PROCESS  #################################################
+
+    @classmethod
+    def copy_process(cls, process_model: ProcessModel) -> ProtocolModel:
+        if isinstance(process_model, TaskModel):
+            return cls.copy_task(process_model)
+        else:
+            return cls.copy_protocol(process_model)
+
+    @classmethod
+    def copy_task(cls, task_model: TaskModel) -> TaskModel:
+        return cls.create_task_model_from_type(
+            task_model.get_process_type(),
+            task_model.config.get_values(),
+            task_model.instance_name)
+
+    @classmethod
+    def copy_protocol(cls, protocol_model: ProtocolModel) -> ProtocolModel:
+        """Copy a protocol, copy sub nodes,copy interface, outerface and connecter
+
+        :param protocol_model: [description]
+        :type protocol_model: ProtocolModel
+        :return: [description]
+        :rtype: ProtocolModel
+        """
+        new_protocol_model: ProtocolModel = cls.create_protocol_empty()
+        new_protocol_model.set_protocol_type(protocol_model.get_process_type())
+
+        # If the instance name is the same as the id, don't set it
+        instance_name = protocol_model.instance_name if protocol_model.instance_name != protocol_model.id else None
+        cls._init_process_model(
+            process_model=protocol_model, config=protocol_model.config.copy(),
+            instance_name=instance_name)
+
+        # copy all the sub process
+        for key, process in protocol_model.processes.items():
+            new_protocol_model.add_process_model(key, cls.copy_process(process))
+
+        # copy the data and then refresh it to update information
+        new_protocol_model._init_interfaces_from_graph(protocol_model.data["graph"]["interfaces"])
+        new_protocol_model._init_outerfaces_from_graph(protocol_model.data["graph"]["outerfaces"])
+        new_protocol_model.init_connectors_from_graph(protocol_model.data["graph"]["links"])
+        new_protocol_model.refresh_graph_from_dump()
+
+        return new_protocol_model

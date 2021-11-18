@@ -40,29 +40,19 @@ class User(Model):
     :type console_token: `str`
     :property console_token: The token used to authenticate the user trough the console
     :type console_token: `str`
-    :property is_http_authenticated: True if the user authenticated through the HTTP context, False otherwise
-    :type is_http_authenticated: `bool`
-    :property is_console_authenticated: True if the user authenticated through the Console context, False otherwise
-    :type is_console_authenticated: `bool`
     """
 
     email: str = CharField(default=False, index=True)
-    first_name: str = CharField(default=False, index=True)
-    last_name: str = CharField(default=False, index=True)
+    first_name: str = CharField(default=False)
+    last_name: str = CharField(default=False)
     group: UserGroup = EnumField(choices=UserGroup,
                                  default=UserGroup.USER)
     is_active = BooleanField(default=True)
-    console_token = CharField(default="")
-    is_http_authenticated = BooleanField(default=False)
-    is_console_authenticated = BooleanField(default=False)
 
-    _is_removable = False
     _table_name = 'gws_user'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if not self.console_token:
-            self.console_token = Utils.generate_random_chars(128)
 
     # -- A --
 
@@ -111,12 +101,6 @@ class User(Model):
     def is_sysuser(self):
         return self.group == UserGroup.SYSUSER
 
-    @property
-    def is_authenticated(self):
-        # get fresh data from DB
-        user: User = User.get_by_id(self.id)
-        return user.is_http_authenticated or user.is_console_authenticated
-
     # -- L --
 
     def has_access(self, group: UserGroup) -> bool:
@@ -141,13 +125,11 @@ class User(Model):
 
     def to_user_data_dict(self) -> UserDataDict:
         return {
-            "uri": self.uri,
+            "id": self.id,
             "email": self.email,
             "first_name": self.first_name,
             "last_name": self.last_name,
             "group": self.group.value,
             "is_active": self.is_active,
             "is_admin": self.is_admin,
-            "is_http_authenticated": self.is_http_authenticated,
-            "is_console_authenticated": self.is_console_authenticated,
         }

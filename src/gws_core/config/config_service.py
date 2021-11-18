@@ -13,8 +13,8 @@ from .config import Config
 class ConfigService(BaseService):
 
     @classmethod
-    def update_config_params_with_uri(cls, uri: str, config_params: ConfigParamsDict) -> Config:
-        config: Config = Config.get_by_uri_and_check(uri)
+    def update_config_params_with_id(cls, id: str, config_params: ConfigParamsDict) -> Config:
+        config: Config = Config.get_by_id_and_check(id)
 
         return cls.update_config_params(config, config_params)
 

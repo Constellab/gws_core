@@ -14,37 +14,18 @@ from ..user.user_dto import UserData
 from .task_service import TaskService
 
 
-@core_app.get("/task/{uri}", tags=["Task"], summary="Get a task")
-async def get_a_task(uri: str,
+@core_app.get("/task/{id}", tags=["Task"], summary="Get a task")
+async def get_a_task(id: str,
                      _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve a task
 
     - **type**: the type of the task (Default is `gws_core.task.task_model.Task`)
-    - **uri**: the uri of the task
+    - **id**: the id of the task
     """
 
-    proc = TaskService.get_task_by_uri(uri=uri)
+    proc = TaskService.get_task_by_id(id=id)
     return proc.to_json()
-
-
-@core_app.get("/task", tags=["Task"], summary="Get the list of taskes")
-async def get_the_list_of_taskes(page: Optional[int] = 1,
-                                 number_of_items_per_page: Optional[int] = 20,
-                                 _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-
-    """
-    Retrieve a list of taskes. The list is paginated.
-
-    - **type**: the type of the taskes to fetch (Default is `gws_core.task.task_model.Task`)
-    - **page**: the page number
-    - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
-    """
-
-    return TaskService.fetch_task_list(
-        page=page,
-        number_of_items_per_page=number_of_items_per_page,
-    )
 
 
 ############################# TASK TYPING ###########################
@@ -75,13 +56,13 @@ async def get_the_list_of_task_grouped(_: UserData = Depends(AuthService.check_u
     return TaskService.fetch_task_typing_tree()
 
 
-@core_app.get("/task-type/{uri}", tags=["Task"], summary="Get a task type detail")
-async def get_protocol_type(uri: str,
+@core_app.get("/task-type/{id}", tags=["Task"], summary="Get a task type detail")
+async def get_protocol_type(id: str,
                             _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve a task type
 
-    - **uri**: the uri of the task type
+    - **id**: the id of the task type
     """
 
-    return TaskService.get_task_typing(uri=uri).to_json(deep=True)
+    return TaskService.get_task_typing(id=id).to_json(deep=True)

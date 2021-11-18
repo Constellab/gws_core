@@ -95,7 +95,7 @@ class QueueService(BaseService):
         experiment: Experiment = job.experiment
 
         Logger.debug(
-            f"Experiment {experiment.uri}, is_running = {experiment.is_running}")
+            f"Experiment {experiment.id}, is_running = {experiment.is_running}")
 
         if Experiment.count_of_running_experiments():
             # -> busy: we will test later!
@@ -115,12 +115,12 @@ class QueueService(BaseService):
             Queue.pop_first()
 
     @classmethod
-    def add_experiment_to_queue(cls, experiment_uri: str) -> Experiment:
+    def add_experiment_to_queue(cls, experiment_id: str) -> Experiment:
         """Add the experiment to the queue and run it when ready
 
 
-        :param uri: [description]
-        :type uri: [type]
+        :param id: [description]
+        :type id: [type]
         :raises NotFoundException: [description]
         :raises BadRequestException: [description]
         :return: [description]
@@ -130,25 +130,25 @@ class QueueService(BaseService):
         # todo check if the experiment is already in the queue.
         experiment: Experiment = None
         try:
-            experiment = Experiment.get(Experiment.uri == experiment_uri)
+            experiment = Experiment.get(Experiment.id == experiment_id)
         except Exception as err:
             raise NotFoundException(
-                detail=f"Experiment '{experiment_uri}' is not found") from err
+                detail=f"Experiment '{experiment_id}' is not found") from err
 
         # check experiment status
         experiment.check_is_runnable()
 
         if experiment.status != ExperimentStatus.DRAFT:
             Logger.info(
-                f"Resetting experiment {experiment.uri} before adding it to the queue")
+                f"Resetting experiment {experiment.id} before adding it to the queue")
 
             try:
                 experiment.reset()
-            except:
+            except Exception as err:
                 # printing stack trace
-                traceback.print_exc()
+                Logger.log_exception_stack_trace(err)
                 raise BadRequestException(
-                    f"Error while resetting experiment {experiment.uri} before adding it to the queue")
+                    f"Error while resetting experiment {experiment.id} before adding it to the queue")
 
         user = CurrentUserService.get_and_check_current_user()
         job = Job(user=user, experiment=experiment)

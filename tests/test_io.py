@@ -5,12 +5,11 @@
 
 
 from gws_core import (FIFO2, BadRequestException, BaseTestCase, ConfigParams,
-                      Connector, Experiment, ExperimentService, GTest,
-                      OptionalIn, ProcessFactory, ProcessSpec, Protocol,
+                      Connector, ConstantOut, Experiment, ExperimentService,
+                      GTest, OptionalIn, ProcessFactory, ProcessSpec, Protocol,
                       ProtocolModel, Resource, ResourceModel, SpecialTypeOut,
-                      Task, TaskInputs, TaskModel, TaskOutputs, ConstantOut,
-                      Wait, protocol_decorator, resource_decorator,
-                      task_decorator)
+                      Task, TaskInputs, TaskModel, TaskOutputs, Wait,
+                      protocol_decorator, resource_decorator, task_decorator)
 from gws_core.io.io_exception import ImcompatiblePortsException
 
 
@@ -51,7 +50,7 @@ class Move(Task):
     config_specs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        return
+        return {'move_person_out': inputs['move_person_in']}
 
 
 @task_decorator("Drive")
@@ -61,7 +60,7 @@ class Drive(Task):
     config_specs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        return
+        return {'move_drive_out': inputs['move_drive_in']}
 
 
 @task_decorator("Jump")
@@ -73,7 +72,7 @@ class Jump(Task):
     config_specs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        return
+        return {'jump_person_out': inputs['jump_person_in_1'], 'jump_person_out_any': inputs['jump_person_in_2']}
 
 
 @task_decorator("Multi")
@@ -85,7 +84,7 @@ class Multi(Task):
     config_specs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        return
+        return {'resource_1': inputs['resource_1'], 'resource_2': inputs['resource_2']}
 
 
 @task_decorator("Fly")
@@ -209,7 +208,7 @@ class TestIO(BaseTestCase):
         self.assertEqual(port_connect.to_json(), {
             "from": {"node": "p0",  "port": "create_person_out"},
             "to": {"node": "p1",  "port": "move_person_in"},
-            'resource': {'uri': '', 'typing_name': ''}
+            'resource_id': ''
         })
 
     def test_multi(self):

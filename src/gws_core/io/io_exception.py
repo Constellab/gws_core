@@ -70,6 +70,11 @@ class ImcompatiblePortsException(BadRequestException):
             detail_args={"out_port_name": out_port.name, "out_port_types": out_port.resource_spec.to_resource_types(),
                          "in_port_name": in_port.name, "in_port_types": in_port.resource_spec.to_resource_types()})
 
+
+class InvalidOutputsException(Exception):
+    pass
+
+
 # class ConnectorCreationException(BadRequestException):
 #     """ Exception raised when an exception on
 

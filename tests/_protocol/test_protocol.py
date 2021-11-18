@@ -10,7 +10,6 @@ from gws_core import (BaseTestCase, Config, Experiment, ExperimentService,
                       ExperimentStatus, GTest, ProcessModel, ProgressBar,
                       ProtocolModel, ProtocolService, Robot, RobotFood,
                       RobotMove, Settings, TaskModel, Typing)
-
 from tests.protocol_examples import (TestNestedProtocol,
                                      TestRobotWithSugarProtocol,
                                      TestSimpleProtocol)
@@ -108,7 +107,7 @@ class TestProtocol(BaseTestCase):
             s1 = json.load(file)
             super_proto = ProtocolService.create_protocol_model_from_graph(s1)
 
-        super_proto_db = ProtocolService.get_protocol_by_uri(super_proto.uri)
+        super_proto_db = ProtocolService.get_protocol_by_id(super_proto.id)
 
         self.assertEqual(len(super_proto_db.processes), 2)
         self.assertEqual(len(super_proto_db.connectors), 0)
@@ -120,12 +119,12 @@ class TestProtocol(BaseTestCase):
 
         # This file should add a mini travel sub protocol
         with open(os.path.join(testdata_dir, "super_proto_update.json"), "r") as file:
-            # set the p0 and p5 uri to simulate a real update
-            file_content: str = file.read().replace('p0_uri', p0.uri).replace('p5_uri', p5.uri)
+            # set the p0 and p5 id to simulate a real update
+            file_content: str = file.read().replace('p0_id', p0.id).replace('p5_id', p5.id)
             s1 = json.loads(file_content)
             super_proto = ProtocolService.update_protocol_graph(super_proto_db, s1)
 
-        super_proto_db = ProtocolService.get_protocol_by_uri(super_proto.uri)
+        super_proto_db = ProtocolService.get_protocol_by_id(super_proto.id)
 
         self.assertEqual(len(super_proto_db.processes), 4)
         self.assertEqual(len(super_proto_db.connectors), 3)
@@ -136,9 +135,9 @@ class TestProtocol(BaseTestCase):
         self.assertEqual(len(mini_travel_db.processes), 2)
         self.assertEqual(len(mini_travel_db.connectors), 1)
 
-        # check that p0 and p5 did not change uri
-        self.assertEqual(super_proto_db.get_process('p0').uri, p0.uri)
-        self.assertEqual(super_proto_db.get_process('p5').uri, p5.uri)
+        # check that p0 and p5 did not change id
+        self.assertEqual(super_proto_db.get_process('p0').id, p0.id)
+        self.assertEqual(super_proto_db.get_process('p5').id, p5.id)
 
         # check p5 config was updated
         p5 = super_proto_db.get_process('p5')
@@ -153,12 +152,12 @@ class TestProtocol(BaseTestCase):
         sub_p1: ProcessModel = mini_travel_db.get_process('p1')
         # Delete p2 of mini travel, update p1 config (of mini travel)
         with open(os.path.join(testdata_dir, "super_proto_update_2.json"), "r") as file:
-            file_content: str = file.read().replace('p0_uri', p0.uri).replace('p5_uri', p5.uri)\
-                .replace('mini_travel_uri', mini_travel_db.uri).replace('sub_p1_uri', sub_p1.uri)
+            file_content: str = file.read().replace('p0_id', p0.id).replace('p5_id', p5.id)\
+                .replace('mini_travel_id', mini_travel_db.id).replace('sub_p1_id', sub_p1.id)
             s1 = json.loads(file_content)
             super_proto = ProtocolService.update_protocol_graph(super_proto_db, s1)
 
-        super_proto_db = ProtocolService.get_protocol_by_uri(super_proto.uri)
+        super_proto_db = ProtocolService.get_protocol_by_id(super_proto.id)
         mini_travel_db: ProtocolModel = super_proto_db.get_process("mini_travel")
         sub_p1: ProcessModel = mini_travel_db.get_process("p1")
 
@@ -167,11 +166,11 @@ class TestProtocol(BaseTestCase):
 
         # Rollback to first protocol
         with open(os.path.join(testdata_dir, "super_proto.json"), "r") as file:
-            file_content: str = file.read().replace('p0_uri', p0.uri).replace('p5_uri', p5.uri)
+            file_content: str = file.read().replace('p0_id', p0.id).replace('p5_id', p5.id)
             s1 = json.loads(file_content)
             super_proto = ProtocolService.update_protocol_graph(super_proto_db, s1)
 
-        super_proto_db = ProtocolService.get_protocol_by_uri(super_proto.uri)
+        super_proto_db = ProtocolService.get_protocol_by_id(super_proto.id)
 
         self.assertEqual(len(super_proto_db.processes), 2)
         self.assertEqual(len(super_proto_db.connectors), 0)
@@ -190,10 +189,10 @@ class TestProtocol(BaseTestCase):
 
         # Test adding a process
         move_typing: Typing = Typing.get_by_model_type(RobotMove)
-        move: ProcessModel = ProtocolService.add_process_to_protocol_uri(
-            super_proto_db.uri, move_typing.typing_name)
+        move: ProcessModel = ProtocolService.add_process_to_protocol_id(
+            super_proto_db.id, move_typing.typing_name)
 
-        super_proto_db = ProtocolService.get_protocol_by_uri(super_proto.uri)
+        super_proto_db = ProtocolService.get_protocol_by_id(super_proto.id)
 
         move: ProcessModel = super_proto_db.get_process(move.instance_name)
         self.assertIsNotNone(move.id)
@@ -209,8 +208,7 @@ class TestProtocol(BaseTestCase):
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
             protocol_model=protocol)
 
-        experiment = await ExperimentService.run_experiment(
-            experiment=experiment, user=GTest.user)
+        experiment = await ExperimentService.run_experiment(experiment=experiment)
 
         eat_1: TaskModel = experiment.protocol_model.get_process('eat_1')
         food: RobotFood = eat_1.inputs.get_resource_model('food')
@@ -229,9 +227,3 @@ class TestProtocol(BaseTestCase):
         robot_output_2: Robot = eat_2.outputs.get_resource_model('robot').get_resource()
         # If this doesn't work, this mean that the process eat_2 was not called because it misses an optional input
         self.assertEqual(robot_output_2.weight, robot_output.weight + 5)  # 5 = food weight
-
-        # Check that eat 3 was called event if it is connected to empty_food and food input is None
-        eat_3: TaskModel = experiment.protocol_model.get_process('eat_3')
-        robot_output_3: Robot = eat_3.outputs.get_resource_model('robot').get_resource()
-        # If this doesn't work, this mean that the process eat_2 was not called because it misses an optional input
-        self.assertEqual(robot_output_3.weight, robot_output_2.weight + 7)  # 7 = food weight

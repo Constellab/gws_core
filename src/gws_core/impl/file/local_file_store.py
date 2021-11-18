@@ -31,7 +31,7 @@ class LocalFileStore(FileStore):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.path:
-            self.data["path"] = os.path.join(self.get_base_dir(), self.uri)
+            self.data["path"] = os.path.join(self.get_base_dir(), self.id)
 
     def add_node_from_path(self, source_path: str, dest_name: str = None, node_type: Type[FSNode] = FSNode) -> FSNode:
         """
@@ -114,7 +114,7 @@ class LocalFileStore(FileStore):
 
         file: FSNode = node_type()
         file.path = self.get_new_node_path(node_path)
-        file.file_store_uri = self.uri
+        file.file_store_id = self.id
 
         return file
 
@@ -164,9 +164,8 @@ class LocalFileStore(FileStore):
 
     @classmethod
     def get_default_instance(cls) -> 'LocalFileStore':
-        try:
-            file_store: FileStore = cls.get_by_id(1)
-        except Exception:
+        file_store: FileStore = cls.select().order_by(cls.creation_datetime).first()
+        if file_store is None:
             file_store = cls()
             file_store.save()
         return file_store
@@ -187,6 +186,10 @@ class LocalFileStore(FileStore):
         """
 
         raise BadRequestException("Cannot manually set LocalFileStore path")
+
+    def delete_node_path(self, node_path: str) -> None:
+        if self.node_path_exists(node_path):
+            FileHelper.delete_node(node_path)
 
     @classmethod
     def get_base_dir(cls) -> str:

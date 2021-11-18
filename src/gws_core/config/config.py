@@ -3,14 +3,12 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, Dict, List, final
+from typing import Any, Dict, final
 
-from gws_core.config.param_spec_helper import ParamSpecHelper
-
+from ..config.param_spec_helper import ParamSpecHelper
+from ..core.model.model import Model
 from ..model.typing_register_decorator import typing_registrator
-from ..model.viewable import Viewable
-from .config_exceptions import (InvalidParamValueException,
-                                MissingConfigsException, UnkownParamException)
+from .config_exceptions import InvalidParamValueException, UnkownParamException
 from .config_types import (ConfigParams, ConfigParamsDict, ConfigSpecs,
                            ConfigSpecsHelper, ParamValue)
 from .param_spec import ParamSpec
@@ -18,7 +16,7 @@ from .param_spec import ParamSpec
 
 @final
 @typing_registrator(unique_name="Config", object_type="MODEL", hide=True)
-class Config(Viewable):
+class Config(Model):
     """
     Config class that represents the configuration of a process. A configuration is
     a collection of parameters
@@ -31,30 +29,11 @@ class Config(Viewable):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        if not self.id:
+        if not self.is_saved():
             self.data = {
                 "specs": {},
                 "values": {}
             }
-
-    # -- A --
-
-    def archive(self, archive: bool) -> 'Config':
-        """
-        Archive the config
-
-        :param tf: True to archive, False to unarchive
-        :type: `bool`
-        :return: True if successfully archived, False otherwise
-        :rtype: `bool`
-        """
-        return super().archive(archive)
-
-    # -- C --
-
-    # -- D --
-
-    # -- G --
 
     ########################################## SPEC #####################################
 
@@ -179,3 +158,11 @@ class Config(Viewable):
 
         data["specs"] = json_specs
         return data
+
+    def copy(self) -> 'Config':
+        """Copy the config to a new Config with a new Id
+        """
+
+        new_config: Config = Config()
+        new_config.data = self.data
+        return new_config

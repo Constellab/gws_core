@@ -32,9 +32,10 @@ class TestTyping(BaseTestCase):
 
         eat_json: Dict = eat_type.to_json(deep=True)
 
-        input_specs: Dict = {'robot': ['RESOURCE.gws_core.Robot'], 'food': ['RESOURCE.gws_core.RobotFood']}
         self.assertEqual(eat_json['typing_name'], 'TASK.gws_core.RobotEat')
-        self.assert_json(eat_json['input_specs'], input_specs)
+        self.assertIsNotNone(eat_json['input_specs'])
+        self.assertIsNotNone(eat_json['input_specs']['robot'])
+        self.assertIsNotNone(eat_json['input_specs']['food'])
 
     async def test_protocol_type(self):
         world_travel: ProtocolTyping = ProtocolTyping.get_by_model_type(RobotWorldTravelProto)

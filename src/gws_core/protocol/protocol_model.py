@@ -47,9 +47,7 @@ class ProtocolModel(ProcessModel):
     def __init__(self, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
-        self._is_loaded = self.id is None or not "graph" in self.data
-        self._inputs = Inputs(self)
-        self._outputs = Outputs(self)
+        self._is_loaded = not self.is_saved() or not "graph" in self.data
         self._processes = {}
         self._interfaces = {}
         self._outerfaces = {}
@@ -99,16 +97,13 @@ class ProtocolModel(ProcessModel):
     def reset(self) -> 'ProtocolModel':
         """
         Reset the protocol
-
-        :return: Returns True if is protocol is successfully reset;  False otherwise
-        :rtype: `bool`
         """
 
         super().reset()
         for process in self.processes.values():
             process.reset()
         self._reset_iofaces()
-        return self.save()
+        return self.save(update_graph=True)
 
     # -- S --
     @transaction()
@@ -117,7 +112,7 @@ class ProtocolModel(ProcessModel):
             Activity.add(
                 Activity.CREATE,
                 object_type=self.full_classname(),
-                object_uri=self.uri
+                object_id=self.id
             )
         if update_graph:
             self.refresh_graph_from_dump()
@@ -410,7 +405,7 @@ class ProtocolModel(ProcessModel):
         if process_port.parent_protocol is None:
             raise Exception('The process is not in a protocol')
 
-        if process_port.parent_protocol.uri != self.uri:
+        if process_port.parent_protocol.id != self.id:
             raise Exception('The process is not a child of this protocol')
 
     def init_connectors_from_graph(self, links) -> None:
@@ -554,6 +549,12 @@ class ProtocolModel(ProcessModel):
 
         # delete the corresponding input's port
         self.inputs.remove_port(name)
+
+    def port_is_interface(self, name: str, port: Port) -> bool:
+        if not name in self.interfaces:
+            return False
+
+        return self.interfaces[name].target_port == port
     ############################### OUTERFACE #################################
 
     @property

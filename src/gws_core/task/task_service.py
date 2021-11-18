@@ -21,20 +21,8 @@ class TaskService(BaseService):
     # -- F --
 
     @classmethod
-    def get_task_by_uri(cls, uri: str) -> TaskModel:
-        return TaskModel.get_by_uri_and_check(uri=uri)
-
-    @classmethod
-    def fetch_task_list(cls,
-                        page: int = 0,
-                        number_of_items_per_page: int = 20) -> Paginator[TaskModel]:
-
-        number_of_items_per_page = min(
-            number_of_items_per_page, cls._number_of_items_per_page)
-
-        query = TaskModel.select().order_by(TaskModel.creation_datetime.desc())
-        return Paginator(
-            query, page=page, number_of_items_per_page=number_of_items_per_page)
+    def get_task_by_id(cls, id: str) -> TaskModel:
+        return TaskModel.get_by_id_and_check(id=id)
 
     @classmethod
     def create_task_model_from_type(cls, task_type: Type[Task], instance_name: str = None,
@@ -49,8 +37,8 @@ class TaskService(BaseService):
         ############################# TASK TYPE ###########################
 
     @classmethod
-    def get_task_typing(cls, uri: str) -> TaskTyping:
-        return TaskTyping.get_by_uri_and_check(uri)
+    def get_task_typing(cls, id: str) -> TaskTyping:
+        return TaskTyping.get_by_id_and_check(id)
 
     @classmethod
     def fetch_task_typing_list(cls,

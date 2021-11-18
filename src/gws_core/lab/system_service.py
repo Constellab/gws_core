@@ -5,16 +5,16 @@
 
 import sys
 
-from gws_core.tag.tag_service import TagService
-
 from ..brick.brick_service import BrickService
 from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
+from ..core.model.base_model_service import BaseModelService
 from ..core.utils.settings import Settings
 from ..experiment.experiment_service import ExperimentService
 from ..experiment.queue_service import QueueService
 from ..impl.file.file_helper import FileHelper
 from ..model.model_service import ModelService
+from ..tag.tag_service import TagService
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
 from ..user.user_service import UserService
@@ -56,7 +56,7 @@ class SystemService:
         Create tables
         """
 
-        ModelService.create_tables()
+        BaseModelService.create_tables()
 
     @classmethod
     def drop_all_tables(cls):
@@ -67,7 +67,7 @@ class SystemService:
         if settings.is_prod:
             raise Exception('Cannot drop all table in prod env')
 
-        ModelService.drop_tables()
+        BaseModelService.drop_tables()
 
     @classmethod
     def delete_temp_folder(cls):

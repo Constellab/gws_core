@@ -19,7 +19,7 @@ class BaseTestCase(IsolatedAsyncioTestCase):
     """
 
     # default value of ignore keys when comparing json
-    json_ignore_keys: List[str] = ["uri", "save_datetime", "creation_datetime"]
+    json_ignore_keys: List[str] = ["id", "save_datetime", "creation_datetime"]
 
     # If true the init and clear are called for each test,
     # If False they are called before and after all the class tests

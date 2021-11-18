@@ -33,23 +33,8 @@ class ProtocolService(BaseService):
     ########################## GET #####################
 
     @classmethod
-    def get_protocol_by_uri(cls, uri: str) -> ProtocolModel:
-        return ProtocolModel.get_by_uri_and_check(uri)
-
-    @classmethod
-    def fetch_protocol_list(cls,
-                            page: int = 0,
-                            number_of_items_per_page: int = 20) -> Paginator[ProtocolModel]:
-
-        number_of_items_per_page = min(
-            number_of_items_per_page, cls._number_of_items_per_page)
-        model_type: Type[ProtocolModel] = None
-
-        query: ModelSelect = ProtocolModel.select().order_by(
-            model_type.creation_datetime.desc())
-
-        return Paginator(
-            query, page=page, number_of_items_per_page=number_of_items_per_page)
+    def get_protocol_by_id(cls, id: str) -> ProtocolModel:
+        return ProtocolModel.get_by_id_and_check(id)
 
     ########################## CREATE #####################
     @classmethod
@@ -155,8 +140,8 @@ class ProtocolService(BaseService):
 
     @classmethod
     @transaction()
-    def add_process_to_protocol_uri(cls, protocol_uri: str, process_typing_name: str) -> ProcessModel:
-        protocol_model: ProtocolModel = ProtocolModel.get_by_uri_and_check(protocol_uri)
+    def add_process_to_protocol_id(cls, protocol_id: str, process_typing_name: str) -> ProcessModel:
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
 
         process_typing: Typing = TypingManager.get_typing_from_name(process_typing_name)
 
@@ -261,8 +246,8 @@ class ProtocolService(BaseService):
     ############################# PROTOCOL TYPE ###########################
 
     @classmethod
-    def get_protocol_type(cls, uri: str) -> ProtocolTyping:
-        return ProtocolTyping.get_by_uri_and_check(uri)
+    def get_protocol_type(cls, id: str) -> ProtocolTyping:
+        return ProtocolTyping.get_by_id_and_check(id)
 
     @classmethod
     def fetch_protocol_type_list(cls,
@@ -292,3 +277,11 @@ class ProtocolService(BaseService):
                 protocol_type.get_model_types_array(), protocol_type.to_json())
 
         return tree.sub_trees
+
+    @classmethod
+    @transaction()
+    def copy_protocol(cls, protocol_model: ProtocolModel) -> ProtocolModel:
+        new_protocol_model: ProtocolModel = ProcessFactory.copy_protocol(protocol_model)
+        new_protocol_model.save_full()
+        new_protocol_model.reset()
+        return new_protocol_model

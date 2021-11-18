@@ -47,9 +47,9 @@ class TestTag(BaseTestCase):
         expected_tags = [Tag('Test', 'value')]
 
         # Add the tag to the model and check that is was added in DB
-        tags = TagService.add_tag_to_model(resource_model.typing_name, resource_model.uri, 'Test', 'value')
+        tags = TagService.add_tag_to_model(resource_model.typing_name, resource_model.id, 'Test', 'value')
         self.assertEqual(tags, expected_tags)
-        resource_model_db: ResourceModel = ResourceModel.get_by_uri_and_check(resource_model.uri)
+        resource_model_db: ResourceModel = ResourceModel.get_by_id_and_check(resource_model.id)
         self.assertEqual(resource_model_db.get_tags(), expected_tags)
 
         # Check that the tag was added to the tag table

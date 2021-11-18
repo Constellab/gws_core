@@ -36,7 +36,7 @@ class ExperimentRunException(BadRequestException):
 
         context_text: str = f"| {context}" if context is not None else ""
 
-        detail_arg: Dict = {"error": exception_detail, "context": context_text, "experiment": experiment.uri}
+        detail_arg: Dict = {"error": exception_detail, "context": context_text, "experiment": experiment.id}
         super().__init__(
             GWSException.EXPERIMENT_RUN_EXCEPTION.value,
             unique_code=unique_code,
@@ -63,3 +63,11 @@ class ExperimentRunException(BadRequestException):
         return ExperimentRunException(
             experiment=experiment, exception_detail=str(exception),
             unique_code=unique_code, instance_id=instance_id, context=context, exception=exception)
+
+
+class ResourceUsedInAnotherExperimentException(BadRequestException):
+    def __init__(self, resource_model_id: str, experiment: str) -> None:
+        super().__init__(
+            GWSException.RESET_ERROR_RESOURCE_USED_IN_ANOTHER_EXPERIMENT.value,
+            unique_code=GWSException.RESET_ERROR_RESOURCE_USED_IN_ANOTHER_EXPERIMENT.name,
+            detail_args={"resource_model_id": resource_model_id, "experiment": experiment})

@@ -25,7 +25,7 @@ class CurrentUserService:
 
         user: User = cls.get_current_user()
 
-        if user is None or not user.is_authenticated:
+        if user is None:
             raise UnauthorizedException("User not authenticated")
 
         return user
@@ -59,7 +59,7 @@ class CurrentUserService:
         else:
             if isinstance(user, dict):
                 try:
-                    user = User.get(User.uri == user.uri)
+                    user = User.get(User.id == user.id)
                 except Exception as err:
                     raise BadRequestException("Invalid current user") from err
 

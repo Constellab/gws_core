@@ -8,22 +8,22 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING, List, TypedDict, final
 
-from gws_core.core.exception.gws_exceptions import GWSException
 from peewee import BooleanField, DoubleField, ForeignKeyField
 
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
+from ..core.exception.gws_exceptions import GWSException
 from ..core.model.json_field import JSONField
+from ..core.model.model import Model
 from ..core.model.sys_proc import SysProc
 from ..model.typing_register_decorator import typing_registrator
-from ..model.viewable import Viewable
-from ..resource.experiment_resource import ExperimentResource
 from ..resource.resource_model import ResourceModel
 from ..study.study import Study
 from ..tag.taggable_model import TaggableModel
 from ..user.activity import Activity
 from ..user.user import User
+from .experiment_exception import ResourceUsedInAnotherExperimentException
 
 if TYPE_CHECKING:
     from ..protocol.protocol_model import ProtocolModel
@@ -48,7 +48,7 @@ class ExperimentErrorInfo(TypedDict):
 
 @final
 @typing_registrator(unique_name="Experiment", object_type="MODEL", hide=True)
-class Experiment(Viewable, TaggableModel):
+class Experiment(Model, TaggableModel):
     """
     Experiment class.
 
@@ -68,11 +68,11 @@ class Experiment(Viewable, TaggableModel):
         Study, null=True, index=True, backref='experiments')
 
     created_by = ForeignKeyField(
-        User, null=True, index=True, backref='created_experiments')
-    score = DoubleField(null=True, index=True)
+        User, null=True, backref='created_experiments')
+    score = DoubleField(null=True)
     status: ExperimentStatus = EnumField(choices=ExperimentStatus,
                                          default=ExperimentStatus.DRAFT)
-    is_validated: bool = BooleanField(default=False, index=True)
+    is_validated: bool = BooleanField(default=False)
     error_info: ExperimentErrorInfo = JSONField(null=True)
 
     _table_name = 'gws_experiment'
@@ -93,7 +93,7 @@ class Experiment(Viewable, TaggableModel):
         Activity.add(
             Activity.ARCHIVE,
             object_type=self.full_classname(),
-            object_uri=self.uri
+            object_id=self.id
         )
         self.protocol_model.archive(archive, archive_resources=archive_resources)
 
@@ -174,7 +174,7 @@ class Experiment(Viewable, TaggableModel):
         Returns child process models.
         """
         from ..task.task_model import TaskModel
-        if not self.id:
+        if not self.is_saved():
             return []
 
         return list(TaskModel.select().where(
@@ -188,13 +188,10 @@ class Experiment(Viewable, TaggableModel):
         Returns child resources.
         """
 
-        resources = []
-        if self.id:
-            Qrel = ExperimentResource.select().where(
-                ExperimentResource.experiment_id == self.id)
-            for rel in Qrel:
-                resources.append(rel.resource)  # is automatically casted
-        return resources
+        if not self.is_saved():
+            return []
+
+        return list(ResourceModel.select().where(ResourceModel.experiment == self))
 
     @transaction()
     def reset(self) -> 'Experiment':
@@ -204,18 +201,42 @@ class Experiment(Viewable, TaggableModel):
         :return: True if it is reset, False otherwise
         :rtype: `bool`
         """
+        from ..task.task_input_model import TaskInputModel
+
+        if not self.is_saved():
+            raise BadRequestException("Can't reset an experiment not saved before")
 
         if self.is_validated or self.is_archived:
-            return None
+            raise BadRequestException("Can't reset a validated or archived experiment")
+
+        # Check if any resource of this experiment is used in another one
+        output_resources: List[ResourceModel] = list(ResourceModel.get_by_experiment(self.id))
+
+        if len(output_resources) > 0:
+            output_resource_ids: List[str] = list(map(lambda x: x.id, output_resources))
+
+            other_experiment: TaskInputModel = TaskInputModel.get_other_experiments(
+                output_resource_ids, self.id).first()
+
+            if other_experiment is not None:
+                raise ResourceUsedInAnotherExperimentException(
+                    other_experiment.resource_model.id, other_experiment.experiment.get_short_name())
 
         if self.protocol_model:
             self.protocol_model.reset()
 
+        # Delete all the resources previously generated to clear the DB
+        for output_resource in output_resources:
+            output_resource.delete_instance()
+
+        # Delete all the TaskInput as well
+        # Most of them are deleted when deleting the resource but for some constant inputs (link source)
+        # the resource is not deleted but the input must be deleted
+        TaskInputModel.delete_by_experiment(self.id)
+
         self.status = ExperimentStatus.DRAFT
         self.score = None
         return self.save()
-
-    # -- S --
 
     def set_title(self, title: str) -> None:
         """
@@ -237,13 +258,21 @@ class Experiment(Viewable, TaggableModel):
 
         self.data["description"] = description
 
+    def get_short_name(self) -> str:
+        """Method to get a readable to quickly distinguish the experiment, (used in error message)
+
+        :return: [description]
+        :rtype: str
+        """
+        return self.get_title()
+
     @transaction()
     def save(self, *args, **kwargs) -> 'Experiment':
         if not self.is_saved():
             Activity.add(
                 Activity.CREATE,
                 object_type=self.full_classname(),
-                object_uri=self.uri
+                object_id=self.id
             )
         return super().save(*args, **kwargs)
 
@@ -266,7 +295,7 @@ class Experiment(Viewable, TaggableModel):
         _json["tags"] = self.get_tags_json()
         _json.update({
             "protocol": {
-                "uri": self.protocol_model.uri,
+                "id": self.protocol_model.id,
                 "typing_name": self.protocol_model.process_typing_name
             },
         })
@@ -364,7 +393,7 @@ class Experiment(Viewable, TaggableModel):
 
         # check experiment status
         if not self.is_running:
-            raise BadRequestException(detail=f"Experiment '{self.uri}' is not running")
+            raise BadRequestException(detail=f"Experiment '{self.id}' is not running")
 
     def check_is_updatable(self) -> None:
         """Throw an error if the experiment is not updatable

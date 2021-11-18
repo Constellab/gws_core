@@ -18,7 +18,7 @@ class TestModelService(BaseTestCase):
 
         # Test the find one
         resource_model_db: ResourceModel = ModelService.fetch_model(
-            CONST_RESOURCE_MODEL_TYPING_NAME, resource_model.uri)
+            CONST_RESOURCE_MODEL_TYPING_NAME, resource_model.id)
         self.assertIsNotNone(resource_model_db)
 
         # Test the find paginated

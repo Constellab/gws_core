@@ -6,7 +6,7 @@ from ..user.user_group import UserGroup
 
 
 class UserData(BaseModel):
-    uri: str
+    id: str
     email: str = ""
     first_name: str = ""
     last_name: str = ""
@@ -18,7 +18,7 @@ class UserData(BaseModel):
 
 
 class UserDataDict(TypedDict):
-    uri: str
+    id: str
     email: str
     first_name: str
     last_name: str

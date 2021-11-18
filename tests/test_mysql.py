@@ -6,22 +6,13 @@
 import os
 import unittest
 
-from gws_core import File, FSNodeModel, FileService, GTest, MySQLService
+from gws_core import (BaseTestCase, File, FileService, FSNodeModel, GTest,
+                      LocalFileStore, MySQLService)
+from gws_core.comment.comment_service import CommentService
 from gws_core.core.db.db_manager import DbManager
-from gws_core.impl.file.local_file_store import LocalFileStore
 
 
-class TestMySQLDumpLoad(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        GTest.drop_tables()
-        GTest.create_tables()
-        GTest.init()
-
-    @classmethod
-    def tearDownClass(cls):
-        GTest.drop_tables()
+class TestMySQLDumpLoad(BaseTestCase):
 
     def test_db_dump_load(self):
         GTest.print("MySQL dump and load")
@@ -31,11 +22,12 @@ class TestMySQLDumpLoad(unittest.TestCase):
             return
 
         # insert data in comment table
-        f: File = LocalFileStore.get_default_instance().create_empty_file("./oui")
-        file_model: FSNodeModel = FileService.create_file_model(file=f)
+        file: File = LocalFileStore.get_default_instance().create_empty_file("./oui")
+        file_model: FSNodeModel = FileService.create_file_model(file=file)
 
-        c = file_model.add_comment("The sky is blue")
-        file_model.add_comment("The sky is blue and the ocean is also blue", reply_to=c)
+        comment = CommentService.add_comment_to_model(file_model, "The sky is blue")
+        CommentService.add_comment_to_model(
+            file_model, "The sky is blue and the ocean is also blue", reply_to_id=comment.id)
         file_model.save()
 
         # dump db

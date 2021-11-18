@@ -17,12 +17,12 @@ from .experiment.experiment_service import ExperimentService
     allow_extra_args=True
 ))
 @click.pass_context
-@click.option('--experiment-uri', help='Experiment uri')
-@click.option('--user-uri', help='User uri')
-def run_experiment(ctx, experiment_uri, user_uri):
+@click.option('--experiment-id', help='Experiment id')
+@click.option('--user-id', help='User id')
+def run_experiment(ctx, experiment_id, user_id):
     try:
         asyncio.run(ExperimentService.run_experiment_in_cli(
-            experiment_uri, user_uri))
+            experiment_id, user_id))
     except Exception as err:
         ExceptionHandler.handle_exception(None, err)
         raise BadRequestException(

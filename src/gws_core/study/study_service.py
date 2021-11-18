@@ -39,7 +39,7 @@ class StudyService(BaseService):
 
         studies_dto: List[StudyDto] = []
         for study in central_studies:
-            studies_dto.append(StudyDto(uri=study['id'], title=study['title'], description=study['description']))
+            studies_dto.append(StudyDto(id=study['id'], title=study['title'], description=study['description']))
         return studies_dto
 
     @classmethod
@@ -48,24 +48,24 @@ class StudyService(BaseService):
 
         studies_dto: List[StudyDto] = []
         for study in studies:
-            studies_dto.append(StudyDto(uri=study.uri, title=study.title, description=study.description))
+            studies_dto.append(StudyDto(id=study.id, title=study.title, description=study.description))
         return studies_dto
 
     @classmethod
     def get_or_create_study_from_dto(cls, study_dto: StudyDto) -> Study:
         """Retreive the study based on a DTO and if it doesn't exists, it creates the study
         """
-        if study_dto is None or study_dto.uri is None:
+        if study_dto is None or study_dto.id is None:
             return None
 
-        study: Study = Study.get_by_uri(study_dto.uri)
+        study: Study = Study.get_by_id(study_dto.id)
 
         if study is not None:
             return study
 
         # Create the study form the DTO
         study = Study()
-        study.uri = study_dto.uri
+        study.id = study_dto.id
         study.title = study_dto.title
         study.description = study_dto.description
         study.owner = CurrentUserService.get_and_check_current_user()

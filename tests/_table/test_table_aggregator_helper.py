@@ -9,7 +9,7 @@ from gws_core import (BaseTestCase, BoolParam, ConfigParams, Experiment,
                       ExperimentService, File, GTest, JSONDict, Resource,
                       Settings, Shell, StrParam, Table, TableAggregatorHelper,
                       TableImporter, TaskInputs, TaskModel, TaskOutputs,
-                      TaskTester, task_decorator)
+                      TaskRunner, task_decorator)
 from pandas import Series
 
 settings = Settings.retrieve()
@@ -19,7 +19,7 @@ testdata_dir = settings.get_variable("gws_core:testdata_dir")
 class TestTableAggregatorHelper(BaseTestCase):
     async def test_table_aggregator_helper(self):
         file = File(path=os.path.join(testdata_dir, "multi_index_data.csv"))
-        tester = TaskTester(
+        tester = TaskRunner(
             params={"header": 0, "index_columns": ["Name"]},
             inputs={"file": file},
             task_type=TableImporter,

@@ -7,24 +7,21 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Type, TypedDict, final
 
+from gws_core.model.typing_manager import TypingManager
+
 from ..core.model.base import Base
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
-from .io_spec import IOSpec, IOSpecClass, IOSpecsHelper
+from .io_spec import IOSpec, IOSpecClass, IOSpecsHelper, ResourceTypeJson
 
 if TYPE_CHECKING:
     from ..process.process_model import ProcessModel
     from .io import IO
 
 
-class PortResourceDict(TypedDict):
-    uri: str
-    typing_name: str
-
-
 class PortDict(TypedDict):
-    resource: PortResourceDict
-    specs: List[str]  # list of supported resource typing names
+    resource_id: str
+    specs: List[ResourceTypeJson]  # list of supported resource typing names
 
 
 class Port(Base):
@@ -44,13 +41,12 @@ class Port(Base):
     # Switch to true when the set_resource_model is set (even if it is set with a None value)
     _resource_provided: bool = False
 
-    def __init__(self, parent: IO, _resource_spec: IOSpec):
+    def __init__(self, parent: IO, _resource_spec: IOSpecClass):
         self._resource_model = None
         self._prev = None
         self._next = []
         self._parent = parent
-
-        self.set_resource_spec(_resource_spec)
+        self._resource_spec = _resource_spec
 
     # -- D --
 
@@ -262,18 +258,6 @@ class Port(Base):
 
         return self._resource_spec
 
-    # -- S --
-
-    def set_resource_spec(self, resource_spec: IOSpec):
-        """
-        Sets the resource_types of the port.
-
-        :param resource: The input resource
-        :type resource: Resource
-        """
-
-        self._resource_spec = IOSpecClass(spec=resource_spec)
-
     @property
     def resource_model(self) -> ResourceModel:
         """
@@ -320,24 +304,22 @@ class Port(Base):
         """overiden by the children
 
         """
-        pass
 
     def to_json(self) -> PortDict:
-        _json: PortDict = {"resource": None, "specs": None}
+        _json: PortDict = {"resource_id": None, "specs": None}
 
         if self.resource_model:
-            _json["resource"] = {
-                "uri": self.resource_model.uri,
-                "typing_name": self.resource_model.typing_name
-            }
+            _json["resource_id"] = self.resource_model.id
         else:
-            _json["resource"] = {
-                "uri": "",
-                "typing_name": ""
-            }
+            _json["resource_id"] = ""
 
         _json["specs"] = self.resource_spec.to_json()
         return _json
+
+    @classmethod
+    def load_from_json(cls, json_: PortDict, parent: IO) -> None:
+        specs: IOSpecClass = IOSpecClass.from_json(json_['specs'])
+        return cls(parent, specs)
 
 
 # ####################################################################

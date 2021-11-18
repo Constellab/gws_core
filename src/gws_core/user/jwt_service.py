@@ -22,18 +22,18 @@ class JWTService:
     _secret: str = None
 
     @classmethod
-    def create_jwt(cls, user_uri: str) -> str:
+    def create_jwt(cls, user_id: str) -> str:
         # calculate the expiration date
         expire = datetime.utcnow() + timedelta(seconds=cls.get_token_duration_in_seconds())
 
-        data: JWTData = {"sub": user_uri, "exp": expire}
+        data: JWTData = {"sub": user_id, "exp": expire}
 
         encoded_jwt = encode(data, cls._get_secret(), algorithm=ALGORITHM)
         return encoded_jwt
 
     @classmethod
     def check_user_access_token(cls, token: str) -> str:
-        """Check the jwt and return user uri if token is valid
+        """Check the jwt and return user id if token is valid
 
         :param token: [description]
         :type token: str, optional
@@ -42,11 +42,11 @@ class JWTService:
         """
         payload: JWTData = decode(token, cls._get_secret(),
                                   algorithms=[ALGORITHM])
-        uri: str = payload.get("sub")
-        if uri is None:
+        id: str = payload.get("sub")
+        if id is None:
             raise InvalidTokenException()
 
-        return uri
+        return id
 
     @classmethod
     def get_token_duration_in_seconds(cls) -> int:

@@ -14,7 +14,6 @@ from ..resource.view_decorator import view
 
 if TYPE_CHECKING:
     from ..impl.file.fs_node import FSNode
-    from .resource_model import ResourceModel
 
 # Typing names generated for the class resource
 CONST_RESOURCE_TYPING_NAME = "RESOURCE.gws_core.Resource"
@@ -30,7 +29,7 @@ class Resource(Base):
     _typing_name: str = None
     _human_name: str = None
     _short_description: str = None
-    _model_uri: str = None
+    _model_id: str = None
 
     def __init__(self):
         # check that the class level property _typing_name is set
@@ -96,14 +95,3 @@ class Resource(Base):
         :rtype: [type]
         """
         return None
-
-    @classmethod
-    def get_resource_model_type(cls) -> Type[ResourceModel]:
-        """Return the resource model associated with this Resource
-        //!\\ To overwrite only when you know what you are doing
-
-        :return: [description]
-        :rtype: Type[Any]
-        """
-        from .resource_model import ResourceModel
-        return ResourceModel

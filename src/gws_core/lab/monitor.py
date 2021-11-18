@@ -40,17 +40,17 @@ class Monitor(Model):
     (e.g. cpu usage, disk usage, memory, network transactions)
     """
     cpu_count = FloatField()
-    cpu_percent = FloatField(index=True)
+    cpu_percent = FloatField()
     disk_total = FloatField()
-    disk_usage_used = FloatField(index=True)
-    disk_usage_free = FloatField(index=True)
-    disk_usage_percent = FloatField(index=True)
-    swap_memory_total = FloatField(index=True)
-    swap_memory_used = FloatField(index=True)
-    swap_memory_free = FloatField(index=True)
-    swap_memory_percent = FloatField(index=True)
-    net_io_bytes_sent = FloatField(index=True)
-    net_io_bytes_recv = FloatField(index=True)
+    disk_usage_used = FloatField()
+    disk_usage_free = FloatField()
+    disk_usage_percent = FloatField()
+    swap_memory_total = FloatField()
+    swap_memory_used = FloatField()
+    swap_memory_free = FloatField()
+    swap_memory_percent = FloatField()
+    net_io_bytes_sent = FloatField()
+    net_io_bytes_recv = FloatField()
     _table_name = 'gws_lab_monitor'
     _is_init = False
 
@@ -66,7 +66,7 @@ class Monitor(Model):
 
     @classmethod
     def get_last(cls):
-        return Monitor.select().order_by(Monitor.id.desc()).get()
+        return Monitor.select().order_by(Monitor.creation_datetime.desc()).get()
 
     @classmethod
     def _tick(cls):

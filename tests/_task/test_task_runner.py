@@ -1,7 +1,7 @@
 
 
 from gws_core import (BadRequestException, BaseTestCase, ConfigParams, Robot,
-                      RobotMove, Task, TaskInputs, TaskOutputs, TaskTester,
+                      RobotMove, Task, TaskInputs, TaskOutputs, TaskRunner,
                       task_decorator)
 from gws_core.io.io_exception import MissingInputResourcesException
 
@@ -13,13 +13,13 @@ class TaskTesterProgress(Task):
         self.update_progress_value(50, 'Hello 50%')
 
 
-class TestTaskTester(BaseTestCase):
+class TestTaskRunner(BaseTestCase):
 
     async def test_task_tester(self):
         """Method to test the Task tester class
         """
 
-        task_tester: TaskTester = TaskTester(RobotMove,
+        task_tester: TaskRunner = TaskRunner(RobotMove,
                                              {'moving_step': 10, 'direction': 'south'},
                                              {'robot': Robot.empty()})
 
@@ -29,7 +29,7 @@ class TestTaskTester(BaseTestCase):
         self.assertEqual(robot.position, [0, -10])
 
     async def test_missing_input(self):
-        task_tester: TaskTester = TaskTester(RobotMove,
+        task_tester: TaskRunner = TaskRunner(RobotMove,
                                              {'moving_step': 10, 'direction': 'south'},
                                              {})
 
@@ -37,7 +37,7 @@ class TestTaskTester(BaseTestCase):
             await task_tester.run()
 
     async def test_wrong_config(self):
-        task_tester: TaskTester = TaskTester(RobotMove,
+        task_tester: TaskRunner = TaskRunner(RobotMove,
                                              {'moving_step': 'test', 'direction': 'south'},
                                              {'robot': Robot.empty()})
 
@@ -45,6 +45,6 @@ class TestTaskTester(BaseTestCase):
             await task_tester.run()
 
     async def test_progress(self):
-        task_tester: TaskTester = TaskTester(TaskTesterProgress)
+        task_tester: TaskRunner = TaskRunner(TaskTesterProgress)
 
         await task_tester.run()

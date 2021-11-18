@@ -8,36 +8,29 @@ from .r_field import BaseRField
 from .resource import Resource
 
 
-class ResourceRFieldDict(TypedDict):
-    resource_model_typing_name: str
-    resource_model_uri: str
-
-
 @final
 class ResourceRField(BaseRField):
 
     def __init__(self) -> None:
         super().__init__(searchable=True, default_value=None, include_in_dict_view=False)
 
-    def deserialize(self, r_field_value: ResourceRFieldDict) -> Resource:
-        if r_field_value is None:
+    def deserialize(self, resource_model_id: str) -> Resource:
+        if resource_model_id is None:
             return None
 
-        resource_model: ResourceModel = TypingManager.get_object_with_typing_name_and_uri(
-            r_field_value["resource_model_typing_name"], r_field_value["resource_model_uri"])
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_model_id)
 
         return resource_model.get_resource()
 
-    def serialize(self, r_field_value: Resource) -> ResourceRFieldDict:
+    def serialize(self, r_field_value: Resource) -> str:
         if r_field_value is None:
             return None
         if not isinstance(r_field_value, Resource):
             raise Exception(
                 f"The value passed to the ResourceRField is not a ressource but a '{str(type(r_field_value))}'")
 
-        if r_field_value._model_uri is None:
+        if r_field_value._model_id is None:
             raise Exception(
                 f"Only a resource previously saved can be passed to a ResourceRField. It must have been the output of a previous task")
 
-        return {"resource_model_typing_name": r_field_value.get_resource_model_type()._typing_name,
-                "resource_model_uri": r_field_value._model_uri}
+        return r_field_value._model_id

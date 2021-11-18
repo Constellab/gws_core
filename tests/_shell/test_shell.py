@@ -8,7 +8,7 @@ import os
 from gws_core import (BaseTestCase, BoolParam, ConfigParams, Experiment,
                       ExperimentService, File, GTest, Resource, Shell,
                       StrParam, TaskInputs, TaskModel, TaskOutputs,
-                      TaskService, TaskTester, task_decorator)
+                      TaskService, TaskRunner, task_decorator)
 
 
 @task_decorator("Echo")
@@ -34,7 +34,7 @@ class TestShell(BaseTestCase):
 
     async def test_shell(self):
         GTest.print("Shell")
-        tester = TaskTester(
+        tester = TaskRunner(
             inputs={},
             params={"name": "John Doe"},
             task_type=Echo

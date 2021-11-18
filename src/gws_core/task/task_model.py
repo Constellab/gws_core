@@ -4,12 +4,13 @@
 # About us: https://gencovery.com
 import inspect
 import zlib
-from typing import Type
+from typing import Dict, List, Type
 
-from ..config.config_types import ConfigParams
-from ..core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from ..config.config_types import ConfigParamsDict
+from ..core.decorator.transaction import transaction
 from ..core.utils.logger import Logger
+from ..io.io_exception import InvalidOutputsException
+from ..io.port import Port
 from ..model.typing_manager import TypingManager
 from ..model.typing_register_decorator import typing_registrator
 from ..process.process_exception import (CheckBeforeTaskStopException,
@@ -17,8 +18,9 @@ from ..process.process_exception import (CheckBeforeTaskStopException,
 from ..process.process_model import ProcessModel
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
-from ..task.task_io import TaskInputs, TaskOutputs
+from ..task.task_io import TaskOutputs
 from .task import CheckBeforeTaskResult, Task
+from .task_runner import TaskRunner
 
 
 @typing_registrator(unique_name="Task", object_type="MODEL", hide=True)
@@ -47,7 +49,7 @@ class TaskModel(ProcessModel):
             self._init_io()
 
     def _init_io(self):
-        task_type: Type[Task] = self._get_process_type()
+        task_type: Type[Task] = self.get_process_type()
 
         # create the input ports from the Task input specs
         for k in task_type.input_specs:
@@ -62,8 +64,6 @@ class TaskModel(ProcessModel):
 
         # set the resources to the ports
         self._init_outputs_from_data()
-
-    # -- C --
 
     def create_source_zip(self):
         """
@@ -80,30 +80,62 @@ class TaskModel(ProcessModel):
         self.process_typing_name = typing_name
         self._init_io()
 
-    # -- D --
-
     def _create_task_instance(self) -> Task:
-        return self._get_process_type()()
+        return self.get_process_type()()
+
+    def is_protocol(self) -> bool:
+        return False
+    ################################# MODEL METHODS #############################
+
+    def save_full(self) -> 'TaskModel':
+        self.config.save()
+        self.progress_bar.save()
+        return self.save()
+
+    # -- A --
+    @transaction()
+    def archive(self, archive: bool, archive_resources=True) -> 'TaskModel':
+        """
+        Archive the process
+        """
+
+        if self.is_archived == archive:
+            return self
+
+        super().archive(archive)
+
+        # -> try to archive the config if possible!
+        self.config.archive(archive)
+        if archive_resources:
+            for resource in self.resources:
+                resource.archive(archive)
+
+        return self
+
+    @property
+    def resources(self) -> List[ResourceModel]:
+        if not self.is_saved():
+            return []
+
+        return list(ResourceModel.select().where(ResourceModel.task_model == self))
+
+    ################################# RUN #############################
 
     async def _run(self) -> None:
         """
         Run the task and save its state in the database.
         """
-        # Create the task instance to run the task
-        task: Task = self._create_task_instance()
 
-        # Set the progress bar
-        task._progress_bar_ = self.progress_bar
-        task._status_ = 'CHECK_BEFORE_RUN'
+        # build the task tester
+        params: ConfigParamsDict = self.config.get_values()
+        inputs: Dict[str, Resource] = self.inputs.get_resources(new_instance=True)
 
-        # Get simpler object for to run the task
-        config_params: ConfigParams = self.config.get_and_check_values()
-        task_inputs: TaskInputs = self.inputs.get_and_check_task_inputs()
+        task_runner: TaskRunner = TaskRunner(self.get_process_type(), params, inputs)
+        task_runner.set_progress_bar(self.progress_bar)
 
         check_result: CheckBeforeTaskResult
         try:
-            check_result = task.check_before_run(
-                config_params, task_inputs)
+            check_result = task_runner.check_before_run()
         except Exception as err:
             Logger.log_exception_stack_trace(err)
             raise ProcessRunException.from_exception(process_model=self, exception=err,
@@ -117,13 +149,13 @@ class TaskModel(ProcessModel):
                 return
 
         await self._run_before_task()
+
         # run the task
-        await self._run_task(task=task, config_params=config_params, task_inputs=task_inputs)
+        await self._run_task(task_runner)
 
         # execute the run after task method
         try:
-            task._status_ = 'RUN_AFTER_TASK'
-            await task.run_after_task()
+            await task_runner.run_after_task()
         except Exception as err:
             if not isinstance(err, ProcessRunException):
                 Logger.log_exception_stack_trace(err)
@@ -132,65 +164,81 @@ class TaskModel(ProcessModel):
 
         await self._run_after_task()
 
-    async def _run_task(self, task: Task, config_params: ConfigParams, task_inputs: TaskInputs) -> None:
+    async def _run_before_task(self) -> None:
+        await super()._run_before_task()
+
+        # Store all the resources user as input for this taks
+        self.save_input_resources()
+
+    def save_input_resources(self) -> None:
+        """Method run juste before the task run to save the input resource for this task.
+          this will allow to know what resource this task uses as input
+        """
+        from .task_input_model import TaskInputModel
+        for key, port in self.inputs.ports.items():
+
+            resource_model: ResourceModel = port.resource_model
+
+            # if the resource was already added for the task (for example multiple use in on Task)
+            if resource_model is None:
+                continue
+
+            # Create the Input resource to save the resource use as input
+            input_resource: TaskInputModel = TaskInputModel()
+            input_resource.resource_model = resource_model
+            input_resource.experiment = self.experiment
+            input_resource.task_model = self
+
+            parent = self.parent_protocol
+            input_resource.protocol_model = parent
+            input_resource.port_name = key
+            input_resource.is_interface = parent.port_is_interface(key, port)
+
+            input_resource.save()
+
+    async def _run_task(self, task_runner: TaskRunner) -> None:
         """
         Run the task and save its state in the database.
         """
 
-        task_outputs: TaskOutputs
-        task._status_ = 'RUN'
-
         try:
             # Run the task task
-            task_outputs = await task.run(config_params, task_inputs)
+            await task_runner.run()
+
+        except InvalidOutputsException as err:
+            # Save the valid resources
+            self._save_outputs(task_runner.get_outputs())
+            raise err
         except Exception as err:
             Logger.log_exception_stack_trace(err)
             raise ProcessRunException.from_exception(process_model=self, exception=err,
                                                      error_prefix='Error during task') from err
 
-        if task_outputs is None:
-            task_outputs = {}
-
-        if not isinstance(task_outputs, dict):
-            raise BadRequestException('The task output is not a dictionary')
-
-        self._save_outputs(task_outputs)
+        # If success, save the outputs
+        self._save_outputs(task_runner.get_outputs())
 
     def _save_outputs(self, task_outputs: TaskOutputs) -> None:
-        for key, port in self.outputs.ports.items():
+        for key, resource in task_outputs.items():
+
+            if not self.outputs.port_exists(key):
+                raise Exception(f"Error while saving the task output. The port '{key}' does not exists")
+
             resource_model: ResourceModel
 
-            # If the resource for the output port was provided
-            if key in task_outputs:
+            port: Port = self.outputs.get_port(key)
 
-                resource: Resource = task_outputs[key]
-
-                if not isinstance(resource, Resource):
-                    raise BadRequestException(
-                        f"The output '{key}' of type '{type(resource)}' is not a resource. It must extend the Resource class")
-
-                # Get the type of resource model to create for this resource
-                resource_model_type: Type[ResourceModel] = resource.get_resource_model_type()
-                if not issubclass(resource_model_type, ResourceModel):
-                    raise BadRequestException(
-                        f"The method get_resource_model_type of resource {resource.classname()} did not return a type that extend ResourceModel")
-
-                if port.is_constant_out:
-                    # If the port is mark as unmodified, we don't create a new resource
-                    # We use the same resource
-                    resource_model = TypingManager.get_object_with_typing_name_and_uri(
-                        typing_name=resource_model_type._typing_name, uri=resource._model_uri)
-                else:
-                    # create the resource model from the resource
-                    resource_model = resource_model_type.from_resource(resource)
-
-                    # Add info and save resource model
-                    resource_model.experiment = self.experiment
-                    resource_model.task = self
-                    resource_model.save()
-
+            if port.is_constant_out:
+                # If the port is mark as unmodified, we don't create a new resource
+                # We use the same resource
+                resource_model = ResourceModel.get_by_id_and_check(resource._model_id)
             else:
-                resource_model = None
+                # create the resource model from the resource
+                resource_model = ResourceModel.from_resource(resource)
+
+                # Add info and save resource model
+                resource_model.experiment = self.experiment
+                resource_model.task_model = self
+                resource_model.save_full()
 
             # save the resource model into the output's port (even if it's None)
             port.resource_model = resource_model

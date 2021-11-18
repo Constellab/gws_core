@@ -6,14 +6,14 @@
 
 import shutil
 
-from ...lab.system_service import SystemService
 from ...core.exception.exceptions import BadRequestException
+from ...core.model.base_model_service import BaseModelService
 from ...core.utils.settings import Settings
-from ...model.model_service import ModelService
+from ...lab.system_service import SystemService
 from ...study.study_dto import StudyDto
 from ...user.auth_service import AuthService
 from ...user.user import User
-from ...user.user_service import UserService
+
 
 class Console:
     """
@@ -25,7 +25,7 @@ class Console:
     user: User = None
 
     @classmethod
-    def init(cls, clean_db: bool=False, user: User=None):
+    def init(cls, clean_db: bool = False, user: User = None):
         """
         This function initializes objects for unit testing
         """
@@ -33,7 +33,7 @@ class Console:
         if clean_db:
             cls.drop_tables()
             cls.create_tables()
-            
+
         settings = Settings.retrieve()
         if not settings.is_dev:
             raise BadRequestException(
@@ -45,8 +45,7 @@ class Console:
             user = User.get_sysuser()
 
         # refresh user information from DB
-        AuthService.authenticate(
-            uri=user.uri, console_token=user.console_token)
+        AuthService.authenticate(id=user.id)
 
         cls.user = user
 
@@ -56,7 +55,7 @@ class Console:
         Create tables
         """
 
-        ModelService.create_tables(models)
+        BaseModelService.create_tables(models)
 
     @classmethod
     def drop_tables(cls, models: list = None):
@@ -64,7 +63,7 @@ class Console:
         Drops tables
         """
 
-        ModelService.drop_tables(models)
+        BaseModelService.drop_tables(models)
 
     @classmethod
     def delete_data_and_temp_folder(cls):
@@ -83,7 +82,7 @@ class Console:
         """
         Get a default study DTO
         """
-        return StudyDto(uri="3b4a462a-d2e2-4859-9837-9303b4a51889", title="Default study",
+        return StudyDto(id="3b4a462a-d2e2-4859-9837-9303b4a51889", title="Default study",
                         description="Study description")
 
     @classmethod

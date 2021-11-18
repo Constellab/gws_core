@@ -22,7 +22,7 @@ class TestCentral(unittest.TestCase):
     def test_create_user(self):
         GTest.print("Central")
         data = {
-            "uri": "1234567890",
+            "id": "1234567890",
             "email": "test@gencovery.com",
             "first_name": "",
             "last_name": "",
@@ -31,5 +31,5 @@ class TestCentral(unittest.TestCase):
         }
         tf = UserService.create_user(data)
         self.assertTrue(tf)
-        user = User.get_by_uri("1234567890")
-        self.assertEqual(user.uri, "1234567890")
+        user = User.get_by_id("1234567890")
+        self.assertEqual(user.id, "1234567890")

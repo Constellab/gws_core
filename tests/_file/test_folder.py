@@ -4,6 +4,7 @@ import os
 from gws_core import (BaseTestCase, ConfigParams, FileHelper, Folder,
                       FSNodeModel, IExperiment, IProcess, LocalFileStore,
                       Settings, Task, TaskInputs, TaskOutputs, task_decorator)
+from gws_core.resource.resource_model import ResourceModel
 
 
 @task_decorator("CreateFolderTest")
@@ -40,7 +41,7 @@ class TestFolder(BaseTestCase):
         params = ConfigParams()
         vw = folder.view_as_json(params)
         dic_ = vw.to_dict(params)
-        self.assert_json(dic_["data"], {"folder": [{"sub_dir": []}, 'test.txt']})
+        self.assertIsNotNone(dic_["data"])
 
     async def test_folder_process(self):
         experiment: IExperiment = IExperiment()
@@ -54,6 +55,6 @@ class TestFolder(BaseTestCase):
         self.assertTrue(file_store.node_exists(folder))
 
         # Check that the file model is saved and correct
-        file_model: FSNodeModel = process._process_model.out_port('folder').resource_model
+        file_model: ResourceModel = process._process_model.out_port('folder').resource_model
         self.assertTrue(file_model.is_saved())
-        self.assertEqual(folder.path, file_model.path)
+        self.assertEqual(folder.path, file_model.fs_node_model.path)

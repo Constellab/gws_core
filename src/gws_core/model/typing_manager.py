@@ -62,13 +62,13 @@ class TypingManager:
         return model_type.get_by_id(object_id)
 
     @classmethod
-    def get_object_with_typing_name_and_uri(cls, typing_name: str, uri: str) -> Model:
+    def get_object_with_typing_name_and_id(cls, typing_name: str, id: str) -> Model:
         model_type: Type[Model] = cls.get_type_from_name(typing_name)
         if not issubclass(model_type, Model):
             raise BadRequestException(
                 f"Can't get the object of type {model_type} (typing name: {typing_name}) from the DB because it is not a Model")
 
-        return model_type.get_by_uri(uri)
+        return model_type.get_by_id(id)
 
     @classmethod
     def type_is_register(cls, model_type: Type[Base]) -> bool:

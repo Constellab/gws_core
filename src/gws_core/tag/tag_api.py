@@ -41,15 +41,15 @@ async def get_tag(key: str,
     return TagService.search_by_key(key, page, number_of_items_per_page).to_json()
 
 
-@core_app.post("/tag/add/{typing_name}/{uri}", tags=["Tag"], summary='Add a tag to a model')
-def add_tag(typing_name: str, uri: str, tag: NewTagDTO,
+@core_app.post("/tag/add/{typing_name}/{id}", tags=["Tag"], summary='Add a tag to a model')
+def add_tag(typing_name: str, id: str, tag: NewTagDTO,
             _: UserData = Depends(AuthService.check_user_access_token)) -> List[Tag]:
 
-    return TagService.add_tag_to_model(typing_name, uri, tag.key, tag.value)
+    return TagService.add_tag_to_model(typing_name, id, tag.key, tag.value)
 
 
-@core_app.put("/tag/save/{typing_name}/{uri}", tags=["Tag"], summary='Save all tag for a model')
-def save_tag(typing_name: str, uri: str, tags: List[Tag],
+@core_app.put("/tag/save/{typing_name}/{id}", tags=["Tag"], summary='Save all tag for a model')
+def save_tag(typing_name: str, id: str, tags: List[Tag],
              _: UserData = Depends(AuthService.check_user_access_token)) -> List[Tag]:
 
-    return TagService.save_tags_to_model(typing_name, uri, tags)
+    return TagService.save_tags_to_model(typing_name, id, tags)

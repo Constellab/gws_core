@@ -26,7 +26,7 @@ async def read_user_me(current_user: UserData = Depends(AuthService.check_user_a
 
 
 @core_app.get("/user/activity", tags=["User"], summary="Get user activities")
-async def get_user_activity(user_uri: Optional[str] = None,
+async def get_user_activity(user_id: Optional[str] = None,
                             activity_type: Optional[str] = None,
                             page: int = 0,
                             number_of_items_per_page: int = 20,
@@ -34,7 +34,7 @@ async def get_user_activity(user_uri: Optional[str] = None,
     """
     Get the list of user activities on the lab
 
-    - **user_uri**: the uri the user [optional]
+    - **user_id**: the id the user [optional]
     - **activity_type**: the type of the activity to retrieve [optional]. The valid types of activities are:
       - **CREATE** : the creation of an object
       - **SAVE**   : the saving of an object
@@ -52,7 +52,7 @@ async def get_user_activity(user_uri: Optional[str] = None,
     """
 
     return UserService.fecth_activity_list(
-        user_uri=user_uri,
+        user_id=user_id,
         activity_type=activity_type,
         page=page,
         number_of_items_per_page=number_of_items_per_page,
@@ -85,6 +85,6 @@ def dev_login(authorization_header: Optional[str] = Header(default=None, alias="
 
 @core_app.get("/check-token", tags=["User"], summary="Check user's token")
 def check_token(current_user: UserData = Depends(AuthService.check_user_access_token)) -> str:
-    """Simple route to check the user's token (used in automatic dev login), returns the user's uri if valid
+    """Simple route to check the user's token (used in automatic dev login), returns the user's id if valid
     """
-    return current_user.uri
+    return current_user.id

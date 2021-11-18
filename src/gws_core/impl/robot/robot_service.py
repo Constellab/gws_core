@@ -20,7 +20,7 @@ class RobotService(BaseService):
         protocol.save_full()
         experiment = ExperimentService.create_experiment_from_protocol_model(
             protocol_model=protocol, title="The journey of Astro.", description="This is the journey of Astro.")
-        QueueService.add_experiment_to_queue(experiment_uri=experiment.uri)
+        QueueService.add_experiment_to_queue(experiment_id=experiment.id)
         return experiment
 
     @classmethod
@@ -29,7 +29,7 @@ class RobotService(BaseService):
         experiment = ExperimentService.create_experiment_from_protocol_model(
             protocol_model=protocol, title="The super journey of Astro.",
             description="This is the super journey of Astro.")
-        QueueService.add_experiment_to_queue(experiment_uri=experiment.uri)
+        QueueService.add_experiment_to_queue(experiment_id=experiment.id)
         return experiment
 
     @classmethod

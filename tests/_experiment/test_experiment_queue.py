@@ -9,6 +9,7 @@ from math import exp
 from gws_core import (BaseTestCase, Experiment, ExperimentService,
                       ExperimentStatus, GTest, QueueService, RobotService,
                       Settings)
+from gws_core.impl.robot.robot_protocol import CreateSimpleRobot
 from gws_core.study.study_dto import StudyDto
 
 settings = Settings.retrieve()
@@ -21,17 +22,16 @@ class TestExperiment(BaseTestCase):
 
     async def test_service(self):
         GTest.print("ExperimentService")
-        proto = RobotService.create_robot_world_travel()
-        experiment = ExperimentService.create_experiment_from_protocol_model(protocol_model=proto)
-        c = Experiment.select().count()
-        self.assertEqual(c, 1)
+        experiment = ExperimentService.create_experiment_from_protocol_type(CreateSimpleRobot)
+        count = Experiment.select().count()
+        self.assertEqual(count, 1)
 
         QueueService.init(tick_interval=3, daemon=False)  # tick each 3 second
 
         def _run() -> bool:
             try:
                 QueueService.add_experiment_to_queue(
-                    experiment_uri=experiment.uri)
+                    experiment_id=experiment.id)
             except Exception as err:
                 print(err)
                 return False
@@ -49,7 +49,7 @@ class TestExperiment(BaseTestCase):
             experiment1: Experiment = Experiment.get(
                 Experiment.id == experiment.id)
             self.assertEqual(experiment1.status, ExperimentStatus.SUCCESS)
-            self.assertEqual(experiment1.pid, None)
+            self.assertEqual(experiment1.pid, 0)
             print("Done!")
             return True
 
@@ -70,6 +70,6 @@ class TestExperiment(BaseTestCase):
         experiment2: Experiment = Experiment.get(
             Experiment.id == experiment.id)
 
-        ExperimentService.validate_experiment(experiment2.uri, GTest.default_study_dto())
+        ExperimentService.validate_experiment(experiment2.id, GTest.default_study_dto())
         self.assertFalse(_run())
         self.assertEqual(Experiment.select().count(), 1)

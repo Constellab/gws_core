@@ -61,7 +61,7 @@ class Connector:
         self.out_port.disconnect()
 
     # -- V --
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
+    def to_json(self, deep: bool = False) -> dict:
         """
         Returns a dictionnary describing the Connector.
 
@@ -69,12 +69,10 @@ class Connector:
         :rtype: dict
         """
 
-        r_uri = ""
-        r_typing_name = ""
+        r_id = ""
 
         if self.out_port.resource_model:
-            r_uri = self.out_port.resource_model.uri
-            r_typing_name = self.out_port.resource_model.typing_name
+            r_id = self.out_port.resource_model.id
 
         link = {
             "from": {
@@ -85,10 +83,7 @@ class Connector:
                 "node": self.right_process.instance_name,
                 "port": self.in_port.name,
             },
-            "resource": {
-                "uri": r_uri,
-                "typing_name": r_typing_name
-            }
+            "resource_id": r_id
         }
 
         return link

@@ -1,7 +1,7 @@
 
 
 from gws_core import (CheckBeforeTaskResult, ResourceModel, Robot, Source,
-                      Switch2, TaskOutputs, TaskTester)
+                      Switch2, TaskOutputs, TaskRunner)
 from gws_core.test.base_test_case import BaseTestCase
 
 
@@ -14,12 +14,12 @@ class TestPlug(BaseTestCase):
         robot_model: ResourceModel = ResourceModel.from_resource(robot)
         robot_model.save()
 
-        task_tester = TaskTester(Source, {'resource_uri': robot_model.uri, 'resource_typing_name': Robot._typing_name})
+        task_tester = TaskRunner(Source, {'resource_id': robot_model.id})
 
         outputs: TaskOutputs = await task_tester.run()
 
         robot_o: Robot = outputs['resource']
-        self.assertEqual(robot_o._model_uri, robot_model.uri)
+        self.assertEqual(robot_o._model_id, robot_model.id)
 
     async def test_switch(self):
         """Test the switch2 task
@@ -27,7 +27,7 @@ class TestPlug(BaseTestCase):
         robot: Robot = Robot.empty()
         robot_2: Robot = Robot.empty()
 
-        task_tester = TaskTester(Switch2, {'index': 2})
+        task_tester = TaskRunner(Switch2, {'index': 2})
         task_tester.set_input('resource_1', robot)
 
         # check that the task is not ready
@@ -49,7 +49,7 @@ class TestPlug(BaseTestCase):
         """
         robot: Robot = Robot.empty()
 
-        task_tester = TaskTester(Switch2)
+        task_tester = TaskRunner(Switch2)
         task_tester.set_input('resource_1', robot)
 
         # check that the task is not ready

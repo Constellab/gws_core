@@ -19,6 +19,6 @@ class ITask(IProcess):
     ############################################### CLASS METHODS ####################################
 
     @classmethod
-    def get_by_uri(cls, uri: str) -> 'ITask':
-        task_model: TaskModel = TaskService.get_task_by_uri(uri)
+    def get_by_id(cls, id: str) -> 'ITask':
+        task_model: TaskModel = TaskService.get_task_by_id(id)
         return ITask(task_model)

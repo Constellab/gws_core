@@ -44,8 +44,13 @@ def transaction(nested_transaction: bool = False) -> Callable:
 
             TransactionSignleton.increment()
             try:
-                with Model.get_db_manager().db.atomic():
-                    result = func(*args, **kwargs)
+                with Model.get_db_manager().db.transaction() as nested_txn:
+                    try:
+                        result = func(*args, **kwargs)
+                    except Exception as err:
+                        nested_txn.rollback()
+                        raise err
+                    nested_txn.commit()
             finally:
                 TransactionSignleton.decrement()
 

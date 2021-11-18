@@ -8,7 +8,7 @@ import os
 import pandas
 from gws_core import (BaseTestCase, ConfigParams, File, GTest, Settings, Table,
                       TableExporter, TableFilter, TableImporter, TaskModel,
-                      TaskTester)
+                      TaskRunner)
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -30,15 +30,15 @@ class TestTable(BaseTestCase):
         GTest.print("Table select")
 
         table: Table = Table(
-            data=[[1, 2, 3], [3, 4, 6], [3, 7, 6]], 
+            data=[[1, 2, 3], [3, 4, 6], [3, 7, 6]],
             column_names=["London", "Lisboa", "Beijin"],
             row_names=["NY", "Tokyo", "Paris"]
         )
-        t = table.select_by_row_indexes([1,2])
+        t = table.select_by_row_indexes([1, 2])
         self.assertEqual(t.column_names, ["London", "Lisboa", "Beijin"])
         self.assertEqual(t.row_names, ["Tokyo", "Paris"])
 
-        t = table.select_by_column_indexes([0,2])
+        t = table.select_by_column_indexes([0, 2])
         self.assertEqual(t.column_names, ["London", "Beijin"])
         self.assertEqual(t.row_names, ["NY", "Tokyo", "Paris"])
 
@@ -49,9 +49,9 @@ class TestTable(BaseTestCase):
         t = table.select_by_column_name("L.*")
         self.assertEqual(t.column_names, ["London", "Lisboa"])
         self.assertEqual(t.row_names, ["NY", "Tokyo", "Paris"])
- 
+
         print(t)
-  
+
     def test_table_import(self):
         GTest.print("Table load")
 
@@ -67,7 +67,7 @@ class TestTable(BaseTestCase):
     async def test_importer_exporter(self):
         # importer
         file_path = os.path.join(testdata_dir, "data.csv")
-        tester = TaskTester(
+        tester = TaskRunner(
             params={}, inputs={"file": File(path=file_path)}, task_type=TableImporter
         )
         self.assertTrue(os.path.exists(file_path))
@@ -77,7 +77,7 @@ class TestTable(BaseTestCase):
         self.assertTrue(df.equals(table.get_data()))
 
         # exporter
-        tester = TaskTester(
+        tester = TaskRunner(
             params={}, inputs={"resource": table}, task_type=TableExporter
         )
         outputs = await tester.run()

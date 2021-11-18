@@ -11,11 +11,12 @@ from datetime import datetime
 from typing import Any, Dict, List, Type
 
 from fastapi.encoders import jsonable_encoder
+from gws_core.core.model.base_model import BaseModel
 from peewee import (AutoField, BigAutoField, BlobField, BooleanField,
                     CharField, DateTimeField, Field, ForeignKeyField,
-                    ManyToManyField)
+                    ForeignKeyMetadata, ManyToManyField)
 from peewee import Model as PeeweeModel
-from peewee import ModelSelect
+from peewee import ModelSelect, UUIDField
 from playhouse.mysql_ext import Match
 
 from ..db.db_manager import DbManager
@@ -29,26 +30,21 @@ from ..utils.settings import Settings
 from ..utils.utils import Utils
 from .base import Base
 
+
 # ####################################################################
 #
 # Format table name
 #
 # ####################################################################
-
-
-def format_table_name(model: Type['Model']) -> str:
-    return model._table_name.lower()
-
-
-@json_ignore(["id", "hash"])
-class Model(Base, PeeweeModel):
+@json_ignore(["hash"])
+class Model(BaseModel, PeeweeModel):
     """
     Model class
 
     :property id: The id of the model (in database)
     :type id: `int`
-    :property uri: The unique resource identifier of the model
-    :type uri: `str`
+    :property id: The unique resource identifier of the model
+    :type id: `str`
     :property type: The type of the python Object (the full class name)
     :type type: `str`
     :property creation_datetime: The creation datetime of the model
@@ -63,34 +59,37 @@ class Model(Base, PeeweeModel):
     :type hash: `str`
     """
 
-    id = AutoField(primary_key=True)
-    uri = CharField(null=True, index=True, unique=True)
-    creation_datetime = DateTimeField(default=datetime.now, index=True)
-    save_datetime = DateTimeField(index=True)
+    id = CharField(primary_key=True, max_length=36)
+    creation_datetime = DateTimeField(default=datetime.now)
+    save_datetime = DateTimeField()
     is_archived = BooleanField(default=False, index=True)
     hash = CharField(null=True)
     data: Dict[str, Any] = JSONField(null=True)
 
-    LAB_URI = None  # todo remove
-
-    _data = None
-    _is_removable = True
-    _db_manager = DbManager
-    _table_name = 'gws_model'
     # Provided at the Class level automatically by the @TypingDecorator
     _typing_name: str = None
+
     _json_ignore_fields: List[str] = []
     _default_full_text_column = "data"
+    _is_saved: bool = False
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if not Model.LAB_URI:
-            Model.LAB_URI = Settings.retrieve().get_data("uri")
 
-        if self.uri is None:
-            self.uri = str(uuid.uuid4())
+        # If there is not id, we consider the model as not saved and generate an id
+        if self.id is None:
+            self.id = str(uuid.uuid4())
+            # self.id = str(uuid.uuid4())
+            self._is_saved = False
             if not self.data:
                 self.data = {}
+        else:
+            self._is_saved = True
+
+    @property
+    def uri(self) -> str:
+        Logger.warning('The uri field should not be used anymore, use id instead.')
+        return self.id
 
     # -- A --
 
@@ -99,7 +98,7 @@ class Model(Base, PeeweeModel):
         if "__relations" not in self.data:
             self.data["__relations"] = {}
         self.data["__relations"][relation_name] = {
-            "uri": related_model.uri,
+            "id": related_model.id,
             "type": related_model.full_classname(),
             # "name": related_model.name
         }
@@ -124,7 +123,6 @@ class Model(Base, PeeweeModel):
 
     def _create_hash_object(self):
         hash_obj = hashlib.blake2b()
-        hash_obj.update(Model.LAB_URI.encode())
         exclusion_list = (ForeignKeyField, JSONField,
                           ManyToManyField, BlobField, AutoField, BigAutoField, )
 
@@ -180,35 +178,6 @@ class Model(Base, PeeweeModel):
         if save:
             self.save()
 
-    @classmethod
-    def create_table(cls, *args, **kwargs):
-        """
-        Create model table
-        """
-
-        if cls.table_exists():
-            return
-        super().create_table(*args, **kwargs)
-        if cls._default_full_text_column:
-            if cls.get_db_manager().is_mysql_engine():
-                cls.get_db_manager().db.execute_sql(
-                    f"CREATE FULLTEXT INDEX {cls._default_full_text_column} ON {cls.get_table_name()}({cls._default_full_text_column})")
-
-    # -- D --
-
-    @classmethod
-    def drop_table(cls, *args, **kwargs):
-        """
-        Drop model table
-        """
-
-        if not cls.table_exists():
-            return
-
-        super().drop_table(*args, **kwargs)
-
-    # -- E --
-
     def __eq__(self, other: object) -> bool:
         """
         Compares the model with another model. The models are equal if they are
@@ -232,52 +201,30 @@ class Model(Base, PeeweeModel):
                 f"The relation {relation_name} does not exists")
         rel: dict = self.data["__relations"][relation_name]
         model_type: Type[Model] = Utils.get_model_type(rel["type"])
-        return model_type.get(model_type.uri == rel["uri"])
+        return model_type.get(model_type.id == rel["id"])
 
     @classmethod
-    def get_table_name(cls) -> str:
-        """
-        Returns the table name of this class
-
-        :return: The table name
-        :rtype: `str`
-        """
-
-        return format_table_name(cls)
-
-    @classmethod
-    def get_db_manager(cls) -> Type[DbManager]:
-        """
-        Returns the (current) DbManager of this model
-
-        :return: The db manager
-        :rtype: `DbManager`
-        """
-
-        return cls._db_manager
-
-    @classmethod
-    def get_by_uri(cls, uri: str) -> 'Model':
+    def get_by_id(cls, id: str) -> 'Model':
         try:
-            return cls.get(cls.uri == uri)
+            return cls.get(cls.id == id)
         except:
             return None
 
     @classmethod
-    def get_by_uri_and_check(cls, uri: str) -> 'Model':
-        """Get by URI and throw 404 error if object not found
+    def get_by_id_and_check(cls, id: str) -> 'Model':
+        """Get by ID and throw 404 error if object not found
 
-        :param uri: [description]
-        :type uri: str
+        :param id: [description]
+        :type id: str
         :return: [description]
         :rtype: str
         """
         try:
-            return cls.get(cls.uri == uri)
+            return cls.get(cls.id == id)
         except:
-            raise NotFoundException(detail=GWSException.OBJECT_URI_NOT_FOUND.value,
-                                    unique_code=GWSException.OBJECT_URI_NOT_FOUND.name,
-                                    detail_args={"objectName": cls.classname(), "id": uri})
+            raise NotFoundException(detail=GWSException.OBJECT_ID_NOT_FOUND.value,
+                                    unique_code=GWSException.OBJECT_ID_NOT_FOUND.name,
+                                    detail_args={"objectName": cls.classname(), "id": id})
 
     # -- H --
 
@@ -295,16 +242,6 @@ class Model(Base, PeeweeModel):
             else:
                 self.data[prop] = data[prop]
 
-    # -- I --
-
-    @classmethod
-    def is_sqlite3_engine(cls):
-        return cls.get_db_manager().get_engine() == "sqlite3"
-
-    @classmethod
-    def is_mysql_engine(cls):
-        return cls.get_db_manager().get_engine() in ["mysql", "mariadb"]
-
     def is_saved(self):
         """
         Returns True if the model is saved in db, False otherwise
@@ -313,11 +250,7 @@ class Model(Base, PeeweeModel):
         :rtype: bool
         """
 
-        return bool(self.id)
-
-    # -- N --
-
-    # -- R --
+        return self._is_saved
 
     def refresh(self) -> None:
         """
@@ -325,7 +258,7 @@ class Model(Base, PeeweeModel):
         """
 
         cls = type(self)
-        if self.id:
+        if self.is_saved():
             db_object = cls.get_by_id(self.id)
             for prop in db_object.property_names(Field):
                 db_val = getattr(db_object, prop)
@@ -383,7 +316,11 @@ class Model(Base, PeeweeModel):
         self.save_datetime = datetime.now()
         self.hash = self.__compute_hash()
 
-        super().save(*args, **kwargs)
+        # set the force insert to true if the object was not created
+        force_insert: bool = not self.is_saved()
+
+        super().save(*args, force_insert=force_insert, **kwargs)
+        self._is_saved = True
 
         return self
 
@@ -404,7 +341,6 @@ class Model(Base, PeeweeModel):
 
         return model_list
 
-    # -- T --
     def to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns a JSON string or dictionnary representation of the model.
@@ -473,7 +409,3 @@ class Model(Base, PeeweeModel):
         """
 
         return self.hash == self.__compute_hash()
-
-    class Meta:
-        database = DbManager.db
-        table_function = format_table_name

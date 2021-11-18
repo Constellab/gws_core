@@ -1,16 +1,17 @@
 
 
-import re
 from typing import Dict, List, Optional
 
 from peewee import CharField
 from peewee import Model as PeeweeModel
 
-from .tag import Tag, TagHelper, default_tags
+from .tag import Tag, TagHelper
 
 
 class TaggableModel(PeeweeModel):
-
+    """
+    Class to extend to make the model support tags.
+    """
     tags = CharField(null=True)
 
     def add_or_replace_tag(self, tag_key: str, tag_value: str) -> None:

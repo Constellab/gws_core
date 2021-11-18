@@ -51,11 +51,11 @@ class TagService():
 
     @classmethod
     @transaction()
-    def add_tag_to_model(cls, model_typing_name: str, uri: str,
+    def add_tag_to_model(cls, model_typing_name: str, id: str,
                          tag_key: str, tag_value: str) -> List[Tag]:
 
         # Add tag to resource model
-        model: Model = TypingManager.get_object_with_typing_name_and_uri(model_typing_name, uri)
+        model: Model = TypingManager.get_object_with_typing_name_and_id(model_typing_name, id)
 
         if not isinstance(model, TaggableModel):
             raise BadRequestException("Can't add tags to this object type")
@@ -70,11 +70,11 @@ class TagService():
 
     @classmethod
     @transaction()
-    def save_tags_to_model(cls, model_typing_name: str, uri: str,
+    def save_tags_to_model(cls, model_typing_name: str, id: str,
                            tags: List[Tag]) -> List[Tag]:
 
         # Add tag to resource model
-        model: Model = TypingManager.get_object_with_typing_name_and_uri(model_typing_name, uri)
+        model: Model = TypingManager.get_object_with_typing_name_and_id(model_typing_name, id)
 
         if not isinstance(model, TaggableModel):
             raise BadRequestException("Can't add tags to this object type")

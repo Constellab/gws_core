@@ -69,7 +69,7 @@ class TestIExperiment(BaseTestCase):
         super_travel.delete_process('sub_travel')
         self.assertRaises(Exception, super_travel.get_process, 'sub_travel')
         # Test also that the process of sub_travel was delete form DB
-        self.assertRaises(Exception, ITask.get_by_uri, move_1._process_model.uri)
+        self.assertRaises(Exception, ITask.get_by_id, move_1._process_model.id)
 
         # Remove interface
         super_travel.delete_interface('robot')
@@ -82,7 +82,7 @@ class TestIExperiment(BaseTestCase):
         self._test_super_travel_after_remove(super_travel_model)
 
         # Verify that the DB was updated
-        super_travel_db: ProtocolModel = IProtocol.get_by_uri(super_travel_model.uri)._protocol_model
+        super_travel_db: ProtocolModel = IProtocol.get_by_id(super_travel_model.id)._protocol_model
         self._test_super_travel_after_remove(super_travel_db)
 
     def _test_super_travel_after_remove(self, super_travel_model: ProtocolModel):

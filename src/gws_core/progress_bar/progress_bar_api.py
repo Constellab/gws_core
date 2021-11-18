@@ -11,14 +11,14 @@ from ..user.user_dto import UserData
 from .progress_bar_service import ProgressBarService
 
 
-@core_app.get("/progress-bar/{uri}", tags=["Progress bar"], summary="Get a progress bar")
-async def get_a_progress_bar(uri: str,
+@core_app.get("/progress-bar/{id}", tags=["Progress bar"], summary="Get a progress bar")
+async def get_a_progress_bar(id: str,
                              _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve a progress bar
 
-    - **uri**: the uri of the progress bar
+    - **id**: the id of the progress bar
     """
 
-    p = ProgressBarService.fetch_progress_bar(uri=uri)
+    p = ProgressBarService.fetch_progress_bar(id=id)
     return p.to_json()

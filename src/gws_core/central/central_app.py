@@ -42,8 +42,8 @@ class TokenData(BaseModel):
     token_type: str
 
 
-class UserUriData(BaseModel):
-    uri: str
+class UserIdData(BaseModel):
+    id: str
 
 # ##################################################################
 #
@@ -53,12 +53,12 @@ class UserUriData(BaseModel):
 
 
 @central_app.post("/user/generate-access-token", response_model=TokenData, tags=["User management"])
-def generate_user_access_token(user_uri_data: UserUriData,
+def generate_user_access_token(user_id_data: UserIdData,
                                _=Depends(AuthCentral.check_central_api_key)):
     """
     Generate a temporary access token for a user.
 
-    - **user_uri_data**: the user uri data (JSON string)
+    - **user_id_data**: the user id data (JSON string)
 
     For example:
 
@@ -68,44 +68,44 @@ def generate_user_access_token(user_uri_data: UserUriData,
       -H "Accept: application/json" \
       -H "Authorization: api-key ${API_KEY}" \
       -H "Content-Type: application/json" \
-      -d "{\"uri\": \"${URI}\"}"
+      -d "{\"id\": \"${ID}\"}"
     `
     """
 
-    return AuthService.generate_user_access_token(user_uri_data.uri)
+    return AuthService.generate_user_access_token(user_id_data.id)
 
 
-@central_app.get("/user/{uri}/activate", tags=["User management"])
-def activate_user(uri: str, _: UserData = Depends(AuthCentral.check_central_api_key)):
+@central_app.get("/user/{id}/activate", tags=["User management"])
+def activate_user(id: str, _: UserData = Depends(AuthCentral.check_central_api_key)):
     """
     Activate a user. Requires central privilege.
 
-    - **uri**: the user uri
+    - **id**: the user id
     """
 
-    return _convert_user_to_dto(UserService.activate_user(uri))
+    return _convert_user_to_dto(UserService.activate_user(id))
 
 
-@central_app.get("/user/{uri}/deactivate", tags=["User management"])
-def deactivate_user(uri: str, _: UserData = Depends(AuthCentral.check_central_api_key)):
+@central_app.get("/user/{id}/deactivate", tags=["User management"])
+def deactivate_user(id: str, _: UserData = Depends(AuthCentral.check_central_api_key)):
     """
     Deactivate a user. Require central privilege.
 
-    - **uri**: the user uri
+    - **id**: the user id
     """
 
-    return _convert_user_to_dto(UserService.deactivate_user(uri))
+    return _convert_user_to_dto(UserService.deactivate_user(id))
 
 
-@central_app.get("/user/{uri}", tags=["User management"])
-def get_user(uri: str, _: UserData = Depends(AuthCentral.check_central_api_key)):
+@central_app.get("/user/{id}", tags=["User management"])
+def get_user(id: str, _: UserData = Depends(AuthCentral.check_central_api_key)):
     """
     Get the details of a user. Require central privilege.
 
-    - **uri**: the user uri
+    - **id**: the user id
     """
 
-    return _convert_user_to_dto(UserService.get_user_by_uri(uri))
+    return _convert_user_to_dto(UserService.get_user_by_id(id))
 
 
 @central_app.post("/user", tags=["User management"])
@@ -114,7 +114,7 @@ def create_user(user: UserData, _: UserData = Depends(AuthCentral.check_central_
     Create a new user
 
     UserData:
-    - **uri**: The user uri
+    - **id**: The user id
     - **email**: The user emails
     - **group**: The user group. Valid groups are: **owner** (lab owner), **user** (user with normal privileges), **admin** (adminstrator).
     - **first_name**: The first names
@@ -160,7 +160,7 @@ def _convert_user_to_dto(user: User) -> Dict:
     if user is None:
         return None
     return {
-        "uri": user.uri,
+        "id": user.id,
         "email": user.email,
         "group": user.group,
         "is_active": user.is_active,
