@@ -12,6 +12,7 @@ from ..config.config_types import ConfigParams
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.utils.logger import Logger
+from ..io.io_exception import InvalidOutputException
 from ..model.typing_manager import TypingManager
 from ..model.typing_register_decorator import typing_registrator
 from ..process.process_exception import (CheckBeforeTaskStopException,
@@ -190,9 +191,11 @@ class TaskModel(ProcessModel):
         if not isinstance(task_outputs, dict):
             raise BadRequestException('The task output is not a dictionary')
 
-        self._save_outputs(task_outputs)
+        self._check_and_save_outputs(task_outputs)
 
-    def _save_outputs(self, task_outputs: TaskOutputs) -> None:
+    def _check_and_save_outputs(self, task_outputs: TaskOutputs) -> None:
+
+        error_text: str = ''
 
         for key, port in self.outputs.ports.items():
             resource_model: ResourceModel
@@ -203,8 +206,10 @@ class TaskModel(ProcessModel):
                 resource: Resource = task_outputs[key]
 
                 if not isinstance(resource, Resource):
-                    raise BadRequestException(
-                        f"The output '{key}' of type '{type(resource)}' is not a resource. It must extend the Resource class")
+                    error_text = f"The output '{key}' of type '{type(resource)}' is not a resource. It must extend the Resource class"
+
+                if not port.resource_type_is_compatible(type(resource)):
+                    error_text = f"The output '{key}' of type '{type(resource)}' is not a compatble with the output specs."
 
                 if port.is_constant_out:
                     # If the port is mark as unmodified, we don't create a new resource
@@ -220,12 +225,22 @@ class TaskModel(ProcessModel):
                     resource_model.save_full()
 
             else:
+                error_text = error_text + f"The output '{key}' was not provided."
                 resource_model = None
 
             # save the resource model into the output's port (even if it's None)
             port.resource_model = resource_model
 
-    ################################# JSON #############################
+        if error_text and len(error_text) > 0:
+            raise InvalidOutputException(error_text)
+
+    def is_protocol(self) -> bool:
+        return False
+
+    def save_full(self) -> 'TaskModel':
+        self.config.save()
+        self.progress_bar.save()
+        return self.save()
 
     def data_to_json(self, deep: bool = False, **kwargs) -> dict:
         """

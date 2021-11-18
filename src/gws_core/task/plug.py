@@ -11,7 +11,7 @@ from ..config.param_spec import FloatParam, IntParam, StrParam
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..io.io_spec import InputSpecs, OutputSpecs
-from ..io.io_types import ConstantOut, SkippableIn
+from ..io.io_special_type import ConstantOut, SkippableIn
 from ..model.typing_manager import TypingManager
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel

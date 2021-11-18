@@ -13,8 +13,9 @@ from ..core.exception.exceptions.bad_request_exception import \
 from ..core.utils.utils import Utils
 from ..model.typing_manager import TypingManager
 from ..resource.resource import Resource
-from .io_types import (ConstantOut, OptionalIn, SkippableIn, SpecialTypeIn,
-                       SpecialTypeIO, SpecialTypeOut)
+from ..task.task_io import TaskInputs
+from .io_special_type import (ConstantOut, OptionalIn, SkippableIn,
+                              SpecialTypeIn, SpecialTypeIO, SpecialTypeOut)
 
 ResourceType = Type[Resource]
 
@@ -271,3 +272,25 @@ class IOSpecsHelper():
                 if param is not None and not Utils.issubclass(param, Resource):
                     raise Exception(
                         f"The {param_type} param of spec '{key}' is invalid. Expected a resource type, got {str(param)}")
+
+    @classmethod
+    def check_task_inputs(cls, task_inputs: Dict[str, Resource], input_specs: InputSpecs) -> TaskInputs:
+        missing_resource: List[str] = []
+        task_io: TaskInputs = TaskInputs()
+        # for key, spec in input_specs.items():
+        #     if key not in task_inputs or task_inputs[key] is None:
+        #         if spec.
+
+        #     if port.is_empty:
+        #         # If the port is empty and not optional, add an error
+        #         if not port.is_optional:
+        #             missing_resource.append(key)
+        #         continue
+        #     # get the port resource and force a new instance to prevent modifing the same
+        #     # resource on new task
+        #     task_io[key] = port.get_resource(new_instance=True)
+
+        # if len(missing_resource) > 0:
+        #     raise MissingInputResourcesException(port_names=missing_resource)
+
+        return task_io

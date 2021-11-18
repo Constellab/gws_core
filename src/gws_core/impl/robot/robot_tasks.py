@@ -2,7 +2,7 @@ import time
 from typing import Optional
 
 from gws_core.config.param_spec import FloatParam, StrParam
-from gws_core.io.io_types import OptionalIn
+from gws_core.io.io_special_type import OptionalIn
 
 from ...config.config_types import ConfigParams
 from ...impl.robot.robot_resource import (MegaRobot, Robot, RobotAddOn,
