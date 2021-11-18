@@ -14,7 +14,7 @@ from ..resource.resource_model import ResourceModel
 from ..task.task_io import TaskInputs
 from .io_exception import (MissingInputResourcesException,
                            ResourceNotCompatibleException)
-from .io_spec import IOSpec
+from .io_spec import IOSpec, IOSpecClass
 from .port import InPort, OutPort, Port, PortDict
 
 if TYPE_CHECKING:
@@ -129,16 +129,18 @@ class IO(Base, Generic[PortType]):
         :type resource_types: type
         """
 
-        if not isinstance(name, str):
-            raise BadRequestException(
-                "Invalid port specs. The port name must be a string")
-
-        port: PortType = self._create_port(resource_spec)
-        self._ports[name] = port
+        port_type: Type[PortType] = self._get_port_type()
+        port: PortType = port_type(self, IOSpecClass(resource_spec))
+        self.add_port(name, port)
         return port
 
+    def add_port(self, name: str, port: PortType) -> None:
+        if not isinstance(name, str):
+            raise BadRequestException("Invalid port specs. The port name must be a string")
+        self._ports[name] = port
+
     @abstractmethod
-    def _create_port(self, resource_spec: IOSpec):
+    def _get_port_type(self) -> Type[PortType]:
         pass
 
     # -- G --
@@ -216,32 +218,22 @@ class IO(Base, Generic[PortType]):
         port: PortType = self.get_port(port_name)
         return port.resource_model
 
-    def _set_resource_model_without_check(self, port_name: str, resource_model: ResourceModel) -> None:
-        """Set the resource in the port without checking the port type
-        """
-        port: PortType = self.get_port(port_name)
-        port.resource_model = resource_model
-
     ################################################### JSON ########################################
 
     def load_from_json(self, io_json: IODict) -> None:
-        if input is None:
+        if io_json is None:
             return
 
         for key, port_dict in io_json.items():
-            # If the port does not exist, create it
-            if not self.port_exists(key):
-                resource_types: List[Type[Resource]] = []
-                for resource_typing_name in port_dict["specs"]:
-                    resource_types.append(TypingManager.get_type_from_name(resource_typing_name))
 
-                self.create_port(key, resource_types)
+            port_type: Type[PortType] = self._get_port_type()
+            port: PortType = port_type.load_from_json(port_dict, self)
 
-            # Add resource if provided
-            if port_dict["resource"]["typing_name"] and port_dict["resource"]["uri"]:
-                resource: ResourceModel = TypingManager.get_object_with_typing_name_and_uri(
-                    port_dict["resource"]["typing_name"], port_dict["resource"]["uri"])
-                self._set_resource_model_without_check(key, resource)
+            if port_dict["resource_uri"]:
+                resource_model: ResourceModel = ResourceModel.get_by_uri_and_check(port_dict["resource_uri"])
+                port.resource_model = resource_model
+
+            self.add_port(key, port)
 
     def to_json(self) -> IODict:
         _json = {}
@@ -278,8 +270,8 @@ class Inputs(IO[InPort]):
 
         return True
 
-    def _create_port(self, resource_spec: IOSpec) -> InPort:
-        return InPort(self, resource_spec)
+    def _get_port_type(self) -> Type[InPort]:
+        return InPort
 
     def all_connected_port_values_provided(self) -> bool:
         """Return true if all the ports that are connected, received a resource
@@ -327,8 +319,8 @@ class Outputs(IO[OutPort]):
     Output class
     """
 
-    def _create_port(self, resource_spec: IOSpec) -> OutPort:
-        return OutPort(self, resource_spec)
+    def _get_port_type(self) -> Type[OutPort]:
+        return OutPort
 
     @property
     def is_connected(self) -> bool:

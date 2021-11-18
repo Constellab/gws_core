@@ -29,14 +29,13 @@ from ..io.port import InPort, OutPort
 from ..model.typing_manager import TypingManager
 from ..model.viewable import Viewable
 from ..progress_bar.progress_bar import ProgressBar
-from ..resource.resource_model import ResourceModel
-from ..resource.task_resource import TaskResource
 from ..user.user import User
 from .process import Process
 from .process_exception import ProcessRunException
 
 if TYPE_CHECKING:
     from ..protocol.protocol_model import ProtocolModel
+    from ..resource.resource_model import ResourceModel
 
 
 class ProcessStatus(Enum):
@@ -105,15 +104,7 @@ class ProcessModel(Viewable):
         if self.is_archived == archive:
             return self
 
-        super().archive(archive)
-
-        # -> try to archive the config if possible!
-        self.config.archive(archive)
-        if archive_resources:
-            for resource in self.resources:
-                resource.archive(archive)
-
-        return self
+        return super().archive(archive)
 
     @transaction()
     def delete_instance(self, *args, **kwargs):
@@ -149,16 +140,6 @@ class ProcessModel(Viewable):
             self._parent_protocol = ProtocolModel.get_by_id(self.parent_protocol_id)
 
         return self._parent_protocol
-
-    # -- R --
-
-    @property
-    def resources(self) -> List[ResourceModel]:
-        Qrel: List[TaskResource] = TaskResource.select().where(TaskResource.task_model_id == self.id)
-        Q = []
-        for o in Qrel:
-            Q.append(o.resource)
-        return Q
 
     @transaction()
     def reset(self) -> 'ProcessModel':

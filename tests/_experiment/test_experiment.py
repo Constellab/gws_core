@@ -10,6 +10,7 @@ from gws_core import (BaseTestCase, Experiment, ExperimentDTO,
                       ExperimentService, ExperimentStatus, GTest, ProcessModel,
                       ProtocolModel, ResourceModel, Robot, RobotService,
                       RobotWorldTravelProto, Settings, TaskModel, Utils)
+from gws_core.io.io_spec import IOSpecClass
 from gws_core.process.process_model import ProcessStatus
 from gws_core.study.study_dto import StudyDto
 
@@ -73,14 +74,14 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(len(experiment2.task_models), 16)
         self.assertEqual(experiment2.status, ExperimentStatus.SUCCESS)
 
+        self.assertEqual(ResourceModel.select().count(), 15)
         Q1 = experiment1.resources
         Q2 = experiment2.resources
-        self.assertEqual(ResourceModel.select().count(), 15)
         self.assertEqual(len(Q1), 15)
         self.assertEqual(len(Q2), 15)
         self.assertEqual(experiment2.pid, 0)
 
-        e2_bis: Experiment = Experiment.get(Experiment.uri == experiment1.uri)
+        e2_bis: Experiment = ExperimentService.get_experiment_by_uri(experiment1.uri)
 
         self.assertEqual(e2_bis.get_title(), "My exp title")
         self.assertEqual(e2_bis.get_description(), "This is my new experiment")
@@ -92,6 +93,11 @@ class TestExperiment(BaseTestCase):
         robot1: Robot = fly_1.inputs.get_resource_model('robot').get_resource()
         robot2: Robot = fly_1.outputs.get_resource_model('robot').get_resource()
         self.assertEqual(robot1.position[0], robot2.position[0] + 2000)
+
+        # Check if the port resource spec was correctly loaded
+        spec: IOSpecClass = fly_1.inputs.get_port('robot').resource_spec
+        self.assertIsInstance(spec, IOSpecClass)
+        self.assertEqual(spec.to_resource_types(), [Robot])
 
         # Test the protocol (super_travel) config (weight of 10)
         super_travel: ProtocolModel = e2_bis.protocol_model.get_process('super_travel')
@@ -175,7 +181,9 @@ class TestExperiment(BaseTestCase):
 
     def _check_process_reset(self, process_model: ProcessModel) -> None:
         self.assertEqual(process_model.status, ProcessStatus.DRAFT)
-        self.assertFalse(process_model.progress_bar.is_initialized)
+        self.assertTrue(process_model.progress_bar.is_initialized)
+        self.assertFalse(process_model.progress_bar.is_running)
+        self.assertFalse(process_model.progress_bar.is_finished)
         self.assertIsNone(process_model.error_info)
 
         for port in process_model.inputs.ports.values():

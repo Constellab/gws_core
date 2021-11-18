@@ -11,6 +11,7 @@ from typing import (Dict, Iterable, List, Literal, Type, TypedDict, Union,
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.utils.utils import Utils
+from ..model.typing_manager import TypingManager
 from ..resource.resource import Resource
 from .io_types import (ConstantOut, OptionalIn, SkippableIn, SpecialTypeIn,
                        SpecialTypeIO, SpecialTypeOut)
@@ -71,6 +72,15 @@ class IOSpecClass:
                     {"typing_name": resource_type._typing_name, "human_name": resource_type._human_name,
                      'short_description': resource_type._short_description})
         return specs
+
+    @classmethod
+    def from_json(cls, json_: List[ResourceTypeJson]) -> 'IOSpecClass':
+        resource_types: List[Type[Resource]] = []
+
+        # retrieve all the resource type from the json specs
+        for spec_json in json_:
+            resource_types.append(TypingManager.get_type_from_name(spec_json['typing_name']))
+        return IOSpecClass(resource_types)
 
 
 class IOSpecsHelper():

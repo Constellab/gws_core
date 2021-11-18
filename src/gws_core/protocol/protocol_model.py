@@ -48,8 +48,6 @@ class ProtocolModel(ProcessModel):
 
         super().__init__(*args, **kwargs)
         self._is_loaded = self.id is None or not "graph" in self.data
-        self._inputs = Inputs(self)
-        self._outputs = Outputs(self)
         self._processes = {}
         self._interfaces = {}
         self._outerfaces = {}

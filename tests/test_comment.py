@@ -3,22 +3,12 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import unittest
 
-from gws_core import Comment, CommentService, File, GTest, ResourceModel
+from gws_core import (BaseTestCase, Comment, CommentService, File, GTest,
+                      ResourceModel)
 
 
-class TestComment(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        GTest.drop_tables()
-        GTest.create_tables()
-        GTest.init()
-
-    @classmethod
-    def tearDownClass(cls):
-        GTest.drop_tables()
+class TestComment(BaseTestCase):
 
     def test_comment(self):
         GTest.print("Comment")

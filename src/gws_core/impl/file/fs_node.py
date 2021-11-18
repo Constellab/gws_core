@@ -2,6 +2,8 @@
 import os
 from typing import Any, Type
 
+from gws_core.resource.r_field import StrRField
+
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 
@@ -15,8 +17,8 @@ class FSNode(Resource):
     provided when creating the resource
     """
 
-    path: str = ""
-    file_store_uri: str = ""
+    path: str = StrRField(searchable=True)
+    file_store_uri: str = StrRField(searchable=True)
 
     def __init__(self, path: str = ""):
         super().__init__()
@@ -24,14 +26,3 @@ class FSNode(Resource):
 
     def _exists(self):
         return os.path.exists(self.path)
-
-    @classmethod
-    def get_resource_model_type(cls) -> Type[Any]:
-        """Return the resource model associated with this Resource
-        //!\\ To overwrite only when you know what you are doing
-
-        :return: [description]
-        :rtype: Type[Any]
-        """
-        from .fs_node_model import FSNodeModel
-        return FSNodeModel

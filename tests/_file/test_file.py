@@ -6,14 +6,16 @@
 import json
 import os
 
-from gws_core import (BaseTestCase, ConfigParams, File, FSNodeModel, FileService,
-                      GTest, LocalFileStore, Robot, RobotCreate, Task,
-                      TaskInputs, TaskOutputs, WriteToJsonFile, task_decorator)
+from gws_core import (BaseTestCase, ConfigParams, File, FileService,
+                      FSNodeModel, GTest, LocalFileStore, Robot, RobotCreate,
+                      Task, TaskInputs, TaskOutputs, WriteToJsonFile,
+                      task_decorator)
 from gws_core.core.utils.settings import Settings
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.impl.file.file_store import FileStore
 from gws_core.process.process_interface import IProcess
 from gws_core.protocol.protocol_interface import IProtocol
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.task_interface import ITask
 
 
@@ -44,10 +46,10 @@ class TestFile(BaseTestCase):
         GTest.print("File")
 
         file_1: File = LocalFileStore.get_default_instance().create_empty_file("my_file.txt")
-        file_model: FSNodeModel = FileService.create_file_model(file=file_1)
+        file_model: ResourceModel = FileService.create_file_model(file=file_1)
 
         self.assertTrue(file_model.is_saved())
-        self.assertEqual(file_model.path, file_1.path)
+        self.assertEqual(file_model.fs_node_model.path, file_1.path)
 
         file_2: File = file_model.get_resource()
         file_3: File = file_model.get_resource()
@@ -56,7 +58,7 @@ class TestFile(BaseTestCase):
 
         self.assertEqual(file_1.path, file_2.path)
         self.assertEqual(file_2.path, file_3.path)
-        self.assertEqual(file_model.path, file_2.path)
+        self.assertEqual(file_model.fs_node_model.path, file_2.path)
         file_2.write("Hi.\n")
         file_2.write("My name is John")
 
@@ -79,9 +81,9 @@ class TestFile(BaseTestCase):
         self.assertEqual(file.read(), 'Hello')
 
         # Check that the file model is saved and correct
-        file_model: FSNodeModel = process._process_model.out_port('file').resource_model
+        file_model: ResourceModel = process._process_model.out_port('file').resource_model
         self.assertTrue(file_model.is_saved())
-        self.assertEqual(file.path, file_model.path)
+        self.assertEqual(file.path, file_model.fs_node_model.path)
 
     async def test_write_to_json_file_process(self):
         """Test a protocol that generate a file
@@ -102,11 +104,10 @@ class TestFile(BaseTestCase):
         await experiment.run()
 
         robot: Robot = create.get_output('robot')
-        file_model: FSNodeModel = write._task_model.out_port('file').resource_model
+        file_model: ResourceModel = write._task_model.out_port('file').resource_model
 
         # check that the file model is create and valid
         self.assertIsNotNone(file_model.id)
-        self.assertTrue(isinstance(file_model, FSNodeModel))
 
         file: File = file_model.get_resource()
         # check that the file was created

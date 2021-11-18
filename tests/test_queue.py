@@ -16,18 +16,6 @@ testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 class TestQueue(BaseTestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        GTest.drop_tables()
-        GTest.create_tables()
-        GTest.init()
-
-    @classmethod
-    def tearDownClass(cls):
-        # kill the tick
-        QueueService.deinit()
-        GTest.drop_tables()
-
     def test_queue(self):
         GTest.print("Experiment Queue")
 

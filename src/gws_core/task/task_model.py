@@ -4,7 +4,9 @@
 # About us: https://gencovery.com
 import inspect
 import zlib
-from typing import Type
+from typing import List, Type
+
+from gws_core.core.decorator.transaction import transaction
 
 from ..config.config_types import ConfigParams
 from ..core.exception.exceptions.bad_request_exception import \
@@ -63,8 +65,6 @@ class TaskModel(ProcessModel):
         # set the resources to the ports
         self._init_outputs_from_data()
 
-    # -- C --
-
     def create_source_zip(self):
         """
         Returns the zipped code source of the task
@@ -80,10 +80,46 @@ class TaskModel(ProcessModel):
         self.process_typing_name = typing_name
         self._init_io()
 
-    # -- D --
-
     def _create_task_instance(self) -> Task:
         return self._get_process_type()()
+
+    def is_protocol(self) -> bool:
+        return False
+    ################################# MODEL METHODS #############################
+
+    def save_full(self) -> 'TaskModel':
+        self.config.save()
+        self.progress_bar.save()
+        return self.save()
+
+    # -- A --
+    @transaction()
+    def archive(self, archive: bool, archive_resources=True) -> 'TaskModel':
+        """
+        Archive the process
+        """
+
+        if self.is_archived == archive:
+            return self
+
+        super().archive(archive)
+
+        # -> try to archive the config if possible!
+        self.config.archive(archive)
+        if archive_resources:
+            for resource in self.resources:
+                resource.archive(archive)
+
+        return self
+
+    @property
+    def resources(self) -> List[ResourceModel]:
+        if not self.id:
+            return []
+
+        return list(ResourceModel.select().where(ResourceModel.task_model == self))
+
+    ################################# RUN #############################
 
     async def _run(self) -> None:
         """
@@ -157,6 +193,7 @@ class TaskModel(ProcessModel):
         self._save_outputs(task_outputs)
 
     def _save_outputs(self, task_outputs: TaskOutputs) -> None:
+
         for key, port in self.outputs.ports.items():
             resource_model: ResourceModel
 
@@ -169,25 +206,18 @@ class TaskModel(ProcessModel):
                     raise BadRequestException(
                         f"The output '{key}' of type '{type(resource)}' is not a resource. It must extend the Resource class")
 
-                # Get the type of resource model to create for this resource
-                resource_model_type: Type[ResourceModel] = resource.get_resource_model_type()
-                if not issubclass(resource_model_type, ResourceModel):
-                    raise BadRequestException(
-                        f"The method get_resource_model_type of resource {resource.classname()} did not return a type that extend ResourceModel")
-
                 if port.is_constant_out:
                     # If the port is mark as unmodified, we don't create a new resource
                     # We use the same resource
-                    resource_model = TypingManager.get_object_with_typing_name_and_uri(
-                        typing_name=resource_model_type._typing_name, uri=resource._model_uri)
+                    resource_model = ResourceModel.get_by_uri_and_check(resource._model_uri)
                 else:
                     # create the resource model from the resource
-                    resource_model = resource_model_type.from_resource(resource)
+                    resource_model = ResourceModel.from_resource(resource)
 
                     # Add info and save resource model
                     resource_model.experiment = self.experiment
-                    resource_model.task = self
-                    resource_model.save()
+                    resource_model.task_model = self
+                    resource_model.save_full()
 
             else:
                 resource_model = None
@@ -195,13 +225,7 @@ class TaskModel(ProcessModel):
             # save the resource model into the output's port (even if it's None)
             port.resource_model = resource_model
 
-    def is_protocol(self) -> bool:
-        return False
-
-    def save_full(self) -> 'TaskModel':
-        self.config.save()
-        self.progress_bar.save()
-        return self.save()
+    ################################# JSON #############################
 
     def data_to_json(self, deep: bool = False, **kwargs) -> dict:
         """

@@ -5,10 +5,7 @@
 
 from typing import Any, Dict, List, Type
 
-from gws_core.core.decorator.transaction import transaction
 from gws_core.resource.resource_search_dto import ResourceSearchDTO
-from gws_core.tag.tag_service import TagService
-from playhouse.mysql_ext import Match
 
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import NotFoundException
@@ -27,28 +24,14 @@ class ResourceService(BaseService):
     ############################# RESOURCE MODEL ###########################
 
     @classmethod
-    def get_resource_by_type_and_uri(cls,
-                                     resource_model_typing_name: str,
-                                     uri: str) -> ResourceModel:
-
-        try:
-            return TypingManager.get_object_with_typing_name_and_uri(resource_model_typing_name, uri)
-
-        except Exception as err:
-            raise NotFoundException(
-                detail=f"No resource found with uri '{uri}' and type '{resource_model_typing_name}'") from err
+    def get_resource_by_uri(cls,
+                            uri: str) -> ResourceModel:
+        return ResourceModel.get_by_uri_and_check(uri)
 
     @classmethod
     def get_resources_of_type(cls,
                               resource_typing_name: str,
                               page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
-
-        # Retrieve the resource type
-        resource_type: Type[Resource] = TypingManager.get_type_from_name(
-            resource_typing_name)
-
-        # Retrieve the resource model type from the resource type
-        resource_model_type: Type[ResourceModel] = resource_type.get_resource_model_type()
 
         # request the resource model
         number_of_items_per_page = min(
@@ -56,8 +39,8 @@ class ResourceService(BaseService):
 
         # Get the resource models and filter them with resource type
         # TODO problem, it does select sub class of resource type.
-        query = resource_model_type.select_by_resource_typing_name(resource_typing_name)\
-            .order_by(resource_model_type.creation_datetime.desc())
+        query = ResourceModel.select_by_resource_typing_name(resource_typing_name)\
+            .order_by(ResourceModel.creation_datetime.desc())
 
         return Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
@@ -90,11 +73,10 @@ class ResourceService(BaseService):
         return ViewHelper.get_views_of_resource_type(resource_type)
 
     @classmethod
-    def call_view_on_resource_type(cls, resource_model_typing_name: str,
-                                   resource_model_uri: str,
+    def call_view_on_resource_type(cls, resource_model_uri: str,
                                    view_name: str, config_values: Dict[str, Any]) -> Any:
 
-        resource_model: ResourceModel = cls.get_resource_by_type_and_uri(resource_model_typing_name, resource_model_uri)
+        resource_model: ResourceModel = cls.get_resource_by_uri(resource_model_uri)
 
         resource: Resource = resource_model.get_resource()
         return cls.call_view_on_resource(resource, view_name, config_values)

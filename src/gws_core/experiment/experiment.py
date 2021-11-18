@@ -18,7 +18,6 @@ from ..core.model.json_field import JSONField
 from ..core.model.sys_proc import SysProc
 from ..model.typing_register_decorator import typing_registrator
 from ..model.viewable import Viewable
-from ..resource.experiment_resource import ExperimentResource
 from ..resource.resource_model import ResourceModel
 from ..study.study import Study
 from ..tag.taggable_model import TaggableModel
@@ -188,13 +187,10 @@ class Experiment(Viewable, TaggableModel):
         Returns child resources.
         """
 
-        resources = []
-        if self.id:
-            Qrel = ExperimentResource.select().where(
-                ExperimentResource.experiment_id == self.id)
-            for rel in Qrel:
-                resources.append(rel.resource)  # is automatically casted
-        return resources
+        if not self.id:
+            return []
+
+        return list(ResourceModel.select().where(ResourceModel.experiment == self))
 
     @transaction()
     def reset(self) -> 'Experiment':

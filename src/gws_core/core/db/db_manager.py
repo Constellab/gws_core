@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 from peewee import DatabaseProxy
+
 from .manager import AbstractDbManager
 
 # GWS_DB_ENGINE = "mariadb"
@@ -15,6 +16,7 @@ from .manager import AbstractDbManager
 # DbManager class
 #
 # ####################################################################
+
 
 class DbManager(AbstractDbManager):
     db = DatabaseProxy()

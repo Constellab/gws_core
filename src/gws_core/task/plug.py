@@ -11,7 +11,7 @@ from ..config.param_spec import FloatParam, IntParam, StrParam
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..io.io_spec import InputSpecs, OutputSpecs
-from ..io.io_types import SkippableIn, ConstantOut
+from ..io.io_types import ConstantOut, SkippableIn
 from ..model.typing_manager import TypingManager
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
@@ -45,7 +45,7 @@ class Source(Task):
         r_type: Type[Resource] = TypingManager.get_type_from_name(r_typing_name)
 
         # retrieve the resource model based and uri and resource type
-        resource_model: ResourceModel = r_type.get_resource_model_type().get_by_uri_and_check(r_uri)
+        resource_model: ResourceModel = ResourceModel.get_by_uri_and_check(r_uri)
 
         return {"resource": resource_model.get_resource()}
 

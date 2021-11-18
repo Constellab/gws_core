@@ -6,22 +6,12 @@
 import os
 import unittest
 
-from gws_core import File, FSNodeModel, FileService, GTest, MySQLService
+from gws_core import (BaseTestCase, File, FileService, FSNodeModel, GTest,
+                      LocalFileStore, MySQLService)
 from gws_core.core.db.db_manager import DbManager
-from gws_core.impl.file.local_file_store import LocalFileStore
 
 
-class TestMySQLDumpLoad(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        GTest.drop_tables()
-        GTest.create_tables()
-        GTest.init()
-
-    @classmethod
-    def tearDownClass(cls):
-        GTest.drop_tables()
+class TestMySQLDumpLoad(BaseTestCase):
 
     def test_db_dump_load(self):
         GTest.print("MySQL dump and load")

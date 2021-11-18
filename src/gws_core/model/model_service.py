@@ -6,6 +6,7 @@
 
 from typing import List, Tuple, Type
 
+from gws_core.resource.resource_model import ResourceModel
 from peewee import DatabaseProxy
 
 from ..core.classes.paginator import Paginator
@@ -178,6 +179,8 @@ class ModelService(BaseService):
             if model_type:
                 models = [t for t in models if isinstance(t, model_type)]
             db.create_tables(models)
+
+        ResourceModel.create_foreign_keys()
 
     @classmethod
     def drop_tables(cls, model_types: List[Type[Model]] = None, model_type: type = None):

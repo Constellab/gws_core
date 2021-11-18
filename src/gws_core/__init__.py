@@ -94,9 +94,6 @@ from .experiment.queue import Job as Job
 from .experiment.queue import Queue as Queue
 from .experiment.queue_service import QueueService as QueueService
 # Extension
-# Extension > ExtendedResource
-from .extension.extended_resource_model import \
-    ExtendedResourceModel as ExtendedResourceModel
 # Impl > File
 from .impl.file.file import File as File
 from .impl.file.file import FileSet as FileSet

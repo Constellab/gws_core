@@ -27,7 +27,7 @@ class TestProgressBar(BaseTestCase):
         self.assertEqual(messages['text'], 'Hello')
         self.assertIsNotNone(messages['datetime'])
 
-        sleep(ProgressBar._min_allowed_delta_time)
+        sleep(ProgressBar._MIN_ALLOWED_DELTA_TIME)
         # Test progress message
         progress_bar.update_progress(25, 'New progress')
         progress_message = progress_bar.messages[1]

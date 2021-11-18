@@ -49,7 +49,7 @@ class TestExperiment(BaseTestCase):
             experiment1: Experiment = Experiment.get(
                 Experiment.id == experiment.id)
             self.assertEqual(experiment1.status, ExperimentStatus.SUCCESS)
-            self.assertEqual(experiment1.pid, None)
+            self.assertEqual(experiment1.pid, 0)
             print("Done!")
             return True
 

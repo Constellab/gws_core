@@ -96,14 +96,3 @@ class Resource(Base):
         :rtype: [type]
         """
         return None
-
-    @classmethod
-    def get_resource_model_type(cls) -> Type[ResourceModel]:
-        """Return the resource model associated with this Resource
-        //!\\ To overwrite only when you know what you are doing
-
-        :return: [description]
-        :rtype: Type[Any]
-        """
-        from .resource_model import ResourceModel
-        return ResourceModel
