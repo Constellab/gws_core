@@ -66,6 +66,16 @@ async def get_the_list_of_files(page: Optional[int] = 1,
         page=page,
         number_of_items_per_page=number_of_items_per_page).to_json()
 
+
+@core_app.delete("/file/{uri}", tags=["Files"], summary="Delete a file")
+async def delete_file(uri: str,
+                      _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+    """
+    Delete a file.
+    """
+
+    return FileService.delete_file(uri)
+
 ############################# FILE TYPE ###########################
 
 

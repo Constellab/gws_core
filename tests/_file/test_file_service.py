@@ -1,9 +1,11 @@
 
 
+import os
 from typing import List, Type
 
 from gws_core import (BaseTestCase, File, FileService, ResourceTyping,
                       resource_decorator)
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_typing import FileTyping
 
 
@@ -31,3 +33,11 @@ class TestFileService(BaseTestCase):
 
         # Check that to_json contains default extension
         self.assertEqual(sub_file_type.to_json()["supported_extensions"], ['super'])
+
+    def test_upload_and_delete(self):
+        file: File = File(os.path.join(self.get_test_data_dir(), 'iris.csv'))
+
+        resource_model: ResourceModel = FileService.create_file_model(file)
+        FileService.delete_file(resource_model.uri)
+
+        self.assertIsNone(ResourceModel.get_by_uri(resource_model.uri))

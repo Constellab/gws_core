@@ -8,6 +8,8 @@ from typing import List, Optional, Type
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
+from gws_core.core.exception.gws_exceptions import GWSException
+from gws_core.task.task_input_model import TaskInputModel
 
 from ...core.classes.jsonable import Jsonable, ListJsonable
 from ...core.classes.paginator import Paginator
@@ -21,7 +23,6 @@ from ...resource.resource_model import ResourceModel, ResourceOrigin
 from ...resource.resource_typing import FileTyping
 from .file import File
 from .file_store import FileStore
-from .fs_node_model import FSNodeModel
 from .local_file_store import LocalFileStore
 
 
@@ -66,7 +67,7 @@ class FileService(BaseService):
 
         result: ListJsonable = ListJsonable()
         for index, file in enumerate(files):
-            file_model: FSNodeModel = cls.upload_file_to_store(file, typing_names[index], file_store)
+            file_model: ResourceModel = cls.upload_file_to_store(file, typing_names[index], file_store)
             result.append(file_model)
 
         return result
@@ -85,25 +86,44 @@ class FileService(BaseService):
     @classmethod
     def create_file_model(cls, file: File) -> ResourceModel:
         file_model: ResourceModel = ResourceModel.from_resource(file)
+        file_model.origin = ResourceOrigin.IMPORTED
         return file_model.save_full()
 
     @classmethod
-    def add_file_to_default_store(cls, file: File, dest_file_name: str = None) -> FSNodeModel:
+    def add_file_to_default_store(cls, file: File, dest_file_name: str = None) -> ResourceModel:
         file_store: LocalFileStore = LocalFileStore.get_default_instance()
         return cls._add_file_to_store(file=file, store=file_store, dest_file_name=dest_file_name)
 
     @classmethod
-    def add_file_to_store(cls, file: File, store_uri: str, dest_file_name: str = None) -> FSNodeModel:
+    def add_file_to_store(cls, file: File, store_uri: str, dest_file_name: str = None) -> ResourceModel:
         file_store: LocalFileStore = FileStore.get_by_uri_and_check(store_uri)
         return cls._add_file_to_store(file=file, store=file_store, dest_file_name=dest_file_name)
 
     @classmethod
-    def _add_file_to_store(cls, file: File, store: FileStore, dest_file_name: str = None) -> FSNodeModel:
+    def _add_file_to_store(cls, file: File, store: FileStore, dest_file_name: str = None) -> ResourceModel:
         new_file: File = store.add_file_from_path(source_path=file, dest_file_name=dest_file_name)
         return cls.create_file_model(new_file)
 
+    @classmethod
+    def delete_file(cls, file_uri: str) -> None:
+        resource_model: ResourceModel = ResourceModel.get_by_uri_and_check(file_uri)
+
+        if resource_model.origin != ResourceOrigin.IMPORTED:
+            raise BadRequestException(GWSException.DELETE_GENERATED_FILE_ERROR.value,
+                                      GWSException.DELETE_USED_FILE_ERROR.value)
+
+        task_input: TaskInputModel = TaskInputModel.get_by_resource_model(resource_model.id).first()
+
+        if task_input:
+            raise BadRequestException(GWSException.DELETE_USED_FILE_ERROR.value,
+                                      unique_code=GWSException.DELETE_USED_FILE_ERROR.value,
+                                      detail_args={"experiment_uri": task_input.experiment.get_short_name()})
+
+        resource_model.delete_instance()
+
 
 ############################# FILE TYPE ###########################
+
 
     @classmethod
     def get_file_types(cls) -> List[FileTyping]:

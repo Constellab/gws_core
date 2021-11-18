@@ -217,7 +217,7 @@ class Experiment(Model, TaggableModel):
 
         if other_experiment is not None:
             raise ResourceUsedInAnotherExperimentException(
-                other_experiment.resource_model.uri, other_experiment.experiment.uri)
+                other_experiment.resource_model.uri, other_experiment.experiment.get_short_name())
 
         # Delete all the resources previously generated to clear the DB
         for output_resource in output_resources:
@@ -251,6 +251,14 @@ class Experiment(Model, TaggableModel):
         """
 
         self.data["description"] = description
+
+    def get_short_name(self) -> str:
+        """Method to get a readable to quickly distinguish the experiment, (used in error message)
+
+        :return: [description]
+        :rtype: str
+        """
+        return self.get_title()
 
     @transaction()
     def save(self, *args, **kwargs) -> 'Experiment':
