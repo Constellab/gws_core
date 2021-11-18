@@ -232,9 +232,6 @@ class ExperimentService(BaseService):
         try:
             user: User = User.get_by_id_and_check(user_id)
 
-            if not user.is_authenticated:
-                raise BadRequestException("The user must be HTTP authenticated")
-
             if experiment.status != ExperimentStatus.WAITING_FOR_CLI_PROCESS:
                 raise Exception(
                     f"Cannot run the experiment {experiment.id} as it status was changed before process could run it")
@@ -310,8 +307,6 @@ class ExperimentService(BaseService):
                 user = CurrentUserService.get_and_check_current_user()
             except:
                 raise BadRequestException("A user is required")
-            if not user.is_authenticated:
-                raise BadRequestException("An authenticated user is required")
 
          # check user privilege
         experiment.check_user_privilege(user)

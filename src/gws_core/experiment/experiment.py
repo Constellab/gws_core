@@ -8,12 +8,12 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING, List, TypedDict, final
 
-from gws_core.core.exception.gws_exceptions import GWSException
 from peewee import BooleanField, DoubleField, ForeignKeyField
 
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
+from ..core.exception.gws_exceptions import GWSException
 from ..core.model.json_field import JSONField
 from ..core.model.model import Model
 from ..core.model.sys_proc import SysProc
@@ -204,20 +204,23 @@ class Experiment(Model, TaggableModel):
         from ..task.task_input_model import TaskInputModel
 
         if not self.is_saved():
-            raise BadRequestException(f"Can't reset a validated or archived experiment")
+            raise BadRequestException("Can't reset an experiment not saved before")
 
         if self.is_validated or self.is_archived:
-            raise BadRequestException(f"Can't reset a validated or archived experiment")
+            raise BadRequestException("Can't reset a validated or archived experiment")
 
         # Check if any resource of this experiment is used in another one
         output_resources: List[ResourceModel] = list(ResourceModel.get_by_experiment(self.id))
-        output_resource_ids: List[str] = list(map(lambda x: x.id, output_resources))
 
-        other_experiment: TaskInputModel = TaskInputModel.get_other_experiments(output_resource_ids, self.id).first()
+        if len(output_resources) > 0:
+            output_resource_ids: List[str] = list(map(lambda x: x.id, output_resources))
 
-        if other_experiment is not None:
-            raise ResourceUsedInAnotherExperimentException(
-                other_experiment.resource_model.id, other_experiment.experiment.get_short_name())
+            other_experiment: TaskInputModel = TaskInputModel.get_other_experiments(
+                output_resource_ids, self.id).first()
+
+            if other_experiment is not None:
+                raise ResourceUsedInAnotherExperimentException(
+                    other_experiment.resource_model.id, other_experiment.experiment.get_short_name())
 
         if self.protocol_model:
             self.protocol_model.reset()
@@ -226,11 +229,14 @@ class Experiment(Model, TaggableModel):
         for output_resource in output_resources:
             output_resource.delete_instance()
 
+        # Delete all the TaskInput as well
+        # Most of them are deleted when deleting the resource but for some constant inputs (link source)
+        # the resource is not deleted but the input must be deleted
+        TaskInputModel.delete_by_experiment(self.id)
+
         self.status = ExperimentStatus.DRAFT
         self.score = None
         return self.save()
-
-    # -- S --
 
     def set_title(self, title: str) -> None:
         """

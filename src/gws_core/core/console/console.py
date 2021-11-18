@@ -45,8 +45,7 @@ class Console:
             user = User.get_sysuser()
 
         # refresh user information from DB
-        AuthService.authenticate(
-            id=user.id, console_token=user.console_token)
+        AuthService.authenticate(id=user.id)
 
         cls.user = user
 

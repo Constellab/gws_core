@@ -141,11 +141,11 @@ class ResourceModel(Model, TaggableModel, Generic[ResourceType]):
         cls.create_foreign_key_if_not_exist(ResourceModel.task_model)
 
     @classmethod
-    def get_by_experiment(cls, experiment_id: int) -> ModelSelect:
+    def get_by_experiment(cls, experiment_id: str) -> ModelSelect:
         return ResourceModel.select().where(ResourceModel.experiment == experiment_id)
 
     @classmethod
-    def delete_list(cls, resource_model_ids: int) -> ModelDelete:
+    def delete_list(cls, resource_model_ids: str) -> ModelDelete:
         return ResourceModel.delete().where(ResourceModel.id.in_(resource_model_ids))
 
     ########################################## RESOURCE ######################################

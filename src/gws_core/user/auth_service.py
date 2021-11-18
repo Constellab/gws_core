@@ -15,7 +15,6 @@ from ..core.exception.exceptions import (BadRequestException,
 from ..core.exception.gws_exceptions import GWSException
 from ..core.service.base_service import BaseService
 from ..core.service.external_api_service import ExternalApiService
-from ..core.utils.http_helper import HTTPHelper
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
 from .activity import Activity
@@ -47,6 +46,9 @@ class AuthService(BaseService):
         credentials_valid: bool = CentralService.check_credentials(credentials)
         if not credentials_valid:
             raise WrongCredentialsException()
+
+        # now save user activity
+        ActivityService.add(Activity.HTTP_AUTHENTICATION, object_type=User._typing_name, object_id=user.id, user=user)
 
         return cls.generate_user_access_token(user.id)
 
@@ -88,9 +90,7 @@ class AuthService(BaseService):
         try:
             user_id: str = JWTService.check_user_access_token(token)
 
-            db_user: User = User.get(User.id == user_id)
-            if not cls.authenticate(id=db_user.id):
-                raise InvalidTokenException()
+            db_user: User = cls.authenticate(user_id)
 
             return UserData(
                 id=db_user.id,
@@ -100,106 +100,30 @@ class AuthService(BaseService):
                 group=db_user.group,
                 is_active=db_user.is_active,
                 is_admin=db_user.is_admin,
-                is_http_authenticated=db_user.is_http_authenticated,
-                is_console_authenticated=db_user.is_console_authenticated
             )
         except Exception:
             raise InvalidTokenException()
 
     @classmethod
-    def authenticate(cls, id: str, console_token: str = "") -> bool:
+    def authenticate(cls, id: str) -> User:
         """
-        Authenticate a user
+        Authenticate a user. Return the DB user if ok, throw an exception if not ok
 
         :param id: The id of the user to authenticate
         :type id: `str`
-        :param console_token: The console token. This token is only used if the for console contexts
-        :type console_token: `str`
-        :return: True if the user is successfully autheticated, False otherwise
-        :rtype: `bool`
         """
-        try:
-            user: User = User.get(User.id == id)
-        except Exception as err:
-            raise BadRequestException(
-                f"User not found with id {id}") from err
+        user: User = User.get_by_id_and_check(id)
+
         if not user.is_active:
-            return False
-        if HTTPHelper.is_http_context():
-            return cls.__authenticate_http(user)
-        else:
-            return cls.__authenticate_console(user, console_token)
+            raise UnauthorizedException(
+                detail=GWSException.WRONG_CREDENTIALS_USER_NOT_ACTIVATED.value,
+                unique_code=GWSException.WRONG_CREDENTIALS_USER_NOT_ACTIVATED.name,
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
-    @classmethod
-    def __authenticate_console(cls, user: User, console_token) -> bool:
-
-        if user.is_console_authenticated:
-            CurrentUserService.set_current_user(user)
-            return True
-        is_valid_token = bool(console_token) and (
-            user.console_token == console_token)
-        if not is_valid_token:
-            return False
-
-        with User.get_db_manager().db.atomic() as transaction:
-            try:
-                # authenticate the user first
-                user.is_console_authenticated = True
-                if user.save():
-                    CurrentUserService.set_current_user(user)
-                else:
-                    raise BadRequestException("Cannot save user status")
-                # now save user activity
-                ActivityService.add(Activity.CONSOLE_AUTHENTICATION)
-                return True
-            except Exception as err:
-                Logger.warning(f"User __authenticate_console {err}")
-                transaction.rollback()
-                return False
-
-    @classmethod
-    def __authenticate_http(cls, user: User) -> bool:
-
-        if user.is_http_authenticated:
-            CurrentUserService.set_current_user(user)
-            return True
-        with User.get_db_manager().db.atomic() as transaction:
-            try:
-                # authenticate the user first
-                user.is_http_authenticated = True
-                if user.save():
-                    CurrentUserService.set_current_user(user)
-                else:
-                    raise BadRequestException("Cannot save user status")
-                # now save user activity
-                ActivityService.add(Activity.HTTP_AUTHENTICATION)
-                return True
-            except Exception as err:
-                Logger.warning(f"User __authenticate_http {err}")
-                transaction.rollback()
-                return False
-
-    @classmethod
-    def unauthenticate(cls, id: str) -> bool:
-        """
-        Unauthenticate a user
-
-        :param id: The id of the user to unauthenticate
-        :type id: `str`
-        :return: True if the user is successfully unautheticated, False otherwise
-        :rtype: `bool`
-        """
-        try:
-            user = User.get(User.id == id)
-        except Exception as err:
-            raise BadRequestException(
-                f"User not found with id {id}") from err
-        if not user.is_active:
-            return False
-        if HTTPHelper.is_http_context():
-            return cls._unauthenticate_http(user)
-        else:
-            return cls._unauthenticate_console(user)
+        # Set the user in the context
+        CurrentUserService.set_current_user(user)
+        return user
 
     @classmethod
     def dev_login(cls, token: str) -> JSONResponse:
@@ -256,43 +180,3 @@ class AuthService(BaseService):
 
         # The user's prod token is valid, we can return the token for the development environment
         return cls.generate_user_access_token(userdb.id)
-
-    @classmethod
-    def _unauthenticate_http(cls, user: User) -> bool:
-
-        if not user.is_http_authenticated:
-            CurrentUserService.set_current_user(None)
-            return True
-        with User.get_db_manager().db.atomic() as transaction:
-            try:
-                user.is_http_authenticated = False
-                ActivityService.add(Activity.HTTP_UNAUTHENTICATION)
-                if user.save():
-                    CurrentUserService.set_current_user(None)
-                else:
-                    raise BadRequestException("Cannot save user status")
-                return True
-            except Exception as err:
-                Logger.warning(f"User __unauthenticate_http {err}")
-                transaction.rollback()
-                return False
-
-    @classmethod
-    def _unauthenticate_console(cls, user: User) -> bool:
-
-        if not user.is_console_authenticated:
-            CurrentUserService.set_current_user(None)
-            return True
-        with User.get_db_manager().db.atomic() as transaction:
-            try:
-                user.is_console_authenticated = False
-                ActivityService.add(Activity.CONSOLE_UNAUTHENTICATION)
-                if user.save():
-                    CurrentUserService.set_current_user(None)
-                else:
-                    raise BadRequestException("Cannot save user status")
-                return True
-            except Exception as err:
-                Logger.warning(f"User __unauthenticate_console {err}")
-                transaction.rollback()
-                return False

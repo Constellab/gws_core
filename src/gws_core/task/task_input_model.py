@@ -51,8 +51,8 @@ class TaskInputModel(BaseModel):
         return TaskInputModel.select().where(TaskInputModel.experiment == experiment_id)
 
     @classmethod
-    def delete_by_experiment(cls, experiment_id: str) -> ModelDelete:
-        return TaskInputModel.delete().where(TaskInputModel.task_model == experiment_id)
+    def delete_by_experiment(cls, experiment_id: str) -> int:
+        return TaskInputModel.delete().where(TaskInputModel.experiment == experiment_id).execute()
 
     def save(self, *args, **kwargs) -> 'BaseModel':
         """Use force insert because it is a composite key

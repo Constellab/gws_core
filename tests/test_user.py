@@ -63,6 +63,5 @@ class TestUser(BaseTestCase):
         # extract the json form the repsonse Byte literal
         token: str = json.loads(json_repsonse.body.decode('utf8').replace("'", '"'))["access_token"]
 
-        user_id: str = JWTService.check_user_access_token(token)
-
-        self.assertEqual(user_id, "06866542-f089-46dc-b57f-a11e25a23aa6")
+        user_data: UserData = AuthService.check_user_access_token(token)
+        self.assertEqual(user_data.id, "06866542-f089-46dc-b57f-a11e25a23aa6")

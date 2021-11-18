@@ -81,10 +81,9 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(experiment2.status, ExperimentStatus.SUCCESS)
 
         self.assertEqual(ResourceModel.select().count(), 15)
-        Q1 = experiment1.resources
-        Q2 = experiment2.resources
-        self.assertEqual(len(Q1), 15)
-        self.assertEqual(len(Q2), 15)
+        self.assertEqual(len(experiment1.resources), 15)
+        self.assertEqual(len(experiment2.resources), 15)
+        self.assertEqual(ResourceModel.get_by_experiment(experiment1.id).count(), 15)
         self.assertEqual(experiment2.pid, 0)
 
         e2_bis: Experiment = ExperimentService.get_experiment_by_id(experiment1.id)
@@ -111,20 +110,6 @@ class TestExperiment(BaseTestCase):
         robot1: Robot = eat_3.inputs.get_resource_model('robot').get_resource()
         robot2: Robot = eat_3.outputs.get_resource_model('robot').get_resource()
         self.assertEqual(robot1.weight, robot2.weight - 10)
-
-        ################################ CHECK TASK INPUT ################################
-        # Check if the Input resource was set
-        task_inputs: List[TaskInputModel] = list(
-            TaskInputModel.get_by_resource_model(fly_1.inputs.get_resource_model('robot').id))
-        self.assertEqual(len(task_inputs), 1)
-        self.assertEqual(task_inputs[0].is_interface, False)
-        self.assertEqual(task_inputs[0].port_name, "robot")
-
-        # Check the TaskInput with a sub process and a resource that is an interface
-        sub_move_4: TaskModel = super_travel.get_process('move_4')
-        task_inputs = list(TaskInputModel.get_by_task_model(sub_move_4.id))
-        self.assertEqual(len(task_inputs), 1)
-        self.assertEqual(task_inputs[0].is_interface, True)
 
     async def test_run_through_cli(self):
 

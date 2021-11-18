@@ -33,20 +33,7 @@ async def call_view_on_resource(id: str,
 
 ####################################### Resource Model ###################################
 
-@core_app.get("/resource/{id}", tags=["Resource"], summary="Get a resource")
-async def get_a_resource(id: str,
-                         _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-    """
-    Retrieve a ResourceModel from a ResourceModel ID
-
-    - **id**: the id of the protocol
-    """
-
-    return ResourceService.get_resource_by_id(id=id).to_json(
-        deep=True)
-
-
-@core_app.get("/resource/type/{resource_typing_name}", tags=["Resource"], summary="Get the list of resources")
+@core_app.get("/resource/by-type/{resource_typing_name}", tags=["Resource"], summary="Get the list of resources")
 async def get_the_list_of_resources(resource_typing_name: Optional[str] = None,
                                     page: Optional[int] = 1,
                                     number_of_items_per_page: Optional[int] = 20,
@@ -65,6 +52,18 @@ async def get_the_list_of_resources(resource_typing_name: Optional[str] = None,
         number_of_items_per_page=number_of_items_per_page,
     ).to_json()
 
+
+@core_app.get("/resource/{id}", tags=["Resource"], summary="Get a resource")
+async def get_a_resource(id: str,
+                         _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    """
+    Retrieve a ResourceModel from a ResourceModel ID
+
+    - **id**: the id of the protocol
+    """
+
+    return ResourceService.get_resource_by_id(id=id).to_json(
+        deep=True)
 ############################# RESOURCE TYPE ###########################
 
 

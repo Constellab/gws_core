@@ -36,7 +36,7 @@ from .base import Base
 # Format table name
 #
 # ####################################################################
-@json_ignore(["id", "hash"])
+@json_ignore(["hash"])
 class Model(BaseModel, PeeweeModel):
     """
     Model class

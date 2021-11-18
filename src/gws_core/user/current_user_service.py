@@ -25,7 +25,7 @@ class CurrentUserService:
 
         user: User = cls.get_current_user()
 
-        if user is None or not user.is_authenticated:
+        if user is None:
             raise UnauthorizedException("User not authenticated")
 
         return user
