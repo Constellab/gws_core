@@ -96,7 +96,6 @@ from .experiment.queue_service import QueueService as QueueService
 # Extension
 # Impl > File
 from .impl.file.file import File as File
-from .impl.file.file import FileSet as FileSet
 from .impl.file.file_helper import FileHelper as FileHelper
 from .impl.file.file_r_field import FileRField as FileRField
 from .impl.file.file_service import FileService as FileService
@@ -243,7 +242,6 @@ from .resource.resource_decorator import \
 from .resource.resource_model import ResourceModel as ResourceModel
 from .resource.resource_r_field import ResourceRField as ResourceRField
 from .resource.resource_service import ResourceService as ResourceService
-from .resource.resource_set import ResourceSet as ResourceSet
 from .resource.resource_typing import ResourceTyping as ResourceTyping
 from .resource.view import View as View
 from .resource.view_decorator import view as view

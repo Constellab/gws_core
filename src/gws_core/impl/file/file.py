@@ -13,7 +13,6 @@ from ...impl.file.file_helper import FileHelper
 from ...impl.json.json_view import JSONView
 from ...resource.any_view import AnyView
 from ...resource.resource_decorator import resource_decorator
-from ...resource.resource_set import ResourceSet
 from ...resource.view import View
 from ...resource.view_decorator import view
 from ..text.view.text_view import TextView
@@ -172,13 +171,3 @@ class File(FSNode):
         with self.open(mode) as fp:
             fp.write(data)
 
-
-# ####################################################################
-#
-# FileSet class
-#
-# ####################################################################
-
-
-class FileSet(ResourceSet):
-    _resource_types = (File,)
