@@ -87,6 +87,11 @@ class Model(BaseModel, PeeweeModel):
         else:
             self._is_saved = True
 
+    @property
+    def uri(self) -> str:
+        Logger.warning('The uri field should not be used anymore, use id instead.')
+        return self.id
+
     # -- A --
 
     def add_related_model(self, relation_name: str, related_model: 'Model'):
