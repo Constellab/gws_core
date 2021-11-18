@@ -69,8 +69,6 @@ class ResourceModel(Model, TaggableModel, Generic[ResourceType]):
 
     fs_node_model: FSNodeModel = ForeignKeyField(FSNodeModel, null=True, index=True, backref="+")
 
-    # _default_full_text_column = "data,tags"
-
     _table_name = 'gws_resource'
     _resource: ResourceType = None
 

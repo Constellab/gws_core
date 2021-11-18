@@ -37,6 +37,7 @@ from .core.classes.paginator import PaginatorDict as PaginatorDict
 from .core.classes.path import URL as URL
 from .core.classes.path import Path as Path
 from .core.classes.query import Query as Query
+from .core.classes.query_builder import QueryBuilder as QueryBuilder
 from .core.classes.validator import BoolValidator as BoolValidator
 from .core.classes.validator import DictValidator as DictValidator
 from .core.classes.validator import FloatValidator as FloatValidator

@@ -1,5 +1,5 @@
 
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from pydantic.main import BaseModel
 
@@ -31,8 +31,16 @@ class Tag(BaseModel):
 
     @staticmethod
     def from_string(tag_str: str) -> 'Tag':
+        if not tag_str:
+            return None
+
         tag_info: List[str] = tag_str.split(KEY_VALUE_SEPARATOR)
-        return Tag(tag_info[0], tag_info[1])
+
+        # Tag without a value
+        if len(tag_info) == 1:
+            return Tag(tag_info[0], '')
+        else:
+            return Tag(tag_info[0], tag_info[1])
 
     def to_json(self) -> Dict:
         return {"key": self.key, "value": self.value}

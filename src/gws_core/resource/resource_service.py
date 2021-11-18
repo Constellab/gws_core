@@ -5,10 +5,16 @@
 
 from typing import Any, Dict, List, Type
 
+from gws_core.core.classes.query_builder import QueryBuilder
+from gws_core.experiment.experiment import Experiment
+from gws_core.experiment.experiment_service import ExperimentService
+from gws_core.tag.tag import Tag, TagHelper
+from gws_core.task.task_model import TaskModel
+from playhouse.mysql_ext import Match
+
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ..core.model.model import Model
 from ..core.service.base_service import BaseService
 from ..model.typing_manager import TypingManager
 from ..resource.resource_search_dto import ResourceSearchDTO
@@ -43,15 +49,6 @@ class ResourceService(BaseService):
 
         return Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
-
-    @classmethod
-    def search(cls, typing_name: str, search_text: str,
-               page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
-        base_type: Type[Model] = TypingManager.get_type_from_name(typing_name)
-
-        query = base_type.search(search_text)
-        return Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page,
-                         nb_max_of_items_per_page=cls._number_of_items_per_page)
 
     ############################# RESOURCE TYPE ###########################
 
@@ -100,17 +97,32 @@ class ResourceService(BaseService):
     @classmethod
     def search(cls, search: ResourceSearchDTO,
                page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
-        # model_select = ResourceModel.select().where(Match((ResourceModel.tags), searchText))
-        expression = None
 
-        for tag in search.tags:
-            new_expresion = (ResourceModel.tags.contains(str(tag)))
-            if expression is not None:
-                expression = expression & new_expresion
-            else:
-                expression = new_expresion
+        expression_builder: QueryBuilder = QueryBuilder()
 
-        model_select = ResourceModel.select().where(expression)
+        if search.tags:
+            tags: List[Tag] = TagHelper.tags_to_list(search.tags)
+            for tag in tags:
+                expression_builder.add_expression(ResourceModel.tags.contains(str(tag)))
+
+        if search.experiment_uri:
+            experiment: Experiment = ExperimentService.get_experiment_by_uri(search.experiment_uri)
+            expression_builder.add_expression(ResourceModel.experiment == experiment)
+
+        if search.task_uri:
+            task_model: TaskModel = TaskModel.get_by_uri_and_check(search.task_uri)
+            expression_builder.add_expression(ResourceModel.task_model == task_model)
+
+        if search.origin:
+            expression_builder.add_expression(ResourceModel.origin == search.origin)
+
+        if search.resource_typing_name:
+            expression_builder.add_expression(ResourceModel.resource_typing_name == search.resource_typing_name)
+
+        if search.data:
+            expression_builder.add_expression(Match((ResourceModel.data), search.data, modifier='IN BOOLEAN MODE'))
+
+        model_select = ResourceModel.select().where(expression_builder.build())
 
         return Paginator(
             model_select, page=page, number_of_items_per_page=number_of_items_per_page)

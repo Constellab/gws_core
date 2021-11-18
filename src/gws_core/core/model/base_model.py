@@ -33,7 +33,7 @@ class BaseModel(Base, PeeweeModel):
         if cls._default_full_text_column:
             if cls.get_db_manager().is_mysql_engine():
                 cls.get_db_manager().db.execute_sql(
-                    f"CREATE FULLTEXT INDEX {cls._default_full_text_column} ON {cls.get_table_name()}({cls._default_full_text_column})")
+                    f"CREATE FULLTEXT INDEX {cls.get_table_name()} ON {cls.get_table_name()}({cls._default_full_text_column})")
 
     @classmethod
     def create_foreign_keys(cls) -> None:
