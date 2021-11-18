@@ -50,10 +50,9 @@ async def get_object_comments(object_typing_name: str,
     - **number_of_items_per_page**: the number of items per page (set equal to -1 to get all the comments)
     """
 
-    return CommentService.fetch_object_comments(
+    return CommentService.get_object_comments(
         object_typing_name=object_typing_name,
         object_uri=object_uri,
         page=page,
         number_of_items_per_page=number_of_items_per_page,
-        as_json=True
-    )
+    ).to_json()

@@ -20,35 +20,6 @@ from .typing_manager import TypingManager
 
 class ModelService(BaseService):
 
-    # -- C --
-
-    # @classmethod
-    # def create_view_model(cls, type_str: str, uri: str, data: RenderingDTO) -> ViewModel:
-    #     """
-    #     View a model
-
-    #     :param type: The type of the model
-    #     :type type: `str`
-    #     :param uri: The uri of the model
-    #     :type uri: `str`
-    #     :param data: The rendering data
-    #     :type data: `dict`
-    #     :return: A model if `as_json == False`, a dictionary if `as_json == True=
-    #     :rtype: `gws.db.model.Model`, `dict`
-    #     """
-
-    #     model_type: Type[Model] = Utils.get_model_type(type_str)
-    #     if model_type is None:
-    #         raise NotFoundException(
-    #             detail=f"Model type '{type_str}' not found")
-    #     try:
-    #         view_model = model_type.get(model_type.uri == uri).create_view_model(
-    #             data=data.dict())
-    #         return view_model
-    #     except Exception as err:
-    #         raise BadRequestException(
-    #             detail=f"Cannot create a view_model for the model of type '{type_str}' and uri '{uri}'") from err
-
     @classmethod
     def count_model(cls, typing_name: str) -> int:
         """

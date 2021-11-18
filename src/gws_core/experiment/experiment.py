@@ -15,9 +15,9 @@ from ..core.classes.enum_field import EnumField
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.json_field import JSONField
+from ..core.model.model import Model
 from ..core.model.sys_proc import SysProc
 from ..model.typing_register_decorator import typing_registrator
-from ..model.viewable import Viewable
 from ..resource.resource_model import ResourceModel
 from ..study.study import Study
 from ..tag.taggable_model import TaggableModel
@@ -47,7 +47,7 @@ class ExperimentErrorInfo(TypedDict):
 
 @final
 @typing_registrator(unique_name="Experiment", object_type="MODEL", hide=True)
-class Experiment(Viewable, TaggableModel):
+class Experiment(Model, TaggableModel):
     """
     Experiment class.
 

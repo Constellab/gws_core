@@ -76,7 +76,7 @@ async def verify_a_model_hash(typing_name: str,
 async def count_the_number_of_models(typing_name: str,
                                      _: UserData = Depends(AuthService.check_user_access_token)) -> int:
     """
-    Get the count of objects of a given type (models can be `Model` or `ViewModel`)
+    Get the count of objects of a given model type
 
     - **type**: the object type
     """

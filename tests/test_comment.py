@@ -5,51 +5,37 @@
 
 
 from gws_core import (BaseTestCase, Comment, CommentService, File, GTest,
-                      ResourceModel)
+                      PaginatorDict, ResourceModel, Robot)
 
 
 class TestComment(BaseTestCase):
 
     def test_comment(self):
         GTest.print("Comment")
-        file = File()
-        file.path = "./oui"
-        resource_model: ResourceModel = ResourceModel()
-        resource_model.resource = file
+        robot = Robot()
+        resource_model: ResourceModel = ResourceModel.from_resource(robot).save_full()
 
-        c1 = resource_model.add_comment("The sky is blue")
-        c2 = resource_model.add_comment(
-            "The sky is blue and the ocean is also blue", reply_to=c1)
-        resource_model.save()
-        c3 = CommentService.add_comment(
-            object_uri=resource_model.uri,
-            object_typing_name=file._typing_name,
-            message="I want to go to Paris"
-        )
+        comment1 = CommentService.add_comment_to_model(resource_model, "The sky is blue")
+        CommentService.add_comment_to_model(
+            resource_model, "The sky is blue and the ocean is also blue", reply_to_uri=comment1.uri)
+        CommentService.add_comment_to_model(resource_model, message="I want to go to Paris")
 
-        self.assertEqual(len(resource_model.comments), 3)
-        for c in resource_model.comments:
-            if c == c1:
-                self.assertEqual(c.message, "The sky is blue")
-            if c == c2:
-                self.assertEqual(
-                    c.message, "The sky is blue and the ocean is also blue")
-            if c == c3:
-                self.assertEqual(c.message, "I want to go to Paris")
+        page: PaginatorDict = CommentService.get_model_comments(resource_model).to_json()
+        self.assertEqual(page['total_number_of_items'], 3)
 
         if Comment.get_db_manager().is_mysql_engine():
-            Q = Comment.search("sky")
-            self.assertEqual(len(Q), 2)
-            for c in Q:
+            query = Comment.search("sky")
+            self.assertEqual(len(query), 2)
+            for c in query:
                 print(c.message)
 
-            Q = Comment.search("want paris", in_boolean_mode=False)
-            self.assertEqual(len(Q), 1)
+            query = Comment.search("want paris", in_boolean_mode=False)
+            self.assertEqual(len(query), 1)
 
-            Q = Comment.search("want paris", in_boolean_mode=True)
-            self.assertEqual(len(Q), 1)
-            for c in Q:
+            query = Comment.search("want paris", in_boolean_mode=True)
+            self.assertEqual(len(query), 1)
+            for c in query:
                 print(c.message)
 
-            Q = Comment.search("want -paris", in_boolean_mode=True)
-            self.assertEqual(len(Q), 0)
+            query = Comment.search("want -paris", in_boolean_mode=True)
+            self.assertEqual(len(query), 0)

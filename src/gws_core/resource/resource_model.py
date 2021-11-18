@@ -10,6 +10,7 @@ from enum import Enum
 from typing import (TYPE_CHECKING, Any, Dict, Generic, Optional, Type, TypeVar,
                     final)
 
+from gws_core.core.model.model import Model
 from peewee import CharField, DeferredForeignKey, ForeignKeyField, ModelSelect
 
 from ..core.classes.enum_field import EnumField
@@ -24,7 +25,6 @@ from ..impl.file.fs_node_model import FSNodeModel
 from ..impl.file.local_file_store import LocalFileStore
 from ..model.typing_manager import TypingManager
 from ..model.typing_register_decorator import typing_registrator
-from ..model.viewable import Viewable
 from ..resource.kv_store import KVStore
 from ..resource.r_field import BaseRField
 from ..resource.resource import Resource
@@ -49,13 +49,11 @@ class ResourceOrigin(Enum):
 
 # Use the typing decorator to avoid circular dependency
 @typing_registrator(unique_name="ResourceModel", object_type="MODEL", hide=True)
-class ResourceModel(Viewable, TaggableModel, Generic[ResourceType]):
+class ResourceModel(Model, TaggableModel, Generic[ResourceType]):
 
     """
     ResourceModel class.
     """
-
-    # tags = CharField(null=True)
 
     # typing name of the resource
     resource_typing_name = CharField(null=False)

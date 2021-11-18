@@ -3,15 +3,15 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from peewee import BooleanField, CharField, ForeignKeyField
+from peewee import CharField, ForeignKeyField
 
+from ..core.model.model import Model
 from ..model.typing_register_decorator import typing_registrator
-from ..model.viewable import Viewable
 from ..user.user import User
 
 
 @typing_registrator(unique_name="Study", object_type="MODEL", hide=True)
-class Study(Viewable):
+class Study(Model):
     """
     Study class.
     """

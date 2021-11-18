@@ -119,16 +119,6 @@ class Paginator(Generic[PaginatorType]):
         )
         return paginator_dict
 
-    def render(self, deep: bool = False) -> PaginatorDict:
-        paginator_dict: PaginatorDict = self._get_paginated_info()
-        paginator_dict['objects'] = Query.format(
-            self.paginated_query,
-            view_params=self.view_params,
-            as_view=True,
-            deep=deep
-        ),
-        return paginator_dict
-
     def current_items(self):
         """
         Returns the current items in the paginators

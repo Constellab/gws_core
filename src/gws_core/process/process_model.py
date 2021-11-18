@@ -22,12 +22,12 @@ from ..core.exception.exceptions import BadRequestException
 from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
 from ..core.model.json_field import JSONField
+from ..core.model.model import Model
 from ..core.utils.logger import Logger
 from ..experiment.experiment import Experiment
 from ..io.io import Inputs, Outputs
 from ..io.port import InPort, OutPort
 from ..model.typing_manager import TypingManager
-from ..model.viewable import Viewable
 from ..progress_bar.progress_bar import ProgressBar
 from ..user.user import User
 from .process import Process
@@ -53,7 +53,7 @@ class ProcessErrorInfo(TypedDict):
 
 
 @json_ignore(["parent_protocol_id"])
-class ProcessModel(Viewable):
+class ProcessModel(Model):
     """Base abstract class for Process and Protocol
 
     :param Viewable: [description]

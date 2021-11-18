@@ -7,6 +7,7 @@ from typing import List, Union
 
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import NotFoundException
+from ..core.model.model import Model
 from ..core.service.base_service import BaseService
 from .comment import Comment
 
@@ -38,31 +39,29 @@ class CommentService(BaseService):
         return comment
 
     @classmethod
-    def fetch_object_comments(cls,
-                              object_typing_name: str,
-                              object_uri: str,
-                              page: int = 0,
-                              number_of_items_per_page: int = 20,
-                              as_json=False) -> Union[List[Comment], List[dict]]:
+    def add_comment_to_model(cls, model: Model, message: str, reply_to_uri: str = None) -> Comment:
+        return cls.add_comment(model._typing_name, model.uri, message, reply_to_uri)
+
+    @classmethod
+    def get_object_comments(cls,
+                            object_typing_name: str,
+                            object_uri: str,
+                            page: int = 0,
+                            number_of_items_per_page: int = 20) -> Paginator[Comment]:
 
         query = Comment.select()\
             .where((Comment.object_uri == object_uri) & (Comment.object_typing_name == object_typing_name))\
             .order_by(Comment.creation_datetime.desc())
 
-        if number_of_items_per_page <= 0:
-            if as_json:
-                comments = []
-                for c in query:
-                    comments.append(c.to_json())
-                return comments
+        number_of_items_per_page = min(
+            number_of_items_per_page, cls._number_of_items_per_page)
+        return Paginator(
+            query, page=page, number_of_items_per_page=number_of_items_per_page)
 
-            return query
-        else:
-            number_of_items_per_page = min(
-                number_of_items_per_page, cls._number_of_items_per_page)
-            paginator = Paginator(
-                query, page=page, number_of_items_per_page=number_of_items_per_page)
-            if as_json:
-                return paginator.to_json()
+    @classmethod
+    def get_model_comments(cls,
+                           model: Model,
+                           page: int = 0,
+                           number_of_items_per_page: int = 20) -> Paginator[Comment]:
 
-            return paginator
+        return cls.get_object_comments(model._typing_name, model.uri, page, number_of_items_per_page)
