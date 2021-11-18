@@ -188,6 +188,10 @@ class LocalFileStore(FileStore):
 
         raise BadRequestException("Cannot manually set LocalFileStore path")
 
+    def delete_node_path(self, node_path: str) -> None:
+        if self.node_path_exists(node_path):
+            FileHelper.delete_node(node_path)
+
     @classmethod
     def get_base_dir(cls) -> str:
         if not cls._base_dir:

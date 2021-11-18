@@ -10,9 +10,15 @@ from gws_core import (BaseTestCase, Experiment, ExperimentDTO,
                       ExperimentService, ExperimentStatus, GTest, ProcessModel,
                       ProtocolModel, ResourceModel, Robot, RobotService,
                       RobotWorldTravelProto, Settings, TaskModel, Utils)
+from gws_core.experiment.experiment_exception import \
+    ResourceUsedInAnotherExperimentException
+from gws_core.experiment.experiment_interface import IExperiment
+from gws_core.impl.robot.robot_protocol import (CreateSimpleRobot,
+                                                MoveSimpleRobot)
 from gws_core.io.io_spec import IOSpecClass
 from gws_core.process.process_model import ProcessStatus
 from gws_core.study.study_dto import StudyDto
+from gws_core.task.task_input_model import TaskInputModel
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -106,6 +112,20 @@ class TestExperiment(BaseTestCase):
         robot2: Robot = eat_3.outputs.get_resource_model('robot').get_resource()
         self.assertEqual(robot1.weight, robot2.weight - 10)
 
+        ################################ CHECK TASK INPUT ################################
+        # Check if the Input resource was set
+        task_inputs: List[TaskInputModel] = list(
+            TaskInputModel.get_by_resource_model(fly_1.inputs.get_resource_model('robot').id))
+        self.assertEqual(len(task_inputs), 1)
+        self.assertEqual(task_inputs[0].is_interface, False)
+        self.assertEqual(task_inputs[0].port_name, "robot")
+
+        # Check the TaskInput with a sub process and a resource that is an interface
+        sub_move_4: TaskModel = super_travel.get_process('move_4')
+        task_inputs = list(TaskInputModel.get_by_task_model(sub_move_4.id))
+        self.assertEqual(len(task_inputs), 1)
+        self.assertEqual(task_inputs[0].is_interface, True)
+
     async def test_run_through_cli(self):
 
         # experiment 3
@@ -169,10 +189,13 @@ class TestExperiment(BaseTestCase):
     async def test_reset(self):
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_type(RobotWorldTravelProto)
 
-        experiment = await ExperimentService.run_experiment(experiment=experiment, user=GTest.user)
+        experiment = await ExperimentService.run_experiment(experiment=experiment)
 
         experiment.reset()
+
         self.assertEqual(experiment.status, ExperimentStatus.DRAFT)
+        # Check that all the resources were deleted
+        self.assertEqual(ResourceModel.select().count(), 0)
 
         # check recursively all the status
         self._check_process_reset(experiment.protocol_model)
@@ -198,3 +221,20 @@ class TestExperiment(BaseTestCase):
         if isinstance(process_model, ProtocolModel):
             for process in process_model.processes.values():
                 self._check_process_reset(process)
+
+    async def test_reset_error(self):
+        """ Test that we can't reset an experiment if one of its resource is used by another experiment
+        """
+        experiment: IExperiment = IExperiment(CreateSimpleRobot)
+        await experiment.run()
+
+        # Retrieve the robot
+        resource = experiment.get_protocol().get_process('facto').get_output('robot')
+
+        # Create a new experiment that uses the previously generated robot
+        experiment2: IExperiment = IExperiment(MoveSimpleRobot)
+        experiment2.get_protocol().get_process('source').set_param('resource_uri', resource._model_uri)
+        await experiment2.run()
+
+        with self.assertRaises(ResourceUsedInAnotherExperimentException):
+            experiment.reset()

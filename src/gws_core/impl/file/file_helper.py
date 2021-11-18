@@ -144,6 +144,18 @@ class FileHelper():
         shutil.rmtree(path=path, ignore_errors=ignore_errors)
 
     @classmethod
+    def delete_file(cls, file_path: PathType) -> None:
+        path = cls.get_path(file_path)
+        os.remove(path)
+
+    @classmethod
+    def delete_node(cls, node_path: PathType) -> None:
+        if cls.is_dir(node_path):
+            cls.delete_dir(node_path)
+        else:
+            cls.delete_file(node_path)
+
+    @classmethod
     def get_dir_content_as_json(cls, path: PathType) -> Any:
         if cls.is_file(path):
             return cls.get_name_with_extension(path)

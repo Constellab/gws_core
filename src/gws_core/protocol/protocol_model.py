@@ -552,6 +552,12 @@ class ProtocolModel(ProcessModel):
 
         # delete the corresponding input's port
         self.inputs.remove_port(name)
+
+    def port_is_interface(self, name: str, port: Port) -> bool:
+        if not name in self.interfaces:
+            return False
+
+        return self.interfaces[name].target_port == port
     ############################### OUTERFACE #################################
 
     @property

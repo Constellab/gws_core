@@ -2,7 +2,7 @@ from ...config.config_types import ConfigParams
 from ...config.param_spec import FloatParam
 from ...protocol.protocol import ProcessSpec, Protocol
 from ...protocol.protocol_decorator import protocol_decorator
-from ...task.plug import Sink
+from ...task.plug import Sink, Source
 from .robot_tasks import (RobotAdd, RobotAddOnCreate, RobotCreate, RobotEat,
                           RobotFly, RobotMove, RobotWait)
 
@@ -113,4 +113,35 @@ class RobotWorldTravelProto(Protocol):
             (super_travel >> 'robot', fly_1 << 'robot'),
             (fly_1 >> 'robot', wait_1 << 'robot'),
             (wait_1 >> 'robot', sink_1 << 'resource')
+        ])
+
+
+@protocol_decorator("CreateSimpleRobot")
+class CreateSimpleRobot(Protocol):
+    def configure_protocol(self, config_params: ConfigParams) -> None:
+        facto: ProcessSpec = self.add_process(RobotCreate, 'facto')
+
+        # define the protocol output
+        sink_1: ProcessSpec = self.add_process(Sink, 'sink_1')
+
+        self.add_connectors([
+            (facto >> 'robot', sink_1 << 'resource'),
+        ])
+
+
+@protocol_decorator("MoveSimpleRobot")
+class MoveSimpleRobot(Protocol):
+
+    config_specs = Source.config_specs
+
+    def configure_protocol(self, config_params: ConfigParams) -> None:
+        source: ProcessSpec = self.add_process(Source, 'source')
+        move: ProcessSpec = self.add_process(RobotMove, 'move')
+
+        # define the protocol output
+        sink_1: ProcessSpec = self.add_process(Sink, 'sink_1')
+
+        self.add_connectors([
+            (source >> 'resource', move << 'robot'),
+            (move >> 'robot', sink_1 << 'resource'),
         ])

@@ -85,6 +85,10 @@ class TestFile(BaseTestCase):
         self.assertTrue(file_model.is_saved())
         self.assertEqual(file.path, file_model.fs_node_model.path)
 
+        # Test delete
+        file_model.delete_instance()
+        self.assertFalse(file_store.node_exists(file))
+
     async def test_write_to_json_file_process(self):
         """Test a protocol that generate a file
         """

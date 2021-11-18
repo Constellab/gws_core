@@ -4,12 +4,12 @@
 # About us: https://gencovery.com
 
 
-from enum import Enum
 from typing import final
 
 from peewee import CharField
 
 from ...core.model.model import Model
+from ...impl.file.file_store import FileStore
 from ...model.typing_register_decorator import typing_registrator
 
 
@@ -24,3 +24,13 @@ class FSNodeModel(Model):
     path = CharField(null=True, index=True, unique=True)
     file_store_uri = CharField(null=True, index=True)
     _table_name = "gws_fs_node"
+
+    def delete_instance(self, *args, **kwargs):
+        # TODO add support for other FileStore
+        file_store: FileStore = FileStore.get_default_instance()
+
+        file_store.delete_node_path(self.path)
+        return super().delete_instance(*args, **kwargs)
+
+    def get_file_store(self) -> FileStore:
+        return FileStore.get_by_uri_and_check(self.file_store_uri)

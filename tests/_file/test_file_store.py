@@ -30,6 +30,9 @@ class TestLocalFileStore(BaseTestCase):
         self.assertTrue(file_store.node_exists(file_2))
         self.assertNotEqual(file_2.path, file.path)
 
+        file_store.delete_node(file)
+        self.assertFalse(file_store.node_exists(file))
+
     def test_empty_file(self):
         file_store: FileStore = LocalFileStore()
 
@@ -45,3 +48,6 @@ class TestLocalFileStore(BaseTestCase):
         folder: Folder = file_store.create_empty_folder('my-folder')
         self.assertTrue(file_store.node_exists(folder))
         self.assertTrue(FileHelper.exists_on_os(folder.path))
+
+        file_store.delete_node(folder)
+        self.assertFalse(file_store.node_exists(folder))

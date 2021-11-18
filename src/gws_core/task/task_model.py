@@ -4,11 +4,10 @@
 # About us: https://gencovery.com
 import inspect
 import zlib
-from typing import List, Type
-
-from gws_core.core.decorator.transaction import transaction
+from typing import Dict, List, Type
 
 from ..config.config_types import ConfigParams
+from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.utils.logger import Logger
@@ -154,6 +153,10 @@ class TaskModel(ProcessModel):
                 return
 
         await self._run_before_task()
+
+        # TODO add the task runner to check input before save
+        self.save_input_resources()
+
         # run the task
         await self._run_task(task=task, config_params=config_params, task_inputs=task_inputs)
 
@@ -168,6 +171,36 @@ class TaskModel(ProcessModel):
                                                      error_prefix='Error during check after task') from err
 
         await self._run_after_task()
+
+    def save_input_resources(self) -> None:
+        """Method run juste before the task run to save the input resource for this task.
+          this will allow to know what resource this task uses as input
+        """
+        from .task_input_model import TaskInputModel
+        resources_models_ids: List[int] = []
+
+        for key, port in self.inputs.ports.items():
+
+            resource_model: ResourceModel = port.resource_model
+
+            # if the resource was already added for the task (for example multiple use in on Task)
+            if resource_model is None or resource_model.id in resources_models_ids:
+                continue
+
+            # Create the Input resource to save the resource use as input
+            input_resource: TaskInputModel = TaskInputModel()
+            input_resource.resource_model = resource_model
+            input_resource.experiment = self.experiment
+            input_resource.task_model = self
+
+            parent = self.parent_protocol
+            input_resource.protocol_model = parent
+            input_resource.port_name = key
+            input_resource.is_interface = parent.port_is_interface(key, port)
+
+            input_resource.save()
+
+            resources_models_ids.append(resource_model.id)
 
     async def _run_task(self, task: Task, config_params: ConfigParams, task_inputs: TaskInputs) -> None:
         """

@@ -32,17 +32,12 @@ class Source(Task):
     output_specs: OutputSpecs = {'resource': ConstantOut(Resource, sub_class=True)}
     config_specs: ConfigSpecs = {
         'resource_uri': StrParam(optional=True, short_description="The uri of the resource"),
-        'resource_typing_name': StrParam(optional=True, short_description="The type of the resource"),
     }
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         r_uri: str = params.get_value("resource_uri")
-        r_typing_name: str = params.get_value("resource_typing_name")
-        if not r_uri or not r_typing_name:
+        if not r_uri:
             raise BadRequestException('Source error, the resource was not provided')
-
-        # retrieve the resource type
-        r_type: Type[Resource] = TypingManager.get_type_from_name(r_typing_name)
 
         # retrieve the resource model based and uri and resource type
         resource_model: ResourceModel = ResourceModel.get_by_uri_and_check(r_uri)

@@ -11,7 +11,8 @@ from typing import (TYPE_CHECKING, Any, Dict, Generic, Optional, Type, TypeVar,
                     final)
 
 from gws_core.core.model.model import Model
-from peewee import CharField, DeferredForeignKey, ForeignKeyField, ModelSelect
+from peewee import (CharField, DeferredForeignKey, ForeignKeyField,
+                    ModelDelete, ModelSelect)
 
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.transaction import transaction
@@ -81,11 +82,17 @@ class ResourceModel(Model, TaggableModel, Generic[ResourceType]):
 
     ########################################## MODEL METHODS ######################################
 
+    @transaction()
     def delete_instance(self, *args, **kwargs):
         kv_store: Optional[KVStore] = self.get_kv_store()
         if kv_store:
             kv_store.remove()
-        return super().delete_instance(*args, **kwargs)
+
+        result = super().delete_instance(*args, **kwargs)
+        if self.fs_node_model:
+            self.fs_node_model.delete_instance()
+
+        return result
 
     @classmethod
     def drop_table(cls, *args, **kwargs):
@@ -134,6 +141,14 @@ class ResourceModel(Model, TaggableModel, Generic[ResourceType]):
         """
         cls.create_foreign_key_if_not_exist(ResourceModel.experiment)
         cls.create_foreign_key_if_not_exist(ResourceModel.task_model)
+
+    @classmethod
+    def get_by_experiment(cls, experiment_id: int) -> ModelSelect:
+        return ResourceModel.select().where(ResourceModel.experiment == experiment_id)
+
+    @classmethod
+    def delete_list(cls, resource_model_ids: int) -> ModelDelete:
+        return ResourceModel.delete().where(ResourceModel.id.in_(resource_model_ids))
 
     ########################################## RESOURCE ######################################
 

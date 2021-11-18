@@ -103,6 +103,13 @@ class FileStore(Model):
     def create_empty_folder(self, folder_name: str, folder_type: Type[Folder] = Folder) -> Folder:
         pass
 
+    @abstractmethod
+    def delete_node_path(self, node_path: str) -> None:
+        pass
+
+    def delete_node(self, node: FSNode) -> None:
+        self.delete_node_path(node.path)
+
     def node_exists(self, node: FSNode) -> bool:
         return self.node_path_exists(node.path)
 

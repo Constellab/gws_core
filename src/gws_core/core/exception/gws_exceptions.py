@@ -32,3 +32,4 @@ class GWSException(Enum):
     EXPERIMENT_ERROR_BEFORE_RUN = "Error before running the experiment."
     TASK_CHECK_BEFORE_STOP = "Check before task returned false. Reason: {{message}}"
     EXPERIMENT_VALIDATE_RUNNING = "Can't validate a running experiment"
+    RESET_ERROR_RESOURCE_USED_IN_ANOTHER_EXPERIMENT = "Can't reset the experiment because the resource '{{resource_model_uri}}' is used in experiment '{{experiment_uri}}'"

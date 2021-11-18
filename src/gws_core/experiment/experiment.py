@@ -23,6 +23,7 @@ from ..study.study import Study
 from ..tag.taggable_model import TaggableModel
 from ..user.activity import Activity
 from ..user.user import User
+from .experiment_exception import ResourceUsedInAnotherExperimentException
 
 if TYPE_CHECKING:
     from ..protocol.protocol_model import ProtocolModel
@@ -200,9 +201,27 @@ class Experiment(Model, TaggableModel):
         :return: True if it is reset, False otherwise
         :rtype: `bool`
         """
+        from ..task.task_input_model import TaskInputModel
+
+        if not self.is_saved():
+            raise BadRequestException(f"Can't reset a validated or archived experiment")
 
         if self.is_validated or self.is_archived:
-            return None
+            raise BadRequestException(f"Can't reset a validated or archived experiment")
+
+        # Check if any resource of this experiment is used in another one
+        output_resources: List[ResourceModel] = list(ResourceModel.get_by_experiment(self.id))
+        output_resource_ids: List[int] = list(map(lambda x: x.id, output_resources))
+
+        other_experiment: TaskInputModel = TaskInputModel.get_other_experiments(output_resource_ids, self.id).first()
+
+        if other_experiment is not None:
+            raise ResourceUsedInAnotherExperimentException(
+                other_experiment.resource_model.uri, other_experiment.experiment.uri)
+
+        # Delete all the resources previously generated to clear the DB
+        for output_resource in output_resources:
+            output_resource.delete_instance()
 
         if self.protocol_model:
             self.protocol_model.reset()

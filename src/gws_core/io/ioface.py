@@ -46,12 +46,10 @@ class IOface:
 
     # -- T --
 
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
+    def to_json(self, deep: bool = False) -> dict:
         r_uri = ""
-        r_typing_name = ""
         if self.source_port.resource_model:
             r_uri = self.source_port.resource_model.uri
-            r_typing_name = self.source_port.resource_model.typing_name
 
         return {
             "name": self.name,
@@ -63,10 +61,7 @@ class IOface:
                 "node": self.target_port.process.instance_name,
                 "port": self.target_port.name,
             },
-            "resource": {
-                "uri": r_uri,
-                "typing_name": r_typing_name
-            }
+            "resource_uri":  r_uri,
         }
 
 

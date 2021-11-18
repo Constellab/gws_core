@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Dict, Generic, List, Type, TypeVar, final
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.base import Base
-from ..model.typing_manager import TypingManager
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
 from ..task.task_io import TaskInputs
@@ -187,7 +186,7 @@ class IO(Base, Generic[PortType]):
             raise BadRequestException(error)
     ################################################### RESOURCE ########################################
 
-    def get_resources(self) -> Dict[str, ResourceModel]:
+    def get_resource_models(self) -> Dict[str, ResourceModel]:
         """
         Returns the resources of all the ports.
 
