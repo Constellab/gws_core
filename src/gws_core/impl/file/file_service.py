@@ -8,19 +8,20 @@ from typing import List, Optional, Type
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
-from gws_core.core.exception.gws_exceptions import GWSException
-from gws_core.task.task_input_model import TaskInputModel
 
 from ...core.classes.jsonable import Jsonable, ListJsonable
 from ...core.classes.paginator import Paginator
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ...core.exception.exceptions.not_found_exception import NotFoundException
+from ...core.exception.gws_exceptions import GWSException
 from ...core.service.base_service import BaseService
+from ...core.utils.utils import Utils
 from ...model.typing_manager import TypingManager
 from ...resource.resource import Resource
 from ...resource.resource_model import ResourceModel, ResourceOrigin
 from ...resource.resource_typing import FileTyping
+from ...task.task_input_model import TaskInputModel
 from .file import File
 from .file_store import FileStore
 from .local_file_store import LocalFileStore
@@ -101,29 +102,48 @@ class FileService(BaseService):
 
     @classmethod
     def _add_file_to_store(cls, file: File, store: FileStore, dest_file_name: str = None) -> ResourceModel:
-        new_file: File = store.add_file_from_path(source_path=file, dest_file_name=dest_file_name)
+        new_file: File = store.add_file_from_path(source_file_path=file.path, dest_file_name=dest_file_name)
         return cls.create_file_model(new_file)
 
     @classmethod
     def delete_file(cls, file_uri: str) -> None:
         resource_model: ResourceModel = ResourceModel.get_by_uri_and_check(file_uri)
 
-        if resource_model.origin != ResourceOrigin.IMPORTED:
-            raise BadRequestException(GWSException.DELETE_GENERATED_FILE_ERROR.value,
-                                      GWSException.DELETE_USED_FILE_ERROR.value)
-
-        task_input: TaskInputModel = TaskInputModel.get_by_resource_model(resource_model.id).first()
-
-        if task_input:
-            raise BadRequestException(GWSException.DELETE_USED_FILE_ERROR.value,
-                                      unique_code=GWSException.DELETE_USED_FILE_ERROR.value,
-                                      detail_args={"experiment_uri": task_input.experiment.get_short_name()})
+        cls._check_before_file_update(resource_model)
 
         resource_model.delete_instance()
 
+    @classmethod
+    def update_file_type(cls, file_uri: str, file_typing_name: str) -> ResourceModel:
+        resource_model: ResourceModel = ResourceModel.get_by_uri_and_check(file_uri)
+
+        cls._check_before_file_update(resource_model)
+
+        file_type: Type[File] = TypingManager.get_type_from_name(file_typing_name)
+
+        if not Utils.issubclass(file_type, File):
+            raise BadRequestException('The type must be a File')
+
+        resource_model.resource_typing_name = file_type._typing_name
+        return resource_model.save()
+
+    @classmethod
+    def _check_before_file_update(cls, file_model: ResourceModel) -> None:
+        """Method to check if a file is updatable
+        """
+        if file_model.origin != ResourceOrigin.IMPORTED:
+            raise BadRequestException(GWSException.DELETE_GENERATED_FILE_ERROR.value,
+                                      GWSException.DELETE_GENERATED_FILE_ERROR.value)
+
+        task_input: TaskInputModel = TaskInputModel.get_by_resource_model(file_model.id).first()
+
+        if task_input:
+            raise BadRequestException(GWSException.FILE_USED_ERROR.value,
+                                      unique_code=GWSException.FILE_USED_ERROR.value,
+                                      detail_args={"experiment_uri": task_input.experiment.get_short_name()})
+
 
 ############################# FILE TYPE ###########################
-
 
     @classmethod
     def get_file_types(cls) -> List[FileTyping]:

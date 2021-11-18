@@ -76,6 +76,17 @@ async def delete_file(uri: str,
 
     return FileService.delete_file(uri)
 
+
+@core_app.put("/file/{uri}/type/{resource_typing_name}", tags=["Files"], summary="Update file type")
+async def update_file_type(uri: str,
+                           resource_typing_name: str,
+                           _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
+    """
+    Update a file.
+    """
+
+    return FileService.update_file_type(uri, resource_typing_name).to_json()
+
 ############################# FILE TYPE ###########################
 
 
