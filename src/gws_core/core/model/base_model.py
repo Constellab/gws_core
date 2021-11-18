@@ -101,6 +101,11 @@ class BaseModel(Base, PeeweeModel):
     def is_mysql_engine(cls):
         return cls.get_db_manager().get_engine() in ["mysql", "mariadb"]
 
+    def save(self, *args, **kwargs) -> 'BaseModel':
+        super().save(*args, **kwargs)
+
+        return self
+
     class Meta:
         database = DbManager.db
         table_function = format_table_name

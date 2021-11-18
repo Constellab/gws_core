@@ -175,8 +175,6 @@ class TaskModel(ProcessModel):
           this will allow to know what resource this task uses as input
         """
         from .task_input_model import TaskInputModel
-        resources_models_ids: List[int] = []
-
         for key, port in self.inputs.ports.items():
 
             resource_model: ResourceModel = port.resource_model
@@ -197,8 +195,6 @@ class TaskModel(ProcessModel):
             input_resource.is_interface = parent.port_is_interface(key, port)
 
             input_resource.save()
-
-            resources_models_ids.append(resource_model.id)
 
     async def _run_task(self, task_runner: TaskRunner) -> None:
         """

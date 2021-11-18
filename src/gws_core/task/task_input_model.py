@@ -55,5 +55,14 @@ class TaskInputModel(BaseModel):
     def delete_by_experiment(cls, experiment_id: int) -> ModelDelete:
         return TaskInputModel.delete().where(TaskInputModel.task_model == experiment_id)
 
+    def save(self, *args, **kwargs) -> 'BaseModel':
+        """Use force insert because it is a composite key
+        https://stackoverflow.com/questions/30038185/python-peewee-save-doesnt-work-as-expected
+
+        :return: [description]
+        :rtype: [type]
+        """
+        return super().save(*args, force_insert=True, **kwargs)
+
     class Meta:
         primary_key = CompositeKey("task_model", "port_name")
