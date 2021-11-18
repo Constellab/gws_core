@@ -2,16 +2,18 @@
 
 from typing import List
 
-from peewee import BooleanField, CharField, ForeignKeyField, ModelDelete, ModelSelect
+from peewee import BooleanField, CharField, CompositeKey, ForeignKeyField
+from peewee import Model as PeeweeModel
+from peewee import ModelDelete, ModelSelect
 
-from ..core.model.model import Model
+from ..core.model.base_model import BaseModel
 from ..experiment.experiment import Experiment
 from ..protocol.protocol_model import ProtocolModel
 from ..resource.resource_model import ResourceModel
 from ..task.task_model import TaskModel
 
 
-class TaskInputModel(Model):
+class TaskInputModel(BaseModel):
     """Model use to store where the resource are used as input of tasks
 
     :param Model: [description]
@@ -54,6 +56,4 @@ class TaskInputModel(Model):
         return TaskInputModel.delete().where(TaskInputModel.task_model == experiment_id)
 
     class Meta:
-        indexes = (
-            (("task_model_id", "resource_model_id", "port_name"), True),
-        )
+        primary_key = CompositeKey("task_model", "port_name")

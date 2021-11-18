@@ -4,21 +4,19 @@
 # About us: https://gencovery.com
 
 
-from typing import List, Tuple, Type
-
-from gws_core.resource.resource_model import ResourceModel
-from peewee import DatabaseProxy
+from typing import Type
 
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.model import Model
 from ..core.service.base_service import BaseService
-from ..core.utils.logger import Logger
 from .typing_manager import TypingManager
 
 
 class ModelService(BaseService):
+
+    ############################################## GET ############################################
 
     @classmethod
     def count_model(cls, typing_name: str) -> int:
@@ -72,18 +70,16 @@ class ModelService(BaseService):
         return Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
 
-    # -- G --
-
     @classmethod
-    def get_model_types(cls):
-        if not getattr(cls, '__model_types', None):
-            cls.__model_types: List[Type[Model]] = Model.inheritors()
+    def search(cls, typing_name: str, search_text: str,
+               page: int = 0, number_of_items_per_page: int = 20) -> Paginator[Model]:
+        base_type: Type[Model] = TypingManager.get_type_from_name(typing_name)
 
-        return cls.__model_types
+        query = base_type.search(search_text)
+        return Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page,
+                         nb_max_of_items_per_page=cls._number_of_items_per_page)
 
-    # -- I --
-
-    # -- R --
+    ############################################## MODIFY ############################################
 
     @classmethod
     def register_all_processes_and_resources(cls) -> None:
@@ -103,8 +99,6 @@ class ModelService(BaseService):
 
         return model.archive(archive)
 
-    # -- V --
-
     @classmethod
     def verify_model_hash(cls, typing_name: str, uri: str) -> bool:
         """
@@ -120,86 +114,3 @@ class ModelService(BaseService):
 
         model: Model = TypingManager.get_object_with_typing_name_and_uri(typing_name, uri)
         return model.verify_hash()
-
-    @classmethod
-    def search(cls, typing_name: str, search_text: str,
-               page: int = 0, number_of_items_per_page: int = 20) -> Paginator[Model]:
-        base_type: Type[Model] = TypingManager.get_type_from_name(typing_name)
-
-        query = base_type.search(search_text)
-        return Paginator(query, page=page, number_of_items_per_page=number_of_items_per_page,
-                         nb_max_of_items_per_page=cls._number_of_items_per_page)
-
-    ############################################ DB ######################################
-
-    @classmethod
-    def create_tables(cls, models: List[type] = None, model_type: type = None):
-        """
-        Create tables (if they don't exist)
-
-        :param models: List of model tables to create
-        :type models: `List[type]`
-        :param instance: If provided, only the tables of the models that are instances of `model_type` will be create
-        :type model_type: `type`
-        """
-
-        db_list, model_list = cls._get_db_and_model_types(models)
-        for db in db_list:
-            i = db_list.index(db)
-            models = [t for t in model_list[i] if not t.table_exists()]
-            if model_type:
-                models = [t for t in models if isinstance(t, model_type)]
-            db.create_tables(models)
-
-        # Create the foreign keys after if necessary (for DeferredForeignKey for example)
-        for models in model_list:
-            for model in models:
-                model.create_foreign_keys()
-
-    @classmethod
-    def drop_tables(cls, model_types: List[Type[Model]] = None, model_type: type = None):
-        """
-        Drops tables (if they exist)
-
-        :param models: List of model tables to drop
-        :type models: `List[type]`
-        :param instance: If provided, only the tables of the models that are instances of `model_type` will be droped
-        :type model_type: `type`
-        """
-
-        db_list, model_list = cls._get_db_and_model_types(model_types)
-        for db in db_list:
-            i = db_list.index(db)
-            models: List[Model] = [
-                t for t in model_list[i] if t.table_exists()]
-            if model_type:
-                models = [t for t in models if isinstance(t, model_type)]
-
-            if len(models) == 0:
-                Logger.debug("No table to drop")
-                return
-
-            # Disable foreigne key on my sql to drop the tables
-            if models[0].is_mysql_engine():
-                db.execute_sql("SET FOREIGN_KEY_CHECKS=0")
-            # Drop all the tables
-            db.drop_tables(models)
-
-            if models[0].is_mysql_engine():
-                db.execute_sql("SET FOREIGN_KEY_CHECKS=1")
-
-    @classmethod
-    def _get_db_and_model_types(cls, models: list = None) -> Tuple[List[DatabaseProxy], List[List[Type[Model]]]]:
-        if not models:
-            models = ModelService.get_model_types()
-        db_list = []
-        model_list = []
-        for t in models:
-            db = t._db_manager.db
-            if db in db_list:
-                i = db_list.index(db)
-                model_list[i].append(t)
-            else:
-                db_list.append(db)
-                model_list.append([t])
-        return db_list, model_list

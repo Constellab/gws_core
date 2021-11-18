@@ -11,6 +11,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Type
 
 from fastapi.encoders import jsonable_encoder
+from gws_core.core.model.base_model import BaseModel
 from peewee import (AutoField, BigAutoField, BlobField, BooleanField,
                     CharField, DateTimeField, Field, ForeignKeyField,
                     ForeignKeyMetadata, ManyToManyField)
@@ -29,19 +30,14 @@ from ..utils.settings import Settings
 from ..utils.utils import Utils
 from .base import Base
 
+
 # ####################################################################
 #
 # Format table name
 #
 # ####################################################################
-
-
-def format_table_name(model: Type['Model']) -> str:
-    return model._table_name.lower() if hasattr(model, "_table_name") else None
-
-
 @json_ignore(["id", "hash"])
-class Model(Base, PeeweeModel):
+class Model(BaseModel, PeeweeModel):
     """
     Model class
 
@@ -65,13 +61,11 @@ class Model(Base, PeeweeModel):
 
     id = AutoField(primary_key=True)
     uri = CharField(null=True, index=True, unique=True)
-    creation_datetime = DateTimeField(default=datetime.now, index=True)
-    save_datetime = DateTimeField(index=True)
+    creation_datetime = DateTimeField(default=datetime.now)
+    save_datetime = DateTimeField()
     is_archived = BooleanField(default=False, index=True)
     hash = CharField(null=True)
     data: Dict[str, Any] = JSONField(null=True)
-
-    LAB_URI = None  # todo remove
 
     _data = None
     _is_removable = True
@@ -83,8 +77,6 @@ class Model(Base, PeeweeModel):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if not Model.LAB_URI:
-            Model.LAB_URI = Settings.retrieve().get_data("uri")
 
         if self.uri is None:
             self.uri = str(uuid.uuid4())
@@ -123,7 +115,6 @@ class Model(Base, PeeweeModel):
 
     def _create_hash_object(self):
         hash_obj = hashlib.blake2b()
-        hash_obj.update(Model.LAB_URI.encode())
         exclusion_list = (ForeignKeyField, JSONField,
                           ManyToManyField, BlobField, AutoField, BigAutoField, )
 
@@ -179,58 +170,6 @@ class Model(Base, PeeweeModel):
         if save:
             self.save()
 
-    @classmethod
-    def create_table(cls, *args, **kwargs):
-        """
-        Create model table
-        """
-
-        if not hasattr(cls, "_table_name") or cls.table_exists():
-            return
-        super().create_table(*args, **kwargs)
-        if cls._default_full_text_column:
-            if cls.get_db_manager().is_mysql_engine():
-                cls.get_db_manager().db.execute_sql(
-                    f"CREATE FULLTEXT INDEX {cls._default_full_text_column} ON {cls.get_table_name()}({cls._default_full_text_column})")
-
-    @classmethod
-    def create_foreign_keys(cls) -> None:
-        """Method call after all the create table
-
-        Useful when use DeferredForeignKey to create the foreign key manually latter
-        """
-
-    @classmethod
-    def create_foreign_key_if_not_exist(cls, field: ForeignKeyField) -> None:
-        """Create a foreign key for a Foreign key field only if the foreign key does not exists
-
-        :param field: [description]
-        :type field: ForeignKeyField
-        """
-        if not cls.foreign_key_exists(field):
-            cls._schema.create_foreign_key(field)
-
-    @classmethod
-    def foreign_key_exists(cls, field: ForeignKeyField) -> bool:
-        foreign_keys: List[ForeignKeyMetadata] = cls._schema.database.get_foreign_keys(cls._table_name)
-        column_name = field.column_name
-        return len([x for x in foreign_keys if x.column == column_name]) > 0
-
-    # -- D --
-
-    @classmethod
-    def drop_table(cls, *args, **kwargs):
-        """
-        Drop model table
-        """
-
-        if not cls.table_exists():
-            return
-
-        super().drop_table(*args, **kwargs)
-
-    # -- E --
-
     def __eq__(self, other: object) -> bool:
         """
         Compares the model with another model. The models are equal if they are
@@ -255,28 +194,6 @@ class Model(Base, PeeweeModel):
         rel: dict = self.data["__relations"][relation_name]
         model_type: Type[Model] = Utils.get_model_type(rel["type"])
         return model_type.get(model_type.uri == rel["uri"])
-
-    @classmethod
-    def get_table_name(cls) -> str:
-        """
-        Returns the table name of this class
-
-        :return: The table name
-        :rtype: `str`
-        """
-
-        return format_table_name(cls)
-
-    @classmethod
-    def get_db_manager(cls) -> Type[DbManager]:
-        """
-        Returns the (current) DbManager of this model
-
-        :return: The db manager
-        :rtype: `DbManager`
-        """
-
-        return cls._db_manager
 
     @classmethod
     def get_by_uri(cls, uri: str) -> 'Model':
@@ -317,16 +234,6 @@ class Model(Base, PeeweeModel):
             else:
                 self.data[prop] = data[prop]
 
-    # -- I --
-
-    @classmethod
-    def is_sqlite3_engine(cls):
-        return cls.get_db_manager().get_engine() == "sqlite3"
-
-    @classmethod
-    def is_mysql_engine(cls):
-        return cls.get_db_manager().get_engine() in ["mysql", "mariadb"]
-
     def is_saved(self):
         """
         Returns True if the model is saved in db, False otherwise
@@ -336,10 +243,6 @@ class Model(Base, PeeweeModel):
         """
 
         return bool(self.id)
-
-    # -- N --
-
-    # -- R --
 
     def refresh(self) -> None:
         """
@@ -426,7 +329,6 @@ class Model(Base, PeeweeModel):
 
         return model_list
 
-    # -- T --
     def to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns a JSON string or dictionnary representation of the model.
@@ -495,7 +397,3 @@ class Model(Base, PeeweeModel):
         """
 
         return self.hash == self.__compute_hash()
-
-    class Meta:
-        database = DbManager.db
-        table_function = format_table_name
