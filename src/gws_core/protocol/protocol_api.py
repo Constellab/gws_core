@@ -28,23 +28,6 @@ async def get_a_protocol(uri: str,
     return proto.to_json(deep=True)
 
 
-@core_app.get("/protocol", tags=["Protocol"], summary="Get the list of protocols")
-async def get_the_list_of_protocols(page: Optional[int] = 1,
-                                    number_of_items_per_page: Optional[int] = 20,
-                                    _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-    """
-    Retrieve a list of protocols. The list is paginated.
-
-    - **page**: the page number
-    - **number_of_items_per_page**: the number of items per page (limited to 50)
-    """
-
-    return ProtocolService.fetch_protocol_list(
-        page=page,
-        number_of_items_per_page=number_of_items_per_page,
-    ).to_json()
-
-
 @core_app.post("/protocol/{uri}/add-process/{process_typing_name}", tags=["Protocol"],
                summary="Add a process to a protocol")
 async def add_process(uri: str,

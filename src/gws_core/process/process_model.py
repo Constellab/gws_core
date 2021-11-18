@@ -60,10 +60,6 @@ class ProcessModel(Model):
     :type Viewable: [type]
     """
 
-    # @ToDo:
-    # ------
-    # Try to replace `protocol_id` and `experiment_id` by foreign keys with `lazy_load=False`
-
     parent_protocol_id = IntegerField(null=True, index=True)
     experiment: Experiment = ForeignKeyField(Experiment, null=True, index=True, backref="+")
     instance_name = CharField(null=True, index=True)

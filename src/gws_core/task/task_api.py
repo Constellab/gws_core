@@ -28,25 +28,6 @@ async def get_a_task(uri: str,
     return proc.to_json()
 
 
-@core_app.get("/task", tags=["Task"], summary="Get the list of taskes")
-async def get_the_list_of_taskes(page: Optional[int] = 1,
-                                 number_of_items_per_page: Optional[int] = 20,
-                                 _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-
-    """
-    Retrieve a list of taskes. The list is paginated.
-
-    - **type**: the type of the taskes to fetch (Default is `gws_core.task.task_model.Task`)
-    - **page**: the page number
-    - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
-    """
-
-    return TaskService.fetch_task_list(
-        page=page,
-        number_of_items_per_page=number_of_items_per_page,
-    )
-
-
 ############################# TASK TYPING ###########################
 @core_app.get("/task-type", tags=["Task"], summary="Get the list of task types")
 async def get_the_list_of_task_types(page: Optional[int] = 1,

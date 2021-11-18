@@ -36,21 +36,6 @@ class ProtocolService(BaseService):
     def get_protocol_by_uri(cls, uri: str) -> ProtocolModel:
         return ProtocolModel.get_by_uri_and_check(uri)
 
-    @classmethod
-    def fetch_protocol_list(cls,
-                            page: int = 0,
-                            number_of_items_per_page: int = 20) -> Paginator[ProtocolModel]:
-
-        number_of_items_per_page = min(
-            number_of_items_per_page, cls._number_of_items_per_page)
-        model_type: Type[ProtocolModel] = None
-
-        query: ModelSelect = ProtocolModel.select().order_by(
-            model_type.creation_datetime.desc())
-
-        return Paginator(
-            query, page=page, number_of_items_per_page=number_of_items_per_page)
-
     ########################## CREATE #####################
     @classmethod
     def create_protocol_model_from_type(cls, protocol_type: Type[Protocol], instance_name: str = None,

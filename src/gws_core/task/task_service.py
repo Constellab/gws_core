@@ -25,18 +25,6 @@ class TaskService(BaseService):
         return TaskModel.get_by_uri_and_check(uri=uri)
 
     @classmethod
-    def fetch_task_list(cls,
-                        page: int = 0,
-                        number_of_items_per_page: int = 20) -> Paginator[TaskModel]:
-
-        number_of_items_per_page = min(
-            number_of_items_per_page, cls._number_of_items_per_page)
-
-        query = TaskModel.select().order_by(TaskModel.creation_datetime.desc())
-        return Paginator(
-            query, page=page, number_of_items_per_page=number_of_items_per_page)
-
-    @classmethod
     def create_task_model_from_type(cls, task_type: Type[Task], instance_name: str = None,
                                     config_params: ConfigParamsDict = None) -> TaskModel:
         task: TaskModel = ProcessFactory.create_task_model_from_type(
