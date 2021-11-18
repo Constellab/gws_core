@@ -6,7 +6,10 @@
 from inspect import isclass
 from typing import List, Optional, Tuple, Type
 
-from ..config.config_types import ConfigParamsDict
+from gws_core.core.exception.exceptions.bad_request_exception import \
+    BadRequestException
+
+from ..config.config_types import ConfigParamsDict, ParamValue
 from ..io.port import InPort, OutPort
 from ..process.process import Process
 from ..process.process_interface import IProcess
@@ -151,6 +154,21 @@ class IProtocol(IProcess):
         """Delete an outerface of the protocol
         """
         ProtocolService.delete_outerface_on_protocol(self._protocol_model, name)
+
+    ############################################### Config ####################################
+    # Block config of the protocol because it does not transfer the config to the task
+
+    def set_param(self, param_name: str, value: ParamValue) -> None:
+        """Set the param value
+        """
+        raise BadRequestException(
+            "The configuration of protocol is not available yet. Please configure the sub task directly")
+
+    def set_config_params(self, config_params: ConfigParamsDict) -> None:
+        """Set the config param values
+        """
+        raise BadRequestException(
+            "The configuration of protocol is not available yet. Please configure the sub task directly")
 
     ############################################### CLASS METHODS ####################################
 
