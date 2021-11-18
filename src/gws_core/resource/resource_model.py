@@ -134,10 +134,8 @@ class ResourceModel(Viewable, TaggableModel, Generic[ResourceType]):
     def create_foreign_keys(cls) -> None:
         """Create the foreign keys because it was deffered
         """
-        if cls.table_exists():
-            return
-        ResourceModel._schema.create_foreign_key(ResourceModel.experiment)
-        ResourceModel._schema.create_foreign_key(ResourceModel.task_model)
+        cls.create_foreign_key_if_not_exist(ResourceModel.experiment)
+        cls.create_foreign_key_if_not_exist(ResourceModel.task_model)
 
     ########################################## RESOURCE ######################################
 

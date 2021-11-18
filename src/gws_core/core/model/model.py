@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Type
 from fastapi.encoders import jsonable_encoder
 from peewee import (AutoField, BigAutoField, BlobField, BooleanField,
                     CharField, DateTimeField, Field, ForeignKeyField,
-                    ManyToManyField)
+                    ForeignKeyMetadata, ManyToManyField)
 from peewee import Model as PeeweeModel
 from peewee import ModelSelect
 from playhouse.mysql_ext import Match
@@ -193,6 +193,29 @@ class Model(Base, PeeweeModel):
             if cls.get_db_manager().is_mysql_engine():
                 cls.get_db_manager().db.execute_sql(
                     f"CREATE FULLTEXT INDEX {cls._default_full_text_column} ON {cls.get_table_name()}({cls._default_full_text_column})")
+
+    @classmethod
+    def create_foreign_keys(cls) -> None:
+        """Method call after all the create table
+
+        Useful when use DeferredForeignKey to create the foreign key manually latter
+        """
+
+    @classmethod
+    def create_foreign_key_if_not_exist(cls, field: ForeignKeyField) -> None:
+        """Create a foreign key for a Foreign key field only if the foreign key does not exists
+
+        :param field: [description]
+        :type field: ForeignKeyField
+        """
+        if not cls.foreign_key_exists(field):
+            cls._schema.create_foreign_key(field)
+
+    @classmethod
+    def foreign_key_exists(cls, field: ForeignKeyField) -> bool:
+        foreign_keys: List[ForeignKeyMetadata] = cls._schema.database.get_foreign_keys(cls._table_name)
+        column_name = field.column_name
+        return len([x for x in foreign_keys if x.column == column_name]) > 0
 
     # -- D --
 

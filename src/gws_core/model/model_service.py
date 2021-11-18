@@ -180,7 +180,10 @@ class ModelService(BaseService):
                 models = [t for t in models if isinstance(t, model_type)]
             db.create_tables(models)
 
-        ResourceModel.create_foreign_keys()
+        # Create the foreign keys after if necessary (for DeferredForeignKey for example)
+        for models in model_list:
+            for model in models:
+                model.create_foreign_keys()
 
     @classmethod
     def drop_tables(cls, model_types: List[Type[Model]] = None, model_type: type = None):
@@ -215,7 +218,7 @@ class ModelService(BaseService):
                 db.execute_sql("SET FOREIGN_KEY_CHECKS=1")
 
     @classmethod
-    def _get_db_and_model_types(cls, models: list = None) -> Tuple[DatabaseProxy, List[Type[Model]]]:
+    def _get_db_and_model_types(cls, models: list = None) -> Tuple[List[DatabaseProxy], List[List[Type[Model]]]]:
         if not models:
             models = ModelService.get_model_types()
         db_list = []
