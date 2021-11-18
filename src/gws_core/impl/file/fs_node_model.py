@@ -21,7 +21,7 @@ class FSNodeModel(Model):
     :param Model: [description]
     :type Model: [type]
     """
-    path = CharField(null=True, index=True, unique=True)
+    path = CharField(null=True, unique=True)
     file_store_uri = CharField(null=True, index=True)
     _table_name = "gws_fs_node"
 

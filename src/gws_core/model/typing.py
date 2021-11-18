@@ -48,8 +48,8 @@ class Typing(Model):
 
     # Full python type of the model
     model_type: CharField = CharField(null=False)
-    brick: CharField = CharField(null=False, index=True)
-    model_name: CharField = CharField(null=False, index=True)
+    brick: CharField = CharField(null=False)
+    model_name: CharField = CharField(null=False)
     object_type: CharField = CharField(null=False)
     human_name: CharField = CharField(default=False)
     short_description: CharField = CharField(default=False)

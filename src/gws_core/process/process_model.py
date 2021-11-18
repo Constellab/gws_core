@@ -62,9 +62,9 @@ class ProcessModel(Model):
 
     parent_protocol_id = IntegerField(null=True, index=True)
     experiment: Experiment = ForeignKeyField(Experiment, null=True, index=True, backref="+")
-    instance_name = CharField(null=True, index=True)
-    created_by: User = ForeignKeyField(User, null=False, index=True, backref='+', )
-    config: Config = ForeignKeyField(Config, null=False, index=True, backref='+')
+    instance_name = CharField(null=True)
+    created_by: User = ForeignKeyField(User, null=False, backref='+', )
+    config: Config = ForeignKeyField(Config, null=False, backref='+')
     progress_bar: ProgressBar = ForeignKeyField(
         ProgressBar, null=True, backref='+')
     process_typing_name = CharField(null=False)

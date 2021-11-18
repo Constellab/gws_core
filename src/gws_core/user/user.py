@@ -47,8 +47,8 @@ class User(Model):
     """
 
     email: str = CharField(default=False, index=True)
-    first_name: str = CharField(default=False, index=True)
-    last_name: str = CharField(default=False, index=True)
+    first_name: str = CharField(default=False)
+    last_name: str = CharField(default=False)
     group: UserGroup = EnumField(choices=UserGroup,
                                  default=UserGroup.USER)
     is_active = BooleanField(default=True)

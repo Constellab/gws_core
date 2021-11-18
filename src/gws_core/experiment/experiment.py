@@ -68,11 +68,11 @@ class Experiment(Model, TaggableModel):
         Study, null=True, index=True, backref='experiments')
 
     created_by = ForeignKeyField(
-        User, null=True, index=True, backref='created_experiments')
-    score = DoubleField(null=True, index=True)
+        User, null=True, backref='created_experiments')
+    score = DoubleField(null=True)
     status: ExperimentStatus = EnumField(choices=ExperimentStatus,
                                          default=ExperimentStatus.DRAFT)
-    is_validated: bool = BooleanField(default=False, index=True)
+    is_validated: bool = BooleanField(default=False)
     error_info: ExperimentErrorInfo = JSONField(null=True)
 
     _table_name = 'gws_experiment'
