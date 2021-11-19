@@ -18,7 +18,7 @@ from .core.utils.logger import Logger
 from .core.utils.settings import Settings
 
 
-def _run(ctx, id="", token="", test="",
+def _run(ctx, test="",
          cli=False, cli_test=False, runserver=False, runmode="dev",
          ip="0.0.0.0", port="3000", log_level: str = None, show_sql=False):
 
@@ -32,8 +32,7 @@ def _run(ctx, id="", token="", test="",
     settings = Settings.retrieve()
     settings.set_data("app_host", ip)
     settings.set_data("app_port", port)
-    settings.set_data("token", token)
-    settings.set_data("id", id)
+    settings.set_data("id", os.getenv("LAB_ID"))
     settings.set_data("is_prod", is_prod)
     settings.set_data("is_debug", True)
     settings.set_data("is_test", is_test)
@@ -84,10 +83,7 @@ def _run(ctx, id="", token="", test="",
         test_runner = unittest.TextTestRunner()
         test_runner.run(test_suite)
     else:
-        Logger.error("No option provided on the run, did you forget '--runserver' or 'test' ?")
-        # only load gws environmenet
-
-    print(f"Log file: {Logger.get_file_path()}")
+        Logger.error("No option provided on the run, did you forget '--runserver' or '--test' ?")
 
 
 @click.command(context_settings=dict(
@@ -95,8 +91,6 @@ def _run(ctx, id="", token="", test="",
     allow_extra_args=True
 ))
 @click.pass_context
-@click.option('--id', default="", help='Lab ID', show_default=True)
-@click.option('--token', default="", help='Lab token', show_default=True)
 @click.option('--test', default="",
               help='The name test file to launch (regular expression). Enter "all" to launch all the tests')
 @click.option('--cli', default="", help='Command to run using the command line interface')
@@ -107,11 +101,9 @@ def _run(ctx, id="", token="", test="",
 @click.option('--port', default="3000", help='Server port', show_default=True)
 @click.option('--log_level', default="INFO", help='Level for the logs', show_default=True)
 @click.option('--show_sql', is_flag=True, help='Log sql queries in the console')
-def run(ctx, id, token, test, cli, cli_test, runserver, runmode, ip, port, log_level, show_sql):
+def run(ctx, test, cli, cli_test, runserver, runmode, ip, port, log_level, show_sql):
     _run(
         ctx,
-        id=id,
-        token=token,
         test=test,
         cli=cli,
         cli_test=cli_test,

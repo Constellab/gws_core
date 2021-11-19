@@ -26,7 +26,6 @@ class TestCentral(unittest.TestCase):
             "email": "test@gencovery.com",
             "first_name": "",
             "last_name": "",
-            "token": "test",
             "group": "user"
         }
         tf = UserService.create_user(data)

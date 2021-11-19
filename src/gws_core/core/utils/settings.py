@@ -72,9 +72,6 @@ class Settings(PeeweeModel):
             # secret_key
             secret_key = Utils.generate_random_chars(128)
             settings.set_data("secret_key", secret_key)
-            # random token by default (security)
-            token = Utils.generate_random_chars(128)
-            settings.set_data("token", token)
             # default id
             settings.set_data("id", "")
             settings.save()
@@ -304,7 +301,6 @@ class Settings(PeeweeModel):
         data = deepcopy(self.data)
         del data["environment"]["variables"]
         del data["secret_key"]
-        del data["token"]
         return {
             "central_api_url": self.get_central_api_url(),
             "lab_prod_api_url": self.get_lab_prod_api_url(),

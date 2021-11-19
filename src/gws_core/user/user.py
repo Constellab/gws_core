@@ -24,7 +24,6 @@ from .user_group import UserGroup
 
 
 @final
-@json_ignore(["is_http_authenticated", "is_console_authenticated", "console_token"])
 @typing_registrator(unique_name="User", object_type="MODEL", hide=True)
 class User(Model):
     """
@@ -36,10 +35,6 @@ class User(Model):
     :type group: `str`
     :property is_active: True if the is active, False otherwise
     :type is_active: `bool`
-    :property console_token: The token used to authenticate the user trough the console
-    :type console_token: `str`
-    :property console_token: The token used to authenticate the user trough the console
-    :type console_token: `str`
     """
 
     email: str = CharField(default=False, index=True)
