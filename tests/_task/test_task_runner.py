@@ -6,8 +6,8 @@ from gws_core import (BadRequestException, BaseTestCase, ConfigParams, Robot,
 from gws_core.io.io_exception import MissingInputResourcesException
 
 
-@task_decorator("TaskTesterProgress")
-class TaskTesterProgress(Task):
+@task_decorator("TaskRunnerProgress")
+class TaskRunnerProgress(Task):
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         self.log_message('Hello')
         self.update_progress_value(50, 'Hello 50%')
@@ -45,6 +45,6 @@ class TestTaskRunner(BaseTestCase):
             await task_tester.run()
 
     async def test_progress(self):
-        task_tester: TaskRunner = TaskRunner(TaskTesterProgress)
+        task_tester: TaskRunner = TaskRunner(TaskRunnerProgress)
 
         await task_tester.run()
