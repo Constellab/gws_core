@@ -2,8 +2,8 @@
 from peewee import Expression
 
 
-class QueryBuilder:
-    """Class to buid
+class ExpressionBuilder:
+    """Class to buid peewee expression to make select
 
     :return: [description]
     :rtype: [type]

@@ -5,23 +5,19 @@
 
 from typing import Any, Dict, List, Type
 
-from gws_core.core.classes.query_builder import QueryBuilder
-from gws_core.core.exception.gws_exceptions import GWSException
-from gws_core.experiment.experiment import Experiment
-from gws_core.experiment.experiment_service import ExperimentService
-from gws_core.tag.tag import Tag, TagHelper
-from gws_core.task.task_input_model import TaskInputModel
-from gws_core.task.task_model import TaskModel
-from playhouse.mysql_ext import Match
+from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
+from ..core.classes.search_builder import SearchBuilder, SearchDict
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from ..core.exception.gws_exceptions import GWSException
 from ..core.service.base_service import BaseService
 from ..model.typing_manager import TypingManager
-from ..resource.resource_search_dto import ResourceSearchDTO
 from ..resource.view_helper import ViewHelper
+from ..task.task_input_model import TaskInputModel
 from .resource_model import Resource, ResourceModel, ResourceOrigin
+from .resource_search import ResourceSearchBuilder
 from .resource_typing import ResourceTyping
 from .view_meta_data import ResourceViewMetaData
 
@@ -31,8 +27,7 @@ class ResourceService(BaseService):
     ############################# RESOURCE MODEL ###########################
 
     @classmethod
-    def get_resource_by_id(cls,
-                           id: str) -> ResourceModel:
+    def get_resource_by_id(cls, id: str) -> ResourceModel:
         return ResourceModel.get_by_id_and_check(id)
 
     @classmethod
@@ -120,32 +115,11 @@ class ResourceService(BaseService):
     ############################# SEARCH ###########################
 
     @classmethod
-    def search(cls, search: ResourceSearchDTO,
+    def search(cls, search: SearchDict,
                page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
 
-        expression_builder: QueryBuilder = QueryBuilder()
+        search_builder: SearchBuilder = ResourceSearchBuilder()
 
-        if search.tags:
-            tags: List[Tag] = TagHelper.tags_to_list(search.tags)
-            for tag in tags:
-                expression_builder.add_expression(ResourceModel.tags.contains(str(tag)))
-
-        if search.experiment_id:
-            expression_builder.add_expression(ResourceModel.experiment == search.experiment_id)
-
-        if search.task_id:
-            expression_builder.add_expression(ResourceModel.task_model == search.task_id)
-
-        if search.origin:
-            expression_builder.add_expression(ResourceModel.origin == search.origin)
-
-        if search.resource_typing_name:
-            expression_builder.add_expression(ResourceModel.resource_typing_name == search.resource_typing_name)
-
-        if search.data:
-            expression_builder.add_expression(Match((ResourceModel.data), search.data, modifier='IN BOOLEAN MODE'))
-
-        model_select = ResourceModel.select().where(expression_builder.build())
-
+        model_select: ModelSelect = search_builder.build_search(search)
         return Paginator(
             model_select, page=page, number_of_items_per_page=number_of_items_per_page)

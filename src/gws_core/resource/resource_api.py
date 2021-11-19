@@ -6,6 +6,7 @@
 from typing import Any, Dict, Optional
 
 from fastapi import Depends
+from gws_core.core.classes.search_builder import SearchDict
 
 from ..core.classes.jsonable import ListJsonable
 from ..core.classes.paginator import PaginatorDict
@@ -74,6 +75,18 @@ async def delete_file(id: str,
     """
 
     return ResourceService.delete(id)
+
+
+@core_app.post("/advanced-search", tags=["Resource"], summary="Advanced search for resource")
+async def advanced_search(search_dict: SearchDict,
+                          page: Optional[int] = 1,
+                          number_of_items_per_page: Optional[int] = 20,
+                          _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+    """
+    Advanced search on resources
+    """
+
+    return ResourceService.search(search_dict, page, number_of_items_per_page).to_json()
 
 ############################# RESOURCE TYPE ###########################
 

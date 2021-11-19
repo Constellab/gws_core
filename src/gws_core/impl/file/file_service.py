@@ -79,7 +79,9 @@ class FileService(BaseService):
 
         file_type: Type[File] = TypingManager.get_type_from_name(typing_name)
 
-        file: File = store.add_from_temp_file(upload_file.file, upload_file.filename, file_type)
+        # slugify the same of the file to prevent injection because it can be used in shell cmd
+        filename = Utils.slugify(upload_file.filename)
+        file: File = store.add_from_temp_file(upload_file.file, filename, file_type)
 
         return cls.create_file_model(file)
 
