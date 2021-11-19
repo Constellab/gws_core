@@ -1,6 +1,6 @@
 
 
-from typing import Any, Callable, List, Literal, Type, TypedDict
+from typing import Any, Callable, List, Literal, Type
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.exception.exceptions.bad_request_exception import \
@@ -8,6 +8,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
 from peewee import (Expression, Field, FloatField, IntegerField, ModelSelect,
                     Ordering)
 from playhouse.mysql_ext import Match
+from typing_extensions import TypedDict
 
 from ..model.model import Model
 from .expression_builder import ExpressionBuilder
