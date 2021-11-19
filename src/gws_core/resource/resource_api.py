@@ -64,6 +64,17 @@ async def get_a_resource(id: str,
 
     return ResourceService.get_resource_by_id(id=id).to_json(
         deep=True)
+
+
+@core_app.delete("/resource/{id}", tags=["Resource"], summary="Delete a resource")
+async def delete_file(id: str,
+                      _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+    """
+    Delete a resource.
+    """
+
+    return ResourceService.delete(id)
+
 ############################# RESOURCE TYPE ###########################
 
 

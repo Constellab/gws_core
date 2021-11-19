@@ -6,9 +6,11 @@
 from typing import Any, Dict, List, Type
 
 from gws_core.core.classes.query_builder import QueryBuilder
+from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.tag.tag import Tag, TagHelper
+from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
 from playhouse.mysql_ext import Match
 
@@ -19,7 +21,7 @@ from ..core.service.base_service import BaseService
 from ..model.typing_manager import TypingManager
 from ..resource.resource_search_dto import ResourceSearchDTO
 from ..resource.view_helper import ViewHelper
-from .resource_model import Resource, ResourceModel
+from .resource_model import Resource, ResourceModel, ResourceOrigin
 from .resource_typing import ResourceTyping
 from .view_meta_data import ResourceViewMetaData
 
@@ -49,6 +51,29 @@ class ResourceService(BaseService):
 
         return Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
+
+    @classmethod
+    def delete(cls, resource_id: str) -> None:
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_id)
+
+        cls.check_before_resource_update(resource_model)
+
+        resource_model.delete_instance()
+
+    @classmethod
+    def check_before_resource_update(cls, resource_model: ResourceModel) -> None:
+        """Method to check if a resource is updatable
+        """
+        if resource_model.origin != ResourceOrigin.IMPORTED:
+            raise BadRequestException(GWSException.DELETE_GENERATED_RESOURCE_ERROR.value,
+                                      GWSException.DELETE_GENERATED_RESOURCE_ERROR.value)
+
+        task_input: TaskInputModel = TaskInputModel.get_by_resource_model(resource_model.id).first()
+
+        if task_input:
+            raise BadRequestException(GWSException.RESOURCE_USED_ERROR.value,
+                                      unique_code=GWSException.RESOURCE_USED_ERROR.value,
+                                      detail_args={"experiment": task_input.experiment.get_short_name()})
 
     ############################# RESOURCE TYPE ###########################
 

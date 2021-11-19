@@ -8,6 +8,7 @@ from typing import List, Optional, Type
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
+from gws_core.resource.resource_service import ResourceService
 
 from ...core.classes.jsonable import Jsonable, ListJsonable
 from ...core.classes.paginator import Paginator
@@ -102,18 +103,10 @@ class FileService(BaseService):
         return cls.create_file_model(new_file)
 
     @classmethod
-    def delete_file(cls, file_id: str) -> None:
-        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(file_id)
-
-        cls._check_before_file_update(resource_model)
-
-        resource_model.delete_instance()
-
-    @classmethod
     def update_file_type(cls, file_id: str, file_typing_name: str) -> ResourceModel:
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(file_id)
 
-        cls._check_before_file_update(resource_model)
+        ResourceService.check_before_resource_update(resource_model)
 
         file_type: Type[File] = TypingManager.get_type_from_name(file_typing_name)
 
@@ -123,24 +116,8 @@ class FileService(BaseService):
         resource_model.resource_typing_name = file_type._typing_name
         return resource_model.save()
 
-    @classmethod
-    def _check_before_file_update(cls, file_model: ResourceModel) -> None:
-        """Method to check if a file is updatable
-        """
-        if file_model.origin != ResourceOrigin.IMPORTED:
-            raise BadRequestException(GWSException.DELETE_GENERATED_FILE_ERROR.value,
-                                      GWSException.DELETE_GENERATED_FILE_ERROR.value)
-
-        task_input: TaskInputModel = TaskInputModel.get_by_resource_model(file_model.id).first()
-
-        if task_input:
-            raise BadRequestException(GWSException.FILE_USED_ERROR.value,
-                                      unique_code=GWSException.FILE_USED_ERROR.value,
-                                      detail_args={"experiment_id": task_input.experiment.get_short_name()})
-
 
 ############################# FILE TYPE ###########################
-
 
     @classmethod
     def get_file_types(cls) -> List[FileTyping]:

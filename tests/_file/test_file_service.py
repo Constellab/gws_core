@@ -7,6 +7,7 @@ from gws_core import (BaseTestCase, File, FileService, ResourceTyping,
                       resource_decorator)
 from gws_core.impl.table.table_file import TableFile
 from gws_core.resource.resource_model import ResourceModel
+from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.resource_typing import FileTyping
 
 
@@ -39,7 +40,7 @@ class TestFileService(BaseTestCase):
         file: File = File(os.path.join(self.get_test_data_dir(), 'iris.csv'))
 
         resource_model: ResourceModel = FileService.create_file_model(file)
-        FileService.delete_file(resource_model.id)
+        ResourceService.delete(resource_model.id)
 
         self.assertIsNone(ResourceModel.get_by_id(resource_model.id))
 

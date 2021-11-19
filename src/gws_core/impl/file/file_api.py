@@ -67,16 +67,6 @@ async def get_the_list_of_files(page: Optional[int] = 1,
         number_of_items_per_page=number_of_items_per_page).to_json()
 
 
-@core_app.delete("/file/{id}", tags=["Files"], summary="Delete a file")
-async def delete_file(id: str,
-                      _: UserData = Depends(AuthService.check_user_access_token)) -> None:
-    """
-    Delete a file.
-    """
-
-    return FileService.delete_file(id)
-
-
 @core_app.put("/file/{id}/type/{resource_typing_name}", tags=["Files"], summary="Update file type")
 async def update_file_type(id: str,
                            resource_typing_name: str,
