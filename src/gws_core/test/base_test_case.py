@@ -4,6 +4,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import os
 from typing import List, Union
 from unittest.async_case import IsolatedAsyncioTestCase
 
@@ -64,6 +65,9 @@ class BaseTestCase(IsolatedAsyncioTestCase):
 
     def get_test_data_dir(self) -> str:
         return Settings.retrieve().get_variable("gws_core:testdata_dir")
+
+    def get_test_data_path(self, *path: str) -> str:
+        return os.path.join(self.get_test_data_dir(), *path)
 
     def assert_json(self, json_1: Union[dict, list], json_2: Union[dict, list], ignore_keys: List[str] = None) -> None:
         """Assert a json with possibility to ignore key

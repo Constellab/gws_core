@@ -11,7 +11,7 @@ from gws_core.config.config_service import ConfigService
 from ..config.config_types import ConfigParams, ConfigParamsDict, ParamValue
 from ..io.port import InPort, OutPort
 from ..resource.resource import Resource
-from ..resource.resource_model import ResourceModel
+from ..resource.resource_model import ResourceModel, ResourceOrigin
 from .process_model import ProcessModel
 
 if TYPE_CHECKING:
@@ -72,7 +72,12 @@ class IProcess:
         :param resource: [description]
         :type resource: Resource
         """
+
+        # create the resource and save it
         resource_model: ResourceModel = ResourceModel.from_resource(resource)
+        # consider the resource as imported
+        resource_model.origin = ResourceOrigin.IMPORTED
+        resource_model.save_full()
         self._process_model.inputs.set_resource_model(port_name=name, resource_model=resource_model)
 
     def get_input(self, name: str) -> Resource:
