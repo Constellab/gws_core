@@ -1,7 +1,7 @@
 
 from gws_core import BaseTestCase, Tag, TagHelper
 from gws_core.impl.robot.robot_resource import Robot
-from gws_core.resource.resource_model import ResourceModel
+from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
 from gws_core.tag.tag import KEY_VALUE_SEPARATOR, TAGS_SEPARATOR
 from gws_core.tag.tag_model import TagModel
@@ -41,8 +41,7 @@ class TestTag(BaseTestCase):
 
     def test_add_tag(self):
         robot: Robot = Robot.empty()
-        resource_model = ResourceModel.from_resource(robot)
-        resource_model.save()
+        resource_model = ResourceModel.save_from_resource(robot, origin=ResourceOrigin.IMPORTED)
 
         expected_tags = [Tag('Test', 'value')]
 

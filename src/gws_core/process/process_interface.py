@@ -74,10 +74,7 @@ class IProcess:
         """
 
         # create the resource and save it
-        resource_model: ResourceModel = ResourceModel.from_resource(resource)
-        # consider the resource as imported
-        resource_model.origin = ResourceOrigin.IMPORTED
-        resource_model.save_full()
+        resource_model: ResourceModel = ResourceModel.save_from_resource(resource, origin=ResourceOrigin.IMPORTED)
         self._process_model.inputs.set_resource_model(port_name=name, resource_model=resource_model)
 
     def get_input(self, name: str) -> Resource:

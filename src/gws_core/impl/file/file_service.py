@@ -80,15 +80,11 @@ class FileService(BaseService):
 
         file: File = store.add_from_temp_file(upload_file.file, upload_file.filename, file_type)
 
-        file_model: ResourceModel = ResourceModel.from_resource(file)
-        file_model.origin = ResourceOrigin.IMPORTED
-        return file_model.save_full()
+        return cls.create_file_model(file)
 
     @classmethod
     def create_file_model(cls, file: File) -> ResourceModel:
-        file_model: ResourceModel = ResourceModel.from_resource(file)
-        file_model.origin = ResourceOrigin.IMPORTED
-        return file_model.save_full()
+        return ResourceModel.save_from_resource(file, origin=ResourceOrigin.IMPORTED)
 
     @classmethod
     def add_file_to_default_store(cls, file: File, dest_file_name: str = None) -> ResourceModel:
@@ -144,6 +140,7 @@ class FileService(BaseService):
 
 
 ############################# FILE TYPE ###########################
+
 
     @classmethod
     def get_file_types(cls) -> List[FileTyping]:

@@ -8,6 +8,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING, List, TypedDict, final
 
+from gws_core.core.utils.logger import Logger
 from peewee import BooleanField, DoubleField, ForeignKeyField
 
 from ..core.classes.enum_field import EnumField
@@ -373,6 +374,7 @@ class Experiment(Model, TaggableModel):
         self.data["pid"] = 0
         self.status = ExperimentStatus.ERROR
         self.error_info = error_info
+        Logger.error(error_info)
         self.save()
 
     def check_is_runnable(self) -> None:

@@ -3,6 +3,7 @@
 from gws_core import (BaseTestCase, BoolRField, DataFrameRField, DictRField,
                       FloatRField, IntRField, KVStore, ListRField,
                       ResourceModel, ResourceRField, Robot, StrRField)
+from gws_core.resource.resource_model import ResourceOrigin
 from pandas.core.frame import DataFrame
 
 
@@ -115,8 +116,7 @@ class TestRField(BaseTestCase):
         self.assertEqual(value.to_dict(), new_dataframe.to_dict())
 
     async def test_resource_r_field(self):
-        resource_model = ResourceModel.from_resource(Robot.empty())
-        resource_model.save()
+        resource_model = ResourceModel.save_from_resource(Robot.empty(), origin=ResourceOrigin.IMPORTED)
         robot: Robot = resource_model.get_resource()
 
         r_field = ResourceRField()

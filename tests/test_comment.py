@@ -6,6 +6,7 @@
 
 from gws_core import (BaseTestCase, Comment, CommentService, File, GTest,
                       PaginatorDict, ResourceModel, Robot)
+from gws_core.resource.resource_model import ResourceOrigin
 
 
 class TestComment(BaseTestCase):
@@ -13,7 +14,7 @@ class TestComment(BaseTestCase):
     def test_comment(self):
         GTest.print("Comment")
         robot = Robot()
-        resource_model: ResourceModel = ResourceModel.from_resource(robot).save_full()
+        resource_model: ResourceModel = ResourceModel.save_from_resource(robot, origin=ResourceOrigin.IMPORTED)
 
         comment1 = CommentService.add_comment_to_model(resource_model, "The sky is blue")
         CommentService.add_comment_to_model(

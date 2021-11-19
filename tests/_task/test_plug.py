@@ -2,6 +2,7 @@
 
 from gws_core import (CheckBeforeTaskResult, ResourceModel, Robot, Source,
                       Switch2, TaskOutputs, TaskRunner)
+from gws_core.resource.resource_model import ResourceOrigin
 from gws_core.test.base_test_case import BaseTestCase
 
 
@@ -11,8 +12,7 @@ class TestPlug(BaseTestCase):
         """Test the source task
         """
         robot: Robot = Robot.empty()
-        robot_model: ResourceModel = ResourceModel.from_resource(robot)
-        robot_model.save()
+        robot_model: ResourceModel = ResourceModel.save_from_resource(robot, origin=ResourceOrigin.IMPORTED)
 
         task_tester = TaskRunner(Source, {'resource_id': robot_model.id})
 

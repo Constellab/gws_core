@@ -10,6 +10,7 @@ from gws_core import (BaseTestCase, Experiment, ExperimentService, GTest,
 from gws_core.resource.r_field import IntRField, ListRField
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
+from gws_core.resource.resource_model import ResourceOrigin
 
 
 @resource_decorator(unique_name="TestResourceFields")
@@ -52,7 +53,7 @@ class TestResource(BaseTestCase):
         resource.age = 12
         resource.weight = None
 
-        resource_model: ResourceModel = ResourceModel.from_resource(resource)
+        resource_model: ResourceModel = ResourceModel.from_resource(resource, origin=ResourceOrigin.IMPORTED)
 
         self.assertEqual(len(resource_model.data), 3)
         self.assertIsNotNone(resource_model.kv_store_path)

@@ -17,7 +17,7 @@ from ..process.process_exception import (CheckBeforeTaskStopException,
                                          ProcessRunException)
 from ..process.process_model import ProcessModel
 from ..resource.resource import Resource
-from ..resource.resource_model import ResourceModel
+from ..resource.resource_model import ResourceModel, ResourceOrigin
 from ..task.task_io import TaskOutputs
 from .task import CheckBeforeTaskResult, Task
 from .task_runner import TaskRunner
@@ -179,9 +179,11 @@ class TaskModel(ProcessModel):
 
             resource_model: ResourceModel = port.resource_model
 
-            # if the resource was already added for the task (for example multiple use in on Task)
             if resource_model is None:
                 continue
+
+            if not resource_model.is_saved():
+                raise Exception(f"The resource of port '{key}' is not saved, it can't be used as input of the task")
 
             # Create the Input resource to save the resource use as input
             input_resource: TaskInputModel = TaskInputModel()
@@ -232,13 +234,9 @@ class TaskModel(ProcessModel):
                 # We use the same resource
                 resource_model = ResourceModel.get_by_id_and_check(resource._model_id)
             else:
-                # create the resource model from the resource
-                resource_model = ResourceModel.from_resource(resource)
-
-                # Add info and save resource model
-                resource_model.experiment = self.experiment
-                resource_model.task_model = self
-                resource_model.save_full()
+                # create ans save the resource model from the resource
+                resource_model = ResourceModel.save_from_resource(
+                    resource, origin=ResourceOrigin.GENERATED, experiment=self.experiment, task_model=self)
 
             # save the resource model into the output's port (even if it's None)
             port.resource_model = resource_model

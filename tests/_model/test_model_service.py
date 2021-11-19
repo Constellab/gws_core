@@ -2,15 +2,15 @@
 
 from gws_core import (BaseTestCase, ModelService, Paginator, ResourceModel,
                       Robot)
-from gws_core.resource.resource_model import CONST_RESOURCE_MODEL_TYPING_NAME
+from gws_core.resource.resource_model import (CONST_RESOURCE_MODEL_TYPING_NAME,
+                                              ResourceOrigin)
 
 
 class TestModelService(BaseTestCase):
 
     def test_get_models(self):
 
-        resource_model: ResourceModel = ResourceModel.from_resource(Robot.empty())
-        resource_model.save()
+        resource_model: ResourceModel = ResourceModel.save_from_resource(Robot.empty(), origin=ResourceOrigin.IMPORTED)
 
         # Test the count
         count: int = ModelService.count_model(CONST_RESOURCE_MODEL_TYPING_NAME)

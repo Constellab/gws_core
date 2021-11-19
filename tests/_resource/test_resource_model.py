@@ -92,7 +92,7 @@ class TestResourceModel(BaseTestCase):
             self, text: str,  tags: List[Tag],
             origin: ResourceOrigin, task: TaskModel = None) -> ResourceModel:
         for_search: ForSearch = ForSearch.create(text)
-        resource_model = ResourceModel.from_resource(for_search)
+        resource_model = ResourceModel.from_resource(for_search, origin=ResourceOrigin.IMPORTED)
         resource_model.set_tags(tags)
         resource_model.origin = origin
 

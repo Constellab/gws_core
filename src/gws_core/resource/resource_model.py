@@ -182,7 +182,8 @@ class ResourceModel(Model, TaggableModel, Generic[ResourceType]):
         return resource
 
     @classmethod
-    def from_resource(cls, resource: ResourceType) -> ResourceModel:
+    def from_resource(cls, resource: ResourceType, origin: ResourceOrigin = ResourceOrigin.GENERATED,
+                      experiment: Experiment = None, task_model: TaskModel = None) -> ResourceModel:
         """Create a new ResourceModel from a resource
 
         Don't set the resource here so it is regenerate on next get (avoid using same instance)
@@ -190,9 +191,16 @@ class ResourceModel(Model, TaggableModel, Generic[ResourceType]):
         :return: [description]
         :rtype: [type]
         """
+
+        # If the origin is generated, then the experiment and the task must be provided
+        if origin == ResourceOrigin.GENERATED and (experiment is None or task_model is None):
+            raise Exception("To create a GENERATED, you must provide the experiment and the task")
+
         resource_model: ResourceModel = ResourceModel()
         resource_model.resource_typing_name = resource._typing_name
-        resource_model.origin = ResourceOrigin.GENERATED
+        resource_model.origin = origin
+        resource_model.experiment = experiment
+        resource_model.task_model = task_model
 
         if isinstance(resource, FSNode):
             # Move the node to the LocalFileStore and create fs node model
@@ -217,6 +225,13 @@ class ResourceModel(Model, TaggableModel, Generic[ResourceType]):
             resource_model.set_name_tag(name)
 
         return resource_model
+
+    @classmethod
+    def save_from_resource(cls, resource: ResourceType, origin: ResourceOrigin = ResourceOrigin.GENERATED,
+                           experiment: Experiment = None, task_model: TaskModel = None) -> ResourceModel:
+        """Create the ResourceModel from the Resource and save it
+        """
+        return cls.from_resource(resource, origin=origin, experiment=experiment, task_model=task_model).save_full()
 
     def send_fields_to_resource(self, resource: ResourceType):
         """for each BaseRField of the resource, set the value form the data or kvstore
