@@ -84,8 +84,8 @@ def _run(ctx, id="", token="", test="",
         test_runner = unittest.TextTestRunner()
         test_runner.run(test_suite)
     else:
+        Logger.error("No option provided on the run, did you forget '--runserver' or 'test' ?")
         # only load gws environmenet
-        pass
 
     print(f"Log file: {Logger.get_file_path()}")
 
