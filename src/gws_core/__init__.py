@@ -32,7 +32,8 @@ from .config.param_spec import StrParam as StrParam
 # Core
 # Core > Classes
 from .core.classes.expose import Expose as Expose
-from .core.classes.expression_builder import ExpressionBuilder as ExpressionBuilder
+from .core.classes.expression_builder import \
+    ExpressionBuilder as ExpressionBuilder
 from .core.classes.paginator import Paginator as Paginator
 from .core.classes.paginator import PaginatorDict as PaginatorDict
 from .core.classes.path import URL as URL
@@ -94,6 +95,9 @@ from .experiment.experiment_service import \
 from .experiment.queue import Job as Job
 from .experiment.queue import Queue as Queue
 from .experiment.queue_service import QueueService as QueueService
+# Impl > Dataset
+from .impl.dataset.dataset import Dataset, DatasetExporter, DatasetImporter
+from .impl.dataset.view.dataset_view import DatasetView
 # Extension
 # Impl > File
 from .impl.file.file import File as File
@@ -131,7 +135,6 @@ from .impl.robot.robot_tasks import RobotEat as RobotEat
 from .impl.robot.robot_tasks import RobotMove as RobotMove
 from .impl.robot.robot_tasks import RobotSugarCreate as RobotSugarCreate
 from .impl.robot.robot_tasks import RobotWait as RobotWait
-# Impl > S3
 from .impl.s3.base import BaseS3 as BaseS3
 from .impl.s3.ovh import OVHS3 as OVHS3
 from .impl.s3.swift import Swift as Swift

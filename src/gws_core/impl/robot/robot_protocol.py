@@ -7,7 +7,7 @@ from .robot_tasks import (RobotAdd, RobotAddOnCreate, RobotCreate, RobotEat,
                           RobotFly, RobotMove, RobotWait)
 
 
-@protocol_decorator("RobotSimpleTravel")
+@protocol_decorator("RobotSimpleTravel", hide=True)
 class RobotSimpleTravel(Protocol):
     def configure_protocol(self, config_params: ConfigParams) -> None:
         facto: ProcessSpec = self.add_process(RobotCreate, 'facto')
@@ -36,7 +36,7 @@ class RobotSimpleTravel(Protocol):
         ])
 
 
-@protocol_decorator("RobotTravelProto")
+@protocol_decorator("RobotTravelProto", hide=True)
 class RobotTravelProto(Protocol):
 
     def configure_protocol(self, config_params: ConfigParams) -> None:
@@ -65,7 +65,7 @@ class RobotTravelProto(Protocol):
         self.add_outerface('robot', eat_2, 'robot')
 
 
-@protocol_decorator("RobotSuperTravelProto", human_name="The super travel of Astro")
+@protocol_decorator("RobotSuperTravelProto", human_name="The super travel of Astro", hide=True)
 class RobotSuperTravelProto(Protocol):
     # config for the eat_3 task
     config_specs = {'third_eat': FloatParam(default_value=3.14)}
@@ -91,7 +91,7 @@ class RobotSuperTravelProto(Protocol):
         self.add_outerface('robot', eat_3, 'robot')
 
 
-@protocol_decorator("RobotWorldTravelProto", human_name="The world trip of Astro")
+@protocol_decorator("RobotWorldTravelProto", human_name="The world trip of Astro", hide=True)
 class RobotWorldTravelProto(Protocol):
 
     def configure_protocol(self, config_params: ConfigParams) -> None:
@@ -116,7 +116,7 @@ class RobotWorldTravelProto(Protocol):
         ])
 
 
-@protocol_decorator("CreateSimpleRobot")
+@protocol_decorator("CreateSimpleRobot", hide=True)
 class CreateSimpleRobot(Protocol):
     def configure_protocol(self, config_params: ConfigParams) -> None:
         facto: ProcessSpec = self.add_process(RobotCreate, 'facto')
@@ -129,7 +129,7 @@ class CreateSimpleRobot(Protocol):
         ])
 
 
-@protocol_decorator("MoveSimpleRobot")
+@protocol_decorator("MoveSimpleRobot", hide=True)
 class MoveSimpleRobot(Protocol):
 
     config_specs = Source.config_specs
