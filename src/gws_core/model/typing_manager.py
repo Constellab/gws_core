@@ -10,7 +10,6 @@ from ..core.exception.exceptions.bad_request_exception import \
 from ..core.model.base import Base
 from ..core.model.model import Model
 from ..core.utils.logger import Logger
-from ..core.utils.utils import Utils
 from ..model.typing import Typing, TypingObjectType, build_typing_unique_name
 
 

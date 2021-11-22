@@ -83,8 +83,8 @@ class ProcessModel(Model):
 
         super().__init__(*args, **kwargs)
 
-        self._inputs = Inputs(self)
-        self._outputs = Outputs(self)
+        self._inputs = None
+        self._outputs = None
 
     ################################# MODEL METHODS #############################
 
@@ -153,8 +153,8 @@ class ProcessModel(Model):
     def _reset_io(self):
         self.inputs.reset()
         self.outputs.reset()
-        self.data["inputs"] = {}
-        self.data["outputs"] = {}
+        self.data["inputs"] = self.inputs.to_json()
+        self.data["outputs"] = self.outputs.to_json()
 
     def save_after_task(self) -> None:
         """Method called after the task to save the process
@@ -213,7 +213,7 @@ class ProcessModel(Model):
         :rtype: Inputs
         """
 
-        if self._inputs.is_empty:
+        if self._inputs is None:
             self._init_inputs_from_data()
         return self._inputs
 
@@ -225,7 +225,7 @@ class ProcessModel(Model):
             self.data["inputs"] = {}
             return
 
-        self._inputs.load_from_json(self.data["inputs"])
+        self._inputs = Inputs.load_from_json(self, self.data["inputs"])
 
     def in_port(self, port_name: str) -> InPort:
         """
@@ -247,7 +247,7 @@ class ProcessModel(Model):
         :rtype: Outputs
         """
 
-        if self._outputs.is_empty:
+        if self._outputs is None:
             self._init_outputs_from_data()
         return self._outputs
 
@@ -259,7 +259,7 @@ class ProcessModel(Model):
             self.data["outputs"] = {}
             return
 
-        self._outputs.load_from_json(self.data["outputs"])
+        self._outputs = Outputs.load_from_json(self, self.data["outputs"])
 
     def out_port(self, port_name: str) -> OutPort:
         """

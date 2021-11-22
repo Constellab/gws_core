@@ -355,7 +355,7 @@ class ProtocolModel(ProcessModel):
         if self._connectors is None:
             # Init the connector from the graph
             if "graph" in self.data and "links" in self.data["graph"]:
-                self.init_connectors_from_graph(self.data["graph"]["links"])
+                self.init_connectors_from_graph(self.data["graph"]["links"], check_compatiblity=False)
             else:
                 self._connectors = []
 
@@ -408,7 +408,7 @@ class ProtocolModel(ProcessModel):
         if process_port.parent_protocol.id != self.id:
             raise Exception('The process is not a child of this protocol')
 
-    def init_connectors_from_graph(self, links) -> None:
+    def init_connectors_from_graph(self, links, check_compatiblity: bool = True) -> None:
         self._connectors = []
         # create links
         for link in links:
@@ -419,8 +419,10 @@ class ProtocolModel(ProcessModel):
             rhs_port_name: str = link["to"]["port"]
             rhs_proc: ProcessModel = self._processes[proc_name]
 
-            connector: Connector = Connector(out_port=lhs_proc.out_port(lhs_port_name),
-                                             in_port=rhs_proc.in_port(rhs_port_name), check_compatiblity=True)
+            connector: Connector = Connector(
+                out_port=lhs_proc.out_port(lhs_port_name),
+                in_port=rhs_proc.in_port(rhs_port_name),
+                check_compatiblity=check_compatiblity)
             self._add_connector(connector)
 
     def _get_connectors_liked_to_process(self, process_model: ProcessModel) -> List[Connector]:
@@ -493,7 +495,7 @@ class ProtocolModel(ProcessModel):
     def add_interface(self, name: str,  target_port: InPort) -> None:
         self._check_port(target_port)
         # Create the input's port
-        source_port: InPort = self._inputs.create_port(name, target_port.resource_spec.resource_spec)
+        source_port: InPort = self._inputs.create_port(name, target_port.resource_spec.type_io)
 
         # create the interface
         self._interfaces[name] = Interface(
@@ -584,7 +586,7 @@ class ProtocolModel(ProcessModel):
         self._check_port(source_port)
 
         # Create the output's port
-        target_port: OutPort = self._outputs.create_port(name, source_port.resource_spec.resource_spec)
+        target_port: OutPort = self._outputs.create_port(name, source_port.resource_spec.type_io)
 
         # create the interface
         self._outerfaces[name] = Outerface(

@@ -10,9 +10,7 @@ from ..core.exception.exceptions.bad_request_exception import \
 from ..core.model.base import Base
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
-from ..task.task_io import TaskInputs
-from .io_exception import (MissingInputResourcesException,
-                           ResourceNotCompatibleException)
+from .io_exception import ResourceNotCompatibleException
 from .io_spec import IOSpec, IOSpecClass
 from .port import InPort, OutPort, Port, PortDict
 
@@ -129,7 +127,7 @@ class IO(Base, Generic[PortType]):
         """
 
         port_type: Type[PortType] = self._get_port_type()
-        port: PortType = port_type(self, IOSpecClass(resource_spec))
+        port: PortType = port_type(self, name, IOSpecClass(resource_spec))
         self.add_port(name, port)
         return port
 
@@ -235,20 +233,25 @@ class IO(Base, Generic[PortType]):
 
     ################################################### JSON ########################################
 
-    def load_from_json(self, io_json: IODict) -> None:
+    @classmethod
+    def load_from_json(cls, parent: ProcessModel, io_json: IODict) -> IO:
+        io: IO = cls(parent)
         if io_json is None:
-            return
+            return io
 
+        # To create an InPort or OutPort
+        port_type: Type[PortType] = io._get_port_type()
         for key, port_dict in io_json.items():
 
-            port_type: Type[PortType] = self._get_port_type()
-            port: PortType = port_type.load_from_json(port_dict, self)
+            port: PortType = port_type.load_from_json(port_dict, io, key)
 
             if port_dict["resource_id"]:
                 resource_model: ResourceModel = ResourceModel.get_by_id_and_check(port_dict["resource_id"])
                 port.resource_model = resource_model
 
-            self.add_port(key, port)
+            io.add_port(key, port)
+
+        return io
 
     def to_json(self) -> IODict:
         _json = {}

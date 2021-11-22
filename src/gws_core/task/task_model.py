@@ -45,24 +45,37 @@ class TaskModel(ProcessModel):
 
         super().__init__(*args, **kwargs)
 
-        if self.process_typing_name is not None:
-            self._init_io()
+        if self.is_saved():
+            self._init_io_from_data()
 
-    def _init_io(self):
+    def _init_io_from_type(self):
+        """Method used when creating a new task model, it init the input and output from task specs
+        """
         task_type: Type[Task] = self.get_process_type()
 
         # create the input ports from the Task input specs
         for k in task_type.input_specs:
             self._inputs.create_port(k, task_type.input_specs[k])
 
-        # set the resources to the ports
-        self._init_inputs_from_data()
+        # Set the data inputs dict
+        self.data["inputs"] = self.inputs.to_json()
 
         # create the output ports from the Task output specs
         for k in task_type.output_specs:
             self._outputs.create_port(k, task_type.output_specs[k])
 
-        # set the resources to the ports
+        # Set the data inputs dict
+        self.data["outputs"] = self.outputs.to_json()
+
+    def _init_io_from_data(self):
+        """Method used when instantiating a TaskModel from the DB, it init the input and output from the
+          data object and it does not use the task specs
+        """
+
+        # init the inputs from the data object
+        self._init_inputs_from_data()
+
+        # init the outputs from the data object
         self._init_outputs_from_data()
 
     def create_source_zip(self):
@@ -78,7 +91,7 @@ class TaskModel(ProcessModel):
 
     def set_task_type(self, typing_name: str) -> None:
         self.process_typing_name = typing_name
-        self._init_io()
+        self._init_io_from_type()
 
     def _create_task_instance(self) -> Task:
         return self.get_process_type()()
