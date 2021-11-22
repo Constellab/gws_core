@@ -5,15 +5,14 @@
 
 import os
 from pathlib import Path
-from typing import Union
-from typing import List
+from typing import List, Union
 
 import numpy as np
 import pandas
 from pandas import DataFrame
 
 from ...config.config_types import ConfigParams
-from ...config.param_spec import BoolParam, IntParam, StrParam, ListParam
+from ...config.param_spec import BoolParam, IntParam, ListParam, StrParam
 from ...core.exception.exceptions import BadRequestException
 from ...impl.file.file import File
 from ...resource.resource import Resource
@@ -30,6 +29,7 @@ from .view.lineplot_2d_view import LinePlot2DView
 from .view.lineplot_3d_view import LinePlot3DView
 from .view.scatterplot_2d_view import ScatterPlot2DView
 from .view.scatterplot_3d_view import ScatterPlot3DView
+from .view.stacked_barplot_view import StackedBarPlotView
 from .view.table_view import TableView
 
 
@@ -342,6 +342,14 @@ class Table(Resource):
         """
 
         return BarPlotView(self._data)
+
+    @view(view_type=StackedBarPlotView, human_name='BarPlot', short_description='View columns as 2D-stacked bar plots', specs={})
+    def view_as_stacked_bar_plot(self, params: ConfigParams) -> BarPlotView:
+        """
+        View one or several columns as 2D-stacked bar plots
+        """
+
+        return StackedBarPlotView(self._data)
 
     @view(view_type=HistogramView, human_name='Histogram', short_description='View columns as 2D-line plots', specs={})
     def view_as_histogram(self, params: ConfigParams) -> HistogramView:

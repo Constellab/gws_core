@@ -23,6 +23,15 @@ from ...task.importer import import_from_path, importer_decorator
 from ..table.data_frame_r_field import DataFrameRField
 from ..table.table import Table
 from ..table.table_tasks import TableExporter, TableImporter
+from ..table.view.barplot_view import BarPlotView
+from ..table.view.boxplot_view import BoxPlotView
+from ..table.view.heatmap_view import HeatmapView
+from ..table.view.histogram_view import HistogramView
+from ..table.view.lineplot_2d_view import LinePlot2DView
+from ..table.view.lineplot_3d_view import LinePlot3DView
+from ..table.view.scatterplot_2d_view import ScatterPlot2DView
+from ..table.view.scatterplot_3d_view import ScatterPlot3DView
+from ..table.view.stacked_barplot_view import StackedBarPlotView
 from .view.dataset_view import DatasetView
 
 # ====================================================================================================================
@@ -76,10 +85,10 @@ class Dataset(Table):
         file_path = os.path.join(dest_dir, file_name)
         file_extension = Path(file_path).suffix or params.get_value("file_format", ".csv")
         if file_extension in [".xls", ".xlsx"] or file_extension in [".xls", ".xlsx"]:
-            table = pandas.concat([self._data, self._targets])
+            table = self.get_full_data()
             table.to_excel(file_path)
         elif file_extension in [".csv", ".tsv", ".txt", ".tab"] or file_extension in [".csv", ".tsv", ".txt", ".tab"]:
-            table = pandas.concat([self._data, self._targets])
+            table = self.get_full_data()
             table.to_csv(
                 file_path,
                 sep=params.get_value("delimiter", "\t"),
@@ -91,6 +100,9 @@ class Dataset(Table):
                 "Cannot detect the file type using file extension. Valid file extensions are [.xls, .xlsx, .csv, .tsv, .txt, .tab].")
 
     # -- F --
+
+    def get_full_data(self) -> DataFrame:
+        return pandas.concat([self._data, self._targets])
 
     def get_features(self) -> DataFrame:
         return self._data
@@ -297,10 +309,6 @@ class Dataset(Table):
         feature_indexes = [i for i in indexes if i < n]
         target_indexes = [i-n for i in indexes if i >= n]
 
-        print(self.nb_features)
-        print(feature_indexes)
-        print(target_indexes)
-
         if not only_targets:
             data = self._data.iloc[:, feature_indexes]
         if not only_features:
@@ -399,19 +407,95 @@ class Dataset(Table):
             data[i][idx] = 1.0
         return DataFrame(data=data, index=self._targets.index, columns=labels)
 
-    @view(view_type=DatasetView,
-          default_view=True,
-          human_name='Dataset',
-          short_description='View as a dataset (extended X,Y table)'
-          )
-    def view_as_dataset(self, params: ConfigParams) -> DatasetView:
+    # -- V ---
+
+    @view(view_type=DatasetView, default_view=True, human_name='Tabular', short_description='View as a table', specs={})
+    def view_as_table(self, params: ConfigParams) -> DatasetView:
         """
         View as table
         """
 
-        return DatasetView(data=self)
+        return DatasetView(self)
 
-    # -- W --
+    # @view(view_type=TableView, default_view=True, human_name='Raw Tabular', short_description='View as a table', specs={})
+    # def view_as_table(self, params: ConfigParams) -> TableView:
+    #     """
+    #     View as table
+    #     """
+    #     return TableView(self.get_full_data())
+
+    @view(view_type=LinePlot2DView, human_name='LinePlot2D', short_description='View columns as 2D-line plots', specs={})
+    def view_as_line_plot_2d(self, params: ConfigParams) -> LinePlot2DView:
+        """
+        View columns as 2D-line plots
+        """
+
+        return LinePlot2DView(self.get_full_data())
+
+    @view(view_type=LinePlot3DView, human_name='LinePlot3D', short_description='View columns as 3D-line plots', specs={})
+    def view_as_line_plot_3d(self, params: ConfigParams) -> LinePlot3DView:
+        """
+        View columns as 3D-line plots
+        """
+
+        return LinePlot3DView(self.get_full_data())
+
+    @view(view_type=ScatterPlot3DView, human_name='ScatterPlot3D', short_description='View columns as 3D-scatter plots', specs={})
+    def view_as_scatter_plot_3d(self, params: ConfigParams) -> ScatterPlot3DView:
+        """
+        View columns as 3D-scatter plots
+        """
+
+        return ScatterPlot3DView(self.get_full_data())
+
+    @view(view_type=ScatterPlot2DView, human_name='ScatterPlot2D', short_description='View columns as 2D-scatter plots', specs={})
+    def view_as_scatter_plot_2d(self, params: ConfigParams) -> ScatterPlot2DView:
+        """
+        View one or several columns as 2D-line plots
+        """
+
+        return ScatterPlot2DView(self.get_full_data())
+
+    @view(view_type=BarPlotView, human_name='BarPlot', short_description='View columns as 2D-bar plots', specs={})
+    def view_as_bar_plot(self, params: ConfigParams) -> BarPlotView:
+        """
+        View one or several columns as 2D-bar plots
+        """
+
+        return BarPlotView(self.get_full_data())
+
+    @view(view_type=StackedBarPlotView, human_name='BarPlot', short_description='View columns as 2D-stacked bar plots', specs={})
+    def view_as_stacked_bar_plot(self, params: ConfigParams) -> BarPlotView:
+        """
+        View one or several columns as 2D-stacked bar plots
+        """
+
+        return StackedBarPlotView(self._data)
+
+    @view(view_type=HistogramView, human_name='Histogram', short_description='View columns as 2D-line plots', specs={})
+    def view_as_histogram(self, params: ConfigParams) -> HistogramView:
+        """
+        View columns as 2D-line plots
+        """
+
+        return HistogramView(self.get_full_data())
+
+    @view(view_type=BoxPlotView, human_name='BoxPlot', short_description='View columns as box plots', specs={})
+    def view_as_box_plot(self, params: ConfigParams) -> BoxPlotView:
+        """
+        View one or several columns as box plots
+        """
+
+        return BoxPlotView(self.get_full_data())
+
+    @view(view_type=HeatmapView, human_name='Heatmap', short_description='View table as heatmap', specs={})
+    def view_as_heatmap(self, params: ConfigParams) -> BarPlotView:
+        """
+        View the table as heatmap
+        """
+
+        return HeatmapView(self.get_full_data())
+
 
 # ====================================================================================================================
 # ====================================================================================================================

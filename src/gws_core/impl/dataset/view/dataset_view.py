@@ -7,6 +7,7 @@ from typing import Union
 
 from pandas import DataFrame
 
+from ....core.exception.exceptions import BadRequestException
 from ...table.view.table_view import TableView
 
 
