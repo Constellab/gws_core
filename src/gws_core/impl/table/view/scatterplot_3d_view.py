@@ -1,4 +1,7 @@
-
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 from pandas import DataFrame
 
@@ -19,22 +22,26 @@ class ScatterPlot3DView(BaseTableView):
     ```
     {
         "type": "scatter-plot-3d-view",
-        "data": [
-            {
-                "data": {
-                    "x": List[Float],
-                    "y": List[Float],
-                    "z": List[Float]
+        "data": {
+            "x_label": str,
+            "y_label": str,
+            "z_label": str,
+            "x_tick_labels": List[str] | None,
+            "y_tick_labels": List[str] | None,
+            "series": [
+                {
+                    "data": {
+                        "x": List[Float],
+                        "y": List[Float],
+                        "z": List[Float]
+                    },
+                    "x_column_name": str,
+                    "y_column_name": str,
+                    "z_column_name": str,
                 },
-                "x_column_name": str,
-                "y_column_name": str,
-                "z_column_name": str,
-            },
-            ...
-        ],
-        "x_label": str,
-        "y_label": str,
-        "z_label": str,
+                ...
+            ]
+        }
     }
     ```
     """
@@ -74,8 +81,13 @@ class ScatterPlot3DView(BaseTableView):
 
         return {
             **super().to_dict(params),
-            "data": series,
-            "x_label": x_label,
-            "y_label": y_label,
-            "z_label": z_label,
+            "data": {
+                "x_label": x_label,
+                "y_label": y_label,
+                "z_label": z_label,
+                "x_tick_labels": None,
+                "y_tick_labels": None,
+                "series": series,
+            }
+
         }

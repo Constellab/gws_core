@@ -1,7 +1,8 @@
 import os
 
 import numpy
-from gws_core import BaseTestCase, HistogramView, Settings, Table, ViewTester, ConfigParams, File
+from gws_core import (BaseTestCase, ConfigParams, File, HistogramView,
+                      Settings, Table, ViewTester)
 
 
 class TestHistogramView(BaseTestCase):
@@ -13,12 +14,12 @@ class TestHistogramView(BaseTestCase):
         table = Table.import_from_path(
             File(path=file_path),
             ConfigParams({
-                "delimiter":",",
-                "header":0
+                "delimiter": ",",
+                "header": 0
             })
         )
         tester = ViewTester(
-            view = HistogramView(table)
+            view=HistogramView(table)
         )
         dic = tester.to_dict(dict(
             column_names=["petal.length", "petal.width"]
@@ -26,25 +27,29 @@ class TestHistogramView(BaseTestCase):
         self.assertEqual(dic["type"], "histogram-view")
 
         self.assertTrue(numpy.all(numpy.isclose(
-            dic["data"][0]["data"]["hist"],
+            dic["data"]["series"][0]["data"]["y"],
             [37, 13, 0, 3, 8, 26, 29, 18, 11, 5],
             rtol=1e-03, atol=1e-03, equal_nan=False
         )))
 
+        edges = numpy.array([1.0, 1.59, 2.18, 2.7700, 3.3600, 3.95, 4.5400, 5.1300, 5.7200, 6.3100, 6.9])
+        edges_centers = (edges[0:-2] + edges[1:-1])/2
         self.assertTrue(numpy.all(numpy.isclose(
-            dic["data"][0]["data"]["bin_edges"],
-            [1.0, 1.59, 2.18, 2.7700, 3.3600, 3.95, 4.5400, 5.1300, 5.7200, 6.3100, 6.9],
+            dic["data"]["series"][0]["data"]["x"],
+            edges_centers,
             rtol=1e-05, atol=1e-03, equal_nan=False
         )))
 
         self.assertTrue(numpy.all(numpy.isclose(
-            dic["data"][1]["data"]["hist"],
+            dic["data"]["series"][1]["data"]["y"],
             [41, 8, 1, 7, 8, 33, 6, 23, 9, 14],
             rtol=1e-03, atol=1e-03, equal_nan=False
         )))
 
+        edges = numpy.array([0.1, 0.3399, 0.58, 0.82, 1.06, 1.3, 1.54, 1.78, 2.02, 2.260, 2.5])
+        edges_centers = (edges[0:-2] + edges[1:-1])/2
         self.assertTrue(numpy.all(numpy.isclose(
-            dic["data"][1]["data"]["bin_edges"],
-            [0.1, 0.3399, 0.58, 0.82, 1.06, 1.3, 1.54, 1.78, 2.02, 2.260, 2.5],
+            dic["data"]["series"][1]["data"]["x"],
+            edges_centers,
             rtol=1e-05, atol=1e-03, equal_nan=False
         )))

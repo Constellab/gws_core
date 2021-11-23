@@ -1,6 +1,7 @@
 import os
 
-from gws_core import BaseTestCase, ScatterPlot2DView, Settings, Table, ViewTester, ConfigParams, File
+from gws_core import (BaseTestCase, ConfigParams, File, ScatterPlot2DView,
+                      Settings, Table, ViewTester)
 
 
 class TestScatterPlot2DView(BaseTestCase):
@@ -12,19 +13,19 @@ class TestScatterPlot2DView(BaseTestCase):
         table = Table.import_from_path(
             File(path=file_path),
             ConfigParams({
-                "delimiter":",",
-                "header":0
+                "delimiter": ",",
+                "header": 0
             })
         )
         tester = ViewTester(
-            view = ScatterPlot2DView(data=table)
+            view=ScatterPlot2DView(data=table)
         )
         dic = tester.to_dict(dict(
             x_column_name="sepal.length",
             y_column_names=["petal.length", "petal.width"]
         ))
         self.assertEqual(dic["type"], "scatter-plot-2d-view")
-        self.assertEqual(dic["data"][0]["data"]["x"], table.get_data()["sepal.length"].values.tolist())
-        self.assertEqual(dic["data"][0]["data"]["y"], table.get_data()["petal.length"].values.tolist())
-        self.assertEqual(dic["data"][1]["data"]["x"], table.get_data()["sepal.length"].values.tolist())
-        self.assertEqual(dic["data"][1]["data"]["y"], table.get_data()["petal.width"].values.tolist())
+        self.assertEqual(dic["data"]["series"][0]["data"]["x"], table.get_data()["sepal.length"].values.tolist())
+        self.assertEqual(dic["data"]["series"][0]["data"]["y"], table.get_data()["petal.length"].values.tolist())
+        self.assertEqual(dic["data"]["series"][1]["data"]["x"], table.get_data()["sepal.length"].values.tolist())
+        self.assertEqual(dic["data"]["series"][1]["data"]["y"], table.get_data()["petal.width"].values.tolist())

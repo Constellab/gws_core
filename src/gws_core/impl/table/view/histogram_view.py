@@ -1,4 +1,7 @@
-
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 import numpy
 from pandas import DataFrame
@@ -21,16 +24,22 @@ class HistogramView(BaseTableView):
     ```
     {
         "type": "histogram-view",
-        "data": [
-            {
-                "data": {
-                    "hist": List[Float],
-                    "bin_edges": List[Float]
+        "data": {
+            "x_label": str,
+            "y_label": str,
+            "x_tick_labels": List[str] | None,
+            "series": [
+                {
+                    "data": {
+                        "x": List[Float],
+                        "y": List[Float],
+                        "width": Float
+                    },
+                    "column_name": str,
                 },
-                "column_name": str,
-            },
-            ...
-        ]
+                ...
+            ]
+        }
     }
     ```
     """
@@ -62,14 +71,25 @@ class HistogramView(BaseTableView):
             col_data = self._data[column_name].values
 
             hist, bin_edges = numpy.histogram(col_data, bins=nbins, density=density)
+            bin_centers = (bin_edges[0:-2] + bin_edges[1:-1])/2
             series.append({
                 "data": {
-                    "hist": hist.tolist(),
-                    "bin_edges": bin_edges.tolist(),
+                    # "bin_edges": bin_edges.tolist(),
+                    # "hist": hist.tolist(),
+                    "x": bin_centers.tolist(),
+                    "y": hist.tolist(),
                 },
                 "column_name": column_name,
             })
+
+        x_label = params.get_value("x_label", "")
+        y_label = params.get_value("y_label", "")
         return {
             **super().to_dict(params),
-            "data": series
+            "data": {
+                "x_label": x_label,
+                "y_label": y_label,
+                "x_tick_labels": None,
+                "series": series
+            }
         }

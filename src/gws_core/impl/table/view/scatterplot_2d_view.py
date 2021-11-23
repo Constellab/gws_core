@@ -1,4 +1,7 @@
-
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 from pandas import DataFrame
 
@@ -19,19 +22,22 @@ class ScatterPlot2DView(BaseTableView):
     ```
     {
         "type": "scatter-plot-2d-view",
-        "series": [
-            {
-                "data": {
-                    "x": List[Float],
-                    "y": List[Float]
+        "data": {
+            "x_label": str,
+            "y_label": str,
+            "x_tick_labels": List[str] | None,
+            "series": [
+                {
+                    "data": {
+                        "x": List[Float],
+                        "y": List[Float],
+                    },
+                    "x_column_name": str,
+                    "y_column_name": str,
                 },
-                "x_column_name": str,
-                "y_column_name": str,
-            },
-            ...
-        ],
-        "x_label": str,
-        "y_label": str,
+                ...
+            ]
+        }
     }
     ```
     """
@@ -64,7 +70,10 @@ class ScatterPlot2DView(BaseTableView):
             })
         return {
             **super().to_dict(params),
-            "data": series,
-            "x_label": x_label,
-            "y_label": y_label,
+            "data": {
+                "x_label": x_label,
+                "y_label": y_label,
+                "x_tick_labels": None,
+                "series": series,
+            }
         }
