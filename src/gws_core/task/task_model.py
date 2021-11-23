@@ -6,6 +6,8 @@ import inspect
 import zlib
 from typing import Dict, List, Type
 
+from gws_core.io.io import Inputs, Outputs
+
 from ..config.config_types import ConfigParamsDict
 from ..core.decorator.transaction import transaction
 from ..core.utils.logger import Logger
@@ -53,6 +55,7 @@ class TaskModel(ProcessModel):
         """
         task_type: Type[Task] = self.get_process_type()
 
+        self._inputs = Inputs(self)
         # create the input ports from the Task input specs
         for k in task_type.input_specs:
             self._inputs.create_port(k, task_type.input_specs[k])
@@ -60,6 +63,7 @@ class TaskModel(ProcessModel):
         # Set the data inputs dict
         self.data["inputs"] = self.inputs.to_json()
 
+        self._outputs = Outputs(self)
         # create the output ports from the Task output specs
         for k in task_type.output_specs:
             self._outputs.create_port(k, task_type.output_specs[k])

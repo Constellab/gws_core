@@ -223,7 +223,6 @@ class ProcessModel(Model):
         """
         if "inputs" not in self.data:
             self.data["inputs"] = {}
-            return
 
         self._inputs = Inputs.load_from_json(self, self.data["inputs"])
 
@@ -257,7 +256,6 @@ class ProcessModel(Model):
         """
         if "outputs" not in self.data:
             self.data["outputs"] = {}
-            return
 
         self._outputs = Outputs.load_from_json(self, self.data["outputs"])
 
