@@ -75,6 +75,9 @@ class BoxPlotView(BaseTableView):
             #column_names = param_series.get_value("column_names", [])
             column_names = param_series["column_names"]
 
+            if not column_names:
+                continue
+
             if not x_tick_labels:
                 x_tick_labels = column_names
 
@@ -107,6 +110,9 @@ class BoxPlotView(BaseTableView):
                 "column_names": column_names,
                 # "nb_of_data": len(self._data[:, column_names[0]])
             })
+
+        if not series:
+            x_tick_labels = None
 
         return {
             **super().to_dict(params),

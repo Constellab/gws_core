@@ -56,6 +56,8 @@ class ScatterPlot3DView(BaseTableView):
         "x_label": StrParam(human_name="X-label", optional=True, visibility='protected', short_description="The x-axis label to display"),
         "y_label": StrParam(human_name="Y-label", optional=True, visibility='protected', short_description="The y-axis label to display"),
         "z_label": StrParam(human_name="Z-label", optional=True, visibility='protected', short_description="The z-axis label to display"),
+        "x_tick_labels": ListParam(human_name="X-tick-labels", optional=True, visibility='protected', short_description="The labels of x-axis ticks"),
+        "y_tick_labels": ListParam(human_name="Y-tick-labels", optional=True, visibility='protected', short_description="The labels of y-axis ticks"),
     }
 
     def to_dict(self, params: ConfigParams) -> dict:
@@ -66,19 +68,18 @@ class ScatterPlot3DView(BaseTableView):
         y_label = params.get_value("y_label", y_column_name)
         z_label = params.get_value("y_label", "")
 
+        if x_column_name:
+            x_data = self._data[x_column_name].values.tolist()
+            x_tick_labels = None
+        else:
+            x_data = range(0, self._data.shape[0])
+            x_tick_labels = params.get_value("x_tick_labels", self._data.index)
+
         series = []
+        y_data = self._data[y_column_name].values.tolist()
+        y_tick_labels = params.get_value("y_tick_labels")
         for z_column_name in z_column_names:
             z_data = self._data[z_column_name].values.tolist()
-            if x_column_name:
-                x_data = self._data[x_column_name].values.tolist()
-            else:
-                x_data = range(0, len(z_data))
-
-            if y_column_name:
-                y_data = self._data[y_column_name].values.tolist()
-            else:
-                y_data = range(0, len(z_data))
-
             series.append({
                 "data": {
                     "x": x_data,
@@ -90,14 +91,18 @@ class ScatterPlot3DView(BaseTableView):
                 "z_column_name": z_column_name,
             })
 
+        if not series:
+            x_tick_labels = None
+            y_tick_labels = None
+
         return {
             **super().to_dict(params),
             "data": {
                 "x_label": x_label,
                 "y_label": y_label,
                 "z_label": z_label,
-                "x_tick_labels": None,
-                "y_tick_labels": None,
+                "x_tick_labels": x_tick_labels,
+                "y_tick_labels": y_tick_labels,
                 "series": series,
             }
 
