@@ -31,22 +31,23 @@ ENCODED_ROW_NAME = "encoded_row_name"
 ENCODED_COLUMN_NAME = "encoded_column_name"
 
 
-@resource_decorator("EncodingTable",
-                    human_name="EncodingTable",
+@resource_decorator("TableEncoding",
+                    human_name="TableEncoding",
                     short_description="Encoding table")
-class EncodingTable(Table):
+class TableEncoding(Table):
     """
     Represents an encoding table
 
     For example:
 
     ```
-    -------------------------------------
-    name       | encoding
-    -------------------------------------
-    name-1     | code-1
-    name-2     | code-2
-    -------------------------------------
+    ---------------------------------------------------------------------------------------
+    original_rowname    | encoded_row_name  |  original_column_name | encoded_column_name
+    ---------------------------------------------------------------------------------------
+    r-name-1            | r-code-1          |  c-name-1             | c-code-1
+    r-name-2            | r-code-2          |  c-name-2             | c-code-2
+                        |                   |  c-name-3             | c-code-3
+    ---------------------------------------------------------------------------------------
     ```
     """
 
@@ -71,10 +72,10 @@ class EncodingTable(Table):
         return self.get_column(self.original_row_name, rtype)
 
     def get_encoded_row_name(self, rtype='list') -> ('DataFrame', list):
-        return self.get_column(self.row_encoding_row_name, rtype)
+        return self.get_column(self.encoded_row_name, rtype)
 
     def get_encoded_column_name(self, rtype='list') -> ('DataFrame', list):
-        return self.get_column(self.column_encoding_column_name, rtype)
+        return self.get_column(self.encoded_column_name, rtype)
 
     # -- I --
 
@@ -86,7 +87,7 @@ class EncodingTable(Table):
                'encoded_column_name': StrParam(default_value=ENCODED_COLUMN_NAME, short_description="The encoded column name"),
                'encoded_row_name': StrParam(default_value=ENCODED_ROW_NAME, short_description="The encoded row name"),
                })
-    def import_from_path(cls, file: File, params: ConfigParams) -> 'EncodingTable':
+    def import_from_path(cls, file: File, params: ConfigParams) -> 'TableEncoding':
         """
         Import from a repository
 
@@ -94,8 +95,8 @@ class EncodingTable(Table):
         :type file: `File`
         :param params: The config params
         :type params: `ConfigParams`
-        :returns: the parsed EncodingTable data
-        :rtype: EncodingTable
+        :returns: the parsed TableEncoding data
+        :rtype: TableEncoding
         """
 
         csv_table = super().import_from_path(file, params)
@@ -109,17 +110,17 @@ class EncodingTable(Table):
                 f"Cannot import Table. No original column or row name is not found (no columns with name '{original_column_name}' or '{original_row_name}')")
 
         if csv_table.column_exists(original_column_name) and not csv_table.column_exists(encoded_column_name):
-            csv_table = EncodingTable(
+            csv_table = TableEncoding(
                 data=pandas.concat([csv_table.data, csv_table[:, original_column_name]]),
-                columns=[*csv_table.columns, encoded_column_name],
-                index=csv_table.index
+                column_names=[*csv_table.columns, encoded_column_name],
+                row_names=csv_table.index
             )
 
         if csv_table.column_exists(original_row_name) and not csv_table.column_exists(encoded_row_name):
-            csv_table = EncodingTable(
+            csv_table = TableEncoding(
                 data=pandas.concat([csv_table.data, csv_table[:, original_row_name]]),
-                columns=[*csv_table.columns, encoded_row_name],
-                index=csv_table.index
+                column_names=[*csv_table.columns, encoded_row_name],
+                row_names=csv_table.index
             )
 
         csv_table.original_column_name = original_column_name
@@ -136,8 +137,8 @@ class EncodingTable(Table):
 # ####################################################################
 
 
-@importer_decorator("EncodingTableImporter", resource_type=EncodingTable)
-class EncodingTableImporter(TableImporter):
+@importer_decorator("TableEncodingImporter", resource_type=TableEncoding)
+class TableEncodingImporter(TableImporter):
     pass
 
 # ####################################################################
@@ -147,6 +148,6 @@ class EncodingTableImporter(TableImporter):
 # ####################################################################
 
 
-@exporter_decorator("EncodingTableExporter", resource_type=EncodingTable)
-class EncodingTableExporter(TableExporter):
+@exporter_decorator("TableEncodingExporter", resource_type=TableEncoding)
+class TableEncodingExporter(TableExporter):
     pass

@@ -174,10 +174,14 @@ class StrParam(ParamSpec[str]):
 
     #  If present, the value must be in the array
     allowed_values: Optional[List[str]]
+    min_length: Optional[int]
+    max_length: Optional[int]
 
     def __init__(
         self,
         default_value: Optional[str] = None,
+        min_length: Optional[int] = None,
+        max_length: Optional[int] = None,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
         human_name: Optional[str] = None,
@@ -203,6 +207,8 @@ class StrParam(ParamSpec[str]):
         :type unit: Optional[str]
         """
         self.allowed_values = allowed_values
+        self.min_length = min_length
+        self.max_length = max_length
         super().__init__(
             default_value=default_value,
             optional=optional,
@@ -213,7 +219,11 @@ class StrParam(ParamSpec[str]):
         )
 
     def _get_validator(self) -> Validator:
-        return StrValidator(allowed_values=self.allowed_values)
+        return StrValidator(
+            allowed_values=self.allowed_values,
+            min_length=self.max_length,
+            max_length=self.max_length
+        )
 
     def to_json(self) -> Dict[str, Any]:
         json_: Dict[str, Any] = super().to_json()
@@ -230,7 +240,6 @@ class StrParam(ParamSpec[str]):
         param_spec: StrParam = super()._load_from_json(json_)
         param_spec.allowed_values = json_.get("allowed_values")
         return param_spec
-
 
 class BoolParam(ParamSpec[bool]):
     """Boolean param"""

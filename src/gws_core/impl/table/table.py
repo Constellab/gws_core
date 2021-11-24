@@ -134,11 +134,17 @@ class Table(Resource):
 
     # -- G --
 
-    def get_column(self, column_name: str, rtype='list') -> Union['DataFrame', list]:
+    def get_column(self, column_name: str, rtype='list', skip_nan=False) -> Union['DataFrame', list]:
         if rtype == 'list':
-            return list(self._data[column_name].values)
+            df = self._data[column_name]
+            if skip_nan:
+                df.dropna(inplace=True)
+            return df.values.tolist()
         else:
-            return self._data[[column_name]]
+            df = self._data[[column_name]]
+            if skip_nan:
+                df.dropna(inplace=True)
+            return df
 
     # -- H --
 

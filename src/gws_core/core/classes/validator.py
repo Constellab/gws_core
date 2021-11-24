@@ -328,11 +328,44 @@ class StrValidator(Validator):
             * `validator.validate(True) -> ValueError`
     """
 
-    def __init__(self, allowed_values: List[str] = None):
-        super().__init__(type_=str, allowed_values=allowed_values)
+    _min_length = -1
+    _max_length = math.inf
+
+    def __init__(self, allowed_values: List[str] = None, min_length: int = None, max_length: int = None):
+        super().__init__(type_=str, allowed_values=allowed_values, )
+
+        if min_length is not None:
+            if isinstance(min_length, str):
+                min_length = int(min_length)
+            if not isinstance(min_length, (int, float)):
+                raise BadRequestException("The min_length must be a numeric")
+            min_length = max(-1, min_length)
+            self._min_length = min_length
+
+        if max_length is not None:
+            if isinstance(max_length, str):
+                max_length = int(max_length)
+            if not isinstance(max_length, (int, float)):
+                raise BadRequestException("The max_length must be a numeric")
+            max_length = min(math.inf, max_length)
+            self._max_length = max_length
+
+        if self._min_length > self._max_length:
+            raise BadRequestException(
+                f"The min length ({self._min_length}) must be grater than the max length ({self._max_length})")
 
     def _from_str(self, str_value: str) -> str:
         return str_value
+
+    def _validate(self, value) -> str:
+        value: str = super()._validate(value)
+        if len(value) < self._min_length:
+            raise BadRequestException(
+                f"The string length is {len(value)}. It is less than the min length of {self._min_length}")
+        if len(value) > self._max_length:
+            raise BadRequestException(
+                f"The string length is {len(value)}. It exceeds the max length of {self._min_length}")
+        return value
 
 
 class ListValidator(Validator):
