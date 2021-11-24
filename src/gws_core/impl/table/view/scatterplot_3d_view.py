@@ -59,20 +59,31 @@ class ScatterPlot3DView(BaseTableView):
     }
 
     def to_dict(self, params: ConfigParams) -> dict:
-        x_column_name = params.get_value("x_column_name", self._data.columns[0])
-        y_column_name = params.get_value("y_column_name", self._data.columns[1])
-        z_column_names = params.get_value("z_column_names", [self._data.columns[2]])
+        x_column_name = params.get_value("x_column_name", "")
+        y_column_name = params.get_value("y_column_name", "")
+        z_column_names = params.get_value("z_column_names", [])
         x_label = params.get_value("x_label", x_column_name)
         y_label = params.get_value("y_label", y_column_name)
         z_label = params.get_value("y_label", "")
 
         series = []
         for z_column_name in z_column_names:
+            z_data = self._data[z_column_name].values.tolist()
+            if x_column_name:
+                x_data = self._data[x_column_name].values.tolist()
+            else:
+                x_data = range(0, len(z_data))
+
+            if y_column_name:
+                y_data = self._data[y_column_name].values.tolist()
+            else:
+                y_data = range(0, len(z_data))
+
             series.append({
                 "data": {
-                    "x": self._data[x_column_name].values.tolist(),
-                    "y": self._data[y_column_name].values.tolist(),
-                    "z": self._data[z_column_name].values.tolist(),
+                    "x": x_data,
+                    "y": y_data,
+                    "z": z_data,
                 },
                 "x_column_name": x_column_name,
                 "y_column_name": y_column_name,

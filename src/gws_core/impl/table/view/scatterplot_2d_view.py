@@ -53,17 +53,22 @@ class ScatterPlot2DView(BaseTableView):
     }
 
     def to_dict(self, params: ConfigParams) -> dict:
-        x_column_name = params.get_value("x_column_name", self._data.columns[0])
-        y_column_names = params.get_value("y_column_names", [self._data.columns[1]])
+        x_column_name = params.get_value("x_column_name", "")
+        y_column_names = params.get_value("y_column_names", [])
         x_label = params.get_value("x_label", x_column_name)
         y_label = params.get_value("y_label", "")
 
         series = []
         for y_column_name in y_column_names:
+            y_data = self._data[y_column_name].values.tolist()
+            if x_column_name:
+                x_data = self._data[x_column_name].values.tolist()
+            else:
+                x_data = range(0, len(y_data))
             series.append({
                 "data": {
-                    "x": self._data[x_column_name].values.tolist(),
-                    "y": self._data[y_column_name].values.tolist(),
+                    "x": x_data,
+                    "y": y_data,
                 },
                 "x_column_name": x_column_name,
                 "y_column_name": y_column_name,

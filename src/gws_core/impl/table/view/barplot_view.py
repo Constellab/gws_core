@@ -57,7 +57,7 @@ class BarPlotView(BaseTableView):
     }
 
     def to_dict(self, params: ConfigParams) -> dict:
-        column_names = params.get_value("column_names", [self._data.columns[1]])
+        column_names = params.get_value("column_names", [])
         x_label = params.get_value("x_label", "")
         y_label = params.get_value("y_label", "")
 
