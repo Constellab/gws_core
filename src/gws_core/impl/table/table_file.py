@@ -122,6 +122,21 @@ class TableFile(File):
 
         return self._get_table_resource().view_as_heatmap(params)
 
+    @view(view_type=MultiViews, human_name='Multi view', short_description='Multi view', specs={})
+    def view_as_multi_views(self, params: ConfigParams) -> MultiViews:
+        """
+        View one or several columns as box plots
+        """
+
+        multi_views: MultiViews = MultiViews(nb_of_columns=4)
+        multi_views.add_view(self.view_as_scatter_plot_2d(params), {}, 3, 1)
+        multi_views.add_view(self.view_as_line_plot_2d(params), {}, 1, 3)
+        multi_views.add_empty_block(2, 2)
+        # multi_views.add_view(self.view_as_table().to_dict(), 2, 2)
+        multi_views.add_view(self.view_as_json(params), {}, 1, 2)
+
+        return multi_views
+
     def _get_table_resource(self) -> Table:
         # guess the delimiter
         max_nb_chars = 10000

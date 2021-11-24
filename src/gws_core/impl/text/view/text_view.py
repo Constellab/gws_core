@@ -61,6 +61,8 @@ class TextView(View):
         text = self._slice(from_char_index=page_info.from_index, to_char_index=page_info.to_index)
         return {
             **super().to_dict(params),
-            "data": text,
-            **page_info.to_json(),
+            "data": {
+                "text": text,
+                **page_info.to_json(),
+            }
         }

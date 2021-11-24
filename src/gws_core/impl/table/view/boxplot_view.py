@@ -116,10 +116,10 @@ class BoxPlotView(BaseTableView):
 
         return {
             **super().to_dict(params),
-            "x_label": x_label,
-            "y_label": y_label,
-            "x_tick_labels": x_tick_labels,
             "data": {
+                "x_label": x_label,
+                "y_label": y_label,
+                "x_tick_labels": x_tick_labels,
                 "series": series,
             }
         }

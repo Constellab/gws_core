@@ -118,8 +118,10 @@ class MultiViews(View):
 
         return {
             "type": self._type,
-            "nb_of_columns": self._nb_of_columns,
-            "data": views_dict
+            "data": {
+                "nb_of_columns": self._nb_of_columns,
+                "views": views_dict
+            }
         }
 
     def _check_number(self, nb: int, name: str) -> None:
