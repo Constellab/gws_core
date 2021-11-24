@@ -7,10 +7,10 @@ from typing import List
 
 from pandas import DataFrame
 
-from .lineplot_2d_view import LinePlot2DView
+from .barplot_view import BarPlotView
 
 
-class StackedBarPlotView(LinePlot2DView):
+class StackedBarPlotView(BarPlotView):
     """
     StackedBarPlotView
 
@@ -33,7 +33,7 @@ class StackedBarPlotView(LinePlot2DView):
                         "y": List[Float],
                     },
                     "x_column_name": str,
-                    "y_column_name": str,
+                    "column_name": str,
                 },
                 ...
             ]

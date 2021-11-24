@@ -8,7 +8,7 @@ from pandas import DataFrame
 
 from ....config.config_types import ConfigParams
 from ....config.param_spec import ListParam, ParamSet, StrParam
-from ....resource.view import ViewSpecs
+from ....resource.view_types import ViewSpecs
 from .base_table_view import BaseTableView
 
 
@@ -57,7 +57,7 @@ class BoxPlotView(BaseTableView):
                 "column_names": ListParam(human_name="Column names", optional=True, short_description="List of columns to plot"),
             },
             human_name="Column series",
-            short_description="Select a series of columns to aggregate box-plot",
+            short_description="Select a series of columns to aggregate as box-plot",
             max_number_of_occurrences=5
         ),
         "x_tick_labels": ListParam(human_name="X-tick-labels", optional=True, visibility='protected', short_description="The labels of x-axis ticks"),
@@ -105,7 +105,7 @@ class BoxPlotView(BaseTableView):
                     "upper_whisker": uw.tolist()
                 },
                 "column_names": column_names,
-                #"nb_of_data": len(self._data[:, column_names[0]])
+                # "nb_of_data": len(self._data[:, column_names[0]])
             })
 
         return {
