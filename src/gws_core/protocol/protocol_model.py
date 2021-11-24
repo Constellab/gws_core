@@ -456,8 +456,9 @@ class ProtocolModel(ProcessModel):
         :return: The inputs
         :rtype: Inputs
         """
-        # load first the value if there are not loaded
-        self._load_from_graph()
+        if self._inputs is None:
+            # load first the value if there are not loaded
+            self._load_from_graph()
 
         return super().inputs
 
@@ -470,8 +471,9 @@ class ProtocolModel(ProcessModel):
         :return: The outputs
         :rtype: Outputs
         """
-        # load first the value if there are not loaded
-        self._load_from_graph()
+        if self._outputs is None:
+          # load first the value if there are not loaded
+          self._load_from_graph()
 
         return super().outputs
 
@@ -524,6 +526,7 @@ class ProtocolModel(ProcessModel):
     def _init_interfaces_from_graph(self, interfaces_dict: Dict) -> None:
         # clear current interfaces
         self._interfaces = {}
+        self._inputs = Inputs(self)
 
         interfaces: Dict[str, InPort] = {}
         for key in interfaces_dict:
@@ -606,6 +609,7 @@ class ProtocolModel(ProcessModel):
     def _init_outerfaces_from_graph(self, outerfaces_dict: Dict) -> None:
         # clear current interfaces
         self._outerfaces = {}
+        self._outputs = Outputs(self)
 
         outerfaces: Dict[str, OutPort] = {}
         for key in outerfaces_dict:
