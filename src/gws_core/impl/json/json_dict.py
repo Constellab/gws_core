@@ -7,10 +7,10 @@ import json
 import os
 from typing import Any
 
-from ...core.exception.exceptions.bad_request_exception import \
-    BadRequestException
 from ...config.config_types import ConfigParams
 from ...config.param_spec import BoolParam, StrParam
+from ...core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 from ...impl.file.file import File
 from ...resource.r_field import DictRField
 from ...resource.resource import Resource
@@ -81,3 +81,8 @@ class JSONDict(Resource):
 
     def __setitem__(self, key, val):
         self.data[key] = val
+
+    def __str__(self):
+        return super().__str__() + "\n" + \
+            "Dictionnary:\n" + \
+            self.data.__str__()

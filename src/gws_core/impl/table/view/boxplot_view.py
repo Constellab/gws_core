@@ -51,10 +51,9 @@ class BoxPlotView(BaseTableView):
     _data: DataFrame
     _specs: ViewSpecs = {
         **BaseTableView._specs,
-        # "column_names": ListParam(human_name="Column names", optional=True, short_description="List of columns to plot"),
         "series": ParamSet(
             {
-                "column_names": ListParam(human_name="Column names", optional=True, short_description="List of columns to plot"),
+                "column_names": ListParam(human_name="Column names", optional=True, short_description="List of columns to plot")
             },
             human_name="Column series",
             short_description="Select a series of columns to aggregate as box-plot",

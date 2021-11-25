@@ -245,7 +245,9 @@ class Table(Resource):
         return self._data.index.values.tolist()
 
     def __str__(self):
-        return self._data.__str__()
+        return super().__str__() + "\n" + \
+            "Table:                                  \n" + \
+            self._data.__str__()
 
     def to_list(self) -> list:
         return self.to_numpy().tolist()

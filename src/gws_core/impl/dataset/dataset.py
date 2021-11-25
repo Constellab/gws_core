@@ -278,7 +278,11 @@ class Dataset(Table):
     # -- S --
 
     def __str__(self):
-        return f"Features: \n{self._data.__str__()} \n\nTargets: \n{self._targets.__str__()} "
+        return super().__str__() + "\n" + \
+            "Features:\n" + \
+            self._data.__str__() + "\n\n" + \
+            "Targets:\n" + \
+            self._targets.__str__()
 
     def set_data(self, *args, **kwargs):
         raise BadRequestException("Not implemented for Dataset")

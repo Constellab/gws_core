@@ -59,14 +59,14 @@ class BarPlotView(BaseTableView):
     def to_dict(self, params: ConfigParams) -> dict:
         column_names = params.get_value("column_names", [])
         x_label = params.get_value("x_label", "")
-        x_tick_labels = params.get_value("x_tick_labels", self._data.index)
+        x_tick_labels = params.get_value("x_tick_labels", self._data.index.to_list())
         y_label = params.get_value("y_label", "")
 
         series = []
         for column_name in column_names:
             series.append({
                 "data": {
-                    "x": range(0, self._data.shape[0]),
+                    "x": list(range(0, self._data.shape[0])),
                     "y": self._data[column_name].values.tolist(),
                 },
                 "column_name": column_name,

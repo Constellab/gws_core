@@ -72,8 +72,8 @@ class ScatterPlot3DView(BaseTableView):
             x_data = self._data[x_column_name].values.tolist()
             x_tick_labels = None
         else:
-            x_data = range(0, self._data.shape[0])
-            x_tick_labels = params.get_value("x_tick_labels", self._data.index)
+            x_data = list(range(0, self._data.shape[0]))
+            x_tick_labels = params.get_value("x_tick_labels", self._data.index.to_list())
 
         series = []
         y_data = self._data[y_column_name].values.tolist()
