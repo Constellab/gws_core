@@ -7,12 +7,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Type, TypedDict, final
 
-from gws_core.model.typing_manager import TypingManager
-
 from ..core.model.base import Base
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
-from .io_spec import IOSpec, IOSpecClass, IOSpecsHelper, ResourceTypeJson
+from .io_spec import IOSpecClass, IOSpecsHelper
+from .io_special_type import TypeIODict
 
 if TYPE_CHECKING:
     from ..process.process_model import ProcessModel
@@ -21,7 +20,7 @@ if TYPE_CHECKING:
 
 class PortDict(TypedDict):
     resource_id: str
-    specs: List[ResourceTypeJson]  # list of supported resource typing names
+    specs: TypeIODict  # list of supported resource typing names
 
 
 class Port(Base):
@@ -32,6 +31,8 @@ class Port(Base):
     Example: [Left Process](output port) => (input port)[Right Process].
     """
 
+    name: str
+
     _resource_model: ResourceModel = None
     _resource_spec: IOSpecClass = None
     _prev: 'Port' = None
@@ -41,11 +42,12 @@ class Port(Base):
     # Switch to true when the set_resource_model is set (even if it is set with a None value)
     _resource_provided: bool = False
 
-    def __init__(self, parent: IO, _resource_spec: IOSpecClass):
+    def __init__(self, parent: IO, name: str, _resource_spec: IOSpecClass):
         self._resource_model = None
         self._prev = None
         self._next = []
         self._parent = parent
+        self.name = name
         self._resource_spec = _resource_spec
 
     # -- D --
@@ -294,16 +296,10 @@ class Port(Base):
         if self.is_optional and resource_type is None:
             return True
 
-        return IOSpecsHelper.spec_is_compatible(resource_type, self._resource_spec.resource_spec)
+        return IOSpecsHelper.spec_is_compatible(resource_type, self._resource_spec.type_io)
 
     def get_resource(self, new_instance: bool = False) -> Resource:
         return self.resource_model.get_resource(new_instance=new_instance)
-
-    @property
-    def name(self) -> str:
-        """overiden by the children
-
-        """
 
     def to_json(self) -> PortDict:
         _json: PortDict = {"resource_id": None, "specs": None}
@@ -317,9 +313,9 @@ class Port(Base):
         return _json
 
     @classmethod
-    def load_from_json(cls, json_: PortDict, parent: IO) -> None:
+    def load_from_json(cls, json_: PortDict, parent: IO, name: str) -> 'Port':
         specs: IOSpecClass = IOSpecClass.from_json(json_['specs'])
-        return cls(parent, specs)
+        return cls(parent, name, specs)
 
 
 # ####################################################################
@@ -333,24 +329,6 @@ class InPort(Port):
     IntPort class representing input port
     """
 
-    # -- N --
-
-    @property
-    def name(self) -> str:
-        """
-        Returns the name of the port.
-
-        :return: The name
-        :rtype: str
-        """
-
-        proc = self.parent.parent
-        proc_inputs = proc.inputs
-        for name in proc_inputs._ports:
-            if proc_inputs._ports[name] is self:
-                return name
-        return None
-
 
 # ####################################################################
 #
@@ -362,19 +340,3 @@ class OutPort(Port):
     """
     OutPort class representing output port
     """
-
-    @property
-    def name(self) -> str:
-        """
-        Returns the name of the port.
-
-        :return: The name
-        :rtype: str
-        """
-
-        proc = self.parent.parent
-        proc_outputs = proc.outputs
-        for name in proc_outputs._ports:
-            if proc_outputs._ports[name] is self:
-                return name
-        return None

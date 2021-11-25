@@ -15,7 +15,7 @@ from ..core.service.mysql_service import MySQLService
 from ..core.service.settings_service import SettingsService
 from ..core.utils.http_helper import HTTPHelper
 from ..impl.file.file import File
-from ..impl.file.file_service import FileService
+from ..impl.file.fs_node_service import FsNodeService
 from ..user.auth_service import AuthService
 from ..user.user import User
 from ..user.user_dto import UserData
@@ -152,7 +152,7 @@ def dump_db(db_name: str, _: UserData = Depends(AuthCentral.check_central_api_ke
     output_file = MySQLService.dump_db(db_name)
     file = File()
     file.path = output_file
-    FileService.add_file_to_default_store(file, 'dump.sql')
+    FsNodeService.add_file_to_default_store(file, 'dump.sql')
     return file.view_as_json().to_dict()
 
 

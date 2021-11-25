@@ -4,18 +4,16 @@
 # About us: https://gencovery.com
 
 from collections.abc import Iterable as IterableClass
-from inspect import isclass
-from typing import (Dict, Iterable, List, Literal, Type, TypedDict, Union,
-                    get_args)
+from typing import Dict, Iterable, List, Literal, Type, Union, get_args
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.utils.utils import Utils
-from ..model.typing_manager import TypingManager
 from ..resource.resource import Resource
 from ..task.task_io import TaskInputs
 from .io_special_type import (ConstantOut, OptionalIn, SkippableIn,
-                              SpecialTypeIn, SpecialTypeIO, SpecialTypeOut)
+                              SpecialTypeIn, SpecialTypeIO, SpecialTypeOut,
+                              TypeIO, TypeIODict)
 
 ResourceType = Type[Resource]
 
@@ -27,61 +25,48 @@ InputSpecs = Dict[str, InputSpec]
 OutputSpec = Union[ResourceType, Iterable[ResourceType], SpecialTypeOut]
 OutputSpecs = Dict[str, OutputSpec]
 
-IOSpec = Union[InputSpec, OutputSpec]
+IOSpec = Union[InputSpec, OutputSpec, TypeIO]
 IOSpecs = Dict[str, IOSpec]
-
-
-class ResourceTypeJson(TypedDict):
-    typing_name: str
-    human_name: str
-    short_description: str
 
 
 class IOSpecClass:
 
+    type_io: TypeIO
+
     resource_spec: IOSpec = None
 
     def __init__(self, spec: IOSpec) -> None:
-        self.resource_spec = spec
+
+        if isinstance(spec, TypeIO):
+            self.type_io = spec
+        else:
+            self.type_io = TypeIO(spec)
 
     def to_resource_types(self) -> Iterable[ResourceType]:
-        return IOSpecsHelper.io_spec_to_resource_types(self.resource_spec)
+        return IOSpecsHelper.io_spec_to_resource_types(self.type_io)
 
     def is_compatible_with_spec(self, spec: 'IOSpecClass') -> bool:
-        return IOSpecsHelper.specs_are_compatible(self.resource_spec, spec.resource_spec)
+        return IOSpecsHelper.specs_are_compatible(self.type_io, spec.type_io)
 
     def is_compatible_with_type(self, resource_type: Type[Resource]) -> bool:
         return IOSpecsHelper.spec_is_compatible(
             io_type=resource_type, expected_types=self.to_resource_types())
 
     def is_optional(self) -> bool:
-        return isinstance(self.resource_spec, OptionalIn) or None in self.to_resource_types()
+        return isinstance(self.type_io, OptionalIn) or None in self.to_resource_types()
 
     def is_constant_out(self) -> bool:
-        return isinstance(self.resource_spec, ConstantOut)
+        return isinstance(self.type_io, ConstantOut)
 
     def is_skippable_in(self) -> bool:
-        return isinstance(self.resource_spec, SkippableIn)
+        return isinstance(self.type_io, SkippableIn)
 
-    def to_json(self) -> List[ResourceTypeJson]:
-        specs: List[ResourceTypeJson] = []
-        for resource_type in self.to_resource_types():
-            if resource_type is None:
-                specs.append({"typing_name": None, "human_name": None, 'short_description': None})
-            else:
-                specs.append(
-                    {"typing_name": resource_type._typing_name, "human_name": resource_type._human_name,
-                     'short_description': resource_type._short_description})
-        return specs
+    def to_json(self) -> TypeIODict:
+        return self.type_io.to_json()
 
     @classmethod
-    def from_json(cls, json_: List[ResourceTypeJson]) -> 'IOSpecClass':
-        resource_types: List[Type[Resource]] = []
-
-        # retrieve all the resource type from the json specs
-        for spec_json in json_:
-            resource_types.append(TypingManager.get_type_from_name(spec_json['typing_name']))
-        return IOSpecClass(resource_types)
+    def from_json(cls, json_: TypeIODict) -> 'IOSpecClass':
+        return IOSpecClass(TypeIO.from_json(json_))
 
 
 class IOSpecsHelper():
@@ -125,12 +110,12 @@ class IOSpecsHelper():
                 resource_types.append(None)
                 continue
 
-            if isinstance(spec, SpecialTypeIO):
+            if isinstance(spec, TypeIO):
                 spec.check_resource_types()
                 resource_types.append(*spec.resource_types)
             else:
                 # check that the type is a Resource or a SubClasses
-                if not isclass(spec) or not issubclass(spec, Resource):
+                if not Utils.issubclass(spec, Resource):
                     raise BadRequestException(f"Invalid port specs. The type '{spec}' is not a resource")
                 resource_types.append(spec)
 
@@ -146,7 +131,7 @@ class IOSpecsHelper():
         :rtype: List[IOSpecType]
         """
 
-        if isinstance(io_spec, SpecialTypeIO):
+        if isinstance(io_spec, TypeIO):
             return [io_spec]
         # if the type is a Union or Optional (equivalient to Union[x, None])
         elif hasattr(io_spec, "__args__") and isinstance(io_spec.__args__, tuple):
@@ -231,11 +216,11 @@ class IOSpecsHelper():
         return False
 
     @classmethod
-    def io_specs_to_json(cls, io_specs: IOSpecs) -> Dict[str, List[ResourceTypeJson]]:
+    def io_specs_to_json(cls, io_specs: IOSpecs) -> Dict[str, TypeIODict]:
         """to_json method for IOSpecs
         """
 
-        json_:  Dict[str, List[ResourceTypeJson]] = {}
+        json_:  Dict[str, TypeIODict] = {}
         for key, spec in io_specs.items():
             json_[key] = IOSpecClass(spec).to_json()
         return json_
@@ -272,25 +257,3 @@ class IOSpecsHelper():
                 if param is not None and not Utils.issubclass(param, Resource):
                     raise Exception(
                         f"The {param_type} param of spec '{key}' is invalid. Expected a resource type, got {str(param)}")
-
-    @classmethod
-    def check_task_inputs(cls, task_inputs: Dict[str, Resource], input_specs: InputSpecs) -> TaskInputs:
-        missing_resource: List[str] = []
-        task_io: TaskInputs = TaskInputs()
-        # for key, spec in input_specs.items():
-        #     if key not in task_inputs or task_inputs[key] is None:
-        #         if spec.
-
-        #     if port.is_empty:
-        #         # If the port is empty and not optional, add an error
-        #         if not port.is_optional:
-        #             missing_resource.append(key)
-        #         continue
-        #     # get the port resource and force a new instance to prevent modifing the same
-        #     # resource on new task
-        #     task_io[key] = port.get_resource(new_instance=True)
-
-        # if len(missing_resource) > 0:
-        #     raise MissingInputResourcesException(port_names=missing_resource)
-
-        return task_io

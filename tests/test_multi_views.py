@@ -24,4 +24,4 @@ class TestMultiViews(BaseTestCase):
 
         dict = multi_view.to_dict(ConfigParams())
         self.assertEqual(dict['type'], 'multi-view')
-        self.assertEqual(len(dict['data']["series"]), 3)
+        self.assertEqual(len(dict['data']["views"]), 3)

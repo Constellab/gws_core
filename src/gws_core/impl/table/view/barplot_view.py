@@ -62,6 +62,15 @@ class BarPlotView(BaseTableView):
         x_tick_labels = params.get_value("x_tick_labels", self._data.index.to_list())
         y_label = params.get_value("y_label", "")
 
+        # Handle x tick labels
+        x_tick_labels = None
+        if params.value_is_set('x_tick_labels'):
+            x_tick_label_columns: str = params.get_value("x_tick_labels")
+            x_tick_labels = []
+            for column in x_tick_label_columns:
+                if column in self._data:
+                    x_tick_labels.extend(self._data[column].values.tolist())
+
         series = []
         for column_name in column_names:
             series.append({

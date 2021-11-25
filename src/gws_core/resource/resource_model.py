@@ -208,6 +208,7 @@ class ResourceModel(Model, TaggableModel, Generic[ResourceType]):
             fs_node_model: FSNodeModel = FSNodeModel()
             fs_node_model.path = node.path
             fs_node_model.file_store_id = node.file_store_id
+            fs_node_model.size = node.get_size()
             resource_model.fs_node_model = fs_node_model
             resource = node
 
@@ -364,6 +365,9 @@ class ResourceModel(Model, TaggableModel, Generic[ResourceType]):
         _json["resource_type_short_description"] = resource._short_description
         _json["resource_human_name"] = _json["resource_type_human_name"]
         _json["name"] = self.get_name_tag() or _json["resource_type_human_name"]
+
+        if self.fs_node_model:
+            _json["fs_node"] = self.fs_node_model.to_json()
 
         return _json
 

@@ -13,20 +13,18 @@ from typing import Any, Dict, List, Type
 from fastapi.encoders import jsonable_encoder
 from gws_core.core.model.base_model import BaseModel
 from peewee import (AutoField, BigAutoField, BlobField, BooleanField,
-                    CharField, DateTimeField, Field, ForeignKeyField,
-                    ForeignKeyMetadata, ManyToManyField)
+                    CharField, DateTimeField, DoesNotExist, Field,
+                    ForeignKeyField, ManyToManyField)
 from peewee import Model as PeeweeModel
-from peewee import ModelSelect, UUIDField
+from peewee import ModelSelect
 from playhouse.mysql_ext import Match
 
-from ..db.db_manager import DbManager
 from ..decorator.json_ignore import json_ignore
 from ..decorator.transaction import transaction
 from ..exception.exceptions import BadRequestException, NotFoundException
 from ..exception.gws_exceptions import GWSException
 from ..model.json_field import JSONField
 from ..utils.logger import Logger
-from ..utils.settings import Settings
 from ..utils.utils import Utils
 from .base import Base
 
@@ -221,7 +219,7 @@ class Model(BaseModel, PeeweeModel):
         """
         try:
             return cls.get(cls.id == id)
-        except:
+        except DoesNotExist:
             raise NotFoundException(detail=GWSException.OBJECT_ID_NOT_FOUND.value,
                                     unique_code=GWSException.OBJECT_ID_NOT_FOUND.name,
                                     detail_args={"objectName": cls.classname(), "id": id})

@@ -122,9 +122,9 @@ class MultiViews(View):
 
         return {
             "type": self._type,
-            "nb_of_columns": self._nb_of_columns,
             "data": {
-                "series": views_dict
+                "nb_of_columns": self._nb_of_columns,
+                "views": views_dict
             }
         }
 

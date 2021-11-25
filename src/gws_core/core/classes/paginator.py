@@ -69,8 +69,8 @@ class PageInfo():
             'total_number_of_items': self.total_number_of_items,
             'total_number_of_pages': self.total_number_of_pages,
             'number_of_items_per_page': self.number_of_items_per_page,
-            'is_first_page': self.page == self.first_page,
-            'is_last_page': self.page == self.last_page
+            'is_first_page': self.page <= self.first_page,
+            'is_last_page': self.page >= self.last_page
         }
 
 

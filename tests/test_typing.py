@@ -5,10 +5,25 @@
 
 from typing import Dict
 
-from gws_core import (BaseTestCase, GTest, ProtocolService, ProtocolTyping,
-                      ResourceTyping, RobotEat, TaskService, TaskTyping)
+from gws_core import (BaseTestCase, ConfigParams, GTest, ProcessSpec, Protocol,
+                      ProtocolService, ProtocolTyping, ResourceTyping,
+                      RobotCreate, RobotEat, Sink, TaskService, TaskTyping,
+                      protocol_decorator)
 from gws_core.impl.robot.robot_protocol import RobotWorldTravelProto
 from gws_core.impl.robot.robot_resource import Robot
+
+
+@protocol_decorator("CreateSimpleRobot2")
+class CreateSimpleRobot2(Protocol):
+    def configure_protocol(self, config_params: ConfigParams) -> None:
+        facto: ProcessSpec = self.add_process(RobotCreate, 'facto')
+
+        # define the protocol output
+        sink_1: ProcessSpec = self.add_process(Sink, 'sink_1')
+
+        self.add_connectors([
+            (facto >> 'robot', sink_1 << 'resource'),
+        ])
 
 
 class TestTyping(BaseTestCase):

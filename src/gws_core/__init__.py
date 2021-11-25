@@ -104,7 +104,7 @@ from .impl.dataset.view.dataset_view import DatasetView
 from .impl.file.file import File as File
 from .impl.file.file_helper import FileHelper as FileHelper
 from .impl.file.file_r_field import FileRField as FileRField
-from .impl.file.file_service import FileService as FileService
+from .impl.file.fs_node_service import FsNodeService as FsNodeService
 from .impl.file.file_store import FileStore as FileStore
 from .impl.file.file_tasks import WriteToJsonFile as WriteToJsonFile
 from .impl.file.folder import Folder as Folder

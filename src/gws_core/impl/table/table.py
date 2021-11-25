@@ -311,7 +311,7 @@ class Table(Resource):
 
         return TableView(self._data)
 
-    @view(view_type=LinePlot2DView, human_name='LinePlot2D', short_description='View columns as 2D-line plots', specs={})
+    @view(view_type=LinePlot2DView, human_name='Line plot 2D', short_description='View columns as 2D-line plots', specs={})
     def view_as_line_plot_2d(self, params: ConfigParams) -> LinePlot2DView:
         """
         View columns as 2D-line plots
@@ -319,23 +319,24 @@ class Table(Resource):
 
         return LinePlot2DView(self._data)
 
-    @view(view_type=LinePlot3DView, human_name='LinePlot3D', short_description='View columns as 3D-line plots', specs={})
-    def view_as_line_plot_3d(self, params: ConfigParams) -> LinePlot3DView:
-        """
-        View columns as 3D-line plots
-        """
+    # @view(view_type=LinePlot3DView, human_name='LinePlot3D', short_description='View columns as 3D-line plots', specs={})
+    # def view_as_line_plot_3d(self, params: ConfigParams) -> LinePlot3DView:
+    #     """
+    #     View columns as 3D-line plots
+    #     """
 
-        return LinePlot3DView(self._data)
+    #     return LinePlot3DView(self._data)
 
-    @view(view_type=ScatterPlot3DView, human_name='ScatterPlot3D', short_description='View columns as 3D-scatter plots', specs={})
-    def view_as_scatter_plot_3d(self, params: ConfigParams) -> ScatterPlot3DView:
-        """
-        View columns as 3D-scatter plots
-        """
+    # @view(view_type=ScatterPlot3DView, human_name='ScatterPlot3D', short_description='View columns as 3D-scatter plots', specs={})
+    # def view_as_scatter_plot_3d(self, params: ConfigParams) -> ScatterPlot3DView:
+    #     """
+    #     View columns as 3D-scatter plots
+    #     """
 
-        return ScatterPlot3DView(self._data)
+    #     return ScatterPlot3DView(self._data)
 
-    @view(view_type=ScatterPlot2DView, human_name='ScatterPlot2D', short_description='View columns as 2D-scatter plots', specs={})
+    @view(view_type=ScatterPlot2DView, human_name='Scatter plot 2D',
+          short_description='View columns as 2D-scatter plots', specs={})
     def view_as_scatter_plot_2d(self, params: ConfigParams) -> ScatterPlot2DView:
         """
         View one or several columns as 2D-line plots
@@ -343,7 +344,7 @@ class Table(Resource):
 
         return ScatterPlot2DView(self._data)
 
-    @view(view_type=BarPlotView, human_name='BarPlot', short_description='View columns as 2D-bar plots', specs={})
+    @view(view_type=BarPlotView, human_name='Bar plot', short_description='View columns as 2D-bar plots', specs={})
     def view_as_bar_plot(self, params: ConfigParams) -> BarPlotView:
         """
         View one or several columns as 2D-bar plots
@@ -351,7 +352,8 @@ class Table(Resource):
 
         return BarPlotView(self._data)
 
-    @view(view_type=StackedBarPlotView, human_name='BarPlot', short_description='View columns as 2D-stacked bar plots', specs={})
+    @view(view_type=StackedBarPlotView, human_name='Stacked bar plot',
+          short_description='View columns as 2D-stacked bar plots', specs={})
     def view_as_stacked_bar_plot(self, params: ConfigParams) -> BarPlotView:
         """
         View one or several columns as 2D-stacked bar plots
@@ -367,7 +369,7 @@ class Table(Resource):
 
         return HistogramView(self._data)
 
-    @view(view_type=BoxPlotView, human_name='BoxPlot', short_description='View columns as box plots', specs={})
+    @view(view_type=BoxPlotView, human_name='Box plot', short_description='View columns as box plots', specs={})
     def view_as_box_plot(self, params: ConfigParams) -> BoxPlotView:
         """
         View one or several columns as box plots
@@ -376,7 +378,7 @@ class Table(Resource):
         return BoxPlotView(self._data)
 
     @view(view_type=HeatmapView, human_name='Heatmap', short_description='View table as heatmap', specs={})
-    def view_as_heatmap(self, params: ConfigParams) -> BarPlotView:
+    def view_as_heatmap(self, params: ConfigParams) -> HeatmapView:
         """
         View the table as heatmap
         """
