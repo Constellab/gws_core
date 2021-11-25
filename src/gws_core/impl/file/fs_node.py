@@ -2,6 +2,7 @@
 import os
 from typing import Any, Type
 
+from gws_core.impl.file.file_helper import FileHelper
 from gws_core.resource.r_field import StrRField
 
 from ...resource.resource import Resource
@@ -23,6 +24,9 @@ class FSNode(Resource):
     def __init__(self, path: str = ""):
         super().__init__()
         self.path = path
+
+    def get_size(self) -> int:
+        return FileHelper.get_size(self.path)
 
     def _exists(self):
         return os.path.exists(self.path)

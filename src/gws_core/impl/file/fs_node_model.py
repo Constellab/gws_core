@@ -6,7 +6,8 @@
 
 from typing import final
 
-from peewee import CharField
+from gws_core.impl.file.file_helper import FileHelper
+from peewee import CharField, IntegerField
 
 from ...core.model.model import Model
 from ...impl.file.file_store import FileStore
@@ -23,6 +24,7 @@ class FSNodeModel(Model):
     """
     path = CharField(null=True, unique=True)
     file_store_id = CharField(null=True, index=True)
+    size = IntegerField(null=True)
     _table_name = "gws_fs_node"
 
     def delete_instance(self, *args, **kwargs):
@@ -34,3 +36,10 @@ class FSNodeModel(Model):
 
     def get_file_store(self) -> FileStore:
         return FileStore.get_by_id_and_check(self.file_store_id)
+
+    def to_json(self, deep: bool = False) -> dict:
+        return {
+            "id": self.id,
+            "size": self.size,
+            "is_file": FileHelper.is_file(self.path)
+        }

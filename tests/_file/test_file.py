@@ -6,8 +6,8 @@
 import json
 import os
 
-from gws_core import (BaseTestCase, ConfigParams, File, FsNodeService,
-                      FSNodeModel, GTest, LocalFileStore, Robot, RobotCreate,
+from gws_core import (BaseTestCase, ConfigParams, File, FSNodeModel,
+                      FsNodeService, GTest, LocalFileStore, Robot, RobotCreate,
                       Task, TaskInputs, TaskOutputs, WriteToJsonFile,
                       task_decorator)
 from gws_core.core.utils.settings import Settings
@@ -121,3 +121,6 @@ class TestFile(BaseTestCase):
         content: str = file.read()
         params = ConfigParams()
         self.assertEqual(content, json.dumps(robot.view_as_json(params).to_dict()))
+
+        # Check file size
+        self.assertTrue(file_model.fs_node_model.size > 0)
