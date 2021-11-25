@@ -131,6 +131,9 @@ class LocalFileStore(FileStore):
             time_file_name: str = str(time()).replace('.', '')
             return os.path.join(self.path, time_file_name)
 
+        # sanitize the node name
+        dest_node_name = FileHelper.sanitize_name(dest_node_name)
+
         #  create the file if another doesn't exists
         if not self.node_name_exists(dest_node_name):
             return os.path.join(self.path, dest_node_name)

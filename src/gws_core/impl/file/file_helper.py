@@ -3,6 +3,7 @@ import mimetypes
 import os
 import shutil
 from pathlib import Path
+from re import sub
 from typing import Any, List, Union
 
 PathType = Union[str, Path]
@@ -170,3 +171,10 @@ class FileHelper():
             return {dir_name: result}
 
         return None
+
+    @classmethod
+    def sanitize_name(cls, name: str) -> str:
+        """Sanitize a file name, folder name or path in order to prevent injection when using the file name
+            Basically, it keeps only the alphanumeric characters and -,_,\,/
+        """
+        return sub(r"[^a-zA-Z0-9-_/.]", '', name)

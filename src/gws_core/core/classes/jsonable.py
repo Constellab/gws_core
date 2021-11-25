@@ -1,6 +1,6 @@
 
 from abc import abstractmethod
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 
 class Jsonable():
@@ -35,8 +35,11 @@ class ListJsonable(Jsonable):
 
         return _json
 
-    def append(self, jsonable: Jsonable) -> None:
-        self.list.append(jsonable)
+    def append(self, jsonable: Union[Jsonable, List[Jsonable]]) -> None:
+        if isinstance(jsonable, list):
+            self.list.extend(jsonable)
+        else:
+            self.list.append(jsonable)
 
 
 class DictJsonable(Jsonable):

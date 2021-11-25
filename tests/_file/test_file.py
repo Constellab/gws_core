@@ -6,7 +6,7 @@
 import json
 import os
 
-from gws_core import (BaseTestCase, ConfigParams, File, FileService,
+from gws_core import (BaseTestCase, ConfigParams, File, FsNodeService,
                       FSNodeModel, GTest, LocalFileStore, Robot, RobotCreate,
                       Task, TaskInputs, TaskOutputs, WriteToJsonFile,
                       task_decorator)
@@ -46,7 +46,7 @@ class TestFile(BaseTestCase):
         GTest.print("File")
 
         file_1: File = LocalFileStore.get_default_instance().create_empty_file("my_file.txt")
-        file_model: ResourceModel = FileService.create_file_model(file=file_1)
+        file_model: ResourceModel = FsNodeService.create_fs_node_model(fs_node=file_1)
 
         self.assertTrue(file_model.is_saved())
         self.assertEqual(file_model.fs_node_model.path, file_1.path)
