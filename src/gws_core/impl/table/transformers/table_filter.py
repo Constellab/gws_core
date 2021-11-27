@@ -16,6 +16,10 @@ from ....task.task import Task
 from ....task.task_decorator import task_decorator
 from ....task.task_io import TaskInputs, TaskOutputs
 from ...table.table import Table
+from ..helper.constructor.num_data_filter_param import \
+    NumericDataFilterParamConstructor
+from ..helper.constructor.text_data_filter_param import \
+    TextDataFilterParamConstructor
 from ..helper.table_aggregator_helper import TableAggregatorHelper
 from ..helper.table_filter_helper import TableFilterHelper
 
@@ -78,48 +82,8 @@ class TableFilter(Task):
             short_description="Filter axis validating a numeric criterion after aggregation",
             max_number_of_occurrences=3
         ),
-        "numeric_data_filter": ParamSet(
-            {
-                "column_name": StrParam(
-                    human_name="Column name (pattern)",
-                    short_description="The name of the columns along which the filter is applied (text pattern)",
-                ),
-                "comparator": StrParam(
-                    human_name="Comparator",
-                    allowed_values=TableFilterHelper.VALID_NUMERIC_COMPARATORS,
-                    short_description="Comparator",
-                ),
-                "value": FloatParam(
-                    human_name="Numeric value",
-                    short_description="Value",
-                ),
-            },
-            optional=True,
-            human_name="Numeric data criterion",
-            short_description="Filter data (along an axis) validating a numeric criterion",
-            max_number_of_occurrences=3
-        ),
-        "text_data_filter": ParamSet(
-            {
-                "column_name": StrParam(
-                    human_name="Column name (pattern)",
-                    short_description="The name of the columns along which the filter is applied (text pattern)",
-                ),
-                "comparator": StrParam(
-                    human_name="Comparator",
-                    allowed_values=TableFilterHelper.VALID_TEXT_COMPARATORS,
-                    short_description="Comparator",
-                ),
-                "value": StrParam(
-                    human_name="Searched text (pattern)",
-                    short_description="Searched text (pattern)",
-                ),
-            },
-            optional=True,
-            human_name="Text data criterion",
-            short_description="Filter data (along an axis) validating a text criterion",
-            max_number_of_occurrences=3
-        ),
+        "numeric_data_filter": NumericDataFilterParamConstructor.construct_filter(),
+        "text_data_filter": TextDataFilterParamConstructor.construct_filter(),
     }
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -138,21 +102,7 @@ class TableFilter(Task):
                 comp=_filter["comparator"],
                 value=_filter["value"],
             )
-
-        for _filter in params["numeric_data_filter"]:
-            data = TableFilterHelper.filter_numeric_data(
-                data=data,
-                column_name=_filter["column_name"],
-                comp=_filter["comparator"],
-                value=_filter["value"],
-            )
-
-        for _filter in params["text_data_filter"]:
-            data = TableFilterHelper.filter_text_data(
-                data=data,
-                column_name=_filter["column_name"],
-                comp=_filter["comparator"],
-                value=_filter["value"],
-            )
+        data = NumericDataFilterParamConstructor.validate_filter("numeric_data_filter", data, params)
+        data = TextDataFilterParamConstructor.validate_filter("text_data_filter", data, params)
 
         return {"table": Table(data=data)}

@@ -6,7 +6,6 @@
 from typing import List
 
 import numpy
-import regex
 from pandas import DataFrame
 
 from ....core.exception.exceptions import BadRequestException
@@ -17,7 +16,7 @@ class TableFilterHelper:
 
     VALID_AXIS_NAMES = ["row", "column"]
     VALID_NUMERIC_COMPARATORS = ["=", "!=", ">=", "<=", ">", "<"]
-    VALID_TEXT_COMPARATORS = ["==", "!="]
+    VALID_TEXT_COMPARATORS = ["=", "!=", "contains", "startswith", "endswith"]
 
     @classmethod
     def _check_axis_name(cls, axis):
@@ -28,6 +27,8 @@ class TableFilterHelper:
 
     @classmethod
     def _check_numeric_comparator(cls, comp):
+        if comp is None:
+            return
         if comp not in cls.VALID_NUMERIC_COMPARATORS:
             raise BadRequestException(
                 f"The numeric comparator '{comp}' is not valid. Valid numeric comparators are {cls.VALID_NUMERIC_COMPARATORS}."
@@ -35,6 +36,8 @@ class TableFilterHelper:
 
     @classmethod
     def _check_text_comparator(cls, comp):
+        if comp is None:
+            return
         if comp not in cls.VALID_TEXT_COMPARATORS:
             raise BadRequestException(
                 f"The text comparator '{comp}' is not valid. Valid text comparators are {cls.VALID_TEXT_COMPARATORS}."
@@ -56,7 +59,8 @@ class TableFilterHelper:
     @classmethod
     def filter_by_aggregated_values(
             cls, data: DataFrame, direction: str, func: str, comp: str, value: float) -> DataFrame:
-
+        if direction is None or func is None or comp is None:
+            return data
         TableAggregatorHelper._check_func(func)
         TableAggregatorHelper._check_direction(direction)
         cls._check_numeric_comparator(comp)
@@ -73,7 +77,7 @@ class TableFilterHelper:
                 tf = aggregated_data < value
             elif comp == "<=":
                 tf = aggregated_data <= value
-            elif comp == "==":
+            elif comp == "=":
                 tf = aggregated_data == value
             elif comp == "!=":
                 tf = aggregated_data != value
@@ -89,6 +93,8 @@ class TableFilterHelper:
     def filter_numeric_data(
         cls, data: DataFrame, column_name: str, comp: str, value: float
     ) -> DataFrame:
+        if column_name is None or comp is None:
+            return data
         tab: DataFrame = data.filter(regex=column_name, axis=1)
 
         def to_numeric(x):
@@ -103,14 +109,12 @@ class TableFilterHelper:
             tab = tab < value
         elif comp == "<=":
             tab = tab <= value
-        elif comp == "==":
+        elif comp == "=":
             tab = tab == value
         elif comp == "!=":
             tab = tab != value
 
-        print(tab)
         tab = tab.all(axis="columns")
-        print(tab)
         data = data.loc[tab, :]
 
         return data
@@ -118,7 +122,8 @@ class TableFilterHelper:
     @classmethod
     def filter_text_data(
             cls, data: DataFrame, column_name: str, comp: str, value: str) -> DataFrame:
-
+        if column_name is None or comp is None:
+            return data
         cls._check_text_comparator(comp)
         tab: DataFrame = data.filter(regex=column_name, axis=1)
 
@@ -126,10 +131,16 @@ class TableFilterHelper:
             return x if isinstance(x, str) else numpy.NaN
         tab = tab.applymap(to_text)
 
-        if comp == "==":
+        if comp == "=":
             tab = tab == value
         elif comp == "!=":
             tab = tab != value
+        elif comp == "contains":
+            tab = tab.str.contains(value, regexp=True)
+        elif comp == "startswith":
+            tab = tab.str.startswith(value)
+        elif comp == "endswith":
+            tab = tab.str.endswith(value)
 
         tab = tab.all(axis="columns")
         data = data.loc[tab, :]

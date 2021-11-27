@@ -8,6 +8,10 @@ from typing import Union
 from pandas import DataFrame
 
 from ....core.exception.exceptions import BadRequestException
+from ...table.helper.constructor.num_data_filter_param import \
+    NumericDataFilterParamConstructor
+from ...table.helper.constructor.text_data_filter_param import \
+    TextDataFilterParamConstructor
 from ...table.view.table_view import TableView
 
 
@@ -48,20 +52,27 @@ class DatasetView(TableView):
         return self._targets.iloc[from_row_index:to_row_index, 0:n].to_dict('list')
 
     def to_dict(self, *args, **kwargs) -> dict:
+        # apply pre-filters
+        data = self._data
+        data = NumericDataFilterParamConstructor.validate_filter("numeric_data_filter", data, params)
+        data = TextDataFilterParamConstructor.validate_filter("text_data_filter", data, params)
+
+        # continue ...
         from_row = kwargs.get("from_row", 1)
         number_of_rows_per_page = kwargs.get("number_of_rows_per_page", 50)
         from_column = kwargs.get("from_column", 1)
         number_of_columns_per_page = kwargs.get("number_of_columns_per_page", 50)
         scale = kwargs.get("scale", "none")
 
-        total_number_of_rows = self._data.shape[0]
-        total_number_of_columns = self._data.shape[1]
+        total_number_of_rows = data.shape[0]
+        total_number_of_columns = data.shape[1]
         from_row_index = from_row - 1
         from_column_index = from_column - 1
         to_row_index = from_row_index + number_of_rows_per_page - 1
         to_column_index = from_column_index + number_of_columns_per_page - 1
 
-        data = self._slice_data(
+        data = self._slice(
+            data,
             from_row_index=from_row_index,
             to_row_index=to_row_index,
             from_column_index=from_column_index,

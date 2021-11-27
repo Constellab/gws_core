@@ -8,6 +8,10 @@ from pandas import DataFrame
 from ....config.config_types import ConfigParams
 from ....config.param_spec import ListParam, StrParam
 from ....resource.view_types import ViewSpecs
+from ..helper.constructor.num_data_filter_param import \
+    NumericDataFilterParamConstructor
+from ..helper.constructor.text_data_filter_param import \
+    TextDataFilterParamConstructor
 from .base_table_view import BaseTableView
 
 
@@ -53,6 +57,8 @@ class ScatterPlot3DView(BaseTableView):
         "x_column_name": StrParam(human_name="X-column name", optional=True, short_description="The column to use as x-axis"),
         "y_column_name": StrParam(human_name="Y-column name", optional=True, short_description="The column to use as y-axis"),
         "z_column_names": ListParam(human_name="Z-column names", optional=True, short_description="List of columns to use as z-axis"),
+        "numeric_data_filter": NumericDataFilterParamConstructor.construct_filter(visibility='protected'),
+        "text_data_filter": TextDataFilterParamConstructor.construct_filter(visibility='protected'),
         "x_label": StrParam(human_name="X-label", optional=True, visibility='protected', short_description="The x-axis label to display"),
         "y_label": StrParam(human_name="Y-label", optional=True, visibility='protected', short_description="The y-axis label to display"),
         "z_label": StrParam(human_name="Z-label", optional=True, visibility='protected', short_description="The z-axis label to display"),
@@ -61,6 +67,12 @@ class ScatterPlot3DView(BaseTableView):
     }
 
     def to_dict(self, params: ConfigParams) -> dict:
+        # apply pre-filters
+        data = self._data
+        data = NumericDataFilterParamConstructor.validate_filter("numeric_data_filter", data, params)
+        data = TextDataFilterParamConstructor.validate_filter("text_data_filter", data, params)
+
+        # continue ...
         x_column_name = params.get_value("x_column_name", "")
         y_column_name = params.get_value("y_column_name", "")
         z_column_names = params.get_value("z_column_names", [])
@@ -69,17 +81,17 @@ class ScatterPlot3DView(BaseTableView):
         z_label = params.get_value("y_label", "")
 
         if x_column_name:
-            x_data = self._data[x_column_name].values.tolist()
+            x_data = data[x_column_name].values.tolist()
             x_tick_labels = None
         else:
-            x_data = list(range(0, self._data.shape[0]))
-            x_tick_labels = params.get_value("x_tick_labels", self._data.index.to_list())
+            x_data = list(range(0, data.shape[0]))
+            x_tick_labels = params.get_value("x_tick_labels", data.index.to_list())
 
         series = []
-        y_data = self._data[y_column_name].values.tolist()
+        y_data = data[y_column_name].values.tolist()
         y_tick_labels = params.get_value("y_tick_labels")
         for z_column_name in z_column_names:
-            z_data = self._data[z_column_name].values.tolist()
+            z_data = data[z_column_name].values.tolist()
             series.append({
                 "data": {
                     "x": x_data,

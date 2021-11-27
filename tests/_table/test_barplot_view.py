@@ -26,9 +26,9 @@ class TestBarPlotView(BaseTestCase):
             column_names=["sepal.length", "petal.length", "petal.width"]
         ))
         self.assertEqual(dic["type"], "bar-plot-view")
-        self.assertEqual(dic["data"]["series"][0]["data"]["x"], range(0, table.get_data().shape[0]))
-        self.assertEqual(dic["data"]["series"][1]["data"]["x"], range(0, table.get_data().shape[0]))
-        self.assertEqual(dic["data"]["series"][2]["data"]["x"], range(0, table.get_data().shape[0]))
+        self.assertEqual(dic["data"]["series"][0]["data"]["x"], list(range(0, table.get_data().shape[0])))
+        self.assertEqual(dic["data"]["series"][1]["data"]["x"], list(range(0, table.get_data().shape[0])))
+        self.assertEqual(dic["data"]["series"][2]["data"]["x"], list(range(0, table.get_data().shape[0])))
 
         self.assertEqual(dic["data"]["series"][0]["data"]["y"], table.get_data()["sepal.length"].values.tolist())
         self.assertEqual(dic["data"]["series"][1]["data"]["y"], table.get_data()["petal.length"].values.tolist())

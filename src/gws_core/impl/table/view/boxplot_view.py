@@ -9,6 +9,10 @@ from pandas import DataFrame
 from ....config.config_types import ConfigParams
 from ....config.param_spec import ListParam, ParamSet, StrParam
 from ....resource.view_types import ViewSpecs
+from ..helper.constructor.num_data_filter_param import \
+    NumericDataFilterParamConstructor
+from ..helper.constructor.text_data_filter_param import \
+    TextDataFilterParamConstructor
 from .base_table_view import BaseTableView
 
 
@@ -59,19 +63,26 @@ class BoxPlotView(BaseTableView):
             short_description="Select a series of columns to aggregate as box-plot",
             max_number_of_occurrences=5
         ),
+        "numeric_data_filter": NumericDataFilterParamConstructor.construct_filter(visibility='protected'),
+        "text_data_filter": TextDataFilterParamConstructor.construct_filter(visibility='protected'),
         "x_tick_labels": ListParam(human_name="X-tick-labels", optional=True, visibility='protected', short_description="The labels of x-axis ticks"),
         "x_label": StrParam(human_name="X-label", optional=True, visibility='protected', short_description="The x-axis label to display"),
         "y_label": StrParam(human_name="Y-label", optional=True, visibility='protected', short_description="The y-axis label to display"),
     }
 
     def to_dict(self, params: ConfigParams) -> dict:
+        # apply pre-filters
+        data = self._data
+        data = NumericDataFilterParamConstructor.validate_filter("numeric_data_filter", data, params)
+        data = TextDataFilterParamConstructor.validate_filter("text_data_filter", data, params)
+
+        # continue ...
         x_tick_labels = params.get_value("x_tick_labels", None)
         x_label = params.get_value("x_label", "")
         y_label = params.get_value("y_label", "")
         series = []
 
         for param_series in params.get("series"):
-            #column_names = param_series.get_value("column_names", [])
             column_names = param_series["column_names"]
 
             if not column_names:
@@ -81,10 +92,10 @@ class BoxPlotView(BaseTableView):
                 x_tick_labels = column_names
 
             if not column_names:
-                n = min(self._data.shape[1], 50)
-                column_names = self._data.columns[0:n]
+                n = min(data.shape[1], 50)
+                column_names = data.columns[0:n]
 
-            df = self._data[column_names]
+            df = data[column_names]
             ymin = df.min(skipna=True).to_list()
             ymax = df.max(skipna=True).to_list()
 
@@ -107,7 +118,6 @@ class BoxPlotView(BaseTableView):
                     "upper_whisker": uw.tolist()
                 },
                 "column_names": column_names,
-                # "nb_of_data": len(self._data[:, column_names[0]])
             })
 
         if not series:

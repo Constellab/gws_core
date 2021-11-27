@@ -20,10 +20,10 @@ class TestTableView(BaseTestCase):
 
         vw = TableView(table)
         self.assertEqual(
-            vw._slice_data(from_row_index=4, to_row_index=21, from_column_index=1, to_column_index=4),
+            vw._slice(vw._data, from_row_index=4, to_row_index=21, from_column_index=1, to_column_index=4),
             table.to_table().iloc[4:21, 1:4].to_dict('list')
         )
-        
+
         tester = ViewTester(view = vw)
         dic = tester.to_dict()
         self.assertEqual(dic["type"], "table-view")
