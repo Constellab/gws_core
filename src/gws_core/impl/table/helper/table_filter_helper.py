@@ -27,8 +27,6 @@ class TableFilterHelper:
 
     @classmethod
     def _check_numeric_comparator(cls, comp):
-        if comp is None:
-            return
         if comp not in cls.VALID_NUMERIC_COMPARATORS:
             raise BadRequestException(
                 f"The numeric comparator '{comp}' is not valid. Valid numeric comparators are {cls.VALID_NUMERIC_COMPARATORS}."
@@ -36,8 +34,6 @@ class TableFilterHelper:
 
     @classmethod
     def _check_text_comparator(cls, comp):
-        if comp is None:
-            return
         if comp not in cls.VALID_TEXT_COMPARATORS:
             raise BadRequestException(
                 f"The text comparator '{comp}' is not valid. Valid text comparators are {cls.VALID_TEXT_COMPARATORS}."
@@ -45,9 +41,9 @@ class TableFilterHelper:
 
     @classmethod
     def filter_by_axis_names(cls, data: DataFrame, axis: str, value: str):
-        cls._check_axis_name(axis)
-        if value is None:
+        if (axis is None) or (value is None):
             return data
+        cls._check_axis_name(axis)
         if isinstance(value, str):
             if axis == "row":
                 return data.filter(regex=value, axis=0)
@@ -59,7 +55,7 @@ class TableFilterHelper:
     @classmethod
     def filter_by_aggregated_values(
             cls, data: DataFrame, direction: str, func: str, comp: str, value: float) -> DataFrame:
-        if direction is None or func is None or comp is None:
+        if (direction is None) or (func is None) or (comp is None) or (value is None):
             return data
         TableAggregatorHelper._check_func(func)
         TableAggregatorHelper._check_direction(direction)
@@ -93,7 +89,7 @@ class TableFilterHelper:
     def filter_numeric_data(
         cls, data: DataFrame, column_name: str, comp: str, value: float
     ) -> DataFrame:
-        if column_name is None or comp is None:
+        if (column_name is None) or (comp is None) or (value is None):
             return data
         tab: DataFrame = data.filter(regex=column_name, axis=1)
 
@@ -122,7 +118,7 @@ class TableFilterHelper:
     @classmethod
     def filter_text_data(
             cls, data: DataFrame, column_name: str, comp: str, value: str) -> DataFrame:
-        if column_name is None or comp is None:
+        if (column_name is None) or (comp is None) or (value is None):
             return data
         cls._check_text_comparator(comp)
         tab: DataFrame = data.filter(regex=column_name, axis=1)

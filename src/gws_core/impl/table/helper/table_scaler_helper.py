@@ -26,6 +26,8 @@ class TableScalerHelper:
     @classmethod
     def scale(
             cls, data: DataFrame, func: str) -> DataFrame:
+        if func is None:
+            return data
         cls._check_func(func)
 
         def _log10(x):
@@ -33,7 +35,6 @@ class TableScalerHelper:
 
         def _log2(x):
             return numpy.log2(x) if isinstance(x, (float, int,)) else numpy.NaN
-
         if func and func != "none":
             if func == "log10":
                 data = data.applymap(_log10, na_action='ignore')

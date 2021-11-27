@@ -30,6 +30,8 @@ class TableAggregatorHelper:
     @classmethod
     def aggregate(
             cls, data: DataFrame, direction: str, func: str, skip_nan: bool = True) -> DataFrame:
+        if (direction is None) or (func is None):
+            return data
         cls._check_direction(direction)
         cls._check_func(func)
         axis_num = 1 if direction == "horizontal" else 0
