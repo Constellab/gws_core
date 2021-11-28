@@ -47,19 +47,20 @@ def upload_folder(files: List[UploadFile] = FastAPIFile(...),
     return result.to_json()
 
 
-@core_app.get("/fs-node/{typing_name}/{id}/download", tags=["Files"], summary="Download a file")
-def download_a_file(id: str,
-                    typing_name: str,
-                    _: UserData = Depends(AuthService.check_user_access_token)) -> FileResponse:
+@core_app.get("/fs-node/{id}/get-download-url", tags=["Files"], summary="Get a unique url to download the file")
+def get_download_file_url(id: str, _: UserData = Depends(AuthService.check_user_access_token)) -> str:
     """
-    Download a file
-
-    - **type**: the type of the file to download
-    - **id**: the id of the file to download
+    Generate a unique url to download the file
     """
+    return f'fs-node/download?unique_code={FsNodeService.generate_download_file_url(id=id)}'
 
-    file_response = FsNodeService.download_file(id=id)
-    return file_response
+
+@core_app.get("/fs-node/download", tags=["Files"], summary="Download a file")
+def download_a_file(id=Depends(AuthService.check_unique_code)) -> FileResponse:
+    """
+    Download a file. The access is made with a unique  code generated with get_download_file_url
+    """
+    return FsNodeService.download_file(id=id)
 
 
 @core_app.get("/fs-node", tags=["Files"], summary="Get the list of files")

@@ -24,6 +24,8 @@ from ...resource.resource import Resource
 from ...resource.resource_model import ResourceModel, ResourceOrigin
 from ...resource.resource_service import ResourceService
 from ...resource.resource_typing import FileTyping
+from ...user.current_user_service import CurrentUserService
+from ...user.unique_code_service import UniqueCodeService
 from .file import File
 from .file_helper import FileHelper
 from .file_store import FileStore
@@ -47,6 +49,10 @@ class FsNodeService(BaseService):
             ResourceModel.creation_datetime.desc())
         return Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
+
+    @classmethod
+    def generate_download_file_url(cls, id: str) -> str:
+        return UniqueCodeService.generate_code(CurrentUserService.get_and_check_current_user().id, id)
 
     @classmethod
     def download_file(cls, id: str) -> FileResponse:

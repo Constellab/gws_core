@@ -23,6 +23,7 @@ from .credentials_dto import CredentialsDTO
 from .current_user_service import CurrentUserService
 from .jwt_service import JWTService
 from .oauth2_user_cookie_scheme import oauth2_user_cookie_scheme
+from .unique_code_service import CodeObject, UniqueCodeService
 from .user import User
 from .user_dto import UserData, UserDataDict
 from .user_exception import InvalidTokenException, WrongCredentialsException
@@ -101,6 +102,19 @@ class AuthService(BaseService):
                 is_active=db_user.is_active,
                 is_admin=db_user.is_admin,
             )
+        except Exception:
+            raise InvalidTokenException()
+
+    @classmethod
+    def check_unique_code(cls, unique_code: str) -> UserData:
+        """Use link the the token to check access for a unique code generated. return the object associated with the code
+        """
+        try:
+            code_obj: CodeObject = UniqueCodeService.check_code(unique_code)
+
+            cls.authenticate(code_obj["user_id"])
+
+            return code_obj['obj']
         except Exception:
             raise InvalidTokenException()
 
