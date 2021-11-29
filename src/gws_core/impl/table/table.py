@@ -281,25 +281,25 @@ class Table(Resource):
         if not isinstance(indexes, list):
             raise BadRequestException("The indexes must be a list of integers")
         data = self._data.iloc[indexes, :]
-        return type(self)(data=data)
+        return Table(data=data)
 
     def select_by_column_indexes(self, indexes: List[int]) -> 'Table':
         if not isinstance(indexes, list):
             raise BadRequestException("The indexes must be a list of integers")
         data = self._data.iloc[:, indexes]
-        return type(self)(data=data)
+        return Table(data=data)
 
     def select_by_row_name(self, name_regex: str) -> 'Table':
         if not isinstance(name_regex, str):
             raise BadRequestException("The name must be a string")
         data = self._data.filter(regex=name_regex, axis=0)
-        return type(self)(data=data)
+        return Table(data=data)
 
     def select_by_column_name(self, name_regex: str) -> 'Table':
         if not isinstance(name_regex, str):
             raise BadRequestException("The name must be a string")
         data = self._data.filter(regex=name_regex, axis=1)
-        return type(self)(data=data)
+        return Table(data=data)
 
     # -- V ---
 

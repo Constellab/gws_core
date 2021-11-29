@@ -302,7 +302,7 @@ class Dataset(Table):
             data = self._data.iloc[indexes, :]
         if not only_features:
             targets = self._targets.iloc[indexes, :]
-        return type(self)(features=data, targets=targets)
+        return Dataset(features=data, targets=targets)
 
     def select_by_column_indexes(self, indexes: List[int], only_features=False, only_targets=False) -> 'Dataset':
         if not isinstance(indexes, list):
@@ -317,7 +317,7 @@ class Dataset(Table):
             data = self._data.iloc[:, feature_indexes]
         if not only_features:
             targets = self._targets.iloc[:, target_indexes]
-        return type(self)(features=data, targets=targets)
+        return Dataset(features=data, targets=targets)
 
     def select_by_row_name(self, name_regex: str, only_features=False, only_targets=False) -> 'Dataset':
         if not isinstance(name_regex, str):
@@ -328,7 +328,7 @@ class Dataset(Table):
             data = self._data.filter(regex=name_regex, axis=0)
         if not only_features:
             targets = self._targets.filter(regex=name_regex, axis=0)
-        return type(self)(features=data, targets=targets)
+        return Dataset(features=data, targets=targets)
 
     def select_by_column_name(self, name_regex: str, only_features=False, only_targets=False) -> 'Dataset':
         if not isinstance(name_regex, str):
@@ -339,7 +339,7 @@ class Dataset(Table):
             data = self._data.filter(regex=name_regex, axis=1)
         if not only_features:
             targets = self._targets.filter(regex=name_regex, axis=1)
-        return type(self)(features=data, targets=targets)
+        return Dataset(features=data, targets=targets)
 
     def _set_features_and_targets(
             self, features: Union[DataFrame, np.ndarray] = None, targets: Union[DataFrame, np.ndarray] = None,
