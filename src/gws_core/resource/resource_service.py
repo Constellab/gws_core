@@ -17,7 +17,7 @@ from ..model.typing_manager import TypingManager
 from ..resource.view_helper import ViewHelper
 from ..task.task_input_model import TaskInputModel
 from .resource_model import Resource, ResourceModel, ResourceOrigin
-from .resource_search import ResourceSearchBuilder
+from .resource_model_search import ResourceModelSearchBuilder
 from .resource_typing import ResourceTyping
 from .view_meta_data import ResourceViewMetaData
 
@@ -118,7 +118,7 @@ class ResourceService(BaseService):
     def search(cls, search: SearchDict,
                page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
 
-        search_builder: SearchBuilder = ResourceSearchBuilder()
+        search_builder: SearchBuilder = ResourceModelSearchBuilder()
 
         model_select: ModelSelect = search_builder.build_search(search)
         return Paginator(

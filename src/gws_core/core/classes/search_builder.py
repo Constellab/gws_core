@@ -1,6 +1,6 @@
 
 
-from typing import Any, Callable, List, Literal, Type
+from typing import Any, Callable, List, Literal, Optional, Type
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.exception.exceptions.bad_request_exception import \
@@ -17,17 +17,19 @@ SearchOperatorStr = Literal["EQ", "NEQ",  "LT", "LE", "GT", "GE", "CONTAINS", "I
                             "START_WITH", "END_WITH", "MATCH", "BETWEEN"]
 
 SearchOrderStr = Literal["ASC", "DESC"]
+SearchOrderNullOption = Literal["LAST", "FIRST"]
 
 
-class SearchFilterParam(TypedDict):
-    field_name: str
+class SearchFilterCriteria(TypedDict):
+    key: str
     operator: SearchOperatorStr
     value: Any
 
 
-class SearchOrderParam(TypedDict):
-    field_name: str
+class SearchSortCriteria(TypedDict):
+    key: str
     order: SearchOrderStr
+    nullOption: Optional[SearchOrderNullOption]
 
 
 class SearchDict(TypedDict):
@@ -36,8 +38,8 @@ class SearchDict(TypedDict):
     :param TypedDict: [description]
     :type TypedDict: [type]
     """
-    filters: List[SearchFilterParam]
-    orders: List[SearchOrderParam]
+    filtersCriteria: List[SearchFilterCriteria]
+    sortsCriteria: Optional[List[SearchSortCriteria]]
 
 
 class SearchBuilder:
@@ -61,21 +63,21 @@ class SearchBuilder:
             self._default_orders = default_order
 
     def build_search(self, search: SearchDict) -> ModelSelect:
-        filter_expresion = self.build_search_filter_query(search["filters"])
+        filter_expression = self.build_search_filter_query(search["filtersCriteria"])
 
-        orders: List[Ordering] = self.build_search_ordering(search["orders"])
+        orders: List[Ordering] = self.build_search_ordering(search["sortsCriteria"])
 
         model_select = self._model_type.select()
 
-        if filter_expresion is not None:
-            model_select = model_select.where(filter_expresion)
+        if filter_expression is not None:
+            model_select = model_select.where(filter_expression)
 
         if len(orders) > 0:
             model_select = model_select.order_by(*orders)
 
         return model_select
 
-    def build_search_filter_query(self, filters: List[SearchFilterParam]) -> Expression:
+    def build_search_filter_query(self, filters: List[SearchFilterCriteria]) -> Expression:
         query_builder: ExpressionBuilder = ExpressionBuilder()
 
         for filter_ in filters:
@@ -83,15 +85,15 @@ class SearchBuilder:
 
         return query_builder.build()
 
-    def get_filter_expression(self, filter_: SearchFilterParam) -> Expression:
-        field: Field = self.get_model_field(filter_["field_name"])
+    def get_filter_expression(self, filter_: SearchFilterCriteria) -> Expression:
+        field: Field = self.get_model_field(filter_["key"])
 
         # convert the value in the correct format
         value = self.convert_value(field, filter_["value"])
 
         return self.get_expression(filter_["operator"], field, value)
 
-    def build_search_ordering(self, orders: List[SearchOrderParam]) -> List[Ordering]:
+    def build_search_ordering(self, orders: List[SearchSortCriteria]) -> List[Ordering]:
         if not orders:
             return self._default_orders
 
@@ -102,24 +104,26 @@ class SearchBuilder:
 
         return ordering
 
-    def get_field_order(self, order: SearchOrderParam) -> Ordering:
-        field: Field = self.get_model_field(order["field_name"])
+    def get_field_order(self, order: SearchSortCriteria) -> Ordering:
+        field: Field = self.get_model_field(order["key"])
+
+        null_option: str = order.get('nullOption', 'LAST')
 
         if order["order"] == "DESC":
-            return field.desc()
+            return field.desc(nulls=null_option)
         else:
-            return field.asc()
+            return field.asc(nulls=null_option)
 
-    def get_model_field(self, field_name: str) -> Field:
+    def get_model_field(self, key: str) -> Field:
         """Retrieve the peewee field of the model base on field name
         """
-        if not hasattr(self._model_type, field_name):
-            raise BadRequestException(f"The model does not have a attribute named '{field_name}'")
+        if not hasattr(self._model_type, key):
+            raise BadRequestException(f"The model does not have a attribute named '{key}'")
 
-        field: Field = getattr(self._model_type, field_name)
+        field: Field = getattr(self._model_type, key)
 
         if not isinstance(field, Field):
-            raise BadRequestException(f"The attribte named '{field_name}' is not a field")
+            raise BadRequestException(f"The attribte named '{key}' is not a field")
 
         return field
 

@@ -4,12 +4,12 @@ from typing import List
 from peewee import Expression
 
 from ..core.classes.expression_builder import ExpressionBuilder
-from ..core.classes.search_builder import SearchBuilder, SearchFilterParam
+from ..core.classes.search_builder import SearchBuilder, SearchFilterCriteria
 from ..tag.tag import Tag, TagHelper
 from .resource_model import ResourceModel
 
 
-class ResourceSearchBuilder(SearchBuilder):
+class ResourceModelSearchBuilder(SearchBuilder):
     """Search build for the resource model
 
     :param SearchBuilder: [description]
@@ -19,9 +19,9 @@ class ResourceSearchBuilder(SearchBuilder):
     def __init__(self) -> None:
         super().__init__(ResourceModel, default_order=[ResourceModel.creation_datetime.desc()])
 
-    def get_filter_expression(self, filter: SearchFilterParam) -> Expression:
+    def get_filter_expression(self, filter: SearchFilterCriteria) -> Expression:
         # Special case for the tags to filter on all tags
-        if filter['field_name'] == 'tags':
+        if filter['key'] == 'tags':
             tags: List[Tag] = TagHelper.tags_to_list(filter['value'])
             query_builder: ExpressionBuilder = ExpressionBuilder()
             for tag in tags:

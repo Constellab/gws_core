@@ -3,7 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, Coroutine
 
 from fastapi.param_functions import Depends
 from requests.models import Response
@@ -23,7 +22,8 @@ from .credentials_dto import CredentialsDTO
 from .current_user_service import CurrentUserService
 from .jwt_service import JWTService
 from .oauth2_user_cookie_scheme import oauth2_user_cookie_scheme
-from .unique_code_service import CodeObject, UniqueCodeService
+from .unique_code_service import (CodeObject, InvalidUniqueCodeException,
+                                  UniqueCodeService)
 from .user import User
 from .user_dto import UserData, UserDataDict
 from .user_exception import InvalidTokenException, WrongCredentialsException
@@ -103,7 +103,7 @@ class AuthService(BaseService):
                 is_admin=db_user.is_admin,
             )
         except Exception:
-            raise InvalidTokenException()
+            raise InvalidUniqueCodeException()
 
     @classmethod
     def check_unique_code(cls, unique_code: str) -> UserData:

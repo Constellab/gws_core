@@ -5,7 +5,7 @@ from typing import List
 from gws_core import (BaseTestCase, ConfigParams, Resource, ResourceModel, Tag,
                       Task, TaskInputs, TaskModel, TaskOutputs,
                       resource_decorator, task_decorator)
-from gws_core.core.classes.search_builder import SearchDict, SearchFilterParam
+from gws_core.core.classes.search_builder import SearchDict, SearchFilterCriteria
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.resource.r_field import RField
 from gws_core.resource.resource_model import ResourceOrigin
@@ -102,10 +102,10 @@ class TestResourceModel(BaseTestCase):
         paginator = ResourceService.search(search_dict).to_json()
         self.assertEqual(paginator['total_number_of_items'], 2)
 
-    def _get_tag_filter(self, value: str) -> SearchFilterParam:
+    def _get_tag_filter(self, value: str) -> SearchFilterCriteria:
         return {'field_name': 'tags', 'operator': 'CONTAINS', 'value': value}
 
-    def _get_data_filter(self, value: str) -> SearchFilterParam:
+    def _get_data_filter(self, value: str) -> SearchFilterCriteria:
         return {'field_name': 'data', 'operator': 'MATCH', 'value': value}
 
     def _create_resource_with_tag(

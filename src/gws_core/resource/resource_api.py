@@ -77,7 +77,7 @@ async def delete_file(id: str,
     return ResourceService.delete(id)
 
 
-@core_app.post("/advanced-search", tags=["Resource"], summary="Advanced search for resource")
+@core_app.post("/resource/advanced-search", tags=["Resource"], summary="Advanced search for resource")
 async def advanced_search(search_dict: SearchDict,
                           page: Optional[int] = 1,
                           number_of_items_per_page: Optional[int] = 20,

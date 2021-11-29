@@ -2,11 +2,13 @@
 
 from typing import Any, Dict, TypedDict
 
-from gws_core.core.exception.gws_exceptions import GWSException
-from gws_core.core.utils.utils import Utils
+from fastapi import status
 
+from ..core.exception.exceptions.base_http_exception import BaseHTTPException
 from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
+from ..core.exception.gws_exceptions import GWSException
+from ..core.utils.utils import Utils
 
 
 class CodeObject(TypedDict):
@@ -40,9 +42,17 @@ class UniqueCodeService():
         """
 
         if not code in cls._generated_codes:
-            raise UnauthorizedException(GWSException.INVALID_UNIQUE_CODE.value,
-                                        unique_code=GWSException.INVALID_UNIQUE_CODE.value)
+            raise InvalidUniqueCodeException()
 
         code_obj = cls._generated_codes[code]
         del cls._generated_codes[code]
         return code_obj
+
+
+class InvalidUniqueCodeException(BaseHTTPException):
+
+    def __init__(self) -> None:
+        super().__init__(
+            http_status_code=status.HTTP_403_FORBIDDEN,
+            detail=GWSException.INVALID_UNIQUE_CODE.value,
+            unique_code=GWSException.INVALID_UNIQUE_CODE.name)
