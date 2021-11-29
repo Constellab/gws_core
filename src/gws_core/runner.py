@@ -19,7 +19,7 @@ from .core.utils.settings import Settings
 
 
 def _run(ctx, test="",
-         cli=False, cli_test=False, runserver=False, runmode="dev",
+         cli=False, cli_test=False, runserver=False, runmode="dev", notebook=False,
          ip="0.0.0.0", port="3000", log_level: str = None, show_sql=False):
 
     is_test = bool(test or cli_test)
@@ -82,6 +82,9 @@ def _run(ctx, test="",
 
         test_runner = unittest.TextTestRunner()
         test_runner.run(test_suite)
+    elif notebook:
+        # nothing ...
+        pass
     else:
         Logger.error("No option provided on the run, did you forget '--runserver' or '--test' ?")
 
@@ -97,11 +100,12 @@ def _run(ctx, test="",
 @click.option('--cli_test', is_flag=True, help='Use command line interface in test mode')
 @click.option('--runserver', is_flag=True, help='Starts the server')
 @click.option('--runmode', default="dev", help='Starting mode (dev or prod). Defaults to dev')
+@click.option('--notebook', is_flag=True, help='Starts the for notebook')
 @click.option('--ip', default="0.0.0.0", help='Server IP', show_default=True)
 @click.option('--port', default="3000", help='Server port', show_default=True)
 @click.option('--log_level', default="INFO", help='Level for the logs', show_default=True)
 @click.option('--show_sql', is_flag=True, help='Log sql queries in the console')
-def run(ctx, test, cli, cli_test, runserver, runmode, ip, port, log_level, show_sql):
+def run(ctx, test, cli, cli_test, runserver, runmode, notebook, ip, port, log_level, show_sql):
     _run(
         ctx,
         test=test,
@@ -109,6 +113,7 @@ def run(ctx, test, cli, cli_test, runserver, runmode, ip, port, log_level, show_
         cli_test=cli_test,
         runserver=runserver,
         runmode=runmode,
+        notebook=notebook,
         ip=ip,
         port=port,
         log_level=log_level,
