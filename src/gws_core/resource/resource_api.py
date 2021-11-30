@@ -92,16 +92,8 @@ async def advanced_search(search_dict: SearchDict,
 
 
 @core_app.get("/resource-type", tags=["Resource"], summary="Get the list of resource types")
-async def get_the_list_of_resource_types(page: Optional[int] = 1,
-                                         number_of_items_per_page: Optional[int] = 20,
-                                         _: UserData = Depends(AuthService.check_user_access_token)) -> PaginatorDict:
+async def get_the_list_of_resource_types(_: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
-    Retrieve a list of resources. The list is paginated.
-
-    - **page**: the page number
-    - **number_of_items_per_page**: the number of items per page. Defaults to 20 items per page.
+    Retrieve a the complete list list of resources types. The list is not paginated.
     """
-    return ResourceService.fetch_resource_type_list(
-        page=page,
-        number_of_items_per_page=number_of_items_per_page,
-    ).to_json()
+    return ListJsonable(ResourceService.fetch_resource_type_list()).to_json()
