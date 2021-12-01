@@ -28,14 +28,15 @@ class VennDiagramView(BaseTableView):
 
     ```
     {
-        "type": "venn-diagramm-view",
+        "type": "venn-diagram-view",
         "data": {
             "label": str,
-            "total_number_of_columns": int
+            "total_number_of_groups": int
+            "group_names": List[str],
             "sections": [
                 {
-                    "column_names": List[str],
-                    "section": [],
+                    "group_names": List[str],
+                    "data": [],
                 },
                 ...
             ]
@@ -44,7 +45,7 @@ class VennDiagramView(BaseTableView):
     ```
     """
 
-    _type: str = "venn_diagram-plot-view"
+    _type: str = "venn-diagram-view"
     _data: DataFrame
 
     _specs: ViewSpecs = {
@@ -64,8 +65,8 @@ class VennDiagramView(BaseTableView):
             if key not in column_names:
                 continue
             bag[key] = {
-                "columns": [key],
-                "section": set(data.iloc[:, i].dropna())
+                "group_names": [key],
+                "data": set(data.iloc[:, i].dropna())
             }
 
         found = True
@@ -76,7 +77,7 @@ class VennDiagramView(BaseTableView):
                 for key2, val2 in bag.items():
                     if key1 == key2:
                         continue
-                    columns = list(set([*val1["columns"], *val2["columns"]]))
+                    columns = list(set([*val1["group_names"], *val2["group_names"]]))
                     skip = False
                     for c in columns:
                         if c not in column_names:
@@ -87,18 +88,19 @@ class VennDiagramView(BaseTableView):
                     columns.sort()
                     joined_key = "_".join(columns)
                     if joined_key not in bag:
-                        inter1 = set([str(k) for k in val1["section"]])
-                        inter2 = set([str(k) for k in val2["section"]])
+                        inter1 = set([str(k) for k in val1["data"]])
+                        inter2 = set([str(k) for k in val2["data"]])
                         bag_copy[joined_key] = {
-                            "columns": columns,
-                            "section": inter1.intersection(inter2)
+                            "group_names": columns,
+                            "data": inter1.intersection(inter2)
                         }
                         found = True
             bag = bag_copy
 
         _data_dict = {
             "label": label,
-            "total_number_of_columns": len(column_names),
+            "total_number_of_groups": len(column_names),
+            "group_names": column_names,
             "sections": list(bag.values()),
         }
         return _data_dict
