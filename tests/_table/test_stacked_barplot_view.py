@@ -42,6 +42,6 @@ class TestStackedBarPlotView(BaseTestCase):
         self.assertEqual(dic["data"]["series"][1]["data"]["x"], list(range(0, table.get_data().shape[0])))
         self.assertEqual(dic["data"]["series"][2]["data"]["x"], list(range(0, table.get_data().shape[0])))
 
-        # print(dic["data"]["series"][0]["data"]["y"])
+        # gitprint(dic["data"]["series"][0]["data"]["y"])
         # print(sum(dic["data"]["series"][0]["data"]["y"]))
         self.assertAlmostEqual(sum(dic["data"]["series"][0]["data"]["y"]), 100, delta=0.01)
