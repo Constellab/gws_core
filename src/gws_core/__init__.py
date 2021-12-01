@@ -104,12 +104,12 @@ from .impl.dataset.view.dataset_view import DatasetView
 from .impl.file.file import File as File
 from .impl.file.file_helper import FileHelper as FileHelper
 from .impl.file.file_r_field import FileRField as FileRField
-from .impl.file.fs_node_service import FsNodeService as FsNodeService
 from .impl.file.file_store import FileStore as FileStore
 from .impl.file.file_tasks import WriteToJsonFile as WriteToJsonFile
 from .impl.file.folder import Folder as Folder
 from .impl.file.fs_node import FSNode as FSNode
 from .impl.file.fs_node_model import FSNodeModel as FSNodeModel
+from .impl.file.fs_node_service import FsNodeService as FsNodeService
 from .impl.file.local_file_store import LocalFileStore as LocalFileStore
 # Impl > JSON
 from .impl.json.json_dict import JSONDict as JSONDict
@@ -172,7 +172,11 @@ from .impl.table.view.scatterplot_2d_view import \
     ScatterPlot2DView as ScatterPlot2DView
 from .impl.table.view.scatterplot_3d_view import \
     ScatterPlot3DView as ScatterPlot3DView
+from .impl.table.view.stacked_barplot_view import \
+    StackedBarPlotView as StackedBarPlotView
 from .impl.table.view.table_view import TableView as TableView
+from .impl.table.view.venn_diagram_view import \
+    VennDiagramView as VennDiagramView
 # Impl > Text
 from .impl.text.text import Text as Text
 # Impl > TextView

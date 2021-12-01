@@ -8,6 +8,8 @@ from pandas import DataFrame
 from ....config.config_types import ConfigParams
 from ....config.param_spec import ListParam, StrParam
 from ....resource.view_types import ViewSpecs
+from ..helper.constructor.data_scale_filter_param import \
+    DataScaleFilterParamConstructor
 from ..helper.constructor.num_data_filter_param import \
     NumericDataFilterParamConstructor
 from ..helper.constructor.text_data_filter_param import \
@@ -57,8 +59,9 @@ class ScatterPlot3DView(BaseTableView):
         "x_column_name": StrParam(human_name="X-column name", optional=True, short_description="The column to use as x-axis"),
         "y_column_name": StrParam(human_name="Y-column name", optional=True, short_description="The column to use as y-axis"),
         "z_column_names": ListParam(human_name="Z-column names", optional=True, short_description="List of columns to use as z-axis"),
-        "numeric_data_filter": NumericDataFilterParamConstructor.construct_filter(visibility='protected'),
-        "text_data_filter": TextDataFilterParamConstructor.construct_filter(visibility='protected'),
+        "numeric_data_filters": NumericDataFilterParamConstructor.construct_filter(visibility='protected'),
+        "text_data_filters": TextDataFilterParamConstructor.construct_filter(visibility='protected'),
+        "data_scaling_filters": DataScaleFilterParamConstructor.construct_filter(visibility='protected'),
         "x_label": StrParam(human_name="X-label", optional=True, visibility='protected', short_description="The x-axis label to display"),
         "y_label": StrParam(human_name="Y-label", optional=True, visibility='protected', short_description="The y-axis label to display"),
         "z_label": StrParam(human_name="Z-label", optional=True, visibility='protected', short_description="The z-axis label to display"),
@@ -66,11 +69,16 @@ class ScatterPlot3DView(BaseTableView):
         "y_tick_labels": ListParam(human_name="Y-tick-labels", optional=True, visibility='protected', short_description="The labels of y-axis ticks"),
     }
 
+    def _filter_data(self, data, params: ConfigParams):
+        data = NumericDataFilterParamConstructor.validate_filter("numeric_data_filters", data, params)
+        data = TextDataFilterParamConstructor.validate_filter("text_data_filters", data, params)
+        data = DataScaleFilterParamConstructor.validate_filter("data_scaling_filters", data, params)
+        return data
+
     def to_dict(self, params: ConfigParams) -> dict:
         # apply pre-filters
         data = self._data
-        data = NumericDataFilterParamConstructor.validate_filter("numeric_data_filter", data, params)
-        data = TextDataFilterParamConstructor.validate_filter("text_data_filter", data, params)
+        data = self._filter_data(data, params)
 
         # continue ...
         x_column_name = params.get_value("x_column_name", "")

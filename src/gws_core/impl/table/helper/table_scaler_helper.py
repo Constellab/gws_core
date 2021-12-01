@@ -3,10 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List
 
 import numpy
-import pandas
 from pandas import DataFrame
 
 from ....core.exception.exceptions import BadRequestException
@@ -14,7 +12,7 @@ from ....core.exception.exceptions import BadRequestException
 
 class TableScalerHelper:
 
-    VALID_SCALING_FUNCTIONS = ["none", "log2", "log10"]
+    VALID_SCALING_FUNCTIONS = ["none", "log2", "log10", "unit", "percent", "standard"]
 
     @classmethod
     def _check_func(cls, func):
@@ -26,18 +24,33 @@ class TableScalerHelper:
     @classmethod
     def scale(
             cls, data: DataFrame, func: str) -> DataFrame:
-        if func is None:
+        if func is None or func == "none":
             return data
         cls._check_func(func)
 
-        def _log10(x):
-            return numpy.log10(x) if isinstance(x, (float, int,)) else numpy.NaN
+        if func == "log10":
+            data = data.applymap(TableScalerHelper._log10, na_action='ignore')
+        elif func == "log2":
+            data = data.applymap(TableScalerHelper._log2, na_action='ignore')
+        else:
+            data = data.applymap(TableScalerHelper._nanify, na_action='ignore')
+            if func == "unit":
+                data = data / data.sum(skipna=None)
+            elif func == "percent":
+                data = (data / data.sum(skipna=None)) * 100
+            elif func == "standard":
+                data = (data - data.mean(skipna=True)) / data.std(skipna=None)
 
-        def _log2(x):
-            return numpy.log2(x) if isinstance(x, (float, int,)) else numpy.NaN
-        if func and func != "none":
-            if func == "log10":
-                data = data.applymap(_log10, na_action='ignore')
-            elif func == "log2":
-                data = data.applymap(_log2, na_action='ignore')
         return data
+
+    @staticmethod
+    def _nanify(x):
+        return x if isinstance(x, (float, int,)) else numpy.NaN
+
+    @staticmethod
+    def _log10(x):
+        return numpy.log10(x) if isinstance(x, (float, int,)) else numpy.NaN
+
+    @staticmethod
+    def _log2(x):
+        return numpy.log2(x) if isinstance(x, (float, int,)) else numpy.NaN
