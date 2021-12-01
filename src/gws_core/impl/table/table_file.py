@@ -9,6 +9,7 @@ from gws_core.config.config_types import ConfigParams
 from gws_core.impl.table.view.barplot_view import BarPlotView
 from gws_core.impl.table.view.heatmap_view import HeatmapView
 from gws_core.impl.table.view.stacked_barplot_view import StackedBarPlotView
+from gws_core.impl.table.view.venn_diagram_view import VennDiagramView
 from gws_core.resource import multi_views
 from gws_core.resource.multi_views import MultiViews
 
@@ -121,6 +122,15 @@ class TableFile(File):
         """
 
         return self._get_table_resource().view_as_heatmap(params)
+
+    @view(view_type=VennDiagramView, human_name='Venn', short_description='Venn diagram', specs={})
+    def view_as_venn_diagram(self, params: ConfigParams) -> VennDiagramView:
+        """
+        View the table as heatmap
+        """
+
+        table: Table = self._get_table_resource()
+        return VennDiagramView(table.get_data())
 
     @view(view_type=MultiViews, human_name='Multi view', short_description='Multi view', specs={})
     def view_as_multi_views(self, params: ConfigParams) -> MultiViews:
