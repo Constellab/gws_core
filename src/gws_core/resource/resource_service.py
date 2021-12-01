@@ -17,7 +17,7 @@ from ..model.typing_manager import TypingManager
 from ..resource.view_helper import ViewHelper
 from ..task.task_input_model import TaskInputModel
 from .resource_model import Resource, ResourceModel, ResourceOrigin
-from .resource_search import ResourceSearchBuilder
+from .resource_model_search import ResourceModelSearchBuilder
 from .resource_typing import ResourceTyping
 from .view_meta_data import ResourceViewMetaData
 
@@ -73,15 +73,9 @@ class ResourceService(BaseService):
     ############################# RESOURCE TYPE ###########################
 
     @classmethod
-    def fetch_resource_type_list(cls,
-                                 page: int = 0,
-                                 number_of_items_per_page: int = 20) -> Paginator[ResourceTyping]:
+    def fetch_resource_type_list(cls) -> List[ResourceTyping]:
 
-        query = ResourceTyping.get_types()
-        number_of_items_per_page = min(
-            number_of_items_per_page, cls._number_of_items_per_page)
-        return Paginator(
-            query, page=page, number_of_items_per_page=number_of_items_per_page)
+        return list(ResourceTyping.get_types())
 
     ################################# VIEW ###############################
 
@@ -118,7 +112,7 @@ class ResourceService(BaseService):
     def search(cls, search: SearchDict,
                page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
 
-        search_builder: SearchBuilder = ResourceSearchBuilder()
+        search_builder: SearchBuilder = ResourceModelSearchBuilder()
 
         model_select: ModelSelect = search_builder.build_search(search)
         return Paginator(

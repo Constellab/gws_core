@@ -29,7 +29,7 @@ class MultiViews(View):
     {
         "type": "multi-view"
         "data":
-            "series": [
+            "views": [
                 {
                     "view": {},
                     "colspan": colspan,

@@ -129,11 +129,14 @@ class TableFile(File):
         """
 
         multi_views: MultiViews = MultiViews(nb_of_columns=4)
-        multi_views.add_view(self.view_as_scatter_plot_2d(params), {}, 3, 1)
-        multi_views.add_view(self.view_as_line_plot_2d(params), {}, 1, 3)
-        multi_views.add_empty_block(2, 2)
+        multi_views.add_view(self.view_as_scatter_plot_2d(params), {
+                             "x_column_name": "one", "y_column_names": ["two", "three"]}, 3, 1)
+        multi_views.add_view(self.view_as_line_plot_2d(params), {
+                             "x_column_name": "one", "y_column_names": ["two", "three"]}, 1, 3)
+        multi_views.add_view(self.view_as_table(params), {}, 2, 2)
         # multi_views.add_view(self.view_as_table().to_dict(), 2, 2)
         multi_views.add_view(self.view_as_json(params), {}, 1, 2)
+        multi_views.add_empty_block(2, 2)
 
         return multi_views
 

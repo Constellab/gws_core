@@ -35,3 +35,4 @@ class GWSException(Enum):
     RESET_ERROR_RESOURCE_USED_IN_ANOTHER_EXPERIMENT = "Can't reset the experiment because the resource '{{resource_model_id}}' is used in experiment '{{experiment}}'"
     DELETE_GENERATED_RESOURCE_ERROR = "This resource was generatd by a task, it cannot be deleted. Only imported resource can be deleted"
     RESOURCE_USED_ERROR = "This resource is used in the experiment '{{experiment}}', it can't be modified or deleted"
+    INVALID_UNIQUE_CODE = "Not authorized. Invalid url"
