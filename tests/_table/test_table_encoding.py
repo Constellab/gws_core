@@ -5,10 +5,10 @@
 
 import os
 
-import pandas
-from gws_core import (BaseTestCase, ConfigParams, File, GTest, Settings, Table,
-                      TableDecoder, TableEncoder, TableEncoding, TableExporter,
-                      TableFilter, TableImporter, TaskModel, TaskRunner)
+from gws_core import (BaseTestCase, ConfigParams, EncodingTable, File, GTest,
+                      Settings, Table, TableDecoder, TableEncoder,
+                      TableExporter, TableFilter, TableImporter, TaskModel,
+                      TaskRunner)
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -26,11 +26,11 @@ class TestTableEncoding(BaseTestCase):
         print(table)
 
         file_path = os.path.join(testdata_dir, "data_encoding.csv")
-        table_en = TableEncoding.import_from_path(File(path=file_path), params=ConfigParams({
-            "original_column_name": "ocn",
-            "original_row_name": "orn",
-            "encoded_column_name": "ecn",
-            "encoded_row_name": "ern",
+        table_en = EncodingTable.import_from_path(File(path=file_path), params=ConfigParams({
+            "original_column": "ocn",
+            "original_row": "orn",
+            "encoded_column": "ecn",
+            "encoded_row": "ern",
         }))
 
         # encoding
@@ -38,7 +38,7 @@ class TestTableEncoding(BaseTestCase):
             task_type=TableEncoder,
             inputs={
                 "table": table,
-                "table_encoding": table_en,
+                "encoding_table": table_en,
             }
         )
         outputs = await tester.run()
@@ -52,7 +52,7 @@ class TestTableEncoding(BaseTestCase):
             task_type=TableDecoder,
             inputs={
                 "encoded_table": etable,
-                "table_encoding": table_en,
+                "encoding_table": table_en,
             }
         )
         outputs = await tester.run()

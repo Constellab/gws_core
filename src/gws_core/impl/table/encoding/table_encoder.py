@@ -12,7 +12,7 @@ from ....task.task_decorator import task_decorator
 from ....task.task_io import TaskInputs, TaskOutputs
 from ...table.table import Table
 from .encoded_table import EncodedTable
-from .table_encoding import TableEncoding
+from .encoding_table import EncodingTable
 
 # ####################################################################
 #
@@ -23,21 +23,21 @@ from .table_encoding import TableEncoding
 
 @task_decorator(unique_name="TableEncoder", short_description="Table encoder")
 class TableEncoder(Task):
-    input_specs: InputSpecs = {"table": Table, "table_encoding": TableEncoding}
+    input_specs: InputSpecs = {"table": Table, "encoding_table": EncodingTable}
     output_specs: OutputSpecs = {"encoded_table": EncodedTable}
     config_specs: ConfigSpecs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         data: DataFrame = inputs["table"].get_data()
-        table_encoding: TableEncoding = inputs["table_encoding"]
+        encoding_table: EncodingTable = inputs["encoding_table"]
 
-        ocn = table_encoding.get_original_column_name()
-        ecn = table_encoding.get_encoded_column_name()
+        ocn = encoding_table.get_original_column_data()
+        ecn = encoding_table.get_encoded_column_data()
         mapper = {ocn[i]: ecn[i] for i in range(0, len(ocn))}
         data = data.rename(columns=mapper, inplace=False)
 
-        orn = table_encoding.get_original_row_name()
-        ern = table_encoding.get_encoded_row_name()
+        orn = encoding_table.get_original_row_data()
+        ern = encoding_table.get_encoded_row_data()
         mapper = {orn[i]: ern[i] for i in range(0, len(orn))}
         data.rename(index=mapper, inplace=True)
 

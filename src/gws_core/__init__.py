@@ -146,9 +146,11 @@ from .impl.shell.shell_proxy import ShellProxy as ShellProxy
 # Impl > Table
 from .impl.table.data_frame_r_field import DataFrameRField as DataFrameRField
 from .impl.table.encoding.encoded_table import EncodedTable
+from .impl.table.encoding.encoding_table import EncodingTable
+from .impl.table.encoding.metadata_table import MetadataTable
+from .impl.table.encoding.table_annotator import TableAnnotator
 from .impl.table.encoding.table_decoder import TableDecoder
 from .impl.table.encoding.table_encoder import TableEncoder
-from .impl.table.encoding.table_encoding import TableEncoding
 from .impl.table.helper.table_aggregator_helper import \
     TableAggregatorHelper as TableAggregatorHelper
 from .impl.table.helper.table_filter_helper import \
