@@ -112,7 +112,7 @@ class IOSpecsHelper():
 
             if isinstance(spec, TypeIO):
                 spec.check_resource_types()
-                resource_types.append(*spec.resource_types)
+                resource_types.extend(spec.resource_types)
             else:
                 # check that the type is a Resource or a SubClasses
                 if not Utils.issubclass(spec, Resource):
