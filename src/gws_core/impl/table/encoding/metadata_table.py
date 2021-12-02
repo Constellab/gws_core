@@ -5,18 +5,10 @@
 
 from typing import List
 
-import pandas
-from pandas import DataFrame
-
 from ....config.config_types import ConfigParams
-from ....config.param_spec import BoolParam, IntParam, ListParam, StrParam
-from ....core.exception.exceptions import BadRequestException
 from ....impl.file.file import File
-from ....resource.r_field import StrRField
-from ....resource.resource import Resource
 from ....resource.resource_decorator import resource_decorator
-from ....resource.view_decorator import view
-from ....task.exporter import export_to_path, exporter_decorator
+from ....task.exporter import exporter_decorator
 from ....task.importer import import_from_path, importer_decorator
 from ..table import Table
 from ..table_tasks import TableExporter, TableImporter
@@ -26,10 +18,6 @@ from ..table_tasks import TableExporter, TableImporter
 # Metadata class
 #
 # ####################################################################
-
-SAMPLE_COLUMN = "sample"
-importer_specs = TableImporter.config_specs
-del importer_specs["index_columns"]
 
 
 @resource_decorator("MetadataTable",
@@ -55,26 +43,23 @@ class MetadataTable(Table):
     The annotated table will be such as the column name `name1` will be converted to `key1:value1|key2:value2|key3:value3`
     """
 
-    _KEY_VALUE_SEPARATOR = ":"
-    _TOKEN_SEPARATOR = "|"
-    _REPLACEMENT_CHAR = "_"
-
-    SAMPLE_COLUMN = SAMPLE_COLUMN
-    sample_column: str = StrRField(default_value=SAMPLE_COLUMN)
+    KEY_VALUE_SEPARATOR = ":"
+    TOKEN_SEPARATOR = "|"
+    REPLACEMENT_CHAR = "_"
 
     # -- F --
 
     @classmethod
     def _clear_value(cls, val):
-        val = f"{val}".replace(cls._KEY_VALUE_SEPARATOR, cls._REPLACEMENT_CHAR)
-        val = val.replace(cls._TOKEN_SEPARATOR, cls._REPLACEMENT_CHAR)
+        val = f"{val}".replace(cls.KEY_VALUE_SEPARATOR, cls.REPLACEMENT_CHAR)
+        val = val.replace(cls.TOKEN_SEPARATOR, cls.REPLACEMENT_CHAR)
         return val
 
     @classmethod
-    def _format_key_value(cls, key, value) -> str:
+    def format_token(cls, key, value) -> str:
         key = cls._clear_value(key)
         value = cls._clear_value(value)
-        return f"{key}{cls._KEY_VALUE_SEPARATOR}{value}"
+        return f"{key}{cls.KEY_VALUE_SEPARATOR}{value}"
 
     # -- G --
 
@@ -124,7 +109,7 @@ class MetadataTable(Table):
         return table
 
     def select_by_key_value(self, key: str, value: str) -> 'MetadataTable':
-        name_regex = self._format_key_value(key, value)
+        name_regex = self.format_token(key, value)
         table = super().select_by_column_name(".*" + name_regex + ".*")
         table = MetadataTable(data=table.get_data())
         return table

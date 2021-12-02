@@ -145,6 +145,7 @@ from .impl.shell.shell import Shell as Shell
 from .impl.shell.shell_proxy import ShellProxy as ShellProxy
 # Impl > Table
 from .impl.table.data_frame_r_field import DataFrameRField as DataFrameRField
+from .impl.table.encoding.annotated_table import AnnotatedTable
 from .impl.table.encoding.encoded_table import EncodedTable
 from .impl.table.encoding.encoding_table import EncodingTable
 from .impl.table.encoding.metadata_table import MetadataTable
@@ -155,6 +156,8 @@ from .impl.table.helper.table_aggregator_helper import \
     TableAggregatorHelper as TableAggregatorHelper
 from .impl.table.helper.table_filter_helper import \
     TableFilterHelper as TableFilterHelper
+from .impl.table.helper.table_grouping_helper import \
+    TableGroupingHelper as TableGroupingHelper
 from .impl.table.table import Table as Table
 from .impl.table.table_file import TableFile as TableFile
 from .impl.table.table_tasks import TableExporter as TableExporter

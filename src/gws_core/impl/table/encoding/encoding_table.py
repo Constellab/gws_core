@@ -7,11 +7,10 @@ import pandas
 from pandas import DataFrame
 
 from ....config.config_types import ConfigParams
-from ....config.param_spec import BoolParam, IntParam, ListParam, StrParam
+from ....config.param_spec import StrParam
 from ....core.exception.exceptions import BadRequestException
 from ....impl.file.file import File
 from ....resource.r_field import StrRField
-from ....resource.resource import Resource
 from ....resource.resource_decorator import resource_decorator
 from ....resource.view_decorator import view
 from ....task.exporter import export_to_path, exporter_decorator

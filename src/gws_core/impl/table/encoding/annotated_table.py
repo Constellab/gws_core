@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+
 from typing import List
 
 from ....resource.resource_decorator import resource_decorator
@@ -12,29 +13,29 @@ from ..table import Table
 from ..table_tasks import TableExporter, TableImporter
 
 
-@resource_decorator("EncodedTable")
-class EncodedTable(Table):
+@resource_decorator("AnnotatedTable")
+class AnnotatedTable(Table):
 
     # -- S --
 
-    def select_by_row_indexes(self, indexes: List[int]) -> 'EncodedTable':
+    def select_by_row_indexes(self, indexes: List[int]) -> 'AnnotatedTable':
         table = super().select_by_row_indexes(indexes)
-        table = EncodedTable(data=table.get_data())
+        table = AnnotatedTable(data=table.get_data())
         return table
 
-    def select_by_column_indexes(self, indexes: List[int]) -> 'EncodedTable':
+    def select_by_column_indexes(self, indexes: List[int]) -> 'AnnotatedTable':
         table = super().select_by_column_indexes(indexes)
-        table = EncodedTable(data=table.get_data())
+        table = AnnotatedTable(data=table.get_data())
         return table
 
-    def select_by_row_name(self, name_regex: str) -> 'EncodedTable':
+    def select_by_row_name(self, name_regex: str) -> 'AnnotatedTable':
         table = super().select_by_row_name(name_regex)
-        table = EncodedTable(data=table.get_data())
+        table = AnnotatedTable(data=table.get_data())
         return table
 
-    def select_by_column_name(self, name_regex: str) -> 'EncodedTable':
+    def select_by_column_name(self, name_regex: str) -> 'AnnotatedTable':
         table = super().select_by_column_name(name_regex)
-        table = EncodedTable(data=table.get_data())
+        table = AnnotatedTable(data=table.get_data())
         return table
 
 # ####################################################################
@@ -44,8 +45,8 @@ class EncodedTable(Table):
 # ####################################################################
 
 
-@importer_decorator("EncodedTableImporter", resource_type=EncodedTable)
-class EncodedTableImporter(TableImporter):
+@importer_decorator("AnnotatedTableImporter", resource_type=AnnotatedTable)
+class AnnotatedTableImporter(TableImporter):
     pass
 
 # ####################################################################
@@ -55,6 +56,6 @@ class EncodedTableImporter(TableImporter):
 # ####################################################################
 
 
-@exporter_decorator("EncodedTableExporter", resource_type=EncodedTable)
-class EncodedTableExporter(TableExporter):
+@exporter_decorator("AnnotatedTableExporter", resource_type=AnnotatedTable)
+class AnnotatedTableExporter(TableExporter):
     pass

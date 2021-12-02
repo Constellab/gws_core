@@ -11,6 +11,7 @@ from ....task.task import Task
 from ....task.task_decorator import task_decorator
 from ....task.task_io import TaskInputs, TaskOutputs
 from ...table.table import Table
+from .annotated_table import AnnotatedTable
 from .metadata_table import MetadataTable
 
 # ####################################################################
@@ -24,7 +25,7 @@ from .metadata_table import MetadataTable
 class TableAnnotator(Task):
 
     input_specs: InputSpecs = {"table": Table, "metadata_table": (MetadataTable, Table)}
-    output_specs: OutputSpecs = {"annotated_table": Table}
+    output_specs: OutputSpecs = {"annotated_table": AnnotatedTable}
     config_specs: ConfigSpecs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -45,13 +46,13 @@ class TableAnnotator(Task):
             row_tab = []
             for i, value in enumerate(values):
                 row_tab.append(
-                    MetadataTable._format_key_value(keys[i], value)
+                    MetadataTable.format_token(keys[i], value)
                 )
             annotated_colnames.append(row_tab)
 
-        annotated_colnames = [MetadataTable._TOKEN_SEPARATOR.join(val) for val in annotated_colnames]
+        annotated_colnames = [MetadataTable.TOKEN_SEPARATOR.join(val) for val in annotated_colnames]
         mapper = {name: annotated_colnames[i] for i, name in enumerate(original_colnames)}
         data: DataFrame = inputs["table"].get_data()
         data = data.rename(columns=mapper, inplace=False)
-        annotated_table = Table(data=data, row_names=data.index)
+        annotated_table = AnnotatedTable(data=data, row_names=data.index)
         return {"annotated_table": annotated_table}
