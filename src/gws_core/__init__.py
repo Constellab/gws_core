@@ -165,6 +165,7 @@ from .impl.table.table_tasks import TableImporter as TableImporter
 from .impl.table.transformers.table_aggregator import \
     TableAggregator as TableAggregator
 from .impl.table.transformers.table_filter import TableFilter as TableFilter
+from .impl.table.transformers.table_grouper import TableGrouper as TableGrouper
 from .impl.table.transformers.table_scaler import TableScaler as TableScaler
 # Impl > TableView
 from .impl.table.view.barplot_view import BarPlotView as BarPlotView

@@ -6,6 +6,7 @@
 from pandas import DataFrame
 
 from ....config.config_types import ConfigParams, ConfigSpecs
+from ....config.param_spec import StrParam
 from ....io.io_spec import InputSpecs, OutputSpecs
 from ....task.task import Task
 from ....task.task_decorator import task_decorator
@@ -21,12 +22,16 @@ from .metadata_table import MetadataTable
 # ####################################################################
 
 
-@task_decorator(unique_name="TableAnnotator", short_description="Table annotator")
+@task_decorator(unique_name="TableAnnotator", human_name="Table annotator",
+                short_description="Annotator column (or row) name accoring to a metadata table")
 class TableAnnotator(Task):
 
     input_specs: InputSpecs = {"table": Table, "metadata_table": (MetadataTable, Table)}
     output_specs: OutputSpecs = {"annotated_table": AnnotatedTable}
-    config_specs: ConfigSpecs = {}
+    config_specs: ConfigSpecs = {
+        "axis": StrParam(default_value="column", allowed_values=["column", "row"],
+                         human_name="Axis", short_description="The axis to annotate")
+    }
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         metadata_table: MetadataTable = inputs["metadata_table"]
@@ -52,7 +57,13 @@ class TableAnnotator(Task):
 
         annotated_colnames = [MetadataTable.TOKEN_SEPARATOR.join(val) for val in annotated_colnames]
         mapper = {name: annotated_colnames[i] for i, name in enumerate(original_colnames)}
+
         data: DataFrame = inputs["table"].get_data()
-        data = data.rename(columns=mapper, inplace=False)
+        axis = params["axis"]
+        if axis == "row":
+            data = data.rename(index=mapper, inplace=False)
+        else:
+            data = data.rename(columns=mapper, inplace=False)
+
         annotated_table = AnnotatedTable(data=data, row_names=data.index)
         return {"annotated_table": annotated_table}

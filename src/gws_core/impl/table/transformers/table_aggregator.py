@@ -5,10 +5,8 @@
 
 from typing import List
 
-from pandas import DataFrame
-
 from ....config.config_types import ConfigParams, ConfigSpecs
-from ....config.param_spec import BoolParam, IntParam, ListParam, StrParam
+from ....config.param_spec import BoolParam, StrParam
 from ....io.io_spec import InputSpecs, OutputSpecs
 from ....task.task import Task
 from ....task.task_decorator import task_decorator
