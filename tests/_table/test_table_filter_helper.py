@@ -95,7 +95,7 @@ class TestTableFilterHelper(BaseTestCase):
         self.assertTrue(df.empty)
 
         df = TableFilterHelper.filter_text_data(
-            data=table.get_data(), column_name="Sex", comp="==", value="M"
+            data=table.get_data(), column_name="Sex", comp="=", value="M"
         )
         self.assertEqual(df.index.tolist(), ["Luc", "Leon"])
         self.assertEqual(df.columns.tolist(), ["Age", "Sex", "City", "Weight"])
