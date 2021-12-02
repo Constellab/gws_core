@@ -103,7 +103,7 @@ class AuthService(BaseService):
                 is_admin=db_user.is_admin,
             )
         except Exception:
-            raise InvalidUniqueCodeException()
+            raise InvalidTokenException()
 
     @classmethod
     def check_unique_code(cls, unique_code: str) -> UserData:
@@ -116,7 +116,7 @@ class AuthService(BaseService):
 
             return code_obj['obj']
         except Exception:
-            raise InvalidTokenException()
+            raise InvalidUniqueCodeException()
 
     @classmethod
     def authenticate(cls, id: str) -> User:
