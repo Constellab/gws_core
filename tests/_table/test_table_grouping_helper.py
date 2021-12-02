@@ -32,7 +32,7 @@ class TestTableGroupingHelper(BaseTestCase):
             key="Gender"
         )
 
-        self.assertEqual(data.columns.to_list(), ["F", "M"])
+        self.assertEqual(data.columns.to_list(), ["Gender:F", "Gender:M"])
         self.assertEqual(data.iloc[0, 0], 2.0)
         self.assertEqual(data.iloc[4, 0], 4.0)
         self.assertEqual(data.iloc[7, 0], 10.0)

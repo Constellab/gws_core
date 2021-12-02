@@ -58,6 +58,6 @@ class TableGroupingHelper:
 
             group_data = pandas.concat([group_data, grouped_col], axis=1, ignore_index=True)
 
-        group_data.columns = values
+        group_data.columns = [MetadataTable.format_token(key, val) for val in values]
         # group_data.index = grouped_idx
         return group_data
