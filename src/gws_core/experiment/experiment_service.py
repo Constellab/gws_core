@@ -155,6 +155,10 @@ class ExperimentService(BaseService):
     def validate_experiment_send_to_central(cls, id: str, study_dto: StudyDto = None) -> Experiment:
         experiment = cls.validate_experiment(id, study_dto)
 
+        if Settings.is_local_env():
+            Logger.info('Skipping sending experiment to central as we are running in LOCAL')
+            return experiment
+
         # Save the experiment in central
         CentralService.save_experiment(experiment.study.id, experiment.to_json())
 

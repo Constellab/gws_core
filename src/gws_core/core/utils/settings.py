@@ -99,6 +99,10 @@ class Settings(PeeweeModel):
         return os.environ["LAB_ENVIRONMENT"]
 
     @classmethod
+    def is_local_env(cls) -> bool:
+        return cls.get_lab_environment() == 'LOCAL'
+
+    @classmethod
     def get_virtual_host(cls) -> str:
         """Return the virtual host of the machine like tokyo.gencovery.io
 
