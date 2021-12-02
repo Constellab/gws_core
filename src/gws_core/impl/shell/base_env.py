@@ -12,7 +12,7 @@ from ...task.task_io import TaskInputs, TaskOutputs
 from .shell import Shell
 
 
-@task_decorator("BaseEnvShell")
+@task_decorator("BaseEnvShell", hide=True)
 class BaseEnvShell(Shell):
     """
     EnvShell task.
@@ -44,7 +44,7 @@ class BaseEnvShell(Shell):
 
         if not cls.unique_env_name:
             cls.unique_env_name = cls.full_classname()
-            
+
         env_dir = os.path.join(cls._GLOBAL_ENV_DIR, cls.unique_env_name)
         if not os.path.exists(env_dir):
             os.makedirs(env_dir)

@@ -20,7 +20,7 @@ from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
 
 
-@task_decorator("Shell")
+@task_decorator("Shell", hide=True)
 class Shell(Task):
     """
     Shell task.

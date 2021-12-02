@@ -17,7 +17,7 @@ from ...task.task_io import TaskInputs, TaskOutputs
 from .base_env import BaseEnvShell
 
 
-@task_decorator("CondaEnvShell")
+@task_decorator("CondaEnvShell", hide=True)
 class CondaEnvShell(BaseEnvShell):
     """
     CondaEnvShell task.
