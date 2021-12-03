@@ -231,6 +231,14 @@ class IO(Base, Generic[PortType]):
                 resources[key] = port.get_resource(new_instance)
         return resources
 
+    def has_resource_model(self, resource_model_id: str) -> bool:
+        """return true if one of the ports contain the resource model
+        """
+        for port in self._ports.values():
+            if port.resource_model and port.resource_model.id == resource_model_id:
+                return True
+        return False
+
     ################################################### JSON ########################################
 
     @classmethod

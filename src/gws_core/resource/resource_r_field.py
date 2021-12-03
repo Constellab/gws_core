@@ -1,15 +1,23 @@
 
-from typing import TypedDict, final
-
-from gws_core.model.typing_manager import TypingManager
-from gws_core.resource.resource_model import ResourceModel
+from typing import final
 
 from .r_field import BaseRField
 from .resource import Resource
+from .resource_model import ResourceModel
 
 
 @final
 class ResourceRField(BaseRField):
+    """RField, these fields must be used in resource attribute
+    This field is useful to link a resource with another resource without duplicating them.
+    When the resource is saved after a task, the field must contains a Resource and if yes, this resource
+    will be linked with the generated resource. Next time this resource is instantiated, the linked resource will be
+    provided in the ResourceRField.
+
+    //!\\ WARNING: the linked resource MUST be a resource provided as input of the task that generate
+    the resource marked with ResourceRField. Otherwise there will be an error before saving the generated resource because it can
+    break the tracability of resources
+    """
 
     def __init__(self) -> None:
         super().__init__(searchable=True, default_value=None, include_in_dict_view=False)

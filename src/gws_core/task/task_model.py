@@ -4,13 +4,16 @@
 # About us: https://gencovery.com
 import inspect
 import zlib
-from typing import Dict, List, Type
-
-from gws_core.io.io import Inputs, Outputs
+from typing import Any, Dict, List, Type
 
 from ..config.config_types import ConfigParamsDict
 from ..core.decorator.transaction import transaction
+from ..core.exception.exceptions.bad_request_exception import \
+    BadRequestException
+from ..core.exception.gws_exceptions import GWSException
 from ..core.utils.logger import Logger
+from ..core.utils.reflector_helper import ReflectorHelper
+from ..io.io import Inputs, Outputs
 from ..io.io_exception import InvalidOutputsException
 from ..io.port import Port
 from ..model.typing_manager import TypingManager
@@ -20,6 +23,7 @@ from ..process.process_exception import (CheckBeforeTaskStopException,
 from ..process.process_model import ProcessModel
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel, ResourceOrigin
+from ..resource.resource_r_field import ResourceRField
 from ..task.task_io import TaskOutputs
 from .task import CheckBeforeTaskResult, Task
 from .task_runner import TaskRunner
@@ -251,12 +255,38 @@ class TaskModel(ProcessModel):
                 # We use the same resource
                 resource_model = ResourceModel.get_by_id_and_check(resource._model_id)
             else:
+                # check the resource r field before saving
+                self._check_resource_r_fields(port, resource)
+
                 # create ans save the resource model from the resource
                 resource_model = ResourceModel.save_from_resource(
                     resource, origin=ResourceOrigin.GENERATED, experiment=self.experiment, task_model=self)
 
             # save the resource model into the output's port (even if it's None)
             port.resource_model = resource_model
+
+    def _check_resource_r_fields(self, resource: Resource, port_name: str):
+        """check all ResourceRField are resource that are input of the task
+        """
+
+        # get the ResourceRField of the resource
+        r_fields: Dict[str, ResourceRField] = ReflectorHelper.get_property_names_of_type(type(resource), ResourceRField)
+
+        for key, r_field in r_fields.items():
+            # get the attribute value corresponding to the r_field
+            r_field_value: Any = getattr(resource, key)
+
+            # retrieve the resource model id
+            resource_model_id = r_field.serialize(r_field_value)
+
+            if not resource_model_id:
+                continue
+
+            # if the resource r field is not listed in task input, error
+            if not self.inputs.has_resource_model(resource_model_id):
+                raise BadRequestException(GWSException.INVALID_RESOURCE_R_FIELD.value,
+                                          unique_code=GWSException.INVALID_RESOURCE_R_FIELD.name,
+                                          detail_args={'port_name': port_name})
 
     def is_protocol(self) -> bool:
         return False

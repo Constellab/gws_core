@@ -36,3 +36,4 @@ class GWSException(Enum):
     DELETE_GENERATED_RESOURCE_ERROR = "This resource was generatd by a task, it cannot be deleted. Only imported resource can be deleted"
     RESOURCE_USED_ERROR = "This resource is used in the experiment '{{experiment}}', it can't be modified or deleted"
     INVALID_UNIQUE_CODE = "Not authorized. Invalid url"
+    INVALID_RESOURCE_R_FIELD = "[ResourceRField] The resource generated on port {{port_name}} is linked to another resource which is not a input of the task. This break the tracability."
