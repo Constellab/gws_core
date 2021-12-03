@@ -12,6 +12,7 @@ default_tags = {
     "type": ['DATA', 'ARRAY', 'EXPERIMENT', 'JSON'],
     "name": []
 }
+MAX_TAG_LENGTH = 20
 
 
 class Tag(BaseModel):
@@ -19,6 +20,13 @@ class Tag(BaseModel):
     value: str
 
     def __init__(self, key: str, value: str) -> None:
+        if key is None:
+            raise Exception('The tag key must be defined')
+        if len(key) > MAX_TAG_LENGTH:
+            key = key[0: MAX_TAG_LENGTH]
+
+        if value and len(value) > MAX_TAG_LENGTH:
+            value = value[0: MAX_TAG_LENGTH]
         super().__init__(key=key, value=value)
 
     def __str__(self) -> str:
