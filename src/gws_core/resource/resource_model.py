@@ -67,6 +67,8 @@ class ResourceModel(Model, TaggableModel, Generic[ResourceType]):
     experiment: Experiment = DeferredForeignKey('Experiment', null=True, index=True)
     task_model: TaskModel = DeferredForeignKey('TaskModel', null=True, index=True)
 
+    name: str = CharField(null=False)
+
     fs_node_model: FSNodeModel = ForeignKeyField(FSNodeModel, null=True, index=True, backref="+")
 
     _table_name = 'gws_resource'
@@ -223,7 +225,9 @@ class ResourceModel(Model, TaggableModel, Generic[ResourceType]):
             Logger.error(f'Error while getting the name of the resource {type(resource)}. Err : {str(err)}')
             Logger.log_exception_stack_trace(err)
         if name:
-            resource_model.set_name_tag(name)
+            resource_model.name = name
+        else:
+            resource_model.name = resource._human_name
 
         return resource_model
 
@@ -364,7 +368,6 @@ class ResourceModel(Model, TaggableModel, Generic[ResourceType]):
         _json["resource_type_human_name"] = resource._human_name or resource.__class__.__name__
         _json["resource_type_short_description"] = resource._short_description
         _json["resource_human_name"] = _json["resource_type_human_name"]
-        _json["name"] = self.get_name_tag() or _json["resource_type_human_name"]
 
         if self.fs_node_model:
             _json["fs_node"] = self.fs_node_model.to_json()
