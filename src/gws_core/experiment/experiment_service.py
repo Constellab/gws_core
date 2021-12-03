@@ -427,7 +427,7 @@ class ExperimentService(BaseService):
 
     @classmethod
     @transaction()
-    def copy_experiment(cls, experiment_id: str) -> ProtocolModel:
+    def clone_experiment(cls, experiment_id: str) -> Experiment:
         """ Copy the experiment into a new draft experiment
         """
         experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)

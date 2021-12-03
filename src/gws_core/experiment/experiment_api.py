@@ -153,3 +153,11 @@ def stop_an_experiment(id: str,
                        tags: List[Tag],
                        _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     return TagService.save_tags_to_model(Experiment._typing_name, id, tags)
+
+
+################################### COPY  ##############################
+
+@core_app.put("/experiment/{id}/clone", tags=["Experiment"], summary="Clone an experiment")
+def clone_experiment(id: str,
+                     _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    return ExperimentService.clone_experiment(id).to_json()

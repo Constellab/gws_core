@@ -233,7 +233,7 @@ class TestExperiment(BaseTestCase):
         task_model = TaskModel.select().count()
         resource_count = ResourceModel.select().count()
 
-        experiment_copy = ExperimentService.copy_experiment(experiment.id)
+        experiment_copy = ExperimentService.clone_experiment(experiment.id)
 
         self.assertEqual(ProtocolModel.select().count(), protocol_count * 2)
         self.assertEqual(TaskModel.select().count(), task_model * 2)
