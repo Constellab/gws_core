@@ -8,7 +8,7 @@ import numpy
 from pandas import DataFrame
 
 from ....core.exception.exceptions import BadRequestException
-
+from .table_nanify_helper import TableNanifyHelper
 
 class TableScalerHelper:
 
@@ -33,7 +33,7 @@ class TableScalerHelper:
         elif func == "log2":
             data = data.applymap(TableScalerHelper._log2, na_action='ignore')
         else:
-            data = data.applymap(TableScalerHelper._nanify, na_action='ignore')
+            data = TableNanifyHelper.nanify(data)
             if func == "unit":
                 data = data / data.sum(skipna=None)
             elif func == "percent":
@@ -42,10 +42,6 @@ class TableScalerHelper:
                 data = (data - data.mean(skipna=True)) / data.std(skipna=None)
 
         return data
-
-    @staticmethod
-    def _nanify(x):
-        return x if isinstance(x, (float, int,)) else numpy.NaN
 
     @staticmethod
     def _log10(x):

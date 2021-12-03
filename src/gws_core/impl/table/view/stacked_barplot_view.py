@@ -10,7 +10,6 @@ from ....config.param_spec import StrParam
 from ....resource.view_types import ViewSpecs
 from .barplot_view import BarPlotView
 
-
 class StackedBarPlotView(BarPlotView):
     """
     StackedBarPlotView

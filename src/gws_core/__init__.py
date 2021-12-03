@@ -167,6 +167,7 @@ from .impl.table.transformers.table_aggregator import \
 from .impl.table.transformers.table_filter import TableFilter as TableFilter
 from .impl.table.transformers.table_grouper import TableGrouper as TableGrouper
 from .impl.table.transformers.table_scaler import TableScaler as TableScaler
+from .impl.table.helper.table_nanify_helper import TableNanifyHelper
 # Impl > TableView
 from .impl.table.view.barplot_view import BarPlotView as BarPlotView
 from .impl.table.view.boxplot_view import BoxPlotView as BoxPlotView

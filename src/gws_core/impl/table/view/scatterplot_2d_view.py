@@ -86,6 +86,9 @@ class ScatterPlot2DView(BaseTableView):
             x_data = list(range(0, data.shape[0]))
             x_tick_labels = params.get_value("x_tick_labels", data.index.to_list())
 
+        # replace NaN by 'NaN' 
+        data: DataFrame = data.fillna('')
+
         series = []
         for y_column_name in y_column_names:
             y_data = data[y_column_name].values.tolist()

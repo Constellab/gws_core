@@ -7,7 +7,7 @@ import numpy
 from pandas import DataFrame
 
 from ....config.config_types import ConfigParams
-from ....config.param_spec import ListParam, ParamSet, StrParam
+from ....config.param_spec import ListParam, ParamSet, StrParam, BoolParam
 from ....resource.view_types import ViewSpecs
 from ..helper.constructor.data_scale_filter_param import \
     DataScaleFilterParamConstructor
@@ -59,7 +59,8 @@ class BoxPlotView(BaseTableView):
         **BaseTableView._specs,
         "series": ParamSet(
             {
-                "column_names": ListParam(human_name="Column names", optional=True, short_description="List of columns to plot")
+                "column_names": ListParam(human_name="Column names", optional=True, short_description="List of columns to plot"),
+                "use_regexp": BoolParam(default_value=False, human_name="Use regexp", short_description="True to use regular expression for column names; False otherwise"),
             },
             human_name="Column series",
             short_description="Select a series of columns to aggregate as box-plot",
@@ -92,22 +93,29 @@ class BoxPlotView(BaseTableView):
 
         for param_series in params.get("series"):
             column_names = param_series["column_names"]
-
             if not column_names:
+                #n = min(data.shape[1], 50)
+                #column_names = data.columns[0:n]
+                column_names = data.columns.to_list()
+            else:
+                if param_series["use_regexp"]:
+                    reg = "|".join([ "^"+val+"$" for val in column_names ])
+                    column_names = data.filter(regex=reg).columns.to_list()
+                else:
+                    column_names = [ col for col in column_names if col in data.columns]
+
+            data = data[column_names]
+            
+            if not len(column_names):
                 continue
 
             if not x_tick_labels:
                 x_tick_labels = column_names
 
-            if not column_names:
-                n = min(data.shape[1], 50)
-                column_names = data.columns[0:n]
+            ymin = data.min(skipna=True).to_list()
+            ymax = data.max(skipna=True).to_list()
 
-            df = data[column_names]
-            ymin = df.min(skipna=True).to_list()
-            ymax = df.max(skipna=True).to_list()
-
-            quantile = numpy.nanquantile(df.to_numpy(), q=[0.25, 0.5, 0.75], axis=0)
+            quantile = numpy.nanquantile(data.to_numpy(), q=[0.25, 0.5, 0.75], axis=0)
             median = quantile[1, :].tolist()
             q1 = quantile[0, :]
             q3 = quantile[2, :]

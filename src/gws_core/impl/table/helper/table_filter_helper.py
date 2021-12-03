@@ -41,7 +41,7 @@ class TableFilterHelper:
 
     @classmethod
     def filter_by_axis_names(cls, data: DataFrame, axis: str, value: str):
-        if (axis is None) or (value is None):
+        if (not axis) or (value is None):
             return data
         cls._check_axis_name(axis)
         if isinstance(value, str):
@@ -55,7 +55,7 @@ class TableFilterHelper:
     @classmethod
     def filter_by_aggregated_values(
             cls, data: DataFrame, direction: str, func: str, comp: str, value: float) -> DataFrame:
-        if (direction is None) or (func is None) or (comp is None) or (value is None):
+        if (not direction) or (not func) or (not comp) or (value is None):
             return data
         TableAggregatorHelper._check_func(func)
         TableAggregatorHelper._check_direction(direction)
@@ -89,8 +89,9 @@ class TableFilterHelper:
     def filter_numeric_data(
         cls, data: DataFrame, column_name: str, comp: str, value: float
     ) -> DataFrame:
-        if (column_name is None) or (comp is None) or (value is None):
+        if (not column_name) or (not comp) or (value is None):
             return data
+
         tab: DataFrame = data.filter(regex=column_name, axis=1)
 
         def to_numeric(x):
@@ -118,7 +119,7 @@ class TableFilterHelper:
     @classmethod
     def filter_text_data(
             cls, data: DataFrame, column_name: str, comp: str, value: str) -> DataFrame:
-        if (column_name is None) or (comp is None) or (value is None):
+        if (not column_name) or (not comp) or (value is None):
             return data
         cls._check_text_comparator(comp)
         tab: DataFrame = data.filter(regex=column_name, axis=1)
