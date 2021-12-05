@@ -57,7 +57,9 @@ class BarPlotView(BaseTableView):
         **BaseTableView._specs,
         "column_names": ListParam(human_name="Column names", optional=True, short_description="List of columns to plot"),
         "use_regexp": BoolParam(default_value=False, human_name="Use regexp", short_description="True to use regular expression for column names; False otherwise"),
+        "index_column": StrParam(human_name="Index column", optional=True, short_description="The index column"),
         "normalization": StrParam(default_value="none", allowed_values=["none", "unit", "percent"], human_name="Normalization", short_description="Type of normalization to apply on data"),
+        "transpose": BoolParam(default_value=False, human_name="Transpose representation", short_description="True to transpose representation; Flase otherwise"),
         "numeric_data_filters": NumericDataFilterParamConstructor.construct_filter(visibility='protected'),
         "text_data_filters": TextDataFilterParamConstructor.construct_filter(visibility='protected'),
         "data_scaling_filters": DataScaleFilterParamConstructor.construct_filter(visibility='protected'),
@@ -85,6 +87,10 @@ class BarPlotView(BaseTableView):
     def to_dict(self, params: ConfigParams) -> dict:
         data = self._data
 
+        index_column = params.get_value("index_column")
+        if index_column:
+            data.index = data.loc[:,index_column].to_list()
+            
         # apply filters
         data = self._filter_data(data, params)
 
@@ -100,9 +106,6 @@ class BarPlotView(BaseTableView):
                 column_names = [ col for col in column_names if col in data.columns]
                 data = data[column_names]
 
-        #normalization is applied at the end
-        data = self._normalize_data(data, params)
-
         # continue ...
         x_label = params.get_value("x_label", "")
         x_tick_labels = params.get_value("x_tick_labels", data.index.to_list())
@@ -117,16 +120,20 @@ class BarPlotView(BaseTableView):
                 if column in data:
                     x_tick_labels.extend(data[column].values.tolist())
 
+        if params["transpose"]:
+            data = data.T
+
+        #normalization is applied at the end
+        data = self._normalize_data(data, params)
+
         # replace NaN by 'NaN' 
         data: DataFrame = data.fillna('')
-
-        print(data)
 
         series = []
         for column_name in data.columns:
             series.append({
                 "data": {
-                    "x": list(range(0, data.shape[0])),
+                    "x": data.index.to_list(),
                     "y": data[column_name].values.tolist(),
                 },
                 "column_name": column_name,
