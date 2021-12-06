@@ -26,8 +26,8 @@ class TypingLocal(TypedDict):
 
 class TypingManager:
 
-    # a dictionary to save the types,the first key is the object type, the key is the brick name, the second the model type
-    _typings: Dict[TypingObjectType, Dict[str, Dict[str, TypingLocal]]] = {}
+    # a dictionary to save the types,the key if the full typing name
+    _typings: Dict[str, TypingLocal] = {}
 
     # Mark as true when the tables exists, the typings can then be saved directly
     _tables_are_created: bool = False
@@ -53,7 +53,7 @@ class TypingManager:
         return cls.get_typing_from_name(typing_name).get_type()
 
     @classmethod
-    def get_object_with_typing_name(cls, typing_name: str, object_id: int) -> Model:
+    def get_object_with_typing_name(cls, typing_name: str, object_id: str) -> Model:
         model_type: Type[Model] = cls.get_type_from_name(typing_name)
         if not issubclass(model_type, Model):
             raise BadRequestException(
@@ -89,16 +89,12 @@ class TypingManager:
 
         brick_name: str = BrickHelper.get_brick_name(object_class)
 
-        if not object_type in cls._typings:
-            cls._typings[object_type] = {}
+        typing_unique_name = build_typing_unique_name(object_type, brick_name, unique_name)
 
-        if not brick_name in cls._typings[object_type]:
-            cls._typings[object_type][brick_name] = {}
-
-        if unique_name in cls._typings[object_type][brick_name]:
+        if typing_unique_name in cls._typings:
             raise Exception(
                 f"""2 differents {object_type} in the brick {brick_name} register with the same name : {unique_name}.
-                                {object_type} already register: [{cls._typings[object_type][brick_name][unique_name]['model_type'] }].
+                                {object_type} already register: [{cls._typings[typing_unique_name]['model_type'] }].
                                 {object_type} trying to register : {object_class.full_classname()}
                                 Please update one of the unique name""")
 
@@ -113,23 +109,21 @@ class TypingManager:
             hide=hide,
         )
 
-        cls._typings[object_type][brick_name][unique_name] = typing_local
+        cls._typings[typing_unique_name] = typing_local
 
         # If the tables exists, directly create the typing
         if cls._tables_are_created:
             cls._save_object_type_in_db(typing_local)
 
-        return build_typing_unique_name(typing_local['object_type'], typing_local['brick'], typing_local['model_name'])
+        return typing_unique_name
 
     @classmethod
     def save_object_types_in_db(cls) -> None:
         # once this method is called, we considere the tables are ready
         cls._tables_are_created = True
 
-        for bricks in cls._typings.values():
-            for objects in bricks.values():
-                for typing in objects.values():
-                    cls._save_object_type_in_db(typing)
+        for typing in cls._typings.values():
+            cls._save_object_type_in_db(typing)
 
     @classmethod
     def _save_object_type_in_db(cls, typing_local: TypingLocal) -> None:
@@ -180,5 +174,5 @@ class TypingManager:
             return
 
     @classmethod
-    def get_typings(cls) -> Dict[TypingObjectType, Dict[str, Dict[str, TypingLocal]]]:
+    def get_typings(cls) -> Dict[str, TypingLocal]:
         return cls._typings
