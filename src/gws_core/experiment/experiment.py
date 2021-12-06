@@ -40,6 +40,13 @@ class ExperimentStatus(Enum):
     ERROR = "ERROR"
 
 
+class ExperimentType(Enum):
+    # Basic experiment
+    EXPERIMENT = "EXPERIMENT"
+    # specific experiment generated form a transformer task
+    TRANSFORMER = "TRANSFORMER"
+
+
 class ExperimentErrorInfo(TypedDict):
     detail: str
     unique_code: str
@@ -75,6 +82,8 @@ class Experiment(Model, TaggableModel):
                                          default=ExperimentStatus.DRAFT)
     is_validated: bool = BooleanField(default=False)
     error_info: ExperimentErrorInfo = JSONField(null=True)
+    type: ExperimentType = EnumField(choices=ExperimentType,
+                                     default=ExperimentType.EXPERIMENT)
 
     _table_name = 'gws_experiment'
 

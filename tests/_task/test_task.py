@@ -10,6 +10,7 @@ from gws_core import (BaseTestCase, ConfigParams, Experiment,
                       ProtocolService, ResourceModel, Robot, RobotCreate, Task,
                       TaskInputs, TaskModel, TaskOutputs, task_decorator)
 from gws_core.experiment.experiment_interface import IExperiment
+from gws_core.experiment.experiment_run_service import ExperimentRunService
 from tests.protocol_examples import TestSimpleProtocol
 
 
@@ -60,7 +61,7 @@ class TestTask(BaseTestCase):
 
         self.assertEqual(experiment.created_by, GTest.user)
 
-        experiment = await ExperimentService.run_experiment(
+        experiment = await ExperimentRunService.run_experiment(
             experiment=experiment, user=GTest.user)
 
         # Refresh the processes

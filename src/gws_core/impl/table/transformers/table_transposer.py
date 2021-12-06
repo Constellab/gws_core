@@ -5,6 +5,8 @@
 
 from typing import List
 
+from gws_core.task.transformer.transformer_decorator import \
+    transformer_decorator
 from pandas import DataFrame
 
 from ....config.config_types import ConfigParams, ConfigSpecs
@@ -21,18 +23,17 @@ from ...table.table import Table
 # ####################################################################
 
 
-@task_decorator(unique_name="TableTransposer", short_description="Transposes the table")
+@transformer_decorator(unique_name="TableTransposer", resource_type=Table, short_description="Transposes the table")
 class TableTransposer(Task):
-    input_specs: InputSpecs = {"table": Table}
-    output_specs: OutputSpecs = {"table": Table}
+
     config_specs: ConfigSpecs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        table = inputs["table"]
+        table: Table = inputs["table"]
         data: DataFrame = table.get_data()
         transposed_table = Table(
-            data=data.T, 
-            row_names=table.column_names, 
+            data=data.T,
+            row_names=table.column_names,
             column_names=table.row_names
         )
         return {"table": transposed_table}

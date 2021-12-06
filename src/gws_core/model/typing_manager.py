@@ -1,6 +1,6 @@
 
 
-from typing import Any, Dict, Type, TypedDict
+from typing import Any, Dict, Type
 
 from peewee import ModelSelect
 
@@ -10,24 +10,13 @@ from ..core.exception.exceptions.bad_request_exception import \
 from ..core.model.base import Base
 from ..core.model.model import Model
 from ..core.utils.logger import Logger
-from ..model.typing import Typing, TypingObjectType, build_typing_unique_name
-
-
-# Use to store locaaly the typing information
-class TypingLocal(TypedDict):
-    model_type: str
-    brick: str
-    model_name: str
-    object_type: TypingObjectType
-    human_name: str
-    short_description: str
-    hide: bool
+from ..model.typing import Typing
 
 
 class TypingManager:
 
     # a dictionary to save the types,the key if the full typing name
-    _typings: Dict[str, TypingLocal] = {}
+    _typings_before_save: Dict[str, Typing] = {}
 
     # Mark as true when the tables exists, the typings can then be saved directly
     _tables_are_created: bool = False
@@ -74,9 +63,7 @@ class TypingManager:
         return Typing.type_is_register(model_type=model_type)
 
     @classmethod
-    def register_typing(
-            cls, object_type: TypingObjectType, unique_name: str, object_class: Type[Base],
-            human_name: str, short_description: str, hide: bool) -> str:
+    def register_typing(cls, typing: Typing, object_class: Type[Base]) -> None:
         """Register the typing into the manager to save it in the database
         Return the typing unique name
         """
@@ -87,58 +74,34 @@ class TypingManager:
             raise Exception(
                 f"""Trying to register the type {name} but it is not a subclass of Base""")
 
-        brick_name: str = BrickHelper.get_brick_name(object_class)
-
-        typing_unique_name = build_typing_unique_name(object_type, brick_name, unique_name)
-
-        if typing_unique_name in cls._typings:
+        if typing.typing_name in cls._typings_before_save:
             raise Exception(
-                f"""2 differents {object_type} in the brick {brick_name} register with the same name : {unique_name}.
-                                {object_type} already register: [{cls._typings[typing_unique_name]['model_type'] }].
-                                {object_type} trying to register : {object_class.full_classname()}
+                f"""2 differents {typing.object_type} in the brick {typing.brick} register with the same name : {typing.model_name}.
+                                {typing.object_type} already register: [{cls._typings_before_save[typing.typing_name]['model_type'] }].
+                                {typing.object_type} trying to register : {object_class.full_classname()}
                                 Please update one of the unique name""")
 
-        # add the object type to the list
-        typing_local: TypingLocal = TypingLocal(
-            brick=brick_name,
-            model_name=unique_name,
-            model_type=object_class.full_classname(),
-            object_type=object_type,
-            human_name=human_name,
-            short_description=short_description,
-            hide=hide,
-        )
-
-        cls._typings[typing_unique_name] = typing_local
+        cls._typings_before_save[typing.typing_name] = typing
 
         # If the tables exists, directly create the typing
         if cls._tables_are_created:
-            cls._save_object_type_in_db(typing_local)
-
-        return typing_unique_name
+            cls._save_object_type_in_db(typing)
 
     @classmethod
     def save_object_types_in_db(cls) -> None:
         # once this method is called, we considere the tables are ready
         cls._tables_are_created = True
 
-        for typing in cls._typings.values():
+        for typing in cls._typings_before_save.values():
             cls._save_object_type_in_db(typing)
 
     @classmethod
-    def _save_object_type_in_db(cls, typing_local: TypingLocal) -> None:
-        typing = Typing(
-            brick=typing_local['brick'],
-            model_name=typing_local['model_name'],
-            model_type=typing_local['model_type'],
-            object_type=typing_local['object_type'],
-            human_name=typing_local['human_name'],
-            short_description=typing_local['short_description'],
-            hide=typing_local['hide']
-        )
-
+    def _save_object_type_in_db(cls, typing: Typing) -> None:
         query: ModelSelect = Typing.get_by_brick_and_model_name(
             typing.object_type, typing.brick, typing.model_name)
+
+        # refresh or set the ancestors list
+        typing.refresh_ancestors()
 
         # If it doesn't exist, create the type in DB
         if query.count() == 0:
@@ -148,20 +111,10 @@ class TypingManager:
         typing_db: Typing = query.first()
 
         # If the model type has changed, log a message and update the DB
-        if typing_db.model_type != typing.model_type:
-            Logger.info(f"""object_type type {typing.model_name} in brick {typing.brick} has changed its model type.
-                            Previous value {typing_db.model_type}.
-                            New Value {typing.model_type}""")
+        if typing_db.model_type != typing.model_type or typing_db.related_model_typing_name != typing.related_model_typing_name or \
+                typing_db.object_sub_type != typing_db.object_sub_type or str(typing_db.data) != str(typing.data):
+            Logger.info(f"""Typing {typing.model_name} in brick {typing.brick} has changed.""")
             typing_db.update_model_type(typing.model_type)
-            return
-
-        # If the data has changed, log a message and update the DB
-        if str(typing_db.data) != str(typing.data):
-            Logger.info(
-                f"""{typing_db.model_type} type {typing.model_name} in brick {typing.brick} has changed its data.
-                            Previous value {typing_db.data}.
-                            New Value {typing.data}""")
-            typing_db.data = typing.data
             typing_db.save()
             return
 
@@ -174,5 +127,5 @@ class TypingManager:
             return
 
     @classmethod
-    def get_typings(cls) -> Dict[str, TypingLocal]:
-        return cls._typings
+    def get_typings(cls) -> Dict[str, Typing]:
+        return cls._typings_before_save

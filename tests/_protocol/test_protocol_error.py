@@ -11,6 +11,7 @@ from gws_core import (BaseTestCase, CheckBeforeTaskResult, ConfigParams,
                       TaskOutputs, protocol_decorator, resource_decorator,
                       task_decorator)
 from gws_core.experiment.experiment_exception import ExperimentRunException
+from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.io.io_spec import InputSpecs
@@ -105,7 +106,7 @@ class TestProtocolError(BaseTestCase):
         # check that the experiment end up in error and get exception
         exception: ExperimentRunException
         try:
-            await ExperimentService.run_experiment(experiment=experiment)
+            await ExperimentRunService.run_experiment(experiment=experiment)
         except ExperimentRunException as err:
             exception = err
         else:
@@ -155,7 +156,7 @@ class TestProtocolError(BaseTestCase):
         # check that the experiment end up in error and get exception
         exception: ExperimentRunException
         try:
-            await ExperimentService.run_experiment(experiment=experiment)
+            await ExperimentRunService.run_experiment(experiment=experiment)
         except ExperimentRunException as err:
             exception = err
         else:

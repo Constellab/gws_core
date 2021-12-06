@@ -97,8 +97,10 @@ from .experiment.queue import Job as Job
 from .experiment.queue import Queue as Queue
 from .experiment.queue_service import QueueService as QueueService
 # Impl > Dataset
-from .impl.dataset.dataset import Dataset, DatasetExporter, DatasetImporter
-from .impl.dataset.view.dataset_view import DatasetView
+from .impl.dataset.dataset import Dataset as Dataset
+from .impl.dataset.dataset import DatasetExporter as DatasetExporter
+from .impl.dataset.dataset import DatasetImporter as DatasetImporter
+from .impl.dataset.view.dataset_view import DatasetView as DatasetView
 # Extension
 # Impl > File
 from .impl.file.file import File as File
@@ -145,19 +147,23 @@ from .impl.shell.shell import Shell as Shell
 from .impl.shell.shell_proxy import ShellProxy as ShellProxy
 # Impl > Table
 from .impl.table.data_frame_r_field import DataFrameRField as DataFrameRField
-from .impl.table.encoding.annotated_table import AnnotatedTable
-from .impl.table.encoding.encoded_table import EncodedTable
-from .impl.table.encoding.encoding_table import EncodingTable
-from .impl.table.encoding.metadata_table import MetadataTable
-from .impl.table.encoding.table_annotator import TableAnnotator
-from .impl.table.encoding.table_decoder import TableDecoder
-from .impl.table.encoding.table_encoder import TableEncoder
+from .impl.table.encoding.annotated_table import \
+    AnnotatedTable as AnnotatedTable
+from .impl.table.encoding.encoded_table import EncodedTable as EncodedTable
+from .impl.table.encoding.encoding_table import EncodingTable as EncodingTable
+from .impl.table.encoding.metadata_table import MetadataTable as MetadataTable
+from .impl.table.encoding.table_annotator import \
+    TableAnnotator as TableAnnotator
+from .impl.table.encoding.table_decoder import TableDecoder as TableDecoder
+from .impl.table.encoding.table_encoder import TableEncoder as TableEncoder
 from .impl.table.helper.table_aggregator_helper import \
     TableAggregatorHelper as TableAggregatorHelper
 from .impl.table.helper.table_filter_helper import \
     TableFilterHelper as TableFilterHelper
 from .impl.table.helper.table_grouping_helper import \
     TableGroupingHelper as TableGroupingHelper
+from .impl.table.helper.table_nanify_helper import \
+    TableNanifyHelper as TableNanifyHelper
 from .impl.table.table import Table as Table
 from .impl.table.table_file import TableFile as TableFile
 from .impl.table.table_tasks import TableExporter as TableExporter
@@ -167,7 +173,6 @@ from .impl.table.transformers.table_aggregator import \
 from .impl.table.transformers.table_filter import TableFilter as TableFilter
 from .impl.table.transformers.table_grouper import TableGrouper as TableGrouper
 from .impl.table.transformers.table_scaler import TableScaler as TableScaler
-from .impl.table.helper.table_nanify_helper import TableNanifyHelper
 # Impl > TableView
 from .impl.table.view.barplot_view import BarPlotView as BarPlotView
 from .impl.table.view.boxplot_view import BoxPlotView as BoxPlotView
@@ -291,6 +296,9 @@ from .task.task_model import TaskModel as TaskModel
 from .task.task_runner import TaskRunner as TaskRunner
 from .task.task_service import TaskService as TaskService
 from .task.task_typing import TaskTyping as TaskTyping
+# Task > Transformer
+from .task.transformer.transformer_decorator import \
+    transformer_decorator as transformer_decorator
 # Core > Test
 from .test.base_test_case import BaseTestCase as BaseTestCase
 from .test.gtest import GTest as GTest

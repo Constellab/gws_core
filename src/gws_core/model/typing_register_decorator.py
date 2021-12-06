@@ -2,7 +2,9 @@
 
 from typing import Any, Callable, Type
 
-from ..model.typing import TypingObjectType
+from ..brick.brick_helper import BrickHelper
+from ..core.model.base import Base
+from ..model.typing import Typing, TypingObjectType
 from .typing_manager import TypingManager
 
 
@@ -18,7 +20,7 @@ def typing_registrator(unique_name: str, object_type: TypingObjectType, hide: bo
     :type hide: bool, optional
     """
 
-    def decorator(object_class: Type[Any]):
+    def decorator(object_class: Type[Base]):
         register_typing_class(object_class=object_class,
                               object_type=object_type, unique_name=unique_name,
                               human_name="", short_description="", hide=hide)
@@ -28,16 +30,27 @@ def typing_registrator(unique_name: str, object_type: TypingObjectType, hide: bo
 
 # Save the Typing to the TypingManager and set the _typing_name class property
 def register_typing_class(
-        object_class: Type[Any],
-        object_type: TypingObjectType, unique_name: str, human_name: str, short_description, hide: bool = False) -> None:
+        object_class: Type[Base], object_type: TypingObjectType, unique_name: str,
+        human_name: str, short_description, hide: bool = False,
+        object_sub_type: str = None, related_model_typeing_name: str = None) -> None:
 
     if not human_name:
         human_name = unique_name
 
-    typing_name: str = TypingManager.register_typing(
-        object_type=object_type,  unique_name=unique_name, object_class=object_class,
-        human_name=human_name, short_description=short_description,  hide=hide)
+    typing = Typing(
+        brick=BrickHelper.get_brick_name(object_class),
+        model_name=unique_name,
+        model_type=object_class.full_classname(),
+        object_type=object_type,
+        human_name=human_name,
+        short_description=short_description,
+        hide=hide,
+        object_sub_type=object_sub_type,
+        related_model_typing_name=related_model_typeing_name
+    )
 
-    object_class._typing_name = typing_name
+    TypingManager.register_typing(typing, object_class)
+
+    object_class._typing_name = typing.typing_name
     object_class._human_name = human_name
     object_class._short_description = short_description

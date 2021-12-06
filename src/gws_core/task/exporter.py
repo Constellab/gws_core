@@ -72,14 +72,14 @@ def export_to_path(specs: ConfigSpecs = None, fs_node_type: Type[FSNode] = File,
 def exporter_decorator(
         unique_name: str, resource_type: Type[Resource],
         allowed_user: UserGroup = UserGroup.USER,) -> Callable:
-    """ Decorator to place on a ResourceExporter instead of task_decorator. This decorator works with @export_to_path and it will
+    """ Decorator to place on a task instead of task_decorator. This decorator works with @export_to_path and it will
     generate a Task which takes a resource as Input and generate a File. This task will call the export_to_path method of the resource with the config?
     :param unique_name: a unique name for this task in the brick. Only 1 task in the current brick can have this name.
                         //!\\ DO NOT MODIFIED THIS NAME ONCE IS DEFINED //!\\
                         It is used to instantiate the tasks
     :type unique_name: str
     :param resource_type: type of the resource to generate from the file. The resource must define the export_to_path method
-    :type resource_type: ProtocolAllowedUser, optional
+    :type resource_type: Type[Resource]
     :param allowed_user: role needed to run the task. By default all user can run it. It Admin, the user need to be an admin of the lab to run the task
     :type allowed_user: ProtocolAllowedUser, optional
     :return: [description]
@@ -114,6 +114,7 @@ def exporter_decorator(
 
             # register the task and set the human_name and short_description dynamically based on resource
             decorate_task(task_class, unique_name, human_name=resource_type._human_name + ' exporter',
+                          task_type='EXPORTER', related_resource=resource_type,
                           short_description=f"Export {resource_type._human_name} to a file", allowed_user=allowed_user)
         except Exception as err:
             BrickService.log_brick_error(task_class, str(err))

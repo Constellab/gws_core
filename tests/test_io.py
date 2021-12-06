@@ -10,6 +10,7 @@ from gws_core import (FIFO2, BadRequestException, BaseTestCase, ConfigParams,
                       ProtocolModel, Resource, ResourceModel, SpecialTypeOut,
                       Task, TaskInputs, TaskModel, TaskOutputs, Wait,
                       protocol_decorator, resource_decorator, task_decorator)
+from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.io.io_exception import ImcompatiblePortsException
 
 
@@ -267,7 +268,7 @@ class TestIO(BaseTestCase):
         protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_type(TestPersonProtocol)
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(protocol)
 
-        experiment = await ExperimentService.run_experiment(experiment)
+        experiment = await ExperimentRunService.run_experiment(experiment)
 
         person1: ResourceModel = experiment.protocol_model.get_process(
             'create').out_port('create_person_out').resource_model
@@ -283,7 +284,7 @@ class TestIO(BaseTestCase):
         protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_type(TestSkippable)
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(protocol)
 
-        experiment = await ExperimentService.run_experiment(experiment)
+        experiment = await ExperimentRunService.run_experiment(experiment)
 
         create2: TaskModel = experiment.protocol_model.get_process('create2')
         skippable: TaskModel = experiment.protocol_model.get_process('skippable')

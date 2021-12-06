@@ -1,8 +1,6 @@
 import inspect
 from typing import Any, Callable, Dict, List, Tuple
 
-from slugify import slugify as _slugify
-
 from ..classes.func_meta_data import FuncArgMetaData, FuncArgsMetaData
 
 

@@ -9,6 +9,7 @@ from gws_core import (BaseTestCase, ConfigParams, Experiment,
                       ExperimentService, File, GTest, JSONDict, PipEnvShell,
                       Resource, Settings, ShellProxy, TaskInputs, TaskModel,
                       TaskOutputs, TaskService, task_decorator)
+from gws_core.experiment.experiment_run_service import ExperimentRunService
 
 settings = Settings.retrieve()
 test_datadir = settings.get_variable("gws_core:testdata_dir")
@@ -46,7 +47,7 @@ class TestProcess(BaseTestCase):
 
         experiment: Experiment = ExperimentService.create_experiment_from_task_model(
             task_model=proc_mdl)
-        experiment = await ExperimentService.run_experiment(experiment=experiment, user=GTest.user)
+        experiment = await ExperimentRunService.run_experiment(experiment=experiment, user=GTest.user)
 
         # refresh the task
         task_model: TaskModel = experiment.task_models[0]

@@ -29,7 +29,7 @@ async def get_resource_type_views(resource_typing_name: str) -> list:
 async def call_view_on_resource(id: str,
                                 view_name: str,
                                 values: Dict[str, Any]) -> Any:
-    return ResourceService.call_view_on_resource_type(id, view_name, values)
+    return await ResourceService.call_view_on_resource_type(id, view_name, values)
 
 
 ####################################### Resource Model ###################################

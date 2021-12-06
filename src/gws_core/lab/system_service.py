@@ -5,6 +5,8 @@
 
 import sys
 
+from gws_core.experiment.experiment_run_service import ExperimentRunService
+
 from ..brick.brick_service import BrickService
 from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
@@ -90,7 +92,7 @@ class SystemService:
         user: User = CurrentUserService.get_and_check_current_user()
 
         # Stop all running experiment
-        ExperimentService.stop_all_running_experiment()
+        ExperimentRunService.stop_all_running_experiment()
 
         cls.deinit_queue_and_monitor()
 

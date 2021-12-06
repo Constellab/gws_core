@@ -5,6 +5,10 @@
 
 from typing import Any, Dict, List, Type
 
+from gws_core.task.task import Task
+from gws_core.task.task_runner import TaskRunner
+from gws_core.task.transformer.transformer import TransformerDict
+from gws_core.task.transformer.transformer_service import TransformerService
 from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
@@ -92,17 +96,21 @@ class ResourceService(BaseService):
         return ViewHelper.get_views_of_resource_type(resource_type)
 
     @classmethod
-    def call_view_on_resource_type(cls, resource_model_id: str,
-                                   view_name: str, config_values: Dict[str, Any]) -> Any:
+    async def call_view_on_resource_type(cls, resource_model_id: str,
+                                         view_name: str, config_values: Dict[str, Any]) -> Any:
 
         resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
 
         resource: Resource = resource_model.get_resource()
-        return cls.call_view_on_resource(resource, view_name, config_values)
+        return await cls.call_view_on_resource(resource, view_name, config_values)
 
     @classmethod
-    def call_view_on_resource(cls, resource: Resource,
-                              view_name: str, config_values: Dict[str, Any]) -> Any:
+    async def call_view_on_resource(cls, resource: Resource,
+                                    view_name: str, config_values: Dict[str, Any],
+                                    transformers: List[TransformerDict] = None) -> Any:
+        # if there is a transformer, call it before calling the view
+        if transformers is not None and len(transformers) > 0:
+            resource = await TransformerService.call_transformers(resource, transformers)
 
         return ViewHelper.call_view_on_resource(resource, view_name, config_values)
 

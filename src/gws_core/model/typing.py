@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 import inspect
-from typing import Any, Dict, List, Literal, Type
+from typing import Any, Dict, List, Literal, Set, Type
 
 from peewee import BooleanField, CharField, ModelSelect
 
@@ -23,9 +23,7 @@ from ..core.utils.utils import Utils
 SEPARATOR: str = "."
 
 # different object typed store in the typing table
-# TODO : allow object type of new bricks automatically
 TypingObjectType = Literal["TASK", "RESOURCE", "PROTOCOL", "MODEL"]
-available_object_types = ["TASK", "RESOURCE", "PROTOCOL", "MODEL"]
 
 
 # Simple method to build the typing  = object_type.brick.model_name
@@ -47,25 +45,27 @@ class Typing(Model):
     """
 
     # Full python type of the model
-    model_type: CharField = CharField(null=False)
-    brick: CharField = CharField(null=False)
+    model_type: CharField = CharField(null=False, max_length=511)
+    brick: CharField = CharField(null=False, max_length=50)
     model_name: CharField = CharField(null=False)
-    object_type: CharField = CharField(null=False)
-    human_name: CharField = CharField(default=False)
+    object_type: CharField = CharField(null=False, max_length=20)
+    human_name: CharField = CharField(default=False, max_length=20)
     short_description: CharField = CharField(default=False)
     hide: BooleanField = BooleanField(default=False)
+
+    # Sub type of the object, types will be differents based on object type
+    object_sub_type: CharField = CharField(null=True, max_length=20)
+    # For process, this is a linked resource to the model (useful for IMPORTER, TRANFORMERS...)
+    related_model_typing_name: CharField = CharField(null=True, index=True)
 
     _table_name = 'gws_typing'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        if self.object_type not in available_object_types:
+        if not Utils.value_is_in_literal(self.object_type, TypingObjectType):
             raise BadRequestException(
-                f"The type {self.object_type} is not authorized in Typing, possible values: {available_object_types}")
-
-        if not self.data.get("ancestors"):
-            self._set_ancestors(self._get_hierarchy_table())
+                f"The type {self.object_type} is not authorized in Typing, possible values: {Utils.get_literal_values(TypingObjectType)}")
 
     # -- G --
 
@@ -77,14 +77,13 @@ class Typing(Model):
         return self.model_type.split('.')
 
     def _get_hierarchy_table(self) -> List[str]:
-        model_t: Model = Utils.get_model_type(self.model_type)
-        mro: List[Model] = inspect.getmro(model_t)
+        model_t: Type = self.get_type()
+        mro: List[Type] = inspect.getmro(model_t)
 
         ht: List[str] = []
         for t in mro:
-            if issubclass(t, Model):
+            if issubclass(t, Base):
                 ht.append(t.full_classname())
-
         return ht
 
     def update_model_type(self, model_type) -> 'Typing':
@@ -92,20 +91,36 @@ class Typing(Model):
         Update the model type and the ancestors, then save into the DB
         """
         self.model_type = model_type
-        self._set_ancestors(self._get_hierarchy_table())
-
-        self.save()
-        return self
+        self.refresh_ancestors()
 
     def _set_ancestors(self, ancestors: List[str]) -> None:
         self.data["ancestors"] = ancestors
 
-    def get_type(self) -> Type[Base]:
+    def refresh_ancestors(self) -> None:
+        self._set_ancestors(self._get_hierarchy_table())
+
+    def get_type(self) -> Type[Any]:
         return Utils.get_model_type(self.model_type)
 
     @property
     def typing_name(self) -> str:
         return build_typing_unique_name(self.object_type, self.brick, self.model_name)
+
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
+        _json: Dict[str, Any] = super().to_json(deep=deep, **kwargs)
+
+        _json["typing_name"] = self.typing_name
+        return _json
+
+    def get_model_type_doc(self) -> str:
+        """Return the python documentation of the model type
+        """
+
+        # retrieve the task python type
+        model_t: Type[Base] = Utils.get_model_type(self.model_type)
+        return inspect.getdoc(model_t)
+
+    ############################################# CLASS METHODS #########################################
 
     @classmethod
     def get_by_brick_and_model_name(cls, object_type: TypingObjectType, brick: str, model_name: str) -> ModelSelect:
@@ -150,20 +165,6 @@ class Typing(Model):
 
         typings = list(filter(lambda typing: issubclass(typing.get_type(), base_type), all_typings))
         return typings
-
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        _json: Dict[str, Any] = super().to_json(deep=deep, **kwargs)
-
-        _json["typing_name"] = self.typing_name
-        return _json
-
-    def get_model_type_doc(self) -> str:
-        """Return the python documentation of the model type
-        """
-
-        # retrieve the task python type
-        model_t: Type[Base] = Utils.get_model_type(self.model_type)
-        return inspect.getdoc(model_t)
 
     class Meta:
         # Unique constrains on brick, model_name and object_type

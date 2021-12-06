@@ -10,6 +10,7 @@ from gws_core import (BaseTestCase, Config, Experiment, ExperimentService,
                       ExperimentStatus, GTest, ProcessModel, ProgressBar,
                       ProtocolModel, ProtocolService, Robot, RobotFood,
                       RobotMove, Settings, TaskModel, Typing)
+from gws_core.experiment.experiment_run_service import ExperimentRunService
 from tests.protocol_examples import (TestNestedProtocol,
                                      TestRobotWithSugarProtocol,
                                      TestSimpleProtocol)
@@ -37,7 +38,7 @@ class TestProtocol(BaseTestCase):
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
             protocol_model=proto)
 
-        experiment = await ExperimentService.run_experiment(experiment=experiment)
+        experiment = await ExperimentRunService.run_experiment(experiment=experiment)
 
         self.assertEqual(len(experiment.task_models), 7)
         self.assertEqual(experiment.status, ExperimentStatus.SUCCESS)
@@ -72,7 +73,7 @@ class TestProtocol(BaseTestCase):
 
         self.assertEqual(ProtocolModel.select().count(), count+2)
 
-        experiment = await ExperimentService.run_experiment(
+        experiment = await ExperimentRunService.run_experiment(
             experiment=experiment, user=GTest.user)
 
         super_proto = ProtocolModel.get_by_id(super_proto.id)
@@ -208,7 +209,7 @@ class TestProtocol(BaseTestCase):
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_model(
             protocol_model=protocol)
 
-        experiment = await ExperimentService.run_experiment(experiment=experiment)
+        experiment = await ExperimentRunService.run_experiment(experiment=experiment)
 
         eat_1: TaskModel = experiment.protocol_model.get_process('eat_1')
         food: RobotFood = eat_1.inputs.get_resource_model('food')

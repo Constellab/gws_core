@@ -7,6 +7,7 @@ from typing import List, Optional
 
 from fastapi import Depends
 
+from ..core.classes.jsonable import ListJsonable
 from ..core.dto.typed_tree_dto import TypedTree
 from ..core_app import core_app
 from ..user.auth_service import AuthService
@@ -40,7 +41,7 @@ async def get_the_list_of_task_types(page: Optional[int] = 1,
     - **number_of_items_per_page**: the number of items per page. Defaults to 20.
     """
 
-    return TaskService.fetch_task_typing_list(
+    return TaskService.get_task_typing_list(
         page=page,
         number_of_items_per_page=number_of_items_per_page,
     ).to_json()
@@ -53,12 +54,12 @@ async def get_the_list_of_task_grouped(_: UserData = Depends(AuthService.check_u
     Retrieve all the task types in TypedTree
     """
 
-    return TaskService.fetch_task_typing_tree()
+    return TaskService.get_task_typing_tree()
 
 
 @core_app.get("/task-type/{id}", tags=["Task"], summary="Get a task type detail")
-async def get_protocol_type(id: str,
-                            _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+async def get_task_type(id: str,
+                        _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Retrieve a task type
 
@@ -66,3 +67,15 @@ async def get_protocol_type(id: str,
     """
 
     return TaskService.get_task_typing(id=id).to_json(deep=True)
+
+
+@core_app.get(
+    "/task-type/related-resource/{related_resource_typing_name}", tags=["Task"],
+    summary="Get tasks types related to a resource")
+async def get_task_typing_by_related_resource(related_resource_typing_name: str,
+                                              _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    """
+    Get tasks types related to a resource
+    """
+
+    return ListJsonable(TaskService.get_task_typing_by_related_resource(related_resource_typing_name)).to_json()

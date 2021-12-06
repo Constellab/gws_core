@@ -6,6 +6,8 @@
 from typing import List, Type
 
 from gws_core.config.config_types import ConfigParamsDict
+from gws_core.model.typing_manager import TypingManager
+from gws_core.resource.resource import Resource
 
 from ..core.classes.paginator import Paginator
 from ..core.dto.typed_tree_dto import TypedTree
@@ -41,9 +43,9 @@ class TaskService(BaseService):
         return TaskTyping.get_by_id_and_check(id)
 
     @classmethod
-    def fetch_task_typing_list(cls,
-                               page: int = 0,
-                               number_of_items_per_page: int = 20) -> Paginator[TaskTyping]:
+    def get_task_typing_list(cls,
+                             page: int = 0,
+                             number_of_items_per_page: int = 20) -> Paginator[TaskTyping]:
 
         query = TaskTyping.get_types()
 
@@ -53,7 +55,7 @@ class TaskService(BaseService):
             query, page=page, number_of_items_per_page=number_of_items_per_page)
 
     @classmethod
-    def fetch_task_typing_tree(cls) -> List[TypedTree]:
+    def get_task_typing_tree(cls) -> List[TypedTree]:
         """
         Return all the task types grouped by module and submodules
         """
@@ -68,3 +70,9 @@ class TaskService(BaseService):
                 task_type.get_model_types_array(), task_type.to_json())
 
         return tree.sub_trees
+
+    @classmethod
+    def get_task_typing_by_related_resource(cls, related_resource_typing_name: str) -> List[TaskTyping]:
+        resource_type: Type[Resource] = TypingManager.get_type_from_name(related_resource_typing_name)
+
+        return TaskTyping.get_by_related_resource(resource_type)

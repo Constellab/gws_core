@@ -13,6 +13,7 @@ from gws_core import (BaseTestCase, Experiment, ExperimentDTO,
 from gws_core.experiment.experiment_exception import \
     ResourceUsedInAnotherExperimentException
 from gws_core.experiment.experiment_interface import IExperiment
+from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.impl.robot.robot_protocol import (CreateSimpleRobot,
                                                 MoveSimpleRobot)
 from gws_core.io.io_spec import IOSpecClass
@@ -33,7 +34,7 @@ class TestExperiment(BaseTestCase):
         study_dto: StudyDto = StudyDto(id=Utils.generate_uuid(), title="Study", description="Desc")
         experiment_dto: ExperimentDTO = ExperimentDTO(
             title="Experiment title", description="Experiment description", study=study_dto)
-        experiment = ExperimentService.create_empty_experiment(experiment_dto)
+        experiment = ExperimentService.create_empty_experiment_from_dto(experiment_dto)
 
         self.assertIsNotNone(experiment.id)
         self.assertEqual(experiment.get_title(), 'Experiment title')
@@ -73,7 +74,7 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(Experiment.select().count(), 1)
 
         print("Run experiment_2 ...")
-        experiment2 = await ExperimentService.run_experiment(experiment=experiment2, user=GTest.user)
+        experiment2 = await ExperimentRunService.run_experiment(experiment=experiment2, user=GTest.user)
 
         #self.assertEqual(e2.processes.count(), 18)
         self.assertEqual(len(experiment2.task_models), 16)
@@ -119,7 +120,7 @@ class TestExperiment(BaseTestCase):
         experiment3 = ExperimentService.create_experiment_from_protocol_model(protocol_model=proto3)
 
         print("Run experiment_3 through cli ...")
-        ExperimentService.create_cli_process_for_experiment(
+        ExperimentRunService.create_cli_process_for_experiment(
             experiment=experiment3, user=GTest.user)
         self.assertEqual(experiment3.status,
                          ExperimentStatus.WAITING_FOR_CLI_PROCESS)
@@ -173,7 +174,7 @@ class TestExperiment(BaseTestCase):
     async def test_reset(self):
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_type(RobotWorldTravelProto)
 
-        experiment = await ExperimentService.run_experiment(experiment=experiment)
+        experiment = await ExperimentRunService.run_experiment(experiment=experiment)
 
         experiment.reset()
 
@@ -227,7 +228,7 @@ class TestExperiment(BaseTestCase):
 
         experiment: Experiment = ExperimentService.create_experiment_from_protocol_type(RobotWorldTravelProto)
 
-        await ExperimentService.run_experiment(experiment)
+        await ExperimentRunService.run_experiment(experiment)
 
         protocol_count = ProtocolModel.select().count()
         task_model = TaskModel.select().count()
@@ -239,5 +240,5 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(TaskModel.select().count(), task_model * 2)
         self.assertEqual(ResourceModel.select().count(), resource_count)
 
-        await ExperimentService.run_experiment(experiment_copy)
+        await ExperimentRunService.run_experiment(experiment_copy)
         self.assertEqual(ResourceModel.select().count(), resource_count * 2)

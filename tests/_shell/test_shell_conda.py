@@ -9,6 +9,7 @@ from gws_core import (BaseTestCase, CondaEnvShell, ConfigParams, Experiment,
                       ExperimentService, File, GTest, JSONDict, Resource,
                       Settings, TaskInputs, TaskModel, TaskOutputs,
                       TaskService, task_decorator)
+from gws_core.experiment.experiment_run_service import ExperimentRunService
 
 settings = Settings.retrieve()
 test_datadir = settings.get_variable("gws_core:testdata_dir")
@@ -47,7 +48,7 @@ class TestProcess(BaseTestCase):
 
         experiment: Experiment = ExperimentService.create_experiment_from_task_model(
             task_model=proc_mdl)
-        experiment = await ExperimentService.run_experiment(experiment=experiment, user=GTest.user)
+        experiment = await ExperimentRunService.run_experiment(experiment=experiment, user=GTest.user)
 
         proc = experiment.task_models[0]
 

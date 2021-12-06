@@ -175,7 +175,7 @@ class ResourceModel(Model, TaggableModel, Generic[ResourceType]):
         """
         Create the Resource object from the resource_typing_name
         """
-        resource_type: Type[ResourceType] = self._get_resource_type()
+        resource_type: Type[ResourceType] = self.get_resource_type()
         resource: ResourceType = resource_type()
         # Pass the model id to the resource
         resource._model_id = self.id
@@ -304,7 +304,7 @@ class ResourceModel(Model, TaggableModel, Generic[ResourceType]):
         """
         return ReflectorHelper.get_property_names_of_type(resource_type, BaseRField)
 
-    def _get_resource_type(self) -> Type[ResourceType]:
+    def get_resource_type(self) -> Type[ResourceType]:
         return TypingManager.get_type_from_name(self.resource_typing_name)
 
     ########################################## KV STORE ######################################
@@ -364,7 +364,7 @@ class ResourceModel(Model, TaggableModel, Generic[ResourceType]):
                 },
             })
 
-        resource: Type[Resource] = self._get_resource_type()
+        resource: Type[Resource] = self.get_resource_type()
         _json["resource_type_human_name"] = resource._human_name or resource.__class__.__name__
         _json["resource_type_short_description"] = resource._short_description
         _json["resource_human_name"] = _json["resource_type_human_name"]

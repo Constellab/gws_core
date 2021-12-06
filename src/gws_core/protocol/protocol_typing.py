@@ -39,7 +39,7 @@ class ProtocolTyping(Typing):
 
         _json = super().data_to_json(deep=deep, **kwargs)
 
-        protocol_type: Type[Protocol] = Utils.get_model_type(self.model_type)
+        protocol_type: Type[Protocol] = self.get_type()
 
         protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_type(
             protocol_type)

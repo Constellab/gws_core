@@ -6,13 +6,15 @@
 from typing import Dict, List, Optional
 
 from fastapi import Depends
-from gws_core.experiment.experiment import Experiment
-from gws_core.study.study_dto import StudyDto
-from gws_core.tag.tag import Tag
-from gws_core.tag.tag_service import TagService
 
 from ..core.classes.paginator import PaginatorDict
 from ..core_app import core_app
+from ..experiment.experiment import Experiment
+from ..experiment.experiment_run_service import ExperimentRunService
+from ..study.study_dto import StudyDto
+from ..tag.tag import Tag
+from ..tag.tag_service import TagService
+from ..task.transformer.transformer_service import TransformerService
 from ..user.auth_service import AuthService
 from ..user.user_dto import UserData
 from .experiment_dto import ExperimentDTO
@@ -73,8 +75,17 @@ def create_an_experiment(experiment: ExperimentDTO,
     - **description**: the description of the experiment [optional]
     """
 
-    return ExperimentService.create_empty_experiment(
+    return ExperimentService.create_empty_experiment_from_dto(
         experiment).to_json(deep=True)
+
+
+@core_app.post(
+    "/experiment/transformer/{transformer_typing_name}/{resource_model_id}", tags=["Experiment"],
+    summary="Create a transformer experiment")
+async def create_transformer_experiment(transformer_typing_name: str, resource_model_id: str,
+                                        _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+
+    return await TransformerService.create_and_run_transformer_experiment(transformer_typing_name, resource_model_id).to_json()
 
 ###################################### UPDATE  ################################
 
@@ -143,7 +154,7 @@ def stop_an_experiment(id: str,
     - **id**: the experiment id
     """
 
-    return ExperimentService.stop_experiment(id=id).to_json(deep=True)
+    return ExperimentRunService.stop_experiment(id=id).to_json(deep=True)
 
 ###################################### RUN ################################
 

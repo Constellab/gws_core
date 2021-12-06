@@ -1,15 +1,14 @@
 
 import threading
-import traceback
 
 from ..core.exception.exceptions import NotFoundException
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.service.base_service import BaseService
 from ..core.utils.logger import Logger
+from ..experiment.experiment_run_service import ExperimentRunService
 from ..user.current_user_service import CurrentUserService
 from .experiment import Experiment, ExperimentStatus
-from .experiment_service import ExperimentService
 from .queue import Job, Queue
 
 TICK_INTERVAL_SECONDS = 30   # 30 sec
@@ -103,7 +102,7 @@ class QueueService(BaseService):
             return
 
         try:
-            ExperimentService.create_cli_process_for_experiment(
+            ExperimentRunService.create_cli_process_for_experiment(
                 experiment=experiment, user=job.user)
         except Exception as err:
             Logger.error(

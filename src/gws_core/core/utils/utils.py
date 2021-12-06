@@ -9,7 +9,7 @@ import random
 import re
 import string
 import uuid
-from typing import Any, List, Tuple, Type, Union
+from typing import Any, List, Set, Tuple, Type, Union, get_args
 
 from slugify import slugify as _slugify
 
@@ -117,3 +117,37 @@ class Utils:
         """issubclass safe that check the input is a class and avoid exception
         """
         return inspect.isclass(__cls) and issubclass(__cls, __class_or_tuple)
+
+    @staticmethod
+    def value_is_in_literal(value: Any, literal_type: Type) -> bool:
+        """Check wheter a value in in a listeral list
+        """
+        return value in Utils.get_literal_values(literal_type)
+
+    @staticmethod
+    def get_literal_values(literal_type: Type) -> Tuple[Any]:
+        """Return the list of literal values
+        """
+        return get_args(literal_type)
+
+    @staticmethod
+    def get_all_subclasses(class_: Type) -> Set[Type]:
+        return set(class_.__subclasses__()).union(
+            [s for c in class_.__subclasses__() for s in Utils.get_all_subclasses(c)])
+
+    @staticmethod
+    def get_parent_classes(class_: Type, max_parent: Type = None) -> List[Type]:
+        """Return  a list of parent class of class_ arg (containing class_).
+        :param class_: [description]
+        :type class_: Type
+        :param max_parent: if provided, doesn't return parent of max_parent class, defaults to None
+        :type max_parent: Type, optional
+        :return: [description]
+        :rtype: List[Type]
+        """
+        mro: List[Type] = inspect.getmro(class_)
+        parents: List[Type] = []
+        for parent_type in mro:
+            if max_parent is None or issubclass(parent_type, max_parent):
+                parents.append(parent_type)
+        return parents

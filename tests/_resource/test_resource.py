@@ -7,6 +7,7 @@ from typing import List
 from gws_core import (BaseTestCase, Experiment, ExperimentService, GTest,
                       ProcessFactory, ResourceModel, Robot, RobotCreate,
                       TaskModel)
+from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.resource.r_field import IntRField, ListRField
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
@@ -31,7 +32,7 @@ class TestResource(BaseTestCase):
             task_type=RobotCreate, instance_name="create")
         experiment = ExperimentService.create_experiment_from_task_model(task_model)
 
-        experiment: Experiment = await ExperimentService.run_experiment(experiment)
+        experiment: Experiment = await ExperimentRunService.run_experiment(experiment)
 
         create: TaskModel = experiment.protocol_model.get_process('create')
 

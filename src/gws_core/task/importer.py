@@ -113,6 +113,7 @@ def importer_decorator(
 
             # register the task and set the human_name and short_description dynamically based on resource
             decorate_task(task_class, unique_name, human_name=resource_type._human_name + ' importer',
+                          task_type='IMPORTER', related_resource=resource_type,
                           short_description=f"Import file to {resource_type._human_name}", allowed_user=allowed_user)
         except Exception as err:
             BrickService.log_brick_error(task_class, str(err))
