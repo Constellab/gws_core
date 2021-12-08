@@ -8,7 +8,6 @@ from typing import Any, Coroutine, List, Type
 
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ...experiment.experiment import Experiment
 from ...experiment.experiment_interface import IExperiment
 from ...model.typing_manager import TypingManager
 from ...process.process_interface import IProcess
@@ -24,7 +23,7 @@ from .transformer import TransformerDict
 class TransformerService():
 
     @classmethod
-    async def create_and_run_transformer_experiment(cls, transformers: List[TransformerDict], resource_model_id: str) -> Coroutine[Any, Any, Experiment]:
+    async def create_and_run_transformer_experiment(cls, transformers: List[TransformerDict], resource_model_id: str) -> Coroutine[Any, Any, ResourceModel]:
 
         if not transformers or len(transformers) == 0:
             raise BadRequestException('At least 1 transformer mustbe provided')
@@ -62,7 +61,8 @@ class TransformerService():
         # add the experiment to queue to run it
         await experiment.run()
 
-        return experiment.get_experiment_model()
+        # return the resource model of the sink process
+        return experiment.get_experiment_model().protocol_model.get_process('sink').inputs.get_resource_model('resource')
 
     @classmethod
     async def call_transformers(cls, resource: Resource,
@@ -70,7 +70,7 @@ class TransformerService():
 
         # call all transformers in a raw
         for transformer in transformers:
-            resource = cls.call_transformer(resource, transformer)
+            resource = await cls.call_transformer(resource, transformer)
 
         return resource
 
@@ -83,6 +83,6 @@ class TransformerService():
         task_runner: TaskRunner = TaskRunner(transformer_task, inputs={'resource': resource})
 
         # run task, clear after task and get resource
-        resource: Resource = await task_runner.run()['resource']
+        resource: Resource = (await task_runner.run())['resource']
         task_runner.run_after_task()
         return resource

@@ -9,8 +9,8 @@ from ....config.config_types import ConfigParams, ConfigSpecs
 from ....config.param_spec import BoolParam, StrParam
 from ....io.io_spec import InputSpecs, OutputSpecs
 from ....task.task import Task
-from ....task.task_decorator import task_decorator
 from ....task.task_io import TaskInputs, TaskOutputs
+from ....task.transformer.transformer_decorator import transformer_decorator
 from ...table.table import Table
 from ..helper.table_aggregator_helper import TableAggregatorHelper
 from ..helper.table_filter_helper import TableFilterHelper
@@ -22,10 +22,11 @@ from ..helper.table_filter_helper import TableFilterHelper
 # ####################################################################
 
 
-@task_decorator(unique_name="TableAggregator", short_description="Aggregate the table along an axis")
+@transformer_decorator(unique_name="TableAggregator", resource_type=Table,
+                       short_description="Aggregate the table along an axis")
 class TableAggregator(Task):
-    input_specs: InputSpecs = {"table": Table}
-    output_specs: OutputSpecs = {"table": Table}
+    input_specs: InputSpecs = {"resource": Table}
+    output_specs: OutputSpecs = {"resource": Table}
     config_specs: ConfigSpecs = {
         "function": StrParam(
             human_name="Aggregation function",
@@ -46,9 +47,9 @@ class TableAggregator(Task):
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         data = TableAggregatorHelper.aggregate(
-            data=inputs["table"].get_data(),
+            data=inputs["resource"].get_data(),
             direction=params["direction"],
             func=params["function"],
             skip_nan=params["skip_nan"]
         )
-        return {"table": Table(data=data)}
+        return {"resource": Table(data=data)}

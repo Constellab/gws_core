@@ -15,7 +15,7 @@ from ..io.io_spec import IOSpecsHelper
 from ..model.typing_register_decorator import register_typing_class
 from ..user.user_group import UserGroup
 from .task import Task
-from .task_typing import TaskType
+from .task_typing import TaskSubType
 
 
 def task_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER,
@@ -49,7 +49,7 @@ def task_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER,
 
 def decorate_task(
         task_class: Type[Task], unique_name: str,
-        task_type: TaskType, related_resource: Type[Resource] = None,
+        task_type: TaskSubType, related_resource: Type[Resource] = None,
         allowed_user: UserGroup = UserGroup.USER,
         human_name: str = "", short_description: str = "", hide: bool = False):
     """Method to decorate a task
@@ -66,10 +66,10 @@ def decorate_task(
             f"The task {unique_name} has a related object which is not a resource.")
         return
 
-    if not Utils.value_is_in_literal(task_type, TaskType):
+    if not Utils.value_is_in_literal(task_type, TaskSubType):
         BrickService.log_brick_error(
             task_class,
-            f"The task_type '{task_type}' for the task is invalid: {task_class.__name__}. Available values: {Utils.get_literal_values(TaskType)}")
+            f"The task_type '{task_type}' for the task is invalid: {task_class.__name__}. Available values: {Utils.get_literal_values(TaskSubType)}")
         return
 
     # Check the input, output and config specs

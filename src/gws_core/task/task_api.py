@@ -70,12 +70,14 @@ async def get_task_type(id: str,
 
 
 @core_app.get(
-    "/task-type/related-resource/{related_resource_typing_name}", tags=["Task"],
-    summary="Get tasks types related to a resource")
-async def get_task_typing_by_related_resource(related_resource_typing_name: str,
-                                              _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    "/task-type/transformers/{related_resource_typing_name}", tags=["Task"],
+    summary="Get trasnformers related to a resource")
+async def get_task_transformers_by_related_resource(related_resource_typing_name: str,
+                                                    _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Get tasks types related to a resource
     """
 
-    return ListJsonable(TaskService.get_task_typing_by_related_resource(related_resource_typing_name)).to_json()
+    return ListJsonable(
+        TaskService.get_task_transformers_by_related_resource(related_resource_typing_name)).to_json(
+        deep=True)  # TODO check deep=True

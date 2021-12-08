@@ -12,7 +12,6 @@ from gws_core import (BaseTestCase, ConfigParams, File, GTest, ProcessSpec,
                       transformer_decorator)
 from gws_core.impl.robot.robot_protocol import RobotWorldTravelProto
 from gws_core.impl.robot.robot_resource import Robot
-from gws_core.impl.table.table import Table
 from gws_core.model.typing import Typing
 from gws_core.resource.resource_decorator import resource_decorator
 
@@ -104,7 +103,7 @@ class TestTyping(BaseTestCase):
         """
 
         # find task typings related to Table
-        typings: List[Typing] = TaskTyping.get_by_related_resource(SubFile)
+        typings: List[Typing] = TaskTyping.get_by_related_resource(SubFile, 'TRANSFORMER')
 
         # Check that we found the TableTransformer
         self.assertEqual(len([x for x in typings if x.model_name == 'TableTransformer']), 1)
@@ -112,7 +111,7 @@ class TestTyping(BaseTestCase):
         self.assertEqual(len([x for x in typings if x.model_name == 'SubFileTransformer']), 1)
 
         # find task typings related to Table
-        typings = TaskTyping.get_by_related_resource(File)
+        typings = TaskTyping.get_by_related_resource(File,  'TRANSFORMER')
 
         # Check that we found the TableTransformer
         self.assertEqual(len([x for x in typings if x.model_name == 'TableTransformer']), 1)

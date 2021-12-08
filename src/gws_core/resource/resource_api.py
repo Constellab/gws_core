@@ -3,10 +3,14 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import Depends
 from gws_core.core.classes.search_builder import SearchDict
+from gws_core.resource.resource_model import ResourceModel
+from gws_core.task.transformer.transformer import TransformerDict
+from gws_core.task.transformer.transformer_service import TransformerService
+from typing_extensions import TypedDict
 
 from ..core.classes.jsonable import ListJsonable
 from ..core.classes.paginator import PaginatorDict
@@ -24,12 +28,17 @@ async def get_resource_type_views(resource_typing_name: str) -> list:
     return ListJsonable(ResourceService.get_views_of_resource(resource_typing_name)).to_json()
 
 
+class ViewConfig(TypedDict):
+    values: Dict[str, Any]
+    transformers: List[TransformerDict]
+
+
 @core_app.post("/resource/{id}/views/{view_name}", tags=["Resource"],
                summary="Call the view name for a resource")
 async def call_view_on_resource(id: str,
                                 view_name: str,
-                                values: Dict[str, Any]) -> Any:
-    return await ResourceService.call_view_on_resource_type(id, view_name, values)
+                                view_config: ViewConfig) -> Any:
+    return await ResourceService.call_view_on_resource_type(id, view_name, view_config["values"], view_config["transformers"])
 
 
 ####################################### Resource Model ###################################
@@ -87,6 +96,16 @@ async def advanced_search(search_dict: SearchDict,
     """
 
     return ResourceService.search(search_dict, page, number_of_items_per_page).to_json()
+
+
+@core_app.post(
+    "/resource/{resource_model_id}/transform", tags=["Resource"],
+    summary="Transform the resource")
+async def create_transformer_experiment(transformers: List[TransformerDict], resource_model_id: str,
+                                        _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+
+    resource_model: ResourceModel = await TransformerService.create_and_run_transformer_experiment(transformers, resource_model_id)
+    return resource_model.to_json()
 
 ############################# RESOURCE TYPE ###########################
 

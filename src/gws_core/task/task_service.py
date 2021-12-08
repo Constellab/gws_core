@@ -72,7 +72,14 @@ class TaskService(BaseService):
         return tree.sub_trees
 
     @classmethod
-    def get_task_typing_by_related_resource(cls, related_resource_typing_name: str) -> List[TaskTyping]:
+    def get_task_transformers_by_related_resource(cls, related_resource_typing_name: str) -> List[TaskTyping]:
+        """Return the list of transformers type link to a resource type
+
+        :param related_resource_typing_name: [description]
+        :type related_resource_typing_name: str
+        :return: [description]
+        :rtype: List[TaskTyping]
+        """
         resource_type: Type[Resource] = TypingManager.get_type_from_name(related_resource_typing_name)
 
-        return TaskTyping.get_by_related_resource(resource_type)
+        return TaskTyping.get_by_related_resource(resource_type, 'TRANSFORMER')

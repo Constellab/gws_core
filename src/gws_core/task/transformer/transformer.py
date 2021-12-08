@@ -4,8 +4,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from typing import Any, Dict
 
-from typing import Any, Dict, TypedDict
+from typing_extensions import TypedDict
 
 
 class TransformerDict(TypedDict):

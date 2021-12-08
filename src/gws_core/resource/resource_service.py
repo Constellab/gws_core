@@ -97,12 +97,13 @@ class ResourceService(BaseService):
 
     @classmethod
     async def call_view_on_resource_type(cls, resource_model_id: str,
-                                         view_name: str, config_values: Dict[str, Any]) -> Any:
+                                         view_name: str, config_values: Dict[str, Any],
+                                         transformers: List[TransformerDict]) -> Any:
 
         resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
 
         resource: Resource = resource_model.get_resource()
-        return await cls.call_view_on_resource(resource, view_name, config_values)
+        return await cls.call_view_on_resource(resource, view_name, config_values, transformers)
 
     @classmethod
     async def call_view_on_resource(cls, resource: Resource,

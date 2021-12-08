@@ -14,7 +14,7 @@ from ..io.io_spec import IOSpecsHelper
 from ..model.typing import Typing, TypingObjectType
 from ..task.task import Task
 
-TaskType = Literal["TASK", "IMPORTER", "EXPORTER", "TRANSFORMER"]
+TaskSubType = Literal["TASK", "IMPORTER", "EXPORTER", "TRANSFORMER"]
 
 
 @final
@@ -24,7 +24,7 @@ class TaskTyping(Typing):
     """
 
     # Sub type of the object, types will be differents based on object type
-    object_sub_type: TaskType = CharField(null=True, max_length=20)
+    object_sub_type: TaskSubType = CharField(null=True, max_length=20)
 
     _object_type: TypingObjectType = "TASK"
 
@@ -33,7 +33,7 @@ class TaskTyping(Typing):
         return cls.get_by_object_type(cls._object_type)
 
     @classmethod
-    def get_by_related_resource(cls, resource_type: Type[Resource]) -> List['TaskTyping']:
+    def get_by_related_resource(cls, resource_type: Type[Resource], task_sub_type: TaskSubType) -> List['TaskTyping']:
         # get all the class types between base_type and Model
         parent_classes: List[Type[Resource]] = Utils.get_parent_classes(resource_type, Resource)
 
@@ -43,7 +43,8 @@ class TaskTyping(Typing):
         # filter on object type and related_model_typing_name
         return list(
             cls.select().where(
-                (cls.object_type == cls._object_type) & (cls.related_model_typing_name.in_(typing_names))))
+                (cls.object_type == cls._object_type) & (cls.object_sub_type == task_sub_type) &
+                (cls.related_model_typing_name.in_(typing_names))))
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:
 
@@ -63,7 +64,7 @@ class TaskTyping(Typing):
             _json["output_specs"] = IOSpecsHelper.io_specs_to_json(model_t.output_specs)
 
             # Handle the config specs
-            _json["config_specs"] = ConfigSpecsHelper.check_config_specs(model_t.config_specs)
+            _json["config_specs"] = ConfigSpecsHelper.config_specs_to_json(model_t.config_specs)
 
         return _json
 

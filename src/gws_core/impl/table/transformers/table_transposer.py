@@ -29,11 +29,11 @@ class TableTransposer(Task):
     config_specs: ConfigSpecs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        table: Table = inputs["table"]
+        table: Table = inputs["resource"]
         data: DataFrame = table.get_data()
         transposed_table = Table(
             data=data.T,
             row_names=table.column_names,
             column_names=table.row_names
         )
-        return {"table": transposed_table}
+        return {"resource": transposed_table}
