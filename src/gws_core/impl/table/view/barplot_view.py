@@ -6,7 +6,7 @@
 from pandas import DataFrame
 
 from ....config.config_types import ConfigParams
-from ....config.param_spec import ListParam, StrParam, BoolParam
+from ....config.param_spec import BoolParam, ListParam, StrParam
 from ....resource.view_types import ViewSpecs
 from ..helper.constructor.data_scale_filter_param import \
     DataScaleFilterParamConstructor
@@ -14,8 +14,8 @@ from ..helper.constructor.num_data_filter_param import \
     NumericDataFilterParamConstructor
 from ..helper.constructor.text_data_filter_param import \
     TextDataFilterParamConstructor
-from .base_table_view import BaseTableView
 from ..helper.table_nanify_helper import TableNanifyHelper
+from .base_table_view import BaseTableView
 
 
 class BarPlotView(BaseTableView):
@@ -89,8 +89,8 @@ class BarPlotView(BaseTableView):
 
         index_column = params.get_value("index_column")
         if index_column:
-            data.index = data.loc[:,index_column].to_list()
-            
+            data.index = data.loc[:, index_column].to_list()
+
         # apply filters
         data = self._filter_data(data, params)
 
@@ -100,10 +100,10 @@ class BarPlotView(BaseTableView):
             column_names = data.columns.to_list()
         else:
             if params["use_regexp"]:
-                reg = "|".join([ "^"+val+"$" for val in column_names ])
+                reg = "|".join(["^"+val+"$" for val in column_names])
                 data = data.filter(regex=reg)
             else:
-                column_names = [ col for col in column_names if col in data.columns]
+                column_names = [col for col in column_names if col in data.columns]
                 data = data[column_names]
 
         # continue ...
@@ -123,10 +123,10 @@ class BarPlotView(BaseTableView):
         if params["transpose"]:
             data = data.T
 
-        #normalization is applied at the end
+        # normalization is applied at the end
         data = self._normalize_data(data, params)
 
-        # replace NaN by 'NaN' 
+        # replace NaN by 'NaN'
         data: DataFrame = data.fillna('')
 
         series = []

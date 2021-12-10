@@ -37,8 +37,8 @@ class TestExperiment(BaseTestCase):
         experiment = ExperimentService.create_empty_experiment_from_dto(experiment_dto)
 
         self.assertIsNotNone(experiment.id)
-        self.assertEqual(experiment.get_title(), 'Experiment title')
-        self.assertEqual(experiment.get_description(), 'Experiment description')
+        self.assertEqual(experiment.title, 'Experiment title')
+        self.assertEqual(experiment.description, 'Experiment description')
         self.assertIsNotNone(experiment.protocol_model.id)
         self.assertEqual(experiment.study.id, study_dto.id)
 
@@ -64,8 +64,8 @@ class TestExperiment(BaseTestCase):
         print("Create experiment_2 = experiment_1 ...")
         experiment2: Experiment = Experiment.get_by_id_and_check(experiment1.id)
 
-        self.assertEqual(experiment2.get_title(), "My exp title")
-        self.assertEqual(experiment2.get_description(),
+        self.assertEqual(experiment2.title, "My exp title")
+        self.assertEqual(experiment2.description,
                          "This is my new experiment")
         self.assertEqual(experiment2, experiment1)
         self.assertEqual(len(experiment2.task_models), 16)
@@ -88,8 +88,8 @@ class TestExperiment(BaseTestCase):
 
         e2_bis: Experiment = ExperimentService.get_experiment_by_id(experiment1.id)
 
-        self.assertEqual(e2_bis.get_title(), "My exp title")
-        self.assertEqual(e2_bis.get_description(), "This is my new experiment")
+        self.assertEqual(e2_bis.title, "My exp title")
+        self.assertEqual(e2_bis.description, "This is my new experiment")
         self.assertEqual(len(e2_bis.task_models), 16)
         self.assertEqual(Experiment.select().count(), 1)
 

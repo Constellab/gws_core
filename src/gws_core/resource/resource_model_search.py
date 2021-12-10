@@ -3,9 +3,8 @@ from typing import List
 
 from peewee import Expression
 
-from ..core.classes.expression_builder import ExpressionBuilder
 from ..core.classes.search_builder import SearchBuilder, SearchFilterCriteria
-from ..tag.tag import Tag, TagHelper
+from ..tag.tag import TagHelper
 from .resource_model import ResourceModel
 
 
@@ -22,10 +21,6 @@ class ResourceModelSearchBuilder(SearchBuilder):
     def get_filter_expression(self, filter: SearchFilterCriteria) -> Expression:
         # Special case for the tags to filter on all tags
         if filter['key'] == 'tags':
-            tags: List[Tag] = TagHelper.tags_to_list(filter['value'])
-            query_builder: ExpressionBuilder = ExpressionBuilder()
-            for tag in tags:
-                query_builder.add_expression(ResourceModel.tags.contains(str(tag)))
-            return query_builder.build()
+            return TagHelper.get_search_tag_expression(filter['value'], ResourceModel.tags)
 
         return super().get_filter_expression(filter)

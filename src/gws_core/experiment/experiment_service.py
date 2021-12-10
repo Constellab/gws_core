@@ -10,11 +10,13 @@ from peewee import ModelSelect
 
 from ..central.central_service import CentralService
 from ..core.classes.paginator import Paginator
+from ..core.classes.search_builder import SearchBuilder, SearchDict
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
+from ..experiment.experiment_search_builder import ExperimentSearchBuilder
 from ..process.process_factory import ProcessFactory
 from ..protocol.protocol import Protocol
 from ..protocol.protocol_model import ProtocolModel
@@ -80,8 +82,8 @@ class ExperimentService(BaseService):
         if not isinstance(protocol_model, ProtocolModel):
             raise BadRequestException("An instance of ProtocolModel is required")
         experiment = Experiment()
-        experiment.set_title(title)
-        experiment.set_description(description)
+        experiment.title = title
+        experiment.description = description
         experiment.created_by = CurrentUserService.get_and_check_current_user()
         experiment.study = study
         experiment.type = type_
@@ -121,8 +123,8 @@ class ExperimentService(BaseService):
 
         experiment.check_is_updatable()
 
-        experiment.set_title(experiment_DTO.title)
-        experiment.set_description(experiment_DTO.description)
+        experiment.title = experiment_DTO.title
+        experiment.description = experiment_DTO.description
         experiment.study = StudyService.get_or_create_study_from_dto(experiment_DTO.study)
 
         experiment.save()
@@ -202,28 +204,15 @@ class ExperimentService(BaseService):
 
     @classmethod
     def search(cls,
-               search_text: str,
+               search: SearchDict,
                page: int = 0,
-               number_of_items_per_page: int = 20,
-               as_json: bool = False) -> Paginator:
+               number_of_items_per_page: int = 20) -> Paginator[Experiment]:
 
-        number_of_items_per_page = cls.get_number_of_item_per_page(
-            number_of_items_per_page)
+        search_builder: SearchBuilder = ExperimentSearchBuilder()
 
-        query: ModelSelect = Experiment.search(search_text)
-        result = []
-        for o in query:
-            if as_json:
-                result.append(o.get_related().to_json())
-            else:
-                result.append(o.get_related())
-
-        paginator = Paginator(
-            query, page=page, number_of_items_per_page=number_of_items_per_page)
-        return {
-            'data': result,
-            'paginator': paginator._get_paginated_info()
-        }
+        model_select: ModelSelect = search_builder.build_search(search)
+        return Paginator(
+            model_select, page=page, number_of_items_per_page=number_of_items_per_page)
 
     ################################### COPY  ##############################
 
@@ -237,6 +226,6 @@ class ExperimentService(BaseService):
         return cls.create_experiment_from_protocol_model(
             protocol_model=ProtocolService.copy_protocol(experiment.protocol_model),
             study=experiment.study,
-            title=experiment.get_title() + " copy",
-            description=experiment.get_description()
+            title=experiment.title + " copy",
+            description=experiment.description
         )

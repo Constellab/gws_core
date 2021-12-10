@@ -9,7 +9,8 @@ from enum import Enum
 from typing import TYPE_CHECKING, List, TypedDict, final
 
 from gws_core.core.utils.logger import Logger
-from peewee import BooleanField, DoubleField, ForeignKeyField
+from peewee import (BooleanField, CharField, DoubleField, ForeignKeyField,
+                    TextField)
 
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.transaction import transaction
@@ -85,63 +86,13 @@ class Experiment(Model, TaggableModel):
     type: ExperimentType = EnumField(choices=ExperimentType,
                                      default=ExperimentType.EXPERIMENT)
 
+    title = CharField(max_length=50)
+    description = TextField()
+
     _table_name = 'gws_experiment'
 
-    # backup of the _protocol
+    # cache of the _protocol
     _protocol: ProtocolModel = None
-
-    # -- A --
-
-    @transaction()
-    def archive(self, archive: bool, archive_resources=True) -> 'Experiment':
-        """
-        Archive the experiment
-        """
-
-        if self.is_archived == archive:
-            return self
-        Activity.add(
-            Activity.ARCHIVE,
-            object_type=self.full_classname(),
-            object_id=self.id
-        )
-        self.protocol_model.archive(archive, archive_resources=archive_resources)
-
-        return super().archive(archive)
-
-    # -- C --
-
-    @classmethod
-    def count_of_running_experiments(cls) -> int:
-        """
-        :return: the count of experiment in progress or waiting for a cli process
-        :rtype: `int`
-        """
-
-        return Experiment.select().where((Experiment.status == ExperimentStatus.RUNNING) |
-                                         (Experiment.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS)).count()
-
-    # -- G --
-
-    def get_title(self) -> str:
-        """
-        Get the title of the experiment. The title is same as the title of the protocol.
-
-        :rtype: `str`
-        """
-
-        return self.data.get("title", "")
-
-    def get_description(self) -> str:
-        """
-        Get the description of the experiment. The description is same as the title of the protocol
-
-        :rtype: `str`
-        """
-
-        return self.data.get("description", "")
-
-    # -- I --
 
     @property
     def is_pid_alive(self) -> bool:
@@ -154,10 +105,6 @@ class Experiment(Model, TaggableModel):
         except Exception as err:
             raise BadRequestException(
                 f"No such process found or its access is denied (pid = {self.pid})") from err
-
-    # -- J --
-
-    # -- P --
 
     @property
     def pid(self) -> int:
@@ -190,8 +137,6 @@ class Experiment(Model, TaggableModel):
         return list(TaskModel.select().where(
             TaskModel.experiment == self))
 
-    # -- R --
-
     @property
     def resources(self) -> List[ResourceModel]:
         """
@@ -202,6 +147,46 @@ class Experiment(Model, TaggableModel):
             return []
 
         return list(ResourceModel.select().where(ResourceModel.experiment == self))
+
+    def get_short_name(self) -> str:
+        """Method to get a readable to quickly distinguish the experiment, (used in error message)
+
+        :return: [description]
+        :rtype: str
+        """
+        return self.title
+
+    def check_user_privilege(self, user: User) -> None:
+        return self.protocol_model.check_user_privilege(user)
+
+    ########################################## MODEL METHODS ######################################
+
+    @transaction()
+    def archive(self, archive: bool, archive_resources=True) -> 'Experiment':
+        """
+        Archive the experiment
+        """
+
+        if self.is_archived == archive:
+            return self
+        Activity.add(
+            Activity.ARCHIVE,
+            object_type=self.full_classname(),
+            object_id=self.id
+        )
+        self.protocol_model.archive(archive, archive_resources=archive_resources)
+
+        return super().archive(archive)
+
+    @classmethod
+    def count_of_running_experiments(cls) -> int:
+        """
+        :return: the count of experiment in progress or waiting for a cli process
+        :rtype: `int`
+        """
+
+        return Experiment.select().where((Experiment.status == ExperimentStatus.RUNNING) |
+                                         (Experiment.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS)).count()
 
     @transaction()
     def reset(self) -> 'Experiment':
@@ -248,34 +233,6 @@ class Experiment(Model, TaggableModel):
         self.score = None
         return self.save()
 
-    def set_title(self, title: str) -> None:
-        """
-        Set the title of the experiment. This title is set to the protocol.
-
-        :param title: The title
-        :type title: `str`
-        """
-
-        self.data["title"] = title
-
-    def set_description(self, description: str) -> None:
-        """
-        Get the description of the experiment. This description is set to the protocol.
-
-        :param description: The description
-        :type description: `str`
-        """
-
-        self.data["description"] = description
-
-    def get_short_name(self) -> str:
-        """Method to get a readable to quickly distinguish the experiment, (used in error message)
-
-        :return: [description]
-        :rtype: str
-        """
-        return self.get_title()
-
     @transaction()
     def save(self, *args, **kwargs) -> 'Experiment':
         if not self.is_saved():
@@ -285,35 +242,6 @@ class Experiment(Model, TaggableModel):
                 object_id=self.id
             )
         return super().save(*args, **kwargs)
-
-    # -- T --
-
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        """
-        Returns JSON string or dictionnary representation of the experiment.
-
-        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
-        :type stringify: bool
-        :param prettify: If True, indent the JSON string. Defaults to False.
-        :type prettify: bool
-        :return: The representation
-        :rtype: dict, str
-        """
-
-        _json = super().to_json(deep=deep, **kwargs)
-
-        _json["tags"] = self.get_tags_json()
-        _json.update({
-            "protocol": {
-                "id": self.protocol_model.id,
-                "typing_name": self.protocol_model.process_typing_name
-            },
-        })
-
-        if deep:
-            _json["study"] = self.study.to_json() if self.study is not None else None
-
-        return _json
 
     @transaction()
     def validate(self) -> None:
@@ -333,10 +261,15 @@ class Experiment(Model, TaggableModel):
         self.is_validated = True
         self.save()
 
-    def check_user_privilege(self, user: User) -> None:
-        return self.protocol_model.check_user_privilege(user)
-
-    # -- V --
+    @classmethod
+    def create_table(cls, *args, **kwargs):
+        if cls.table_exists():
+            return
+        super().create_table(*args, **kwargs)
+        # create fulltext index on title and description for search
+        if cls.get_db_manager().is_mysql_engine():
+            cls.get_db_manager().db.execute_sql(
+                f"CREATE FULLTEXT INDEX TI_DESC ON {cls.get_table_name()}(title, description)")
 
     ########################### STATUS MANAGEMENT ##################################
 
@@ -417,3 +350,32 @@ class Experiment(Model, TaggableModel):
         if self.is_archived:
             raise BadRequestException(
                 detail="Experiment is archived, please unachived it to update it")
+
+    ########################### TO JSON ##################################
+
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
+        """
+        Returns JSON string or dictionnary representation of the experiment.
+
+        :param stringify: If True, returns a JSON string. Returns a python dictionary otherwise. Defaults to False
+        :type stringify: bool
+        :param prettify: If True, indent the JSON string. Defaults to False.
+        :type prettify: bool
+        :return: The representation
+        :rtype: dict, str
+        """
+
+        _json = super().to_json(deep=deep, **kwargs)
+
+        _json["tags"] = self.get_tags_json()
+        _json.update({
+            "protocol": {
+                "id": self.protocol_model.id,
+                "typing_name": self.protocol_model.process_typing_name
+            },
+        })
+
+        if deep:
+            _json["study"] = self.study.to_json() if self.study is not None else None
+
+        return _json

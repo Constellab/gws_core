@@ -1,7 +1,10 @@
 
-from typing import Dict, List, Optional
+from typing import Dict, List
 
+from peewee import CharField, Expression
 from pydantic.main import BaseModel
+
+from ..core.classes.expression_builder import ExpressionBuilder
 
 KEY_VALUE_SEPARATOR: str = ':'
 TAGS_SEPARATOR = ','
@@ -91,3 +94,18 @@ class TagHelper():
         for tag_str in tags.split(TAGS_SEPARATOR):
             tags_list.append(Tag.from_string(tag_str))
         return tags_list
+
+    @classmethod
+    def get_search_tag_expression(cls, tag_str: str, tag_field: CharField) -> Expression:
+        """ Get the filter expresion for a search in tags column
+
+        :param filter_: [description]
+        :type filter_: SearchFilterCriteria
+        :return: [description]
+        :rtype: Expression
+        """
+        tags: List[Tag] = cls.tags_to_list(tag_str)
+        query_builder: ExpressionBuilder = ExpressionBuilder()
+        for tag in tags:
+            query_builder.add_expression(tag_field.contains(str(tag)))
+        return query_builder.build()

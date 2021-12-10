@@ -5,7 +5,8 @@ from typing import List
 from gws_core import (BaseTestCase, ConfigParams, Resource, ResourceModel, Tag,
                       Task, TaskInputs, TaskModel, TaskOutputs,
                       resource_decorator, task_decorator)
-from gws_core.core.classes.search_builder import SearchDict, SearchFilterCriteria
+from gws_core.core.classes.search_builder import (SearchDict,
+                                                  SearchFilterCriteria)
 from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.resource.r_field import RField
 from gws_core.resource.resource_model import ResourceOrigin
@@ -52,61 +53,51 @@ class TestResourceModel(BaseTestCase):
         self._create_resource_with_tag('the weather is not so great today', [
                                        nameTag, otherTag], ResourceOrigin.IMPORTED)
 
-        search_dict: SearchDict = {"filters": [], "orders": []}
+        search_dict: SearchDict = {"filtersCriteria": [], "sortsCriteria": []}
 
         # Search on name tag
-        search_dict['filters'] = [self._get_tag_filter(str(nameTag))]
-        paginator = ResourceService.search(search_dict).to_json()
-        self.assertEqual(paginator['total_number_of_items'], 2)
+        search_dict['filtersCriteria'] = [self._get_tag_filter(str(nameTag))]
+        self.search(search_dict, 2)
         # Search on both tag
-        search_dict['filters'] = [self._get_tag_filter(TagHelper.tags_to_str([nameTag, otherTag]))]
-        paginator = ResourceService.search(search_dict).to_json()
-        self.assertEqual(paginator['total_number_of_items'], 1)
+        search_dict['filtersCriteria'] = [self._get_tag_filter(TagHelper.tags_to_str([nameTag, otherTag]))]
+        self.search(search_dict, 1)
         # Search on name tag
-        search_dict['filters'] = [self._get_tag_filter('name')]
-        paginator = ResourceService.search(search_dict).to_json()
-        self.assertEqual(paginator['total_number_of_items'], 2)
+        search_dict['filtersCriteria'] = [self._get_tag_filter('name')]
+        self.search(search_dict, 2)
 
         # Search on name tag & resource typing name
-        search_dict['filters'] = [
+        search_dict['filtersCriteria'] = [
             self._get_tag_filter(str(nameTag)),
-            {"field_name": "resource_typing_name", "operator": "EQ", "value": ForSearch._typing_name}]
-        paginator = ResourceService.search(search_dict).to_json()
-        self.assertEqual(paginator['total_number_of_items'], 2)
+            {"key": "resource_typing_name", "operator": "EQ", "value": ForSearch._typing_name}]
+        self.search(search_dict, 2)
 
         # Search on name tag & ResourceOrigin
-        search_dict['filters'] = [
+        search_dict['filtersCriteria'] = [
             self._get_tag_filter(str(nameTag)),
-            {"field_name": "origin", "operator": "EQ", "value": ResourceOrigin.GENERATED.value}]
-        paginator = ResourceService.search(search_dict).to_json()
-        self.assertEqual(paginator['total_number_of_items'], 1)
+            {"key": "origin", "operator": "EQ", "value": ResourceOrigin.GENERATED.value}]
+        self.search(search_dict, 1)
 
         # Search on Experiment
-        search_dict['filters'] = [{"field_name": "experiment", "operator": "EQ", "value": experiment._experiment.id}]
-        paginator = ResourceService.search(search_dict).to_json()
-        self.assertEqual(paginator['total_number_of_items'], 1)
+        search_dict['filtersCriteria'] = [{"key": "experiment", "operator": "EQ", "value": experiment._experiment.id}]
+        self.search(search_dict, 1)
 
         # Search on Task
-        search_dict['filters'] = [{"field_name": "task_model", "operator": "EQ", "value": task._task_model.id}]
-        paginator = ResourceService.search(search_dict).to_json()
-        self.assertEqual(paginator['total_number_of_items'], 1)
+        search_dict['filtersCriteria'] = [{"key": "task_model", "operator": "EQ", "value": task._task_model.id}]
+        self.search(search_dict, 1)
 
         # Search on Data with full text
-        search_dict['filters'] = [self._get_data_filter("information")]
-        paginator = ResourceService.search(search_dict).to_json()
-        self.assertEqual(paginator['total_number_of_items'], 1)
-        search_dict['filters'] = [self._get_data_filter("great")]
-        paginator = ResourceService.search(search_dict).to_json()
-        self.assertEqual(paginator['total_number_of_items'], 2)
-        search_dict['filters'] = [self._get_data_filter("gre*")]
-        paginator = ResourceService.search(search_dict).to_json()
-        self.assertEqual(paginator['total_number_of_items'], 2)
+        search_dict['filtersCriteria'] = [self._get_data_filter("information")]
+        self.search(search_dict, 1)
+        search_dict['filtersCriteria'] = [self._get_data_filter("great")]
+        self.search(search_dict, 2)
+        search_dict['filtersCriteria'] = [self._get_data_filter("gre*")]
+        self.search(search_dict, 2)
 
     def _get_tag_filter(self, value: str) -> SearchFilterCriteria:
-        return {'field_name': 'tags', 'operator': 'CONTAINS', 'value': value}
+        return {'key': 'tags', 'operator': 'CONTAINS', 'value': value}
 
     def _get_data_filter(self, value: str) -> SearchFilterCriteria:
-        return {'field_name': 'data', 'operator': 'MATCH', 'value': value}
+        return {'key': 'data', 'operator': 'MATCH', 'value': value}
 
     def _create_resource_with_tag(
             self, text: str,  tags: List[Tag],
@@ -120,3 +111,7 @@ class TestResourceModel(BaseTestCase):
             resource_model.task_model = task
             resource_model.experiment = task.experiment
         return resource_model.save()
+
+    def search(self, search_dict: SearchDict, expected_nb_of_result: int) -> None:
+        paginator = ResourceService.search(search_dict).to_json()
+        self.assertEqual(paginator['total_number_of_items'], expected_nb_of_result)

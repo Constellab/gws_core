@@ -6,6 +6,7 @@
 from typing import Dict, List, Optional
 
 from fastapi import Depends
+from gws_core.core.classes.search_builder import SearchDict
 
 from ..core.classes.paginator import PaginatorDict
 from ..core_app import core_app
@@ -59,6 +60,18 @@ def get_the_list_of_experiments(page: Optional[int] = 1,
         page=page,
         number_of_items_per_page=number_of_items_per_page,
     ).to_json()
+
+
+@core_app.post("/experiment/advanced-search", tags=["Experiment"], summary="Advanced search for experiment")
+async def advanced_search(search_dict: SearchDict,
+                          page: Optional[int] = 1,
+                          number_of_items_per_page: Optional[int] = 20,
+                          _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+    """
+    Advanced search on experiment
+    """
+
+    return ExperimentService.search(search_dict, page, number_of_items_per_page).to_json()
 
 
 ###################################### CREATE ################################
@@ -145,8 +158,6 @@ def stop_an_experiment(id: str,
     """
 
     return ExperimentRunService.stop_experiment(id=id).to_json(deep=True)
-
-###################################### RUN ################################
 
 
 @core_app.put("/experiment/{id}/tags", tags=["Experiment"], summary="Update experiment tags")
