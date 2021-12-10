@@ -68,5 +68,4 @@ class StudyService(BaseService):
         study.id = study_dto.id
         study.title = study_dto.title
         study.description = study_dto.description
-        study.owner = CurrentUserService.get_and_check_current_user()
         return study.save()

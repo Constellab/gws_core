@@ -61,12 +61,15 @@ class TestTask(BaseTestCase):
 
         self.assertEqual(experiment.created_by, GTest.user)
 
-        experiment = await ExperimentRunService.run_experiment(
-            experiment=experiment, user=GTest.user)
+        experiment = await ExperimentRunService.run_experiment(experiment=experiment)
 
         # Refresh the processes
         protocol: ProtocolModel = experiment.protocol_model
+        self.assertEqual(protocol.created_by, GTest.user)
+
         p0: TaskModel = protocol.get_process("p0")
+        self.assertEqual(protocol.created_by, GTest.user)
+
         p1: TaskModel = protocol.get_process("p1")
         p2: TaskModel = protocol.get_process("p2")
         p3: TaskModel = protocol.get_process("p3")

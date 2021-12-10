@@ -46,7 +46,7 @@ class ResourceService(BaseService):
         # Get the resource models and filter them with resource type
         # TODO problem, it does select sub class of resource type.
         query = ResourceModel.select_by_resource_typing_name(resource_typing_name)\
-            .order_by(ResourceModel.creation_datetime.desc())
+            .order_by(ResourceModel.created_at.desc())
 
         return Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)

@@ -74,7 +74,7 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(Experiment.select().count(), 1)
 
         print("Run experiment_2 ...")
-        experiment2 = await ExperimentRunService.run_experiment(experiment=experiment2, user=GTest.user)
+        experiment2 = await ExperimentRunService.run_experiment(experiment=experiment2)
 
         #self.assertEqual(e2.processes.count(), 18)
         self.assertEqual(len(experiment2.task_models), 16)

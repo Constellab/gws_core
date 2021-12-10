@@ -114,9 +114,13 @@ class User(Model):
                     "Cannot deactivate the {owner, admin, system} users")
         return super().save(*arg, **kwargs)
 
-    # -- T --
-
-    # -- U --
+    def to_json(self, deep: bool = False, **kwargs) -> dict:
+        return {
+            "id": self.id,
+            "email": self.email,
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+        }
 
     def to_user_data_dict(self) -> UserDataDict:
         return {

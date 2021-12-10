@@ -10,7 +10,7 @@ from .experiment import Experiment
 class ExperimentSearchBuilder(SearchBuilder):
 
     def __init__(self) -> None:
-        super().__init__(Experiment, default_order=[Experiment.save_datetime.desc()])
+        super().__init__(Experiment, default_order=[Experiment.last_modified_at.desc()])
 
     def get_filter_expression(self, filter: SearchFilterCriteria) -> Expression:
         # Special case for the tags to filter on all tags

@@ -45,10 +45,10 @@ class Model(BaseModel, PeeweeModel):
     :type id: `str`
     :property type: The type of the python Object (the full class name)
     :type type: `str`
-    :property creation_datetime: The creation datetime of the model
-    :type creation_datetime: `datetime`
+    :property created_at: The creation datetime of the model
+    :type created_at: `datetime`
     :property save_datetime: The last save datetime in database
-    :type save_datetime: `datetime`
+    :type last_modified_at: `datetime`
     :property is_archived: True if the model is archived, False otherwise. Defaults to False
     :type is_archived: `bool`
     :property data: The data of the model
@@ -58,8 +58,8 @@ class Model(BaseModel, PeeweeModel):
     """
 
     id = CharField(primary_key=True, max_length=36)
-    creation_datetime = DateTimeField(default=datetime.now)
-    save_datetime = DateTimeField()
+    created_at = DateTimeField(default=datetime.now)
+    last_modified_at = DateTimeField(default=datetime.now)
     is_archived = BooleanField(default=False, index=True)
     hash = CharField(null=True)
     data: Dict[str, Any] = JSONField(null=True)
@@ -310,17 +310,33 @@ class Model(BaseModel, PeeweeModel):
         :type data: dict
         :raises Exception: If the input data is not a `dict`
         """
+        # set the force insert value
+        # if define in params, use the value
+        # otherwise true if the object was not created
+        force_insert: bool = kwargs.get('force_insert') if kwargs.get(
+            'force_insert') is not None else not self.is_saved()
 
-        self.save_datetime = datetime.now()
+        if force_insert:
+            self._before_insert()
+        else:
+            self._before_update()
+
         self.hash = self.__compute_hash()
 
-        # set the force insert to true if the object was not created
-        force_insert: bool = not self.is_saved()
-
-        super().save(*args, force_insert=force_insert, **kwargs)
+        kwargs['force_insert'] = force_insert
+        super().save(*args, **kwargs)
         self._is_saved = True
 
         return self
+
+    def _before_insert(self) -> None:
+        """Method to override to trigger action before the entity is inserted
+        """
+
+    def _before_update(self) -> None:
+        """Method to override to trigger action before the entity is updated (not called on insert)
+        """
+        self.last_modified_at = datetime.now()
 
     @classmethod
     @transaction()

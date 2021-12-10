@@ -84,7 +84,6 @@ class ExperimentService(BaseService):
         experiment = Experiment()
         experiment.title = title
         experiment.description = description
-        experiment.created_by = CurrentUserService.get_and_check_current_user()
         experiment.study = study
         experiment.type = type_
 
@@ -98,22 +97,21 @@ class ExperimentService(BaseService):
     @classmethod
     def create_experiment_from_protocol_type(
             cls, protocol_type: Type[Protocol],
-            study: Study = None, title: str = "", description: str = "") -> Experiment:
+            study: Study = None, title: str = "", description: str = "",
+            type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
 
         protocol_model: ProtocolModel = ProtocolService.create_protocol_model_from_type(protocol_type=protocol_type)
         return cls.create_experiment_from_protocol_model(
-            protocol_model=protocol_model, study=study, title=title, description=description)
+            protocol_model=protocol_model, study=study, title=title, description=description, type_=type_)
 
     @classmethod
     def create_experiment_from_task_type(
-            cls, task_type: Type[Task],
-            study: Study = None, title: str = "", description: str = "") -> Experiment:
+            cls, task_type: Type[Task], study: Study = None, title: str = "",
+            description: str = "", type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
 
         task_model: TaskModel = TaskService.create_task_model_from_type(task_type=task_type)
         return cls.create_experiment_from_task_model(
-            task_model=task_model, study=study, title=title, description=description)
-
-        # -- F --
+            task_model=task_model, study=study, title=title, description=description, type_=type_)
 
     ################################### UPDATE ##############################
 
@@ -196,7 +194,7 @@ class ExperimentService(BaseService):
         number_of_items_per_page = cls.get_number_of_item_per_page(
             number_of_items_per_page)
 
-        query = Experiment.select().order_by(Experiment.creation_datetime.desc())
+        query = Experiment.select().order_by(Experiment.created_at.desc())
 
         paginator: Paginator[Experiment] = Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)

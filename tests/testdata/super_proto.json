@@ -1,11 +1,11 @@
 {
     "nodes": {
         "p0": {
-            "creation_datetime": "2021-08-25T14:59:54",
+            "created_at": "2021-08-25T14:59:54",
             "instance_name": "p0",
             "is_archived": false,
             "process_typing_name": "TASK.gws_core.RobotCreate",
-            "save_datetime": "2021-08-25T14:59:54",
+            "last_modified_at": "2021-08-25T14:59:54",
             "id": "p0_id",
             "data": {
                 "title": "Create robot",
@@ -22,9 +22,9 @@
             "is_finished": false,
             "is_protocol": false,
             "config": {
-                "creation_datetime": "2021-08-25T14:59:54",
+                "created_at": "2021-08-25T14:59:54",
                 "is_archived": false,
-                "save_datetime": "2021-08-25T14:59:54",
+                "last_modified_at": "2021-08-25T14:59:54",
                 "id": "e43cd305-167c-4662-bd70-b9edc7ebd136",
                 "data": {
                     "specs": {},
@@ -32,9 +32,9 @@
                 }
             },
             "progress_bar": {
-                "creation_datetime": "2021-08-25T14:59:54",
+                "created_at": "2021-08-25T14:59:54",
                 "is_archived": false,
-                "save_datetime": "2021-08-25T14:59:54",
+                "last_modified_at": "2021-08-25T14:59:54",
                 "id": "a9260143-c999-40fa-a063-04dd75f12fd0",
                 "data": {
                     "value": 0.0,
@@ -65,11 +65,11 @@
             }
         },
         "p5": {
-            "creation_datetime": "2021-08-25T14:59:54",
+            "created_at": "2021-08-25T14:59:54",
             "instance_name": "p5",
             "is_archived": false,
             "process_typing_name": "TASK.gws_core.RobotEat",
-            "save_datetime": "2021-08-25T14:59:54",
+            "last_modified_at": "2021-08-25T14:59:54",
             "id": "p5_id",
             "data": {
                 "title": "Eat process",
@@ -86,9 +86,9 @@
             "is_finished": false,
             "is_protocol": false,
             "config": {
-                "creation_datetime": "2021-08-25T14:59:54",
+                "created_at": "2021-08-25T14:59:54",
                 "is_archived": false,
-                "save_datetime": "2021-08-25T14:59:54",
+                "last_modified_at": "2021-08-25T14:59:54",
                 "id": "659a90cf-68e4-4d9f-8da0-ca2a9f4a0550",
                 "data": {
                     "specs": {
@@ -101,9 +101,9 @@
                 }
             },
             "progress_bar": {
-                "creation_datetime": "2021-08-25T14:59:54",
+                "created_at": "2021-08-25T14:59:54",
                 "is_archived": false,
-                "save_datetime": "2021-08-25T14:59:54",
+                "last_modified_at": "2021-08-25T14:59:54",
                 "id": "4de3f239-be25-4618-8432-d45281551d20",
                 "data": {
                     "value": 0.0,

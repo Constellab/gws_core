@@ -76,7 +76,7 @@ class UserService(BaseService):
                             page: int = 0,
                             number_of_items_per_page: int = 20) -> Paginator[User]:
 
-        query = Activity.select().order_by(Activity.creation_datetime.desc())
+        query = Activity.select().order_by(Activity.created_at.desc())
         if user_id:
             query = query.join(User).where(User.id == user_id)
         if activity_type:
@@ -94,7 +94,7 @@ class UserService(BaseService):
                         page: int = 0,
                         number_of_items_per_page: int = 20) -> Paginator[User]:
 
-        query = User.select().order_by(User.creation_datetime.desc())
+        query = User.select().order_by(User.created_at.desc())
         return Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
 

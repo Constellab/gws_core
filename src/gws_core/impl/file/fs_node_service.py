@@ -46,7 +46,7 @@ class FsNodeService(BaseService):
 
         query = ResourceModel.select().where(
             (ResourceModel.origin == ResourceOrigin.IMPORTED) & (ResourceModel.fs_node_model is not None)).order_by(
-            ResourceModel.creation_datetime.desc())
+            ResourceModel.created_at.desc())
         return Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
 

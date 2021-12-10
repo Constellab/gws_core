@@ -8,7 +8,6 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING, List, TypedDict, final
 
-from gws_core.core.utils.logger import Logger
 from peewee import (BooleanField, CharField, DoubleField, ForeignKeyField,
                     TextField)
 
@@ -16,9 +15,10 @@ from ..core.classes.enum_field import EnumField
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.exception.gws_exceptions import GWSException
+from ..core.model.model_with_user import ModelWithUser
 from ..core.model.json_field import JSONField
-from ..core.model.model import Model
 from ..core.model.sys_proc import SysProc
+from ..core.utils.logger import Logger
 from ..model.typing_register_decorator import typing_registrator
 from ..resource.resource_model import ResourceModel
 from ..study.study import Study
@@ -57,7 +57,7 @@ class ExperimentErrorInfo(TypedDict):
 
 @final
 @typing_registrator(unique_name="Experiment", object_type="MODEL", hide=True)
-class Experiment(Model, TaggableModel):
+class Experiment(ModelWithUser, TaggableModel):
     """
     Experiment class.
 
@@ -73,11 +73,8 @@ class Experiment(Model, TaggableModel):
     :type is_validated: `bool`
     """
 
-    study: Study = ForeignKeyField(
-        Study, null=True, index=True, backref='experiments')
+    study: Study = ForeignKeyField(Study, null=True)
 
-    created_by = ForeignKeyField(
-        User, null=True, backref='created_experiments')
     score = DoubleField(null=True)
     status: ExperimentStatus = EnumField(choices=ExperimentStatus,
                                          default=ExperimentStatus.DRAFT)

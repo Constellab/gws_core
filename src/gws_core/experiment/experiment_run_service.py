@@ -26,14 +26,12 @@ class ExperimentRunService():
     """
 
     @classmethod
-    async def run_experiment_in_cli(cls, experiment_id: str, user_id: str) -> None:
+    async def run_experiment_in_cli(cls, experiment_id: str) -> None:
         """Method called by the cli sub process to run the experiment
         """
         experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
 
         try:
-            user: User = User.get_by_id_and_check(user_id)
-
             if experiment.status != ExperimentStatus.WAITING_FOR_CLI_PROCESS:
                 raise Exception(
                     f"Cannot run the experiment {experiment.id} as it status was changed before process could run it")
@@ -44,22 +42,14 @@ class ExperimentRunService():
             experiment.mark_as_error({"detail": error_text,
                                       "unique_code": GWSException.EXPERIMENT_ERROR_BEFORE_RUN.name,
                                       "context": None, "instance_id": None})
-        await cls.run_experiment(experiment, user)
+        await cls.run_experiment(experiment)
 
     @classmethod
-    async def run_experiment(cls, experiment: Experiment, user: User = None) -> Coroutine[Any, Any, Experiment]:
+    async def run_experiment(cls, experiment: Experiment) -> Coroutine[Any, Any, Experiment]:
         """
         Run the experiment
-
-        :param user: The user who is running the experiment. If not provided, the system will try the get the currently authenticated user
-        :type user: `gws.user.User`
         """
-        # check user
-        if not user:
-            try:
-                user = CurrentUserService.get_and_check_current_user()
-            except:
-                raise BadRequestException("A user is required")
+        user = CurrentUserService.get_and_check_current_user()
 
         # check user privilege
         experiment.check_user_privilege(user)

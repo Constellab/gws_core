@@ -66,7 +66,7 @@ class ModelService(BaseService):
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)
 
-        query = model_type.select().order_by(model_type.creation_datetime.desc())
+        query = model_type.select().order_by(model_type.created_at.desc())
         return Paginator(
             query, page=page, number_of_items_per_page=number_of_items_per_page)
 

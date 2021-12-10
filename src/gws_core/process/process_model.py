@@ -21,8 +21,8 @@ from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
+from ..core.model.model_with_user import ModelWithUser
 from ..core.model.json_field import JSONField
-from ..core.model.model import Model
 from ..core.utils.logger import Logger
 from ..experiment.experiment import Experiment
 from ..io.io import Inputs, Outputs
@@ -52,7 +52,7 @@ class ProcessErrorInfo(TypedDict):
 
 
 @json_ignore(["parent_protocol_id"])
-class ProcessModel(Model):
+class ProcessModel(ModelWithUser):
     """Base abstract class for Process and Protocol
 
     :param Viewable: [description]
@@ -62,7 +62,6 @@ class ProcessModel(Model):
     parent_protocol_id = CharField(max_length=36, null=True, index=True)
     experiment: Experiment = ForeignKeyField(Experiment, null=True, index=True, backref="+")
     instance_name = CharField(null=True)
-    created_by: User = ForeignKeyField(User, null=False, backref='+')
     config: Config = ForeignKeyField(Config, null=False, backref='+')
     progress_bar: ProgressBar = ForeignKeyField(
         ProgressBar, null=True, backref='+')

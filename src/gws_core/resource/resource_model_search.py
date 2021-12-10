@@ -16,7 +16,7 @@ class ResourceModelSearchBuilder(SearchBuilder):
     """
 
     def __init__(self) -> None:
-        super().__init__(ResourceModel, default_order=[ResourceModel.creation_datetime.desc()])
+        super().__init__(ResourceModel, default_order=[ResourceModel.created_at.desc()])
 
     def get_filter_expression(self, filter: SearchFilterCriteria) -> Expression:
         # Special case for the tags to filter on all tags

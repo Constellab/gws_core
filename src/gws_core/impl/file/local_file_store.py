@@ -167,7 +167,7 @@ class LocalFileStore(FileStore):
 
     @classmethod
     def get_default_instance(cls) -> 'LocalFileStore':
-        file_store: FileStore = cls.select().order_by(cls.creation_datetime).first()
+        file_store: FileStore = cls.select().order_by(cls.created_at).first()
         if file_store is None:
             file_store = cls()
             file_store.save()

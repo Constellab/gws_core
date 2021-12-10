@@ -51,7 +51,7 @@ class CommentService(BaseService):
 
         query = Comment.select()\
             .where((Comment.object_id == object_id) & (Comment.object_typing_name == object_typing_name))\
-            .order_by(Comment.creation_datetime.desc())
+            .order_by(Comment.created_at.desc())
 
         number_of_items_per_page = min(
             number_of_items_per_page, cls._number_of_items_per_page)

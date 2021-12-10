@@ -1,11 +1,11 @@
 {
     "nodes": {
         "p1": {
-            "creation_datetime": "2021-08-25T14:56:26.138535",
+            "created_at": "2021-08-25T14:56:26.138535",
             "instance_name": "p1",
             "is_archived": false,
             "process_typing_name": "TASK.gws_core.RobotMove",
-            "save_datetime": "2021-08-25T14:56:26.410965",
+            "last_modified_at": "2021-08-25T14:56:26.410965",
             "id": "ca81f0e4-8e8b-4e63-8eae-302c1b53de8e",
             "data": {
                 "title": "Move robot",
@@ -22,9 +22,9 @@
             "is_finished": false,
             "is_protocol": false,
             "config": {
-                "creation_datetime": "2021-08-25T14:56:26.159515",
+                "created_at": "2021-08-25T14:56:26.159515",
                 "is_archived": false,
-                "save_datetime": "2021-08-25T14:56:26.396108",
+                "last_modified_at": "2021-08-25T14:56:26.396108",
                 "id": "6329b055-5a9a-40de-b0cb-8ae6d0c4f7a4",
                 "data": {
                     "specs": {
@@ -49,9 +49,9 @@
                 }
             },
             "progress_bar": {
-                "creation_datetime": "2021-08-25T14:56:26.164572",
+                "created_at": "2021-08-25T14:56:26.164572",
                 "is_archived": false,
-                "save_datetime": "2021-08-25T14:56:26.402984",
+                "last_modified_at": "2021-08-25T14:56:26.402984",
                 "id": "87a47473-f91d-4dcc-8ba2-de34788cb647",
                 "data": {
                     "value": 0.0,
@@ -92,11 +92,11 @@
             }
         },
         "p2": {
-            "creation_datetime": "2021-08-25T14:56:26.189436",
+            "created_at": "2021-08-25T14:56:26.189436",
             "instance_name": "p2",
             "is_archived": false,
             "process_typing_name": "TASK.gws_core.RobotEat",
-            "save_datetime": "2021-08-25T14:56:26.432884",
+            "last_modified_at": "2021-08-25T14:56:26.432884",
             "id": "8e707c7b-4ff1-4a08-9444-bc731c1c5c1f",
             "data": {
                 "title": "Eat process",
@@ -113,9 +113,9 @@
             "is_finished": false,
             "is_protocol": false,
             "config": {
-                "creation_datetime": "2021-08-25T14:56:26.209418",
+                "created_at": "2021-08-25T14:56:26.209418",
                 "is_archived": false,
-                "save_datetime": "2021-08-25T14:56:26.419201",
+                "last_modified_at": "2021-08-25T14:56:26.419201",
                 "id": "451b140f-ee68-4cde-b12a-27a44f109dc1",
                 "data": {
                     "specs": {
@@ -128,9 +128,9 @@
                 }
             },
             "progress_bar": {
-                "creation_datetime": "2021-08-25T14:56:26.214172",
+                "created_at": "2021-08-25T14:56:26.214172",
                 "is_archived": false,
-                "save_datetime": "2021-08-25T14:56:26.426029",
+                "last_modified_at": "2021-08-25T14:56:26.426029",
                 "id": "c6a74561-27be-464e-85da-822dca68f112",
                 "data": {
                     "value": 0.0,
@@ -171,11 +171,11 @@
             }
         },
         "p3": {
-            "creation_datetime": "2021-08-25T14:56:26.237910",
+            "created_at": "2021-08-25T14:56:26.237910",
             "instance_name": "p3",
             "is_archived": false,
             "process_typing_name": "TASK.gws_core.RobotMove",
-            "save_datetime": "2021-08-25T14:56:26.455068",
+            "last_modified_at": "2021-08-25T14:56:26.455068",
             "id": "a835b998-5e80-43a8-985b-64007b93b7aa",
             "data": {
                 "title": "Move robot",
@@ -192,9 +192,9 @@
             "is_finished": false,
             "is_protocol": false,
             "config": {
-                "creation_datetime": "2021-08-25T14:56:26.255741",
+                "created_at": "2021-08-25T14:56:26.255741",
                 "is_archived": false,
-                "save_datetime": "2021-08-25T14:56:26.441733",
+                "last_modified_at": "2021-08-25T14:56:26.441733",
                 "id": "c18b7ffd-a049-43df-9e33-cab19dde05d6",
                 "data": {
                     "specs": {
@@ -219,9 +219,9 @@
                 }
             },
             "progress_bar": {
-                "creation_datetime": "2021-08-25T14:56:26.260121",
+                "created_at": "2021-08-25T14:56:26.260121",
                 "is_archived": false,
-                "save_datetime": "2021-08-25T14:56:26.448077",
+                "last_modified_at": "2021-08-25T14:56:26.448077",
                 "id": "82c4a378-954d-4f53-8d6a-6a32f76e9141",
                 "data": {
                     "value": 0.0,
@@ -262,11 +262,11 @@
             }
         },
         "p4": {
-            "creation_datetime": "2021-08-25T14:56:26.280687",
+            "created_at": "2021-08-25T14:56:26.280687",
             "instance_name": "p4",
             "is_archived": false,
             "process_typing_name": "TASK.gws_core.RobotMove",
-            "save_datetime": "2021-08-25T14:56:26.479956",
+            "last_modified_at": "2021-08-25T14:56:26.479956",
             "id": "819527a5-3f07-41d6-b6b5-322248a437fd",
             "data": {
                 "title": "Move robot",
@@ -283,9 +283,9 @@
             "is_finished": false,
             "is_protocol": false,
             "config": {
-                "creation_datetime": "2021-08-25T14:56:26.296921",
+                "created_at": "2021-08-25T14:56:26.296921",
                 "is_archived": false,
-                "save_datetime": "2021-08-25T14:56:26.464768",
+                "last_modified_at": "2021-08-25T14:56:26.464768",
                 "id": "f1e8d39e-4fcd-4759-8588-6f156d6e7087",
                 "data": {
                     "specs": {
@@ -310,9 +310,9 @@
                 }
             },
             "progress_bar": {
-                "creation_datetime": "2021-08-25T14:56:26.301513",
+                "created_at": "2021-08-25T14:56:26.301513",
                 "is_archived": false,
-                "save_datetime": "2021-08-25T14:56:26.471506",
+                "last_modified_at": "2021-08-25T14:56:26.471506",
                 "id": "d124b251-9982-481b-a7b5-267e7db34f26",
                 "data": {
                     "value": 0.0,
@@ -353,11 +353,11 @@
             }
         },
         "p_wait": {
-            "creation_datetime": "2021-08-25T14:56:26.323894",
+            "created_at": "2021-08-25T14:56:26.323894",
             "instance_name": "p_wait",
             "is_archived": false,
             "process_typing_name": "TASK.gws_core.RobotWait",
-            "save_datetime": "2021-08-25T14:56:26.503639",
+            "last_modified_at": "2021-08-25T14:56:26.503639",
             "id": "359f1040-c43c-4feb-ac91-55e9d580d48f",
             "data": {
                 "title": "Wait process",
@@ -374,9 +374,9 @@
             "is_finished": false,
             "is_protocol": false,
             "config": {
-                "creation_datetime": "2021-08-25T14:56:26.341335",
+                "created_at": "2021-08-25T14:56:26.341335",
                 "is_archived": false,
-                "save_datetime": "2021-08-25T14:56:26.489381",
+                "last_modified_at": "2021-08-25T14:56:26.489381",
                 "id": "5520a8fd-9b6d-4c0b-8bb7-2af2dfdfed3e",
                 "data": {
                     "specs": {
@@ -389,9 +389,9 @@
                 }
             },
             "progress_bar": {
-                "creation_datetime": "2021-08-25T14:56:26.346214",
+                "created_at": "2021-08-25T14:56:26.346214",
                 "is_archived": false,
-                "save_datetime": "2021-08-25T14:56:26.497156",
+                "last_modified_at": "2021-08-25T14:56:26.497156",
                 "id": "b64ee92c-9dfd-4fce-91ec-dade38b6dc33",
                 "data": {
                     "value": 0.0,

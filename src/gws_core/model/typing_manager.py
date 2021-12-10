@@ -105,7 +105,8 @@ class TypingManager:
 
         # If it doesn't exist, create the type in DB
         if query.count() == 0:
-            typing.save()
+            # force the creation (useful for tests when this is called multiple time with the same objects)
+            typing.save(force_insert=True)
             return
 
         typing_db: Typing = query.first()

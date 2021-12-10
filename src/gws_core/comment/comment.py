@@ -8,14 +8,14 @@ from typing import final
 from peewee import CharField, ForeignKeyField
 
 from ..core.decorator.json_ignore import json_ignore
-from ..core.model.model import Model
+from ..core.model.model_with_user import ModelWithUser
 from ..model.typing_register_decorator import typing_registrator
 
 
 @final
 @json_ignore(["object_id", "object_typing_name"])
 @typing_registrator(unique_name="Comment", object_type="MODEL", hide=True)
-class Comment(Model):
+class Comment(ModelWithUser):
     """
     Comment class that represents generic object comments
 

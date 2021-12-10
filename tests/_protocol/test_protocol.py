@@ -73,8 +73,7 @@ class TestProtocol(BaseTestCase):
 
         self.assertEqual(ProtocolModel.select().count(), count+2)
 
-        experiment = await ExperimentRunService.run_experiment(
-            experiment=experiment, user=GTest.user)
+        experiment = await ExperimentRunService.run_experiment(experiment=experiment)
 
         super_proto = ProtocolModel.get_by_id(super_proto.id)
 

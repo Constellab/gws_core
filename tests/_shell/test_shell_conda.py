@@ -48,7 +48,7 @@ class TestProcess(BaseTestCase):
 
         experiment: Experiment = ExperimentService.create_experiment_from_task_model(
             task_model=proc_mdl)
-        experiment = await ExperimentRunService.run_experiment(experiment=experiment, user=GTest.user)
+        experiment = await ExperimentRunService.run_experiment(experiment=experiment)
 
         proc = experiment.task_models[0]
 
