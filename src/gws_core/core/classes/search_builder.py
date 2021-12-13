@@ -137,8 +137,8 @@ class SearchBuilder:
             return value
         if isinstance(value, list):
             values = []
-            for value in values:
-                values.append(converter(value))
+            for val in value:
+                values.append(converter(val))
             return values
         else:
             return converter(value)
