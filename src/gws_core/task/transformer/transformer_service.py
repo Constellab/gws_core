@@ -6,6 +6,8 @@
 
 from typing import Any, Coroutine, List, Type
 
+from gws_core.experiment.experiment import ExperimentType
+
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ...experiment.experiment_interface import IExperiment
@@ -33,7 +35,8 @@ class TransformerService():
         resource_type: Type[Resource] = resource_model.get_resource_type()
 
         # Create an experiment containing 1 source, X transformers task , 1 sink
-        experiment: IExperiment = IExperiment(None, title=f"{resource_type._human_name} transformation")
+        experiment: IExperiment = IExperiment(
+            None, title=f"{resource_type._human_name} transformation", type_=ExperimentType.TRANSFORMER)
         protocol: IProtocol = experiment.get_protocol()
 
         # create the source and save last process to create connectors later
