@@ -15,8 +15,8 @@ from ..core.classes.enum_field import EnumField
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.exception.gws_exceptions import GWSException
-from ..core.model.model_with_user import ModelWithUser
 from ..core.model.json_field import JSONField
+from ..core.model.model_with_user import ModelWithUser
 from ..core.model.sys_proc import SysProc
 from ..core.utils.logger import Logger
 from ..model.typing_register_decorator import typing_registrator
@@ -84,7 +84,7 @@ class Experiment(ModelWithUser, TaggableModel):
                                      default=ExperimentType.EXPERIMENT)
 
     title = CharField(max_length=50)
-    description = TextField()
+    description = TextField(null=True)
 
     _table_name = 'gws_experiment'
 
