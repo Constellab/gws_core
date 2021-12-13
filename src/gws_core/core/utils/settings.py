@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 import os
+import re
 import tempfile
 from copy import deepcopy
 from typing import Dict, Literal, TypedDict
@@ -225,11 +226,15 @@ class Settings(PeeweeModel):
 
     def get_variable(self, key) -> str:
         """ Returns a variable. Returns `None` if the variable does not exist """
-        return self.data.get("variables", {}).get(key)
+        value = self.data.get("variables", {}).get(key)
+        return self._format_variable(value)
 
     def get_variables(self) -> dict:
         """ Returns the variables dict """
-        return self.data.get("variables", {})
+        variables = self.data.get("variables", {})
+        for key, val in variables.items():
+            variables[key] = self._format_variable(val)
+        return variables
 
     def get_root_temp_dir(self) -> str:
         """ Return the root temp dir """
@@ -246,6 +251,18 @@ class Settings(PeeweeModel):
 
     def get_modules(self) -> Dict[str, ModuleInfo]:
         return self.data["modules"]
+
+    def _format_variable(self, variable: str) -> str:
+        """ Format a variable """
+        if not variable:
+            return variable
+
+        tabs = re.findall(r"\$\{?([A-Z_]*)\}?", variable)
+        for token in tabs:
+            value = os.getenv(token)
+            if value:
+                variable = re.sub(r"\$\{?"+token+r"\}?", value, variable)
+        return variable
 
     @property
     def is_prod(self) -> bool:

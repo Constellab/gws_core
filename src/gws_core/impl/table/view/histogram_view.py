@@ -9,14 +9,17 @@ from pandas import DataFrame
 from ....config.config_types import ConfigParams
 from ....config.param_spec import BoolParam, IntParam, ListParam, StrParam
 from ....resource.view_types import ViewSpecs
+from ...view.histogram_view import HistogramView
 from .base_table_view import BaseTableView
 
+MAX_NUMBERS_OF_COLUMNS_PER_PAGE = 999
 
-class HistogramView(BaseTableView):
+
+class TableHistogramView(BaseTableView):
     """
-    HistogramView
+    TableHistogramView
 
-    Show a set of columns as histograms.
+    Class for creating histograms using a Table.
 
     The view model is:
     ------------------
@@ -33,9 +36,8 @@ class HistogramView(BaseTableView):
                     "data": {
                         "x": List[Float],
                         "y": List[Float],
-                        "width": Float
                     },
-                    "column_name": str,
+                    "name": str,
                 },
                 ...
             ]
@@ -44,7 +46,6 @@ class HistogramView(BaseTableView):
     ```
     """
 
-    _type: str = "histogram-view"
     _data: DataFrame
     _specs: ViewSpecs = {
         **BaseTableView._specs,
@@ -63,33 +64,24 @@ class HistogramView(BaseTableView):
         if nbins <= 0:
             nbins = "auto"
         if not column_names:
-            n = min(self._data.shape[1], 50)
+            n = min(self._data.shape[1], MAX_NUMBERS_OF_COLUMNS_PER_PAGE)
             column_names = self._data.columns[0:n]
-
-        series = []
-        for column_name in column_names:
-            col_data = self._data[column_name].values
-
-            hist, bin_edges = numpy.histogram(col_data, bins=nbins, density=density)
-            bin_centers = (bin_edges[0:-2] + bin_edges[1:-1])/2
-            series.append({
-                "data": {
-                    # "bin_edges": bin_edges.tolist(),
-                    # "hist": hist.tolist(),
-                    "x": bin_centers.tolist(),
-                    "y": hist.tolist(),
-                },
-                "column_name": column_name,
-            })
 
         x_label = params.get_value("x_label", "")
         y_label = params.get_value("y_label", "")
-        return {
-            **super().to_dict(params),
-            "data": {
-                "x_label": x_label,
-                "y_label": y_label,
-                "x_tick_labels": None,
-                "series": series
-            }
-        }
+
+        # create view
+        view = HistogramView()
+        view.x_label = x_label
+        view.y_label = y_label
+        for column_name in column_names:
+            col_data = self._data[column_name].values
+            hist, bin_edges = numpy.histogram(col_data, bins=nbins, density=density)
+            bin_centers = (bin_edges[0:-2] + bin_edges[1:-1])/2
+            view.add_series(
+                x=bin_centers.tolist(),
+                y=hist.tolist(),
+                name=column_name
+            )
+
+        return view.to_dict(params)

@@ -1,11 +1,12 @@
 import os
 
 import numpy
+from gws_core import (BaseTestCase, ConfigParams, File, HeatmapView, Settings,
+                      Table, ViewTester)
 from pandas import DataFrame
-from gws_core import BaseTestCase, HeatmapView, Settings, Table, ViewTester, ConfigParams, File
 
 
-class TestHeatmapView(BaseTestCase):
+class TestTableHeatmapView(BaseTestCase):
 
     def test_heatmap_view(self,):
         settings = Settings.retrieve()
@@ -14,17 +15,18 @@ class TestHeatmapView(BaseTestCase):
         table = Table.import_from_path(
             File(path=file_path),
             ConfigParams({
-                "delimiter":",",
-                "header":0
+                "delimiter": ",",
+                "header": 0
             })
         )
         tester = ViewTester(
-            view = HeatmapView(table)
+            view=HeatmapView(table)
         )
         dic = tester.to_dict({
-            "from_column":1,
-            "number_of_columns_per_page":4,
-            "scale":"none"
+            "from_row": 1,
+            "number_of_rows_per_page": 50,
+            "from_column": 1,
+            "number_of_columns_per_page": 4,
         })
         self.assertEqual(dic["type"], "heatmap-view")
         self.assertEqual(
@@ -37,13 +39,4 @@ class TestHeatmapView(BaseTestCase):
             data=numpy.log10(data),
             index=data.index,
             columns=data.columns
-        )
-        dic = tester.to_dict({
-            "from_column":1, 
-            "number_of_columns_per_page":4, 
-            "scale":"log10"
-        })
-        self.assertEqual(
-            dic["data"],
-            data.to_dict('list')
         )

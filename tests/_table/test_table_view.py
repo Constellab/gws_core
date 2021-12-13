@@ -1,6 +1,7 @@
 import os
 
-from gws_core import BaseTestCase, Settings, Table, TableView, ViewTester, File, ConfigParams
+from gws_core import (BaseTestCase, ConfigParams, File, Settings, Table,
+                      TableView, ViewTester)
 
 
 class TestTableView(BaseTestCase):
@@ -12,8 +13,8 @@ class TestTableView(BaseTestCase):
         table = Table.import_from_path(
             File(path=file_path),
             ConfigParams({
-                "delimiter":",",
-                "header":0
+                "delimiter": ",",
+                "header": 0
             })
         )
         print(table)
@@ -24,15 +25,20 @@ class TestTableView(BaseTestCase):
             table.to_table().iloc[4:21, 1:4].to_dict('list')
         )
 
-        tester = ViewTester(view = vw)
-        dic = tester.to_dict()
+        tester = ViewTester(view=vw)
+        dic = tester.to_dict(dict(
+            from_row=1,
+            number_of_rows_per_page=50,
+            from_column=1,
+            number_of_columns_per_page=50
+        ))
         self.assertEqual(dic["type"], "table-view")
         self.assertEqual(
             dic["data"],
             table.to_table().iloc[0:50, 0:5].to_dict('list')
         )
 
-        tester = ViewTester(view = vw)
+        tester = ViewTester(view=vw)
         dic = tester.to_dict(dict(
             from_row=3,
             number_of_rows_per_page=3,

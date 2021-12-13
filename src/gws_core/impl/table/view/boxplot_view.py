@@ -7,22 +7,19 @@ import numpy
 from pandas import DataFrame
 
 from ....config.config_types import ConfigParams
-from ....config.param_spec import ListParam, ParamSet, StrParam, BoolParam
+from ....config.param_spec import BoolParam, ListParam, ParamSet, StrParam
 from ....resource.view_types import ViewSpecs
-from ..helper.constructor.data_scale_filter_param import \
-    DataScaleFilterParamConstructor
-from ..helper.constructor.num_data_filter_param import \
-    NumericDataFilterParamConstructor
-from ..helper.constructor.text_data_filter_param import \
-    TextDataFilterParamConstructor
+from ...view.boxplot_view import BoxPlotView
 from .base_table_view import BaseTableView
 
+MAX_NUMBERS_OF_COLUMNS_PER_PAGE = 999
 
-class BoxPlotView(BaseTableView):
+
+class TableBoxPlotView(BaseTableView):
     """
-    BarPlotView
+    TableBarPlotView
 
-    Show a set of columns as box plots.
+    Class for creating box plots using a Table.
 
     The view model is:
     ------------------
@@ -43,14 +40,17 @@ class BoxPlotView(BaseTableView):
                         "median": List[Float],
                         "min": List[Float],
                         "q3": List[Float],
-                    },
-                    "column_names": List[Float],
+                        "lower_whisker": List[Float],
+                        "upper_whisker": List[Float],
+                    }
                 },
                 ...
             ]
         }
     }
     ```
+
+    See also BoxPlotView
     """
 
     _type: str = "box-plot-view"
@@ -66,46 +66,39 @@ class BoxPlotView(BaseTableView):
             short_description="Select a series of columns to aggregate as box-plot",
             max_number_of_occurrences=5
         ),
-        "numeric_data_filters": NumericDataFilterParamConstructor.construct_filter(visibility='protected'),
-        "text_data_filters": TextDataFilterParamConstructor.construct_filter(visibility='protected'),
-        "data_scaling_filters": DataScaleFilterParamConstructor.construct_filter(visibility='protected', allowed_values=["none", "log10", "log2"]),
         "x_tick_labels": ListParam(human_name="X-tick-labels", optional=True, visibility='protected', short_description="The labels of x-axis ticks"),
         "x_label": StrParam(human_name="X-label", optional=True, visibility='protected', short_description="The x-axis label to display"),
         "y_label": StrParam(human_name="Y-label", optional=True, visibility='protected', short_description="The y-axis label to display"),
     }
 
-    def _filter_data(self, data, params: ConfigParams):
-        data = NumericDataFilterParamConstructor.validate_filter("numeric_data_filters", data, params)
-        data = TextDataFilterParamConstructor.validate_filter("text_data_filters", data, params)
-        data = DataScaleFilterParamConstructor.validate_filter("data_scaling_filters", data, params)
-        return data
-
     def to_dict(self, params: ConfigParams) -> dict:
         # apply pre-filters
         data = self._data
-        data = self._filter_data(data, params)
-
-        # continue ...
         x_tick_labels = params.get_value("x_tick_labels", None)
         x_label = params.get_value("x_label", "")
         y_label = params.get_value("y_label", "")
-        series = []
+
+        # continue ...
+        view = BoxPlotView()
+        view.x_label = x_label
+        view.y_label = y_label
+        view.x_tick_labels = x_tick_labels
 
         for param_series in params.get("series"):
             column_names = param_series["column_names"]
             if not column_names:
-                #n = min(data.shape[1], 50)
-                #column_names = data.columns[0:n]
-                column_names = data.columns.to_list()
+                n = min(data.shape[1], MAX_NUMBERS_OF_COLUMNS_PER_PAGE)
+                column_names = data.columns[0:n].to_list()
+                #column_names = data.columns.to_list()
             else:
                 if param_series["use_regexp"]:
-                    reg = "|".join([ "^"+val+"$" for val in column_names ])
+                    reg = "|".join(["^"+val+"$" for val in column_names])
                     column_names = data.filter(regex=reg).columns.to_list()
                 else:
-                    column_names = [ col for col in column_names if col in data.columns]
+                    column_names = [col for col in column_names if col in data.columns]
 
             data = data[column_names]
-            
+
             if not len(column_names):
                 continue
 
@@ -120,31 +113,11 @@ class BoxPlotView(BaseTableView):
             q1 = quantile[0, :]
             q3 = quantile[2, :]
             iqr = q3 - q1
-            lw = q1 - (1.5 * iqr)
-            uw = q3 + (1.5 * iqr)
-
-            series.append({
-                "data": {
-                    "median": median,
-                    "q1": q1.tolist(),
-                    "q3": q3.tolist(),
-                    "min": ymin,
-                    "max": ymax,
-                    "lower_whisker": lw.tolist(),
-                    "upper_whisker": uw.tolist()
-                },
-                "column_names": column_names,
-            })
-
-        if not series:
-            x_tick_labels = None
-
-        return {
-            **super().to_dict(params),
-            "data": {
-                "x_label": x_label,
-                "y_label": y_label,
-                "x_tick_labels": x_tick_labels,
-                "series": series,
-            }
-        }
+            lower_whisker = q1 - (1.5 * iqr)
+            upper_whisker = q3 + (1.5 * iqr)
+            view.add_series(
+                x=column_names, median=median,
+                q1=q1.tolist(), q3=q3.tolist(), min=ymin, max=ymax,
+                lower_whisker=lower_whisker.tolist(), upper_whisker=upper_whisker.tolist()
+            )
+        return view.to_dict(params)

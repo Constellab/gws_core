@@ -2,7 +2,7 @@
 
 import os
 
-from gws_core import (ConfigParams, File, MultiViews, ScatterPlot2DView, Table,
+from gws_core import (ConfigParams, File, MultiViews, TableScatterPlot2DView, Table,
                       TextView)
 from gws_core.test.base_test_case import BaseTestCase
 
@@ -13,7 +13,7 @@ class TestMultiViews(BaseTestCase):
         testdata_dir = self.get_test_data_dir()
         file_path = os.path.join(testdata_dir, "iris.csv")
         table = Table.import_from_path(File(file_path), ConfigParams(delimiter=",", head=0, file_format='.csv'))
-        view = ScatterPlot2DView(data=table)
+        view = TableScatterPlot2DView(data=table)
 
         text_view = TextView('Hello test super view')
 

@@ -23,15 +23,15 @@ from ...task.importer import import_from_path, importer_decorator
 from ..table.data_frame_r_field import DataFrameRField
 from ..table.table import Table
 from ..table.table_tasks import TableExporter, TableImporter
-from ..table.view.barplot_view import BarPlotView
-from ..table.view.boxplot_view import BoxPlotView
+from ..table.view.barplot_view import TableBarPlotView
+from ..table.view.boxplot_view import TableBoxPlotView
 from ..table.view.heatmap_view import HeatmapView
-from ..table.view.histogram_view import HistogramView
-from ..table.view.lineplot_2d_view import LinePlot2DView
-from ..table.view.lineplot_3d_view import LinePlot3DView
-from ..table.view.scatterplot_2d_view import ScatterPlot2DView
-from ..table.view.scatterplot_3d_view import ScatterPlot3DView
-from ..table.view.stacked_barplot_view import StackedBarPlotView
+from ..table.view.histogram_view import TableHistogramView
+from ..table.view.lineplot_2d_view import TableLinePlot2DView
+from ..table.view.lineplot_3d_view import TableLinePlot3DView
+from ..table.view.scatterplot_2d_view import TableScatterPlot2DView
+from ..table.view.scatterplot_3d_view import TableScatterPlot3DView
+from ..table.view.stacked_barplot_view import TableStackedBarPlotView
 from .view.dataset_view import DatasetView
 
 # ====================================================================================================================
@@ -428,72 +428,75 @@ class Dataset(Table):
     #     """
     #     return TableView(self.get_full_data())
 
-    @view(view_type=LinePlot2DView, human_name='LinePlot2D', short_description='View columns as 2D-line plots', specs={})
-    def view_as_line_plot_2d(self, params: ConfigParams) -> LinePlot2DView:
+    @view(view_type=TableLinePlot2DView, human_name='LinePlot2D', short_description='View columns as 2D-line plots', specs={})
+    def view_as_line_plot_2d(self, params: ConfigParams) -> TableLinePlot2DView:
         """
         View columns as 2D-line plots
         """
 
-        return LinePlot2DView(self.get_full_data())
+        return TableLinePlot2DView(self.get_full_data())
 
-    @view(view_type=LinePlot3DView, human_name='LinePlot3D', short_description='View columns as 3D-line plots', specs={})
-    def view_as_line_plot_3d(self, params: ConfigParams) -> LinePlot3DView:
+    @view(view_type=TableLinePlot3DView, human_name='LinePlot3D', short_description='View columns as 3D-line plots', specs={})
+    def view_as_line_plot_3d(self, params: ConfigParams) -> TableLinePlot3DView:
         """
         View columns as 3D-line plots
         """
 
-        return LinePlot3DView(self.get_full_data())
+        return TableLinePlot3DView(self.get_full_data())
 
-    @view(view_type=ScatterPlot3DView, human_name='ScatterPlot3D', short_description='View columns as 3D-scatter plots', specs={})
-    def view_as_scatter_plot_3d(self, params: ConfigParams) -> ScatterPlot3DView:
+    @view(view_type=TableScatterPlot3DView, human_name='ScatterPlot3D',
+          short_description='View columns as 3D-scatter plots', specs={})
+    def view_as_scatter_plot_3d(self, params: ConfigParams) -> TableScatterPlot3DView:
         """
         View columns as 3D-scatter plots
         """
 
-        return ScatterPlot3DView(self.get_full_data())
+        return TableScatterPlot3DView(self.get_full_data())
 
-    @view(view_type=ScatterPlot2DView, human_name='ScatterPlot2D', short_description='View columns as 2D-scatter plots', specs={})
-    def view_as_scatter_plot_2d(self, params: ConfigParams) -> ScatterPlot2DView:
+    @view(view_type=TableScatterPlot2DView, human_name='ScatterPlot2D',
+          short_description='View columns as 2D-scatter plots', specs={})
+    def view_as_scatter_plot_2d(self, params: ConfigParams) -> TableScatterPlot2DView:
         """
         View one or several columns as 2D-line plots
         """
 
-        return ScatterPlot2DView(self.get_full_data())
+        return TableScatterPlot2DView(self.get_full_data())
 
-    @view(view_type=BarPlotView, human_name='BarPlot', short_description='View columns as 2D-bar plots', specs={})
-    def view_as_bar_plot(self, params: ConfigParams) -> BarPlotView:
+    @view(view_type=TableBarPlotView, human_name='BarPlot', short_description='View columns as 2D-bar plots', specs={})
+    def view_as_bar_plot(self, params: ConfigParams) -> TableBarPlotView:
         """
         View one or several columns as 2D-bar plots
         """
 
-        return BarPlotView(self.get_full_data())
+        return TableBarPlotView(self.get_full_data())
 
-    @view(view_type=StackedBarPlotView, human_name='BarPlot', short_description='View columns as 2D-stacked bar plots', specs={})
-    def view_as_stacked_bar_plot(self, params: ConfigParams) -> BarPlotView:
+    @view(view_type=TableStackedBarPlotView, human_name='StackedBarPlot',
+          short_description='View columns as 2D-stacked bar plots', specs={})
+    def view_as_stacked_bar_plot(self, params: ConfigParams) -> TableStackedBarPlotView:
         """
         View one or several columns as 2D-stacked bar plots
         """
 
-        return StackedBarPlotView(self._data)
+        return TableStackedBarPlotView(self._data)
 
-    @view(view_type=HistogramView, human_name='Histogram', short_description='View columns as 2D-line plots', specs={})
-    def view_as_histogram(self, params: ConfigParams) -> HistogramView:
+    @view(view_type=TableHistogramView, human_name='Histogram', short_description='View columns as 2D-line plots', specs={})
+    def view_as_histogram(self, params: ConfigParams) -> TableHistogramView:
         """
         View columns as 2D-line plots
         """
 
-        return HistogramView(self.get_full_data())
+        return TableHistogramView(self.get_full_data())
 
-    @view(view_type=BoxPlotView, human_name='BoxPlot', short_description='View columns as box plots', specs={})
-    def view_as_box_plot(self, params: ConfigParams) -> BoxPlotView:
+    @view(view_type=TableBoxPlotView, human_name='BoxPlot', short_description='View columns as box plots', specs={})
+    def view_as_box_plot(self, params: ConfigParams) -> TableBoxPlotView:
         """
         View one or several columns as box plots
         """
 
-        return BoxPlotView(self.get_full_data())
+        return TableBoxPlotView(self.get_full_data())
 
     @view(view_type=HeatmapView, human_name='Heatmap', short_description='View table as heatmap', specs={})
-    def view_as_heatmap(self, params: ConfigParams) -> BarPlotView:
+    def view_as_heatmap(self, params: ConfigParams) -> TableBarPlotView:
         """
         View the table as heatmap
         """

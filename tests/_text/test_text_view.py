@@ -1,6 +1,6 @@
 import os
 
-from gws_core import BaseTestCase, Settings, Text, TextView, File, ConfigParams
+from gws_core import BaseTestCase, ConfigParams, File, Settings, Text, TextView
 
 
 class TestTextView(BaseTestCase):
@@ -23,9 +23,9 @@ class TestTextView(BaseTestCase):
         )
 
         params = ConfigParams(
-            {"page":2, "page_size":100}
+            {"page": 2, "page_size": 100}
         )
         self.assertEqual(
             len(_view.to_dict(params)["data"]),
-            100
+            10
         )

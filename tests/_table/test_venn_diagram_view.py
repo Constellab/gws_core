@@ -1,7 +1,7 @@
 import os
 
 from gws_core import (BaseTestCase, ConfigParams, File, Settings, Table,
-                      VennDiagramView, ViewTester)
+                      TableVennDiagramView, ViewTester)
 from gws_core.config.config_types import ConfigParams
 from gws_core.impl.file.file import File
 
@@ -20,16 +20,16 @@ class TestVennDiagrammView(BaseTestCase):
             })
         )
         tester = ViewTester(
-            view=VennDiagramView(table)
+            view=TableVennDiagramView(table)
         )
         dic = tester.to_dict({})
 
-        self.assertEqual(dic["data"]["total_number_of_columns"], 3)
+        self.assertEqual(dic["data"]["total_number_of_groups"], 3)
         self.assertEqual(len(dic["data"]["sections"]), 7)
-        self.assertEqual(dic["data"]["sections"][6], {'columns': ['A', 'B', 'C'], 'section': {'3', '1'}})
+        self.assertEqual(dic["data"]["sections"][6], {'group_names': ['A', 'B', 'C'], 'data': {'3', '1'}})
 
         dic = tester.to_dict({"column_names": ["A", "B"]})
-        self.assertEqual(dic["data"]["total_number_of_columns"], 2)
+        self.assertEqual(dic["data"]["total_number_of_groups"], 2)
         self.assertEqual(len(dic["data"]["sections"]), 3)
 
         dic = tester.to_dict({"column_names": ["A", "B", "D", "E"]})

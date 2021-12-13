@@ -21,20 +21,28 @@ from ...resource.view_decorator import view
 from ...task.exporter import export_to_path
 from ...task.importer import import_from_path
 from .data_frame_r_field import DataFrameRField
-from .view.barplot_view import BarPlotView
-from .view.boxplot_view import BoxPlotView
+from .view.barplot_view import TableBarPlotView
+from .view.boxplot_view import TableBoxPlotView
 from .view.heatmap_view import HeatmapView
-from .view.histogram_view import HistogramView
-from .view.lineplot_2d_view import LinePlot2DView
-from .view.lineplot_3d_view import LinePlot3DView
-from .view.scatterplot_2d_view import ScatterPlot2DView
-from .view.scatterplot_3d_view import ScatterPlot3DView
-from .view.stacked_barplot_view import StackedBarPlotView
+from .view.histogram_view import TableHistogramView
+from .view.lineplot_2d_view import TableLinePlot2DView
+from .view.lineplot_3d_view import TableLinePlot3DView
+from .view.scatterplot_2d_view import TableScatterPlot2DView
+from .view.scatterplot_3d_view import TableScatterPlot3DView
+from .view.stacked_barplot_view import TableStackedBarPlotView
 from .view.table_view import TableView
+
+ALLOWED_DELIMITER = ["tab", "space", ",", ";"]
+DEFAULT_DELIMITER = "tab"
+DEFAULT_FILE_FORMAT = ".csv"
 
 
 @resource_decorator("Table")
 class Table(Resource):
+
+    ALLOWED_DELIMITER = ALLOWED_DELIMITER
+    DEFAULT_DELIMITER = DEFAULT_DELIMITER
+    DEFAULT_FILE_FORMAT = DEFAULT_FILE_FORMAT
 
     _data: DataFrame = DataFrameRField()
 
@@ -92,11 +100,10 @@ class Table(Resource):
 
     @export_to_path(specs={
         'file_name': StrParam(default_value='file.csv', short_description="Destination file name in the store"),
-        'file_format': StrParam(default_value=".csv", short_description="File format"),
-        'delimiter': StrParam(default_value="\t", short_description="Delimiter character. Only for CSV files"),
+        'file_format': StrParam(default_value=DEFAULT_FILE_FORMAT, short_description="File format"),
+        'delimiter': StrParam(allowed_values=ALLOWED_DELIMITER, default_value=DEFAULT_DELIMITER, short_description="Delimiter character. Only for CSV files"),
         'write_header': BoolParam(default_value=True, short_description="True to write column names (header), False otherwise"),
         'write_index': BoolParam(default_value=True, short_description="True to write row names (index), False otherwise"),
-        'file_store_id': StrParam(optional=True, short_description="ID of the file_store where the file must be exported"),
     })
     def export_to_path(self, dest_dir: str, params: ConfigParams) -> File:
         """
@@ -108,13 +115,19 @@ class Table(Resource):
         file_path = os.path.join(dest_dir, params.get_value('file_name', 'file.csv'))
 
         file_format: str = params.get_value('file_format', ".csv")
+        sep = params.get_value('delimiter', "tab")
+        if sep == "tab":
+            sep = "\t"
+        elif sep == "space":
+            sep = " "
+
         file_extension = Path(file_path).suffix
         if file_extension in [".xls", ".xlsx"] or file_format in [".xls", ".xlsx"]:
             self._data.to_excel(file_path)
         elif file_extension in [".csv", ".tsv", ".txt", ".tab"] or file_format in [".csv", ".tsv", ".txt", ".tab"]:
             self._data.to_csv(
                 file_path,
-                sep=params.get_value('delimiter', "\t"),
+                sep=sep,
                 header=params.get_value('write_header', True),
                 index=params.get_value('write_index', True)
             )
@@ -176,8 +189,8 @@ class Table(Resource):
 
     @classmethod
     @import_from_path(specs={
-        'file_format': StrParam(default_value=".csv", short_description="File format"),
-        'delimiter': StrParam(default_value="\t", short_description="Delimiter character. Only for parsing CSV files"),
+        'file_format': StrParam(default_value=DEFAULT_FILE_FORMAT, short_description="File format"),
+        'delimiter': StrParam(allowed_values=ALLOWED_DELIMITER, default_value=DEFAULT_DELIMITER, short_description="Delimiter character. Only for parsing CSV files"),
         'header': IntParam(default_value=0, short_description="Row number to use as the column names. Use None to prevent parsing column names. Only for CSV files"),
         'index_columns': ListParam(optional=True, short_description="Columns to use as the row names. Use None to prevent parsing row names. Only for CSV files"),
     })
@@ -192,12 +205,18 @@ class Table(Resource):
         """
 
         file_format: str = params.get_value('file_format', ".csv")
+        sep = params.get_value('delimiter', "tab")
+        if sep == "tab":
+            sep = "\t"
+        elif sep == "space":
+            sep = " "
+
         if file.extension in [".xls", ".xlsx"] or file_format in [".xls", ".xlsx"]:
             df = pandas.read_excel(file.path)
         elif file.extension in [".csv", ".tsv", ".txt", ".tab"] or file_format in [".csv", ".tsv", ".txt", ".tab"]:
             df = pandas.read_table(
                 file.path,
-                sep=params.get_value('delimiter', "\t"),
+                sep=sep,
                 header=params.get_value('header', 0),
                 index_col=params.get_value('index_columns')
             )
@@ -311,13 +330,13 @@ class Table(Resource):
 
         return TableView(self._data)
 
-    @view(view_type=LinePlot2DView, human_name='Line plot 2D', short_description='View columns as 2D-line plots', specs={})
-    def view_as_line_plot_2d(self, params: ConfigParams) -> LinePlot2DView:
+    @view(view_type=TableLinePlot2DView, human_name='Line plot 2D', short_description='View columns as 2D-line plots', specs={})
+    def view_as_line_plot_2d(self, params: ConfigParams) -> TableLinePlot2DView:
         """
         View columns as 2D-line plots
         """
 
-        return LinePlot2DView(self._data)
+        return TableLinePlot2DView(self._data)
 
     # @view(view_type=LinePlot3DView, human_name='LinePlot3D', short_description='View columns as 3D-line plots', specs={})
     # def view_as_line_plot_3d(self, params: ConfigParams) -> LinePlot3DView:
@@ -327,55 +346,55 @@ class Table(Resource):
 
     #     return LinePlot3DView(self._data)
 
-    # @view(view_type=ScatterPlot3DView, human_name='ScatterPlot3D', short_description='View columns as 3D-scatter plots', specs={})
-    # def view_as_scatter_plot_3d(self, params: ConfigParams) -> ScatterPlot3DView:
+    # @view(view_type=TableScatterPlot3DView, human_name='ScatterPlot3D', short_description='View columns as 3D-scatter plots', specs={})
+    # def view_as_scatter_plot_3d(self, params: ConfigParams) -> TableScatterPlot3DView:
     #     """
     #     View columns as 3D-scatter plots
     #     """
 
-    #     return ScatterPlot3DView(self._data)
+    #     return TableScatterPlot3DView(self._data)
 
-    @view(view_type=ScatterPlot2DView, human_name='Scatter plot 2D',
+    @view(view_type=TableScatterPlot2DView, human_name='Scatter plot 2D',
           short_description='View columns as 2D-scatter plots', specs={})
-    def view_as_scatter_plot_2d(self, params: ConfigParams) -> ScatterPlot2DView:
+    def view_as_scatter_plot_2d(self, params: ConfigParams) -> TableScatterPlot2DView:
         """
         View one or several columns as 2D-line plots
         """
 
-        return ScatterPlot2DView(self._data)
+        return TableScatterPlot2DView(self._data)
 
-    @view(view_type=BarPlotView, human_name='Bar plot', short_description='View columns as 2D-bar plots', specs={})
-    def view_as_bar_plot(self, params: ConfigParams) -> BarPlotView:
+    @view(view_type=TableBarPlotView, human_name='Bar plot', short_description='View columns as 2D-bar plots', specs={})
+    def view_as_bar_plot(self, params: ConfigParams) -> TableBarPlotView:
         """
         View one or several columns as 2D-bar plots
         """
 
-        return BarPlotView(self._data)
+        return TableBarPlotView(self._data)
 
-    @view(view_type=StackedBarPlotView, human_name='Stacked bar plot',
+    @view(view_type=TableStackedBarPlotView, human_name='Stacked bar plot',
           short_description='View columns as 2D-stacked bar plots', specs={})
-    def view_as_stacked_bar_plot(self, params: ConfigParams) -> BarPlotView:
+    def view_as_stacked_bar_plot(self, params: ConfigParams) -> TableStackedBarPlotView:
         """
         View one or several columns as 2D-stacked bar plots
         """
 
-        return StackedBarPlotView(self._data)
+        return TableStackedBarPlotView(self._data)
 
-    @view(view_type=HistogramView, human_name='Histogram', short_description='View columns as 2D-line plots', specs={})
-    def view_as_histogram(self, params: ConfigParams) -> HistogramView:
+    @view(view_type=TableHistogramView, human_name='Histogram', short_description='View columns as 2D-line plots', specs={})
+    def view_as_histogram(self, params: ConfigParams) -> TableHistogramView:
         """
         View columns as 2D-line plots
         """
 
-        return HistogramView(self._data)
+        return TableHistogramView(self._data)
 
-    @view(view_type=BoxPlotView, human_name='Box plot', short_description='View columns as box plots', specs={})
-    def view_as_box_plot(self, params: ConfigParams) -> BoxPlotView:
+    @view(view_type=TableBoxPlotView, human_name='Box plot', short_description='View columns as box plots', specs={})
+    def view_as_box_plot(self, params: ConfigParams) -> TableBoxPlotView:
         """
         View one or several columns as box plots
         """
 
-        return BoxPlotView(self._data)
+        return TableBoxPlotView(self._data)
 
     @view(view_type=HeatmapView, human_name='Heatmap', short_description='View table as heatmap', specs={})
     def view_as_heatmap(self, params: ConfigParams) -> HeatmapView:

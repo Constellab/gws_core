@@ -1,11 +1,11 @@
 import os
 
 import numpy
-from gws_core import (BaseTestCase, BoxPlotView, ConfigParams, File, Settings,
-                      Table, ViewTester)
+from gws_core import (BaseTestCase, ConfigParams, File, Settings, Table,
+                      TableBoxPlotView, ViewTester)
 
 
-class TestBoxPlotView(BaseTestCase):
+class TestTableBoxPlotView(BaseTestCase):
 
     def test_boxplot_view(self,):
         settings = Settings.retrieve()
@@ -19,7 +19,7 @@ class TestBoxPlotView(BaseTestCase):
             })
         )
         tester = ViewTester(
-            view=BoxPlotView(table)
+            view=TableBoxPlotView(table)
         )
 
         dic = tester.to_dict({
@@ -28,7 +28,7 @@ class TestBoxPlotView(BaseTestCase):
             ]
         })
         self.assertEqual(dic["type"], "box-plot-view")
-
+        self.assertEqual(dic["data"]["series"][0]["data"]["x"], ['petal.length', 'petal.width'])
         self.assertEqual(dic["data"]["series"][0]["data"]["min"], [1.0, 0.1])
         self.assertEqual(dic["data"]["series"][0]["data"]["q1"], [1.6, 0.3])
         self.assertEqual(dic["data"]["series"][0]["data"]["median"], [4.35, 1.3])

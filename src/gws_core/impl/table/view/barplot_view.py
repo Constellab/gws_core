@@ -7,22 +7,19 @@ from pandas import DataFrame
 
 from ....config.config_types import ConfigParams
 from ....config.param_spec import BoolParam, ListParam, StrParam
+from ....core.exception.exceptions import BadRequestException
 from ....resource.view_types import ViewSpecs
-from ..helper.constructor.data_scale_filter_param import \
-    DataScaleFilterParamConstructor
-from ..helper.constructor.num_data_filter_param import \
-    NumericDataFilterParamConstructor
-from ..helper.constructor.text_data_filter_param import \
-    TextDataFilterParamConstructor
-from ..helper.table_nanify_helper import TableNanifyHelper
+from ...view.barplot_view import BarPlotView
 from .base_table_view import BaseTableView
 
+MAX_NUMBERS_OF_COLUMNS_PER_PAGE = 999
 
-class BarPlotView(BaseTableView):
+
+class TableBarPlotView(BaseTableView):
     """
-    BarPlotView
+    TableBarPlotView
 
-    Show a set of columns as bar plots.
+    Class for creating bar plots using a Table.
 
     The view model is:
     ------------------
@@ -40,8 +37,7 @@ class BarPlotView(BaseTableView):
                         "x": List[Float],
                         "y": List[Float],
                     },
-                    "x_column_name": str,
-                    "column_name": str,
+                    "name": str,
                 },
                 ...
             ]
@@ -50,54 +46,34 @@ class BarPlotView(BaseTableView):
     ```
     """
 
-    _type: str = "bar-plot-view"
     _data: DataFrame
-
     _specs: ViewSpecs = {
         **BaseTableView._specs,
         "column_names": ListParam(human_name="Column names", optional=True, short_description="List of columns to plot"),
         "use_regexp": BoolParam(default_value=False, human_name="Use regexp", short_description="True to use regular expression for column names; False otherwise"),
-        "index_column": StrParam(human_name="Index column", optional=True, short_description="The index column"),
-        "normalization": StrParam(default_value="none", allowed_values=["none", "unit", "percent"], human_name="Normalization", short_description="Type of normalization to apply on data"),
-        "transpose": BoolParam(default_value=False, human_name="Transpose representation", short_description="True to transpose representation; Flase otherwise"),
-        "numeric_data_filters": NumericDataFilterParamConstructor.construct_filter(visibility='protected'),
-        "text_data_filters": TextDataFilterParamConstructor.construct_filter(visibility='protected'),
-        "data_scaling_filters": DataScaleFilterParamConstructor.construct_filter(visibility='protected'),
+        "index_column": StrParam(human_name="Index column", optional=True, short_description="The index column used to label bar"),
         "x_label": StrParam(human_name="X-label", optional=True, visibility='protected', short_description="The x-axis label to display"),
         "y_label": StrParam(human_name="Y-label", optional=True, visibility='protected', short_description="The y-axis label to display"),
-        "x_tick_labels": ListParam(human_name="X-tick-labels", optional=True, visibility='protected', short_description="The labels of x-axis ticks"),
+        "x_tick_labels": ListParam(human_name="X-tick-labels", optional=True, visibility='protected', short_description="The labels of x-axis ticks")
     }
-
-    def _filter_data(self, data, params: ConfigParams):
-        data = NumericDataFilterParamConstructor.validate_filter("numeric_data_filters", data, params)
-        data = TextDataFilterParamConstructor.validate_filter("text_data_filters", data, params)
-        data = DataScaleFilterParamConstructor.validate_filter("data_scaling_filters", data, params)
-        data = TableNanifyHelper.nanify(data)
-        return data
-
-    def _normalize_data(self, data, params: ConfigParams):
-        norm = params["normalization"]
-        if norm and norm != "none":
-            if norm == "unit":
-                data = data.div(data.sum(skipna=None, axis=1), axis=0)
-            elif norm == "percent":
-                data = data.div(data.sum(skipna=None, axis=1), axis=0) * 100
-        return data
+    _view_helper = BarPlotView
 
     def to_dict(self, params: ConfigParams) -> dict:
+        if not issubclass(self._view_helper, BarPlotView):
+            raise BadRequestException("Invalid view helper. An subclass of BarPlotView is expected")
+
         data = self._data
 
         index_column = params.get_value("index_column")
         if index_column:
             data.index = data.loc[:, index_column].to_list()
 
-        # apply filters
-        data = self._filter_data(data, params)
-
         # select columns
         column_names = params.get_value("column_names", [])
         if not column_names:
-            column_names = data.columns.to_list()
+            n = min(data.shape[1], MAX_NUMBERS_OF_COLUMNS_PER_PAGE)
+            column_names = data.columns[0:n].to_list()
+            #column_names = data.columns.to_list()
         else:
             if params["use_regexp"]:
                 reg = "|".join(["^"+val+"$" for val in column_names])
@@ -111,43 +87,28 @@ class BarPlotView(BaseTableView):
         x_tick_labels = params.get_value("x_tick_labels", data.index.to_list())
         y_label = params.get_value("y_label", "")
 
-        # handle x tick labels
-        x_tick_labels = None
-        if params.value_is_set('x_tick_labels'):
-            x_tick_label_columns: str = params.get_value("x_tick_labels")
-            x_tick_labels = []
-            for column in x_tick_label_columns:
-                if column in data:
-                    x_tick_labels.extend(data[column].values.tolist())
-
-        if params["transpose"]:
-            data = data.T
-
-        # normalization is applied at the end
-        data = self._normalize_data(data, params)
+        # # handle x tick labels
+        # x_tick_labels = None
+        # if params.value_is_set('x_tick_labels'):
+        #     x_tick_label_columns: str = params.get_value("x_tick_labels")
+        #     x_tick_labels = []
+        #     for column in x_tick_label_columns:
+        #         if column in data:
+        #             x_tick_labels.extend(data[column].values.tolist())
 
         # replace NaN by 'NaN'
         data: DataFrame = data.fillna('')
 
-        series = []
+        # create view
+        view = self._view_helper()
+        view.x_label = x_label
+        view.y_label = y_label
+        view.x_tick_labels = x_tick_labels
         for column_name in data.columns:
-            series.append({
-                "data": {
-                    "x": data.index.to_list(),
-                    "y": data[column_name].values.tolist(),
-                },
-                "column_name": column_name,
-            })
+            view.add_series(
+                x=data.index.to_list(),
+                y=data[column_name].values.tolist(),
+                name=column_name
+            )
 
-        if not series:
-            x_tick_labels = None
-
-        return {
-            **super().to_dict(params),
-            "data": {
-                "x_label": x_label,
-                "y_label": y_label,
-                "x_tick_labels": x_tick_labels,
-                "series": series,
-            }
-        }
+        return view.to_dict(params)

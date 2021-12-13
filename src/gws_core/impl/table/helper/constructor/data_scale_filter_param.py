@@ -51,5 +51,5 @@ class DataScaleFilterParamConstructor:
             optional=True,
             human_name="Data scaler",
             short_description="Scale data using a numeric function",
-            max_number_of_occurrences=3
+            max_number_of_occurrences=9
         )

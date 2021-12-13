@@ -1,11 +1,11 @@
 import os
 
 import numpy
-from gws_core import (BaseTestCase, ConfigParams, File, HistogramView,
+from gws_core import (BaseTestCase, ConfigParams, File, TableHistogramView,
                       Settings, Table, ViewTester)
 
 
-class TestHistogramView(BaseTestCase):
+class TestTableHistogramView(BaseTestCase):
 
     def test_histogram_view(self,):
         settings = Settings.retrieve()
@@ -19,7 +19,7 @@ class TestHistogramView(BaseTestCase):
             })
         )
         tester = ViewTester(
-            view=HistogramView(table)
+            view=TableHistogramView(table)
         )
         dic = tester.to_dict(dict(
             column_names=["petal.length", "petal.width"]

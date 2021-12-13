@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Any, Union
 
 from pandas import DataFrame
 
@@ -16,7 +16,11 @@ class BaseTableView(View):
     _type: str
     _data: DataFrame
 
-    def check_and_set_data(self, data: Union[DataFrame, Table]):
+    def __init__(self, data: Any, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._check_and_set_data(data)
+
+    def _check_and_set_data(self, data: Union[DataFrame, Table]):
         from ..table import Table
         if not isinstance(data, (DataFrame, Table,)):
             raise BadRequestException("The data must be a pandas.DataFrame or Table resource")

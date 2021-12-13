@@ -3,18 +3,16 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List
-
-from pandas import DataFrame
-
-from .scatterplot_2d_view import ScatterPlot2DView
+from ....resource.view_types import ViewSpecs
+from ...view.lineplot_2d_view import LinePlot2DView
+from .scatterplot_2d_view import TableScatterPlot2DView
 
 
-class LinePlot2DView(ScatterPlot2DView):
+class TableLinePlot2DView(TableScatterPlot2DView):
     """
-    ScatterPlot2DView
+    TableScatterPlot2DView
 
-    Show a set of columns as 2d-line plots.
+    Class for creating 2d-line plots using a Table.
 
     The view model is:
     ------------------
@@ -40,7 +38,9 @@ class LinePlot2DView(ScatterPlot2DView):
         }
     }
     ```
+
+    See also ScatterPlot2DView, LinePlot2DView, TableScatterPlot2DView
     """
 
-    _type: str = "line-plot-2d-view"
-    _data: DataFrame
+    _specs: ViewSpecs = {**TableScatterPlot2DView._specs}
+    _view_helper = LinePlot2DView

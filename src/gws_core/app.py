@@ -82,20 +82,9 @@ class App:
         """
 
         SystemService.init()
-
-        # Add static dirs for docs of git modules
-        # @ToDo: Add route or hooks to compile docs after
         settings: Settings = Settings.retrieve()
-        bricks_info = BrickHelper.get_all_bricks()
         Logger.info(
             f"Starting server in {('prod' if settings.is_prod else 'dev')} mode ...")
-        for brick_info in bricks_info.values():
-            name = brick_info["path"].strip("/").split("/")[-1]
-            documention_path = os.path.join(brick_info["path"], "./docs/html/build")
-            if not os.path.exists(documention_path):
-                os.makedirs(documention_path)
-            cls.app.mount(
-                f"/docs/{name}/", StaticFiles(directory=documention_path), name=f"/docs/{name}/")
 
         # Configure the CORS
         CorsConfig.configure_app_cors(app)

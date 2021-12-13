@@ -1,10 +1,10 @@
 import os
 
-from gws_core import (BaseTestCase, ConfigParams, File, ScatterPlot3DView,
-                      Settings, Table, ViewTester)
+from gws_core import (BaseTestCase, ConfigParams, File, Settings, Table,
+                      TableScatterPlot3DView, ViewTester)
 
 
-class TestScatterPlot2DView(BaseTestCase):
+class TestTableScatterPlot2DView(BaseTestCase):
 
     def test_scatterplot_2d_view(self,):
         settings = Settings.retrieve()
@@ -13,12 +13,12 @@ class TestScatterPlot2DView(BaseTestCase):
         table = Table.import_from_path(
             File(path=file_path),
             ConfigParams({
-                "delimiter":",",
-                "header":0
+                "delimiter": ",",
+                "header": 0
             })
         )
         tester = ViewTester(
-            view = ScatterPlot3DView(table)
+            view=TableScatterPlot3DView(table)
         )
         dic = tester.to_dict(dict(
             x_column_name="sepal.length",

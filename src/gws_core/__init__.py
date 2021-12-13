@@ -174,25 +174,40 @@ from .impl.table.transformers.table_filter import TableFilter as TableFilter
 from .impl.table.transformers.table_grouper import TableGrouper as TableGrouper
 from .impl.table.transformers.table_scaler import TableScaler as TableScaler
 # Impl > TableView
-from .impl.table.view.barplot_view import BarPlotView as BarPlotView
-from .impl.table.view.boxplot_view import BoxPlotView as BoxPlotView
+from .impl.table.view.barplot_view import TableBarPlotView as TableBarPlotView
+from .impl.table.view.boxplot_view import TableBoxPlotView as TableBoxPlotView
 from .impl.table.view.heatmap_view import HeatmapView as HeatmapView
-from .impl.table.view.histogram_view import HistogramView as HistogramView
-from .impl.table.view.lineplot_2d_view import LinePlot2DView as LinePlot2DView
-from .impl.table.view.lineplot_3d_view import LinePlot3DView as LinePlot3DView
+from .impl.table.view.histogram_view import \
+    TableHistogramView as TableHistogramView
+from .impl.table.view.lineplot_2d_view import \
+    TableLinePlot2DView as TableLinePlot2DView
+from .impl.table.view.lineplot_3d_view import \
+    TableLinePlot3DView as TableLinePlot3DView
 from .impl.table.view.scatterplot_2d_view import \
-    ScatterPlot2DView as ScatterPlot2DView
+    TableScatterPlot2DView as TableScatterPlot2DView
 from .impl.table.view.scatterplot_3d_view import \
-    ScatterPlot3DView as ScatterPlot3DView
+    TableScatterPlot3DView as TableScatterPlot3DView
 from .impl.table.view.stacked_barplot_view import \
-    StackedBarPlotView as StackedBarPlotView
+    TableStackedBarPlotView as TableStackedBarPlotView
 from .impl.table.view.table_view import TableView as TableView
 from .impl.table.view.venn_diagram_view import \
-    VennDiagramView as VennDiagramView
+    TableVennDiagramView as TableVennDiagramView
 # Impl > Text
 from .impl.text.text import Text as Text
 # Impl > TextView
 from .impl.text.view.text_view import TextView as TextView
+# View
+from .impl.view.barplot_view import BarPlotView as BarPlotView
+from .impl.view.boxplot_view import BoxPlotView as BoxPlotView
+from .impl.view.histogram_view import HistogramView as HistogramView
+from .impl.view.lineplot_2d_view import LinePlot2DView as LinePlot2DView
+from .impl.view.lineplot_3d_view import LinePlot3DView as LinePlot3DView
+from .impl.view.scatterplot_2d_view import \
+    ScatterPlot2DView as ScatterPlot2DView
+from .impl.view.scatterplot_3d_view import \
+    ScatterPlot3DView as ScatterPlot3DView
+from .impl.view.stacked_barplot_view import \
+    StackedBoxPlotView as StackedBoxPlotView
 # Impl > Volatile
 from .impl.volatile.volatile_resource import \
     VolatileResource as VolatileResource

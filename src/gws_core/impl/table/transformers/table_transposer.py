@@ -3,8 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List
-
 from gws_core.task.transformer.transformer_decorator import \
     transformer_decorator
 from pandas import DataFrame

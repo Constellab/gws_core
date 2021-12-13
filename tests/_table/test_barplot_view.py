@@ -1,12 +1,12 @@
 import os
 
-from gws_core import (BarPlotView, BaseTestCase, ConfigParams, File, Settings,
+from gws_core import (TableBarPlotView, BaseTestCase, ConfigParams, File, Settings,
                       Table, ViewTester)
 from gws_core.config.config_types import ConfigParams
 from gws_core.impl.file.file import File
 
 
-class TestBarPlotView(BaseTestCase):
+class TestTableBarPlotView(BaseTestCase):
 
     def test_barplot_2d_view(self,):
         settings = Settings.retrieve()
@@ -20,7 +20,7 @@ class TestBarPlotView(BaseTestCase):
             })
         )
         tester = ViewTester(
-            view=BarPlotView(table)
+            view=TableBarPlotView(table)
         )
         dic = tester.to_dict(dict(
             column_names=["sepal.length", "petal.length", "petal.width"]

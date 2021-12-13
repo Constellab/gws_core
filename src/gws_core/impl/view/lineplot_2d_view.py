@@ -3,22 +3,20 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from ...view.stacked_barplot_view import StackedBoxPlotView
-from .barplot_view import TableBarPlotView
+from .scatterplot_2d_view import ScatterPlot2DView
 
 
-class TableStackedBarPlotView(TableBarPlotView):
+class LinePlot2DView(ScatterPlot2DView):
     """
-    TableStackedBarPlotView
+    LinePlot2DView
 
-    Class for creating stacked-bar plots using a Table.
+    Base class for creating 2d-line plots.
 
     The view model is:
     ------------------
-
     ```
     {
-        "type": "stacked-bar-plot-view",
+        "type": "line-plot-2d-view",
         "data": {
             "x_label": str,
             "y_label": str,
@@ -29,13 +27,16 @@ class TableStackedBarPlotView(TableBarPlotView):
                         "x": List[Float],
                         "y": List[Float],
                     },
-                    "name": str,
+                    "x_name": str,
+                    "y_name": str,
                 },
                 ...
             ]
         }
     }
     ```
+
+    See also ScatterPlot2DView
     """
 
-    _view_helper = StackedBoxPlotView
+    _type: str = "line-plot-2d-view"

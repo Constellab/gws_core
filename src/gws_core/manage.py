@@ -79,10 +79,10 @@ class SettingsLoader:
     @staticmethod
     def parse_variables(repo_name, cwd, variables):
         for key, value in variables.items():
-            value = value.replace("{LAB_DIR}", "/lab")
-            value = value.replace("{DATA_DIR}", "/data")
-            value = value.replace("{CURRENT_DIR}", cwd)
-            value = value.replace("{CURRENT_BRICK}", repo_name)
+            value = value.replace("${LAB_DIR}", "/lab")
+            value = value.replace("${DATA_DIR}", "/data")
+            value = value.replace("${CURRENT_DIR}", cwd)
+            value = value.replace("${CURRENT_BRICK}", repo_name)
             variables[key] = value
 
     @classmethod

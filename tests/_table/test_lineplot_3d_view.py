@@ -1,10 +1,10 @@
 import os
 
-from gws_core import (BaseTestCase, ConfigParams, File, LinePlot3DView,
-                      Settings, Table, ViewTester)
+from gws_core import (BaseTestCase, ConfigParams, File, Settings, Table,
+                      TableLinePlot3DView, ViewTester)
 
 
-class TestLinePlot3DView(BaseTestCase):
+class TestTableLinePlot3DView(BaseTestCase):
 
     def test_lineplot_2d_view(self,):
         settings = Settings.retrieve()
@@ -18,7 +18,7 @@ class TestLinePlot3DView(BaseTestCase):
             })
         )
         tester = ViewTester(
-            view=LinePlot3DView(table)
+            view=TableLinePlot3DView(table)
         )
         dic = tester.to_dict(dict(
             x_column_name="sepal.length",

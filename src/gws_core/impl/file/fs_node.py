@@ -9,7 +9,7 @@ from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 
 
-@resource_decorator(unique_name="FsNode", hide=True)
+@resource_decorator(unique_name="FSNode", hide=True)
 class FSNode(Resource):
     """
     Node class to manage resources that are stored in the server (as file or folder)

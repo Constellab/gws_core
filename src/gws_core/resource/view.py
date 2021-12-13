@@ -11,10 +11,8 @@ class View:
 
     # Spec of the view. All the view spec must be optional or have a default value
     _specs: ViewSpecs = {}
-    _data: Any
 
-    def __init__(self, data: Any, *args, **kwargs):
-        self.check_and_set_data(data)
+    def __init__(self, *args, **kwargs):
         self._check_view_specs()
 
     def _check_view_specs(self) -> None:
@@ -29,15 +27,6 @@ class View:
             if not spec.optional:
                 raise Exception(
                     f"The spec '{key}' of the view '{self.__class__.__name__}' is not optional. All the view specs must be optional or have a default value")
-
-    def check_and_set_data(self, data):
-        """
-        Check the data and return.
-
-        Must be overloaded to implement adhoc data checker
-        """
-
-        self._data = data
 
     def to_dict(self, params: ConfigParams) -> dict:
         return {

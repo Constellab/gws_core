@@ -3,16 +3,16 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from pandas import DataFrame
+from ....resource.view_types import ViewSpecs
+from ...view.lineplot_3d_view import LinePlot3DView
+from .scatterplot_3d_view import TableScatterPlot3DView
 
-from .scatterplot_3d_view import ScatterPlot3DView
 
-
-class LinePlot3DView(ScatterPlot3DView):
+class TableLinePlot3DView(TableScatterPlot3DView):
     """
     Line3DPlotView
 
-    Show a set of columns as 3d-line plots.
+    Class for creating 3d-line plots using a Table.
 
     The view model is:
     ------------------
@@ -44,5 +44,5 @@ class LinePlot3DView(ScatterPlot3DView):
     ```
     """
 
-    _type: str = "line-plot-3d-view"
-    _data: DataFrame
+    _specs: ViewSpecs = {**TableScatterPlot3DView._specs}
+    _view_helper = LinePlot3DView

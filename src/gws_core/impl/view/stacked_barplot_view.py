@@ -3,15 +3,14 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from ...view.stacked_barplot_view import StackedBoxPlotView
-from .barplot_view import TableBarPlotView
+from .barplot_view import BarPlotView
 
 
-class TableStackedBarPlotView(TableBarPlotView):
+class StackedBoxPlotView(BarPlotView):
     """
-    TableStackedBarPlotView
+    StackedBoxPlotView
 
-    Class for creating stacked-bar plots using a Table.
+    Base class for creating stacked-bar plots.
 
     The view model is:
     ------------------
@@ -36,6 +35,8 @@ class TableStackedBarPlotView(TableBarPlotView):
         }
     }
     ```
+
+    See also BarPlotView
     """
 
-    _view_helper = StackedBoxPlotView
+    _type: str = "stacked-bar-plot-view"

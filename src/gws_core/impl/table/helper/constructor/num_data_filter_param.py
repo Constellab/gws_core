@@ -54,5 +54,5 @@ class NumericDataFilterParamConstructor:
             optional=True,
             human_name="Numeric data filter",
             short_description="Filter data using a numeric criterion along a selected set of columns",
-            max_number_of_occurrences=3
+            max_number_of_occurrences=9
         )

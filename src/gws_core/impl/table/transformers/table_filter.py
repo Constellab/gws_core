@@ -3,14 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, TypedDict
-
-import regex
 from pandas import DataFrame
 
 from ....config.config_types import ConfigParams, ConfigSpecs
-from ....config.param_spec import (BoolParam, FloatParam, IntParam, ListParam,
-                                   ParamSet, StrParam)
+from ....config.param_spec import FloatParam, ParamSet, StrParam
 from ....io.io_spec import InputSpecs, OutputSpecs
 from ....task.task import Task
 from ....task.task_decorator import task_decorator

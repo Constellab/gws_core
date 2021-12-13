@@ -3,22 +3,16 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, List
-
-import numpy
 from pandas import DataFrame
 
-from ....config.param_spec import StrParam
-from ....resource.view import View
-from ....resource.view_types import ViewSpecs
 from .table_view import TableView
 
 
 class HeatmapView(TableView):
     """
-    HistogramView
+    TableHistogramView
 
-    Show a set of columns as heatmap. By default all the columns are shown as heatmap.
+    Class for creating heatmaps using a Table.
 
     The view model is:
     ------------------
@@ -29,7 +23,8 @@ class HeatmapView(TableView):
         "data": dict
     }
     ```
+
+    See also TableView
     """
 
     _type: str = "heatmap-view"
-    _data: DataFrame

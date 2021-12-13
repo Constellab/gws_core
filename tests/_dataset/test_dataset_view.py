@@ -4,7 +4,7 @@ from gws_core import (BaseTestCase, ConfigParams, Dataset, DatasetImporter,
                       DatasetView, File, Settings, TaskRunner, ViewTester)
 
 
-class TestTDatasetView(BaseTestCase):
+class TestDatasetView(BaseTestCase):
 
     async def test_dataset_view(self,):
         self.print("Dataset import")
@@ -26,15 +26,20 @@ class TestTDatasetView(BaseTestCase):
         tester = ViewTester(
             view=DatasetView(ds)
         )
-        dic = tester.to_dict({})
+        dic = tester.to_dict(dict(
+            from_row=1,
+            number_of_rows_per_page=50,
+            from_column=1,
+            number_of_columns_per_page=50
+        ))
 
         self.assertEqual(dic["type"], "dataset-view")
         self.assertEqual(
             dic["data"],
-            ds.get_data().iloc[0:49, 0:4].to_dict('list')
+            ds.get_data().iloc[0:50, 0:4].to_dict('list')
         )
 
         self.assertEqual(
             dic["targets"],
-            ds.get_targets().iloc[0:49, :].to_dict('list')
+            ds.get_targets().iloc[0:50, :].to_dict('list')
         )

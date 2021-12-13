@@ -6,24 +6,26 @@
 from typing import List
 
 from gws_core.config.config_types import ConfigParams
-from gws_core.impl.table.view.barplot_view import BarPlotView
+from gws_core.impl.table.view.barplot_view import TableBarPlotView
 from gws_core.impl.table.view.heatmap_view import HeatmapView
-from gws_core.impl.table.view.stacked_barplot_view import StackedBarPlotView
-from gws_core.impl.table.view.venn_diagram_view import VennDiagramView
+from gws_core.impl.table.view.stacked_barplot_view import \
+    TableStackedBarPlotView
+from gws_core.impl.table.view.venn_diagram_view import TableVennDiagramView
 from gws_core.resource import multi_views
 from gws_core.resource.multi_views import MultiViews
+from pandas import DataFrame
 
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view
 from ..file.file import File
 from ..file.file_helper import FileHelper
 from ..table.table import Table
-from ..table.view.boxplot_view import BoxPlotView
-from .view.histogram_view import HistogramView
-from .view.lineplot_2d_view import LinePlot2DView
-from .view.lineplot_3d_view import LinePlot3DView
-from .view.scatterplot_2d_view import ScatterPlot2DView
-from .view.scatterplot_3d_view import ScatterPlot3DView
+from ..table.view.boxplot_view import TableBoxPlotView
+from .view.histogram_view import TableHistogramView
+from .view.lineplot_2d_view import TableLinePlot2DView
+from .view.lineplot_3d_view import TableLinePlot3DView
+from .view.scatterplot_2d_view import TableScatterPlot2DView
+from .view.scatterplot_3d_view import TableScatterPlot3DView
 from .view.table_view import TableView
 
 
@@ -47,68 +49,68 @@ class TableFile(File):
 
         return self._get_table_resource().view_as_table(params)
 
-    @view(view_type=LinePlot2DView, human_name='LinePlot2D', short_description='View columns as 2D-line plots', specs={})
-    def view_as_line_plot_2d(self, params: ConfigParams) -> LinePlot2DView:
+    @view(view_type=TableLinePlot2DView, human_name='LinePlot2D', short_description='View columns as 2D-line plots', specs={})
+    def view_as_line_plot_2d(self, params: ConfigParams) -> TableLinePlot2DView:
         """
         View columns as 2D-line plots
         """
 
         return self._get_table_resource().view_as_line_plot_2d(params)
 
-    # @view(view_type=LinePlot3DView, human_name='LinePlot3D', short_description='View columns as 3D-line plots', specs={})
-    # def view_as_line_plot_3d(self, params: ConfigParams) -> LinePlot3DView:
+    # @view(view_type=TableLinePlot3DView, human_name='LinePlot3D', short_description='View columns as 3D-line plots', specs={})
+    # def view_as_line_plot_3d(self, params: ConfigParams) -> TableLinePlot3DView:
     #     """
     #     View columns as 3D-line plots
     #     """
 
     #     return self._get_table_resource().view_as_line_plot_3d(params)
 
-    # @view(view_type=ScatterPlot3DView, human_name='ScatterPlot3D', short_description='View columns as 3D-scatter plots',
+    # @view(view_type=TableScatterPlot3DView, human_name='ScatterPlot3D', short_description='View columns as 3D-scatter plots',
     #       specs={})
-    # def view_as_scatter_plot_3d(self, params: ConfigParams) -> ScatterPlot3DView:
+    # def view_as_scatter_plot_3d(self, params: ConfigParams) -> TableScatterPlot3DView:
     #     """
     #     View columns as 3D-scatter plots
     #     """
 
     #     return self._get_table_resource().view_as_scatter_plot_3d(params)
 
-    @view(view_type=ScatterPlot2DView, human_name='ScatterPlot2D', short_description='View columns as 2D-scatter plots',
-          specs={})
-    def view_as_scatter_plot_2d(self, params: ConfigParams) -> ScatterPlot2DView:
+    @view(view_type=TableScatterPlot2DView, human_name='ScatterPlot2D',
+          short_description='View columns as 2D-scatter plots', specs={})
+    def view_as_scatter_plot_2d(self, params: ConfigParams) -> TableScatterPlot2DView:
         """
         View one or several columns as 2D-line plots
         """
 
         return self._get_table_resource().view_as_scatter_plot_2d(params)
 
-    @view(view_type=HistogramView, human_name='Histogram', short_description='View columns as 2D-line plots',
+    @view(view_type=TableHistogramView, human_name='Histogram', short_description='View columns as 2D-line plots',
           specs={})
-    def view_as_histogram(self, params: ConfigParams) -> HistogramView:
+    def view_as_histogram(self, params: ConfigParams) -> TableHistogramView:
         """
         View columns as 2D-line plots
         """
 
         return self._get_table_resource().view_as_histogram(params)
 
-    @view(view_type=BoxPlotView, human_name='BoxPlot', short_description='View columns as box plots', specs={})
-    def view_as_box_plot(self, params: ConfigParams) -> BoxPlotView:
+    @view(view_type=TableBoxPlotView, human_name='BoxPlot', short_description='View columns as box plots', specs={})
+    def view_as_box_plot(self, params: ConfigParams) -> TableBoxPlotView:
         """
         View one or several columns as box plots
         """
 
         return self._get_table_resource().view_as_box_plot(params)
 
-    @view(view_type=BarPlotView, human_name='Bar plot', short_description='View columns as 2D-bar plots', specs={})
-    def view_as_bar_plot(self, params: ConfigParams) -> BarPlotView:
+    @view(view_type=TableBarPlotView, human_name='Bar plot', short_description='View columns as 2D-bar plots', specs={})
+    def view_as_bar_plot(self, params: ConfigParams) -> TableBarPlotView:
         """
         View one or several columns as 2D-bar plots
         """
 
         return self._get_table_resource().view_as_bar_plot(params)
 
-    @view(view_type=StackedBarPlotView, human_name='Stacked bar plot',
+    @view(view_type=TableStackedBarPlotView, human_name='Stacked bar plot',
           short_description='View columns as 2D-stacked bar plots', specs={})
-    def view_as_stacked_bar_plot(self, params: ConfigParams) -> BarPlotView:
+    def view_as_stacked_bar_plot(self, params: ConfigParams) -> TableStackedBarPlotView:
         """
         View one or several columns as 2D-stacked bar plots
         """
@@ -123,14 +125,14 @@ class TableFile(File):
 
         return self._get_table_resource().view_as_heatmap(params)
 
-    @view(view_type=VennDiagramView, human_name='Venn', short_description='Venn diagram', specs={})
-    def view_as_venn_diagram(self, params: ConfigParams) -> VennDiagramView:
+    @view(view_type=TableVennDiagramView, human_name='Venn', short_description='Venn diagram', specs={})
+    def view_as_venn_diagram(self, params: ConfigParams) -> TableVennDiagramView:
         """
         View the table as heatmap
         """
 
         table: Table = self._get_table_resource()
-        return VennDiagramView(table.get_data())
+        return TableVennDiagramView(table.get_data())
 
     @view(view_type=MultiViews, human_name='Multi view', short_description='Multi view', specs={})
     def view_as_multi_views(self, params: ConfigParams) -> MultiViews:
