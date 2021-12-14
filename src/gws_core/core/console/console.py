@@ -78,14 +78,6 @@ class Console:
         SystemService.delete_temp_folder()
 
     @classmethod
-    def default_study_dto(cls) -> StudyDto:
-        """
-        Get a default study DTO
-        """
-        return StudyDto(id="3b4a462a-d2e2-4859-9837-9303b4a51889", title="Default study",
-                        description="Study description")
-
-    @classmethod
     def print(cls, text):
         """
         Print test title

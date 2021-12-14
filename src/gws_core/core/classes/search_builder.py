@@ -1,12 +1,12 @@
 
 
-from typing import Any, Callable, List, Literal, Optional, Type
+from typing import Any, Callable, Dict, List, Literal, Optional, Type
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from peewee import (Expression, Field, FloatField, IntegerField, ModelSelect,
-                    Ordering)
+from peewee import (Expression, Field, FloatField, ForeignKeyField,
+                    IntegerField, ModelSelect, Ordering)
 from playhouse.mysql_ext import Match
 from typing_extensions import TypedDict
 
@@ -55,12 +55,19 @@ class SearchBuilder:
     _default_orders: List[Ordering]
 
     def __init__(self, model_type: Type[Model], default_order: List[Ordering] = None) -> None:
+        """Create a search build to make dynamic search
+
+
+        :param model_type: peewee type of the model to search
+        :type model_type: Type[Model]
+        :param default_order: define a default sort for the request, defaults to None
+        :type default_order: List[Ordering], optional
+        """
         self._model_type = model_type
 
         if default_order is None:
-            self._default_orders = []
-        else:
-            self._default_orders = default_order
+            default_orders = []
+        self._default_orders = default_order
 
     def build_search(self, search: SearchDict) -> ModelSelect:
         filter_expression = self.build_search_filter_query(search["filtersCriteria"])

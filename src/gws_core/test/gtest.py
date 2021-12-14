@@ -4,7 +4,10 @@
 # About us: https://gencovery.com
 
 
+from gws_core.study.study import Study
+
 from ..core.console.console import Console
+
 
 class GTest(Console):
     """
@@ -12,4 +15,10 @@ class GTest(Console):
 
     Provides functionalities to initilize unit testing environments
     """
-    pass
+
+    @classmethod
+    def create_default_study(cls) -> Study:
+        """
+        Get a default study DTO
+        """
+        return Study(title="Default study", description="Study description").save()

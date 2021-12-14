@@ -4,7 +4,9 @@ from gws_core.core.classes.search_builder import SearchDict
 from gws_core.experiment.experiment import (Experiment, ExperimentStatus,
                                             ExperimentType)
 from gws_core.experiment.experiment_service import ExperimentService
+from gws_core.study.study import Study
 from gws_core.test.base_test_case import BaseTestCase
+from gws_core.test.gtest import GTest
 
 
 class TestExperimentSearch(BaseTestCase):
@@ -13,9 +15,13 @@ class TestExperimentSearch(BaseTestCase):
         experiment_1 = ExperimentService.create_empty_experiment(
             title="My first experiment title world", description="The description of the first",
             type_=ExperimentType.TRANSFORMER)
+
         experiment_2: Experiment = ExperimentService.create_empty_experiment(
             title="The second one world", description="The second")
         experiment_2.mark_as_success()
+
+        study: Study = GTest.create_default_study()
+        experiment_2.study = study
         experiment_2.is_validated = True
         experiment_2.save()
 
@@ -43,6 +49,10 @@ class TestExperimentSearch(BaseTestCase):
 
         # Test validate search
         search_dict["filtersCriteria"] = [{"key": "is_validated", "operator": "EQ", "value": True}]
+        self.search(search_dict, 1)
+
+        # Test with study
+        search_dict["filtersCriteria"] = [{"key": "study", "operator": "IN", "value": [study.id]}]
         self.search(search_dict, 1)
 
     def search(self, search_dict: SearchDict, expected_nb_of_result: int) -> None:
