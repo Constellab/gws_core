@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Type
+from typing import TYPE_CHECKING, Any, Dict
 
 from ..config.config_types import ConfigParams
 from ..core.exception.exceptions.bad_request_exception import \
@@ -87,8 +87,8 @@ class Resource(Base):
         return (self is o) or ((self.uid is not None) and (self.uid == o.uid))
 
     def get_name(self) -> str:
-        """You can redifine this method to set a name of the resource.
-        When saving the resource the name will ba saved in the tags automatically
+        """You can redefine this method to set a name of the resource.
+        When saving the resource the name will be saved automatically
         This can be useful to distinguish this resource from another one or to search for the resource
 
         :return: [description]

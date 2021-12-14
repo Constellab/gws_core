@@ -24,12 +24,14 @@ from ..impl.file.file_r_field import FileRField
 from ..impl.file.fs_node import FSNode
 from ..impl.file.fs_node_model import FSNodeModel
 from ..impl.file.local_file_store import LocalFileStore
+from ..model.typing import Typing
 from ..model.typing_manager import TypingManager
 from ..model.typing_register_decorator import typing_registrator
 from ..resource.kv_store import KVStore
 from ..resource.r_field import BaseRField
 from ..resource.resource import Resource
 from ..tag.taggable_model import TaggableModel
+from ..task.converter.exporter import get_resource_type_export_meta_data
 
 if TYPE_CHECKING:
     from ..experiment.experiment import Experiment
@@ -355,19 +357,14 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
 
         _json["typing_name"] = self._typing_name
         _json["tags"] = self.get_tags_json()
-        if self.experiment:
-            _json.update({
-                "experiment": {"id": self.experiment.id},
-                "task": {
-                    "id": self.task_model.id,
-                    "typing_name": self.task_model.process_typing_name,
-                },
-            })
 
-        resource: Type[Resource] = self.get_resource_type()
-        _json["resource_type_human_name"] = resource._human_name or resource.__class__.__name__
-        _json["resource_type_short_description"] = resource._short_description
-        _json["resource_human_name"] = _json["resource_type_human_name"]
+        resource_typing: Typing = TypingManager.get_typing_from_name(self.resource_typing_name)
+        _json["resource_type_human_name"] = resource_typing.human_name
+        _json["resource_type_short_description"] = resource_typing.short_description
+        _json["resource_type"] = resource_typing.object_sub_type
+
+        # the resource is downloadable if it's a file or if the export_to_path is defined
+        _json["is_downloadable"] = self.fs_node_model or get_resource_type_export_meta_data(resource_typing.get_type())
 
         if self.fs_node_model:
             _json["fs_node"] = self.fs_node_model.to_json()

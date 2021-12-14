@@ -13,8 +13,8 @@ from ...resource.r_field import RField
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view
-from ...task.exporter import export_to_path
-from ...task.importer import import_from_path
+from ...task.converter.exporter import export_to_path
+from ...task.converter.importer import import_from_path
 from .view.text_view import TextView
 
 

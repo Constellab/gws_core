@@ -114,6 +114,8 @@ from .impl.file.folder import Folder as Folder
 from .impl.file.fs_node import FSNode as FSNode
 from .impl.file.fs_node_model import FSNodeModel as FSNodeModel
 from .impl.file.fs_node_service import FsNodeService as FsNodeService
+from .impl.file.importable_resource_decorator import \
+    importable_resource_decorator as importable_resource_decorator
 from .impl.file.local_file_store import LocalFileStore as LocalFileStore
 # Impl > JSON
 from .impl.json.json_dict import JSONDict as JSONDict
@@ -291,13 +293,14 @@ from .study.study import Study as Study
 # Tag
 from .tag.tag import Tag as Tag
 from .tag.tag import TagHelper as TagHelper
+# Task > Converter
+from .task.converter.exporter import ResourceExporter as ResourceExporter
+from .task.converter.exporter import export_to_path as export_to_path
+from .task.converter.exporter import exporter_decorator as exporter_decorator
+from .task.converter.importer import ResourceImporter as ResourceImporter
+from .task.converter.importer import import_from_path as import_from_path
+from .task.converter.importer import importer_decorator as importer_decorator
 # Task
-from .task.exporter import ResourceExporter as ResourceExporter
-from .task.exporter import export_to_path as export_to_path
-from .task.exporter import exporter_decorator as exporter_decorator
-from .task.importer import ResourceImporter as ResourceImporter
-from .task.importer import import_from_path as import_from_path
-from .task.importer import importer_decorator as importer_decorator
 from .task.plug import FIFO2 as FIFO2
 from .task.plug import Sink as Sink
 from .task.plug import Source as Source

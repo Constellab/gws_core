@@ -39,7 +39,8 @@ def resource_decorator(unique_name: str, human_name: str = "", short_description
             return resource_class
 
         register_typing_class(object_class=resource_class, object_type="RESOURCE", unique_name=unique_name,
-                              human_name=human_name, short_description=short_description, hide=hide)
+                              human_name=human_name, short_description=short_description, hide=hide,
+                              object_sub_type='RESOURCE')
 
         return resource_class
 

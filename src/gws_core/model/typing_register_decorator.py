@@ -32,7 +32,7 @@ def typing_registrator(unique_name: str, object_type: TypingObjectType, hide: bo
 def register_typing_class(
         object_class: Type[Base], object_type: TypingObjectType, unique_name: str,
         human_name: str, short_description, hide: bool = False,
-        object_sub_type: str = None, related_model_typeing_name: str = None) -> None:
+        object_sub_type: str = None, related_model_typing_name: str = None) -> None:
 
     if not human_name:
         human_name = unique_name
@@ -46,7 +46,7 @@ def register_typing_class(
         short_description=short_description,
         hide=hide,
         object_sub_type=object_sub_type,
-        related_model_typing_name=related_model_typeing_name
+        related_model_typing_name=related_model_typing_name
     )
 
     TypingManager.register_typing(typing, object_class)

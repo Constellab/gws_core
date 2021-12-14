@@ -15,8 +15,8 @@ from ...impl.file.file import File
 from ...resource.r_field import DictRField
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
-from ...task.exporter import export_to_path
-from ...task.importer import import_from_path
+from ...task.converter.exporter import export_to_path
+from ...task.converter.importer import import_from_path
 
 
 @resource_decorator("JSONDict")

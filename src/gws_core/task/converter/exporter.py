@@ -1,24 +1,25 @@
 
 
-from typing import Callable, Type, TypedDict, final
+from typing import Callable, Optional, Type, TypedDict, final
 
-from ..brick.brick_service import BrickService
-from ..config.config_types import ConfigParams, ConfigSpecs
-from ..config.param_spec_helper import ParamSpecHelper
-from ..core.utils.decorator_helper import DecoratorHelper
-from ..core.utils.reflector_helper import ReflectorHelper
-from ..core.utils.settings import Settings
-from ..core.utils.utils import Utils
-from ..impl.file.file import File
-from ..impl.file.file_helper import FileHelper
-from ..impl.file.file_store import FileStore
-from ..impl.file.fs_node import FSNode
-from ..impl.file.local_file_store import LocalFileStore
-from ..resource.resource import Resource
-from ..task.task import CheckBeforeTaskResult, Task
-from ..task.task_decorator import decorate_task, task_decorator
-from ..task.task_io import TaskInputs, TaskOutputs
-from ..user.user_group import UserGroup
+
+from ...brick.brick_service import BrickService
+from ...config.config_types import ConfigParams, ConfigSpecs
+from ...config.param_spec_helper import ParamSpecHelper
+from ...core.utils.decorator_helper import DecoratorHelper
+from ...core.utils.reflector_helper import ReflectorHelper
+from ...core.utils.settings import Settings
+from ...core.utils.utils import Utils
+from ...impl.file.file import File
+from ...impl.file.file_helper import FileHelper
+from ...impl.file.file_store import FileStore
+from ...impl.file.fs_node import FSNode
+from ...impl.file.local_file_store import LocalFileStore
+from ...resource.resource import Resource
+from ...task.task import CheckBeforeTaskResult, Task
+from ...task.task_decorator import decorate_task, task_decorator
+from ...task.task_io import TaskInputs, TaskOutputs
+from ...user.user_group import UserGroup
 
 EXPORT_TO_PATH_META_DATA_ATTRIBUTE = '_import_from_path_meta_data'
 
@@ -96,8 +97,7 @@ def exporter_decorator(
             if not Utils.issubclass(parent_class, Task):
                 raise Exception(f"The first parent class of {task_class.__name__} must be a Task")
 
-            meta_data: ExportToPathMetaData = ReflectorHelper.get_and_check_object_metadata(
-                resource_type.export_to_path, EXPORT_TO_PATH_META_DATA_ATTRIBUTE, dict)
+            meta_data: ExportToPathMetaData = get_resource_type_export_meta_data(resource_type)
             if meta_data is None:
                 raise Exception(
                     f"The exporter decorator is link to resource {resource_type.classname()} but the export_to_path method of the resource is not decorated with @export_to_path decorator")
@@ -121,6 +121,19 @@ def exporter_decorator(
 
         return task_class
     return decorator
+
+
+def get_resource_type_export_meta_data(resource_type: Type[Resource]) -> Optional[ExportToPathMetaData]:
+    """ return the export_to_path metadata if the export_to_path of the resource is decorated
+        return None otherwise
+
+    :param resource_type: [description]
+    :type resource_type: Type[Resource]
+    :return: [description]
+    :rtype: bool
+    """
+    return ReflectorHelper.get_and_check_object_metadata(
+        resource_type.export_to_path, EXPORT_TO_PATH_META_DATA_ATTRIBUTE, dict)
 
 
 @task_decorator("ResourceExporter", hide=True)

@@ -2,20 +2,19 @@
 
 from typing import Callable, Type, TypedDict, final
 
-from gws_core.brick.brick_service import BrickService
-
-from ..config.config_types import ConfigParams, ConfigSpecs
-from ..config.param_spec_helper import ParamSpecHelper
-from ..core.utils.decorator_helper import DecoratorHelper
-from ..core.utils.reflector_helper import ReflectorHelper
-from ..core.utils.utils import Utils
-from ..impl.file.file import File
-from ..impl.file.fs_node import FSNode
-from ..resource.resource import Resource
-from ..task.task import CheckBeforeTaskResult, Task
-from ..task.task_decorator import decorate_task, task_decorator
-from ..task.task_io import TaskInputs, TaskOutputs
-from ..user.user_group import UserGroup
+from ...brick.brick_service import BrickService
+from ...config.config_types import ConfigParams, ConfigSpecs
+from ...config.param_spec_helper import ParamSpecHelper
+from ...core.utils.decorator_helper import DecoratorHelper
+from ...core.utils.reflector_helper import ReflectorHelper
+from ...core.utils.utils import Utils
+from ...impl.file.file import File
+from ...impl.file.fs_node import FSNode
+from ...resource.resource import Resource
+from ...task.task import CheckBeforeTaskResult, Task
+from ...task.task_decorator import decorate_task, task_decorator
+from ...task.task_io import TaskInputs, TaskOutputs
+from ...user.user_group import UserGroup
 
 IMPORT_FROM_PATH_META_DATA_ATTRIBUTE = '_import_from_path_meta_data'
 

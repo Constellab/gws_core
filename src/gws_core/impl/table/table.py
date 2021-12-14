@@ -18,8 +18,8 @@ from ...impl.file.file import File
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view
-from ...task.exporter import export_to_path
-from ...task.importer import import_from_path
+from ...task.converter.exporter import export_to_path
+from ...task.converter.importer import import_from_path
 from .data_frame_r_field import DataFrameRField
 from .view.barplot_view import TableBarPlotView
 from .view.boxplot_view import TableBoxPlotView

@@ -4,8 +4,8 @@
 # About us: https://gencovery.com
 
 from ...config.param_spec import BoolParam, StrParam
-from ...task.exporter import ResourceExporter, exporter_decorator
-from ...task.importer import ResourceImporter, importer_decorator
+from ...task.converter.exporter import ResourceExporter, exporter_decorator
+from ...task.converter.importer import ResourceImporter, importer_decorator
 from ...task.task_decorator import task_decorator
 from .json_dict import JSONDict
 

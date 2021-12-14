@@ -8,8 +8,8 @@ from typing import List
 from ....config.config_types import ConfigParams
 from ....impl.file.file import File
 from ....resource.resource_decorator import resource_decorator
-from ....task.exporter import exporter_decorator
-from ....task.importer import import_from_path, importer_decorator
+from ....task.converter.exporter import exporter_decorator
+from ....task.converter.importer import import_from_path, importer_decorator
 from ..table import Table
 from ..table_tasks import TableExporter, TableImporter
 

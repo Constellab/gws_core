@@ -5,31 +5,26 @@
 
 from typing import List
 
-from gws_core.config.config_types import ConfigParams
-from gws_core.impl.table.view.barplot_view import TableBarPlotView
-from gws_core.impl.table.view.heatmap_view import HeatmapView
-from gws_core.impl.table.view.stacked_barplot_view import \
-    TableStackedBarPlotView
-from gws_core.impl.table.view.venn_diagram_view import TableVennDiagramView
-from gws_core.resource import multi_views
-from gws_core.resource.multi_views import MultiViews
-from pandas import DataFrame
-
-from ...resource.resource_decorator import resource_decorator
+from ...config.config_types import ConfigParams
+from ...resource.multi_views import MultiViews
 from ...resource.view_decorator import view
 from ..file.file import File
 from ..file.file_helper import FileHelper
-from ..table.table import Table
-from ..table.view.boxplot_view import TableBoxPlotView
+from ..file.importable_resource_decorator import importable_resource_decorator
+from .table import Table
+from .table_tasks import TableImporter
+from .view.barplot_view import TableBarPlotView
+from .view.boxplot_view import TableBoxPlotView
+from .view.heatmap_view import HeatmapView
 from .view.histogram_view import TableHistogramView
 from .view.lineplot_2d_view import TableLinePlot2DView
-from .view.lineplot_3d_view import TableLinePlot3DView
 from .view.scatterplot_2d_view import TableScatterPlot2DView
-from .view.scatterplot_3d_view import TableScatterPlot3DView
+from .view.stacked_barplot_view import TableStackedBarPlotView
 from .view.table_view import TableView
+from .view.venn_diagram_view import TableVennDiagramView
 
 
-@resource_decorator("TableFile")
+@importable_resource_decorator("TableFile", resource_importer=TableImporter)
 class TableFile(File):
     """Specific file to .csv and .tsv files. This file contains the sames view as the Table resource.
 

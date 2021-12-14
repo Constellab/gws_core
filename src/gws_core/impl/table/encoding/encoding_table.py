@@ -13,8 +13,8 @@ from ....impl.file.file import File
 from ....resource.r_field import StrRField
 from ....resource.resource_decorator import resource_decorator
 from ....resource.view_decorator import view
-from ....task.exporter import export_to_path, exporter_decorator
-from ....task.importer import import_from_path, importer_decorator
+from ....task.converter.exporter import export_to_path, exporter_decorator
+from ....task.converter.importer import import_from_path, importer_decorator
 from ..table import Table
 from ..table_tasks import TableExporter, TableImporter
 

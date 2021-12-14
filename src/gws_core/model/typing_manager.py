@@ -113,7 +113,7 @@ class TypingManager:
 
         # If the model type has changed, log a message and update the DB
         if typing_db.model_type != typing.model_type or typing_db.related_model_typing_name != typing.related_model_typing_name or \
-                typing_db.object_sub_type != typing_db.object_sub_type or str(typing_db.data) != str(typing.data):
+                typing_db.object_sub_type != typing.object_sub_type or str(typing_db.data) != str(typing.data):
             Logger.info(f"""Typing {typing.model_name} in brick {typing.brick} has changed.""")
             typing_db.update_model_type(typing.model_type)
             typing_db.related_model_typing_name = typing.related_model_typing_name

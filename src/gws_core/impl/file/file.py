@@ -5,7 +5,7 @@
 
 import json
 import os
-from typing import Any, AnyStr, List
+from typing import Any, AnyStr, List, Type
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
@@ -32,6 +32,10 @@ class File(FSNode):
 
     # Override this attribute to define the list of file extension the class supports
     supported_extensions: List[str] = []
+
+    # Provided at the Class level automatically by the @importable_resource_decorator
+    # //!\\ Do not modify theses values
+    _resource_importer: Type
 
     @property
     def size(self):

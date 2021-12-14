@@ -2,19 +2,23 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
+from __future__ import annotations
 
-from typing import Any, Dict, List, Type
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Type
 
 from peewee import ModelSelect
 
-from ..impl.file.file import File
 from ..model.typing import Typing, TypingObjectType
 
-# ####################################################################
-#
-# ResourceType class
-#
-# ####################################################################
+if TYPE_CHECKING:
+    from ..impl.file.file import File
+
+
+# Sub type of resource type
+# RESOURCE --> normal resource
+# IMPORTABLE_RESOURCE --> resource decorated with importable_resource_decorator, linked to a normal resource
+#                     --> the related_model_typing_name is the linked resource
+ResourceSubType = Literal["RESOURCE", "IMPORTABLE_RESOURCE"]
 
 
 class ResourceTyping(Typing):
@@ -59,6 +63,8 @@ class FileTyping(ResourceTyping):
 
     @classmethod
     def get_typings(cls) -> List['ResourceTyping']:
+        from ..impl.file.file import File
+
         return cls.get_children_typings(cls._object_type, File)
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:

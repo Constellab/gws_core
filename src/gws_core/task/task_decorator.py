@@ -87,7 +87,7 @@ def decorate_task(
 
     register_typing_class(object_class=task_class, object_type="TASK", unique_name=unique_name,
                           object_sub_type=task_type, human_name=human_name, short_description=short_description,
-                          hide=hide, related_model_typeing_name=related_resource_typing_name)
+                          hide=hide, related_model_typing_name=related_resource_typing_name)
 
     # set the allowed user for the task
     task_class._allowed_user = allowed_user
