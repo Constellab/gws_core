@@ -58,8 +58,7 @@ class TransformerService():
             index += 1
 
         # add sink and sink connector
-        sink = protocol.add_process(Sink, 'sink')
-        protocol.add_connector(last_process >> 'resource', sink << 'resource')
+        protocol.add_sink('sink', last_process >> 'resource')
 
         # add the experiment to queue to run it
         await experiment.run()

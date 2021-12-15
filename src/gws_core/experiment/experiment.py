@@ -46,6 +46,8 @@ class ExperimentType(Enum):
     EXPERIMENT = "EXPERIMENT"
     # specific experiment generated form a transformer task
     TRANSFORMER = "TRANSFORMER"
+    # specific experiment generated form a importer task
+    IMPORTER = "IMPORTER"
 
 
 class ExperimentErrorInfo(TypedDict):

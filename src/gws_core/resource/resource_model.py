@@ -364,7 +364,8 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         _json["resource_type"] = resource_typing.object_sub_type
 
         # the resource is downloadable if it's a file or if the export_to_path is defined
-        _json["is_downloadable"] = self.fs_node_model or get_resource_type_export_meta_data(resource_typing.get_type())
+        _json["is_downloadable"] = self.fs_node_model is not None or get_resource_type_export_meta_data(
+            resource_typing.get_type()) is not None
 
         if self.fs_node_model:
             _json["fs_node"] = self.fs_node_model.to_json()

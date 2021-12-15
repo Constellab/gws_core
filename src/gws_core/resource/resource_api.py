@@ -6,8 +6,10 @@
 from typing import Any, Dict, List, Optional
 
 from fastapi import Depends
+from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.classes.search_builder import SearchDict
 from gws_core.resource.resource_model import ResourceModel
+from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.transformer.transformer import TransformerDict
 from gws_core.task.transformer.transformer_service import TransformerService
 from typing_extensions import TypedDict
@@ -97,14 +99,33 @@ async def advanced_search(search_dict: SearchDict,
 
     return ResourceService.search(search_dict, page, number_of_items_per_page).to_json()
 
+############################# IMPORTER ###########################
 
-@core_app.post(
-    "/resource/{resource_model_id}/transform", tags=["Resource"],
-    summary="Transform the resource")
+
+@core_app.post("/resource/{resource_model_id}/transform", tags=["Resource"],
+               summary="Transform the resource")
 async def create_transformer_experiment(transformers: List[TransformerDict], resource_model_id: str,
                                         _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
 
     resource_model: ResourceModel = await TransformerService.create_and_run_transformer_experiment(transformers, resource_model_id)
+    return resource_model.to_json()
+
+############################# IMPORTER ###########################
+
+
+@core_app.get("/resource-type/{resource_typing_name}/import/specs", tags=["Resource"],
+              summary="Get specs to import the resource")
+async def get_import_specs(resource_typing_name: str,
+                           _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+
+    return ConverterService.get_import_specs(resource_typing_name)
+
+
+@core_app.post("/resource/{resource_model_id}/import", tags=["Resource"], summary="Import the resource")
+async def import_resource(config: dict, resource_model_id: str,
+                          _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+
+    resource_model: ResourceModel = await ConverterService.call_importer(resource_model_id, config)
     return resource_model.to_json()
 
 ############################# RESOURCE TYPE ###########################

@@ -8,6 +8,7 @@ from typing import List, Optional, Tuple, Type
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from gws_core.task.plug import Sink, Source
 
 from ..config.config_types import ConfigParamsDict, ParamValue
 from ..io.port import InPort, OutPort
@@ -169,6 +170,37 @@ class IProtocol(IProcess):
         """
         raise BadRequestException(
             "The configuration of protocol is not available yet. Please configure the sub task directly")
+
+    ############################################### Specific processes ####################################
+
+    def add_source(self, instance_name: str, resource_model_id: str, in_port: InPort) -> ITask:
+        """Add a Source task to the protocol and connected it to the in_port
+        :param instance_name: instance name of the task
+        :type instance_name: str
+        :param resource_model_id: the id of the resource model the source will provided as input
+        :type resource_model_id: str
+        :param in_port: the in port that should receive the resource
+        :type in_port: InPort
+        :return: [description]
+        :rtype: ITask
+        """
+        source: IProcess = self.add_process(Source, instance_name, {'resource_id': resource_model_id})
+        self.add_connector(source >> 'resource', in_port)
+        return source
+
+    def add_sink(self, instance_name: str, out_port: OutPort) -> ITask:
+        """Add a sink task to the protocol that receive the out_port resource
+
+        :param instance_name: instance name of the task
+        :type instance_name: str
+        :param out_port: out_port connect to connect to the sink
+        :type out_port: OutPort
+        :return: [description]
+        :rtype: ITask
+        """
+        sink = self.add_process(Sink, instance_name)
+        self.add_connector(out_port, sink << 'resource')
+        return sink
 
     ############################################### CLASS METHODS ####################################
 
