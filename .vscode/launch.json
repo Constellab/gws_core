@@ -6,8 +6,8 @@
     "configurations": [
         // configuration to start the gws
         {
-            "args": ["--runserver", "main"],
-            "name": "Run GWS",
+            "args": ["--runserver"],
+            "name": "Starts GWS server",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/manage.py",
@@ -15,8 +15,8 @@
         },
         // configuration to start the gws
         {
-            "args": ["--runserver", "--log_level=DEBUG",  "main"],
-            "name": "Run GWS DEBUG log",
+            "args": ["--runserver", "--log_level=DEBUG"],
+            "name": "Starts GWS server - DEBUG log",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/manage.py",
