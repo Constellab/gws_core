@@ -1,22 +1,13 @@
-import os
 
-from gws_core import (BaseTestCase, ConfigParams, File, Settings, Table,
-                      TableLinePlot3DView, ViewTester)
+from gws_core import BaseTestCase, TableLinePlot3DView, ViewTester
+from tests.gws_core_test_helper import GwsCoreTestHelper
 
 
 class TestTableLinePlot3DView(BaseTestCase):
 
     def test_lineplot_2d_view(self,):
-        settings = Settings.retrieve()
-        testdata_dir = settings.get_variable("gws_core:testdata_dir")
-        file_path = os.path.join(testdata_dir, "iris.csv")
-        table = Table.import_from_path(
-            File(path=file_path),
-            ConfigParams({
-                "delimiter": ",",
-                "header": 0
-            })
-        )
+        table = await GwsCoreTestHelper.get_iris_table()
+
         tester = ViewTester(
             view=TableLinePlot3DView(table)
         )

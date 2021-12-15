@@ -1,24 +1,12 @@
-import os
 
-from gws_core import (BaseTestCase, ConfigParams, File, Settings, Table,
-                      TableVennDiagramView, ViewTester)
-from gws_core.config.config_types import ConfigParams
-from gws_core.impl.file.file import File
+from gws_core import BaseTestCase, TableVennDiagramView, ViewTester
+from tests.gws_core_test_helper import GwsCoreTestHelper
 
 
 class TestVennDiagrammView(BaseTestCase):
 
-    def test_barplot_2d_view(self,):
-        settings = Settings.retrieve()
-        testdata_dir = settings.get_variable("gws_core:testdata_dir")
-        file_path = os.path.join(testdata_dir, "venn_data.csv")
-        table = Table.import_from_path(
-            File(path=file_path),
-            ConfigParams({
-                "delimiter": "\t",
-                "header": 0
-            })
-        )
+    async def test_venn_diagram_view(self,):
+        table = await GwsCoreTestHelper.get_venn_data_table()
         tester = ViewTester(
             view=TableVennDiagramView(table)
         )

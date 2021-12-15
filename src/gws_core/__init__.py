@@ -298,7 +298,6 @@ from .task.converter.exporter import ResourceExporter as ResourceExporter
 from .task.converter.exporter import export_to_path as export_to_path
 from .task.converter.exporter import exporter_decorator as exporter_decorator
 from .task.converter.importer import ResourceImporter as ResourceImporter
-from .task.converter.importer import import_from_path as import_from_path
 from .task.converter.importer import importer_decorator as importer_decorator
 # Task
 from .task.plug import FIFO2 as FIFO2

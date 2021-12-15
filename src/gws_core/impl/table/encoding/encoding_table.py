@@ -3,18 +3,18 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import pandas
-from pandas import DataFrame
+from typing import Type
 
-from ....config.config_types import ConfigParams
+import pandas
+
+from ....config.config_types import ConfigParams, ConfigSpecs
 from ....config.param_spec import StrParam
 from ....core.exception.exceptions import BadRequestException
 from ....impl.file.file import File
 from ....resource.r_field import StrRField
 from ....resource.resource_decorator import resource_decorator
-from ....resource.view_decorator import view
-from ....task.converter.exporter import export_to_path, exporter_decorator
-from ....task.converter.importer import import_from_path, importer_decorator
+from ....task.converter.exporter import exporter_decorator
+from ....task.converter.importer import importer_decorator
 from ..table import Table
 from ..table_tasks import TableExporter, TableImporter
 
@@ -76,33 +76,31 @@ class EncodingTable(Table):
     def get_encoded_column_data(self, rtype='list') -> ('DataFrame', list):
         return self.get_column(self.encoded_column, rtype)
 
-    # -- I --
 
-    @classmethod
-    @import_from_path(
-        specs={**TableImporter.config_specs,
-               'original_column': StrParam(default_value=ORIGINAL_COLUMN, short_description="The original column name"),
-               'original_row': StrParam(default_value=ORIGINAL_ROW, short_description="The original row name"),
-               'encoded_column': StrParam(default_value=ENCODED_COLUMN, short_description="The encoded column name"),
-               'encoded_row': StrParam(default_value=ENCODED_ROW, short_description="The encoded row name"),
-               })
-    def import_from_path(cls, file: File, params: ConfigParams) -> 'EncodingTable':
-        """
-        Import from a repository
+# ####################################################################
+#
+# Importer class
+#
+# ####################################################################
 
-        :param file: The file to import
-        :type file: `File`
-        :param params: The config params
-        :type params: `ConfigParams`
-        :returns: the parsed EncodingTable data
-        :rtype: EncodingTable
-        """
 
-        csv_table = super().import_from_path(file, params)
-        original_column = params.get_value("original_column", cls.ORIGINAL_COLUMN)
-        original_row = params.get_value("original_row", cls.ORIGINAL_ROW)
-        encoded_column = params.get_value("encoded_column", cls.ENCODED_COLUMN)
-        encoded_row = params.get_value("encoded_row", cls.ENCODED_ROW)
+@importer_decorator("EncodingTableImporter", resource_type=EncodingTable)
+class EncodingTableImporter(TableImporter):
+    input_specs = {'file': File}
+
+    config_specs: ConfigSpecs = {
+        **TableImporter.config_specs,
+        'original_column': StrParam(default_value=ORIGINAL_COLUMN, short_description="The original column name"),
+        'original_row': StrParam(default_value=ORIGINAL_ROW, short_description="The original row name"),
+        'encoded_column': StrParam(default_value=ENCODED_COLUMN, short_description="The encoded column name"),
+        'encoded_row': StrParam(default_value=ENCODED_ROW, short_description="The encoded row name"), }
+
+    async def import_from_path(self, file: File, params: ConfigParams, destination_type: Type[EncodingTable]) -> EncodingTable:
+        csv_table: EncodingTable = await super().import_from_path(file, params, destination_type)
+        original_column = params.get_value("original_column", destination_type.ORIGINAL_COLUMN)
+        original_row = params.get_value("original_row", destination_type.ORIGINAL_ROW)
+        encoded_column = params.get_value("encoded_column", destination_type.ENCODED_COLUMN)
+        encoded_row = params.get_value("encoded_row", destination_type.ENCODED_ROW)
 
         if not csv_table.column_exists(original_column) and not csv_table.column_exists(original_row):
             raise BadRequestException(
@@ -129,16 +127,6 @@ class EncodingTable(Table):
 
         return csv_table
 
-# ####################################################################
-#
-# Importer class
-#
-# ####################################################################
-
-
-@importer_decorator("EncodingTableImporter", resource_type=EncodingTable)
-class EncodingTableImporter(TableImporter):
-    pass
 
 # ####################################################################
 #

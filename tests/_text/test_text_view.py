@@ -1,15 +1,14 @@
-import os
 
-from gws_core import BaseTestCase, ConfigParams, File, Settings, Text, TextView
+from gws_core import BaseTestCase, ConfigParams, TextView
+from gws_core.impl.text.text_tasks import TextImporter
+from gws_core.task.converter.importer_runner import ImporterRunner
+from tests.gws_core_test_helper import GwsCoreTestHelper
 
 
 class TestTextView(BaseTestCase):
 
-    def test_text_view(self,):
-        settings = Settings.retrieve()
-        testdata_dir = settings.get_variable("gws_core:testdata_dir")
-        file_path = os.path.join(testdata_dir, "iris.csv")
-        table = Text.import_from_path(File(path=file_path), ConfigParams())
+    async def test_text_view(self,):
+        table = await ImporterRunner(TextImporter, GwsCoreTestHelper.get_iris_file()).run()
         _view = TextView(table)
 
         self.assertEqual(

@@ -288,14 +288,6 @@ class TaskModel(ProcessModel):
                                           unique_code=GWSException.INVALID_RESOURCE_R_FIELD.name,
                                           detail_args={'port_name': port_name})
 
-    def is_protocol(self) -> bool:
-        return False
-
-    def save_full(self) -> 'TaskModel':
-        self.config.save()
-        self.progress_bar.save()
-        return self.save()
-
     def data_to_json(self, deep: bool = False, **kwargs) -> dict:
         """
         Returns a JSON string or dictionnary representation of the model.

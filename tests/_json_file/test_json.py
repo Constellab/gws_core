@@ -6,7 +6,10 @@
 import json
 import os
 
-from gws_core import BaseTestCase, GTest, JSONDict, Settings, File, ConfigParams
+from gws_core import (BaseTestCase, ConfigParams, File, GTest, JSONDict,
+                      Settings)
+from gws_core.impl.json.json_tasks import JSONImporter
+from gws_core.task.converter.importer_runner import ImporterRunner
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -14,10 +17,10 @@ testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 class TestJson(BaseTestCase):
 
-    def test_json_data(self):
+    async def test_json_data(self):
         GTest.print("JSONDict")
         file_path = os.path.join(testdata_dir, "mini_travel_graph.json")
-        json_dict: JSONDict = JSONDict.import_from_path(File(path=file_path), params=ConfigParams())
+        json_dict: JSONDict = await ImporterRunner(JSONImporter, file_path).run()
         _json = {}
         with open(file_path) as fp:
             _json = json.load(fp)

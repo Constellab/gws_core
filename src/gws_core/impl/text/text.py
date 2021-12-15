@@ -14,7 +14,6 @@ from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view
 from ...task.converter.exporter import export_to_path
-from ...task.converter.importer import import_from_path
 from .view.text_view import TextView
 
 
@@ -61,28 +60,6 @@ class Text(Resource):
             raise BadRequestException("Cannot export the text") from err
 
         return File(file_path)
-
-    # -- I --
-
-    @classmethod
-    @import_from_path(specs={'encoding': StrParam(default_value='utf-8', short_description="Text encoding")})
-    def import_from_path(cls, file: File, params: ConfigParams) -> 'Text':
-        """
-        Import from a repository
-
-        :param file_path: The source file path
-        :type file_path: File
-        :returns: the parsed data
-        :rtype any
-        """
-
-        try:
-            with open(file.path, 'r+t', encoding=params.get_value('encoding', 'utf-8')) as fp:
-                text = fp.read()
-        except Exception as err:
-            raise BadRequestException("Cannot import the text") from err
-
-        return cls(data=text)
 
     @view(view_type=TextView, human_name='Text', short_description='View as text',
           specs={})

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Dict
 
 from ..config.config_types import ConfigParams
 from ..core.exception.exceptions.bad_request_exception import \
@@ -52,20 +52,6 @@ class Resource(Base):
         pass
 
     # -- G --
-
-    # -- I --
-
-    @classmethod
-    def import_from_path(cls, fs_node: FSNode, params: ConfigParams) -> Any:
-        """
-        Import a resource from a repository. Must be overloaded by the child class.
-
-        :param file_path: The source file path
-        :type file_path: str
-        :returns: the parsed data
-        :rtype any
-        """
-        pass
 
     @view(view_type=JSONView, human_name="View as JSON", short_description="View the complete resource as json", default_view=True)
     def view_as_json(self, params: ConfigParams) -> JSONView:

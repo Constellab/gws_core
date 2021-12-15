@@ -1,67 +1,18 @@
 
 
-from typing import Callable, Type, TypedDict, final
+from abc import abstractmethod
+from typing import Callable, Type, final
 
 from ...brick.brick_service import BrickService
 from ...config.config_types import ConfigParams, ConfigSpecs
-from ...config.param_spec_helper import ParamSpecHelper
-from ...core.utils.decorator_helper import DecoratorHelper
-from ...core.utils.reflector_helper import ReflectorHelper
 from ...core.utils.utils import Utils
-from ...impl.file.file import File
 from ...impl.file.fs_node import FSNode
+from ...io.io_spec import IOSpecsHelper
 from ...resource.resource import Resource
-from ...task.task import CheckBeforeTaskResult, Task
+from ...task.task import Task
 from ...task.task_decorator import decorate_task, task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
 from ...user.user_group import UserGroup
-
-IMPORT_FROM_PATH_META_DATA_ATTRIBUTE = '_import_from_path_meta_data'
-
-
-class ImportFromPathMetaData(TypedDict):
-    specs: ConfigSpecs
-    fs_node_type: Type[FSNode]
-    inherit_specs: bool
-
-
-def import_from_path(specs: ConfigSpecs = None, fs_node_type: Type[FSNode] = File,
-                     inherit_specs: bool = True) -> Callable:
-    """ Decorator to place on the import_from_path method of a Resource. This works with @importer_decorator and it allow to
-        generate a Task which takes a file as Input and return the resource. The task will call the import_from_path with the config
-
-    :param specs: [description]
-    :type specs: ConfigSpecs
-    :param fs_node_type: Type of the node (file of folder) required to import the path
-    :type fs_node_type: ConfigSpecs
-    :param inherit_specs: If true the specs are merge with the parent spec. If false parent specs is ignored.
-    :type inherit_specs: bool
-    :return: [description]
-    :rtype: Callable
-    """
-    if specs is None:
-        specs = {}
-
-    def decorator(func: Callable) -> Callable:
-
-        try:
-            ParamSpecHelper.check_config_specs(specs)
-            DecoratorHelper.check_method_decorator(func)
-
-            # Check that the annotated method is called import_from_path
-            if func.__name__ != 'import_from_path':
-                raise Exception("The import_from_path decorator must be placed on a method called import_from_path")
-
-            # Create the meta data object
-            meta_data: ImportFromPathMetaData = {"specs": specs,
-                                                 "fs_node_type": fs_node_type, "inherit_specs": inherit_specs}
-            # Store the meta data object into the view_meta_data_attribute of the function
-            ReflectorHelper.set_object_has_metadata(func, IMPORT_FROM_PATH_META_DATA_ATTRIBUTE, meta_data)
-        except Exception as err:
-            BrickService.log_brick_error(func, str(err))
-        return func
-
-    return decorator
 
 
 def importer_decorator(
@@ -87,27 +38,17 @@ def importer_decorator(
                 raise Exception(
                     f"The importer_decorator is used on the class: {task_class.__name__} and this class is not a sub class of ResourceImporter")
 
-            parent_class: Type[Task] = task_class.__base__
-            if not Utils.issubclass(parent_class, Task):
-                raise Exception(f"The first parent class of {task_class.__name__} must be a Task")
+            IOSpecsHelper.check_input_specs(task_class.input_specs)
 
-            meta_data: ImportFromPathMetaData = ReflectorHelper.get_and_check_object_metadata(
-                resource_type.import_from_path, IMPORT_FROM_PATH_META_DATA_ATTRIBUTE, dict)
-            if meta_data is None:
+            if len(task_class.input_specs) != 1 or 'file' not in task_class.input_specs \
+                    or not Utils.issubclass(task_class.input_specs['file'], FSNode):
                 raise Exception(
-                    f"The importer decorator is link to resource {resource_type.classname()} but the import_from_path method of the resource is not decorated with @import_from_path decorator")
+                    f"The ResourceImporter {task_class.__name__} have invalid input specs. It must have only one input called 'file' of type file (no special types)")
 
-            # set the task config using the config in import_from_path method
-            specs: ConfigSpecs = meta_data['specs']
-            if meta_data['inherit_specs']:
-                task_class.config_specs = {**parent_class.config_specs, **specs}
-            else:
-                task_class.config_specs = specs
-
-            task_class.input_specs = {'file': meta_data['fs_node_type']}
+            # force the output specs
             task_class.output_specs = {'resource': resource_type}
 
-            # set resource type in task
+            # set resource type in ResourceImporter
             task_class._resource_type = resource_type
 
             # register the task and set the human_name and short_description dynamically based on resource
@@ -124,23 +65,39 @@ def importer_decorator(
 @task_decorator("ResourceImporter", hide=True)
 class ResourceImporter(Task):
     """Generic task that take a file as input and return a resource
+
+    Override the import_from_path method to import the file to the destination resource
     """
+
+    # /!\ The input specs can be override, BUT the RessourceImporter task must
+    # have 1 input called file that extend FsNode (like File or Folder)
     input_specs = {'file': FSNode}
+
+    # The output spec can't be overrided, it will be automatically define with the correct resource type
     output_specs = {"resource": Resource}
+
+    # Override the config_spec to define custom spec for the importer
+    config_specs: ConfigSpecs = {}
 
     # Do not modify, this is provided by the importer_decorator
     _resource_type: Type[Resource]
 
     @final
-    def check_before_run(self, params: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
-        return super().check_before_run(params, inputs)
-
-    @final
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         fs_node: FSNode = inputs.get('file')
-        resource: Resource = self._resource_type.import_from_path(fs_node, params)
+        resource: Resource = await self.import_from_path(fs_node, params, self.output_specs['resource'])
         return {'resource': resource}
 
-    @final
-    async def run_after_task(self) -> None:
-        pass
+    @abstractmethod
+    async def import_from_path(self, fs_node: FSNode, params: ConfigParams, destination_type: Type[Resource]) -> Resource:
+        """Override the import form path method to create the destination resource from the file
+
+        :param fs_node: file resource to import
+        :type fs_node: FSNode
+        :param params: config params
+        :type params: ConfigParams
+        :param destination_type: resource type of the result. Useful to make generic importers
+        :type destination_type: Type[Resource]
+        :return: resource of type destination_type
+        :rtype: Resource
+        """

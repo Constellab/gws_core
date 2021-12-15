@@ -4,27 +4,14 @@
 # About us: https://gencovery.com
 
 import math
-import os
 
-from gws_core import (AnnotatedTable, BaseTestCase, BoolParam, ConfigParams,
-                      Experiment, ExperimentService, File, GTest, JSONDict,
-                      Resource, Settings, Shell, StrParam, Table, TableGrouper,
-                      TableImporter, TaskInputs, TaskModel, TaskOutputs,
-                      TaskRunner, task_decorator)
-from pandas import Series
-
-settings = Settings.retrieve()
-testdata_dir = settings.get_variable("gws_core:testdata_dir")
+from gws_core import BaseTestCase, TableGrouper, TaskRunner
+from tests.gws_core_test_helper import GwsCoreTestHelper
 
 
 class TestTableGrouper(BaseTestCase):
     async def test_table_grouper(self):
-        file_path = os.path.join(testdata_dir, "annotated_table.csv")
-        table = AnnotatedTable.import_from_path(File(path=file_path), params=ConfigParams({
-            "index_columns": [0],
-            "delimiter": ",",
-        }))
-
+        table = await GwsCoreTestHelper.get_annotated_table()
         print(table)
 
         # filter columns

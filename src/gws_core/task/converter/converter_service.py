@@ -19,6 +19,8 @@ from ...task.plug import Sink, Source
 
 class ConverterService:
 
+    ################################################ IMPRTER ################################################
+
     @classmethod
     def get_import_specs(cls, resource_typing_name: str) -> dict:
         resource_type: Type[File] = TypingManager.get_type_from_name(resource_typing_name)
@@ -35,15 +37,15 @@ class ConverterService:
 
         importer_type: Type[ResourceImporter] = cls._get_and_check_resource_type_importer(resource_type)
 
-        # Create an experiment containing 1 source, X transformers task , 1 sink
+        # Create an experiment containing 1 source, 1 importer , 1 sink
         experiment: IExperiment = IExperiment(
             None, title=f"{resource_type._human_name} importer", type_=ExperimentType.TRANSFORMER)
         protocol: IProtocol = experiment.get_protocol()
 
-        # create the source and save last process to create connectors later
+        # create the source
         source: IProcess = protocol.add_process(Source, 'source', {'resource_id': resource_model_id})
 
-        # Add the importer
+        # Add the importer and the connector
         importer: IProcess = protocol.add_process(importer_type, 'importer', config)
         protocol.add_connector(source >> 'resource', importer << 'file')
 
@@ -65,3 +67,5 @@ class ConverterService:
         if resource_type._resource_importer is None:
             raise BadRequestException(
                 "The resource must be an importable resource (using the importable_resource_decorator)")
+
+    ################################################ EXPORTER ################################################

@@ -3,12 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import os
 
-from gws_core import (BaseTestCase, ConfigParams, EncodingTable, File, GTest,
-                      Settings, Table, TableDecoder, TableEncoder,
-                      TableExporter, TableFilter, TableImporter, TaskModel,
+from gws_core import (BaseTestCase, Settings, TableDecoder, TableEncoder,
                       TaskRunner)
+from tests.gws_core_test_helper import GwsCoreTestHelper
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -18,20 +16,11 @@ class TestTableEncoding(BaseTestCase):
 
     async def test_table_encoding_decoding(self):
         # importer
-        file_path = os.path.join(testdata_dir, "data.csv")
-        table = Table.import_from_path(File(path=file_path), params=ConfigParams({
-            "index_columns": [0],
-            "header": 0,
-        }))
+        table = await GwsCoreTestHelper.get_data_table()
+
         print(table)
 
-        file_path = os.path.join(testdata_dir, "data_encoding.csv")
-        table_en = EncodingTable.import_from_path(File(path=file_path), params=ConfigParams({
-            "original_column": "ocn",
-            "original_row": "orn",
-            "encoded_column": "ecn",
-            "encoded_row": "ern",
-        }))
+        table_en = await GwsCoreTestHelper.get_data_encoding_table()
 
         # encoding
         tester = TaskRunner(

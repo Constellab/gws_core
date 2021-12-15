@@ -3,33 +3,17 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import os
 
-import pandas
-from gws_core import (BaseTestCase, ConfigParams, File, GTest, MetadataTable,
-                      Settings, Table, TableAnnotator, TableDecoder,
-                      TableExporter, TableFilter, TableImporter, TaskModel,
-                      TaskRunner)
-
-settings = Settings.retrieve()
-testdata_dir = settings.get_variable("gws_core:testdata_dir")
+from gws_core import BaseTestCase, TableAnnotator, TaskRunner
+from tests.gws_core_test_helper import GwsCoreTestHelper
 
 
 class TestTableAnnotator(BaseTestCase):
 
     async def test_table_column_annotator(self):
         # importer
-        file_path = os.path.join(testdata_dir, "data.csv")
-        table = Table.import_from_path(File(path=file_path), params=ConfigParams({
-            "index_columns": [0],
-            "header": 0,
-        }))
-
-        file_path = os.path.join(testdata_dir, "metadata.csv")
-        metatable = MetadataTable.import_from_path(File(path=file_path), params=ConfigParams({
-            "index_columns": [0],
-            "header": 0,
-        }))
+        table = await GwsCoreTestHelper.get_data_table()
+        metatable = await GwsCoreTestHelper.get_metadata_table()
         print(table)
 
         # annotation
@@ -55,18 +39,8 @@ class TestTableAnnotator(BaseTestCase):
 
     async def test_table_row_annotator(self):
         # importer
-        file_path = os.path.join(testdata_dir, "data.csv")
-        table = Table.import_from_path(File(path=file_path), params=ConfigParams({
-            "index_columns": [0],
-            "header": 0,
-        }))
-        table = Table(data=table.get_data().T)
-
-        file_path = os.path.join(testdata_dir, "metadata.csv")
-        metatable = MetadataTable.import_from_path(File(path=file_path), params=ConfigParams({
-            "index_columns": [0],
-            "header": 0,
-        }))
+        table = await GwsCoreTestHelper.get_data_table()
+        metatable = await GwsCoreTestHelper.get_metadata_table()
         print(table)
 
         # annotation

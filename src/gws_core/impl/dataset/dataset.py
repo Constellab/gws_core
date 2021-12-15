@@ -5,21 +5,22 @@
 
 import os
 from pathlib import Path
-from typing import List, Union
+from typing import List, Type, Union
 
 import numpy as np
 import pandas
+from gws_core.impl.file.fs_node import FSNode
 from pandas import DataFrame
 from pandas.api.types import is_string_dtype
 
-from ...config.config_types import ConfigParams
+from ...config.config_types import ConfigParams, ConfigSpecs
 from ...config.param_spec import BoolParam, IntParam, ListParam, StrParam
 from ...core.exception.exceptions import BadRequestException
 from ...impl.file.file import File
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view
 from ...task.converter.exporter import export_to_path, exporter_decorator
-from ...task.converter.importer import import_from_path, importer_decorator
+from ...task.converter.importer import importer_decorator
 from ..table.data_frame_r_field import DataFrameRField
 from ..table.table import Table
 from ..table.table_tasks import TableExporter, TableImporter
@@ -145,58 +146,6 @@ class Dataset(Table):
             targets = self._targets.head(n)
 
         return features, targets
-
-    # -- I --
-
-    @classmethod
-    @import_from_path(specs={
-        'file_format': StrParam(default_value=".csv", short_description="File format"),
-        'delimiter': StrParam(default_value='\t', short_description="Delimiter character. Only for parsing CSV files"),
-        'header': IntParam(optional=True, default_value=0, short_description="Row number to use as the column names. Use -1 to prevent parsing column names. Only for parsing CSV files"),
-        'index_columns': ListParam(optional=True, short_description="Columns to use as the row names. Use None to prevent parsing row names. Only for parsing CSV files"),
-        'targets': ListParam(default_value='[]', short_description="List of integers or strings (eg. ['name', 6, '7'])"),
-    })
-    def import_from_path(cls, file: File, params: ConfigParams) -> 'Dataset':
-        """
-        Import from a repository
-
-        :param file_path: The source file path
-        :type file_path: file path
-        :returns: the parsed data
-        :rtype any
-        """
-
-        delimiter = params.get_value("delimiter", '\t')
-        header = params.get_value("header", 0)
-        index_col = params.get_value("index_columns")
-        #file_format = params.get_value("file_format")
-        targets = params.get_value("targets", [])
-        _, file_extension = os.path.splitext(file.path)
-
-        if file_extension in [".xls", ".xlsx"]:
-            df = pandas.read_excel(file.path)
-        elif file_extension in [".csv", ".tsv", ".txt", ".tab"]:
-            df = pandas.read_table(
-                file.path,
-                sep=delimiter,
-                header=(None if header < 0 else header),
-                index_col=index_col
-            )
-        else:
-            raise BadRequestException(
-                "Cannot detect the file type using file extension. Valid file extensions are [.xls, .xlsx, .csv, .tsv, .txt, .tab].")
-
-        if not targets:
-            ds = cls(features=df)
-        else:
-            try:
-                t_df = df.loc[:, targets]
-            except Exception as err:
-                raise BadRequestException(
-                    f"The targets {targets} are no found in column names. Please check targets names or set parameter 'header' to read column names.") from err
-            df.drop(columns=targets, inplace=True)
-            ds = cls(features=df, targets=t_df)
-        return ds
 
     @property
     def instance_names(self) -> list:
@@ -510,7 +459,48 @@ class Dataset(Table):
 
 @importer_decorator(unique_name="DatasetImporter", resource_type=Dataset)
 class DatasetImporter(TableImporter):
-    pass
+    input_specs = {'file': File}
+
+    config_specs: ConfigSpecs = {
+        'file_format': StrParam(default_value=".csv", short_description="File format"),
+        'delimiter': StrParam(default_value='\t', short_description="Delimiter character. Only for parsing CSV files"),
+        'header': IntParam(optional=True, default_value=0, short_description="Row number to use as the column names. Use -1 to prevent parsing column names. Only for parsing CSV files"),
+        'index_columns': ListParam(optional=True, short_description="Columns to use as the row names. Use None to prevent parsing row names. Only for parsing CSV files"),
+        'targets': ListParam(default_value='[]', short_description="List of integers or strings (eg. ['name', 6, '7'])"),
+    }
+
+    async def import_from_path(self, file: File, params: ConfigParams, destination_type: Type[Dataset]) -> Dataset:
+        delimiter = params.get_value("delimiter", '\t')
+        header = params.get_value("header", 0)
+        index_col = params.get_value("index_columns")
+        #file_format = params.get_value("file_format")
+        targets = params.get_value("targets", [])
+        _, file_extension = os.path.splitext(file.path)
+
+        if file_extension in [".xls", ".xlsx"]:
+            df = pandas.read_excel(file.path)
+        elif file_extension in [".csv", ".tsv", ".txt", ".tab"]:
+            df = pandas.read_table(
+                file.path,
+                sep=delimiter,
+                header=(None if header < 0 else header),
+                index_col=index_col
+            )
+        else:
+            raise BadRequestException(
+                "Cannot detect the file type using file extension. Valid file extensions are [.xls, .xlsx, .csv, .tsv, .txt, .tab].")
+
+        if not targets:
+            ds = destination_type(features=df)
+        else:
+            try:
+                t_df = df.loc[:, targets]
+            except Exception as err:
+                raise BadRequestException(
+                    f"The targets {targets} are no found in column names. Please check targets names or set parameter 'header' to read column names.") from err
+            df.drop(columns=targets, inplace=True)
+            ds = destination_type(features=df, targets=t_df)
+        return ds
 
 
 @exporter_decorator("DatasetExporter", resource_type=Dataset)

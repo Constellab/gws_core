@@ -3,13 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List
+from typing import List, Type
 
 from ....config.config_types import ConfigParams
 from ....impl.file.file import File
 from ....resource.resource_decorator import resource_decorator
 from ....task.converter.exporter import exporter_decorator
-from ....task.converter.importer import import_from_path, importer_decorator
+from ....task.converter.importer import importer_decorator
 from ..table import Table
 from ..table_tasks import TableExporter, TableImporter
 
@@ -66,26 +66,6 @@ class MetadataTable(Table):
     def get_sample_data(self) -> list:
         return self._data.index.to_list()
 
-    # -- I --
-
-    @classmethod
-    @import_from_path(specs=TableImporter.config_specs)
-    def import_from_path(cls, file: File, params: ConfigParams) -> 'MetadataTable':
-        """
-        Import from a repository
-
-        :param file: The file to import
-        :type file: `File`
-        :param params: The config params
-        :type params: `ConfigParams`
-        :returns: the parsed MetadataTable data
-        :rtype: MetadataTable
-        """
-
-        params["index_colums"] = params.get_value("index_colums", [0])  # use the first colum by default
-        csv_table = super().import_from_path(file, params)
-        return csv_table
-
     # -- S --
 
     def select_by_row_indexes(self, indexes: List[int]) -> 'MetadataTable':
@@ -121,9 +101,15 @@ class MetadataTable(Table):
 # ####################################################################
 
 
-@ importer_decorator("MetadataTableImporter", resource_type=MetadataTable)
+@importer_decorator("MetadataTableImporter", resource_type=MetadataTable)
 class MetadataTableImporter(TableImporter):
-    pass
+    input_specs = {'file': File}
+
+    async def import_from_path(self, file: File, params: ConfigParams, destination_type: Type[MetadataTable]) -> MetadataTable:
+        params["index_colums"] = params.get_value("index_colums", [0])  # use the first colum by default
+        csv_table = await super().import_from_path(file, params, destination_type)
+        return csv_table
+
 
 # ####################################################################
 #
@@ -132,6 +118,6 @@ class MetadataTableImporter(TableImporter):
 # ####################################################################
 
 
-@ exporter_decorator("MetadataTableExporter", resource_type=MetadataTable)
+@exporter_decorator("MetadataTableExporter", resource_type=MetadataTable)
 class MetadataTableExporter(TableExporter):
     pass

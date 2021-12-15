@@ -151,4 +151,4 @@ class TableFile(File):
         # guess the delimiter
         max_nb_chars = 10000
         delimiter = FileHelper.detect_csv_delimiter(self.read(size=max_nb_chars))
-        return Table.import_from_path(self, ConfigParams(delimiter=delimiter, header=0))
+        # return Table.import_from_path(self, ConfigParams(delimiter=delimiter, header=0))

@@ -9,6 +9,7 @@ from gws_core import BaseTestCase, File, LocalFileStore
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_store import FileStore
 from gws_core.impl.file.folder import Folder
+from tests.gws_core_test_helper import GwsCoreTestHelper
 
 
 class TestLocalFileStore(BaseTestCase):
@@ -16,7 +17,7 @@ class TestLocalFileStore(BaseTestCase):
     def test_file(self):
         file_store: FileStore = LocalFileStore()
 
-        file_path = self.get_test_data_path("mini_travel_graph.json")
+        file_path = GwsCoreTestHelper.get_test_data_path("mini_travel_graph.json")
 
         # Add a file from a path
         file: File = file_store.add_file_from_path(file_path)
@@ -61,7 +62,7 @@ class TestLocalFileStore(BaseTestCase):
         dangerous_file_name = "\"Az02'{([$*!%?-_.txt"
         safe_file_name = "Az02-_.txt"
         file_store: FileStore = LocalFileStore()
-        file_path = self.get_test_data_path("mini_travel_graph.json")
+        file_path = GwsCoreTestHelper.get_test_data_path("mini_travel_graph.json")
         # Add a file from a path
         file: File = file_store.add_file_from_path(file_path, dangerous_file_name)
 

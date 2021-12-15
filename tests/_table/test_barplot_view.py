@@ -1,24 +1,24 @@
 import os
 
-from gws_core import (TableBarPlotView, BaseTestCase, ConfigParams, File, Settings,
-                      Table, ViewTester)
+from gws_core import (BaseTestCase, ConfigParams, File, Settings, Table,
+                      TableBarPlotView, ViewTester)
 from gws_core.config.config_types import ConfigParams
 from gws_core.impl.file.file import File
+from gws_core.impl.table.table_tasks import TableImporter
+from gws_core.task.converter.importer_runner import ImporterRunner
 
 
 class TestTableBarPlotView(BaseTestCase):
 
-    def test_barplot_2d_view(self,):
+    async def test_barplot_2d_view(self,):
         settings = Settings.retrieve()
         testdata_dir = settings.get_variable("gws_core:testdata_dir")
         file_path = os.path.join(testdata_dir, "iris.csv")
-        table = Table.import_from_path(
-            File(path=file_path),
-            ConfigParams({
-                "delimiter": ",",
-                "header": 0
-            })
-        )
+        table = await ImporterRunner(TableImporter, file_path, {
+            "delimiter": ",",
+            "header": 0
+        }).run()
+
         tester = ViewTester(
             view=TableBarPlotView(table)
         )

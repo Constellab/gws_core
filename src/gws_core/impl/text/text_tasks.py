@@ -1,8 +1,13 @@
 
+from typing import Type
+
+from ...config.config_types import ConfigParams, ConfigSpecs
 from ...config.param_spec import StrParam
+from ...core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 from ...task.converter.exporter import ResourceExporter, exporter_decorator
 from ...task.converter.importer import ResourceImporter, importer_decorator
-from ...task.task_decorator import task_decorator
+from ..file.file import File
 from .text import Text
 
 # ####################################################################
@@ -14,7 +19,19 @@ from .text import Text
 
 @importer_decorator(unique_name="TextImporter", resource_type=Text)
 class TextImporter(ResourceImporter):
-    pass
+    input_specs = {'file': File}
+
+    config_specs: ConfigSpecs = {'encoding': StrParam(default_value='utf-8', short_description="Text encoding")}
+
+    async def import_from_path(self, file: File, params: ConfigParams, destination_type: Type[Text]) -> Text:
+        try:
+            with open(file.path, 'r+t', encoding=params.get_value('encoding', 'utf-8')) as fp:
+                text = fp.read()
+        except Exception as err:
+            raise BadRequestException("Cannot import the text") from err
+
+        return destination_type(data=text)
+
 
 # ####################################################################
 #

@@ -1,22 +1,13 @@
-import os
 
-from gws_core import (BaseTestCase, ConfigParams, File, Settings, Table,
-                      TableView, ViewTester)
+from gws_core import BaseTestCase, TableView, ViewTester
+from tests.gws_core_test_helper import GwsCoreTestHelper
 
 
 class TestTableView(BaseTestCase):
 
-    def test_table_view(self,):
-        settings = Settings.retrieve()
-        testdata_dir = settings.get_variable("gws_core:testdata_dir")
-        file_path = os.path.join(testdata_dir, "iris.csv")
-        table = Table.import_from_path(
-            File(path=file_path),
-            ConfigParams({
-                "delimiter": ",",
-                "header": 0
-            })
-        )
+    async def test_table_view(self,):
+        table = await GwsCoreTestHelper.get_iris_table()
+
         print(table)
 
         vw = TableView(table)

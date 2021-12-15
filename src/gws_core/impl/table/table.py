@@ -8,27 +8,23 @@ from pathlib import Path
 from typing import List, Union
 
 import numpy as np
-import pandas
 from pandas import DataFrame
 
 from ...config.config_types import ConfigParams
-from ...config.param_spec import BoolParam, IntParam, ListParam, StrParam
+from ...config.param_spec import BoolParam, StrParam
 from ...core.exception.exceptions import BadRequestException
 from ...impl.file.file import File
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view
 from ...task.converter.exporter import export_to_path
-from ...task.converter.importer import import_from_path
 from .data_frame_r_field import DataFrameRField
 from .view.barplot_view import TableBarPlotView
 from .view.boxplot_view import TableBoxPlotView
 from .view.heatmap_view import HeatmapView
 from .view.histogram_view import TableHistogramView
 from .view.lineplot_2d_view import TableLinePlot2DView
-from .view.lineplot_3d_view import TableLinePlot3DView
 from .view.scatterplot_2d_view import TableScatterPlot2DView
-from .view.scatterplot_3d_view import TableScatterPlot3DView
 from .view.stacked_barplot_view import TableStackedBarPlotView
 from .view.table_view import TableView
 
@@ -186,45 +182,6 @@ class Table(Resource):
     @property
     def is_row_vector(self) -> bool:
         return self.nb_rows == 1
-
-    @classmethod
-    @import_from_path(specs={
-        'file_format': StrParam(default_value=DEFAULT_FILE_FORMAT, short_description="File format"),
-        'delimiter': StrParam(allowed_values=ALLOWED_DELIMITER, default_value=DEFAULT_DELIMITER, short_description="Delimiter character. Only for parsing CSV files"),
-        'header': IntParam(default_value=0, short_description="Row number to use as the column names. Use None to prevent parsing column names. Only for CSV files"),
-        'index_columns': ListParam(optional=True, short_description="Columns to use as the row names. Use None to prevent parsing row names. Only for CSV files"),
-    })
-    def import_from_path(cls, file: File, params: ConfigParams) -> 'Table':
-        """
-        Import from a repository
-
-        :param file_path: The source file path
-        :type file_path: File
-        :returns: the parsed data
-        :rtype any
-        """
-
-        file_format: str = params.get_value('file_format', ".csv")
-        sep = params.get_value('delimiter', "tab")
-        if sep == "tab":
-            sep = "\t"
-        elif sep == "space":
-            sep = " "
-
-        if file.extension in [".xls", ".xlsx"] or file_format in [".xls", ".xlsx"]:
-            df = pandas.read_excel(file.path)
-        elif file.extension in [".csv", ".tsv", ".txt", ".tab"] or file_format in [".csv", ".tsv", ".txt", ".tab"]:
-            df = pandas.read_table(
-                file.path,
-                sep=sep,
-                header=params.get_value('header', 0),
-                index_col=params.get_value('index_columns')
-            )
-        else:
-            raise BadRequestException(
-                "Cannot detect the file type using file extension. Valid file extensions are [.xls, .xlsx, .csv, .tsv, .txt, .tab].")
-
-        return cls(data=df)
 
     # -- N --
 

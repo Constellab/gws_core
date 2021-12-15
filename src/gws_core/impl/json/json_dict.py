@@ -5,7 +5,6 @@
 
 import json
 import os
-from typing import Any
 
 from ...config.config_types import ConfigParams
 from ...config.param_spec import BoolParam, StrParam
@@ -16,7 +15,6 @@ from ...resource.r_field import DictRField
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...task.converter.exporter import export_to_path
-from ...task.converter.importer import import_from_path
 
 
 @resource_decorator("JSONDict")
@@ -60,24 +58,6 @@ class JSONDict(Resource):
 
     def get(self, key, default=None):
         return self.data.get(key, default)
-
-    @classmethod
-    @import_from_path(specs={'file_format': StrParam(default_value=".json", short_description="File format")})
-    def import_from_path(cls, file: File, params: ConfigParams) -> Any:
-        """
-        Import a give from repository
-
-        :param file_path: The source file path
-        :type file_path: File
-        :returns: the parsed data
-        :rtype any
-        """
-
-        with open(file.path, "r", encoding="utf-8") as f:
-            json_data = cls()
-            json_data.data = json.load(f)
-
-        return json_data
 
     def __setitem__(self, key, val):
         self.data[key] = val

@@ -1,22 +1,13 @@
-import os
 
-from gws_core import (BaseTestCase, ConfigParams, File, Settings, Table,
-                      TableScatterPlot3DView, ViewTester)
+from gws_core import BaseTestCase, TableScatterPlot3DView, ViewTester
+from tests.gws_core_test_helper import GwsCoreTestHelper
 
 
 class TestTableScatterPlot2DView(BaseTestCase):
 
-    def test_scatterplot_2d_view(self,):
-        settings = Settings.retrieve()
-        testdata_dir = settings.get_variable("gws_core:testdata_dir")
-        file_path = os.path.join(testdata_dir, "iris.csv")
-        table = Table.import_from_path(
-            File(path=file_path),
-            ConfigParams({
-                "delimiter": ",",
-                "header": 0
-            })
-        )
+    async def test_scatterplot_2d_view(self,):
+        table = await GwsCoreTestHelper.get_iris_table()
+
         tester = ViewTester(
             view=TableScatterPlot3DView(table)
         )

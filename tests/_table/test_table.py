@@ -9,6 +9,8 @@ import pandas
 from gws_core import (BaseTestCase, ConfigParams, File, GTest, Settings, Table,
                       TableExporter, TableFilter, TableImporter, TaskModel,
                       TaskRunner)
+from gws_core.task.converter.importer_runner import ImporterRunner
+from tests.gws_core_test_helper import GwsCoreTestHelper
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -52,11 +54,11 @@ class TestTable(BaseTestCase):
 
         print(t)
 
-    def test_table_import(self):
+    async def test_table_import(self):
         GTest.print("Table load")
 
-        file_path = os.path.join(testdata_dir, "data.csv")
-        table = Table.import_from_path(File(path=file_path), params=ConfigParams())
+        file_path = GwsCoreTestHelper.get_data_file_path()
+        table = await ImporterRunner(TableImporter, file_path).run()
         df = pandas.read_table(file_path)
         print(df)
 
@@ -66,7 +68,7 @@ class TestTable(BaseTestCase):
 
     async def test_importer_exporter(self):
         # importer
-        file_path = os.path.join(testdata_dir, "data.csv")
+        file_path = GwsCoreTestHelper.get_data_file_path()
         tester = TaskRunner(
             params={}, inputs={"file": File(path=file_path)}, task_type=TableImporter
         )
