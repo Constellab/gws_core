@@ -12,7 +12,6 @@ from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
 from ..core.model.base_model_service import BaseModelService
 from ..core.utils.settings import Settings
-from ..experiment.experiment_service import ExperimentService
 from ..experiment.queue_service import QueueService
 from ..impl.file.file_helper import FileHelper
 from ..model.model_service import ModelService
