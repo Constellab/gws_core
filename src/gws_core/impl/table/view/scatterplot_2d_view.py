@@ -71,13 +71,8 @@ class TableScatterPlot2DView(BaseTableView):
         y_column_names = params.get_value("y_column_names", [])
         x_label = params.get_value("x_label", x_column_name)
         y_label = params.get_value("y_label", "")
-
-        if x_column_name:
-            x_data = data[x_column_name].values.tolist()
-            x_tick_labels = None
-        else:
-            x_data = list(range(0, data.shape[0]))
-            x_tick_labels = params.get_value("x_tick_labels", data.index.to_list())
+        x_data = list(range(0, data.shape[0]))
+        x_tick_labels = params.get_value("x_tick_labels", data.index.to_list())
 
         # replace NaN by 'NaN'
         data: DataFrame = data.fillna('')

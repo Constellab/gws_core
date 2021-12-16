@@ -115,8 +115,10 @@ class TableBoxPlotView(BaseTableView):
             iqr = q3 - q1
             lower_whisker = q1 - (1.5 * iqr)
             upper_whisker = q3 + (1.5 * iqr)
+            x = list(range(0, len(column_names))),
             view.add_series(
-                x=column_names, median=median,
+                x=x,
+                median=median,
                 q1=q1.tolist(), q3=q3.tolist(), min=ymin, max=ymax,
                 lower_whisker=lower_whisker.tolist(), upper_whisker=upper_whisker.tolist()
             )

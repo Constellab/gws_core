@@ -60,8 +60,7 @@ class BoxPlotView(View):
             min: List[float],
             max: List[float],
             lower_whisker: List[float],
-            upper_whisker: List[float],
-            names: List[float] = None):
+            upper_whisker: List[float]):
 
         if not self._series:
             self._series = []

@@ -105,9 +105,11 @@ class TableBarPlotView(BaseTableView):
         view.y_label = y_label
         view.x_tick_labels = x_tick_labels
         for column_name in data.columns:
+            y = data[column_name].values.tolist()
+            x = list(range(0, len(y)))
             view.add_series(
-                x=data.index.to_list(),
-                y=data[column_name].values.tolist(),
+                x=x,
+                y=y,
                 name=column_name
             )
 

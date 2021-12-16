@@ -83,13 +83,14 @@ class SystemService:
         FileHelper.delete_dir(settings.get_root_temp_dir())
 
     @classmethod
-    def reset_dev_envionment(cls) -> None:
+    def reset_dev_envionment(cls, check_user=True) -> None:
         settings: Settings = Settings.retrieve()
 
         if not settings.is_dev:
             raise UnauthorizedException('The reset method can only be called in dev environment')
 
-        user: User = CurrentUserService.get_and_check_current_user()
+        if check_user:
+            user: User = CurrentUserService.get_and_check_current_user()
 
         # Stop all running experiment
         ExperimentRunService.stop_all_running_experiment()
@@ -102,7 +103,8 @@ class SystemService:
         cls.init()
         cls.init_queue_and_monitor()
 
-        UserService.create_user_if_not_exists(user.to_user_data_dict())
+        if check_user:
+            UserService.create_user_if_not_exists(user.to_user_data_dict())
 
     @classmethod
     def kill_process(cls) -> None:

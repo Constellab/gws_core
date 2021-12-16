@@ -16,11 +16,12 @@ from .core.db.db_manager import DbManager
 from .core.exception.exceptions import BadRequestException
 from .core.utils.logger import Logger
 from .core.utils.settings import Settings
+from .lab.system_service import SystemService
 
 
 def _run(ctx, test="",
          cli=False, cli_test=False, runserver=False, runmode="dev", notebook=False,
-         ip="0.0.0.0", port="3000", log_level: str = None, show_sql=False):
+         ip="0.0.0.0", port="3000", log_level: str = None, show_sql=False, reset_env=False):
 
     is_test = bool(test or cli_test)
     is_prod = (runmode == "prod")
@@ -51,6 +52,11 @@ def _run(ctx, test="",
             raise BadRequestException("Cannot run tests while the Application is running.")
 
     DbManager.init_all_db(test=is_test)
+
+    if reset_env:
+        SystemService.reset_dev_envionment(check_user=False)
+        Logger.info("Dev env reset successfully")
+        return
 
     if runserver:
         # start app
@@ -105,7 +111,8 @@ def _run(ctx, test="",
 @click.option('--port', default="3000", help='Server port', show_default=True)
 @click.option('--log_level', default="INFO", help='Level for the logs', show_default=True)
 @click.option('--show_sql', is_flag=True, help='Log sql queries in the console')
-def run(ctx, test, cli, cli_test, runserver, runmode, notebook, ip, port, log_level, show_sql):
+@click.option('--reset_env', is_flag=True, help='Reset environment')
+def run(ctx, test, cli, cli_test, runserver, runmode, notebook, ip, port, log_level, show_sql, reset_env):
     _run(
         ctx,
         test=test,
@@ -117,5 +124,6 @@ def run(ctx, test, cli, cli_test, runserver, runmode, notebook, ip, port, log_le
         ip=ip,
         port=port,
         log_level=log_level,
-        show_sql=show_sql
+        show_sql=show_sql,
+        reset_env=reset_env
     )
