@@ -25,7 +25,6 @@ from .system_status import SystemStatus
 
 
 class SystemService:
-
     @classmethod
     def init(cls):
         """
