@@ -6,7 +6,7 @@ from tests.gws_core_test_helper import GwsCoreTestHelper
 class TestTableView(BaseTestCase):
 
     async def test_table_view(self,):
-        table = await GwsCoreTestHelper.get_iris_table()
+        table = GwsCoreTestHelper.get_iris_table()
 
         print(table)
 

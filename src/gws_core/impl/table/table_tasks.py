@@ -6,6 +6,7 @@
 from typing import Type
 
 import pandas
+from gws_core.impl.table.table_helper import TableHelper
 
 from ...config.config_types import ConfigParams, ConfigSpecs
 from ...config.param_spec import IntParam, ListParam, StrParam
@@ -41,6 +42,8 @@ class TableImporter(ResourceImporter):
             sep = "\t"
         elif sep == "space":
             sep = " "
+        elif sep == "auto":
+            sep = TableHelper.detect_csv_delimiter(file.read(size=10000))
 
         if file.extension in [".xls", ".xlsx"] or file_format in [".xls", ".xlsx"]:
             df = pandas.read_excel(file.path)

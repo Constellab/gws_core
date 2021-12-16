@@ -28,8 +28,8 @@ from .view.scatterplot_2d_view import TableScatterPlot2DView
 from .view.stacked_barplot_view import TableStackedBarPlotView
 from .view.table_view import TableView
 
-ALLOWED_DELIMITER = ["tab", "space", ",", ";"]
-DEFAULT_DELIMITER = "tab"
+ALLOWED_DELIMITER = ["auto", "tab", "space", ",", ";"]
+DEFAULT_DELIMITER = "auto"
 DEFAULT_FILE_FORMAT = ".csv"
 
 

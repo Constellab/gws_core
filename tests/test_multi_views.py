@@ -9,7 +9,7 @@ from tests.gws_core_test_helper import GwsCoreTestHelper
 class TestMultiViews(BaseTestCase):
 
     def test_multi_view(self):
-        table = await GwsCoreTestHelper.get_iris_table()
+        table = GwsCoreTestHelper.get_iris_table()
         view = TableScatterPlot2DView(data=table)
 
         text_view = TextView('Hello test super view')

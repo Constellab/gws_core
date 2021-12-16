@@ -1,17 +1,21 @@
 
 
+import asyncio
 from abc import abstractmethod
-from typing import Callable, Type, final
+from concurrent.futures.thread import ThreadPoolExecutor
+from typing import Callable, Type, Union, final
 
 from ...brick.brick_service import BrickService
-from ...config.config_types import ConfigParams, ConfigSpecs
+from ...config.config_types import ConfigParams, ConfigParamsDict, ConfigSpecs
 from ...core.utils.utils import Utils
+from ...impl.file.file import File
 from ...impl.file.fs_node import FSNode
 from ...io.io_spec import IOSpecsHelper
 from ...resource.resource import Resource
 from ...task.task import Task
 from ...task.task_decorator import decorate_task, task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
+from ...task.task_runner import TaskRunner
 from ...user.user_group import UserGroup
 
 
@@ -101,3 +105,29 @@ class ResourceImporter(Task):
         :return: resource of type destination_type
         :rtype: Resource
         """
+
+    @final
+    @classmethod
+    def call(cls, fs_node: Union[FSNode, str],
+             params: ConfigParamsDict = None) -> Resource:
+        """Call the import_from_path method manually
+
+          :param fs_node: provide a FsNode or a string. If a string, it create a File with the string as path
+          :type fs_node: Union[FSNode, str]
+          :param params: params for the import_from_path_method
+          :type params: ConfigParamsDict
+        """
+        fs_node_obj: FSNode
+        if isinstance(fs_node, FSNode):
+            fs_node_obj = fs_node
+        else:
+            fs_node_obj = File(fs_node)
+
+        task_runner: TaskRunner = TaskRunner(cls, params=params, inputs={'file': fs_node_obj})
+
+        # call the run async method in a sync function
+        with ThreadPoolExecutor() as pool:
+            outputs = pool.submit(asyncio.run, task_runner.run()).result()
+            result = outputs['resource']
+            pool.submit(asyncio.run, task_runner.run_after_task())
+            return result

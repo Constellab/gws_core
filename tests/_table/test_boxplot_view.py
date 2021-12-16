@@ -6,7 +6,7 @@ from tests.gws_core_test_helper import GwsCoreTestHelper
 class TestTableBoxPlotView(BaseTestCase):
 
     def test_boxplot_view(self,):
-        table = await GwsCoreTestHelper.get_iris_table()
+        table = GwsCoreTestHelper.get_iris_table()
         tester = ViewTester(
             view=TableBoxPlotView(table)
         )

@@ -1,8 +1,11 @@
 
 
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from typing import Type, Union
 
 from gws_core.config.config_types import ConfigParamsDict
+from gws_core.core.utils.logger import Logger
 from gws_core.impl.file.file import File
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.resource.resource import Resource
@@ -24,6 +27,8 @@ class ImporterRunner():
           :type fs_node: Union[FSNode, str]
          """
 
+        Logger.error('Deprecated, use the ResourceImporter.call_importer() instead')
+
         fs_node_obj: FSNode
         if isinstance(fs_node, FSNode):
             fs_node_obj = fs_node
@@ -32,6 +37,8 @@ class ImporterRunner():
 
         self._task_runner = TaskRunner(importer_type, params=params, inputs={'file': fs_node_obj})
 
-    async def run(self) -> Resource:
-        outputs = await self._task_runner.run()
-        return outputs['resource']
+    def run(self) -> Resource:
+        # call the run async method in a sync function
+        with ThreadPoolExecutor() as e:
+            outputs = e.submit(asyncio.run, self._task_runner.run()).result()
+            return outputs['resource']

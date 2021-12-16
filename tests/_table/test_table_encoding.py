@@ -16,11 +16,11 @@ class TestTableEncoding(BaseTestCase):
 
     async def test_table_encoding_decoding(self):
         # importer
-        table = await GwsCoreTestHelper.get_data_table()
+        table = GwsCoreTestHelper.get_data_table()
 
         print(table)
 
-        table_en = await GwsCoreTestHelper.get_data_encoding_table()
+        table_en = GwsCoreTestHelper.get_data_encoding_table()
 
         # encoding
         tester = TaskRunner(

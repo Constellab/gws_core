@@ -11,7 +11,7 @@ from tests.gws_core_test_helper import GwsCoreTestHelper
 
 class TestTableGrouper(BaseTestCase):
     async def test_table_grouper(self):
-        table = await GwsCoreTestHelper.get_annotated_table()
+        table = GwsCoreTestHelper.get_annotated_table()
         print(table)
 
         # filter columns

@@ -5,8 +5,8 @@ from tests.gws_core_test_helper import GwsCoreTestHelper
 
 class TestVennDiagrammView(BaseTestCase):
 
-    async def test_venn_diagram_view(self,):
-        table = await GwsCoreTestHelper.get_venn_data_table()
+    def test_venn_diagram_view(self,):
+        table = GwsCoreTestHelper.get_venn_data_table()
         tester = ViewTester(
             view=TableVennDiagramView(table)
         )

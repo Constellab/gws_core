@@ -1,15 +1,15 @@
 
 from gws_core import BaseTestCase, ConfigParams, TextView
+from gws_core.impl.text.text import Text
 from gws_core.impl.text.text_tasks import TextImporter
-from gws_core.task.converter.importer_runner import ImporterRunner
 from tests.gws_core_test_helper import GwsCoreTestHelper
 
 
 class TestTextView(BaseTestCase):
 
     async def test_text_view(self,):
-        table = await ImporterRunner(TextImporter, GwsCoreTestHelper.get_iris_file()).run()
-        _view = TextView(table)
+        text: Text = TextImporter.call(GwsCoreTestHelper.get_iris_file())
+        _view = TextView(text)
 
         self.assertEqual(
             len(_view._slice(from_char_index=10, to_char_index=400)),

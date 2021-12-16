@@ -39,7 +39,16 @@
             "request": "launch",
             "program": "${workspaceFolder}/manage.py",
             "console": "integratedTerminal",
-        }
+        },
+        // reset the dev env
+        {
+          "args": ["--runserver", "--reset_env"],
+          "name": "Reset dev env",
+          "type": "python",
+          "request": "launch",
+          "program": "${workspaceFolder}/manage.py ",
+          "console": "integratedTerminal",
+      }
     ],
 
     "inputs": [

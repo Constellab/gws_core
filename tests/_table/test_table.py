@@ -6,10 +6,8 @@
 import os
 
 import pandas
-from gws_core import (BaseTestCase, ConfigParams, File, GTest, Settings, Table,
-                      TableExporter, TableFilter, TableImporter, TaskModel,
-                      TaskRunner)
-from gws_core.task.converter.importer_runner import ImporterRunner
+from gws_core import (BaseTestCase, File, GTest, Settings, Table,
+                      TableExporter, TableImporter, TaskRunner)
 from tests.gws_core_test_helper import GwsCoreTestHelper
 
 settings = Settings.retrieve()
@@ -54,11 +52,11 @@ class TestTable(BaseTestCase):
 
         print(t)
 
-    async def test_table_import(self):
+    def test_table_import(self):
         GTest.print("Table load")
 
         file_path = GwsCoreTestHelper.get_data_file_path()
-        table = await ImporterRunner(TableImporter, file_path).run()
+        table = TableImporter.call(file_path)
         df = pandas.read_table(file_path)
         print(df)
 

@@ -6,7 +6,7 @@ from tests.gws_core_test_helper import GwsCoreTestHelper
 class TestTableStackedBarPlotView(BaseTestCase):
 
     def test_stacked_barplot_2d_view(self,):
-        table = await GwsCoreTestHelper.get_iris_table()
+        table = GwsCoreTestHelper.get_iris_table()
 
         tester = ViewTester(
             view=TableStackedBarPlotView(table)

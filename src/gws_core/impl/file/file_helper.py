@@ -15,7 +15,6 @@ class FileHelper():
     """
 
     LARGE_SIZE_IN_BYTES = 20*1e6   # 20 MB
-    CSV_DELIMITERS: List[str] = ['\t', ',', ';']
 
     @classmethod
     def get_dir(cls, path: PathType) -> Path:
@@ -117,27 +116,6 @@ class FileHelper():
         if isinstance(path, Path):
             return path
         return Path(path)
-
-    @classmethod
-    def detect_csv_delimiter(cls, csv_str: str) -> str:
-        """Method to guess the delimiter of a csv string based on delimiter count
-        """
-        if csv_str is None or len(csv_str) < 10:
-            return None
-
-        max_delimiter: str = None
-        max_delimiter_count: int = 0
-
-        # use a sub csv to improve speed
-        sub_csv = csv_str[0:10000]
-
-        for delimiter in cls.CSV_DELIMITERS:
-            count: int = sub_csv.count(delimiter)
-            if(count > max_delimiter_count):
-                max_delimiter = delimiter
-                max_delimiter_count = count
-
-        return max_delimiter
 
     @classmethod
     def delete_dir(cls, dir_path: PathType, ignore_errors: bool = True) -> None:

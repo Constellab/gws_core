@@ -9,7 +9,7 @@ from tests.gws_core_test_helper import GwsCoreTestHelper
 class TestTableHeatmapView(BaseTestCase):
 
     def test_heatmap_view(self,):
-        table = await GwsCoreTestHelper.get_iris_table()
+        table = GwsCoreTestHelper.get_iris_table()
         tester = ViewTester(
             view=HeatmapView(table)
         )

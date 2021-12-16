@@ -12,8 +12,8 @@ class TestTableAnnotator(BaseTestCase):
 
     async def test_table_column_annotator(self):
         # importer
-        table = await GwsCoreTestHelper.get_data_table()
-        metatable = await GwsCoreTestHelper.get_metadata_table()
+        table = GwsCoreTestHelper.get_data_table()
+        metatable = GwsCoreTestHelper.get_metadata_table()
         print(table)
 
         # annotation
@@ -39,8 +39,8 @@ class TestTableAnnotator(BaseTestCase):
 
     async def test_table_row_annotator(self):
         # importer
-        table = await GwsCoreTestHelper.get_data_table()
-        metatable = await GwsCoreTestHelper.get_metadata_table()
+        table = GwsCoreTestHelper.get_data_table()
+        metatable = GwsCoreTestHelper.get_metadata_table()
         print(table)
 
         # annotation
