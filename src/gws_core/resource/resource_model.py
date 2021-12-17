@@ -31,7 +31,6 @@ from ..resource.kv_store import KVStore
 from ..resource.r_field import BaseRField
 from ..resource.resource import Resource
 from ..tag.taggable_model import TaggableModel
-from ..task.converter.exporter import get_resource_type_export_meta_data
 
 if TYPE_CHECKING:
     from ..experiment.experiment import Experiment
@@ -364,8 +363,7 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         _json["resource_type"] = resource_typing.object_sub_type
 
         # the resource is downloadable if it's a file or if the export_to_path is defined
-        _json["is_downloadable"] = self.fs_node_model is not None or get_resource_type_export_meta_data(
-            resource_typing.get_type()) is not None
+        _json["is_downloadable"] = self.fs_node_model is not None
 
         if self.fs_node_model:
             _json["fs_node"] = self.fs_node_model.to_json()

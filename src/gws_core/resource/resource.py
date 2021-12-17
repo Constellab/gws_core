@@ -1,6 +1,5 @@
-from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict
+from typing import Dict
 
 from ..config.config_types import ConfigParams
 from ..core.exception.exceptions.bad_request_exception import \
@@ -11,9 +10,6 @@ from ..impl.json.json_view import JSONView
 from ..model.typing_register_decorator import typing_registrator
 from ..resource.r_field import BaseRField, UUIDRField
 from ..resource.view_decorator import view
-
-if TYPE_CHECKING:
-    from ..impl.file.fs_node import FSNode
 
 # Typing names generated for the class resource
 CONST_RESOURCE_TYPING_NAME = "RESOURCE.gws_core.Resource"
@@ -41,15 +37,6 @@ class Resource(Base):
         properties: Dict[str, BaseRField] = ReflectorHelper.get_property_names_of_type(type(self), BaseRField)
         for key, r_field in properties.items():
             setattr(self, key, r_field.get_default_value())
-
-    def export_to_path(self, dest_dir: str, params: ConfigParams) -> FSNode:
-        """
-        Export the resource to a repository
-
-        :param dest_dir: The destination directory
-        :type dest_dir: str
-        """
-        pass
 
     # -- G --
 

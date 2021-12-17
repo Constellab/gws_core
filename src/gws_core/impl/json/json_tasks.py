@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 import json
+import os
 from typing import Type
 
 from ...config.config_types import ConfigParams, ConfigSpecs
@@ -42,4 +43,22 @@ class JSONImporter(ResourceImporter):
 
 @exporter_decorator("JSONExporter", resource_type=JSONDict)
 class JSONExporter(ResourceExporter):
-    pass
+
+    output_specs = {"file": File}
+
+    config_specs: ConfigSpecs = {
+        'file_name': StrParam(default_value='file.json', short_description="Destination file name in the store"),
+        'file_format': StrParam(default_value=".json", short_description="File format"),
+        'prettify': BoolParam(default_value=False, short_description="True to indent and prettify the JSON file, False otherwise")
+    }
+
+    async def export_to_path(self, resource: JSONDict, dest_dir: str, params: ConfigParams) -> File:
+        file_path = os.path.join(dest_dir, params.get_value('file_name', 'file.json'))
+
+        with open(file_path, "w", encoding="utf-8") as f:
+            if params.get_value('prettify', False):
+                json.dump(resource.data, f, indent=4)
+            else:
+                json.dump(resource.data, f)
+
+        return File(file_path)

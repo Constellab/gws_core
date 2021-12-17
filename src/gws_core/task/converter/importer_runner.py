@@ -1,3 +1,7 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 
 import asyncio
@@ -13,6 +17,7 @@ from gws_core.task.converter.importer import ResourceImporter
 from gws_core.task.task_runner import TaskRunner
 
 
+# TODO to delete
 class ImporterRunner():
 
     _task_runner: TaskRunner

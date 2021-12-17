@@ -3,21 +3,17 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import os
-from pathlib import Path
+
 from typing import List, Union
 
 import numpy as np
 from pandas import DataFrame
 
 from ...config.config_types import ConfigParams
-from ...config.param_spec import BoolParam, StrParam
 from ...core.exception.exceptions import BadRequestException
-from ...impl.file.file import File
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view
-from ...task.converter.exporter import export_to_path
 from .data_frame_r_field import DataFrameRField
 from .view.barplot_view import TableBarPlotView
 from .view.boxplot_view import TableBoxPlotView
@@ -93,45 +89,6 @@ class Table(Resource):
         else:
             lower_names = [x.lower() for x in self.column_names]
             return name.lower() in lower_names
-
-    @export_to_path(specs={
-        'file_name': StrParam(default_value='file.csv', short_description="Destination file name in the store"),
-        'file_format': StrParam(default_value=DEFAULT_FILE_FORMAT, short_description="File format"),
-        'delimiter': StrParam(allowed_values=ALLOWED_DELIMITER, default_value=DEFAULT_DELIMITER, short_description="Delimiter character. Only for CSV files"),
-        'write_header': BoolParam(default_value=True, short_description="True to write column names (header), False otherwise"),
-        'write_index': BoolParam(default_value=True, short_description="True to write row names (index), False otherwise"),
-    })
-    def export_to_path(self, dest_dir: str, params: ConfigParams) -> File:
-        """
-        Export to a repository
-
-        :param dest_dir: The destination directory
-        :type dest_dir: str
-        """
-        file_path = os.path.join(dest_dir, params.get_value('file_name', 'file.csv'))
-
-        file_format: str = params.get_value('file_format', ".csv")
-        sep = params.get_value('delimiter', "tab")
-        if sep == "tab":
-            sep = "\t"
-        elif sep == "space":
-            sep = " "
-
-        file_extension = Path(file_path).suffix
-        if file_extension in [".xls", ".xlsx"] or file_format in [".xls", ".xlsx"]:
-            self._data.to_excel(file_path)
-        elif file_extension in [".csv", ".tsv", ".txt", ".tab"] or file_format in [".csv", ".tsv", ".txt", ".tab"]:
-            self._data.to_csv(
-                file_path,
-                sep=sep,
-                header=params.get_value('write_header', True),
-                index=params.get_value('write_index', True)
-            )
-        else:
-            raise BadRequestException(
-                "Cannot detect the file type using file extension. Valid file extensions are [.xls, .xlsx, .csv, .tsv, .txt, .tab].")
-
-        return File(file_path)
 
     # -- F --
 

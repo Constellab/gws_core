@@ -32,7 +32,7 @@ class ConverterService:
 
         return {
             'specs': ConfigSpecsHelper.config_specs_to_json(importer_type.config_specs),
-            'resource_destination': importer_type._resource_type._human_name
+            'resource_destination': importer_type.get_resource_type()._human_name
         }
 
     @classmethod

@@ -1,4 +1,5 @@
 
+import os
 from typing import Type
 
 from ...config.config_types import ConfigParams, ConfigSpecs
@@ -42,4 +43,21 @@ class TextImporter(ResourceImporter):
 
 @exporter_decorator(unique_name="TextExporter", resource_type=Text)
 class TextExporter(ResourceExporter):
-    pass
+    output_specs = {"file": File}
+
+    config_specs: ConfigSpecs = {
+        'file_name': StrParam(default_value='file.txt', short_description="Destination file name in the store"),
+        'encoding': StrParam(default_value='utf-8', short_description="Text encoding"),
+        'file_store_id': StrParam(optional=True, short_description="ID of the file_store where the file must be exported"),
+    }
+
+    async def export_to_path(self, resource: Text, dest_dir: str, params: ConfigParams) -> File:
+        file_path = os.path.join(dest_dir, params.get_value('file_name', 'file.txt'))
+
+        try:
+            with open(file_path, 'w+t', encoding=params.get_value('encoding', 'utf-8')) as fp:
+                fp.write(resource._data)
+        except Exception as err:
+            raise BadRequestException("Cannot export the text") from err
+
+        return File(file_path)

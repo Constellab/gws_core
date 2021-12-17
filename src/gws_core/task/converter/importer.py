@@ -1,3 +1,7 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 
 import asyncio
@@ -21,20 +25,36 @@ from ...user.user_group import UserGroup
 
 def importer_decorator(
         unique_name: str, resource_type: Type[Resource],
-        allowed_user: UserGroup = UserGroup.USER) -> Callable:
-    """ Decorator to place on a ResourceImporter instead of task_decorator. This decorator works with @import_from_path and it will generate a Task
-    which takes a file as Input and return the resource of type resource_type. This task will call the import_from_path method of the resource with the config.
+        allowed_user: UserGroup = UserGroup.USER,
+        human_name: str = None, short_description: str = None, hide: bool = False) -> Callable:
+    """ Decorator to place on a ResourceImporter instead of task_decorator. It defines a special task to import a FsNode (file or folder)
+    to resource_type
     :param unique_name: a unique name for this task in the brick. Only 1 task in the current brick can have this name.
                         //!\\ DO NOT MODIFIED THIS NAME ONCE IS DEFINED //!\\
                         It is used to instantiate the tasks
     :type unique_name: str
-    :param resource_type: type of the resource to generate from the file. The resource must define the import_from_path method
+    :param resource_type: type of the resource to generate from the file.
     :type resource_type: ProtocolAllowedUser, optional
     :param allowed_user: role needed to run the task. By default all user can run it. It Admin, the user need to be an admin of the lab to run the task
     :type allowed_user: ProtocolAllowedUser, optional
+    :param human_name: optional name that will be used in the interface when viewing the tasks. Must not be longer than 20 caracters
+                        If not defined, an automatic is generated.
+    :type human_name: str, optional
+    :param short_description: optional description that will be used in the interface when viewing the tasks. Must not be longer than 100 caracters
+                              If not defined, an automatic is generated
+    :type short_description: str, optional
+    :param hide: Only the task with hide=False will be available in the interface(web platform), other will be hidden.
+                It is useful for task that are not meant to be viewed in the interface (like abstract classes), defaults to False
+    :type hide: bool, optional
     :return: [description]
     :rtype: Callable
     """
+
+    if human_name is None:
+        human_name = resource_type._human_name + ' importer'
+    if short_description is None:
+        short_description = f"Import file to {resource_type._human_name}"
+
     def decorator(task_class: Type[ResourceImporter]):
 
         try:
@@ -42,23 +62,20 @@ def importer_decorator(
                 raise Exception(
                     f"The importer_decorator is used on the class: {task_class.__name__} and this class is not a sub class of ResourceImporter")
 
+            # Check input specs
             IOSpecsHelper.check_input_specs(task_class.input_specs)
-
             if len(task_class.input_specs) != 1 or 'file' not in task_class.input_specs \
                     or not Utils.issubclass(task_class.input_specs['file'], FSNode):
                 raise Exception(
-                    f"The ResourceImporter {task_class.__name__} have invalid input specs. It must have only one input called 'file' of type file (no special types)")
+                    f"The ResourceImporter {task_class.__name__} have invalid input specs. It must have only one input called 'file' of type FsNode (no special types)")
 
             # force the output specs
             task_class.output_specs = {'resource': resource_type}
 
-            # set resource type in ResourceImporter
-            task_class._resource_type = resource_type
-
-            # register the task and set the human_name and short_description dynamically based on resource
-            decorate_task(task_class, unique_name, human_name=resource_type._human_name + ' importer',
+            # register the task
+            decorate_task(task_class, unique_name, human_name=human_name,
                           task_type='IMPORTER', related_resource=resource_type,
-                          short_description=f"Import file to {resource_type._human_name}", allowed_user=allowed_user)
+                          short_description=short_description, allowed_user=allowed_user, hide=hide)
         except Exception as err:
             BrickService.log_brick_error(task_class, str(err))
 
@@ -73,7 +90,7 @@ class ResourceImporter(Task):
     Override the import_from_path method to import the file to the destination resource
     """
 
-    # /!\ The input specs can be override, BUT the RessourceImporter task must
+    # /!\ The input specs can be overrided, BUT the RessourceImporter task must
     # have 1 input called file that extend FsNode (like File or Folder)
     input_specs = {'file': FSNode}
 
@@ -83,13 +100,10 @@ class ResourceImporter(Task):
     # Override the config_spec to define custom spec for the importer
     config_specs: ConfigSpecs = {}
 
-    # Do not modify, this is provided by the importer_decorator
-    _resource_type: Type[Resource]
-
     @final
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         fs_node: FSNode = inputs.get('file')
-        resource: Resource = await self.import_from_path(fs_node, params, self.output_specs['resource'])
+        resource: Resource = await self.import_from_path(fs_node, params, self.get_resource_type())
         return {'resource': resource}
 
     @abstractmethod
@@ -110,7 +124,7 @@ class ResourceImporter(Task):
     @classmethod
     def call(cls, fs_node: Union[FSNode, str],
              params: ConfigParamsDict = None) -> Resource:
-        """Call the import_from_path method manually
+        """Call the ResourceImporter method manually
 
           :param fs_node: provide a FsNode or a string. If a string, it create a File with the string as path
           :type fs_node: Union[FSNode, str]
@@ -131,3 +145,13 @@ class ResourceImporter(Task):
             result = outputs['resource']
             pool.submit(asyncio.run, task_runner.run_after_task())
             return result
+
+    @final
+    @classmethod
+    def get_resource_type(cls) -> Type[Resource]:
+        """Get the type of the resource that is imported by this task
+
+        :return: [description]
+        :rtype: Type[Resource]
+        """
+        return cls.output_specs['resource']
