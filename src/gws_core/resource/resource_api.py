@@ -13,7 +13,7 @@ from gws_core.task.transformer.transformer_service import TransformerService
 from gws_core.task.transformer.transformer_type import TransformerDict
 from typing_extensions import TypedDict
 
-from ..core.classes.jsonable import ListJsonable
+from ..core.classes.jsonable import Jsonable, ListJsonable
 from ..core.classes.paginator import PaginatorDict
 from ..core_app import core_app
 from ..user.auth_service import AuthService
@@ -112,19 +112,23 @@ async def create_transformer_experiment(transformers: List[TransformerDict], res
 ############################# IMPORTER ###########################
 
 
-@core_app.get("/resource-type/{resource_typing_name}/import/specs", tags=["Resource"],
+@core_app.get("/resource-type/{resource_typing_name}/importer", tags=["Resource"],
               summary="Get specs to import the resource")
 async def get_import_specs(resource_typing_name: str,
                            _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
 
-    return ConverterService.get_import_specs(resource_typing_name)
+    return ListJsonable(ConverterService.get_resource_importers(resource_typing_name)).to_json(deep=True)
 
 
-@core_app.post("/resource/{resource_model_id}/import", tags=["Resource"], summary="Import the resource")
-async def import_resource(config: dict, resource_model_id: str,
+@core_app.post(
+    "/resource/{resource_model_id}/import/{importer_typing_name}", tags=["Resource"],
+    summary="Import the resource")
+async def import_resource(config: dict,
+                          resource_model_id: str,
+                          importer_typing_name: str,
                           _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
 
-    resource_model: ResourceModel = await ConverterService.call_importer(resource_model_id, config)
+    resource_model: ResourceModel = await ConverterService.call_importer(resource_model_id, importer_typing_name, config)
     return resource_model.to_json()
 
 ############################# RESOURCE TYPE ###########################

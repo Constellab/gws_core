@@ -5,6 +5,8 @@
 
 from typing import Callable, Type
 
+from gws_core.core.utils.reflector_helper import ReflectorHelper
+
 from ..brick.brick_service import BrickService
 from ..core.utils.utils import Utils
 from ..model.typing_register_decorator import register_typing_class
@@ -36,6 +38,13 @@ def resource_decorator(unique_name: str, human_name: str = "", short_description
             BrickService.log_brick_error(
                 resource_class,
                 f"The ResourceDecorator is used on class '{resource_class.__name__}' while this class is not a subclass of Resource")
+            return resource_class
+
+        # check resource constructor, it must have only optional params
+        if not ReflectorHelper.function_args_are_optional(resource_class.__init__):
+            BrickService.log_brick_error(
+                resource_class,
+                f"The Resource '{resource_class.__name__}' have a constructor with mandatory params. The resource constructor must contain only optional arguments")
             return resource_class
 
         register_typing_class(object_class=resource_class, object_type="RESOURCE", unique_name=unique_name,

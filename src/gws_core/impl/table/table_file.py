@@ -5,6 +5,8 @@
 
 from typing import List
 
+from gws_core.config.param_spec import IntParam, ListParam, StrParam
+
 from ...config.config_types import ConfigParams
 from ...config.param_spec import BoolParam, IntParam, ListParam, StrParam
 from ...resource.resource_decorator import resource_decorator
@@ -24,7 +26,9 @@ class TableFile(File):
     :rtype: [type]
     """
 
-    @view(view_type=TableView, human_name='Tabular Preview', short_description='Tabular preview of the table', default_view=True,
+    supported_extensions: List[str] = ['xlsx', 'xls', 'csv', 'tsv']
+
+    @view(view_type=TableView, human_name='Preview', short_description='Preview the table', default_view=True,
           specs={
               'file_format': StrParam(default_value=Table.DEFAULT_FILE_FORMAT, short_description="File format"),
               'delimiter': StrParam(allowed_values=Table.ALLOWED_DELIMITER, default_value=Table.DEFAULT_DELIMITER, short_description="Delimiter character. Only for parsing CSV files"),

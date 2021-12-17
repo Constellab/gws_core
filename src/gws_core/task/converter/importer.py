@@ -67,7 +67,7 @@ def importer_decorator(
 
             # register the task
             decorate_converter(task_class, unique_name=unique_name, task_type='IMPORTER',
-                               source_type=FSNode, target_type=target_type,
+                               source_type=FSNode, target_type=target_type, related_resource=source_type,
                                human_name=human_name_computed, short_description=short_description_computed,
                                allowed_user=allowed_user, hide=hide)
         except Exception as err:

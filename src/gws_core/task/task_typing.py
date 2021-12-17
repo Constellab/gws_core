@@ -50,9 +50,6 @@ class TaskTyping(Typing):
 
         _json: Dict[str, Any] = super().to_json(deep=deep, **kwargs)
 
-        # TODO to remove | for compatibility
-        _json["ptype"] = self.model_type
-
         if deep:
             # retrieve the task python type
             model_t: Type[Task] = self.get_type()

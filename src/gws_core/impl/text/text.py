@@ -17,7 +17,7 @@ from .view.text_view import TextView
 class Text(Resource):
     _data: str = RField()
 
-    def __init__(self, data: str):
+    def __init__(self, data: str = None):
         super().__init__()
         self._set_data(data)
 
@@ -34,7 +34,7 @@ class Text(Resource):
         return self._data
 
     @view(view_type=TextView, human_name='Text', short_description='View as text',
-          specs={})
+          specs={}, default_view=True)
     def view_as_text(self, params: ConfigParams) -> TextView:
         """
         View as table

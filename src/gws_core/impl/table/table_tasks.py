@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Type
 
 import pandas
+from gws_core.impl.table.table_file import TableFile
 
 from ...config.config_types import ConfigParams, ConfigSpecs
 from ...config.param_spec import BoolParam, IntParam, ListParam, StrParam
@@ -27,7 +28,7 @@ from .table_file import TableFile
 # ####################################################################
 
 
-@importer_decorator(unique_name="TableImporter", source_type=TableFile, target_type=Table)
+@importer_decorator(unique_name="TableImporter", target_type=Table, source_type=TableFile)
 class TableImporter(ResourceImporter):
     config_specs: ConfigSpecs = {
         'file_format': StrParam(default_value=Table.DEFAULT_FILE_FORMAT, allowed_values=Table.ALLOWED_FILE_FORMATS, short_description="File format"),
