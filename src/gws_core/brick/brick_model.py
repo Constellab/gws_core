@@ -7,8 +7,8 @@ from peewee import CharField
 from ..core.model.model import Model
 from ..model.typing_register_decorator import typing_registrator
 
-BrickStatus = Literal['SUCCESS', 'ERROR', 'WARNING']
-BrickMessageStatus = Literal['INFO', 'ERROR', 'WARNING']
+BrickStatus = Literal['SUCCESS', 'ERROR', 'CRITICAL', 'WARNING']
+BrickMessageStatus = Literal['INFO', 'ERROR', 'CRITICAL', 'WARNING']
 
 
 class BrickMessage(TypedDict):
@@ -41,7 +41,9 @@ class BrickModel(Model):
         self.data['messages'].append(brick_message)
 
         # update the brick status
-        if status == 'ERROR':
+        if status == 'CRITICAL':
+            self.status = 'CRITICAL'
+        elif status == 'ERROR' and self.status != 'CRITICAL':
             self.status = 'ERROR'
         elif status == 'WARNING' and self.status == 'SUCCESS':
             self.status = 'WARNING'
@@ -52,3 +54,7 @@ class BrickModel(Model):
 
     def clear_messages(self) -> None:
         self.data['messages'] = []
+
+    @classmethod
+    def delete_all(cls) -> None:
+        cls.delete().execute(cls._db_manager.db)

@@ -2,6 +2,7 @@
 
 import importlib
 import os
+import traceback
 from time import time
 from typing import Any, Dict, List, TypedDict
 
@@ -27,21 +28,21 @@ class BrickService():
 
     @classmethod
     def log_brick_error(cls, obj: Any, message: str) -> None:
-        cls.log_brick_message(obj, message, 'ERROR')
+        cls.log_brick_message_from_obj(obj, message, 'ERROR')
 
     @classmethod
     def log_brick_info(cls, obj: Any, message: str) -> None:
-        cls.log_brick_message(obj, message, 'INFO')
+        cls.log_brick_message_from_obj(obj, message, 'INFO')
 
     @classmethod
     def log_brick_warning(cls, obj: Any, message: str) -> None:
-        cls.log_brick_message(obj, message, 'WARNING')
+        cls.log_brick_message_from_obj(obj, message, 'WARNING')
 
     @classmethod
-    def log_brick_message(cls, obj: Any, message: str, status: BrickMessageStatus) -> None:
+    def log_brick_message_from_obj(cls, obj: Any, message: str, status: BrickMessageStatus) -> None:
         """Log a message for the brick of the object. The message is save in DB so it can be viewed later
 
-        :param obj: [description]
+        :param obj: obj that caused the message. The brick information will be retrieve form the obj type
         :type obj: Any
         :param message: [description]
         :type message: str
@@ -55,8 +56,12 @@ class BrickService():
             brick_path = BrickHelper.get_brick_path(obj)
         except:
             brick_name = '__Unknown'
-            brick_path = None
+            brick_path = ''
 
+        cls.log_brick_message(brick_name=brick_path, brick_path=brick_path, message=message, status=status)
+
+    @classmethod
+    def log_brick_message(cls, brick_name: str, brick_path: str, message: str, status: BrickMessageStatus) -> None:
         brick_message: WaitingMessage = {"brick_name": brick_name, "brick_path": brick_path,
                                          "message": message, "status": status, "timestamp": time()}
 
@@ -88,6 +93,8 @@ class BrickService():
     def init(cls) -> None:
         """Log all the messages that were waiting on start
         """
+        # clear all the previous messages
+        BrickModel.delete_all()
 
         bricks_info: Dict[str, ModuleInfo] = BrickHelper.get_all_bricks()
         for brick_name, brick_info in bricks_info.items():
@@ -127,7 +134,7 @@ class BrickService():
     @classmethod
     def import_all_modules(cls):
         bricks_info: Dict[str, ModuleInfo] = BrickHelper.get_all_bricks()
-        for brick_info in bricks_info.values():
+        for brick_name, brick_info in bricks_info.items():
             _, files = Utils.walk_dir(os.path.join(brick_info['path'], "src"))
             for py_file in files:
                 parts = py_file.split("/src/")[-1].split("/")
@@ -135,5 +142,13 @@ class BrickService():
                 module_name = ".".join(parts)
                 try:
                     importlib.import_module(module_name)
+                # On module load error, log an error but don't stop the app szo a brick won't break the whole app
                 except Exception as err:
-                    raise Exception(f"Cannot import module {module_name}.") from err
+                    cls.log_brick_message(
+                        brick_name=brick_name, brick_path=brick_info['path'],
+                        message=f"Cannot import module {module_name}. Skipping brick load. Error: {err}",
+                        status='CRITICAL')
+                    traceback.print_exc()
+                    # stop the brick load and go to next brick
+                    break
+                    # raise Exception(f"Cannot import module {module_name}.") from err
