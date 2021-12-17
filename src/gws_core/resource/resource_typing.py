@@ -16,9 +16,7 @@ if TYPE_CHECKING:
 
 # Sub type of resource type
 # RESOURCE --> normal resource
-# IMPORTABLE_RESOURCE --> resource decorated with importable_resource_decorator, linked to a normal resource
-#                     --> the related_model_typing_name is the linked resource
-ResourceSubType = Literal["RESOURCE", "IMPORTABLE_RESOURCE"]
+ResourceSubType = Literal["RESOURCE"]
 
 
 class ResourceTyping(Typing):

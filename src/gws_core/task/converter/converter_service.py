@@ -68,9 +68,9 @@ class ConverterService:
         if not Utils.issubclass(resource_type, File):
             raise BadRequestException("Can't import this resource type")
 
-        if resource_type._resource_importer is None:
+        if not resource_type._is_importable:
             raise BadRequestException(
-                "The resource must be an importable resource (using the importable_resource_decorator)")
+                "The resource must be an importable resource. This means that a importer task must exist on for this resource")
 
         return resource_type._resource_importer
 

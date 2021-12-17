@@ -7,11 +7,7 @@ from pandas import DataFrame
 
 from ....config.config_types import ConfigParams, ConfigSpecs
 from ....config.param_spec import FloatParam, ParamSet, StrParam
-from ....io.io_spec import InputSpecs, OutputSpecs
-from ....task.task import Task
-from ....task.task_decorator import task_decorator
-from ....task.task_io import TaskInputs, TaskOutputs
-from ....task.transformer.transformer_decorator import transformer_decorator
+from ....task.transformer.transformer import Transformer, transformer_decorator
 from ...table.table import Table
 from ..helper.constructor.num_data_filter_param import \
     NumericDataFilterParamConstructor
@@ -32,9 +28,7 @@ from ..helper.table_filter_helper import TableFilterHelper
     resource_type=Table,
     short_description="Filters the table using various fitering rules",
 )
-class TableFilter(Task):
-    input_specs: InputSpecs = {"resource": Table}
-    output_specs: OutputSpecs = {"resource": Table}
+class TableFilter(Transformer):
     config_specs: ConfigSpecs = {
         "axis_name_filter": ParamSet(
             {
@@ -84,8 +78,8 @@ class TableFilter(Task):
         "text_data_filter": TextDataFilterParamConstructor.construct_filter(),
     }
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        data: DataFrame = inputs["resource"].get_data()
+    async def transform(self, source: Table, params: ConfigParams) -> Table:
+        data: DataFrame = source.get_data()
 
         for _filter in params["axis_name_filter"]:
             data = TableFilterHelper.filter_by_axis_names(
@@ -103,4 +97,4 @@ class TableFilter(Task):
         data = NumericDataFilterParamConstructor.validate_filter("numeric_data_filter", data, params)
         data = TextDataFilterParamConstructor.validate_filter("text_data_filter", data, params)
 
-        return {"resource": Table(data=data)}
+        return Table(data=data)

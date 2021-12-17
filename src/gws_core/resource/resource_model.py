@@ -357,10 +357,11 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         _json["typing_name"] = self._typing_name
         _json["tags"] = self.get_tags_json()
 
+        resource_type: Type[Resource] = self.get_resource_type()
         resource_typing: Typing = TypingManager.get_typing_from_name(self.resource_typing_name)
         _json["resource_type_human_name"] = resource_typing.human_name
         _json["resource_type_short_description"] = resource_typing.short_description
-        _json["resource_type"] = resource_typing.object_sub_type
+        _json["is_importable"] = resource_type._is_importable
 
         # the resource is downloadable if it's a file or if the export_to_path is defined
         _json["is_downloadable"] = self.fs_node_model is not None

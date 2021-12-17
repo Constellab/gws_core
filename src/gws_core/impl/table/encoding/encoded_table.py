@@ -5,6 +5,8 @@
 
 from typing import List
 
+from gws_core.impl.file.file import File
+
 from ....resource.resource_decorator import resource_decorator
 from ....task.converter.exporter import exporter_decorator
 from ....task.converter.importer import importer_decorator
@@ -44,7 +46,7 @@ class EncodedTable(Table):
 # ####################################################################
 
 
-@importer_decorator("EncodedTableImporter", resource_type=EncodedTable)
+@importer_decorator("EncodedTableImporter", target_type=EncodedTable)
 class EncodedTableImporter(TableImporter):
     pass
 
@@ -55,6 +57,6 @@ class EncodedTableImporter(TableImporter):
 # ####################################################################
 
 
-@exporter_decorator("EncodedTableExporter", resource_type=EncodedTable)
+@exporter_decorator("EncodedTableExporter", source_type=EncodedTable)
 class EncodedTableExporter(TableExporter):
     pass

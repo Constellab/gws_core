@@ -101,9 +101,8 @@ class MetadataTable(Table):
 # ####################################################################
 
 
-@importer_decorator("MetadataTableImporter", resource_type=MetadataTable)
+@importer_decorator("MetadataTableImporter", target_type=MetadataTable)
 class MetadataTableImporter(TableImporter):
-    input_specs = {'source': File}
 
     async def import_from_path(self, file: File, params: ConfigParams, target_type: Type[MetadataTable]) -> MetadataTable:
         params["index_colums"] = params.get_value("index_colums", [0])  # use the first colum by default
@@ -118,6 +117,6 @@ class MetadataTableImporter(TableImporter):
 # ####################################################################
 
 
-@exporter_decorator("MetadataTableExporter", resource_type=MetadataTable)
+@exporter_decorator("MetadataTableExporter", source_type=MetadataTable)
 class MetadataTableExporter(TableExporter):
     pass

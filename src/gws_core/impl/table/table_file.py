@@ -6,15 +6,15 @@
 from typing import List
 
 from ...config.config_types import ConfigParams
+from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view
 from ..file.file import File
-from ..file.importable_resource_decorator import importable_resource_decorator
 from .table import Table
 from .table_tasks import TableImporter
 from .view.table_view import TableView
 
 
-@importable_resource_decorator("TableFile", resource_importer=TableImporter)
+@resource_decorator("TableFile")
 class TableFile(File):
     """Specific file to .csv and .tsv files. This file contains the sames view as the Table resource.
 

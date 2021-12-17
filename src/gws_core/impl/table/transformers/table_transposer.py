@@ -3,15 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core.task.transformer.transformer_decorator import \
-    transformer_decorator
 from pandas import DataFrame
 
 from ....config.config_types import ConfigParams, ConfigSpecs
-from ....io.io_spec import InputSpecs, OutputSpecs
-from ....task.task import Task
-from ....task.task_decorator import task_decorator
-from ....task.task_io import TaskInputs, TaskOutputs
+from ....task.transformer.transformer import Transformer, transformer_decorator
 from ...table.table import Table
 
 # ####################################################################
@@ -22,16 +17,14 @@ from ...table.table import Table
 
 
 @transformer_decorator(unique_name="TableTransposer", resource_type=Table, short_description="Transposes the table")
-class TableTransposer(Task):
+class TableTransposer(Transformer):
 
     config_specs: ConfigSpecs = {}
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        table: Table = inputs["resource"]
-        data: DataFrame = table.get_data()
-        transposed_table = Table(
+    async def transform(self, source: Table, params: ConfigParams) -> Table:
+        data: DataFrame = source.get_data()
+        return Table(
             data=data.T,
-            row_names=table.column_names,
-            column_names=table.row_names
+            row_names=source.column_names,
+            column_names=source.row_names
         )
-        return {"resource": transposed_table}

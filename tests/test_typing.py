@@ -14,6 +14,7 @@ from gws_core.impl.robot.robot_protocol import RobotWorldTravelProto
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.model.typing import Typing
 from gws_core.resource.resource_decorator import resource_decorator
+from gws_core.task.transformer.transformer import Transformer
 
 
 @protocol_decorator("CreateSimpleRobot2")
@@ -35,12 +36,12 @@ class SubFile(File):
 
 
 @transformer_decorator(unique_name="TableTransformer", resource_type=File)
-class FileTransformer(Task):
+class FileTransformer(Transformer):
     pass
 
 
 @transformer_decorator(unique_name="SubFileTransformer", resource_type=SubFile)
-class SubFileTransformer(Task):
+class SubFileTransformer(Transformer):
     pass
 
 

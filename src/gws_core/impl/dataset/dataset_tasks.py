@@ -20,10 +20,8 @@ from ..table.table_tasks import TableExporter, TableImporter
 from .dataset import Dataset
 
 
-@importer_decorator(unique_name="DatasetImporter", resource_type=Dataset)
+@importer_decorator(unique_name="DatasetImporter", target_type=Dataset)
 class DatasetImporter(TableImporter):
-    input_specs = {'source': File}
-
     config_specs: ConfigSpecs = {
         'file_format': StrParam(default_value=".csv", short_description="File format"),
         'delimiter': StrParam(default_value='\t', short_description="Delimiter character. Only for parsing CSV files"),
@@ -66,10 +64,8 @@ class DatasetImporter(TableImporter):
         return ds
 
 
-@exporter_decorator("DatasetExporter", resource_type=Dataset)
+@exporter_decorator("DatasetExporter", source_type=Dataset)
 class DatasetExporter(TableExporter):
-    output_specs = {"target": File}
-
     config_specs: ConfigSpecs = {
         'file_name': StrParam(default_value="file.csv", short_description="File name"),
         'file_format': StrParam(default_value=".csv", short_description="File format"),

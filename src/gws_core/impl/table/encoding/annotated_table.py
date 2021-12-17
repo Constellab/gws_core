@@ -6,6 +6,8 @@
 
 from typing import List
 
+from gws_core.impl.file.file import File
+
 from ....resource.resource_decorator import resource_decorator
 from ....task.converter.exporter import exporter_decorator
 from ....task.converter.importer import importer_decorator
@@ -45,7 +47,7 @@ class AnnotatedTable(Table):
 # ####################################################################
 
 
-@importer_decorator("AnnotatedTableImporter", resource_type=AnnotatedTable)
+@importer_decorator("AnnotatedTableImporter", target_type=AnnotatedTable)
 class AnnotatedTableImporter(TableImporter):
     pass
 
@@ -56,6 +58,6 @@ class AnnotatedTableImporter(TableImporter):
 # ####################################################################
 
 
-@exporter_decorator("AnnotatedTableExporter", resource_type=AnnotatedTable)
+@exporter_decorator("AnnotatedTableExporter", source_type=AnnotatedTable)
 class AnnotatedTableExporter(TableExporter):
     pass

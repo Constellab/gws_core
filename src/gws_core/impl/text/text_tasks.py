@@ -18,9 +18,8 @@ from .text import Text
 # ####################################################################
 
 
-@importer_decorator(unique_name="TextImporter", resource_type=Text)
+@importer_decorator(unique_name="TextImporter", target_type=Text)
 class TextImporter(ResourceImporter):
-    input_specs = {'source': File}
 
     config_specs: ConfigSpecs = {'encoding': StrParam(default_value='utf-8', short_description="Text encoding")}
 
@@ -41,9 +40,8 @@ class TextImporter(ResourceImporter):
 # ####################################################################
 
 
-@exporter_decorator(unique_name="TextExporter", resource_type=Text)
+@exporter_decorator(unique_name="TextExporter", source_type=Text)
 class TextExporter(ResourceExporter):
-    output_specs = {"target": File}
 
     config_specs: ConfigSpecs = {
         'file_name': StrParam(default_value='file.txt', short_description="Destination file name in the store"),

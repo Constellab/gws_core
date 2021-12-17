@@ -21,10 +21,8 @@ from .json_dict import JSONDict
 # ####################################################################
 
 
-@importer_decorator(unique_name="JSONImporter", resource_type=JSONDict)
+@importer_decorator(unique_name="JSONImporter", target_type=JSONDict)
 class JSONImporter(ResourceImporter):
-    input_specs = {'source': File}
-
     config_specs: ConfigSpecs = {'file_format': StrParam(default_value=".json", short_description="File format")}
 
     async def import_from_path(self, file: File, params: ConfigParams, target_type: Type[JSONDict]) -> JSONDict:
@@ -41,11 +39,8 @@ class JSONImporter(ResourceImporter):
         # ####################################################################
 
 
-@exporter_decorator("JSONExporter", resource_type=JSONDict)
+@exporter_decorator("JSONExporter", source_type=JSONDict)
 class JSONExporter(ResourceExporter):
-
-    output_specs = {"target": File}
-
     config_specs: ConfigSpecs = {
         'file_name': StrParam(default_value='file.json', short_description="Destination file name in the store"),
         'file_format': StrParam(default_value=".json", short_description="File format"),

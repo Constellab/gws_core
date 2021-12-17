@@ -56,7 +56,6 @@ class Typing(Model):
     # Sub type of the object, types will be differents based on object type
     object_sub_type: CharField = CharField(null=True, max_length=20)
     # For process, this is a linked resource to the model (useful for IMPORTER, TRANFORMERS...)
-    # For resource, this is a linked resource, useful for importable resource (TableFile is link to Table)
     related_model_typing_name: CharField = CharField(null=True, index=True)
 
     _table_name = 'gws_typing'

@@ -84,10 +84,8 @@ class EncodingTable(Table):
 # ####################################################################
 
 
-@importer_decorator("EncodingTableImporter", resource_type=EncodingTable)
+@importer_decorator("EncodingTableImporter", target_type=EncodingTable)
 class EncodingTableImporter(TableImporter):
-    input_specs = {'source': File}
-
     config_specs: ConfigSpecs = {
         **TableImporter.config_specs,
         'original_column': StrParam(default_value=ORIGINAL_COLUMN, short_description="The original column name"),
@@ -135,6 +133,6 @@ class EncodingTableImporter(TableImporter):
 # ####################################################################
 
 
-@exporter_decorator("EncodingTableExporter", resource_type=EncodingTable)
+@exporter_decorator("EncodingTableExporter", source_type=EncodingTable)
 class EncodingTableExporter(TableExporter):
     pass

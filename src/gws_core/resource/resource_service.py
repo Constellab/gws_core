@@ -16,8 +16,8 @@ from ..core.service.base_service import BaseService
 from ..model.typing_manager import TypingManager
 from ..resource.view_helper import ViewHelper
 from ..task.task_input_model import TaskInputModel
-from ..task.transformer.transformer import TransformerDict
 from ..task.transformer.transformer_service import TransformerService
+from ..task.transformer.transformer_type import TransformerDict
 from .resource_model import Resource, ResourceModel, ResourceOrigin
 from .resource_model_search import ResourceModelSearchBuilder
 from .resource_typing import ResourceTyping

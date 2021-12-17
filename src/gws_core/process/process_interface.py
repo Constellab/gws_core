@@ -4,9 +4,10 @@
 # About us: https://gencovery.com
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, Type
 
 from gws_core.config.config_service import ConfigService
+from gws_core.process.process import Process
 
 from ..config.config_types import ConfigParams, ConfigParamsDict, ParamValue
 from ..io.port import InPort, OutPort
@@ -40,6 +41,9 @@ class IProcess:
             raise Exception(f"The process '{self.instance_name}' does not have a parent protocol")
 
         return IProtocol(self._process_model.parent_protocol)
+
+    def get_process_type(self) -> Type[Process]:
+        return self._process_model.get_process_type()
 
     ############################################### CONFIG #########################################
 
@@ -104,3 +108,9 @@ class IProcess:
 
     def __rshift__(self, name: str) -> OutPort:
         return self._process_model.out_port(name)
+
+    def get_first_inport(self) -> InPort:
+        return list(self._process_model.inputs.ports.values())[0]
+
+    def get_first_outport(self) -> OutPort:
+        return list(self._process_model.outputs.ports.values())[0]

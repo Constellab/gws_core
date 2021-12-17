@@ -26,6 +26,8 @@ class Resource(Base):
     _human_name: str = None
     _short_description: str = None
     _model_id: str = None
+    _is_importable: bool = False
+    _is_exportable: bool = False
 
     def __init__(self):
         # check that the class level property _typing_name is set

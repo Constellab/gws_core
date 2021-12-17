@@ -114,8 +114,6 @@ from .impl.file.folder import Folder as Folder
 from .impl.file.fs_node import FSNode as FSNode
 from .impl.file.fs_node_model import FSNodeModel as FSNodeModel
 from .impl.file.fs_node_service import FsNodeService as FsNodeService
-from .impl.file.importable_resource_decorator import \
-    importable_resource_decorator as importable_resource_decorator
 from .impl.file.local_file_store import LocalFileStore as LocalFileStore
 # Impl > JSON
 from .impl.json.json_dict import JSONDict as JSONDict
@@ -316,7 +314,7 @@ from .task.task_runner import TaskRunner as TaskRunner
 from .task.task_service import TaskService as TaskService
 from .task.task_typing import TaskTyping as TaskTyping
 # Task > Transformer
-from .task.transformer.transformer_decorator import \
+from .task.transformer.transformer import \
     transformer_decorator as transformer_decorator
 # Core > Test
 from .test.base_test_case import BaseTestCase as BaseTestCase

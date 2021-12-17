@@ -56,7 +56,7 @@ class TestTable(BaseTestCase):
         GTest.print("Table load")
 
         file_path = GwsCoreTestHelper.get_data_file_path()
-        table = TableImporter.call(file_path)
+        table = TableImporter.call(File(file_path))
         df = pandas.read_table(file_path)
         print(df)
 

@@ -26,10 +26,8 @@ from .table import Table
 # ####################################################################
 
 
-@importer_decorator(unique_name="TableImporter", resource_type=Table)
+@importer_decorator(unique_name="TableImporter", target_type=Table)
 class TableImporter(ResourceImporter):
-    input_specs = {'source': File}
-
     config_specs: ConfigSpecs = {
         'file_format': StrParam(default_value=Table.DEFAULT_FILE_FORMAT, short_description="File format"),
         'delimiter': StrParam(allowed_values=Table.ALLOWED_DELIMITER, default_value=Table.DEFAULT_DELIMITER, short_description="Delimiter character. Only for parsing CSV files"),
@@ -69,11 +67,8 @@ class TableImporter(ResourceImporter):
 # ####################################################################
 
 
-@exporter_decorator(unique_name="TableExporter", resource_type=Table)
+@exporter_decorator(unique_name="TableExporter", source_type=Table)
 class TableExporter(ResourceExporter):
-
-    output_specs = {"target": File}
-
     config_specs: ConfigSpecs = {
         'file_name': StrParam(default_value='file.csv', short_description="Destination file name in the store"),
         'file_format': StrParam(default_value=Table.DEFAULT_FILE_FORMAT, short_description="File format"),

@@ -38,21 +38,21 @@ class GwsCoreTestHelper():
 
     @classmethod
     def get_data_table(cls) -> Table:
-        return TableImporter.call(cls.get_data_file_path(), {
+        return TableImporter.call(File(cls.get_data_file_path()), {
             "index_columns": [0],
             "header": 0,
         })
 
     @classmethod
     def get_metadata_table(cls) -> Table:
-        return MetadataTableImporter.call(cls.get_test_data_path("metadata.csv"), {
+        return MetadataTableImporter.call(File(cls.get_test_data_path("metadata.csv")), {
             "index_columns": [0],
             "header": 0,
         })
 
     @classmethod
     def get_data_encoding_table(cls) -> Table:
-        return EncodingTableImporter.call(cls.get_test_data_path("data_encoding.csv"), {
+        return EncodingTableImporter.call(File(cls.get_test_data_path("data_encoding.csv")), {
             "original_column": "ocn",
             "original_row": "orn",
             "encoded_column": "ecn",
@@ -61,14 +61,14 @@ class GwsCoreTestHelper():
 
     @classmethod
     def get_venn_data_table(cls) -> Table:
-        return TableImporter.call(cls.get_test_data_path("venn_data.csv"), {
+        return TableImporter.call(File(cls.get_test_data_path("venn_data.csv")), {
             "delimiter": "tab",
             "header": 0
         })
 
     @classmethod
     def get_annotated_table(cls) -> Table:
-        return AnnotatedTableImporter.call(cls.get_test_data_path("annotated_table.csv"), {
+        return AnnotatedTableImporter.call(File(cls.get_test_data_path("annotated_table.csv0")), {
             "index_columns": [0],
             "delimiter": ",",
         })

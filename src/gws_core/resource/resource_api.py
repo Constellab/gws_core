@@ -6,12 +6,11 @@
 from typing import Any, Dict, List, Optional
 
 from fastapi import Depends
-from gws_core.config.config_types import ConfigParamsDict
 from gws_core.core.classes.search_builder import SearchDict
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.converter.converter_service import ConverterService
-from gws_core.task.transformer.transformer import TransformerDict
 from gws_core.task.transformer.transformer_service import TransformerService
+from gws_core.task.transformer.transformer_type import TransformerDict
 from typing_extensions import TypedDict
 
 from ..core.classes.jsonable import ListJsonable

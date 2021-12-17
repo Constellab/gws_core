@@ -4,15 +4,12 @@
 # About us: https://gencovery.com
 
 
-import asyncio
+import traceback
 from abc import abstractmethod
-from concurrent.futures.thread import ThreadPoolExecutor
-from typing import Callable, Optional, Type, TypedDict, final
+from typing import Callable, Type, TypedDict, final
 
 from ...brick.brick_service import BrickService
-from ...config.config_types import ConfigParams, ConfigParamsDict, ConfigSpecs
-from ...core.utils.logger import Logger
-from ...core.utils.reflector_helper import ReflectorHelper
+from ...config.config_types import ConfigParams, ConfigSpecs
 from ...core.utils.settings import Settings
 from ...core.utils.utils import Utils
 from ...impl.file.file import File
@@ -20,13 +17,10 @@ from ...impl.file.file_helper import FileHelper
 from ...impl.file.file_store import FileStore
 from ...impl.file.fs_node import FSNode
 from ...impl.file.local_file_store import LocalFileStore
-from ...io.io_spec import IOSpecsHelper
 from ...resource.resource import Resource
-from ...task.task import Task
-from ...task.task_decorator import decorate_task, task_decorator
-from ...task.task_io import TaskInputs, TaskOutputs
-from ...task.task_runner import TaskRunner
+from ...task.task_decorator import task_decorator
 from ...user.user_group import UserGroup
+from .converter import Converter, decorate_converter
 
 EXPORT_TO_PATH_META_DATA_ATTRIBUTE = '_import_from_path_meta_data'
 
@@ -42,14 +36,14 @@ def export_to_path(specs: ConfigSpecs = None, fs_node_type: Type[FSNode] = File,
                    inherit_specs: bool = True) -> Callable:
 
     def decorator(func: Callable) -> Callable:
-        Logger.error('[DEPRECATED] do not use the export_to_path decorator, use only the exporter_decorator instead')
+        print('[DEPRECATED] do not use the export_to_path decorator, use only the exporter_decorator instead')
         return func
 
     return decorator
 
 
 def exporter_decorator(
-        unique_name: str, resource_type: Type[Resource],
+        unique_name: str, source_type: Type[Resource], target_type: Type[FSNode] = File,
         allowed_user: UserGroup = UserGroup.USER,
         human_name: str = None, short_description: str = None, hide: bool = False) -> Callable:
     """ Decorator to place on a ResourceExporter. It defines a special task to export a resource (of type resource_type) to
@@ -58,8 +52,6 @@ def exporter_decorator(
                         //!\\ DO NOT MODIFIED THIS NAME ONCE IS DEFINED //!\\
                         It is used to instantiate the tasks
     :type unique_name: str
-    :param resource_type: type of the resource to export to a file.
-    :type resource_type: Type[Resource]
     :param allowed_user: role needed to run the task. By default all user can run it. It Admin, the user need to be an admin of the lab to run the task
     :type allowed_user: ProtocolAllowedUser, optional
     :param human_name: optional name that will be used in the interface when viewing the tasks. Must not be longer than 20 caracters
@@ -75,33 +67,35 @@ def exporter_decorator(
     :rtype: Callable
     """
 
-    if human_name is None:
-        human_name = resource_type._human_name + ' exporter'
-    if short_description is None:
-        short_description = f"Export {resource_type._human_name} to a file"
-
     def decorator(task_class: Type[ResourceExporter]):
 
         try:
             if not Utils.issubclass(task_class, ResourceExporter):
-                raise Exception(
+                BrickService.log_brick_error(
+                    task_class,
                     f"The exporter_decorator is used on the class: {task_class.__name__} and this class is not a sub class of ResourceExporter")
+                return task_class
 
-            # Check input specs
-            IOSpecsHelper.check_output_specs(task_class.output_specs)
-            if len(task_class.output_specs) != 1 or 'target' not in task_class.output_specs \
-                    or not Utils.issubclass(task_class.output_specs['target'], FSNode):
-                raise Exception(
-                    f"The ResourceExporter {task_class.__name__} have invalid output specs. It must have only one input called 'target' of type FsNode (no special types)")
+            if not Utils.issubclass(target_type, FSNode):
+                BrickService.log_brick_error(
+                    task_class,
+                    f"Error in the exporter_decorator of class {task_class.__name__}. The target_type must be an FsNode or child class")
+                return task_class
 
-            # force the input specs
-            task_class.input_specs = {'target': resource_type}
+            human_name_computed = human_name or source_type._human_name + ' exporter'
+            short_description_computed = short_description or f"Export {source_type._human_name} to a file"
 
-            # register the task and set the human_name and short_description dynamically based on resource
-            decorate_task(task_class, unique_name, human_name=human_name,
-                          task_type='EXPORTER', related_resource=resource_type,
-                          short_description=short_description, allowed_user=allowed_user, hide=hide)
+            # mark the resource as exportable
+            if not hide:
+                source_type._is_exportable = True
+
+            # register the task
+            decorate_converter(task_class, unique_name=unique_name, task_type='EXPORTER',
+                               source_type=source_type, target_type=target_type,
+                               human_name=human_name_computed, short_description=short_description_computed,
+                               allowed_user=allowed_user, hide=hide)
         except Exception as err:
+            traceback.print_stack()
             BrickService.log_brick_error(task_class, str(err))
 
         return task_class
@@ -109,7 +103,7 @@ def exporter_decorator(
 
 
 @task_decorator("ResourceExporter", hide=True)
-class ResourceExporter(Task):
+class ResourceExporter(Converter):
     """Generic task that take a file as input and return a resource
 
         Override the export_to_path method to export the resource into a fsNode
@@ -126,7 +120,7 @@ class ResourceExporter(Task):
     config_specs: ConfigSpecs = {}
 
     @final
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    async def convert(self, source: Resource, params: ConfigParams, target_type: Type[Resource]) -> FSNode:
 
         # Retrieve the file store
         file_store: FileStore
@@ -138,16 +132,14 @@ class ResourceExporter(Task):
         # Create a new temp_dir to create the file here
         self.__temp_dir: str = Settings.retrieve().make_temp_dir()
 
-        # retrieve resource and export it to path
-        resource: Resource = inputs.get('source')
-        fs_node: FSNode = await self.export_to_path(resource, self.__temp_dir, params, self.get_target_type())
+        fs_node: FSNode = await self.export_to_path(source, self.__temp_dir, params, target_type)
 
         # add the node to the store
         file_store.add_node(fs_node)
-        return {'target': fs_node}
+        return fs_node
 
     @abstractmethod
-    async def export_to_path(self, resource: Resource, dest_dir: str, params: ConfigParams, target_type: Type[FSNode]) -> File:
+    async def export_to_path(self, source: Resource, dest_dir: str, params: ConfigParams, target_type: Type[FSNode]) -> FSNode:
         """Override this method to generate a fs_node (File or Folder) from the resource
 
         :param resource: resource to export to fs_node
@@ -166,46 +158,3 @@ class ResourceExporter(Task):
     async def run_after_task(self) -> None:
         # delete temp dir
         FileHelper.delete_dir(self.__temp_dir)
-
-    @final
-    @classmethod
-    def call(cls, resource: Resource,
-             params: ConfigParamsDict = None) -> FSNode:
-        """Call the ResourceExporter method manually
-
-          :param resource: resource to export
-          :type resource: Resource
-          :param params: params for the import_from_path_method
-          :type params: ConfigParamsDict
-        """
-        if not isinstance(resource, cls.get_source_type()):
-            raise Exception(f"The {cls._human_name} task requires a {cls.get_source_type()._human_name} resource")
-
-        task_runner: TaskRunner = TaskRunner(cls, params=params, inputs={'source': resource})
-
-        # call the run async method in a sync function
-        with ThreadPoolExecutor() as pool:
-            outputs = pool.submit(asyncio.run, task_runner.run()).result()
-            result = outputs['target']
-            pool.submit(asyncio.run, task_runner.run_after_task())
-            return result
-
-    @final
-    @classmethod
-    def get_source_type(cls) -> Type[Resource]:
-        """Get the type of the resource that is exported by this task
-
-        :return: [description]
-        :rtype: Type[Resource]
-        """
-        return cls.input_specs['source']
-
-    @final
-    @classmethod
-    def get_target_type(cls) -> Type[FSNode]:
-        """Get the type of the FsNode once the resource is exported
-
-        :return: [description]
-        :rtype: Type[Resource]
-        """
-        return cls.output_specs['target']

@@ -243,6 +243,9 @@ class IOSpecsHelper():
         if not io_specs:
             return
 
+        if not isinstance(io_specs, dict):
+            raise Exception("The specs must be a dictionary")
+
         for key, item in io_specs.items():
             params: Iterable[ResourceType]
 

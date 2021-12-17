@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 
+from re import S
 from typing import Any, Coroutine, List, Type
 
 from gws_core.experiment.experiment import ExperimentType
@@ -16,10 +17,10 @@ from ...process.process_interface import IProcess
 from ...protocol.protocol_interface import IProtocol
 from ...resource.resource import Resource
 from ...resource.resource_model import ResourceModel
-from ..plug import Sink, Source
+from ..plug import Source
 from ..task import Task
 from ..task_runner import TaskRunner
-from .transformer import TransformerDict
+from .transformer_type import TransformerDict
 
 
 class TransformerService():
@@ -51,14 +52,14 @@ class TransformerService():
             new_process: IProcess = protocol.add_process(
                 transformer_type, f"transformer_{index}", transformer["config_values"])
 
-            protocol.add_connector(last_process >> 'resource', new_process << 'resource')
+            protocol.add_connector(last_process.get_first_outport(), new_process << 'source')
 
             # refresh data
             last_process = new_process
             index += 1
 
         # add sink and sink connector
-        protocol.add_sink('sink', last_process >> 'resource')
+        protocol.add_sink('sink', last_process >> 'target')
 
         # add the experiment to queue to run it
         await experiment.run()
