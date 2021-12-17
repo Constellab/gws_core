@@ -52,7 +52,7 @@ class JSONExporter(ResourceExporter):
         'prettify': BoolParam(default_value=False, short_description="True to indent and prettify the JSON file, False otherwise")
     }
 
-    async def export_to_path(self, resource: JSONDict, dest_dir: str, params: ConfigParams) -> File:
+    async def export_to_path(self, resource: JSONDict, dest_dir: str, params: ConfigParams, destination_type: Type[File]) -> File:
         file_path = os.path.join(dest_dir, params.get_value('file_name', 'file.json'))
 
         with open(file_path, "w", encoding="utf-8") as f:

@@ -82,7 +82,7 @@ class TableExporter(ResourceExporter):
         'write_index': BoolParam(default_value=True, short_description="True to write row names (index), False otherwise"),
     }
 
-    async def export_to_path(self, resource: Table, dest_dir: str, params: ConfigParams) -> File:
+    async def export_to_path(self, resource: Table, dest_dir: str, params: ConfigParams, destination_type: Type[File]) -> File:
         file_path = os.path.join(dest_dir, params.get_value('file_name', 'file.csv'))
 
         file_format: str = params.get_value('file_format', ".csv")

@@ -120,7 +120,7 @@ class ResourceExporter(Task):
 
     # /!\ The output specs can be overrided, BUT the ResourceExporter task must
     # have 1 output called file that extend FsNode (like File or Folder)
-    output_specs = {"file": Resource}
+    output_specs = {"file": FSNode}
 
     # Override the config_spec to define custom spec for the importer
     config_specs: ConfigSpecs = {}
@@ -140,14 +140,14 @@ class ResourceExporter(Task):
 
         # retrieve resource and export it to path
         resource: Resource = inputs.get('resource')
-        fs_node: FSNode = await self.export_to_path(resource, self.__temp_dir, params)
+        fs_node: FSNode = await self.export_to_path(resource, self.__temp_dir, params, self.get_destination_type())
 
         # add the node to the store
         file_store.add_node(fs_node)
         return {'file': fs_node}
 
     @abstractmethod
-    async def export_to_path(self, resource: Resource, dest_dir: str, params: ConfigParams) -> File:
+    async def export_to_path(self, resource: Resource, dest_dir: str, params: ConfigParams, destination_type: Type[FSNode]) -> File:
         """Override this method to generate a fs_node (File or Folder) from the resource
 
         :param resource: resource to export to fs_node
@@ -156,6 +156,8 @@ class ResourceExporter(Task):
         :type dest_dir: str
         :param params: config params for the export
         :type params: ConfigParams
+        :param destination_type: file type of the result, defined in output_specs. Useful to make generic exporter
+        :return: resource of type destination_type
         :return: [description]
         :rtype: File
         """
@@ -176,8 +178,8 @@ class ResourceExporter(Task):
           :param params: params for the import_from_path_method
           :type params: ConfigParamsDict
         """
-        if not isinstance(resource, cls.get_resource_type()):
-            raise Exception(f"The {cls._human_name} task required a {cls.get_resource_type()._human_name} resource")
+        if not isinstance(resource, cls.get_source_type()):
+            raise Exception(f"The {cls._human_name} task requires a {cls.get_source_type()._human_name} resource")
 
         task_runner: TaskRunner = TaskRunner(cls, params=params, inputs={'resource': resource})
 
@@ -190,10 +192,20 @@ class ResourceExporter(Task):
 
     @final
     @classmethod
-    def get_resource_type(cls) -> Type[Resource]:
+    def get_source_type(cls) -> Type[Resource]:
         """Get the type of the resource that is exported by this task
 
         :return: [description]
         :rtype: Type[Resource]
         """
         return cls.input_specs['resource']
+
+    @final
+    @classmethod
+    def get_destination_type(cls) -> Type[FSNode]:
+        """Get the type of the FsNode once the resource is exported
+
+        :return: [description]
+        :rtype: Type[Resource]
+        """
+        return cls.output_specs['file']

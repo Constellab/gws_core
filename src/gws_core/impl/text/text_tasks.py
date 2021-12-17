@@ -51,7 +51,7 @@ class TextExporter(ResourceExporter):
         'file_store_id': StrParam(optional=True, short_description="ID of the file_store where the file must be exported"),
     }
 
-    async def export_to_path(self, resource: Text, dest_dir: str, params: ConfigParams) -> File:
+    async def export_to_path(self, resource: Text, dest_dir: str, params: ConfigParams, destination_type: Type[File]) -> File:
         file_path = os.path.join(dest_dir, params.get_value('file_name', 'file.txt'))
 
         try:
