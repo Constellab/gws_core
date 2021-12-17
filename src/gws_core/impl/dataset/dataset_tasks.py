@@ -78,7 +78,7 @@ class DatasetExporter(TableExporter):
         'write_index': BoolParam(optional=True, short_description="True to write row names (index), Fasle otherwise"),
     }
 
-    async def export_to_path(self, resource: Dataset, dest_dir: str, params: ConfigParams) -> File:
+    async def export_to_path(self, resource: Dataset, dest_dir: str, params: ConfigParams, destination_type: Type[File]) -> File:
         file_name = params.get_value("file_name", "file.csv")
 
         file_path = os.path.join(dest_dir, file_name)
