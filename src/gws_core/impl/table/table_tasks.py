@@ -28,7 +28,7 @@ from .table import Table
 
 @importer_decorator(unique_name="TableImporter", resource_type=Table)
 class TableImporter(ResourceImporter):
-    input_specs = {'file': File}
+    input_specs = {'source': File}
 
     config_specs: ConfigSpecs = {
         'file_format': StrParam(default_value=Table.DEFAULT_FILE_FORMAT, short_description="File format"),
@@ -37,7 +37,7 @@ class TableImporter(ResourceImporter):
         'index_columns': ListParam(optional=True, short_description="Columns to use as the row names. Use None to prevent parsing row names. Only for CSV files"),
     }
 
-    async def import_from_path(self, file: File, params: ConfigParams, destination_type: Type[Table]) -> Table:
+    async def import_from_path(self, file: File, params: ConfigParams, target_type: Type[Table]) -> Table:
         file_format: str = params.get_value('file_format', ".csv")
         sep = params.get_value('delimiter', "tab")
         if sep == "tab":
@@ -60,7 +60,7 @@ class TableImporter(ResourceImporter):
             raise BadRequestException(
                 "Cannot detect the file type using file extension. Valid file extensions are [.xls, .xlsx, .csv, .tsv, .txt, .tab].")
 
-        return destination_type(data=df)
+        return target_type(data=df)
 
 # ####################################################################
 #
@@ -72,7 +72,7 @@ class TableImporter(ResourceImporter):
 @exporter_decorator(unique_name="TableExporter", resource_type=Table)
 class TableExporter(ResourceExporter):
 
-    output_specs = {"file": File}
+    output_specs = {"target": File}
 
     config_specs: ConfigSpecs = {
         'file_name': StrParam(default_value='file.csv', short_description="Destination file name in the store"),
@@ -82,7 +82,7 @@ class TableExporter(ResourceExporter):
         'write_index': BoolParam(default_value=True, short_description="True to write row names (index), False otherwise"),
     }
 
-    async def export_to_path(self, resource: Table, dest_dir: str, params: ConfigParams, destination_type: Type[File]) -> File:
+    async def export_to_path(self, resource: Table, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
         file_path = os.path.join(dest_dir, params.get_value('file_name', 'file.csv'))
 
         file_format: str = params.get_value('file_format', ".csv")

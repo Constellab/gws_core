@@ -22,7 +22,7 @@ from .dataset import Dataset
 
 @importer_decorator(unique_name="DatasetImporter", resource_type=Dataset)
 class DatasetImporter(TableImporter):
-    input_specs = {'file': File}
+    input_specs = {'source': File}
 
     config_specs: ConfigSpecs = {
         'file_format': StrParam(default_value=".csv", short_description="File format"),
@@ -32,7 +32,7 @@ class DatasetImporter(TableImporter):
         'targets': ListParam(default_value='[]', short_description="List of integers or strings (eg. ['name', 6, '7'])"),
     }
 
-    async def import_from_path(self, file: File, params: ConfigParams, destination_type: Type[Dataset]) -> Dataset:
+    async def import_from_path(self, file: File, params: ConfigParams, target_type: Type[Dataset]) -> Dataset:
         delimiter = params.get_value("delimiter", '\t')
         header = params.get_value("header", 0)
         index_col = params.get_value("index_columns")
@@ -54,7 +54,7 @@ class DatasetImporter(TableImporter):
                 "Cannot detect the file type using file extension. Valid file extensions are [.xls, .xlsx, .csv, .tsv, .txt, .tab].")
 
         if not targets:
-            ds = destination_type(features=df)
+            ds = target_type(features=df)
         else:
             try:
                 t_df = df.loc[:, targets]
@@ -62,13 +62,13 @@ class DatasetImporter(TableImporter):
                 raise BadRequestException(
                     f"The targets {targets} are no found in column names. Please check targets names or set parameter 'header' to read column names.") from err
             df.drop(columns=targets, inplace=True)
-            ds = destination_type(features=df, targets=t_df)
+            ds = target_type(features=df, targets=t_df)
         return ds
 
 
 @exporter_decorator("DatasetExporter", resource_type=Dataset)
 class DatasetExporter(TableExporter):
-    output_specs = {"file": File}
+    output_specs = {"target": File}
 
     config_specs: ConfigSpecs = {
         'file_name': StrParam(default_value="file.csv", short_description="File name"),

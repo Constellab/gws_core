@@ -40,10 +40,10 @@ class ImporterRunner():
         else:
             fs_node_obj = File(fs_node)
 
-        self._task_runner = TaskRunner(importer_type, params=params, inputs={'file': fs_node_obj})
+        self._task_runner = TaskRunner(importer_type, params=params, inputs={'source': fs_node_obj})
 
     def run(self) -> Resource:
         # call the run async method in a sync function
         with ThreadPoolExecutor() as e:
             outputs = e.submit(asyncio.run, self._task_runner.run()).result()
-            return outputs['resource']
+            return outputs['target']

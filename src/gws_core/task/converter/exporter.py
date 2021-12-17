@@ -89,13 +89,13 @@ def exporter_decorator(
 
             # Check input specs
             IOSpecsHelper.check_output_specs(task_class.output_specs)
-            if len(task_class.output_specs) != 1 or 'file' not in task_class.output_specs \
-                    or not Utils.issubclass(task_class.output_specs['file'], FSNode):
+            if len(task_class.output_specs) != 1 or 'target' not in task_class.output_specs \
+                    or not Utils.issubclass(task_class.output_specs['target'], FSNode):
                 raise Exception(
-                    f"The ResourceExporter {task_class.__name__} have invalid output specs. It must have only one input called 'file' of type FsNode (no special types)")
+                    f"The ResourceExporter {task_class.__name__} have invalid output specs. It must have only one input called 'target' of type FsNode (no special types)")
 
             # force the input specs
-            task_class.input_specs = {'resource': resource_type}
+            task_class.input_specs = {'target': resource_type}
 
             # register the task and set the human_name and short_description dynamically based on resource
             decorate_task(task_class, unique_name, human_name=human_name,
@@ -116,11 +116,11 @@ class ResourceExporter(Task):
     """
 
     # The output spec can't be overrided, it will be automatically define with the correct resource type
-    input_specs = {"resource": Resource}
+    input_specs = {"source": Resource}
 
     # /!\ The output specs can be overrided, BUT the ResourceExporter task must
     # have 1 output called file that extend FsNode (like File or Folder)
-    output_specs = {"file": FSNode}
+    output_specs = {"target": FSNode}
 
     # Override the config_spec to define custom spec for the importer
     config_specs: ConfigSpecs = {}
@@ -139,15 +139,15 @@ class ResourceExporter(Task):
         self.__temp_dir: str = Settings.retrieve().make_temp_dir()
 
         # retrieve resource and export it to path
-        resource: Resource = inputs.get('resource')
-        fs_node: FSNode = await self.export_to_path(resource, self.__temp_dir, params, self.get_destination_type())
+        resource: Resource = inputs.get('source')
+        fs_node: FSNode = await self.export_to_path(resource, self.__temp_dir, params, self.get_target_type())
 
         # add the node to the store
         file_store.add_node(fs_node)
-        return {'file': fs_node}
+        return {'target': fs_node}
 
     @abstractmethod
-    async def export_to_path(self, resource: Resource, dest_dir: str, params: ConfigParams, destination_type: Type[FSNode]) -> File:
+    async def export_to_path(self, resource: Resource, dest_dir: str, params: ConfigParams, target_type: Type[FSNode]) -> File:
         """Override this method to generate a fs_node (File or Folder) from the resource
 
         :param resource: resource to export to fs_node
@@ -156,9 +156,9 @@ class ResourceExporter(Task):
         :type dest_dir: str
         :param params: config params for the export
         :type params: ConfigParams
-        :param destination_type: file type of the result, defined in output_specs. Useful to make generic exporter
-        :return: resource of type destination_type
-        :return: [description]
+        :param target_type: file type of the result, defined in output_specs. Useful to make generic exporter
+        :type params: Type[FSNode]
+        :return: resource of type target_type
         :rtype: File
         """
 
@@ -181,12 +181,12 @@ class ResourceExporter(Task):
         if not isinstance(resource, cls.get_source_type()):
             raise Exception(f"The {cls._human_name} task requires a {cls.get_source_type()._human_name} resource")
 
-        task_runner: TaskRunner = TaskRunner(cls, params=params, inputs={'resource': resource})
+        task_runner: TaskRunner = TaskRunner(cls, params=params, inputs={'source': resource})
 
         # call the run async method in a sync function
         with ThreadPoolExecutor() as pool:
             outputs = pool.submit(asyncio.run, task_runner.run()).result()
-            result = outputs['file']
+            result = outputs['target']
             pool.submit(asyncio.run, task_runner.run_after_task())
             return result
 
@@ -198,14 +198,14 @@ class ResourceExporter(Task):
         :return: [description]
         :rtype: Type[Resource]
         """
-        return cls.input_specs['resource']
+        return cls.input_specs['source']
 
     @final
     @classmethod
-    def get_destination_type(cls) -> Type[FSNode]:
+    def get_target_type(cls) -> Type[FSNode]:
         """Get the type of the FsNode once the resource is exported
 
         :return: [description]
         :rtype: Type[Resource]
         """
-        return cls.output_specs['file']
+        return cls.output_specs['target']

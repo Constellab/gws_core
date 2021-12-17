@@ -103,11 +103,11 @@ class MetadataTable(Table):
 
 @importer_decorator("MetadataTableImporter", resource_type=MetadataTable)
 class MetadataTableImporter(TableImporter):
-    input_specs = {'file': File}
+    input_specs = {'source': File}
 
-    async def import_from_path(self, file: File, params: ConfigParams, destination_type: Type[MetadataTable]) -> MetadataTable:
+    async def import_from_path(self, file: File, params: ConfigParams, target_type: Type[MetadataTable]) -> MetadataTable:
         params["index_colums"] = params.get_value("index_colums", [0])  # use the first colum by default
-        csv_table = await super().import_from_path(file, params, destination_type)
+        csv_table = await super().import_from_path(file, params, target_type)
         return csv_table
 
 

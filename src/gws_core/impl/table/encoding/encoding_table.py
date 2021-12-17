@@ -86,7 +86,7 @@ class EncodingTable(Table):
 
 @importer_decorator("EncodingTableImporter", resource_type=EncodingTable)
 class EncodingTableImporter(TableImporter):
-    input_specs = {'file': File}
+    input_specs = {'source': File}
 
     config_specs: ConfigSpecs = {
         **TableImporter.config_specs,
@@ -95,12 +95,12 @@ class EncodingTableImporter(TableImporter):
         'encoded_column': StrParam(default_value=ENCODED_COLUMN, short_description="The encoded column name"),
         'encoded_row': StrParam(default_value=ENCODED_ROW, short_description="The encoded row name"), }
 
-    async def import_from_path(self, file: File, params: ConfigParams, destination_type: Type[EncodingTable]) -> EncodingTable:
-        csv_table: EncodingTable = await super().import_from_path(file, params, destination_type)
-        original_column = params.get_value("original_column", destination_type.ORIGINAL_COLUMN)
-        original_row = params.get_value("original_row", destination_type.ORIGINAL_ROW)
-        encoded_column = params.get_value("encoded_column", destination_type.ENCODED_COLUMN)
-        encoded_row = params.get_value("encoded_row", destination_type.ENCODED_ROW)
+    async def import_from_path(self, file: File, params: ConfigParams, target_type: Type[EncodingTable]) -> EncodingTable:
+        csv_table: EncodingTable = await super().import_from_path(file, params, target_type)
+        original_column = params.get_value("original_column", target_type.ORIGINAL_COLUMN)
+        original_row = params.get_value("original_row", target_type.ORIGINAL_ROW)
+        encoded_column = params.get_value("encoded_column", target_type.ENCODED_COLUMN)
+        encoded_row = params.get_value("encoded_row", target_type.ENCODED_ROW)
 
         if not csv_table.column_exists(original_column) and not csv_table.column_exists(original_row):
             raise BadRequestException(

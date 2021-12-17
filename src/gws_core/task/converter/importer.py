@@ -64,13 +64,13 @@ def importer_decorator(
 
             # Check input specs
             IOSpecsHelper.check_input_specs(task_class.input_specs)
-            if len(task_class.input_specs) != 1 or 'file' not in task_class.input_specs \
-                    or not Utils.issubclass(task_class.input_specs['file'], FSNode):
+            if len(task_class.input_specs) != 1 or 'source' not in task_class.input_specs \
+                    or not Utils.issubclass(task_class.input_specs['source'], FSNode):
                 raise Exception(
-                    f"The ResourceImporter {task_class.__name__} have invalid input specs. It must have only one input called 'file' of type FsNode (no special types)")
+                    f"The ResourceImporter {task_class.__name__} have invalid input specs. It must have only one input called 'source' of type FsNode (no special types)")
 
             # force the output specs
-            task_class.output_specs = {'resource': resource_type}
+            task_class.output_specs = {'target': resource_type}
 
             # register the task
             decorate_task(task_class, unique_name, human_name=human_name,
@@ -91,32 +91,32 @@ class ResourceImporter(Task):
     """
 
     # /!\ The input specs can be overrided, BUT the RessourceImporter task must
-    # have 1 input called file that extend FsNode (like File or Folder)
-    input_specs = {'file': FSNode}
+    # have 1 input called source that extend FsNode (like File or Folder)
+    input_specs = {'source': FSNode}
 
     # The output spec can't be overrided, it will be automatically define with the correct resource type
-    output_specs = {"resource": Resource}
+    output_specs = {"target": Resource}
 
     # Override the config_spec to define custom spec for the importer
     config_specs: ConfigSpecs = {}
 
     @final
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        fs_node: FSNode = inputs.get('file')
-        resource: Resource = await self.import_from_path(fs_node, params, self.get_destination_type())
-        return {'resource': resource}
+        fs_node: FSNode = inputs.get('source')
+        resource: Resource = await self.import_from_path(fs_node, params, self.get_target_type())
+        return {'target': resource}
 
     @abstractmethod
-    async def import_from_path(self, fs_node: FSNode, params: ConfigParams, destination_type: Type[Resource]) -> Resource:
+    async def import_from_path(self, source: FSNode, params: ConfigParams, target_type: Type[Resource]) -> Resource:
         """Override the import form path method to create the destination resource from the file
 
         :param fs_node: file resource to import
         :type fs_node: FSNode
         :param params: config params
         :type params: ConfigParams
-        :param destination_type: resource type of the result, defined in input_specs. Useful to make generic importers
-        :type destination_type: Type[Resource]
-        :return: resource of type destination_type
+        :param target_type: resource type of the result, defined in input_specs. Useful to make generic importers
+        :type target_type: Type[Resource]
+        :return: resource of type target_type
         :rtype: Resource
         """
 
@@ -137,21 +137,21 @@ class ResourceImporter(Task):
         else:
             fs_node_obj = File(fs_node)
 
-        task_runner: TaskRunner = TaskRunner(cls, params=params, inputs={'file': fs_node_obj})
+        task_runner: TaskRunner = TaskRunner(cls, params=params, inputs={'source': fs_node_obj})
 
         # call the run async method in a sync function
         with ThreadPoolExecutor() as pool:
             outputs = pool.submit(asyncio.run, task_runner.run()).result()
-            result = outputs['resource']
+            result = outputs['target']
             pool.submit(asyncio.run, task_runner.run_after_task())
             return result
 
     @final
     @classmethod
-    def get_destination_type(cls) -> Type[Resource]:
+    def get_target_type(cls) -> Type[Resource]:
         """Get the type of the resource that is imported by this task
 
         :return: [description]
         :rtype: Type[Resource]
         """
-        return cls.output_specs['resource']
+        return cls.output_specs['target']

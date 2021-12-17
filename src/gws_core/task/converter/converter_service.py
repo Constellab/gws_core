@@ -32,7 +32,7 @@ class ConverterService:
 
         return {
             'specs': ConfigSpecsHelper.config_specs_to_json(importer_type.config_specs),
-            'resource_destination': importer_type.get_destination_type()._human_name
+            'resource_destination': importer_type.get_target_type()._human_name
         }
 
     @classmethod
@@ -52,10 +52,10 @@ class ConverterService:
         importer: IProcess = protocol.add_process(importer_type, 'importer', config)
 
         # Add source and connect it
-        protocol.add_source('source', resource_model_id, importer << 'file')
+        protocol.add_source('source', resource_model_id, importer << 'source')
 
         # Add sink and connect it
-        protocol.add_sink('sink', importer >> 'resource')
+        protocol.add_sink('sink', importer >> 'target')
 
         # add the experiment to queue to run it
         await experiment.run()
