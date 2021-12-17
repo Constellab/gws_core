@@ -103,7 +103,7 @@ class ResourceImporter(Task):
     @final
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         fs_node: FSNode = inputs.get('file')
-        resource: Resource = await self.import_from_path(fs_node, params, self.get_resource_type())
+        resource: Resource = await self.import_from_path(fs_node, params, self.get_destination_type())
         return {'resource': resource}
 
     @abstractmethod
@@ -114,7 +114,7 @@ class ResourceImporter(Task):
         :type fs_node: FSNode
         :param params: config params
         :type params: ConfigParams
-        :param destination_type: resource type of the result. Useful to make generic importers
+        :param destination_type: resource type of the result, defined in input_specs. Useful to make generic importers
         :type destination_type: Type[Resource]
         :return: resource of type destination_type
         :rtype: Resource
@@ -148,7 +148,7 @@ class ResourceImporter(Task):
 
     @final
     @classmethod
-    def get_resource_type(cls) -> Type[Resource]:
+    def get_destination_type(cls) -> Type[Resource]:
         """Get the type of the resource that is imported by this task
 
         :return: [description]
