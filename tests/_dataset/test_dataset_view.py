@@ -1,28 +1,15 @@
 import os
 
 from gws_core import (BaseTestCase, ConfigParams, Dataset, DatasetImporter,
-                      DatasetView, File, Settings, TaskRunner, ViewTester)
+                      DatasetView, File, TaskRunner, ViewTester)
+from tests.gws_core_test_helper import GWSCoreTestHelper
 
 
 class TestDatasetView(BaseTestCase):
 
     async def test_dataset_view(self,):
         self.print("Dataset import")
-        settings = Settings.retrieve()
-        test_dir = settings.get_variable("gws_core:testdata_dir")
-        # run trainer
-        tester = TaskRunner(
-            params={
-                "delimiter": ",",
-                "header": 0,
-                "targets": ["variety"]
-            },
-            inputs={'file': File(path=os.path.join(test_dir, "./iris.csv"))},
-            task_type=DatasetImporter
-        )
-        outputs = await tester.run()
-        ds = outputs['resource']
-
+        ds = GWSCoreTestHelper.get_iris_dataset()
         tester = ViewTester(
             view=DatasetView(ds)
         )

@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Type
+from typing import List, Type
 
 import pandas
 
@@ -16,6 +16,7 @@ from ....resource.resource_decorator import resource_decorator
 from ....task.converter.exporter import exporter_decorator
 from ....task.converter.importer import importer_decorator
 from ..table import Table
+from ..table_file import TableFile
 from ..table_tasks import TableExporter, TableImporter
 
 # ####################################################################
@@ -60,6 +61,8 @@ class EncodingTable(Table):
     encoded_column: str = StrRField(default_value=ENCODED_ROW)
     encoded_row: str = StrRField(default_value=ENCODED_COLUMN)
 
+    # -- C --
+
     # -- E --
 
     # -- G --
@@ -76,6 +79,29 @@ class EncodingTable(Table):
     def get_encoded_column_data(self, rtype='list') -> ('DataFrame', list):
         return self.get_column(self.encoded_column, rtype)
 
+    # -- S --
+
+    def select_by_row_indexes(self, indexes: List[int]) -> 'EncodingTable':
+        table = super().select_by_row_indexes(indexes)
+        table.original_column = self.original_column
+        table.original_row = self.original_row
+        table.encoded_column = self.encoded_column
+        table.encoded_row = self.encoded_row
+        return table
+
+    def select_by_column_indexes(self, indexes: List[int]) -> 'EncodingTable':
+        raise BadRequestException("Not allowed of EncodingTable")
+
+    def select_by_row_name(self, name_regex: str) -> 'EncodingTable':
+        table = super().select_by_row_name(name_regex)
+        table.original_column = self.original_column
+        table.original_row = self.original_row
+        table.encoded_column = self.encoded_column
+        table.encoded_row = self.encoded_row
+        return table
+
+    def select_by_column_name(self, name_regex: str) -> 'Table':
+        raise BadRequestException("Not allowed of EncodingTable")
 
 # ####################################################################
 #
@@ -84,7 +110,7 @@ class EncodingTable(Table):
 # ####################################################################
 
 
-@importer_decorator("EncodingTableImporter", target_type=EncodingTable)
+@importer_decorator("EncodingTableImporter", source_type=TableFile, target_type=EncodingTable)
 class EncodingTableImporter(TableImporter):
     config_specs: ConfigSpecs = {
         **TableImporter.config_specs,
@@ -133,6 +159,6 @@ class EncodingTableImporter(TableImporter):
 # ####################################################################
 
 
-@exporter_decorator("EncodingTableExporter", source_type=EncodingTable)
+@exporter_decorator("EncodingTableExporter", source_type=EncodingTable, target_type=TableFile)
 class EncodingTableExporter(TableExporter):
     pass

@@ -12,33 +12,13 @@ from ....resource.resource_decorator import resource_decorator
 from ....task.converter.exporter import exporter_decorator
 from ....task.converter.importer import importer_decorator
 from ..table import Table
+from ..table_file import TableFile
 from ..table_tasks import TableExporter, TableImporter
 
 
 @resource_decorator("AnnotatedTable")
 class AnnotatedTable(Table):
-
-    # -- S --
-
-    def select_by_row_indexes(self, indexes: List[int]) -> 'AnnotatedTable':
-        table = super().select_by_row_indexes(indexes)
-        table = AnnotatedTable(data=table.get_data())
-        return table
-
-    def select_by_column_indexes(self, indexes: List[int]) -> 'AnnotatedTable':
-        table = super().select_by_column_indexes(indexes)
-        table = AnnotatedTable(data=table.get_data())
-        return table
-
-    def select_by_row_name(self, name_regex: str) -> 'AnnotatedTable':
-        table = super().select_by_row_name(name_regex)
-        table = AnnotatedTable(data=table.get_data())
-        return table
-
-    def select_by_column_name(self, name_regex: str) -> 'AnnotatedTable':
-        table = super().select_by_column_name(name_regex)
-        table = AnnotatedTable(data=table.get_data())
-        return table
+    pass
 
 # ####################################################################
 #
@@ -47,7 +27,7 @@ class AnnotatedTable(Table):
 # ####################################################################
 
 
-@importer_decorator("AnnotatedTableImporter", target_type=AnnotatedTable)
+@importer_decorator("AnnotatedTableImporter", source_type=TableFile, target_type=AnnotatedTable)
 class AnnotatedTableImporter(TableImporter):
     pass
 
@@ -58,6 +38,6 @@ class AnnotatedTableImporter(TableImporter):
 # ####################################################################
 
 
-@exporter_decorator("AnnotatedTableExporter", source_type=AnnotatedTable)
+@exporter_decorator("AnnotatedTableExporter", source_type=AnnotatedTable, target_type=TableFile)
 class AnnotatedTableExporter(TableExporter):
     pass

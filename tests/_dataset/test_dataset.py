@@ -4,26 +4,14 @@ import os
 
 from gws_core import (BaseTestCase, Dataset, DatasetImporter, File, Settings,
                       TaskRunner)
+from tests.gws_core_test_helper import GWSCoreTestHelper
 
 
 class TestImporter(BaseTestCase):
 
     async def test_importer(self):
         self.print("Dataset import")
-        settings = Settings.retrieve()
-        test_dir = settings.get_variable("gws_core:testdata_dir")
-        # run trainer
-        tester = TaskRunner(
-            params={
-                "delimiter": ",",
-                "header": 0,
-                "targets": ["variety"]
-            },
-            inputs={"file": File(path=os.path.join(test_dir, "./iris.csv"))},
-            task_type=DatasetImporter
-        )
-        outputs = await tester.run()
-        ds = outputs['resource']
+        ds = GWSCoreTestHelper.get_iris_dataset()
         self.assertEquals(ds.nb_features, 4)
         self.assertEquals(ds.nb_targets, 1)
         self.assertEquals(ds.nb_instances, 150)
@@ -38,20 +26,7 @@ class TestImporter(BaseTestCase):
 
     async def test_data_select(self):
         self.print("Dataset import")
-        settings = Settings.retrieve()
-        test_dir = settings.get_variable("gws_core:testdata_dir")
-        # run trainer
-        tester = TaskRunner(
-            params={
-                "delimiter": ",",
-                "header": 0,
-                "targets": ["variety"]
-            },
-            inputs={"file": File(path=os.path.join(test_dir, "./iris.csv"))},
-            task_type=DatasetImporter
-        )
-        outputs = await tester.run()
-        ds = outputs['resource']
+        ds = GWSCoreTestHelper.get_iris_dataset()
         print(ds)
 
         selected_ds = ds.select_by_column_indexes([1, 2])
@@ -76,20 +51,7 @@ class TestImporter(BaseTestCase):
 
     async def test_importer_no_head(self):
         self.print("Dataset import without header")
-        settings = Settings.retrieve()
-        test_dir = settings.get_variable("gws_core:testdata_dir")
-        # run trainer
-        tester = TaskRunner(
-            params={
-                "delimiter": ",",
-                "header": -1,
-                "targets": [4]
-            },
-            inputs={"file": File(path=os.path.join(test_dir, "./iris_no_head.csv"))},
-            task_type=DatasetImporter
-        )
-        outputs = await tester.run()
-        ds = outputs['resource']
+        ds = GWSCoreTestHelper.get_no_head_iris_dataset()
         self.assertEquals(ds.nb_features, 4)
         self.assertEquals(ds.nb_targets, 1)
         self.assertEquals(ds.nb_instances, 150)

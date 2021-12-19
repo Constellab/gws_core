@@ -151,9 +151,15 @@ from .impl.shell.shell_proxy import ShellProxy as ShellProxy
 from .impl.table.data_frame_r_field import DataFrameRField as DataFrameRField
 from .impl.table.encoding.annotated_table import \
     AnnotatedTable as AnnotatedTable
+from .impl.table.encoding.annotated_table import (AnnotatedTableExporter,
+                                                  AnnotatedTableImporter)
 from .impl.table.encoding.encoded_table import EncodedTable as EncodedTable
 from .impl.table.encoding.encoding_table import EncodingTable as EncodingTable
+from .impl.table.encoding.encoding_table import (EncodingTableExporter,
+                                                 EncodingTableImporter)
 from .impl.table.encoding.metadata_table import MetadataTable as MetadataTable
+from .impl.table.encoding.metadata_table import (MetadataTableExporter,
+                                                 MetadataTableImporter)
 from .impl.table.encoding.table_annotator import \
     TableAnnotator as TableAnnotator
 from .impl.table.encoding.table_decoder import TableDecoder as TableDecoder

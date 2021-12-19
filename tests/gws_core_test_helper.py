@@ -2,13 +2,9 @@
 
 import os
 
-from gws_core.core.utils.settings import Settings
-from gws_core.impl.file.file import File
-from gws_core.impl.table.encoding.annotated_table import AnnotatedTableImporter
-from gws_core.impl.table.encoding.encoding_table import EncodingTableImporter
-from gws_core.impl.table.encoding.metadata_table import MetadataTableImporter
-from gws_core.impl.table.table import Table
-from gws_core.impl.table.table_tasks import TableImporter
+from gws_core import (AnnotatedTableImporter, Dataset, DatasetImporter,
+                      EncodingTableImporter, File, MetadataTableImporter,
+                      Settings, Table, TableImporter)
 
 
 class GWSCoreTestHelper():
@@ -26,10 +22,30 @@ class GWSCoreTestHelper():
         return File(cls.get_test_data_path('iris.csv'))
 
     @classmethod
+    def get_no_head_iris_file(cls) -> File:
+        return File(cls.get_test_data_path('iris_no_head.csv'))
+
+    @classmethod
     def get_iris_table(cls) -> Table:
         return TableImporter.call(cls.get_iris_file(), {
             "delimiter": ",",
             "header": 0
+        })
+
+    @classmethod
+    def get_iris_dataset(cls) -> Dataset:
+        return DatasetImporter.call(cls.get_iris_file(), {
+            "delimiter": ",",
+            "header": 0,
+            "targets": ["variety"]
+        })
+
+    @classmethod
+    def get_no_head_iris_dataset(cls) -> Dataset:
+        return DatasetImporter.call(cls.get_no_head_iris_file(), {
+            "delimiter": ",",
+            "header": -1,
+            "targets": [4]
         })
 
     @classmethod

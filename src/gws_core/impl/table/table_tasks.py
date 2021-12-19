@@ -32,13 +32,14 @@ class TableImporter(ResourceImporter):
     config_specs: ConfigSpecs = {
         'file_format': StrParam(default_value=Table.DEFAULT_FILE_FORMAT, allowed_values=Table.ALLOWED_FILE_FORMATS, short_description="File format"),
         'delimiter': StrParam(allowed_values=Table.ALLOWED_DELIMITER, default_value=Table.DEFAULT_DELIMITER, short_description="Delimiter character. Only for parsing CSV files"),
-        'header': IntParam(default_value=0, short_description="Row number to use as the column names. Use None to prevent parsing column names. Only for CSV files"),
+        'header': IntParam(default_value=0, min_value=-1, short_description="Row number to use as the column names. Use -1 to prevent parsing column names. Only for CSV files"),
         'index_columns': ListParam(optional=True, short_description="Columns to use as the row names. Use None to prevent parsing row names. Only for CSV files"),
     }
 
     async def import_from_path(self, file: File, params: ConfigParams, target_type: Type[Table]) -> Table:
         file_format: str = params.get_value('file_format', Table.DEFAULT_FILE_FORMAT)
         sep = params.get_value('delimiter', Table.DEFAULT_DELIMITER)
+        header = params.get_value('header', 0)
         if sep == "tab":
             sep = "\t"
         elif sep == "space":
@@ -52,7 +53,7 @@ class TableImporter(ResourceImporter):
             df = pandas.read_table(
                 file.path,
                 sep=sep,
-                header=params.get_value('header', 0),
+                header=(None if header < 0 else header),
                 index_col=params.get_value('index_columns')
             )
         else:
