@@ -2,13 +2,13 @@
 from gws_core import BaseTestCase, ConfigParams, TextView
 from gws_core.impl.text.text import Text
 from gws_core.impl.text.text_tasks import TextImporter
-from tests.gws_core_test_helper import GwsCoreTestHelper
+from tests.gws_core_test_helper import GWSCoreTestHelper
 
 
 class TestTextView(BaseTestCase):
 
     async def test_text_view(self,):
-        text: Text = TextImporter.call(GwsCoreTestHelper.get_iris_file())
+        text: Text = TextImporter.call(GWSCoreTestHelper.get_iris_file())
         _view = TextView(text)
 
         self.assertEqual(

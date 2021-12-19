@@ -11,7 +11,7 @@ from gws_core.impl.table.table import Table
 from gws_core.impl.table.table_tasks import TableImporter
 
 
-class GwsCoreTestHelper():
+class GWSCoreTestHelper():
 
     @classmethod
     def get_test_data_dir(cls) -> str:

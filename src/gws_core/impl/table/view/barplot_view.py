@@ -51,10 +51,10 @@ class TableBarPlotView(BaseTableView):
         **BaseTableView._specs,
         "column_names": ListParam(human_name="Column names", optional=True, short_description="List of columns to plot"),
         "use_regexp": BoolParam(default_value=False, human_name="Use regexp", short_description="True to use regular expression for column names; False otherwise"),
-        "index_column": StrParam(human_name="Index column", optional=True, short_description="The index column used to label bar"),
+        "index_column": StrParam(human_name="Index column", optional=True, short_description="The index column used to label bars"),
         "x_label": StrParam(human_name="X-label", optional=True, visibility='protected', short_description="The x-axis label to display"),
         "y_label": StrParam(human_name="Y-label", optional=True, visibility='protected', short_description="The y-axis label to display"),
-        "x_tick_labels": ListParam(human_name="X-tick-labels", optional=True, visibility='protected', short_description="The labels of x-axis ticks")
+        "x_tick_labels": ListParam(human_name="X-tick-labels", optional=True, visibility='protected', short_description="The labels of x-axis ticks. Will override 'index_colum' parameter if given.")
     }
     _view_helper = BarPlotView
 
@@ -71,9 +71,8 @@ class TableBarPlotView(BaseTableView):
         # select columns
         column_names = params.get_value("column_names", [])
         if not column_names:
-            n = min(data.shape[1], MAX_NUMBERS_OF_COLUMNS_PER_PAGE)
-            column_names = data.columns[0:n].to_list()
-            #column_names = data.columns.to_list()
+            ncols = min(data.shape[1], MAX_NUMBERS_OF_COLUMNS_PER_PAGE)
+            column_names = data.columns[0:ncols].to_list()
         else:
             if params["use_regexp"]:
                 reg = "|".join(["^"+val+"$" for val in column_names])

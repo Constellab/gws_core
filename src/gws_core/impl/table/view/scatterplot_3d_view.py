@@ -83,10 +83,9 @@ class TableScatterPlot3DView(BaseTableView):
 
         if x_column_name:
             x_data = data[x_column_name].values.tolist()
-            x_tick_labels = None
         else:
             x_data = list(range(0, data.shape[0]))
-            x_tick_labels = params.get_value("x_tick_labels", data.index.to_list())
+        x_tick_labels = params.get_value("x_tick_labels", x_data)
 
         # replace NaN by 'NaN'
         data: DataFrame = data.fillna('')

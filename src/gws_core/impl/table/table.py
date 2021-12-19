@@ -27,6 +27,9 @@ from .view.table_view import TableView
 ALLOWED_DELIMITER = ["auto", "tab", "space", ",", ";"]
 DEFAULT_DELIMITER = "auto"
 DEFAULT_FILE_FORMAT = ".csv"
+ALLOWED_XLS_FILE_FORMATS = ['.xlsx', '.xls']
+ALLOWED_TXT_FILE_FORMATS = ['.csv', '.tsv', '.txt']
+ALLOWED_FILE_FORMATS = [*ALLOWED_XLS_FILE_FORMATS, *ALLOWED_TXT_FILE_FORMATS]
 
 
 @resource_decorator("Table")
@@ -35,6 +38,9 @@ class Table(Resource):
     ALLOWED_DELIMITER = ALLOWED_DELIMITER
     DEFAULT_DELIMITER = DEFAULT_DELIMITER
     DEFAULT_FILE_FORMAT = DEFAULT_FILE_FORMAT
+    ALLOWED_FILE_FORMATS = ALLOWED_FILE_FORMATS
+    ALLOWED_XLS_FILE_FORMATS = ALLOWED_XLS_FILE_FORMATS
+    ALLOWED_TXT_FILE_FORMATS = ALLOWED_TXT_FILE_FORMATS
 
     _data: DataFrame = DataFrameRField()
 
@@ -179,7 +185,7 @@ class Table(Resource):
 
     def __str__(self):
         return super().__str__() + "\n" + \
-            "Table:                                  \n" + \
+            "Table:\n" + \
             self._data.__str__()
 
     def to_list(self) -> list:
@@ -214,25 +220,29 @@ class Table(Resource):
         if not isinstance(indexes, list):
             raise BadRequestException("The indexes must be a list of integers")
         data = self._data.iloc[indexes, :]
-        return Table(data=data)
+        cls = type(self)
+        return cls(data=data)
 
     def select_by_column_indexes(self, indexes: List[int]) -> 'Table':
         if not isinstance(indexes, list):
             raise BadRequestException("The indexes must be a list of integers")
         data = self._data.iloc[:, indexes]
-        return Table(data=data)
+        cls = type(self)
+        return cls(data=data)
 
     def select_by_row_name(self, name_regex: str) -> 'Table':
         if not isinstance(name_regex, str):
             raise BadRequestException("The name must be a string")
         data = self._data.filter(regex=name_regex, axis=0)
-        return Table(data=data)
+        cls = type(self)
+        return cls(data=data)
 
     def select_by_column_name(self, name_regex: str) -> 'Table':
         if not isinstance(name_regex, str):
             raise BadRequestException("The name must be a string")
         data = self._data.filter(regex=name_regex, axis=1)
-        return Table(data=data)
+        cls = type(self)
+        return cls(data=data)
 
     # -- V ---
 

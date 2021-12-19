@@ -18,6 +18,7 @@ from ...impl.table.table_helper import TableHelper
 from ...task.converter.exporter import ResourceExporter, exporter_decorator
 from ...task.converter.importer import ResourceImporter, importer_decorator
 from .table import Table
+from .table_file import TableFile
 
 # ####################################################################
 #
@@ -26,18 +27,18 @@ from .table import Table
 # ####################################################################
 
 
-@importer_decorator(unique_name="TableImporter", target_type=Table)
+@importer_decorator(unique_name="TableImporter", source_type=TableFile, target_type=Table)
 class TableImporter(ResourceImporter):
     config_specs: ConfigSpecs = {
-        'file_format': StrParam(default_value=Table.DEFAULT_FILE_FORMAT, short_description="File format"),
+        'file_format': StrParam(default_value=Table.DEFAULT_FILE_FORMAT, allowed_values=Table.ALLOWED_FILE_FORMATS, short_description="File format"),
         'delimiter': StrParam(allowed_values=Table.ALLOWED_DELIMITER, default_value=Table.DEFAULT_DELIMITER, short_description="Delimiter character. Only for parsing CSV files"),
         'header': IntParam(default_value=0, short_description="Row number to use as the column names. Use None to prevent parsing column names. Only for CSV files"),
         'index_columns': ListParam(optional=True, short_description="Columns to use as the row names. Use None to prevent parsing row names. Only for CSV files"),
     }
 
     async def import_from_path(self, file: File, params: ConfigParams, target_type: Type[Table]) -> Table:
-        file_format: str = params.get_value('file_format', ".csv")
-        sep = params.get_value('delimiter', "tab")
+        file_format: str = params.get_value('file_format', Table.DEFAULT_FILE_FORMAT)
+        sep = params.get_value('delimiter', Table.DEFAULT_DELIMITER)
         if sep == "tab":
             sep = "\t"
         elif sep == "space":
@@ -45,9 +46,9 @@ class TableImporter(ResourceImporter):
         elif sep == "auto":
             sep = TableHelper.detect_csv_delimiter(file.read(size=10000))
 
-        if file.extension in [".xls", ".xlsx"] or file_format in [".xls", ".xlsx"]:
+        if file.extension in Table.ALLOWED_XLS_FILE_FORMATS or file_format in Table.ALLOWED_XLS_FILE_FORMATS:
             df = pandas.read_excel(file.path)
-        elif file.extension in [".csv", ".tsv", ".txt", ".tab"] or file_format in [".csv", ".tsv", ".txt", ".tab"]:
+        elif file.extension in Table.ALLOWED_TXT_FILE_FORMATS or file_format in Table.ALLOWED_TXT_FILE_FORMATS:
             df = pandas.read_table(
                 file.path,
                 sep=sep,
@@ -56,7 +57,7 @@ class TableImporter(ResourceImporter):
             )
         else:
             raise BadRequestException(
-                "Cannot detect the file type using file extension. Valid file extensions are [.xls, .xlsx, .csv, .tsv, .txt, .tab].")
+                "Valid file formats are [.xls, .xlsx, .csv, .tsv, .txt, .tab].")
 
         return target_type(data=df)
 
@@ -67,31 +68,32 @@ class TableImporter(ResourceImporter):
 # ####################################################################
 
 
-@exporter_decorator(unique_name="TableExporter", source_type=Table)
+@exporter_decorator(unique_name="TableExporter", source_type=Table, target_type=TableFile)
 class TableExporter(ResourceExporter):
     config_specs: ConfigSpecs = {
-        'file_name': StrParam(default_value='file.csv', short_description="Destination file name in the store"),
-        'file_format': StrParam(default_value=Table.DEFAULT_FILE_FORMAT, short_description="File format"),
+        'file_name': StrParam(default_value='file', short_description="File name (without extension)"),
+        'file_format': StrParam(default_value=Table.DEFAULT_FILE_FORMAT, allowed_values=Table.ALLOWED_FILE_FORMATS, short_description="File format"),
         'delimiter': StrParam(allowed_values=Table.ALLOWED_DELIMITER, default_value=Table.DEFAULT_DELIMITER, short_description="Delimiter character. Only for CSV files"),
         'write_header': BoolParam(default_value=True, short_description="True to write column names (header), False otherwise"),
         'write_index': BoolParam(default_value=True, short_description="True to write row names (index), False otherwise"),
     }
 
-    async def export_to_path(self, resource: Table, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
-        file_path = os.path.join(dest_dir, params.get_value('file_name', 'file.csv'))
-
-        file_format: str = params.get_value('file_format', ".csv")
-        sep = params.get_value('delimiter', "tab")
+    async def export_to_path(self, resource: Table, dest_dir: str, params: ConfigParams, target_type: Type[TableFile]) -> TableFile:
+        file_name = params.get_value('file_name', 'file')
+        file_format = params.get_value('file_format', Table.DEFAULT_FILE_FORMAT)
+        file_path = os.path.join(dest_dir, file_name+file_format)
+        sep = params.get_value('delimiter', Table.DEFAULT_DELIMITER)
         if sep == "tab":
             sep = "\t"
         elif sep == "space":
             sep = " "
+        elif sep == "auto":
+            sep = ","
 
-        file_extension = Path(file_path).suffix
-        if file_extension in [".xls", ".xlsx"] or file_format in [".xls", ".xlsx"]:
-            resource._data.to_excel(file_path)
-        elif file_extension in [".csv", ".tsv", ".txt", ".tab"] or file_format in [".csv", ".tsv", ".txt", ".tab"]:
-            resource._data.to_csv(
+        if file_format in Table.ALLOWED_XLS_FILE_FORMATS:
+            resource.get_data().to_excel(file_path)
+        elif file_format in Table.ALLOWED_TXT_FILE_FORMATS:
+            resource.get_data().to_csv(
                 file_path,
                 sep=sep,
                 header=params.get_value('write_header', True),
@@ -99,6 +101,6 @@ class TableExporter(ResourceExporter):
             )
         else:
             raise BadRequestException(
-                "Cannot detect the file type using file extension. Valid file extensions are [.xls, .xlsx, .csv, .tsv, .txt, .tab].")
+                f"Valid file formats are {Table.ALLOWED_FILE_FORMATS}.")
 
-        return File(file_path)
+        return target_type(path=file_path)

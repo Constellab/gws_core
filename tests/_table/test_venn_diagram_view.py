@@ -1,12 +1,12 @@
 
 from gws_core import BaseTestCase, TableVennDiagramView, ViewTester
-from tests.gws_core_test_helper import GwsCoreTestHelper
+from tests.gws_core_test_helper import GWSCoreTestHelper
 
 
 class TestVennDiagrammView(BaseTestCase):
 
     def test_venn_diagram_view(self,):
-        table = GwsCoreTestHelper.get_venn_data_table()
+        table = GWSCoreTestHelper.get_venn_data_table()
         tester = ViewTester(
             view=TableVennDiagramView(table)
         )

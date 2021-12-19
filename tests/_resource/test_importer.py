@@ -10,7 +10,7 @@ from gws_core.impl.table.table_tasks import TableImporter
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.test.base_test_case import BaseTestCase
-from tests.gws_core_test_helper import GwsCoreTestHelper
+from tests.gws_core_test_helper import GWSCoreTestHelper
 
 
 class TestImporter(BaseTestCase):
@@ -21,7 +21,7 @@ class TestImporter(BaseTestCase):
         self.assertEqual(len(specs['specs']), len(TableImporter.config_specs))
 
     async def test_importer(self):
-        file = TableFile(path=GwsCoreTestHelper.get_test_data_path("data.csv"))
+        file = TableFile(path=GWSCoreTestHelper.get_test_data_path("data.csv"))
 
         resource_model: ResourceModel = ResourceModel.save_from_resource(file, origin=ResourceOrigin.IMPORTED)
 

@@ -6,12 +6,12 @@
 import math
 
 from gws_core import BaseTestCase, TableGrouper, TaskRunner
-from tests.gws_core_test_helper import GwsCoreTestHelper
+from tests.gws_core_test_helper import GWSCoreTestHelper
 
 
 class TestTableGrouper(BaseTestCase):
     async def test_table_grouper(self):
-        table = GwsCoreTestHelper.get_annotated_table()
+        table = GWSCoreTestHelper.get_annotated_table()
         print(table)
 
         # filter columns

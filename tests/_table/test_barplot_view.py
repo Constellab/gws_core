@@ -1,12 +1,12 @@
 
 from gws_core import BaseTestCase, TableBarPlotView, ViewTester
-from tests.gws_core_test_helper import GwsCoreTestHelper
+from tests.gws_core_test_helper import GWSCoreTestHelper
 
 
 class TestTableBarPlotView(BaseTestCase):
 
     def test_barplot_2d_view(self,):
-        table = GwsCoreTestHelper.get_iris_table()
+        table = GWSCoreTestHelper.get_iris_table()
 
         tester = ViewTester(
             view=TableBarPlotView(table)
@@ -15,6 +15,7 @@ class TestTableBarPlotView(BaseTestCase):
             column_names=["sepal.length", "petal.length", "petal.width"]
         ))
         self.assertEqual(dic["type"], "bar-plot-view")
+        self.assertEqual(dic["data"]["x_tick_labels"], list(range(0, table.get_data().shape[0])))
         self.assertEqual(dic["data"]["series"][0]["data"]["x"], list(range(0, table.get_data().shape[0])))
         self.assertEqual(dic["data"]["series"][1]["data"]["x"], list(range(0, table.get_data().shape[0])))
         self.assertEqual(dic["data"]["series"][2]["data"]["x"], list(range(0, table.get_data().shape[0])))

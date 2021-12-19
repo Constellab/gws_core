@@ -1,12 +1,12 @@
 
 from gws_core import BaseTestCase, TableScatterPlot3DView, ViewTester
-from tests.gws_core_test_helper import GwsCoreTestHelper
+from tests.gws_core_test_helper import GWSCoreTestHelper
 
 
 class TestTableScatterPlot2DView(BaseTestCase):
 
     async def test_scatterplot_2d_view(self,):
-        table = GwsCoreTestHelper.get_iris_table()
+        table = GWSCoreTestHelper.get_iris_table()
 
         tester = ViewTester(
             view=TableScatterPlot3DView(table)

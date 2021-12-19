@@ -50,55 +50,6 @@ class TableVennDiagramView(BaseTableView):
         "label": StrParam(human_name="Label", optional=True, visibility='protected', short_description="The label to display"),
     }
 
-    # def _compute_sections(self, data, params):
-    #     label = params.get_value("label", "")
-    #     column_names = params["column_names"]
-    #     bag = {}
-    #     for i in range(0, data.shape[1]):
-    #         key = data.columns[i]
-    #         if key not in column_names:
-    #             continue
-    #         bag[key] = {
-    #             "group_names": [key],
-    #             "data": set(data.iloc[:, i].dropna())
-    #         }
-
-    #     found = True
-    #     while found:
-    #         found = False
-    #         bag_copy = copy.deepcopy(bag)
-    #         for key1, val1 in bag.items():
-    #             for key2, val2 in bag.items():
-    #                 if key1 == key2:
-    #                     continue
-    #                 columns = list(set([*val1["group_names"], *val2["group_names"]]))
-    #                 skip = False
-    #                 for c in columns:
-    #                     if c not in column_names:
-    #                         skip = True
-    #                         break
-    #                 if skip:
-    #                     continue
-    #                 columns.sort()
-    #                 joined_key = "_".join(columns)
-    #                 if joined_key not in bag:
-    #                     inter1 = set([str(k) for k in val1["data"]])
-    #                     inter2 = set([str(k) for k in val2["data"]])
-    #                     bag_copy[joined_key] = {
-    #                         "group_names": columns,
-    #                         "data": inter1.intersection(inter2)
-    #                     }
-    #                     found = True
-    #         bag = bag_copy
-
-    #     _data_dict = {
-    #         "label": label,
-    #         "total_number_of_groups": len(column_names),
-    #         "group_names": column_names,
-    #         "sections": list(bag.values()),
-    #     }
-    #     return _data_dict
-
     def to_dict(self, params: ConfigParams) -> dict:
         data = self._data
         column_names = params.get_value("column_names")

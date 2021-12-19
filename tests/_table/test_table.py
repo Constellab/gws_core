@@ -8,7 +8,7 @@ import os
 import pandas
 from gws_core import (BaseTestCase, File, GTest, Settings, Table,
                       TableExporter, TableImporter, TaskRunner)
-from tests.gws_core_test_helper import GwsCoreTestHelper
+from tests.gws_core_test_helper import GWSCoreTestHelper
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -55,7 +55,7 @@ class TestTable(BaseTestCase):
     def test_table_import(self):
         GTest.print("Table load")
 
-        file_path = GwsCoreTestHelper.get_data_file_path()
+        file_path = GWSCoreTestHelper.get_data_file_path()
         table = TableImporter.call(File(file_path))
         df = pandas.read_table(file_path)
         print(df)
@@ -66,22 +66,22 @@ class TestTable(BaseTestCase):
 
     async def test_importer_exporter(self):
         # importer
-        file_path = GwsCoreTestHelper.get_data_file_path()
+        file_path = GWSCoreTestHelper.get_data_file_path()
         tester = TaskRunner(
-            params={}, inputs={"file": File(path=file_path)}, task_type=TableImporter
+            params={}, inputs={"source": File(path=file_path)}, task_type=TableImporter
         )
         self.assertTrue(os.path.exists(file_path))
         outputs = await tester.run()
-        table = outputs["resource"]
+        table = outputs["target"]
         df = pandas.read_table(file_path)
         self.assertTrue(df.equals(table.get_data()))
 
         # exporter
         tester = TaskRunner(
-            params={}, inputs={"resource": table}, task_type=TableExporter
+            params={}, inputs={"source": table}, task_type=TableExporter
         )
         outputs = await tester.run()
-        file_ = outputs["file"]
+        file_ = outputs["target"]
 
         print(file_.path)
 

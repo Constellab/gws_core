@@ -5,15 +5,19 @@ from typing import List
 class TableHelper:
 
     CSV_DELIMITERS: List[str] = ['\t', ',', ';']
+    DEFAULT_CSV_DELIMITER = ","
 
     @classmethod
     def detect_csv_delimiter(cls, csv_str: str) -> str:
-        """Method to guess the delimiter of a csv string based on delimiter count
+        """
+        Method to guess the delimiter of a csv string based on delimiter count.
+
+        By default, the delimiter is comma.
         """
         if csv_str is None or len(csv_str) < 10:
             return None
 
-        max_delimiter: str = None
+        max_delimiter: str = cls.DEFAULT_CSV_DELIMITER
         max_delimiter_count: int = 0
 
         # use a sub csv to improve speed

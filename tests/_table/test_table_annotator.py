@@ -5,15 +5,15 @@
 
 
 from gws_core import BaseTestCase, TableAnnotator, TaskRunner
-from tests.gws_core_test_helper import GwsCoreTestHelper
+from tests.gws_core_test_helper import GWSCoreTestHelper
 
 
 class TestTableAnnotator(BaseTestCase):
 
     async def test_table_column_annotator(self):
         # importer
-        table = GwsCoreTestHelper.get_data_table()
-        metatable = GwsCoreTestHelper.get_metadata_table()
+        table = GWSCoreTestHelper.get_data_table()
+        metatable = GWSCoreTestHelper.get_metadata_table()
         print(table)
 
         # annotation
@@ -39,8 +39,8 @@ class TestTableAnnotator(BaseTestCase):
 
     async def test_table_row_annotator(self):
         # importer
-        table = GwsCoreTestHelper.get_data_table()
-        metatable = GwsCoreTestHelper.get_metadata_table()
+        table = GWSCoreTestHelper.get_data_table()
+        metatable = GWSCoreTestHelper.get_metadata_table()
         print(table)
 
         # annotation

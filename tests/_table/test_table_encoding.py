@@ -6,7 +6,7 @@
 
 from gws_core import (BaseTestCase, Settings, TableDecoder, TableEncoder,
                       TaskRunner)
-from tests.gws_core_test_helper import GwsCoreTestHelper
+from tests.gws_core_test_helper import GWSCoreTestHelper
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -16,11 +16,11 @@ class TestTableEncoding(BaseTestCase):
 
     async def test_table_encoding_decoding(self):
         # importer
-        table = GwsCoreTestHelper.get_data_table()
+        table = GWSCoreTestHelper.get_data_table()
 
         print(table)
 
-        table_en = GwsCoreTestHelper.get_data_encoding_table()
+        table_en = GWSCoreTestHelper.get_data_encoding_table()
 
         # encoding
         tester = TaskRunner(

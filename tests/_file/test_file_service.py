@@ -11,7 +11,7 @@ from gws_core.impl.table.table_file import TableFile
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.resource_typing import FileTyping
-from tests.gws_core_test_helper import GwsCoreTestHelper
+from tests.gws_core_test_helper import GWSCoreTestHelper
 
 client = TestClient(app)
 client2 = TestClient(core_app)
@@ -43,7 +43,7 @@ class TestFileService(BaseTestCase):
         self.assertEqual(sub_file_type.to_json()["supported_extensions"], ['super'])
 
     def test_upload_and_delete(self):
-        file: File = GwsCoreTestHelper.get_iris_file()
+        file: File = GWSCoreTestHelper.get_iris_file()
 
         resource_model: ResourceModel = FsNodeService.create_fs_node_model(file)
         ResourceService.delete(resource_model.id)
@@ -51,7 +51,7 @@ class TestFileService(BaseTestCase):
         self.assertIsNone(ResourceModel.get_by_id(resource_model.id))
 
     def test_update_type(self):
-        file: File = GwsCoreTestHelper.get_iris_file()
+        file: File = GWSCoreTestHelper.get_iris_file()
 
         resource_model: ResourceModel = FsNodeService.create_fs_node_model(file)
         self.assertIsInstance(resource_model.get_resource(), File)

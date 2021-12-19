@@ -66,30 +66,28 @@ class TableBoxPlotView(BaseTableView):
             short_description="Select a series of columns to aggregate as box-plot",
             max_number_of_occurrences=5
         ),
-        "x_tick_labels": ListParam(human_name="X-tick-labels", optional=True, visibility='protected', short_description="The labels of x-axis ticks"),
+        "x_tick_labels": ListParam(human_name="X-tick-labels", optional=True, visibility='protected', short_description="The labels of x-axis ticks. By default, the 'column_names' are used"),
         "x_label": StrParam(human_name="X-label", optional=True, visibility='protected', short_description="The x-axis label to display"),
         "y_label": StrParam(human_name="Y-label", optional=True, visibility='protected', short_description="The y-axis label to display"),
     }
 
     def to_dict(self, params: ConfigParams) -> dict:
-        # apply pre-filters
         data = self._data
-        x_tick_labels = params.get_value("x_tick_labels", None)
         x_label = params.get_value("x_label", "")
         y_label = params.get_value("y_label", "")
+        x_tick_labels = params.get_value("x_tick_labels", None)
 
         # continue ...
         view = BoxPlotView()
         view.x_label = x_label
         view.y_label = y_label
-        view.x_tick_labels = x_tick_labels
 
-        for param_series in params.get("series"):
+        for param_series in params.get_value("series", []):
             column_names = param_series["column_names"]
             if not column_names:
                 n = min(data.shape[1], MAX_NUMBERS_OF_COLUMNS_PER_PAGE)
                 column_names = data.columns[0:n].to_list()
-                #column_names = data.columns.to_list()
+                # column_names = data.columns.to_list()
             else:
                 if param_series["use_regexp"]:
                     reg = "|".join(["^"+val+"$" for val in column_names])
@@ -115,11 +113,14 @@ class TableBoxPlotView(BaseTableView):
             iqr = q3 - q1
             lower_whisker = q1 - (1.5 * iqr)
             upper_whisker = q3 + (1.5 * iqr)
-            x = list(range(0, len(column_names))),
+            x = list(range(0, len(column_names)))
             view.add_series(
                 x=x,
                 median=median,
                 q1=q1.tolist(), q3=q3.tolist(), min=ymin, max=ymax,
                 lower_whisker=lower_whisker.tolist(), upper_whisker=upper_whisker.tolist()
             )
+
+        x_tick_labels = params.get_value("x_tick_labels", x_tick_labels)
+        view.x_tick_labels = x_tick_labels
         return view.to_dict(params)

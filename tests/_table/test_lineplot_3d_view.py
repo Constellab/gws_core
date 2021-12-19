@@ -1,12 +1,12 @@
 
 from gws_core import BaseTestCase, TableLinePlot3DView, ViewTester
-from tests.gws_core_test_helper import GwsCoreTestHelper
+from tests.gws_core_test_helper import GWSCoreTestHelper
 
 
 class TestTableLinePlot3DView(BaseTestCase):
 
     def test_lineplot_2d_view(self,):
-        table = GwsCoreTestHelper.get_iris_table()
+        table = GWSCoreTestHelper.get_iris_table()
 
         tester = ViewTester(
             view=TableLinePlot3DView(table)

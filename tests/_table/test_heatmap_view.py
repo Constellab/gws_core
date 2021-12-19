@@ -3,13 +3,13 @@ import os
 import numpy
 from gws_core import BaseTestCase, HeatmapView, ViewTester
 from pandas import DataFrame
-from tests.gws_core_test_helper import GwsCoreTestHelper
+from tests.gws_core_test_helper import GWSCoreTestHelper
 
 
 class TestTableHeatmapView(BaseTestCase):
 
     def test_heatmap_view(self,):
-        table = GwsCoreTestHelper.get_iris_table()
+        table = GWSCoreTestHelper.get_iris_table()
         tester = ViewTester(
             view=HeatmapView(table)
         )
