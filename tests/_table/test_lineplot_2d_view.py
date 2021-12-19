@@ -1,12 +1,12 @@
 
 from gws_core import BaseTestCase, TableLinePlot2DView, ViewTester
-from tests.gws_core_test_helper import GWSCoreTestHelper
+from gws_core.extra import DataProvider
 
 
 class TestTableLinePlot2DView(BaseTestCase):
 
     def test_lineplot_2d_view(self,):
-        table = GWSCoreTestHelper.get_iris_table()
+        table = DataProvider.get_iris_table()
         tester = ViewTester(
             view=TableLinePlot2DView(table)
         )

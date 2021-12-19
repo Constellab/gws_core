@@ -4,14 +4,14 @@ import os
 
 from gws_core import (BaseTestCase, Dataset, DatasetImporter, File, Settings,
                       TaskRunner)
-from tests.gws_core_test_helper import GWSCoreTestHelper
+from gws_core.extra import DataProvider
 
 
 class TestImporter(BaseTestCase):
 
     async def test_importer(self):
         self.print("Dataset import")
-        ds = GWSCoreTestHelper.get_iris_dataset()
+        ds = DataProvider.get_iris_dataset()
         self.assertEquals(ds.nb_features, 4)
         self.assertEquals(ds.nb_targets, 1)
         self.assertEquals(ds.nb_instances, 150)
@@ -26,7 +26,7 @@ class TestImporter(BaseTestCase):
 
     async def test_data_select(self):
         self.print("Dataset import")
-        ds = GWSCoreTestHelper.get_iris_dataset()
+        ds = DataProvider.get_iris_dataset()
         print(ds)
 
         selected_ds = ds.select_by_column_indexes([1, 2])
@@ -51,7 +51,7 @@ class TestImporter(BaseTestCase):
 
     async def test_importer_no_head(self):
         self.print("Dataset import without header")
-        ds = GWSCoreTestHelper.get_no_head_iris_dataset()
+        ds = DataProvider.get_no_head_iris_dataset()
         self.assertEquals(ds.nb_features, 4)
         self.assertEquals(ds.nb_targets, 1)
         self.assertEquals(ds.nb_instances, 150)

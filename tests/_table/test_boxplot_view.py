@@ -1,12 +1,12 @@
 
 from gws_core import BaseTestCase, TableBoxPlotView, ViewTester
-from tests.gws_core_test_helper import GWSCoreTestHelper
+from gws_core.extra import DataProvider
 
 
 class TestTableBoxPlotView(BaseTestCase):
 
     def test_boxplot_view(self,):
-        table = GWSCoreTestHelper.get_iris_table()
+        table = DataProvider.get_iris_table()
         tester = ViewTester(
             view=TableBoxPlotView(table)
         )

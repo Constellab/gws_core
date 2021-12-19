@@ -2,14 +2,14 @@ import os
 
 import numpy
 from gws_core import BaseTestCase, HeatmapView, ViewTester
+from gws_core.extra import DataProvider
 from pandas import DataFrame
-from tests.gws_core_test_helper import GWSCoreTestHelper
 
 
 class TestTableHeatmapView(BaseTestCase):
 
     def test_heatmap_view(self,):
-        table = GWSCoreTestHelper.get_iris_table()
+        table = DataProvider.get_iris_table()
         tester = ViewTester(
             view=HeatmapView(table)
         )

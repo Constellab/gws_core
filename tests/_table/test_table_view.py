@@ -1,12 +1,12 @@
 
 from gws_core import BaseTestCase, TableView, ViewTester
-from tests.gws_core_test_helper import GWSCoreTestHelper
+from gws_core.extra import DataProvider
 
 
 class TestTableView(BaseTestCase):
 
     async def test_table_view(self,):
-        table = GWSCoreTestHelper.get_iris_table()
+        table = DataProvider.get_iris_table()
 
         print(table)
 

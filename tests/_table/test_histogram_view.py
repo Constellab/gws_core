@@ -1,13 +1,13 @@
 
 import numpy
 from gws_core import BaseTestCase, TableHistogramView, ViewTester
-from tests.gws_core_test_helper import GWSCoreTestHelper
+from gws_core.extra import DataProvider
 
 
 class TestTableHistogramView(BaseTestCase):
 
     def test_histogram_view(self,):
-        table = GWSCoreTestHelper.get_iris_table()
+        table = DataProvider.get_iris_table()
         tester = ViewTester(
             view=TableHistogramView(table)
         )

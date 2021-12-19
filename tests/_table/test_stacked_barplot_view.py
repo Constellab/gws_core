@@ -1,12 +1,12 @@
 
 from gws_core import BaseTestCase, TableStackedBarPlotView, ViewTester
-from tests.gws_core_test_helper import GWSCoreTestHelper
+from gws_core.extra import DataProvider
 
 
 class TestTableStackedBarPlotView(BaseTestCase):
 
     def test_stacked_barplot_2d_view(self,):
-        table = GWSCoreTestHelper.get_iris_table()
+        table = DataProvider.get_iris_table()
 
         tester = ViewTester(
             view=TableStackedBarPlotView(table)

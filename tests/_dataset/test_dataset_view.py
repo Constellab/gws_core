@@ -2,14 +2,14 @@ import os
 
 from gws_core import (BaseTestCase, ConfigParams, Dataset, DatasetImporter,
                       DatasetView, File, TaskRunner, ViewTester)
-from tests.gws_core_test_helper import GWSCoreTestHelper
+from gws_core.extra import DataProvider
 
 
 class TestDatasetView(BaseTestCase):
 
     async def test_dataset_view(self,):
         self.print("Dataset import")
-        ds = GWSCoreTestHelper.get_iris_dataset()
+        ds = DataProvider.get_iris_dataset()
         tester = ViewTester(
             view=DatasetView(ds)
         )
