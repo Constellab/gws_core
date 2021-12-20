@@ -258,6 +258,8 @@ from .progress_bar.progress_bar import \
     ProgressBarMessageType as ProgressBarMessageType
 from .progress_bar.progress_bar_service import \
     ProgressBarService as ProgressBarService
+# Project
+from .project.project import Project as Project
 # Protocol
 from .protocol.protocol import Protocol as Protocol
 from .protocol.protocol_decorator import \
@@ -292,8 +294,6 @@ from .resource.resource_typing import ResourceTyping as ResourceTyping
 from .resource.view import View as View
 from .resource.view_decorator import view as view
 from .resource.view_types import ViewSpecs as ViewSpecs
-# Study
-from .study.study import Study as Study
 # Tag
 from .tag.tag import Tag as Tag
 from .tag.tag import TagHelper as TagHelper

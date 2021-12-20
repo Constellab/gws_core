@@ -10,7 +10,7 @@ from ..core.service.base_service import BaseService
 from ..core.service.external_api_service import ExternalApiService
 from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
-from ..study.study_dto import CentralStudy
+from ..project.project_dto import CentralProject
 from ..user.credentials_dto import CredentialsDTO
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
@@ -53,23 +53,24 @@ class CentralService(BaseService):
         return response.status_code == 201
 
     @classmethod
-    def get_current_user_studies(cls) -> List[CentralStudy]:
+    def get_current_user_projects(cls) -> List[CentralProject]:
         """
-        Call the central api to get the list of study for the current user
+        Call the central api to get the list of project for the current user
         """
         user: User = CurrentUserService.get_and_check_current_user()
-        central_api_url: str = cls._get_central_api_url(f"{cls._external_labs_route}/user/{user.id}/studies")
+        central_api_url: str = cls._get_central_api_url(f"{cls._external_labs_route}/user/{user.id}/projects")
         response = ExternalApiService.get(central_api_url, cls._get_request_header())
 
         if response.status_code != 200:
-            Logger.error(f"Can't retrieve studies for the user {user.id}, {user.email}. Error : {response.text}")
-            raise BadRequestException("Can't retrieve studies for current user")
+            Logger.error(f"Can't retrieve projects for the user {user.id}, {user.email}. Error : {response.text}")
+            raise BadRequestException("Can't retrieve projects for current user")
 
         return response.json()
 
     @classmethod
-    def save_experiment(cls, study_id: str, experiment: dict) -> None:
-        central_api_url: str = cls._get_central_api_url(f"{cls._external_labs_route}/study/{study_id}/add-experiment")
+    def save_experiment(cls, project_id: str, experiment: dict) -> None:
+        central_api_url: str = cls._get_central_api_url(
+            f"{cls._external_labs_route}/project/{project_id}/add-experiment")
         response = ExternalApiService.put(central_api_url, experiment, cls._get_request_header())
 
         if response.status_code != 200:

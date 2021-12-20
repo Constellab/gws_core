@@ -3,23 +3,23 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from peewee import CharField, ForeignKeyField
+from peewee import CharField
 
 from ..core.model.model_with_user import ModelWithUser
 from ..model.typing_register_decorator import typing_registrator
 
 
-@typing_registrator(unique_name="Study", object_type="MODEL", hide=True)
-class Study(ModelWithUser):
+@typing_registrator(unique_name="Project", object_type="MODEL", hide=True)
+class Project(ModelWithUser):
     """
-    Study class.
+    Project class.
     """
     title: str = CharField(null=False)
     description: str = CharField(null=False)
 
-    _table_name = 'gws_study'
+    _table_name = 'gws_project'
 
-    def archive(self, archive: bool) -> 'Study':
+    def archive(self, archive: bool) -> 'Project':
         """
         Deactivated method.
         """

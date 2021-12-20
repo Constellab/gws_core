@@ -12,7 +12,7 @@ from ..core.classes.paginator import PaginatorDict
 from ..core_app import core_app
 from ..experiment.experiment import Experiment
 from ..experiment.experiment_run_service import ExperimentRunService
-from ..study.study_dto import StudyDto
+from ..project.project_dto import ProjectDto
 from ..tag.tag import Tag
 from ..tag.tag_service import TagService
 from ..user.auth_service import AuthService
@@ -81,10 +81,6 @@ def create_an_experiment(experiment: ExperimentDTO,
                          _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Create an experiment.
-
-    - **study_id**: the id of the study
-    - **title**: the title of the experiment [optional]
-    - **description**: the description of the experiment [optional]
     """
 
     return ExperimentService.create_empty_experiment_from_dto(
@@ -95,7 +91,7 @@ def create_an_experiment(experiment: ExperimentDTO,
 
 @core_app.put("/experiment/{id}/validate", tags=["Experiment"], summary="Validate an experiment")
 def validate_an_experiment(id: str,
-                           study_dto: Optional[StudyDto] = None,
+                           project_dto: Optional[ProjectDto] = None,
                            _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """
     Validate a protocol
@@ -103,7 +99,7 @@ def validate_an_experiment(id: str,
     - **id**: the id of the experiment
     """
 
-    return ExperimentService.validate_experiment_send_to_central(id=id, study_dto=study_dto).to_json(deep=True)
+    return ExperimentService.validate_experiment_send_to_central(id=id, project_dto=project_dto).to_json(deep=True)
 
 
 @core_app.put("/experiment/{id}/protocol", tags=["Experiment"], summary="Update an experiment's protocol")

@@ -7,11 +7,11 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from ..study.study_dto import StudyDto
+from ..project.project_dto import ProjectDto
 
 
 # DTO to create/update an experiment
 class ExperimentDTO(BaseModel):
-    study: Optional[StudyDto] = None
+    project: Optional[ProjectDto] = None
     title: Optional[str] = None
     description: Optional[str] = None

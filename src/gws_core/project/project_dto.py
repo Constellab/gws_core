@@ -4,20 +4,20 @@ from typing import Any, TypedDict
 from pydantic import BaseModel
 
 
-class CentralStudy(TypedDict):
+class CentralProject(TypedDict):
 
     id: str
     title: str
     description: str
 
 
-class StudyDto(BaseModel):
+class ProjectDto(BaseModel):
 
     id: str = None
     title: str = None
     description: str = None
 
     def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, StudyDto):
+        if not isinstance(other, ProjectDto):
             return False
         return self.id == other.id

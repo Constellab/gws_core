@@ -18,12 +18,12 @@ from ..core.utils.logger import Logger
 from ..core.utils.settings import Settings
 from ..experiment.experiment_search_builder import ExperimentSearchBuilder
 from ..process.process_factory import ProcessFactory
+from ..project.project import Project
+from ..project.project_dto import ProjectDto
+from ..project.project_service import ProjectService
 from ..protocol.protocol import Protocol
 from ..protocol.protocol_model import ProtocolModel
 from ..protocol.protocol_service import ProtocolService
-from ..study.study import Study
-from ..study.study_dto import StudyDto
-from ..study.study_service import StudyService
 from ..task.task import Task
 from ..task.task_model import TaskModel
 from ..task.task_service import TaskService
@@ -42,22 +42,22 @@ class ExperimentService(BaseService):
     @classmethod
     def create_empty_experiment_from_dto(cls, experimentDTO: ExperimentDTO) -> Experiment:
 
-        # retrieve the study
-        study: Study = StudyService.get_or_create_study_from_dto(experimentDTO.study)
+        # retrieve the project
+        project: Project = ProjectService.get_or_create_project_from_dto(experimentDTO.project)
 
         return cls.create_empty_experiment(
-            study=study,
+            project=project,
             title=experimentDTO.title,
             description=experimentDTO.description,
         )
 
     @classmethod
-    def create_empty_experiment(cls, study: Study = None, title: str = "", description: str = "",
+    def create_empty_experiment(cls, project: Project = None, title: str = "", description: str = "",
                                 type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
 
         return cls.create_experiment_from_protocol_model(
             protocol_model=ProcessFactory.create_protocol_empty(),
-            study=study,
+            project=project,
             title=title,
             description=description,
             type_=type_
@@ -66,25 +66,25 @@ class ExperimentService(BaseService):
     @classmethod
     @transaction()
     def create_experiment_from_task_model(
-            cls, task_model: TaskModel, study: Study = None, title: str = "", description: str = "",
+            cls, task_model: TaskModel, project: Project = None, title: str = "", description: str = "",
             type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
         if not isinstance(task_model, TaskModel, ):
             raise BadRequestException("An instance of TaskModel is required")
         proto = ProtocolService.create_protocol_model_from_task_model(task_model=task_model)
         return cls.create_experiment_from_protocol_model(
-            protocol_model=proto, study=study, title=title, description=description, type_=type_)
+            protocol_model=proto, project=project, title=title, description=description, type_=type_)
 
     @classmethod
     @transaction()
     def create_experiment_from_protocol_model(
-            cls, protocol_model: ProtocolModel, study: Study = None, title: str = "", description: str = "",
+            cls, protocol_model: ProtocolModel, project: Project = None, title: str = "", description: str = "",
             type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
         if not isinstance(protocol_model, ProtocolModel):
             raise BadRequestException("An instance of ProtocolModel is required")
         experiment = Experiment()
         experiment.title = title
         experiment.description = description
-        experiment.study = study
+        experiment.project = project
         experiment.type = type_
 
         experiment = experiment.save()
@@ -97,21 +97,21 @@ class ExperimentService(BaseService):
     @classmethod
     def create_experiment_from_protocol_type(
             cls, protocol_type: Type[Protocol],
-            study: Study = None, title: str = "", description: str = "",
+            project: Project = None, title: str = "", description: str = "",
             type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
 
         protocol_model: ProtocolModel = ProtocolService.create_protocol_model_from_type(protocol_type=protocol_type)
         return cls.create_experiment_from_protocol_model(
-            protocol_model=protocol_model, study=study, title=title, description=description, type_=type_)
+            protocol_model=protocol_model, project=project, title=title, description=description, type_=type_)
 
     @classmethod
     def create_experiment_from_task_type(
-            cls, task_type: Type[Task], study: Study = None, title: str = "",
+            cls, task_type: Type[Task], project: Project = None, title: str = "",
             description: str = "", type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
 
         task_model: TaskModel = TaskService.create_task_model_from_type(task_type=task_type)
         return cls.create_experiment_from_task_model(
-            task_model=task_model, study=study, title=title, description=description, type_=type_)
+            task_model=task_model, project=project, title=title, description=description, type_=type_)
 
     ################################### UPDATE ##############################
 
@@ -123,7 +123,7 @@ class ExperimentService(BaseService):
 
         experiment.title = experiment_DTO.title
         experiment.description = experiment_DTO.description
-        experiment.study = StudyService.get_or_create_study_from_dto(experiment_DTO.study)
+        experiment.project = ProjectService.get_or_create_project_from_dto(experiment_DTO.project)
 
         experiment.save()
         return experiment
@@ -140,12 +140,12 @@ class ExperimentService(BaseService):
 
     @classmethod
     @transaction()
-    def validate_experiment(cls, id: str, study_dto: StudyDto = None) -> Experiment:
+    def validate_experiment(cls, id: str, project_dto: ProjectDto = None) -> Experiment:
         experiment: Experiment = Experiment.get_by_id_and_check(id)
 
-        # set the study if it is provided
-        if study_dto is not None:
-            experiment.study = StudyService.get_or_create_study_from_dto(study_dto)
+        # set the project if it is provided
+        if project_dto is not None:
+            experiment.project = ProjectService.get_or_create_project_from_dto(project_dto)
 
         experiment.validate()
 
@@ -159,15 +159,15 @@ class ExperimentService(BaseService):
 
     @classmethod
     @transaction()
-    def validate_experiment_send_to_central(cls, id: str, study_dto: StudyDto = None) -> Experiment:
-        experiment = cls.validate_experiment(id, study_dto)
+    def validate_experiment_send_to_central(cls, id: str, project_dto: ProjectDto = None) -> Experiment:
+        experiment = cls.validate_experiment(id, project_dto)
 
         if Settings.is_local_env():
             Logger.info('Skipping sending experiment to central as we are running in LOCAL')
             return experiment
 
         # Save the experiment in central
-        CentralService.save_experiment(experiment.study.id, experiment.to_json())
+        CentralService.save_experiment(experiment.project.id, experiment.to_json())
 
         return experiment
 
@@ -223,7 +223,7 @@ class ExperimentService(BaseService):
 
         return cls.create_experiment_from_protocol_model(
             protocol_model=ProtocolService.copy_protocol(experiment.protocol_model),
-            study=experiment.study,
+            project=experiment.project,
             title=experiment.title + " copy",
             description=experiment.description
         )

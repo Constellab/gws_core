@@ -18,7 +18,7 @@ from gws_core.impl.robot.robot_protocol import (CreateSimpleRobot,
                                                 MoveSimpleRobot)
 from gws_core.io.io_spec import IOSpecClass
 from gws_core.process.process_model import ProcessStatus
-from gws_core.study.study_dto import StudyDto
+from gws_core.project.project_dto import ProjectDto
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -31,16 +31,16 @@ class TestExperiment(BaseTestCase):
     async def test_create_empty(self):
         GTest.print("Create empty")
 
-        study_dto: StudyDto = StudyDto(id=Utils.generate_uuid(), title="Study", description="Desc")
+        project_dto: ProjectDto = ProjectDto(id=Utils.generate_uuid(), title="Project", description="Desc")
         experiment_dto: ExperimentDTO = ExperimentDTO(
-            title="Experiment title", description="Experiment description", study=study_dto)
+            title="Experiment title", description="Experiment description", project=project_dto)
         experiment = ExperimentService.create_empty_experiment_from_dto(experiment_dto)
 
         self.assertIsNotNone(experiment.id)
         self.assertEqual(experiment.title, 'Experiment title')
         self.assertEqual(experiment.description, 'Experiment description')
         self.assertIsNotNone(experiment.protocol_model.id)
-        self.assertEqual(experiment.study.id, study_dto.id)
+        self.assertEqual(experiment.project.id, project_dto.id)
 
     async def test_run(self):
         GTest.print("Run Experiment")
