@@ -37,7 +37,7 @@ class TestBrick(BaseTestCase):
         self.assertIsNotNone(ListJsonable(brick_models).to_json())
 
     def test_log_brick_message(self):
-        BrickService.log_brick_message(Task, 'Test message', 'ERROR')
+        BrickService.log_brick_message_from_obj(Task, 'Test message', 'ERROR')
 
         brick_model = BrickService.get_brick_model('gws_core')
         self.assertEqual(brick_model.status, 'ERROR')

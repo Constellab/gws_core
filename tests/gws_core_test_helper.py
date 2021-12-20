@@ -84,7 +84,7 @@ class GWSCoreTestHelper():
 
     @classmethod
     def get_annotated_table(cls) -> Table:
-        return AnnotatedTableImporter.call(File(cls.get_test_data_path("annotated_table.csv0")), {
+        return AnnotatedTableImporter.call(File(cls.get_test_data_path("annotated_table.csv")), {
             "index_columns": [0],
             "delimiter": ",",
         })

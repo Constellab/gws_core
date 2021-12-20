@@ -17,6 +17,10 @@ class DataProvider():
         return os.path.join(cls._get_test_data_dir(), path)
 
     @classmethod
+    def get_test_data_file(cls, path: str) -> File:
+        return File(cls.get_test_data_path(path))
+
+    @classmethod
     def get_iris_file(cls) -> File:
         return File(cls.get_test_data_path('iris.csv'))
 

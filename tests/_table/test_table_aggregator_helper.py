@@ -3,29 +3,16 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import os
 
-from gws_core import (BaseTestCase, BoolParam, ConfigParams, Experiment,
-                      ExperimentService, File, GTest, JSONDict, Resource,
-                      Settings, Shell, StrParam, Table, TableAggregatorHelper,
-                      TableImporter, TaskInputs, TaskModel, TaskOutputs,
-                      TaskRunner, task_decorator)
+from gws_core import BaseTestCase, Table, TableAggregatorHelper, TableImporter
+from gws_core.data_provider.data_provider import DataProvider
 from pandas import Series
-
-settings = Settings.retrieve()
-testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 
 class TestTableAggregatorHelper(BaseTestCase):
     async def test_table_aggregator_helper(self):
-        file = File(path=os.path.join(testdata_dir, "multi_index_data.csv"))
-        tester = TaskRunner(
-            params={"header": 0, "index_columns": ["Name"]},
-            inputs={"file": file},
-            task_type=TableImporter,
-        )
-        outputs = await tester.run()
-        table = outputs["resource"]
+        file = DataProvider.get_test_data_file("multi_index_data.csv")
+        table: Table = TableImporter.call(file, {"header": 0, "index_columns": ["Name"]})
 
         df = TableAggregatorHelper.aggregate(data=table.get_data(), direction="vertical", func="sum")
         exptect_df = Series(data=[110, 170], index=["Age", "Weight"])

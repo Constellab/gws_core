@@ -3,13 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import os
 
-from gws_core import (BaseTestCase, BoolParam, ConfigParams, Experiment,
-                      ExperimentService, File, GTest, JSONDict, Resource,
-                      Settings, Shell, StrParam, Table, TableFilterHelper,
-                      TableImporter, TaskInputs, TaskModel, TaskOutputs,
-                      TaskRunner, task_decorator)
+from gws_core import (BaseTestCase, Settings, Table, TableFilterHelper,
+                      TableImporter)
+from gws_core.data_provider.data_provider import DataProvider
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -17,15 +14,8 @@ testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 class TestTableFilterHelper(BaseTestCase):
     async def test_table_filter_helper(self):
-        file = File(path=os.path.join(testdata_dir, "multi_index_data.csv"))
-        tester = TaskRunner(
-            params={"header": 0, "index_columns": ["Name"]},
-            inputs={"file": file},
-            task_type=TableImporter,
-        )
-        outputs = await tester.run()
-        table = outputs["resource"]
-        print(table)
+        file = DataProvider.get_test_data_file("multi_index_data.csv")
+        table: Table = TableImporter.call(file, {"header": 0, "index_columns": ["Name"]})
 
         # filter by row name
         df = TableFilterHelper.filter_by_axis_names(

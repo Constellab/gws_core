@@ -31,5 +31,5 @@ class TestPaginator(BaseTestCase):
         self.assertEqual(paginator_dict["is_last_page"], True)
 
         # Test the experiment values
-        self.assertEqual(paginator_dict["objects"][0]["data"]["title"], 'My title')
-        self.assertEqual(paginator_dict["objects"][0]["data"]["description"], 'My description')
+        self.assertEqual(paginator_dict["objects"][0]["title"], 'My title')
+        self.assertEqual(paginator_dict["objects"][0]["description"], 'My description')
