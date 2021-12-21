@@ -83,9 +83,9 @@ class TransformerService():
         # retrieve transformer type
         transformer_task: Type[Task] = TypingManager.get_type_from_name(transformer['typing_name'])
 
-        task_runner: TaskRunner = TaskRunner(transformer_task, inputs={'resource': resource})
+        task_runner: TaskRunner = TaskRunner(transformer_task, inputs={'source': resource})
 
         # run task, clear after task and get resource
-        resource: Resource = (await task_runner.run())['resource']
+        resource: Resource = (await task_runner.run())['target']
         task_runner.run_after_task()
         return resource
