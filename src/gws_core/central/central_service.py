@@ -86,7 +86,7 @@ class CentralService(BaseService):
         central_api_url = Settings.get_central_api_url()
         if central_api_url is None:
             raise BadRequestException('The CENTRAL_API_URL environment variable is not set')
-        return central_api_url + route
+        return central_api_url + '/' + route
 
     @classmethod
     def _get_request_header(cls) -> Dict[str, str]:
