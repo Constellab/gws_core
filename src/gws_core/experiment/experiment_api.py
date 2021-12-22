@@ -66,7 +66,7 @@ def get_the_list_of_experiments(page: Optional[int] = 1,
 async def advanced_search(search_dict: SearchDict,
                           page: Optional[int] = 1,
                           number_of_items_per_page: Optional[int] = 20,
-                          _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+                          _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
     """
     Advanced search on experiment
     """
