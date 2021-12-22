@@ -3,9 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import final
+from typing import Optional, final
 
-from peewee import BooleanField, CharField, CompositeKey, ForeignKeyField
+from peewee import BooleanField, CharField, CompositeKey, ForeignKeyField, ModelSelect
 
 from ..core.model.base_model import BaseModel
 from ..core.model.json_field import JSONField
@@ -60,6 +60,10 @@ class ReportExperiment(BaseModel):
     @classmethod
     def delete_obj(cls, experiment_id: str, report_id: str) -> None:
         return cls.delete().where((cls.experiment == experiment_id) & (cls.report == report_id)).execute()
+
+    @classmethod
+    def find_by_pk(cls, experiment_id: str, report_id: str) -> ModelSelect:
+        return cls.select().where((cls.experiment == experiment_id) & (cls.report == report_id))
 
     def save(self, *args, **kwargs) -> 'BaseModel':
         """Use force insert because it is a composite key

@@ -6,6 +6,7 @@
 
 from typing import Dict, List
 
+from gws_core.core.exception.gws_exceptions import GWSException
 from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
@@ -65,8 +66,8 @@ class ReportService():
         experiments: List[Experiment] = cls.get_experiments_by_report(report_id)
         for experiment in experiments:
             if not experiment.is_validated:
-                raise BadRequestException(
-                    "Can't validate the report if one of the associated experiment is not validated")
+                raise BadRequestException(GWSException.REPORT_VALIDATION_EXP_NOT_VALIDATED.value,
+                                          GWSException.REPORT_VALIDATION_EXP_NOT_VALIDATED.name)
 
         report.is_validated = True
 
@@ -75,6 +76,10 @@ class ReportService():
     @classmethod
     def add_experiment(cls, report_id: str, experiment_id: str) -> Experiment:
         report: Report = cls._get_and_check_before_update(report_id)
+
+        if ReportExperiment.find_by_pk(experiment_id, report_id).count() > 0:
+            raise BadRequestException(GWSException.REPORT_EXP_ALREADY_ASSOCIATED.value,
+                                      GWSException.REPORT_EXP_ALREADY_ASSOCIATED.name)
 
         experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
 
@@ -100,7 +105,7 @@ class ReportService():
         report: Report = Report.get_by_id_and_check(report_id)
 
         if report.is_validated:
-            raise BadRequestException("Can't update or delete a validated report")
+            raise BadRequestException(GWSException.REPORT_VALIDATED.value, GWSException.REPORT_VALIDATED.name)
 
         return report
 

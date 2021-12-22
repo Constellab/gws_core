@@ -59,6 +59,11 @@ def remove_experiment(
         report_id: str, experiment_id: str, _: UserData = Depends(AuthService.check_user_access_token)) -> None:
     ReportService.remove_experiment(report_id, experiment_id)
 
+
+@core_app.put("/report/{report_id}/validate", tags=["Report"], summary="Validate the report")
+def validate(report_id: str, _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
+    return ReportService.validate(report_id).to_json()
+
   ################################################# GET ########################################
 
 
