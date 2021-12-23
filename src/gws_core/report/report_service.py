@@ -7,6 +7,8 @@
 from typing import Dict, List
 
 from gws_core.core.exception.gws_exceptions import GWSException
+from gws_core.project.project_dto import ProjectDto
+from gws_core.project.project_service import ProjectService
 from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
@@ -59,8 +61,15 @@ class ReportService():
         Report.delete_by_id(report_id)
 
     @classmethod
-    def validate(cls, report_id: str) -> Report:
+    def validate(cls, report_id: str, project_dto: ProjectDto = None) -> Report:
         report: Report = cls._get_and_check_before_update(report_id)
+
+        # set the project if it is provided
+        if project_dto is not None:
+            report.project = ProjectService.get_or_create_project_from_dto(project_dto)
+
+        if report.project is None:
+            raise BadRequestException("The report must be associated to a project to be validated")
 
         # check that all associated experiment are validated
         experiments: List[Experiment] = cls.get_experiments_by_report(report_id)

@@ -3,15 +3,17 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Optional, final
+from typing import final
 
-from peewee import BooleanField, CharField, CompositeKey, ForeignKeyField, ModelSelect
+from peewee import (BooleanField, CharField, CompositeKey, ForeignKeyField,
+                    ModelSelect)
 
 from ..core.model.base_model import BaseModel
 from ..core.model.json_field import JSONField
 from ..core.model.model_with_user import ModelWithUser
 from ..experiment.experiment import Experiment
 from ..model.typing_register_decorator import typing_registrator
+from ..project.project import Project
 
 
 @final
@@ -21,6 +23,8 @@ class Report(ModelWithUser):
 
     content = JSONField(null=True)
 
+    project: Project = ForeignKeyField(Project, null=True)
+
     is_validated: bool = BooleanField(default=False)
 
     _table_name = 'gws_report'
@@ -28,7 +32,9 @@ class Report(ModelWithUser):
     def to_json(self, deep: bool = False, **kwargs) -> dict:
         json_ = super().to_json(deep=deep, **kwargs)
 
-        if not deep:
+        if deep:
+            json_["project"] = self.project.to_json() if self.project is not None else None
+        else:
             del json_["content"]
 
         return json_

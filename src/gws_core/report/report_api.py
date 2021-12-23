@@ -7,6 +7,7 @@ from typing import Dict, List, Optional
 
 from fastapi.param_functions import Depends
 from gws_core.core.classes.search_builder import SearchDict
+from gws_core.project.project_dto import ProjectDto
 
 from ..core.classes.jsonable import ListJsonable
 from ..core_app import core_app
@@ -61,14 +62,15 @@ def remove_experiment(
 
 
 @core_app.put("/report/{report_id}/validate", tags=["Report"], summary="Validate the report")
-def validate(report_id: str, _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
-    return ReportService.validate(report_id).to_json()
+def validate(report_id: str, project_dto: Optional[ProjectDto] = None,
+             _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
+    return ReportService.validate(report_id, project_dto).to_json()
 
   ################################################# GET ########################################
 
 
 @core_app.get("/report/{id}", tags=["Report"], summary="Get a report")
-def get_by_experiment(id: str, _: UserData = Depends(AuthService.check_user_access_token)) -> List[Report]:
+def get_by_id(id: str, _: UserData = Depends(AuthService.check_user_access_token)) -> List[Report]:
     return ReportService.get_by_id_and_check(id).to_json(deep=True)
 
 
