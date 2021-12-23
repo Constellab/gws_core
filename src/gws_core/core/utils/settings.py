@@ -124,6 +124,10 @@ class Settings(PeeweeModel):
         :rtype: [type]
         """
 
+        # specific central api key for local env
+        if cls.is_local_env():
+            return '123456'
+
         if "CENTRAL_API_KEY" not in os.environ:
             return None
 
@@ -136,6 +140,10 @@ class Settings(PeeweeModel):
         :return: [description]
         :rtype: [type]
         """
+
+        # specific central api url for local env
+        if cls.is_local_env():
+            return 'http://host.docker.internal:3001'
 
         if "CENTRAL_API_URL" not in os.environ:
             return None

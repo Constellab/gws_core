@@ -15,7 +15,7 @@ class Project(ModelWithUser):
     Project class.
     """
     title: str = CharField(null=False)
-    description: str = CharField(null=False)
+    description: str = CharField(null=True)
 
     _table_name = 'gws_project'
 

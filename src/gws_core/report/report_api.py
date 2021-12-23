@@ -64,7 +64,7 @@ def remove_experiment(
 @core_app.put("/report/{report_id}/validate", tags=["Report"], summary="Validate the report")
 def validate(report_id: str, project_dto: Optional[ProjectDto] = None,
              _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
-    return ReportService.validate(report_id, project_dto).to_json()
+    return ReportService.validate_and_send_to_central(report_id, project_dto).to_json(deep=True)
 
   ################################################# GET ########################################
 

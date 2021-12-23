@@ -6,17 +6,20 @@
 
 from typing import Dict, List
 
-from gws_core.core.exception.gws_exceptions import GWSException
-from gws_core.project.project_dto import ProjectDto
-from gws_core.project.project_service import ProjectService
 from peewee import ModelSelect
 
+from ..central.central_service import CentralService
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import SearchBuilder, SearchDict
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from ..core.exception.gws_exceptions import GWSException
+from ..core.utils.logger import Logger
+from ..core.utils.settings import Settings
 from ..experiment.experiment import Experiment
+from ..project.project_dto import ProjectDto
+from ..project.project_service import ProjectService
 from ..report.report_dto import ReportDTO
 from ..report.report_search_builder import ReportSearchBuilder
 from .report import Report, ReportExperiment
@@ -76,11 +79,35 @@ class ReportService():
         for experiment in experiments:
             if not experiment.is_validated:
                 raise BadRequestException(GWSException.REPORT_VALIDATION_EXP_NOT_VALIDATED.value,
-                                          GWSException.REPORT_VALIDATION_EXP_NOT_VALIDATED.name)
+                                          GWSException.REPORT_VALIDATION_EXP_NOT_VALIDATED.name, {'title': experiment.title})
+
+            if experiment.project.id != report.project.id:
+                raise BadRequestException(GWSException.REPORT_VALIDATION_EXP_OTHER_PROJECT.value,
+                                          GWSException.REPORT_VALIDATION_EXP_OTHER_PROJECT.name, {'title': experiment.title})
 
         report.is_validated = True
 
         return report.save()
+
+    @classmethod
+    @transaction()
+    def validate_and_send_to_central(cls, report_id: str, project_dto: ProjectDto = None) -> Report:
+        report = cls.validate(report_id, project_dto)
+
+        # if Settings.is_local_env():
+        #     Logger.info('Skipping sending experiment to central as we are running in LOCAL')
+        #     return report
+
+        json_: Dict = report.to_json(deep=True)
+
+        # check that all associated experiment are validated
+        experiments: List[Experiment] = cls.get_experiments_by_report(report_id)
+        json_["experimentIds"] = list(map(lambda x: x.id, experiments))
+
+        # Save the experiment in central
+        CentralService.save_report(report.project.id, json_)
+
+        return report
 
     @classmethod
     def add_experiment(cls, report_id: str, experiment_id: str) -> Experiment:

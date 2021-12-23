@@ -39,4 +39,5 @@ class GWSException(Enum):
     INVALID_RESOURCE_R_FIELD = "[ResourceRField] The resource generated on port {{port_name}} is linked to another resource which is not a input of the task. This break the tracability."
     REPORT_VALIDATED = "The report can't be updated not delete because it is validated"
     REPORT_EXP_ALREADY_ASSOCIATED = "The experiment is already associated with the report"
-    REPORT_VALIDATION_EXP_NOT_VALIDATED = "The associated experiments must be validated first"
+    REPORT_VALIDATION_EXP_NOT_VALIDATED = "The associated experiment '{{title}}' must be validated first"
+    REPORT_VALIDATION_EXP_OTHER_PROJECT = "The associated experiment '{{title}}' is linked to another project"
