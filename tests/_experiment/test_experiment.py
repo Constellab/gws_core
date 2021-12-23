@@ -33,14 +33,17 @@ class TestExperiment(BaseTestCase):
 
         project_dto: ProjectDto = ProjectDto(id=Utils.generate_uuid(), title="Project", description="Desc")
         experiment_dto: ExperimentDTO = ExperimentDTO(
-            title="Experiment title", description="Experiment description", project=project_dto)
+            title="Experiment title", project=project_dto)
         experiment = ExperimentService.create_empty_experiment_from_dto(experiment_dto)
 
         self.assertIsNotNone(experiment.id)
         self.assertEqual(experiment.title, 'Experiment title')
-        self.assertEqual(experiment.description, 'Experiment description')
         self.assertIsNotNone(experiment.protocol_model.id)
         self.assertEqual(experiment.project.id, project_dto.id)
+
+        ExperimentService.update_experiment_description(experiment.id, {"test": "ok"})
+        experiment = ExperimentService.get_experiment_by_id(experiment.id)
+        self.assert_json(experiment.description, {"test": "ok"})
 
     async def test_run(self):
         GTest.print("Run Experiment")
@@ -52,7 +55,7 @@ class TestExperiment(BaseTestCase):
         proto1: ProtocolModel = RobotService.create_robot_world_travel()
 
         experiment1: Experiment = ExperimentService.create_experiment_from_protocol_model(
-            protocol_model=proto1, title="My exp title", description="This is my new experiment")
+            protocol_model=proto1, title="My exp title")
 
         self.assertEqual(len(experiment1.task_models), 16)
         self.assertEqual(TaskModel.select().count(), 16)
@@ -64,9 +67,6 @@ class TestExperiment(BaseTestCase):
         print("Create experiment_2 = experiment_1 ...")
         experiment2: Experiment = Experiment.get_by_id_and_check(experiment1.id)
 
-        self.assertEqual(experiment2.title, "My exp title")
-        self.assertEqual(experiment2.description,
-                         "This is my new experiment")
         self.assertEqual(experiment2, experiment1)
         self.assertEqual(len(experiment2.task_models), 16)
         self.assertEqual(TaskModel.select().count(), 16)
@@ -89,7 +89,6 @@ class TestExperiment(BaseTestCase):
         e2_bis: Experiment = ExperimentService.get_experiment_by_id(experiment1.id)
 
         self.assertEqual(e2_bis.title, "My exp title")
-        self.assertEqual(e2_bis.description, "This is my new experiment")
         self.assertEqual(len(e2_bis.task_models), 16)
         self.assertEqual(Experiment.select().count(), 1)
 

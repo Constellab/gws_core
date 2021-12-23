@@ -27,7 +27,7 @@ class IExperiment:
     _protocol: IProtocol
 
     def __init__(
-            self, protocol_type: Type[Protocol] = None, project: Project = None, title: str = '', description: str = '',
+            self, protocol_type: Type[Protocol] = None, project: Project = None, title: str = '',
             type_: ExperimentType = ExperimentType.EXPERIMENT):
         """This create an experiment in the database with the provided Task or Protocol
 
@@ -39,8 +39,6 @@ class IExperiment:
         :type project: str, optional
         :param title: experiment title, defaults to ''
         :type title: str, optional
-        :param description: experiment description, defaults to ''
-        :type description: str, optional
         :param type_: type fo the experiment, to change only if you want what you are doing, defaults to ExperimentType.EXPERIMENT
         :type type_: str, optional
         :raises Exception: [description]
@@ -48,12 +46,12 @@ class IExperiment:
 
         if protocol_type is None:
             self._experiment = ExperimentService.create_empty_experiment(
-                title=title, description=description, project=project, type_=type_)
+                title=title, project=project, type_=type_)
         else:
             if not isclass(protocol_type) or not issubclass(protocol_type, Protocol):
                 raise Exception(f"The provided process_type '{str(protocol_type)}' is not a process")
             self._experiment = ExperimentService.create_experiment_from_protocol_type(
-                protocol_type=protocol_type, title=title, description=description, project=project, type_=type_)
+                protocol_type=protocol_type, title=title, project=project, type_=type_)
 
         # Init the IProtocol
         self._protocol = IProtocol(self._experiment.protocol_model)

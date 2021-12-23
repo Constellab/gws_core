@@ -48,42 +48,39 @@ class ExperimentService(BaseService):
         return cls.create_empty_experiment(
             project=project,
             title=experimentDTO.title,
-            description=experimentDTO.description,
         )
 
     @classmethod
-    def create_empty_experiment(cls, project: Project = None, title: str = "", description: str = "",
+    def create_empty_experiment(cls, project: Project = None, title: str = "",
                                 type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
 
         return cls.create_experiment_from_protocol_model(
             protocol_model=ProcessFactory.create_protocol_empty(),
             project=project,
             title=title,
-            description=description,
             type_=type_
         )
 
     @classmethod
     @transaction()
     def create_experiment_from_task_model(
-            cls, task_model: TaskModel, project: Project = None, title: str = "", description: str = "",
+            cls, task_model: TaskModel, project: Project = None, title: str = "",
             type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
         if not isinstance(task_model, TaskModel, ):
             raise BadRequestException("An instance of TaskModel is required")
         proto = ProtocolService.create_protocol_model_from_task_model(task_model=task_model)
         return cls.create_experiment_from_protocol_model(
-            protocol_model=proto, project=project, title=title, description=description, type_=type_)
+            protocol_model=proto, project=project, title=title, type_=type_)
 
     @classmethod
     @transaction()
     def create_experiment_from_protocol_model(
-            cls, protocol_model: ProtocolModel, project: Project = None, title: str = "", description: str = "",
+            cls, protocol_model: ProtocolModel, project: Project = None, title: str = "",
             type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
         if not isinstance(protocol_model, ProtocolModel):
             raise BadRequestException("An instance of ProtocolModel is required")
         experiment = Experiment()
         experiment.title = title
-        experiment.description = description
         experiment.project = project
         experiment.type = type_
 
@@ -97,21 +94,21 @@ class ExperimentService(BaseService):
     @classmethod
     def create_experiment_from_protocol_type(
             cls, protocol_type: Type[Protocol],
-            project: Project = None, title: str = "", description: str = "",
+            project: Project = None, title: str = "",
             type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
 
         protocol_model: ProtocolModel = ProtocolService.create_protocol_model_from_type(protocol_type=protocol_type)
         return cls.create_experiment_from_protocol_model(
-            protocol_model=protocol_model, project=project, title=title, description=description, type_=type_)
+            protocol_model=protocol_model, project=project, title=title, type_=type_)
 
     @classmethod
     def create_experiment_from_task_type(
             cls, task_type: Type[Task], project: Project = None, title: str = "",
-            description: str = "", type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
+            type_: ExperimentType = ExperimentType.EXPERIMENT) -> Experiment:
 
         task_model: TaskModel = TaskService.create_task_model_from_type(task_type=task_type)
         return cls.create_experiment_from_task_model(
-            task_model=task_model, project=project, title=title, description=description, type_=type_)
+            task_model=task_model, project=project, title=title, type_=type_)
 
     ################################### UPDATE ##############################
 
@@ -122,7 +119,6 @@ class ExperimentService(BaseService):
         experiment.check_is_updatable()
 
         experiment.title = experiment_DTO.title
-        experiment.description = experiment_DTO.description
         experiment.project = ProjectService.get_or_create_project_from_dto(experiment_DTO.project)
 
         experiment.save()
@@ -137,6 +133,14 @@ class ExperimentService(BaseService):
 
         experiment.save()
         return experiment
+
+    @classmethod
+    def update_experiment_description(cls, id: str, description: Dict) -> Experiment:
+        experiment: Experiment = Experiment.get_by_id_and_check(id)
+
+        experiment.check_is_updatable()
+        experiment.description = description
+        return experiment.save()
 
     @classmethod
     @transaction()
@@ -221,9 +225,11 @@ class ExperimentService(BaseService):
         """
         experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
 
-        return cls.create_experiment_from_protocol_model(
+        new_experiment: Experiment = cls.create_experiment_from_protocol_model(
             protocol_model=ProtocolService.copy_protocol(experiment.protocol_model),
             project=experiment.project,
             title=experiment.title + " copy",
-            description=experiment.description
         )
+
+        new_experiment.description = experiment.description
+        return new_experiment.save()

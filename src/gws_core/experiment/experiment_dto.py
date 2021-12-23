@@ -13,5 +13,4 @@ from ..project.project_dto import ProjectDto
 # DTO to create/update an experiment
 class ExperimentDTO(BaseModel):
     project: Optional[ProjectDto] = None
-    title: Optional[str] = None
-    description: Optional[str] = None
+    title: str = None
