@@ -44,3 +44,21 @@ class TestTaskTransformer(BaseTestCase):
         # retrieve robot and check age
         robot: Robot = resource_model.get_resource()
         self.assertEqual(robot.age, age_config)
+
+    async def test_call_transformers(self):
+
+        age_config = 99
+
+        transformers: List[TransformerDict] = [{
+            'typing_name': RobotTransform._typing_name,
+            'config_values': {'age': 5}
+        },
+            {
+            'typing_name': RobotTransform._typing_name,
+            'config_values': {'age': age_config}
+        }]
+
+        # create a robot resource
+        robot = Robot.empty()
+        new_robot: Robot = await TransformerService.call_transformers(robot, transformers)
+        self.assertEqual(new_robot.age, age_config)

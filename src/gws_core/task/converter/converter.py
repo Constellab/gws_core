@@ -13,7 +13,7 @@ from ...brick.brick_service import BrickService
 from ...config.config_types import ConfigParams, ConfigParamsDict, ConfigSpecs
 from ...core.utils.utils import Utils
 from ...resource.resource import Resource
-from ...task.task import Task
+from ...task.task import CheckBeforeTaskResult, Task
 from ...task.task_decorator import decorate_task, task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
 from ...task.task_runner import TaskRunner
@@ -87,13 +87,12 @@ class Converter(Task):
         if not isinstance(source, cls.get_source_type()):
             raise Exception(f"The {cls.__name__} task requires a {cls.get_source_type().__name__} resource")
 
-        task_runner: TaskRunner = TaskRunner(cls, params=params, inputs={'source': source})
+        converter_runner: ConverterRunner = ConverterRunner(cls, params=params, input=source)
 
         # call the run async method in a sync function
         with ThreadPoolExecutor() as pool:
-            outputs = pool.submit(asyncio.run, task_runner.run()).result()
-            result = outputs['target']
-            pool.submit(asyncio.run, task_runner.run_after_task())
+            result = pool.submit(asyncio.run, converter_runner.run()).result()
+            pool.submit(asyncio.run, converter_runner.run_after_task())
             return result
 
     @final
@@ -115,3 +114,40 @@ class Converter(Task):
         :rtype: Type[Resource]
         """
         return cls.output_specs['target']
+
+
+class ConverterRunner():
+    """Class to run a converter
+
+    :raises Exception: [description]
+    :return: [description]
+    :rtype: [type]
+    """
+
+    _task_runner: TaskRunner
+
+    def __init__(self, converter_type: Type[Converter], params: ConfigParamsDict = None,
+                 input: Resource = None) -> None:
+        if not Utils.issubclass(converter_type, Converter):
+            raise Exception('The ConverterRunner must have a Converter')
+
+        self._task_runner = TaskRunner(converter_type, params)
+
+        if input is not None:
+            self.set_input(input)
+
+    def check_before_run(self) -> CheckBeforeTaskResult:
+        self._task_runner.check_before_run()
+
+    async def run(self) -> Resource:
+        await self._task_runner.run()
+        return self.get_output()
+
+    async def run_after_task(self) -> None:
+        self._task_runner.run_after_task()
+
+    def set_input(self, resource: Resource) -> None:
+        self._task_runner.set_input('source', resource)
+
+    def get_output(self) -> Resource:
+        return self._task_runner.get_output('target')

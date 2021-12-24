@@ -4,22 +4,20 @@
 # About us: https://gencovery.com
 
 
-from re import S
 from typing import Any, Coroutine, List, Type
-
-from gws_core.experiment.experiment import ExperimentType
 
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from ...experiment.experiment import ExperimentType
 from ...experiment.experiment_interface import IExperiment
 from ...model.typing_manager import TypingManager
 from ...process.process_interface import IProcess
 from ...protocol.protocol_interface import IProtocol
 from ...resource.resource import Resource
 from ...resource.resource_model import ResourceModel
+from ..converter.converter import ConverterRunner
 from ..plug import Source
 from ..task import Task
-from ..task_runner import TaskRunner
 from .transformer_type import TransformerDict
 
 
@@ -83,9 +81,10 @@ class TransformerService():
         # retrieve transformer type
         transformer_task: Type[Task] = TypingManager.get_type_from_name(transformer['typing_name'])
 
-        task_runner: TaskRunner = TaskRunner(transformer_task, inputs={'source': resource})
+        converter_runner: ConverterRunner = ConverterRunner(transformer_task, params=transformer['config_values'],
+                                                            input=resource)
 
         # run task, clear after task and get resource
-        resource: Resource = (await task_runner.run())['target']
-        task_runner.run_after_task()
+        resource: Resource = await converter_runner.run()
+        converter_runner.run_after_task()
         return resource

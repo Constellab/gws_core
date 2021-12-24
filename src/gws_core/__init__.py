@@ -300,6 +300,8 @@ from .resource.view_types import ViewSpecs as ViewSpecs
 from .tag.tag import Tag as Tag
 from .tag.tag import TagHelper as TagHelper
 # Task > Converter
+from .task.converter.converter import Converter as Converter
+from .task.converter.converter import ConverterRunner as ConverterRunner
 from .task.converter.exporter import ResourceExporter as ResourceExporter
 from .task.converter.exporter import export_to_path as export_to_path
 from .task.converter.exporter import exporter_decorator as exporter_decorator
