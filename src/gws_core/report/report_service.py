@@ -15,8 +15,6 @@ from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.exception.gws_exceptions import GWSException
-from ..core.utils.logger import Logger
-from ..core.utils.settings import Settings
 from ..experiment.experiment import Experiment
 from ..project.project_dto import ProjectDto
 from ..project.project_service import ProjectService
@@ -37,9 +35,7 @@ class ReportService():
         if experiment_ids is not None:
             # Create the ReportExperiment
             for experiment_id in experiment_ids:
-                experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
-
-                ReportExperiment.create_obj(experiment, report).save()
+                cls.add_experiment(report.id, experiment_id)
 
         return report
 
@@ -110,14 +106,31 @@ class ReportService():
         return report
 
     @classmethod
+    @transaction()
     def add_experiment(cls, report_id: str, experiment_id: str) -> Experiment:
         report: Report = cls._get_and_check_before_update(report_id)
 
-        if ReportExperiment.find_by_pk(experiment_id, report_id).count() > 0:
-            raise BadRequestException(GWSException.REPORT_EXP_ALREADY_ASSOCIATED.value,
-                                      GWSException.REPORT_EXP_ALREADY_ASSOCIATED.name)
+        experiments: List[Experiment] = cls.get_experiments_by_report(report_id)
+
+        for experiment in experiments:
+            # If the experiment was already added to the report
+            if experiment.id == experiment_id:
+                raise BadRequestException(GWSException.REPORT_EXP_ALREADY_ASSOCIATED.value,
+                                          GWSException.REPORT_EXP_ALREADY_ASSOCIATED.name)
 
         experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
+
+        # check projects
+        if report.project is None:
+            # if the report is not associated with a project, associate it with the project of the experiment
+            if experiment.project is not None:
+                report.project = experiment.project
+                report.save()
+        else:
+            # check if the report project is the same as the experiment project
+            if experiment.project is not None and report.project.id != experiment.project.id:
+                raise BadRequestException(GWSException.REPORT_ADD_EXP_OTHER_PROJECT.value,
+                                          GWSException.REPORT_ADD_EXP_OTHER_PROJECT.name)
 
         ReportExperiment.create_obj(experiment, report).save()
         return experiment
