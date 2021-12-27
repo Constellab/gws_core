@@ -9,7 +9,7 @@ class TestTableScatterPlot2DView(BaseTestCase):
         table = DataProvider.get_iris_table()
 
         tester = ViewTester(
-            view=TableScatterPlot2DView(data=table)
+            view=TableScatterPlot2DView(table)
         )
         dic = tester.to_dict(dict(
             series=[

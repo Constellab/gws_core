@@ -21,9 +21,9 @@ class BaseTableView(View):
     _type: str
     _table: Table
 
-    def __init__(self, data: Any, *args, **kwargs):
+    def __init__(self, table: Any, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._check_and_set_data(data)
+        self._check_and_set_data(table)
 
     def _check_and_set_data(self, table: Table):
         from ..table import Table
