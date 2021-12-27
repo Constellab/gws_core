@@ -33,8 +33,8 @@ class TableLinePlot3DView(TableScatterPlot3DView):
                         "y": List[Float],
                         "z": List[Float]
                     },
-                    "x_column_name": str,
-                    "y_column_name": str,
+                    "x_data": str,
+                    "y_data": str,
                     "z_column_name": str,
                 },
                 ...

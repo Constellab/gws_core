@@ -5,7 +5,7 @@
 
 import math
 
-from gws_core import BaseTestCase, TableGrouper, TaskRunner
+from gws_core import BaseTestCase, TableKVColumnGrouper, TaskRunner
 from tests.gws_core_test_helper import GWSCoreTestHelper
 
 
@@ -20,7 +20,7 @@ class TestTableGrouper(BaseTestCase):
                 'grouping_key': "Gender"
             },
             inputs={'table': table},
-            task_type=TableGrouper,
+            task_type=TableKVColumnGrouper,
         )
         outputs = await tester.run()
         data = outputs["table"].get_data()

@@ -15,18 +15,18 @@ testdata_dir = settings.get_variable("gws_core:testdata_dir")
 class TestTableFilterHelper(BaseTestCase):
     async def test_table_filter_helper(self):
         file = DataProvider.get_test_data_file("multi_index_data.csv")
-        table: Table = TableImporter.call(file, {"header": 0, "index_columns": ["Name"]})
+        table: Table = TableImporter.call(file, {"header": 0, "index_column": "Name"})
 
         # filter by row name
         df = TableFilterHelper.filter_by_axis_names(
-            data=table.get_data(), axis="row", value="L.*a$"
+            data=table.get_data(), axis="row", value="L.*a$", use_regexp=True
         )
         self.assertEqual(df.index.tolist(), ["Lea", "Laura"])
         self.assertEqual(df.columns.tolist(), ["Age", "Sex", "City", "Weight"])
 
         # filter by column name
         df = TableFilterHelper.filter_by_axis_names(
-            data=table.get_data(), axis="column", value="Cit.*"
+            data=table.get_data(), axis="column", value="Cit.*", use_regexp=True
         )
         self.assertEqual(df.index.tolist(), ["Luc", "Lea", "Laura", "Leon"])
         self.assertEqual(df.columns.tolist(), ["City"])

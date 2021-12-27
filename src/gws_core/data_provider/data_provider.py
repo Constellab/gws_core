@@ -48,5 +48,5 @@ class DataProvider():
         return DatasetImporter.call(cls.get_no_head_iris_file(), {
             "delimiter": ",",
             "header": -1,
-            "targets": [4]
+            "targets": ["C4"]
         })

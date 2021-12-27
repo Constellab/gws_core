@@ -67,15 +67,35 @@ class Table(Resource):
                 raise BadRequestException(
                     "The data must be an instance of DataFrame or Numpy array")
 
+        # Table._format_row_and_columns_names(data)
+        data.index = Table._format_names(data.index, mapper=Table._row_formater)
+        data.columns = Table._format_names(data.columns, mapper=Table._column_formater)
         self._data = data
         return self
+
+    @staticmethod
+    def _format_names(col_or_index, mapper):
+        # ensure that all row and column names are string
+        if col_or_index.is_object():
+            col_or_index = col_or_index.map(str)
+        else:
+            col_or_index = col_or_index.map(mapper)
+        return col_or_index
+
+    @staticmethod
+    def _row_formater(x):
+        return "R"+str(x)
+
+    @staticmethod
+    def _column_formater(x):
+        return "C"+str(x)
 
     def get_data(self):
         return self._data
 
     # -- C --
 
-    @property
+    @ property
     def column_names(self) -> list:
         """
         Returns the column names of the Datatable.
@@ -98,7 +118,7 @@ class Table(Resource):
 
     # -- F --
 
-    @classmethod
+    @ classmethod
     def from_dict(cls, data: dict, orient='index', dtype=None, columns=None) -> 'Table':
         dataframe = DataFrame.from_dict(data, orient, dtype, columns)
         res = cls(data=dataframe)
@@ -134,21 +154,21 @@ class Table(Resource):
 
     # -- I --
 
-    @property
+    @ property
     def is_vector(self) -> bool:
         return self.nb_rows == 1 or self.nb_columns == 1
 
-    @property
+    @ property
     def is_column_vector(self) -> bool:
         return self.nb_columns == 1
 
-    @property
+    @ property
     def is_row_vector(self) -> bool:
         return self.nb_rows == 1
 
     # -- N --
 
-    @property
+    @ property
     def nb_columns(self) -> int:
         """
         Returns the number of columns.
@@ -159,7 +179,7 @@ class Table(Resource):
 
         return self._data.shape[1]
 
-    @property
+    @ property
     def nb_rows(self) -> int:
         """
         Returns the number of rows.
@@ -172,7 +192,7 @@ class Table(Resource):
 
     # -- R --
 
-    @property
+    @ property
     def row_names(self) -> list:
         """
         Returns the row names.
@@ -183,10 +203,59 @@ class Table(Resource):
 
         return self._data.index.values.tolist()
 
+    # -- S --
+
+    def select_by_row_positions(self, positions: List[int]) -> 'Table':
+        if not isinstance(positions, list):
+            raise BadRequestException("The positions must be a list of integers")
+        if not all(isinstance(x, int) for x in positions):
+            raise BadRequestException("The positions must be a list of integers")
+
+        data = self._data.iloc[positions, :]
+        cls = type(self)
+        return cls(data=data)
+
+    def select_by_column_positions(self, positions: List[int]) -> 'Table':
+        if not isinstance(positions, list):
+            raise BadRequestException("The positions must be a list of integers")
+        if not all(isinstance(x, int) for x in positions):
+            raise BadRequestException("The positions must be a list of integers")
+        data = self._data.iloc[:, positions]
+        cls = type(self)
+        return cls(data=data)
+
+    def select_by_row_names(self, names: List[str], use_regex=False) -> 'Table':
+        if not isinstance(names, list):
+            raise BadRequestException("The names must be a list of strings")
+        if not all(isinstance(x, str) for x in names):
+            raise BadRequestException("The names must be a list of strings")
+        if use_regex:
+            regex = "(" + ")|(".join(names) + ")"
+            data = self._data.filter(regex=regex, axis=0)
+        else:
+            data = self._data.filter(items=names, axis=0)
+        cls = type(self)
+        return cls(data=data)
+
+    def select_by_column_names(self, names: List[str], use_regex=False) -> 'Table':
+        if not isinstance(names, list):
+            raise BadRequestException("The names must be a list of strings")
+        if not all(isinstance(x, str) for x in names):
+            raise BadRequestException("The names must be a list of strings")
+        if use_regex:
+            regex = "(" + ")|(".join(names) + ")"
+            data = self._data.filter(regex=regex, axis=1)
+        else:
+            data = self._data.filter(items=names, axis=1)
+        cls = type(self)
+        return cls(data=data)
+
     def __str__(self):
         return super().__str__() + "\n" + \
             "Table:\n" + \
             self._data.__str__()
+
+    # -- T --
 
     def to_list(self) -> list:
         return self.to_numpy().tolist()
@@ -200,7 +269,6 @@ class Table(Resource):
     def to_csv(self) -> str:
         return self._data.to_csv()
 
-     # -- T --
     def to_json(self) -> dict:
         return self._data.to_json()
 
@@ -216,37 +284,9 @@ class Table(Resource):
 
         return self._data.tail(n)
 
-    def select_by_row_indexes(self, indexes: List[int]) -> 'Table':
-        if not isinstance(indexes, list):
-            raise BadRequestException("The indexes must be a list of integers")
-        data = self._data.iloc[indexes, :]
-        cls = type(self)
-        return cls(data=data)
-
-    def select_by_column_indexes(self, indexes: List[int]) -> 'Table':
-        if not isinstance(indexes, list):
-            raise BadRequestException("The indexes must be a list of integers")
-        data = self._data.iloc[:, indexes]
-        cls = type(self)
-        return cls(data=data)
-
-    def select_by_row_name(self, name_regex: str) -> 'Table':
-        if not isinstance(name_regex, str):
-            raise BadRequestException("The name must be a string")
-        data = self._data.filter(regex=name_regex, axis=0)
-        cls = type(self)
-        return cls(data=data)
-
-    def select_by_column_name(self, name_regex: str) -> 'Table':
-        if not isinstance(name_regex, str):
-            raise BadRequestException("The name must be a string")
-        data = self._data.filter(regex=name_regex, axis=1)
-        cls = type(self)
-        return cls(data=data)
-
     # -- V ---
 
-    @view(view_type=TableView, default_view=True, human_name='Tabular', short_description='View as a table', specs={})
+    @ view(view_type=TableView, default_view=True, human_name='Tabular', short_description='View as a table', specs={})
     def view_as_table(self, params: ConfigParams) -> TableView:
         """
         View as table
@@ -254,7 +294,7 @@ class Table(Resource):
 
         return TableView(self._data)
 
-    @view(view_type=TableLinePlot2DView, human_name='Line plot 2D', short_description='View columns as 2D-line plots', specs={})
+    @ view(view_type=TableLinePlot2DView, human_name='Line plot 2D', short_description='View columns as 2D-line plots', specs={})
     def view_as_line_plot_2d(self, params: ConfigParams) -> TableLinePlot2DView:
         """
         View columns as 2D-line plots
@@ -278,8 +318,8 @@ class Table(Resource):
 
     #     return TableScatterPlot3DView(self._data)
 
-    @view(view_type=TableScatterPlot2DView, human_name='Scatter plot 2D',
-          short_description='View columns as 2D-scatter plots', specs={})
+    @ view(view_type=TableScatterPlot2DView, human_name='Scatter plot 2D',
+           short_description='View columns as 2D-scatter plots', specs={})
     def view_as_scatter_plot_2d(self, params: ConfigParams) -> TableScatterPlot2DView:
         """
         View one or several columns as 2D-line plots
@@ -287,7 +327,7 @@ class Table(Resource):
 
         return TableScatterPlot2DView(self._data)
 
-    @view(view_type=TableBarPlotView, human_name='Bar plot', short_description='View columns as 2D-bar plots', specs={})
+    @ view(view_type=TableBarPlotView, human_name='Bar plot', short_description='View columns as 2D-bar plots', specs={})
     def view_as_bar_plot(self, params: ConfigParams) -> TableBarPlotView:
         """
         View one or several columns as 2D-bar plots
@@ -295,8 +335,8 @@ class Table(Resource):
 
         return TableBarPlotView(self._data)
 
-    @view(view_type=TableStackedBarPlotView, human_name='Stacked bar plot',
-          short_description='View columns as 2D-stacked bar plots', specs={})
+    @ view(view_type=TableStackedBarPlotView, human_name='Stacked bar plot',
+           short_description='View columns as 2D-stacked bar plots', specs={})
     def view_as_stacked_bar_plot(self, params: ConfigParams) -> TableStackedBarPlotView:
         """
         View one or several columns as 2D-stacked bar plots
@@ -304,7 +344,7 @@ class Table(Resource):
 
         return TableStackedBarPlotView(self._data)
 
-    @view(view_type=TableHistogramView, human_name='Histogram', short_description='View columns as 2D-line plots', specs={})
+    @ view(view_type=TableHistogramView, human_name='Histogram', short_description='View columns as 2D-line plots', specs={})
     def view_as_histogram(self, params: ConfigParams) -> TableHistogramView:
         """
         View columns as 2D-line plots
@@ -312,7 +352,7 @@ class Table(Resource):
 
         return TableHistogramView(self._data)
 
-    @view(view_type=TableBoxPlotView, human_name='Box plot', short_description='View columns as box plots', specs={})
+    @ view(view_type=TableBoxPlotView, human_name='Box plot', short_description='View columns as box plots', specs={})
     def view_as_box_plot(self, params: ConfigParams) -> TableBoxPlotView:
         """
         View one or several columns as box plots
@@ -320,7 +360,7 @@ class Table(Resource):
 
         return TableBoxPlotView(self._data)
 
-    @view(view_type=HeatmapView, human_name='Heatmap', short_description='View table as heatmap', specs={})
+    @ view(view_type=HeatmapView, human_name='Heatmap', short_description='View table as heatmap', specs={})
     def view_as_heatmap(self, params: ConfigParams) -> HeatmapView:
         """
         View the table as heatmap

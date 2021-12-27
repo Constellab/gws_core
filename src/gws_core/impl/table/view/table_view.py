@@ -3,12 +3,19 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core.config.config_types import ConfigParams
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from pandas import DataFrame
 
+from ....config.config_types import ConfigParams
 from ....config.param_spec import IntParam
 from ....resource.view_types import ViewSpecs
 from .base_table_view import BaseTableView
+
+if TYPE_CHECKING:
+    from ..table import Table
 
 MAX_NUMBERS_OF_ROWS_PER_PAGE = 100
 MAX_NUMBERS_OF_COLUMNS_PER_PAGE = 999
@@ -25,11 +32,18 @@ class TableView(BaseTableView):
     {
         "type": "table"
         "data": dict,
+        "from_row": int,
+        "number_of_rows_per_page": int,
+        "from_column": int,
+        "number_of_columns_per_page": int,
+        "total_number_of_rows": int,
+        "total_number_of_columns": int,
     }
     ```
     """
 
     _type = "table-view"
+    _table: Table
     _specs: ViewSpecs = {
         **BaseTableView._specs, "from_row": IntParam(default_value=1, human_name="From row"),
         "number_of_rows_per_page":
@@ -42,12 +56,11 @@ class TableView(BaseTableView):
             default_value=MAX_NUMBERS_OF_COLUMNS_PER_PAGE, max_value=MAX_NUMBERS_OF_COLUMNS_PER_PAGE, min_value=1,
             human_name="Number of columns per page"),
     }
-    _data: DataFrame
 
     MAX_NUMBERS_OF_ROWS_PER_PAGE = MAX_NUMBERS_OF_ROWS_PER_PAGE
     MAX_NUMBERS_OF_COLUMNS_PER_PAGE = MAX_NUMBERS_OF_COLUMNS_PER_PAGE
 
-    def _slice(self, data, from_row_index: int, to_row_index: int,
+    def _slice(self, data: DataFrame, from_row_index: int, to_row_index: int,
                from_column_index: int, to_column_index: int) -> dict:
         last_row_index = data.shape[0]
         last_column_index = data.shape[1]
@@ -67,7 +80,7 @@ class TableView(BaseTableView):
         ].to_dict('list')
 
     def to_dict(self, params: ConfigParams) -> dict:
-        data = self._data
+        data = self._table.get_data()
 
         # continue ...
         from_row: int = params.get("from_row")

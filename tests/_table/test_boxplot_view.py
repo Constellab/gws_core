@@ -1,4 +1,3 @@
-
 from gws_core import BaseTestCase, TableBoxPlotView, ViewTester
 from gws_core.extra import DataProvider
 
@@ -13,7 +12,9 @@ class TestTableBoxPlotView(BaseTestCase):
 
         dic = tester.to_dict({
             "series": [
-                {"column_names": ["petal.length", "petal.width"]}
+                {
+                    "y_data_columns": ["petal.length", "petal.width"]
+                }
             ]
         })
         self.assertEqual(dic["type"], "box-plot-view")

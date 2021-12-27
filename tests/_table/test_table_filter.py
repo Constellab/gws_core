@@ -14,12 +14,14 @@ class TestTableFilter(BaseTestCase):
     async def test_multi_index_table(self):
         GTest.print("Multi Index Table")
         file = DataProvider.get_test_data_file("multi_index_data.csv")
-        table: Table = TableImporter.call(file, {"header": 0, "index_columns": ["Name"]})
+        table: Table = TableImporter.call(file, {"header": 0, "index_column": "Name"})
 
         # filter columns
         tester = TaskRunner(
             params={
-                "axis_name_filter": [{"axis_type": "column", "value": "Ag.*"}]
+                "axis_name_filter": [
+                    {"axis_type": "column", "value": "Age", "use_regexp": True}
+                ]
             },
             inputs={"source": table},
             task_type=TableFilter,
@@ -34,8 +36,8 @@ class TestTableFilter(BaseTestCase):
         tester = TaskRunner(
             params={
                 "axis_name_filter": [
-                    {"axis_type": "column", "value": "Ag.*"},
-                    {"axis_type": "row", "value": "Luc|Lea"}
+                    {"axis_type": "column", "value": "Ag.*", "use_regexp": True},
+                    {"axis_type": "row", "value": "Luc|Lea", "use_regexp": True}
                 ]
             },
             inputs={"source": table},

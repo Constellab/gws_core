@@ -8,7 +8,9 @@ from typing import List
 
 from gws_core.impl.table.table import Table
 from gws_core.impl.table.table_file import TableFile
-from gws_core.impl.table.table_tasks import TableImporter
+from gws_core.impl.table.tasks.table_exporter import TableExporter
+from gws_core.impl.table.tasks.table_importer import TableImporter
+
 from gws_core.impl.text.text_tasks import TextImporter
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.task.converter.converter_service import ConverterService

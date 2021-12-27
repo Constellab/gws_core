@@ -60,6 +60,9 @@ class TableAnnotator(Task):
 
         data: DataFrame = inputs["table"].get_data()
         axis = params["axis"]
+
+        print(mapper)
+
         if axis == "row":
             data = data.rename(index=mapper, inplace=False)
         else:

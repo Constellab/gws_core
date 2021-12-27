@@ -18,7 +18,8 @@ from ...impl.table.table_file import TableFile
 from ...impl.table.table_helper import TableHelper
 from ...task.converter.exporter import exporter_decorator
 from ...task.converter.importer import importer_decorator
-from ..table.table_tasks import TableExporter, TableImporter
+from ..table.tasks.table_exporter import TableExporter
+from ..table.tasks.table_importer import TableImporter
 from .dataset import Dataset
 
 
@@ -26,12 +27,12 @@ from .dataset import Dataset
 class DatasetImporter(TableImporter):
     config_specs: ConfigSpecs = {
         **TableImporter.config_specs,
-        'targets': ListParam(default_value='[]', short_description="List of integers or strings (eg. ['name', 6, '7'])"),
+        'targets': ListParam(default_value='[]', short_description="Name of the columns to user as targets"),
     }
 
     async def import_from_path(self, file: File, params: ConfigParams, target_type: Type[Dataset]) -> Dataset:
         header = params.get_value("header", 0)
-        index_col = params.get_value("index_columns")
+        index_col = params.get_value("index_column")
         targets = params.get_value("targets", [])
 
         file_format: str = params.get_value('file_format', Dataset.DEFAULT_FILE_FORMAT)
@@ -54,19 +55,10 @@ class DatasetImporter(TableImporter):
             )
         else:
             raise BadRequestException(
-                "Cannot detect the file type using file extension. Valid file extensions are [.xls, .xlsx, .csv, .tsv, .txt, .tab].")
+                f"Cannot detect the file type using file extension. Valid file extensions are {Dataset.ALLOWED_FILE_FORMATS}.")
 
-        if not targets:
-            ds = target_type(features=df)
-        else:
-            try:
-                t_df = df.loc[:, targets]
-            except Exception as err:
-                raise BadRequestException(
-                    f"The targets {targets} are no found in column names. Please check targets names or set parameter 'header' to read column names.") from err
-            df.drop(columns=targets, inplace=True)
-            ds = target_type(features=df, targets=t_df)
-        return ds
+        dataset = target_type(data=df, target_names=targets)
+        return dataset
 
 
 @exporter_decorator("DatasetExporter", source_type=Dataset, target_type=TableFile)
