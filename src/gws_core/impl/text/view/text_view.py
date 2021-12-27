@@ -62,6 +62,9 @@ class TextView(View):
         page_size = params.get_value("page_size")
         total_number_of_chars = len(self._data)
         page_info: PageInfo = PageInfo(page, page_size, total_number_of_chars, self.MAX_NUMBER_OF_CHARS_PER_PAGE, 1)
+
+        print(page_info.to_json())
+
         text = self._slice(from_char_index=page_info.from_index, to_char_index=page_info.to_index)
         return {
             **super().to_dict(params),

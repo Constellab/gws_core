@@ -1,30 +1,20 @@
 
-from gws_core import BaseTestCase, ConfigParams, TextView
+from gws_core import BaseTestCase, ConfigParams, TextView, ViewTester
+from gws_core.extra import DataProvider
 from gws_core.impl.text.text import Text
 from gws_core.impl.text.text_tasks import TextImporter
-from tests.gws_core_test_helper import GWSCoreTestHelper
 
 
 class TestTextView(BaseTestCase):
 
     async def test_text_view(self,):
-        text: Text = TextImporter.call(GWSCoreTestHelper.get_iris_file())
-        _view = TextView(text)
+        text: Text = TextImporter.call(DataProvider.get_iris_file())
 
-        self.assertEqual(
-            len(_view._slice(from_char_index=10, to_char_index=400)),
-            390
+        tester = ViewTester(
+            view=TextView(text)
         )
-
-        self.assertEqual(
-            len(_view._slice(from_char_index=10, to_char_index=400000)),
-            3965
+        dic = tester.to_dict(
+            {"page": 2, "page_size": 1000}
         )
 
-        params = ConfigParams(
-            {"page": 2, "page_size": 100}
-        )
-        self.assertEqual(
-            len(_view.to_dict(params)["data"]),
-            10
-        )
+        self.assertEqual(dic["data"]["total_number_of_pages"], 4)

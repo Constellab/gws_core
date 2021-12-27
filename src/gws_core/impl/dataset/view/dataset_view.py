@@ -38,15 +38,15 @@ class DatasetView(TableView):
     """
 
     _type = "dataset-view"
-    _data: Dataset
+    _table: Dataset
 
-    def _check_and_set_data(self, data: Dataset):
+    def _check_and_set_data(self, table: Dataset):
         from ..dataset import Dataset
-        if not isinstance(data, Dataset):
-            raise BadRequestException("The data must be a pandas.DataFrame or Table resource")
-        super()._check_and_set_data(data)
+        if not isinstance(table, Dataset):
+            raise BadRequestException("The data must be a Table")
+        super()._check_and_set_data(table)
 
     def to_dict(self, params: ConfigParams) -> dict:
         dict_ = super().to_dict(params)
-        dict_["target_names"] = self._data.target_names
+        dict_["target_names"] = self._table.target_names
         return dict_
