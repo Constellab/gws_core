@@ -1,7 +1,3 @@
-
-import asyncio
-import os
-
 from gws_core import (BaseTestCase, Dataset, DatasetImporter, File, Settings,
                       TaskRunner)
 from gws_core.extra import DataProvider

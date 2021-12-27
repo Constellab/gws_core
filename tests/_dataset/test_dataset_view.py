@@ -1,5 +1,3 @@
-import os
-
 from gws_core import (BaseTestCase, ConfigParams, Dataset, DatasetImporter,
                       DatasetView, File, TaskRunner, ViewTester)
 from gws_core.extra import DataProvider
