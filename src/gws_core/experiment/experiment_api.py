@@ -66,7 +66,7 @@ def get_the_list_of_experiments(page: Optional[int] = 1,
 async def advanced_search(search_dict: SearchDict,
                           page: Optional[int] = 1,
                           number_of_items_per_page: Optional[int] = 20,
-                          _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+                          _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
     """
     Advanced search on experiment
     """
@@ -128,6 +128,17 @@ def update_experiment(id: str,
     """
 
     return ExperimentService.update_experiment(id, experiment).to_json(deep=True)
+
+
+@core_app.put("/experiment/{id}/description", tags=["Experiment"], summary="Update an experiment's description")
+def update_experiment_description(id: str,
+                                  description: Dict,
+                                  _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    """
+    Update an experiment's description
+    """
+
+    return ExperimentService.update_experiment_description(id, description).to_json(deep=True)
 
 
 ###################################### RUN ################################

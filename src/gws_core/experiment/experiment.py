@@ -86,7 +86,7 @@ class Experiment(ModelWithUser, TaggableModel):
                                      default=ExperimentType.EXPERIMENT)
 
     title = CharField(max_length=50)
-    description = TextField(null=True)
+    description = JSONField(null=True)
 
     _table_name = 'gws_experiment'
 

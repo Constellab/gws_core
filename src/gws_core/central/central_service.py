@@ -70,11 +70,21 @@ class CentralService(BaseService):
     @classmethod
     def save_experiment(cls, project_id: str, experiment: dict) -> None:
         central_api_url: str = cls._get_central_api_url(
-            f"{cls._external_labs_route}/project/{project_id}/add-experiment")
+            f"{cls._external_labs_route}/project/{project_id}/experiment")
         response = ExternalApiService.put(central_api_url, experiment, cls._get_request_header())
 
         if response.status_code != 200:
             Logger.error(f"Can't save the experiment in central. Error : {response.text}")
+            raise BadRequestException("Can't save the experiment in central")
+
+    @classmethod
+    def save_report(cls, project_id: str, report: dict) -> None:
+        central_api_url: str = cls._get_central_api_url(
+            f"{cls._external_labs_route}/project/{project_id}/report")
+        response = ExternalApiService.put(central_api_url, report, cls._get_request_header())
+
+        if response.status_code != 200:
+            Logger.error(f"Can't save the report in central. Error : {response.text}")
             raise BadRequestException("Can't save the experiment in central")
 
     @classmethod
@@ -86,7 +96,7 @@ class CentralService(BaseService):
         central_api_url = Settings.get_central_api_url()
         if central_api_url is None:
             raise BadRequestException('The CENTRAL_API_URL environment variable is not set')
-        return central_api_url + route
+        return central_api_url + '/' + route
 
     @classmethod
     def _get_request_header(cls) -> Dict[str, str]:
