@@ -13,9 +13,10 @@ from .lab.monitor_api import *
 from .lab.system_api import *
 from .model.model_api import *
 from .progress_bar.progress_bar_api import *
+from .project.project_api import *
 from .protocol.protocol_api import *
+from .report.report_api import *
 from .resource.resource_api import *
-from .study.study_api import *
 from .tag.tag_api import *
 from .task.task_api import *
 from .user.user_api import *

@@ -18,35 +18,18 @@ from ..helper.table_filter_helper import TableFilterHelper
 
 # ####################################################################
 #
-# TableFilter class
+# TableAggregatorFilter class
 #
 # ####################################################################
 
 
 @transformer_decorator(
-    unique_name="TableFilter",
+    unique_name="TableAggregatorFilter",
     resource_type=Table,
     short_description="Filters the table using various fitering rules",
 )
-class TableFilter(Transformer):
+class TableAggregatorFilter(Transformer):
     config_specs: ConfigSpecs = {
-        "axis_name_filter": ParamSet(
-            {
-                "axis_type": StrParam(
-                    default_value="column",
-                    human_name="Axis type",
-                    allowed_values=TableFilterHelper.VALID_AXIS_NAMES,
-                    short_description="The axis whose name is searched",
-                ),
-                "value": StrParam(
-                    human_name="Searched text pattern",
-                    short_description="The row or column names are matched against the pattern",
-                ),
-            },
-            human_name="Axis names filter",
-            short_description="Filter using rows or columns name patterns",
-            max_number_of_occurrences=3
-        ),
         "aggregation_filter": ParamSet(
             {
                 "direction": StrParam(
@@ -73,9 +56,7 @@ class TableFilter(Transformer):
             human_name="Numeric aggregation criterion",
             short_description="Filter axis validating a numeric criterion after aggregation",
             max_number_of_occurrences=3
-        ),
-        "numeric_data_filter": NumericDataFilterParamConstructor.construct_filter(),
-        "text_data_filter": TextDataFilterParamConstructor.construct_filter(),
+        )
     }
 
     async def transform(self, source: Table, params: ConfigParams) -> Table:

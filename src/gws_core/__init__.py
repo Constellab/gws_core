@@ -174,12 +174,14 @@ from .impl.table.helper.table_nanify_helper import \
     TableNanifyHelper as TableNanifyHelper
 from .impl.table.table import Table as Table
 from .impl.table.table_file import TableFile as TableFile
-from .impl.table.table_tasks import TableExporter as TableExporter
-from .impl.table.table_tasks import TableImporter as TableImporter
+from .impl.table.tasks.table_exporter import TableExporter as TableExporter
+from .impl.table.tasks.table_filter import TableFilter
+from .impl.table.tasks.table_importer import TableImporter as TableImporter
+from .impl.table.tasks.table_kv_column_grouper import TableKVColumnGrouper
 from .impl.table.transformers.table_aggregator import \
     TableAggregator as TableAggregator
-from .impl.table.transformers.table_filter import TableFilter as TableFilter
-from .impl.table.transformers.table_grouper import TableGrouper as TableGrouper
+from .impl.table.transformers.table_data_filter import \
+    TableDataFilter as TableDataFilter
 from .impl.table.transformers.table_scaler import TableScaler as TableScaler
 # Impl > TableView
 from .impl.table.view.barplot_view import TableBarPlotView as TableBarPlotView
@@ -258,6 +260,8 @@ from .progress_bar.progress_bar import \
     ProgressBarMessageType as ProgressBarMessageType
 from .progress_bar.progress_bar_service import \
     ProgressBarService as ProgressBarService
+# Project
+from .project.project import Project as Project
 # Protocol
 from .protocol.protocol import Protocol as Protocol
 from .protocol.protocol_decorator import \
@@ -292,8 +296,6 @@ from .resource.resource_typing import ResourceTyping as ResourceTyping
 from .resource.view import View as View
 from .resource.view_decorator import view as view
 from .resource.view_types import ViewSpecs as ViewSpecs
-# Study
-from .study.study import Study as Study
 # Tag
 from .tag.tag import Tag as Tag
 from .tag.tag import TagHelper as TagHelper

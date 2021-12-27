@@ -11,9 +11,13 @@ class TestTableHistogramView(BaseTestCase):
         tester = ViewTester(
             view=TableHistogramView(table)
         )
-        dic = tester.to_dict(dict(
-            column_names=["petal.length", "petal.width"]
-        ))
+        dic = tester.to_dict({
+            "series": [
+                {"y_data_column": "petal.length"},
+                {"y_data_column": "petal.width"},
+            ]
+        })
+
         self.assertEqual(dic["type"], "histogram-view")
 
         self.assertTrue(numpy.all(numpy.isclose(

@@ -4,7 +4,10 @@
 # About us: https://gencovery.com
 
 
-from typing import Any, Coroutine, Type
+from typing import Any, Coroutine, List, Type
+
+from gws_core.impl.file.fs_node import FSNode
+from gws_core.task.task_typing import TaskTyping
 
 from ...config.config_types import ConfigParamsDict, ConfigSpecsHelper
 from ...core.exception.exceptions.bad_request_exception import \
@@ -25,23 +28,29 @@ class ConverterService:
     ################################################ IMPRTER ################################################
 
     @classmethod
-    def get_import_specs(cls, resource_typing_name: str) -> dict:
+    def get_resource_importers(cls, resource_typing_name: str) -> List[TaskTyping]:
+        """ return the list of importer typing of a resource
+
+        :param resource_typing_name: [description]
+        :type resource_typing_name: str
+        :return: [description]
+        :rtype: List[TaskTyping]
+        """
         resource_type: Type[File] = TypingManager.get_type_from_name(resource_typing_name)
 
-        importer_type: Type[ResourceImporter] = cls._get_and_check_resource_type_importer(resource_type)
+        if not resource_type._is_importable:
+            raise BadRequestException(
+                "The resource must be an importable resource. This means that a importer task must exist on for this resource")
 
-        return {
-            'specs': ConfigSpecsHelper.config_specs_to_json(importer_type.config_specs),
-            'resource_destination': importer_type.get_target_type()._human_name
-        }
+        return TaskTyping.get_by_related_resource(resource_type, "IMPORTER")
 
     @classmethod
-    async def call_importer(cls, resource_model_id: str, config: ConfigParamsDict) -> Coroutine[Any, Any, ResourceModel]:
+    async def call_importer(cls, resource_model_id: str, importer_typing_name: str, config: ConfigParamsDict) -> Coroutine[Any, Any, ResourceModel]:
         # Get and check the resource id
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_model_id)
         resource_type: Type[File] = resource_model.get_resource_type()
 
-        importer_type: Type[ResourceImporter] = cls._get_and_check_resource_type_importer(resource_type)
+        importer_type: Type[ResourceImporter] = TypingManager.get_type_from_name(importer_typing_name)
 
         # Create an experiment containing 1 source, 1 importer , 1 sink
         experiment: IExperiment = IExperiment(
@@ -62,16 +71,5 @@ class ConverterService:
 
         # return the resource model of the sink process
         return experiment.get_experiment_model().protocol_model.get_process('sink').inputs.get_resource_model('resource')
-
-    @classmethod
-    def _get_and_check_resource_type_importer(cls, resource_type: Type[File]) -> Type[ResourceImporter]:
-        if not Utils.issubclass(resource_type, File):
-            raise BadRequestException("Can't import this resource type")
-
-        if not resource_type._is_importable:
-            raise BadRequestException(
-                "The resource must be an importable resource. This means that a importer task must exist on for this resource")
-
-        return resource_type._resource_importer
 
     ################################################ EXPORTER ################################################

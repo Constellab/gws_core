@@ -101,7 +101,7 @@ class TestView(BaseTestCase):
             {"test_str_param": "Bonjour ", "test_any_param": '12', "page": 1, "page_size": 5000})
 
         self.assertEqual(dict_["type"], TextView._type)
-        self.assertEqual(dict_["data"], "Bonjour 12")
+        self.assertEqual(dict_["data"]['text'], "Bonjour 12")
 
     def test_method_view_override_and_hide(self):
         """Test that the spec of a view are overrided but the children method. And check if hide param in view decorator works

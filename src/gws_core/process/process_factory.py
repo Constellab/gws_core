@@ -285,13 +285,6 @@ class ProcessFactory():
             process_id=process_model.id, process_typing_name=process_model.process_typing_name)
         process_model.progress_bar = progress_bar
 
-        # set the created by
-        user: User = CurrentUserService.get_current_user()
-
-        if user is None:
-            user = User.get_sysuser()
-        process_model.created_by = user
-
         if instance_name is not None:
             process_model.instance_name = instance_name
         else:

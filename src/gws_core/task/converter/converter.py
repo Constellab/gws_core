@@ -23,6 +23,7 @@ from ...user.user_group import UserGroup
 
 def decorate_converter(task_class: Type['Converter'], unique_name: str, task_type: TaskSubType,
                        source_type: Type[Resource] = Resource, target_type: Type[Resource] = Resource,
+                       related_resource: Type[Resource] = None,
                        allowed_user: UserGroup = UserGroup.USER,
                        human_name: str = "", short_description: str = "", hide: bool = False) -> None:
     if not Utils.issubclass(task_class, Converter):
@@ -36,7 +37,7 @@ def decorate_converter(task_class: Type['Converter'], unique_name: str, task_typ
     task_class.output_specs = {'target': target_type}
 
     # register the task and set the human_name and short_description dynamically based on resource
-    decorate_task(task_class, unique_name, human_name=human_name, related_resource=source_type,
+    decorate_task(task_class, unique_name, human_name=human_name, related_resource=related_resource,
                   task_type=task_type, short_description=short_description, allowed_user=allowed_user, hide=hide)
 
 

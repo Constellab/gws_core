@@ -11,7 +11,8 @@ from ....resource.resource_decorator import resource_decorator
 from ....task.converter.exporter import exporter_decorator
 from ....task.converter.importer import importer_decorator
 from ..table import Table
-from ..table_tasks import TableExporter, TableImporter
+from ..tasks.table_exporter import TableExporter
+from ..tasks.table_importer import TableImporter
 
 # ####################################################################
 #
@@ -68,13 +69,13 @@ class MetadataTable(Table):
 
     # -- S --
 
-    def select_by_row_indexes(self, indexes: List[int]) -> 'MetadataTable':
-        table = super().select_by_row_indexes(indexes)
+    def select_by_row_positions(self, indexes: List[int]) -> 'MetadataTable':
+        table = super().select_by_row_positions(indexes)
         table = MetadataTable(data=table.get_data())
         return table
 
-    def select_by_column_indexes(self, indexes: List[int]) -> 'MetadataTable':
-        table = super().select_by_column_indexes(indexes)
+    def select_by_column_positions(self, indexes: List[int]) -> 'MetadataTable':
+        table = super().select_by_column_positions(indexes)
         table = MetadataTable(data=table.get_data())
         return table
 

@@ -30,8 +30,8 @@ class TableLinePlot2DView(TableScatterPlot2DView):
                         "x": List[Float],
                         "y": List[Float],
                     },
-                    "x_column_name": str,
-                    "y_column_name": str,
+                    "x_data": str,
+                    "y_data": str,
                 },
                 ...
             ]

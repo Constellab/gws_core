@@ -21,10 +21,7 @@ class TestDatasetView(BaseTestCase):
         self.assertEqual(dic["type"], "dataset-view")
         self.assertEqual(
             dic["data"],
-            ds.get_data().iloc[0:50, 0:4].to_dict('list')
+            ds.get_data().iloc[0:50, :].to_dict('list')
         )
 
-        self.assertEqual(
-            dic["targets"],
-            ds.get_targets().iloc[0:50, :].to_dict('list')
-        )
+        self.assertEqual(dic["target_names"], ['variety'])

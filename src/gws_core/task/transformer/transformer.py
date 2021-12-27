@@ -46,7 +46,7 @@ def transformer_decorator(unique_name: str, resource_type: Type[Resource],
         task_class.output_specs = {'resource': resource_type}
 
         decorate_converter(task_class=task_class, unique_name=unique_name, task_type='TRANSFORMER',
-                           source_type=resource_type, target_type=resource_type,
+                           source_type=resource_type, target_type=resource_type, related_resource=resource_type,
                            allowed_user=allowed_user, human_name=human_name,
                            short_description=short_description, hide=hide)
 

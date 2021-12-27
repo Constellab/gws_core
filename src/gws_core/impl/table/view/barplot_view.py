@@ -3,17 +3,19 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from pandas import DataFrame
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from ....config.config_types import ConfigParams
-from ....config.param_spec import BoolParam, ListParam, StrParam
+from ....config.param_spec import ListParam, ParamSet, StrParam
 from ....core.exception.exceptions import BadRequestException
 from ....resource.view_types import ViewSpecs
 from ...view.barplot_view import BarPlotView
 from .base_table_view import BaseTableView
 
-MAX_NUMBERS_OF_COLUMNS_PER_PAGE = 999
-
+if TYPE_CHECKING:
+    from ..table import Table
 
 class TableBarPlotView(BaseTableView):
     """
@@ -46,15 +48,20 @@ class TableBarPlotView(BaseTableView):
     ```
     """
 
-    _data: DataFrame
+    _table: Table
     _specs: ViewSpecs = {
         **BaseTableView._specs,
-        "column_names": ListParam(human_name="Column names", optional=True, short_description="List of columns to plot"),
-        "use_regexp": BoolParam(default_value=False, human_name="Use regexp", short_description="True to use regular expression for column names; False otherwise"),
-        "index_column": StrParam(human_name="Index column", optional=True, short_description="The index column used to label bars"),
-        "x_label": StrParam(human_name="X-label", optional=True, visibility='protected', short_description="The x-axis label to display"),
-        "y_label": StrParam(human_name="Y-label", optional=True, visibility='protected', short_description="The y-axis label to display"),
-        "x_tick_labels": ListParam(human_name="X-tick-labels", optional=True, visibility='protected', short_description="The labels of x-axis ticks. Will override 'index_colum' parameter if given.")
+        "series": ParamSet(
+            {
+                "y_data_column": StrParam(human_name="Y-data column"),
+            },
+            human_name="Series of Y-data",
+            max_number_of_occurrences=10
+        ),
+        "x_label": StrParam(human_name="X-axis label", optional=True, visibility=StrParam.PROTECTED_VISIBILITY, short_description="The x-axis label to display"),
+        "y_label": StrParam(human_name="Y-axis label", optional=True, visibility=StrParam.PROTECTED_VISIBILITY, short_description="The y-axis label to display"),
+        "x_tick_labels":
+        ListParam(human_name="X-tick labels", optional=True, visibility=ListParam.PROTECTED_VISIBILITY, short_description="The labels of x-axis ticks. By default, the data index is used")
     }
     _view_helper = BarPlotView
 
@@ -62,53 +69,31 @@ class TableBarPlotView(BaseTableView):
         if not issubclass(self._view_helper, BarPlotView):
             raise BadRequestException("Invalid view helper. An subclass of BarPlotView is expected")
 
-        data = self._data
-
-        index_column = params.get_value("index_column")
-        if index_column:
-            data.index = data.loc[:, index_column].to_list()
+        data = self._table.get_data()
 
         # select columns
-        column_names = params.get_value("column_names", [])
-        if not column_names:
-            ncols = min(data.shape[1], MAX_NUMBERS_OF_COLUMNS_PER_PAGE)
-            column_names = data.columns[0:ncols].to_list()
-        else:
-            if params["use_regexp"]:
-                reg = "|".join(["^"+val+"$" for val in column_names])
-                data = data.filter(regex=reg)
-            else:
-                column_names = [col for col in column_names if col in data.columns]
-                data = data[column_names]
+        y_data_columns = []
+        for param_series in params.get_value("series", []):
+            name = param_series.get("y_data_column")
+            y_data_columns.append(name)
+
+        self.check_column_names(y_data_columns)
 
         # continue ...
         x_label = params.get_value("x_label", "")
-        x_tick_labels = params.get_value("x_tick_labels", data.index.to_list())
         y_label = params.get_value("y_label", "")
-
-        # # handle x tick labels
-        # x_tick_labels = None
-        # if params.value_is_set('x_tick_labels'):
-        #     x_tick_label_columns: str = params.get_value("x_tick_labels")
-        #     x_tick_labels = []
-        #     for column in x_tick_label_columns:
-        #         if column in data:
-        #             x_tick_labels.extend(data[column].values.tolist())
-
-        # replace NaN by 'NaN'
-        data: DataFrame = data.fillna('')
+        x_tick_labels = params.get_value("x_tick_labels", data.index.values.tolist())
 
         # create view
         view = self._view_helper()
         view.x_label = x_label
         view.y_label = y_label
         view.x_tick_labels = x_tick_labels
-        for column_name in data.columns:
-            y = data[column_name].values.tolist()
-            x = list(range(0, len(y)))
+        for column_name in y_data_columns:
+            y_data = data[column_name].fillna('').values.tolist()
             view.add_series(
-                x=x,
-                y=y,
+                x=list(range(0,len(y_data))),
+                y=y_data,
                 name=column_name
             )
 

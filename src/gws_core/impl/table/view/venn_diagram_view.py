@@ -3,15 +3,18 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import copy
+from __future__ import annotations
 
-from pandas import DataFrame
+from typing import TYPE_CHECKING
 
 from ....config.config_types import ConfigParams
-from ....config.param_spec import ListParam, StrParam
+from ....config.param_spec import ParamSet, StrParam
 from ....resource.view_types import ViewSpecs
 from ...view.venn_diagram_view import VennDiagramView
 from .base_table_view import BaseTableView
+
+if TYPE_CHECKING:
+    from ..table import Table
 
 
 class TableVennDiagramView(BaseTableView):
@@ -42,22 +45,34 @@ class TableVennDiagramView(BaseTableView):
     """
 
     _type: str = "venn-diagram-view"
-    _data: DataFrame
+    _table: Table
 
     _specs: ViewSpecs = {
         **BaseTableView._specs,
-        "column_names": ListParam(human_name="Column names", optional=True, short_description="List of columns use as groups (max = 3 groups)"),
-        "label": StrParam(human_name="Label", optional=True, visibility='protected', short_description="The label to display"),
+        "series": ParamSet(
+            {
+                "data_column": StrParam(human_name="Data column", short_description="Data that represents a group"),
+            },
+            human_name="Series of data",
+            max_number_of_occurrences=4
+        ),
+        "label": StrParam(human_name="Label", optional=True, visibility=StrParam.PROTECTED_VISIBILITY, short_description="The label of the plot"),
     }
 
     def to_dict(self, params: ConfigParams) -> dict:
-        data = self._data
-        column_names = params.get_value("column_names")
-        if not column_names:
-            column_names = data.columns[0:3]
+        data = self._table.get_data()
+
+        #column_names = params.get_value("column_names")
+        data_columns = []
+        for param_series in params.get_value("series", []):
+            name = param_series["data_column"]
+            data_columns.append(name)
+
+        if not data_columns:
+            data_columns = data.columns[0:3]
 
         view = VennDiagramView()
-        for i, name in enumerate(column_names):
+        for i, name in enumerate(data_columns):
             view.add_group(
                 name=name,
                 data=set(data.iloc[:, i].dropna())

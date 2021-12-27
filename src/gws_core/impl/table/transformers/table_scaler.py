@@ -23,10 +23,10 @@ from ..table import Table
 )
 class TableScaler(Transformer):
     config_specs: ConfigSpecs = {
-        "data_scaling_filter": DataScaleFilterParamConstructor.construct_filter(),
+        "scaling": DataScaleFilterParamConstructor.construct_filter(),
     }
 
     async def transform(self, source: Table, params: ConfigParams) -> Table:
         data = source.get_data()
-        data = DataScaleFilterParamConstructor.validate_filter("data_scaling_filters", data, params)
+        data = DataScaleFilterParamConstructor.validate_filter("scaling", data, params)
         return Table(data=data)

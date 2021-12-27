@@ -20,8 +20,8 @@ from ..core.model.model_with_user import ModelWithUser
 from ..core.model.sys_proc import SysProc
 from ..core.utils.logger import Logger
 from ..model.typing_register_decorator import typing_registrator
+from ..project.project import Project
 from ..resource.resource_model import ResourceModel
-from ..study.study import Study
 from ..tag.taggable_model import TaggableModel
 from ..user.activity import Activity
 from ..user.user import User
@@ -63,8 +63,8 @@ class Experiment(ModelWithUser, TaggableModel):
     """
     Experiment class.
 
-    :property study: The study of the experiment
-    :type study: `gws.study.Study`
+    :property project: The project of the experiment
+    :type project: `gws.project.Project`
     :property protocol: The the protocol of the experiment
     :type protocol: `gws_core.protocol.protocol.Protocol`
     :property created_by: The user who created the experiment. This user may be different from the user who runs the experiment.
@@ -75,7 +75,7 @@ class Experiment(ModelWithUser, TaggableModel):
     :type is_validated: `bool`
     """
 
-    study: Study = ForeignKeyField(Study, null=True)
+    project: Project = ForeignKeyField(Project, null=True)
 
     score = DoubleField(null=True)
     status: ExperimentStatus = EnumField(choices=ExperimentStatus,
@@ -86,7 +86,7 @@ class Experiment(ModelWithUser, TaggableModel):
                                      default=ExperimentType.EXPERIMENT)
 
     title = CharField(max_length=50)
-    description = TextField(null=True)
+    description = JSONField(null=True)
 
     _table_name = 'gws_experiment'
 
@@ -254,8 +254,8 @@ class Experiment(ModelWithUser, TaggableModel):
             raise BadRequestException(GWSException.EXPERIMENT_VALIDATE_RUNNING.value,
                                       unique_code=GWSException.EXPERIMENT_VALIDATE_RUNNING.name)
 
-        if self.study is None:
-            raise BadRequestException("The experiment must be linked to a study before validating it")
+        if self.project is None:
+            raise BadRequestException("The experiment must be linked to a project before validating it")
 
         self.is_validated = True
         self.save()
@@ -375,6 +375,6 @@ class Experiment(ModelWithUser, TaggableModel):
         })
 
         if deep:
-            _json["study"] = self.study.to_json() if self.study is not None else None
+            _json["project"] = self.project.to_json() if self.project is not None else None
 
         return _json

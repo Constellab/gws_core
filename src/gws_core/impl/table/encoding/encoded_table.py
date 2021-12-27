@@ -12,7 +12,8 @@ from ....task.converter.exporter import exporter_decorator
 from ....task.converter.importer import importer_decorator
 from ..table import Table
 from ..table_file import TableFile
-from ..table_tasks import TableExporter, TableImporter
+from ..tasks.table_exporter import TableExporter
+from ..tasks.table_importer import TableImporter
 
 
 @resource_decorator("EncodedTable")

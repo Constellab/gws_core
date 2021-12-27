@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from gws_core.study.study import Study
+from gws_core.project.project import Project
 
 from ..core.console.console import Console
 
@@ -17,8 +17,8 @@ class GTest(Console):
     """
 
     @classmethod
-    def create_default_study(cls) -> Study:
+    def create_default_project(cls) -> Project:
         """
-        Get a default study DTO
+        Get a default Project
         """
-        return Study(title="Default study", description="Study description").save()
+        return Project(title="Default project", description="Project description").save()

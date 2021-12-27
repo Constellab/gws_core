@@ -58,7 +58,7 @@ class BrickService():
             brick_name = '__Unknown'
             brick_path = ''
 
-        cls.log_brick_message(brick_name=brick_path, brick_path=brick_path, message=message, status=status)
+        cls.log_brick_message(brick_name=brick_name, brick_path=brick_path, message=message, status=status)
 
     @classmethod
     def log_brick_message(cls, brick_name: str, brick_path: str, message: str, status: BrickMessageStatus) -> None:

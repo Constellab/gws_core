@@ -21,15 +21,15 @@ from ..helper.table_aggregator_helper import TableAggregatorHelper
                        short_description="Aggregate the table along an axis")
 class TableAggregator(Transformer):
     config_specs: ConfigSpecs = {
-        "function": StrParam(
-            human_name="Aggregation function",
-            allowed_values=TableAggregatorHelper.VALID_AXIS_AGGREGATION_FUNCTIONS,
-            short_description="Function applied to aggregate value along a direction",
-        ),
         "direction": StrParam(
             human_name="Direction",
             allowed_values=TableAggregatorHelper.VALID_AGGREGATION_DIRECTIONS,
             short_description="Aggregation direction",
+        ),
+        "function": StrParam(
+            human_name="Aggregation function",
+            allowed_values=TableAggregatorHelper.VALID_AXIS_AGGREGATION_FUNCTIONS,
+            short_description="Function applied to aggregate value along a direction",
         ),
         "skip_nan": BoolParam(
             default_value=True,

@@ -38,6 +38,10 @@ class ParamSpec(Generic[ParamSpecType]):
     # Measure unit of the value (ex kg)
     unit: Optional[str]
 
+    PUBLIC_VISIBILITY = "public"
+    PROTECTED_VISIBILITY = "protected"
+    PRIVATE_VISIBILITY = "private"
+
     def __init__(
         self,
         default_value: Optional[ParamSpecType] = None,
@@ -240,6 +244,7 @@ class StrParam(ParamSpec[str]):
         param_spec: StrParam = super()._load_from_json(json_)
         param_spec.allowed_values = json_.get("allowed_values")
         return param_spec
+
 
 class BoolParam(ParamSpec[bool]):
     """Boolean param"""

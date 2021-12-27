@@ -30,6 +30,10 @@ class Resource(Base):
     _is_exportable: bool = False
 
     def __init__(self):
+        """Resource constructor
+        /!\ It must have only optional parameters
+        """
+
         # check that the class level property _typing_name is set
         if self._typing_name == CONST_RESOURCE_TYPING_NAME and type(self) != Resource:  # pylint: disable=unidiomatic-typecheck
             raise BadRequestException(

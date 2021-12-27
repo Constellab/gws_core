@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from gws_core import BaseTestCase, TableAnnotator, TaskRunner
+from gws_core import BaseTestCase, Table, TableAnnotator, TaskRunner
 from tests.gws_core_test_helper import GWSCoreTestHelper
 
 
@@ -40,8 +40,8 @@ class TestTableAnnotator(BaseTestCase):
     async def test_table_row_annotator(self):
         # importer
         table = GWSCoreTestHelper.get_data_table()
+        table = Table(data=table.get_data().T)
         metatable = GWSCoreTestHelper.get_metadata_table()
-        print(table)
 
         # annotation
         tester = TaskRunner(

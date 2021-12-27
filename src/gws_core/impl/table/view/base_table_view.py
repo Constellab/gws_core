@@ -1,3 +1,8 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Union
@@ -14,16 +19,22 @@ if TYPE_CHECKING:
 
 class BaseTableView(View):
     _type: str
-    _data: DataFrame
+    _table: Table
 
     def __init__(self, data: Any, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._check_and_set_data(data)
 
-    def _check_and_set_data(self, data: Union[DataFrame, Table]):
+    def _check_and_set_data(self, table: Table):
         from ..table import Table
-        if not isinstance(data, (DataFrame, Table,)):
+        if not isinstance(table, Table):
             raise BadRequestException("The data must be a pandas.DataFrame or Table resource")
-        if isinstance(data, Table):
-            data = data.get_data()
-        self._data = data
+        self._table = table
+
+    def get_table(self):
+        return self._table
+
+    def check_column_names(self, column_names):
+        for name in column_names:
+            if name not in self._table.get_data().columns:
+                raise BadRequestException(f"The column name '{name}' is not valid")

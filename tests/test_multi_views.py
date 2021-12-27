@@ -1,9 +1,8 @@
 
 
 from gws_core import ConfigParams, MultiViews, TableScatterPlot2DView, TextView
-from gws_core.test.base_test_case import BaseTestCase
 from gws_core.extra import DataProvider
-from tests.gws_core_test_helper import GWSCoreTestHelper
+from gws_core.test.base_test_case import BaseTestCase
 
 
 class TestMultiViews(BaseTestCase):

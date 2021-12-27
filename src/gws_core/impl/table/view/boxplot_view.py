@@ -3,8 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import numpy
-from pandas import DataFrame
 
 from ....config.config_types import ConfigParams
 from ....config.param_spec import BoolParam, ListParam, ParamSet, StrParam
@@ -12,7 +15,8 @@ from ....resource.view_types import ViewSpecs
 from ...view.boxplot_view import BoxPlotView
 from .base_table_view import BaseTableView
 
-MAX_NUMBERS_OF_COLUMNS_PER_PAGE = 999
+if TYPE_CHECKING:
+    from ..table import Table
 
 
 class TableBoxPlotView(BaseTableView):
@@ -30,7 +34,7 @@ class TableBoxPlotView(BaseTableView):
         "data": {
             "x_label": str,
             "y_label": str,
-            "x_tick_labels": List[str] | None,
+            "x_tick_labels": List[str],
             "series": [
                 {
                     "data": {
@@ -54,66 +58,49 @@ class TableBoxPlotView(BaseTableView):
     """
 
     _type: str = "box-plot-view"
-    _data: DataFrame
+    _table: Table
     _specs: ViewSpecs = {
         **BaseTableView._specs,
         "series": ParamSet(
             {
-                "column_names": ListParam(human_name="Column names", optional=True, short_description="List of columns to plot"),
-                "use_regexp": BoolParam(default_value=False, human_name="Use regexp", short_description="True to use regular expression for column names; False otherwise"),
+                "y_data_columns": ListParam(human_name="Set of Y-data columns", short_description="Set of columns to aggregate as a series of box plots"),
             },
-            human_name="Column series",
-            short_description="Select a series of columns to aggregate as box-plot",
+            human_name="Series of data",
             max_number_of_occurrences=5
         ),
-        "x_tick_labels": ListParam(human_name="X-tick-labels", optional=True, visibility='protected', short_description="The labels of x-axis ticks. By default, the 'column_names' are used"),
-        "x_label": StrParam(human_name="X-label", optional=True, visibility='protected', short_description="The x-axis label to display"),
-        "y_label": StrParam(human_name="Y-label", optional=True, visibility='protected', short_description="The y-axis label to display"),
+        "x_label": StrParam(human_name="X-axis label", optional=True, visibility='protected', short_description="The x-axis label to display"),
+        "y_label": StrParam(human_name="Y-axis label", optional=True, visibility='protected', short_description="The y-axis label to display"),
+        "x_tick_labels": ListParam(human_name="X-tick labels", optional=True, visibility='protected', short_description="The labels of x-axis ticks. By default, the 'column_names' are used"),
     }
 
     def to_dict(self, params: ConfigParams) -> dict:
-        data = self._data
+        data = self._table.get_data()
         x_label = params.get_value("x_label", "")
         y_label = params.get_value("y_label", "")
-        x_tick_labels = params.get_value("x_tick_labels", None)
+        x_tick_labels = params.get_value("x_tick_labels", [])
 
         # continue ...
         view = BoxPlotView()
         view.x_label = x_label
         view.y_label = y_label
+        view.x_tick_labels = x_tick_labels
 
         for param_series in params.get_value("series", []):
-            column_names = param_series["column_names"]
-            if not column_names:
-                n = min(data.shape[1], MAX_NUMBERS_OF_COLUMNS_PER_PAGE)
-                column_names = data.columns[0:n].to_list()
-                # column_names = data.columns.to_list()
-            else:
-                if param_series["use_regexp"]:
-                    reg = "|".join(["^"+val+"$" for val in column_names])
-                    column_names = data.filter(regex=reg).columns.to_list()
-                else:
-                    column_names = [col for col in column_names if col in data.columns]
+            y_data_columns = param_series.get("y_data_columns")
+            self.check_column_names(y_data_columns)
+            current_data = data[y_data_columns]
 
-            data = data[column_names]
+            ymin = current_data.min(skipna=True).to_list()
+            ymax = current_data.max(skipna=True).to_list()
 
-            if not len(column_names):
-                continue
-
-            if not x_tick_labels:
-                x_tick_labels = column_names
-
-            ymin = data.min(skipna=True).to_list()
-            ymax = data.max(skipna=True).to_list()
-
-            quantile = numpy.nanquantile(data.to_numpy(), q=[0.25, 0.5, 0.75], axis=0)
+            quantile = numpy.nanquantile(current_data.to_numpy(), q=[0.25, 0.5, 0.75], axis=0)
             median = quantile[1, :].tolist()
             q1 = quantile[0, :]
             q3 = quantile[2, :]
             iqr = q3 - q1
             lower_whisker = q1 - (1.5 * iqr)
             upper_whisker = q3 + (1.5 * iqr)
-            x = list(range(0, len(column_names)))
+            x = list(range(0, len(y_data_columns)))
             view.add_series(
                 x=x,
                 median=median,
@@ -121,6 +108,9 @@ class TableBoxPlotView(BaseTableView):
                 lower_whisker=lower_whisker.tolist(), upper_whisker=upper_whisker.tolist()
             )
 
-        x_tick_labels = params.get_value("x_tick_labels", x_tick_labels)
-        view.x_tick_labels = x_tick_labels
+        # if possible, try to use y_data_columns as x_tick_labels
+        if not x_tick_labels:
+            if len(params.get_value("series")) == 1:
+                view.x_tick_labels = y_data_columns
+
         return view.to_dict(params)

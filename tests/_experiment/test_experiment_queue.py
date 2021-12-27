@@ -4,13 +4,10 @@
 # About us: https://gencovery.com
 
 import time
-from math import exp
 
 from gws_core import (BaseTestCase, Experiment, ExperimentService,
-                      ExperimentStatus, GTest, QueueService, RobotService,
-                      Settings)
+                      ExperimentStatus, GTest, QueueService, Settings)
 from gws_core.impl.robot.robot_protocol import CreateSimpleRobot
-from gws_core.study.study_dto import StudyDto
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -70,6 +67,6 @@ class TestExperiment(BaseTestCase):
         experiment2: Experiment = Experiment.get(
             Experiment.id == experiment.id)
 
-        ExperimentService.validate_experiment(experiment2.id, GTest.default_study_dto())
+        ExperimentService.validate_experiment(experiment2.id, GTest.create_default_project())
         self.assertFalse(_run())
         self.assertEqual(Experiment.select().count(), 1)

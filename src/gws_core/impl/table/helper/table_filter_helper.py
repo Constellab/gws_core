@@ -40,15 +40,16 @@ class TableFilterHelper:
             )
 
     @classmethod
-    def filter_by_axis_names(cls, data: DataFrame, axis: str, value: str):
+    def filter_by_axis_names(cls, data: DataFrame, axis: str, value: str, use_regexp=False):
         if (not axis) or (value is None):
             return data
         cls._check_axis_name(axis)
         if isinstance(value, str):
-            if axis == "row":
-                return data.filter(regex=value, axis=0)
+            ax = 0 if axis == "row" else 1
+            if use_regexp:
+                return data.filter(regex=value, axis=ax)
             else:
-                return data.filter(regex=value, axis=1)
+                return data.filter(items=value, axis=ax)
         else:
             raise BadRequestException("A string is required")
 

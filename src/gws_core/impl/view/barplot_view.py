@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List
+from typing import List, Union
 
 from ...config.config_types import ConfigParams
 from ...resource.view import View
@@ -46,7 +46,7 @@ class BarPlotView(View):
     _series: List = None
     _type: str = "bar-plot-view"
 
-    def add_series(self, x: List[float], y: List[float], name: str = None):
+    def add_series(self, x: Union[List[float], List[str]], y: List[float], name: str = None):
         if not self._series:
             self._series = []
         self._series.append({

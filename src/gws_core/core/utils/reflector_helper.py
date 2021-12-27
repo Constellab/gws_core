@@ -47,6 +47,19 @@ class ReflectorHelper():
         return arguments
 
     @classmethod
+    def function_args_are_optional(cls, func: Callable) -> bool:
+        """Function to get the arguments with type (Any if not provided) of a method or a function
+
+        :param func: [description]
+        :type func: Callable
+        :return: [description]
+        :rtype: Dict[str, type]
+        """
+
+        func_args: FuncArgsMetaData = cls.get_function_arguments(func)
+        return func_args.all_args_have_default()
+
+    @classmethod
     def object_has_metadata(cls, object_: Any, meta_data_name: str, meta_obj_type: type = None) -> bool:
         """Check if the object has meta data. If meta_obj_type is provided, it also check if the type of the metadata is valid
         """

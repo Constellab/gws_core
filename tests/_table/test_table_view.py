@@ -12,7 +12,7 @@ class TestTableView(BaseTestCase):
 
         vw = TableView(table)
         self.assertEqual(
-            vw._slice(vw._data, from_row_index=4, to_row_index=21, from_column_index=1, to_column_index=4),
+            vw._slice(vw.get_table().get_data(), from_row_index=4, to_row_index=21, from_column_index=1, to_column_index=4),
             table.to_table().iloc[4:21, 1:4].to_dict('list')
         )
 
