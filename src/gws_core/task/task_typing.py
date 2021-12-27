@@ -44,7 +44,9 @@ class TaskTyping(Typing):
         return list(
             cls.select().where(
                 (cls.object_type == cls._object_type) & (cls.object_sub_type == task_sub_type) &
-                (cls.related_model_typing_name.in_(typing_names))))
+                (cls.related_model_typing_name.in_(typing_names)))
+            .order_by(cls.human_name)
+        )
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:
 

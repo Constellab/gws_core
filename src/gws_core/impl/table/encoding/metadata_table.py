@@ -5,6 +5,8 @@
 
 from typing import List, Type
 
+from gws_core.impl.table.table_file import TableFile
+
 from ....config.config_types import ConfigParams
 from ....impl.file.file import File
 from ....resource.resource_decorator import resource_decorator
@@ -102,7 +104,7 @@ class MetadataTable(Table):
 # ####################################################################
 
 
-@importer_decorator("MetadataTableImporter", target_type=MetadataTable)
+@importer_decorator("MetadataTableImporter", source_type=TableFile, target_type=MetadataTable)
 class MetadataTableImporter(TableImporter):
 
     async def import_from_path(self, file: File, params: ConfigParams, target_type: Type[MetadataTable]) -> MetadataTable:

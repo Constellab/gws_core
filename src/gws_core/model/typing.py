@@ -86,7 +86,7 @@ class Typing(Model):
                 ht.append(t.full_classname())
         return ht
 
-    def update_model_type(self, model_type) -> 'Typing':
+    def update_model_type(self, model_type) -> None:
         """
         Update the model type and the ancestors, then save into the DB
         """
@@ -98,6 +98,9 @@ class Typing(Model):
 
     def refresh_ancestors(self) -> None:
         self._set_ancestors(self._get_hierarchy_table())
+
+    def get_ancestors(self) -> List[str]:
+        return self.data["ancestors"]
 
     def get_type(self) -> Type[Any]:
         return Utils.get_model_type(self.model_type)

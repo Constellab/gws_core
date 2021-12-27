@@ -8,13 +8,10 @@ from typing import List
 
 from gws_core.impl.table.table import Table
 from gws_core.impl.table.table_file import TableFile
-from gws_core.impl.table.tasks.table_exporter import TableExporter
-from gws_core.impl.table.tasks.table_importer import TableImporter
-
-from gws_core.impl.text.text_tasks import TextImporter
+from gws_core.impl.table.table_tasks import TableImporter
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
-from gws_core.task.converter.converter_service import ConverterService
-from gws_core.task.task_typing import TaskTyping
+from gws_core.task.converter.converter_service import (ConverterService,
+                                                       ResourceImportersDTO)
 from gws_core.test.base_test_case import BaseTestCase
 from tests.gws_core_test_helper import GWSCoreTestHelper
 
@@ -22,10 +19,12 @@ from tests.gws_core_test_helper import GWSCoreTestHelper
 class TestImporter(BaseTestCase):
 
     def test_get_import_specs(self):
-        importers: List[TaskTyping] = ConverterService.get_resource_importers(TableFile._typing_name)
+        importers: List[ResourceImportersDTO] = ConverterService.get_resource_importers(TableFile._typing_name)
 
         self.assertTrue(len(importers) > 0)
-        self.assertTrue(len([x for x in importers if x.get_type() == TableImporter]) == 1)
+        # the first importer group must be importers of TableFile
+        self.assertEqual(importers[0].resource.get_type(), TableFile)
+        self.assertTrue(len([x for x in importers[0].importers if x.get_type() == TableImporter]) == 1)
         # self.assertTrue(len([x for x in importers if x.get_type() == TextImporter]) == 0)
 
     async def test_importer(self):

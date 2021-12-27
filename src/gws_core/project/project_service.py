@@ -4,6 +4,7 @@ from typing import List
 from ..central.central_service import CentralService
 from ..core.service.base_service import BaseService
 from ..core.utils.logger import Logger
+from ..core.utils.settings import Settings
 from .project import Project
 from .project_dto import CentralProject, ProjectDto
 
@@ -30,7 +31,8 @@ class ProjectService(BaseService):
         try:
             central_projects = CentralService.get_current_user_projects()
         except Exception as err:
-            Logger.log_exception_stack_trace(err)
+            if not Settings.is_local_env():
+                Logger.log_exception_stack_trace(err)
             return []
 
         projects_dto: List[ProjectDto] = []
