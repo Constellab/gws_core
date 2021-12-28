@@ -3,8 +3,4 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict
-
-from ..config.param_spec import ParamSpec
-
-ViewSpecs = Dict[str, ParamSpec]
+class LazyViewParam():

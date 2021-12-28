@@ -1,4 +1,7 @@
-
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 from typing import List, TypedDict
 
@@ -25,6 +28,7 @@ class MixedViews(View):
     _sub_views: List[View]
     _type = "mixed-view"
     _allowed_view_types = []
+
     def __init__(self, *args, **kwargs):
         """[summary]
         """
@@ -61,7 +65,6 @@ class MixedViews(View):
                 "config_params": config_params,
             }
         )
-
 
     def to_dict(self, params: ConfigParams) -> dict:
         views_dict: List[dict] = []
