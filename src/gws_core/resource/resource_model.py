@@ -262,8 +262,6 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
                 # delete the RField default value so the lazy load can be called
                 delattr(resource, key)
 
-                # loaded_value = r_field.deserialize(kv_store.get(key))
-
     def receive_fields_from_resource(self, resource: ResourceType):
         """for each BaseRField of the resource, store its value to the data or kvstore
 
