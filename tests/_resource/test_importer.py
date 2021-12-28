@@ -6,9 +6,7 @@
 
 from typing import List
 
-from gws_core.impl.table.table import Table
-from gws_core.impl.table.table_file import TableFile
-from gws_core.impl.table.table_tasks import TableImporter
+from gws_core import Table, TableFile, TableImporter
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.task.converter.converter_service import (ConverterService,
                                                        ResourceImportersDTO)
