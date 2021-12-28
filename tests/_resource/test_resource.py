@@ -8,7 +8,7 @@ from gws_core import (BaseTestCase, Experiment, ExperimentService, GTest,
                       ProcessFactory, ResourceModel, Robot, RobotCreate,
                       TaskModel)
 from gws_core.experiment.experiment_run_service import ExperimentRunService
-from gws_core.resource.r_field import IntRField, ListRField
+from gws_core.resource.r_field import IntRField, ListRField, StrRField
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
 from gws_core.resource.resource_model import ResourceOrigin
@@ -20,7 +20,7 @@ class TestResourceFields(Resource):
     age: int = IntRField()
     position: List[float] = ListRField()
 
-    weight: int = IntRField()
+    long_str = StrRField(searchable=False)
 
 
 class TestResource(BaseTestCase):
@@ -48,21 +48,23 @@ class TestResource(BaseTestCase):
         # Check the to_json
         resource_model.to_json(deep=True)
 
-    def test_2(self):
+    def test_resource_r_fields(self):
+        """Test that RField are loaded and long field are lazy loaded
+        """
         resource = TestResourceFields()
         resource.position = [5, 2]
         resource.age = 12
-        resource.weight = None
+        resource.long_str = "Hello world"
 
         resource_model: ResourceModel = ResourceModel.from_resource(resource, origin=ResourceOrigin.IMPORTED)
 
-        self.assertEqual(len(resource_model.data), 3)
+        self.assertEqual(len(resource_model.data), 2)
         self.assertIsNotNone(resource_model.kv_store_path)
 
         # generate the resource from the resource model and check its values
         new_resource: TestResourceFields = resource_model.get_resource(new_instance=True)
 
         self.assertEqual(new_resource.age, 12)
-        self.assertIsNone(new_resource.weight)
+        self.assertEqual(new_resource.long_str, "Hello world")
         self.assertEqual(new_resource.position[0], 5)
         self.assertEqual(new_resource.position[1], 2)

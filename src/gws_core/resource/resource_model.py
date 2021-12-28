@@ -248,19 +248,21 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         properties: Dict[str, BaseRField] = self._get_resource_r_fields(type(resource))
 
         kv_store: KVStore = self.get_kv_store()
+        resource._kv_store = kv_store
 
         # for each BaseRField of the resource, set the value form the data or kvstore
         for key, r_field in properties.items():
-
-            loaded_value: Any = None
             # If the property is searchable, it is stored in the DB
             if r_field.searchable:
                 loaded_value = copy.deepcopy(r_field.deserialize(self.data.get(key)))
+                setattr(resource, key, loaded_value)
 
+            # if it comes from the kvstore, lazy load it
             elif kv_store is not None:
-                loaded_value = r_field.deserialize(kv_store.get(key))
+                # delete the RField default value so the lazy load can be called
+                delattr(resource, key)
 
-            setattr(resource, key, loaded_value)
+                # loaded_value = r_field.deserialize(kv_store.get(key))
 
     def receive_fields_from_resource(self, resource: ResourceType):
         """for each BaseRField of the resource, store its value to the data or kvstore
