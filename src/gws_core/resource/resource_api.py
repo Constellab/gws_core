@@ -13,7 +13,7 @@ from gws_core.task.transformer.transformer_service import TransformerService
 from gws_core.task.transformer.transformer_type import TransformerDict
 from typing_extensions import TypedDict
 
-from ..core.classes.jsonable import Jsonable, ListJsonable
+from ..core.classes.jsonable import DictJsonable, Jsonable, ListJsonable
 from ..core.classes.paginator import PaginatorDict
 from ..core_app import core_app
 from ..user.auth_service import AuthService
@@ -27,6 +27,12 @@ from .resource_service import ResourceService
               summary="Get the list of view for a resource type")
 async def get_resource_type_views(resource_typing_name: str) -> list:
     return ListJsonable(ResourceService.get_views_of_resource(resource_typing_name)).to_json()
+
+
+@core_app.get("/resource/{id}/views/{view_name}/specs", tags=["Resource"],
+              summary="Get the specs for a view of a resource")
+async def get_view_specs(id: str, view_name: str) -> list:
+    return DictJsonable(ResourceService.get_view_specs(id, view_name)).to_json()
 
 
 class ViewConfig(TypedDict):

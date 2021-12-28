@@ -276,6 +276,7 @@ from .protocol.protocol_spec import ProcessSpec as ProcessSpec
 from .protocol.protocol_typing import ProtocolTyping as ProtocolTyping
 # Resource
 from .resource.kv_store import KVStore as KVStore
+from .resource.lazy_view_param import LazyViewParam as LazyViewParam
 from .resource.multi_views import MultiViews as MultiViews
 from .resource.r_field import BoolRField as BoolRField
 from .resource.r_field import DictRField as DictRField

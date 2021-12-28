@@ -48,17 +48,9 @@ class ResourceViewMetaData():
             "view_type": self.view_type._type,
             "human_name": self.human_name,
             "short_description": self.short_description,
-            "specs": self.merge_visible_specs(),
             "default_view": self.default_view,
         }
 
-    def merge_visible_specs(self) -> ViewConfig:
+    def merge_specs(self) -> ViewSpecs:
         """Merge the view and method specs and return only visible specs"""
-        json_: ViewSpecs = {**self.view_type._specs, **self.specs}
-
-        visible_json = {}
-        for key, spec in json_.items():
-            if spec.visibility == 'private':
-                continue
-            visible_json[key] = spec.to_json()
-        return visible_json
+        return {**self.view_type._specs, **self.specs}
