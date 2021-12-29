@@ -59,13 +59,13 @@ class Table(Resource):
                 pass
             elif isinstance(data, (np.ndarray, list)):
                 data = DataFrame(data)
-                if column_names:
-                    data.columns = column_names
-                if row_names:
-                    data.index = row_names
             else:
                 raise BadRequestException(
                     "The data must be an instance of DataFrame or Numpy array")
+            if column_names:
+                data.columns = column_names
+            if row_names:
+                data.index = row_names
 
         # Table._format_row_and_columns_names(data)
         data.index = Table._format_names(data.index, mapper=Table._row_formater)

@@ -7,6 +7,7 @@ from typing import List, Union, final
 
 import numpy as np
 from pandas import DataFrame
+from pandas.api.types import is_string_dtype
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
@@ -75,6 +76,11 @@ class Dataset(Table):
         return name in self.feature_names
 
     # -- H --
+    
+    def has_string_targets(self):
+        return is_string_dtype(self.get_targets())
+
+    # -- I --
 
     @ property
     def instance_names(self) -> list:
