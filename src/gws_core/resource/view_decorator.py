@@ -1,8 +1,12 @@
-
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 from typing import Callable, Type
 
 from gws_core.brick.brick_service import BrickService
+from gws_core.resource.lazy_view_param import LazyViewParam
 
 from ..config.param_spec import ParamSpec
 from ..core.classes.func_meta_data import FuncArgsMetaData
@@ -44,66 +48,71 @@ def view(view_type: Type[View], human_name: str = "", short_description: str = "
         specs = {}
 
     def decorator(func: Callable) -> Callable:
-        func_args: FuncArgsMetaData = ReflectorHelper.get_function_arguments(func)
 
-        if not func_args.is_method():
-            BrickService.log_brick_error(
-                func,
-                'The @view decorator must be unsed on a method (with self). It must not be used in a classmethod or a static method')
-            return func
+        try:
+            func_args: FuncArgsMetaData = ReflectorHelper.get_function_arguments(func)
 
-        # if the view is mark as default, all the parameters must be optional
-        if default_view:
-            if hide:
-                BrickService.log_brick_error(
-                    func,
-                    f"View error. The @view of method '{func_args.func_name}' is mark as default and hide. The default view can't be hidden")
-                return func
+            if not func_args.is_method():
+                raise Exception(
+                    'The @view decorator must be unsed on a method (with self). It must not be used in a classmethod or a static method')
 
-            for spec_name, spec in specs.items():
-                if not spec.optional:
-                    BrickService.log_brick_error(
-                        func,
-                        f"View error. The @view of method '{func_args.func_name}' is mark as default but the spec '{spec_name}' is mandatory. If the view is mark as default, all the view specs must be optional or have a default value")
-                    return func
+            # if the view is mark as default, all the parameters must be optional
+            if default_view:
+                if hide:
+                    raise Exception(
+                        f"View error. The @view of method '{func_args.func_name}' is mark as default and hide. The default view can't be hidden")
 
-        # # Check that the function arg matches the view specs and the type are the same
-        # for arg_name in func_args.get_named_args().keys():
-        #     if arg_name not in specs:
-        #         raise Exception(
-        #             f"View error. The method '{func_args.func_name}' has an argument called '{arg_name}' but this argument is not defined in the specs of the @view decorator")
+                for spec_name, spec in specs.items():
+                    if not spec.optional:
+                        raise Exception(
+                            f"View error. The @view of method '{func_args.func_name}' is mark as default but the spec '{spec_name}' is mandatory. If the view is mark as default, all the view specs must be optional or have a default value")
 
-            # view_param_type: type = specs[arg_name].get_type()
-            # if arg_type != view_param_type:
-            #     raise Exception(
-            #         f"View error. The method '{func.__name__}' has an argument called '{arg_name}' of type '{arg_type}' but this type is not the same as the type defined in the specs of the view decorator '{view_param_type}'")
+            # # Check that the function arg matches the view specs and the type are the same
+            # for arg_name in func_args.get_named_args().keys():
+            #     if arg_name not in specs:
+            #         raise Exception(
+            #             f"View error. The method '{func_args.func_name}' has an argument called '{arg_name}' but this argument is not defined in the specs of the @view decorator")
 
-        # # Check that the view specs matches the args types (only is the function does not have an arg or kwargs)
-        # if not func_args.contain_args():
-        #     for spec_name in specs.keys():
-        #         if spec_name not in func_args.args:
-        #             raise Exception(
-        #                 f"View error. The @view decorator of the method '{func_args.func_name}' has a spec called '{spec_name}' but there is not argument in the function called with the same name")
+                # view_param_type: type = specs[arg_name].get_type()
+                # if arg_type != view_param_type:
+                #     raise Exception(
+                #         f"View error. The method '{func.__name__}' has an argument called '{arg_name}' of type '{arg_type}' but this type is not the same as the type defined in the specs of the view decorator '{view_param_type}'")
 
-        # If method spec overides view spec, check the type
-        view_specs: ViewSpecs = view_type._specs
-        if len(specs) > 0 and len(view_specs) > 0:
-            for spec_name, method_spec in specs.items():
-                # if the method spec overide the view spec
-                if spec_name in view_specs:
-                    view_spec: ParamSpec = view_specs[spec_name]
-                    # the method spec must be a sub class of the view spec
-                    if not isinstance(method_spec, type(view_spec)):
-                        BrickService.log_brick_error(
-                            func,
-                            f"View error. The @view decorator of the method '{func_args.func_name}' has a spec called '{spec_name}' that overide the spec of the view '{view_type}' but the types are imcompatible")
+            # # Check that the view specs matches the args types (only is the function does not have an arg or kwargs)
+            # if not func_args.contain_args():
+            #     for spec_name in specs.keys():
+            #         if spec_name not in func_args.args:
+            #             raise Exception(
+            #                 f"View error. The @view decorator of the method '{func_args.func_name}' has a spec called '{spec_name}' but there is not argument in the function called with the same name")
 
-        # Create the meta data object
-        view_meta_data: ResourceViewMetaData = ResourceViewMetaData(
-            func.__name__, view_type, human_name, short_description, specs, default_view, hide)
-        # Store the meta data object into the view_meta_data_attribute of the function
-        ReflectorHelper.set_object_has_metadata(func, VIEW_META_DATA_ATTRIBUTE, view_meta_data)
+            # Check the specs
+            if not isinstance(specs, dict):
+                raise Exception("The view specs must be a dictionary")
 
+            for key, item in specs.items():
+                if not isinstance(item, ParamSpec) and not isinstance(item, LazyViewParam):
+                    raise Exception(
+                        f"The config spec '{key}' is invalid, it must be a ParamSpec or a LazyViewParam but got {type(item)}")
+
+            # If method spec overides view spec, check the type
+            view_specs: ViewSpecs = view_type._specs
+            if len(specs) > 0 and len(view_specs) > 0:
+                for spec_name, method_spec in specs.items():
+                    # if the method spec overide the view spec
+                    if spec_name in view_specs:
+                        view_spec: ParamSpec = view_specs[spec_name]
+                        # the method spec must be a sub class of the view spec
+                        if not isinstance(method_spec, type(view_spec)):
+                            raise Exception(
+                                f"View error. The @view decorator of the method '{func_args.func_name}' has a spec called '{spec_name}' that overide the spec of the view '{view_type}' but the types are imcompatible")
+
+            # Create the meta data object
+            view_meta_data: ResourceViewMetaData = ResourceViewMetaData(
+                func.__name__, view_type, human_name, short_description, specs, default_view, hide)
+            # Store the meta data object into the view_meta_data_attribute of the function
+            ReflectorHelper.set_object_has_metadata(func, VIEW_META_DATA_ATTRIBUTE, view_meta_data)
+        except Exception as e:
+            BrickService.log_brick_error(func, str(e))
         return func
 
     return decorator

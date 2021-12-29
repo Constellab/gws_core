@@ -5,6 +5,11 @@ from typing import Dict, List
 from gws_core import (BaseTestCase, ConfigParams, IntParam, JSONView, Resource,
                       ResourceService, StrParam, TextView, resource_decorator,
                       view)
+from gws_core.config.config_types import ConfigSpecs
+from gws_core.config.param_spec import ParamSpec
+from gws_core.resource.any_view import AnyView
+from gws_core.resource.lazy_view_param import LazyViewParam
+from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.resource.view_helper import ViewHelper
 from gws_core.resource.view_meta_data import ResourceViewMetaData
 
@@ -49,13 +54,22 @@ class ResourceViewTestOveride(ResourceViewTestOverideParent):
     @view(view_type=TextView, hide=True)
     def view_as_json(self, params: ConfigParams) -> JSONView:
         """Disable the view
-
-        :param params: [description]
-        :type params: ConfigParams
-        :return: [description]
-        :rtype: JSONView
         """
         pass
+
+
+@resource_decorator("ResourceLazySpecs")
+class ResourceLazySpecs(Resource):
+
+    allowed_value = ['super']
+
+    @view(view_type=AnyView, human_name='View overide',
+          specs={"lazy": LazyViewParam('get_param')})
+    def lazy_view(self, params: ConfigParams) -> AnyView:
+        return AnyView('Test sub')
+
+    def get_param(self) -> StrParam:
+        return StrParam(allowed_values=self.allowed_value)
 
 
 class TestView(BaseTestCase):
@@ -119,12 +133,21 @@ class TestView(BaseTestCase):
     def test_view_spec_override_and_private(self):
         """Test a method view where spec override view specs and private visiblity"""
 
-        view_meta_data: ResourceViewMetaData = ViewHelper.get_and_check_view(
-            ResourceViewTestOverideParent, 'a_view_test')
+        resource: Resource = ResourceViewTestOverideParent()
+        resource_model: ResourceModel = ResourceModel.from_resource(resource, origin=ResourceOrigin.IMPORTED)
 
-        self.assertTrue('page' in view_meta_data.view_type._specs)
-        self.assertTrue('page' in view_meta_data.specs)
-        json_ = view_meta_data.merge_visible_specs()
+        specs: ConfigSpecs = ViewHelper.get_view_specs(resource_model, 'a_view_test')
 
         # if the page was overrided and the private is working, the page should not be in the json
-        self.assertFalse('page' in json_)
+        self.assertFalse('page' in specs)
+
+    def test_get_view_specs(self):
+        resource: Resource = ResourceLazySpecs()
+        resource_model: ResourceModel = ResourceModel.from_resource(resource, origin=ResourceOrigin.IMPORTED)
+
+        specs: ConfigSpecs = ViewHelper.get_view_specs(resource_model, 'lazy_view')
+
+        self.assertEqual(len(specs), 1)
+        self.assertTrue('lazy' in specs)
+        self.assertIsInstance(specs['lazy'], ParamSpec)
+        self.assertEqual(specs['lazy'].allowed_values, ['super'])

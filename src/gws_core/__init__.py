@@ -276,6 +276,7 @@ from .protocol.protocol_spec import ProcessSpec as ProcessSpec
 from .protocol.protocol_typing import ProtocolTyping as ProtocolTyping
 # Resource
 from .resource.kv_store import KVStore as KVStore
+from .resource.lazy_view_param import LazyViewParam as LazyViewParam
 from .resource.multi_views import MultiViews as MultiViews
 from .resource.r_field import BoolRField as BoolRField
 from .resource.r_field import DictRField as DictRField
@@ -300,6 +301,8 @@ from .resource.view_types import ViewSpecs as ViewSpecs
 from .tag.tag import Tag as Tag
 from .tag.tag import TagHelper as TagHelper
 # Task > Converter
+from .task.converter.converter import Converter as Converter
+from .task.converter.converter import ConverterRunner as ConverterRunner
 from .task.converter.exporter import ResourceExporter as ResourceExporter
 from .task.converter.exporter import export_to_path as export_to_path
 from .task.converter.exporter import exporter_decorator as exporter_decorator

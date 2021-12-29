@@ -28,7 +28,7 @@ class BaseTableView(View):
     def _check_and_set_data(self, table: Table):
         from ..table import Table
         if not isinstance(table, Table):
-            raise BadRequestException("The data must be a pandas.DataFrame or Table resource")
+            raise BadRequestException("The data must be a Table resource")
         self._table = table
 
     def get_table(self):

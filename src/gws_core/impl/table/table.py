@@ -292,7 +292,7 @@ class Table(Resource):
         View as table
         """
 
-        return TableView(self._data)
+        return TableView(self)
 
     @ view(view_type=TableLinePlot2DView, human_name='Line plot 2D', short_description='View columns as 2D-line plots', specs={})
     def view_as_line_plot_2d(self, params: ConfigParams) -> TableLinePlot2DView:
@@ -300,7 +300,7 @@ class Table(Resource):
         View columns as 2D-line plots
         """
 
-        return TableLinePlot2DView(self._data)
+        return TableLinePlot2DView(self)
 
     # @view(view_type=LinePlot3DView, human_name='LinePlot3D', short_description='View columns as 3D-line plots', specs={})
     # def view_as_line_plot_3d(self, params: ConfigParams) -> LinePlot3DView:
@@ -308,7 +308,7 @@ class Table(Resource):
     #     View columns as 3D-line plots
     #     """
 
-    #     return LinePlot3DView(self._data)
+    #     return LinePlot3DView(self)
 
     # @view(view_type=TableScatterPlot3DView, human_name='ScatterPlot3D', short_description='View columns as 3D-scatter plots', specs={})
     # def view_as_scatter_plot_3d(self, params: ConfigParams) -> TableScatterPlot3DView:
@@ -316,7 +316,7 @@ class Table(Resource):
     #     View columns as 3D-scatter plots
     #     """
 
-    #     return TableScatterPlot3DView(self._data)
+    #     return TableScatterPlot3DView(self)
 
     @ view(view_type=TableScatterPlot2DView, human_name='Scatter plot 2D',
            short_description='View columns as 2D-scatter plots', specs={})
@@ -325,7 +325,7 @@ class Table(Resource):
         View one or several columns as 2D-line plots
         """
 
-        return TableScatterPlot2DView(self._data)
+        return TableScatterPlot2DView(self)
 
     @ view(view_type=TableBarPlotView, human_name='Bar plot', short_description='View columns as 2D-bar plots', specs={})
     def view_as_bar_plot(self, params: ConfigParams) -> TableBarPlotView:
@@ -333,7 +333,7 @@ class Table(Resource):
         View one or several columns as 2D-bar plots
         """
 
-        return TableBarPlotView(self._data)
+        return TableBarPlotView(self)
 
     @ view(view_type=TableStackedBarPlotView, human_name='Stacked bar plot',
            short_description='View columns as 2D-stacked bar plots', specs={})
@@ -342,7 +342,7 @@ class Table(Resource):
         View one or several columns as 2D-stacked bar plots
         """
 
-        return TableStackedBarPlotView(self._data)
+        return TableStackedBarPlotView(self)
 
     @ view(view_type=TableHistogramView, human_name='Histogram', short_description='View columns as 2D-line plots', specs={})
     def view_as_histogram(self, params: ConfigParams) -> TableHistogramView:
@@ -350,7 +350,7 @@ class Table(Resource):
         View columns as 2D-line plots
         """
 
-        return TableHistogramView(self._data)
+        return TableHistogramView(self)
 
     @ view(view_type=TableBoxPlotView, human_name='Box plot', short_description='View columns as box plots', specs={})
     def view_as_box_plot(self, params: ConfigParams) -> TableBoxPlotView:
@@ -358,7 +358,7 @@ class Table(Resource):
         View one or several columns as box plots
         """
 
-        return TableBoxPlotView(self._data)
+        return TableBoxPlotView(self)
 
     @ view(view_type=HeatmapView, human_name='Heatmap', short_description='View table as heatmap', specs={})
     def view_as_heatmap(self, params: ConfigParams) -> HeatmapView:
@@ -366,4 +366,4 @@ class Table(Resource):
         View the table as heatmap
         """
 
-        return HeatmapView(self._data)
+        return HeatmapView(self)

@@ -1,5 +1,11 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
-from typing import Dict
+from typing import Callable, Dict, Type
+
+from gws_core.resource.kv_store import KVStore
 
 from ..config.config_types import ConfigParams
 from ..core.exception.exceptions.bad_request_exception import \
@@ -28,6 +34,7 @@ class Resource(Base):
     _model_id: str = None
     _is_importable: bool = False
     _is_exportable: bool = False
+    _kv_store: KVStore
 
     def __init__(self):
         """Resource constructor
@@ -74,3 +81,20 @@ class Resource(Base):
         :rtype: [type]
         """
         return None
+
+    def __getattribute__(self, name):
+        """Override get attribute to lazy load kvstore Rfields
+
+        :param name: [description]
+        :type name: [type]
+        :return: [description]
+        :rtype: [type]
+        """
+        attr = super().__getattribute__(name)
+
+        if isinstance(attr, BaseRField) and name in self._kv_store:
+            value = self._kv_store.get(name)
+            setattr(self, name, value)
+            return value
+
+        return attr

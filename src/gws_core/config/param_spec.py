@@ -1,5 +1,12 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
+
 from abc import abstractclassmethod, abstractmethod
 from typing import Any, Dict, Generic, List, Literal, Optional, Type, TypeVar
+
+from gws_core.core.utils.logger import Logger
 
 from ..core.classes.validator import (BoolValidator, DictValidator,
                                       FloatValidator, IntValidator,
@@ -41,6 +48,7 @@ class ParamSpec(Generic[ParamSpecType]):
     PUBLIC_VISIBILITY = "public"
     PROTECTED_VISIBILITY = "protected"
     PRIVATE_VISIBILITY = "private"
+    MAX_ALLOWED_VALUES_COUNT = 50
 
     def __init__(
         self,
@@ -210,7 +218,14 @@ class StrParam(ParamSpec[str]):
         :param unit: Measure unit of the value (ex kg)
         :type unit: Optional[str]
         """
-        self.allowed_values = allowed_values
+        if allowed_values is not None and isinstance(allowed_values, list):
+            if len(allowed_values) > self.MAX_ALLOWED_VALUES_COUNT:
+                Logger.warning(
+                    f'[ParamSpecs] Max number of allowed value reached, values will be truncated. Max {self.MAX_ALLOWED_VALUES_COUNT}')
+            self.allowed_values = allowed_values[:self.MAX_ALLOWED_VALUES_COUNT]
+        else:
+            self.allowed_values = None
+
         self.min_length = min_length
         self.max_length = max_length
         super().__init__(
@@ -324,7 +339,14 @@ class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
         :param unit: Measure unit of the value (ex kg)
         :type unit: Optional[str]
         """
-        self.allowed_values = allowed_values
+        if allowed_values is not None and isinstance(allowed_values, list):
+            if len(allowed_values) > self.MAX_ALLOWED_VALUES_COUNT:
+                Logger.warning(
+                    f'[ParamSpecs] Max number of allowed value reached, values will be truncated. Max {self.MAX_ALLOWED_VALUES_COUNT}')
+            self.allowed_values = allowed_values[:self.MAX_ALLOWED_VALUES_COUNT]
+        else:
+            self.allowed_values = None
+
         self.min_value = min_value
         self.max_value = max_value
         super().__init__(
@@ -431,7 +453,7 @@ class ParamSet(ParamSpec[list]):
             param_set = {}
         self.param_set = param_set
         super().__init__(
-            default_value=[],
+            default_value=[] if optional else None,
             optional=optional,
             visibility=visibility,
             human_name=human_name,

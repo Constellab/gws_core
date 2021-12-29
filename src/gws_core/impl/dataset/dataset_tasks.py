@@ -23,14 +23,14 @@ from ..table.tasks.table_importer import TableImporter
 from .dataset import Dataset
 
 
-@importer_decorator(unique_name="DatasetImporter", source_type=File, target_type=Dataset)
+@importer_decorator(unique_name="DatasetImporter", source_type=TableFile, target_type=Dataset)
 class DatasetImporter(TableImporter):
     config_specs: ConfigSpecs = {
         **TableImporter.config_specs,
         'targets': ListParam(default_value='[]', short_description="Name of the columns to user as targets"),
     }
 
-    async def import_from_path(self, file: File, params: ConfigParams, target_type: Type[Dataset]) -> Dataset:
+    async def import_from_path(self, file: TableFile, params: ConfigParams, target_type: Type[Dataset]) -> Dataset:
         header = params.get_value("header", 0)
         index_col = params.get_value("index_column")
         targets = params.get_value("targets", [])

@@ -5,6 +5,7 @@
 
 from typing import Any, Dict, List, Type
 
+from gws_core.config.config_types import ConfigSpecs
 from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
@@ -91,6 +92,12 @@ class ResourceService(BaseService):
         if not issubclass(resource_type, Resource):
             raise BadRequestException("Can't find views of an object other than a Resource")
         return ViewHelper.get_views_of_resource_type(resource_type)
+
+    @classmethod
+    def get_view_specs(cls, resource_model_id: str, view_name: str) -> ConfigSpecs:
+        resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
+
+        return ViewHelper.get_view_specs(resource_model, view_name)
 
     @classmethod
     async def call_view_on_resource_type(cls, resource_model_id: str,
