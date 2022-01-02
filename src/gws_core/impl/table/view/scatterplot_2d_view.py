@@ -7,8 +7,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Type
 
-from pandas import DataFrame
-
 from ....config.config_types import ConfigParams
 from ....config.param_spec import ListParam, ParamSet, StrParam
 from ....core.exception.exceptions import BadRequestException
@@ -18,6 +16,8 @@ from .base_table_view import BaseTableView
 
 if TYPE_CHECKING:
     from ..table import Table
+
+DEFAULT_NUMBER_OF_COLUMNS = 3
 
 
 class TableScatterPlot2DView(BaseTableView):
@@ -31,6 +31,8 @@ class TableScatterPlot2DView(BaseTableView):
     ```
     {
         "type": "scatter-plot-2d-view",
+        "title": str,
+        "caption": str,
         "data": {
             "x_label": str,
             "y_label": str,
@@ -61,7 +63,9 @@ class TableScatterPlot2DView(BaseTableView):
                 "x_data_column": StrParam(human_name="X-data column", optional=True, default_value=None),
                 "y_data_column": StrParam(human_name="Y-data column"),
             },
-            human_name="Y-data series",
+            optional=True,
+            human_name="Series of data",
+            short_description=f"Select series of data. By default the first {DEFAULT_NUMBER_OF_COLUMNS} columns used as Y-data",
             max_number_of_occurrences=10
         ),
         "x_label": StrParam(human_name="X-axis label", optional=True, default_value=None, visibility=StrParam.PROTECTED_VISIBILITY),
@@ -79,9 +83,16 @@ class TableScatterPlot2DView(BaseTableView):
         # continue ...
         x_data_columns = []
         y_data_columns = []
-        for param_series in params.get_value("series", []):
+        series = params.get_value("series", [])
+        if not series:
+            n = min(DEFAULT_NUMBER_OF_COLUMNS, data.shape[1])
+            series = [{"y_data_column": v} for v in data.columns[0:n]]
+
+        for param_series in series:
             x_data_columns.append(param_series.get("x_data_column"))
             y_data_columns.append(param_series.get("y_data_column"))
+
+        print(x_data_columns)
 
         self.check_column_names(x_data_columns)
         self.check_column_names(y_data_columns)

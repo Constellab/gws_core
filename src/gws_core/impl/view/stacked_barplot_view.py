@@ -18,6 +18,8 @@ class StackedBoxPlotView(BarPlotView):
     ```
     {
         "type": "stacked-bar-plot-view",
+        "title": str,
+        "caption": str,
         "data": {
             "x_label": str,
             "y_label": str,
@@ -40,3 +42,4 @@ class StackedBoxPlotView(BarPlotView):
     """
 
     _type: str = "stacked-bar-plot-view"
+    _title: str = "Stacked-Bar Plot"

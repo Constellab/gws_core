@@ -20,6 +20,8 @@ class TableLinePlot3DView(TableScatterPlot3DView):
     ```
     {
         "type": "line-plot-3d-view",
+        "title": str,
+        "caption": str,
         "data": {
             "x_label": str,
             "y_label": str,

@@ -21,6 +21,8 @@ class HistogramView(View):
     ```
     {
         "type": "histogram-view",
+        "title": str,
+        "caption": str,
         "data": {
             "x_label": str,
             "y_label": str,
@@ -44,6 +46,7 @@ class HistogramView(View):
     x_tick_labels: List[str] = None
     _series: List = None
     _type: str = "histogram-view"
+    _title: str = "Histogram"
 
     def add_series(self, x: List[float], y: List[float], name: str = None):
         if not self._series:

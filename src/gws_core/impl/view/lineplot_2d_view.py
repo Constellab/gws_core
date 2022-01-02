@@ -17,6 +17,8 @@ class LinePlot2DView(ScatterPlot2DView):
     ```
     {
         "type": "line-plot-2d-view",
+        "title": str,
+        "caption": str,
         "data": {
             "x_label": str,
             "y_label": str,
@@ -40,3 +42,4 @@ class LinePlot2DView(ScatterPlot2DView):
     """
 
     _type: str = "line-plot-2d-view"
+    _title: str = "2D-Line Plot"

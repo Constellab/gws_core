@@ -20,6 +20,8 @@ class ScatterPlot3DView(View):
     ```
     {
         "type": "scatter-plot-3d-view",
+        "title": str,
+        "caption": str,
         "data": {
             "x_label": str,
             "y_label": str,
@@ -51,6 +53,7 @@ class ScatterPlot3DView(View):
     y_tick_labels: List[str] = None
     _series: List = None
     _type: str = "scatter-plot-3d-view"
+    _title: str = "3D-Scatter Plot"
 
     def add_series(
             self, x: List[float],

@@ -62,6 +62,12 @@ class Table(Resource):
             else:
                 raise BadRequestException(
                     "The data must be an instance of DataFrame or Numpy array")
+
+            if (column_names is not None) and not isinstance(column_names, list):
+                raise BadRequestException("The column_names an instance of list")
+            if (row_names is not None) and not isinstance(row_names, list):
+                raise BadRequestException("The rown_names an instance of list")
+
             if column_names:
                 data.columns = column_names
             if row_names:

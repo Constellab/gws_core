@@ -18,7 +18,7 @@ from .base_table_view import BaseTableView
 if TYPE_CHECKING:
     from ..table import Table
 
-MAX_NUMBERS_OF_COLUMNS_PER_PAGE = 999
+DEFAULT_NUMBER_OF_COLUMNS = 3
 
 
 class TableHistogramView(BaseTableView):
@@ -33,6 +33,8 @@ class TableHistogramView(BaseTableView):
     ```
     {
         "type": "histogram-view",
+        "title": str,
+        "caption": str,
         "data": {
             "x_label": str,
             "y_label": str,
@@ -59,7 +61,9 @@ class TableHistogramView(BaseTableView):
             {
                 "y_data_column": StrParam(human_name="Y-data column", short_description="Data to distribute among bins"),
             },
-            human_name="Series of Y-data",
+            optional=True,
+            human_name="Series of data",
+            short_description=f"Select series of data. By default the first {DEFAULT_NUMBER_OF_COLUMNS} columns are plotted",
             max_number_of_occurrences=10
         ),
         "nbins": IntParam(default_value=10, min_value=0, optional=True, human_name="Nbins", short_description="The number of bins. Set zero (0) for auto."),
@@ -70,21 +74,21 @@ class TableHistogramView(BaseTableView):
 
     def to_dict(self, params: ConfigParams) -> dict:
         nbins = params.get_value("nbins")
-        #column_names = params.get_value("column_names", [])
         density = params.get_value("density")
 
         data = self._table.get_data()
+        series = params.get_value("series", [])
+        if not series:
+            n = min(DEFAULT_NUMBER_OF_COLUMNS, data.shape[1])
+            series = [{"y_data_columns": v} for v in data.columns[0:n]]
 
         y_data_columns = []
-        for param_series in params.get_value("series", []):
-            name = param_series["y_data_column"]
+        for param_series in series:
+            name = param_series.get("y_data_column")
             y_data_columns.append(name)
 
         if nbins <= 0:
             nbins = "auto"
-        if not y_data_columns:
-            n = min(data.shape[1], MAX_NUMBERS_OF_COLUMNS_PER_PAGE)
-            y_data_columns = data.columns[0:n]
 
         x_label = params.get_value("x_label", "")
         y_label = params.get_value("y_label", "")

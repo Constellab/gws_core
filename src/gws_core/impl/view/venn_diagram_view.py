@@ -23,6 +23,8 @@ class VennDiagramView(View):
     ```
     {
         "type": "venn-diagram-view",
+        "title": str,
+        "caption": str,
         "data": {
             "label": str,
             "total_number_of_groups": int
@@ -42,6 +44,7 @@ class VennDiagramView(View):
     label: str = None
     _groups: Dict[str, set] = None
     _type: str = "bar-plot-view"
+    _title: str = "Venn Diagram"
 
     def _compute_sections(self):
         group_names = list(self._groups.keys())

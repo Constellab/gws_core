@@ -12,7 +12,7 @@ from pandas import Series
 class TestTableAggregatorHelper(BaseTestCase):
     async def test_table_aggregator_helper(self):
         file = DataProvider.get_test_data_file("multi_index_data.csv")
-        table: Table = TableImporter.call(file, {"header": 0, "index_column": "Name"})
+        table: Table = TableImporter.call(file, {"header": 0, "index_column": 0})
 
         df = TableAggregatorHelper.aggregate(data=table.get_data(), direction="vertical", func="sum")
         exptect_df = Series(data=[110, 170], index=["Age", "Weight"])

@@ -20,6 +20,8 @@ class HeatmapView(TableView):
     ```
     {
         "type": "heatmap-view",
+        "title": str,
+        "caption": str,
         "data": dict
     }
     ```

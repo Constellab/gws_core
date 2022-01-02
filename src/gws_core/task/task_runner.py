@@ -84,7 +84,7 @@ class TaskRunner():
 
         return self._check_outputs(task_outputs)
 
-    async def run_after_task(self) -> None:
+    async  def run_after_task(self) -> None:
         task: Task = self._get_task_instance()
         task._status_ = 'RUN_AFTER_TASK'
 

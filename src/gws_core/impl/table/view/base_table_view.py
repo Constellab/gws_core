@@ -36,5 +36,6 @@ class BaseTableView(View):
 
     def check_column_names(self, column_names):
         for name in column_names:
-            if name not in self._table.get_data().columns:
-                raise BadRequestException(f"The column name '{name}' is not valid")
+            if name is not None:
+                if name not in self._table.get_data().columns:
+                    raise BadRequestException(f"The column name '{name}' is not valid")

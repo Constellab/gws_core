@@ -14,7 +14,7 @@ class TestTableFilter(BaseTestCase):
     async def test_multi_index_table(self):
         GTest.print("Multi Index Table")
         file = DataProvider.get_test_data_file("multi_index_data.csv")
-        table: Table = TableImporter.call(file, {"header": 0, "index_column": "Name"})
+        table: Table = TableImporter.call(file, {"header": 0, "index_column": 0})
 
         # filter columns
         tester = TaskRunner(

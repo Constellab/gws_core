@@ -21,6 +21,8 @@ class BarPlotView(View):
     ```
     {
         "type": "bar-plot-view",
+        "title": str,
+        "caption": str,
         "data": {
             "x_label": str,
             "y_label": str,
@@ -45,6 +47,7 @@ class BarPlotView(View):
     x_tick_labels: List[str] = None
     _series: List = None
     _type: str = "bar-plot-view"
+    _title: str = "Bar Plot"
 
     def add_series(self, x: Union[List[float], List[str]], y: List[float], name: str = None):
         if not self._series:

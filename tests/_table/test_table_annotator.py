@@ -12,7 +12,7 @@ class TestTableAnnotator(BaseTestCase):
 
     async def test_table_column_annotator(self):
         # importer
-        table = GWSCoreTestHelper.get_data_table()
+        table = GWSCoreTestHelper.get_small_data_table()
         metatable = GWSCoreTestHelper.get_metadata_table()
         print(table)
 
@@ -39,7 +39,7 @@ class TestTableAnnotator(BaseTestCase):
 
     async def test_table_row_annotator(self):
         # importer
-        table = GWSCoreTestHelper.get_data_table()
+        table = GWSCoreTestHelper.get_small_data_table()
         table = Table(data=table.get_data().T)
         metatable = GWSCoreTestHelper.get_metadata_table()
 

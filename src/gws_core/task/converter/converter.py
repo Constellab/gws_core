@@ -143,8 +143,8 @@ class ConverterRunner():
         await self._task_runner.run()
         return self.get_output()
 
-    async def run_after_task(self) -> None:
-        self._task_runner.run_after_task()
+    async  def run_after_task(self) -> None:
+        await self._task_runner.run_after_task()
 
     def set_input(self, resource: Resource) -> None:
         self._task_runner.set_input('source', resource)

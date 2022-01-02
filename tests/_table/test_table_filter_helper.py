@@ -15,7 +15,7 @@ testdata_dir = settings.get_variable("gws_core:testdata_dir")
 class TestTableFilterHelper(BaseTestCase):
     async def test_table_filter_helper(self):
         file = DataProvider.get_test_data_file("multi_index_data.csv")
-        table: Table = TableImporter.call(file, {"header": 0, "index_column": "Name"})
+        table: Table = TableImporter.call(file, {"header": 0, "index_column": 0})
 
         # filter by row name
         df = TableFilterHelper.filter_by_axis_names(

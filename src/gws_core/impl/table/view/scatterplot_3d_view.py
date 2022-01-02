@@ -19,6 +19,8 @@ from .base_table_view import BaseTableView
 if TYPE_CHECKING:
     from ..table import Table
 
+DEFAULT_NUMBER_OF_COLUMNS = 3
+
 
 class TableScatterPlot3DView(BaseTableView):
     """
@@ -31,6 +33,8 @@ class TableScatterPlot3DView(BaseTableView):
     ```
     {
         "type": "scatter-plot-3d-view",
+        "title": str,
+        "caption": str,
         "data": {
             "x_label": str,
             "y_label": str,
@@ -67,7 +71,9 @@ class TableScatterPlot3DView(BaseTableView):
                 "y_data_column": StrParam(human_name="Y-data column", default_value=None, optional=True),
                 "z_data_column": StrParam(human_name="Z-data column"),
             },
-            human_name="Z-data series",
+            optional=True,
+            human_name="Series of data",
+            short_description=f"Select series of data. By default the first {DEFAULT_NUMBER_OF_COLUMNS} columns are used as Z-data",
             max_number_of_occurrences=10
         ),
         "x_label": StrParam(human_name="X-axis label", optional=True, visibility=StrParam.PROTECTED_VISIBILITY),
@@ -83,12 +89,16 @@ class TableScatterPlot3DView(BaseTableView):
             raise BadRequestException("Invalid view helper. An subclass of ScatterPlot2DView is expected")
 
         data = self._table.get_data()
+        series = params.get_value("series", [])
+        if not series:
+            n = min(DEFAULT_NUMBER_OF_COLUMNS, data.shape[1])
+            series = [{"z_data_column": v} for v in data.columns[0:n]]
 
         # continue ...
         x_data_columns = []
         y_data_columns = []
         z_data_columns = []
-        for param_series in params.get_value("series", []):
+        for param_series in series:
             x_data_columns.append(param_series.get("x_data_column"))
             y_data_columns.append(param_series.get("y_data_column"))
             z_data_columns.append(param_series.get("z_data_column"))

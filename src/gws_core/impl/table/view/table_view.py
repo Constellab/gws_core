@@ -31,6 +31,8 @@ class TableView(BaseTableView):
     ```
     {
         "type": "table"
+        "title": str,
+        "caption": str,
         "data": dict,
         "from_row": int,
         "number_of_rows_per_page": int,
@@ -45,14 +47,13 @@ class TableView(BaseTableView):
     _type = "table-view"
     _table: Table
     _specs: ViewSpecs = {
-        **BaseTableView._specs, "from_row": IntParam(default_value=1, human_name="From row"),
-        "number_of_rows_per_page":
-        IntParam(
+        **BaseTableView._specs,
+        "from_row": IntParam(default_value=1, human_name="From row"),
+        "number_of_rows_per_page": IntParam(
             default_value=MAX_NUMBERS_OF_ROWS_PER_PAGE, max_value=MAX_NUMBERS_OF_ROWS_PER_PAGE, min_value=1,
             human_name="Number of rows per page"),
         "from_column": IntParam(default_value=1, human_name="From column"),
-        "number_of_columns_per_page":
-        IntParam(
+        "number_of_columns_per_page": IntParam(
             default_value=MAX_NUMBERS_OF_COLUMNS_PER_PAGE, max_value=MAX_NUMBERS_OF_COLUMNS_PER_PAGE, min_value=1,
             human_name="Number of columns per page"),
     }

@@ -61,12 +61,10 @@ class TableAnnotator(Task):
         data: DataFrame = inputs["table"].get_data()
         axis = params["axis"]
 
-        print(mapper)
-
         if axis == "row":
             data = data.rename(index=mapper, inplace=False)
         else:
             data = data.rename(columns=mapper, inplace=False)
 
-        annotated_table = AnnotatedTable(data=data, row_names=data.index)
+        annotated_table = AnnotatedTable(data=data, row_names=data.index.values.tolist())
         return {"annotated_table": annotated_table}

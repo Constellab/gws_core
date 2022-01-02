@@ -36,7 +36,6 @@ class TableImporter(ResourceImporter):
         header = params.get_value('header', 0)
         header = (None if header == -1 else header)
         index_column = params.get_value('index_column', None)
-        index_column = (None if index_column == 0 else index_column)
 
         if sep == "tab":
             sep = "\t"

@@ -17,6 +17,8 @@ from .base_table_view import BaseTableView
 if TYPE_CHECKING:
     from ..table import Table
 
+DEFAULT_NUMBER_OF_COLUMNS = 3
+
 class TableBarPlotView(BaseTableView):
     """
     TableBarPlotView
@@ -29,6 +31,8 @@ class TableBarPlotView(BaseTableView):
     ```
     {
         "type": "bar-plot-view",
+        "title": str,
+        "caption": str,
         "data": {
             "x_label": str,
             "y_label": str,
@@ -55,7 +59,9 @@ class TableBarPlotView(BaseTableView):
             {
                 "y_data_column": StrParam(human_name="Y-data column"),
             },
-            human_name="Series of Y-data",
+            optional=True,
+            human_name="Series of data",
+            short_description=f"Select series of data. By default the first {DEFAULT_NUMBER_OF_COLUMNS} columns are plotted",
             max_number_of_occurrences=10
         ),
         "x_label": StrParam(human_name="X-axis label", optional=True, visibility=StrParam.PROTECTED_VISIBILITY, short_description="The x-axis label to display"),
@@ -70,11 +76,15 @@ class TableBarPlotView(BaseTableView):
             raise BadRequestException("Invalid view helper. An subclass of BarPlotView is expected")
 
         data = self._table.get_data()
+        series = params.get_value("series", [])
+        if not series:
+            n = min(DEFAULT_NUMBER_OF_COLUMNS, data.shape[1])
+            series = [{ "y_data_column":v } for v in data.columns[0:n]]
 
         # select columns
         y_data_columns = []
-        for param_series in params.get_value("series", []):
-            name = param_series.get("y_data_column")
+        for param_series in series:
+            name = param_series["y_data_column"]
             y_data_columns.append(name)
 
         self.check_column_names(y_data_columns)

@@ -20,6 +20,8 @@ class ScatterPlot2DView(View):
     ```
     {
         "type": "scatter-plot-2d-view",
+        "title": str,
+        "caption": str,
         "data": {
             "x_label": str,
             "y_label": str,
@@ -45,6 +47,7 @@ class ScatterPlot2DView(View):
     x_tick_labels: List[str] = None
     _series: List = None
     _type: str = "scatter-plot-2d-view"
+    _title: str = "2D-Scatter Plot"
 
     def add_series(self, x: List[float], y: List[float], x_name: str = None, y_name: str = None):
         if not self._series:

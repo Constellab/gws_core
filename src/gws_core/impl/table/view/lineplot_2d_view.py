@@ -20,6 +20,8 @@ class TableLinePlot2DView(TableScatterPlot2DView):
     ```
     {
         "type": "line-2d-plot-view",
+        "title": str,
+        "caption": str,
         "data": {
             "x_label": str,
             "y_label": str,

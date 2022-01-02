@@ -17,6 +17,8 @@ class LinePlot3DView(ScatterPlot3DView):
     ```
     {
         "type": "line-plot-3d-view",
+        "title": str,
+        "caption": str,
         "data": {
             "x_label": str,
             "y_label": str,
@@ -40,3 +42,4 @@ class LinePlot3DView(ScatterPlot3DView):
     """
 
     _type: str = "line-plot-3d-view"
+    _title: str = "3D-Line Plot"

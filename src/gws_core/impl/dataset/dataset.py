@@ -35,7 +35,10 @@ class Dataset(Table):
         super().__init__(data, column_names, row_names)
         self._set_target_names(target_names)
 
-    def _set_target_names(self, target_names=None):
+    def _set_target_names(self, target_names: List = None):
+        if (target_names is not None) and not isinstance(target_names, list):
+            raise BadRequestException("The target_names an instance of list")
+
         if target_names:
             if not isinstance(target_names, list):
                 raise BadRequestException("The target names must be a list")
@@ -76,7 +79,7 @@ class Dataset(Table):
         return name in self.feature_names
 
     # -- H --
-    
+
     def has_string_targets(self):
         return is_string_dtype(self.get_targets())
 

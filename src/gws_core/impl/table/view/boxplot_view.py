@@ -18,6 +18,8 @@ from .base_table_view import BaseTableView
 if TYPE_CHECKING:
     from ..table import Table
 
+DEFAULT_NUMBER_OF_COLUMNS = 3
+
 
 class TableBoxPlotView(BaseTableView):
     """
@@ -31,6 +33,8 @@ class TableBoxPlotView(BaseTableView):
     ```
     {
         "type": "box-plot-view",
+        "title": str,
+        "caption": str,
         "data": {
             "x_label": str,
             "y_label": str,
@@ -65,7 +69,9 @@ class TableBoxPlotView(BaseTableView):
             {
                 "y_data_columns": ListParam(human_name="Set of Y-data columns", short_description="Set of columns to aggregate as a series of box plots"),
             },
+            optional=True,
             human_name="Series of data",
+            short_description=f"Select series of data. By default the first {DEFAULT_NUMBER_OF_COLUMNS} columns are plotted",
             max_number_of_occurrences=5
         ),
         "x_label": StrParam(human_name="X-axis label", optional=True, visibility='protected', short_description="The x-axis label to display"),
@@ -85,7 +91,12 @@ class TableBoxPlotView(BaseTableView):
         view.y_label = y_label
         view.x_tick_labels = x_tick_labels
 
-        for param_series in params.get_value("series", []):
+        series = params.get_value("series", [])
+        if not series:
+            n = min(DEFAULT_NUMBER_OF_COLUMNS, data.shape[1])
+            series = [{"y_data_columns": data.columns[0:n].values.tolist()}]
+
+        for param_series in series:
             y_data_columns = param_series.get("y_data_columns")
             self.check_column_names(y_data_columns)
             current_data = data[y_data_columns]
@@ -110,7 +121,7 @@ class TableBoxPlotView(BaseTableView):
 
         # if possible, try to use y_data_columns as x_tick_labels
         if not x_tick_labels:
-            if len(params.get_value("series")) == 1:
+            if len(series) == 1:
                 view.x_tick_labels = y_data_columns
 
         return view.to_dict(params)

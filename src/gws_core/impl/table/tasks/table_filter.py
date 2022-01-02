@@ -54,6 +54,7 @@ class TableFilter(Task):
             },
             human_name="Axis names filter",
             short_description="Filter using rows or columns name patterns",
+            optional=True,
             max_number_of_occurrences=3
         ),
         "aggregation_filter": ParamSet(

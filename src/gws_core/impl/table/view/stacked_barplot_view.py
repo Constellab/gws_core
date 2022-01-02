@@ -19,6 +19,8 @@ class TableStackedBarPlotView(TableBarPlotView):
     ```
     {
         "type": "stacked-bar-plot-view",
+        "title": str,
+        "caption": str,
         "data": {
             "x_label": str,
             "y_label": str,

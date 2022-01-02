@@ -21,6 +21,8 @@ class BoxPlotView(View):
     ```
     {
         "type": "box-plot-view",
+        "title": str,
+        "caption": str,
         "data": {
             "x_label": str,
             "y_label": str,
@@ -50,6 +52,7 @@ class BoxPlotView(View):
     x_tick_labels: List[str] = None
     _series: List = None
     _type: str = "box-plot-view"
+    _title: str = "Box Plot"
 
     def add_series(
             self,
