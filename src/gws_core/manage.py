@@ -32,7 +32,7 @@ class SettingsLoader:
 
     @classmethod
     def _load_bricks(cls, cwd: str = None):
-        cls.parse_settings(cwd)
+        cls.parse_settings(cwd, is_brick=True)
         cls.all_settings["cwd"] = cwd
 
     @classmethod
@@ -64,17 +64,17 @@ class SettingsLoader:
 
     # -- P --
 
-    @staticmethod
-    def parse_git_package(string: str) -> str:
-        tab = re.findall(r"\[.+\]$", string)
-        if tab:
-            string = string.replace(tab[0], "")
-            commit_sha = re.match(r".*(c|commit)\s*=\s*([A-Za-z0-9]+).*", tab[0])[2]
-            branch = re.match(r".*(b|branch)\s*=\s*([A-Za-z0-9]+).*", tab[0])[2]
-            if commit_sha == "latest":
-                commit_sha = None
-            return string, commit_sha, branch
-        return string, None, None
+    # @staticmethod
+    # def parse_git_package(string: str) -> str:
+    #     tab = re.findall(r"\[.+\]$", string)
+    #     if tab:
+    #         string = string.replace(tab[0], "")
+    #         commit_sha = re.match(r".*(c|commit)\s*=\s*([A-Za-z0-9]+).*", tab[0])[2]
+    #         branch = re.match(r".*(b|branch)\s*=\s*([A-Za-z0-9]+).*", tab[0])[2]
+    #         if commit_sha == "latest":
+    #             commit_sha = None
+    #         return string, commit_sha, branch
+    #     return string, None, None
 
     @staticmethod
     def parse_variables(repo_name, cwd, variables):
@@ -86,73 +86,110 @@ class SettingsLoader:
             variables[key] = value
 
     @classmethod
-    def parse_settings(cls, cwd):
+    def parse_settings(cls, cwd, is_brick=False):
         repo_name = cwd.strip("/").split("/")[-1]
-        file_path = os.path.join(cwd, "settings.json")
-        is_brick = os.path.exists(file_path)
+        if repo_name in cls.all_settings["modules"]:
+            return
+
         if is_brick:
+            sys.path.insert(0, os.path.join(cwd, "src"))
+            cls.all_settings["modules"][repo_name] = {
+                "path": cwd,
+                "is_brick": True,
+                "repo_type": "git",
+                "type": "brick,git"
+            }
+
+            # read settings file
+            file_path = os.path.join(cwd, "settings.json")
             with open(file_path, 'r', encoding='utf-8') as fp:
                 try:
                     settings_data = json.load(fp)
                 except Exception as err:
                     raise Exception(
-                        f"Error while parsing the setting JSON file. Please check file setting file '{file_path}'") from err
+                        f"Error: cannot parse the the settings file of '{repo_name}'") from err
 
             # parse variables
             if not "variables" in settings_data:
                 settings_data["variables"] = {}
             cls.parse_variables(repo_name, cwd, settings_data["variables"])
 
-            # parse git packages
+            # loads git packages
             cls._update_dict(cls.all_settings, settings_data)
             git_env = settings_data["environment"].get("git", [])
             for channel in git_env:
                 for package in channel.get("packages"):
-                    repo, _, _ = cls.parse_git_package(package)
-                    repo_dir = os.path.join(cls.LAB_WORKSPACE_DIR, "user", "bricks", repo)
-                    if not os.path.exists(repo_dir):
+                    repo = package["name"]
+                    is_brick = package.get("is_brick", False)
+                    if is_brick:
+                        repo_dir = os.path.join(cls.LAB_WORKSPACE_DIR, "user", "bricks", repo)
+                        if not os.path.exists(repo_dir):
+                            repo_dir = os.path.join(cls.LAB_WORKSPACE_DIR, "user", ".lib", "bricks", repo)
+                            if not os.path.exists(repo_dir):
+                                raise Exception(f"Repository '{repo_dir}' is not found")
+                    else:
                         repo_dir = os.path.join(cls.LAB_WORKSPACE_DIR, ".sys", "lib", repo)
                         if not os.path.exists(repo_dir):
                             raise Exception(f"Repository '{repo_dir}' is not found")
+                    cls.parse_settings(repo_dir, is_brick)
 
-                    cls.parse_settings(repo_dir)
-
-            if repo_name not in cls.all_settings["modules"]:
-                sys.path.insert(0, os.path.join(cwd, "src"))
-                cls.all_settings["modules"][repo_name] = {
-                    "path": cwd,
-                    "type": "brick,git"
-                }
-
+            # loads pip packages
             pip_env = settings_data["environment"].get("pip", [])
-            cls._read_pip_deps(pip_env)
+            for channel in pip_env:
+                for package in channel.get("packages"):
+                    repo = package["name"]
+                    is_brick = package.get("is_brick", False)
+                    if repo not in sys.modules:
+                        continue
+                    module = importlib.import_module(repo)
+                    repo_dir = os.path.abspath(module.__file__)
+                    cls.parse_settings(repo_dir, is_brick)
         else:
-            if cwd not in cls.all_settings["modules"]:
-                sys.path.insert(0, os.path.abspath(cwd))
-                cls.all_settings["modules"][repo_name] = {
-                    "path": cwd,
-                    "type": "extern"
-                }
+            sys.path.insert(0, os.path.abspath(cwd))
+            cls.all_settings["modules"][repo_name] = {
+                "path": cwd,
+                "is_brick": False,
+                "repo_type": "git",
+                "type": "extern"
+            }
 
     # -- R --
 
-    @classmethod
-    def _read_pip_deps(cls, pip_env: dict):
-        for channel in pip_env:
-            for package in channel.get("packages"):
-                package = re.match(r"^([a-zA-Z]+).*", package)[1]
-                if package in sys.modules:
-                    module = importlib.import_module(package)
-                    path = os.path.abspath(module.__file__)
-                    file_path = os.path.join(path, "settings.json")
-                    is_brick = os.path.exists(file_path)
-                    if is_brick:
-                        cls.all_settings["modules"][package] = {
-                            "path": path,
-                            "type": "brick,pip"
-                        }
+    # @classmethod
+    # def _read_pip_deps(cls, pip_env: dict):
+    #     for channel in pip_env:
+    #         for package in channel.get("packages"):
+    #             repo = package["name"]
+    #             is_brick = package["is_brick"]
 
-    # -- U --
+    #             if repo in sys.modules:
+    #                 module = importlib.import_module(package)
+    #                 path = os.path.abspath(module.__file__)
+    #                 cls.all_settings["modules"][package] = {
+    #                     "path": path,
+    #                     "is_brick": is_brick,
+    #                     "repo_type": "pip",
+    #                     "type": "brick,pip"
+    #                 }
+
+    #                 # recurssively loads packages
+    #                 if is_brick:
+    #                     # parse settings file
+    #                     file_path = os.path.join(path, "settings.json")
+    #                     with open(file_path, 'r', encoding='utf-8') as fp:
+    #                         try:
+    #                             settings_data = json.load(fp)
+    #                         except Exception as err:
+    #                             raise Exception(
+    #                                 f"Error while parsing the setting JSON file. Please check file setting file '{file_path}'") from err
+
+    #                     # parse variables
+    #                     if not "variables" in settings_data:
+    #                         settings_data["variables"] = {}
+    #                     cls.parse_variables(repo_name, cwd, settings_data["variables"])
+
+    #                     pip_env = settings_data["environment"].get("pip", [])
+    #                     cls._read_pip_deps(pip_env)
 
     @classmethod
     def _update_dict(cls, d, u):

@@ -8,10 +8,11 @@ import sys
 
 if 'gws_core' not in sys.modules:
     CORE_LIB_PATH = "/lab/user/bricks/gws_core/src"
-    if os.path.exists(CORE_LIB_PATH):
-        sys.path.insert(0, CORE_LIB_PATH)
-    else:
-        raise Exception("Cannot find the core brick")
+    if not os.path.exists(CORE_LIB_PATH):
+        CORE_LIB_PATH = "/lab/user/bricks/.lib/gws_core/src"
+        if not os.path.exists(CORE_LIB_PATH):
+            raise Exception("Cannot find gws_core brick")
+    sys.path.insert(0, CORE_LIB_PATH)
 
 from gws_core import manage, runner
 
