@@ -124,7 +124,7 @@ class SettingsLoader:
                     if is_brick:
                         repo_dir = os.path.join(cls.LAB_WORKSPACE_DIR, "user", "bricks", repo)
                         if not os.path.exists(repo_dir):
-                            repo_dir = os.path.join(cls.LAB_WORKSPACE_DIR, "user", ".lib", "bricks", repo)
+                            repo_dir = os.path.join(cls.LAB_WORKSPACE_DIR, "user", "bricks", ".lib", repo)
                             if not os.path.exists(repo_dir):
                                 raise Exception(f"Repository '{repo_dir}' is not found")
                     else:
