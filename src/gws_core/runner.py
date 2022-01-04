@@ -19,7 +19,7 @@ from .core.utils.settings import Settings
 from .lab.system_service import SystemService
 
 
-def _run(ctx, test="",
+def call(test="",
          cli=False, cli_test=False, runserver=False, runmode="dev", notebook=False,
          ip="0.0.0.0", port="3000", log_level: str = None, show_sql=False, reset_env=False):
 
@@ -113,8 +113,7 @@ def _run(ctx, test="",
 @click.option('--show_sql', is_flag=True, help='Log sql queries in the console')
 @click.option('--reset_env', is_flag=True, help='Reset environment')
 def run(ctx, test, cli, cli_test, runserver, runmode, notebook, ip, port, log_level, show_sql, reset_env):
-    _run(
-        ctx,
+    call(
         test=test,
         cli=cli,
         cli_test=cli_test,
