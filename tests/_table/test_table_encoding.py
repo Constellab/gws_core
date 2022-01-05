@@ -6,7 +6,7 @@
 
 from gws_core import (BaseTestCase, Settings, TableDecoder, TableEncoder,
                       TaskRunner)
-from tests.gws_core_test_helper import GWSCoreTestHelper
+from gws_core_test_helper import GWSCoreTestHelper
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")

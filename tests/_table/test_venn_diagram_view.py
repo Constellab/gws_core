@@ -1,6 +1,6 @@
 
 from gws_core import BaseTestCase, TableVennDiagramView, ViewTester
-from tests.gws_core_test_helper import GWSCoreTestHelper
+from gws_core_test_helper import GWSCoreTestHelper
 
 
 class TestVennDiagrammView(BaseTestCase):

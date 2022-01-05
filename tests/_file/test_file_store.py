@@ -9,7 +9,7 @@ from gws_core import BaseTestCase, File, LocalFileStore
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_store import FileStore
 from gws_core.impl.file.folder import Folder
-from tests.gws_core_test_helper import GWSCoreTestHelper
+from gws_core_test_helper import GWSCoreTestHelper
 
 
 class TestLocalFileStore(BaseTestCase):

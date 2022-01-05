@@ -11,7 +11,7 @@ from gws_core.impl.table.table_file import TableFile
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.resource_typing import FileTyping
-from tests.gws_core_test_helper import GWSCoreTestHelper
+from gws_core_test_helper import GWSCoreTestHelper
 
 client = TestClient(app)
 client2 = TestClient(core_app)

@@ -6,7 +6,7 @@
 import math
 
 from gws_core import BaseTestCase, TableKVColumnGrouper, TaskRunner
-from tests.gws_core_test_helper import GWSCoreTestHelper
+from gws_core_test_helper import GWSCoreTestHelper
 
 
 class TestTableGrouper(BaseTestCase):

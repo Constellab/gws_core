@@ -11,7 +11,7 @@ from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.task.converter.converter_service import (ConverterService,
                                                        ResourceImportersDTO)
 from gws_core.test.base_test_case import BaseTestCase
-from tests.gws_core_test_helper import GWSCoreTestHelper
+from gws_core_test_helper import GWSCoreTestHelper
 
 
 class TestImporter(BaseTestCase):

@@ -80,7 +80,22 @@ def call(test="",
         loader = unittest.TestLoader()
         test_suite: BaseTestSuite = BaseTestSuite()
         for test_file in tests:
-            brick_dir = settings.get_cwd()
+            tab = test_file.split("/")
+            if len(tab) == 2:
+                modules = settings.get_modules()
+                brick_name = tab[0]
+                test_file = tab[1]
+                if brick_name not in modules:
+                    raise BadRequestException(
+                        f"The brick '{brick_name}' is not found. It is maybe not loaded on this lab.")
+                if not modules[brick_name].get("is_brick"):
+                    raise BadRequestException(
+                        f"Module '{brick_name}' is not a brick. Unit testing is not allowed for external modules.")
+                brick_dir = modules[brick_name]["path"]
+            else:
+                test_file = tab[0]
+                brick_dir = settings.get_cwd()
+
             test_suite.addTests(loader.discover(os.path.join(brick_dir, "./tests/"), pattern=test_file+".py"))
 
         if test_suite.countTestCases() == 0:

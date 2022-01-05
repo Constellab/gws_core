@@ -8,7 +8,7 @@ import json
 from gws_core import BaseTestCase, GTest, JSONDict
 from gws_core.impl.file.file import File
 from gws_core.impl.json.json_tasks import JSONImporter
-from tests.gws_core_test_helper import GWSCoreTestHelper
+from gws_core_test_helper import GWSCoreTestHelper
 
 
 class TestJson(BaseTestCase):
