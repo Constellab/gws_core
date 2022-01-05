@@ -93,7 +93,7 @@ class Resource(Base):
         attr = super().__getattribute__(name)
 
         if isinstance(attr, BaseRField) and name in self._kv_store:
-            value = self._kv_store.get(name)
+            value = attr.deserialize(self._kv_store.get(name))
             setattr(self, name, value)
             return value
 
