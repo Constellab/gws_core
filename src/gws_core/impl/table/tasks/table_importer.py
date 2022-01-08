@@ -24,7 +24,7 @@ class TableImporter(ResourceImporter):
         'file_format': StrParam(default_value=Table.DEFAULT_FILE_FORMAT, allowed_values=Table.ALLOWED_FILE_FORMATS, human_name="File format", short_description="File format"),
         'delimiter': StrParam(allowed_values=Table.ALLOWED_DELIMITER, default_value=Table.DEFAULT_DELIMITER, human_name="Delimiter", short_description="Delimiter character. Only for parsing CSV files"),
         'header': IntParam(default_value=0, min_value=-1, human_name="Header", short_description="Row number to use as the column names, and the start of the data. By default the first row is used (header=0). Set header=-1 to prevent parsing column names."),
-        'index_column': IntParam(default_value=None, min_value=0, optional=True, human_name="Index column", short_description="Column index to use as the row name. By default no column is used."),
+        'index_column': IntParam(default_value=None, min_value=0, optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Index column", short_description="Column to use as the row names. By default no column is used."),
         'decimal': StrParam(default_value=".", optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Decimal character", short_description="Character to recognize as decimal point (e.g. use ‘,’ for European/French data)."),
         'nrows': IntParam(default_value=None, optional=True, min_value=0, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Nb. rows", short_description="Number of rows to import. Useful to read piece of data."),
         'comment': StrParam(default_value=None, optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Comment character", short_description="Character used to comment lines."),

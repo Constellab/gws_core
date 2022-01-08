@@ -5,9 +5,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Union
-
-from pandas import DataFrame
+from typing import TYPE_CHECKING, Any
 
 from ....core.exception.exceptions.bad_request_exception import \
     BadRequestException
