@@ -12,9 +12,10 @@ class TestTableView(BaseTestCase):
 
         vw = TableView(table)
         self.assertEqual(
-            vw._slice(vw.get_table().get_data(), from_row_index=4, to_row_index=21, from_column_index=1, to_column_index=4),
-            table.to_table().iloc[4:21, 1:4].to_dict('list')
-        )
+            vw._slice(
+                vw.get_table().get_data(),
+                from_row_index=4, to_row_index=21, from_column_index=1, to_column_index=4),
+            table.to_dataframe().iloc[4: 21, 1: 4].to_dict('list'))
 
         tester = ViewTester(view=vw)
         dic = tester.to_dict(dict(
@@ -26,7 +27,7 @@ class TestTableView(BaseTestCase):
         self.assertEqual(dic["type"], "table-view")
         self.assertEqual(
             dic["data"],
-            table.to_table().iloc[0:50, 0:5].to_dict('list')
+            table.to_dataframe().iloc[0:50, 0:5].to_dict('list')
         )
 
         tester = ViewTester(view=vw)
@@ -38,5 +39,5 @@ class TestTableView(BaseTestCase):
         ))
         self.assertEqual(
             dic["data"],
-            table.to_table().iloc[2:5, 1:3].to_dict('list')
+            table.to_dataframe().iloc[2:5, 1:3].to_dict('list')
         )

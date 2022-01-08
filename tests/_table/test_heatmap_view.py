@@ -22,7 +22,7 @@ class TestTableHeatmapView(BaseTestCase):
         self.assertEqual(dic["type"], "heatmap-view")
         self.assertEqual(
             dic["data"],
-            table.to_table().iloc[0:50, 0:4].to_dict('list')
+            table.to_dataframe().iloc[0:50, 0:4].to_dict('list')
         )
 
         data = table.get_data().iloc[0:50, 0:4]

@@ -146,17 +146,17 @@ class Table(Resource):
 
     # -- H --
 
-    def head(self, n=5) -> DataFrame:
+    def head(self, nrows=5) -> DataFrame:
         """
         Returns the first n rows for the columns ant targets.
 
-        :param n: Number of rows
-        :param n: int
+        :param nrows: Number of rows
+        :param nrows: int
         :return: The `panda.DataFrame` objects representing the n first rows of the `data`
         :rtype: pandas.DataFrame
         """
 
-        return self._data.head(n)
+        return self._data.head(nrows)
 
     # -- I --
 
@@ -269,7 +269,7 @@ class Table(Resource):
     def to_numpy(self) -> np.ndarray:
         return self._data.to_numpy()
 
-    def to_table(self) -> DataFrame:
+    def to_dataframe(self) -> DataFrame:
         return self._data
 
     def to_csv(self) -> str:
@@ -278,17 +278,17 @@ class Table(Resource):
     def to_json(self) -> dict:
         return self._data.to_json()
 
-    def tail(self, n=5) -> DataFrame:
+    def tail(self, nrows=5) -> DataFrame:
         """
         Returns the last n rows for the columns ant targets.
 
-        :param n: Number of rows
-        :param n: int
+        :param nrows: Number of rows
+        :param nrows: int
         :return: The `panda.DataFrame` objects representing the n first rows of the `data`
         :rtype: pandas.DataFrame
         """
 
-        return self._data.tail(n)
+        return self._data.tail(nrows)
 
     # -- V ---
 
