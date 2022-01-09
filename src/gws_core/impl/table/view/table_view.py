@@ -17,9 +17,6 @@ from .base_table_view import BaseTableView
 if TYPE_CHECKING:
     from ..table import Table
 
-MAX_NUMBERS_OF_ROWS_PER_PAGE = 100
-MAX_NUMBERS_OF_COLUMNS_PER_PAGE = 999
-
 
 class TableView(BaseTableView):
     """
@@ -44,27 +41,30 @@ class TableView(BaseTableView):
     ```
     """
 
+    MAX_NUMBER_OF_ROWS_PER_PAGE = 5000
+    MAX_NUMBER_OF_COLUMNS_PER_PAGE = 99
+
     _type = "table-view"
     _table: Table
     _specs: ViewSpecs = {
-        **BaseTableView._specs, "from_row": IntParam(default_value=1, human_name="From row"),
+        **BaseTableView._specs,
+        "from_row": IntParam(default_value=1, human_name="From row"),
         "number_of_rows_per_page":
+        # LazyViewParam('_get_param_number_of_rows_per_page'),
         IntParam(
-            default_value=MAX_NUMBERS_OF_ROWS_PER_PAGE, max_value=MAX_NUMBERS_OF_ROWS_PER_PAGE, min_value=1,
+            default_value=MAX_NUMBER_OF_ROWS_PER_PAGE, max_value=MAX_NUMBER_OF_ROWS_PER_PAGE, min_value=1,
             human_name="Number of rows per page"),
-        "from_column": IntParam(default_value=1, human_name="From column"),
+        "from_column": IntParam(default_value=1, human_name="From column", visibility=StrParam.PROTECTED_VISIBILITY),
         "number_of_columns_per_page":
+        # LazyViewParam('_get_param_number_of_columns_per_page'),
         IntParam(
-            default_value=MAX_NUMBERS_OF_COLUMNS_PER_PAGE, max_value=MAX_NUMBERS_OF_COLUMNS_PER_PAGE, min_value=1,
-            human_name="Number of columns per page"),
+            default_value=MAX_NUMBER_OF_COLUMNS_PER_PAGE, max_value=MAX_NUMBER_OF_COLUMNS_PER_PAGE, min_value=1,
+            human_name="Number of columns per page", visibility=StrParam.PROTECTED_VISIBILITY),
         'replace_nan_by':
         StrParam(
             default_value="empty", allowed_values=["empty", "NaN", "-"],
             optional=True, visibility=StrParam.PROTECTED_VISIBILITY, human_name="Replace NaN by",
             short_description="Text to use to replace NaN values. Defaults to empty string"), }
-
-    MAX_NUMBERS_OF_ROWS_PER_PAGE = MAX_NUMBERS_OF_ROWS_PER_PAGE
-    MAX_NUMBERS_OF_COLUMNS_PER_PAGE = MAX_NUMBERS_OF_COLUMNS_PER_PAGE
 
     def _slice(self, data: DataFrame, from_row_index: int, to_row_index: int,
                from_column_index: int, to_column_index: int, replace_nan_by: str = "") -> dict:
@@ -72,9 +72,9 @@ class TableView(BaseTableView):
         last_column_index = data.shape[1]
         from_row_index = min(max(from_row_index, 0), last_row_index-1)
         from_column_index = min(max(from_column_index, 0), last_column_index-1)
-        to_row_index = min(min(to_row_index, from_row_index + self.MAX_NUMBERS_OF_ROWS_PER_PAGE), last_row_index)
+        to_row_index = min(min(to_row_index, from_row_index + self.MAX_NUMBER_OF_ROWS_PER_PAGE), last_row_index)
         to_column_index = min(
-            min(to_column_index, from_column_index + self.MAX_NUMBERS_OF_COLUMNS_PER_PAGE),
+            min(to_column_index, from_column_index + self.MAX_NUMBER_OF_COLUMNS_PER_PAGE),
             last_column_index)
 
         # Remove NaN values to convert to json
@@ -123,3 +123,13 @@ class TableView(BaseTableView):
             "total_number_of_rows": total_number_of_rows,
             "total_number_of_columns": total_number_of_columns,
         }
+
+    # def _get_param_number_of_rows_per_page(self) -> IntParam:
+    #     return IntParam(
+    #         default_value=self.MAX_NUMBER_OF_ROWS_PER_PAGE, max_value=self.MAX_NUMBER_OF_ROWS_PER_PAGE, min_value=1,
+    #         human_name="Number of rows per page")
+
+    # def _get_param_number_of_columns_per_page(self) -> IntParam:
+    #     return IntParam(
+    #         default_value=self.MAX_NUMBER_OF_COLUMNS_PER_PAGE, max_value=self.MAX_NUMBER_OF_COLUMNS_PER_PAGE,
+    #         min_value=1, human_name="Number of columns per page", visibility=StrParam.PROTECTED_VISIBILITY)

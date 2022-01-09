@@ -36,7 +36,7 @@ class TableView(BaseTableView):
         "columns":
         StrParam(
             default_value="C1:C1000",
-            human_name=f"Column range or names (e.g. R5; R10:R20; R35:R38). The max numbers of columns is {MAX_NUMBERS_OF_ELEMENTS}."), }
+            human_name=f"Column range or names (e.g. C5; C10:C20; C35:C38). The max numbers of columns is {MAX_NUMBERS_OF_ELEMENTS}."), }
     _data: DataFrame
 
     MAX_NUMBERS_OF_ELEMENTS = MAX_NUMBERS_OF_ELEMENTS
@@ -47,9 +47,9 @@ class TableView(BaseTableView):
     #     last_column_index = data.shape[1]
     #     from_row_index = min(max(from_row_index, 0), last_row_index-1)
     #     from_column_index = min(max(from_column_index, 0), last_column_index-1)
-    #     to_row_index = min(min(to_row_index, from_row_index + self.MAX_NUMBERS_OF_ROWS_PER_PAGE), last_row_index)
+    #     to_row_index = min(min(to_row_index, from_row_index + self.MAX_NUMBER_OF_ROWS_PER_PAGE), last_row_index)
     #     to_column_index = min(
-    #         min(to_column_index, from_column_index + self.MAX_NUMBERS_OF_COLUMNS_PER_PAGE),
+    #         min(to_column_index, from_column_index + self.MAX_NUMBER_OF_COLUMNS_PER_PAGE),
     #         last_column_index)
 
     #     # Remove NaN values to convert to json
@@ -89,7 +89,7 @@ class TableView(BaseTableView):
         data = self._data
 
         rows: int = params.get_value("rows")
-        colums: int = params.get_value("columns")
+        columns: int = params.get_value("columns")
 
         total_number_of_rows = data.shape[0]
         total_number_of_columns = data.shape[1]

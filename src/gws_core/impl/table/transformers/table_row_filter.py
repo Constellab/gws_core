@@ -9,11 +9,6 @@ from ....config.config_types import ConfigParams, ConfigSpecs
 from ....config.param_spec import BoolParam, StrParam
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ...table.table import Table
-from ..helper.constructor.num_data_filter_param import \
-    NumericDataFilterParamConstructor
-from ..helper.constructor.text_data_filter_param import \
-    TextDataFilterParamConstructor
-from ..helper.table_aggregator_helper import TableAggregatorHelper
 from ..helper.table_filter_helper import TableFilterHelper
 
 # ####################################################################
@@ -29,6 +24,12 @@ from ..helper.table_filter_helper import TableFilterHelper
     short_description="Select table columns",
 )
 class TableRowSelector(Transformer):
+    """
+    TableRowSelector
+
+    Select part of a table using row name
+    """
+
     config_specs: ConfigSpecs = {
         "row_name": StrParam(
             human_name="Row name",
