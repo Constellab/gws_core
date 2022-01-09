@@ -30,7 +30,8 @@ class TableView(BaseTableView):
         "type": "table"
         "title": str,
         "caption": str,
-        "data": dict,
+        "data": {'column_name_1': list, 'column_name_2: list, ...},
+        "row_names": list
         "from_row": int,
         "number_of_rows_per_page": int,
         "from_column": int,
@@ -105,7 +106,7 @@ class TableView(BaseTableView):
         to_row_index: int = from_row_index + number_of_rows_per_page
         to_column_index: int = from_column_index + number_of_columns_per_page
 
-        data = self._slice(
+        data_list = self._slice(
             data,
             from_row_index=from_row_index,
             to_row_index=to_row_index,
@@ -115,7 +116,8 @@ class TableView(BaseTableView):
 
         return {
             **super().to_dict(params),
-            "data": data,
+            "data": data_list,
+            "row_names": data.index.tolist(),
             "from_row": from_row_index,
             "number_of_rows_per_page": number_of_rows_per_page,
             "from_column": from_column_index,

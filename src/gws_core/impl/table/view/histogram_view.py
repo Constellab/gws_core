@@ -97,14 +97,20 @@ class TableHistogramView(BaseTableView):
         view = HistogramView()
         view.x_label = x_label
         view.y_label = y_label
+        view.nbins = nbins
+        view.density = density
         for y_data_column in y_data_columns:
             col_data = data[y_data_column].values
-            hist, bin_edges = numpy.histogram(col_data, bins=nbins, density=density)
-            bin_centers = (bin_edges[0:-2] + bin_edges[1:-1])/2
-            view.add_series(
-                x=bin_centers.tolist(),
-                y=hist.tolist(),
-                name=y_data_column
-            )
+            name = y_data_column
+            view.add_series(col_data, name)
+
+            # col_data = data[y_data_column].values
+            # hist, bin_edges = numpy.histogram(col_data, bins=nbins, density=density)
+            # bin_centers = (bin_edges[0:-2] + bin_edges[1:-1])/2
+            # view.add_series(
+            #     x=bin_centers.tolist(),
+            #     y=hist.tolist(),
+            #     name=y_data_column
+            # )
 
         return view.to_dict(params)
