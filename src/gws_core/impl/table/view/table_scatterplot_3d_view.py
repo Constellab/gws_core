@@ -137,7 +137,7 @@ class TableScatterPlot3DView(BaseTableView):
             else:
                 y_data = list(range(0, data.shape[0]))
 
-            view.add_series(x_data, y_data, z_data, x_name=x_data_column,
+            view.add_series(x=x_data, y=y_data, z=z_data, x_name=x_data_column,
                             y_name=y_data_column, z_name=z_data_column)
 
         return view.to_dict(params)

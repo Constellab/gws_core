@@ -8,10 +8,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ....config.config_types import ConfigParams
-from ....config.param_spec import ListParam, ParamSet, StrParam
-from ....core.exception.exceptions import BadRequestException
+from ....config.param_spec import BoolParam, IntParam, ParamSet, StrParam
 from ....resource.view_types import ViewSpecs
-from ...view.barplot_view import BarPlotView
+from ...view.histogram_view import HistogramView
 from .base_table_view import BaseTableView
 
 if TYPE_CHECKING:
@@ -19,18 +18,19 @@ if TYPE_CHECKING:
 
 DEFAULT_NUMBER_OF_COLUMNS = 3
 
-class TableBarPlotView(BaseTableView):
-    """
-    TableBarPlotView
 
-    Class for creating bar plots using a Table.
+class TableHistogramView(BaseTableView):
+    """
+    TableHistogramView
+
+    Class for creating histograms using a Table.
 
     The view model is:
     ------------------
 
     ```
     {
-        "type": "bar-plot-view",
+        "type": "histogram-view",
         "title": str,
         "caption": str,
         "data": {
@@ -57,54 +57,49 @@ class TableBarPlotView(BaseTableView):
         **BaseTableView._specs,
         "series": ParamSet(
             {
-                "y_data_column": StrParam(human_name="Y-data column"),
+                "y_data_column": StrParam(human_name="Y-data column", short_description="Data to distribute among bins"),
             },
             optional=True,
             human_name="Series of data",
             short_description=f"Select series of data. By default the first {DEFAULT_NUMBER_OF_COLUMNS} columns are plotted",
             max_number_of_occurrences=10
         ),
-        "x_label": StrParam(human_name="X-axis label", optional=True, visibility=StrParam.PROTECTED_VISIBILITY, short_description="The x-axis label to display"),
-        "y_label": StrParam(human_name="Y-axis label", optional=True, visibility=StrParam.PROTECTED_VISIBILITY, short_description="The y-axis label to display"),
-        "x_tick_labels":
-        ListParam(human_name="X-tick labels", optional=True, visibility=ListParam.PROTECTED_VISIBILITY, short_description="The labels of x-axis ticks. By default, the data index is used")
+        "nbins": IntParam(default_value=10, min_value=0, optional=True, human_name="Nbins", short_description="The number of bins. Set zero (0) for auto."),
+        "density": BoolParam(default_value=False, optional=True, human_name="Density", short_description="True to plot density"),
+        "x_label": StrParam(human_name="X-label", optional=True, visibility='protected', short_description="The x-axis label to display"),
+        "y_label": StrParam(human_name="Y-label", optional=True, visibility='protected', short_description="The y-axis label to display"),
     }
-    _view_helper = BarPlotView
 
     def to_dict(self, params: ConfigParams) -> dict:
-        if not issubclass(self._view_helper, BarPlotView):
-            raise BadRequestException("Invalid view helper. An subclass of BarPlotView is expected")
+        nbins = params.get_value("nbins")
+        density = params.get_value("density")
 
         data = self._table.get_data()
         series = params.get_value("series", [])
         if not series:
             n = min(DEFAULT_NUMBER_OF_COLUMNS, data.shape[1])
-            series = [{ "y_data_column":v } for v in data.columns[0:n]]
+            series = [{"y_data_columns": v} for v in data.columns[0:n]]
 
-        # select columns
         y_data_columns = []
         for param_series in series:
-            name = param_series["y_data_column"]
+            name = param_series.get("y_data_column")
             y_data_columns.append(name)
 
-        self.check_column_names(y_data_columns)
+        if nbins <= 0:
+            nbins = "auto"
 
-        # continue ...
         x_label = params.get_value("x_label", "")
         y_label = params.get_value("y_label", "")
-        x_tick_labels = params.get_value("x_tick_labels", data.index.values.tolist())
 
         # create view
-        view = self._view_helper()
+        view = HistogramView()
         view.x_label = x_label
         view.y_label = y_label
-        view.x_tick_labels = x_tick_labels
-        for column_name in y_data_columns:
-            y_data = data[column_name].fillna('').values.tolist()
-            view.add_series(
-                x=list(range(0,len(y_data))),
-                y=y_data,
-                name=column_name
-            )
+        view.nbins = nbins
+        view.density = density
+        for y_data_column in y_data_columns:
+            col_data = data[y_data_column].values.tolist()
+            name = y_data_column
+            view.add_series(data=col_data, name=name)
 
         return view.to_dict(params)

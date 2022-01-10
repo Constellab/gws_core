@@ -4,10 +4,10 @@
 # About us: https://gencovery.com
 
 import copy
-import math
-from typing import Dict, List, Union
+from typing import Dict, Union
 
 from ...config.config_types import ConfigParams
+from ...core.exception.exceptions import BadRequestException
 from ...resource.view import View
 
 
@@ -16,6 +16,9 @@ class VennDiagramView(View):
     VennDiagramView
 
     Base class for creating Venn diagrams.
+
+    :property label: The label of the plot
+    :type label: str
 
     The view model is:
     ------------------
@@ -91,9 +94,13 @@ class VennDiagramView(View):
         }
         return _data_dict
 
-    def add_group(self, name: str, data: Union[set, list]):
+    def add_group(self, *, name: str = None, data: Union[set, list] = None):
         if not self._groups:
             self._groups = {}
+        if (name is None) or not isinstance(name, str):
+            raise BadRequestException("The name is required and must be a string")
+        if (data is None) or not isinstance(data, (set, list,)):
+            raise BadRequestException("The data is required and must be a set or a list")
         data = [str(x) for x in data]
         self._groups[name] = set(data)
 

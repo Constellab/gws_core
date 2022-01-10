@@ -5,7 +5,7 @@
 
 from ....resource.view_types import ViewSpecs
 from ...view.lineplot_3d_view import LinePlot3DView
-from .scatterplot_3d_view import TableScatterPlot3DView
+from .table_scatterplot_3d_view import TableScatterPlot3DView
 
 
 class TableLinePlot3DView(TableScatterPlot3DView):

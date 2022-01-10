@@ -8,6 +8,7 @@ from typing import List
 import numpy
 
 from ...config.config_types import ConfigParams
+from ...core.exception.exceptions import BadRequestException
 from ...resource.view import View
 
 
@@ -16,6 +17,17 @@ class HistogramView(View):
     HistogramView
 
     Base class for creating histograms.
+
+    :property x_label: The X-axis label
+    :type x_label: str
+    :property y_label: The Y-axis label
+    :type y_label: str
+    :property nbins: The number of bins
+    :type nbins: int
+    :property density: True to plot the density, The frequency is plotted overwise (default)
+    :type density: bool
+    :property x_tick_labels: The labels of X-ticks
+    :type x_tick_labels: list[str]
 
     The view model is:
     ------------------
@@ -47,17 +59,19 @@ class HistogramView(View):
     y_label: str = None
     nbins: int = 10
     density: bool = False
-
     x_tick_labels: List[str] = None
+
     _series: List = None
     _type: str = "histogram-view"
     _title: str = "Histogram"
 
-    def add_series(self, y: List[float], name: str = None):
+    def add_series(self, *, data: List[float] = None, name: str = None):
         if not self._series:
             self._series = []
+        if (data is None) or not isinstance(data, list):
+            raise BadRequestException("The data is required and must be a list of float")
         self._series.append({
-            "y": y,
+            "data": data,
             "name": name,
         })
 
@@ -65,10 +79,10 @@ class HistogramView(View):
 
         dict_series = []
         for series in self._series:
-            y = series["y"]
+            data = series["data"]
             name = series["name"]
 
-            hist, bin_edges = numpy.histogram(y, bins=self.nbins, density=self.density)
+            hist, bin_edges = numpy.histogram(data, bins=self.nbins, density=self.density)
             bin_centers = (bin_edges[0:-2] + bin_edges[1:-1])/2
             dict_series.append({
                 "data": {

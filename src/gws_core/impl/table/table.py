@@ -15,13 +15,13 @@ from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view
 from .data_frame_r_field import DataFrameRField
-from .view.barplot_view import TableBarPlotView
-from .view.boxplot_view import TableBoxPlotView
 from .view.heatmap_view import HeatmapView
-from .view.histogram_view import TableHistogramView
-from .view.lineplot_2d_view import TableLinePlot2DView
-from .view.scatterplot_2d_view import TableScatterPlot2DView
-from .view.stacked_barplot_view import TableStackedBarPlotView
+from .view.table_barplot_view import TableBarPlotView
+from .view.table_boxplot_view import TableBoxPlotView
+from .view.table_histogram_view import TableHistogramView
+from .view.table_lineplot_2d_view import TableLinePlot2DView
+from .view.table_scatterplot_2d_view import TableScatterPlot2DView
+from .view.table_stacked_barplot_view import TableStackedBarPlotView
 from .view.table_view import TableView
 
 ALLOWED_DELIMITER = ["auto", "tab", "space", ",", ";"]

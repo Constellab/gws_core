@@ -183,25 +183,27 @@ from .impl.table.transformers.table_aggregator import \
 from .impl.table.transformers.table_data_filter import \
     TableDataFilter as TableDataFilter
 from .impl.table.transformers.table_scaler import TableScaler as TableScaler
-# Impl > TableView
-from .impl.table.view.barplot_view import TableBarPlotView as TableBarPlotView
-from .impl.table.view.boxplot_view import TableBoxPlotView as TableBoxPlotView
 from .impl.table.view.heatmap_view import HeatmapView as HeatmapView
-from .impl.table.view.histogram_view import \
+# Impl > TableView
+from .impl.table.view.table_barplot_view import \
+    TableBarPlotView as TableBarPlotView
+from .impl.table.view.table_boxplot_view import \
+    TableBoxPlotView as TableBoxPlotView
+from .impl.table.view.table_histogram_view import \
     TableHistogramView as TableHistogramView
-from .impl.table.view.lineplot_2d_view import \
+from .impl.table.view.table_lineplot_2d_view import \
     TableLinePlot2DView as TableLinePlot2DView
-from .impl.table.view.lineplot_3d_view import \
+from .impl.table.view.table_lineplot_3d_view import \
     TableLinePlot3DView as TableLinePlot3DView
-from .impl.table.view.scatterplot_2d_view import \
+from .impl.table.view.table_scatterplot_2d_view import \
     TableScatterPlot2DView as TableScatterPlot2DView
-from .impl.table.view.scatterplot_3d_view import \
+from .impl.table.view.table_scatterplot_3d_view import \
     TableScatterPlot3DView as TableScatterPlot3DView
-from .impl.table.view.stacked_barplot_view import \
+from .impl.table.view.table_stacked_barplot_view import \
     TableStackedBarPlotView as TableStackedBarPlotView
-from .impl.table.view.table_view import TableView as TableView
-from .impl.table.view.venn_diagram_view import \
+from .impl.table.view.table_venn_diagram_view import \
     TableVennDiagramView as TableVennDiagramView
+from .impl.table.view.table_view import TableView as TableView
 # Impl > Text
 from .impl.text.text import Text as Text
 # Impl > TextView

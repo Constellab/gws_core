@@ -6,6 +6,7 @@
 from typing import List
 
 from ...config.config_types import ConfigParams
+from ...core.exception.exceptions import BadRequestException
 from ...resource.view import View
 
 
@@ -14,6 +15,13 @@ class BoxPlotView(View):
     BoxPlotView
 
     Base class for creating box plots.
+
+    :property x_label: The X-axis label
+    :type x_label: str
+    :property y_label: The Y-axis label
+    :type y_label: str
+    :property x_tick_labels: The labels of X-ticks
+    :type x_tick_labels: list[str]
 
     The view model is:
     ------------------
@@ -55,18 +63,30 @@ class BoxPlotView(View):
     _title: str = "Box Plot"
 
     def add_series(
-            self,
-            x: List[float],
-            median: List[float],
-            q1: List[float],
-            q3: List[float],
-            min: List[float],
-            max: List[float],
-            lower_whisker: List[float],
-            upper_whisker: List[float]):
+            self, *,
+            x: List[float] = None,
+            median: List[float] = None,
+            q1: List[float] = None,
+            q3: List[float] = None,
+            min: List[float] = None,
+            max: List[float] = None,
+            lower_whisker: List[float] = None,
+            upper_whisker: List[float] = None):
 
         if not self._series:
             self._series = []
+
+        if (median is None) or not isinstance(median, list):
+            raise BadRequestException("The median data is required and must be a list of float")
+        if (q1 is None) or not isinstance(q1, list):
+            raise BadRequestException("The q1 data is required and must be a list of float")
+        if (q3 is None) or not isinstance(q3, list):
+            raise BadRequestException("The q3 data is required and must be a list of float")
+        if (lower_whisker is None) or not isinstance(lower_whisker, list):
+            raise BadRequestException("The lower_whisker data is required and must be a list of float")
+        if (upper_whisker is None) or not isinstance(upper_whisker, list):
+            raise BadRequestException("The upper_whisker data is required and must be a list of float")
+
         self._series.append({
             "data": {
                 "x": x,

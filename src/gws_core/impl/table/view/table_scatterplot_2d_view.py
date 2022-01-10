@@ -115,6 +115,6 @@ class TableScatterPlot2DView(BaseTableView):
                 x_data = data[x_data_column].fillna('').values.tolist()
             else:
                 x_data = list(range(0, data.shape[0]))
-            view.add_series(x_data, y_data, x_name=x_data_column, y_name=y_data_column)
+            view.add_series(x=x_data, y=y_data, x_name=x_data_column, y_name=y_data_column)
 
         return view.to_dict(params)

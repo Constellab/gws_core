@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import numpy
 
 from ....config.config_types import ConfigParams
-from ....config.param_spec import BoolParam, ListParam, ParamSet, StrParam
+from ....config.param_spec import ListParam, ParamSet, StrParam
 from ....resource.view_types import ViewSpecs
 from ...view.boxplot_view import BoxPlotView
 from .base_table_view import BaseTableView
