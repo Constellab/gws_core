@@ -135,7 +135,7 @@ class ResourceExporter(Converter):
         fs_node: FSNode = await self.export_to_path(source, self.__temp_dir, params, target_type)
 
         # add the node to the store
-        file_store.add_node(fs_node)
+        file_store.add_file_from_path(fs_node.path)
         return fs_node
 
     @abstractmethod

@@ -207,13 +207,17 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
 
         if isinstance(resource, FSNode):
             # Move the node to the LocalFileStore and create fs node model
-            node: FSNode = LocalFileStore.get_default_instance().add_node(resource, resource.get_name())
+            node: FSNode = LocalFileStore.get_default_instance().add_node_from_path(resource.path, resource.get_name())
+            # update the resource path and file store
+            resource.path = node.path
+            resource.file_store_id = node.file_store_id
+
+            # create the node model
             fs_node_model: FSNodeModel = FSNodeModel()
             fs_node_model.path = node.path
             fs_node_model.file_store_id = node.file_store_id
             fs_node_model.size = node.get_size()
             resource_model.fs_node_model = fs_node_model
-            resource = node
 
         # synchronize the model fields with the resource fields
         resource_model.receive_fields_from_resource(resource)
@@ -245,7 +249,7 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         :param resource: [description]
         :type resource: ResourceType
         """
-        properties: Dict[str, BaseRField] = self._get_resource_r_fields(type(resource))
+        properties: Dict[str, BaseRField] = resource.__get_resource_r_fields__()
 
         kv_store: KVStore = self.get_kv_store()
         resource._kv_store = kv_store
@@ -273,7 +277,7 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         kv_store: KVStore = self._get_or_create_kv_store()
 
         # get the r_fields of the resource
-        r_fields: Dict[str, BaseRField] = self._get_resource_r_fields(type(resource))
+        r_fields: Dict[str, BaseRField] = resource.__get_resource_r_fields__()
 
         for key, r_field in r_fields.items():
             # get the attribute value corresponding to the r_field

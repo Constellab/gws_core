@@ -47,6 +47,7 @@ class LocalFileStore(FileStore):
 
         file = self._init_node(node_path=dest_name, node_type=node_type)
         self._copy_node(source_path, file.path)
+
         return file
 
     def add_from_temp_file(

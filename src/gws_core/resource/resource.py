@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Callable, Dict, Type
+from typing import Dict, final
 
 from gws_core.resource.kv_store import KVStore
 
@@ -31,10 +31,11 @@ class Resource(Base):
     _typing_name: str = None
     _human_name: str = None
     _short_description: str = None
-    _model_id: str = None
     _is_importable: bool = False
     _is_exportable: bool = False
-    _kv_store: KVStore
+    # Set by the resource parent on creation
+    _model_id: str = None
+    _kv_store: KVStore = None
 
     def __init__(self):
         """Resource constructor
@@ -82,6 +83,30 @@ class Resource(Base):
         """
         return None
 
+    def clone(self) -> 'Resource':
+        """Clone the resource to create a new instance
+            It copies the RFields
+        """
+        clone: Resource = type(self)()
+        clone._kv_store = self._kv_store
+        clone._model_id = self._model_id
+
+        # get the r_fields of the resource
+        r_fields: Dict[str, BaseRField] = self.__get_resource_r_fields__()
+        for fieldname in r_fields:
+            setattr(clone, fieldname, getattr(self, fieldname))
+
+        return clone
+
+    @final
+    @classmethod
+    def __get_resource_r_fields__(cls) -> Dict[str, BaseRField]:
+        """Get the list of resource's r_fields,
+        the key is the property name, the value is the BaseRField object
+        """
+        return ReflectorHelper.get_property_names_of_type(cls, BaseRField)
+
+    @final
     def __getattribute__(self, name):
         """Override get attribute to lazy load kvstore Rfields
 

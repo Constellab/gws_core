@@ -4,9 +4,10 @@
 # About us: https://gencovery.com
 from typing import List
 
+
 from gws_core import (BaseTestCase, Experiment, ExperimentService, GTest,
                       ProcessFactory, ResourceModel, Robot, RobotCreate,
-                      TaskModel)
+                      TaskModel, File)
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.resource.r_field import IntRField, ListRField, StrRField
 from gws_core.resource.resource import Resource
@@ -16,6 +17,15 @@ from gws_core.resource.resource_model import ResourceOrigin
 
 @resource_decorator(unique_name="TestResourceFields")
 class TestResourceFields(Resource):
+
+    age: int = IntRField()
+    position: List[float] = ListRField()
+
+    long_str = StrRField(searchable=False)
+
+
+@resource_decorator(unique_name="TestResourceFieldsFile")
+class TestResourceFieldsFile(File):
 
     age: int = IntRField()
     position: List[float] = ListRField()
@@ -68,3 +78,18 @@ class TestResource(BaseTestCase):
         self.assertEqual(new_resource.long_str, "Hello world")
         self.assertEqual(new_resource.position[0], 5)
         self.assertEqual(new_resource.position[1], 2)
+
+    def test_resource_clone(self):
+        """Test that clone
+        """
+        resource = TestResourceFields()
+        resource.position = [5, 2]
+        resource.age = 12
+        resource.long_str = "Hello world"
+
+        new_resource = resource.clone()
+
+        self.assertIsNot(resource, new_resource)
+        self.assertEqual(resource.position, new_resource.position)
+        self.assertEqual(resource.age, new_resource.age)
+        self.assertEqual(resource.long_str, new_resource.long_str)

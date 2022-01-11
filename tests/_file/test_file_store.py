@@ -3,8 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import os
-
 from gws_core import BaseTestCase, File, LocalFileStore
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_store import FileStore

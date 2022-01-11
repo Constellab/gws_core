@@ -62,20 +62,6 @@ class FileStore(Model):
         """
         return self.add_node_from_path(source_file_path, dest_file_name, file_type)
 
-    def add_node(self, source_path: FSNode, dest_file_name: str = None) -> FSNode:
-        """ Copy a file (from another file) to the store. Do nothing if the file is already in the store.
-        :param source_file: file to move to file store
-        :type source_file: File
-        :param dest_file_name: Name of the file once in the store. If not provided, it generate a unique name, defaults to None
-        :type dest_file_name: str, optional
-        :rtype: File
-        """
-
-        if self.node_exists(source_path):
-            return source_path
-        return self.add_node_from_path(source_path=source_path.path, dest_name=dest_file_name,
-                                       node_type=type(source_path))
-
     @abstractmethod
     def add_from_temp_file(
             self, source_file: Union[IOBase, SpooledTemporaryFile],
