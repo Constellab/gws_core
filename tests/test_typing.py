@@ -7,12 +7,13 @@ from typing import Dict, List
 
 from gws_core import (BaseTestCase, ConfigParams, File, GTest, ProcessSpec,
                       Protocol, ProtocolService, ProtocolTyping,
-                      ResourceTyping, RobotCreate, RobotEat, Sink, Task,
-                      TaskService, TaskTyping, protocol_decorator,
-                      transformer_decorator)
+                      ResourceTyping, RobotCreate, RobotEat, Sink, TaskService,
+                      TaskTyping, protocol_decorator, transformer_decorator)
+from gws_core.core.classes.search_builder import SearchDict
 from gws_core.impl.robot.robot_protocol import RobotWorldTravelProto
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.model.typing import Typing
+from gws_core.model.typing_service import TypingService
 from gws_core.resource.resource_decorator import resource_decorator
 from gws_core.task.transformer.transformer import Transformer
 
@@ -118,3 +119,14 @@ class TestTyping(BaseTestCase):
         self.assertEqual(len([x for x in typings if x.model_name == 'TableTransformer']), 1)
         # Check that the SubFileTransformer is not present
         self.assertEqual(len([x for x in typings if x.model_name == 'SubFileTransformer']), 0)
+
+    async def test_typing_search(self):
+        search_dict: SearchDict = SearchDict()
+
+        # Search on name brick
+        search_dict.filtersCriteria = [{'key': 'brick', "operator": "EQ", "value": "gws_core"}]
+        self.assertTrue(TypingService.search(search_dict).page_info.number_of_items_per_page > 0)
+
+    def _search(self, search_dict: SearchDict, expected_nb_of_result: int) -> None:
+        paginator = TypingService.search(search_dict).to_json()
+        self.assertEqual(paginator['total_number_of_items'], expected_nb_of_result)

@@ -8,11 +8,7 @@ from fastapi import FastAPI
 from fastapi.param_functions import Depends
 from starlette.exceptions import HTTPException
 
-from gws_core.core.service.settings_service import SettingsService
-
 from .core.exception.exception_handler import ExceptionHandler
-from .user.auth_service import AuthService
-from .user.user_dto import UserData
 
 core_app = FastAPI(docs_url="/docs")
 

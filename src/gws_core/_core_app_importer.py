@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from . import *
 # File to import all the api files
 from .brick.brick_api import *
 from .config.config_api import *
@@ -12,6 +13,7 @@ from .impl.robot.robot_api import *
 from .lab.monitor_api import *
 from .lab.system_api import *
 from .model.model_api import *
+from .model.typing_api import *
 from .progress_bar.progress_bar_api import *
 from .project.project_api import *
 from .protocol.protocol_api import *

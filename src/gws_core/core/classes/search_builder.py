@@ -1,13 +1,14 @@
 
 
-from typing import Any, Callable, Dict, List, Literal, Optional, Type
+from typing import Any, Callable, List, Literal, Optional, Type
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from peewee import (Expression, Field, FloatField, ForeignKeyField,
-                    IntegerField, ModelSelect, Ordering)
+from peewee import (Expression, Field, FloatField, IntegerField, ModelSelect,
+                    Ordering)
 from playhouse.mysql_ext import Match
+from pydantic import BaseModel
 from typing_extensions import TypedDict
 
 from ..model.model import Model
@@ -32,14 +33,24 @@ class SearchSortCriteria(TypedDict):
     nullOption: Optional[SearchOrderNullOption]
 
 
-class SearchDict(TypedDict):
+class SearchDict(BaseModel):
     """Dictionnary containing information to filter and order a search
 
     :param TypedDict: [description]
     :type TypedDict: [type]
     """
-    filtersCriteria: List[SearchFilterCriteria]
-    sortsCriteria: Optional[List[SearchSortCriteria]]
+    filtersCriteria: List[SearchFilterCriteria] = []
+    sortsCriteria: Optional[List[SearchSortCriteria]] = []
+
+    def add_filter_criteria(self, key: str, operator: SearchOperatorStr, value: Any) -> None:
+        self.filtersCriteria.append({'key': key, 'operator': operator, 'value': value})
+
+    def remove_filter_criteria(self, key: str) -> None:
+        self.filtersCriteria = list(filter(lambda x: x["key"] != key, self.filtersCriteria))
+
+    def override_filter_criteria(self, key: str, operator: SearchOperatorStr, value: Any) -> None:
+        self.remove_filter_criteria(key)
+        self.filtersCriteria.append({'key': key, 'operator': operator, 'value': value})
 
 
 class SearchBuilder:
@@ -70,9 +81,9 @@ class SearchBuilder:
         self._default_orders = default_order
 
     def build_search(self, search: SearchDict) -> ModelSelect:
-        filter_expression = self.build_search_filter_query(search["filtersCriteria"])
+        filter_expression = self.build_search_filter_query(search.filtersCriteria)
 
-        orders: List[Ordering] = self.build_search_ordering(search["sortsCriteria"])
+        orders: List[Ordering] = self.build_search_ordering(search.sortsCriteria)
 
         model_select = self._model_type.select()
 

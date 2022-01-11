@@ -25,34 +25,34 @@ class TestExperimentSearch(BaseTestCase):
         experiment_2.is_validated = True
         experiment_2.save()
 
-        search_dict: SearchDict = {"filtersCriteria": [], "sortsCriteria": []}
+        search_dict: SearchDict = SearchDict()
 
         # Test full text search
-        search_dict["filtersCriteria"] = [{"key": "text", "operator": "MATCH", "value": "title"}]
+        search_dict.filtersCriteria = [{"key": "text", "operator": "MATCH", "value": "title"}]
         self.search(search_dict, 1)
 
-        search_dict["filtersCriteria"] = [{"key": "text", "operator": "MATCH", "value": "description"}]
+        search_dict.filtersCriteria = [{"key": "text", "operator": "MATCH", "value": "description"}]
         self.search(search_dict, 1)
 
-        search_dict["filtersCriteria"] = [{"key": "text", "operator": "MATCH", "value": "world"}]
+        search_dict.filtersCriteria = [{"key": "text", "operator": "MATCH", "value": "world"}]
         self.search(search_dict, 2)
 
         # Test status search
-        search_dict["filtersCriteria"] = [
+        search_dict.filtersCriteria = [
             {"key": "status", "operator": "EQ", "value": ExperimentStatus.SUCCESS.value}]
         self.search(search_dict, 1)
 
         # Test type search
-        search_dict["filtersCriteria"] = [
+        search_dict.filtersCriteria = [
             {"key": "type", "operator": "EQ", "value": ExperimentType.TRANSFORMER.value}]
         self.search(search_dict, 1)
 
         # Test validate search
-        search_dict["filtersCriteria"] = [{"key": "is_validated", "operator": "EQ", "value": True}]
+        search_dict.filtersCriteria = [{"key": "is_validated", "operator": "EQ", "value": True}]
         self.search(search_dict, 1)
 
         # Test with project
-        search_dict["filtersCriteria"] = [{"key": "project", "operator": "IN", "value": [project.id]}]
+        search_dict.filtersCriteria = [{"key": "project", "operator": "IN", "value": [project.id]}]
         self.search(search_dict, 1)
 
     def search(self, search_dict: SearchDict, expected_nb_of_result: int) -> None:

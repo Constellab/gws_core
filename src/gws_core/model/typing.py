@@ -49,7 +49,7 @@ class Typing(Model):
     brick: CharField = CharField(null=False, max_length=50)
     model_name: CharField = CharField(null=False)
     object_type: CharField = CharField(null=False, max_length=20)
-    human_name: CharField = CharField(default=False, max_length=20)
+    human_name: CharField = CharField(default=False, max_length=255)
     short_description: CharField = CharField(default=False)
     hide: BooleanField = BooleanField(default=False)
 

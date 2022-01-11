@@ -53,44 +53,44 @@ class TestResourceModel(BaseTestCase):
         self._create_resource_with_tag('the weather is not so great today', [
                                        nameTag, otherTag], ResourceOrigin.IMPORTED)
 
-        search_dict: SearchDict = {"filtersCriteria": [], "sortsCriteria": []}
+        search_dict: SearchDict = SearchDict()
 
         # Search on name tag
-        search_dict['filtersCriteria'] = [self._get_tag_filter(str(nameTag))]
+        search_dict.filtersCriteria = [self._get_tag_filter(str(nameTag))]
         self.search(search_dict, 2)
         # Search on both tag
-        search_dict['filtersCriteria'] = [self._get_tag_filter(TagHelper.tags_to_str([nameTag, otherTag]))]
+        search_dict.filtersCriteria = [self._get_tag_filter(TagHelper.tags_to_str([nameTag, otherTag]))]
         self.search(search_dict, 1)
         # Search on name tag
-        search_dict['filtersCriteria'] = [self._get_tag_filter('name')]
+        search_dict.filtersCriteria = [self._get_tag_filter('name')]
         self.search(search_dict, 2)
 
         # Search on name tag & resource typing name
-        search_dict['filtersCriteria'] = [
+        search_dict.filtersCriteria = [
             self._get_tag_filter(str(nameTag)),
             {"key": "resource_typing_name", "operator": "EQ", "value": ForSearch._typing_name}]
         self.search(search_dict, 2)
 
         # Search on name tag & ResourceOrigin
-        search_dict['filtersCriteria'] = [
+        search_dict.filtersCriteria = [
             self._get_tag_filter(str(nameTag)),
             {"key": "origin", "operator": "EQ", "value": ResourceOrigin.GENERATED.value}]
         self.search(search_dict, 1)
 
         # Search on Experiment
-        search_dict['filtersCriteria'] = [{"key": "experiment", "operator": "EQ", "value": experiment._experiment.id}]
+        search_dict.filtersCriteria = [{"key": "experiment", "operator": "EQ", "value": experiment._experiment.id}]
         self.search(search_dict, 1)
 
         # Search on Task
-        search_dict['filtersCriteria'] = [{"key": "task_model", "operator": "EQ", "value": task._task_model.id}]
+        search_dict.filtersCriteria = [{"key": "task_model", "operator": "EQ", "value": task._task_model.id}]
         self.search(search_dict, 1)
 
         # Search on Data with full text
-        search_dict['filtersCriteria'] = [self._get_data_filter("information")]
+        search_dict.filtersCriteria = [self._get_data_filter("information")]
         self.search(search_dict, 1)
-        search_dict['filtersCriteria'] = [self._get_data_filter("great")]
+        search_dict.filtersCriteria = [self._get_data_filter("great")]
         self.search(search_dict, 2)
-        search_dict['filtersCriteria'] = [self._get_data_filter("gre*")]
+        search_dict.filtersCriteria = [self._get_data_filter("gre*")]
         self.search(search_dict, 2)
 
     def _get_tag_filter(self, value: str) -> SearchFilterCriteria:
