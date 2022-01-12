@@ -47,6 +47,6 @@ from .brick_service import BrickService
 
 
 @core_app.get("/brick", tags=["Bricks APIs"], summary="Get all brick with status")
-async def call_a_custom_brick_api(_: UserData = Depends(AuthService.check_user_access_token)) -> Any:
+async def get_bricks_status(_: UserData = Depends(AuthService.check_user_access_token)) -> Any:
     bricks = BrickService.get_all_brick_models()
     return ListJsonable(bricks).to_json()
