@@ -50,15 +50,6 @@ class SubFileTransformer(Transformer):
 
 class TestTyping(BaseTestCase):
 
-    async def test_typing(self):
-        GTest.print("Model Typing")
-
-        process_types = TaskService.get_task_typing_list().to_json()
-        self.assertTrue(len(process_types["objects"]) > 0)
-
-        protocol_types = ProtocolService.fetch_protocol_type_list().to_json()
-        self.assertTrue(len(protocol_types["objects"]) > 0)
-
     async def test_process_type(self):
         """Test a get from a type and test convertion to json of a type that
         has mulitple spec and an optional spec

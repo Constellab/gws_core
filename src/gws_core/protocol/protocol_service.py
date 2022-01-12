@@ -243,41 +243,6 @@ class ProtocolService(BaseService):
         protocol_model.remove_outerface(outerface_name)
         protocol_model.save(update_graph=True)
 
-    ############################# PROTOCOL TYPE ###########################
-
-    @classmethod
-    def get_protocol_type(cls, id: str) -> ProtocolTyping:
-        return ProtocolTyping.get_by_id_and_check(id)
-
-    @classmethod
-    def fetch_protocol_type_list(cls,
-                                 page: int = 0,
-                                 number_of_items_per_page: int = 20) -> Paginator[ProtocolTyping]:
-
-        query = ProtocolTyping.get_types()
-
-        number_of_items_per_page = min(
-            number_of_items_per_page, cls._number_of_items_per_page)
-        return Paginator(
-            query, page=page, number_of_items_per_page=number_of_items_per_page)
-
-    @classmethod
-    def fetch_protocol_type_tree(cls) -> List[TypedTree]:
-        """
-        Return all the protocol types grouped by module and submodules
-        """
-
-        query: List[ProtocolTyping] = ProtocolTyping.get_types()
-
-        # create a fake main group to add protocols in it
-        tree: TypedTree = TypedTree('')
-
-        for protocol_type in query:
-            tree.add_object(
-                protocol_type.get_model_types_array(), protocol_type.to_json())
-
-        return tree.sub_trees
-
     @classmethod
     @transaction()
     def copy_protocol(cls, protocol_model: ProtocolModel) -> ProtocolModel:
