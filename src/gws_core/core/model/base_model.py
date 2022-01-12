@@ -19,8 +19,6 @@ class BaseModel(Base, PeeweeModel):
 
     _db_manager = DbManager
 
-    _default_full_text_column: str = None
-
     @classmethod
     def create_table(cls, *args, **kwargs):
         """
@@ -30,14 +28,10 @@ class BaseModel(Base, PeeweeModel):
         if not hasattr(cls, "_table_name") or cls.table_exists():
             return
         super().create_table(*args, **kwargs)
-        if cls._default_full_text_column:
-            if cls.get_db_manager().is_mysql_engine():
-                cls.get_db_manager().db.execute_sql(
-                    f"CREATE FULLTEXT INDEX {cls.get_table_name()} ON {cls.get_table_name()}({cls._default_full_text_column})")
 
     @classmethod
-    def create_foreign_keys(cls) -> None:
-        """Method call after all the create table
+    def after_table_init(cls) -> None:
+        """Method call after all the table are inited
 
         Useful when use DeferredForeignKey to create the foreign key manually latter
         """
@@ -51,6 +45,18 @@ class BaseModel(Base, PeeweeModel):
         """
         if not cls.foreign_key_exists(field):
             cls._schema.create_foreign_key(field)
+
+    @classmethod
+    def create_full_text_index(cls, columns: List[str], index_name: str) -> None:
+        """Method to create a full text index
+
+        :param columns: [description]
+        :type columns: List[str]
+        """
+        if not cls.get_db_manager().is_mysql_engine():
+            return
+        cls.get_db_manager().db.execute_sql(
+            f"CREATE FULLTEXT INDEX {index_name} ON {cls.get_table_name()}({','.join(columns)})")
 
     @classmethod
     def foreign_key_exists(cls, field: ForeignKeyField) -> bool:

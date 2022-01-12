@@ -265,10 +265,8 @@ class Experiment(ModelWithUser, TaggableModel):
         if cls.table_exists():
             return
         super().create_table(*args, **kwargs)
-        # create fulltext index on title and description for search
-        if cls.get_db_manager().is_mysql_engine():
-            cls.get_db_manager().db.execute_sql(
-                f"CREATE FULLTEXT INDEX TI_DESC ON {cls.get_table_name()}(title, description)")
+
+        cls.create_full_text_index(['title', 'description'], 'I_F_EXP_TIDESC')
 
     ########################### STATUS MANAGEMENT ##################################
 

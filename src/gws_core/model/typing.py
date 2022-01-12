@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 import inspect
+from os import path
 from typing import Any, Dict, List, Literal, Set, Type
 
 from peewee import BooleanField, CharField, ModelSelect
@@ -26,9 +27,23 @@ SEPARATOR: str = "."
 TypingObjectType = Literal["TASK", "RESOURCE", "PROTOCOL", "MODEL"]
 
 
-# Simple method to build the typing  = object_type.brick.model_name
-def build_typing_unique_name(object_type: str, brick_name: str, model_name: str) -> str:
-    return object_type + SEPARATOR + brick_name + SEPARATOR + model_name
+class TypingNameObj():
+    object_type: TypingObjectType
+    brick_name: str
+    model_name: str
+
+    def __init__(self, object_type: TypingObjectType, brick_name: str, model_name: str) -> None:
+        self.object_type = object_type
+        self.brick_name = brick_name
+        self.model_name = model_name
+
+    @staticmethod
+    def from_typing_name(typing_name: str) -> 'TypingNameObj':
+        try:
+            parts: List[str] = typing_name.split(SEPARATOR)
+            return TypingNameObj(object_type=parts[0], brick_name=parts[1], model_name=parts[2])
+        except:
+            raise BadRequestException(f"The typing name '{typing_name}' is invalid")
 
 
 @json_ignore(["model_type", "hide"])
@@ -107,7 +122,7 @@ class Typing(Model):
 
     @property
     def typing_name(self) -> str:
-        return build_typing_unique_name(self.object_type, self.brick, self.model_name)
+        return Typing.typing_obj_to_str(self.object_type, self.brick, self.model_name)
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:
         _json: Dict[str, Any] = super().to_json(deep=deep, **kwargs)
@@ -127,18 +142,14 @@ class Typing(Model):
 
     @classmethod
     def get_by_brick_and_model_name(cls, object_type: TypingObjectType, brick: str, model_name: str) -> ModelSelect:
-        return Typing.select().where(
-            Typing.object_type == object_type, Typing.brick == brick, Typing.model_name == model_name)
+        return cls.select().where(
+            cls.object_type == object_type, cls.brick == brick, cls.model_name == model_name)
 
     @classmethod
-    def get_by_typing_name(cls, typing_name: str) -> ModelSelect:
-        # retrieve the brickname and the model name
-        try:
-            object_type, brick_name, model_name = typing_name.split(SEPARATOR)
-        except:
-            raise BadRequestException(
-                f"The typing name '{typing_name}' is invalid")
-        return cls.get_by_brick_and_model_name(object_type, brick_name,  model_name)
+    def get_by_typing_name(cls, typing_name: str) -> 'Typing':
+        typing_obj: TypingNameObj = TypingNameObj.from_typing_name(typing_name)
+        return cls.get_by_brick_and_model_name(
+            typing_obj.object_type, typing_obj.brick_name, typing_obj.model_name).first()
 
     @classmethod
     def get_by_object_type(cls, object_type: TypingObjectType) -> ModelSelect:
@@ -168,6 +179,21 @@ class Typing(Model):
 
         typings = list(filter(lambda typing: issubclass(typing.get_type(), base_type), all_typings))
         return typings
+
+    @classmethod
+    def create_table(cls, *args, **kwargs):
+        if cls.table_exists():
+            return
+        super().create_table(*args, **kwargs)
+
+        cls.create_full_text_index(['human_name', 'short_description', 'model_name'], 'I_F_TYP_TXT')
+
+    ############################################# STATIC METHODS #########################################
+
+    # Simple method to build the typing name  = object_type.brick.model_name
+    @staticmethod
+    def typing_obj_to_str(object_type: str, brick_name: str, model_name: str) -> str:
+        return object_type + SEPARATOR + brick_name + SEPARATOR + model_name
 
     class Meta:
         # Unique constrains on brick, model_name and object_type

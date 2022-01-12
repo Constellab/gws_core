@@ -23,20 +23,3 @@ class TestComment(BaseTestCase):
 
         page: PaginatorDict = CommentService.get_model_comments(resource_model).to_json()
         self.assertEqual(page['total_number_of_items'], 3)
-
-        if Comment.get_db_manager().is_mysql_engine():
-            query = Comment.search("sky")
-            self.assertEqual(len(query), 2)
-            for c in query:
-                print(c.message)
-
-            query = Comment.search("want paris", in_boolean_mode=False)
-            self.assertEqual(len(query), 1)
-
-            query = Comment.search("want paris", in_boolean_mode=True)
-            self.assertEqual(len(query), 1)
-            for c in query:
-                print(c.message)
-
-            query = Comment.search("want -paris", in_boolean_mode=True)
-            self.assertEqual(len(query), 0)

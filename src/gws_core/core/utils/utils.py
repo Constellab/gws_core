@@ -151,3 +151,19 @@ class Utils:
             if max_parent is None or issubclass(parent_type, max_parent):
                 parents.append(parent_type)
         return parents
+
+    @staticmethod
+    def camel_case_to_sentence(name: str) -> str:
+        """Convert a camel case to sentence like
+        Ex 'TestClass2Build' -> 'Test class2 build'
+
+        :param name: [description]
+        :type name: str
+        :return: [description]
+        :rtype: str
+        """
+        if name is None:
+            return None
+        name = name.replace(' ', '')
+        name = re.sub('(.)([A-Z][a-z]+)', r'\1 \2', name)
+        return re.sub('([a-z0-9])([A-Z])', r'\1 \2', name).capitalize()

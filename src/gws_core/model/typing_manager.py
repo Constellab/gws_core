@@ -27,7 +27,7 @@ class TypingManager:
     @classmethod
     def get_typing_from_name(cls, typing_name: str) -> Typing:
         if typing_name not in cls._typings_name_cache:
-            typing: Typing = Typing.get_by_typing_name(typing_name).first()
+            typing: Typing = Typing.get_by_typing_name(typing_name)
 
             if typing is None:
                 raise BadRequestException(

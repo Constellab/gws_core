@@ -9,6 +9,7 @@ from gws_core import (BaseTestCase, ConfigParams, File, GTest, ProcessSpec,
                       Protocol, ProtocolService, ProtocolTyping,
                       ResourceTyping, RobotCreate, RobotEat, Sink, TaskService,
                       TaskTyping, protocol_decorator, transformer_decorator)
+from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchDict
 from gws_core.impl.robot.robot_protocol import RobotWorldTravelProto
 from gws_core.impl.robot.robot_resource import Robot
@@ -36,7 +37,8 @@ class SubFile(File):
     pass
 
 
-@transformer_decorator(unique_name="TableTransformer", resource_type=File)
+@transformer_decorator(unique_name="TableTransformer", resource_type=File, human_name='My file transformer',
+                       short_description="Anything is possible")
 class FileTransformer(Transformer):
     pass
 
@@ -80,8 +82,8 @@ class TestTyping(BaseTestCase):
         world_travel_json: Dict = world_travel.to_json(deep=True)
 
         self.assertEqual(world_travel_json['typing_name'], 'PROTOCOL.gws_core.RobotWorldTravelProto')
-        self.assertTrue(len(world_travel_json['data']['graph']['nodes']) > 0)
-        self.assertTrue(len(world_travel_json['data']['graph']['links']) > 0)
+        self.assertTrue(len(world_travel_json['graph']['nodes']) > 0)
+        self.assertTrue(len(world_travel_json['graph']['links']) > 0)
 
     async def test_resource_type(self):
         robot: ResourceTyping = ResourceTyping.get_by_model_type(Robot)
@@ -120,13 +122,38 @@ class TestTyping(BaseTestCase):
         # Check that the SubFileTransformer is not present
         self.assertEqual(len([x for x in typings if x.model_name == 'SubFileTransformer']), 0)
 
+    async def test_get_typing(self):
+        typing: Typing = TypingService.get_typing(SubFile._typing_name)
+        self.assertIsInstance(typing, ResourceTyping)
+
+        typing = TypingService.get_typing(FileTransformer._typing_name)
+        self.assertIsInstance(typing, TaskTyping)
+
+        typing = TypingService.get_typing(CreateSimpleRobot2._typing_name)
+        self.assertIsInstance(typing, ProtocolTyping)
+
     async def test_typing_search(self):
         search_dict: SearchDict = SearchDict()
 
         # Search on name brick
         search_dict.filtersCriteria = [{'key': 'brick', "operator": "EQ", "value": "gws_core"}]
-        self.assertTrue(TypingService.search(search_dict).page_info.number_of_items_per_page > 0)
+        paginator: Paginator[Typing] = TypingService.search(search_dict)
+        self.assertTrue(paginator.page_info.number_of_items_per_page > 0)
+        # Check that there is no Hide element
+        self.assertEqual(len([x for x in paginator.current_items() if x.hide == True]), 0)
 
-    def _search(self, search_dict: SearchDict, expected_nb_of_result: int) -> None:
-        paginator = TypingService.search(search_dict).to_json()
-        self.assertEqual(paginator['total_number_of_items'], expected_nb_of_result)
+        # Search on full text
+        search_dict.filtersCriteria = [{'key': 'text', "operator": "MATCH", "value": "file"}]
+        paginator: Paginator[Typing] = TypingService.search(search_dict)
+        # Test that it found the TableTransformer
+        self.assertTrue(len([x for x in paginator.current_items() if x.model_name == 'TableTransformer']) > 0)
+
+        search_dict.filtersCriteria = [{'key': 'text', "operator": "MATCH", "value": "possible is"}]
+        paginator: Paginator[Typing] = TypingService.search(search_dict)
+        # Test that it found the TableTransformer
+        self.assertTrue(len([x for x in paginator.current_items() if x.model_name == 'TableTransformer']) > 0)
+
+        search_dict.filtersCriteria = [{'key': 'text', "operator": "MATCH", "value": "TableTransformer"}]
+        paginator: Paginator[Typing] = TypingService.search(search_dict)
+        # Test that it found the TableTransformer
+        self.assertTrue(len([x for x in paginator.current_items() if x.model_name == 'TableTransformer']) > 0)

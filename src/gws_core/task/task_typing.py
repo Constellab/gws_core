@@ -65,21 +65,6 @@ class TaskTyping(Typing):
             # Handle the config specs
             _json["config_specs"] = ConfigSpecsHelper.config_specs_to_json(model_t.config_specs)
 
-        return _json
-
-    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
-        """
-        Returns a JSON string or dictionnary representation of the model.
-        :return: The representation
-        :rtype: `dict`, `str`
-        """
-
-        if not deep:
-            return None
-
-        _json: Dict[str, Any] = super().data_to_json(deep=deep, **kwargs)
-
-       # Other infos
-        _json["doc"] = self.get_model_type_doc()
+            _json["doc"] = self.get_model_type_doc()
 
         return _json

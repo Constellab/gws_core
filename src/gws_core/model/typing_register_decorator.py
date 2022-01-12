@@ -2,6 +2,8 @@
 
 from typing import Any, Callable, Type
 
+from gws_core.core.utils.utils import Utils
+
 from ..brick.brick_helper import BrickHelper
 from ..core.model.base import Base
 from ..model.typing import Typing, TypingObjectType
@@ -35,7 +37,7 @@ def register_typing_class(
         object_sub_type: str = None, related_model_typing_name: str = None) -> None:
 
     if not human_name:
-        human_name = unique_name
+        human_name = Utils.camel_case_to_sentence(unique_name)
 
     typing = Typing(
         brick=BrickHelper.get_brick_name(object_class),

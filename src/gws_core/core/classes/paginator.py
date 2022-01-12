@@ -84,7 +84,7 @@ class Paginator(Generic[PaginatorType]):
 
     page_info: PageInfo
     query: Query
-    paginated_query: Any
+    paginated_query: ModelSelect
 
     def __init__(self, query: ModelSelect,
                  page: int = 0,
@@ -119,7 +119,7 @@ class Paginator(Generic[PaginatorType]):
         )
         return paginator_dict
 
-    def current_items(self):
+    def current_items(self) -> ModelSelect:
         """
         Returns the current items in the paginators
         """

@@ -68,7 +68,6 @@ class Model(BaseModel, PeeweeModel):
     _typing_name: str = None
 
     _json_ignore_fields: List[str] = []
-    _default_full_text_column = "data"
     _is_saved: bool = False
 
     def __init__(self, *args, **kwargs):
@@ -269,25 +268,6 @@ class Model(BaseModel, PeeweeModel):
         """
 
         return cls.select(*args, **kwargs)
-
-    @classmethod
-    def search(cls, phrase: str, in_boolean_mode: bool = False) -> ModelSelect:
-        """
-        Performs full-text search on the :param:`data` field
-
-        :param phrase: The phrase to search
-        :type phrase: `str`
-        :param in_boolean_mode: True to search in boolean mode, False otherwise
-        :type in_boolean_mode: `bool`
-        """
-
-        if in_boolean_mode:
-            modifier = 'IN BOOLEAN MODE'
-        else:
-            modifier = None
-
-        field = getattr(cls, cls._default_full_text_column)
-        return cls.select().where(Match((field), phrase, modifier=modifier))
 
     def set_data(self, data: dict):
         """

@@ -9,7 +9,13 @@ from gws_core.user.user_dto import UserData
 from ..core_app import core_app
 
 
-@core_app.get("/typing/advanced-search", tags=["Typing"], summary="Search typings")
+@core_app.get("/typing/{typing_name}", tags=["Typing"], summary="Get a typing")
+async def get_typing(typing_name: str,
+                     _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    return TypingService.get_typing(typing_name).to_json(deep=True)
+
+
+@core_app.post("/typing/advanced-search", tags=["Typing"], summary="Search typings")
 async def advanced_search(search_dict: SearchDict,
                           page: Optional[int] = 1,
                           number_of_items_per_page: Optional[int] = 20,

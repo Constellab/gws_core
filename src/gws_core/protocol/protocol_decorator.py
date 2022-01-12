@@ -36,6 +36,7 @@ def protocol_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USE
             return protocol_class
 
         register_typing_class(object_class=protocol_class, object_type="PROTOCOL", unique_name=unique_name,
+                              object_sub_type='PROTOCOL',
                               human_name=human_name, short_description=short_description, hide=hide)
 
         # set the allowed user for the protocol

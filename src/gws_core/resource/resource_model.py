@@ -125,19 +125,16 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
 
         return self
 
-    # @classmethod
-    # def create_table(cls, *args, **kwargs):
-    #     if cls.table_exists():
-    #         return
-    #     super().create_table(*args, **kwargs)
-    #     # Create the foreign-key constraint:
+    @classmethod
+    def create_table(cls, *args, **kwargs):
+        if cls.table_exists():
+            return
+        super().create_table(*args, **kwargs)
 
-        # if cls.get_db_manager().is_mysql_engine():
-        #     cls.get_db_manager().db.execute_sql(
-        #         f"CREATE FULLTEXT INDEX TAG_INDEX ON {cls.get_table_name()}(tags)")
+        cls.create_full_text_index(['data'], 'I_F_RES_DATA')
 
     @classmethod
-    def create_foreign_keys(cls) -> None:
+    def after_table_init(cls) -> None:
         """Create the foreign keys because it was deffered
         """
         cls.create_foreign_key_if_not_exist(ResourceModel.experiment)
