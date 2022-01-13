@@ -256,28 +256,28 @@ class ProtocolModel(ProcessModel):
 
         return self._processes
 
-    def add_process_model(self, instance_name: str, process_model: ProcessModel) -> None:
+    def add_process_model(self, process_model: ProcessModel, instance_name: str = None) -> None:
         """
         Adds a process to the protocol.
 
-        :param name: Unique name of the process
-        :type name: str
         :param process: The process
         :type process: Process
+        :param instance_name: Unique name of the process. If none, the name is generated
+        :type instance_name: str
         """
         # be sure to have loaded the protocol before adding a process
         self._load_from_graph()
 
-        self._add_process_model(instance_name=instance_name, process_model=process_model)
+        self._add_process_model(process_model=process_model, instance_name=instance_name)
 
-    def _add_process_model(self, instance_name: str, process_model: ProcessModel) -> None:
+    def _add_process_model(self, process_model: ProcessModel, instance_name: str = None) -> None:
         """
         Adds a process to the protocol.
 
-        :param name: Unique name of the process
-        :type name: str
         :param process: The process
         :type process: Process
+        :param instance_name: Unique name of the process. If none, the name is generated
+        :type instance_name: str
         """
         if not isinstance(process_model, ProcessModel):
             raise BadRequestException(
@@ -285,6 +285,10 @@ class ProtocolModel(ProcessModel):
         if process_model.parent_protocol_id and self.id != process_model.parent_protocol_id:
             raise BadRequestException(
                 f"The process instance '{instance_name}' already belongs to another protocol")
+
+        if instance_name is None:
+            instance_name = self.generate_unique_instance_name(process_model.get_process_type().__name__)
+
         if instance_name in self._processes:
             raise BadRequestException(f"Process name '{instance_name}' already exists")
         if process_model in self._processes.items():
@@ -293,6 +297,8 @@ class ProtocolModel(ProcessModel):
         process_model.set_parent_protocol(self)
         if self.experiment and process_model.experiment is None:
             process_model.set_experiment(self.experiment)
+
+        # set instance name in process and add process
         process_model.instance_name = instance_name
         self._processes[instance_name] = process_model
 
@@ -313,7 +319,7 @@ class ProtocolModel(ProcessModel):
                 self._processes[key].config.set_values(process_model.config.get_values())
             # If it's a new process
             else:
-                self._add_process_model(key, process_model)
+                self._add_process_model(process_model, key)
 
     def get_process(self, name: str) -> ProcessModel:
         """
@@ -359,7 +365,7 @@ class ProtocolModel(ProcessModel):
             else:
                 self._connectors = []
 
-    def add_connector(self, connector: Connector):
+    def add_connector(self, connector: Connector) -> None:
         """
         Adds a connector to the pfrotocol.
 
@@ -472,8 +478,8 @@ class ProtocolModel(ProcessModel):
         :rtype: Outputs
         """
         if self._outputs is None:
-          # load first the value if there are not loaded
-          self._load_from_graph()
+            # load first the value if there are not loaded
+            self._load_from_graph()
 
         return super().outputs
 

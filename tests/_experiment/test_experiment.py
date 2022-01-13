@@ -134,11 +134,11 @@ class TestExperiment(BaseTestCase):
             time.sleep(3)
             if waiting_count == 10:
                 raise Exception("The experiment is not finished")
-            experiment3.refresh()  # reload from DB
+            experiment3 = experiment3.refresh()  # reload from DB
             waiting_count += 1
 
         self.assertEqual(Experiment.count_of_running_experiments(), 0)
-        experiment3: Experiment = Experiment.get_by_id_and_check(experiment3.id)
+        experiment3 = Experiment.get_by_id_and_check(experiment3.id)
         self.assertEqual(experiment3.status, ExperimentStatus.SUCCESS)
         self.assertEqual(experiment3.pid, 0)
 

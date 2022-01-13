@@ -21,8 +21,8 @@ from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
-from ..core.model.model_with_user import ModelWithUser
 from ..core.model.json_field import JSONField
+from ..core.model.model_with_user import ModelWithUser
 from ..core.utils.logger import Logger
 from ..experiment.experiment import Experiment
 from ..io.io import Inputs, Outputs
@@ -420,10 +420,8 @@ class ProcessModel(ModelWithUser):
 
         _json = super().to_json(deep=deep, **kwargs)
 
-        _json["experiment"] = {
-            "id": (self.experiment.id if self.experiment else "")}
-        _json["parent_protocol"] = {
-            "id": (self.parent_protocol.id if self.parent_protocol_id else "")}
+        _json["experiment_id"] = self.experiment.id if self.experiment else None
+        _json["parent_protocol_id"] = self.parent_protocol.id if self.parent_protocol_id else None
         _json["is_running"] = self.progress_bar.is_running
         _json["is_finished"] = self.progress_bar.is_finished
         _json["is_protocol"] = self.is_protocol()
@@ -458,19 +456,19 @@ class ProcessModel(ModelWithUser):
 
     ########################### STATUS MANAGEMENT ##################################
 
-    @property
+    @ property
     def is_running(self) -> bool:
         return self.status == ProcessStatus.RUNNING
 
-    @property
+    @ property
     def is_finished(self) -> bool:
         return self.status == ProcessStatus.SUCCESS or self.is_error
 
-    @property
+    @ property
     def is_draft(self) -> bool:
         return self.status == ProcessStatus.DRAFT
 
-    @property
+    @ property
     def is_updatable(self) -> bool:
         return not self.is_archived and (self.experiment is None or not self.experiment.is_validated)
 
@@ -478,15 +476,15 @@ class ProcessModel(ModelWithUser):
         if not self.is_updatable:
             raise BadRequestException("The protocol can't be modified")
 
-    @property
+    @ property
     def is_error(self) -> bool:
         return self.status == ProcessStatus.ERROR
 
-    @property
+    @ property
     def is_success(self) -> bool:
         return self.status == ProcessStatus.SUCCESS
 
-    @property
+    @ property
     def is_ready(self) -> bool:
         """
         Returns True if the process is ready (i.e. all its ports are

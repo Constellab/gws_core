@@ -7,14 +7,11 @@ from typing import List, Tuple, Type
 
 from gws_core.io.connector import Connector
 from gws_core.io.port import InPort, OutPort
-from gws_core.process import process_model
 from gws_core.process.process import Process
-from peewee import ModelSelect
+from gws_core.protocol.protocol_action import AddProcessWithLink
 
 from ..config.config_types import ConfigParamsDict
-from ..core.classes.paginator import Paginator
 from ..core.decorator.transaction import transaction
-from ..core.dto.typed_tree_dto import TypedTree
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
 from ..model.typing import Typing
@@ -25,7 +22,6 @@ from ..process.protocol_sub_process_builder import SubProcessBuilderUpdate
 from ..protocol.protocol_model import ProtocolModel
 from ..task.task_model import TaskModel
 from .protocol import Protocol
-from .protocol_typing import ProtocolTyping
 
 
 class ProtocolService(BaseService):
@@ -140,20 +136,18 @@ class ProtocolService(BaseService):
 
     @classmethod
     @transaction()
-    def add_process_to_protocol_id(cls, protocol_id: str, process_typing_name: str) -> ProcessModel:
+    def add_process_to_protocol_id(cls, protocol_id: str, process_typing_name: str,
+                                   instance_name: str = None) -> ProcessModel:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
 
         process_typing: Typing = TypingManager.get_typing_from_name(process_typing_name)
-
-        # get the instance name from type model name
-        instance_name = protocol_model.generate_unique_instance_name(process_typing.model_name)
 
         return cls.add_process_to_protocol(protocol_model=protocol_model, process_type=process_typing.get_type(),
                                            instance_name=instance_name)
 
     @classmethod
     @transaction()
-    def add_empty_protocol_to_protocol(cls, protocol_model: ProtocolModel, instance_name: str) -> ProcessModel:
+    def add_empty_protocol_to_protocol(cls, protocol_model: ProtocolModel, instance_name: str = None) -> ProcessModel:
         child_protocol_model: ProtocolModel = ProcessFactory.create_protocol_empty()
 
         return cls.add_process_model_to_protocol(protocol_model=protocol_model, process_model=child_protocol_model,
@@ -162,10 +156,10 @@ class ProtocolService(BaseService):
     @classmethod
     @transaction()
     def add_process_to_protocol(cls, protocol_model: ProtocolModel, process_type: Type[Process],
-                                instance_name: str, config_params: ConfigParamsDict = None) -> ProcessModel:
+                                instance_name: str = None, config_params: ConfigParamsDict = None) -> ProcessModel:
         # create the process
         process_model: ProcessModel = ProcessFactory.create_process_model_from_type(
-            process_type=process_type, config_params=config_params, instance_name=instance_name)
+            process_type=process_type, config_params=config_params)
 
         return cls.add_process_model_to_protocol(protocol_model=protocol_model, process_model=process_model,
                                                  instance_name=instance_name)
@@ -173,9 +167,10 @@ class ProtocolService(BaseService):
     @classmethod
     @transaction()
     def add_process_model_to_protocol(cls, protocol_model: ProtocolModel, process_model: ProcessModel,
-                                      instance_name: str) -> ProcessModel:
+                                      instance_name: str = None) -> ProcessModel:
+
         protocol_model.check_is_updatable()
-        protocol_model.add_process_model(instance_name=instance_name, process_model=process_model)
+        protocol_model.add_process_model(process_model=process_model, instance_name=instance_name)
         # save the new process
         process_model.save_full()
 
@@ -197,6 +192,53 @@ class ProtocolService(BaseService):
         protocol_model.remove_process(process_instance_name)
         protocol_model.save(update_graph=True)
 
+    ########################## SPECIFIC PROCESS #####################
+    @classmethod
+    @transaction()
+    def add_source_to_process_input(
+            cls, protocol_id: str, process_name: str, input_port_name: str, resource_id: str) -> AddProcessWithLink:
+        """ Add a source task to the protocol. Configure it with the resource. And add connector
+            from source to process
+
+        """
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+
+        # Create source task model
+        source: TaskModel = ProcessFactory.create_source(resource_id)
+
+        # Add the source to the protocol
+        source_model: ProcessModel = cls.add_process_model_to_protocol(protocol_model, source)
+
+        process_model: ProcessModel = protocol_model.get_process(process_name)
+        # Create the connector
+        connector = cls.add_connector_to_protocol(
+            protocol_model, source_model.out_port('resource'),
+            process_model.in_port(input_port_name))
+
+        return AddProcessWithLink(process_model=source_model, connector=connector)
+
+    @classmethod
+    @transaction()
+    def add_sink_to_process_ouput(
+            cls, protocol_id: str, process_name: str, output_port_name: str) -> AddProcessWithLink:
+        """ Add a sink task to the protocol. And add connector from process to sink
+        """
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+
+        # Create source task model
+        sink: TaskModel = ProcessFactory.create_sink()
+
+        # Add the source to the protocol
+        sink_model: ProcessModel = cls.add_process_model_to_protocol(protocol_model, sink)
+
+        process_model: ProcessModel = protocol_model.get_process(process_name)
+        # Create the connector
+        connector = cls.add_connector_to_protocol(
+            protocol_model, process_model.out_port(output_port_name),
+            sink_model.in_port('resource'))
+
+        return AddProcessWithLink(process_model=sink_model, connector=connector)
+
     ########################## CONNECTORS #####################
 
     @classmethod
@@ -209,12 +251,24 @@ class ProtocolService(BaseService):
         return protocol_model.save(update_graph=True)
 
     @classmethod
+    def add_connector_to_protocol_id(cls, protocol_id: str, output_process_name: str, out_port_name: str,
+                                     input_process_name: str, in_port_name: str) -> Connector:
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+
+        output_process: ProcessModel = protocol_model.get_process(output_process_name)
+        input_process: ProcessModel = protocol_model.get_process(input_process_name)
+
+        return cls.add_connector_to_protocol(protocol_model, output_process.out_port(out_port_name),
+                                             input_process.in_port(in_port_name))
+
+    @classmethod
     def add_connector_to_protocol(
-            cls, protocol_model: ProtocolModel, out_port: OutPort, in_port: InPort) -> ProtocolModel:
+            cls, protocol_model: ProtocolModel, out_port: OutPort, in_port: InPort) -> Connector:
         protocol_model.check_is_updatable()
         connector: Connector = Connector(out_port, in_port)
         protocol_model.add_connector(connector)
-        return protocol_model.save(update_graph=True)
+        protocol_model.save(update_graph=True)
+        return connector
 
     ########################## INTERFACE & OUTERFACE #####################
     @classmethod

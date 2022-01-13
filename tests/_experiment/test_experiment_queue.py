@@ -58,7 +58,7 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(Experiment.select().count(), 1)
 
         print("Re-run the same experiment ...")
-        experiment.refresh()
+        experiment = experiment.refresh()
         self.assertTrue(_run())
         self.assertEqual(Experiment.select().count(), 1)
 

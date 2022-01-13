@@ -5,6 +5,8 @@
 
 from typing import Dict, List, Type
 
+from gws_core.task.plug import Sink, Source
+
 from ..config.config import Config
 from ..config.config_types import ConfigParamsDict
 from ..core.exception.exceptions.bad_request_exception import \
@@ -193,7 +195,7 @@ class ProcessFactory():
             if not isinstance(proc, ProcessModel):
                 raise BadRequestException(
                     "The dictionnary of processes must contain instances of ProcessModel")
-            protocol_model.add_process_model(name, proc)
+            protocol_model.add_process_model(proc, name)
 
         # set connectors
         for conn in connectors:
@@ -327,7 +329,7 @@ class ProcessFactory():
 
         # copy all the sub process
         for key, process in protocol_model.processes.items():
-            new_protocol_model.add_process_model(key, cls.copy_process(process))
+            new_protocol_model.add_process_model(cls.copy_process(process), key)
 
         # copy the data and then refresh it to update information
         new_protocol_model._init_interfaces_from_graph(protocol_model.data["graph"]["interfaces"])
@@ -336,3 +338,13 @@ class ProcessFactory():
         new_protocol_model.refresh_graph_from_dump()
 
         return new_protocol_model
+
+      ############################################### SPECIFIC #################################################
+
+    @classmethod
+    def create_source(cls, resouce_id: str) -> TaskModel:
+        return cls.create_task_model_from_type(Source, {'resource_id': resouce_id})
+
+    @classmethod
+    def create_sink(cls) -> TaskModel:
+        return cls.create_task_model_from_type(Sink)

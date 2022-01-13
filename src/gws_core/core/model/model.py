@@ -249,17 +249,8 @@ class Model(BaseModel, PeeweeModel):
 
         return self._is_saved
 
-    def refresh(self) -> None:
-        """
-        Refresh a model instance by re-requesting the db
-        """
-
-        cls = type(self)
-        if self.is_saved():
-            db_object = cls.get_by_id(self.id)
-            for prop in db_object.property_names(Field):
-                db_val = getattr(db_object, prop)
-                setattr(self, prop, db_val)
+    def refresh(self) -> 'Model':
+        return self.get_by_id_and_check(self.id)
 
     @classmethod
     def select_me(cls, *args, **kwargs):

@@ -187,16 +187,6 @@ class TestProtocol(BaseTestCase):
         self.assertEqual(Config.select().count(), 3)
         self.assertEqual(ProgressBar.select().count(), 3)
 
-        # Test adding a process
-        move_typing: Typing = Typing.get_by_model_type(RobotMove)
-        move: ProcessModel = ProtocolService.add_process_to_protocol_id(
-            super_proto_db.id, move_typing.typing_name)
-
-        super_proto_db = ProtocolService.get_protocol_by_id(super_proto.id)
-
-        move: ProcessModel = super_proto_db.get_process(move.instance_name)
-        self.assertIsNotNone(move.id)
-
     async def test_optional_input(self):
         """Test the optional input if different scenarios
         1. It is connected and provided, so we wait for it

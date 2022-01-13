@@ -57,7 +57,7 @@ class TestModel(BaseTestCase):
             'sirname': 'Smith',
             'city': 'NY'
         })
-        john2.refresh()
+        john2 = john2.refresh()
         self.assertEqual(john2.data, {})
 
     def test_model_registrering(self):
