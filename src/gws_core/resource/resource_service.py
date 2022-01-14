@@ -82,10 +82,10 @@ class ResourceService(BaseService):
     ################################# VIEW ###############################
 
     @classmethod
-    def get_views_of_resource(cls, resource_typing_name: str) -> List[ResourceViewMetaData]:
-        resource_type: Type[Resource] = TypingManager.get_type_from_name(resource_typing_name)
+    def get_views_of_resource(cls, resource_model_id: str) -> List[ResourceViewMetaData]:
+        resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
 
-        return cls.get_views_of_resource_type(resource_type)
+        return cls.get_views_of_resource_type(resource_model.get_resource_type())
 
     @classmethod
     def get_views_of_resource_type(cls, resource_type: Type[Resource]) -> List[ResourceViewMetaData]:
@@ -98,6 +98,13 @@ class ResourceService(BaseService):
         resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
 
         return ViewHelper.get_view_specs(resource_model, view_name)
+
+    @classmethod
+    async def call_default_view_on_resource(cls, resource_model_id: str) -> Any:
+        resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
+
+        resource: Resource = resource_model.get_resource()
+        return ViewHelper.call_default_view_on_resource(resource)
 
     @classmethod
     async def call_view_on_resource_type(cls, resource_model_id: str,

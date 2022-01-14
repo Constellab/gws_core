@@ -29,7 +29,7 @@ class ViewHelper():
                               view_name: str, config: Dict[str, Any]) -> Dict:
 
         # Get the view object from the view method
-        view: View = cls.call_view_method(resource, view_name, config)
+        view: View = cls._call_view_method(resource, view_name, config)
 
         # check the view config and set default values
         config_params: ConfigParams = ParamSpecHelper.get_config_params(view._specs, config)
@@ -38,8 +38,15 @@ class ViewHelper():
         return view.to_dict(config_params)
 
     @classmethod
-    def call_view_method(cls, resource: Resource,
-                         view_name: str, config:  Dict[str, Any]) -> View:
+    def call_default_view_on_resource(cls, resource: Resource) -> Dict:
+
+        view_data: ResourceViewMetaData = cls.get_default_view_of_resource_type(type(resource))
+
+        return cls.call_view_on_resource(resource, view_data.method_name, {})
+
+    @classmethod
+    def _call_view_method(cls, resource: Resource,
+                          view_name: str, config:  Dict[str, Any]) -> View:
 
         # check if the view exists
         view_metadata: ResourceViewMetaData = ViewHelper.get_and_check_view(type(resource), view_name)

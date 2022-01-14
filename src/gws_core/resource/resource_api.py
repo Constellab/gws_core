@@ -13,7 +13,7 @@ from gws_core.task.transformer.transformer_service import TransformerService
 from gws_core.task.transformer.transformer_type import TransformerDict
 from typing_extensions import TypedDict
 
-from ..core.classes.jsonable import DictJsonable, Jsonable, ListJsonable
+from ..core.classes.jsonable import DictJsonable, ListJsonable
 from ..core.classes.paginator import PaginatorDict
 from ..core_app import core_app
 from ..user.auth_service import AuthService
@@ -23,10 +23,10 @@ from .resource_service import ResourceService
 ############################# VIEW ###########################
 
 
-@core_app.get("/resource/{resource_typing_name}/views", tags=["Resource"],
+@core_app.get("/resource/{id}/views", tags=["Resource"],
               summary="Get the list of view for a resource type")
-async def get_resource_type_views(resource_typing_name: str) -> list:
-    return ListJsonable(ResourceService.get_views_of_resource(resource_typing_name)).to_json()
+async def get_resource_type_views(id: str) -> list:
+    return ListJsonable(ResourceService.get_views_of_resource(id)).to_json()
 
 
 @core_app.get("/resource/{id}/views/{view_name}/specs", tags=["Resource"],
@@ -46,6 +46,12 @@ async def call_view_on_resource(id: str,
                                 view_name: str,
                                 view_config: ViewConfig) -> Any:
     return await ResourceService.call_view_on_resource_type(id, view_name, view_config["values"], view_config["transformers"])
+
+
+@core_app.post("/resource/{id}/default-views", tags=["Resource"],
+               summary="Call the default view for a resource")
+async def call_default_view_on_resource(id: str) -> Any:
+    return await ResourceService.call_default_view_on_resource(id)
 
 
 ####################################### Resource Model ###################################
