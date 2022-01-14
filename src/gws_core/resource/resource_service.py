@@ -62,7 +62,7 @@ class ResourceService(BaseService):
     def check_before_resource_update(cls, resource_model: ResourceModel) -> None:
         """Method to check if a resource is updatable
         """
-        if resource_model.origin != ResourceOrigin.IMPORTED:
+        if resource_model.origin != ResourceOrigin.UPLOADED:
             raise BadRequestException(GWSException.DELETE_GENERATED_RESOURCE_ERROR.value,
                                       GWSException.DELETE_GENERATED_RESOURCE_ERROR.value)
 

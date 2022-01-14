@@ -41,7 +41,7 @@ class TestTag(BaseTestCase):
 
     def test_add_tag(self):
         robot: Robot = Robot.empty()
-        resource_model = ResourceModel.save_from_resource(robot, origin=ResourceOrigin.IMPORTED)
+        resource_model = ResourceModel.save_from_resource(robot, origin=ResourceOrigin.UPLOADED)
 
         expected_tags = [Tag('Test', 'value')]
 

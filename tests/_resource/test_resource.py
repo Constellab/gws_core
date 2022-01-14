@@ -66,7 +66,7 @@ class TestResource(BaseTestCase):
         resource.age = 12
         resource.long_str = "Hello world"
 
-        resource_model: ResourceModel = ResourceModel.from_resource(resource, origin=ResourceOrigin.IMPORTED)
+        resource_model: ResourceModel = ResourceModel.from_resource(resource, origin=ResourceOrigin.UPLOADED)
 
         self.assertEqual(len(resource_model.data), 2)
         self.assertIsNotNone(resource_model.kv_store_path)

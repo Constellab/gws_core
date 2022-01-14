@@ -134,7 +134,7 @@ class TestView(BaseTestCase):
         """Test a method view where spec override view specs and private visiblity"""
 
         resource: Resource = ResourceViewTestOverideParent()
-        resource_model: ResourceModel = ResourceModel.from_resource(resource, origin=ResourceOrigin.IMPORTED)
+        resource_model: ResourceModel = ResourceModel.from_resource(resource, origin=ResourceOrigin.UPLOADED)
 
         specs: ConfigSpecs = ViewHelper.get_view_specs(resource_model, 'a_view_test')
 
@@ -143,7 +143,7 @@ class TestView(BaseTestCase):
 
     def test_get_view_specs(self):
         resource: Resource = ResourceLazySpecs()
-        resource_model: ResourceModel = ResourceModel.from_resource(resource, origin=ResourceOrigin.IMPORTED)
+        resource_model: ResourceModel = ResourceModel.from_resource(resource, origin=ResourceOrigin.UPLOADED)
 
         specs: ConfigSpecs = ViewHelper.get_view_specs(resource_model, 'lazy_view')
 

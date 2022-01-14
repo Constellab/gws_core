@@ -10,7 +10,7 @@ class TestModelService(BaseTestCase):
 
     def test_get_models(self):
 
-        resource_model: ResourceModel = ResourceModel.save_from_resource(Robot.empty(), origin=ResourceOrigin.IMPORTED)
+        resource_model: ResourceModel = ResourceModel.save_from_resource(Robot.empty(), origin=ResourceOrigin.UPLOADED)
 
         # Test the count
         count: int = ModelService.count_model(CONST_RESOURCE_MODEL_TYPING_NAME)

@@ -14,7 +14,7 @@ class TestComment(BaseTestCase):
     def test_comment(self):
         GTest.print("Comment")
         robot = Robot()
-        resource_model: ResourceModel = ResourceModel.save_from_resource(robot, origin=ResourceOrigin.IMPORTED)
+        resource_model: ResourceModel = ResourceModel.save_from_resource(robot, origin=ResourceOrigin.UPLOADED)
 
         comment1 = CommentService.add_comment_to_model(resource_model, "The sky is blue")
         CommentService.add_comment_to_model(

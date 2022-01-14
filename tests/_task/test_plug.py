@@ -12,7 +12,7 @@ class TestPlug(BaseTestCase):
         """Test the source task
         """
         robot: Robot = Robot.empty()
-        robot_model: ResourceModel = ResourceModel.save_from_resource(robot, origin=ResourceOrigin.IMPORTED)
+        robot_model: ResourceModel = ResourceModel.save_from_resource(robot, origin=ResourceOrigin.UPLOADED)
 
         task_tester = TaskRunner(Source, {'resource_id': robot_model.id})
 

@@ -116,7 +116,7 @@ class TestRField(BaseTestCase):
         self.assertEqual(value.to_dict(), new_dataframe.to_dict())
 
     async def test_resource_r_field(self):
-        resource_model = ResourceModel.save_from_resource(Robot.empty(), origin=ResourceOrigin.IMPORTED)
+        resource_model = ResourceModel.save_from_resource(Robot.empty(), origin=ResourceOrigin.UPLOADED)
         robot: Robot = resource_model.get_resource()
 
         r_field = ResourceRField()

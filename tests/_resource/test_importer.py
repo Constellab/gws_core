@@ -28,7 +28,7 @@ class TestImporter(BaseTestCase):
     async def test_importer(self):
         file = TableFile(path=GWSCoreTestHelper.get_test_data_path("data.csv"))
 
-        resource_model: ResourceModel = ResourceModel.save_from_resource(file, origin=ResourceOrigin.IMPORTED)
+        resource_model: ResourceModel = ResourceModel.save_from_resource(file, origin=ResourceOrigin.UPLOADED)
 
         # import the table file into a Table
         result: ResourceModel = await ConverterService.call_importer(resource_model.id, TableImporter._typing_name,  {})

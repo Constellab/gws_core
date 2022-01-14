@@ -34,7 +34,7 @@ class TestTaskTransformer(BaseTestCase):
         # create a robot resource
         robot = Robot.empty()
         self.assertNotEqual(robot.age, age_config)
-        robot_model = ResourceModel.save_from_resource(robot, origin=ResourceOrigin.IMPORTED)
+        robot_model = ResourceModel.save_from_resource(robot, origin=ResourceOrigin.UPLOADED)
 
         # create and run
         transformers: List[TransformerDict] = [

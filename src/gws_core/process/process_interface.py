@@ -78,7 +78,7 @@ class IProcess:
         """
 
         # create the resource and save it
-        resource_model: ResourceModel = ResourceModel.save_from_resource(resource, origin=ResourceOrigin.IMPORTED)
+        resource_model: ResourceModel = ResourceModel.save_from_resource(resource, origin=ResourceOrigin.UPLOADED)
         self._process_model.inputs.set_resource_model(port_name=name, resource_model=resource_model)
 
     def get_input(self, name: str) -> Resource:

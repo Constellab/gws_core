@@ -28,7 +28,7 @@ class TestProtocolService(BaseTestCase):
         self.assertEqual(protocol_model.get_process(process_model.instance_name).get_process_type(), RobotMove)
 
         # Test add source
-        resource_model: ResourceModel = ResourceModel.save_from_resource(Robot.empty(), ResourceOrigin.IMPORTED)
+        resource_model: ResourceModel = ResourceModel.save_from_resource(Robot.empty(), ResourceOrigin.UPLOADED)
         source_model: ProcessModel = ProtocolService.add_source_to_process_input(
             protocol_model.id, process_model.instance_name, 'robot', resource_model.id).process_model
 

@@ -51,7 +51,7 @@ class TestResourceModel(BaseTestCase):
             'this is information about a great banana', [nameTag],
             ResourceOrigin.GENERATED, task._task_model)
         self._create_resource_with_tag('the weather is not so great today', [
-                                       nameTag, otherTag], ResourceOrigin.IMPORTED)
+                                       nameTag, otherTag], ResourceOrigin.UPLOADED)
 
         search_dict: SearchDict = SearchDict()
 
@@ -103,7 +103,7 @@ class TestResourceModel(BaseTestCase):
             self, text: str,  tags: List[Tag],
             origin: ResourceOrigin, task: TaskModel = None) -> ResourceModel:
         for_search: ForSearch = ForSearch.create(text)
-        resource_model = ResourceModel.from_resource(for_search, origin=ResourceOrigin.IMPORTED)
+        resource_model = ResourceModel.from_resource(for_search, origin=ResourceOrigin.UPLOADED)
         resource_model.set_tags(tags)
         resource_model.origin = origin
 

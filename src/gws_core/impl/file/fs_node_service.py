@@ -37,20 +37,6 @@ from .local_file_store import LocalFileStore
 class FsNodeService(BaseService):
 
     @classmethod
-    def fetch_file_list(cls,
-                        page: Optional[int] = 1,
-                        number_of_items_per_page: Optional[int] = 20) -> Paginator:
-
-        number_of_items_per_page = min(
-            number_of_items_per_page, cls._number_of_items_per_page)
-
-        query = ResourceModel.select().where(
-            (ResourceModel.origin == ResourceOrigin.IMPORTED) & (ResourceModel.fs_node_model is not None)).order_by(
-            ResourceModel.created_at.desc())
-        return Paginator(
-            query, page=page, number_of_items_per_page=number_of_items_per_page)
-
-    @classmethod
     def generate_download_file_url(cls, id: str) -> str:
         return UniqueCodeService.generate_code(CurrentUserService.get_and_check_current_user().id, id)
 
@@ -134,7 +120,7 @@ class FsNodeService(BaseService):
 
     @classmethod
     def create_fs_node_model(cls, fs_node: FSNode) -> ResourceModel:
-        return ResourceModel.save_from_resource(fs_node, origin=ResourceOrigin.IMPORTED)
+        return ResourceModel.save_from_resource(fs_node, origin=ResourceOrigin.UPLOADED)
 
 
 ############################# FOLDER ###########################
