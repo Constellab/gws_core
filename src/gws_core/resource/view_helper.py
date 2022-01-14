@@ -9,7 +9,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 from gws_core.config.param_spec import ParamSpec
 from gws_core.resource.lazy_view_param import LazyViewParam
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.resource.view_types import ViewSpecs
+from gws_core.resource.view_types import ViewCallResult, ViewSpecs
 
 from ..config.config_types import ConfigParams, ConfigSpecs
 from ..config.param_spec_helper import ParamSpecHelper
@@ -26,19 +26,26 @@ class ViewHelper():
 
     @classmethod
     def call_view_on_resource(cls, resource: Resource,
-                              view_name: str, config: Dict[str, Any]) -> Dict:
+                              view_name: str, config: Dict[str, Any]) -> ViewCallResult:
+
+        # check if the view exists
+        view_metadata: ResourceViewMetaData = ViewHelper.get_and_check_view(type(resource), view_name)
 
         # Get the view object from the view method
-        view: View = cls._call_view_method(resource, view_name, config)
+        view: View = cls._call_view_method(resource, view_metadata, config)
 
         # check the view config and set default values
         config_params: ConfigParams = ParamSpecHelper.get_config_params(view._specs, config)
 
         # convert the view to dict using the config
-        return view.to_dict(config_params)
+        return {
+            "view_human_name": view_metadata.human_name,
+            "view_short_description": view_metadata.short_description,
+            "view_data": view.to_dict(config_params)
+        }
 
     @classmethod
-    def call_default_view_on_resource(cls, resource: Resource) -> Dict:
+    def call_default_view_on_resource(cls, resource: Resource) -> ViewCallResult:
 
         view_data: ResourceViewMetaData = cls.get_default_view_of_resource_type(type(resource))
 
@@ -46,10 +53,7 @@ class ViewHelper():
 
     @classmethod
     def _call_view_method(cls, resource: Resource,
-                          view_name: str, config:  Dict[str, Any]) -> View:
-
-        # check if the view exists
-        view_metadata: ResourceViewMetaData = ViewHelper.get_and_check_view(type(resource), view_name)
+                          view_metadata: ResourceViewMetaData, config:  Dict[str, Any]) -> View:
 
         # check the method config and set the default values
         if config is None:
@@ -57,13 +61,13 @@ class ViewHelper():
         config_params: ConfigParams = ParamSpecHelper.get_config_params(view_metadata.specs, config)
 
         # Get view method
-        view_method: Callable = getattr(resource, view_name)
+        view_method: Callable = getattr(resource, view_metadata.method_name)
 
         # Get the view object from the view method
         view: View = view_method(config_params)
 
         if view is None or not isinstance(view, View):
-            raise Exception(f"The view method '{view_name}' didn't returned a View object")
+            raise Exception(f"The view method '{view_metadata.method_name}' didn't returned a View object")
 
         return view
 

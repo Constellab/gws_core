@@ -48,7 +48,7 @@ async def call_view_on_resource(id: str,
     return await ResourceService.call_view_on_resource_type(id, view_name, view_config["values"], view_config["transformers"])
 
 
-@core_app.post("/resource/{id}/default-views", tags=["Resource"],
+@core_app.post("/resource/{id}/default-view", tags=["Resource"],
                summary="Call the default view for a resource")
 async def call_default_view_on_resource(id: str) -> Any:
     return await ResourceService.call_default_view_on_resource(id)
