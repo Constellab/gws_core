@@ -185,10 +185,11 @@ from .impl.table.transformers.table_data_filter import \
 from .impl.table.transformers.table_scaler import TableScaler as TableScaler
 # Impl > Text
 from .impl.text.text import Text as Text
-# Impl > TextView
 from .impl.text.view.text_view import TextView as TextView
+# View
 from .impl.view.barplot_view import BarPlotView as BarPlotView
 from .impl.view.boxplot_view import BoxPlotView as BoxPlotView
+from .impl.view.heatmap_view import HeatmapView as HeatmapView
 from .impl.view.histogram_view import HistogramView as HistogramView
 from .impl.view.lineplot_2d_view import LinePlot2DView as LinePlot2DView
 from .impl.view.lineplot_3d_view import LinePlot3DView as LinePlot3DView
@@ -198,7 +199,6 @@ from .impl.view.scatterplot_3d_view import \
     ScatterPlot3DView as ScatterPlot3DView
 from .impl.view.stacked_barplot_view import \
     StackedBoxPlotView as StackedBoxPlotView
-# View
 from .impl.view.tabular_view import TabularView as TabularView
 # Impl > Volatile
 from .impl.volatile.volatile_resource import \
