@@ -74,7 +74,8 @@ class TestTable(BaseTestCase):
             table.get_data().to_numpy()
         ))
         self.assertEqual(table.column_names, ["A", "B", "C", "D", "E"])
-        self.assertEqual(table.row_names, ["R0", "R1"])
+        self.assertEqual(table.row_names, [0, 1])
+        #self.assertEqual(table.row_names, ["R0", "R1"])
 
     def test_table_import_2(self):
         GTest.print("Table load")
@@ -89,7 +90,8 @@ class TestTable(BaseTestCase):
             table.get_data().to_numpy()
         ))
         self.assertEqual(table.column_names, ["A", "B", "3", "D", "1.5"])
-        self.assertEqual(table.row_names, ["R0", "R1"])
+        self.assertEqual(table.row_names, [0, 1])
+        #self.assertEqual(table.row_names, ["R0", "R1"])
 
     async def test_importer_exporter(self):
         # importer

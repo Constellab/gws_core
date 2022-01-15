@@ -64,9 +64,9 @@ class Table(Resource):
                     "The data must be an instance of DataFrame or Numpy array")
 
             if (column_names is not None) and not isinstance(column_names, list):
-                raise BadRequestException("The column_names an instance of list")
+                raise BadRequestException("The column_names must be an instance of list")
             if (row_names is not None) and not isinstance(row_names, list):
-                raise BadRequestException("The rown_names an instance of list")
+                raise BadRequestException("The rown_names must be an instance of list")
 
             if column_names:
                 data.columns = column_names
@@ -74,27 +74,27 @@ class Table(Resource):
                 data.index = row_names
 
         # Table._format_row_and_columns_names(data)
-        data.index = Table._format_names(data.index, mapper=Table._row_formater)
-        data.columns = Table._format_names(data.columns, mapper=Table._column_formater)
+        # data.index = Table._format_names(data.index, mapper=Table._row_formater)
+        # data.columns = Table._format_names(data.columns, mapper=Table._column_formater)
         self._data = data
         return self
 
-    @staticmethod
-    def _format_names(col_or_index, mapper):
-        # ensure that all row and column names are string
-        if col_or_index.is_object():
-            col_or_index = col_or_index.map(str)
-        else:
-            col_or_index = col_or_index.map(mapper)
-        return col_or_index
+    # @staticmethod
+    # def _format_names(col_or_index, mapper):
+    #     # ensure that all row and column names are string
+    #     if col_or_index.is_object():
+    #         col_or_index = col_or_index.map(str)
+    #     else:
+    #         col_or_index = col_or_index.map(mapper)
+    #     return col_or_index
 
-    @staticmethod
-    def _row_formater(x):
-        return "R"+str(x)
+    # @staticmethod
+    # def _row_formater(x):
+    #     return "R"+str(x)
 
-    @staticmethod
-    def _column_formater(x):
-        return "C"+str(x)
+    # @staticmethod
+    # def _column_formater(x):
+    #     return "C"+str(x)
 
     def get_data(self):
         return self._data

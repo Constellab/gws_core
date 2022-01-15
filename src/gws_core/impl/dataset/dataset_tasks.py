@@ -32,8 +32,11 @@ class DatasetImporter(TableImporter):
 
     async def import_from_path(self, file: TableFile, params: ConfigParams, target_type: Type[Dataset]) -> Dataset:
         header = params.get_value("header", 0)
-        index_col = params.get_value("index_column")
+        index_column = params.get_value("index_column", -1)
         targets = params.get_value("targets", [])
+
+        header = (None if header == -1 else header)
+        index_column = (None if index_column == -1 else index_column)
 
         file_format: str = params.get_value('file_format', Dataset.DEFAULT_FILE_FORMAT)
         sep = params.get_value('delimiter', Dataset.DEFAULT_DELIMITER)
@@ -50,8 +53,8 @@ class DatasetImporter(TableImporter):
             df = pandas.read_table(
                 file.path,
                 sep=sep,
-                header=(None if header < 0 else header),
-                index_col=index_col
+                header=header,
+                index_col=index_column
             )
         else:
             raise BadRequestException(

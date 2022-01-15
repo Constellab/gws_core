@@ -117,6 +117,7 @@ from .impl.file.fs_node_service import FsNodeService as FsNodeService
 from .impl.file.local_file_store import LocalFileStore as LocalFileStore
 # Impl > JSON
 from .impl.json.json_dict import JSONDict as JSONDict
+from .impl.json.json_file import JSONFile as JSONFile
 from .impl.json.json_tasks import JSONExporter as JSONExporter
 from .impl.json.json_tasks import JSONImporter as JSONImporter
 # Impl > JSONView
