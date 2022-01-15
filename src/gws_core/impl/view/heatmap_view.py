@@ -7,10 +7,11 @@ from pandas import DataFrame
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
+from ...resource.view import View
 from .tabular_view import TabularView
 
 
-class HeatmapView:
+class HeatmapView(View):
     """
     TableHistogramView
 
