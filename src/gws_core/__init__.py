@@ -187,7 +187,6 @@ from .impl.table.transformers.table_scaler import TableScaler as TableScaler
 from .impl.text.text import Text as Text
 # Impl > TextView
 from .impl.text.view.text_view import TextView as TextView
-# View
 from .impl.view.barplot_view import BarPlotView as BarPlotView
 from .impl.view.boxplot_view import BoxPlotView as BoxPlotView
 from .impl.view.histogram_view import HistogramView as HistogramView
@@ -199,6 +198,8 @@ from .impl.view.scatterplot_3d_view import \
     ScatterPlot3DView as ScatterPlot3DView
 from .impl.view.stacked_barplot_view import \
     StackedBoxPlotView as StackedBoxPlotView
+# View
+from .impl.view.tabular_view import TabularView as TabularView
 # Impl > Volatile
 from .impl.volatile.volatile_resource import \
     VolatileResource as VolatileResource
