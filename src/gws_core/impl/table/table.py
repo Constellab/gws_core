@@ -15,9 +15,9 @@ from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view
 from .data_frame_r_field import DataFrameRField
-from .view.heatmap_view import HeatmapView
 from .view.table_barplot_view import TableBarPlotView
 from .view.table_boxplot_view import TableBoxPlotView
+from .view.table_heatmap_view import TableHeatmapView
 from .view.table_histogram_view import TableHistogramView
 from .view.table_lineplot_2d_view import TableLinePlot2DView
 from .view.table_scatterplot_2d_view import TableScatterPlot2DView
@@ -366,10 +366,10 @@ class Table(Resource):
 
         return TableBoxPlotView(self)
 
-    @ view(view_type=HeatmapView, human_name='Heatmap', short_description='View table as heatmap', specs={})
-    def view_as_heatmap(self, params: ConfigParams) -> HeatmapView:
+    @ view(view_type=TableHeatmapView, human_name='Heatmap', short_description='View table as heatmap', specs={})
+    def view_as_heatmap(self, params: ConfigParams) -> TableHeatmapView:
         """
         View the table as heatmap
         """
 
-        return HeatmapView(self)
+        return TableHeatmapView(self)

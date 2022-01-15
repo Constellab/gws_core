@@ -102,7 +102,6 @@ from .experiment.queue_service import QueueService as QueueService
 from .impl.dataset.dataset import Dataset as Dataset
 from .impl.dataset.dataset_tasks import DatasetExporter as DatasetExporter
 from .impl.dataset.dataset_tasks import DatasetImporter as DatasetImporter
-from .impl.dataset.view.dataset_view import DatasetView as DatasetView
 # Extension
 # Impl > File
 from .impl.file.file import File as File
@@ -184,27 +183,6 @@ from .impl.table.transformers.table_aggregator import \
 from .impl.table.transformers.table_data_filter import \
     TableDataFilter as TableDataFilter
 from .impl.table.transformers.table_scaler import TableScaler as TableScaler
-from .impl.table.view.heatmap_view import HeatmapView as HeatmapView
-# Impl > TableView
-from .impl.table.view.table_barplot_view import \
-    TableBarPlotView as TableBarPlotView
-from .impl.table.view.table_boxplot_view import \
-    TableBoxPlotView as TableBoxPlotView
-from .impl.table.view.table_histogram_view import \
-    TableHistogramView as TableHistogramView
-from .impl.table.view.table_lineplot_2d_view import \
-    TableLinePlot2DView as TableLinePlot2DView
-from .impl.table.view.table_lineplot_3d_view import \
-    TableLinePlot3DView as TableLinePlot3DView
-from .impl.table.view.table_scatterplot_2d_view import \
-    TableScatterPlot2DView as TableScatterPlot2DView
-from .impl.table.view.table_scatterplot_3d_view import \
-    TableScatterPlot3DView as TableScatterPlot3DView
-from .impl.table.view.table_stacked_barplot_view import \
-    TableStackedBarPlotView as TableStackedBarPlotView
-from .impl.table.view.table_venn_diagram_view import \
-    TableVennDiagramView as TableVennDiagramView
-from .impl.table.view.table_view import TableView as TableView
 # Impl > Text
 from .impl.text.text import Text as Text
 # Impl > TextView

@@ -1,6 +1,6 @@
 
-from gws_core import BaseTestCase, TableLinePlot3DView, ViewTester
-from gws_core.extra import DataProvider
+from gws_core import BaseTestCase, ViewTester
+from gws_core.extra import DataProvider, TableLinePlot3DView
 
 
 class TestTableLinePlot3DView(BaseTestCase):

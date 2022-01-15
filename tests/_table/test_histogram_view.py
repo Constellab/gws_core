@@ -1,7 +1,7 @@
 
 import numpy
-from gws_core import BaseTestCase, TableHistogramView, ViewTester
-from gws_core.extra import DataProvider
+from gws_core import BaseTestCase, ViewTester
+from gws_core.extra import DataProvider, TableHistogramView
 
 
 class TestTableHistogramView(BaseTestCase):

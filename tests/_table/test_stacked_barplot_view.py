@@ -1,6 +1,6 @@
 
-from gws_core import BaseTestCase, TableStackedBarPlotView, ViewTester
-from gws_core.extra import DataProvider
+from gws_core import BaseTestCase, ViewTester
+from gws_core.extra import DataProvider, TableStackedBarPlotView
 
 
 class TestTableStackedBarPlotView(BaseTestCase):

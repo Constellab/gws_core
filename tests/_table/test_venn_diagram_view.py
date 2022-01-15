@@ -1,5 +1,6 @@
 
-from gws_core import BaseTestCase, TableVennDiagramView, ViewTester
+from gws_core import BaseTestCase, ViewTester
+from gws_core.extra import TableVennDiagramView
 from gws_core_test_helper import GWSCoreTestHelper
 
 

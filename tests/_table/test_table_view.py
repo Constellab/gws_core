@@ -1,6 +1,6 @@
 
-from gws_core import BaseTestCase, TableView, ViewTester
-from gws_core.extra import DataProvider
+from gws_core import BaseTestCase, ViewTester
+from gws_core.extra import DataProvider, TableView
 
 
 class TestTableView(BaseTestCase):
@@ -11,12 +11,6 @@ class TestTableView(BaseTestCase):
         print(table)
 
         vw = TableView(table)
-        self.assertEqual(
-            vw._slice(
-                vw.get_table().get_data(),
-                from_row_index=4, to_row_index=21, from_column_index=1, to_column_index=4),
-            table.to_dataframe().iloc[4: 21, 1: 4].to_dict('list'))
-
         tester = ViewTester(view=vw)
         dic = tester.to_dict(dict(
             from_row=1,

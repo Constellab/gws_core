@@ -7,11 +7,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pandas import DataFrame
-
 from ....config.config_types import ConfigParams
 from ....config.param_spec import IntParam, StrParam
 from ....resource.view_types import ViewSpecs
+from ...view.tabular_view import TabularView
 from .base_table_view import BaseTableView
 
 if TYPE_CHECKING:
@@ -42,24 +41,18 @@ class TableView(BaseTableView):
     ```
     """
 
-    MAX_NUMBER_OF_ROWS_PER_PAGE = 5000
-    MAX_NUMBER_OF_COLUMNS_PER_PAGE = 99
-
-    _type = "table-view"
     _table: Table
     _specs: ViewSpecs = {
         **BaseTableView._specs,
         "from_row": IntParam(default_value=1, human_name="From row"),
         "number_of_rows_per_page":
-        # LazyViewParam('_get_param_number_of_rows_per_page'),
         IntParam(
-            default_value=MAX_NUMBER_OF_ROWS_PER_PAGE, max_value=MAX_NUMBER_OF_ROWS_PER_PAGE, min_value=1,
+            default_value=TabularView.MAX_NUMBER_OF_ROWS_PER_PAGE, max_value=TabularView.MAX_NUMBER_OF_ROWS_PER_PAGE, min_value=1,
             human_name="Number of rows per page"),
         "from_column": IntParam(default_value=1, human_name="From column", visibility=StrParam.PROTECTED_VISIBILITY),
         "number_of_columns_per_page":
-        # LazyViewParam('_get_param_number_of_columns_per_page'),
         IntParam(
-            default_value=MAX_NUMBER_OF_COLUMNS_PER_PAGE, max_value=MAX_NUMBER_OF_COLUMNS_PER_PAGE, min_value=1,
+            default_value=TabularView.MAX_NUMBER_OF_COLUMNS_PER_PAGE, max_value=TabularView.MAX_NUMBER_OF_COLUMNS_PER_PAGE, min_value=1,
             human_name="Number of columns per page", visibility=StrParam.PROTECTED_VISIBILITY),
         'replace_nan_by':
         StrParam(
@@ -67,71 +60,13 @@ class TableView(BaseTableView):
             optional=True, visibility=StrParam.PROTECTED_VISIBILITY, human_name="Replace NaN by",
             short_description="Text to use to replace NaN values. Defaults to empty string"), }
 
-    def _slice(self, data: DataFrame, from_row_index: int, to_row_index: int,
-               from_column_index: int, to_column_index: int, replace_nan_by: str = "") -> dict:
-        last_row_index = data.shape[0]
-        last_column_index = data.shape[1]
-        from_row_index = min(max(from_row_index, 0), last_row_index-1)
-        from_column_index = min(max(from_column_index, 0), last_column_index-1)
-        to_row_index = min(min(to_row_index, from_row_index + self.MAX_NUMBER_OF_ROWS_PER_PAGE), last_row_index)
-        to_column_index = min(
-            min(to_column_index, from_column_index + self.MAX_NUMBER_OF_COLUMNS_PER_PAGE),
-            last_column_index)
-
-        # Remove NaN values to convert to json
-        data: DataFrame = data.fillna(replace_nan_by)
-
-        return data.iloc[
-            from_row_index:to_row_index,
-            from_column_index:to_column_index,
-        ].to_dict('list')
-
     def to_dict(self, params: ConfigParams) -> dict:
         data = self._table.get_data()
-
-        # continue ...
-        from_row: int = params.get("from_row")
-        number_of_rows_per_page: int = params.get("number_of_rows_per_page")
-        from_column: int = params.get("from_column")
-        number_of_columns_per_page: int = params.get("number_of_columns_per_page")
-        replace_nan_by: str = params.get("replace_nan_by", "")
-        if replace_nan_by == "empty":
-            replace_nan_by = ""
-
-        total_number_of_rows = data.shape[0]
-        total_number_of_columns = data.shape[1]
-
-        from_row_index: int = from_row - 1
-        from_column_index: int = from_column - 1
-        to_row_index: int = from_row_index + number_of_rows_per_page
-        to_column_index: int = from_column_index + number_of_columns_per_page
-
-        data_list = self._slice(
-            data,
-            from_row_index=from_row_index,
-            to_row_index=to_row_index,
-            from_column_index=from_column_index,
-            to_column_index=to_column_index,
-            replace_nan_by=replace_nan_by)
-
-        return {
-            **super().to_dict(params),
-            "data": data_list,
-            "row_names": data.index.tolist(),
-            "from_row": from_row_index,
-            "number_of_rows_per_page": number_of_rows_per_page,
-            "from_column": from_column_index,
-            "number_of_columns_per_page": number_of_columns_per_page,
-            "total_number_of_rows": total_number_of_rows,
-            "total_number_of_columns": total_number_of_columns,
-        }
-
-    # def _get_param_number_of_rows_per_page(self) -> IntParam:
-    #     return IntParam(
-    #         default_value=self.MAX_NUMBER_OF_ROWS_PER_PAGE, max_value=self.MAX_NUMBER_OF_ROWS_PER_PAGE, min_value=1,
-    #         human_name="Number of rows per page")
-
-    # def _get_param_number_of_columns_per_page(self) -> IntParam:
-    #     return IntParam(
-    #         default_value=self.MAX_NUMBER_OF_COLUMNS_PER_PAGE, max_value=self.MAX_NUMBER_OF_COLUMNS_PER_PAGE,
-    #         min_value=1, human_name="Number of columns per page", visibility=StrParam.PROTECTED_VISIBILITY)
+        helper_view = TabularView()
+        helper_view.set_data(data)
+        helper_view.from_row = params["from_row"]
+        helper_view.number_of_rows_per_page = params["number_of_rows_per_page"]
+        helper_view.from_column = params["from_column"]
+        helper_view.number_of_columns_per_page = params["number_of_columns_per_page"]
+        helper_view.replace_nan_by = params["replace_nan_by"]
+        return helper_view.to_dict(params)

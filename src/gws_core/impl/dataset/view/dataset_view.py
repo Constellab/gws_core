@@ -8,7 +8,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Union
 
 from gws_core.config.config_types import ConfigParams
-from pandas import DataFrame
 
 from ....core.exception.exceptions import BadRequestException
 from ...table.view.table_view import TableView
@@ -47,6 +46,7 @@ class DatasetView(TableView):
         super()._check_and_set_data(table)
 
     def to_dict(self, params: ConfigParams) -> dict:
-        dict_ = super().to_dict(params)
-        dict_["target_names"] = self._table.target_names
-        return dict_
+        view_dict = super().to_dict(params)
+        view_dict["target_names"] = self._table.target_names
+        view_dict["type"] = self._type
+        return view_dict

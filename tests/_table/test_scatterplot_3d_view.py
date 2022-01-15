@@ -1,6 +1,6 @@
 
-from gws_core import BaseTestCase, TableScatterPlot3DView, ViewTester
-from gws_core.extra import DataProvider
+from gws_core import BaseTestCase, ViewTester
+from gws_core.extra import DataProvider, TableScatterPlot3DView
 
 
 class TestTableScatterPlot2DView(BaseTestCase):

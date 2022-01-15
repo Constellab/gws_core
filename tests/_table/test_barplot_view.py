@@ -1,5 +1,5 @@
-from gws_core import BaseTestCase, TableBarPlotView, ViewTester
-from gws_core.extra import DataProvider
+from gws_core import BaseTestCase, ViewTester
+from gws_core.extra import DataProvider, TableBarPlotView
 
 
 class TestTableBarPlotView(BaseTestCase):
