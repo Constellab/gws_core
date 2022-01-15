@@ -100,6 +100,6 @@ class TableHistogramView(BaseTableView):
         for y_data_column in y_data_columns:
             col_data = data[y_data_column].values.tolist()
             name = y_data_column
-            view.add_series(data=col_data, name=name)
+            view.add_data(data=col_data, name=name)
 
         return view.to_dict(params)

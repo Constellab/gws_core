@@ -18,8 +18,6 @@ from .base_table_view import BaseTableView
 if TYPE_CHECKING:
     from ..table import Table
 
-DEFAULT_NUMBER_OF_COLUMNS = 3
-
 
 class TableBoxPlotView(BaseTableView):
     """
@@ -61,6 +59,8 @@ class TableBoxPlotView(BaseTableView):
     See also BoxPlotView
     """
 
+    DEFAULT_NUMBER_OF_COLUMNS = 3
+
     _type: str = "box-plot-view"
     _table: Table
     _specs: ViewSpecs = {
@@ -86,42 +86,26 @@ class TableBoxPlotView(BaseTableView):
         x_tick_labels = params.get_value("x_tick_labels", [])
 
         # continue ...
-        view = BoxPlotView()
-        view.x_label = x_label
-        view.y_label = y_label
-        view.x_tick_labels = x_tick_labels
+        box_view = BoxPlotView()
+        box_view.x_label = x_label
+        box_view.y_label = y_label
+        box_view.x_tick_labels = x_tick_labels
 
         series = params.get_value("series", [])
         if not series:
-            n = min(DEFAULT_NUMBER_OF_COLUMNS, data.shape[1])
-            series = [{"y_data_columns": data.columns[0:n].values.tolist()}]
+            n = min(self.DEFAULT_NUMBER_OF_COLUMNS, data.shape[1])
+            series = [{
+                "y_data_columns": data.columns[0:n].values.tolist()
+            }]
 
         for param_series in series:
             y_data_columns = param_series.get("y_data_columns")
             self.check_column_names(y_data_columns)
-            current_data = data[y_data_columns]
-
-            ymin = current_data.min(skipna=True).to_list()
-            ymax = current_data.max(skipna=True).to_list()
-
-            quantile = numpy.nanquantile(current_data.to_numpy(), q=[0.25, 0.5, 0.75], axis=0)
-            median = quantile[1, :].tolist()
-            q1 = quantile[0, :]
-            q3 = quantile[2, :]
-            iqr = q3 - q1
-            lower_whisker = q1 - (1.5 * iqr)
-            upper_whisker = q3 + (1.5 * iqr)
-            x = list(range(0, len(y_data_columns)))
-            view.add_series(
-                x=x,
-                median=median,
-                q1=q1.tolist(), q3=q3.tolist(), min=ymin, max=ymax,
-                lower_whisker=lower_whisker.tolist(), upper_whisker=upper_whisker.tolist()
-            )
+            box_view.add_data(data=data[y_data_columns])
 
         # if possible, try to use y_data_columns as x_tick_labels
         if not x_tick_labels:
             if len(series) == 1:
-                view.x_tick_labels = y_data_columns
+                box_view.x_tick_labels = y_data_columns
 
-        return view.to_dict(params)
+        return box_view.to_dict(params)

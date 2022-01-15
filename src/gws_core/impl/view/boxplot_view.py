@@ -3,7 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List
+from typing import List, Union
+
+import numpy
+from pandas import DataFrame
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
@@ -62,6 +65,48 @@ class BoxPlotView(View):
     _type: str = "box-plot-view"
     _title: str = "Box Plot"
 
+    def add_data(self, *, data: Union[List[List[float]], DataFrame] = None):
+        """
+        Add series of raw data.
+
+        :params data: The data that will be used to compute histogram
+        :type data: list of str
+        :params name: The name of the series
+        :type name: str
+        """
+
+        if not self._series:
+            self._series = []
+        if (data is None):
+            if not isinstance(data, list) and not isinstance(data, DataFrame):
+                raise BadRequestException("The data is required and must be an array of float or a DataFrame")
+
+        if isinstance(data, list):
+            data = DataFrame(data)
+
+        ymin = data.min(skipna=True).to_list()
+        ymax = data.max(skipna=True).to_list()
+
+        quantile = numpy.nanquantile(data.to_numpy(), q=[0.25, 0.5, 0.75], axis=0)
+        median = quantile[1, :].tolist()
+        q1 = quantile[0, :]
+        q3 = quantile[2, :]
+        iqr = q3 - q1
+        lower_whisker = q1 - (1.5 * iqr)
+        upper_whisker = q3 + (1.5 * iqr)
+
+        x = list(range(0, data.shape[1]))
+        self.add_series(
+            x=x,
+            median=median,
+            q1=q1.tolist(),
+            q3=q3.tolist(),
+            min=ymin,
+            max=ymax,
+            lower_whisker=lower_whisker.tolist(),
+            upper_whisker=upper_whisker.tolist()
+        )
+
     def add_series(
             self, *,
             x: List[float] = None,
@@ -72,6 +117,27 @@ class BoxPlotView(View):
             max: List[float] = None,
             lower_whisker: List[float] = None,
             upper_whisker: List[float] = None):
+        """
+        Add series of pre-computed histogram x and y values.
+        Vector x is the vector of bin centers and y contains the magnitudes at corresponding x positions.
+
+        :params x: The bin-center values
+        :type x: list of float
+        :params median: The median
+        :type median: list of float
+        :params q1: The first quartile
+        :type q1: list of float
+        :params q3: The third quartile
+        :type q3: list of float
+        :params min: The min values
+        :type min: list of float
+        :params max: The max values
+        :type max: list of float
+        :params lower_whisker: The lower_whisker values
+        :type lower_whisker: list of float
+        :params upper_whisker: The upper_whisker values
+        :type upper_whisker: list of float
+        """
 
         if not self._series:
             self._series = []

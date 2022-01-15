@@ -3,9 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List
+from typing import List, Union
 
 import numpy
+from pandas import DataFrame
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
@@ -65,38 +66,70 @@ class HistogramView(View):
     _type: str = "histogram-view"
     _title: str = "Histogram"
 
-    def add_series(self, *, data: List[float] = None, name: str = None):
+    def add_data(self, *, data: Union[List[float], DataFrame] = None, name: str = None):
+        """
+        Add series of raw data.
+
+        :params data: The data that will be used to compute histogram
+        :type data: list of str
+        :params name: The name of the series
+        :type name: str
+        """
+
         if not self._series:
             self._series = []
-        if (data is None) or not isinstance(data, list):
-            raise BadRequestException("The data is required and must be a list of float")
+
+        if (data is None):
+            if not isinstance(data, list) and not isinstance(data, DataFrame):
+                raise BadRequestException("The data is required and must be a list of float or a DataFrame")
+
+        if isinstance(data, DataFrame):
+            if data.shape[0] != 1 and data.shape[1] != 1:
+                raise BadRequestException("The data must be row or column vector")
+
+        hist, bin_edges = numpy.histogram(data, bins=self.nbins, density=self.density)
+        bin_centers = (bin_edges[0:-2] + bin_edges[1:-1])/2
+        self.add_series(
+            x=bin_centers.tolist(),
+            y=hist.tolist(),
+            name=name
+        )
+
+    def add_series(self, *, x: Union[List[float], List[str]] = None, y: List[float] = None, name: str = None):
+        """
+        Add series of pre-computed histogram x and y values.
+        Vector x is the vector of bin centers and y contains the magnitudes at corresponding x positions.
+
+        :params x: The bin-center values
+        :type x: list of str
+        :params y: The magnitude at x positions
+        :type y: list of str
+        :params name: The name of the series
+        :type name: str
+        """
+
+        if not self._series:
+            self._series = []
+
+        if (x is None) or not isinstance(x, list):
+            raise BadRequestException("The x-data is required and must be a list of float")
+        if (y is None) or not isinstance(y, list):
+            raise BadRequestException("The y-data is required and must be a list of float")
+
         self._series.append({
-            "data": data,
+            "data": {
+                "x": x,
+                "y": y,
+            },
             "name": name,
         })
 
     def to_dict(self, params: ConfigParams) -> dict:
-
-        dict_series = []
-        for series in self._series:
-            data = series["data"]
-            name = series["name"]
-
-            hist, bin_edges = numpy.histogram(data, bins=self.nbins, density=self.density)
-            bin_centers = (bin_edges[0:-2] + bin_edges[1:-1])/2
-            dict_series.append({
-                "data": {
-                    "x": bin_centers.tolist(),
-                    "y": hist.tolist(),
-                },
-                "name": name,
-            })
-
         return {
             **super().to_dict(params),
             "data": {
                 "x_label": self.x_label,
                 "y_label": self.y_label,
-                "series": dict_series,
+                "series": self._series,
             }
         }
