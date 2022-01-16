@@ -78,7 +78,7 @@ class TableHistogramView(BaseTableView):
         series = params.get_value("series", [])
         if not series:
             n = min(DEFAULT_NUMBER_OF_COLUMNS, data.shape[1])
-            series = [{"y_data_columns": v} for v in data.columns[0:n]]
+            series = [{"y_data_column": v} for v in data.columns[0:n]]
 
         y_data_columns = []
         for param_series in series:
