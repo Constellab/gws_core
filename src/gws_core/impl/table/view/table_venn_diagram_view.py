@@ -82,10 +82,10 @@ class TableVennDiagramView(BaseTableView):
             data_columns.append(name)
 
         view = VennDiagramView()
-        for i, name in enumerate(data_columns):
+        for name in data_columns:
             view.add_group(
                 name=name,
-                data=set(data.iloc[:, i].dropna())
+                data=set( data.loc[:, name].dropna().values.tolist() )
             )
 
         return view.to_dict(params)
