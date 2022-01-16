@@ -46,7 +46,7 @@ class VennDiagramView(View):
 
     label: str = None
     _groups: Dict[str, set] = None
-    _type: str = "bar-plot-view"
+    _type: str = "venn-diagram-view"
     _title: str = "Venn Diagram"
 
     def _compute_sections(self):
