@@ -77,9 +77,9 @@ class BoxPlotView(View):
 
         if not self._series:
             self._series = []
-        if (data is None):
-            if not isinstance(data, list) and not isinstance(data, DataFrame):
-                raise BadRequestException("The data is required and must be an array of float or a DataFrame")
+
+        if not isinstance(data, list) and not isinstance(data, DataFrame):
+            raise BadRequestException("The data is required and must be an array of float or a DataFrame")
 
         if isinstance(data, list):
             data = DataFrame(data)

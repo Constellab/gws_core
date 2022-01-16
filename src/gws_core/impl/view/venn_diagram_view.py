@@ -97,9 +97,9 @@ class VennDiagramView(View):
     def add_group(self, *, name: str = None, data: Union[set, list] = None):
         if not self._groups:
             self._groups = {}
-        if (name is None) or not isinstance(name, str):
+        if not isinstance(name, str):
             raise BadRequestException("The name is required and must be a string")
-        if (data is None) or not isinstance(data, (set, list,)):
+        if not isinstance(data, (set, list,)):
             raise BadRequestException("The data is required and must be a set or a list")
         data = [str(x) for x in data]
         self._groups[name] = set(data)

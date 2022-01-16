@@ -111,9 +111,9 @@ class HistogramView(View):
         if not self._series:
             self._series = []
 
-        if (x is None) or not isinstance(x, list):
+        if not isinstance(x, list):
             raise BadRequestException("The x-data is required and must be a list of float")
-        if (y is None) or not isinstance(y, list):
+        if not isinstance(y, list):
             raise BadRequestException("The y-data is required and must be a list of float")
 
         self._series.append({

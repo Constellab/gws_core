@@ -5,6 +5,8 @@
 
 from typing import List, Union
 
+from pandas import DataFrame
+
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
 from ...resource.view import View
@@ -57,11 +59,13 @@ class BarPlotView(View):
     _type: str = "bar-plot-view"
     _title: str = "Bar Plot"
 
-    def add_series(self, *, x: Union[List[float], List[str]] = None, y: List[float] = None, name: str = None):
+    def add_series(self, *, x: Union[List[float], List[str], ] = None, y: List[float] = None, name: str = None):
         if not self._series:
             self._series = []
-        if (y is None) or not isinstance(y, list):
-            raise BadRequestException("The y data is required and must be a list of float")
+
+        if not isinstance(y, list):
+            raise BadRequestException("The y-data is required and must be a list of float")
+
         if x is None:
             x = list(range(0, len(y)))
         self._series.append({

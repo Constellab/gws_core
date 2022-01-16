@@ -41,7 +41,7 @@ class HeatmapView(View):
     _type: str = "heatmap-view"
     _data: DataFrame = None
 
-    def set_data(self, data: DataFrame):
+    def set_data(self, *, data: DataFrame = None):
         if not isinstance(data, DataFrame):
             raise BadRequestException("The data must be a DataFrame")
         self._data = data

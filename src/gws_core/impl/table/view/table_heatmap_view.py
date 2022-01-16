@@ -45,7 +45,7 @@ class TableHeatmapView(BaseTableView):
     def to_dict(self, params: ConfigParams) -> dict:
         data = self._table.get_data()
         helper_view = HeatmapView()
-        helper_view.set_data(data)
+        helper_view.set_data(data=data)
         helper_view.from_row = params["from_row"]
         helper_view.number_of_rows_per_page = params["number_of_rows_per_page"]
         helper_view.from_column = params["from_column"]

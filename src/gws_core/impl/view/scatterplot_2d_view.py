@@ -60,8 +60,8 @@ class ScatterPlot2DView(View):
     def add_series(self, *, x: List[float], y: List[float], x_name: str = None, y_name: str = None):
         if not self._series:
             self._series = []
-        if (y is None) or not isinstance(y, list):
-            raise BadRequestException("The y data is required and must be a list of float")
+        if not isinstance(y, list):
+            raise BadRequestException("The y-data is required and must be a list of float")
         if x is None:
             x = list(range(0, len(y)))
         self._series.append({
