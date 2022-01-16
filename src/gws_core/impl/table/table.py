@@ -22,6 +22,7 @@ from .view.table_histogram_view import TableHistogramView
 from .view.table_lineplot_2d_view import TableLinePlot2DView
 from .view.table_scatterplot_2d_view import TableScatterPlot2DView
 from .view.table_stacked_barplot_view import TableStackedBarPlotView
+from .view.table_venn_diagram_view import TableVennDiagramView
 from .view.table_view import TableView
 
 ALLOWED_DELIMITER = ["auto", "tab", "space", ",", ";"]
@@ -373,3 +374,11 @@ class Table(Resource):
         """
 
         return TableHeatmapView(self)
+
+    @ view(view_type=TableVennDiagramView, human_name='VennDiagram', short_description='View table as Venn diagram', specs={})
+    def view_as_heatmap(self, params: ConfigParams) -> TableHeatmapView:
+        """
+        View the table as Venn diagram
+        """
+
+        return TableVennDiagramView(self)
