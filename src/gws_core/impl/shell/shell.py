@@ -141,6 +141,7 @@ class Shell(Task):
                 env=user_env,
                 shell=self._shell_mode,
                 stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
             )
 
             tic_a = time.perf_counter()
@@ -148,7 +149,7 @@ class Shell(Task):
             for line in iter(proc.stdout.readline, b''):
                 stdout.append(line.decode().strip())
                 tic_b = time.perf_counter()
-                if tic_b - tic_a >= 1:      # save outputs every N sec in taskbar
+                if tic_b - tic_a >= 0.1:      # save outputs every 0.1 sec in taskbar
                     self.log_info_message("\n".join(stdout))
                     tic_a = time.perf_counter()
                     stdout = []
