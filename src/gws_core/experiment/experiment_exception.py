@@ -66,8 +66,8 @@ class ExperimentRunException(BadRequestException):
 
 
 class ResourceUsedInAnotherExperimentException(BadRequestException):
-    def __init__(self, resource_model_id: str, experiment: str) -> None:
+    def __init__(self, resource_model_name: str, experiment: str) -> None:
         super().__init__(
             GWSException.RESET_ERROR_RESOURCE_USED_IN_ANOTHER_EXPERIMENT.value,
             unique_code=GWSException.RESET_ERROR_RESOURCE_USED_IN_ANOTHER_EXPERIMENT.name,
-            detail_args={"resource_model_id": resource_model_id, "experiment": experiment})
+            detail_args={"resource_model_name": resource_model_name, "experiment": experiment})

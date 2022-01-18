@@ -180,9 +180,17 @@ def stop_an_experiment(id: str,
     return TagService.save_tags_to_model(Experiment._typing_name, id, tags)
 
 
-################################### COPY  ##############################
+################################### COPY ##############################
 
 @core_app.put("/experiment/{id}/clone", tags=["Experiment"], summary="Clone an experiment")
 def clone_experiment(id: str,
                      _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     return ExperimentService.clone_experiment(id).to_json()
+
+################################### DELETE ##############################
+
+
+@core_app.delete("/experiment/{id}", tags=["Experiment"], summary="Delete an experiment")
+def delete_experiment(id: str,
+                      _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+    return ExperimentService.delete_experiment(id)

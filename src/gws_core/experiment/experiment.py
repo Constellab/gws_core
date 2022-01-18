@@ -217,7 +217,7 @@ class Experiment(ModelWithUser, TaggableModel):
 
             if other_experiment is not None:
                 raise ResourceUsedInAnotherExperimentException(
-                    other_experiment.resource_model.id, other_experiment.experiment.get_short_name())
+                    other_experiment.resource_model.name, other_experiment.experiment.get_short_name())
 
         if self.protocol_model:
             self.protocol_model.reset()
@@ -262,6 +262,15 @@ class Experiment(ModelWithUser, TaggableModel):
 
         self.is_validated = True
         self.save()
+
+    @transaction()
+    def delete_instance(self):
+        self.reset()
+
+        if self.protocol_model:
+            self.protocol_model.delete_instance()
+
+        return super().delete_instance()
 
     @classmethod
     def create_table(cls, *args, **kwargs):

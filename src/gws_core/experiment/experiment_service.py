@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 
+from cmath import exp
 from typing import Dict, Type
 
 from peewee import ModelSelect
@@ -239,3 +240,11 @@ class ExperimentService(BaseService):
 
         new_experiment.description = experiment.description
         return new_experiment.save()
+
+      ################################### DELETE ##############################
+
+    @classmethod
+    def delete_experiment(cls, experiment_id: str) -> None:
+        experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
+
+        experiment.delete_instance()
