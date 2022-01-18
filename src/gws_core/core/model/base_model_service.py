@@ -51,7 +51,7 @@ class BaseModelService:
         # Create the foreign keys after if necessary (for DeferredForeignKey for example)
         for models in model_list:
             for model in models:
-                model.after_table_init()
+                model.after_all_tables_init()
 
     @classmethod
     def drop_tables(cls, model_types: List[Type[BaseModel]] = None, model_type: type = None):

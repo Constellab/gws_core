@@ -126,15 +126,12 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         return self
 
     @classmethod
-    def create_table(cls, *args, **kwargs):
-        if cls.table_exists():
-            return
-        super().create_table(*args, **kwargs)
-
+    def after_table_creation(cls) -> None:
+        super().after_table_creation()
         cls.create_full_text_index(['data'], 'I_F_RES_DATA')
 
     @classmethod
-    def after_table_init(cls) -> None:
+    def after_all_tables_init(cls) -> None:
         """Create the foreign keys because it was deffered
         """
         cls.create_foreign_key_if_not_exist(ResourceModel.experiment)

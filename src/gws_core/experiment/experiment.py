@@ -273,11 +273,8 @@ class Experiment(ModelWithUser, TaggableModel):
         return super().delete_instance()
 
     @classmethod
-    def create_table(cls, *args, **kwargs):
-        if cls.table_exists():
-            return
-        super().create_table(*args, **kwargs)
-
+    def after_table_creation(cls) -> None:
+        super().after_table_creation()
         cls.create_full_text_index(['title', 'description'], 'I_F_EXP_TIDESC')
 
     ########################### STATUS MANAGEMENT ##################################
