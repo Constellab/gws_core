@@ -181,13 +181,9 @@ class Typing(Model):
         return typings
 
     @classmethod
-    def create_table(cls, *args, **kwargs):
-        if cls.table_exists():
-            return
-        super().create_table(*args, **kwargs)
-
+    def after_table_creation(cls) -> None:
+        super().after_table_creation()
         cls.create_full_text_index(['human_name', 'short_description', 'model_name'], 'I_F_TYP_TXT')
-
     ############################################# STATIC METHODS #########################################
 
     # Simple method to build the typing name  = object_type.brick.model_name

@@ -4,7 +4,9 @@ from typing import List, Type
 
 from peewee import ForeignKeyField, ForeignKeyMetadata
 from peewee import Model as PeeweeModel
+from peewee import ModelSelect
 
+from ...core.exception.exceptions import BadRequestException
 from ..db.db_manager import DbManager
 from .base import Base
 
@@ -30,7 +32,14 @@ class BaseModel(Base, PeeweeModel):
         super().create_table(*args, **kwargs)
 
     @classmethod
-    def after_table_init(cls) -> None:
+    def after_table_creation(cls) -> None:
+        """Method call after the table is created
+
+        Usefull to create the full text indexes
+        """
+
+    @classmethod
+    def after_all_tables_init(cls) -> None:
         """Method call after all the table are inited
 
         Useful when use DeferredForeignKey to create the foreign key manually latter
@@ -98,6 +107,17 @@ class BaseModel(Base, PeeweeModel):
         """
 
         return cls._db_manager
+
+    @classmethod
+    def search(cls, phrase: str, modifier: str = None) -> ModelSelect:
+        """
+        Performs full-text search on the field. Must be overrided by child class to work
+        :param phrase: The phrase to search
+        :type phrase: `str`
+        :param in_boolean_mode: True to search in boolean mode, False otherwise
+        :type in_boolean_mode: `bool`
+        """
+        raise BadRequestException("This entity does not support search")
 
     @classmethod
     def is_sqlite3_engine(cls):
