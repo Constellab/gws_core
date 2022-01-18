@@ -203,6 +203,9 @@ class Experiment(ModelWithUser, TaggableModel):
         if self.is_validated or self.is_archived:
             raise BadRequestException("Can't reset a validated or archived experiment")
 
+        if self.is_running:
+            raise BadRequestException("Can't reset a running experiment")
+
         # Check if any resource of this experiment is used in another one
         output_resources: List[ResourceModel] = list(ResourceModel.get_by_experiment(self.id))
 

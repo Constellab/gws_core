@@ -175,6 +175,12 @@ class ExperimentService(BaseService):
 
         return experiment
 
+    @classmethod
+    def reset_experiment(cls, id: str) -> Experiment:
+        experiment: Experiment = Experiment.get_by_id_and_check(id)
+
+        return experiment.reset()
+
     ################################### GET  ##############################
 
     @classmethod

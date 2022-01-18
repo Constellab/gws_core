@@ -1,6 +1,9 @@
 
 import threading
 
+from gws_core.core.exception.exceptions.base_http_exception import \
+    BaseHTTPException
+
 from ..core.exception.exceptions import NotFoundException
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -138,11 +141,12 @@ class QueueService(BaseService):
         experiment.check_is_runnable()
 
         if experiment.status != ExperimentStatus.DRAFT:
-            Logger.info(
-                f"Resetting experiment {experiment.id} before adding it to the queue")
+            Logger.info(f"Resetting experiment {experiment.id} before adding it to the queue")
 
             try:
                 experiment.reset()
+            except BaseHTTPException as err:
+                raise err
             except Exception as err:
                 # printing stack trace
                 Logger.log_exception_stack_trace(err)

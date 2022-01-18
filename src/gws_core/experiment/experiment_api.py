@@ -141,7 +141,13 @@ def update_experiment_description(id: str,
     return ExperimentService.update_experiment_description(id, description).to_json(deep=True)
 
 
+@core_app.put("/experiment/{id}/reset", tags=["Experiment"], summary="Reset an experiment")
+def reset_an_experiment(id: str,
+                        _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    return ExperimentService.reset_experiment(id).to_json(deep=True)
+
 ###################################### RUN ################################
+
 
 @core_app.post("/experiment/{id}/start", tags=["Experiment"], summary="Start an experiment")
 def start_an_experiment(id: str,
