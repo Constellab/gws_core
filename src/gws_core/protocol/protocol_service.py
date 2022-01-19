@@ -5,20 +5,19 @@
 
 from typing import List, Tuple, Type
 
-from gws_core.io.connector import Connector
-from gws_core.io.port import InPort, OutPort
-from gws_core.process.process import Process
-from gws_core.protocol.protocol_action import AddProcessWithLink
-
 from ..config.config_types import ConfigParamsDict
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
+from ..io.connector import Connector
+from ..io.port import InPort, OutPort
 from ..model.typing import Typing
 from ..model.typing_manager import TypingManager
+from ..process.process import Process
 from ..process.process_factory import ProcessFactory
 from ..process.process_model import ProcessModel
 from ..process.protocol_sub_process_builder import SubProcessBuilderUpdate
+from ..protocol.protocol_action import AddProcessWithLink
 from ..protocol.protocol_model import ProtocolModel
 from ..task.task_model import TaskModel
 from .protocol import Protocol
@@ -192,6 +191,95 @@ class ProtocolService(BaseService):
         protocol_model.remove_process(process_instance_name)
         protocol_model.save(update_graph=True)
 
+    ########################## CONNECTORS #####################
+
+    @classmethod
+    def add_connectors_to_protocol(
+            cls, protocol_model: ProtocolModel, connectors: List[Tuple[OutPort, InPort]]) -> ProtocolModel:
+        protocol_model.check_is_updatable()
+        for connector in connectors:
+            new_connector: Connector = Connector(connector[0], connector[1])
+            protocol_model.add_connector(new_connector)
+        return protocol_model.save(update_graph=True)
+
+    @classmethod
+    def add_connector_to_protocol_id(cls, protocol_id: str, output_process_name: str, out_port_name: str,
+                                     input_process_name: str, in_port_name: str) -> Connector:
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+
+        output_process: ProcessModel = protocol_model.get_process(output_process_name)
+        input_process: ProcessModel = protocol_model.get_process(input_process_name)
+
+        return cls.add_connector_to_protocol(protocol_model, output_process.out_port(out_port_name),
+                                             input_process.in_port(in_port_name))
+
+    @classmethod
+    def add_connector_to_protocol(
+            cls, protocol_model: ProtocolModel, out_port: OutPort, in_port: InPort) -> Connector:
+        protocol_model.check_is_updatable()
+        connector: Connector = Connector(out_port, in_port)
+        protocol_model.add_connector(connector)
+        protocol_model.save(update_graph=True)
+        return connector
+
+    @classmethod
+    def delete_connector_of_protocol(
+            cls, protocol_id: str, dest_process_name: str, dest_process_port_name: str) -> None:
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+
+        protocol_model.check_is_updatable()
+        protocol_model.delete_connector(dest_process_name, dest_process_port_name)
+        protocol_model.save(update_graph=True)
+
+    ########################## INTERFACE & OUTERFACE #####################
+    @classmethod
+    def add_interface_to_protocol(
+            cls, protocol_model: ProtocolModel, name: str, in_port: InPort) -> ProtocolModel:
+        protocol_model.check_is_updatable()
+        protocol_model.add_interface(name, in_port)
+        return protocol_model.save(update_graph=True)
+
+    @classmethod
+    def add_outerface_to_protocol(
+            cls, protocol_model: ProtocolModel, name: str, out_port: OutPort) -> ProtocolModel:
+        protocol_model.check_is_updatable()
+        protocol_model.add_outerface(name, out_port)
+        return protocol_model.save(update_graph=True)
+
+    @classmethod
+    def delete_interface_on_protocol(cls, protocol_model: ProtocolModel, interface_name: str) -> None:
+        protocol_model.check_is_updatable()
+        protocol_model.remove_interface(interface_name)
+        protocol_model.save(update_graph=True)
+
+    @classmethod
+    def delete_outerface_on_protocol(cls, protocol_model: ProtocolModel, outerface_name: str) -> None:
+        protocol_model.check_is_updatable()
+        protocol_model.remove_outerface(outerface_name)
+        protocol_model.save(update_graph=True)
+
+    @classmethod
+    @transaction()
+    def copy_protocol(cls, protocol_model: ProtocolModel) -> ProtocolModel:
+        new_protocol_model: ProtocolModel = ProcessFactory.copy_protocol(protocol_model)
+        new_protocol_model.save_full()
+        new_protocol_model.reset()
+        return new_protocol_model
+
+    ########################## CONFIG #####################
+
+    @classmethod
+    @transaction()
+    def configure_process(cls, protocol_id: str, process_instance_name: str, config: ConfigParamsDict) -> ProcessModel:
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+
+        protocol_model.check_is_updatable()
+        process_model: ProcessModel = protocol_model.get_process(process_instance_name)
+
+        # delete the process form the DB
+        process_model.config.set_values(config)
+        return protocol_model.save()
+
     ########################## SPECIFIC PROCESS #####################
     @classmethod
     @transaction()
@@ -238,69 +326,3 @@ class ProtocolService(BaseService):
             sink_model.in_port('resource'))
 
         return AddProcessWithLink(process_model=sink_model, connector=connector)
-
-    ########################## CONNECTORS #####################
-
-    @classmethod
-    def add_connectors_to_protocol(
-            cls, protocol_model: ProtocolModel, connectors: List[Tuple[OutPort, InPort]]) -> ProtocolModel:
-        protocol_model.check_is_updatable()
-        for connector in connectors:
-            new_connector: Connector = Connector(connector[0], connector[1])
-            protocol_model.add_connector(new_connector)
-        return protocol_model.save(update_graph=True)
-
-    @classmethod
-    def add_connector_to_protocol_id(cls, protocol_id: str, output_process_name: str, out_port_name: str,
-                                     input_process_name: str, in_port_name: str) -> Connector:
-        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
-
-        output_process: ProcessModel = protocol_model.get_process(output_process_name)
-        input_process: ProcessModel = protocol_model.get_process(input_process_name)
-
-        return cls.add_connector_to_protocol(protocol_model, output_process.out_port(out_port_name),
-                                             input_process.in_port(in_port_name))
-
-    @classmethod
-    def add_connector_to_protocol(
-            cls, protocol_model: ProtocolModel, out_port: OutPort, in_port: InPort) -> Connector:
-        protocol_model.check_is_updatable()
-        connector: Connector = Connector(out_port, in_port)
-        protocol_model.add_connector(connector)
-        protocol_model.save(update_graph=True)
-        return connector
-
-    ########################## INTERFACE & OUTERFACE #####################
-    @classmethod
-    def add_interface_to_protocol(
-            cls, protocol_model: ProtocolModel, name: str, in_port: InPort) -> ProtocolModel:
-        protocol_model.check_is_updatable()
-        protocol_model.add_interface(name, in_port)
-        return protocol_model.save(update_graph=True)
-
-    @classmethod
-    def add_outerface_to_protocol(
-            cls, protocol_model: ProtocolModel, name: str, out_port: OutPort) -> ProtocolModel:
-        protocol_model.check_is_updatable()
-        protocol_model.add_outerface(name, out_port)
-        return protocol_model.save(update_graph=True)
-
-    @classmethod
-    def delete_interface_on_protocol(cls, protocol_model: ProtocolModel, interface_name: str) -> None:
-        protocol_model.check_is_updatable()
-        protocol_model.remove_interface(interface_name)
-        protocol_model.save(update_graph=True)
-
-    @classmethod
-    def delete_outerface_on_protocol(cls, protocol_model: ProtocolModel, outerface_name: str) -> None:
-        protocol_model.check_is_updatable()
-        protocol_model.remove_outerface(outerface_name)
-        protocol_model.save(update_graph=True)
-
-    @classmethod
-    @transaction()
-    def copy_protocol(cls, protocol_model: ProtocolModel) -> ProtocolModel:
-        new_protocol_model: ProtocolModel = ProcessFactory.copy_protocol(protocol_model)
-        new_protocol_model.save_full()
-        new_protocol_model.reset()
-        return new_protocol_model

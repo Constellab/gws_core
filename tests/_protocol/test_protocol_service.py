@@ -50,7 +50,7 @@ class TestProtocolService(BaseTestCase):
         # Check that the connector was created
         self.assertEqual(len(protocol_model.connectors), 2)
 
-    def test_add_connector(self):
+    def test_connector(self):
         protocol_model: ProtocolModel = ProtocolService.create_empty_protocol()
 
         create: ProcessModel = ProtocolService.add_process_to_protocol_id(
@@ -72,3 +72,11 @@ class TestProtocolService(BaseTestCase):
         self.assertEqual(connector.out_port.parent.parent.id, create.id)
         self.assertEqual(connector.in_port.name, 'robot')
         self.assertEqual(connector.in_port.parent.parent.id, move.id)
+
+        # Test removing connector
+        ProtocolService.delete_connector_of_protocol(protocol_model.id, move.instance_name, 'robot')
+
+        protocol_model = protocol_model.refresh()
+
+        # Check that the connector was deleted
+        self.assertEqual(len(protocol_model.connectors), 0)

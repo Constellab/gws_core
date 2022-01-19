@@ -118,3 +118,8 @@ class Connector:
         """return true if the connector is connected to the process model
         """
         return process_model in (self.left_process, self.right_process)
+
+    def is_right_connected_to(self, process_model_name: str, port_name: str) -> bool:
+        """ return true if the right side is the specified process connected to the specified port
+        """
+        return self.in_port.process.instance_name == process_model_name and self.in_port.name == port_name

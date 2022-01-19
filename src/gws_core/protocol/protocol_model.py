@@ -447,6 +447,13 @@ class ProtocolModel(ProcessModel):
             connector.disconnect()
         self._connectors = []
 
+    def delete_connector(self, dest_process_name: str, dest_process_port_name: str) -> None:
+        """ remove the connector which right side is connected to the specified port of the specified process
+        """
+        self._connectors = [
+            item for item in self.connectors
+            if not item.is_right_connected_to(dest_process_name, dest_process_port_name)]
+
     def _delete_connectors_by_process(self, process_model: ProcessModel) -> None:
         """remove all the connectors connected to a process (input or output)
         """
