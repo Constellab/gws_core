@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from ...view.stacked_barplot_view import StackedBoxPlotView
+from ...view.stacked_barplot_view import StackedBarPlotView
 from .table_barplot_view import TableBarPlotView
 
 
@@ -40,4 +40,4 @@ class TableStackedBarPlotView(TableBarPlotView):
     ```
     """
 
-    _view_helper = StackedBoxPlotView
+    _view_helper = StackedBarPlotView

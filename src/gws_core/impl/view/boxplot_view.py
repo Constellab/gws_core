@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 from typing import List, Union
-
+import math
 import numpy
 from pandas import DataFrame
 
@@ -156,13 +156,13 @@ class BoxPlotView(View):
         self._series.append({
             "data": {
                 "x": x,
-                "median": median,
-                "q1": q1,
-                "q3": q3,
-                "min": min,
-                "max": max,
-                "lower_whisker": lower_whisker,
-                "upper_whisker": upper_whisker
+                "median": self._clean_nan(median),
+                "q1": self._clean_nan(q1),
+                "q3": self._clean_nan(q3),
+                "min": self._clean_nan(min),
+                "max": self._clean_nan(max),
+                "lower_whisker": self._clean_nan(lower_whisker),
+                "upper_whisker": self._clean_nan(upper_whisker)
             },
         })
 
@@ -176,3 +176,6 @@ class BoxPlotView(View):
                 "series": self._series,
             }
         }
+
+    def _clean_nan(self, data: List[float]):
+        return [ '' if math.isnan(x) else x for x in data ]
