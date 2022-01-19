@@ -198,7 +198,7 @@ from .impl.view.scatterplot_2d_view import \
 from .impl.view.scatterplot_3d_view import \
     ScatterPlot3DView as ScatterPlot3DView
 from .impl.view.stacked_barplot_view import \
-    StackedBoxPlotView as StackedBoxPlotView
+    StackedBarPlotView as StackedBarPlotView
 from .impl.view.tabular_view import TabularView as TabularView
 # Impl > Volatile
 from .impl.volatile.volatile_resource import \
