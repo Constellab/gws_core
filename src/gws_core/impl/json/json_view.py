@@ -22,9 +22,14 @@ class JSONView(View):
     _type: str = "json-view"
     _data: Any
 
-    def __init__(self, data: Dict):
+    def __init__(self, data: Dict = None):
         super().__init__()
-        if data is not None and not isinstance(data, (dict, list, bool, str, int, float)):
+        self.set_data(data)
+
+    def set_data(self, data: Dict):
+        if data is None:
+            data = {}
+        if not isinstance(data, (dict, list, bool, str, int, float)):
             raise BadRequestException("The data must be a json (dictionary, list of primitive or primitive object)")
         self._data = data
 
