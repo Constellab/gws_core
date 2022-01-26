@@ -30,6 +30,7 @@ class BaseModel(Base, PeeweeModel):
         if not hasattr(cls, "_table_name") or cls.table_exists():
             return
         super().create_table(*args, **kwargs)
+        cls.after_table_creation()
 
     @classmethod
     def after_table_creation(cls) -> None:
