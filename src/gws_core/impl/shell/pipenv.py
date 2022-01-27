@@ -14,6 +14,7 @@ from ...progress_bar.progress_bar import ProgressBar, ProgressBarMessageType
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
 from .base_env import BaseEnvShell
+from ...task.task import Task
 
 
 @task_decorator("PipEnvShell", hide=True)
@@ -78,10 +79,13 @@ class PipEnvShell(BaseEnvShell):
     # -- I --
 
     @classmethod
-    def install(cls):
+    def install(cls, current_task: Task=None):
         """
         Install the virtual env
         """
+
+        if (current_task is not None) and not isinstance(current_task, Task):
+            raise BadRequestException(f"The current task must be an instance of Task")
 
         if cls.is_installed():
             return
@@ -99,7 +103,8 @@ class PipEnvShell(BaseEnvShell):
         ]
 
         try:
-            ProgressBar.add_message_to_current("Installing the virtual environment ...")
+            if current_task:
+                current_task.log_info_message("Installing the virtual environment ...")
             env = os.environ.copy()
             env["PIPENV_VENV_IN_PROJECT"] = "enabled"
             res = subprocess.run(
@@ -109,16 +114,21 @@ class PipEnvShell(BaseEnvShell):
                 env=env,
                 shell=True
             )
-            ProgressBar.add_message_to_current("Virtual environment installed!", ProgressBarMessageType.SUCCESS)
         except Exception as err:
-            raise Exception(
+            raise BadRequestException(
                 "Cannot install the virtual environment.") from err
 
         if res.returncode != 0:
-            raise Exception(f"Cannot install the virtual environment. Error: {res.stderr}")
+            raise BadRequestException(f"Cannot install the virtual environment. Error: {res.stderr}")
+
+        if current_task:
+            current_task.log_success_message("Virtual environment installed!")
 
     @classmethod
-    def uninstall(cls):
+    def uninstall(cls, current_task: Task=None):
+        if (current_task is not None) and not isinstance(current_task, Task):
+            raise BadRequestException(f"The current task must be an instance of Task")
+
         if not cls.is_installed():
             return
         cmd = [
@@ -128,7 +138,8 @@ class PipEnvShell(BaseEnvShell):
         ]
 
         try:
-            ProgressBar.add_message_to_current("Removing the virtual environment ...")
+            if current_task:
+                current_task.log_info_message("Removing the virtual environment ...")
             env = os.environ.copy()
             env["PIPENV_VENV_IN_PROJECT"] = "enabled"
             res = subprocess.run(
@@ -138,16 +149,18 @@ class PipEnvShell(BaseEnvShell):
                 env=env,
                 shell=True
             )
-            ProgressBar.add_message_to_current("Virtual environment removed!")
         except:
             try:
                 if os.path.exists(cls.get_env_dir()):
                     shutil.rmtree(cls.get_env_dir())
             except:
-                raise Exception("Cannot remove the virtual environment.")
+                raise BadRequestException("Cannot remove the virtual environment.")
 
         if res.returncode != 0:
-            raise Exception(f"Cannot remove the virtual environment. Error: {res.stderr}")
+            raise BadRequestException(f"Cannot remove the virtual environment. Error: {res.stderr}")
+
+        if current_task:
+            current_task.log_info_message("Virtual environment removed!")
 
     @abstractmethod
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

@@ -15,6 +15,7 @@ from ...progress_bar.progress_bar import ProgressBar, ProgressBarMessageType
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
 from .base_env import BaseEnvShell
+from ...task.task import Task
 
 
 @task_decorator("CondaEnvShell", hide=True)
@@ -66,10 +67,12 @@ class CondaEnvShell(BaseEnvShell):
     # -- I --
 
     @ classmethod
-    def install(cls):
+    def install(cls, current_task:Task=None):
         """
         Install the virtual env
         """
+        if (current_task is not None) and not isinstance(current_task, Task):
+            raise BadRequestException(f"The current task must be an instance of Task")
 
         if cls.is_installed():
             return
@@ -87,25 +90,30 @@ class CondaEnvShell(BaseEnvShell):
 
         res: subprocess.CompletedProcess
         try:
-            ProgressBar.add_message_to_current("Installing the virtual environment ...")
+            if current_task:
+                current_task.log_info_message("Installing the virtual environment ...")
             res = subprocess.run(
                 " ".join(cmd),
                 cwd=cls.get_env_dir(),
                 stderr=subprocess.PIPE,
                 shell=True
             )
-            ProgressBar.add_message_to_current("Virtual environment installed!")
         except Exception as err:
-            raise Exception("Cannot install the virtual environment.") from err
+            raise BadRequestException("Cannot install the virtual environment.") from err
 
         if res.returncode != 0:
-            raise Exception(f"Cannot install the virtual environment. Error: {res.stderr}")
-        ProgressBar.add_message_to_current("Virtual environment installed!", ProgressBarMessageType.SUCCESS)
+            raise BadRequestException(f"Cannot install the virtual environment. Error: {res.stderr}")
+
+        if current_task:
+            current_task.log_success_message("Virtual environment installed!")
 
     # -- U --
 
     @ classmethod
-    def uninstall(cls):
+    def uninstall(cls, current_task:Task=None):
+        if (current_task is not None) and not isinstance(current_task, Task):
+            raise BadRequestException(f"The current task must be an instance of Task")
+
         if not cls.is_installed():
             return
         cmd = [
@@ -117,23 +125,26 @@ class CondaEnvShell(BaseEnvShell):
 
         res: subprocess.CompletedProcess
         try:
-            ProgressBar.add_message_to_current("Removing the virtual environment ...")
+            if current_task:
+                current_task.log_info_message("Removing the virtual environment ...")
             res = subprocess.run(
                 " ".join(cmd),
                 cwd=cls.get_env_dir(),
                 stderr=subprocess.PIPE,
                 shell=True
             )
-            ProgressBar.add_message_to_current("Virtual environment removed!", ProgressBarMessageType.SUCCESS)
         except Exception as err:
             try:
                 if os.path.exists(cls.get_env_dir()):
                     shutil.rmtree(cls.get_env_dir())
             except Exception as err:
-                raise Exception("Cannot remove the virtual environment.") from err
+                raise BadRequestException("Cannot remove the virtual environment.") from err
 
         if res.returncode != 0:
-            raise Exception(f"Cannot remove the virtual environment. Error: {res.stderr}")
+            raise BadRequestException(f"Cannot remove the virtual environment. Error: {res.stderr}")
+
+        if current_task:
+            current_task.log_info_message("Virtual environment removed!")
 
     @ abstractmethod
     def gather_outputs(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

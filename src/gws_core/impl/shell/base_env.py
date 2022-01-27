@@ -29,7 +29,7 @@ class BaseEnvShell(Shell):
 
     unique_env_name = None
     _shell_mode = False
-    _GLOBAL_ENV_DIR = "/.local/share/gws/venv/"
+    _GLOBAL_ENV_DIR = "/lab/.sys/.venv/"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -87,7 +87,7 @@ class BaseEnvShell(Shell):
         """
 
         if not self.is_installed():
-            self.install()
+            self.install(current_task=self)
         return await super().run(params, inputs)
 
     # -- U --
