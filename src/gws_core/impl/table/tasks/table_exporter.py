@@ -18,15 +18,15 @@ from ..table_file import TableFile
 @exporter_decorator(unique_name="TableExporter", source_type=Table, target_type=TableFile)
 class TableExporter(ResourceExporter):
     config_specs: ConfigSpecs = {
-        'file_name': StrParam(default_value='file', short_description="File name (without extension)"),
-        'file_format': StrParam(default_value=Table.DEFAULT_FILE_FORMAT, allowed_values=Table.ALLOWED_FILE_FORMATS, short_description="File format"),
+        'file_name': StrParam(optional=True, short_description="File name (without extension)"),
+        'file_format': StrParam(optional=True, default_value=Table.DEFAULT_FILE_FORMAT, allowed_values=Table.ALLOWED_FILE_FORMATS, short_description="File format"),
         'delimiter': StrParam(allowed_values=Table.ALLOWED_DELIMITER, default_value=Table.DEFAULT_DELIMITER, short_description="Delimiter character. Only for CSV files"),
         'write_header': BoolParam(default_value=True, short_description="True to write column names (header), False otherwise"),
         'write_index': BoolParam(default_value=True, short_description="True to write row names (index), False otherwise"),
     }
 
     async def export_to_path(self, source: Table, dest_dir: str, params: ConfigParams, target_type: Type[TableFile]) -> TableFile:
-        file_name = params.get_value('file_name', 'file')
+        file_name = params.get_value('file_name', type(self)._human_name)
         file_format = params.get_value('file_format', Table.DEFAULT_FILE_FORMAT)
         file_path = os.path.join(dest_dir, file_name+file_format)
         sep = params.get_value('delimiter', Table.DEFAULT_DELIMITER)

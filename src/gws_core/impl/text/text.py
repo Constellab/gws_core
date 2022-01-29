@@ -15,6 +15,7 @@ from .view.text_view import TextView
 
 @resource_decorator("Text")
 class Text(Resource):
+    DEFAULT_FILE_FORMAT = ".txt"
     _data: str = RField()
 
     def __init__(self, data: str = None):

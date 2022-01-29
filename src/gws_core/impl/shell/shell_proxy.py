@@ -25,32 +25,57 @@ class ShellProxy:
             BadRequestException("The shell_task_type must be a subclass of Shell")
         self._shell_task_type = shell_task_type
 
-    def check_output(self, cmd: List[str], text: bool = True) -> Any:
+    def check_output(self, cmd: List[str], text: bool = True, cwd: str = None) -> Any:
         shell_task = self._shell_task_type()
-        if isinstance(shell_task, BaseEnvShell):
-            return self._env_shell_check_output(cmd, text)
-        else:
-            return self._base_shell_check_output(cmd, text)
-
-    def _base_shell_check_output(self, cmd: List[str], text: bool = True) -> Any:
-        shell_task = self._shell_task_type()
-        env_cmd = shell_task._format_command(cmd)
-        text = subprocess.check_output(
-            env_cmd,
-            text=text,
-            shell=shell_task._shell_mode
-        )
-        return text
-
-    def _env_shell_check_output(self, cmd: List[str], text: bool = True) -> Any:
-        shell_task = self._shell_task_type()
-        shell_task.install()
         env_cmd = shell_task._format_command(cmd)
         env_dir = shell_task.build_os_env()
-        text = subprocess.check_output(
-            env_cmd,
-            text=text,
-            env=env_dir,
-            shell=shell_task._shell_mode
-        )
-        return text
+        if isinstance(shell_task, BaseEnvShell):
+            self._shell_task_type.install()
+        if not cwd:
+            cwd = shell_task.working_dir
+        
+        try:
+            output = subprocess.check_output(
+                env_cmd,
+                cwd=cwd,
+                text=text,
+                env=env_dir,
+                shell=shell_task._shell_mode
+            )
+            return output
+        except Exception as err:
+            shell_task._clean_working_dir()
+            raise BadRequestException(f"The shell process has failed. Error {err}.")
+
+    def run(self, cmd: List[str], text: bool = True, cwd: str = None) -> Any:
+        shell_task = self._shell_task_type()
+        env_cmd = shell_task._format_command(cmd)
+        env_dir = shell_task.build_os_env()
+        if isinstance(shell_task, BaseEnvShell):
+            self._shell_task_type.install()
+        if not cwd:
+            cwd = shell_task.working_dir
+        
+        try:
+            proc = subprocess.Popen(
+                cmd,
+                cwd=cwd,
+                env=env_dir,
+                shell=shell_task._shell_mode,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+            )
+            tic_a = time.perf_counter()
+            stdout: list = []
+            for line in iter(proc.stdout.readline, b''):
+                stdout.append(line.decode().strip())
+                tic_b = time.perf_counter()
+                if tic_b - tic_a >= 0.1:      # save outputs every 0.1 sec in taskbar
+                    self.log_info_message("\n".join(stdout))
+                    tic_a = time.perf_counter()
+                    stdout = []
+            if stdout:
+                self.log_info_message("\n".join(stdout))
+        except Exception as err:
+            shell_task._clean_working_dir()
+            raise BadRequestException(f"The shell process has failed. Error {err}.")

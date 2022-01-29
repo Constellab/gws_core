@@ -69,8 +69,8 @@ class DatasetExporter(TableExporter):
     config_specs: ConfigSpecs = {**TableExporter.config_specs}
 
     async def export_to_path(self, resource: Table, dest_dir: str, params: ConfigParams, target_type: Type[TableFile]) -> TableFile:
-        file_name = params.get_value("file_name", "file")
-        file_format = params.get_value("file_format", Dataset.DEFAULT_FILE_FORMAT)
+        file_name = params.get_value('file_name', type(self)._human_name)
+        file_format = params.get_value('file_format', Dataset.DEFAULT_FILE_FORMAT)
         file_path = os.path.join(dest_dir, file_name+file_format)
 
         sep = params.get_value('delimiter', Dataset.DEFAULT_DELIMITER)

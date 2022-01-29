@@ -42,13 +42,15 @@ class JSONImporter(ResourceImporter):
 @exporter_decorator("JSONExporter", source_type=JSONDict, target_type=JSONFile)
 class JSONExporter(ResourceExporter):
     config_specs: ConfigSpecs = {
-        'file_name': StrParam(default_value='file.json', short_description="Destination file name in the store"),
-        'file_format': StrParam(default_value=".json", short_description="File format"),
-        'prettify': BoolParam(default_value=False, short_description="True to indent and prettify the JSON file, False otherwise")
+        'file_name': StrParam(optional=True, short_description="Destination file name in the store"),
+        'file_format': StrParam(optional=True, default_value=".json", visibility=StrParam.PROTECTED_VISIBILITY, short_description="File format"),
+        'prettify': BoolParam(default_value=False, visibility=BoolParam.PROTECTED_VISIBILITY, short_description="True to indent and prettify the JSON file, False otherwise")
     }
 
     async def export_to_path(self, resource: JSONDict, dest_dir: str, params: ConfigParams, target_type: Type[JSONFile]) -> JSONFile:
-        file_path = os.path.join(dest_dir, params.get_value('file_name', 'file.json'))
+        file_name = params.get_value('file_name', type(self)._human_name)
+        file_format = params.get_value('file_format', '.json')
+        file_path = os.path.join(dest_dir, file_name+file_format)
 
         with open(file_path, "w", encoding="utf-8") as f:
             if params.get_value('prettify', False):
