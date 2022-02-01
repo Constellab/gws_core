@@ -5,7 +5,8 @@
 
 from typing import Any, Dict, List, Optional
 
-from fastapi import Depends
+from fastapi import Depends, Request
+from fastapi.responses import FileResponse
 from gws_core.core.classes.search_builder import SearchDict
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.converter.converter_service import ConverterService
@@ -142,6 +143,43 @@ async def import_resource(config: dict,
 
     resource_model: ResourceModel = await ConverterService.call_importer(resource_model_id, importer_typing_name, config)
     return resource_model.to_json()
+
+############################# EXPORTER ###########################
+
+
+@core_app.get("/resource/{resource_typing_name}/exporter", tags=["Resource"],
+              summary="Get the exporter info of a resource type")
+async def get_exporter_config(
+        resource_typing_name: str,
+        _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+
+    return ConverterService.get_resource_exporter_from_name(resource_typing_name).to_json(deep=True)
+
+
+@core_app.get("/resource/{id}/{exporter_typing_name}/get-download-url", tags=["Resources"],
+              summary="Get a unique url to download the resource")
+def get_download_resource_url(
+        id: str,
+        exporter_typing_name: str,
+        _: UserData = Depends(AuthService.check_user_access_token)) -> str:
+    """
+    Generate a unique url to download the file
+    """
+    return f'resource/download/{ResourceService.generate_download_resource_url(id=id)}/{exporter_typing_name}'
+
+
+@core_app.get(
+    "/resource/download/{unique_code}/{exporter_typing_name}", tags=["Resources"],
+    summary="Download a resource")
+def download_a_resource(
+        exporter_typing_name: str,
+        request: Request,
+        id=Depends(AuthService.check_unique_code)) -> FileResponse:
+    """
+    Download a file. The access is made with a unique  code generated with get_download_file_url
+    """
+    return ResourceService.download_resource(
+        id=id, exporter_typing_name=exporter_typing_name, params=request.query_params)
 
 ############################# RESOURCE TYPE ###########################
 

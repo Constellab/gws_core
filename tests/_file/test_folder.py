@@ -26,7 +26,7 @@ class TestFolder(BaseTestCase):
 
     def test_folder_attr(self):
         folder: Folder = LocalFileStore.get_default_instance().create_empty_folder("folder")
-        self.assertEqual(folder.name, "folder")
+        self.assertEqual(folder.get_name(), "folder")
 
         folder.create_empty_file_if_not_exist('test.txt')
         folder.create_dir_if_not_exist('sub_dir')

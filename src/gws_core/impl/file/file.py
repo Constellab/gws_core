@@ -71,12 +71,8 @@ class File(FSNode):
     def mime(self):
         return FileHelper.get_mime(self.path)
 
-    @property
-    def name(self):
-        return FileHelper.get_name_with_extension(self.path)
-
     def get_name(self) -> str:
-        return self.name
+        return FileHelper.get_name_with_extension(self.path)
 
     # -- O --
 

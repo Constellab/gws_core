@@ -62,8 +62,7 @@ def importer_decorator(
             short_description_computed = short_description or f"Import file to {target_type._human_name}"
 
             # mark the resource as importable
-            if not hide:
-                source_type._is_importable = True
+            source_type._is_importable = True
 
             # register the task
             decorate_converter(task_class, unique_name=unique_name, task_type='IMPORTER',

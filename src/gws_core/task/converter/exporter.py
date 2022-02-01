@@ -86,12 +86,11 @@ def exporter_decorator(
             short_description_computed = short_description or f"Export {source_type._human_name} to a file"
 
             # mark the resource as exportable
-            if not hide:
-                source_type._is_exportable = True
+            source_type._is_exportable = True
 
             # register the task
             decorate_converter(task_class, unique_name=unique_name, task_type='EXPORTER',
-                               source_type=source_type, target_type=target_type, related_resource=target_type,
+                               source_type=source_type, target_type=target_type, related_resource=source_type,
                                human_name=human_name_computed, short_description=short_description_computed,
                                allowed_user=allowed_user, hide=hide)
         except Exception as err:
@@ -121,21 +120,11 @@ class ResourceExporter(Converter):
 
     @final
     async def convert(self, source: Resource, params: ConfigParams, target_type: Type[Resource]) -> FSNode:
-
-        # Retrieve the file store
-        file_store: FileStore
-        if params.value_is_set('file_store_id'):
-            file_store = LocalFileStore.get_by_id_and_check(params.get('file_store_id'))
-        else:
-            file_store = FileStore.get_default_instance()
-
         # Create a new temp_dir to create the file here
         self.__temp_dir: str = Settings.retrieve().make_temp_dir()
 
         fs_node: FSNode = await self.export_to_path(source, self.__temp_dir, params, target_type)
 
-        # add the node to the store
-        file_store.add_file_from_path(fs_node.path)
         return fs_node
 
     @abstractmethod
@@ -153,8 +142,3 @@ class ResourceExporter(Converter):
         :return: resource of type target_type
         :rtype: File
         """
-
-    @final
-    async def run_after_task(self) -> None:
-        # delete temp dir
-        FileHelper.delete_dir(self.__temp_dir)

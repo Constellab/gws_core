@@ -4,6 +4,8 @@ from typing import Any, Dict, TypedDict
 
 from fastapi import status
 
+from gws_core.user.current_user_service import CurrentUserService
+
 from ..core.exception.exceptions.base_http_exception import BaseHTTPException
 from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
@@ -20,6 +22,10 @@ class UniqueCodeService():
 
     # dictionary where key = generated code
     _generated_codes: Dict[str, CodeObject] = {}
+
+    @classmethod
+    def generate_code_current_user(cls, obj: Any) -> str:
+        return cls.generate_code(CurrentUserService.get_current_user().id, obj)
 
     @classmethod
     def generate_code(cls, user_id: str, obj: Any) -> str:

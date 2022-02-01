@@ -5,14 +5,13 @@
 
 import os
 from pathlib import Path
-from typing import List, Optional, Type
+from typing import List, Type
 
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
 
 from ...core.classes.jsonable import Jsonable, ListJsonable
-from ...core.classes.paginator import Paginator
 from ...core.decorator.transaction import transaction
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -24,7 +23,6 @@ from ...resource.resource import Resource
 from ...resource.resource_model import ResourceModel, ResourceOrigin
 from ...resource.resource_service import ResourceService
 from ...resource.resource_typing import FileTyping
-from ...user.current_user_service import CurrentUserService
 from ...user.unique_code_service import UniqueCodeService
 from .file import File
 from .file_helper import FileHelper
@@ -38,7 +36,7 @@ class FsNodeService(BaseService):
 
     @classmethod
     def generate_download_file_url(cls, id: str) -> str:
-        return UniqueCodeService.generate_code(CurrentUserService.get_and_check_current_user().id, id)
+        return UniqueCodeService.generate_code_current_user(id)
 
     @classmethod
     def download_file(cls, id: str) -> FileResponse:
@@ -46,13 +44,14 @@ class FsNodeService(BaseService):
         resource: Resource = resource_model.get_resource()
 
         if not isinstance(resource, File):
-            raise BadRequestException(f"The resource is not a file")
+            raise BadRequestException("The resource is not a file")
 
         file_store: FileStore = LocalFileStore.get_default_instance()
-        if not file_store.node_name_exists(resource.name):
-            raise NotFoundException(f"The file '{resource.name}' does not exists on the server. It has been deleted")
+        if not file_store.node_name_exists(resource.get_name()):
+            raise NotFoundException(
+                f"The file '{resource.get_name()}' does not exists on the server. It has been deleted")
 
-        return FileResponse(resource.path, media_type='application/octet-stream', filename=resource.name)
+        return FileResponse(resource.path, media_type='application/octet-stream', filename=resource.get_name())
 
     ############################# UPLOAD / CREATION  ###########################
 
@@ -118,13 +117,13 @@ class FsNodeService(BaseService):
 
 ############################# FS NODE  ###########################
 
+
     @classmethod
     def create_fs_node_model(cls, fs_node: FSNode) -> ResourceModel:
         return ResourceModel.save_from_resource(fs_node, origin=ResourceOrigin.UPLOADED)
 
 
 ############################# FOLDER ###########################
-
 
     @classmethod
     def upload_folder(cls, files: List[UploadFile] = FastAPIFile(...)) -> ResourceModel:

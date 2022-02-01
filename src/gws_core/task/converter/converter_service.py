@@ -6,6 +6,10 @@
 
 from typing import Any, Coroutine, Dict, List, Type
 
+from gws_core.impl.file.fs_node import FSNode
+from gws_core.resource.resource import Resource
+from gws_core.task.converter.exporter import ResourceExporter
+
 from ...config.config_types import ConfigParamsDict
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -38,7 +42,7 @@ class ConverterService:
 
         if not resource_type._is_importable:
             raise BadRequestException(
-                "The resource must be an importable resource. This means that a importer task must exist on for this resource")
+                "The resource must be an importable resource. This means that an importer task must exist on for this resource")
 
         task_typings: List[TaskTyping] = TaskTyping.get_by_related_resource(resource_type, "IMPORTER")
 
@@ -88,3 +92,40 @@ class ConverterService:
         return experiment.get_experiment_model().protocol_model.get_process('sink').inputs.get_resource_model('resource')
 
     ################################################ EXPORTER ################################################
+
+    @classmethod
+    def get_resource_exporter_from_name(cls, resource_typing_name: str) -> TaskTyping:
+        """return the Task exporter typing for the resource type.
+        The one that is closest to class in herarchy
+        """
+        resource_type: Type[File] = TypingManager.get_type_from_name(resource_typing_name)
+
+        cls.get_resource_exporter(resource_type)
+
+    @classmethod
+    def get_resource_exporter(cls, resource_type: Type[Resource]) -> TaskTyping:
+        """return the Task exporter typing for the resource type.
+        The one that is closest to class in herarchy
+        """
+        if not resource_type._is_exportable:
+            raise BadRequestException(
+                "The resource must be an exportable resource. This means that an exporter task must exist on for this resource")
+
+        task_typings: List[TaskTyping] = TaskTyping.get_by_related_resource(resource_type, "EXPORTER")
+
+        if len(task_typings) == 0:
+            raise BadRequestException(f"Can't find the exporters for the resource type {resource_type._human_name}")
+
+        # sort the list to have the most specific exporter first and generic last
+        task_typings.sort(key=lambda x: len(x.get_ancestors()), reverse=True)
+
+        return task_typings[0]
+
+    @classmethod
+    def call_exporter_directly(
+            cls, resource_model_id: str, exporter_typing_name: str, params: ConfigParamsDict) -> FSNode:
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_model_id)
+
+        exporter_type: Type[ResourceExporter] = TypingManager.get_type_from_name(exporter_typing_name)
+
+        return exporter_type.call(resource_model.get_resource(), params)

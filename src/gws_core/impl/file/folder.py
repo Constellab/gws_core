@@ -15,10 +15,6 @@ from .fs_node import FSNode
 @resource_decorator("Folder")
 class Folder(FSNode):
 
-    @property
-    def name(self):
-        return os.path.basename(self.path)
-
     def has_node(self, node_name: str) -> bool:
         return FileHelper.exists_on_os(self.get_sub_path(node_name))
 
@@ -44,7 +40,7 @@ class Folder(FSNode):
         return os.path.join(self.path, node_name)
 
     def get_name(self) -> str:
-        return self.name
+        return FileHelper.get_dir_name(self.path)
 
     def get_size(self) -> int:
         return None
