@@ -129,6 +129,9 @@ class BaseModel(Base, PeeweeModel):
         return cls.get_db_manager().get_engine() in ["mysql", "mariadb"]
 
     def save(self, *args, **kwargs) -> 'BaseModel':
+        if not hasattr(self, "_table_name"):
+            raise Exception(f"The class '{type(self).__name__}' does not have the attribute '_table_name'")
+
         super().save(*args, **kwargs)
 
         return self
