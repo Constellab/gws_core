@@ -24,4 +24,4 @@ def remove_experiment_from_queue(
     Remove an experiment from the queue
     """
 
-    QueueService.remove_experiment_from_queue(id)
+    return QueueService.remove_experiment_from_queue(id).to_json()

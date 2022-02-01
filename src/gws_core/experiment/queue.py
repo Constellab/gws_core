@@ -80,7 +80,7 @@ class Queue(Model):
 
     @classmethod
     @transaction()
-    def remove_experiment(cls, experiment_id: str):
+    def remove_experiment(cls, experiment_id: str) -> Experiment:
         experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
 
         if experiment.status != experiment.status.IN_QUEUE:
@@ -88,6 +88,7 @@ class Queue(Model):
 
         experiment.mark_as_draft()
         Job.remove_experiment_from_queue(experiment_id)
+        return experiment
 
     @classmethod
     def length(cls) -> int:
@@ -155,7 +156,8 @@ class Job(Model):
         return Job.delete().where(cls.experiment == experiment_id).execute()
 
     def to_json(self, deep: bool) -> Dict:
-        return {
-            "user": self.user.to_json(),
-            "experiment": self.experiment.to_json()
-        }
+
+        json_ = super().to_json(deep=deep)
+        json_["user"] = self.user.to_json()
+        json_["experiment"] = self.experiment.to_json()
+        return json_

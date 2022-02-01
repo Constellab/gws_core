@@ -169,5 +169,5 @@ class QueueService(BaseService):
         return Job.experiment_in_queue(experiment_id)
 
     @classmethod
-    def remove_experiment_from_queue(cls, experiment_id: str) -> None:
+    def remove_experiment_from_queue(cls, experiment_id: str) -> Experiment:
         return Queue.remove_experiment(experiment_id)
