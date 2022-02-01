@@ -100,7 +100,7 @@ class ConverterService:
         """
         resource_type: Type[File] = TypingManager.get_type_from_name(resource_typing_name)
 
-        cls.get_resource_exporter(resource_type)
+        return cls.get_resource_exporter(resource_type)
 
     @classmethod
     def get_resource_exporter(cls, resource_type: Type[Resource]) -> TaskTyping:
@@ -126,6 +126,11 @@ class ConverterService:
             cls, resource_model_id: str, exporter_typing_name: str, params: ConfigParamsDict) -> FSNode:
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_model_id)
 
+        resource: Resource = resource_model.get_resource()
+
+        if isinstance(resource, FSNode):
+            return resource
+
         exporter_type: Type[ResourceExporter] = TypingManager.get_type_from_name(exporter_typing_name)
 
-        return exporter_type.call(resource_model.get_resource(), params)
+        return exporter_type.call(resource, params)

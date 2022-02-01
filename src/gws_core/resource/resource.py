@@ -81,7 +81,7 @@ class Resource(Base):
         :return: [description]
         :rtype: [type]
         """
-        return None
+        return self._human_name
 
     def clone(self) -> 'Resource':
         """Clone the resource to create a new instance

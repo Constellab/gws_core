@@ -10,6 +10,8 @@ from typing import List, Type
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
+from gws_core.core.utils.settings import Settings
+from gws_core.core.utils.zip import Zip
 
 from ...core.classes.jsonable import Jsonable, ListJsonable
 from ...core.decorator.transaction import transaction
@@ -43,15 +45,22 @@ class FsNodeService(BaseService):
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(id)
         resource: Resource = resource_model.get_resource()
 
-        if not isinstance(resource, File):
-            raise BadRequestException("The resource is not a file")
+        if not isinstance(resource, FSNode):
+            raise BadRequestException("Can't download resource because it is not an FsNode")
 
         file_store: FileStore = LocalFileStore.get_default_instance()
         if not file_store.node_name_exists(resource.get_name()):
             raise NotFoundException(
                 f"The file '{resource.get_name()}' does not exists on the server. It has been deleted")
 
-        return FileResponse(resource.path, media_type='application/octet-stream', filename=resource.get_name())
+        if isinstance(resource, Folder):
+            temp_dir: str = Settings.retrieve().make_temp_dir()
+            filename = resource.get_name() + '.zip'
+            zip_file = os.path.join(temp_dir, filename)
+            Zip.zipdir(resource.path, zip_file)
+            return FileResponse(zip_file, media_type='application/octet-stream', filename=filename)
+        else:
+            return FileResponse(resource.path, media_type='application/octet-stream', filename=resource.get_name())
 
     ############################# UPLOAD / CREATION  ###########################
 
