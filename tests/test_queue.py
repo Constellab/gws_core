@@ -19,38 +19,62 @@ class TestQueue(BaseTestCase):
     def test_queue(self):
         GTest.print("Experiment Queue")
 
+        queue: Queue = Queue().save()
         self.assertEqual(Experiment.count_of_running_experiments(), 0)
-        self.assertEqual(Queue.length(), 0)
+        self.assertEqual(queue.length(), 0)
 
         proto1 = RobotService.create_robot_world_travel()
-        experiment1 = ExperimentService.create_experiment_from_protocol_model(protocol_model=proto1)
-        job1 = Job(user=GTest.user, experiment=experiment1)
-        QueueService.add_job(job1)
+        experiment1: Experiment = ExperimentService.create_experiment_from_protocol_model(protocol_model=proto1)
+        Queue.add_job(user=GTest.user, experiment=experiment1)
 
-        self.assertEqual(Queue.next(), job1)
+        experiment1 = experiment1.refresh()
+        self.assertEqual(experiment1.status, ExperimentStatus.IN_QUEUE)
+
         self.assertEqual(Queue.length(), 1)
+        job1 = queue.pop_first()
+        self.assertEqual(Queue.length(), 0)
+        self.assertEqual(experiment1.id, job1.experiment.id)
 
-        proto2 = RobotService.create_robot_world_travel()
-        experiment2 = ExperimentService.create_experiment_from_protocol_model(protocol_model=proto2)
-        job2 = Job(user=GTest.user, experiment=experiment2)
-        QueueService.add_job(job2)
-
-        self.assertEqual(Queue.next(), job1)
-        self.assertEqual(Queue.length(), 2)
-
-        Queue.remove(job1)
-        self.assertEqual(Queue.next(), job2)
+        Queue.add_job(user=GTest.user, experiment=experiment1)
         self.assertEqual(Queue.length(), 1)
+        Queue.remove_experiment(experiment1.id)
+        self.assertEqual(Queue.length(), 0)
 
-        proto3 = RobotService.create_robot_world_travel()
-        experiment3 = ExperimentService.create_experiment_from_protocol_model(protocol_model=proto3)
-        job3 = Job(user=GTest.user, experiment=experiment3)
-        QueueService.add_job(job3)
-        self.assertEqual(Queue.next(), job2)
-        self.assertEqual(Queue.length(), 2)
+        experiment1 = experiment1.refresh()
+        self.assertEqual(experiment1.status, ExperimentStatus.DRAFT)
 
+    def test_queue_run(self):
         # init the ticking, tick each second
         QueueService.init(tick_interval=3)
+
+        proto2 = RobotService.create_robot_world_travel()
+        experiment2: Experiment = ExperimentService.create_experiment_from_protocol_model(protocol_model=proto2)
+
+        proto3 = RobotService.create_robot_world_travel()
+        experiment3: Experiment = ExperimentService.create_experiment_from_protocol_model(
+            protocol_model=proto3)
+
+        QueueService._add_job(user=GTest.user, experiment=experiment2)
+        QueueService._add_job(user=GTest.user, experiment=experiment3)
+
+        self.assertEqual(Queue.length(), 2)
+        self._wait_for_experiments()
+        self.assertEqual(Queue.length(), 0)
+
+        experiment2 = experiment2.refresh()
+        experiment3 = experiment3.refresh()
+        self.assertEqual(experiment2.status, ExperimentStatus.SUCCESS)
+        self.assertEqual(experiment3.status, ExperimentStatus.SUCCESS)
+
+        # Re-run exp3
+        QueueService.add_experiment_to_queue(experiment2.id)
+        self._wait_for_experiments()
+
+        experiment3 = experiment3.refresh()
+        self.assertEqual(experiment3.status, ExperimentStatus.SUCCESS)
+
+    def _wait_for_experiments(self) -> None:
+
         wait_count = 0
         # Wait until the queue is clear and there is not experiment that is running
         while Queue.length() > 0 or ExperimentService.count_of_running_experiments() > 0:
@@ -59,13 +83,3 @@ class TestQueue(BaseTestCase):
             if wait_count >= 10:
                 raise Exception("The experiment queue is not empty")
             wait_count += 1
-
-        query = Experiment.select()
-        self.assertEqual(len(query), 3)
-        for experiment in query:
-            if experiment.id == experiment1.id:
-                # check that e1 has never been run
-                self.assertEqual(experiment.status, ExperimentStatus.DRAFT)
-            else:
-                self.assertEqual(experiment.status, ExperimentStatus.SUCCESS,
-                                 f"Experiment {experiment.id} not finished")

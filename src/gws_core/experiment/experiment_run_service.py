@@ -34,7 +34,7 @@ class ExperimentRunService():
         try:
             if experiment.status != ExperimentStatus.WAITING_FOR_CLI_PROCESS:
                 raise Exception(
-                    f"Cannot run the experiment {experiment.id} as it status was changed before process could run it")
+                    f"Cannot run the experiment {experiment.id} as its status was changed before process could run it")
 
         except Exception as err:
             error_text = GWSException.EXPERIMENT_ERROR_BEFORE_RUN.value + str(err)
@@ -98,9 +98,6 @@ class ExperimentRunService():
 
         # check user privilege
         experiment.check_user_privilege(user)
-
-        # check experiment status
-        experiment.check_is_runnable()
 
         if experiment.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS:
             raise BadRequestException(

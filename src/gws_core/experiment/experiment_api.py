@@ -6,6 +6,7 @@
 from typing import Dict, List, Optional
 
 from fastapi import Depends
+from gws_core.core.classes.jsonable import ListJsonable
 from gws_core.core.classes.search_builder import SearchDict
 
 from ..core.classes.paginator import PaginatorDict
@@ -23,6 +24,15 @@ from .queue_service import QueueService
 
 
 ###################################### GET ################################
+@core_app.get("/experiment/queue", tags=["Experiment"], summary="Get the queue of experiments")
+def get_the_experiment_queue(_: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    """
+    Retrieve the queue of experiments
+    """
+
+    return ListJsonable(QueueService.get_queue_jobs()).to_json()
+
+
 @core_app.get("/experiment/{id}", tags=["Experiment"], summary="Get an experiment")
 def get_an_experiment(id: str,
                       _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
@@ -33,15 +43,6 @@ def get_an_experiment(id: str,
     """
 
     return ExperimentService.get_experiment_by_id(id=id).to_json(deep=True)
-
-
-@core_app.get("/experiment/queue", tags=["Experiment"], summary="Get the queue of experiment")
-def get_the_experiment_queue(_: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-    """
-    Retrieve the queue of experiment
-    """
-
-    return QueueService.get_queue().to_json()
 
 
 @core_app.get("/experiment", tags=["Experiment"], summary="Get the list of experiments")

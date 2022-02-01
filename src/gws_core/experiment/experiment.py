@@ -33,6 +33,7 @@ if TYPE_CHECKING:
 
 class ExperimentStatus(Enum):
     DRAFT = "DRAFT"
+    IN_QUEUE = "IN_QUEUE"  # when the experiment is in Queue waiting to be runned
     # WAITING means that a shell process will be started to run the experiment
     WAITING_FOR_CLI_PROCESS = "WAITING_FOR_CLI_PROCESS"
     RUNNING = "RUNNING"
@@ -230,9 +231,8 @@ class Experiment(ModelWithUser, TaggableModel):
         # the resource is not deleted but the input must be deleted
         TaskInputModel.delete_by_experiment(self.id)
 
-        self.status = ExperimentStatus.DRAFT
-        self.score = None
-        return self.save()
+        self.mark_as_draft()
+        return self
 
     @transaction()
     def save(self, *args, **kwargs) -> 'Experiment':
@@ -296,6 +296,10 @@ class Experiment(ModelWithUser, TaggableModel):
         """
         return self.status == ExperimentStatus.ERROR
 
+    def mark_as_in_queue(self):
+        self.status = ExperimentStatus.IN_QUEUE
+        self.save()
+
     def mark_as_waiting_for_cli_process(self, pid: int):
         """Mark that a process is created for the experiment, but it is not started yet
 
@@ -313,6 +317,12 @@ class Experiment(ModelWithUser, TaggableModel):
     def mark_as_success(self):
         self.data["pid"] = 0
         self.status = ExperimentStatus.SUCCESS
+        self.save()
+
+    def mark_as_draft(self):
+        self.data["pid"] = 0
+        self.score = None
+        self.status = ExperimentStatus.DRAFT
         self.save()
 
     def mark_as_error(self, error_info: ExperimentErrorInfo) -> None:

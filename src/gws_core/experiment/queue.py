@@ -2,6 +2,10 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
+
+from typing import Dict, List, Union
+
+from gws_core.core.decorator.transaction import transaction
 from peewee import BooleanField, ForeignKeyField, IntegerField, ModelSelect
 
 from ..core.exception.exceptions import BadRequestException
@@ -10,22 +14,6 @@ from ..core.utils.logger import Logger
 from ..model.typing_register_decorator import typing_registrator
 from ..user.user import User
 from .experiment import Experiment
-
-
-@typing_registrator(unique_name="Job", object_type="MODEL", hide=True)
-class Job(Model):
-    """
-    Class representing queue job
-
-    :property user: The user who creates the job
-    :type user: `gws.user.User`
-    :property experiment: The experiment to add to the job
-    :type experiment: `gws.experiment.Experiment`
-    """
-
-    user = ForeignKeyField(User, null=True, backref='jobs')
-    experiment = ForeignKeyField(Experiment, null=True, backref='jobs')
-    _table_name = "gws_queue_job"
 
 
 @typing_registrator(unique_name="Queue", object_type="MODEL", hide=True)
@@ -46,20 +34,14 @@ class Queue(Model):
     _table_name = "gws_queue"
     _instance: 'Queue' = None
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if not self.data.get("jobs"):
-            self.data["jobs"] = []
-            self.save()
-
     @classmethod
     def get_instance(cls) -> 'Queue':
         if cls._instance is None:
-            query: ModelSelect = Queue.select()
-            if query.count() > 0:
-                cls._instance = query.first()
+            queue = Queue.select().first()
+            if queue is not None:
+                cls._instance = queue
             else:
-                cls._instance = Queue()
+                cls._instance = Queue().save()
 
         return cls._instance
 
@@ -79,67 +61,101 @@ class Queue(Model):
         queue.is_active = False
         queue.save()
 
-    # -- A --
-
     @classmethod
-    def add(cls, job: Job) -> 'Queue':
-        if not isinstance(job, Job):
-            raise BadRequestException(
-                "Invalid argument. An instance of gws.queue.Jobs is required")
-        job.save()
+    @transaction()
+    def add_job(cls, user: User, experiment: Experiment) -> 'Queue':
+
+        if Job.experiment_in_queue(experiment.id):
+            raise BadRequestException("The experiment already is in the queue")
+
         queue = cls.get_instance()
-        if job.id in queue.data["jobs"]:
-            return
-        if len(queue.data["jobs"]) > queue.max_length:
+        if Job.count_experiment_in_queue(queue.id) > queue.max_length:
             raise BadRequestException("The maximum number of jobs is reached")
-        queue.data["jobs"].append(job.id)
-        queue.save()
+
+        experiment.mark_as_in_queue()
+        job = Job(user=user, experiment=experiment, queue=queue)
+        job.save()
 
         return queue
 
-    # -- G --
+    @classmethod
+    @transaction()
+    def remove_experiment(cls, experiment_id: str):
+        experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
 
-    # -- R --
+        if experiment.status != experiment.status.IN_QUEUE:
+            raise BadRequestException('The experiment does not have the queued status')
+
+        experiment.mark_as_draft()
+        Job.remove_experiment_from_queue(experiment_id)
 
     @classmethod
-    def remove(cls, job: Job):
-        if not isinstance(job, Job):
-            raise BadRequestException(
-                "Invalid argument. An instance of gws.queue.Job is required")
-        queue = cls.get_instance()
-        if job.id in queue.data["jobs"]:
-            queue.data["jobs"].remove(job.id)
-            queue.save()
-
-    # -- L --
+    def length(cls) -> int:
+        return Job.select().count()
 
     @classmethod
-    def length(cls):
+    def pop_first(cls) -> 'Job':
         queue = cls.get_instance()
-        return len(queue.data["jobs"])
 
-    # -- N --
+        return Job.pop_first_job(queue.id)
 
     @classmethod
-    def next(cls) -> Job:
-        queue = cls.get_instance()
-        if not queue.data["jobs"]:
-            return None
-        id = queue.data["jobs"][0]
-        try:
-            return Job.get(Job.id == id)
-        except:
-            print("Oprhan job")
-            # orphan job => discard it from the queue
-            cls.pop_first()
-            return cls.next()
+    def get_jobs(cls) -> 'Job':
+        queue = Queue.get_instance()
+        return Job.get_queue_jobs(queue.id)
 
-    # -- P --
+
+@typing_registrator(unique_name="Job", object_type="MODEL", hide=True)
+class Job(Model):
+    """
+    Class representing queue job
+
+    :property user: The user who creates the job
+    :type user: `gws.user.User`
+    :property experiment: The experiment to add to the job
+    :type experiment: `gws.experiment.Experiment`
+    """
+
+    user: User = ForeignKeyField(User, null=False, backref='+')
+    experiment: Experiment = ForeignKeyField(Experiment, null=False, backref='+', unique=True)
+    queue: Queue = ForeignKeyField(Queue, null=False, backref='+')
+    _table_name = "gws_queue_job"
 
     @classmethod
-    def pop_first(cls):
-        queue = cls.get_instance()
-        queue.data["jobs"].pop(0)
-        queue.save()
+    def pop_first_job(cls, queue_id: str) -> Union['Job', None]:
+        job = cls.get_first_job(queue_id)
 
-    # -- S --
+        if job is not None:
+            cls.delete_by_id(job.id)
+
+        return job
+
+    @classmethod
+    def get_first_job(cls, queue_id: str) -> Union['Job', None]:
+        return cls._get_job_in_orders(queue_id).first()
+
+    @classmethod
+    def get_queue_jobs(cls, queue_id: str) -> List['Job']:
+        return list(cls._get_job_in_orders(queue_id))
+
+    @classmethod
+    def _get_job_in_orders(cls, queue_id: str) -> ModelSelect:
+        return Job.select().where(cls.queue == queue_id).order_by(cls.created_at.asc())
+
+    @classmethod
+    def count_experiment_in_queue(cls, queue_id: str) -> int:
+        return Job.select().where(cls.queue == queue_id).count()
+
+    @classmethod
+    def experiment_in_queue(cls, experiment_id: str) -> bool:
+        return Job.select().where(cls.experiment == experiment_id).count() > 0
+
+    @classmethod
+    def remove_experiment_from_queue(cls, experiment_id: str) -> None:
+        return Job.delete().where(cls.experiment == experiment_id).execute()
+
+    def to_json(self, deep: bool) -> Dict:
+        return {
+            "user": self.user.to_json(),
+            "experiment": self.experiment.to_json()
+        }

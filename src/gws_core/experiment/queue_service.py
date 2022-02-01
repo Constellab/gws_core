@@ -1,8 +1,11 @@
 
 import threading
+from cmath import exp
+from typing import List
 
 from gws_core.core.exception.exceptions.base_http_exception import \
     BaseHTTPException
+from gws_core.user.user import User
 
 from ..core.exception.exceptions import NotFoundException
 from ..core.exception.exceptions.bad_request_exception import \
@@ -50,17 +53,6 @@ class QueueService(BaseService):
             thread.start()
 
     @classmethod
-    def add_job(cls, job: Job, auto_start: bool = False):
-        queue: Queue = Queue.add(job=job)
-        if auto_start:
-            if queue.is_active:
-                # > manally trigger the experiment if possible!
-                if not Experiment.count_of_running_experiments():
-                    cls._tick()
-            else:
-                cls.init()
-
-    @classmethod
     def _tick(cls):
         """Method called a each tick to run experiment from the queue
 
@@ -88,8 +80,12 @@ class QueueService(BaseService):
         :raises BadRequestException: [description]
         """
         Logger.debug("Checking experiment queue ...")
+        if Experiment.count_of_running_experiments() > 0:
+            # -> busy: we will test later!
+            Logger.debug("The lab is busy! Retry later")
+            return
 
-        job = Queue.next()
+        job = Queue.pop_first()
         if not job:
             return
 
@@ -99,11 +95,6 @@ class QueueService(BaseService):
         Logger.debug(
             f"Experiment {experiment.id}, is_running = {experiment.is_running}")
 
-        if Experiment.count_of_running_experiments() > 0:
-            # -> busy: we will test later!
-            Logger.debug("The lab is busy! Retry later")
-            return
-
         try:
             ExperimentRunService.create_cli_process_for_experiment(
                 experiment=experiment, user=job.user)
@@ -111,10 +102,6 @@ class QueueService(BaseService):
             Logger.error(
                 f"An error occured while runnig the experiment. Error: {err}.")
             raise err
-
-        finally:
-            # Remove the experiment from the queue before executing it
-            Queue.pop_first()
 
     @classmethod
     def add_experiment_to_queue(cls, experiment_id: str) -> Experiment:
@@ -129,7 +116,6 @@ class QueueService(BaseService):
         :rtype: Experiment
         """
 
-        # todo check if the experiment is already in the queue.
         experiment: Experiment = None
         try:
             experiment = Experiment.get(Experiment.id == experiment_id)
@@ -137,8 +123,14 @@ class QueueService(BaseService):
             raise NotFoundException(
                 detail=f"Experiment '{experiment_id}' is not found") from err
 
+        if Job.experiment_in_queue(experiment.id):
+            raise BadRequestException("The experiment already is in the queue")
+
         # check experiment status
         experiment.check_is_runnable()
+
+        if experiment.is_running or experiment.status == ExperimentStatus.IN_QUEUE:
+            raise BadRequestException("The experiment is already running or in the queue")
 
         if experiment.status != ExperimentStatus.DRAFT:
             Logger.info(f"Resetting experiment {experiment.id} before adding it to the queue")
@@ -154,11 +146,24 @@ class QueueService(BaseService):
                     f"Error while resetting experiment {experiment.id} before adding it to the queue")
 
         user = CurrentUserService.get_and_check_current_user()
-        job = Job(user=user, experiment=experiment)
-        cls.add_job(job, auto_start=True)
+        cls._add_job(user=user, experiment=experiment, auto_start=True)
         return experiment
 
     @classmethod
-    def get_queue(cls) -> 'Queue':
-        queue = Queue.get_instance()
-        return queue
+    def _add_job(cls, user: User, experiment: Experiment, auto_start: bool = False):
+        queue: Queue = Queue.add_job(user=user, experiment=experiment)
+        if auto_start:
+            if queue.is_active:
+                # > manally trigger the experiment if possible!
+                if not Experiment.count_of_running_experiments():
+                    cls._tick()
+            else:
+                cls.init()
+
+    @classmethod
+    def get_queue_jobs(cls) -> List[Job]:
+        return Queue.get_jobs()
+
+    @classmethod
+    def experiment_is_in_queue(cls, experiment_id: str) -> bool:
+        return Job.experiment_in_queue(experiment_id)

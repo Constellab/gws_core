@@ -151,6 +151,8 @@ class Model(BaseModel, PeeweeModel):
             try:
                 val = getattr(self, prop)
                 if isinstance(val, Model):
+                    if val.hash is None:
+                        raise Exception(f"The model '{prop}' does not have a hash. It was not saved")
                     hash_obj.update(val.hash.encode())
             except Exception as err:
                 Logger.error(f"Erreur during the hash of the foreign key property '{prop}'. Object: '{val}'")

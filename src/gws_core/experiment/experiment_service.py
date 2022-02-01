@@ -4,7 +4,6 @@
 # About us: https://gencovery.com
 
 
-from cmath import exp
 from typing import Dict, Type
 
 from peewee import ModelSelect
@@ -15,8 +14,6 @@ from ..core.classes.search_builder import SearchBuilder, SearchDict
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
-from ..core.utils.logger import Logger
-from ..core.utils.settings import Settings
 from ..experiment.experiment_search_builder import ExperimentSearchBuilder
 from ..process.process_factory import ProcessFactory
 from ..project.project import Project
@@ -245,6 +242,7 @@ class ExperimentService(BaseService):
 
     @classmethod
     def delete_experiment(cls, experiment_id: str) -> None:
+
         experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
 
         experiment.delete_instance()
