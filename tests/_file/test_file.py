@@ -38,7 +38,7 @@ class TestFile(BaseTestCase):
 
     def test_file_attr(self):
         file: File = LocalFileStore.get_default_instance().create_empty_file("test_attr.txt")
-        self.assertEqual(file.get_name(), "test_attr.txt")
+        self.assertEqual(file.get_default_name(), "test_attr.txt")
         self.assertEqual(file.extension, ".txt")
         self.assertEqual(file.is_txt(), True)
 
@@ -115,7 +115,7 @@ class TestFile(BaseTestCase):
 
         file: File = file_model.get_resource()
         # check that the file was created
-        self.assertTrue(file_store.node_name_exists(file.get_name()))
+        self.assertTrue(file_store.node_name_exists(file.get_default_name()))
 
         # Check file content
         content: str = file.read()

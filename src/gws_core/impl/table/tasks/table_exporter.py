@@ -26,7 +26,7 @@ class TableExporter(ResourceExporter):
     }
 
     async def export_to_path(self, source: Table, dest_dir: str, params: ConfigParams, target_type: Type[TableFile]) -> TableFile:
-        file_name = params.get_value('file_name', source.get_name())
+        file_name = params.get_value('file_name', source.name)
         file_format = params.get_value('file_format', Table.DEFAULT_FILE_FORMAT)
         file_path = os.path.join(dest_dir, file_name+file_format)
         sep = params.get_value('delimiter', Table.DEFAULT_DELIMITER)

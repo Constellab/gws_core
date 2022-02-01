@@ -19,8 +19,8 @@ class TestLocalFileStore(BaseTestCase):
 
         # Add a file from a path
         file: File = file_store.add_file_from_path(file_path)
-        self.assertTrue(file_store.node_name_exists(file.get_name()))
-        self.assertTrue(file.get_name(), 'mini_travel_graph.json')
+        self.assertTrue(file_store.node_name_exists(file.get_default_name()))
+        self.assertTrue(file.get_default_name(), 'mini_travel_graph.json')
 
         # Add a file with the same name
         file_2 = file_store.add_file_from_path(file_path, 'mini_travel_graph.json')
@@ -64,4 +64,4 @@ class TestLocalFileStore(BaseTestCase):
         # Add a file from a path
         file: File = file_store.add_file_from_path(file_path, dangerous_file_name)
 
-        self.assertEqual(file.get_name(), safe_file_name)
+        self.assertEqual(file.get_default_name(), safe_file_name)

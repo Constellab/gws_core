@@ -39,7 +39,7 @@ class Folder(FSNode):
         """
         return os.path.join(self.path, node_name)
 
-    def get_name(self) -> str:
+    def get_default_name(self) -> str:
         return FileHelper.get_dir_name(self.path)
 
     def get_size(self) -> int:

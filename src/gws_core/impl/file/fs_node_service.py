@@ -49,18 +49,19 @@ class FsNodeService(BaseService):
             raise BadRequestException("Can't download resource because it is not an FsNode")
 
         file_store: FileStore = LocalFileStore.get_default_instance()
-        if not file_store.node_name_exists(resource.get_name()):
+        if not file_store.node_path_exists(resource.path):
             raise NotFoundException(
-                f"The file '{resource.get_name()}' does not exists on the server. It has been deleted")
+                f"The file '{resource.name}' does not exists on the server. It has been deleted")
 
         if isinstance(resource, Folder):
             temp_dir: str = Settings.retrieve().make_temp_dir()
-            filename = resource.get_name() + '.zip'
+            filename = resource.name + '.zip'
             zip_file = os.path.join(temp_dir, filename)
             Zip.zipdir(resource.path, zip_file)
             return FileResponse(zip_file, media_type='application/octet-stream', filename=filename)
         else:
-            return FileResponse(resource.path, media_type='application/octet-stream', filename=resource.get_name())
+            return FileResponse(resource.path, media_type='application/octet-stream',
+                                filename=resource.get_default_name())
 
     ############################# UPLOAD / CREATION  ###########################
 
@@ -126,13 +127,13 @@ class FsNodeService(BaseService):
 
 ############################# FS NODE  ###########################
 
-
     @classmethod
     def create_fs_node_model(cls, fs_node: FSNode) -> ResourceModel:
         return ResourceModel.save_from_resource(fs_node, origin=ResourceOrigin.UPLOADED)
 
 
 ############################# FOLDER ###########################
+
 
     @classmethod
     def upload_folder(cls, files: List[UploadFile] = FastAPIFile(...)) -> ResourceModel:
@@ -152,7 +153,7 @@ class FsNodeService(BaseService):
         for file in files:
             file_path: Path = FileHelper.get_path(file.filename)
             # replace the initial folder name with the name of the generated folder
-            new_file_path = os.path.join(folder.get_name(), *file_path.parts[1:])
+            new_file_path = os.path.join(folder.get_default_name(), *file_path.parts[1:])
             # use file.file to access temporary file
             file_store.add_from_temp_file(file.file, new_file_path)
 

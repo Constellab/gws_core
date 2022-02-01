@@ -77,6 +77,13 @@ class ResourceService(BaseService):
                                       unique_code=GWSException.RESOURCE_USED_ERROR.value,
                                       detail_args={"experiment": task_input.experiment.get_short_name()})
 
+    @classmethod
+    def update_name(cls, resource_model_id: str, name: str) -> ResourceModel:
+        resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
+
+        resource_model.name = name
+        return resource_model.save()
+
     ############################# RESOURCE TYPE ###########################
 
     @classmethod
@@ -153,4 +160,4 @@ class ResourceService(BaseService):
 
         fs_node: FSNode = ConverterService.call_exporter_directly(id, exporter_typing_name, params)
 
-        return FileResponse(fs_node.path, media_type='application/octet-stream', filename=fs_node.get_name())
+        return FileResponse(fs_node.path, media_type='application/octet-stream', filename=fs_node.get_default_name())

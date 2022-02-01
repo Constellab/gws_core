@@ -111,6 +111,16 @@ async def advanced_search(search_dict: SearchDict,
 
     return ResourceService.search(search_dict, page, number_of_items_per_page).to_json()
 
+
+@core_app.put("/resource/{id}/name/{name}", tags=["Resource"], summary="Update the resource name")
+async def update_name(id: str, name: str,
+                      _: UserData = Depends(AuthService.check_user_access_token)) -> None:
+    """
+    Advanced search on resources
+    """
+
+    return ResourceService.update_name(id, name).to_json(deep=True)
+
 ############################# IMPORTER ###########################
 
 

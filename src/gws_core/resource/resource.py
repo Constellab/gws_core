@@ -14,7 +14,7 @@ from ..core.model.base import Base
 from ..core.utils.reflector_helper import ReflectorHelper
 from ..impl.json.json_view import JSONView
 from ..model.typing_register_decorator import typing_registrator
-from ..resource.r_field import BaseRField, UUIDRField
+from ..resource.r_field import BaseRField, StrRField, UUIDRField
 from ..resource.view_decorator import view
 
 # Typing names generated for the class resource
@@ -25,6 +25,7 @@ CONST_RESOURCE_TYPING_NAME = "RESOURCE.gws_core.Resource"
 class Resource(Base):
 
     uid: str = UUIDRField(searchable=True)
+    name: str
 
     # Provided at the Class level automatically by the @ResourceDecorator
     # //!\\ Do not modify theses values
@@ -47,6 +48,8 @@ class Resource(Base):
             raise BadRequestException(
                 f"The resource {self.full_classname()} is not decorated with @ResourceDecorator, it can't be instantiate. Please decorate the resource class with @ResourceDecorator")
 
+        # init the default name
+        self.name = None
         # Init default values of BaseRField
         properties: Dict[str, BaseRField] = ReflectorHelper.get_property_names_of_type(type(self), BaseRField)
         for key, r_field in properties.items():
@@ -73,7 +76,7 @@ class Resource(Base):
             return False
         return (self is o) or ((self.uid is not None) and (self.uid == o.uid))
 
-    def get_name(self) -> str:
+    def get_default_name(self) -> str:
         """You can redefine this method to set a name of the resource.
         When saving the resource the name will be saved automatically
         This can be useful to distinguish this resource from another one or to search for the resource

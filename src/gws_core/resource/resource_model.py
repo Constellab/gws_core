@@ -199,9 +199,21 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         resource_model.experiment = experiment
         resource_model.task_model = task_model
 
+        # Get the name of the resource, and set it in the resource model
+        name: str = None
+        try:
+            name = resource.name or resource.get_default_name()
+        except Exception as err:
+            Logger.error(f'Error while getting the default name of the resource {type(resource)}. Err : {str(err)}')
+            Logger.log_exception_stack_trace(err)
+
+        if name is None:
+            name = resource._human_name
+        resource_model.name = name
+
         if isinstance(resource, FSNode):
             # Move the node to the LocalFileStore and create fs node model
-            node: FSNode = LocalFileStore.get_default_instance().add_node_from_path(resource.path, resource.get_name())
+            node: FSNode = LocalFileStore.get_default_instance().add_node_from_path(resource.path, name)
             # update the resource path and file store
             resource.path = node.path
             resource.file_store_id = node.file_store_id
@@ -215,18 +227,6 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
 
         # synchronize the model fields with the resource fields
         resource_model.receive_fields_from_resource(resource)
-
-        # set the tag name if the name exist
-        name: str = None
-        try:
-            name = resource.get_name()
-        except Exception as err:
-            Logger.error(f'Error while getting the name of the resource {type(resource)}. Err : {str(err)}')
-            Logger.log_exception_stack_trace(err)
-        if name:
-            resource_model.name = name
-        else:
-            resource_model.name = resource._human_name
 
         return resource_model
 
@@ -243,6 +243,9 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         :param resource: [description]
         :type resource: ResourceType
         """
+        # set the name
+        resource.name = self.name
+
         properties: Dict[str, BaseRField] = resource.__get_resource_r_fields__()
 
         kv_store: KVStore = self.get_kv_store()
