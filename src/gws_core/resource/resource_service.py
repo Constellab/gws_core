@@ -20,7 +20,7 @@ from ..task.task_input_model import TaskInputModel
 from ..task.transformer.transformer_service import TransformerService
 from ..task.transformer.transformer_type import TransformerDict
 from .resource_model import Resource, ResourceModel, ResourceOrigin
-from .resource_model_search import ResourceModelSearchBuilder
+from .resource_model_search_builder import ResourceModelSearchBuilder
 from .resource_typing import ResourceTyping
 from .view_meta_data import ResourceViewMetaData
 
