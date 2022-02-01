@@ -155,7 +155,7 @@ class Job(Model):
     def remove_experiment_from_queue(cls, experiment_id: str) -> None:
         return Job.delete().where(cls.experiment == experiment_id).execute()
 
-    def to_json(self, deep: bool) -> Dict:
+    def to_json(self, deep: bool = False) -> Dict:
 
         json_ = super().to_json(deep=deep)
         json_["user"] = self.user.to_json()
