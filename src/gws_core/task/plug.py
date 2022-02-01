@@ -138,3 +138,25 @@ class Wait(Task):
         time.sleep(waiting_time)
         resource = inputs["resource"]
         return {"resource": resource}
+
+@task_decorator(unique_name="Dispatch2")
+class Dispatch2(Task):
+    """
+    Dispatch task (with 2 input ports)
+
+    The Dispatch2 proccess dispatch the input data to the 2 outputs
+    """
+
+    input_specs: InputSpecs = {'resource': Resource}
+    output_specs: OutputSpecs = {
+        'resource_1': ConstantOut(resource_types=Resource, sub_class=True),
+        'resource_2': ConstantOut(resource_types=Resource, sub_class=True)
+    }
+    config_specs: ConfigSpecs = {}
+
+    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        resource = inputs["resource"]
+        return {
+            "resource_1": resource,
+            "resource_2": resource
+        }
