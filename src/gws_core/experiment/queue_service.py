@@ -99,7 +99,7 @@ class QueueService(BaseService):
         Logger.debug(
             f"Experiment {experiment.id}, is_running = {experiment.is_running}")
 
-        if Experiment.count_of_running_experiments():
+        if Experiment.count_of_running_experiments() > 0:
             # -> busy: we will test later!
             Logger.debug("The lab is busy! Retry later")
             return

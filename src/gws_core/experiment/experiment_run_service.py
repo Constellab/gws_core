@@ -82,7 +82,7 @@ class ExperimentRunService():
             raise exception
 
     @classmethod
-    def create_cli_process_for_experiment(cls, experiment: Experiment, user=None):
+    def create_cli_process_for_experiment(cls, experiment: Experiment, user: User):
         """
         Run an experiment in a non-blocking way through the cli.
 
@@ -93,14 +93,10 @@ class ExperimentRunService():
         settings: Settings = Settings.retrieve()
         cwd_dir = settings.get_cwd()
 
-        # check user
-        if not user:
-            try:
-                user = CurrentUserService.get_and_check_current_user()
-            except:
-                raise BadRequestException("A user is required")
+        # set the user in the context to make the update works
+        CurrentUserService.set_current_user(user)
 
-         # check user privilege
+        # check user privilege
         experiment.check_user_privilege(user)
 
         # check experiment status

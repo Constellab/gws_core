@@ -25,41 +25,16 @@ class TestExperiment(BaseTestCase):
 
         QueueService.init(tick_interval=3, daemon=False)  # tick each 3 second
 
-        def _run() -> bool:
-            try:
-                QueueService.add_experiment_to_queue(
-                    experiment_id=experiment.id)
-            except Exception as err:
-                print(err)
-                return False
-
-            self.assertEqual(Experiment.count_of_running_experiments(), 1)
-            n = 0
-            while Experiment.count_of_running_experiments() > 0:
-                print("Waiting 3 secs for cli experiment to finish ...")
-                time.sleep(3)
-                if n == 10:
-                    raise Exception("The experiment queue is not empty")
-                n += 1
-
-            self.assertEqual(Experiment.count_of_running_experiments(), 0)
-            experiment1: Experiment = Experiment.get(
-                Experiment.id == experiment.id)
-            self.assertEqual(experiment1.status, ExperimentStatus.SUCCESS)
-            self.assertEqual(experiment1.pid, 0)
-            print("Done!")
-            return True
-
         self.assertEqual(Experiment.select().count(), 1)
 
         print("")
         print("Run the experiment ...")
-        self.assertTrue(_run())
+        self.assertTrue(self._run(experiment.id))
         self.assertEqual(Experiment.select().count(), 1)
 
         print("Re-run the same experiment ...")
         experiment = experiment.refresh()
-        self.assertTrue(_run())
+        self.assertTrue(self._run(experiment.id))
         self.assertEqual(Experiment.select().count(), 1)
 
         print("")
@@ -68,5 +43,30 @@ class TestExperiment(BaseTestCase):
             Experiment.id == experiment.id)
 
         ExperimentService.validate_experiment(experiment2.id, GTest.create_default_project())
-        self.assertFalse(_run())
+        self.assertFalse(self._run(experiment.id))
         self.assertEqual(Experiment.select().count(), 1)
+
+    def _run(self, experiment_id: str) -> bool:
+        try:
+            QueueService.add_experiment_to_queue(
+                experiment_id=experiment_id)
+        except Exception as err:
+            print(err)
+            return False
+
+        self.assertEqual(Experiment.count_of_running_experiments(), 1)
+        n = 0
+        while Experiment.count_of_running_experiments() > 0:
+            print("Waiting 3 secs for cli experiment to finish ...")
+            time.sleep(3)
+            if n == 10:
+                raise Exception("The experiment queue is not empty")
+            n += 1
+
+        self.assertEqual(Experiment.count_of_running_experiments(), 0)
+        experiment1: Experiment = Experiment.get(
+            Experiment.id == experiment_id)
+        self.assertEqual(experiment1.status, ExperimentStatus.SUCCESS)
+        self.assertEqual(experiment1.pid, 0)
+        print("Done!")
+        return True
