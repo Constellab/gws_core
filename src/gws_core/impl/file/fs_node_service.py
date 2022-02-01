@@ -11,6 +11,7 @@ from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
 from gws_core.core.utils.settings import Settings
+from gws_core.core.utils.utils import Utils
 from gws_core.core.utils.zip import Zip
 
 from ...core.classes.jsonable import Jsonable, ListJsonable
@@ -19,12 +20,10 @@ from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ...core.exception.exceptions.not_found_exception import NotFoundException
 from ...core.service.base_service import BaseService
-from ...core.utils.utils import Utils
 from ...model.typing_manager import TypingManager
 from ...resource.resource import Resource
 from ...resource.resource_model import ResourceModel, ResourceOrigin
-from ...resource.resource_service import ResourceService
-from ...resource.resource_typing import FileTyping
+from ...resource.resource_typing import FileTyping, ResourceTyping
 from ...user.unique_code_service import UniqueCodeService
 from .file import File
 from .file_helper import FileHelper
@@ -110,21 +109,6 @@ class FsNodeService(BaseService):
         new_file: File = store.add_file_from_path(source_file_path=file.path, dest_file_name=dest_file_name)
         return cls.create_fs_node_model(new_file)
 
-    @classmethod
-    def update_file_type(cls, file_id: str, file_typing_name: str) -> ResourceModel:
-        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(file_id)
-
-        ResourceService.check_before_resource_update(resource_model)
-
-        file_type: Type[File] = TypingManager.get_type_from_name(file_typing_name)
-
-        if not Utils.issubclass(file_type, File):
-            raise BadRequestException('The type must be a File')
-
-        resource_model.resource_typing_name = file_type._typing_name
-        return resource_model.save()
-
-
 ############################# FS NODE  ###########################
 
     @classmethod
@@ -134,11 +118,15 @@ class FsNodeService(BaseService):
 
 ############################# FOLDER ###########################
 
-
     @classmethod
-    def upload_folder(cls, files: List[UploadFile] = FastAPIFile(...)) -> ResourceModel:
+    def upload_folder(cls, folder_typing_name: str, files: List[UploadFile] = FastAPIFile(...)) -> ResourceModel:
         if len(files) == 0:
             raise BadRequestException('The folder is empty')
+
+        folder_type: Type[Folder] = TypingManager.get_type_from_name(folder_typing_name)
+
+        if not Utils.issubclass(folder_type, Folder):
+            raise BadRequestException('The type is not a sub class of Folder')
 
         # retrieve the folder name
         path: Path = FileHelper.get_path(files[0].filename)
@@ -146,7 +134,7 @@ class FsNodeService(BaseService):
 
         # create the folder
         file_store: FileStore = LocalFileStore.get_default_instance()
-        folder_model: ResourceModel = cls.create_empty_folder(folder_name, file_store)
+        folder_model: ResourceModel = cls.create_empty_folder(folder_name, file_store, folder_type)
         folder: Folder = folder_model.get_resource()
 
         # Add all the file under the create folder
@@ -160,8 +148,8 @@ class FsNodeService(BaseService):
         return folder_model
 
     @classmethod
-    def create_empty_folder(cls, path: str, store: FileStore) -> ResourceModel:
-        folder = store.create_empty_folder(path)
+    def create_empty_folder(cls, path: str, store: FileStore, folder_type: Type[Folder] = Folder) -> ResourceModel:
+        folder = store.create_empty_folder(path, folder_type)
         return cls.create_fs_node_model(folder)
 
 ############################# FILE TYPE ###########################
@@ -169,3 +157,7 @@ class FsNodeService(BaseService):
     @classmethod
     def get_file_types(cls) -> List[FileTyping]:
         return FileTyping.get_typings()
+
+    @classmethod
+    def get_folder_types(cls) -> List[ResourceTyping]:
+        return ResourceTyping.get_folder_types()

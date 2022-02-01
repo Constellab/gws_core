@@ -30,6 +30,12 @@ class ResourceTyping(Typing):
     def get_types(cls) -> ModelSelect:
         return cls.get_by_object_type(cls._object_type)
 
+    @classmethod
+    def get_folder_types(cls) -> List['ResourceTyping']:
+        from ..impl.file.folder import Folder
+
+        return cls.get_children_typings(cls._object_type, Folder)
+
     def to_json(self, deep: bool = False, **kwargs) -> dict:
 
         _json: Dict[str, Any] = super().to_json(**kwargs)

@@ -33,8 +33,9 @@ def upload_a_file_or_list_of_files(files: List[UploadFile] = FastAPIFile(...),
     return result.to_json()
 
 
-@core_app.post("/fs-node/upload-folder", tags=["Fs node"], summary="Upload a folder")
-def upload_folder(files: List[UploadFile] = FastAPIFile(...),
+@core_app.post("/fs-node/upload-folder/{folder_typing_name}", tags=["Fs node"], summary="Upload a folder")
+def upload_folder(folder_typing_name: str,
+                  files: List[UploadFile] = FastAPIFile(...),
                   _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     """ Upload a folder
 
@@ -42,7 +43,7 @@ def upload_folder(files: List[UploadFile] = FastAPIFile(...),
     :type files: List[UploadFile], optional
     """
 
-    result = FsNodeService.upload_folder(files=files)
+    result = FsNodeService.upload_folder(folder_typing_name=folder_typing_name, files=files)
     return result.to_json()
 
 
@@ -62,22 +63,20 @@ def download_a_file(id=Depends(AuthService.check_unique_code)) -> FileResponse:
     return FsNodeService.download_file(id=id)
 
 
-@core_app.put("/fs-node/{id}/type/{resource_typing_name}", tags=["Files"], summary="Update file type")
-def update_file_type(id: str,
-                     resource_typing_name: str,
-                     _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
-    """
-    Update a file.
-    """
-
-    return FsNodeService.update_file_type(id, resource_typing_name).to_json()
-
 ############################# FILE TYPE ###########################
 
 
-@core_app.get("/file-type", tags=["Files"], summary="Get the list of file types")
-def get_the_list_of_file_types(_: UserData = Depends(AuthService.check_user_access_token)) -> List[Dict]:
+@core_app.get("/fs-node/file-type", tags=["Files"], summary="Get the list of file types")
+def get_file_types_list(_: UserData = Depends(AuthService.check_user_access_token)) -> List[Dict]:
     """
     Get the list of file types
     """
     return ListJsonable(FsNodeService.get_file_types()).to_json()
+
+
+@core_app.get("/fs-node/folder-type", tags=["Files"], summary="Get the list of folder types")
+def get_folder_types_list(_: UserData = Depends(AuthService.check_user_access_token)) -> List[Dict]:
+    """
+    Get the list of folder types
+    """
+    return ListJsonable(FsNodeService.get_folder_types()).to_json()

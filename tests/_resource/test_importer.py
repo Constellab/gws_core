@@ -7,11 +7,11 @@
 from typing import List
 
 from gws_core import Table, TableFile, TableImporter
+from gws_core.data_provider.data_provider import DataProvider
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.task.converter.converter_service import (ConverterService,
                                                        ResourceImportersDTO)
 from gws_core.test.base_test_case import BaseTestCase
-from gws_core_test_helper import GWSCoreTestHelper
 
 
 class TestImporter(BaseTestCase):
@@ -26,7 +26,7 @@ class TestImporter(BaseTestCase):
         # self.assertTrue(len([x for x in importers if x.get_type() == TextImporter]) == 0)
 
     async def test_importer(self):
-        file = TableFile(path=GWSCoreTestHelper.get_test_data_path("data.csv"))
+        file = TableFile(path=DataProvider.get_test_data_path("data.csv"))
 
         resource_model: ResourceModel = ResourceModel.save_from_resource(file, origin=ResourceOrigin.UPLOADED)
 

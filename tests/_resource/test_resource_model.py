@@ -2,17 +2,16 @@
 
 from typing import List
 
-from gws_core import (BaseTestCase, ConfigParams, Resource, ResourceModel, Tag,
-                      Task, TaskInputs, TaskModel, TaskOutputs,
-                      resource_decorator, task_decorator)
+from gws_core import (BaseTestCase, ConfigParams, File, IExperiment, ITask,
+                      Resource, ResourceModel, RField, TableFile, Tag, Task,
+                      TaskInputs, TaskModel, TaskOutputs, resource_decorator,
+                      task_decorator)
 from gws_core.core.classes.search_builder import (SearchDict,
                                                   SearchFilterCriteria)
-from gws_core.experiment.experiment_interface import IExperiment
-from gws_core.resource.r_field import RField
+from gws_core.data_provider.data_provider import DataProvider
 from gws_core.resource.resource_model import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
 from gws_core.tag.tag import TagHelper
-from gws_core.task.task_interface import ITask
 
 
 @resource_decorator(unique_name="ForSearch")
@@ -115,3 +114,23 @@ class TestResourceModel(BaseTestCase):
     def search(self, search_dict: SearchDict, expected_nb_of_result: int) -> None:
         paginator = ResourceService.search(search_dict).to_json()
         self.assertEqual(paginator['total_number_of_items'], expected_nb_of_result)
+
+    def test_upload_and_delete(self):
+        file: File = DataProvider.get_iris_file()
+
+        resource_model: ResourceModel = ResourceModel.save_from_resource(file, origin=ResourceOrigin.UPLOADED)
+        ResourceService.delete(resource_model.id)
+
+        self.assertIsNone(ResourceModel.get_by_id(resource_model.id))
+
+    def test_update_type(self):
+        file: File = DataProvider.get_iris_file()
+
+        resource_model: ResourceModel = ResourceModel.save_from_resource(file, origin=ResourceOrigin.UPLOADED)
+        self.assertIsInstance(resource_model.get_resource(), File)
+        self.assertNotIsInstance(resource_model.get_resource(), TableFile)
+
+        ResourceService.update_resource_type(resource_model.id, TableFile._typing_name)
+
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_model.id)
+        self.assertIsInstance(resource_model.get_resource(), TableFile)

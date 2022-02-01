@@ -121,6 +121,13 @@ async def update_name(id: str, name: str,
 
     return ResourceService.update_name(id, name).to_json(deep=True)
 
+
+@core_app.put("/resource/{id}/type/{resource_typing_name}", tags=["Files"], summary="Update resource type")
+def update_file_type(id: str,
+                     resource_typing_name: str,
+                     _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
+    return ResourceService.update_resource_type(id, resource_typing_name).to_json()
+
 ############################# IMPORTER ###########################
 
 

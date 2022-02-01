@@ -3,15 +3,11 @@
 from typing import List
 
 from fastapi.testclient import TestClient
-from gws_core import (BaseTestCase, File, FsNodeService, ResourceTyping,
-                      resource_decorator)
+from gws_core import (BaseTestCase, File, Folder, FsNodeService,
+                      ResourceTyping, resource_decorator)
 from gws_core.app import app
 from gws_core.core_app import core_app
-from gws_core.impl.table.table_file import TableFile
-from gws_core.resource.resource_model import ResourceModel
-from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.resource_typing import FileTyping
-from gws_core_test_helper import GWSCoreTestHelper
 
 client = TestClient(app)
 client2 = TestClient(core_app)
@@ -26,7 +22,6 @@ class SubFile(File):
 class TestFileService(BaseTestCase):
 
     def test_get_file_types(self):
-
         file_types: List[ResourceTyping] = FsNodeService.get_file_types()
 
         # Check that there is at least 2 files type, File and SubFile
@@ -42,22 +37,11 @@ class TestFileService(BaseTestCase):
         # Check that to_json contains default extension
         self.assertEqual(sub_file_type.to_json()["supported_extensions"], ['super'])
 
-    def test_upload_and_delete(self):
-        file: File = GWSCoreTestHelper.get_iris_file()
+    def test_get_folder_types(self):
+        file_types: List[ResourceTyping] = FsNodeService.get_folder_types()
 
-        resource_model: ResourceModel = FsNodeService.create_fs_node_model(file)
-        ResourceService.delete(resource_model.id)
+        # Check that there is at least 1 folder type, Folder
+        self.assertTrue(len(file_types) >= 1)
 
-        self.assertIsNone(ResourceModel.get_by_id(resource_model.id))
-
-    def test_update_type(self):
-        file: File = GWSCoreTestHelper.get_iris_file()
-
-        resource_model: ResourceModel = FsNodeService.create_fs_node_model(file)
-        self.assertIsInstance(resource_model.get_resource(), File)
-        self.assertNotIsInstance(resource_model.get_resource(), TableFile)
-
-        FsNodeService.update_file_type(resource_model.id, TableFile._typing_name)
-
-        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_model.id)
-        self.assertIsInstance(resource_model.get_resource(), TableFile)
+        # Check that the File and SubFile type exists
+        self.assertIsNotNone(next(filter(lambda file: Folder == file.get_type(), file_types), None))

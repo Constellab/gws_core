@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Type
 
 from fastapi.responses import FileResponse
 from gws_core.config.config_types import ConfigParamsDict, ConfigSpecs
+from gws_core.core.utils.utils import Utils
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.task.converter.converter_service import ConverterService
 from peewee import ModelSelect
@@ -82,6 +83,20 @@ class ResourceService(BaseService):
         resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
 
         resource_model.name = name
+        return resource_model.save()
+
+    @classmethod
+    def update_resource_type(cls, file_id: str, file_typing_name: str) -> ResourceModel:
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(file_id)
+
+        ResourceService.check_before_resource_update(resource_model)
+
+        file_type: Type[Resource] = TypingManager.get_type_from_name(file_typing_name)
+
+        if not Utils.issubclass(file_type, Resource):
+            raise BadRequestException('The type must be a Resource')
+
+        resource_model.resource_typing_name = file_type._typing_name
         return resource_model.save()
 
     ############################# RESOURCE TYPE ###########################
