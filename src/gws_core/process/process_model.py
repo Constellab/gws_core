@@ -21,7 +21,7 @@ from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
-from ..core.model.json_field import JSONField
+from ..core.model.db_field import JSONField
 from ..core.model.model_with_user import ModelWithUser
 from ..core.utils.logger import Logger
 from ..experiment.experiment import Experiment

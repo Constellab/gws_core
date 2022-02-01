@@ -9,7 +9,7 @@ from peewee import (BooleanField, CharField, CompositeKey, ForeignKeyField,
                     ModelSelect)
 
 from ..core.model.base_model import BaseModel
-from ..core.model.json_field import JSONField
+from ..core.model.db_field import JSONField
 from ..core.model.model_with_user import ModelWithUser
 from ..experiment.experiment import Experiment
 from ..model.typing_register_decorator import typing_registrator

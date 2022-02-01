@@ -8,14 +8,13 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING, List, TypedDict, final
 
-from peewee import (BooleanField, CharField, DoubleField, ForeignKeyField,
-                    TextField)
+from peewee import BooleanField, CharField, DoubleField, ForeignKeyField
 
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.exception.gws_exceptions import GWSException
-from ..core.model.json_field import JSONField
+from ..core.model.db_field import JSONField
 from ..core.model.model_with_user import ModelWithUser
 from ..core.model.sys_proc import SysProc
 from ..core.utils.logger import Logger

@@ -12,21 +12,19 @@ from typing import Any, Dict, List, Type
 
 from fastapi.encoders import jsonable_encoder
 from gws_core.core.model.base_model import BaseModel
+from gws_core.core.utils.date_helper import DateHelper
 from peewee import (AutoField, BigAutoField, BlobField, BooleanField,
-                    CharField, DateTimeField, DoesNotExist, Field,
-                    ForeignKeyField, ManyToManyField)
+                    CharField, DoesNotExist, Field, ForeignKeyField,
+                    ManyToManyField)
 from peewee import Model as PeeweeModel
-from peewee import ModelSelect
-from playhouse.mysql_ext import Match
 
 from ..decorator.json_ignore import json_ignore
 from ..decorator.transaction import transaction
 from ..exception.exceptions import BadRequestException, NotFoundException
 from ..exception.gws_exceptions import GWSException
-from ..model.json_field import JSONField
 from ..utils.logger import Logger
 from ..utils.utils import Utils
-from .base import Base
+from .db_field import DateTimeUTC, JSONField
 
 
 # ####################################################################
@@ -58,8 +56,8 @@ class Model(BaseModel, PeeweeModel):
     """
 
     id = CharField(primary_key=True, max_length=36)
-    created_at = DateTimeField(default=datetime.now)
-    last_modified_at = DateTimeField(default=datetime.now)
+    created_at = DateTimeUTC(default=DateHelper.now_utc)
+    last_modified_at = DateTimeUTC(default=DateHelper.now_utc)
     is_archived = BooleanField(default=False, index=True)
     hash = CharField(null=True)
     data: Dict[str, Any] = JSONField(null=True)
@@ -348,7 +346,11 @@ class Model(BaseModel, PeeweeModel):
                 continue  # -> private or protected property
 
             val = getattr(self, prop)
-            _json[prop] = jsonable_encoder(val)
+
+            if isinstance(val, datetime):
+                _json[prop] = val
+            else:
+                _json[prop] = jsonable_encoder(val)
 
         # convert the data to json
         _json["data"] = self.data_to_json(deep=deep, **kwargs)

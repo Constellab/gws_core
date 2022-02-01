@@ -67,7 +67,8 @@ from .core.exception.exceptions import *
 from .core.exception.gws_exceptions import GWSException as GWSException
 # Core > Model
 from .core.model.base import Base as Base
-from .core.model.json_field import JSONField as JSONField
+from .core.model.db_field import DateTimeUTC as DateTimeUTC
+from .core.model.db_field import JSONField as JSONField
 from .core.model.model import Model as Model
 from .core.model.sys_proc import SysProc as SysProc
 # Core > Service
