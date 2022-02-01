@@ -98,6 +98,9 @@ class BrickService():
 
         bricks_info: Dict[str, ModuleInfo] = BrickHelper.get_all_bricks()
         for brick_name, brick_info in bricks_info.items():
+            # skip app and skeleton 'bricks'
+            if brick_name == 'app' or brick_name == 'skeleton':
+                continue
             cls._init_brick_model(brick_name, brick_info['path'])
 
         for brick_message in cls._waiting_messages:
