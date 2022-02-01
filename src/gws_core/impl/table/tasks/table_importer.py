@@ -6,6 +6,7 @@
 from typing import Type
 
 import pandas
+from gws_core.core.exception.gws_exceptions import GWSException
 
 from ....config.config_types import ConfigParams, ConfigSpecs
 from ....config.param_spec import IntParam, StrParam
@@ -31,6 +32,9 @@ class TableImporter(ResourceImporter):
     }
 
     async def import_from_path(self, source: File, params: ConfigParams, target_type: Type[Table]) -> Table:
+        if source.is_empty():
+            raise BadRequestException(GWSException.EMPTY_FILE.value, unique_code=GWSException.EMPTY_FILE.name)
+
         file_format: str = params.get_value('file_format', Table.DEFAULT_FILE_FORMAT)
         sep = params.get_value('delimiter', Table.DEFAULT_DELIMITER)
         header = params.get_value('header', 0)

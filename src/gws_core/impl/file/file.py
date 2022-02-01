@@ -174,3 +174,6 @@ class File(FSNode):
         mode = "a+"+self._mode
         with self.open(mode) as fp:
             fp.write(data)
+
+    def is_empty(self) -> bool:
+        return self.size == 0 or len(self.read(size=10)) == 0

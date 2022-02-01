@@ -7,6 +7,9 @@ import json
 import os
 from typing import Type
 
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
+from gws_core.core.exception.gws_exceptions import GWSException
+
 from ...config.config_types import ConfigParams, ConfigSpecs
 from ...config.param_spec import BoolParam, StrParam
 from ...task.converter.exporter import ResourceExporter, exporter_decorator
@@ -25,8 +28,11 @@ from .json_file import JSONFile
 class JSONImporter(ResourceImporter):
     config_specs: ConfigSpecs = {'file_format': StrParam(default_value=".json", short_description="File format")}
 
-    async def import_from_path(self, file: JSONFile, params: ConfigParams, target_type: Type[JSONDict]) -> JSONDict:
-        with open(file.path, "r", encoding="utf-8") as f:
+    async def import_from_path(self, source: JSONFile, params: ConfigParams, target_type: Type[JSONDict]) -> JSONDict:
+        if source.is_empty():
+            raise BadRequestException(GWSException.EMPTY_FILE.value, unique_code=GWSException.EMPTY_FILE.name)
+
+        with open(source.path, "r", encoding="utf-8") as f:
             json_data = target_type()
             json_data.data = json.load(f)
 
