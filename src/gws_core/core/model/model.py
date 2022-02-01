@@ -344,10 +344,7 @@ class Model(BaseModel, PeeweeModel):
 
             val = getattr(self, prop)
 
-            if isinstance(val, datetime):
-                _json[prop] = val
-            else:
-                _json[prop] = jsonable_encoder(val)
+            _json[prop] = jsonable_encoder(val)
 
         # convert the data to json
         _json["data"] = self.data_to_json(deep=deep, **kwargs)

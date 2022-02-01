@@ -6,6 +6,8 @@
 
 from typing import Dict, Type
 
+from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.settings import Settings
 from peewee import ModelSelect
 
 from ..central.central_service import CentralService
@@ -164,9 +166,9 @@ class ExperimentService(BaseService):
     def validate_experiment_send_to_central(cls, id: str, project_dto: ProjectDto = None) -> Experiment:
         experiment = cls.validate_experiment(id, project_dto)
 
-        # if Settings.is_local_env():
-        #     Logger.info('Skipping sending experiment to central as we are running in LOCAL')
-        #     return experiment
+        if Settings.is_local_env():
+            Logger.info('Skipping sending experiment to central as we are running in LOCAL')
+            return experiment
 
         # Save the experiment in central
         CentralService.save_experiment(experiment.project.id, experiment.to_json())
