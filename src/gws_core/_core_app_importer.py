@@ -8,6 +8,7 @@ from . import *
 from .brick.brick_api import *
 from .config.config_api import *
 from .experiment.experiment_api import *
+from .experiment.queue_api import *
 from .impl.file.fs_node_api import *
 from .impl.robot.robot_api import *
 from .lab.monitor_api import *
