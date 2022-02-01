@@ -200,9 +200,6 @@ from .impl.view.scatterplot_3d_view import \
 from .impl.view.stacked_barplot_view import \
     StackedBarPlotView as StackedBarPlotView
 from .impl.view.tabular_view import TabularView as TabularView
-# Impl > Volatile
-from .impl.volatile.volatile_resource import \
-    VolatileResource as VolatileResource
 # Io
 from .io.connector import Connector as Connector
 from .io.io import IO as IO
