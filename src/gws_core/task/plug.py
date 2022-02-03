@@ -135,7 +135,12 @@ class Wait(Task):
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         waiting_time = params.get_value("waiting_time")
-        time.sleep(waiting_time)
+
+        current_time = 0
+        while(current_time < waiting_time):
+            self.update_progress_value((current_time / waiting_time) * 100, 'Waiting 1 sec')
+            time.sleep(1)
+            current_time = current_time + 1
         resource = inputs["resource"]
         return {"resource": resource}
 
