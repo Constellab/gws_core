@@ -115,7 +115,6 @@ class OptionalIn(SpecialTypeIn):
     This type tell the system that the input is optional.
     The input can be not connected and the task will still run (the input value will then be None)
     If the input is connected, the task will wait for the resource to run himself (this is the difference from SkippableIn)
-    This is equivalent to [Resource, None]
     """
 
     _name: str = 'OptionalIn'

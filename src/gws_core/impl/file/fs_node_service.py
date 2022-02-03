@@ -10,6 +10,7 @@ from typing import List, Type
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
+from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.utils import Utils
 from gws_core.core.utils.zip import Zip
@@ -68,31 +69,37 @@ class FsNodeService(BaseService):
     def upload_files(cls, files: List[UploadFile] = FastAPIFile(...), typing_names: List[str] = None) -> Jsonable:
         """Upload multiple files to the serveur flat.
         """
-
-        file_store: FileStore = LocalFileStore.get_default_instance()
-
         result: ListJsonable = ListJsonable()
         for index, file in enumerate(files):
-            file_model: List[ResourceModel] = cls.upload_file_to_store(file, typing_names[index], file_store)
+            file_model: ResourceModel = cls.upload_file(file, typing_names[index])
             result.append(file_model)
 
         return result
 
     @classmethod
     @transaction()
-    def upload_file_to_store(cls, upload_file: UploadFile, typing_name: str, store: FileStore) -> List[ResourceModel]:
-        """Upload a file to the store and create the resource. If the file path contains '/' or '\' it also create the folders and resource for the folders
+    def upload_file(cls, upload_file: UploadFile, typing_name: str) -> ResourceModel:
+        """Upload a file to the store and create the resource.
         """
-        resource_models: List[ResourceModel] = []
 
+        file_store: FileStore = LocalFileStore.get_default_instance()
         file_type: Type[File] = TypingManager.get_type_from_name(typing_name)
 
         # retrieve the name of the file without the folder if there are some
         filename = FileHelper.get_name_with_extension(upload_file.filename)
-        file: File = store.add_from_temp_file(upload_file.file, filename, file_type)
+        file: File = file_store.add_from_temp_file(upload_file.file, filename, file_type)
 
-        resource_models.append(cls.create_fs_node_model(file))
-        return resource_models
+        # Call the check resource on file
+        try:
+            error = file.check_resource()
+        except Exception as err:
+            error = str(err)
+        if error is not None and len(error):
+            file_store.delete_node(file)
+            raise BadRequestException(GWSException.INVALID_FILE_ON_UPLOAD.value,
+                                      GWSException.INVALID_FILE_ON_UPLOAD.name, {'error': error})
+
+        return cls.create_fs_node_model(file)
 
     @classmethod
     def add_file_to_default_store(cls, file: File, dest_file_name: str = None) -> ResourceModel:
@@ -118,7 +125,9 @@ class FsNodeService(BaseService):
 
 ############################# FOLDER ###########################
 
+
     @classmethod
+    @transaction()
     def upload_folder(cls, folder_typing_name: str, files: List[UploadFile] = FastAPIFile(...)) -> ResourceModel:
         if len(files) == 0:
             raise BadRequestException('The folder is empty')
@@ -144,6 +153,16 @@ class FsNodeService(BaseService):
             new_file_path = os.path.join(folder.get_default_name(), *file_path.parts[1:])
             # use file.file to access temporary file
             file_store.add_from_temp_file(file.file, new_file_path)
+
+        # Call the check resource on the folder
+        try:
+            error = folder.check_resource()
+        except Exception as err:
+            error = str(err)
+        if error is not None and len(error):
+            file_store.delete_node(folder)
+            raise BadRequestException(GWSException.INVALID_FOLDER_ON_UPLOAD.value,
+                                      GWSException.INVALID_FOLDER_ON_UPLOAD.name, {'error': error})
 
         return folder_model
 

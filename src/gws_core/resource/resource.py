@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict, final
+from typing import Dict, Union, final
 
 from gws_core.resource.kv_store import KVStore
 
@@ -85,6 +85,14 @@ class Resource(Base):
         :rtype: [type]
         """
         return self._human_name
+
+    def check_resource(self) -> Union[str, None]:
+        """You can redefine this method to define custom logic to check this resource.
+        If there is a problem with the resource, return a string that define the error, otherwise return None
+        This method is called on output resources of a task. If there is an error returned, the task will be set to error and next proceses will not be run.
+        It is also call when uploading a resource (usually for files or folder), if there is an error returned, the resource will not be uploaded
+        """
+        return None
 
     def clone(self) -> 'Resource':
         """Clone the resource to create a new instance
