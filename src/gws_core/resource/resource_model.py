@@ -212,8 +212,15 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         resource_model.name = name
 
         if isinstance(resource, FSNode):
-            # Move the node to the LocalFileStore and create fs node model
-            node: FSNode = LocalFileStore.get_default_instance().add_node_from_path(resource.path, name)
+
+            node: FSNode
+            if origin == origin.GENERATED:
+                # Move the node to the LocalFileStore and create fs node model
+                node = LocalFileStore.get_default_instance().add_node_from_path(resource.path, name)
+            else:
+               # On uploaded resource, the node is already in the file store, no need to add it
+                node = resource
+
             # update the resource path and file store
             resource.path = node.path
             resource.file_store_id = node.file_store_id
