@@ -37,7 +37,7 @@ def resource_decorator(unique_name: str, human_name: str = "", short_description
         if not Utils.issubclass(resource_class, Resource):
             BrickService.log_brick_error(
                 resource_class,
-                f"The ResourceDecorator is used on class '{resource_class.__name__}' while this class is not a subclass of Resource")
+                f"The ResourceDecorator is used on class '{resource_class.__name__}' but this class is not a subclass of Resource")
             return resource_class
 
         # check resource constructor, it must have only optional params

@@ -5,6 +5,7 @@
 
 import sys
 
+from gws_core.core.db.db_migration import DbMigrationService
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 
 from ..brick.brick_service import BrickService
@@ -32,6 +33,7 @@ class SystemService:
          - register the processes and resources
          - create the sysuser if not exists
         """
+        DbMigrationService.migrate()
         cls.create_all_tables()
         ModelService.register_all_processes_and_resources()
         UserService.create_sysuser()

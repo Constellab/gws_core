@@ -15,6 +15,9 @@ class BrickHelper():
         settings = Settings.retrieve()
         bricks: Dict[str, ModuleInfo] = {}
         for name, brick_info in settings.get_modules().items():
+            # skip app and skeleton 'bricks'
+            if name == 'app' or name == 'skeleton':
+                continue
             if "brick" in brick_info["type"]:
                 bricks[name] = brick_info
         return bricks

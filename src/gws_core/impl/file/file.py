@@ -5,7 +5,7 @@
 
 import json
 import os
-from typing import Any, AnyStr, List, Type
+from typing import Any, AnyStr, List, Type, Union
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
@@ -173,3 +173,6 @@ class File(FSNode):
 
     def is_empty(self) -> bool:
         return self.size == 0 or len(self.read(size=10)) == 0
+
+    def check_resource(self) -> Union[str, None]:
+        return 'Pas cool'

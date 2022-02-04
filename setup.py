@@ -6,6 +6,7 @@
 import os
 import sys
 from subprocess import check_call
+
 import setuptools
 from setuptools.command.install import install
 
@@ -19,14 +20,14 @@ with open("README.md", "r", encoding="utf-8") as fh:
 class InstallHook(install):
     """Installation hooks (for production mode)."""
 
-    def _run_install(self, what ):
+    def _run_install(self, what):
         cwd = os.path.join(self.install_lib, NAME)
         script_path = os.path.join(cwd, ".hooks", f"{what}-install.sh")
         if os.path.exists(script_path):
-            check_call([ "bash", script_path ], cwd=cwd)
+            check_call(["bash", script_path], cwd=cwd)
         script_path = os.path.join(cwd, ".hooks", f"{what}-install.py")
         if os.path.exists(script_path):
-            check_call([ sys.executable, script_path ], cwd=cwd)
+            check_call([sys.executable, script_path], cwd=cwd)
 
     def _run_pre_install(self):
         self.announce("Running pre-install hook ...")
@@ -42,6 +43,7 @@ class InstallHook(install):
         self._run_pre_install()
         install.run(self)
         self._run_post_install()
+
 
 setuptools.setup(
     name=NAME,

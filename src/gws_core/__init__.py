@@ -51,6 +51,8 @@ from .core.classes.validator import StrValidator as StrValidator
 from .core.classes.validator import URLValidator as URLValidator
 from .core.classes.validator import Validator as Validator
 # Core > DB
+from .core.db.db_migration import BrickMigration as BrickMigration
+from .core.db.db_migration import brick_migration as brick_migration
 from .core.db.mysql import MySQLBase as MySQLBase
 from .core.db.mysql import MySQLDump as MySQLDump
 from .core.db.mysql import MySQLLoad as MySQLLoad
@@ -290,11 +292,11 @@ from .task.converter.importer import ResourceImporter as ResourceImporter
 from .task.converter.importer import importer_decorator as importer_decorator
 # Task
 from .task.plug import FIFO2 as FIFO2
+from .task.plug import Dispatch2 as Dispatch2
 from .task.plug import Sink as Sink
 from .task.plug import Source as Source
 from .task.plug import Switch2 as Switch2
 from .task.plug import Wait as Wait
-from .task.plug import Dispatch2 as Dispatch2
 from .task.task import CheckBeforeTaskResult as CheckBeforeTaskResult
 from .task.task import Task as Task
 from .task.task_decorator import task_decorator as task_decorator
