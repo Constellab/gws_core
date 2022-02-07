@@ -173,6 +173,3 @@ class File(FSNode):
 
     def is_empty(self) -> bool:
         return self.size == 0 or len(self.read(size=10)) == 0
-
-    def check_resource(self) -> Union[str, None]:
-        return 'Pas cool'
