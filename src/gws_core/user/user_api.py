@@ -88,3 +88,21 @@ def check_token(current_user: UserData = Depends(AuthService.check_user_access_t
     """Simple route to check the user's token (used in automatic dev login), returns the user's id if valid
     """
     return current_user.id
+
+
+@core_app.get("/super-test", tags=["User"], summary="Check user's token")
+def super_test() -> str:
+    """Simple route to check the user's token (used in automatic dev login), returns the user's id if valid
+    """
+    response = JSONResponse(content={})
+
+    # Add the token is the cookies
+    response.set_cookie(
+        "Authorization",
+        value=f"Bearer mon token poto",
+        httponly=True,
+        max_age=(60 * 60 * 24 * 3),
+        expires=(60 * 60 * 24 * 3),
+    )
+
+    return response
