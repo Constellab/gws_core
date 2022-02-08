@@ -13,7 +13,7 @@ from ..utils.settings import Settings
 class CorsConfig():
 
     _ALLOW_ANY_ORIGIN = '*'
-    _ALLOW_CREDENTIALS = False
+    _ALLOW_CREDENTIALS = True
     _ALLOW_METHODS = ["*"]
     _ALLOW_HEADERS = ["*"]
 
@@ -73,6 +73,7 @@ class CorsConfig():
             allow_credentials=cls._ALLOW_CREDENTIALS,
             allow_methods=cls._ALLOW_METHODS,
             allow_headers=cls._ALLOW_HEADERS,
+
         )
 
     @classmethod

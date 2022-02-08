@@ -5,6 +5,7 @@
 
 
 from fastapi.param_functions import Depends
+from pydantic import JsonError
 from requests.models import Response
 from starlette.responses import JSONResponse
 
@@ -24,8 +25,8 @@ from .jwt_service import JWTService
 from .oauth2_user_cookie_scheme import oauth2_user_cookie_scheme
 from .unique_code_service import (CodeObject, InvalidUniqueCodeException,
                                   UniqueCodeService)
-from .user import User
-from .user_dto import UserData, UserDataDict
+from .user import User, UserDataDict
+from .user_dto import UserCentral, UserData
 from .user_exception import InvalidTokenException, WrongCredentialsException
 from .user_service import UserService
 
@@ -43,10 +44,12 @@ class AuthService(BaseService):
         except:
             raise WrongCredentialsException()
 
-        # Check the user credentials
-        credentials_valid: bool = CentralService.check_credentials(credentials)
-        if not credentials_valid:
-            raise WrongCredentialsException()
+        # skip the check with central in local env
+        if not Settings.is_local_env():
+            # Check the user credentials
+            credentials_valid: bool = CentralService.check_credentials(credentials)
+            if not credentials_valid:
+                raise WrongCredentialsException()
 
         # now save user activity
         ActivityService.add(Activity.HTTP_AUTHENTICATION, object_type=User._typing_name, object_id=user.id, user=user)
@@ -71,19 +74,38 @@ class AuthService(BaseService):
 
         access_token = JWTService.create_jwt(user_id=user.id)
 
-        content = {"access_token": access_token, "token_type": "Bearer"}
+        content = {"expiresIn": JWTService.get_token_duration_in_seconds()}
         response = JSONResponse(content=content)
 
         # Add the token is the cookies
-        response.set_cookie(
-            "Authorization",
-            value=f"Bearer {access_token}",
-            httponly=True,
-            max_age=JWTService.get_token_duration_in_seconds(),
-            expires=JWTService.get_token_duration_in_seconds(),
-        )
+        cls._set_token_in_response(access_token, JWTService.get_token_duration_in_seconds(), response)
 
         return response
+
+    @classmethod
+    def generate_user_temp_access(cls, user_central: UserCentral) -> str:
+        user: User = UserService.fetch_user(user_central.id)
+        if not user:
+            raise UnauthorizedException(
+                detail=GWSException.WRONG_CREDENTIALS_USER_NOT_FOUND.value,
+                unique_code=GWSException.WRONG_CREDENTIALS_USER_NOT_FOUND.name,
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        if not user.is_active:
+            raise UnauthorizedException(
+                detail=GWSException.WRONG_CREDENTIALS_USER_NOT_ACTIVATED.value,
+                unique_code=GWSException.WRONG_CREDENTIALS_USER_NOT_ACTIVATED.name,
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        # update the user info and save it
+        user.first_name = user_central.firstname
+        user.last_name = user_central.lastname
+        user.email = user_central.email
+        user.theme = user_central.theme
+        user.save()
+
+        return UniqueCodeService.generate_code(user.id, {})
 
     @classmethod
     def check_user_access_token(cls, token: str = Depends(oauth2_user_cookie_scheme)) -> UserData:
@@ -140,7 +162,7 @@ class AuthService(BaseService):
         return user
 
     @classmethod
-    def dev_login(cls, token: str) -> JSONResponse:
+    def dev_get_check_user(cls, token: str) -> User:
         """[summary]
         Log the user on the dev lab by calling the prod api
         Only allowed for the dev service
@@ -190,7 +212,24 @@ class AuthService(BaseService):
             raise BadRequestException(detail=GWSException.USER_NOT_ACTIVATED.value,
                                       unique_code=GWSException.USER_NOT_ACTIVATED.name)
 
-        userdb: User = UserService.create_user_if_not_exists(user)
+        return UserService.create_user_if_not_exists(user)
 
-        # The user's prod token is valid, we can return the token for the development environment
-        return cls.generate_user_access_token(userdb.id)
+    @classmethod
+    def logout(cls) -> JSONResponse:
+        response = JSONResponse(content={})
+        cls._set_token_in_response('', 0, response)
+        return response
+
+    @classmethod
+    def _set_token_in_response(cls, token: str, expireInSeconds: int, response: JSONResponse) -> None:
+        # Add the token is the cookies
+        response.set_cookie(
+            "Authorization",
+            value=token,
+            httponly=True,
+            max_age=expireInSeconds,
+            expires=expireInSeconds,
+            domain=Settings.get_virtual_host(),  # set the domain to virtual host so cookie works for dev and prod env,
+            secure=not Settings.is_local_env(),
+            samesite='strict'
+        )

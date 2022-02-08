@@ -3,19 +3,32 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import final
+from enum import Enum
+from typing import TypedDict, final
 
-from gws_core.user.user_dto import UserDataDict
 from peewee import BooleanField, CharField
 
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.json_ignore import json_ignore
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
-from ..core.utils.utils import Utils
 from ..model.typing_register_decorator import typing_registrator
 from .user_group import UserGroup
 
+
+class UserDataDict(TypedDict):
+    id: str
+    email: str
+    first_name: str
+    last_name: str
+    group: str
+    is_active: bool
+    is_admin: bool
+
+
+class UserTheme(Enum):
+    LIGHT_THEME = 'light-theme'
+    DARK_THEME = 'dark-theme'
 # ####################################################################
 #
 # User class
@@ -43,6 +56,8 @@ class User(Model):
     group: UserGroup = EnumField(choices=UserGroup,
                                  default=UserGroup.USER)
     is_active = BooleanField(default=True)
+    theme: UserTheme = EnumField(choices=UserTheme,
+                                 default=UserTheme.LIGHT_THEME)
 
     _table_name = 'gws_user'
 

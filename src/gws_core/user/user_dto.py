@@ -1,5 +1,6 @@
 from typing import TypedDict
 
+from gws_core.user.user import UserTheme
 from pydantic import BaseModel
 
 from ..user.user_group import UserGroup
@@ -15,11 +16,9 @@ class UserData(BaseModel):
     is_admin: bool
 
 
-class UserDataDict(TypedDict):
+class UserCentral(BaseModel):
     id: str
+    firstname: str
+    lastname: str
     email: str
-    first_name: str
-    last_name: str
-    group: str
-    is_active: bool
-    is_admin: bool
+    theme: UserTheme

@@ -17,8 +17,8 @@ from ..core.utils.http_helper import HTTPHelper
 from ..impl.file.file import File
 from ..impl.file.fs_node_service import FsNodeService
 from ..user.auth_service import AuthService
-from ..user.user import User
-from ..user.user_dto import UserData
+from ..user.user import User, UserTheme
+from ..user.user_dto import UserCentral, UserData
 from ..user.user_service import UserService
 from ._auth_central import AuthCentral
 
@@ -44,6 +44,7 @@ class TokenData(BaseModel):
 
 class UserIdData(BaseModel):
     id: str
+
 
 # ##################################################################
 #
@@ -73,6 +74,16 @@ def generate_user_access_token(user_id_data: UserIdData,
     """
 
     return AuthService.generate_user_access_token(user_id_data.id)
+
+
+@central_app.post("/user/generate-temp-access", tags=["User management"])
+def generate_user_temp_access(user_central: UserCentral,
+                              _=Depends(AuthCentral.check_central_api_key)) -> str:
+    """
+    Generate a temporary link for the user to login in the lab
+    """
+
+    return {"temp_token":  AuthService.generate_user_temp_access(user_central)}
 
 
 @central_app.get("/user/{id}/activate", tags=["User management"])

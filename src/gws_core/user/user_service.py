@@ -8,8 +8,7 @@ from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
 from .activity import Activity
-from .user import User
-from .user_dto import UserDataDict
+from .user import User, UserDataDict
 from .user_group import UserGroup
 
 

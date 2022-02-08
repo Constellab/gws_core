@@ -7,8 +7,8 @@ import json
 
 from gws_core import BaseTestCase, User, UserGroup, UserService
 from gws_core.user.auth_service import AuthService
-from gws_core.user.jwt_service import JWTService
-from gws_core.user.user_dto import UserData, UserDataDict
+from gws_core.user.user import UserDataDict
+from gws_core.user.user_dto import UserData
 from starlette.responses import JSONResponse
 
 

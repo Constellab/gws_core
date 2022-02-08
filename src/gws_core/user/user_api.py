@@ -6,6 +6,9 @@
 from typing import Optional
 
 from fastapi import Cookie, Depends, Header
+from gws_core.core.utils.settings import Settings
+from gws_core.user.current_user_service import CurrentUserService
+from gws_core.user.user import User
 from starlette.responses import JSONResponse
 
 from ..core_app import core_app
@@ -68,9 +71,22 @@ def login(credentials: CredentialsDTO) -> JSONResponse:
     return AuthService.login(credentials)
 
 
+@core_app.get("/check-token", tags=["User"], summary="Check user's token")
+def check_token(current_user: UserData = Depends(AuthService.check_user_access_token)) -> str:
+    """Simple route to check the user's token (used in automatic dev login), returns the user's id if valid
+    """
+    return current_user.id
+
+
+@core_app.post("/login-temp-access/{unique_code}", tags=["User"], summary="Check user's token")
+def login_from_temp_token(_=Depends(AuthService.check_unique_code)) -> JSONResponse:
+
+    return AuthService.generate_user_access_token(CurrentUserService.get_and_check_current_user().id)
+
+
 @core_app.post("/dev-login", tags=["User"], summary="Login to the dev lab using the prod token")
 def dev_login(authorization_header: Optional[str] = Header(default=None, alias="Authorization"),
-              authorization_cookie: Optional[str] = Cookie(default=None, alias="Authorization")) -> JSONResponse:
+              authorization_cookie: Optional[str] = Cookie(default=None, alias="Authorization")) -> User:
     """
     Log the user on the dev lab by calling the prod api
     """
@@ -80,29 +96,13 @@ def dev_login(authorization_header: Optional[str] = Header(default=None, alias="
     if token is None:
         raise InvalidTokenException()
 
-    return AuthService.dev_login(token)
+    return AuthService.dev_get_check_user(token)
 
 
-@core_app.get("/check-token", tags=["User"], summary="Check user's token")
-def check_token(current_user: UserData = Depends(AuthService.check_user_access_token)) -> str:
-    """Simple route to check the user's token (used in automatic dev login), returns the user's id if valid
+@core_app.post("/logout", tags=["User"], summary="Logout the user")
+def logout() -> JSONResponse:
     """
-    return current_user.id
-
-
-@core_app.get("/super-test", tags=["User"], summary="Check user's token")
-def super_test() -> str:
-    """Simple route to check the user's token (used in automatic dev login), returns the user's id if valid
+    Logout
     """
-    response = JSONResponse(content={})
 
-    # Add the token is the cookies
-    response.set_cookie(
-        "Authorization",
-        value=f"Bearer mon token poto",
-        httponly=True,
-        max_age=(60 * 60 * 24 * 3),
-        expires=(60 * 60 * 24 * 3),
-    )
-
-    return response
+    return AuthService.logout()
