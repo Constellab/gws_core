@@ -231,5 +231,5 @@ class AuthService(BaseService):
             expires=expireInSeconds,
             domain=Settings.get_virtual_host(),  # set the domain to virtual host so cookie works for dev and prod env,
             secure=not Settings.is_local_env(),
-            # samesite='strict'
+            samesite='strict'
         )
