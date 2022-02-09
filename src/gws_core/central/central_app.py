@@ -53,29 +53,6 @@ class UserIdData(BaseModel):
 # ##################################################################
 
 
-@central_app.post("/user/generate-access-token", response_model=TokenData, tags=["User management"])
-def generate_user_access_token(user_id_data: UserIdData,
-                               _=Depends(AuthCentral.check_central_api_key)):
-    """
-    Generate a temporary access token for a user.
-
-    - **user_id_data**: the user id data (JSON string)
-
-    For example:
-
-    `
-    curl -X "POST" \
-      "${LAB_URL}/central-api/user/generate-access-token" \
-      -H "Accept: application/json" \
-      -H "Authorization: api-key ${API_KEY}" \
-      -H "Content-Type: application/json" \
-      -d "{\"id\": \"${ID}\"}"
-    `
-    """
-
-    return AuthService.generate_user_access_token(user_id_data.id)
-
-
 @central_app.post("/user/generate-temp-access", tags=["User management"])
 def generate_user_temp_access(user_central: UserCentral,
                               _=Depends(AuthCentral.check_central_api_key)) -> str:

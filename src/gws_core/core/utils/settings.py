@@ -150,6 +150,23 @@ class Settings(PeeweeModel):
 
         return os.environ["CENTRAL_API_URL"]
 
+    @classmethod
+    def get_front_url(cls) -> str:
+        """Return the central api url
+
+        :return: [description]
+        :rtype: [type]
+        """
+
+        # specific central api url for local env
+        if cls.is_local_env():
+            return 'http://localhost:4200'
+
+        if "FRONT_URL" not in os.environ:
+            return None
+
+        return os.environ["FRONT_URL"]
+
     # -- A --
 
     @property

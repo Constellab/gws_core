@@ -5,9 +5,8 @@
 
 
 from fastapi.param_functions import Depends
-from pydantic import JsonError
 from requests.models import Response
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, Response
 
 from ..central.central_service import CentralService
 from ..core.exception.exceptions import (BadRequestException,
@@ -54,10 +53,18 @@ class AuthService(BaseService):
         # now save user activity
         ActivityService.add(Activity.HTTP_AUTHENTICATION, object_type=User._typing_name, object_id=user.id, user=user)
 
-        return cls.generate_user_access_token(user.id)
+        access_token = cls.generate_user_access_token(user.id)
+
+        content = {"expiresIn": JWTService.get_token_duration_in_seconds()}
+        response = JSONResponse(content=content)
+
+        # Add the token is the cookies
+        cls.set_token_in_response(access_token, JWTService.get_token_duration_in_seconds(), response)
+
+        return response
 
     @classmethod
-    def generate_user_access_token(cls, id: str) -> JSONResponse:
+    def generate_user_access_token(cls, id: str) -> str:
         user: User = UserService.fetch_user(id)
         if not user:
             raise UnauthorizedException(
@@ -74,13 +81,7 @@ class AuthService(BaseService):
 
         access_token = JWTService.create_jwt(user_id=user.id)
 
-        content = {"expiresIn": JWTService.get_token_duration_in_seconds()}
-        response = JSONResponse(content=content)
-
-        # Add the token is the cookies
-        cls._set_token_in_response(access_token, JWTService.get_token_duration_in_seconds(), response)
-
-        return response
+        return access_token
 
     @classmethod
     def generate_user_temp_access(cls, user_central: UserCentral) -> str:
@@ -217,11 +218,11 @@ class AuthService(BaseService):
     @classmethod
     def logout(cls) -> JSONResponse:
         response = JSONResponse(content={})
-        cls._set_token_in_response('', 0, response)
+        cls.set_token_in_response('', 0, response)
         return response
 
     @classmethod
-    def _set_token_in_response(cls, token: str, expireInSeconds: int, response: JSONResponse) -> None:
+    def set_token_in_response(cls, token: str, expireInSeconds: int, response: Response) -> None:
         # Add the token is the cookies
         response.set_cookie(
             "Authorization",

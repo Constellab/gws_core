@@ -59,9 +59,7 @@ class TestUser(BaseTestCase):
         }
         UserService.create_user(user_data)
 
-        json_repsonse: JSONResponse = AuthService.generate_user_access_token("06866542-f089-46dc-b57f-a11e25a23aa6")
-        # extract the json form the repsonse Byte literal
-        token: str = json.loads(json_repsonse.body.decode('utf8').replace("'", '"'))["access_token"]
+        token = AuthService.generate_user_access_token("06866542-f089-46dc-b57f-a11e25a23aa6")
 
         user_data: UserData = AuthService.check_user_access_token(token)
         self.assertEqual(user_data.id, "06866542-f089-46dc-b57f-a11e25a23aa6")
