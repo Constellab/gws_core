@@ -107,7 +107,7 @@ class AuthService(BaseService):
         user.lang = user_central.lang
         user.save()
 
-        return UniqueCodeService.generate_code(user.id, {})
+        return UniqueCodeService.generate_code(user.id, {}, 60)
 
     @classmethod
     def check_user_access_token(cls, token: str = Depends(oauth2_user_cookie_scheme)) -> UserData:

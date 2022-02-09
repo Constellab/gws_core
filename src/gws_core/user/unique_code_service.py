@@ -1,9 +1,9 @@
 
 
+from datetime import datetime, timedelta
 from typing import Any, Dict, TypedDict
 
 from fastapi import status
-
 from gws_core.user.current_user_service import CurrentUserService
 
 from ..core.exception.exceptions.base_http_exception import BaseHTTPException
@@ -16,6 +16,7 @@ from ..core.utils.utils import Utils
 class CodeObject(TypedDict):
     user_id: str
     obj: Any
+    expiration_date: datetime
 
 
 class UniqueCodeService():
@@ -24,22 +25,26 @@ class UniqueCodeService():
     _generated_codes: Dict[str, CodeObject] = {}
 
     @classmethod
-    def generate_code_current_user(cls, obj: Any) -> str:
-        return cls.generate_code(CurrentUserService.get_current_user().id, obj)
+    def generate_code_current_user(cls, obj: Any, validity_duration: int) -> str:
+        return cls.generate_code(CurrentUserService.get_current_user().id, obj, validity_duration)
 
     @classmethod
-    def generate_code(cls, user_id: str, obj: Any) -> str:
+    def generate_code(cls, user_id: str, obj: Any, validity_duration: int) -> str:
         """Generate a unique code for a user.
 
         :param user_id: id of the user to generate code
         :type user_id: str
         :param obj: object link to the generation.
         :type obj: Any
+        :param validity_duration: validity duration in second of the code
+        :type validity_duration: Any
         :return: [description]
         :rtype: str
         """
         uuid = Utils.generate_uuid()
-        cls._generated_codes[uuid] = {'user_id': user_id, 'obj': obj}
+
+        expriation_date = datetime.now() + timedelta(seconds=validity_duration)
+        cls._generated_codes[uuid] = {'user_id': user_id, 'obj': obj, 'expiration_date': expriation_date}
         return uuid
 
     @classmethod
@@ -52,6 +57,10 @@ class UniqueCodeService():
 
         code_obj = cls._generated_codes[code]
         del cls._generated_codes[code]
+
+        if datetime.now() > code_obj['expiration_date']:
+            raise InvalidUniqueCodeException()
+
         return code_obj
 
 
