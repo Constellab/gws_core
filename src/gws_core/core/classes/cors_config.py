@@ -92,6 +92,7 @@ class CorsConfig():
             raise Exception(
                 "Can't configure the lab, the environment variable 'VIRTUAL_HOST' is missing")
 
+# https://.*\.tokyo\.gencovery\.io
         # allow all request from sub domain or virtual host
         # escape the . in virtual host
-        return "https://.*\." + virtual_host.replace('.', '\.') + '|https://.*\.gencovery\.com'
+        return "https:\/\/.*\." + virtual_host.replace('.', '\.') + '|https:\/\/.*\.gencovery\.com'
