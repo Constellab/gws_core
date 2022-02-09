@@ -24,11 +24,19 @@ class UserDataDict(TypedDict):
     group: str
     is_active: bool
     is_admin: bool
+    theme: str
+    lang: str
 
 
 class UserTheme(Enum):
     LIGHT_THEME = 'light-theme'
     DARK_THEME = 'dark-theme'
+
+
+class UserLanguage(Enum):
+    EN = 'en'
+    FR = 'fr'
+
 # ####################################################################
 #
 # User class
@@ -58,6 +66,9 @@ class User(Model):
     is_active = BooleanField(default=True)
     theme: UserTheme = EnumField(choices=UserTheme,
                                  default=UserTheme.LIGHT_THEME)
+
+    lang: UserLanguage = EnumField(choices=UserLanguage,
+                                   default=UserLanguage.EN)
 
     _table_name = 'gws_user'
 
@@ -146,4 +157,6 @@ class User(Model):
             "group": self.group.value,
             "is_active": self.is_active,
             "is_admin": self.is_admin,
+            "theme": self.theme.value,
+            "lang": self.lang.value
         }

@@ -10,7 +10,6 @@ from fastapi.responses import RedirectResponse
 from gws_core.core.utils.settings import Settings
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.jwt_service import JWTService
-from gws_core.user.unique_code_service import UniqueCodeService
 from gws_core.user.user import User
 from starlette.responses import JSONResponse
 
@@ -22,13 +21,13 @@ from .user_exception import InvalidTokenException
 from .user_service import UserService
 
 
-@core_app.get("/user/me", response_model=UserData, tags=["User"])
-async def read_user_me(current_user: UserData = Depends(AuthService.check_user_access_token)):
+@core_app.get("/user/me", tags=["User"])
+async def read_user_me(_: UserData = Depends(AuthService.check_user_access_token)):
     """
     Get current user details.
     """
 
-    return current_user
+    return CurrentUserService.get_and_check_current_user().to_user_data_dict()
 
 
 @core_app.get("/user/activity", tags=["User"], summary="Get user activities")

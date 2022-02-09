@@ -104,6 +104,7 @@ class AuthService(BaseService):
         user.last_name = user_central.lastname
         user.email = user_central.email
         user.theme = user_central.theme
+        user.lang = user_central.lang
         user.save()
 
         return UniqueCodeService.generate_code(user.id, {})

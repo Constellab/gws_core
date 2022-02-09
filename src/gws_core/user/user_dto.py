@@ -1,6 +1,5 @@
-from typing import TypedDict
 
-from gws_core.user.user import UserTheme
+from gws_core.user.user import UserLanguage, UserTheme
 from pydantic import BaseModel
 
 from ..user.user_group import UserGroup
@@ -22,3 +21,4 @@ class UserCentral(BaseModel):
     lastname: str
     email: str
     theme: UserTheme
+    lang: UserLanguage
