@@ -64,16 +64,9 @@ def upload_folder(folder_typing_name: str,
     return result.to_json()
 
 
-@core_app.get("/fs-node/{id}/get-download-url", tags=["Files"], summary="Get a unique url to download the file")
-def get_download_file_url(id: str, _: UserData = Depends(AuthService.check_user_access_token)) -> str:
-    """
-    Generate a unique url to download the file
-    """
-    return f'fs-node/download?unique_code={FsNodeService.generate_download_file_url(id=id)}'
-
-
-@core_app.get("/fs-node/download", tags=["Files"], summary="Download a file")
-def download_a_file(id=Depends(AuthService.check_unique_code)) -> FileResponse:
+@core_app.get("/fs-node/{id}/download", tags=["Files"], summary="Download a file")
+def download_a_file(id: str,
+                    _: UserData = Depends(AuthService.check_user_access_token)) -> FileResponse:
     """
     Download a file. The access is made with a unique  code generated with get_download_file_url
     """

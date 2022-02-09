@@ -25,7 +25,6 @@ from ...model.typing_manager import TypingManager
 from ...resource.resource import Resource
 from ...resource.resource_model import ResourceModel, ResourceOrigin
 from ...resource.resource_typing import FileTyping, ResourceTyping
-from ...user.unique_code_service import UniqueCodeService
 from .file import File
 from .file_helper import FileHelper
 from .file_store import FileStore
@@ -35,10 +34,6 @@ from .local_file_store import LocalFileStore
 
 
 class FsNodeService(BaseService):
-
-    @classmethod
-    def generate_download_file_url(cls, id: str) -> str:
-        return UniqueCodeService.generate_code_current_user(id)
 
     @classmethod
     def download_file(cls, id: str) -> FileResponse:
@@ -124,7 +119,6 @@ class FsNodeService(BaseService):
 
 
 ############################# FOLDER ###########################
-
 
     @classmethod
     @transaction()

@@ -173,25 +173,14 @@ async def get_exporter_config(
     return ConverterService.get_resource_exporter_from_name(resource_typing_name).to_json(deep=True)
 
 
-@core_app.get("/resource/{id}/{exporter_typing_name}/get-download-url", tags=["Resources"],
-              summary="Get a unique url to download the resource")
-def get_download_resource_url(
-        id: str,
-        exporter_typing_name: str,
-        _: UserData = Depends(AuthService.check_user_access_token)) -> str:
-    """
-    Generate a unique url to download the file
-    """
-    return f'resource/download/{ResourceService.generate_download_resource_url(id=id)}/{exporter_typing_name}'
-
-
 @core_app.get(
-    "/resource/download/{unique_code}/{exporter_typing_name}", tags=["Resources"],
+    "/resource/{id}/download/{exporter_typing_name}", tags=["Resources"],
     summary="Download a resource")
 def download_a_resource(
         exporter_typing_name: str,
         request: Request,
-        id=Depends(AuthService.check_unique_code)) -> FileResponse:
+        id=str,
+        _: UserData = Depends(AuthService.check_user_access_token)) -> FileResponse:
     """
     Download a file. The access is made with a unique  code generated with get_download_file_url
     """

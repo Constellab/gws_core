@@ -23,7 +23,6 @@ from ..resource.view_helper import ViewHelper
 from ..task.task_input_model import TaskInputModel
 from ..task.transformer.transformer_service import TransformerService
 from ..task.transformer.transformer_type import TransformerDict
-from ..user.unique_code_service import UniqueCodeService
 from .resource_model import Resource, ResourceModel, ResourceOrigin
 from .resource_model_search_builder import ResourceModelSearchBuilder
 from .resource_typing import ResourceTyping
@@ -165,10 +164,6 @@ class ResourceService(BaseService):
             model_select, page=page, number_of_items_per_page=number_of_items_per_page)
 
     ############################# DOWNLOAD ###########################
-
-    @classmethod
-    def generate_download_resource_url(cls, id: str) -> str:
-        return UniqueCodeService.generate_code_current_user(id)
 
     @classmethod
     def download_resource(cls, id: str, exporter_typing_name: str, params: ConfigParamsDict) -> FileResponse:
