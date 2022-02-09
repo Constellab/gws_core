@@ -86,10 +86,12 @@ class CorsConfig():
 
         # In prod env we allow origin only from the virtual host (like tokyo.gencovery.io)
         virtual_host: str = Settings.get_virtual_host()
+        # virtual_host: str = 'gencovery.io'
 
         if virtual_host is None:
             raise Exception(
                 "Can't configure the lab, the environment variable 'VIRTUAL_HOST' is missing")
 
         # allow all request from sub domain or virtual host
-        return "https://.*\." + virtual_host.replace('.', '\.')  # escape the . in virtual host
+        # escape the . in virtual host
+        return "https://.*\." + virtual_host.replace('.', '\.') + '|https://.*\.gencovery\.com'
