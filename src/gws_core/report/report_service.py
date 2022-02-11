@@ -7,6 +7,7 @@
 from typing import Dict, List
 
 from fastapi import UploadFile
+from gws_core.core.classes.rich_text_content import RichText
 from gws_core.report.report_file_service import ReportFileService, ReportImage
 from peewee import ModelSelect
 
@@ -102,8 +103,16 @@ class ReportService():
         experiments: List[Experiment] = cls.get_experiments_by_report(report_id)
         json_["experimentIds"] = list(map(lambda x: x.id, experiments))
 
+        rich_text = RichText(report.content)
+        figures = rich_text.get_figures()
+        files = []
+
+        for figure in figures:
+          # TODO fix content type
+            files.append(('files', open(ReportFileService.get_file_path(figure['filename']), 'rb')))
+
         # Save the experiment in central
-        CentralService.save_report(report.project.id, json_)
+        CentralService.save_report(report.project.id, json_, files=files)
 
         return report
 

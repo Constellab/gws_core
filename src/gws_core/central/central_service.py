@@ -3,7 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict, List
+import json
+from typing import Any, Dict, List
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
@@ -78,10 +79,14 @@ class CentralService(BaseService):
             raise BadRequestException("Can't save the experiment in central")
 
     @classmethod
-    def save_report(cls, project_id: str, report: dict) -> None:
+    def save_report(cls, project_id: str, report: dict, files: List[Any]) -> None:
         central_api_url: str = cls._get_central_api_url(
             f"{cls._external_labs_route}/project/{project_id}/report")
-        response = ExternalApiService.put(central_api_url, report, cls._get_request_header())
+
+        response = ExternalApiService.put_form_data(
+            central_api_url, data={'body': json.dumps(report)},
+            headers=cls._get_request_header(),
+            files=files)
 
         if response.status_code != 200:
             Logger.error(f"Can't save the report in central. Error : {response.text}")
