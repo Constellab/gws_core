@@ -6,6 +6,8 @@
 
 from typing import Dict, List
 
+from fastapi import UploadFile
+from gws_core.report.report_file_service import ReportFileService, ReportImage
 from peewee import ModelSelect
 
 from ..central.central_service import CentralService
@@ -187,3 +189,17 @@ class ReportService():
         model_select: ModelSelect = search_builder.build_search(search)
         return Paginator(
             model_select, page=page, number_of_items_per_page=number_of_items_per_page)
+
+    ################################################# Image ########################################
+
+    @classmethod
+    def upload_image(cls, file: UploadFile) -> ReportImage:
+        return ReportFileService.upload_file(file)
+
+    @classmethod
+    def get_image_path(cls, filename: str) -> str:
+        return ReportFileService.get_file_path(filename)
+
+    @classmethod
+    def delete_image(cls, filename: str) -> None:
+        ReportFileService.delete_file(filename)

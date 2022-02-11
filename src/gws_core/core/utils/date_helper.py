@@ -10,3 +10,7 @@ class DateHelper:
     @staticmethod
     def now_utc() -> datetime:
         return datetime.now(timezone.utc)
+
+    @staticmethod
+    def now_utc_as_milliseconds() -> datetime:
+        return int(DateHelper.now_utc().timestamp() * 1000)
