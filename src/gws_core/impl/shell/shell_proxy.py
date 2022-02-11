@@ -5,6 +5,7 @@
 
 import subprocess
 from typing import Any, List, Type
+import time
 
 from ...core.exception.exceptions import BadRequestException
 from .base_env import BaseEnvShell
@@ -25,12 +26,13 @@ class ShellProxy:
             BadRequestException("The shell_task_type must be a subclass of Shell")
         self._shell_task_type = shell_task_type
 
-    def check_output(self, cmd: List[str], text: bool = True, cwd: str = None) -> Any:
+    def check_output(self, cmd: List[str], text: bool = True, cwd: str = None, shell_mode: bool=False) -> Any:
         shell_task = self._shell_task_type()
         env_cmd = shell_task._format_command(cmd)
         env_dir = shell_task.build_os_env()
         if isinstance(shell_task, BaseEnvShell):
             self._shell_task_type.install()
+            shell_mode = shell_task._shell_mode
         if not cwd:
             cwd = shell_task.working_dir
         
@@ -40,19 +42,20 @@ class ShellProxy:
                 cwd=cwd,
                 text=text,
                 env=env_dir,
-                shell=shell_task._shell_mode
+                shell=shell_mode
             )
             return output
         except Exception as err:
             shell_task._clean_working_dir()
             raise BadRequestException(f"The shell process has failed. Error {err}.")
 
-    def run(self, cmd: List[str], text: bool = True, cwd: str = None) -> Any:
+    def run(self, cmd: List[str], text: bool = True, cwd: str = None, shell_mode: bool=False) -> Any:
         shell_task = self._shell_task_type()
         env_cmd = shell_task._format_command(cmd)
         env_dir = shell_task.build_os_env()
         if isinstance(shell_task, BaseEnvShell):
             self._shell_task_type.install()
+            shell_mode = shell_task._shell_mode
         if not cwd:
             cwd = shell_task.working_dir
         
@@ -61,7 +64,7 @@ class ShellProxy:
                 cmd,
                 cwd=cwd,
                 env=env_dir,
-                shell=shell_task._shell_mode,
+                shell=shell_mode,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
             )
