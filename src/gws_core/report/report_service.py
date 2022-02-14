@@ -8,6 +8,7 @@ from typing import Dict, List
 
 from fastapi import UploadFile
 from gws_core.core.classes.rich_text_content import RichText
+from gws_core.impl.file.file_helper import FileHelper
 from gws_core.report.report_file_service import ReportFileService, ReportImage
 from peewee import ModelSelect
 
@@ -105,14 +106,13 @@ class ReportService():
 
         rich_text = RichText(report.content)
         figures = rich_text.get_figures()
-        files = []
+        file_paths: List[str] = []
 
         for figure in figures:
-          # TODO fix content type
-            files.append(('files', open(ReportFileService.get_file_path(figure['filename']), 'rb')))
+            file_paths.append(ReportFileService.get_file_path(figure['filename']))
 
         # Save the experiment in central
-        CentralService.save_report(report.project.id, json_, files=files)
+        CentralService.save_report(report.project.id, json_, file_paths=file_paths)
 
         return report
 

@@ -13,8 +13,12 @@ class RichTextI(TypedDict):
 
 
 class RichTextFigure(TypedDict):
+    """Object representing a figure in a rich text
+
+    :param TypedDict: [description]
+    :type TypedDict: [type]
+    """
     filename: str
-    url: str
     title: Optional[str]
     caption: Optional[str]
     width: int
@@ -24,6 +28,11 @@ class RichTextFigure(TypedDict):
 
 
 class RichText():
+    """Class to manipulate the rich texts content
+
+    :return: [description]
+    :rtype: [type]
+    """
 
     _content: RichTextI
 

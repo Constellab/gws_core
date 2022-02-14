@@ -6,6 +6,8 @@
 import json
 from typing import Any, Dict, List
 
+from gws_core.impl.file.file_helper import FileHelper
+
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
 from ..core.service.external_api_service import ExternalApiService
@@ -79,9 +81,17 @@ class CentralService(BaseService):
             raise BadRequestException("Can't save the experiment in central")
 
     @classmethod
-    def save_report(cls, project_id: str, report: dict, files: List[Any]) -> None:
+    def save_report(cls, project_id: str, report: dict, file_paths: List[str]) -> None:
         central_api_url: str = cls._get_central_api_url(
             f"{cls._external_labs_route}/project/{project_id}/report")
+
+        # convert the file paths to file object supported by the form data request
+        files = []
+        for file_path in file_paths:
+            file = open(file_path, 'rb')
+            filename = FileHelper.get_name_with_extension(file_path)
+            content_type = FileHelper.get_mime(file_path)
+            files.append(('files', (filename, file, content_type)))
 
         response = ExternalApiService.put_form_data(
             central_api_url, data={'body': json.dumps(report)},
