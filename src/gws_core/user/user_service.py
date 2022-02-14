@@ -4,6 +4,8 @@
 # About us: https://gencovery.com
 
 
+from typing import List
+
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
@@ -123,8 +125,13 @@ class UserService(BaseService):
         return user
 
     @classmethod
-    def get_all_users(cls):
+    def get_all_users(cls) -> List[User]:
         return list(User.select())
+
+    @classmethod
+    def get_all_real_users(cls) -> List[User]:
+        return list(User.select().where(User.group != UserGroup.SYSUSER)
+                    .order_by(User.last_name, User.first_name))
 
     # Create the admin
     @classmethod

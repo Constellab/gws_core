@@ -72,9 +72,6 @@ class User(Model):
 
     _table_name = 'gws_user'
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     # -- A --
 
     def archive(self, archive: bool) -> None:
