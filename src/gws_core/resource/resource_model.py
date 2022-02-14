@@ -375,7 +375,10 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
             _json["fs_node"] = self.fs_node_model.to_json()
 
         if self.experiment is not None:
-            _json["experiment_id"] = self.experiment.id
+            _json["experiment"] = {
+                'id': self.experiment.id,
+                'title': self.experiment.title
+            }
 
         return _json
 
