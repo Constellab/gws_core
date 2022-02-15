@@ -300,6 +300,7 @@ from .task.plug import Wait as Wait
 from .task.task import CheckBeforeTaskResult as CheckBeforeTaskResult
 from .task.task import Task as Task
 from .task.task_decorator import task_decorator as task_decorator
+from .task.task_helper import TaskHelper as TaskHelper
 from .task.task_interface import ITask as ITask
 from .task.task_io import TaskInputs as TaskInputs
 from .task.task_io import TaskOutputs as TaskOutputs

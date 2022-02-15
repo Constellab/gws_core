@@ -1,6 +1,8 @@
 {
     "name"          : "gws_core",
     "author"        : "Gencovery",
+    "author_email"  : "admin@gencovery.com",
+    "description"   : "Core Gencovery Web Services",
     "version"       : "0.2.0",
     "app_dir"       : "./",
     "app_host"      : "0.0.0.0",

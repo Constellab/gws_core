@@ -7,7 +7,7 @@ import os
 import re
 import tempfile
 from copy import deepcopy
-from typing import Dict, Literal, TypedDict
+from typing import Dict, List, Literal, TypedDict
 
 from peewee import Model as PeeweeModel
 from peewee import SqliteDatabase
@@ -207,6 +207,9 @@ class Settings(PeeweeModel):
         else:
             return self.data.get(k, default)
 
+    def get_brick_list(self) -> List[str]:
+        return [key for key in self.data["modules"] if self.data["modules"]["is_brick"]]
+
     def get_lab_dir(self) -> str:
         """
         Get the lab directory.
@@ -289,31 +292,31 @@ class Settings(PeeweeModel):
                 variable = re.sub(r"\$\{?"+token+r"\}?", value, variable)
         return variable
 
-    @property
+    @ property
     def is_prod(self) -> bool:
         return self.data.get("is_prod", False)
 
-    @property
+    @ property
     def is_dev(self) -> bool:
         return not self.is_prod
 
-    @property
+    @ property
     def is_debug(self) -> bool:
         return self.data.get("is_debug", False)
 
-    @property
+    @ property
     def is_test(self) -> bool:
         return self.data.get("is_test", False)
 
     # -- N --
 
-    @property
+    @ property
     def name(self):
         return self.data.get("name", None)
 
     # -- R --
 
-    @classmethod
+    @ classmethod
     def retrieve(cls) -> 'Settings':
 
         if cls._setting_instance is None:
@@ -337,7 +340,7 @@ class Settings(PeeweeModel):
 
     # -- V --
 
-    @property
+    @ property
     def version(self):
         return self.data.get("version", None)
 

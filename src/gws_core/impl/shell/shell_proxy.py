@@ -4,15 +4,16 @@
 # About us: https://gencovery.com
 
 import subprocess
-from typing import Any, List, Type
 import time
+from typing import Any, List, Type
 
 from ...core.exception.exceptions import BadRequestException
+from ...task.task_helper import TaskHelper
 from .base_env import BaseEnvShell
 from .shell import Shell
 
 
-class ShellProxy:
+class ShellProxy(TaskHelper):
     """
     Shell task proxy.
 
@@ -26,7 +27,7 @@ class ShellProxy:
             BadRequestException("The shell_task_type must be a subclass of Shell")
         self._shell_task_type = shell_task_type
 
-    def check_output(self, cmd: List[str], text: bool = True, cwd: str = None, shell_mode: bool=False) -> Any:
+    def check_output(self, cmd: List[str], text: bool = True, cwd: str = None, shell_mode: bool = False) -> Any:
         shell_task = self._shell_task_type()
         env_cmd = shell_task._format_command(cmd)
         env_dir = shell_task.build_os_env()
@@ -35,7 +36,7 @@ class ShellProxy:
             shell_mode = shell_task._shell_mode
         if not cwd:
             cwd = shell_task.working_dir
-        
+
         try:
             output = subprocess.check_output(
                 env_cmd,
@@ -49,7 +50,7 @@ class ShellProxy:
             shell_task._clean_working_dir()
             raise BadRequestException(f"The shell process has failed. Error {err}.")
 
-    def run(self, cmd: List[str], text: bool = True, cwd: str = None, shell_mode: bool=False) -> Any:
+    def run(self, cmd: List[str], text: bool = True, cwd: str = None, shell_mode: bool = False) -> Any:
         shell_task = self._shell_task_type()
         env_cmd = shell_task._format_command(cmd)
         env_dir = shell_task.build_os_env()
@@ -58,7 +59,7 @@ class ShellProxy:
             shell_mode = shell_task._shell_mode
         if not cwd:
             cwd = shell_task.working_dir
-        
+
         try:
             proc = subprocess.Popen(
                 cmd,
@@ -74,11 +75,11 @@ class ShellProxy:
                 stdout.append(line.decode().strip())
                 tic_b = time.perf_counter()
                 if tic_b - tic_a >= 0.1:      # save outputs every 0.1 sec in taskbar
-                    self.log_info_message("\n".join(stdout))
+                    self.notify_info_message("\n".join(stdout))
                     tic_a = time.perf_counter()
                     stdout = []
             if stdout:
-                self.log_info_message("\n".join(stdout))
+                self.notify_info_message("\n".join(stdout))
         except Exception as err:
             shell_task._clean_working_dir()
             raise BadRequestException(f"The shell process has failed. Error {err}.")

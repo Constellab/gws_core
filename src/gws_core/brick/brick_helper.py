@@ -18,7 +18,7 @@ class BrickHelper():
             # skip app and skeleton 'bricks'
             if name == 'app' or name == 'skeleton':
                 continue
-            if "brick" in brick_info["type"]:
+            if brick_info.get("is_brick"):  # "brick" in brick_info["type"]:
                 bricks[name] = brick_info
         return bricks
 

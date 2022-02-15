@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import json
 import os
 import sys
 from subprocess import check_call
@@ -10,9 +11,14 @@ from subprocess import check_call
 import setuptools
 from setuptools.command.install import install
 
-NAME = "gws_core"
-VERSION = "0.2.0"
-DESCRIPTION = "Core Gencovery Web Services"
+with open("settings.json", "r", encoding="utf-8") as fh:
+    settings = json.load(fh)
+    name = settings["name"]
+    description = settings["description"]
+    version = settings["version"]
+    author = settings.get("author", "")
+    author_email = settings.get("author_email", "")
+
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
@@ -21,7 +27,7 @@ class InstallHook(install):
     """Installation hooks (for production mode)."""
 
     def _run_install(self, what):
-        cwd = os.path.join(self.install_lib, NAME)
+        cwd = os.path.join(self.install_lib, name)
         script_path = os.path.join(cwd, ".hooks", f"{what}-install.sh")
         if os.path.exists(script_path):
             check_call(["bash", script_path], cwd=cwd)
@@ -46,11 +52,11 @@ class InstallHook(install):
 
 
 setuptools.setup(
-    name=NAME,
-    version=VERSION,
-    author="Gencovery",
-    author_email="admin@gencovery.com",
-    description=DESCRIPTION,
+    name=name,
+    version=version,
+    author=author,
+    author_email=author_email,
+    description=description,
     long_description=long_description,
     long_description_content_type="text/markdown",
     # url="https://github.com/pypa/sampleproject",
