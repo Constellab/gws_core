@@ -6,6 +6,10 @@
 
 from typing import Dict, List
 
+from fastapi import UploadFile
+from gws_core.core.classes.rich_text_content import RichText
+from gws_core.impl.file.file_helper import FileHelper
+from gws_core.report.report_file_service import ReportFileService, ReportImage
 from peewee import ModelSelect
 
 from ..central.central_service import CentralService
@@ -100,8 +104,15 @@ class ReportService():
         experiments: List[Experiment] = cls.get_experiments_by_report(report_id)
         json_["experimentIds"] = list(map(lambda x: x.id, experiments))
 
+        rich_text = RichText(report.content)
+        figures = rich_text.get_figures()
+        file_paths: List[str] = []
+
+        for figure in figures:
+            file_paths.append(ReportFileService.get_file_path(figure['filename']))
+
         # Save the experiment in central
-        CentralService.save_report(report.project.id, json_)
+        CentralService.save_report(report.project.id, json_, file_paths=file_paths)
 
         return report
 
@@ -187,3 +198,17 @@ class ReportService():
         model_select: ModelSelect = search_builder.build_search(search)
         return Paginator(
             model_select, page=page, number_of_items_per_page=number_of_items_per_page)
+
+    ################################################# Image ########################################
+
+    @classmethod
+    def upload_image(cls, file: UploadFile) -> ReportImage:
+        return ReportFileService.upload_file(file)
+
+    @classmethod
+    def get_image_path(cls, filename: str) -> str:
+        return ReportFileService.get_file_path(filename)
+
+    @classmethod
+    def delete_image(cls, filename: str) -> None:
+        ReportFileService.delete_file(filename)

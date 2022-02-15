@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict
+from typing import Any, Dict
 
 import requests
 from requests.models import Response
@@ -25,13 +25,23 @@ class ExternalApiService:
         return requests.post(url, json=body, headers=headers)
 
     @classmethod
-    def put(cls, url: str, body: Dict, headers: Dict[str, str] = None) -> Response:
+    def put(cls, url: str, body: Dict, headers: Dict[str, str] = None, files: Any = None) -> Response:
         """
         Make an HTTP put request
         """
         if headers is None:
             headers = {}
-        return requests.put(url, json=body, headers=headers)
+        return requests.put(url, json=body, headers=headers, files=files)
+
+    @classmethod
+    def put_form_data(cls, url: str, data: Dict, headers: Dict[str, str] = None, files: Any = None) -> Response:
+        """
+        Make an HTTP put request
+        """
+        if headers is None:
+            headers = {}
+        session = requests.Session()
+        return session.put(url, data=data, headers=headers, files=files)
 
     @classmethod
     def get(cls, url: str, headers: Dict[str, str] = None) -> Response:
