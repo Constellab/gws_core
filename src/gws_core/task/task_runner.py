@@ -5,6 +5,8 @@
 
 from typing import Dict, List, Type
 
+from gws_core.core.utils.logger import Logger
+
 from ..config.config import Config
 from ..config.config_types import ConfigParams, ConfigParamsDict, ParamValue
 from ..io.io_exception import (InvalidInputsException, InvalidOutputsException,
@@ -236,6 +238,7 @@ class TaskRunner():
                 return error
 
         except Exception as err:
+            Logger.log_exception_stack_trace(err)
             return f"Error during the key of the output resource '{key}'. Error : {str(err)}"
 
         return None

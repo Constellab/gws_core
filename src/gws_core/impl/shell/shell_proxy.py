@@ -23,6 +23,7 @@ class ShellProxy(TaskHelper):
     _shell_task_type: Type[Shell]
 
     def __init__(self, shell_task_type: Type[Shell]):
+        super().__init__()
         if not issubclass(shell_task_type, Shell):
             BadRequestException("The shell_task_type must be a subclass of Shell")
         self._shell_task_type = shell_task_type
