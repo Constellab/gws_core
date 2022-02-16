@@ -6,10 +6,12 @@
 import os
 from pathlib import Path
 from typing import List, Type
+
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
 from gws_core.core.exception.gws_exceptions import GWSException
+from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.utils import Utils
 from gws_core.core.utils.zip import Zip
@@ -88,6 +90,7 @@ class FsNodeService(BaseService):
             error = file.check_resource()
         except Exception as err:
             error = str(err)
+            Logger.log_exception_stack_trace(err)
         if error is not None and len(error):
             file_store.delete_node(file)
             raise BadRequestException(GWSException.INVALID_FILE_ON_UPLOAD.value,
@@ -152,6 +155,7 @@ class FsNodeService(BaseService):
             error = folder.check_resource()
         except Exception as err:
             error = str(err)
+            Logger.log_exception_stack_trace(err)
         if error is not None and len(error):
             file_store.delete_node(folder)
             raise BadRequestException(GWSException.INVALID_FOLDER_ON_UPLOAD.value,
