@@ -77,8 +77,9 @@ class SettingsLoader:
             variables[key] = value
 
     @classmethod
-    def parse_settings(cls, cwd, is_brick=False, repo_type="app"):
+    def parse_settings(cls, cwd, is_brick=False, repo_type="app", channel_source=""):
         repo_name = cwd.strip("/").split("/")[-1]
+        channel_source = re.sub(r"((https?|ssh)://)(.+@)?(.+)", r"\1\4", channel_source)
         if repo_name in cls.all_settings["modules"]:
             return
 
@@ -98,7 +99,8 @@ class SettingsLoader:
                 "version": settings_data["version"],
                 "is_brick": True,
                 "repo_type": repo_type,
-                "repo_commit": cls.get_git_commit(cwd) if repo_type == "git" else ""
+                "repo_commit": cls.get_git_commit(cwd) if repo_type == "git" else "",
+                "source": channel_source
             }
 
             # parse variables
@@ -110,6 +112,7 @@ class SettingsLoader:
             cls._update_dict(cls.all_settings, settings_data)
             git_env = settings_data["environment"].get("git", [])
             for channel in git_env:
+                channel_source = channel["source"]
                 for package in channel.get("packages"):
                     repo = package["name"]
                     is_brick = package.get("is_brick", False)
@@ -123,11 +126,12 @@ class SettingsLoader:
                         repo_dir = os.path.join(cls.LAB_WORKSPACE_DIR, ".sys", "lib", repo)
                         if not os.path.exists(repo_dir):
                             raise Exception(f"Repository '{repo_dir}' is not found")
-                    cls.parse_settings(repo_dir, is_brick, repo_type="git")
+                    cls.parse_settings(repo_dir, is_brick, repo_type="git", channel_source=channel_source)
 
             # loads pip packages
             pip_env = settings_data["environment"].get("pip", [])
             for channel in pip_env:
+                channel_source = channel["source"]
                 for package in channel.get("packages"):
                     repo = package["name"]
                     is_brick = package.get("is_brick", False)
@@ -135,7 +139,7 @@ class SettingsLoader:
                         continue
                     module = importlib.import_module(repo)
                     repo_dir = os.path.abspath(module.__file__)
-                    cls.parse_settings(repo_dir, is_brick, repo_type="pip")
+                    cls.parse_settings(repo_dir, is_brick, repo_type="pip", channel_source=channel_source)
         else:
             sys.path.insert(0, os.path.abspath(cwd))
             cls.all_settings["modules"][repo_name] = {
@@ -143,6 +147,7 @@ class SettingsLoader:
                 "is_brick": False,
                 "repo_type": repo_type,
                 "repo_commit": cls.get_git_commit(cwd),
+                "source": channel_source,
             }
 
     # -- R --
