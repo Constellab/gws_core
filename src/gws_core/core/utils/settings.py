@@ -7,8 +7,9 @@ import os
 import re
 import tempfile
 from copy import deepcopy
-from typing import Dict, List, Literal, TypedDict
+from typing import Dict, List, Literal, TypedDict, Union
 
+from gws_core.core.utils.date_helper import DateHelper
 from peewee import Model as PeeweeModel
 from peewee import SqliteDatabase
 from playhouse.sqlite_ext import JSONField
@@ -24,9 +25,23 @@ __SETTINGS_DB__ = SqliteDatabase(
 
 class ModuleInfo(TypedDict):
     path: str
-    type: str
+    version: str
+    is_brick: bool
+    repo_type: str
+    repo_commit: str
+    name: str
 
-# app settings
+
+class BrickMigrationLogHistory(TypedDict):
+    version: str
+    migration_date: str
+
+
+class BrickMigrationLog(TypedDict):
+    brick_name: str
+    version: str
+    last_date_check: str
+    history: List[BrickMigrationLogHistory]
 
 
 class Settings(PeeweeModel):
@@ -279,6 +294,49 @@ class Settings(PeeweeModel):
 
     def get_modules(self) -> Dict[str, ModuleInfo]:
         return self.data["modules"]
+
+    # BRICK MIGRATION
+
+    def get_brick_migrations_logs(self) -> Dict[str, BrickMigrationLog]:
+        """Retrieve the list of all brick migrations
+        """
+        return self.data.get("brick_migrations", {})
+
+    def get_brick_migration_log(self, brick_name: str) -> Union[BrickMigrationLog, None]:
+        brick_migrations = self.get_brick_migrations_logs()
+
+        return brick_migrations.get(brick_name)
+
+    def update_brick_migration_log(self, brick_name: str, version: str) -> None:
+        """Add a new brick migration log and update last migration version
+        """
+        brick_migrations: Dict[str, BrickMigrationLog] = self.get_brick_migrations_logs()
+        brick_migration: BrickMigrationLog
+        # if this is the first time the migration is executed for this brick
+        if brick_name not in brick_migrations:
+            brick_migration = {
+                "brick_name": brick_name, "version": None, "history": [], "last_date_check": None
+            }
+            # add the new migration to the list of migration and save it in data
+            brick_migrations[brick_name] = brick_migration
+
+        brick_migration = brick_migrations[brick_name]
+        date = DateHelper.now_utc().isoformat()
+
+        # Update the date check
+        brick_migration["last_date_check"] = date
+
+        # update the version and history only if this is a new version
+        if brick_migration["version"] != version:
+            # udpate the brick version
+            brick_migration["version"] = version
+            # add the history
+            brick_migration["history"].append({
+                "version": version,
+                "migration_date": date
+            })
+        self.data["brick_migrations"] = brick_migrations
+        self.save()
 
     def _format_variable(self, variable: str) -> str:
         """ Format a variable """

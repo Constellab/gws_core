@@ -1,4 +1,7 @@
-
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 import importlib
 import os
@@ -16,7 +19,6 @@ from .brick_model import BrickMessageStatus, BrickModel
 
 class WaitingMessage(TypedDict):
     brick_name: str
-    brick_path: str
     message: str
     status: BrickMessageStatus
     timestamp: float
@@ -50,19 +52,16 @@ class BrickService():
         :type status: BrickMessageStatus
         """
         brick_name: str
-        brick_path: str
         try:
             brick_name = BrickHelper.get_brick_name(obj)
-            brick_path = BrickHelper.get_brick_path(obj)
         except:
             brick_name = '__Unknown'
-            brick_path = ''
 
-        cls.log_brick_message(brick_name=brick_name, brick_path=brick_path, message=message, status=status)
+        cls.log_brick_message(brick_name=brick_name, message=message, status=status)
 
     @classmethod
-    def log_brick_message(cls, brick_name: str, brick_path: str, message: str, status: BrickMessageStatus) -> None:
-        brick_message: WaitingMessage = {"brick_name": brick_name, "brick_path": brick_path,
+    def log_brick_message(cls, brick_name: str, message: str, status: BrickMessageStatus) -> None:
+        brick_message: WaitingMessage = {"brick_name": brick_name,
                                          "message": message, "status": status, "timestamp": time()}
 
         if SystemStatus.app_is_initialized:
@@ -75,7 +74,11 @@ class BrickService():
     def _log_brick_message(cls, brick_message: WaitingMessage) -> None:
         cls._log_message(brick_message)
 
-        brick_model: BrickModel = cls._get_or_create_brick(brick_message['brick_name'], brick_message['brick_path'])
+        brick_model: BrickModel = cls._get_brick_model(brick_message['brick_name'])
+
+        if not brick_model:
+            Logger.error(f"Can't log brick message because brick '{brick_message['brick_name']}' was not found")
+            return
         brick_model.add_message(brick_message['message'], brick_message['status'], brick_message['timestamp'])
         brick_model.save()
 
@@ -93,12 +96,9 @@ class BrickService():
     def init(cls) -> None:
         """Log all the messages that were waiting on start
         """
-        # clear all the previous messages
-        BrickModel.delete_all()
-
         bricks_info: Dict[str, ModuleInfo] = BrickHelper.get_all_bricks()
-        for brick_name, brick_info in bricks_info.items():
-            cls._init_brick_model(brick_name, brick_info['path'])
+        for brick_info in bricks_info.values():
+            cls._init_brick_model(brick_info)
 
         for brick_message in cls._waiting_messages:
             cls._log_brick_message(brick_message)
@@ -106,22 +106,21 @@ class BrickService():
         cls._waiting_messages = []
 
     @classmethod
-    def _init_brick_model(cls, name: str, path: str) -> BrickModel:
-        brick_model: BrickModel = cls._get_or_create_brick(name, path)
+    def _init_brick_model(cls, brick_info: ModuleInfo) -> BrickModel:
+        brick_model: BrickModel = cls._get_brick_model(brick_info['name'])
+
+        if brick_model is None:
+            brick_model = BrickModel()
+            brick_model.name = brick_info['name']
+
+        brick_model.path = brick_info['path']
+        brick_model.status = 'SUCCESS'
         brick_model.clear_messages()
         return brick_model.save()
 
     @classmethod
-    def _get_or_create_brick(cls, name: str, path: str) -> BrickModel:
-        brick: BrickModel = BrickModel.find_by_name(name)
-
-        if brick is None:
-            brick = BrickModel()
-            brick.name = name
-            brick.path = path
-            brick.status = 'SUCCESS'
-
-        return brick
+    def _get_brick_model(cls, brick_name: str) -> BrickModel:
+        return BrickModel.find_by_name(brick_name)
 
     @classmethod
     def get_all_brick_models(cls) -> List[BrickModel]:
@@ -145,7 +144,7 @@ class BrickService():
                 # On module load error, log an error but don't stop the app szo a brick won't break the whole app
                 except Exception as err:
                     cls.log_brick_message(
-                        brick_name=brick_name, brick_path=brick_info['path'],
+                        brick_name=brick_name,
                         message=f"Cannot import module {module_name}. Skipping brick load. Error: {err}",
                         status='CRITICAL')
                     traceback.print_exc()

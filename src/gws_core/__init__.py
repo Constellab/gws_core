@@ -51,7 +51,7 @@ from .core.classes.validator import StrValidator as StrValidator
 from .core.classes.validator import URLValidator as URLValidator
 from .core.classes.validator import Validator as Validator
 # Core > DB
-from .core.db.db_migration import BrickMigration as BrickMigration
+from .core.db.brick_migrator import BrickMigration as BrickMigration
 from .core.db.db_migration import brick_migration as brick_migration
 from .core.db.mysql import MySQLBase as MySQLBase
 from .core.db.mysql import MySQLDump as MySQLDump
