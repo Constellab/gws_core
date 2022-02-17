@@ -1,5 +1,7 @@
 from typing import final
 
+from itsdangerous import json
+
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..resource.resource_model import ResourceModel
@@ -51,6 +53,11 @@ class IOface:
         if self.source_port.resource_model:
             r_id = self.source_port.resource_model.id
 
+        json_ = self.export_config()
+        json_["resource_id"] = r_id,
+        return json_
+
+    def export_config(self) -> dict:
         return {
             "name": self.name,
             "from": {
@@ -61,7 +68,6 @@ class IOface:
                 "node": self.target_port.process.instance_name,
                 "port": self.target_port.name,
             },
-            "resource_id":  r_id,
         }
 
 
@@ -80,16 +86,12 @@ class Interface(IOface):
 
         super().__init__(name, source_port, target_port)
 
-    # -- S --
-
     def set_resource(self, resource_model: ResourceModel):
         self.source_port.resource_model = resource_model
         self.target_port.resource_model = resource_model
 
-    # -- V -
-
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        _json = super().to_json(deep=deep, **kwargs)
+    def export_config(self) -> dict:
+        _json = super().export_config()
         _json["from"]["node"] = ":parent:"
         return _json
 
@@ -109,14 +111,10 @@ class Outerface(IOface):
 
         super().__init__(name, source_port, target_port)
 
-    # -- G --
-
     def get_resource(self) -> ResourceModel:
         return self.source_port.resource_model
 
-    # -- V --
-
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        _json = super().to_json(deep=deep, **kwargs)
+    def export_config(self) -> dict:
+        _json = super().export_config()
         _json["to"]["node"] = ":parent:"
         return _json

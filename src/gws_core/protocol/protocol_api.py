@@ -6,6 +6,7 @@
 
 from fastapi import Depends
 from gws_core.config.config_types import ConfigParamsDict
+from gws_core.experiment.experiment import Experiment
 from gws_core.protocol.protocol_action import AddConnectorDTO
 from pydantic import BaseModel
 
@@ -13,6 +14,18 @@ from ..core_app import core_app
 from ..user.auth_service import AuthService
 from ..user.user_dto import UserData
 from .protocol_service import ProtocolService
+
+
+@core_app.get("/pprotocol/{id}", tags=["Protocol"], summary="Get a protocol")
+async def get_a_protocol(id: str,
+                         _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    """
+    Retrieve a protocol
+
+    - **id**: the id of the protocol
+    """
+
+    return Experiment.get_by_id_and_check(id=id).export_config()
 
 
 @core_app.get("/protocol/{id}", tags=["Protocol"], summary="Get a protocol")

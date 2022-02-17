@@ -113,7 +113,6 @@ class BrickService():
             brick_model = BrickModel()
             brick_model.name = brick_info['name']
 
-        brick_model.path = brick_info['path']
         brick_model.status = 'SUCCESS'
         brick_model.clear_messages()
         return brick_model.save()

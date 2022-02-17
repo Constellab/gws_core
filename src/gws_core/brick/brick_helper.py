@@ -1,11 +1,23 @@
 
 
-import importlib
 import inspect
-import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, TypedDict
 
 from ..core.utils.settings import ModuleInfo, Settings
+
+
+class BrickVersion(TypedDict):
+    name: str
+    version: str
+    repo_type: str
+    repo_commit: str
+
+
+class LabConfig(TypedDict):
+    """Object representing the complete config of a lab to recreate it
+    """
+    version: int  # version of the config
+    brick_versions: List[BrickVersion]
 
 
 class BrickHelper():
@@ -39,13 +51,19 @@ class BrickHelper():
 
     @classmethod
     def get_brick_info(cls, obj: Any) -> ModuleInfo:
-        """Methode to return a brick info of any object
+        """Methode to return a brick.
+        If object, retrieve the brick of the object
+        If string, retrieve the brick of name
 
         :param obj: class, method...
         :type obj: Any
         :rtype: str
         """
-        brick_name = cls.get_brick_name(obj)
+
+        if isinstance(obj, str):
+            brick_name = obj
+        else:
+            brick_name = cls.get_brick_name(obj)
 
         bricks = cls.get_all_bricks()
 
@@ -55,16 +73,28 @@ class BrickHelper():
         return bricks[brick_name]
 
     @classmethod
-    def get_brick_path(cls, obj: Any) -> str:
-        """Methode to return a brick path of any object
+    def get_lab_config(cls) -> LabConfig:
+        """Get the config of the lab to rebuild one as a copy of this one
 
-        :param obj: class, method...
-        :type obj: Any
-        :rtype: str
+        :return: _description_
+        :rtype: List[BrickVersion]
         """
-        name = cls.get_brick_name(obj)
-        try:
-            module = importlib.import_module(name)
-        except Exception as err:
-            raise Exception(f"Can't import python module {name}") from err
-        return os.path.join(os.path.abspath(os.path.dirname(module.__file__)), "../../")
+        bricks = cls.get_all_bricks()
+
+        brick_versions: List[BrickVersion] = []
+
+        for brick in bricks.values():
+            # ignore app brick
+            if brick['repo_type'] == 'app':
+                continue
+
+            brick_versions.append({
+                'name': brick['name'],
+                'version': brick['version'],
+                'repo_type': brick['repo_type'],
+                'repo_commit': brick['repo_commit']
+            })
+        return {
+            'version': 1,
+            'brick_versions': brick_versions
+        }

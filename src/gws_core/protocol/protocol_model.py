@@ -689,6 +689,28 @@ class ProtocolModel(ProcessModel):
 
         return _json
 
+    def export_config(self) -> Dict:
+
+        _json = super().export_config()
+
+        graph = {
+            "nodes": {},
+            "links": [],
+            "interfaces": {},
+            "outerfaces": {}
+        }
+
+        for conn in self.connectors:
+            graph['links'].append(conn.export_config())
+        for key, process in self.processes.items():
+            graph["nodes"][key] = process.export_config()
+        for key, interface in self.interfaces.items():
+            graph['interfaces'][key] = interface.export_config()
+        for key, outerface in self.outerfaces.items():
+            graph['outerfaces'][key] = outerface.export_config()
+        _json["graph"] = graph
+        return _json
+
     ############################### OTHER #################################
 
     def is_protocol(self) -> bool:

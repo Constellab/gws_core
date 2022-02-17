@@ -3,8 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Literal, TypedDict
+from typing import Dict, Literal, TypedDict
 
+from gws_core.brick.brick_helper import BrickHelper
+from gws_core.core.utils.settings import ModuleInfo
 from peewee import CharField
 
 from ..core.model.model import Model
@@ -24,7 +26,6 @@ class BrickMessage(TypedDict):
 class BrickModel(Model):
 
     name: str = CharField(unique=True)
-    path: str = CharField(unique=True)
     status: BrickStatus = CharField()
 
     _table_name = "gws_brick"
@@ -58,6 +59,19 @@ class BrickModel(Model):
     def clear_messages(self) -> None:
         self.data['messages'] = []
 
+    def get_brick_info(self) -> ModuleInfo:
+        return BrickHelper.get_brick_info(self.name)
+
     @classmethod
     def delete_all(cls) -> None:
         cls.delete().execute(cls._db_manager.db)
+
+    def to_json(self, deep: bool = False, **kwargs) -> Dict:
+        json_ = super().to_json(deep=deep, **kwargs)
+
+        brick_info = self.get_brick_info()
+        json_['version'] = brick_info['version']
+        json_['repo_type'] = brick_info['repo_type']
+        json_['repo_commit'] = brick_info['repo_commit']
+
+        return json_

@@ -9,7 +9,7 @@ import asyncio
 import inspect
 from abc import abstractmethod
 from enum import Enum
-from typing import TYPE_CHECKING, Type, TypedDict, final
+from typing import TYPE_CHECKING, Dict, Type, TypedDict, final
 
 from peewee import CharField, ForeignKeyField
 from starlette_context import context
@@ -453,6 +453,13 @@ class ProcessModel(ModelWithUser):
         _json["doc"] = inspect.getdoc(process_type)
 
         return _json
+
+    def export_config(self) -> Dict:
+        return {
+            "process_typing_name": self.process_typing_name,
+            "instance_name": self.instance_name,
+            "config": self.config.get_and_check_values()
+        }
 
     ########################### STATUS MANAGEMENT ##################################
 
