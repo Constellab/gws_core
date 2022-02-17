@@ -1,87 +1,19 @@
-from abc import abstractmethod
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
+
 from typing import Callable, Dict, List, Type
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.brick.brick_service import BrickService
-from gws_core.core.db.version import Version
 from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.settings import (BrickMigrationLog, ModuleInfo,
+                                          Settings)
 from gws_core.core.utils.utils import Utils
 
-
-class MigrationObject():
-    """Simple object to store brick migration along with version
-    """
-    brick_migration: Type['BrickMigration']
-    version: Version
-
-    def __init__(self, migration_object: Type['BrickMigration'], version: Version) -> None:
-        self.brick_migration = migration_object
-        self.version = version
-
-
-class BrickMigrator():
-    """Object for a brick that list all the migration and run the required migration
-
-    :raises Exception: [description]
-    :raises err: [description]
-    :return: [description]
-    :rtype: [type]
-    """
-    brick_name: str
-    current_brick_version: Version
-
-    _migration_objects: List[MigrationObject]
-
-    def __init__(self, brick_name: str, brick_version: Version) -> None:
-        self.brick_name = brick_name
-        self.current_brick_version = brick_version
-        self._migration_objects = []
-
-    def append_migration(self, brick_migration: Type['BrickMigration'], version: Version) -> None:
-
-        # Check if that version was already added
-        if len([x for x in self._migration_objects if x.version == version]) > 0:
-            raise Exception(
-                f"Error on migrator for brick '{self.brick_name}'. The migration version '{str(version)}' was already registered. ")
-
-        self._migration_objects.append(MigrationObject(brick_migration, version))
-
-    def migrate(self) -> None:
-        # retrieve all the migration objects that have an higher version of current brick version
-        to_migrate_list: List[MigrationObject] = self._get_to_migrate_list()
-
-        if len(to_migrate_list) == 0:
-            Logger.debug(f"Skipping migration for brick '{self.brick_name}' because it is up to date")
-            return
-
-        for migration_obj in to_migrate_list:
-            self._call_migration(migration_obj)
-
-    def _get_to_migrate_list(self) -> List[MigrationObject]:
-        # retrieve all the migration objects that have an higher version of current brick version
-        to_migrate: List[MigrationObject] = [
-            x for x in self._migration_objects if x.version > self.current_brick_version]
-
-        # sort them to migrate in order
-        to_migrate.sort(key=lambda x: x.version.get_version_as_int())
-        return to_migrate
-
-    def _call_migration(self, migration_object: MigrationObject) -> None:
-        Logger.info(
-            f"Start migrating '{self.brick_name}' from version '{self.current_brick_version}' to version '{migration_object.version}'")
-
-        try:
-            migration_object.brick_migration.migrate(self.current_brick_version, migration_object.version)
-
-        except Exception as err:
-            Logger.error(
-                f"Error during migration of brick '{self.brick_name}' from version '{self.current_brick_version}' to version '{migration_object.version}'")
-            raise err
-
-        Logger.info(
-            f"Success migrating '{self.brick_name}' from version '{self.current_brick_version}' to version '{migration_object.version}'")
-
-        self.current_brick_version = migration_object.version
+from .brick_migrator import BrickMigration, BrickMigrator, MigrationObject
+from .version import Version
 
 
 class DbMigrationService:
@@ -91,36 +23,85 @@ class DbMigrationService:
     # store the different migration object, where key is brick
     _brick_migrators: Dict[str, BrickMigrator] = {}
 
+    _migration_objects: List[MigrationObject] = []
+
     @classmethod
     def migrate(cls):
-        for migrator in cls._brick_migrators.values():
-            migrator.migrate()
+        settings: Settings = Settings.retrieve()
+
+        # If migration objetcs already exists, meaning this is not the first start
+        if len(settings.get_brick_migrations_logs()) > 0:
+            for migrator in cls._get_brick_migrators().values():
+                migrated = migrator.migrate()
+
+                if migrated:
+                    settings.update_brick_migration_log(migrator.brick_name, str(migrator.current_brick_version))
+
+        # save all the brick current version as last migration
+        bricks = BrickHelper.get_all_bricks()
+        for brick in bricks.values():
+            settings.update_brick_migration_log(brick["name"], brick["version"])
 
     @classmethod
-    def register_migration_object(cls, brick_migration: Type['BrickMigration'], version: Version):
-        brick_name = BrickHelper.get_brick_name(brick_migration)
+    def _get_brick_migrators(cls) -> Dict[str, BrickMigrator]:
+        brick_migrators: Dict[str, BrickMigrator] = {}
 
-        if not brick_name in cls._brick_migrators:
-            # TODO retrieve version of brick !
-            cls._brick_migrators[brick_name] = BrickMigrator(brick_name, Version('1.0.0'))
+        for migration_obj in cls._migration_objects:
+            brick_info: ModuleInfo
 
-        cls._brick_migrators[brick_name].append_migration(brick_migration, version)
+            try:
+                brick_info = BrickHelper.get_brick_info(migration_obj.brick_migration)
+            except:
+                Logger.error(
+                    f"Can't retrieve brick information for migration class : '{str(migration_obj.brick_migration)}'")
+                continue
 
+            brick_name = brick_info["name"]
+            current_brick_version = Version(brick_info["version"])
+            migration_version = migration_obj.version
 
-class BrickMigration():
+            # Check that the migration version is not higher than the brick version
+            if migration_version > current_brick_version:
+                BrickService.log_brick_message(
+                    brick_name=brick_name,
+                    message=f"Error while registering migration for brick {brick_name}. The migration version '{str(migration_version)}' is higher than the brick version '{str(current_brick_version)}'. Skipping migration.",
+                    status="ERROR")
+                continue
+
+            if not brick_name in cls._brick_migrators:
+                # Retrieive previous brick version
+                previous_brick_model: BrickMigrationLog = Settings.retrieve().get_brick_migration_log(brick_name)
+
+                if not previous_brick_model:
+                    Logger.info(f"Skipping migration for brick {brick_name} because it is new")
+                    continue
+
+                previous_version = Version(previous_brick_model["version"])
+                # create the brick migrator by taking the last brick version
+                brick_migrators[brick_name] = BrickMigrator(brick_name, previous_version)
+
+            brick_migrator: BrickMigrator = brick_migrators[brick_name]
+
+            # Check that the migration version was not already registered
+            if brick_migrator.has_migration_version(migration_version):
+                BrickService.log_brick_message(
+                    brick_name=brick_name,
+                    message=f"Error while registering migration for brick {brick_name}. The migration version '{str(migration_version)}' was already registered. Skipping migration.",
+                    status="ERROR")
+                continue
+
+            brick_migrator.append_migration(migration_obj.brick_migration, migration_version)
+
+        return brick_migrators
 
     @classmethod
-    @abstractmethod
-    def migrate(cls, from_version: Version, to_version: Version) -> None:
-        """Must override this method to write the migration code
-
-        :param from_version: previous version
-        :type from_version: Version
-        """
+    def register_migration_object(
+            cls, brick_migration: Type['BrickMigration'], version: Version) -> None:
+        cls._migration_objects.append(MigrationObject(brick_migration, version))
 
 
 def brick_migration(version: str) -> Callable:
-    """Decorator to place on sub class of BrickMigration to declare  a new migration code
+    """Decorator to place on sub class of BrickMigration to declare a new migration code
 
     :param version: version of this migration
     :type version: str
@@ -138,14 +119,14 @@ def brick_migration(version: str) -> Callable:
 
         try:
             version_obj = Version(version)
-
-            # Register the migration
-            DbMigrationService.register_migration_object(class_, version_obj)
         except:
             BrickService.log_brick_error(
                 class_,
                 f"The version '{version}' used in brick_migration decorator on class '{class_.__name__}' is invalid")
             return class_
+
+            # Register the migration
+        DbMigrationService.register_migration_object(class_, version_obj)
 
         return class_
 

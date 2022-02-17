@@ -27,9 +27,6 @@ class TestBrick(BaseTestCase):
         brick_name = BrickHelper.get_brick_name(Task.run)
         self.assertEqual(brick_name, 'gws_core')
 
-        brick_path: str = BrickHelper.get_brick_path(Task)
-        self.assertIsNotNone(brick_path)
-
     def test_brick_models(self):
         brick_models: List[BrickModel] = BrickService.get_all_brick_models()
         self.assertTrue(len(brick_models) > 0)

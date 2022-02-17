@@ -7,6 +7,7 @@ from typing import Optional
 
 from fastapi import Cookie, Depends, Header
 from fastapi.responses import RedirectResponse
+from gws_core.core.classes.jsonable import ListJsonable
 from gws_core.core.utils.settings import Settings
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.jwt_service import JWTService
@@ -119,3 +120,12 @@ def logout() -> JSONResponse:
     """
 
     return AuthService.logout()
+
+
+@core_app.get("/user", tags=["User"])
+async def get_all_users(_: UserData = Depends(AuthService.check_user_access_token)):
+    """
+    List the users.
+    """
+
+    return ListJsonable(UserService.get_all_real_users()).to_json()

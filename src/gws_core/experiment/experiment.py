@@ -394,3 +394,11 @@ class Experiment(ModelWithUser, TaggableModel):
             _json["project"] = self.project.to_json() if self.project is not None else None
 
         return _json
+
+    def export_protocol(self) -> dict:
+        json_ = self.protocol_model.export_config()
+        del json_["instance_name"]  # remove the main instance name because it is not relevant
+        return {
+            "version": 1,  # version of the protocol json format
+            "data": json_
+        }

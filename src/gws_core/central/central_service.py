@@ -5,6 +5,7 @@
 
 import json
 from typing import Any, Dict, List
+from gws_core.experiment.experiment_dto import SaveExperimentToCentralDTO
 
 from gws_core.impl.file.file_helper import FileHelper
 
@@ -71,10 +72,10 @@ class CentralService(BaseService):
         return response.json()
 
     @classmethod
-    def save_experiment(cls, project_id: str, experiment: dict) -> None:
+    def save_experiment(cls, project_id: str, save_experiment_dto: SaveExperimentToCentralDTO) -> None:
         central_api_url: str = cls._get_central_api_url(
             f"{cls._external_labs_route}/project/{project_id}/experiment")
-        response = ExternalApiService.put(central_api_url, experiment, cls._get_request_header())
+        response = ExternalApiService.put(central_api_url, save_experiment_dto, cls._get_request_header())
 
         if response.status_code != 200:
             Logger.error(f"Can't save the experiment in central. Error : {response.text}")

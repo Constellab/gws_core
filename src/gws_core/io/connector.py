@@ -70,11 +70,16 @@ class Connector:
         """
 
         r_id = ""
-
         if self.out_port.resource_model:
             r_id = self.out_port.resource_model.id
 
-        link = {
+        json_ = self.export_config()
+        json_["resource_id"] = r_id
+
+        return json_
+
+    def export_config(self) -> dict:
+        return {
             "from": {
                 "node": self.left_process.instance_name,
                 "port": self.out_port.name,
@@ -83,10 +88,7 @@ class Connector:
                 "node": self.right_process.instance_name,
                 "port": self.in_port.name,
             },
-            "resource_id": r_id
         }
-
-        return link
 
     # -- L --
 
