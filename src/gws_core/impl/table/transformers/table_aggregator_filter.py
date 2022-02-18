@@ -62,11 +62,6 @@ class TableAggregatorFilter(Transformer):
     async def transform(self, source: Table, params: ConfigParams) -> Table:
         data: DataFrame = source.get_data()
 
-        for _filter in params["axis_name_filter"]:
-            data = TableFilterHelper.filter_by_axis_names(
-                data=data, axis=_filter["axis_type"], value=_filter["value"]
-            )
-
         for _filter in params["aggregation_filter"]:
             data = TableFilterHelper.filter_by_aggregated_values(
                 data=data,
@@ -75,7 +70,5 @@ class TableAggregatorFilter(Transformer):
                 comp=_filter["comparator"],
                 value=_filter["value"],
             )
-        data = NumericDataFilterParamConstructor.validate_filter("numeric_data_filter", data, params)
-        data = TextDataFilterParamConstructor.validate_filter("text_data_filter", data, params)
 
         return Table(data=data)

@@ -13,27 +13,27 @@ from ..helper.table_filter_helper import TableFilterHelper
 
 # ####################################################################
 #
-# TableColumnSelector class
+# TableRowSelector class
 #
 # ####################################################################
 
 
 @transformer_decorator(
-    unique_name="TableColumnsSelector",
+    unique_name="TableRowsSelector",
     resource_type=Table,
     short_description="Select table columns",
 )
-class TableColumnSelector(Transformer):
+class TableRowSelector(Transformer):
     """
-    TableColumnSelector
+    TableRowSelector
 
-    Select part of a table using column name
+    Select part of a table using row name
     """
 
     config_specs: ConfigSpecs = {
-        "column_name": StrParam(
-            human_name="Column name",
-            short_description="Searched text or pattern (i.e. regular expression)",
+        "row_name": StrParam(
+            human_name="Row name",
+            short_description="Searched text or pattern",
         ),
         "use_regexp": BoolParam(
             default_value=False,
@@ -43,9 +43,11 @@ class TableColumnSelector(Transformer):
     }
 
     async def transform(self, source: Table, params: ConfigParams) -> Table:
-        data: DataFrame = source.get_data()
         data = TableFilterHelper.filter_by_axis_names(
-            data=data, axis="column", value=params["column_name"], use_regexp=params["use_regexp"]
+            data=source.get_data(),
+            axis="row",
+            value=params["row_name"],
+            use_regexp=params["use_regexp"]
         )
 
         return Table(data=data)

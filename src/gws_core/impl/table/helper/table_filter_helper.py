@@ -49,7 +49,7 @@ class TableFilterHelper:
             if use_regexp:
                 return data.filter(regex=value, axis=ax)
             else:
-                return data.filter(items=value, axis=ax)
+                return data.filter(items=[value], axis=ax)
         else:
             raise BadRequestException("A string is required")
 

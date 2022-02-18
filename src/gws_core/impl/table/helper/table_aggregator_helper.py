@@ -65,4 +65,9 @@ class TableAggregatorHelper:
                 axis=axis_num, numeric_only=True, skipna=skip_nan
             )
 
+        if direction == "vertical":
+            aggregated_data = aggregated_data.to_frame().T
+        else:
+            aggregated_data = aggregated_data.to_frame()
+
         return aggregated_data

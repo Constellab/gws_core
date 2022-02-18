@@ -11,7 +11,7 @@ from ....task.task_decorator import task_decorator
 from ....task.task_io import TaskInputs, TaskOutputs
 from ...table.table import Table
 from ..encoding.annotated_table import AnnotatedTable
-from ..helper.table_grouping_helper import TableGroupingHelper
+from ..helper.table_meta_grouper_helper import TableMetaGrouperHelper
 
 # ####################################################################
 #
@@ -33,7 +33,7 @@ class TableKVColumnGrouper(Task):
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         table = inputs["table"]
-        data = TableGroupingHelper.group_data(
+        data = TableMetaGrouperHelper.group_data(
             data=table.get_data(),
             key=params["grouping_key"],
             current_task=self

@@ -7,7 +7,7 @@
 from typing import List, Union
 
 import numpy as np
-from pandas import DataFrame
+from pandas import DataFrame, Series
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
@@ -55,6 +55,8 @@ class Table(Resource):
         if data is None:
             data = DataFrame()
         else:
+            if isinstance(data, Series):
+                data = data.to_frame()
             if isinstance(data, DataFrame):
                 # OK!
                 pass

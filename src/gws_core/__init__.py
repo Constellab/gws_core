@@ -171,10 +171,12 @@ from .impl.table.helper.table_aggregator_helper import \
     TableAggregatorHelper as TableAggregatorHelper
 from .impl.table.helper.table_filter_helper import \
     TableFilterHelper as TableFilterHelper
-from .impl.table.helper.table_grouping_helper import \
-    TableGroupingHelper as TableGroupingHelper
+from .impl.table.helper.table_meta_grouper_helper import \
+    TableMetaGrouperHelper as TableMetaGrouperHelper
 from .impl.table.helper.table_nanify_helper import \
     TableNanifyHelper as TableNanifyHelper
+from .impl.table.helper.table_scaler_helper import \
+    TableScalerHelper as TableScalerHelper
 from .impl.table.table import Table as Table
 from .impl.table.table_file import TableFile as TableFile
 from .impl.table.tasks.table_exporter import TableExporter as TableExporter
@@ -185,6 +187,8 @@ from .impl.table.transformers.table_aggregator import \
     TableAggregator as TableAggregator
 from .impl.table.transformers.table_data_filter import \
     TableDataFilter as TableDataFilter
+from .impl.table.transformers.table_meta_grouper import \
+    TableMetaGrouper as TableMetaGrouper
 from .impl.table.transformers.table_scaler import TableScaler as TableScaler
 # Impl > Text
 from .impl.text.text import Text as Text

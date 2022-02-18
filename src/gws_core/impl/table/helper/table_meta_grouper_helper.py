@@ -12,7 +12,7 @@ from pandas import DataFrame, Series
 from ....core.exception.exceptions import BadRequestException
 
 
-class TableGroupingHelper:
+class TableMetaGrouperHelper:
 
     @classmethod
     def group_data(cls, data: DataFrame(), key: str, current_task=None):

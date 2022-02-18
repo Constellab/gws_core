@@ -39,9 +39,10 @@ class TableAggregator(Transformer):
     }
 
     async def transform(self, source: Table, params: ConfigParams) -> Table:
-        return TableAggregatorHelper.aggregate(
+        data = TableAggregatorHelper.aggregate(
             data=source.get_data(),
             direction=params["direction"],
             func=params["function"],
             skip_nan=params["skip_nan"]
         )
+        return Table(data=data)
