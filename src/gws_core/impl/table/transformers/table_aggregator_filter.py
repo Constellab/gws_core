@@ -71,4 +71,6 @@ class TableAggregatorFilter(Transformer):
                 value=_filter["value"],
             )
 
-        return Table(data=data)
+        table = Table(data=data)
+        table.name = source.name + " (Aggregation filter)"
+        return table

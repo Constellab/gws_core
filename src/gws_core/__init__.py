@@ -152,43 +152,41 @@ from .impl.shell.shell import Shell as Shell
 from .impl.shell.shell_proxy import ShellProxy as ShellProxy
 # Impl > Table
 from .impl.table.data_frame_r_field import DataFrameRField as DataFrameRField
-from .impl.table.encoding.annotated_table import \
-    AnnotatedTable as AnnotatedTable
-from .impl.table.encoding.annotated_table import (AnnotatedTableExporter,
-                                                  AnnotatedTableImporter)
 from .impl.table.encoding.encoded_table import EncodedTable as EncodedTable
 from .impl.table.encoding.encoding_table import EncodingTable as EncodingTable
 from .impl.table.encoding.encoding_table import (EncodingTableExporter,
                                                  EncodingTableImporter)
-from .impl.table.encoding.metadata_table import MetadataTable as MetadataTable
-from .impl.table.encoding.metadata_table import (MetadataTableExporter,
-                                                 MetadataTableImporter)
-from .impl.table.encoding.table_annotator import \
-    TableAnnotator as TableAnnotator
 from .impl.table.encoding.table_decoder import TableDecoder as TableDecoder
 from .impl.table.encoding.table_encoder import TableEncoder as TableEncoder
 from .impl.table.helper.table_aggregator_helper import \
     TableAggregatorHelper as TableAggregatorHelper
 from .impl.table.helper.table_filter_helper import \
     TableFilterHelper as TableFilterHelper
-from .impl.table.helper.table_meta_grouper_helper import \
-    TableMetaGrouperHelper as TableMetaGrouperHelper
 from .impl.table.helper.table_nanify_helper import \
     TableNanifyHelper as TableNanifyHelper
 from .impl.table.helper.table_scaler_helper import \
     TableScalerHelper as TableScalerHelper
+from .impl.table.helper.table_tag_grouper_helper import \
+    TableTagGrouperHelper as TableTagGrouperHelper
+from .impl.table.metadata_table.metadata_table import \
+    MetadataTable as MetadataTable
+from .impl.table.metadata_table.metadata_table_task import (
+    MetadataTableExporter, MetadataTableImporter)
+from .impl.table.metadata_table.table_annotator import \
+    TableAnnotator as TableAnnotator
 from .impl.table.table import Table as Table
 from .impl.table.table_file import TableFile as TableFile
 from .impl.table.tasks.table_exporter import TableExporter as TableExporter
 from .impl.table.tasks.table_filter import TableFilter
 from .impl.table.tasks.table_importer import TableImporter as TableImporter
-from .impl.table.tasks.table_kv_column_grouper import TableKVColumnGrouper
 from .impl.table.transformers.table_aggregator import \
     TableAggregator as TableAggregator
+from .impl.table.transformers.table_column_tag_grouper import \
+    TableColumnTagGrouper as TableColumnTagGrouper
 from .impl.table.transformers.table_data_filter import \
     TableDataFilter as TableDataFilter
-from .impl.table.transformers.table_meta_grouper import \
-    TableMetaGrouper as TableMetaGrouper
+from .impl.table.transformers.table_row_tag_grouper import \
+    TableRowTagGrouper as TableRowTagGrouper
 from .impl.table.transformers.table_scaler import TableScaler as TableScaler
 # Impl > Text
 from .impl.text.text import Text as Text

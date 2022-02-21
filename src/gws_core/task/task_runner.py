@@ -138,7 +138,7 @@ class TaskRunner():
             resource: Resource = self._inputs[key]
             if not spec.is_compatible_with_type(type(resource)):
                 invalid_input_text = invalid_input_text + \
-                    f"The input '{key}' of type '{resource}' is not a compatble with the corresponding input spec."
+                    f"The input '{key}' of type '{resource}' is not a compatible with the corresponding input spec."
 
             task_io[key] = resource
 

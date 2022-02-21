@@ -45,4 +45,6 @@ class TableAggregator(Transformer):
             func=params["function"],
             skip_nan=params["skip_nan"]
         )
-        return Table(data=data)
+        table = Table(data=data)
+        table.name = source.name + " (Aggregation)"
+        return table

@@ -50,4 +50,6 @@ class TableRowSelector(Transformer):
             use_regexp=params["use_regexp"]
         )
 
-        return Table(data=data)
+        table = Table(data=data)
+        table.name = source.name + " (Row sliced)"
+        return table

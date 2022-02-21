@@ -29,4 +29,6 @@ class TableScaler(Transformer):
     async def transform(self, source: Table, params: ConfigParams) -> Table:
         data = source.get_data()
         data = DataScaleFilterParamConstructor.validate_filter("scaling", data, params)
-        return Table(data=data)
+        table = Table(data=data)
+        table.name = source.name + " (Scaled)"
+        return table

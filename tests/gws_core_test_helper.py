@@ -1,9 +1,6 @@
 
-
-import os
-
-from gws_core import (AnnotatedTableImporter, EncodingTableImporter, File,
-                      MetadataTableImporter, Table, TableImporter)
+from gws_core import (EncodingTableImporter, File, MetadataTableImporter,
+                      Table, TableImporter)
 from gws_core.data_provider.data_provider import DataProvider
 
 
@@ -21,10 +18,16 @@ class GWSCoreTestHelper():
         })
 
     @classmethod
-    def get_metadata_table(cls) -> Table:
-        return MetadataTableImporter.call(File(DataProvider.get_test_data_path("metadata.csv")), {
+    def get_sample_table(cls) -> Table:
+        return TableImporter.call(File(DataProvider.get_test_data_path("sample_data.csv")), {
             "index_column": 0,
             "header": 0,
+        })
+
+    @classmethod
+    def get_sample_metadata_table(cls) -> Table:
+        return MetadataTableImporter.call(File(DataProvider.get_test_data_path("sample_metadata.csv")), {
+            "sample_id_column": "sample-id",
         })
 
     @classmethod
@@ -41,11 +44,4 @@ class GWSCoreTestHelper():
         return TableImporter.call(File(DataProvider.get_test_data_path("venn_data.csv")), {
             "delimiter": "tab",
             "header": 0
-        })
-
-    @classmethod
-    def get_annotated_table(cls) -> Table:
-        return AnnotatedTableImporter.call(File(DataProvider.get_test_data_path("annotated_table.csv")), {
-            "index_column": 0,
-            "delimiter": ",",
         })

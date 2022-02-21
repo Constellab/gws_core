@@ -21,35 +21,117 @@ class TestTable(BaseTestCase):
 
         table: Table = Table(data=[[1, 2, 3]], column_names=["a", "b", "c"])
         print(table.get_data())
+        self.assertEqual(table.get_meta(), {'row_tags': [{}], 'column_tags': [{}, {}, {}]})
 
         table._set_data(
             data=[1, 2, 3], column_names=["data"], row_names=["a", "b", "c"]
         )
         print(table.get_data())
+        self.assertEqual(table.get_meta(), {'row_tags': [{}, {}, {}], 'column_tags': [{}]})
+        print(print(table.get_meta()))
 
     def test_table_select(self):
         GTest.print("Table select")
+        meta = {
+            "row_tags": [
+                {"lg": "EN", "c": "US", "user": "Vi"},
+                {"lg": "JP", "c": "JP", "user": "Jo"},
+                {"lg": "FR", "c": "FR", "user": "Jo"},
+            ],
+            "column_tags": [
+                {"lg": "EN", "c": "UK"},
+                {"lg": "PT", "c": "PT"},
+                {"lg": "CH", "c": "CH"}
+            ],
+        }
 
         table: Table = Table(
             data=[[1, 2, 3], [3, 4, 6], [3, 7, 6]],
+            row_names=["NY", "Tokyo", "Paris"],
             column_names=["London", "Lisboa", "Beijin"],
-            row_names=["NY", "Tokyo", "Paris"]
+            meta=meta
         )
+        self.assertEqual(table.get_meta(), meta)
+
+        # ------------------------------------------------------------
+        # Select by row positions
+        # ------------------------------------------------------------
+
         t = table.select_by_row_positions([1, 2])
         self.assertEqual(t.column_names, ["London", "Lisboa", "Beijin"])
         self.assertEqual(t.row_names, ["Tokyo", "Paris"])
+        self.assertEqual(t.get_row_tags(), [
+            {"lg": "JP", "c": "JP", "user": "Jo"},
+            {"lg": "FR", "c": "FR", "user": "Jo"},
+        ])
+        self.assertEqual(t.get_column_tags(), [
+            {"lg": "EN", "c": "UK"},
+            {"lg": "PT", "c": "PT"},
+            {"lg": "CH", "c": "CH"}
+        ])
+
+        # ------------------------------------------------------------
+        # Select by column positions
+        # ------------------------------------------------------------
 
         t = table.select_by_column_positions([0, 2])
         self.assertEqual(t.column_names, ["London", "Beijin"])
         self.assertEqual(t.row_names, ["NY", "Tokyo", "Paris"])
+        self.assertEqual(t.get_row_tags(), [
+            {"lg": "EN", "c": "US", "user": "Vi"},
+            {"lg": "JP", "c": "JP", "user": "Jo"},
+            {"lg": "FR", "c": "FR", "user": "Jo"},
+        ])
+        self.assertEqual(t.get_column_tags(), [
+            {"lg": "EN", "c": "UK"},
+            {"lg": "CH", "c": "CH"}
+        ])
+
+        t = table.select_by_column_positions([2, 0])
+        self.assertEqual(t.column_names, ["Beijin", "London"])
+        self.assertEqual(t.row_names, ["NY", "Tokyo", "Paris"])
+        self.assertEqual(t.get_row_tags(), [
+            {"lg": "EN", "c": "US", "user": "Vi"},
+            {"lg": "JP", "c": "JP", "user": "Jo"},
+            {"lg": "FR", "c": "FR", "user": "Jo"},
+        ])
+        self.assertEqual(t.get_column_tags(), [
+            {"lg": "CH", "c": "CH"},
+            {"lg": "EN", "c": "UK"},
+        ])
+
+        # ------------------------------------------------------------
+        # Select by row names
+        # ------------------------------------------------------------
 
         t = table.select_by_row_names(["Toky.*"], use_regex=True)
         self.assertEqual(t.column_names, ["London", "Lisboa", "Beijin"])
         self.assertEqual(t.row_names, ["Tokyo"])
+        self.assertEqual(t.get_row_tags(), [
+            {"lg": "JP", "c": "JP", "user": "Jo"},
+        ])
+        self.assertEqual(t.get_column_tags(), [
+            {"lg": "EN", "c": "UK"},
+            {"lg": "PT", "c": "PT"},
+            {"lg": "CH", "c": "CH"}
+        ])
+
+        # ------------------------------------------------------------
+        # Select by column names
+        # ------------------------------------------------------------
 
         t = table.select_by_column_names(["L.*"], use_regex=True)
         self.assertEqual(t.column_names, ["London", "Lisboa"])
         self.assertEqual(t.row_names, ["NY", "Tokyo", "Paris"])
+        self.assertEqual(t.get_row_tags(), [
+            {"lg": "EN", "c": "US", "user": "Vi"},
+            {"lg": "JP", "c": "JP", "user": "Jo"},
+            {"lg": "FR", "c": "FR", "user": "Jo"},
+        ])
+        self.assertEqual(t.get_column_tags(), [
+            {"lg": "EN", "c": "UK"},
+            {"lg": "PT", "c": "PT"},
+        ])
 
         t = table.select_by_column_names(["L.*", "B.*"], use_regex=True)
         self.assertEqual(t.column_names, ["London", "Lisboa", "Beijin"])
@@ -59,7 +141,51 @@ class TestTable(BaseTestCase):
         self.assertEqual(t.column_names, ["London", "Lisboa", "Beijin"])
         self.assertEqual(t.row_names, ["Tokyo"])
 
-        print(t)
+        # ------------------------------------------------------------
+        # Select by column tags
+        # ------------------------------------------------------------
+
+        t = table.select_by_column_tags([{"lg": "PT"}])
+        self.assertEqual(t.column_names, ["Lisboa"])
+        self.assertEqual(t.row_names, ["NY", "Tokyo", "Paris"])
+
+        t = table.select_by_column_tags([{"lg": "PT", "c": "PT"}])
+        self.assertEqual(t.column_names, ["Lisboa"])
+        self.assertEqual(t.row_names, ["NY", "Tokyo", "Paris"])
+
+        # ------------------------------------------------------------
+        # Select by row tags
+        # ------------------------------------------------------------
+
+        # ( t1 )
+        t = table.select_by_row_tags([{"c": "JP"}])
+        self.assertEqual(t.column_names, ["London", "Lisboa", "Beijin"])
+        self.assertEqual(t.row_names, ["Tokyo"])
+
+        # ( t2 )
+        t = table.select_by_row_tags([{"user": "Jo"}])
+        self.assertEqual(t.column_names, ["London", "Lisboa", "Beijin"])
+        self.assertEqual(t.row_names, ["Tokyo", "Paris"])
+
+        # ( t1 AND t2 )
+        t = table.select_by_row_tags([{"c": "JP", "user": "Jo"}])
+        self.assertEqual(t.column_names, ["London", "Lisboa", "Beijin"])
+        self.assertEqual(t.row_names, ["Tokyo"])
+
+        # ( t1 ) OR ( t2 )
+        t = table.select_by_row_tags([{"user": "Jo"}, {"c": "JP"}])
+        self.assertEqual(t.column_names, ["London", "Lisboa", "Beijin"])
+        self.assertEqual(t.row_names, ["Tokyo", "Paris"])
+
+        # ( t1 AND t2 ) OR t2
+        t = table.select_by_row_tags([{"user": "Jo", "c": "JP"}, {"c": "JP"}])
+        self.assertEqual(t.column_names, ["London", "Lisboa", "Beijin"])
+        self.assertEqual(t.row_names, ["Tokyo"])
+
+        # ( t1 AND t2 ) OR t1
+        t = table.select_by_row_tags([{"user": "Jo", "c": "JP"}, {"user": "Jo"}])
+        self.assertEqual(t.column_names, ["London", "Lisboa", "Beijin"])
+        self.assertEqual(t.row_names, ["Tokyo", "Paris"])
 
     def test_table_import_1(self):
         GTest.print("Table load")

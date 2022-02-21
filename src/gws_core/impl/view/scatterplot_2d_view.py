@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List
+from typing import Dict, List
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
@@ -34,6 +34,7 @@ class ScatterPlot2DView(View):
             "x_label": str,
             "y_label": str,
             "x_tick_labels": List[str] | None,
+            "x_tick_tags": List[Dict[str, str]] | None,
             "series": [
                 {
                     "data": {
@@ -53,11 +54,15 @@ class ScatterPlot2DView(View):
     x_label: str = None
     y_label: str = None
     x_tick_labels: List[str] = None
+    x_tick_tags: List[Dict[str, str]] = None
     _series: List = None
     _type: str = "scatter-plot-2d-view"
     _title: str = "2D-Scatter Plot"
 
-    def add_series(self, *, x: List[float], y: List[float], x_name: str = None, y_name: str = None):
+    def add_series(
+            self, *, x: List[float],
+            y: List[float],
+            x_name: str = None, y_name: str = None):
         if not self._series:
             self._series = []
         if not isinstance(y, list):
@@ -80,6 +85,7 @@ class ScatterPlot2DView(View):
                 "x_label": self.x_label,
                 "y_label": self.y_label,
                 "x_tick_labels": self.x_tick_labels,
+                "x_tags": self.x_tick_tags,
                 "series": self._series,
             }
         }

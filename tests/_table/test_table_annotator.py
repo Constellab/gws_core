@@ -12,8 +12,8 @@ class TestTableAnnotator(BaseTestCase):
 
     async def test_table_column_annotator(self):
         # importer
-        table = GWSCoreTestHelper.get_small_data_table()
-        metatable = GWSCoreTestHelper.get_metadata_table()
+        table = GWSCoreTestHelper.get_sample_table()
+        metatable = GWSCoreTestHelper.get_sample_metadata_table()
         print(table)
 
         # annotation
@@ -25,42 +25,12 @@ class TestTableAnnotator(BaseTestCase):
             }
         )
         outputs = await tester.run()
-        annotated_table = outputs["annotated_table"]
-        print(annotated_table)
-
-        self.assertEqual(annotated_table.row_names, table.row_names)
-        self.assertEqual(annotated_table.column_names, [
-            "Sex:F|Group:15|Age:15",
-            "Sex:M|Group:15|Age:15",
-            "Sex:F|Group:3|Age:15",
-            "Sex:F|Group:15|Age:15"
-        ])
-        self.assertTrue((annotated_table.get_data().values == table.get_data().values).all())
-
-    async def test_table_row_annotator(self):
-        # importer
-        table = GWSCoreTestHelper.get_small_data_table()
-        table = Table(data=table.get_data().T)
-        metatable = GWSCoreTestHelper.get_metadata_table()
-
-        # annotation
-        tester = TaskRunner(
-            task_type=TableAnnotator,
-            params={"axis": "row"},
-            inputs={
-                "table": table,
-                "metadata_table": metatable,
-            }
+        annotated_table = outputs["table"]
+        self.assertEqual(
+            annotated_table.get_meta()['row_tags'],
+            [{'Gender': 'M', 'Group': 15, 'Age': 15},
+             {'Gender': 'F', 'Group': 15, 'Age': 15},
+             {'Gender': 'M', 'Group': 1, 'Age': 18},
+             {'Gender': 'F', 'Group': 3, 'Age': 15},
+             {}]
         )
-        outputs = await tester.run()
-        annotated_table = outputs["annotated_table"]
-        print(annotated_table)
-
-        self.assertEqual(annotated_table.column_names, table.column_names)
-        self.assertEqual(annotated_table.row_names, [
-            "Sex:F|Group:15|Age:15",
-            "Sex:M|Group:15|Age:15",
-            "Sex:F|Group:3|Age:15",
-            "Sex:F|Group:15|Age:15"
-        ])
-        self.assertTrue((annotated_table.get_data().values == table.get_data().values).all())

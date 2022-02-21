@@ -23,8 +23,10 @@ class TableTransposer(Transformer):
 
     async def transform(self, source: Table, params: ConfigParams) -> Table:
         data: DataFrame = source.get_data()
-        return Table(
+        table = Table(
             data=data.T,
             row_names=source.column_names,
             column_names=source.row_names
         )
+        table.name = source.name + " (Transposed)"
+        return table

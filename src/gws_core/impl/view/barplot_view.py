@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Union
+from typing import List, Union, Dict
 
 from pandas import DataFrame
 
@@ -37,6 +37,7 @@ class BarPlotView(View):
             "x_label": str,
             "y_label": str,
             "x_tick_labels": List[str] | None,
+            "x_tick_tags": List[Dict[str, str]] | None,
             "series": [
                 {
                     "data": {
@@ -55,6 +56,7 @@ class BarPlotView(View):
     x_label: str = None
     y_label: str = None
     x_tick_labels: List[str] = None
+    x_tick_tags: List[Dict[str, str]] = None
     _series: List = None
     _type: str = "bar-plot-view"
     _title: str = "Bar Plot"
@@ -83,6 +85,7 @@ class BarPlotView(View):
                 "x_label": self.x_label,
                 "y_label": self.y_label,
                 "x_tick_labels": self.x_tick_labels,
+                "x_tick_tags": self.x_tick_tags,
                 "series": self._series,
             }
         }

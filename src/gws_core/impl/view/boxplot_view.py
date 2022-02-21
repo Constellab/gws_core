@@ -3,8 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Union
 import math
+from typing import List, Union, Dict
+
 import numpy
 from pandas import DataFrame
 
@@ -38,6 +39,7 @@ class BoxPlotView(View):
             "x_label": str,
             "y_label": str,
             "x_tick_labels": List[str] | None,
+            "x_tick_tags": List[Dict[str, str]] | None,
             "series": [
                 {
                     "data": {
@@ -61,6 +63,7 @@ class BoxPlotView(View):
     x_label: str = None
     y_label: str = None
     x_tick_labels: List[str] = None
+    x_tick_tags: List[Dict[str, str]] = None
     _series: List = None
     _type: str = "box-plot-view"
     _title: str = "Box Plot"
@@ -173,9 +176,10 @@ class BoxPlotView(View):
                 "x_label": self.x_label,
                 "y_label": self.y_label,
                 "x_tick_labels": self.x_tick_labels,
+                "x_tick_tags": self.x_tick_tags,
                 "series": self._series,
             }
         }
 
     def _clean_nan(self, data: List[float]):
-        return [ '' if math.isnan(x) else x for x in data ]
+        return ['' if math.isnan(x) else x for x in data]

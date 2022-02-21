@@ -4,13 +4,15 @@
 # About us: https://gencovery.com
 
 
-from typing import List, Union
+import copy
+from typing import Dict, List, Union
 
 import numpy as np
 from pandas import DataFrame, Series
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
+from ...resource.r_field import DictRField
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view
@@ -44,14 +46,15 @@ class Table(Resource):
     ALLOWED_TXT_FILE_FORMATS = ALLOWED_TXT_FILE_FORMATS
 
     _data: DataFrame = DataFrameRField()
+    _meta: Dict = DictRField()
 
     def __init__(self, data: Union[DataFrame, np.ndarray, list] = None,
-                 column_names=None, row_names=None):
+                 row_names=None, column_names=None,  meta: List = None):
         super().__init__()
-        self._set_data(data, column_names, row_names)
+        self._set_data(data, row_names=row_names, column_names=column_names, meta=meta)
 
     def _set_data(self, data: Union[DataFrame, np.ndarray] = None,
-                  column_names=None, row_names=None) -> 'Table':
+                  row_names=None, column_names=None,  meta=None) -> 'Table':
         if data is None:
             data = DataFrame()
         else:
@@ -69,35 +72,88 @@ class Table(Resource):
             if (column_names is not None) and not isinstance(column_names, list):
                 raise BadRequestException("The column_names must be an instance of list")
             if (row_names is not None) and not isinstance(row_names, list):
-                raise BadRequestException("The rown_names must be an instance of list")
+                raise BadRequestException("The row_names must be an instance of list")
 
             if column_names:
                 data.columns = column_names
             if row_names:
                 data.index = row_names
 
-        # Table._format_row_and_columns_names(data)
-        # data.index = Table._format_names(data.index, mapper=Table._row_formater)
-        # data.columns = Table._format_names(data.columns, mapper=Table._column_formater)
         self._data = data
+        self._set_meta(meta)
         return self
 
-    # @staticmethod
-    # def _format_names(col_or_index, mapper):
-    #     # ensure that all row and column names are string
-    #     if col_or_index.is_object():
-    #         col_or_index = col_or_index.map(str)
-    #     else:
-    #         col_or_index = col_or_index.map(mapper)
-    #     return col_or_index
+    def _set_meta(self, meta: Dict = None):
+        if meta is None:
+            meta = {
+                "row_tags": [{}] * self.nb_rows,
+                "column_tags": [{}] * self.nb_columns
+            }
+        else:
+            if "row_tags" not in meta:
+                meta["row_tags"] = [{}] * self.nb_rows
+            if "column_tags" not in meta:
+                meta["column_tags"] = [{}] * self.nb_columns
+            if len(meta["row_tags"]) != self._data.shape[0]:
+                raise BadRequestException("The length of row_tags must be equal to the number of rows")
+            if len(meta["column_tags"]) != self._data.shape[1]:
+                raise BadRequestException("The length of column_tags must be equal to the number of columns")
 
-    # @staticmethod
-    # def _row_formater(x):
-    #     return "R"+str(x)
+        self._meta = meta
 
-    # @staticmethod
-    # def _column_formater(x):
-    #     return "C"+str(x)
+    def _add_tag(self, axis, index: int, key: str, value: Union[str, int, float]):
+        if axis not in ["row", "column"]:
+            raise BadRequestException("The index must be an integer")
+        if not isinstance(index, int):
+            raise BadRequestException("The index must be an integer")
+        if not isinstance(key, str):
+            raise BadRequestException("The tag key must be a string")
+        if not isinstance(value, (str, int, float)):
+            raise BadRequestException("The tag value must be a string, int or float")
+
+        self._meta[axis + "_tags"][index][key] = str(value)
+
+    def add_row_tag(self, row_index: int, key: str, value: Union[str, int, float]):
+        """
+        Add a {key, value} tag to a row at a given index
+
+        :param row_index: The row index
+        :param row_index: int
+        :param key: The tag key
+        :param key: str
+        :param value: The tag value
+        :param value: str, int, float
+        """
+
+        self._add_tag("row", row_index, key, value)
+
+    def add_column_tag(self, column_index: int, key: str, value: Union[str, int, float]):
+        """
+        Add a {key, value} tag to a column at a given index
+
+        :param column_index: The column index
+        :param column_index: int
+        :param key: The tag key
+        :param key: str
+        :param value: The tag value
+        :param value: str, int, float
+        """
+
+        self._add_tag("column", column_index, key, value)
+
+    def set_row_tags(self, tags: list):
+        if not isinstance(tags, list):
+            raise BadRequestException("The tags must be a list")
+        if len(tags) != self._data.shape[0]:
+            raise BadRequestException("The length of tags must be equal to the number of rows")
+        self._meta["row_tags"] = tags
+
+    def set_column_tags(self, tags: list):
+        if not isinstance(tags, list):
+            raise BadRequestException("The tags must be a list")
+        if len(tags) != self._data.shape[1]:
+            raise BadRequestException("The length of tags must be equal to the number of columns")
+        self._meta["column_tags"] = tags
 
     def get_data(self):
         return self._data
@@ -115,7 +171,7 @@ class Table(Resource):
 
         try:
             return self._data.columns.values.tolist()
-        except Exception as _:
+        except:
             return None
 
     def column_exists(self, name, case_sensitive=True) -> bool:
@@ -146,6 +202,15 @@ class Table(Resource):
             if skip_nan:
                 df.dropna(inplace=True)
             return df
+
+    def get_meta(self):
+        return self._meta
+
+    def get_row_tags(self):
+        return self._meta["row_tags"]
+
+    def get_column_tags(self):
+        return self._meta["column_tags"]
 
     # -- H --
 
@@ -219,10 +284,12 @@ class Table(Resource):
             raise BadRequestException("The positions must be a list of integers")
         if not all(isinstance(x, int) for x in positions):
             raise BadRequestException("The positions must be a list of integers")
-
         data = self._data.iloc[positions, :]
+        meta = copy.deepcopy(self._meta)
+        if "row_tags" in self._meta:
+            meta["row_tags"] = [meta["row_tags"][k] for k in positions]
         cls = type(self)
-        return cls(data=data)
+        return cls(data=data, meta=meta)
 
     def select_by_column_positions(self, positions: List[int]) -> 'Table':
         if not isinstance(positions, list):
@@ -230,8 +297,11 @@ class Table(Resource):
         if not all(isinstance(x, int) for x in positions):
             raise BadRequestException("The positions must be a list of integers")
         data = self._data.iloc[:, positions]
+        meta = copy.deepcopy(self._meta)
+        if "column_tags" in self._meta:
+            meta["column_tags"] = [meta["column_tags"][k] for k in positions]
         cls = type(self)
-        return cls(data=data)
+        return cls(data=data, meta=meta)
 
     def select_by_row_names(self, names: List[str], use_regex=False) -> 'Table':
         if not isinstance(names, list):
@@ -243,8 +313,12 @@ class Table(Resource):
             data = self._data.filter(regex=regex, axis=0)
         else:
             data = self._data.filter(items=names, axis=0)
+        positions = [self._data.index.get_loc(k) for k in self._data.index if k in data.index]
+        meta = copy.deepcopy(self._meta)
+        if "row_tags" in self._meta:
+            meta["row_tags"] = [meta["row_tags"][k] for k in positions]
         cls = type(self)
-        return cls(data=data)
+        return cls(data=data, meta=meta)
 
     def select_by_column_names(self, names: List[str], use_regex=False) -> 'Table':
         if not isinstance(names, list):
@@ -256,8 +330,86 @@ class Table(Resource):
             data = self._data.filter(regex=regex, axis=1)
         else:
             data = self._data.filter(items=names, axis=1)
+        positions = [self._data.columns.get_loc(k) for k in self._data.columns if k in data.columns]
+        meta = copy.deepcopy(self._meta)
+        if "column_tags" in self._meta:
+            meta["column_tags"] = [meta["column_tags"][k] for k in positions]
         cls = type(self)
-        return cls(data=data)
+        return cls(data=data, meta=meta)
+
+    def select_by_row_tags(self, tags: List[dict]) -> 'Table':
+        """
+        Select table rows matching a list of tags
+
+        Example of search tags are:
+
+        - `tags = [ {"key1": "value1"} ]` to select rows having a tag `{"key1": "value1"}`
+        - `tags = [ {"key1": "value1", "key2": "value2"} ]` to select rows having tags `{"key1": "value1"} AND {"key2": "value2"}`
+        - `tags = [ {"key1": "value1"}, {"key2": "value2"} ]` to select rows having tags `{"key1": "value1"} OR {"key2": "value2"}`
+        - `tags = [ {"key1": "value1", "key2": "value2"}, {"key3": "value3"} ]` to select rows having tags `({"key1": "value1"} AND {"key2": "value2"}) OR {"key2": "value2"}`
+        - AND and OR logics can further be combined to perform complex selects
+
+        :param tags: The of tags
+        :param tags: List[dict]
+        :return: The selected table
+        :rtype: Table
+        """
+
+        if not isinstance(tags, list):
+            raise BadRequestException("A list of tags is required")
+
+        row_tags = self.get_row_tags()
+        position_union = []
+        for tag in tags:
+            position_instersect = []
+            for key, value in tag.items():
+                if not position_instersect:
+                    position_instersect = [i for i, t in enumerate(row_tags) if t.get(key) == value]
+                else:
+                    pos = [i for i, t in enumerate(row_tags) if t.get(key) == value]
+                    position_instersect = list(set(pos) & set(position_instersect))
+
+            position_union.extend(position_instersect)
+
+        position_union = sorted(list(set(position_union)))
+        return self.select_by_row_positions(position_union)
+
+    def select_by_column_tags(self, tags: List[dict]) -> 'Table':
+        """
+        Select table columns matching a list of tags
+
+        Example of search tags are:
+
+        - `tags = [ {"key1": "value1"} ]` to select columns having a tag `{"key1": "value1"}`
+        - `tags = [ {"key1": "value1", "key2": "value2"} ]` to select columns having tags `{"key1": "value1"} AND {"key2": "value2"}`
+        - `tags = [ {"key1": "value1"}, {"key2": "value2"} ]` to select columns having tags `{"key1": "value1"} OR {"key2": "value2"}`
+        - `tags = [ {"key1": "value1", "key2": "value2"}, {"key3": "value3"} ]` to select columns having tags `({"key1": "value1"} AND {"key2": "value2"}) OR {"key2": "value2"}`
+        - AND and OR logics can further be combined to perform complex selects
+
+        :param tags: The of tags
+        :param tags: List[dict]
+        :return: The selected table
+        :rtype: Table
+        """
+
+        if not isinstance(tags, list):
+            raise BadRequestException("A list of tags is required")
+
+        column_tags = self.get_column_tags()
+        position_union = []
+        for tag in tags:
+            position_instersect = []
+            for key, value in tag.items():
+                if not position_instersect:
+                    position_instersect = [i for i, t in enumerate(column_tags) if t.get(key) == value]
+                else:
+                    pos = [i for i, t in enumerate(column_tags) if t.get(key) == value]
+                    position_instersect = list(set(pos) & set(position_instersect))
+
+            position_union.extend(position_instersect)
+
+        position_union = sorted(list(set(position_union)))
+        return self.select_by_column_positions(position_union)
 
     def __str__(self):
         return super().__str__() + "\n" + \
@@ -378,7 +530,7 @@ class Table(Resource):
         return TableHeatmapView(self)
 
     @ view(view_type=TableVennDiagramView, human_name='VennDiagram', short_description='View table as Venn diagram', specs={})
-    def view_as_heatmap(self, params: ConfigParams) -> TableHeatmapView:
+    def view_as_venn_diagram(self, params: ConfigParams) -> TableHeatmapView:
         """
         View the table as Venn diagram
         """

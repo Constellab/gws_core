@@ -62,11 +62,16 @@ class TableView(BaseTableView):
 
     def to_dict(self, params: ConfigParams) -> dict:
         data = self._table.get_data()
+        row_tags = self._table.get_row_tags()
+        column_tags = self._table.get_column_tags()
+
         helper_view = TabularView()
-        helper_view.set_data(data)
+        helper_view.set_data(data, row_tags=row_tags, column_tags=column_tags)
         helper_view.from_row = params["from_row"]
         helper_view.number_of_rows_per_page = params["number_of_rows_per_page"]
         helper_view.from_column = params["from_column"]
         helper_view.number_of_columns_per_page = params["number_of_columns_per_page"]
         helper_view.replace_nan_by = params["replace_nan_by"]
-        return helper_view.to_dict(params)
+
+        view_dict = helper_view.to_dict(params)
+        return view_dict

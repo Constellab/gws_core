@@ -23,6 +23,8 @@ class TestTableView(BaseTestCase):
             dic["data"],
             table.to_dataframe().iloc[0:50, 0:5].to_dict('list')
         )
+        self.assertEqual(len(dic["row_tags"]), 50)
+        self.assertEqual(len(dic["column_tags"]), 5)
 
         tester = ViewTester(view=vw)
         dic = tester.to_dict(dict(
@@ -35,3 +37,5 @@ class TestTableView(BaseTestCase):
             dic["data"],
             table.to_dataframe().iloc[2:5, 1:3].to_dict('list')
         )
+        self.assertEqual(len(dic["row_tags"]), 3)
+        self.assertEqual(len(dic["column_tags"]), 2)
