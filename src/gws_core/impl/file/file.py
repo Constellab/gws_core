@@ -168,4 +168,4 @@ class File(FSNode):
             fp.write(data)
 
     def is_empty(self) -> bool:
-        return self.size == 0 or len(self.read(size=10)) == 0
+        return self.get_size() == 0 or len(self.read(size=10)) == 0
