@@ -38,10 +38,6 @@ class File(FSNode):
     _resource_importer: Type
 
     @property
-    def size(self):
-        return FileHelper.get_size(self.path)
-
-    @property
     def dir(self):
         return FileHelper.get_dir(self.path)
 

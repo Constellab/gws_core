@@ -22,7 +22,18 @@ class FileHelper():
 
     @classmethod
     def get_size(cls, path: PathType) -> int:
-        return os.path.getsize(path)
+        if cls.is_file(path):
+            return os.path.getsize(path)
+
+        total_size = 0
+        for dirpath, dirnames, filenames in os.walk(path):
+            for filename in filenames:
+                fp = os.path.join(dirpath, filename)
+                # skip if it is symbolic link
+                if not os.path.islink(fp):
+                    total_size += os.path.getsize(fp)
+
+        return total_size
 
     # -- E --
 

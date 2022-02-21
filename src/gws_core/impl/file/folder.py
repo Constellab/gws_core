@@ -42,9 +42,6 @@ class Folder(FSNode):
     def get_default_name(self) -> str:
         return FileHelper.get_dir_name(self.path)
 
-    def get_size(self) -> int:
-        return None
-
     @view(view_type=JSONView, human_name="View folder content", short_description="View the sub files and folders",
           default_view=True)
     def view_as_json(self, params: ConfigParams) -> JSONView:

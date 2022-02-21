@@ -161,6 +161,10 @@ class FsNodeService(BaseService):
             raise BadRequestException(GWSException.INVALID_FOLDER_ON_UPLOAD.value,
                                       GWSException.INVALID_FOLDER_ON_UPLOAD.name, {'error': error})
 
+        # Recalculate and set the folder size after all the files are set in folder
+        folder_model.fs_node_model.size = folder.get_size()
+        folder_model.fs_node_model.save()
+
         return folder_model
 
     @classmethod
