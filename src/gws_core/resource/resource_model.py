@@ -211,10 +211,23 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
             name = resource._human_name
         resource_model.name = name
 
+        # handle tags
+        tags = resource.tags
+        if tags is not None:
+            if not isinstance(tags, dict):
+                Logger.error(f"The 'tags' attribute of the resource {type(resource)} is not a dict.")
+            else:
+                resource_model.set_tags_dict(tags)
+                # register the tags globally
+                from ..tag.tag_service import TagService
+                TagService.register_tags(resource_model.get_tags())
+
         if isinstance(resource, FSNode):
 
             node: FSNode
-            if origin == origin.GENERATED:
+
+            local_file_store = LocalFileStore.get_default_instance()
+            if not local_file_store.node_exists(resource):
                 # Move the node to the LocalFileStore and create fs node model
                 node = LocalFileStore.get_default_instance().add_node_from_path(resource.path, name)
             else:

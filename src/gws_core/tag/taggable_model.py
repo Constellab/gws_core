@@ -23,6 +23,10 @@ class TaggableModel(PeeweeModel):
     def set_tags(self, tags: List[Tag]) -> None:
         self.tags = TagHelper.tags_to_str(tags)
 
+    def set_tags_dict(self, tags: Dict[str, str]) -> None:
+        tags_list = TagHelper.tags_dict_to_list(tags)
+        self.set_tags(tags_list)
+
     def get_tag_value(self, tag_key: str) -> Optional[str]:
         tags = [x for x in self.get_tags() if x.key == tag_key]
         if len(tags) > 0:

@@ -1,6 +1,6 @@
 
 
-from typing import List
+from typing import Dict, List
 
 from gws_core import (BaseTestCase, ConfigParams, File, IExperiment, ITask,
                       Resource, ResourceModel, RField, TableFile, Tag, Task,
@@ -12,6 +12,8 @@ from gws_core.data_provider.data_provider import DataProvider
 from gws_core.resource.resource_model import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
 from gws_core.tag.tag import TagHelper
+from gws_core.tag.tag_model import TagModel
+from gws_core.tag.tag_service import TagService
 
 
 @resource_decorator(unique_name="ForSearch")
@@ -47,10 +49,10 @@ class TestResourceModel(BaseTestCase):
         nameTag = Tag('name', 'test')
         otherTag = Tag('other', 'super')
         self._create_resource_with_tag(
-            'this is information about a great banana', [nameTag],
+            'this is information about a great banana', {'name': 'test'},
             ResourceOrigin.GENERATED, task._task_model)
-        self._create_resource_with_tag('the weather is not so great today', [
-                                       nameTag, otherTag], ResourceOrigin.UPLOADED)
+        self._create_resource_with_tag('the weather is not so great today',
+                                       {'name': 'test', 'other': 'super'}, ResourceOrigin.UPLOADED)
 
         search_dict: SearchDict = SearchDict()
 
@@ -92,25 +94,6 @@ class TestResourceModel(BaseTestCase):
         search_dict.filtersCriteria = [self._get_data_filter("gre*")]
         self.search(search_dict, 2)
 
-    def _get_tag_filter(self, value: str) -> SearchFilterCriteria:
-        return {'key': 'tags', 'operator': 'CONTAINS', 'value': value}
-
-    def _get_data_filter(self, value: str) -> SearchFilterCriteria:
-        return {'key': 'data', 'operator': 'MATCH', 'value': value}
-
-    def _create_resource_with_tag(
-            self, text: str,  tags: List[Tag],
-            origin: ResourceOrigin, task: TaskModel = None) -> ResourceModel:
-        for_search: ForSearch = ForSearch.create(text)
-        resource_model = ResourceModel.from_resource(for_search, origin=ResourceOrigin.UPLOADED)
-        resource_model.set_tags(tags)
-        resource_model.origin = origin
-
-        if task:
-            resource_model.task_model = task
-            resource_model.experiment = task.experiment
-        return resource_model.save()
-
     def search(self, search_dict: SearchDict, expected_nb_of_result: int) -> None:
         paginator = ResourceService.search(search_dict).to_json()
         self.assertEqual(paginator['total_number_of_items'], expected_nb_of_result)
@@ -134,3 +117,31 @@ class TestResourceModel(BaseTestCase):
 
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_model.id)
         self.assertIsInstance(resource_model.get_resource(), TableFile)
+
+    def test_resource_tags(self):
+        resource_model: ResourceModel = self._create_resource_with_tag('',
+                                                                       {'aaaaa': 'bbbbb'}, ResourceOrigin.UPLOADED)
+        resource_model = resource_model.refresh()
+        self.assertEqual(resource_model.get_tag_value('aaaaa'), 'bbbbb')
+
+        tag_model: TagModel = TagService.get_by_key('aaaaa')
+        self.assertTrue(tag_model.has_value('bbbbb'))
+
+    def _get_tag_filter(self, value: str) -> SearchFilterCriteria:
+        return {'key': 'tags', 'operator': 'CONTAINS', 'value': value}
+
+    def _get_data_filter(self, value: str) -> SearchFilterCriteria:
+        return {'key': 'data', 'operator': 'MATCH', 'value': value}
+
+    def _create_resource_with_tag(
+            self, text: str,  tags: Dict[str, str],
+            origin: ResourceOrigin, task: TaskModel = None) -> ResourceModel:
+        for_search: ForSearch = ForSearch.create(text)
+        for_search.tags = tags
+        resource_model = ResourceModel.from_resource(for_search, origin=ResourceOrigin.UPLOADED)
+        resource_model.origin = origin
+
+        if task:
+            resource_model.task_model = task
+            resource_model.experiment = task.experiment
+        return resource_model.save()

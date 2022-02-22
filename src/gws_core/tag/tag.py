@@ -15,7 +15,7 @@ default_tags = {
     "type": ['DATA', 'ARRAY', 'EXPERIMENT', 'JSON'],
     "name": []
 }
-MAX_TAG_LENGTH = 20
+MAX_TAG_LENGTH = 30
 
 
 class Tag(BaseModel):
@@ -28,9 +28,12 @@ class Tag(BaseModel):
         if len(key) > MAX_TAG_LENGTH:
             key = key[0: MAX_TAG_LENGTH]
 
-        if value and len(value) > MAX_TAG_LENGTH:
-            value = value[0: MAX_TAG_LENGTH]
-        super().__init__(key=key, value=value)
+        if value:
+            value = value.lower()
+            if len(value) > MAX_TAG_LENGTH:
+                value = value[0: MAX_TAG_LENGTH]
+
+        super().__init__(key=key.lower(), value=value)
 
     def __str__(self) -> str:
         return self.key + ':' + self.value
@@ -93,6 +96,17 @@ class TagHelper():
 
         for tag_str in tags.split(TAGS_SEPARATOR):
             tags_list.append(Tag.from_string(tag_str))
+        return tags_list
+
+    @classmethod
+    def tags_dict_to_list(cls, tags: Dict[str, str]) -> List[Tag]:
+        if not tags:
+            return []
+
+        tags_list: List[Tag] = []
+
+        for tag_key, tag_value in tags.items():
+            tags_list.append(Tag(tag_key, tag_value))
         return tags_list
 
     @classmethod

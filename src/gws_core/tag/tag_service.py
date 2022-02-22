@@ -25,6 +25,13 @@ class TagService():
             TagModel.create(key, value).save()
 
     @classmethod
+    def register_tags(cls, tags: List[Tag]) -> List[TagModel]:
+        tag_models: List[TagModel] = []
+        for tag in tags:
+            tag_models.append(cls.register_tag(tag.key, tag.value))
+        return tag_models
+
+    @classmethod
     def register_tag(cls, tag_key: str, tag_value: str) -> TagModel:
         tag: TagModel = TagModel.find_by_key(tag_key)
 
@@ -44,10 +51,12 @@ class TagService():
     @classmethod
     def search_by_key(cls,
                       tag_key: str) -> List[TagModel]:
-
-        # tt = list(TagModel.select().order_by(TagModel.key))
-        # tt = list(TagModel.select(TagModel.key == tag_key).order_by(TagModel.key))
         return list(TagModel.select().where(TagModel.key.contains(tag_key)).order_by(TagModel.key))
+
+    @classmethod
+    def get_by_key(cls,
+                   tag_key: str) -> TagModel:
+        return TagModel.select().where(TagModel.key == tag_key).first()
 
     @classmethod
     @transaction()

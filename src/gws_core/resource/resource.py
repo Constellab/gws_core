@@ -3,9 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict, Union, final
+from typing import Dict, List, Union, final
 
 from gws_core.resource.kv_store import KVStore
+from gws_core.tag.tag import Tag
 
 from ..config.config_types import ConfigParams
 from ..core.exception.exceptions.bad_request_exception import \
@@ -26,6 +27,9 @@ class Resource(Base):
 
     uid: str = UUIDRField(searchable=True)
     name: str
+
+    # provide tags to this attribute to save them on resource generation
+    tags: Dict[str, str] = {}
 
     # Provided at the Class level automatically by the @ResourceDecorator
     # //!\\ Do not modify theses values
@@ -109,15 +113,15 @@ class Resource(Base):
 
         return clone
 
-    @final
-    @classmethod
+    @ final
+    @ classmethod
     def __get_resource_r_fields__(cls) -> Dict[str, BaseRField]:
         """Get the list of resource's r_fields,
         the key is the property name, the value is the BaseRField object
         """
         return ReflectorHelper.get_property_names_of_type(cls, BaseRField)
 
-    @final
+    @ final
     def __getattribute__(self, name):
         """Override get attribute to lazy load kvstore Rfields
 
