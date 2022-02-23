@@ -9,8 +9,6 @@ from ..core.utils.settings import ModuleInfo, Settings
 class BrickVersion(TypedDict):
     name: str
     version: str
-    repo_type: str
-    repo_commit: str
 
 
 class LabConfig(TypedDict):
@@ -91,8 +89,6 @@ class BrickHelper():
             brick_versions.append({
                 'name': brick['name'],
                 'version': brick['version'],
-                'repo_type': brick['repo_type'],
-                'repo_commit': brick['repo_commit']
             })
         return {
             'version': 1,
