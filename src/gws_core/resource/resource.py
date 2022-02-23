@@ -132,9 +132,14 @@ class Resource(Base):
         """
         attr = super().__getattribute__(name)
 
-        if isinstance(attr, BaseRField) and name in self._kv_store:
-            value = attr.deserialize(self._kv_store.get(name))
-            setattr(self, name, value)
-            return value
+        if isinstance(attr, BaseRField):
+            if name in self._kv_store:
+                value = attr.deserialize(self._kv_store.get(name))
+                setattr(self, name, value)
+                return value
+            else:
+                # if the key is not in the kv_store return the default
+                # this can happend when the RField is new
+                return attr.get_default_value()
 
         return attr

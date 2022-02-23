@@ -134,4 +134,4 @@ class SystemService:
         if result:
             Logger.info('Lab started successfully registered on central')
         else:
-            Logger.error('Error during la start registration with central')
+            Logger.error('Error during lab start registration with central')
