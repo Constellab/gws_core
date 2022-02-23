@@ -5,7 +5,10 @@
 
 import sys
 
+from gws_core.brick.brick_helper import BrickHelper
+from gws_core.central.central_service import CentralService
 from gws_core.core.db.db_migration import DbMigrationService
+from gws_core.core.utils.logger import Logger
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 
 from ..brick.brick_service import BrickService
@@ -114,3 +117,21 @@ class SystemService:
             raise UnauthorizedException('The kill method can only be called in dev environment')
 
         sys.exit()
+
+    @classmethod
+    def register_lab_start(cls) -> None:
+        """Method to call central after start to mark the lab as started in central
+        """
+        settings: Settings = Settings.retrieve()
+
+        if settings.is_dev:
+            return
+
+        Logger.info('Registering lab start on central')
+
+        result = CentralService.register_lab_start(BrickHelper.get_lab_config())
+
+        if result:
+            Logger.info('Lab started successfully registered on central')
+        else:
+            Logger.error('Error during la start registration with central')

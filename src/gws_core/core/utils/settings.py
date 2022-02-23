@@ -27,7 +27,7 @@ class ModuleInfo(TypedDict):
     path: str
     version: str
     is_brick: bool
-    repo_type: str
+    repo_type: Literal['app', 'git', 'pip']
     repo_commit: str
     name: str
 

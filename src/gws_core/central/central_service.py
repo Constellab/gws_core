@@ -4,9 +4,11 @@
 # About us: https://gencovery.com
 
 import json
-from typing import Any, Dict, List
-from gws_core.experiment.experiment_dto import SaveExperimentToCentralDTO
+from typing import Dict, List, TypedDict
 
+from gws_core.brick.brick_helper import LabConfig
+from gws_core.brick.brick_service import BrickService
+from gws_core.experiment.experiment_dto import SaveExperimentToCentralDTO
 from gws_core.impl.file.file_helper import FileHelper
 
 from ..core.exception.exceptions import BadRequestException
@@ -18,6 +20,10 @@ from ..project.project_dto import CentralProject
 from ..user.credentials_dto import CredentialsDTO
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
+
+
+class LabStartDTO(TypedDict):
+    lab_config: LabConfig
 
 
 class CentralService(BaseService):
@@ -55,6 +61,24 @@ class CentralService(BaseService):
         response = ExternalApiService.post(central_api_url, credentials.dict())
 
         return response.status_code == 201
+
+    @classmethod
+    def register_lab_start(cls, lab_config: LabConfig) -> bool:
+        """
+        Call the central api to mark the lab as started
+        """
+        central_api_url: str = cls._get_central_api_url(f"{cls._external_labs_route}/start")
+
+        body: LabStartDTO = {
+            "lab_config": lab_config
+        }
+
+        response = ExternalApiService.put(central_api_url, body, cls._get_request_header())
+
+        if response.status_code != 200:
+            BrickService.log_brick_error(CentralService, f"Can't register lab start on central. Error : {response.text}")
+            return False
+        return True
 
     @classmethod
     def get_current_user_projects(cls) -> List[CentralProject]:

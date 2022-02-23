@@ -3,14 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import os
+from threading import Thread
 
 import uvicorn
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 from starlette_context.middleware.context_middleware import ContextMiddleware
-
-from gws_core.brick.brick_helper import BrickHelper
 
 from ._core_app_importer import *
 from .central.central_app import central_app
@@ -93,6 +90,10 @@ class App:
         cls.app.add_middleware(
             ContextMiddleware
         )
+
+        # Registrer the lab start. Use a new thread to prevent blocking the start
+        th = Thread(target=SystemService.register_lab_start)
+        th.start()
 
         # api routes
         cls.app.mount("/core-api/", core_app)
