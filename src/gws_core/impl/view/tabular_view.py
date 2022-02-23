@@ -25,13 +25,9 @@ class TabularView(View):
         "type": "table"
         "title": str,
         "caption": str,
-        "data": {'column_name_1': List, 'column_name_2: List, ...},
-        "row_names": List[str],
-        "row_tags": List[Dict[str, str]] | None,
-        "column_tags": List[Dict[str, str]] | None,
-        #"data" List[List[float]],
-        #"rows": List[Dict],
-        #"columns": List[Dict],
+        "data" List[List[float]],
+        "rows": List[Dict["name": str, tags: Dict[str, str]]],
+        "columns": List[Dict["name": str, tags: Dict[str, str]]],
         "from_row": int,
         "number_of_rows_per_page": int,
         "from_column": int,
@@ -66,7 +62,9 @@ class TabularView(View):
 
     def _set_row_tags(self, row_tags: List[Dict[str, str]]):
         if row_tags is None:
+            self._row_tags = [{}] * self._data.shape[0]
             return
+
         if not isinstance(row_tags, list):
             raise BadRequestException("The row_tags must be a list")
         if len(row_tags) != self._data.shape[0]:
@@ -81,7 +79,9 @@ class TabularView(View):
 
     def _set_column_tags(self, column_tags: List[Dict[str, str]]):
         if column_tags is None:
+            self._column_tags = [{}] * self._data.shape[1]
             return
+
         if not isinstance(column_tags, list):
             raise BadRequestException("The column_tags must be a list")
         if len(column_tags) != self._data.shape[1]:
@@ -94,10 +94,10 @@ class TabularView(View):
                 "The column_tags cannot be cleaned. Please check that column_tags is a list of dict") from err
         self._column_tags = column_tags
 
-    def _slice(self, data: DataFrame, from_row_index: int, to_row_index: int,
-               from_column_index: int, to_column_index: int, replace_nan_by: str = "") -> dict:
-        last_row_index = data.shape[0]
-        last_column_index = data.shape[1]
+    def _slice(self, from_row_index: int, to_row_index: int,
+               from_column_index: int, to_column_index: int) -> dict:
+        last_row_index = self._data.shape[0]
+        last_column_index = self._data.shape[1]
         from_row_index = min(max(from_row_index, 0), last_row_index-1)
         from_column_index = min(max(from_column_index, 0), last_column_index-1)
         to_row_index = min(min(to_row_index, from_row_index + self.MAX_NUMBER_OF_ROWS_PER_PAGE), last_row_index)
@@ -105,54 +105,65 @@ class TabularView(View):
             min(to_column_index, from_column_index + self.MAX_NUMBER_OF_COLUMNS_PER_PAGE),
             last_column_index)
 
-        # Remove NaN values to convert to json
-        data: DataFrame = data.fillna(replace_nan_by)
-
-        sliced_data = data.iloc[
+        sliced_data = self._data.iloc[
             from_row_index:to_row_index,
             from_column_index:to_column_index,
-        ].to_dict('list')
+        ]
 
-        return sliced_data, (from_row_index, to_row_index, from_column_index, to_column_index, )
+        sliced_row_tags = self._row_tags[from_row_index:to_row_index]
+        sliced_column_tags = self._column_tags[from_column_index:to_column_index]
+
+        return {
+            "data": sliced_data,
+            "row_tags": sliced_row_tags,
+            "column_tags": sliced_column_tags,
+            "indexes": (from_row_index, to_row_index, from_column_index, to_column_index,)
+        }
 
     def to_dict(self, params: ConfigParams) -> dict:
-        data = self._data
-        if data is None:
-            data = DataFrame()
+        if self._data is None:
+            raise BadRequestException("No data found")
 
         # continue ...
         from_row: int = self.from_row
         number_of_rows_per_page: int = self.number_of_rows_per_page
         from_column: int = self.from_column
         number_of_columns_per_page: int = self.number_of_columns_per_page
-        replace_nan_by: str = self.replace_nan_by
-        if replace_nan_by == "empty":
-            replace_nan_by = ""
 
-        total_number_of_rows = data.shape[0]
-        total_number_of_columns = data.shape[1]
+        total_number_of_rows = self._data.shape[0]
+        total_number_of_columns = self._data.shape[1]
 
         from_row_index: int = from_row - 1
         from_column_index: int = from_column - 1
         to_row_index: int = from_row_index + number_of_rows_per_page
         to_column_index: int = from_column_index + number_of_columns_per_page
 
-        data_list, current_slice_indexes = self._slice(
-            data,
+        sliced_data = self._slice(
             from_row_index=from_row_index,
             to_row_index=to_row_index,
             from_column_index=from_column_index,
-            to_column_index=to_column_index,
-            replace_nan_by=replace_nan_by)
+            to_column_index=to_column_index)
 
-        from_row_index, to_row_index, from_column_index, to_column_index = current_slice_indexes
+        data = sliced_data["data"]
+        row_tags = sliced_data["row_tags"]
+        column_tags = sliced_data["column_tags"]
+        from_row_index, to_row_index, from_column_index, to_column_index = sliced_data["indexes"]
+
+        # Remove NaN values to convert to json
+        replace_nan_by: str = self.replace_nan_by
+        if replace_nan_by == "empty":
+            replace_nan_by = ""
+        data: DataFrame = data.fillna(replace_nan_by)
+
+        data_dict = data.to_dict('split')
+        rows = [{"name": name, "tags": row_tags[i]} for i, name in enumerate(data_dict["index"])]
+        columns = [{"name": name, "tags": column_tags[i]} for i, name in enumerate(data_dict["columns"])]
 
         return {
             **super().to_dict(params),
-            "data": data_list,
-            "row_names": data.index.tolist(),
-            "row_tags": self._row_tags[from_row_index:to_row_index] if self._row_tags else None,
-            "column_tags": self._column_tags[from_column_index:to_column_index] if self._column_tags else None,
+            "data": data_dict["data"],
+            "rows": rows,
+            "columns": columns,
             "from_row": from_row_index,
             "number_of_rows_per_page": number_of_rows_per_page,
             "from_column": from_column_index,

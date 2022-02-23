@@ -27,10 +27,9 @@ class HeatmapView(View):
         "type": "heatmap-view",
         "title": str,
         "caption": str,
-        "data": {'column_name_1': List, 'column_name_2: List, ...},
-        "row_names": List[str],
-        "row_tags": List[Dict[str, str]],
-        "column_tags": List[Dict[str, str]],
+        "data" List[List[float]],
+        "rows": List[Dict["name": str, tags: Dict[str, str]]],
+        "columns": List[Dict["name": str, tags: Dict[str, str]]],
         "from_row": int,
         "number_of_rows_per_page": int,
         "from_column": int,
@@ -64,7 +63,7 @@ class HeatmapView(View):
 
     def to_dict(self, params: ConfigParams) -> dict:
         if self._data is None:
-            self._data = DataFrame()
+            raise BadRequestException("No data found")
 
         helper_view = TabularView()
         helper_view.set_data(self._data, row_tags=self._row_tags, column_tags=self._column_tags)

@@ -29,10 +29,9 @@ class TableView(BaseTableView):
         "type": "table"
         "title": str,
         "caption": str,
-        "data": {'column_name_1': List, 'column_name_2: List, ...},
-        "row_names": List[str],
-        "row_tags": List[Dict[str, str]],
-        "column_tags": List[Dict[str, str]],
+        "data" List[List[float]],
+        "rows": List[Dict["name": str, tags: Dict[str, str]]],
+        "columns": List[Dict["name": str, tags: Dict[str, str]]],
         "from_row": int,
         "number_of_rows_per_page": int,
         "from_column": int,
