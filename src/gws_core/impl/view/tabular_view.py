@@ -25,8 +25,13 @@ class TabularView(View):
         "type": "table"
         "title": str,
         "caption": str,
-        "data": {'column_name_1': list, 'column_name_2: list, ...},
-        "row_names": list
+        "data": {'column_name_1': List, 'column_name_2: List, ...},
+        "row_names": List[str],
+        "row_tags": List[Dict[str, str]] | None,
+        "column_tags": List[Dict[str, str]] | None,
+        #"data" List[List[float]],
+        #"rows": List[Dict],
+        #"columns": List[Dict],
         "from_row": int,
         "number_of_rows_per_page": int,
         "from_column": int,
@@ -48,7 +53,7 @@ class TabularView(View):
 
     _type = "table-view"
     _data: DataFrame = None
-    _row_tags: List[Dict] = None
+    _row_tags: List[Dict[str, str]] = None
     _column_tags: List[Dict[str, str]] = None
 
     def set_data(

@@ -4,9 +4,10 @@
 # About us: https://gencovery.com
 
 import math
-from typing import List, Union, Dict
+from typing import Dict, List, Union
 
 import numpy
+import pandas
 from pandas import DataFrame
 
 from ...config.config_types import ConfigParams
@@ -39,7 +40,6 @@ class BoxPlotView(View):
             "x_label": str,
             "y_label": str,
             "x_tick_labels": List[str] | None,
-            "x_tick_tags": List[Dict[str, str]] | None,
             "series": [
                 {
                     "data": {
@@ -51,6 +51,7 @@ class BoxPlotView(View):
                         "q3": List[Float],
                         "lower_whisker": List[Float],
                         "upper_whisker": List[Float],
+                        "tags": List[Dict[str,str]] | None
                     }
                 },
                 ...
@@ -63,19 +64,18 @@ class BoxPlotView(View):
     x_label: str = None
     y_label: str = None
     x_tick_labels: List[str] = None
-    x_tick_tags: List[Dict[str, str]] = None
     _series: List = None
     _type: str = "box-plot-view"
     _title: str = "Box Plot"
 
-    def add_data(self, *, data: Union[List[List[float]], DataFrame] = None):
+    def add_data(self, *, data: Union[List[List[float]], DataFrame] = None, tags: List[Dict[str, str]] = None):
         """
         Add series of raw data.
 
-        :params data: The data that will be used to compute histogram
-        :type data: list of str
-        :params name: The name of the series
-        :type name: str
+        :params data: The data that will be used to compute box plots. Each data column will give one box plot.
+        :type data: DataFrame or List[List[float]]
+        :params tags: [optional] The list of `tags`. The length of `tags` must be equal to the number of columns in `data`
+        :type tags: List[Dict[str, str]]
         """
 
         if not self._series:
@@ -86,6 +86,10 @@ class BoxPlotView(View):
 
         if isinstance(data, list):
             data = DataFrame(data)
+
+        if tags is not None:
+            if not isinstance(tags, list) or len(tags) != data.shape[1]:
+                raise BadRequestException("The tags must a list of length equal to the number of columns in data")
 
         ymin = data.min(skipna=True).to_list()
         ymax = data.max(skipna=True).to_list()
@@ -107,7 +111,8 @@ class BoxPlotView(View):
             min=ymin,
             max=ymax,
             lower_whisker=lower_whisker.tolist(),
-            upper_whisker=upper_whisker.tolist()
+            upper_whisker=upper_whisker.tolist(),
+            tags=tags
         )
 
     def add_series(
@@ -119,12 +124,13 @@ class BoxPlotView(View):
             min: List[float] = None,
             max: List[float] = None,
             lower_whisker: List[float] = None,
-            upper_whisker: List[float] = None):
+            upper_whisker: List[float] = None,
+            tags: List[Dict[str, str]] = None):
         """
-        Add series of pre-computed histogram x and y values.
+        Add series of pre-computed x and y box values.
         Vector x is the vector of bin centers and y contains the magnitudes at corresponding x positions.
 
-        :params x: The bin-center values
+        :params x: The x-axis positions of boxes
         :type x: list of float
         :params median: The median
         :type median: list of float
@@ -140,6 +146,8 @@ class BoxPlotView(View):
         :type lower_whisker: list of float
         :params upper_whisker: The upper_whisker values
         :type upper_whisker: list of float
+        :params tags: [optional] The list of `tags`. The length of `tags` must be equal to the number of columns in `x`
+        :type tags: List[Dict[str, str]]
         """
 
         if not self._series:
@@ -156,6 +164,10 @@ class BoxPlotView(View):
         if (upper_whisker is None) or not isinstance(upper_whisker, list):
             raise BadRequestException("The upper_whisker data is required and must be a list of float")
 
+        if tags is not None:
+            if not isinstance(tags, list) or len(tags) != len(x):
+                raise BadRequestException("The tags must a list of length equal to the length of x")
+            tags = [{str(k): str(v) for k, v in t.items()} for t in tags]
         self._series.append({
             "data": {
                 "x": x,
@@ -165,7 +177,8 @@ class BoxPlotView(View):
                 "min": self._clean_nan(min),
                 "max": self._clean_nan(max),
                 "lower_whisker": self._clean_nan(lower_whisker),
-                "upper_whisker": self._clean_nan(upper_whisker)
+                "upper_whisker": self._clean_nan(upper_whisker),
+                "tags": tags
             },
         })
 
@@ -176,7 +189,6 @@ class BoxPlotView(View):
                 "x_label": self.x_label,
                 "y_label": self.y_label,
                 "x_tick_labels": self.x_tick_labels,
-                "x_tick_tags": self.x_tick_tags,
                 "series": self._series,
             }
         }

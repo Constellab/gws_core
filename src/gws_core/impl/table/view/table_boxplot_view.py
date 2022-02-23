@@ -7,8 +7,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import numpy
-
 from ....config.config_types import ConfigParams
 from ....config.param_spec import ListParam, ParamSet, StrParam
 from ....resource.view_types import ViewSpecs
@@ -80,7 +78,7 @@ class TableBoxPlotView(BaseTableView):
     }
 
     def to_dict(self, params: ConfigParams) -> dict:
-        data = self._table.get_data()
+        data = self._table.select_numeric_columns().get_data()
         x_label = params.get_value("x_label", "")
         y_label = params.get_value("y_label", "")
         x_tick_labels = params.get_value("x_tick_labels", [])
@@ -101,7 +99,17 @@ class TableBoxPlotView(BaseTableView):
         for param_series in series:
             y_data_columns = param_series.get("y_data_columns")
             self.check_column_names(y_data_columns)
-            box_view.add_data(data=data[y_data_columns])
+
+            selected_table = self._table.select_by_column_names(y_data_columns)
+
+            # create tags using {column_name, colunm_tags}
+            extended_col_tags = selected_table.get_column_tags()
+            extended_col_tags = [{"name": y_data_columns[i], **t} for i, t in enumerate(extended_col_tags)]
+
+            box_view.add_data(
+                data=selected_table.get_data(),  # data[y_data_columns],
+                tags=extended_col_tags
+            )
 
         # if possible, try to use y_data_columns as x_tick_labels
         if not x_tick_labels:

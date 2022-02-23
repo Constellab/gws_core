@@ -3,10 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from typing import Dict, List, Union
+
 from pandas import DataFrame
-from .barplot_view import BarPlotView
-from typing import List, Union
+
 from ...config.config_types import ConfigParams
+from .barplot_view import BarPlotView
+
 
 class StackedBarPlotView(BarPlotView):
     """
@@ -31,6 +34,7 @@ class StackedBarPlotView(BarPlotView):
                     "data": {
                         "x": List[Float],
                         "y": List[Float],
+                        "tags": List[Dict[str,str]] | None
                     },
                     "name": str,
                 },
@@ -47,15 +51,30 @@ class StackedBarPlotView(BarPlotView):
     _title: str = "Stacked-Bar Plot"
     normalize = False
     _series_sums: DataFrame = None
-    
-    def add_series(self, *, x: Union[List[float], List[str], ] = None, y: List[float] = None, name: str = None):
+
+    def add_series(self, *,
+                   x: Union[List[float], List[str], ] = None, y: List[float] = None, name: str = None,
+                   tags: List[Dict[str, str]] = None):
+        """
+        Add a series of stacked-bars to plot
+
+        :params x: The x-axis positions of bars
+        :type x: list of float
+        :params y: The y-axis magnitudes of bars
+        :type y: list of float
+        :params name: The name of the series
+        :type name: str
+        :params tags: [optional] The list of `tags`. The length of `tags` must be equal to the number of columns in `x`
+        :type tags: List[Dict[str, str]]
+        """
+
         if self.normalize:
             if self._series_sums is None:
                 self._series_sums = DataFrame(y)
             else:
                 self._series_sums = self._series_sums + DataFrame(y)
 
-        super().add_series(x=x,y=y,name=name)
+        super().add_series(x=x, y=y, name=name, tags=tags)
 
     def to_dict(self, params: ConfigParams) -> dict:
         view_dict = super().to_dict(params)
@@ -63,6 +82,6 @@ class StackedBarPlotView(BarPlotView):
             for i, _ in enumerate(view_dict["data"]["series"]):
                 df = view_dict["data"]["series"][i]["data"]["y"]
                 df = DataFrame(df) / self._series_sums
-                view_dict["data"]["series"][i]["data"]["y"] = df.iloc[:,0].values.tolist()
-        
+                view_dict["data"]["series"][i]["data"]["y"] = df.iloc[:, 0].values.tolist()
+
         return view_dict

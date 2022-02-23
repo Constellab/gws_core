@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List, Union, Dict
+from typing import Dict, List, Union
 
 from pandas import DataFrame
 
@@ -37,12 +37,12 @@ class BarPlotView(View):
             "x_label": str,
             "y_label": str,
             "x_tick_labels": List[str] | None,
-            "x_tick_tags": List[Dict[str, str]] | None,
             "series": [
                 {
                     "data": {
                         "x": List[Float],
                         "y": List[Float],
+                        "tags": List[Dict[str,str]] | None
                     },
                     "name": str,
                 },
@@ -61,7 +61,21 @@ class BarPlotView(View):
     _type: str = "bar-plot-view"
     _title: str = "Bar Plot"
 
-    def add_series(self, *, x: Union[List[float], List[str], ] = None, y: List[float] = None, name: str = None):
+    def add_series(self, *, x: Union[List[float], List[str], ] = None, y: List[float] = None, name: str = None,
+                   tags: List[Dict[str, str]] = None):
+        """
+        Add a series of bars to plot
+
+        :params x: The x-axis positions of bars
+        :type x: list of float
+        :params y: The y-axis magnitudes of bars
+        :type y: list of float
+        :params name: The name of the series
+        :type name: str
+        :params tags: [optional] The list of `tags`. The length of `tags` must be equal to the number of columns in `x`
+        :type tags: List[Dict[str, str]]
+        """
+
         if not self._series:
             self._series = []
 
@@ -70,10 +84,15 @@ class BarPlotView(View):
 
         if x is None:
             x = list(range(0, len(y)))
+        if tags is not None:
+            if not isinstance(tags, list) or len(tags) != len(x):
+                raise BadRequestException("The tags must a list of length equal to the length of x")
+            tags = [{str(k): str(v) for k, v in t.items()} for t in tags]
         self._series.append({
             "data": {
                 "x": x,
                 "y": y,
+                "tags": tags
             },
             "name": name,
         })

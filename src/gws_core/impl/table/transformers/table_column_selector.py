@@ -3,8 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from pandas import DataFrame
-
 from ....config.config_types import ConfigParams, ConfigSpecs
 from ....config.param_spec import BoolParam, StrParam
 from ....task.transformer.transformer import Transformer, transformer_decorator
@@ -51,5 +49,5 @@ class TableColumnSelector(Transformer):
         )
 
         table = Table(data=data)
-        table.name = source.name + " (Column sliced)"
+        # table.name = source.name + " (Column sliced)"
         return table

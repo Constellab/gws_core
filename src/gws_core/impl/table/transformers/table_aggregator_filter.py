@@ -9,10 +9,6 @@ from ....config.config_types import ConfigParams, ConfigSpecs
 from ....config.param_spec import FloatParam, ParamSet, StrParam
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ...table.table import Table
-from ..helper.constructor.num_data_filter_param import \
-    NumericDataFilterParamConstructor
-from ..helper.constructor.text_data_filter_param import \
-    TextDataFilterParamConstructor
 from ..helper.table_aggregator_helper import TableAggregatorHelper
 from ..helper.table_filter_helper import TableFilterHelper
 
@@ -72,5 +68,5 @@ class TableAggregatorFilter(Transformer):
             )
 
         table = Table(data=data)
-        table.name = source.name + " (Aggregation filter)"
+        # table.name = source.name + " (Aggregation filter)"
         return table

@@ -34,12 +34,12 @@ class ScatterPlot2DView(View):
             "x_label": str,
             "y_label": str,
             "x_tick_labels": List[str] | None,
-            "x_tick_tags": List[Dict[str, str]] | None,
             "series": [
                 {
                     "data": {
                         "x": List[Float],
                         "y": List[Float],
+                        "tags": List[Dict[str,str]] | None
                     },
                     "x_name": str,
                     "y_name": str,
@@ -54,25 +54,43 @@ class ScatterPlot2DView(View):
     x_label: str = None
     y_label: str = None
     x_tick_labels: List[str] = None
-    x_tick_tags: List[Dict[str, str]] = None
     _series: List = None
     _type: str = "scatter-plot-2d-view"
     _title: str = "2D-Scatter Plot"
 
     def add_series(
-            self, *, x: List[float],
-            y: List[float],
-            x_name: str = None, y_name: str = None):
+            self, *, x: List[float], y: List[float],
+            x_name: str = None, y_name: str = None, tags: List[Dict[str, str]] = None):
+        """
+        Add a series of points to plot
+
+        :params x: The x-axis positions of points
+        :type x: list of float
+        :params y: The y-axis magnitudes of points
+        :type y: list of float
+        :params x_name: [optional] The name of x-axis data
+        :type x_name: str
+        :params y_name: [optional] The name of y-axis data
+        :type y_name: str
+        :params tags: [optional] The list of `tags` of points. The length of `tags` must be equal to the number of columns in `x`
+        :type tags: List[Dict[str, str]]
+        """
+
         if not self._series:
             self._series = []
         if not isinstance(y, list):
             raise BadRequestException("The y-data is required and must be a list of float")
         if x is None:
             x = list(range(0, len(y)))
+        if tags is not None:
+            if not isinstance(tags, list) or len(tags) != len(x):
+                raise BadRequestException("The tags must a list of length equal to the length of x")
+            tags = [{str(k): str(v) for k, v in t.items()} for t in tags]
         self._series.append({
             "data": {
                 "x": x,
-                "y": y
+                "y": y,
+                "tags": tags
             },
             "x_name": x_name,
             "y_name": y_name,
@@ -85,7 +103,6 @@ class ScatterPlot2DView(View):
                 "x_label": self.x_label,
                 "y_label": self.y_label,
                 "x_tick_labels": self.x_tick_labels,
-                "x_tags": self.x_tick_tags,
                 "series": self._series,
             }
         }

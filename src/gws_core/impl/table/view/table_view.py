@@ -29,8 +29,10 @@ class TableView(BaseTableView):
         "type": "table"
         "title": str,
         "caption": str,
-        "data": {'column_name_1': list, 'column_name_2: list, ...},
-        "row_names": list
+        "data": {'column_name_1': List, 'column_name_2: List, ...},
+        "row_names": List[str],
+        "row_tags": List[Dict[str, str]],
+        "column_tags": List[Dict[str, str]],
         "from_row": int,
         "number_of_rows_per_page": int,
         "from_column": int,
@@ -64,7 +66,6 @@ class TableView(BaseTableView):
         data = self._table.get_data()
         row_tags = self._table.get_row_tags()
         column_tags = self._table.get_column_tags()
-
         helper_view = TabularView()
         helper_view.set_data(data, row_tags=row_tags, column_tags=column_tags)
         helper_view.from_row = params["from_row"]
@@ -72,6 +73,5 @@ class TableView(BaseTableView):
         helper_view.from_column = params["from_column"]
         helper_view.number_of_columns_per_page = params["number_of_columns_per_page"]
         helper_view.replace_nan_by = params["replace_nan_by"]
-
         view_dict = helper_view.to_dict(params)
         return view_dict

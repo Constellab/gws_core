@@ -111,7 +111,7 @@ class Table(Resource):
         if not isinstance(value, (str, int, float)):
             raise BadRequestException("The tag value must be a string, int or float")
 
-        self._meta[axis + "_tags"][index][key] = str(value)
+        self._meta[axis + "_tags"][index][str(key)] = str(value)
 
     def add_row_tag(self, row_index: int, key: str, value: Union[str, int, float]):
         """
@@ -146,6 +146,12 @@ class Table(Resource):
             raise BadRequestException("The tags must be a list")
         if len(tags) != self._data.shape[0]:
             raise BadRequestException("The length of tags must be equal to the number of rows")
+
+        try:
+            tags = [{str(k): str(v) for k, v in t.items()} for t in tags]
+        except:
+            raise BadRequestException("The tags are not valid. Please check")
+
         self._meta["row_tags"] = tags
 
     def set_column_tags(self, tags: list):
@@ -153,6 +159,12 @@ class Table(Resource):
             raise BadRequestException("The tags must be a list")
         if len(tags) != self._data.shape[1]:
             raise BadRequestException("The length of tags must be equal to the number of columns")
+
+        try:
+            tags = [{str(k): str(v) for k, v in t.items()} for t in tags]
+        except:
+            raise BadRequestException("The tags are not valid. Please check")
+
         self._meta["column_tags"] = tags
 
     def get_data(self):
@@ -206,11 +218,21 @@ class Table(Resource):
     def get_meta(self):
         return self._meta
 
-    def get_row_tags(self):
-        return self._meta["row_tags"]
+    def get_row_tags(self, none_if_empty: bool = False):
+        tags = self._meta["row_tags"]
+        are_tags_empty = [len(t) == 0 for t in tags]
+        if all(are_tags_empty) and none_if_empty:
+            return None
+        else:
+            return tags
 
-    def get_column_tags(self):
-        return self._meta["column_tags"]
+    def get_column_tags(self, none_if_empty: bool = False):
+        tags = self._meta["column_tags"]
+        are_tags_empty = [len(t) == 0 for t in tags]
+        if all(are_tags_empty) and none_if_empty:
+            return None
+        else:
+            return tags
 
     # -- H --
 
@@ -410,6 +432,17 @@ class Table(Resource):
 
         position_union = sorted(list(set(position_union)))
         return self.select_by_column_positions(position_union)
+
+    def select_numeric_columns(self) -> 'Table':
+        data = self._data.select_dtypes([np.number])
+        if data.shape[1] == self._data.shape[0]:
+            return self
+        column_tags = self.get_column_tags()
+        selected_col_tags = [column_tags[i] for i, name in enumerate(self.column_names) if name in data.columns]
+        table = Table(data=data)
+        table.set_row_tags(self.get_row_tags())
+        table.set_column_tags(selected_col_tags)
+        return table
 
     def __str__(self):
         return super().__str__() + "\n" + \

@@ -74,7 +74,8 @@ class TableHistogramView(BaseTableView):
         nbins = params.get_value("nbins")
         density = params.get_value("density")
 
-        data = self._table.get_data()
+        data = self._table.select_numeric_columns().get_data()
+
         series = params.get_value("series", [])
         if not series:
             n = min(DEFAULT_NUMBER_OF_COLUMNS, data.shape[1])

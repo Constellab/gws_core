@@ -30,5 +30,5 @@ class TableScaler(Transformer):
         data = source.get_data()
         data = DataScaleFilterParamConstructor.validate_filter("scaling", data, params)
         table = Table(data=data)
-        table.name = source.name + " (Scaled)"
+        # table.name = source.name + " (Scaled)"
         return table

@@ -28,5 +28,5 @@ class TableTransposer(Transformer):
             row_names=source.column_names,
             column_names=source.row_names
         )
-        table.name = source.name + " (Transposed)"
+        # table.name = source.name + " (Transposed)"
         return table

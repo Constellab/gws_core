@@ -24,7 +24,16 @@ class TableHeatmapView(BaseTableView):
         "type": "heatmap-view",
         "title": str,
         "caption": str,
-        "data": dict
+        "data": {'column_name_1': List, 'column_name_2: List, ...},
+        "row_names": List[str],
+        "row_tags": List[Dict[str, str]] | None,
+        "column_tags": List[Dict[str, str]] | None,
+        "from_row": int,
+        "number_of_rows_per_page": int,
+        "from_column": int,
+        "number_of_columns_per_page": int,
+        "total_number_of_rows": int,
+        "total_number_of_columns": int,
     }
     ```
     """
@@ -43,9 +52,12 @@ class TableHeatmapView(BaseTableView):
             human_name="Number of columns per page", visibility=StrParam.PROTECTED_VISIBILITY)}
 
     def to_dict(self, params: ConfigParams) -> dict:
-        data = self._table.get_data()
+        data = self._table.select_numeric_columns().get_data()
+
+        row_tags = self._table.get_row_tags(none_if_empty=True)
+        column_tags = self._table.get_column_tags(none_if_empty=True)
         helper_view = HeatmapView()
-        helper_view.set_data(data=data)
+        helper_view.set_data(data=data, row_tags=row_tags, column_tags=column_tags)
         helper_view.from_row = params["from_row"]
         helper_view.number_of_rows_per_page = params["number_of_rows_per_page"]
         helper_view.from_column = params["from_column"]

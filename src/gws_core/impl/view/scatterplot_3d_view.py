@@ -40,14 +40,13 @@ class ScatterPlot3DView(View):
             "z_label": str,
             "x_tick_labels": List[str] | None,
             "y_tick_labels": List[str] | None,
-            "x_tick_tags": List[Dict[str, str]] | None,
-            "y_tick_tags": List[Dict[str, str]] | None,
             "series": [
                 {
                     "data": {
                         "x": List[Float],
                         "y": List[Float],
-                        "z": List[Float]
+                        "z": List[Float],
+                        "tags": List[Dict[str,str]] | None
                     },
                     "x_data": str,
                     "y_data": str,
@@ -65,8 +64,6 @@ class ScatterPlot3DView(View):
     z_label: str = None
     x_tick_labels: List[str] = None
     y_tick_labels: List[str] = None
-    x_tick_tags: List[Dict[str, str]] = None
-    y_tick_tags: List[Dict[str, str]] = None
     _series: List = None
     _type: str = "scatter-plot-3d-view"
     _title: str = "3D-Scatter Plot"
@@ -76,7 +73,25 @@ class ScatterPlot3DView(View):
             x: List[float],
             y: List[float],
             z: List[float],
-            x_name: str = None, y_name: str = None, z_name: str = None):
+            x_name: str = None, y_name: str = None, z_name: str = None, tags: List[Dict[str, str]] = None):
+        """
+        Add a series of points to plot
+
+        :params x: The x-axis positions of points
+        :type x: list of float
+        :params y: The y-axis positions of points
+        :type y: list of float
+        :params z: The z-axis magnitudes of points
+        :type z: list of float
+        :params x_name: [optional] The name of x-axis data
+        :type x_name: str
+        :params y_name: [optional] The name of y-axis data
+        :type y_name: str
+        :params z_name: [optional] The name of z-axis data
+        :type z_name: str
+        :params tags: [optional] The list of `tags` of points. The length of `tags` must be equal to the number of columns in `x`
+        :type tags: List[Dict[str, str]]
+        """
         if not self._series:
             self._series = []
         if not isinstance(z, list):
@@ -85,15 +100,20 @@ class ScatterPlot3DView(View):
             y = list(range(0, len(z)))
         if x is None:
             x = list(range(0, len(z)))
+        if tags is not None:
+            if not isinstance(tags, list) or len(tags) != len(x):
+                raise BadRequestException("The tags must a list of length equal to the length of x")
+            tags = [{str(k): str(v) for k, v in t.items()} for t in tags]
         self._series.append({
             "data": {
                 "x": x,
                 "y": y,
-                "z": z
+                "z": z,
+                "tags": tags
             },
             "x_name": x_name,
             "y_name": y_name,
-            "z_name": z_name
+            "z_name": z_name,
         })
 
     def to_dict(self, params: ConfigParams) -> dict:
@@ -105,8 +125,6 @@ class ScatterPlot3DView(View):
                 "z_label": self.z_label,
                 "x_tick_labels": self.x_tick_labels,
                 "y_tick_labels": self.y_tick_labels,
-                "x_tick_tags": self.x_tick_tags,
-                "y_tick_tags": self.y_tick_tags,
                 "series": self._series,
             }
         }

@@ -63,7 +63,7 @@ class Logger:
         Logger._logger.addHandler(console_logger)
 
         # Configure the logs into the log files
-        settings = Settings()
+        settings = Settings.retrieve()
 
         log_dir = settings.get_log_dir()
         if not path.exists(log_dir):

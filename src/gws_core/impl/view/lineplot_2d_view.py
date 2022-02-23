@@ -23,12 +23,12 @@ class LinePlot2DView(ScatterPlot2DView):
             "x_label": str,
             "y_label": str,
             "x_tick_labels": List[str] | None,
-            "x_tick_tags": List[Dict[str, str]] | None,
             "series": [
                 {
                     "data": {
                         "x": List[Float],
                         "y": List[Float],
+                        "tags": List[Dict[str,str]] | None
                     },
                     "x_name": str,
                     "y_name": str,

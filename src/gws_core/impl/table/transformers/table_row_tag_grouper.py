@@ -3,10 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from pandas import DataFrame
-
 from ....config.config_types import ConfigParams, ConfigSpecs
-from ....config.param_spec import FloatParam, ListParam, StrParam
+from ....config.param_spec import ListParam, StrParam
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ...table.table import Table
 from ..helper.table_tag_grouper_helper import TableTagGrouperHelper
@@ -41,5 +39,5 @@ class TableRowTagGrouper(Transformer):
         keys = params["tag_keys"]
         func = params["grouping_func"]
         table = TableTagGrouperHelper.group_by_row_tags(table, keys=keys, func=func)
-        table.name = source.name + " (sliced along row tag)"
+        # table.name = source.name + " (sliced along row tag)"
         return table

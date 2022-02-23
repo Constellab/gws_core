@@ -46,7 +46,8 @@ class TableScatterPlot3DView(BaseTableView):
                     "data": {
                         "x": List[Float],
                         "y": List[Float],
-                        "z": List[Float]
+                        "z": List[Float],
+                        "tags": List[Dict[str,str]] | None,
                     },
                     "x_data_column": str,
                     "y_data_column": str,
@@ -88,7 +89,8 @@ class TableScatterPlot3DView(BaseTableView):
         if not issubclass(self._view_helper, ScatterPlot3DView):
             raise BadRequestException("Invalid view helper. An subclass of ScatterPlot2DView is expected")
 
-        data = self._table.get_data()
+        data = self._table.select_numeric_columns().get_data()
+
         series = params.get_value("series", [])
         if not series:
             n = min(DEFAULT_NUMBER_OF_COLUMNS, data.shape[1])
@@ -137,7 +139,15 @@ class TableScatterPlot3DView(BaseTableView):
             else:
                 y_data = list(range(0, data.shape[0]))
 
-            view.add_series(x=x_data, y=y_data, z=z_data, x_name=x_data_column,
-                            y_name=y_data_column, z_name=z_data_column)
+            row_tags = self._table.get_row_tags(none_if_empty=True)
+            view.add_series(
+                x=x_data,
+                y=y_data,
+                z=z_data,
+                x_name=x_data_column,
+                y_name=y_data_column,
+                z_name=z_data_column,
+                tags=row_tags
+            )
 
         return view.to_dict(params)

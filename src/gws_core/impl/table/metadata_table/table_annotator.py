@@ -48,5 +48,5 @@ class TableAnnotator(Task):
             tags = [unsorted_tags.get(ids, {}) for ids in table_ids]
             table.set_column_tags(tags)
 
-        table.name = table.name + " (Annotated)"
+        # table.name = table.name + " (Annotated)"
         return {"table": table}

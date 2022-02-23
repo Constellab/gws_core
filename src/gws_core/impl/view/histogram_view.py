@@ -70,9 +70,9 @@ class HistogramView(View):
         """
         Add series of raw data.
 
-        :params data: The data that will be used to compute histogram
-        :type data: list of str
-        :params name: The name of the series
+        :params data: The data (row or column vector) that will be used to compute histogram
+        :type data: DataFrame or List[float]
+        :params name: The name of the data
         :type name: str
         """
 
@@ -97,7 +97,7 @@ class HistogramView(View):
 
     def add_series(self, *, x: Union[List[float], List[str]] = None, y: List[float] = None, name: str = None):
         """
-        Add series of pre-computed histogram x and y values.
+        Add series of pre-computed x and y histogram values.
         Vector x is the vector of bin centers and y contains the magnitudes at corresponding x positions.
 
         :params x: The bin-center values

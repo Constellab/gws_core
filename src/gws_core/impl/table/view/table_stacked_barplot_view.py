@@ -30,6 +30,7 @@ class TableStackedBarPlotView(TableBarPlotView):
                     "data": {
                         "x": List[Float],
                         "y": List[Float],
+                        "tags": List[Dict[str,str]] | None,
                     },
                     "name": str,
                 },

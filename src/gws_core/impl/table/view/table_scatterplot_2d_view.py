@@ -42,6 +42,7 @@ class TableScatterPlot2DView(BaseTableView):
                     "data": {
                         "x": List[Float],
                         "y": List[Float],
+                        "tags": List[Dict[str,str]] | None,
                     },
                     "x_name": str,
                     "y_name": str,
@@ -78,7 +79,7 @@ class TableScatterPlot2DView(BaseTableView):
         if not issubclass(self._view_helper, ScatterPlot2DView):
             raise BadRequestException("Invalid view helper. An subclass of ScatterPlot2DView is expected")
 
-        data = self._table.get_data()
+        data = self._table.select_numeric_columns().get_data()
 
         # continue ...
         x_data_columns = []
@@ -91,8 +92,6 @@ class TableScatterPlot2DView(BaseTableView):
         for param_series in series:
             x_data_columns.append(param_series.get("x_data_column"))
             y_data_columns.append(param_series.get("y_data_column"))
-
-        print(x_data_columns)
 
         self.check_column_names(x_data_columns)
         self.check_column_names(y_data_columns)
@@ -115,6 +114,14 @@ class TableScatterPlot2DView(BaseTableView):
                 x_data = data[x_data_column].fillna('').values.tolist()
             else:
                 x_data = list(range(0, data.shape[0]))
-            view.add_series(x=x_data, y=y_data, x_name=x_data_column, y_name=y_data_column)
+
+            row_tags = self._table.get_row_tags(none_if_empty=True)
+            view.add_series(
+                x=x_data,
+                y=y_data,
+                x_name=x_data_column,
+                y_name=y_data_column,
+                tags=row_tags,
+            )
 
         return view.to_dict(params)
