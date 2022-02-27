@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from gws_core import (BaseTestCase, Table, TableAnnotator,
+from gws_core import (BaseTestCase, Table, TableRowAnnotator,
                       TableTagGrouperHelper, TaskRunner)
 from gws_core_test_helper import GWSCoreTestHelper
 
@@ -17,14 +17,14 @@ class TestTableAggregatorHelper(BaseTestCase):
 
         # annotation
         tester = TaskRunner(
-            task_type=TableAnnotator,
+            task_type=TableRowAnnotator,
             inputs={
-                "table": table,
+                "tasample_tableble": table,
                 "metadata_table": metatable,
             }
         )
         outputs = await tester.run()
-        annotated_table = outputs["table"]
+        annotated_table = outputs["sample_table"]
 
         # Sort
         # -----------------------

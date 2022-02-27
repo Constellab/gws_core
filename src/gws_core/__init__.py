@@ -173,7 +173,9 @@ from .impl.table.metadata_table.metadata_table import \
 from .impl.table.metadata_table.metadata_table_task import (
     MetadataTableExporter, MetadataTableImporter)
 from .impl.table.metadata_table.table_annotator import \
-    TableAnnotator as TableAnnotator
+    TableColumnAnnotator as TableColumnAnnotator
+from .impl.table.metadata_table.table_annotator import \
+    TableRowAnnotator as TableRowAnnotator
 from .impl.table.table import Table as Table
 from .impl.table.table_file import TableFile as TableFile
 from .impl.table.tasks.table_exporter import TableExporter as TableExporter

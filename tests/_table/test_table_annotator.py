@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from gws_core import BaseTestCase, Table, TableAnnotator, TaskRunner
+from gws_core import BaseTestCase, Table, TableRowAnnotator, TaskRunner
 from gws_core_test_helper import GWSCoreTestHelper
 
 
@@ -23,14 +23,14 @@ class TestTableAnnotator(BaseTestCase):
 
         # annotation
         tester = TaskRunner(
-            task_type=TableAnnotator,
+            task_type=TableRowAnnotator,
             inputs={
-                "table": table,
+                "sample_table": table,
                 "metadata_table": metatable,
             }
         )
         outputs = await tester.run()
-        annotated_table = outputs["table"]
+        annotated_table = outputs["sample_table"]
         expected_row_tags = [{'Gender': 'M', 'Group': '15', 'Age': '15'},
                              {'Gender': 'F', 'Group': '15', 'Age': '15'},
                              {'Gender': 'M', 'Group': '1', 'Age': '18'},
