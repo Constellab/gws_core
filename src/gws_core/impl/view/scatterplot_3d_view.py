@@ -96,10 +96,17 @@ class ScatterPlot3DView(View):
             self._series = []
         if not isinstance(z, list):
             raise BadRequestException("The z-data is required and must be a list of float")
+
         if y is None:
             y = list(range(0, len(z)))
+        else:
+            y = [float(val) for val in y]
+
         if x is None:
             x = list(range(0, len(z)))
+        else:
+            x = [float(val) for val in x]
+
         if tags is not None:
             if not isinstance(tags, list) or len(tags) != len(x):
                 raise BadRequestException("The tags must a list of length equal to the length of x")

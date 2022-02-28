@@ -84,6 +84,9 @@ class BarPlotView(View):
 
         if x is None:
             x = list(range(0, len(y)))
+        else:
+            x = [float(val) for val in x]
+
         if tags is not None:
             if not isinstance(tags, list) or len(tags) != len(x):
                 raise BadRequestException("The tags must a list of length equal to the length of x")

@@ -194,4 +194,4 @@ class BoxPlotView(View):
         }
 
     def _clean_nan(self, data: List[float]):
-        return ['' if math.isnan(x) else x for x in data]
+        return ['' if math.isnan(x) else float(x) for x in data]
