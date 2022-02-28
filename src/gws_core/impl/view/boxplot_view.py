@@ -170,7 +170,7 @@ class BoxPlotView(View):
             tags = [{str(k): str(v) for k, v in t.items()} for t in tags]
         self._series.append({
             "data": {
-                "x": x,
+                "x": [float(val) for val in x],
                 "median": self._clean_nan(median),
                 "q1": self._clean_nan(q1),
                 "q3": self._clean_nan(q3),

@@ -88,7 +88,7 @@ class ScatterPlot2DView(View):
             tags = [{str(k): str(v) for k, v in t.items()} for t in tags]
         self._series.append({
             "data": {
-                "x": x,
+                "x": [float(val) for val in x],
                 "y": y,
                 "tags": tags
             },
