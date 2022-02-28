@@ -35,6 +35,7 @@ class Queue(Model):
     _instance: 'Queue' = None
 
     @classmethod
+    @transaction(nested_transaction=True)  # force new transaction to commit anyway
     def get_instance(cls) -> 'Queue':
         if cls._instance is None:
             queue = Queue.select().first()
