@@ -16,18 +16,6 @@ from ..model.typing_register_decorator import typing_registrator
 from .user_group import UserGroup
 
 
-class UserDataDict(TypedDict):
-    id: str
-    email: str
-    first_name: str
-    last_name: str
-    group: str
-    is_active: bool
-    is_admin: bool
-    theme: str
-    lang: str
-
-
 class UserTheme(Enum):
     LIGHT_THEME = 'light-theme'
     DARK_THEME = 'dark-theme'
@@ -36,6 +24,19 @@ class UserTheme(Enum):
 class UserLanguage(Enum):
     EN = 'en'
     FR = 'fr'
+
+
+class UserDataDict(TypedDict):
+    id: str
+    email: str
+    first_name: str
+    last_name: str
+    group: UserGroup
+    is_active: bool
+    is_admin: bool
+    theme: UserTheme
+    lang: UserLanguage
+
 
 # ####################################################################
 #
@@ -151,9 +152,9 @@ class User(Model):
             "email": self.email,
             "first_name": self.first_name,
             "last_name": self.last_name,
-            "group": self.group.value,
+            "group": self.group,
             "is_active": self.is_active,
             "is_admin": self.is_admin,
-            "theme": self.theme.value,
-            "lang": self.lang.value
+            "theme": self.theme,
+            "lang": self.lang
         }

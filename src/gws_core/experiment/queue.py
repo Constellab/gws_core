@@ -59,8 +59,7 @@ class Queue(Model):
     @classmethod
     def deinit(cls):
         queue = cls.get_instance()
-        queue.is_active = False
-        queue.save()
+        cls.delete_by_id(queue.id)
 
     @classmethod
     @transaction()

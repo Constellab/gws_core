@@ -10,7 +10,7 @@ from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
 from .activity import Activity
-from .user import User, UserDataDict
+from .user import User, UserDataDict, UserLanguage, UserTheme
 from .user_group import UserGroup
 
 
@@ -54,8 +54,9 @@ class UserService(BaseService):
             last_name=data['last_name'],
             group=group,
             is_active=data.get('is_active', True),
-            data={
-            }
+            data={},
+            theme=data.get('theme', UserTheme.LIGHT_THEME),
+            lang=data.get('lang', UserLanguage.EN),
         )
         # set the id later to mark the user as not saved
         user.id = data['id']
