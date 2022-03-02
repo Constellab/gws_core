@@ -115,23 +115,19 @@ class TypingManager:
         if typing_db.model_type != typing.model_type or typing_db.related_model_typing_name != typing.related_model_typing_name or \
                 typing_db.object_sub_type != typing.object_sub_type or str(typing_db.data) != str(typing.data):
             Logger.info(f"""Typing {typing.model_name} in brick {typing.brick} has changed.""")
-            typing_db.update_model_type(typing.model_type)
-            typing_db.related_model_typing_name = typing.related_model_typing_name
-            typing_db.object_sub_type = typing.object_sub_type
-            typing_db.data = typing.data
-            typing_db.save()
+            cls._update_typing(typing, typing_db)
             return
 
         # If another value has changed only udpate the DB
         if typing_db.hide != typing.hide or typing_db.human_name != typing.human_name or typing_db.short_description != typing.short_description or \
                 typing_db.deprecated_since != typing.deprecated_since or typing_db.deprecated_message != typing.deprecated_message:
-            typing_db.hide = typing.hide
-            typing_db.human_name = typing.human_name
-            typing_db.short_description = typing.short_description
-            typing_db.deprecated_since = typing.deprecated_since
-            typing_db.deprecated_message = typing.deprecated_message
-            typing_db.save()
+            cls._update_typing(typing, typing_db)
             return
+
+    @classmethod
+    def _update_typing(cls, typing: Typing, typing_db: Typing) -> None:
+        typing.id = typing_db.id
+        typing.save(force_insert=False)  # use to update instead of insert
 
     @classmethod
     def get_typings(cls) -> Dict[str, Typing]:
