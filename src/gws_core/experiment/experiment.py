@@ -390,8 +390,11 @@ class Experiment(ModelWithUser, TaggableModel):
             },
         })
 
-        if deep:
-            _json["project"] = self.project.to_json() if self.project is not None else None
+        if self.project:
+            _json["project"] = {
+                'id': self.project.id,
+                'title': self.project.title
+            }
 
         return _json
 
