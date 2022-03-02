@@ -1,7 +1,11 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
+from typing import Callable, Type
 
-from typing import Any, Callable, Type
-
+from gws_core.core.db.version import Version
 from gws_core.core.utils.utils import Utils
 
 from ..brick.brick_helper import BrickHelper
@@ -34,7 +38,8 @@ def typing_registrator(unique_name: str, object_type: TypingObjectType, hide: bo
 def register_typing_class(
         object_class: Type[Base], object_type: TypingObjectType, unique_name: str,
         human_name: str, short_description, hide: bool = False,
-        object_sub_type: str = None, related_model_typing_name: str = None) -> None:
+        object_sub_type: str = None, related_model_typing_name: str = None,
+        deprecated_since: str = None, deprecated_message: str = None) -> None:
 
     if not human_name:
         human_name = Utils.camel_case_to_sentence(unique_name)
@@ -48,7 +53,9 @@ def register_typing_class(
         short_description=short_description,
         hide=hide,
         object_sub_type=object_sub_type,
-        related_model_typing_name=related_model_typing_name
+        related_model_typing_name=related_model_typing_name,
+        deprecated_since=deprecated_since,
+        deprecated_message=deprecated_message
     )
 
     TypingManager.register_typing(typing, object_class)
@@ -56,3 +63,28 @@ def register_typing_class(
     object_class._typing_name = typing.typing_name
     object_class._human_name = human_name
     object_class._short_description = short_description
+
+
+# Method to register gws object like Resource, Task and Protocol
+def register_gws_typing_class(
+        object_class: Type[Base], object_type: TypingObjectType, unique_name: str,
+        human_name: str, short_description, hide: bool = False,
+        object_sub_type: str = None, related_model_typing_name: str = None,
+        deprecated_since: str = None, deprecated_message: str = None) -> None:
+    from ..brick.brick_service import BrickService
+    if deprecated_since is not None:
+        try:
+            Version(deprecated_since)
+        except:
+            BrickService.log_brick_error(
+                object_class,
+                f"The deprecated_since property '{deprecated_since}' for typing object {human_name} is not a version. Must be formatted like 1.0.0")
+            deprecated_since = None
+            deprecated_message = None
+    else:
+      # clear the deprecated message if not version are provided
+        deprecated_message = None
+    register_typing_class(object_class=object_class, object_type=object_type, unique_name=unique_name,
+                          human_name=human_name, short_description=short_description, hide=hide,
+                          object_sub_type=object_sub_type, related_model_typing_name=related_model_typing_name,
+                          deprecated_since=deprecated_since, deprecated_message=deprecated_message)

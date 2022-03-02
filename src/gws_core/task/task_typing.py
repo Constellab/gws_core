@@ -48,23 +48,10 @@ class TaskTyping(Typing):
             .order_by(cls.human_name)
         )
 
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-
-        _json: Dict[str, Any] = super().to_json(deep=deep, **kwargs)
-
-        if deep:
-            # retrieve the task python type
-            model_t: Type[Task] = self.get_type()
-
-            # Handle the resource input specs
-            _json["input_specs"] = IOSpecsHelper.io_specs_to_json(model_t.input_specs)
-
-            # Handle the resource output specs
-            _json["output_specs"] = IOSpecsHelper.io_specs_to_json(model_t.output_specs)
-
-            # Handle the config specs
-            _json["config_specs"] = ConfigSpecsHelper.config_specs_to_json(model_t.config_specs)
-
-            _json["doc"] = self.get_model_type_doc()
-
-        return _json
+    def model_type_to_json(self, model_t: Type[Task]) -> dict:
+        return {
+            "input_specs": IOSpecsHelper.io_specs_to_json(model_t.input_specs),
+            "output_specs": IOSpecsHelper.io_specs_to_json(model_t.output_specs),
+            "config_specs": ConfigSpecsHelper.config_specs_to_json(model_t.config_specs),
+            "doc": self.get_model_type_doc(),
+        }

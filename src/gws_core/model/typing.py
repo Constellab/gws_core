@@ -66,6 +66,8 @@ class Typing(Model):
     object_type: CharField = CharField(null=False, max_length=20)
     human_name: CharField = CharField(default=False, max_length=255)
     short_description: CharField = CharField(default=False)
+    deprecated_since: CharField = CharField(null=True, max_length=50)
+    deprecated_message: CharField = CharField(null=True, max_length=255)
     hide: BooleanField = BooleanField(default=False)
 
     # Sub type of the object, types will be differents based on object type
@@ -128,14 +130,29 @@ class Typing(Model):
         _json: Dict[str, Any] = super().to_json(deep=deep, **kwargs)
 
         _json["typing_name"] = self.typing_name
+
+        # retrieve the task python type
+        model_t: Type[Base] = self.get_type()
+
+        if model_t is None:
+            _json["status"] = 'TYPE_UNAVAILABLE'
+        else:
+            _json["status"] = 'SUCCESS'
+
+        if deep and model_t:
+            _json['type'] = self.model_type_to_json(model_t)
+
         return _json
+
+    def model_type_to_json(self, model_t: Type[Base]) -> dict:
+        return {}
 
     def get_model_type_doc(self) -> str:
         """Return the python documentation of the model type
         """
 
         # retrieve the task python type
-        model_t: Type[Base] = Utils.get_model_type(self.model_type)
+        model_t: Type[Base] = self.get_type()
         return inspect.getdoc(model_t)
 
     ############################################# CLASS METHODS #########################################

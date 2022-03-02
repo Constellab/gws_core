@@ -2,14 +2,15 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-import importlib
 import inspect
 import os
 import random
 import re
 import string
 import uuid
-from typing import Any, List, Set, Tuple, Type, Union, get_args
+from importlib import import_module
+from importlib.util import find_spec
+from typing import Any, List, Optional, Set, Tuple, Type, Union, get_args
 
 from slugify import slugify as _slugify
 
@@ -88,7 +89,7 @@ class Utils:
         return dirs, files
 
     @classmethod
-    def get_model_type(cls, type_str: str = None) -> Type[Any]:
+    def get_model_type(cls, type_str: str = None) -> Optional[Type[Any]]:
         """
         Get the type of a registered model using its litteral type
 
@@ -101,12 +102,24 @@ class Utils:
         if type_str is None:
             return None
 
-        tab = type_str.split(".")
-        length = len(tab)
-        module_name = ".".join(tab[0:length-1])
-        function_name = tab[length-1]
-        module = importlib.import_module(module_name)
-        return getattr(module, function_name, None)
+        try:
+            tab = type_str.split(".")
+            length = len(tab)
+            module_name = ".".join(tab[0:length-1])
+            function_name = tab[length-1]
+
+            if find_spec(module_name) is None:
+                return None
+
+            module = import_module(module_name)
+
+            return getattr(module, function_name, None)
+        except:
+            return None
+
+    @classmethod
+    def model_type_exists(cls, type_str: str = None) -> bool:
+        return cls.get_model_type(type_str) is not None
 
     @classmethod
     def generate_uuid(cls) -> str:

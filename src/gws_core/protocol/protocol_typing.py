@@ -31,16 +31,10 @@ class ProtocolTyping(Typing):
     def get_types(cls) -> ModelSelect:
         return cls.get_by_object_type(cls._object_type)
 
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        _json: Dict[str, Any] = super().to_json(deep=deep, **kwargs)
-
-        if deep:
-            _json["doc"] = self.get_model_type_doc()
-
-            protocol_type: Type[Protocol] = self.get_type()
-
-            protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_type(
-                protocol_type)
-            _json["graph"] = protocol.dumps_data(minimize=False)
-
-        return _json
+    def model_type_to_json(self, model_t: Type[Protocol]) -> dict:
+        protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_type(
+            model_t)
+        return {
+            "graph": protocol.dumps_data(minimize=False),
+            "doc": self.get_model_type_doc(),
+        }

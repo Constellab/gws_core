@@ -9,12 +9,13 @@ from gws_core.core.utils.reflector_helper import ReflectorHelper
 
 from ..brick.brick_service import BrickService
 from ..core.utils.utils import Utils
-from ..model.typing_register_decorator import register_typing_class
+from ..model.typing_register_decorator import register_gws_typing_class
 from ..resource.resource import Resource
 
 
 def resource_decorator(unique_name: str, human_name: str = "", short_description: str = "",
-                       hide: bool = False) -> Callable:
+                       hide: bool = False,
+                       deprecated_since: str = None, deprecated_message: str = None) -> Callable:
     """ Decorator to be placed on all the resourcees. A resource not decorated will not be runnable.
     It define static information about the resource
 
@@ -30,6 +31,12 @@ def resource_decorator(unique_name: str, human_name: str = "", short_description
     :param hide: Only the resource will hide=False will be available in the interface, other will be hidden.
                 It is useful for resource that are not meant to be viewed in the interface (like abstract classes), defaults to False
     :type hide: bool, optional
+    :param deprecated_since: To provide when the object is deprecated. It must be a version string like 1.0.0 to
+                            tell at which version the object became deprecated, defaults to None
+    :type deprecated_since: str, optional
+    :param deprecated_message: Active when deprecated_since is provided. It describe a message about the deprecation.
+                For example you can provide the name of another object to use instead, defaults to None
+    :type deprecated_message: str, optional
 
     """
 
@@ -47,9 +54,10 @@ def resource_decorator(unique_name: str, human_name: str = "", short_description
                 f"The Resource '{resource_class.__name__}' have a constructor with mandatory params. The resource constructor must contain only optional arguments")
             return resource_class
 
-        register_typing_class(object_class=resource_class, object_type="RESOURCE", unique_name=unique_name,
-                              human_name=human_name, short_description=short_description, hide=hide,
-                              object_sub_type='RESOURCE')
+        register_gws_typing_class(object_class=resource_class, object_type="RESOURCE", unique_name=unique_name,
+                                  human_name=human_name, short_description=short_description, hide=hide,
+                                  object_sub_type='RESOURCE',
+                                  deprecated_since=deprecated_since, deprecated_message=deprecated_message)
 
         return resource_class
 

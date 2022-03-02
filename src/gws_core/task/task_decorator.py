@@ -12,14 +12,15 @@ from ..brick.brick_service import BrickService
 from ..config.param_spec_helper import ParamSpecHelper
 from ..core.utils.utils import Utils
 from ..io.io_spec import IOSpecsHelper
-from ..model.typing_register_decorator import register_typing_class
+from ..model.typing_register_decorator import register_gws_typing_class
 from ..user.user_group import UserGroup
 from .task import Task
 from .task_typing import TaskSubType
 
 
 def task_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER,
-                   human_name: str = "", short_description: str = "", hide: bool = False) -> Callable:
+                   human_name: str = "", short_description: str = "", hide: bool = False,
+                   deprecated_since: str = None, deprecated_message: str = None) -> Callable:
     """ Decorator to be placed on all the tasks. A task not decorated will not be runnable.
     It define static information about the task
 
@@ -37,11 +38,18 @@ def task_decorator(unique_name: str, allowed_user: UserGroup = UserGroup.USER,
     :param hide: Only the task with hide=False will be available in the interface(web platform), other will be hidden.
                 It is useful for task that are not meant to be viewed in the interface (like abstract classes), defaults to False
     :type hide: bool, optional
+    :param deprecated_since: To provide when the object is deprecated. It must be a version string like 1.0.0 to
+                            tell at which version the object became deprecated, defaults to None
+    :type deprecated_since: str, optional
+    :param deprecated_message: Active when deprecated_since is provided. It describe a message about the deprecation.
+                For example you can provide the name of another object to use instead, defaults to None
+    :type deprecated_message: str, optional
 
     """
     def decorator(task_class: Type[Task]):
         decorate_task(task_class, unique_name=unique_name, task_type='TASK', allowed_user=allowed_user,
-                      human_name=human_name, short_description=short_description, hide=hide)
+                      human_name=human_name, short_description=short_description, hide=hide,
+                      deprecated_since=deprecated_since, deprecated_message=deprecated_message)
 
         return task_class
     return decorator
@@ -51,7 +59,8 @@ def decorate_task(
         task_class: Type[Task], unique_name: str,
         task_type: TaskSubType, related_resource: Type[Resource] = None,
         allowed_user: UserGroup = UserGroup.USER,
-        human_name: str = "", short_description: str = "", hide: bool = False):
+        human_name: str = "", short_description: str = "", hide: bool = False,
+        deprecated_since: str = None, deprecated_message: str = None):
     """Method to decorate a task
     """
     if not Utils.issubclass(task_class, Task):
@@ -85,9 +94,10 @@ def decorate_task(
 
     related_resource_typing_name = related_resource._typing_name if related_resource else None
 
-    register_typing_class(object_class=task_class, object_type="TASK", unique_name=unique_name,
-                          object_sub_type=task_type, human_name=human_name, short_description=short_description,
-                          hide=hide, related_model_typing_name=related_resource_typing_name)
+    register_gws_typing_class(object_class=task_class, object_type="TASK", unique_name=unique_name,
+                              object_sub_type=task_type, human_name=human_name, short_description=short_description,
+                              hide=hide, related_model_typing_name=related_resource_typing_name,
+                              deprecated_since=deprecated_since, deprecated_message=deprecated_message)
 
     # set the allowed user for the task
     task_class._allowed_user = allowed_user

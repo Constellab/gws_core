@@ -25,7 +25,8 @@ def decorate_converter(task_class: Type['Converter'], unique_name: str, task_typ
                        source_type: Type[Resource] = Resource, target_type: Type[Resource] = Resource,
                        related_resource: Type[Resource] = None,
                        allowed_user: UserGroup = UserGroup.USER,
-                       human_name: str = "", short_description: str = "", hide: bool = False) -> None:
+                       human_name: str = "", short_description: str = "", hide: bool = False,
+                       deprecated_since: str = None, deprecated_message: str = None) -> None:
     if not Utils.issubclass(task_class, Converter):
         BrickService.log_brick_error(
             task_class,
@@ -38,7 +39,8 @@ def decorate_converter(task_class: Type['Converter'], unique_name: str, task_typ
 
     # register the task and set the human_name and short_description dynamically based on resource
     decorate_task(task_class, unique_name, human_name=human_name, related_resource=related_resource,
-                  task_type=task_type, short_description=short_description, allowed_user=allowed_user, hide=hide)
+                  task_type=task_type, short_description=short_description, allowed_user=allowed_user, hide=hide,
+                  deprecated_since=deprecated_since, deprecated_message=deprecated_message)
 
 
 @task_decorator("Converter", hide=True)
@@ -143,7 +145,7 @@ class ConverterRunner():
         await self._task_runner.run()
         return self.get_output()
 
-    async  def run_after_task(self) -> None:
+    async def run_after_task(self) -> None:
         await self._task_runner.run_after_task()
 
     def set_input(self, resource: Resource) -> None:

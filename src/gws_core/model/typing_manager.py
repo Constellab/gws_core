@@ -123,10 +123,13 @@ class TypingManager:
             return
 
         # If another value has changed only udpate the DB
-        if typing_db.hide != typing.hide or typing_db.human_name != typing.human_name or typing_db.short_description != typing.short_description:
+        if typing_db.hide != typing.hide or typing_db.human_name != typing.human_name or typing_db.short_description != typing.short_description or \
+                typing_db.deprecated_since != typing.deprecated_since or typing_db.deprecated_message != typing.deprecated_message:
             typing_db.hide = typing.hide
             typing_db.human_name = typing.human_name
             typing_db.short_description = typing.short_description
+            typing_db.deprecated_since = typing.deprecated_since
+            typing_db.deprecated_message = typing.deprecated_message
             typing_db.save()
             return
 

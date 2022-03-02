@@ -1,11 +1,12 @@
-
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 from gws_core import BaseTestCase
-from gws_core.brick.brick_model import BrickModel
 from gws_core.core.db.brick_migrator import BrickMigration, BrickMigrator
-from gws_core.core.db.db_migration import DbMigrationService, brick_migration
+from gws_core.core.db.db_migration import brick_migration
 from gws_core.core.db.version import Version, VersionInvalidException
-from gws_core.core.utils.settings import ModuleInfo
 
 
 class MigrationTest(BrickMigration):

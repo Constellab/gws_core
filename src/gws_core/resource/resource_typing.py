@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Type
 
+from gws_core.core.model.base import Base
 from peewee import ModelSelect
 
 from ..model.typing import Typing, TypingObjectType
@@ -36,31 +37,10 @@ class ResourceTyping(Typing):
 
         return cls.get_children_typings(cls._object_type, Folder)
 
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-
-        _json: Dict[str, Any] = super().to_json(**kwargs)
-
-        # for compatibility
-        _json["rtype"] = self.model_type
-
-        return _json
-
-    def data_to_json(self, deep: bool = False, **kwargs) -> dict:
-        """
-        Returns a JSON string or dictionnary representation of the model.
-        :return: The representation
-        :rtype: `dict`, `str`
-        """
-
-        if not deep:
-            return None
-
-        _json = super().data_to_json(deep=deep, **kwargs)
-
-        # Other infos
-        _json["doc"] = self.get_model_type_doc()
-
-        return _json
+    def model_type_to_json(self, model_t: Type[Base]) -> dict:
+        return {
+            "doc": self.get_model_type_doc(),
+        }
 
 
 class FileTyping(ResourceTyping):
@@ -76,7 +56,8 @@ class FileTyping(ResourceTyping):
 
         file_type: Type[File] = self.get_type()
 
-        # Add the list of default extensions for the file
-        _json["supported_extensions"] = file_type.supported_extensions
+        if file_type:
+            # Add the list of default extensions for the file
+            _json["supported_extensions"] = getattr(file_type, 'supported_extensions', [])
 
         return _json
