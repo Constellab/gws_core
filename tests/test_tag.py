@@ -2,7 +2,6 @@
 from gws_core import BaseTestCase, Tag, TagHelper
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
-from gws_core.resource.resource_service import ResourceService
 from gws_core.tag.tag import KEY_VALUE_SEPARATOR, TAGS_SEPARATOR
 from gws_core.tag.tag_model import TagModel
 from gws_core.tag.tag_service import TagService
@@ -36,7 +35,7 @@ class TestTag(BaseTestCase):
 
         # Test modify a tag in list
         new_list_2 = TagHelper.add_or_replace_tag(tag_list_str, 'test2', 'OK')
-        new_list_expected_2 = str(tag) + TAGS_SEPARATOR + str(Tag('test2', 'OK'))
+        new_list_expected_2 = str(tag) + TAGS_SEPARATOR + str(Tag('test2', 'ok'))
         self.assertEqual(new_list_2, new_list_expected_2)
 
     def test_add_tag(self):

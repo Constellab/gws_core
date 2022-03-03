@@ -61,9 +61,9 @@ class TestTyping(BaseTestCase):
         eat_json: Dict = eat_type.to_json(deep=True)
 
         self.assertEqual(eat_json['typing_name'], 'TASK.gws_core.RobotEat')
-        self.assertIsNotNone(eat_json['input_specs'])
-        self.assertIsNotNone(eat_json['input_specs']['robot'])
-        self.assertIsNotNone(eat_json['input_specs']['food'])
+        self.assertIsNotNone(eat_json['type']['input_specs'])
+        self.assertIsNotNone(eat_json['type']['input_specs']['robot'])
+        self.assertIsNotNone(eat_json['type']['input_specs']['food'])
 
     async def test_protocol_type(self):
         world_travel: ProtocolTyping = ProtocolTyping.get_by_model_type(RobotWorldTravelProto)
@@ -73,8 +73,8 @@ class TestTyping(BaseTestCase):
         world_travel_json: Dict = world_travel.to_json(deep=True)
 
         self.assertEqual(world_travel_json['typing_name'], 'PROTOCOL.gws_core.RobotWorldTravelProto')
-        self.assertTrue(len(world_travel_json['graph']['nodes']) > 0)
-        self.assertTrue(len(world_travel_json['graph']['links']) > 0)
+        self.assertTrue(len(world_travel_json['type']['graph']['nodes']) > 0)
+        self.assertTrue(len(world_travel_json['type']['graph']['links']) > 0)
 
     async def test_resource_type(self):
         robot: ResourceTyping = ResourceTyping.get_by_model_type(Robot)

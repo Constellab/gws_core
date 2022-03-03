@@ -1,5 +1,4 @@
-from gws_core import (BaseTestCase, Dataset, DatasetImporter, File, Settings,
-                      TaskRunner)
+from gws_core import BaseTestCase
 from gws_core.extra import DataProvider
 
 

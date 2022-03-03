@@ -7,9 +7,9 @@ import json
 import os
 
 from gws_core import (BaseTestCase, Config, Experiment, ExperimentService,
-                      ExperimentStatus, GTest, ProcessModel, ProgressBar,
+                      ExperimentStatus, ProcessModel, ProgressBar,
                       ProtocolModel, ProtocolService, Robot, RobotFood,
-                      RobotMove, Settings, TaskModel, Typing)
+                      Settings, TaskModel)
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 from tests.protocol_examples import (TestNestedProtocol,
                                      TestRobotWithSugarProtocol,

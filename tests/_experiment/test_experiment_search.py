@@ -13,11 +13,11 @@ class TestExperimentSearch(BaseTestCase):
 
     def test_search(self):
         experiment_1 = ExperimentService.create_empty_experiment(
-            title="My first experiment title world", description="The description of the first",
+            title="My first experiment title world",
             type_=ExperimentType.TRANSFORMER)
 
         experiment_2: Experiment = ExperimentService.create_empty_experiment(
-            title="The second one world", description="The second")
+            title="The second one world")
         experiment_2.mark_as_success()
 
         project: Project = GTest.create_default_project()
@@ -29,9 +29,6 @@ class TestExperimentSearch(BaseTestCase):
 
         # Test full text search
         search_dict.filtersCriteria = [{"key": "text", "operator": "MATCH", "value": "title"}]
-        self.search(search_dict, 1)
-
-        search_dict.filtersCriteria = [{"key": "text", "operator": "MATCH", "value": "description"}]
         self.search(search_dict, 1)
 
         search_dict.filtersCriteria = [{"key": "text", "operator": "MATCH", "value": "world"}]

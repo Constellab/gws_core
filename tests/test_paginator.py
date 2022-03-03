@@ -14,7 +14,7 @@ class TestPaginator(BaseTestCase):
 
         protocol: ProtocolModel = RobotService.create_robot_world_travel()
         ExperimentService.create_experiment_from_protocol_model(
-            protocol_model=protocol, title="My title", description="My description")
+            protocol_model=protocol, title="My title")
 
         paginator: Paginator[Experiment] = ExperimentService.fetch_experiment_list(page=0, number_of_items_per_page=20)
 
@@ -32,4 +32,3 @@ class TestPaginator(BaseTestCase):
 
         # Test the experiment values
         self.assertEqual(paginator_dict["objects"][0]["title"], 'My title')
-        self.assertEqual(paginator_dict["objects"][0]["description"], 'My description')

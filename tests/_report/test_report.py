@@ -3,6 +3,8 @@ from typing import List
 
 from gws_core.experiment.experiment import Experiment
 from gws_core.experiment.experiment_service import ExperimentService
+from gws_core.project.project import Project
+from gws_core.project.project_dto import ProjectDto
 from gws_core.report.report import Report
 from gws_core.report.report_service import ReportService
 from gws_core.test.base_test_case import BaseTestCase
@@ -11,6 +13,9 @@ from gws_core.test.base_test_case import BaseTestCase
 class TestReport(BaseTestCase):
 
     def test_report(self):
+        project = Project()
+        project.title = 'Project'
+        project = project.save()
         # test create an empty report
 
         report = ReportService.create({'title': 'Test report'})
@@ -54,8 +59,11 @@ class TestReport(BaseTestCase):
         # Try to validate report_2, but there should be an error because the experiment is not validated
         self.assertRaises(Exception, ReportService.validate, report_2.id)
         experiment_2.is_validated = True
+        experiment_2.project = project
         experiment_2.save()
-        report_2 = ReportService.validate(report_2.id)
+
+        project_dto = ProjectDto(id=project.id, title=project.title)
+        report_2 = ReportService.validate(report_2.id, project_dto=project_dto)
         self.assertTrue(report_2.is_validated)
 
         # Try to update report_2

@@ -1,7 +1,9 @@
 
 
-from gws_core import ConfigParams, MultiViews, TableScatterPlot2DView, TextView
+from gws_core import ConfigParams, MultiViews, TextView
 from gws_core.extra import DataProvider
+from gws_core.impl.table.view.table_scatterplot_2d_view import \
+    TableScatterPlot2DView
 from gws_core.test.base_test_case import BaseTestCase
 
 
@@ -9,7 +11,7 @@ class TestMultiViews(BaseTestCase):
 
     def test_multi_view(self):
         table = DataProvider.get_iris_table()
-        view = TableScatterPlot2DView(data=table)
+        view = TableScatterPlot2DView(table=table)
 
         text_view = TextView('Hello test super view')
 

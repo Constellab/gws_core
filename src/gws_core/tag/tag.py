@@ -19,21 +19,33 @@ MAX_TAG_LENGTH = 30
 
 
 class Tag(BaseModel):
-    key: str
-    value: str
+    key: str = None
+    value: str = None
 
     def __init__(self, key: str, value: str) -> None:
+        super().__init__(key=self._check_parse_key(key), value=self._check_parse_value(value))
+
+    def set_key(self, key: str) -> None:
+        self.key = self._check_parse_key(key)
+
+    def set_value(self, value: str) -> None:
+        self.value = self._check_parse_value(value)
+
+    def _check_parse_key(self, key: str) -> str:
         if key is None:
-            raise Exception('The tag key must be defined')
+            raise ValueError('The tag key must be defined')
         if len(key) > MAX_TAG_LENGTH:
             key = key[0: MAX_TAG_LENGTH]
 
+        return key.lower()
+
+    def _check_parse_value(self, value: str) -> str:
         if value:
             value = value.lower()
             if len(value) > MAX_TAG_LENGTH:
                 value = value[0: MAX_TAG_LENGTH]
 
-        super().__init__(key=key.lower(), value=value)
+        return value
 
     def __str__(self) -> str:
         return self.key + ':' + self.value
@@ -75,7 +87,7 @@ class TagHelper():
         same_key: List[Tag] = [x for x in tags if x.key == tag_key]
 
         if same_key:
-            same_key[0].value = tag_value
+            same_key[0].set_value(tag_value)
         else:
             tags.append(Tag(tag_key, tag_value))
 

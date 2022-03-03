@@ -26,7 +26,7 @@ class TestImporter(BaseTestCase):
         # self.assertTrue(len([x for x in importers if x.get_type() == TextImporter]) == 0)
 
     async def test_importer(self):
-        file = TableFile(path=DataProvider.get_test_data_path("data.csv"))
+        file = TableFile(path=DataProvider.get_iris_file().path)
 
         resource_model: ResourceModel = ResourceModel.save_from_resource(file, origin=ResourceOrigin.UPLOADED)
 
