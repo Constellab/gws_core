@@ -23,7 +23,6 @@ class Person(Model):
 class TestModel(BaseTestCase):
 
     def test_model(self):
-        GTest.print("Model")
         p1: Person = Person(name='John Smith', data={})
         p1.save()
         p2: Person = Person(name='Robert Vincent', data={})
@@ -61,6 +60,5 @@ class TestModel(BaseTestCase):
         self.assertEqual(john2.data, {})
 
     def test_model_registrering(self):
-        GTest.print("Model Registering")
         self.assertTrue(len(TypingManager.get_typings()) > 0)
         self.assertIsNotNone(JSONDict._typing_name)

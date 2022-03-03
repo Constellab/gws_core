@@ -15,7 +15,6 @@ from gws_core.core.classes.validator import (BoolValidator, DictValidator,
 class TestValidator(unittest.TestCase):
 
     def test_int_validator(self):
-        GTest.print("Integrer Validator")
 
         validator: Validator = IntValidator()
         self.assertEqual(validator.validate('3'), 3)
@@ -29,7 +28,6 @@ class TestValidator(unittest.TestCase):
         self.assertRaises(Exception, validator.validate, 6)
 
     def test_str_validator(self):
-        GTest.print("String Validator")
 
         validator: Validator = StrValidator()
         self.assertEqual(validator.validate('4'), '4')
@@ -39,7 +37,6 @@ class TestValidator(unittest.TestCase):
         self.assertRaises(Exception, validator.validate, True)
 
     def test_bool_validator(self):
-        GTest.print("Boolean Validator")
 
         validator: Validator = BoolValidator()
         self.assertEqual(validator.validate(False), False)
@@ -50,7 +47,6 @@ class TestValidator(unittest.TestCase):
         self.assertRaises(Exception, validator.validate, 4)
 
     def test_float_validator(self):
-        GTest.print("Float Validator")
 
         validator: Validator = FloatValidator()
         self.assertEqual(validator.validate(5.5), 5.5)
@@ -76,7 +72,6 @@ class TestValidator(unittest.TestCase):
         self.assertRaises(Exception, validator.validate, '-7')
 
     def test_list_validator(self):
-        GTest.print("List Validator")
 
         validator: Validator = ListValidator()
         self.assertEqual(validator.validate([5.5, 3]), [5.5, 3])
@@ -92,7 +87,6 @@ class TestValidator(unittest.TestCase):
         self.assertRaises(Exception, validator.validate, '{"foo":1.2}')
 
     def test_dict_validator(self):
-        GTest.print("Dict Validator")
 
         validator: Validator = DictValidator()
         self.assertEqual(validator.validate('{"foo":0.5}'), {"foo": 0.5})

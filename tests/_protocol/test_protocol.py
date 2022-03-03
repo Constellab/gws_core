@@ -24,7 +24,6 @@ class TestProtocol(BaseTestCase):
     init_before_each_test: bool = True
 
     async def test_protocol(self):
-        GTest.print("Protocol")
 
         Q = ProtocolModel.select()
         count = len(Q)
@@ -44,7 +43,6 @@ class TestProtocol(BaseTestCase):
         self.assertEqual(experiment.status, ExperimentStatus.SUCCESS)
 
     async def test_advanced_protocol(self):
-        GTest.print("Advanced protocol")
 
         Q = ProtocolModel.select()
         count = len(Q)
@@ -81,7 +79,6 @@ class TestProtocol(BaseTestCase):
         self.assertEqual(len(Q), count+2)
 
     async def test_graph_load(self):
-        GTest.print("Load protocol graph")
 
         super_proto: ProtocolModel
         with open(os.path.join(testdata_dir, "super_proto_update.json"), "r") as f:
@@ -101,7 +98,6 @@ class TestProtocol(BaseTestCase):
         self.assertTrue(mini_travel.is_outerfaced_with(sub_p2))
 
     async def test_protocol_update(self):
-        GTest.print("Update protocol")
 
         with open(os.path.join(testdata_dir, "super_proto.json"), "r") as file:
             s1 = json.load(file)

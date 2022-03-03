@@ -17,7 +17,6 @@ testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 class TestTable(BaseTestCase):
     def test_table(self):
-        GTest.print("Table")
 
         table: Table = Table(data=[[1, 2, 3]], column_names=["a", "b", "c"])
         print(table.get_data())
@@ -31,7 +30,6 @@ class TestTable(BaseTestCase):
         print(print(table.get_meta()))
 
     def test_table_select(self):
-        GTest.print("Table select")
         meta = {
             "row_tags": [
                 {"lg": "EN", "c": "US", "user": "Vi"},
@@ -188,7 +186,6 @@ class TestTable(BaseTestCase):
         self.assertEqual(t.row_names, ["Tokyo", "Paris"])
 
     def test_table_import_1(self):
-        GTest.print("Table load")
 
         file_path = GWSCoreTestHelper.get_small_data_file_path(1)
         table = TableImporter.call(File(file_path))
@@ -204,7 +201,6 @@ class TestTable(BaseTestCase):
         #self.assertEqual(table.row_names, ["R0", "R1"])
 
     def test_table_import_2(self):
-        GTest.print("Table load")
 
         file_path = GWSCoreTestHelper.get_small_data_file_path(2)
         table = TableImporter.call(File(file_path))

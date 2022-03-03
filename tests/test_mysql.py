@@ -15,7 +15,6 @@ from gws_core.core.db.db_manager import DbManager
 class TestMySQLDumpLoad(BaseTestCase):
 
     def test_db_dump_load(self):
-        GTest.print("MySQL dump and load")
 
         if DbManager.is_sqlite_engine():
             print("SQLite3 db detected: exit test, OK!")

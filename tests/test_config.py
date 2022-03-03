@@ -11,7 +11,6 @@ from gws_core.config.config_exceptions import MissingConfigsException
 class TestConfig(BaseTestCase):
 
     def test_config(self):
-        GTest.print("Config")
         specs = {
             'moving_step':  FloatParam(default_value=0.1)
         }
@@ -38,7 +37,6 @@ class TestConfig(BaseTestCase):
         self.assertEqual(config2.data, config.data)
 
     def test_task_config(self):
-        GTest.print("Task config")
 
         robot_move: TaskModel = ProcessFactory.create_task_model_from_type(
             RobotMove)
@@ -50,7 +48,6 @@ class TestConfig(BaseTestCase):
         self.assertEqual(config.get_value("moving_step"), 0.3)
 
     def test_optional(self):
-        GTest.print("Config optional")
         specs = {
             'moving_step': FloatParam(),
             'optional': FloatParam(default_value=0.1),

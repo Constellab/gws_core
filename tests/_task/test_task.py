@@ -27,7 +27,6 @@ class RunAfterTask(Task):
 class TestTask(BaseTestCase):
 
     def test_task_singleton(self):
-        GTest.print("Task Singleton")
 
         p0: TaskModel = ProcessFactory.create_task_model_from_type(
             task_type=RobotCreate)
@@ -40,7 +39,6 @@ class TestTask(BaseTestCase):
         self.assertTrue(p0.id != p1.id)
 
     async def test_process(self):
-        GTest.print("Task")
 
         proto: ProtocolModel = ProtocolService.create_protocol_model_from_type(TestSimpleProtocol)
 

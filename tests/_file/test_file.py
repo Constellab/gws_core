@@ -43,8 +43,6 @@ class TestFile(BaseTestCase):
         self.assertEqual(file.is_txt(), True)
 
     def test_file(self):
-        GTest.print("File")
-
         file_1: File = LocalFileStore.get_default_instance().create_empty_file("my_file.txt")
         file_model: ResourceModel = FsNodeService.create_fs_node_model(fs_node=file_1)
 

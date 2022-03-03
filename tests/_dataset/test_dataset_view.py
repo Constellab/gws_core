@@ -6,7 +6,6 @@ from gws_core.extra import DataProvider, DatasetView
 class TestDatasetView(BaseTestCase):
 
     async def test_dataset_view(self,):
-        self.print("Dataset import")
         ds = DataProvider.get_iris_dataset()
         tester = ViewTester(
             view=DatasetView(ds)

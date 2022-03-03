@@ -78,6 +78,7 @@ class App:
         Starts FastAPI uvicorn
         """
 
+        SystemService.migrate_db()
         SystemService.init()
         settings: Settings = Settings.retrieve()
         Logger.info(

@@ -26,15 +26,27 @@ class BaseTestCase(IsolatedAsyncioTestCase):
     # If False they are called before and after all the class tests
     init_before_each_test: bool = False
 
+    # use to call set up and tear down class only once
+    _class_setted_up: bool = False
+    _class_teared_down: bool = False
+
     @classmethod
     def setUpClass(cls):
+        if cls._class_setted_up:
+            return
+        print(f"************** Running test file '{cls.__module__}', class '{cls.__name__}' **************")
         if not cls.init_before_each_test:
             cls.init_before_test()
+        cls._class_setted_up = True
 
     @classmethod
     def tearDownClass(cls):
+        if cls._class_teared_down:
+            return
         if not cls.init_before_each_test:
             cls.clear_after_test()
+        print(f"************** End of test file '{cls.__module__}', class '{cls.__name__}' **************")
+        cls._class_teared_down = True
 
     def setUp(self) -> None:
         if self.init_before_each_test:

@@ -33,7 +33,6 @@ class Echo(Shell):
 class TestShell(BaseTestCase):
 
     async def test_shell(self):
-        GTest.print("Shell")
         tester = TaskRunner(
             inputs={},
             params={"name": "John Doe"},

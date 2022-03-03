@@ -4,15 +4,14 @@
 # About us: https://gencovery.com
 
 
-from gws_core import (BaseTestCase, Comment, CommentService, File, GTest,
-                      PaginatorDict, ResourceModel, Robot)
+from gws_core import (BaseTestCase, CommentService, PaginatorDict,
+                      ResourceModel, Robot)
 from gws_core.resource.resource_model import ResourceOrigin
 
 
 class TestComment(BaseTestCase):
 
     def test_comment(self):
-        GTest.print("Comment")
         robot = Robot()
         resource_model: ResourceModel = ResourceModel.save_from_resource(robot, origin=ResourceOrigin.UPLOADED)
 

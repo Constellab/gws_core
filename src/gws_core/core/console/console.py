@@ -25,14 +25,10 @@ class Console:
     user: User = None
 
     @classmethod
-    def init(cls, clean_db: bool = False, user: User = None):
+    def init(cls, user: User = None):
         """
         This function initializes objects for unit testing
         """
-
-        if clean_db:
-            cls.drop_tables()
-            cls.create_tables()
 
         settings = Settings.retrieve()
         if not settings.is_dev:
@@ -82,13 +78,4 @@ class Console:
         """
         Print test title
         """
-
-        text = "Test: " + text
-
-        n = max((len(text)+3), 64)
-        stars = "*" * n
-        print("\n" + stars)
-        print("*")
-        print(f"* {text} ")
-        print("*")
-        print(stars + "\n")
+        print(f"---- Test: {text} ----")

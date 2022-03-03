@@ -41,7 +41,6 @@ class TestProcess(BaseTestCase):
         CondaEnvTester.uninstall()
 
     async def test_conda(self):
-        GTest.print("Conda")
         proc_mdl: TaskModel = TaskService.create_task_model_from_type(
             task_type=CondaEnvTester)
         self.assertFalse(CondaEnvTester.is_installed())

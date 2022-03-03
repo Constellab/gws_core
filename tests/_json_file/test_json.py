@@ -14,7 +14,6 @@ from gws_core.impl.json.json_tasks import JSONImporter
 class TestJson(BaseTestCase):
 
     def test_json_data(self):
-        GTest.print("JSONDict")
         file_path = DataProvider.get_test_data_path("mini_travel_graph.json")
         json_dict: JSONDict = JSONImporter.call(File(file_path))
         _json = {}

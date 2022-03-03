@@ -179,7 +179,6 @@ class TestSkippable(Protocol):
 class TestIO(BaseTestCase):
 
     def test_connect(self):
-        GTest.print("IO connect")
 
         p0: TaskModel = ProcessFactory.create_task_model_from_type(
             task_type=Create, instance_name="p0")

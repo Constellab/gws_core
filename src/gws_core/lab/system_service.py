@@ -28,6 +28,11 @@ from .system_status import SystemStatus
 
 
 class SystemService:
+
+    @classmethod
+    def migrate_db(cls):
+        DbMigrationService.migrate()
+
     @classmethod
     def init(cls):
         """
@@ -36,7 +41,6 @@ class SystemService:
          - register the processes and resources
          - create the sysuser if not exists
         """
-        DbMigrationService.migrate()
         cls.create_all_tables()
         ModelService.register_all_processes_and_resources()
         UserService.create_sysuser()

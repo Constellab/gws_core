@@ -17,7 +17,6 @@ testdata_dir = settings.get_variable("gws_core:testdata_dir")
 class TestQueue(BaseTestCase):
 
     def test_queue(self):
-        GTest.print("Experiment Queue")
 
         queue: Queue = Queue().save()
         self.assertEqual(Experiment.count_of_running_experiments(), 0)

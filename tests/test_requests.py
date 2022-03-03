@@ -23,7 +23,6 @@ class TestRequests(unittest.TestCase):
         pass
 
     def test_download(self):
-        GTest.print("Download Requests")
 
         url = "https://www.biorxiv.org/content/10.1101/2020.02.16.951624v1.full.pdf"
         filename = "my_file.pdf"

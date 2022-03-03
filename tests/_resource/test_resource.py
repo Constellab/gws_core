@@ -4,10 +4,9 @@
 # About us: https://gencovery.com
 from typing import List
 
-
-from gws_core import (BaseTestCase, Experiment, ExperimentService, GTest,
+from gws_core import (BaseTestCase, Experiment, ExperimentService, File, GTest,
                       ProcessFactory, ResourceModel, Robot, RobotCreate,
-                      TaskModel, File)
+                      TaskModel)
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.resource.r_field import IntRField, ListRField, StrRField
 from gws_core.resource.resource import Resource
@@ -36,7 +35,7 @@ class TestResourceFieldsFile(File):
 class TestResource(BaseTestCase):
 
     async def test_resource(self):
-        GTest.print("Resource")
+        GTest.print('Waow')
 
         task_model: TaskModel = ProcessFactory.create_task_model_from_type(
             task_type=RobotCreate, instance_name="create")

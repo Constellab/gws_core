@@ -39,7 +39,6 @@ class TestProcess(BaseTestCase):
 
     async def test_pipenv(self):
 
-        GTest.print("Pipenv")
         PipEnvTester.uninstall()
         proc_mdl: TaskModel = TaskService.create_task_model_from_type(
             task_type=PipEnvTester)
@@ -64,7 +63,6 @@ class TestProcess(BaseTestCase):
         self.assertFalse(PipEnvTester.is_installed())
 
     async def test_pipenv_proxy(self):
-        GTest.print("Pipenv proxy")
 
         prox = ShellProxy(PipEnvTester)
         encoded_string = prox.check_output(

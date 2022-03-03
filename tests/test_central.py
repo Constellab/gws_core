@@ -3,24 +3,14 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import unittest
 
 from gws_core import GTest, User, UserService
+from gws_core.test.base_test_case import BaseTestCase
 
 
-class TestCentral(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        GTest.drop_tables()
-        GTest.create_tables()
-
-    @classmethod
-    def tearDownClass(cls):
-        GTest.drop_tables()
+class TestCentral(BaseTestCase):
 
     def test_create_user(self):
-        GTest.print("Central")
         data = {
             "id": "1234567890",
             "email": "test@gencovery.com",

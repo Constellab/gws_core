@@ -16,8 +16,6 @@ class TestKVStore(BaseTestCase):
         self.assertTrue(s1.file_exists())
 
     def test_store(self):
-        GTest.print("KVStore")
-
         s1 = KVStore.from_filename('s1')
 
         # Test that the file is not created on kv store creation

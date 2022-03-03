@@ -97,7 +97,6 @@ class TestProtocolError(BaseTestCase):
 
     async def test_error_on_task(self):
         """Test an experiment with a task that throws an exception """
-        GTest.print("Error Task")
 
         protocol: ProtocolModel = ProtocolService.create_protocol_model_from_type(TestErrorProtocol)
 
