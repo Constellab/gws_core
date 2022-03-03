@@ -94,7 +94,6 @@ class LabConfigModel(BaseModel):
 
         return hash_obj.hexdigest()
 
-    @classmethod
     def to_json(self) -> LabConfig:
         return {
             'version': self.version,
