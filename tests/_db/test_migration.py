@@ -5,16 +5,10 @@
 
 from gws_core import BaseTestCase
 from gws_core.core.db.brick_migrator import BrickMigration, BrickMigrator
-from gws_core.core.db.db_migration import brick_migration
 from gws_core.core.db.version import Version, VersionInvalidException
 
 
 class MigrationTest(BrickMigration):
-    pass
-
-
-@brick_migration('99.99.99')
-class MigrationTest2(BrickMigration):
     pass
 
 
