@@ -10,7 +10,7 @@ from .system_service import SystemService
 
 
 @core_app.post("/system/dev-reset", tags=["System"], summary="Reset dev environment")
-async def get_the_lab_monitor_data(_: UserData = Depends(AuthService.check_user_access_token)) -> None:
+async def dev_reset(_: UserData = Depends(AuthService.check_user_access_token)) -> None:
     """
     Reset dev environment
     """

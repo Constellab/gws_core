@@ -8,6 +8,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING, List, TypedDict, final
 
+from gws_core.lab.lab_config_model import LabConfigModel
 from peewee import BooleanField, CharField, DoubleField, ForeignKeyField
 
 from ..core.classes.enum_field import EnumField
@@ -87,6 +88,7 @@ class Experiment(ModelWithUser, TaggableModel):
 
     title = CharField(max_length=50)
     description = JSONField(null=True)
+    lab_config: LabConfigModel = ForeignKeyField(LabConfigModel, null=True)
 
     _table_name = 'gws_experiment'
 
@@ -323,6 +325,7 @@ class Experiment(ModelWithUser, TaggableModel):
 
     def mark_as_started(self):
         self.status = ExperimentStatus.RUNNING
+        self.lab_config = LabConfigModel.get_current_config()
         self.save()
 
     def mark_as_success(self):

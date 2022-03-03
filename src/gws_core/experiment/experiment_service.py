@@ -7,6 +7,7 @@
 from typing import Dict, Type
 
 from gws_core.brick.brick_helper import BrickHelper
+from gws_core.lab.lab_config_model import LabConfigModel
 from peewee import ModelSelect
 
 from ..central.central_service import CentralService
@@ -169,10 +170,13 @@ class ExperimentService(BaseService):
         #     Logger.info('Skipping sending experiment to central as we are running in LOCAL')
         #     return experiment
 
+        lab_config: LabConfigModel = experiment.lab_config
+        if lab_config is None:
+            lab_config = LabConfigModel.get_current_config()
         save_experiment_dto: SaveExperimentToCentralDTO = {
             "experiment": experiment.to_json(),
             "protocol": experiment.export_protocol(),
-            "lab_config": BrickHelper.get_lab_config()
+            "lab_config": lab_config.to_json()
         }
         # Save the experiment in central
         CentralService.save_experiment(experiment.project.id, save_experiment_dto)
