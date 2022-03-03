@@ -194,7 +194,7 @@ class ExperimentService(BaseService):
         :rtype: `int`
         """
 
-        return Experiment.count_of_running_experiments()
+        return Experiment.count_running_experiments()
 
     @classmethod
     def get_experiment_by_id(cls, id: str) -> Experiment:

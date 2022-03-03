@@ -19,7 +19,7 @@ class TestQueue(BaseTestCase):
     def test_queue(self):
 
         queue: Queue = Queue().save()
-        self.assertEqual(Experiment.count_of_running_experiments(), 0)
+        self.assertEqual(Experiment.count_running_or_queued_experiments(), 0)
         self.assertEqual(queue.length(), 0)
 
         proto1 = RobotService.create_robot_world_travel()
@@ -76,7 +76,7 @@ class TestQueue(BaseTestCase):
 
         wait_count = 0
         # Wait until the queue is clear and there is not experiment that is running
-        while Queue.length() > 0 or ExperimentService.count_of_running_experiments() > 0:
+        while Queue.length() > 0 or Experiment.count_running_or_queued_experiments() > 0:
             print("Waiting 5 secs for cli experiments to finish ...")
             time.sleep(5)
             if wait_count >= 10:

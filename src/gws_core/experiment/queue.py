@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from gws_core.core.decorator.transaction import transaction
 from peewee import BooleanField, ForeignKeyField, IntegerField, ModelSelect
@@ -30,25 +30,29 @@ class Queue(Model):
 
     is_active = BooleanField(default=False)
     max_length = IntegerField(default=10)
-    _queue_instance = None
+
+    _current_queue: 'Queue' = None
     _table_name = "gws_queue"
-    _instance: 'Queue' = None
+
+    @classmethod
+    def get_current_queue(cls) -> Optional['Queue']:
+        return cls._current_queue
 
     @classmethod
     @transaction(nested_transaction=True)  # force new transaction to commit anyway
-    def get_instance(cls) -> 'Queue':
-        if cls._instance is None:
+    def _get_or_create_instance(cls) -> 'Queue':
+        if cls._current_queue is None:
             queue = Queue.select().first()
             if queue is not None:
-                cls._instance = queue
+                cls._current_queue = queue
             else:
-                cls._instance = Queue().save()
+                cls._current_queue = Queue().save()
 
-        return cls._instance
+        return cls._current_queue
 
     @classmethod
     def init(cls) -> 'Queue':
-        queue = cls.get_instance()
+        queue = cls._get_or_create_instance()
         if not queue.is_active:
             queue.is_active = True
             queue.save()
@@ -58,17 +62,20 @@ class Queue(Model):
 
     @classmethod
     def deinit(cls):
-        queue = cls.get_instance()
-        cls.delete_by_id(queue.id)
+        queue = cls.get_current_queue()
+
+        if queue is not None:
+            cls.delete_by_id(queue.id)
+            cls._current_queue = None
 
     @classmethod
-    @transaction()
+    @transaction(nested_transaction=True)  # use nested to prevent transaction block in queue tick (from parent call)
     def add_job(cls, user: User, experiment: Experiment) -> 'Queue':
 
         if Job.experiment_in_queue(experiment.id):
             raise BadRequestException("The experiment already is in the queue")
 
-        queue = cls.get_instance()
+        queue = cls._get_or_create_instance()
         if Job.count_experiment_in_queue(queue.id) > queue.max_length:
             raise BadRequestException("The maximum number of jobs is reached")
 
@@ -79,7 +86,7 @@ class Queue(Model):
         return queue
 
     @classmethod
-    @transaction()
+    @transaction(nested_transaction=True)  # use nested to prevent transaction block in queue tick (from parent call)
     def remove_experiment(cls, experiment_id: str) -> Experiment:
         experiment: Experiment = Experiment.get_by_id_and_check(experiment_id)
 
@@ -95,14 +102,21 @@ class Queue(Model):
         return Job.select().count()
 
     @classmethod
-    def pop_first(cls) -> 'Job':
-        queue = cls.get_instance()
+    def pop_first(cls) -> Optional['Job']:
+        queue = cls.get_current_queue()
+
+        if not queue:
+            return None
 
         return Job.pop_first_job(queue.id)
 
     @classmethod
-    def get_jobs(cls) -> 'Job':
-        queue = Queue.get_instance()
+    def get_jobs(cls) -> List['Job']:
+        queue = cls.get_current_queue()
+
+        if not queue:
+            return []
+
         return Job.get_queue_jobs(queue.id)
 
 

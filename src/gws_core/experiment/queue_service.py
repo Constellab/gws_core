@@ -41,8 +41,8 @@ class QueueService(BaseService):
 
     @classmethod
     def _queue_tick(cls, tick_interval, daemon):
-        queue = Queue.get_instance()
-        if not queue.is_active:
+        queue = Queue.get_current_queue()
+        if not queue or not queue.is_active:
             return
         try:
             cls._tick()
@@ -80,7 +80,7 @@ class QueueService(BaseService):
         :raises BadRequestException: [description]
         """
         Logger.debug("Checking experiment queue ...")
-        if Experiment.count_of_running_experiments() > 0:
+        if Experiment.count_running_experiments() > 0:
             # -> busy: we will test later!
             Logger.debug("The lab is busy! Retry later")
             return
@@ -155,7 +155,7 @@ class QueueService(BaseService):
         if auto_start:
             if queue.is_active:
                 # > manally trigger the experiment if possible!
-                if not Experiment.count_of_running_experiments():
+                if not Experiment.count_running_experiments():
                     cls._tick()
             else:
                 cls.init()

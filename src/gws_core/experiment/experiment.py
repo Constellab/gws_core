@@ -178,13 +178,24 @@ class Experiment(ModelWithUser, TaggableModel):
         return super().archive(archive)
 
     @classmethod
-    def count_of_running_experiments(cls) -> int:
+    def count_running_experiments(cls) -> int:
         """
         :return: the count of experiment in progress or waiting for a cli process
         :rtype: `int`
         """
 
         return Experiment.select().where((Experiment.status == ExperimentStatus.RUNNING) |
+                                         (Experiment.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS)).count()
+
+    @classmethod
+    def count_running_or_queued_experiments(cls) -> int:
+        """
+        :return: the count of experiment in progress or waiting for a cli process
+        :rtype: `int`
+        """
+
+        return Experiment.select().where((Experiment.status == ExperimentStatus.RUNNING) |
+                                         (Experiment.status == ExperimentStatus.IN_QUEUE) |
                                          (Experiment.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS)).count()
 
     @transaction()
