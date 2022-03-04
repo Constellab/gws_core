@@ -5,18 +5,18 @@
 
 from pandas import DataFrame
 
-from ....config.config_types import ConfigParams, ConfigSpecs
-from ....config.param_spec import BoolParam, FloatParam, ParamSet, StrParam
-from ....task.task import Task
-from ....task.task_decorator import task_decorator
-from ....task.task_io import TaskInputs, TaskOutputs
-from ...table.table import Table
-from ..helper.constructor.num_data_filter_param import \
+from ..config.config_types import ConfigParams, ConfigSpecs
+from ..config.param_spec import BoolParam, FloatParam, ParamSet, StrParam
+from ..impl.table.helper.constructor.num_data_filter_param import \
     NumericDataFilterParamConstructor
-from ..helper.constructor.text_data_filter_param import \
+from ..impl.table.helper.constructor.text_data_filter_param import \
     TextDataFilterParamConstructor
-from ..helper.table_aggregator_helper import TableAggregatorHelper
-from ..helper.table_filter_helper import TableFilterHelper
+from ..impl.table.helper.table_aggregator_helper import TableAggregatorHelper
+from ..impl.table.helper.table_filter_helper import TableFilterHelper
+from ..impl.table.table import Table
+from ..task.task import Task
+from ..task.task_decorator import task_decorator
+from ..task.task_io import TaskInputs, TaskOutputs
 
 # ####################################################################
 #
@@ -25,10 +25,10 @@ from ..helper.table_filter_helper import TableFilterHelper
 # ####################################################################
 
 
-@task_decorator(
-    unique_name="TableFilter",
-    short_description="Filters the table using various fitering rules",
-)
+@task_decorator(unique_name="TableFilter", human_name="Table filter",
+                short_description="Filters the table using various fitering rules",
+                hide=True, deprecated_since='0.2.2',
+                deprecated_message='Please use TableDataFilter or TableAggregatorFilter instead')
 class TableFilter(Task):
     input_specs = {'source': Table}
     output_specs = {'target': Table}

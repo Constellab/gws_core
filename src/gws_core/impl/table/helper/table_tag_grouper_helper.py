@@ -42,10 +42,24 @@ class TableTagGrouperHelper:
         if func == "sort":
             tag_dataframe = DataFrame(row_tags, index=table.get_data().index)
             tag_keys = tag_dataframe.columns
+            row_positions = DataFrame(
+                range(0, tag_dataframe.shape[0]),
+                index=table.get_data().index,
+                columns=["row_positions"]
+            )
 
-            df = pandas.concat([tag_dataframe, table.get_data()], axis=1)
+            df = pandas.concat([row_positions, tag_dataframe, table.get_data()],
+                               axis=1)  # add ne columns for multi-row sort
+
             df.sort_values(by=keys, inplace=True)
-            df = df.drop(tag_keys, axis=1)
+            new_row_position = df["row_positions"]
+            df = df.drop([*tag_keys.values.tolist(), "row_positions"], axis=1)
+
+            sorted_table = Table(df)
+            new_row_tags = [row_tags[i] for i in new_row_position]
+            sorted_table.set_row_tags(new_row_tags)
+            sorted_table.set_column_tags(table.get_column_tags())
+            return sorted_table
         else:
             all_tag_keys = list(set([k for t in row_tags for k, v in t.items()]))
             if len(keys) > 1:
@@ -67,9 +81,11 @@ class TableTagGrouperHelper:
             df = pandas.concat(list(df_list.values()), axis=0)
             df.index = list(df_list.keys())
 
-        return Table(df)
+            grouped_table = Table(df)
+            grouped_table.set_column_tags(table.get_column_tags())
+            return grouped_table
 
-    @classmethod
+    @ classmethod
     def group_by_column_tags(cls, table: Table, keys: List[str], func: str = "mean") -> Table:
         """
         Group data along a list of column tag keys
@@ -92,12 +108,27 @@ class TableTagGrouperHelper:
         column_tags = table.get_column_tags()
 
         if func == "sort":
-            tag_dataframe = DataFrame(column_tags, index=table.get_data().index)
+            tag_dataframe = DataFrame(column_tags, index=table.get_data().columns)
             tag_keys = tag_dataframe.columns
 
-            df = pandas.concat([tag_dataframe, table.get_data()], axis=0)
-            df.sort_values(by=keys, inplace=True)
-            df = df.drop(tag_keys, axis=0)
+            column_positions = DataFrame(
+                range(0, tag_dataframe.shape[1]),
+                columns=table.get_data().columns,
+                index=["column_positions"]
+            )
+
+            df = pandas.concat([column_positions, tag_dataframe, table.get_data()],
+                               axis=0)  # add new rows for multi-column sort
+
+            df.sort_values(by=keys, inplace=True, axis=1)
+            new_column_position = df["column_positions"]
+            df = df.drop([*tag_keys.values.tolist(), "column_positions"], axis=1)
+
+            sorted_table = Table(df)
+            new_column_tags = [column_tags[i] for i in new_column_position]
+            sorted_table.set_column_tags(new_column_tags)
+            sorted_table.set_row_tags(table.get_row_tags())
+            return sorted_table
         else:
             all_tag_keys = list(set([k for t in column_tags for k, v in t.items()]))
             if len(keys) > 1:
@@ -119,4 +150,6 @@ class TableTagGrouperHelper:
             df = pandas.concat(list(df_list.values()), axis=1)
             df.columns = list(df_list.keys())
 
-        return Table(df)
+            grouped_table = Table(df)
+            grouped_table.set_row_tags(table.get_row_tags())
+            return grouped_table

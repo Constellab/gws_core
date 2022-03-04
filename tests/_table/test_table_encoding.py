@@ -16,7 +16,7 @@ class TestTableEncoding(BaseTestCase):
 
     async def test_table_encoding_decoding(self):
         # importer
-        table = GWSCoreTestHelper.get_data_table()
+        table = GWSCoreTestHelper.get_small_data_table()
 
         print(table)
 

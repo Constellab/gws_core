@@ -65,6 +65,7 @@ class TableFilterHelper:
             return data
         if isinstance(value, (int, float,)):
             aggregated_data: DataFrame = TableAggregatorHelper.aggregate(data, direction, func)
+
             tf: List[bool]
             if comp == ">":
                 tf = aggregated_data > value
@@ -79,6 +80,7 @@ class TableFilterHelper:
             elif comp == "!=":
                 tf = aggregated_data != value
 
+            tf = tf.squeeze()  # convert to series for selection
             if direction == "horizontal":
                 return data.loc[tf[tf].index, :]
             else:

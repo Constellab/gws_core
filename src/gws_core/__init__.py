@@ -89,6 +89,9 @@ from .core.utils.serializer import Serializer as Serializer
 from .core.utils.settings import Settings as Settings
 from .core.utils.utils import Utils as Utils
 from .core.utils.zip import Zip as Zip
+# Deprecated
+from .deprecated.dep_table_annotator import TableAnnotator
+from .deprecated.dep_table_filter import TableFilter
 # Experiment
 from .experiment.experiment import Experiment as Experiment
 from .experiment.experiment import ExperimentStatus as ExperimentStatus
@@ -179,7 +182,6 @@ from .impl.table.metadata_table.table_annotator import \
 from .impl.table.table import Table as Table
 from .impl.table.table_file import TableFile as TableFile
 from .impl.table.tasks.table_exporter import TableExporter as TableExporter
-from .impl.table.tasks.table_filter import TableFilter
 from .impl.table.tasks.table_importer import TableImporter as TableImporter
 from .impl.table.transformers.table_aggregator import \
     TableAggregator as TableAggregator

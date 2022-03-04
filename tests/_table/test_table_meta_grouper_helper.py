@@ -19,7 +19,7 @@ class TestTableAggregatorHelper(BaseTestCase):
         tester = TaskRunner(
             task_type=TableRowAnnotator,
             inputs={
-                "tasample_tableble": table,
+                "sample_table": table,
                 "metadata_table": metatable,
             }
         )
@@ -29,10 +29,20 @@ class TestTableAggregatorHelper(BaseTestCase):
         # Sort
         # -----------------------
         grouped_table = TableTagGrouperHelper.group_by_row_tags(annotated_table, keys=['Gender'], func="sort")
-        self.assertEqual(grouped_table.row_names, ['B', 'D', 'C', 'A', 'Z'])
+        print(grouped_table.get_row_tags())
+
+        self.assertEqual(grouped_table.get_row_tags()[0]["Gender"], "F")
+        self.assertEqual(grouped_table.get_row_tags()[1]["Gender"], "F")
+        self.assertEqual(grouped_table.get_row_tags()[2]["Gender"], "M")
+        self.assertEqual(grouped_table.get_row_tags()[3]["Gender"], "M")
 
         grouped_table = TableTagGrouperHelper.group_by_row_tags(annotated_table, keys=['Gender', 'Group'], func="sort")
-        self.assertEqual(grouped_table.row_names, ["D", "B", "A", "C", "Z"])
+        self.assertEqual(grouped_table.get_row_tags()[0]["Gender"], "F")
+        self.assertEqual(grouped_table.get_row_tags()[1]["Gender"], "F")
+        self.assertEqual(grouped_table.get_row_tags()[2]["Gender"], "M")
+        self.assertEqual(grouped_table.get_row_tags()[3]["Gender"], "M")
+
+        #self.assertEqual(grouped_table.row_names, ["D", "B", "A", "C", "Z"])
 
         # Mean
         # -----------------------

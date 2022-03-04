@@ -7,9 +7,6 @@ class TestTableView(BaseTestCase):
 
     async def test_table_view(self,):
         table = DataProvider.get_iris_table()
-
-        print(table)
-
         vw = TableView(table)
         tester = ViewTester(view=vw)
         dic = tester.to_dict(dict(
@@ -19,12 +16,13 @@ class TestTableView(BaseTestCase):
             number_of_columns_per_page=50
         ))
         self.assertEqual(dic["type"], "table-view")
+
         self.assertEqual(
             dic["data"],
-            table.to_dataframe().iloc[0:50, 0:5].to_dict('list')
+            table.to_dataframe().iloc[0:50, 0:5].to_dict('split')["data"]
         )
-        self.assertEqual(len(dic["row_tags"]), 50)
-        self.assertEqual(len(dic["column_tags"]), 5)
+        self.assertEqual(len(dic["rows"]), 50)
+        self.assertEqual(len(dic["columns"]), 5)
 
         tester = ViewTester(view=vw)
         dic = tester.to_dict(dict(
@@ -35,7 +33,7 @@ class TestTableView(BaseTestCase):
         ))
         self.assertEqual(
             dic["data"],
-            table.to_dataframe().iloc[2:5, 1:3].to_dict('list')
+            table.to_dataframe().iloc[2:5, 1:3].to_dict('split')["data"]
         )
-        self.assertEqual(len(dic["row_tags"]), 3)
-        self.assertEqual(len(dic["column_tags"]), 2)
+        self.assertEqual(len(dic["rows"]), 3)
+        self.assertEqual(len(dic["columns"]), 2)

@@ -41,5 +41,5 @@ class TableDecoder(Task):
         mapper = {ern[i]: orn[i] for i in range(0, len(orn))}
         data.rename(index=mapper, inplace=True)
 
-        decoded_table = Table(data=data, column_names=ocn, row_names=orn)
+        decoded_table = Table(data=data)
         return {"decoded_table": decoded_table}

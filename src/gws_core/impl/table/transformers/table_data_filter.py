@@ -35,6 +35,10 @@ class TableDataFilter(Transformer):
         data: DataFrame = source.get_data()
         data = NumericDataFilterParamConstructor.validate_filter("numeric_filter", data, params)
         data = TextDataFilterParamConstructor.validate_filter("text_filter", data, params)
+
+        print("====>")
+        print(data)
+
         table = Table(data=data)
         # table.name = source.name + " (Filtered)"
         return table

@@ -109,26 +109,25 @@ class TabularView(View):
             from_row_index:to_row_index,
             from_column_index:to_column_index,
         ]
-
         sliced_row_tags = self._row_tags[from_row_index:to_row_index]
         sliced_column_tags = self._column_tags[from_column_index:to_column_index]
-
-        return {
+        sliced_data_info = {
             "data": sliced_data,
             "row_tags": sliced_row_tags,
             "column_tags": sliced_column_tags,
             "indexes": (from_row_index, to_row_index, from_column_index, to_column_index,)
         }
+        return sliced_data_info
 
     def to_dict(self, params: ConfigParams) -> dict:
         if self._data is None:
             raise BadRequestException("No data found")
 
         # continue ...
-        from_row: int = self.from_row
-        number_of_rows_per_page: int = self.number_of_rows_per_page
-        from_column: int = self.from_column
-        number_of_columns_per_page: int = self.number_of_columns_per_page
+        from_row: int = params.get("from_row", self.from_row)
+        number_of_rows_per_page: int = params.get("number_of_rows_per_page", self.number_of_rows_per_page)
+        from_column: int = params.get("from_column", self.from_column)
+        number_of_columns_per_page: int = params.get("number_of_columns_per_page", self.number_of_columns_per_page)
 
         total_number_of_rows = self._data.shape[0]
         total_number_of_columns = self._data.shape[1]
@@ -138,19 +137,19 @@ class TabularView(View):
         to_row_index: int = from_row_index + number_of_rows_per_page
         to_column_index: int = from_column_index + number_of_columns_per_page
 
-        sliced_data = self._slice(
+        sliced_data_info = self._slice(
             from_row_index=from_row_index,
             to_row_index=to_row_index,
             from_column_index=from_column_index,
             to_column_index=to_column_index)
 
-        data = sliced_data["data"]
-        row_tags = sliced_data["row_tags"]
-        column_tags = sliced_data["column_tags"]
-        from_row_index, to_row_index, from_column_index, to_column_index = sliced_data["indexes"]
+        data = sliced_data_info["data"]
+        row_tags = sliced_data_info["row_tags"]
+        column_tags = sliced_data_info["column_tags"]
+        from_row_index, to_row_index, from_column_index, to_column_index = sliced_data_info["indexes"]
 
         # Remove NaN values to convert to json
-        replace_nan_by: str = self.replace_nan_by
+        replace_nan_by: str = params.get("replace_nan_by", self.replace_nan_by)
         if replace_nan_by == "empty":
             replace_nan_by = ""
         data: DataFrame = data.fillna(replace_nan_by)

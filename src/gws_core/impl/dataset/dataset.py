@@ -31,8 +31,8 @@ class Dataset(Table):
     _target_positions: List[int] = ListRField()
 
     def __init__(self, data: Union[DataFrame, np.ndarray, list] = None,
-                 column_names=None, row_names=None, target_names: List[str] = None):
-        super().__init__(data, column_names, row_names)
+                 row_names=None, column_names=None, target_names: List[str] = None, meta: List = None):
+        super().__init__(data, row_names=row_names, column_names=column_names, meta=meta)
         self._set_target_names(target_names)
 
     def _set_target_names(self, target_names: List = None):
@@ -146,23 +146,23 @@ class Dataset(Table):
     def select_by_column_positions(self, positions: List[int]) -> 'Dataset':
         dataset: Dataset = super().select_by_column_positions(positions)
         new_target_names = [name for name in self.target_names if name in dataset.column_names]
-        dataset = Dataset(dataset.get_data(), target_names=new_target_names)
+        dataset._set_target_names(new_target_names)
         return dataset
 
     def select_by_column_names(self, names: str, use_regex=False) -> 'Dataset':
         dataset: Dataset = super().select_by_column_names(names, use_regex=use_regex)
         new_target_names = [name for name in self.target_names if name in dataset.column_names]
-        dataset = Dataset(dataset.get_data(), target_names=new_target_names)
+        dataset._set_target_names(new_target_names)
         return dataset
 
     def select_by_row_positions(self, positions: List[int]) -> 'Dataset':
         dataset: Dataset = super().select_by_row_positions(positions)
-        dataset = Dataset(dataset.get_data(), target_names=self.target_names)
+        dataset._set_target_names(self.target_names)
         return dataset
 
     def select_by_row_names(self, names: str, use_regex=False) -> 'Dataset':
         dataset: Dataset = super().select_by_row_names(names, use_regex=use_regex)
-        dataset = Dataset(dataset.get_data(), target_names=self.target_names)
+        dataset._set_target_names(self.target_names)
         return dataset
 
     # -- T --

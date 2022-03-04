@@ -3,15 +3,17 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Union, Type
-from ..config.config_types import ConfigParams, ConfigParamsDict, ParamValue
+from typing import Type, Union
+
 from ..config.config import Config
+from ..config.config_types import ConfigParams, ConfigParamsDict, ParamValue
 from ..resource.view import View
+
 
 class ViewTester():
     """ ViewTester """
     _view: View
-    
+
     def __init__(self, view: View):
         self._view = view
 
@@ -19,7 +21,7 @@ class ViewTester():
         if params is None:
             params = {}
 
-        params = self._get_and_check_config(params)
+        params: ConfigParams = self._get_and_check_config(params)
         return self._view.to_dict(params)
 
     def _get_and_check_config(self, params: ConfigParamsDict) -> ConfigParams:

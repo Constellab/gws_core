@@ -59,6 +59,10 @@ class TestTableFilter(BaseTestCase):
         )
         outputs = await tester.run()
         filtered_table = outputs["target"]
+
+        print("---->")
+        print(filtered_table)
+
         self.assertEqual(filtered_table.row_names, ["Laura", "Leon"])
         self.assertEqual(filtered_table.column_names, ["Age", "Sex", "City", "Weight"])
 

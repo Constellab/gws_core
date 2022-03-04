@@ -16,7 +16,7 @@ from ..task.task_io import TaskInputs, TaskOutputs
 @task_decorator(unique_name="TableAnnotator", human_name="Table annotator",
                 short_description="Annotate table rows (or columns) according to a metadata table",
                 hide=True, deprecated_since='0.2.2',
-                deprecated_message='Please use Table Row Annotator or Table Column Annotator instead')
+                deprecated_message='Please use TableRowAnnotator or TableColumnAnnotator instead')
 class TableAnnotator(Task):
     """
     TableAnnotator

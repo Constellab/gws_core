@@ -28,5 +28,6 @@ class TableTransposer(Transformer):
             row_names=source.column_names,
             column_names=source.row_names
         )
-        # table.name = source.name + " (Transposed)"
+        table.set_row_tags(self.get_column_tags())
+        table.set_column_tags(self.get_row_tags())
         return table

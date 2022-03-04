@@ -67,6 +67,9 @@ class TableAggregatorFilter(Transformer):
                 value=_filter["value"],
             )
 
+        print("====>")
+        print(data)
+
         table = Table(data=data)
         # table.name = source.name + " (Aggregation filter)"
         return table

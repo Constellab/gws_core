@@ -41,5 +41,5 @@ class TableEncoder(Task):
         mapper = {orn[i]: ern[i] for i in range(0, len(orn))}
         data.rename(index=mapper, inplace=True)
 
-        encoded_table = EncodedTable(data=data, column_names=ecn, row_names=ern)
+        encoded_table = EncodedTable(data=data)
         return {"encoded_table": encoded_table}
