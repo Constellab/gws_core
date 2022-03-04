@@ -7,20 +7,23 @@ import os
 import re
 import tempfile
 from copy import deepcopy
-from typing import Dict, List, Literal, TypedDict, Union
+from json import dump, load
+from typing import Any, Dict, List, Literal, TypedDict, Union
 
 from gws_core.core.utils.date_helper import DateHelper
-from peewee import Model as PeeweeModel
-from peewee import SqliteDatabase
-from playhouse.sqlite_ext import JSONField
+from gws_core.impl.file.file_helper import FileHelper
 
 from .utils import Utils
 
 __SETTINGS_DIR__ = "/conf/settings"
-if not os.path.exists(__SETTINGS_DIR__):
-    os.makedirs(__SETTINGS_DIR__)
-__SETTINGS_DB__ = SqliteDatabase(
-    os.path.join(__SETTINGS_DIR__, "settings.sqlite3"))
+__SETTINGS_NAME__ = "settings.json"
+
+
+__DEFAULT_SETTINGS__ = {
+    "app_dir": os.path.dirname(os.path.abspath(__file__)),
+    "app_host": '0.0.0.0',
+    "app_port": 3000,
+}
 
 
 class ModuleInfo(TypedDict):
@@ -44,7 +47,7 @@ class BrickMigrationLog(TypedDict):
     history: List[BrickMigrationLogHistory]
 
 
-class Settings(PeeweeModel):
+class Settings():
     """
     Settings class.
 
@@ -54,43 +57,45 @@ class Settings(PeeweeModel):
     :type data: `dict`
     """
 
-    data = JSONField(null=True)
-    _data = dict(
-        app_dir=os.path.dirname(os.path.abspath(__file__)),
-        app_host='0.0.0.0',
-        app_port=3000,
-    )
-
-    _table_name = "gws_settings"
+    data: Dict[str, Any]
 
     _setting_instance: 'Settings' = None
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if not self.data:
-            self.data = {}
-            for k in self._data:
-                self.data[k] = self._data[k]
+    def __init__(self, data: dict):
+        self.data = data
 
     @classmethod
     def init(cls, settings_json: dict = None):
-        for k in settings_json:
-            cls._data[k] = settings_json[k]
-        if not cls.table_exists():
-            cls.create_table()
-        try:
-            settings = Settings.get_by_id(1)
-            for k in cls._data:
-                settings.data[k] = cls._data[k]
-            settings.save()
-        except Exception as _:
-            settings = Settings()
+
+        settings = Settings.retrieve()
+
+        if settings.get_data('secret_key') is None:
             # secret_key
             secret_key = Utils.generate_random_chars(128)
             settings.set_data("secret_key", secret_key)
-            # default id
-            settings.set_data("id", "")
-            settings.save()
+
+        for key, value in settings_json.items():
+            settings.set_data(key, value)
+
+        settings.save()
+
+    def save(self) -> bool:
+        # create the parent directory
+        FileHelper.create_dir_if_not_exist(__SETTINGS_DIR__)
+
+        with open(self._get_setting_file_path(), 'w') as f:
+            dump(self.data, f, sort_keys=True)
+
+        Settings._setting_instance = self
+        return True
+
+    @classmethod
+    def _get_setting_file_path(cls) -> str:
+        return os.path.join(__SETTINGS_DIR__, __SETTINGS_NAME__)
+
+    @classmethod
+    def _setting_file_exists(cls) -> bool:
+        return FileHelper.exists_on_os(cls._get_setting_file_path())
 
     @classmethod
     def get_lab_prod_api_url(cls) -> str:
@@ -374,15 +379,22 @@ class Settings(PeeweeModel):
 
     # -- R --
 
-    @ classmethod
+    @classmethod
     def retrieve(cls) -> 'Settings':
 
         if cls._setting_instance is None:
-            try:
-                cls._setting_instance = Settings.get_by_id(1)
-            except Exception as err:
-                raise Exception("Settings", "retrieve",
-                                "Cannot retrieve settings from the database") from err
+            settings_json = None
+
+            # try to read the settings file
+            if cls._setting_file_exists():
+                with open(cls._get_setting_file_path()) as f:
+                    settings_json = load(f)
+            # use default settings if no file exists
+            else:
+                settings_json = __DEFAULT_SETTINGS__
+
+            # set the setting instance
+            cls._setting_instance = Settings(settings_json)
 
         return cls._setting_instance
 
@@ -421,6 +433,3 @@ class Settings(PeeweeModel):
             "kv_store_dir": self.get_kv_store_base_dir(),
             "data": data
         }
-
-    class Meta:
-        database = __SETTINGS_DB__
