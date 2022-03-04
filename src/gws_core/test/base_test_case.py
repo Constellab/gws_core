@@ -3,14 +3,9 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-
-import os
 from typing import List, Union
 from unittest.async_case import IsolatedAsyncioTestCase
 
-from gws_core.core.utils.settings import Settings
-
-from ..core.db.db_manager import DbManager
 from ..experiment.queue_service import QueueService
 from .gtest import GTest
 
@@ -60,7 +55,6 @@ class BaseTestCase(IsolatedAsyncioTestCase):
     def init_before_test(cls):
         #print(f'Setup: {cls}')
         GTest.delete_data_and_temp_folder()
-        DbManager.init_all_db(test=True)
         GTest.drop_tables()
         GTest.init()
 

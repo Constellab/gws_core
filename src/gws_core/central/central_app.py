@@ -135,9 +135,9 @@ async def health_check() -> bool:
     return True
 
 
-@central_app.get("/db/{db_name}/dump", tags=["DB management"])
-def dump_db(db_name: str, _: UserData = Depends(AuthCentral.check_central_api_key)):
-    output_file = MySQLService.dump_db(db_name)
+@central_app.get("/db/{db_manager_name}/dump", tags=["DB management"])
+def dump_db(db_manager_name: str, _: UserData = Depends(AuthCentral.check_central_api_key)):
+    output_file = MySQLService.dump_db(db_manager_name)
     file = File()
     file.path = output_file
     FsNodeService.add_file_to_default_store(file, 'dump.sql')

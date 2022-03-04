@@ -10,6 +10,7 @@ from copy import deepcopy
 from json import dump, load
 from typing import Any, Dict, List, Literal, TypedDict, Union
 
+from gws_core.core.db.db_config import DbConfig
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.impl.file.file_helper import FileHelper
 
@@ -187,6 +188,36 @@ class Settings():
 
         return os.environ["FRONT_URL"]
 
+    def get_gws_core_prod_db_config(self) -> DbConfig:
+        return {
+            "host":  "gws_core_prod_db",
+            "user": "gws_core",
+            "password": "gencovery",
+            "port": 3306,
+            "db_name": "gws_core",
+            "engine": "mariadb"
+        }
+
+    def get_gws_core_dev_db_config(self) -> DbConfig:
+        return {
+            "host":  "gws_core_dev_db",
+            "user": "gws_core",
+            "password": "gencovery",
+            "port": 3306,
+            "db_name": "gws_core",
+            "engine": "mariadb"
+        }
+
+    def get_gws_core_test_db_config(self) -> DbConfig:
+        return {
+            "host":  "test_gws_dev_db",
+            "user": "test_gws",
+            "password": "gencovery",
+            "port": 3306,
+            "db_name": "test_gws",
+            "engine": "mariadb"
+        }
+
     # -- A --
 
     @property
@@ -195,18 +226,6 @@ class Settings():
 
     def get_maria_db_backup_dir(self) -> str:
         return os.path.join(self.get_data_dir(), "backups")
-
-    def get_maria_db_host(self, db_name) -> str:
-        if self.is_prod:
-            return self.get_maria_prod_db_host(db_name)
-        else:
-            return self.get_maria_dev_db_host(db_name)
-
-    def get_maria_prod_db_host(self, db_name) -> str:
-        return f"{db_name}_prod_db"
-
-    def get_maria_dev_db_host(self, db_name) -> str:
-        return f"{db_name}_dev_db"
 
     def get_cwd(self) -> str:
         """ Returns the current working directory of the Application (i.e. the main brick directory) """

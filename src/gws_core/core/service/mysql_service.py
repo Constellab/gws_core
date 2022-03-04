@@ -5,6 +5,8 @@
 
 import os
 
+from gws_core.core.db.db_manager_service import DbManagerService
+
 from ..db.mysql import MySQLDump, MySQLLoad
 from ..utils.requests import Requests
 from .base_service import BaseService
@@ -13,7 +15,7 @@ from .base_service import BaseService
 class MySQLService(BaseService):
 
     @classmethod
-    def dump_db(cls, db_name, force: bool = False, wait: bool = False) -> str:
+    def dump_db(cls, db_manager_name: str, force: bool = False, wait: bool = False) -> str:
         """
         Dump an MySQL db
 
@@ -26,16 +28,15 @@ class MySQLService(BaseService):
         :return: The path of the dump file
         :rtype: `str`
         """
-
-        dump = MySQLDump()
-        dump.set_default_config(db_name)
+        db_config = DbManagerService.get_db_manager_config(db_manager_name)
+        dump = MySQLDump(db_config, db_manager_name)
         dump.run(force=force, wait=wait)
         return dump.output_file
 
-    # -- L --
-
     @classmethod
-    def load_db(cls, db_name, local_file_path: str = None, remote_file_url: str = None,  force: bool = False, wait: bool = False):
+    def load_db(
+            cls, db_manager_name: str, local_file_path: str = None, remote_file_url: str = None, force: bool = False,
+            wait: bool = False):
         """
         Load an MySQL db
 
@@ -51,8 +52,8 @@ class MySQLService(BaseService):
         :type wait: `bool`
         """
 
-        load = MySQLLoad()
-        load.set_default_config(db_name)
+        db_config = DbManagerService.get_db_manager_config(db_manager_name)
+        load = MySQLLoad(db_config, db_manager_name)
         if local_file_path:
             if os.path.exists(local_file_path):
                 load.input_file = local_file_path
@@ -67,5 +68,3 @@ class MySQLService(BaseService):
             pass
 
         load.run(force=force, wait=wait)
-
-    # -- R --

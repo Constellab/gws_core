@@ -2,12 +2,13 @@
 
 from typing import List, Type
 
+from gws_core.core.db.db_manager import AbstractDbManager
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from peewee import ForeignKeyField, ForeignKeyMetadata
 from peewee import Model as PeeweeModel
 from peewee import ModelSelect
 
 from ...core.exception.exceptions import BadRequestException
-from ..db.db_manager import DbManager
 from .base import Base
 
 
@@ -19,7 +20,7 @@ class BaseModel(Base, PeeweeModel):
     """ BaseModel that contains no column but management for Tables (create, delete, foreign key...)
     """
 
-    _db_manager = DbManager
+    _db_manager = GwsCoreDbManager
 
     @classmethod
     def create_table(cls, *args, **kwargs):
@@ -99,7 +100,7 @@ class BaseModel(Base, PeeweeModel):
         return format_table_name(cls)
 
     @classmethod
-    def get_db_manager(cls) -> Type[DbManager]:
+    def get_db_manager(cls) -> Type[AbstractDbManager]:
         """
         Returns the (current) DbManager of this model
 
@@ -122,7 +123,7 @@ class BaseModel(Base, PeeweeModel):
 
     @classmethod
     def is_mysql_engine(cls):
-        return cls.get_db_manager().get_engine() in ["mysql", "mariadb"]
+        return cls.get_db_manager().is_mysql_engine()
 
     def save(self, *args, **kwargs) -> 'BaseModel':
         if not hasattr(self, "_table_name"):
@@ -133,5 +134,5 @@ class BaseModel(Base, PeeweeModel):
         return self
 
     class Meta:
-        database = DbManager.db
+        database = GwsCoreDbManager.db
         table_function = format_table_name

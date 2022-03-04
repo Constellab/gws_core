@@ -12,7 +12,7 @@ from unittest.suite import BaseTestSuite
 import click
 
 from .app import App
-from .core.db.db_manager import DbManager
+from .core.db.db_manager_service import DbManagerService
 from .core.exception.exceptions import BadRequestException
 from .core.utils.logger import Logger
 from .core.utils.settings import Settings
@@ -51,7 +51,7 @@ def call(test="",
         if App.is_running:
             raise BadRequestException("Cannot run tests while the Application is running.")
 
-    DbManager.init_all_db(test=is_test)
+    DbManagerService.init_all_db()
 
     if reset_env:
         SystemService.reset_dev_envionment(check_user=False)

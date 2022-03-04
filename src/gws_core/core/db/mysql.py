@@ -7,10 +7,10 @@ import os
 import subprocess
 from typing import List
 
-from ..db.manager import AbstractDbManager
+from gws_core.core.db.db_config import DbConfig
+from gws_core.core.utils.logger import Logger
+
 from ..exception.exceptions import BadRequestException
-from ..utils.settings import Settings
-from ..utils.utils import Utils
 
 
 class MySQLBase:
@@ -18,17 +18,13 @@ class MySQLBase:
     MySQLBase class
     """
 
-    user = AbstractDbManager._mariadb_config["user"]
-    password = AbstractDbManager._mariadb_config["password"]
-    db_name = AbstractDbManager.get_db_name()
+    db_config: DbConfig
     input_dir = "/data/gws/backup/mariadb"
     output_dir = "/data/gws/backup/mariadb"
 
     input_file = ""
     output_file = ""
 
-    host = ""
-    port = 3306
     process = None
 
     DUMP_FILENAME = "backup.sql.gz"
@@ -36,6 +32,10 @@ class MySQLBase:
     IN_PROGRESS_FILENAME = ".in_progress"
     LOG_OUR_FILE_NAME = "out.log"
     LOG_ERR_FILE_NAME = "error.log"
+
+    def __init__(self, db_config: DbConfig, output_dir: str) -> None:
+        self.db_config = db_config
+        self.output_dir = f"/data/{output_dir}/backup/mariadb"
 
     # -- B --
 
@@ -52,7 +52,7 @@ class MySQLBase:
 
     def run(self, force: bool = False, wait: bool = False) -> bool:
         if not self.is_ready() and not force:
-            Warning("An db process is already in progress")
+            Logger.error("An db process is already in progress")
             return False
 
         in_progress_file = os.path.join(
@@ -93,17 +93,6 @@ class MySQLBase:
 
         return True
 
-    # -- S --
-
-    def set_default_config(self, db_name):
-        self.user = db_name
-        self.password = "gencovery"
-        self.db_name = db_name
-        self.output_dir = f"/data/{db_name}/backup/mariadb"
-        settings = Settings.retrieve()
-        self.host = settings.get_maria_db_host(self.db_name)
-        self.port = 3306
-
 # ####################################################################
 #
 # MySQLDump
@@ -119,19 +108,14 @@ class MySQLDump(MySQLBase):
     """
 
     def build_command(self) -> List[str]:
-        settings = Settings.retrieve()
-        # slugify string for security
-        self.db_name = Utils.slugify(self.db_name, snakefy=True)
-        self.host = settings.get_maria_db_host(self.db_name)
-
         if not self.output_file:
             self.output_file = os.path.join(
                 self.output_dir, self.DUMP_FILENAME)
 
-        login = f"--defaults-extra-file={self.CNF_FILENAME} --host {self.host} --port {self.port}"
+        login = f'--defaults-extra-file={self.CNF_FILENAME} --host {self.db_config["host"]} --port {self.db_config["port"]}'
         cmd = [
-            f'echo "[client]\nuser={self.user}\npassword={self.password}" > {self.CNF_FILENAME}',
-            f'mysql {login} -N information_schema -e "select table_name from tables where table_schema = \'{self.db_name}\'" | xargs -I"{{}}" mysqldump {login} {self.db_name} {{}} | gzip -f --best --rsyncable > {self.output_file}',
+            f'echo "[client]\nuser={self.db_config["user"]}\npassword={self.db_config["password"]}" > {self.CNF_FILENAME}',
+            f'mysql {login} -N information_schema -e "select table_name from tables where table_schema = \'{self.db_config["db_name"]}\'" | xargs -I"{{}}" mysqldump {login} {self.db_config["db_name"]} {{}} | gzip -f --best --rsyncable > {self.output_file}',
             f'rm -f {self.CNF_FILENAME}',
         ]
         return cmd
@@ -151,17 +135,13 @@ class MySQLLoad(MySQLBase):
     """
 
     def build_command(self) -> List[str]:
-        settings = Settings.retrieve()
-        # slugify string for security
-        self.db_name = Utils.slugify(self.db_name, snakefy=True)
-        self.host = settings.get_maria_db_host(self.db_name)
         if not self.input_file:
             self.input_file = os.path.join(self.input_dir, self.DUMP_FILENAME)
 
-        login = f"--defaults-extra-file={self.CNF_FILENAME} --host {self.host} --port {self.port}"
+        login = f'--defaults-extra-file={self.CNF_FILENAME} --host {self.db_config["host"]} --port {self.db_config["port"]}'
         cmd = [
-            f'echo "[client]\nuser={self.user}\npassword={self.password}" > {self.CNF_FILENAME}',
-            f'gzip -c -d {self.input_file} | mysql {login} {self.db_name}',
+            f'echo "[client]\nuser={self.db_config["user"]}\npassword={self.db_config["password"]}" > {self.CNF_FILENAME}',
+            f'gzip -c -d {self.input_file} | mysql {login} {self.db_config["db_name"]}',
             f'rm -f {self.CNF_FILENAME}'
         ]
         return cmd

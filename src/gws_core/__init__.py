@@ -52,6 +52,9 @@ from .core.classes.validator import URLValidator as URLValidator
 from .core.classes.validator import Validator as Validator
 # Core > DB
 from .core.db.brick_migrator import BrickMigration as BrickMigration
+from .core.db.db_config import DbConfig as DbConfig
+from .core.db.db_config import DbMode as DbMode
+from .core.db.db_manager import AbstractDbManager as AbstractDbManager
 from .core.db.db_migration import brick_migration as brick_migration
 from .core.db.mysql import MySQLBase as MySQLBase
 from .core.db.mysql import MySQLDump as MySQLDump
