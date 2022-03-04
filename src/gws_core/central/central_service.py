@@ -6,10 +6,10 @@
 import json
 from typing import Dict, List, TypedDict
 
-from gws_core.brick.brick_helper import LabConfig
 from gws_core.brick.brick_service import BrickService
 from gws_core.experiment.experiment_dto import SaveExperimentToCentralDTO
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.lab.lab_config_model import LabConfig
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
@@ -76,7 +76,8 @@ class CentralService(BaseService):
         response = ExternalApiService.put(central_api_url, body, cls._get_request_header())
 
         if response.status_code != 200:
-            BrickService.log_brick_error(CentralService, f"Can't register lab start on central. Error : {response.text}")
+            BrickService.log_brick_error(
+                CentralService, f"Can't register lab start on central. Error : {response.text}")
             return False
         return True
 

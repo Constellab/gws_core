@@ -4,6 +4,8 @@
 # About us: https://gencovery.com
 
 
+from gws_core.experiment.experiment import Experiment
+from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.model.typing import Typing
 from playhouse.migrate import SqliteMigrator, migrate
 
@@ -19,7 +21,7 @@ class Migration022(BrickMigration):
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
 
-        Logger.info('Adding deprecated columns to Typing entity')
+        Logger.info('Adding deprecated columns to Typing')
         migrator = SqliteMigrator(Typing.get_db_manager().db)
 
         migrate(
@@ -28,4 +30,22 @@ class Migration022(BrickMigration):
                 Typing.deprecated_since.column_name, Typing.deprecated_since),
             migrator.add_column(
                 Typing.get_table_name(),
-                Typing.deprecated_message.column_name, Typing.deprecated_message))
+                Typing.deprecated_message.column_name, Typing.deprecated_message),
+        )
+
+
+@brick_migration('0.2.3')
+class Migration023(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        Logger.info('Create LabConfigModel table and add lab_config_id to experiment')
+        migrator = SqliteMigrator(Typing.get_db_manager().db)
+
+        LabConfigModel.create_table()
+        migrate(
+            migrator.add_column(
+                Experiment.get_table_name(),
+                Experiment.lab_config.column_name, Experiment.lab_config)
+        )

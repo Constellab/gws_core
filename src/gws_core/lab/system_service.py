@@ -4,12 +4,14 @@
 # About us: https://gencovery.com
 
 import sys
+from typing import Dict
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.central.central_service import CentralService
 from gws_core.core.db.db_migration import DbMigrationService
 from gws_core.core.utils.logger import Logger
 from gws_core.experiment.experiment_run_service import ExperimentRunService
+from gws_core.lab.lab_config_model import LabConfigModel
 
 from ..brick.brick_service import BrickService
 from ..core.exception.exceptions.unauthorized_exception import \
@@ -48,6 +50,7 @@ class SystemService:
 
         BrickService.init()
         TagService.init_default_tags()
+        LabConfigModel.save_current_config()
 
     @classmethod
     def init_queue_and_monitor(cls) -> None:
@@ -133,7 +136,7 @@ class SystemService:
 
         Logger.info('Registering lab start on central')
 
-        result = CentralService.register_lab_start(BrickHelper.get_lab_config())
+        result = CentralService.register_lab_start(LabConfigModel.get_current_config().to_json())
 
         if result:
             Logger.info('Lab started successfully registered on central')

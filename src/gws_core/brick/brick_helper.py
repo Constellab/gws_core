@@ -1,21 +1,13 @@
-
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 import inspect
 from typing import Any, Dict, List, TypedDict
 
 from ..core.utils.settings import ModuleInfo, Settings
-
-
-class BrickVersion(TypedDict):
-    name: str
-    version: str
-
-
-class LabConfig(TypedDict):
-    """Object representing the complete config of a lab to recreate it
-    """
-    version: int  # version of the config
-    brick_versions: List[BrickVersion]
+from .brick_dto import BrickVersion
 
 
 class BrickHelper():
@@ -71,14 +63,8 @@ class BrickHelper():
         return bricks[brick_name]
 
     @classmethod
-    def get_lab_config(cls) -> LabConfig:
-        """Get the config of the lab to rebuild one as a copy of this one
-
-        :return: _description_
-        :rtype: List[BrickVersion]
-        """
+    def get_all_brick_versions(cls) -> List[BrickVersion]:
         bricks = cls.get_all_bricks()
-
         brick_versions: List[BrickVersion] = []
 
         for brick in bricks.values():
@@ -90,7 +76,4 @@ class BrickHelper():
                 'name': brick['name'],
                 'version': brick['version'],
             })
-        return {
-            'version': 1,
-            'brick_versions': brick_versions
-        }
+        return brick_versions

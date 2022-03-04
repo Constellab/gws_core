@@ -1,8 +1,7 @@
-# ####################################################################
-#
-# Model
-#
-# ####################################################################
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 import hashlib
 import json
@@ -27,11 +26,6 @@ from ..utils.utils import Utils
 from .db_field import DateTimeUTC, JSONField
 
 
-# ####################################################################
-#
-# Format table name
-#
-# ####################################################################
 @json_ignore(["hash"])
 class Model(BaseModel, PeeweeModel):
     """
