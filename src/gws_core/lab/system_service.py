@@ -142,3 +142,7 @@ class SystemService:
             Logger.info('Lab started successfully registered on central')
         else:
             Logger.error('Error during lab start registration with central')
+
+    @classmethod
+    def call_migration_manually(cls, brick_name: str, version_str: str) -> None:
+        DbMigrationService.call_migration_manually(brick_name, version_str)

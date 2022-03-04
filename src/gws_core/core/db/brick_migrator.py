@@ -8,6 +8,8 @@ from typing import List, Type
 from gws_core.core.db.version import Version
 from gws_core.core.utils.logger import Logger
 
+from ...core.exception.exceptions import BadRequestException
+
 
 class BrickMigration():
 
@@ -106,6 +108,34 @@ class BrickMigrator():
 
         self.current_brick_version = migration_object.version
 
+    def call_migration_manually(self, version: Version) -> None:
+        """Call migration manually for the version at any time
+        """
+        migration_object = self.get_migration_version(version)
+
+        if migration_object is None:
+            raise BadRequestException(
+                f"The migration for version '{str(version)}' for brick '{self.brick_name}' doesn't exist")
+
+        Logger.info(
+            f"Start migrating manually '{self.brick_name}' from version '{self.current_brick_version}' to version '{migration_object.version}'")
+
+        try:
+            migration_object.brick_migration.migrate(self.current_brick_version, migration_object.version)
+
+        except Exception as err:
+            Logger.error(
+                f"Error during manual migration of brick '{self.brick_name}' from version '{self.current_brick_version}' to version '{migration_object.version}'")
+            raise err
+
+        Logger.info(
+            f"Success migrating manually  '{self.brick_name}' from version '{self.current_brick_version}' to version '{migration_object.version}'")
+
     def has_migration_version(self, version: Version) -> bool:
         # Check if that version was already added
-        return len([x for x in self._migration_objects if x.version == version]) > 0
+        return self.get_migration_version(version) is not None
+
+    def get_migration_version(self, version: Version) -> MigrationObject:
+        # Check if that version was already added
+        migration_objects = list([x for x in self._migration_objects if x.version == version])
+        return migration_objects[0] if len(migration_objects) > 0 else None

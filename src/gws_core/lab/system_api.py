@@ -23,6 +23,13 @@ async def kill_process(_: UserData = Depends(AuthService.check_user_access_token
     SystemService.kill_process()
 
 
-@core_app.get("system/settings", summary="Get settings")
+@core_app.get("/system/settings",  tags=["System"], summary="Get settings")
 async def get_settings(_: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     return SettingsService.get_settings().to_json()
+
+
+@core_app.post("/system/call-migration/{brick_name}/{version}",  tags=["System"], summary="Call a specific migration")
+def call_migration(brick_name: str,
+                   version: str,
+                   _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    return SystemService.call_migration_manually(brick_name, version)

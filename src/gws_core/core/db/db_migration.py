@@ -7,6 +7,8 @@ from typing import Callable, Dict, List, Type
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.brick.brick_service import BrickService
+from gws_core.core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import (BrickMigrationLog, ModuleInfo,
                                           Settings)
@@ -29,9 +31,11 @@ class DbMigrationService:
     def migrate(cls):
         settings: Settings = Settings.retrieve()
 
+        cls._init_brick_migrators()
+
         # If migration objetcs already exists, meaning this is not the first start
         if len(settings.get_brick_migrations_logs()) > 0:
-            for migrator in cls._get_brick_migrators().values():
+            for migrator in cls._brick_migrators.values():
                 migrated = migrator.migrate()
 
                 if migrated:
@@ -43,7 +47,12 @@ class DbMigrationService:
             settings.update_brick_migration_log(brick["name"], brick["version"])
 
     @classmethod
-    def _get_brick_migrators(cls) -> Dict[str, BrickMigrator]:
+    def _init_brick_migrators(cls) -> None:
+        """ Init the _brick_migrators object with the migrators
+
+        :return: _description_
+        :rtype: _type_
+        """
         brick_migrators: Dict[str, BrickMigrator] = {}
 
         for migration_obj in cls._migration_objects:
@@ -68,7 +77,7 @@ class DbMigrationService:
                     status="ERROR")
                 continue
 
-            if not brick_name in cls._brick_migrators:
+            if not brick_name in brick_migrators:
                 # Retrieive previous brick version
                 previous_brick_model: BrickMigrationLog = Settings.retrieve().get_brick_migration_log(brick_name)
 
@@ -92,12 +101,22 @@ class DbMigrationService:
 
             brick_migrator.append_migration(migration_obj.brick_migration, migration_version)
 
-        return brick_migrators
+        cls._brick_migrators = brick_migrators
 
     @classmethod
     def register_migration_object(
             cls, brick_migration: Type['BrickMigration'], version: Version) -> None:
         cls._migration_objects.append(MigrationObject(brick_migration, version))
+
+    @classmethod
+    def call_migration_manually(cls, brick_name: str, version_str: str) -> None:
+        version = Version(version_str)
+
+        brick_migrator = cls._brick_migrators.get(brick_name)
+        if brick_migrator is None:
+            raise BadRequestException(f"The brick '{brick_name}' does not have migration objects registered")
+
+        brick_migrator.call_migration_manually(version)
 
 
 def brick_migration(version: str) -> Callable:
