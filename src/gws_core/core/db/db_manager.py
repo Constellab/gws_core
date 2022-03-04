@@ -7,10 +7,6 @@ from peewee import DatabaseProxy
 
 from .manager import AbstractDbManager
 
-# GWS_DB_ENGINE = "mariadb"
-# GWS_DB_ENGINE="sqlite3"
-# GWS_DB_ENGINE = os.getenv("LAB_DB_ENGINE", "sqlite3")
-
 # ####################################################################
 #
 # DbManager class

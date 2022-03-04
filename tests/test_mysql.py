@@ -6,7 +6,7 @@
 import os
 import unittest
 
-from gws_core import (BaseTestCase, File, FsNodeService, FSNodeModel, GTest,
+from gws_core import (BaseTestCase, File, FSNodeModel, FsNodeService, GTest,
                       LocalFileStore, MySQLService)
 from gws_core.comment.comment_service import CommentService
 from gws_core.core.db.db_manager import DbManager
@@ -15,10 +15,6 @@ from gws_core.core.db.db_manager import DbManager
 class TestMySQLDumpLoad(BaseTestCase):
 
     def test_db_dump_load(self):
-
-        if DbManager.is_sqlite_engine():
-            print("SQLite3 db detected: exit test, OK!")
-            return
 
         # insert data in comment table
         file: File = LocalFileStore.get_default_instance().create_empty_file("./oui")

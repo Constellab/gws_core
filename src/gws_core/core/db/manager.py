@@ -5,8 +5,9 @@
 
 from typing import List, Type
 
-from peewee import DatabaseProxy, MySQLDatabase, SqliteDatabase
+from peewee import DatabaseProxy, MySQLDatabase
 from playhouse.shortcuts import ReconnectMixin
+
 from ..utils.settings import Settings
 
 # ####################################################################
@@ -43,14 +44,13 @@ class AbstractDbManager:
     db = DatabaseProxy()
     _DEFAULT_DB_ENGINE = "mariadb"
     _DEFAULT_DB_NAME = "gws_core"
-    __TEST_DB_NAME = "test_gws" # Keep private and constant => All models inherit the same test DB
+    __TEST_DB_NAME = "test_gws"  # Keep private and constant => All models inherit the same test DB
     _engine = None
     _mariadb_config = {
         "user": _DEFAULT_DB_NAME,
         "password": "gencovery"
     }
     _db_name = _DEFAULT_DB_NAME
-    
 
     @classmethod
     def _init(cls, engine: str = None, test: bool = None):
@@ -63,10 +63,7 @@ class AbstractDbManager:
             cls._engine = engine
         if not cls._engine:
             cls._engine = cls._DEFAULT_DB_ENGINE
-        if cls._engine == "sqlite3":
-            db_path = cls.get_sqlite3_db_path(test=test)
-            _db = SqliteDatabase(db_path)
-        elif cls._engine in ["mariadb", "mysql"]:
+        if cls._engine in ["mariadb", "mysql"]:
             _db = ReconnectMySQLDatabase(
                 cls._db_name,
                 user=cls._mariadb_config["user"],
@@ -165,21 +162,6 @@ class AbstractDbManager:
 
         settings = Settings.retrieve()
         return settings.get_maria_db_host(cls._db_name)
-
-    @classmethod
-    def get_sqlite3_db_path(cls, test: bool=None):
-        """ Get the current current sqlite3 db path """
-
-        settings = Settings.retrieve()
-        return settings.get_sqlite3_db_path(cls._db_name, test=test)
-
-    # -- I --
-
-    @classmethod
-    def is_sqlite_engine(cls):
-        """ Test if the sqlite3 engine is active """
-
-        return cls._engine == "sqlite3"
 
     @classmethod
     def is_mysql_engine(cls):

@@ -7,7 +7,7 @@
 from gws_core.experiment.experiment import Experiment
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.model.typing import Typing
-from playhouse.migrate import SqliteMigrator, migrate
+from playhouse.migrate import MySQLMigrator, migrate
 
 from ...utils.logger import Logger
 from ..brick_migrator import BrickMigration
@@ -22,7 +22,7 @@ class Migration022(BrickMigration):
     def migrate(cls, from_version: Version, to_version: Version) -> None:
 
         Logger.info('Adding deprecated columns to Typing')
-        migrator = SqliteMigrator(Typing.get_db_manager().db)
+        migrator = MySQLMigrator(Typing.get_db_manager().db)
 
         migrate(
             migrator.add_column(
@@ -41,7 +41,7 @@ class Migration023(BrickMigration):
     def migrate(cls, from_version: Version, to_version: Version) -> None:
 
         Logger.info('Create LabConfigModel table and add lab_config_id to experiment')
-        migrator = SqliteMigrator(Typing.get_db_manager().db)
+        migrator = MySQLMigrator(Typing.get_db_manager().db)
 
         LabConfigModel.create_table()
         migrate(

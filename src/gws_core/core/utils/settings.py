@@ -193,15 +193,6 @@ class Settings():
     def author(self):
         return self.data.get("author", "")
 
-    # -- G --
-
-    def get_sqlite3_db_path(self, db_name, test: bool = None) -> str:
-        db_dir = os.path.join(self.get_data_dir(test=test), db_name, "sqlite3")
-        if not os.path.exists(db_dir):
-            os.makedirs(db_dir)
-        db_path = os.path.join(db_dir, f"{db_name}.sqlite3")
-        return db_path
-
     def get_maria_db_backup_dir(self) -> str:
         return os.path.join(self.get_data_dir(), "backups")
 

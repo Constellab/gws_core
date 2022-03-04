@@ -121,10 +121,6 @@ class BaseModel(Base, PeeweeModel):
         raise BadRequestException("This entity does not support search")
 
     @classmethod
-    def is_sqlite3_engine(cls):
-        return cls.get_db_manager().get_engine() == "sqlite3"
-
-    @classmethod
     def is_mysql_engine(cls):
         return cls.get_db_manager().get_engine() in ["mysql", "mariadb"]
 
