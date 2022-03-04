@@ -180,6 +180,3 @@ class Utils:
         name = name.replace(' ', '')
         name = re.sub('(.)([A-Z][a-z]+)', r'\1 \2', name)
         return re.sub('([a-z0-9])([A-Z])', r'\1 \2', name).capitalize()
-
-    @staticmethod
-    def value_to_enum(value: Any, enum: Any) -> Any:
