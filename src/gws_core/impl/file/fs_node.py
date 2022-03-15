@@ -3,7 +3,7 @@ import os
 from typing import Any, Type
 
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.resource.r_field import StrRField
+from gws_core.resource.r_field import BoolRField, StrRField
 
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
@@ -20,6 +20,10 @@ class FSNode(Resource):
 
     path: str = StrRField(searchable=True)
     file_store_id: str = StrRField(searchable=True)
+
+    # when true, the node is considered as a symoblic link.
+    # The node is not delete on resource deletion
+    is_symbolic_link: bool = BoolRField(default_value=False)
 
     def __init__(self, path: str = ""):
         super().__init__()

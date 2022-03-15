@@ -233,6 +233,7 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
             else:
                # On uploaded resource, the node is already in the file store, no need to add it
                 node = resource
+                node.file_store_id = local_file_store.id
 
             # update the resource path and file store
             resource.path = node.path
@@ -243,6 +244,7 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
             fs_node_model.path = node.path
             fs_node_model.file_store_id = node.file_store_id
             fs_node_model.size = node.get_size()
+            fs_node_model.is_symbolic_link = node.is_symbolic_link
             resource_model.fs_node_model = fs_node_model
 
         # synchronize the model fields with the resource fields

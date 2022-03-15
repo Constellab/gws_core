@@ -26,13 +26,15 @@ from .resource_service import ResourceService
 
 @core_app.get("/resource/{id}/views", tags=["Resource"],
               summary="Get the list of view for a resource type")
-async def get_resource_type_views(id: str) -> list:
+async def get_resource_type_views(id: str,
+                                  _: UserData = Depends(AuthService.check_user_access_token)) -> list:
     return ListJsonable(ResourceService.get_views_of_resource(id)).to_json()
 
 
 @core_app.get("/resource/{id}/views/{view_name}/specs", tags=["Resource"],
               summary="Get the specs for a view of a resource")
-async def get_view_specs(id: str, view_name: str) -> list:
+async def get_view_specs(id: str, view_name: str,
+                         _: UserData = Depends(AuthService.check_user_access_token)) -> list:
     return DictJsonable(ResourceService.get_view_specs(id, view_name)).to_json()
 
 
@@ -41,18 +43,21 @@ class ViewConfig(TypedDict):
     transformers: List[TransformerDict]
 
 
+@core_app.post("/resource/{id}/views/default-view", tags=["Resource"],
+               summary="Call the default view for a resource")
+async def call_default_view_on_resource(id: str,
+                                        view_config: ViewConfig,
+                                        _: UserData = Depends(AuthService.check_user_access_token)) -> Any:
+    return await ResourceService.call_default_view_on_resource(id, view_config["values"], view_config["transformers"])
+
+
 @core_app.post("/resource/{id}/views/{view_name}", tags=["Resource"],
                summary="Call the view name for a resource")
 async def call_view_on_resource(id: str,
                                 view_name: str,
-                                view_config: ViewConfig) -> Any:
+                                view_config: ViewConfig,
+                                _: UserData = Depends(AuthService.check_user_access_token)) -> Any:
     return await ResourceService.call_view_on_resource_type(id, view_name, view_config["values"], view_config["transformers"])
-
-
-@core_app.post("/resource/{id}/default-view", tags=["Resource"],
-               summary="Call the default view for a resource")
-async def call_default_view_on_resource(id: str) -> Any:
-    return await ResourceService.call_default_view_on_resource(id)
 
 
 ####################################### Resource Model ###################################

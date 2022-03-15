@@ -5,8 +5,10 @@
 
 
 from gws_core.experiment.experiment import Experiment
+from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.model.typing import Typing
+from peewee import BigIntegerField
 from playhouse.migrate import MySQLMigrator, migrate
 
 from ...utils.logger import Logger
@@ -48,4 +50,23 @@ class Migration023(BrickMigration):
             migrator.add_column(
                 Experiment.get_table_name(),
                 Experiment.lab_config.column_name, Experiment.lab_config)
+        )
+
+
+@brick_migration('0.3.3')
+class Migration033(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        Logger.info('Create symbolic link in FsNodeModel and convert size to BigInt')
+        migrator = MySQLMigrator(FSNodeModel.get_db_manager().db)
+
+        migrate(
+            migrator.add_column(
+                FSNodeModel.get_table_name(),
+                FSNodeModel.is_symbolic_link.column_name, FSNodeModel.is_symbolic_link),
+
+            migrator.alter_column_type(FSNodeModel.get_table_name(), FSNodeModel.size.column_name,
+                                       BigIntegerField(null=True))
         )

@@ -10,6 +10,8 @@ from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
 from gws_core.core.classes.jsonable import ListJsonable
+from gws_core.task.converter.converter_service import ConverterService
+from typing_extensions import TypedDict
 
 from ...core_app import core_app
 from ...user.auth_service import AuthService
@@ -71,6 +73,24 @@ def download_a_file(id: str,
     Download a file. The access is made with a unique  code generated with get_download_file_url
     """
     return FsNodeService.download_file(id=id)
+
+############################# FILE EXTRACTOR ###########################
+
+
+class ExtractFileDTO(TypedDict):
+    path: str
+    fs_node_typing_name: str
+
+
+@core_app.put("/fs-node/{id}/extract-file", tags=["Files"], summary="Extract a file from a folder")
+async def extract_file(id: str,
+                       extract: ExtractFileDTO,
+                       _: UserData = Depends(AuthService.check_user_access_token)) -> FileResponse:
+    """
+    Download a file. The access is made with a unique  code generated with get_download_file_url
+    """
+    result = await ConverterService.call_file_extractor(folder_model_id=id, sub_path=extract["path"], fs_node_typing_name=extract["fs_node_typing_name"])
+    return result.to_json()
 
 
 ############################# FILE TYPE ###########################

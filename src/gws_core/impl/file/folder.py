@@ -1,8 +1,14 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 
 import os
 from pathlib import Path
 from typing import List
+
+from gws_core.impl.file.folder_view import LocalFolderView
 
 from ...config.config_types import ConfigParams
 from ...resource.resource_decorator import resource_decorator
@@ -42,10 +48,7 @@ class Folder(FSNode):
     def get_default_name(self) -> str:
         return FileHelper.get_dir_name(self.path)
 
-    @view(view_type=JSONView, human_name="View folder content", short_description="View the sub files and folders",
-          default_view=True)
+    @view(view_type=LocalFolderView, human_name="View folder content",
+          short_description="View the sub files and folders", default_view=True)
     def view_as_json(self, params: ConfigParams) -> JSONView:
-        return JSONView({
-            "path": self.path,
-            "content": FileHelper.get_dir_content_as_json(self.path)
-        })
+        return LocalFolderView(self.path)

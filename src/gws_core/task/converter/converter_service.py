@@ -6,6 +6,8 @@
 
 from typing import Any, Coroutine, Dict, List, Type
 
+from gws_core.impl.file.file_helper import FileHelper
+from gws_core.impl.file.file_tasks import FsNodeExtractor
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.resource.resource import Resource
 from gws_core.task.converter.exporter import ResourceExporter
@@ -134,3 +136,31 @@ class ConverterService:
         exporter_type: Type[ResourceExporter] = TypingManager.get_type_from_name(exporter_typing_name)
 
         return exporter_type.call(resource, params)
+
+    ################################################ FILE EXTRACTOR ################################################
+
+    @classmethod
+    async def call_file_extractor(cls, folder_model_id: str, sub_path: str, fs_node_typing_name: str) -> ResourceModel:
+        # Get and check the resource id
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(folder_model_id)
+
+        # Create an experiment containing 1 source, 1 extractor , 1 sink
+        experiment: IExperiment = IExperiment(
+            None, title=f"{FileHelper.get_name(sub_path)} extractor", type_=ExperimentType.EXPERIMENT)
+        protocol: IProtocol = experiment.get_protocol()
+
+        # Add the importer and the connector
+        extractor: IProcess = protocol.add_process(FsNodeExtractor, 'extractor', {
+                                                   'fs_node_path': sub_path, 'fs_node_typing_name': fs_node_typing_name})
+
+        # Add source and connect it
+        protocol.add_source('source', folder_model_id, extractor << 'source')
+
+        # Add sink and connect it
+        protocol.add_sink('sink', extractor >> 'target')
+
+        # add the experiment to queue to run it
+        await experiment.run()
+
+        # return the resource model of the sink process
+        return experiment.get_experiment_model().protocol_model.get_process('sink').inputs.get_resource_model('resource')
