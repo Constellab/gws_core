@@ -9,7 +9,7 @@ import pandas
 from gws_core.core.exception.gws_exceptions import GWSException
 
 from ....config.config_types import ConfigParams, ConfigSpecs
-from ....config.param_spec import IntParam, StrParam
+from ....config.param_spec import IntParam, StrParam, BoolParam, ParamSet
 from ....core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ....impl.file.file import File
@@ -24,6 +24,11 @@ class TableImporter(ResourceImporter):
         'file_format': StrParam(default_value=Table.DEFAULT_FILE_FORMAT, allowed_values=Table.ALLOWED_FILE_FORMATS, human_name="File format", short_description="File format"),
         'delimiter': StrParam(allowed_values=Table.ALLOWED_DELIMITER, default_value=Table.DEFAULT_DELIMITER, human_name="Delimiter", short_description="Delimiter character. Only for parsing CSV files"),
         'header': IntParam(default_value=0, min_value=-1, human_name="Header", short_description="Row to use as the column names, and the start of the data. By default the first row is used (header=0). Set header=-1 to prevent parsing column names."),
+        "metadata": ParamSet({
+            'column': StrParam(default_value=None, optional=True, visibility=StrParam.PROTECTED_VISIBILITY, human_name="Column", short_description="Column to use to tag rows using metadata."),
+            'type': StrParam(default_value="categorical", optional=True, allowed_values=["categorical", "numerical"], visibility=StrParam.PROTECTED_VISIBILITY, human_name="Type", short_description="Types of metadata"),
+            'keep_in_data': BoolParam(default_value=False, optional=True, visibility=BoolParam.PROTECTED_VISIBILITY, human_name="Keep in data", short_description="Set True to keep metadata in table; False otherwise"),
+        }, optional=True),
         'index_column': IntParam(default_value=-1, min_value=-1, optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Index column", short_description="Column to use as the row names. By default no index is used (i.e. index_column=-1)."),
         'decimal': StrParam(default_value=".", optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Decimal character", short_description="Character to recognize as decimal point (e.g. use ‘,’ for European/French data)."),
         'nrows': IntParam(default_value=None, optional=True, min_value=0, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Nb. rows", short_description="Number of rows to import. Useful to read piece of data."),
@@ -38,6 +43,7 @@ class TableImporter(ResourceImporter):
         sep = params.get_value('delimiter', Table.DEFAULT_DELIMITER)
         header = params.get_value('header', 0)
         index_column = params.get_value('index_column', -1)
+        metadata_param_set = params.get_value('metadata', [])
 
         header = (None if header == -1 else header)
         index_column = (None if index_column == -1 else index_column)
@@ -64,4 +70,32 @@ class TableImporter(ResourceImporter):
             raise BadRequestException(
                 "Valid file formats are [.xls, .xlsx, .csv, .tsv, .txt, .tab].")
 
-        return target_type(data=df)
+        # set metadata
+        if metadata_param_set:
+            row_tags = []
+            meta_cols = []
+            meta_types = []
+            keep_in_data = []
+            for metadata in metadata_param_set:
+                colname = metadata.get("column")
+                meta_cols.append(colname)
+                meta_types[colname] = "num" if metadata.get("type") == "numerical" else "cat"
+                keep_in_data[colname] = metadata.get("keep_in_data")
+
+            tag_df = df[meta_cols]
+
+            drop_cols = [ col for col,keep in keep_in_data.items() if keep == False ]
+            if drop_cols:
+                df.drop(drop_cols, axis=1, inplace=False)
+
+            for idx in df.index:
+                tag = { col:tag_df.loc[col,idx] for col in tag_df.columns }
+                row_tags.append(tag)
+
+            table = target_type(data=df)
+            table.set_row_tags(row_tags)
+            table.set_row_tag_types(meta_types)
+        else:
+            table = target_type(data=df)
+        
+        return table

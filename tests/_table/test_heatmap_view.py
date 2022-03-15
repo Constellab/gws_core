@@ -19,5 +19,5 @@ class TestTableHeatmapView(BaseTestCase):
         self.assertEqual(view_dict["type"], "heatmap-view")
         self.assertEqual(
             view_dict["data"],
-            table.to_dataframe().iloc[0:50, 0:4].to_dict('list')
+            table.to_dataframe().iloc[0:50, 0:4].to_dict('split')["data"]
         )

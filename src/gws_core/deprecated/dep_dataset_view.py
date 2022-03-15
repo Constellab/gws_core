@@ -9,11 +9,11 @@ from typing import TYPE_CHECKING, Any, Union
 
 from gws_core.config.config_types import ConfigParams
 
-from ....core.exception.exceptions import BadRequestException
-from ...table.view.table_view import TableView
+from ..core.exception.exceptions import BadRequestException
+from ..impl.table.view.table_view import TableView
 
 if TYPE_CHECKING:
-    from ..dataset import Dataset
+    from .dep_dataset import Dataset
 
 
 class DatasetView(TableView):
@@ -40,7 +40,7 @@ class DatasetView(TableView):
     _table: Dataset
 
     def _check_and_set_data(self, table: Dataset):
-        from ..dataset import Dataset
+        from .dep_dataset import Dataset
         if not isinstance(table, Dataset):
             raise BadRequestException("The data must be a Table")
         super()._check_and_set_data(table)

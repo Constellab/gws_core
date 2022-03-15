@@ -92,9 +92,6 @@ from .core.utils.serializer import Serializer as Serializer
 from .core.utils.settings import Settings as Settings
 from .core.utils.utils import Utils as Utils
 from .core.utils.zip import Zip as Zip
-# Deprecated
-from .deprecated.dep_table_annotator import TableAnnotator
-from .deprecated.dep_table_filter import TableFilter
 # Experiment
 from .experiment.experiment import Experiment as Experiment
 from .experiment.experiment import ExperimentStatus as ExperimentStatus
@@ -108,9 +105,9 @@ from .experiment.queue import Job as Job
 from .experiment.queue import Queue as Queue
 from .experiment.queue_service import QueueService as QueueService
 # Impl > Dataset
-from .impl.dataset.dataset import Dataset as Dataset
-from .impl.dataset.dataset_tasks import DatasetExporter as DatasetExporter
-from .impl.dataset.dataset_tasks import DatasetImporter as DatasetImporter
+from .deprecated.dep_dataset import Dataset as Dataset
+from .deprecated.dep_dataset_tasks import DatasetExporter as DatasetExporter
+from .deprecated.dep_dataset_tasks import DatasetImporter as DatasetImporter
 # Extension
 # Impl > File
 from .impl.file.file import File as File
@@ -157,10 +154,10 @@ from .impl.shell.shell import Shell as Shell
 from .impl.shell.shell_proxy import ShellProxy as ShellProxy
 # Impl > Table
 from .impl.table.data_frame_r_field import DataFrameRField as DataFrameRField
-from .impl.table.encoding.encoded_table import EncodedTable as EncodedTable
 from .impl.table.encoding.encoding_table import EncodingTable as EncodingTable
 from .impl.table.encoding.table_decoder import TableDecoder as TableDecoder
 from .impl.table.encoding.table_encoder import TableEncoder as TableEncoder
+from .impl.table.encoding.encoding_table import EncodingTableImporter as EncodingTableImporter
 from .impl.table.helper.table_aggregator_helper import \
     TableAggregatorHelper as TableAggregatorHelper
 from .impl.table.helper.table_filter_helper import \

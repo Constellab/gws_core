@@ -7,6 +7,7 @@ import os
 
 import numpy
 import pandas
+from pandas import DataFrame
 from gws_core import (BaseTestCase, File, GTest, Settings, Table,
                       TableExporter, TableImporter, TaskRunner)
 from gws_core_test_helper import GWSCoreTestHelper
@@ -17,16 +18,19 @@ testdata_dir = settings.get_variable("gws_core:testdata_dir")
 
 class TestTable(BaseTestCase):
     def test_table(self):
-
         table: Table = Table(data=[[1, 2, 3]], column_names=["a", "b", "c"])
         print(table.get_data())
-        self.assertEqual(table.get_meta(), {'row_tags': [{}], 'column_tags': [{}, {}, {}]})
+        self.assertEqual(table.get_meta(), 
+            {'row_tags': [{}], 'column_tags': [{}, {}, {}], 'column_tag_types': {}, 'row_tag_types': {}}
+        )
 
         table._set_data(
             data=[1, 2, 3], column_names=["data"], row_names=["a", "b", "c"]
         )
         print(table.get_data())
-        self.assertEqual(table.get_meta(), {'row_tags': [{}, {}, {}], 'column_tags': [{}]})
+        self.assertEqual(table.get_meta(), 
+            {'row_tags': [{}, {}, {}], 'column_tags': [{}], 'column_tag_types': {}, 'row_tag_types': {}}
+        )
         print(print(table.get_meta()))
 
     def test_table_select(self):
@@ -239,3 +243,37 @@ class TestTable(BaseTestCase):
 
         print(file_.path)
         self.assertTrue(os.path.exists(file_.path))
+
+    def test_table_dummy_matrix(self):
+        meta = {
+            "row_tags": [
+                {"lg": "EN", "c": "US", "user": "Vi"},
+                {"lg": "JP", "c": "JP", "user": "Jo"},
+                {"lg": "FR", "c": "FR", "user": "Jo"},
+                {"lg": "JP", "c": "JP", "user": "Vi"},
+            ],
+            "column_tags": [
+                {"lg": "EN", "c": "UK"},
+                {"lg": "PT", "c": "PT"},
+                {"lg": "CH", "c": "CH"}
+            ],
+        }
+
+        table: Table = Table(
+            data=[[1, 2, 3], [3, 4, 6], [3, 7, 6], [3, 7, 6]],
+            row_names=["NY", "Tokyo", "Paris", "Kyoto"],
+            column_names=["London", "Lisboa", "Beijin"],
+            meta=meta
+        )
+        data = table.convert_row_tags_to_dummy_target_matrix(key="lg")
+
+        dummy = DataFrame(data=[
+            [1.0,0.0,0.0], 
+            [0.0,0.0,1.0],
+            [0.0,1.0,0.0],
+            [0.0,0.0,1.0]
+            ],
+            index=["EN","JP","FR","JP"],
+            columns=["EN","FR","JP"]
+        )
+        self.assertTrue(data.equals(dummy))

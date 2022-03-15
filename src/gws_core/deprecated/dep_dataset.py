@@ -9,18 +9,18 @@ import numpy as np
 from pandas import DataFrame
 from pandas.api.types import is_string_dtype
 
-from ...config.config_types import ConfigParams
-from ...core.exception.exceptions import BadRequestException
-from ...resource.r_field import ListRField
-from ...resource.resource_decorator import resource_decorator
-from ...resource.view_decorator import view
-from ..table.data_frame_r_field import DataFrameRField
-from ..table.table import Table
-from .view.dataset_view import DatasetView
+from ..config.config_types import ConfigParams
+from ..core.exception.exceptions import BadRequestException
+from ..resource.r_field import ListRField
+from ..resource.resource_decorator import resource_decorator
+from ..resource.view_decorator import view
+from ..impl.table.data_frame_r_field import DataFrameRField
+from ..impl.table.table import Table
+from .dep_dataset_view import DatasetView
 
 
 @final
-@resource_decorator("Dataset")
+@resource_decorator("Dataset", hide=True, deprecated_since='0.3.3', deprecated_message='Use dataset')
 class Dataset(Table):
     """
     Dataset class

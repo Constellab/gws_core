@@ -11,7 +11,6 @@ from ....task.task import Task
 from ....task.task_decorator import task_decorator
 from ....task.task_io import TaskInputs, TaskOutputs
 from ...table.table import Table
-from .encoded_table import EncodedTable
 from .encoding_table import EncodingTable
 
 # ####################################################################
@@ -23,7 +22,7 @@ from .encoding_table import EncodingTable
 
 @task_decorator(unique_name="TableDecoder", short_description="Table decoder")
 class TableDecoder(Task):
-    input_specs: InputSpecs = {"encoded_table": EncodedTable, "encoding_table": EncodingTable}
+    input_specs: InputSpecs = {"encoded_table": Table, "encoding_table": EncodingTable}
     output_specs: OutputSpecs = {"decoded_table": Table}
     config_specs: ConfigSpecs = {}
 
