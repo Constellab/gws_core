@@ -125,7 +125,6 @@ from .impl.file.fs_node_service import FsNodeService as FsNodeService
 from .impl.file.local_file_store import LocalFileStore as LocalFileStore
 # Impl > JSON
 from .impl.json.json_dict import JSONDict as JSONDict
-from .impl.json.json_file import JSONFile as JSONFile
 from .impl.json.json_tasks import JSONExporter as JSONExporter
 from .impl.json.json_tasks import JSONImporter as JSONImporter
 # Impl > JSONView
@@ -160,8 +159,6 @@ from .impl.shell.shell_proxy import ShellProxy as ShellProxy
 from .impl.table.data_frame_r_field import DataFrameRField as DataFrameRField
 from .impl.table.encoding.encoded_table import EncodedTable as EncodedTable
 from .impl.table.encoding.encoding_table import EncodingTable as EncodingTable
-from .impl.table.encoding.encoding_table import (EncodingTableExporter,
-                                                 EncodingTableImporter)
 from .impl.table.encoding.table_decoder import TableDecoder as TableDecoder
 from .impl.table.encoding.table_encoder import TableEncoder as TableEncoder
 from .impl.table.helper.table_aggregator_helper import \
@@ -176,14 +173,13 @@ from .impl.table.helper.table_tag_grouper_helper import \
     TableTagGrouperHelper as TableTagGrouperHelper
 from .impl.table.metadata_table.metadata_table import \
     MetadataTable as MetadataTable
-from .impl.table.metadata_table.metadata_table_task import (
-    MetadataTableExporter, MetadataTableImporter)
+from .impl.table.metadata_table.metadata_table_task import \
+    MetadataTableImporter
 from .impl.table.metadata_table.table_annotator import \
     TableColumnAnnotator as TableColumnAnnotator
 from .impl.table.metadata_table.table_annotator import \
     TableRowAnnotator as TableRowAnnotator
 from .impl.table.table import Table as Table
-from .impl.table.table_file import TableFile as TableFile
 from .impl.table.tasks.table_exporter import TableExporter as TableExporter
 from .impl.table.tasks.table_importer import TableImporter as TableImporter
 from .impl.table.transformers.table_aggregator import \
@@ -295,7 +291,6 @@ from .tag.tag import TagHelper as TagHelper
 from .task.converter.converter import Converter as Converter
 from .task.converter.converter import ConverterRunner as ConverterRunner
 from .task.converter.exporter import ResourceExporter as ResourceExporter
-from .task.converter.exporter import export_to_path as export_to_path
 from .task.converter.exporter import exporter_decorator as exporter_decorator
 from .task.converter.importer import ResourceImporter as ResourceImporter
 from .task.converter.importer import importer_decorator as importer_decorator

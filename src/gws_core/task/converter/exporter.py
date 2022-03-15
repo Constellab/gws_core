@@ -13,10 +13,7 @@ from ...config.config_types import ConfigParams, ConfigSpecs
 from ...core.utils.settings import Settings
 from ...core.utils.utils import Utils
 from ...impl.file.file import File
-from ...impl.file.file_helper import FileHelper
-from ...impl.file.file_store import FileStore
 from ...impl.file.fs_node import FSNode
-from ...impl.file.local_file_store import LocalFileStore
 from ...resource.resource import Resource
 from ...task.task_decorator import task_decorator
 from ...user.user_group import UserGroup
@@ -31,21 +28,11 @@ class ExportToPathMetaData(TypedDict):
     inherit_specs: bool
 
 
-# TODO to delete
-def export_to_path(specs: ConfigSpecs = None, fs_node_type: Type[FSNode] = File,
-                   inherit_specs: bool = True) -> Callable:
-
-    def decorator(func: Callable) -> Callable:
-        print('[DEPRECATED] do not use the export_to_path decorator, use only the exporter_decorator instead')
-        return func
-
-    return decorator
-
-
 def exporter_decorator(
         unique_name: str, source_type: Type[Resource], target_type: Type[FSNode] = File,
         allowed_user: UserGroup = UserGroup.USER,
-        human_name: str = None, short_description: str = None, hide: bool = False) -> Callable:
+        human_name: str = None, short_description: str = None, hide: bool = False,
+        deprecated_since: str = None, deprecated_message: str = None) -> Callable:
     """ Decorator to place on a ResourceExporter. It defines a special task to export a resource (of type resource_type) to
     a FsNode (file or folder)
     :param unique_name: a unique name for this task in the brick. Only 1 task in the current brick can have this name.
@@ -63,6 +50,12 @@ def exporter_decorator(
     :param hide: Only the task with hide=False will be available in the interface(web platform), other will be hidden.
                 It is useful for task that are not meant to be viewed in the interface (like abstract classes), defaults to False
     :type hide: bool, optional
+    :param deprecated_since: To provide when the object is deprecated. It must be a version string like 1.0.0 to
+                            tell at which version the object became deprecated, defaults to None
+    :type deprecated_since: str, optional
+    :param deprecated_message: Active when deprecated_since is provided. It describe a message about the deprecation.
+                For example you can provide the name of another object to use instead, defaults to None
+    :type deprecated_message: str, optional
     :return: [description]
     :rtype: Callable
     """
@@ -89,10 +82,11 @@ def exporter_decorator(
             source_type._is_exportable = True
 
             # register the task
-            decorate_converter(task_class, unique_name=unique_name, task_type='EXPORTER',
-                               source_type=source_type, target_type=target_type, related_resource=source_type,
-                               human_name=human_name_computed, short_description=short_description_computed,
-                               allowed_user=allowed_user, hide=hide)
+            decorate_converter(
+                task_class, unique_name=unique_name, task_type='EXPORTER', source_type=source_type,
+                target_type=target_type, related_resource=source_type, human_name=human_name_computed,
+                short_description=short_description_computed, allowed_user=allowed_user, hide=hide,
+                deprecated_since=deprecated_since, deprecated_message=deprecated_message)
         except Exception as err:
             traceback.print_stack()
             BrickService.log_brick_error(task_class, str(err))

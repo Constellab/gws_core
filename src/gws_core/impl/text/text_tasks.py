@@ -18,7 +18,7 @@ from .text import Text
 # ####################################################################
 
 
-@importer_decorator(unique_name="TextImporter", target_type=Text)
+@importer_decorator(unique_name="TextImporter", target_type=Text, supported_extensions=['.txt'])
 class TextImporter(ResourceImporter):
 
     config_specs: ConfigSpecs = {'encoding': StrParam(default_value='utf-8', short_description="Text encoding")}

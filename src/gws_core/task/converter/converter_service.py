@@ -6,6 +6,8 @@
 
 from typing import Any, Coroutine, Dict, List, Type
 
+from gws_core.core.model.base import Base
+from gws_core.core.utils.utils import Utils
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_tasks import FsNodeExtractor
 from gws_core.impl.file.fs_node import FSNode
@@ -32,7 +34,7 @@ class ConverterService:
     ################################################ IMPRTER ################################################
 
     @classmethod
-    def get_resource_importers(cls, resource_typing_name: str) -> List[ResourceImportersDTO]:
+    def get_importers(cls, resource_typing_name: str, extension: str) -> List[ResourceImportersDTO]:
         """ return the list of importer typing of a resource
 
         :param resource_typing_name: [description]
@@ -42,15 +44,26 @@ class ConverterService:
         """
         resource_type: Type[File] = TypingManager.get_type_from_name(resource_typing_name)
 
-        if not resource_type._is_importable:
-            raise BadRequestException(
-                "The resource must be an importable resource. This means that an importer task must exist on for this resource")
+        if not Utils.issubclass(resource_type, FSNode):
+            raise BadRequestException("The resource must be a FsNode")
 
         task_typings: List[TaskTyping] = TaskTyping.get_by_related_resource(resource_type, "IMPORTER")
 
         # Group the importers by resource type
         grouped_tasks: Dict[str, ResourceImportersDTO] = {}
         for task_typing in task_typings:
+
+            # retrieve the task python type
+            model_t: Type[Base] = task_typing.get_type()
+
+            # check if the type exist and is a ResourceImporter
+            if model_t is None or not issubclass(model_t, ResourceImporter):
+                continue
+
+            # Check that the extensions is supported by the importer
+            if extension and model_t._supported_extensions and extension not in model_t._supported_extensions:
+                continue
+
             resource_typing: str = task_typing.related_model_typing_name
 
             # if the resource typing was not added

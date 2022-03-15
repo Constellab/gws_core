@@ -5,7 +5,7 @@
 
 import traceback
 from abc import abstractmethod
-from typing import Callable, Type, final
+from typing import Callable, List, Type, final
 
 from gws_core.impl.file.file import File
 
@@ -20,18 +20,25 @@ from .converter import Converter, decorate_converter
 
 
 def importer_decorator(
-        unique_name: str, target_type: Type[Resource], source_type: Type[FSNode] = File,
+        unique_name: str, target_type: Type[Resource], supported_extensions: List[str],
+        source_type: Type[FSNode] = File,
         allowed_user: UserGroup = UserGroup.USER, human_name: str = None,
-        short_description: bool = None, hide: bool = False) -> Callable:
+        short_description: bool = None, hide: bool = False,
+        deprecated_since: str = None, deprecated_message: str = None) -> Callable:
     """ Decorator to place on a ResourceImporter instead of task_decorator. It defines a special task to import a FsNode (file or folder)
     to resource_type
     :param unique_name: a unique name for this task in the brick. Only 1 task in the current brick can have this name.
                         //!\\ DO NOT MODIFIED THIS NAME ONCE IS DEFINED //!\\
                         It is used to instantiate the tasks
     :type unique_name: str
+    :param target_type: Type of the resource output after the import
+    :type target_type: ProtocolAllowedUser, optional
+    :param supported_extensions: List of supported extension of file input supported by the importer
+    :type supported_extensions: List[str], optional
+    :param source_type: If provided, the importer works only on subclasses of source_type
+    :type source_type: Type[FSNode], optional
     :param allowed_user: role needed to run the task. By default all user can run it. It Admin, the user need to be an admin of the lab to run the task
     :type allowed_user: ProtocolAllowedUser, optional
-    :param human_name: optional name that will be used in the interface when viewing the tasks. Must not be longer than 20 caracters
     :param human_name: optional name that will be used in the interface when viewing the tasks. Must not be longer than 20 caracters
                         If not defined, an automatic is generated.
     :type human_name: str, optional
@@ -41,6 +48,12 @@ def importer_decorator(
     :param hide: Only the task with hide=False will be available in the interface(web platform), other will be hidden.
                 It is useful for task that are not meant to be viewed in the interface (like abstract classes), defaults to False
     :type hide: bool, optional
+    :param deprecated_since: To provide when the object is deprecated. It must be a version string like 1.0.0 to
+                            tell at which version the object became deprecated, defaults to None
+    :type deprecated_since: str, optional
+    :param deprecated_message: Active when deprecated_since is provided. It describe a message about the deprecation.
+                For example you can provide the name of another object to use instead, defaults to None
+    :type deprecated_message: str, optional
     :return: [description]
     :rtype: Callable
     """
@@ -58,17 +71,16 @@ def importer_decorator(
                     f"Error in the importer_decorator of class {task_class.__name__}. The source_type must be an FsNode or child class")
                 return task_class
 
+            task_class._supported_extensions = supported_extensions
             human_name_computed = human_name or target_type._human_name + ' importer'
             short_description_computed = short_description or f"Import file to {target_type._human_name}"
 
-            # mark the resource as importable
-            source_type._is_importable = True
-
             # register the task
-            decorate_converter(task_class, unique_name=unique_name, task_type='IMPORTER',
-                               source_type=FSNode, target_type=target_type, related_resource=source_type,
-                               human_name=human_name_computed, short_description=short_description_computed,
-                               allowed_user=allowed_user, hide=hide)
+            decorate_converter(
+                task_class, unique_name=unique_name, task_type='IMPORTER', source_type=source_type,
+                target_type=target_type, related_resource=source_type, human_name=human_name_computed,
+                short_description=short_description_computed, allowed_user=allowed_user, hide=hide,
+                deprecated_since=deprecated_since, deprecated_message=deprecated_message)
         except Exception as err:
             traceback.print_stack()
             BrickService.log_brick_error(task_class, str(err))
@@ -93,6 +105,8 @@ class ResourceImporter(Converter):
 
     # Override the config_spec to define custom spec for the importer
     config_specs: ConfigSpecs = {}
+
+    _supported_extensions: List[str] = []
 
     @final
     async def convert(self, source: FSNode, params: ConfigParams, target_type: Type[Resource]) -> Resource:

@@ -30,9 +30,6 @@ class File(FSNode):
 
     _mode = "t"
 
-    # Override this attribute to define the list of file extension the class supports
-    supported_extensions: List[str] = []
-
     # Provided at the Class level automatically by the @importable_resource_decorator
     # //!\\ Do not modify theses values
     _resource_importer: Type

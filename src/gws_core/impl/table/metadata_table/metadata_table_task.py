@@ -5,14 +5,17 @@
 
 from typing import Type
 
+from gws_core.impl.file.file import File
+
 from ....config.config_types import ConfigParams, ConfigSpecs
 from ....config.param_spec import StrParam
 from ....core.exception.exceptions import BadRequestException
 from ....task.converter.exporter import exporter_decorator
 from ....task.converter.importer import importer_decorator
+from ..table import Table
 from ..tasks.table_exporter import TableExporter
 from ..tasks.table_importer import TableImporter
-from .metadata_table import MetadataTable, MetadataTableFile
+from .metadata_table import MetadataTable
 
 # ####################################################################
 #
@@ -21,7 +24,7 @@ from .metadata_table import MetadataTable, MetadataTableFile
 # ####################################################################
 
 
-@importer_decorator("MetadataTableImporter", source_type=MetadataTableFile, target_type=MetadataTable)
+@importer_decorator("MetadataTableImporter", target_type=MetadataTable, supported_extensions=Table.ALLOWED_FILE_FORMATS)
 class MetadataTableImporter(TableImporter):
 
     config_specs: ConfigSpecs = {
@@ -31,12 +34,12 @@ class MetadataTableImporter(TableImporter):
             default_value=MetadataTable.DEFAULT_SAMPLE_ID_COLUMN,
             short_description="The name of the column containing the sample ids"), }
 
-    async def import_from_path(self, file: MetadataTableFile, params: ConfigParams, target_type: Type[MetadataTable]) -> MetadataTable:
+    async def import_from_path(self, file: File, params: ConfigParams, target_type: Type[MetadataTable]) -> MetadataTable:
         """
         Import from a repository
 
         :param file: The file to import
-        :type file: `MetadataTableFile`
+        :type file: `File`
         :param params: The config params
         :type params: `ConfigParams`
         :returns: the parsed metadata
@@ -63,15 +66,3 @@ class MetadataTableImporter(TableImporter):
                 f"Cannot import MetadataTable. The list of sample ids contains duplicates")
 
         return csv_table
-
-
-# ####################################################################
-#
-# Exporter class
-#
-# ####################################################################
-
-
-@ exporter_decorator("MetadataTableExporter", source_type=MetadataTable, target_type=MetadataTableFile)
-class MetadataTableExporter(TableExporter):
-    pass

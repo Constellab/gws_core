@@ -5,7 +5,8 @@
 
 from typing import List
 
-from gws_core.impl.table.table_file import TableFile
+from gws_core.core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 
 from ....resource.r_field import StrRField
 from ....resource.resource_decorator import resource_decorator
@@ -77,10 +78,3 @@ class MetadataTable(Table):
             raise BadRequestException("The sample_id_column is required and must be selected")
         table.sample_id_column = self.sample_id_column
         return table
-
-
-@resource_decorator("MetadataTableFile",
-                    human_name="MetadataTable file",
-                    short_description="Table file of metadata")
-class MetadataTableFile(TableFile):
-    pass

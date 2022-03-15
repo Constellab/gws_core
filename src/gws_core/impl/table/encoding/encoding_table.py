@@ -16,7 +16,6 @@ from ....resource.resource_decorator import resource_decorator
 from ....task.converter.exporter import exporter_decorator
 from ....task.converter.importer import importer_decorator
 from ..table import Table
-from ..table_file import TableFile
 from ..tasks.table_exporter import TableExporter
 from ..tasks.table_importer import TableImporter
 
@@ -111,7 +110,7 @@ class EncodingTable(Table):
 # ####################################################################
 
 
-@importer_decorator("EncodingTableImporter", source_type=TableFile, target_type=EncodingTable)
+@importer_decorator("EncodingTableImporter", target_type=EncodingTable, supported_extensions=Table.ALLOWED_FILE_FORMATS)
 class EncodingTableImporter(TableImporter):
     config_specs: ConfigSpecs = {
         **TableImporter.config_specs,
@@ -151,15 +150,3 @@ class EncodingTableImporter(TableImporter):
         csv_table.encoded_row = encoded_row
 
         return csv_table
-
-
-# ####################################################################
-#
-# Exporter class
-#
-# ####################################################################
-
-
-@exporter_decorator("EncodingTableExporter", source_type=EncodingTable, target_type=TableFile)
-class EncodingTableExporter(TableExporter):
-    pass

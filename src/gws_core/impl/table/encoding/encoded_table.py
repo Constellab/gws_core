@@ -3,16 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List
-
-from gws_core.impl.file.file import File
 
 from ....resource.resource_decorator import resource_decorator
 from ....task.converter.exporter import exporter_decorator
 from ....task.converter.importer import importer_decorator
 from ..table import Table
-from ..table_file import TableFile
-from ..tasks.table_exporter import TableExporter
 from ..tasks.table_importer import TableImporter
 
 
@@ -27,17 +22,6 @@ class EncodedTable(Table):
 # ####################################################################
 
 
-@importer_decorator("EncodedTableImporter", source_type=TableFile, target_type=EncodedTable)
+@importer_decorator("EncodedTableImporter", target_type=EncodedTable, supported_extensions=Table.ALLOWED_FILE_FORMATS)
 class EncodedTableImporter(TableImporter):
-    pass
-
-# ####################################################################
-#
-# Exporter class
-#
-# ####################################################################
-
-
-@exporter_decorator("EncodedTableExporter", source_type=EncodedTable, target_type=TableFile)
-class EncodedTableExporter(TableExporter):
     pass

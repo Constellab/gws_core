@@ -5,18 +5,18 @@
 
 from typing import List
 
-from gws_core.config.param_spec import IntParam, ListParam, StrParam
+from gws_core.config.param_spec import IntParam, StrParam
 
-from ...config.config_types import ConfigParams
-from ...config.param_spec import BoolParam, IntParam, ListParam, StrParam
-from ...resource.resource_decorator import resource_decorator
-from ...resource.view_decorator import view
-from ..file.file import File
-from .table import Table
-from .view.table_view import TableView
+from ..config.config_types import ConfigParams
+from ..config.param_spec import IntParam, StrParam
+from ..impl.file.file import File
+from ..impl.table.table import Table
+from ..impl.table.view.table_view import TableView
+from ..resource.resource_decorator import resource_decorator
+from ..resource.view_decorator import view
 
 
-@resource_decorator("TableFile")
+@resource_decorator("TableFile",  hide=True, deprecated_since='0.3.3', deprecated_message='Use simple file')
 class TableFile(File):
     """Specific file to .csv and .tsv files. This file contains the sames view as the Table resource.
 
@@ -43,6 +43,6 @@ class TableFile(File):
         """
         View as table
         """
-        from .tasks.table_importer import TableImporter
+        from ..impl.table.tasks.table_importer import TableImporter
         table: Table = TableImporter.call(self, params)
         return table.view_as_table(ConfigParams())

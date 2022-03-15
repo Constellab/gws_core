@@ -16,10 +16,9 @@ from ....impl.file.file import File
 from ....impl.table.table_helper import TableHelper
 from ....task.converter.importer import ResourceImporter, importer_decorator
 from ..table import Table
-from ..table_file import TableFile
 
 
-@importer_decorator(unique_name="TableImporter", target_type=Table, source_type=TableFile)
+@importer_decorator(unique_name="TableImporter", target_type=Table, supported_extensions=Table.ALLOWED_FILE_FORMATS)
 class TableImporter(ResourceImporter):
     config_specs: ConfigSpecs = {
         'file_format': StrParam(default_value=Table.DEFAULT_FILE_FORMAT, allowed_values=Table.ALLOWED_FILE_FORMATS, human_name="File format", short_description="File format"),

@@ -13,10 +13,10 @@ client = TestClient(app)
 client2 = TestClient(core_app)
 
 
-@resource_decorator("SubFile")
+@resource_decorator("SubFile2")
 class SubFile(File):
 
-    supported_extensions: List[str] = ['super']
+    pass
 
 
 class TestFileService(BaseTestCase):
@@ -33,9 +33,6 @@ class TestFileService(BaseTestCase):
         sub_file_type: FileTyping = next(filter(lambda file: SubFile == file.get_type(), file_types), None)
         self.assertIsNotNone(sub_file_type)
         self.assertIsInstance(sub_file_type, FileTyping)
-
-        # Check that to_json contains default extension
-        self.assertEqual(sub_file_type.to_json()["supported_extensions"], ['super'])
 
     def test_get_folder_types(self):
         file_types: List[ResourceTyping] = FsNodeService.get_folder_types()

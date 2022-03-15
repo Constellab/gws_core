@@ -3,8 +3,8 @@
 from typing import Dict, List
 
 from gws_core import (BaseTestCase, ConfigParams, File, IExperiment, ITask,
-                      Resource, ResourceModel, RField, TableFile, Tag, Task,
-                      TaskInputs, TaskModel, TaskOutputs, resource_decorator,
+                      Resource, ResourceModel, RField, Tag, Task, TaskInputs,
+                      TaskModel, TaskOutputs, resource_decorator,
                       task_decorator)
 from gws_core.core.classes.search_builder import (SearchDict,
                                                   SearchFilterCriteria)
@@ -36,6 +36,11 @@ class ForSearchCreate(Task):
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {'search': ForSearch.create('empty')}
+
+
+@resource_decorator(unique_name="SubFile")
+class SubFile(File):
+    pass
 
 
 class TestResourceModel(BaseTestCase):
@@ -111,12 +116,12 @@ class TestResourceModel(BaseTestCase):
 
         resource_model: ResourceModel = ResourceModel.save_from_resource(file, origin=ResourceOrigin.UPLOADED)
         self.assertIsInstance(resource_model.get_resource(), File)
-        self.assertNotIsInstance(resource_model.get_resource(), TableFile)
+        self.assertNotIsInstance(resource_model.get_resource(), SubFile)
 
-        ResourceService.update_resource_type(resource_model.id, TableFile._typing_name)
+        ResourceService.update_resource_type(resource_model.id, SubFile._typing_name)
 
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_model.id)
-        self.assertIsInstance(resource_model.get_resource(), TableFile)
+        self.assertIsInstance(resource_model.get_resource(), SubFile)
 
     def test_resource_tags(self):
         resource_model: ResourceModel = self._create_resource_with_tag('',

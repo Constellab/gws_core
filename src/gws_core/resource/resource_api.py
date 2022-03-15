@@ -139,12 +139,17 @@ async def create_transformer_experiment(transformers: List[TransformerDict], res
 ############################# IMPORTER ###########################
 
 
-@core_app.get("/resource-type/{resource_typing_name}/importer", tags=["Resource"],
+@core_app.get("/resource-type/{resource_typing_name}/{extension}/importer", tags=["Resource"],
               summary="Get specs to import the resource")
 async def get_import_specs(resource_typing_name: str,
+                           extension: str,
                            _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    if extension == ' ':
+        extension = None
+    else:
+        extension = '.' + extension
 
-    return ListJsonable(ConverterService.get_resource_importers(resource_typing_name)).to_json()
+    return ListJsonable(ConverterService.get_importers(resource_typing_name, extension)).to_json()
 
 
 @core_app.post(

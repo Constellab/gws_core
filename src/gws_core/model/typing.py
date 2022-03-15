@@ -177,6 +177,10 @@ class Typing(Model):
             .order_by(cls.human_name)
 
     @classmethod
+    def get_by_object_sub_type(cls, sub_type: str) -> List['Typing']:
+        return list(cls.select().where(cls.object_sub_type == sub_type).order_by(cls.human_name))
+
+    @classmethod
     def get_by_model_type(cls, model_type: Type[Base]) -> 'Typing':
         return cls._get_by_model_type(model_type).first()
 
@@ -194,7 +198,7 @@ class Typing(Model):
         """
         all_typings: List[Typing] = list(cls.get_by_object_type(typing_type))
 
-        typings = list(filter(lambda typing: issubclass(typing.get_type(), base_type), all_typings))
+        typings = list(filter(lambda typing: Utils.issubclass(typing.get_type(), base_type), all_typings))
         return typings
 
     @classmethod

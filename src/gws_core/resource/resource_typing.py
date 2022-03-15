@@ -50,14 +50,3 @@ class FileTyping(ResourceTyping):
         from ..impl.file.file import File
 
         return cls.get_children_typings(cls._object_type, File)
-
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
-        _json = super().to_json(deep, **kwargs)
-
-        file_type: Type[File] = self.get_type()
-
-        if file_type:
-            # Add the list of default extensions for the file
-            _json["supported_extensions"] = getattr(file_type, 'supported_extensions', [])
-
-        return _json

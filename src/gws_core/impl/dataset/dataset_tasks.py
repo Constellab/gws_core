@@ -14,7 +14,6 @@ from ...config.config_types import ConfigParams, ConfigSpecs
 from ...core.exception.exceptions import BadRequestException
 from ...impl.file.file import File
 from ...impl.table.table import Table
-from ...impl.table.table_file import TableFile
 from ...impl.table.table_helper import TableHelper
 from ...task.converter.exporter import exporter_decorator
 from ...task.converter.importer import importer_decorator
@@ -23,14 +22,14 @@ from ..table.tasks.table_importer import TableImporter
 from .dataset import Dataset
 
 
-@importer_decorator(unique_name="DatasetImporter", source_type=TableFile, target_type=Dataset)
+@importer_decorator(unique_name="DatasetImporter", target_type=Dataset, supported_extensions=Table.ALLOWED_FILE_FORMATS)
 class DatasetImporter(TableImporter):
     config_specs: ConfigSpecs = {
         **TableImporter.config_specs,
         'targets': ListParam(default_value='[]', short_description="Name of the columns to user as targets"),
     }
 
-    async def import_from_path(self, file: TableFile, params: ConfigParams, target_type: Type[Dataset]) -> Dataset:
+    async def import_from_path(self, file: File, params: ConfigParams, target_type: Type[Dataset]) -> Dataset:
         header = params.get_value("header", 0)
         index_column = params.get_value("index_column", -1)
         targets = params.get_value("targets", [])
@@ -64,11 +63,11 @@ class DatasetImporter(TableImporter):
         return dataset
 
 
-@exporter_decorator("DatasetExporter", source_type=Dataset, target_type=TableFile)
+@exporter_decorator("DatasetExporter", source_type=Dataset)
 class DatasetExporter(TableExporter):
     config_specs: ConfigSpecs = {**TableExporter.config_specs}
 
-    async def export_to_path(self, resource: Table, dest_dir: str, params: ConfigParams, target_type: Type[TableFile]) -> TableFile:
+    async def export_to_path(self, resource: Table, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
         file_name = params.get_value('file_name', type(self)._human_name)
         file_format = params.get_value('file_format', Dataset.DEFAULT_FILE_FORMAT)
         file_path = os.path.join(dest_dir, file_name+file_format)

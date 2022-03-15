@@ -6,16 +6,17 @@
 import os
 from typing import Type
 
+from gws_core.impl.file.file import File
+
 from ....config.config_types import ConfigParams, ConfigSpecs
 from ....config.param_spec import BoolParam, StrParam
 from ....core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ....task.converter.exporter import ResourceExporter, exporter_decorator
 from ..table import Table
-from ..table_file import TableFile
 
 
-@exporter_decorator(unique_name="TableExporter", source_type=Table, target_type=TableFile)
+@exporter_decorator(unique_name="TableExporter", source_type=Table)
 class TableExporter(ResourceExporter):
     config_specs: ConfigSpecs = {
         'file_name': StrParam(optional=True, short_description="File name (without extension)"),
@@ -25,7 +26,7 @@ class TableExporter(ResourceExporter):
         'write_index': BoolParam(default_value=True, short_description="True to write row names (index), False otherwise"),
     }
 
-    async def export_to_path(self, source: Table, dest_dir: str, params: ConfigParams, target_type: Type[TableFile]) -> TableFile:
+    async def export_to_path(self, source: Table, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
         file_name = params.get_value('file_name', source.name) or 'table'
         file_format = params.get_value('file_format', Table.DEFAULT_FILE_FORMAT)
         file_path = os.path.join(dest_dir, file_name+file_format)

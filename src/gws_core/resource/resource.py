@@ -36,7 +36,6 @@ class Resource(Base):
     _typing_name: str = None
     _human_name: str = None
     _short_description: str = None
-    _is_importable: bool = False
     _is_exportable: bool = False
     # Set by the resource parent on creation
     _model_id: str = None
