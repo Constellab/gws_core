@@ -125,13 +125,6 @@ class ResourceService(BaseService):
         return ViewHelper.get_view_specs(resource_model, view_name)
 
     @classmethod
-    async def call_default_view_on_resource(cls, resource_model_id: str) -> Any:
-        resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
-
-        resource: Resource = resource_model.get_resource()
-        return ViewHelper.call_default_view_on_resource(resource)
-
-    @classmethod
     async def call_view_on_resource_type(cls, resource_model_id: str,
                                          view_name: str, config_values: Dict[str, Any],
                                          transformers: List[TransformerDict]) -> Any:
@@ -139,7 +132,15 @@ class ResourceService(BaseService):
         resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
 
         resource: Resource = resource_model.get_resource()
-        return await cls.call_view_on_resource(resource, view_name, config_values, transformers)
+
+        view_method_name: str
+        # specific case for the default view, we retrieve the view name
+        if view_name == 'default-view':
+            view_method_name = ViewHelper.get_default_view_of_resource_type(type(resource)).method_name
+        else:
+            view_method_name = view_name
+
+        return await cls.call_view_on_resource(resource, view_method_name, config_values, transformers)
 
     @classmethod
     async def call_view_on_resource(cls, resource: Resource,

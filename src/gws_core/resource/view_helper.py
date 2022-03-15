@@ -45,13 +45,6 @@ class ViewHelper():
         }
 
     @classmethod
-    def call_default_view_on_resource(cls, resource: Resource) -> ViewCallResult:
-
-        view_data: ResourceViewMetaData = cls.get_default_view_of_resource_type(type(resource))
-
-        return cls.call_view_on_resource(resource, view_data.method_name, {})
-
-    @classmethod
     def _call_view_method(cls, resource: Resource,
                           view_metadata: ResourceViewMetaData, config:  Dict[str, Any]) -> View:
 

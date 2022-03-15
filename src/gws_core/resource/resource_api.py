@@ -43,14 +43,6 @@ class ViewConfig(TypedDict):
     transformers: List[TransformerDict]
 
 
-@core_app.post("/resource/{id}/views/default-view", tags=["Resource"],
-               summary="Call the default view for a resource")
-async def call_default_view_on_resource(id: str,
-                                        view_config: ViewConfig,
-                                        _: UserData = Depends(AuthService.check_user_access_token)) -> Any:
-    return await ResourceService.call_default_view_on_resource(id, view_config["values"], view_config["transformers"])
-
-
 @core_app.post("/resource/{id}/views/{view_name}", tags=["Resource"],
                summary="Call the view name for a resource")
 async def call_view_on_resource(id: str,
