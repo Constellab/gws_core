@@ -9,18 +9,18 @@ import numpy as np
 from pandas import DataFrame
 from pandas.api.types import is_string_dtype
 
-from ..config.config_types import ConfigParams
-from ..core.exception.exceptions import BadRequestException
-from ..resource.r_field import ListRField
-from ..resource.resource_decorator import resource_decorator
-from ..resource.view_decorator import view
-from ..impl.table.data_frame_r_field import DataFrameRField
-from ..impl.table.table import Table
-from .dep_dataset_view import DatasetView
+from ...config.config_types import ConfigParams
+from ...core.exception.exceptions import BadRequestException
+from ...resource.r_field import ListRField
+from ...resource.resource_decorator import resource_decorator
+from ...resource.view_decorator import view
+from ...impl.table.data_frame_r_field import DataFrameRField
+from ...impl.table.table import Table
+from .dataset_view import DatasetView
 
 
 @final
-@resource_decorator("Dataset", hide=True, deprecated_since='0.3.3', deprecated_message='Use dataset')
+@resource_decorator("Dataset", human_name="Dataset", short_description="Data table for statistical and machine learning analysis")
 class Dataset(Table):
     """
     Dataset class
@@ -179,6 +179,20 @@ class Dataset(Table):
 
     def target_exists(self, name) -> bool:
         return name in self.target_names
+
+    def convert_row_tags_to_dummy_target_matrix(self, key: str) -> DataFrame:
+        tags = self.get_row_tags()
+        targets = [ tag[key] for tag in tags ]
+        labels = sorted(list(set(targets)))
+        nb_labels = len(labels)
+        nb_instances = len(targets)
+        data = np.zeros(shape=(nb_instances, nb_labels))
+        for i in range(0, nb_instances):
+            current_label = targets[i]
+            idx = labels.index(current_label)
+            data[i][idx] = 1.0
+        
+        return DataFrame(data=data, index=targets, columns=labels)
 
     def convert_targets_to_dummy_matrix(self) -> DataFrame:
         targets = self.get_targets()

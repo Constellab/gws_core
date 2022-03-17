@@ -31,10 +31,12 @@ ALLOWED_DELIMITER = ["auto", "tab", "space", ",", ";"]
 DEFAULT_DELIMITER = "auto"
 DEFAULT_FILE_FORMAT = ".csv"
 ALLOWED_XLS_FILE_FORMATS = ['.xlsx', '.xls']
-ALLOWED_TAG_TYPES = ['categorical', 'numerical']
-ALLOWED_TXT_FILE_FORMATS = ['.csv', '.tsv', '.txt']
+ALLOWED_TXT_FILE_FORMATS = ['.csv', '.tsv', '.tab', '.txt']
 ALLOWED_FILE_FORMATS = [*ALLOWED_XLS_FILE_FORMATS, *ALLOWED_TXT_FILE_FORMATS]
 
+NUMERICAL_TAG_TYPE = "numerical"
+CATEGORICAL_TAG_TYPE = "categorical"
+ALLOWED_TAG_TYPES = [CATEGORICAL_TAG_TYPE, NUMERICAL_TAG_TYPE]
 
 @resource_decorator("Table")
 class Table(Resource):
@@ -43,9 +45,13 @@ class Table(Resource):
     DEFAULT_DELIMITER = DEFAULT_DELIMITER
     DEFAULT_FILE_FORMAT = DEFAULT_FILE_FORMAT
     ALLOWED_FILE_FORMATS = ALLOWED_FILE_FORMATS
-    ALLOWED_TAG_TYPES = ALLOWED_TAG_TYPES
+    
     ALLOWED_XLS_FILE_FORMATS = ALLOWED_XLS_FILE_FORMATS
     ALLOWED_TXT_FILE_FORMATS = ALLOWED_TXT_FILE_FORMATS
+
+    NUMERICAL_TAG_TYPE = NUMERICAL_TAG_TYPE
+    CATEGORICAL_TAG_TYPE = CATEGORICAL_TAG_TYPE
+    ALLOWED_TAG_TYPES = ALLOWED_TAG_TYPES
 
     _data: DataFrame = DataFrameRField()
     _meta: Dict = DictRField()
@@ -78,6 +84,8 @@ class Table(Resource):
 
             if column_names:
                 data.columns = column_names
+            data.columns = data.columns.map(str)
+
             if row_names:
                 data.index = row_names
 
@@ -156,20 +164,6 @@ class Table(Resource):
 
         self._add_tag("column", column_index, key, value, type=type)
 
-    def convert_row_tags_to_dummy_target_matrix(self, key: str) -> DataFrame:
-        tags = self.get_row_tags()
-        targets = [ tag[key] for tag in tags ]
-        labels = sorted(list(set(targets)))
-        nb_labels = len(labels)
-        nb_instances = len(targets)
-        data = np.zeros(shape=(nb_instances, nb_labels))
-        for i in range(0, nb_instances):
-            current_label = targets[i]
-            idx = labels.index(current_label)
-            data[i][idx] = 1.0
-        
-        return DataFrame(data=data, index=targets, columns=labels)
-
     def set_row_tags(self, tags: list):
         if not isinstance(tags, list):
             raise BadRequestException("The tags must be a list")
@@ -179,13 +173,15 @@ class Table(Resource):
         self._meta["row_tags"] = self.clean_tags(tags)
 
     def set_row_tag_types(self, types: dict):
+        current_row_tags = self.get_row_tags()
         current_row_tag_types = self.get_row_tag_types()
-        for k,t in types.items():
-            if k not in current_row_tag_types:
+        all_current_keys = list(set([k for t in current_row_tags for k in t]))
+        for k,v in types.items():
+            if k not in all_current_keys:
                 raise BadRequestException(f"The tag `{k}` does not exist")
             else:
-                if t not in self.ALLOWED_TAG_TYPES:
-                    raise BadRequestException(f"Invalid tag type '{t}'. The tag type in {self.ALLOWED_TAG_TYPES}")
+                if v not in self.ALLOWED_TAG_TYPES:
+                    raise BadRequestException(f"Invalid tag type '{v}'. The tag type in {self.ALLOWED_TAG_TYPES}")
                 current_row_tag_types[k] = v
 
         self._meta["row_tag_types"] = current_row_tag_types

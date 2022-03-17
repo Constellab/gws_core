@@ -244,36 +244,3 @@ class TestTable(BaseTestCase):
         print(file_.path)
         self.assertTrue(os.path.exists(file_.path))
 
-    def test_table_dummy_matrix(self):
-        meta = {
-            "row_tags": [
-                {"lg": "EN", "c": "US", "user": "Vi"},
-                {"lg": "JP", "c": "JP", "user": "Jo"},
-                {"lg": "FR", "c": "FR", "user": "Jo"},
-                {"lg": "JP", "c": "JP", "user": "Vi"},
-            ],
-            "column_tags": [
-                {"lg": "EN", "c": "UK"},
-                {"lg": "PT", "c": "PT"},
-                {"lg": "CH", "c": "CH"}
-            ],
-        }
-
-        table: Table = Table(
-            data=[[1, 2, 3], [3, 4, 6], [3, 7, 6], [3, 7, 6]],
-            row_names=["NY", "Tokyo", "Paris", "Kyoto"],
-            column_names=["London", "Lisboa", "Beijin"],
-            meta=meta
-        )
-        data = table.convert_row_tags_to_dummy_target_matrix(key="lg")
-
-        dummy = DataFrame(data=[
-            [1.0,0.0,0.0], 
-            [0.0,0.0,1.0],
-            [0.0,1.0,0.0],
-            [0.0,0.0,1.0]
-            ],
-            index=["EN","JP","FR","JP"],
-            columns=["EN","FR","JP"]
-        )
-        self.assertTrue(data.equals(dummy))

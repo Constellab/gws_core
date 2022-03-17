@@ -32,7 +32,12 @@ class DataProvider():
     def get_iris_table(cls) -> Table:
         return TableImporter.call(cls.get_iris_file(), {
             "delimiter": ",",
-            "header": 0
+            "header": 0,
+            "metadata": [{
+                "column": "variety",
+                "type": Table.CATEGORICAL_TAG_TYPE,
+                "keep_in_data": True,
+            }]
         })
 
     @classmethod
@@ -40,7 +45,12 @@ class DataProvider():
         return DatasetImporter.call(cls.get_iris_file(), {
             "delimiter": ",",
             "header": 0,
-            "targets": ["variety"]
+            "metadata": [{
+                "column": "variety",
+                "type": Table.CATEGORICAL_TAG_TYPE,
+                "keep_in_data": True,
+                "is_target": True
+            }]
         })
 
     @classmethod
@@ -48,6 +58,10 @@ class DataProvider():
         return DatasetImporter.call(cls.get_no_head_iris_file(), {
             "delimiter": ",",
             "header": -1,
-            "targets": [4]
-            # "targets": ["C4"]
+            "metadata": [{
+                "column": "4",
+                "type": Table.CATEGORICAL_TAG_TYPE,
+                "keep_in_data": True,
+                "is_target": True
+            }]
         })

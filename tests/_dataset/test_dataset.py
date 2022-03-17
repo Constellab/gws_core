@@ -1,4 +1,6 @@
-from gws_core import BaseTestCase
+from pandas import DataFrame
+
+from gws_core import BaseTestCase, Dataset
 from gws_core.extra import DataProvider
 
 
@@ -6,6 +8,7 @@ class TestImporter(BaseTestCase):
 
     async def test_importer(self):
         ds = DataProvider.get_iris_dataset()
+
         self.assertEquals(ds.nb_features, 4)
         self.assertEquals(ds.nb_targets, 1)
         self.assertEquals(ds.nb_instances, 150)
@@ -48,7 +51,41 @@ class TestImporter(BaseTestCase):
         self.assertEquals(ds.get_features().values[0, 0], 5.1)
         self.assertEquals(ds.get_features().values[0, 1], 3.5)
         self.assertEquals(ds.get_features().values[149, 0], 5.9)
-        self.assertEquals(list(ds.feature_names), [0, 1, 2, 3])
-        self.assertEquals(list(ds.target_names), [4])
+        self.assertEquals(list(ds.feature_names), ['0', '1', '2', '3'])
+        self.assertEquals(list(ds.target_names), ['4'])
         #self.assertEquals(list(ds.feature_names), ["C0", "C1", "C2", "C3"])
         #self.assertEquals(list(ds.target_names), ["C4"])
+
+    def test_table_dummy_matrix(self):
+        meta = {
+            "row_tags": [
+                {"lg": "EN", "c": "US", "user": "Vi"},
+                {"lg": "JP", "c": "JP", "user": "Jo"},
+                {"lg": "FR", "c": "FR", "user": "Jo"},
+                {"lg": "JP", "c": "JP", "user": "Vi"},
+            ],
+            "column_tags": [
+                {"lg": "EN", "c": "UK"},
+                {"lg": "PT", "c": "PT"},
+                {"lg": "CH", "c": "CH"}
+            ],
+        }
+
+        dataset: Dataset = Dataset(
+            data=[[1, 2, 3], [3, 4, 6], [3, 7, 6], [3, 7, 6]],
+            row_names=["NY", "Tokyo", "Paris", "Kyoto"],
+            column_names=["London", "Lisboa", "Beijin"],
+            meta=meta
+        )
+        data = dataset.convert_row_tags_to_dummy_target_matrix(key="lg")
+
+        dummy = DataFrame(data=[
+            [1.0,0.0,0.0], 
+            [0.0,0.0,1.0],
+            [0.0,1.0,0.0],
+            [0.0,0.0,1.0]
+            ],
+            index=["EN","JP","FR","JP"],
+            columns=["EN","FR","JP"]
+        )
+        self.assertTrue(data.equals(dummy))

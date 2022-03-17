@@ -105,9 +105,9 @@ from .experiment.queue import Job as Job
 from .experiment.queue import Queue as Queue
 from .experiment.queue_service import QueueService as QueueService
 # Impl > Dataset
-from .deprecated.dep_dataset import Dataset as Dataset
-from .deprecated.dep_dataset_tasks import DatasetExporter as DatasetExporter
-from .deprecated.dep_dataset_tasks import DatasetImporter as DatasetImporter
+from .impl.dataset.dataset import Dataset as Dataset
+from .impl.dataset.dataset_tasks import DatasetExporter as DatasetExporter
+from .impl.dataset.dataset_tasks import DatasetImporter as DatasetImporter
 # Extension
 # Impl > File
 from .impl.file.file import File as File
