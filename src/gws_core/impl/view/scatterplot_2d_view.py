@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict, List
+from typing import Any, Dict, List, Optional, Union
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
@@ -41,6 +41,7 @@ class ScatterPlot2DView(View):
                         "y": List[Float],
                         "tags": List[Dict[str,str]] | None
                     },
+                    "name": str,
                     "x_name": str,
                     "y_name": str,
                 },
@@ -59,7 +60,7 @@ class ScatterPlot2DView(View):
     _title: str = "2D-Scatter Plot"
 
     def add_series(
-            self, *, x: List[float], y: List[float],
+            self, *, x: List[float], y: List[float], name: str = None,
             x_name: str = None, y_name: str = None, tags: List[Dict[str, str]] = None):
         """
         Add a series of points to plot
@@ -68,6 +69,8 @@ class ScatterPlot2DView(View):
         :type x: list of float
         :params y: The y-axis magnitudes of points
         :type y: list of float
+        :params name: [optional] The name of the serie
+        :type name: str
         :params x_name: [optional] The name of x-axis data
         :type x_name: str
         :params y_name: [optional] The name of y-axis data
@@ -80,14 +83,19 @@ class ScatterPlot2DView(View):
             self._series = []
         if not isinstance(y, list):
             raise BadRequestException("The y-data is required and must be a list of float")
+
         if x is None:
             x = list(range(0, len(y)))
         else:
-            x = [float(val) for val in x]
+            # Convert y to float
+            x = self.list_to_float(x)
+
+        # Convert y to float
+        y = self.list_to_float(y)
 
         if tags is not None:
             if not isinstance(tags, list) or len(tags) != len(x):
-                raise BadRequestException("The tags must a list of length equal to the length of x")
+                raise BadRequestException("The tags must be a list of length equal to the length of x")
             tags = [{str(k): str(v) for k, v in t.items()} for t in tags]
         self._series.append({
             "data": {
@@ -95,6 +103,7 @@ class ScatterPlot2DView(View):
                 "y": y,
                 "tags": tags
             },
+            "name": name,
             "x_name": x_name,
             "y_name": y_name,
         })
