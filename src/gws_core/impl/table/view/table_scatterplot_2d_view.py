@@ -76,11 +76,11 @@ class TableScatterPlot2DView(BaseTableView):
         view = self._view_helper()
 
         for serie in series:
-            y_data = self.get_selection_range_values(serie["y"])
+            y_data = self.get_values_from_selection_range(serie["y"])
 
             x_data: List[float] = None
             if serie.get('x') is not None:
-                x_data = self.get_selection_range_values(serie["x"])
+                x_data = self.get_values_from_selection_range(serie["x"])
 
             view.add_series(
                 x=x_data,

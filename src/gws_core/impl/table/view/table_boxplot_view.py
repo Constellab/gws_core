@@ -79,7 +79,7 @@ class TableBoxPlotView(BaseTableView):
         box_view = BoxPlotView()
 
         for serie in series:
-            data = self.get_selection_range_values(serie["y"])
+            data = self.get_values_from_selection_range(serie["y"])
             box_view.add_data(
                 data=data,  # data[y_data_columns],
                 tags=self.get_row_tags_from_selection_range(serie["y"])

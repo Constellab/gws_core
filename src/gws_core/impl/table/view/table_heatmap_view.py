@@ -11,12 +11,12 @@ from ....config.config_types import ConfigParams
 from ....config.param_spec import DictParam, IntParam, StrParam
 from ....resource.view_types import ViewSpecs
 from ...view.heatmap_view import HeatmapView
-from .base_table_view import BaseTableView, SelectionRange
+from .base_table_view import BaseTableView, TableSelection
 
 
 class HeatMapSerie(TypedDict):
     name: str
-    y: SelectionRange
+    y: TableSelection
 
 
 class TableHeatmapView(BaseTableView):

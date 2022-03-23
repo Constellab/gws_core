@@ -81,7 +81,7 @@ class TableHistogramView(BaseTableView):
         view.density = density
         for serie in series:
             view.add_data(
-                data=self.get_selection_range_values(serie["y"]),
+                data=self.get_values_from_selection_range(serie["y"]),
                 name=serie["name"])
 
         return view.to_dict(params)

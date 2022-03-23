@@ -7,14 +7,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List
 
-from pandas.api.types import is_numeric_dtype
-
 from ....config.config_types import ConfigParams
-from ....config.param_spec import ListParam, ParamSet, StrParam
+from ....config.param_spec import ListParam
 from ....core.exception.exceptions import BadRequestException
 from ....resource.view_types import ViewSpecs
 from ...view.barplot_view import BarPlotView
-from .base_table_view import BaseTableView, Serie1d, Serie2d
+from .base_table_view import BaseTableView, Serie1d
 
 if TYPE_CHECKING:
     from ..table import Table
@@ -76,7 +74,7 @@ class TableBarPlotView(BaseTableView):
         view = self._view_helper()
 
         for serie in series:
-            y_data = self.get_selection_range_values(serie["y"])
+            y_data = self.get_values_from_selection_range(serie["y"])
 
             view.add_series(
                 y=y_data,

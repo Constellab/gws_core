@@ -68,7 +68,7 @@ class TableVennDiagramView(BaseTableView):
         for serie in series:
             view.add_group(
                 name=serie["name"],
-                data=self.get_selection_range_values(serie["y"])
+                data=self.get_values_from_selection_range(serie["y"])
             )
 
         return view.to_dict(params)
