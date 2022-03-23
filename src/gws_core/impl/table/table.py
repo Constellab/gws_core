@@ -572,7 +572,11 @@ class Table(Resource):
 
         return TableView(self)
 
-    @view(view_type=TableLinePlot2DView, human_name='Line plot 2D', short_description='View columns as 2D-line plots', specs={})
+    ################################################# PLOT VIEW #################################################
+    # Plot view are hidden because they are manually called by the front
+    # /!\ DO NOT CHANGE THE FUNCTION NAMES OF THESES HIDDEN VIEWS /!\
+
+    @view(view_type=TableLinePlot2DView, human_name='Line plot 2D', short_description='View columns as 2D-line plots', specs={}, hide=True)
     def view_as_line_plot_2d(self, params: ConfigParams) -> TableLinePlot2DView:
         """
         View columns as 2D-line plots
@@ -597,7 +601,7 @@ class Table(Resource):
     #     return TableScatterPlot3DView(self)
 
     @view(view_type=TableScatterPlot2DView, human_name='Scatter plot 2D',
-          short_description='View columns as 2D-scatter plots', specs={})
+          short_description='View columns as 2D-scatter plots', specs={}, hide=True)
     def view_as_scatter_plot_2d(self, params: ConfigParams) -> TableScatterPlot2DView:
         """
         View one or several columns as 2D-line plots
@@ -605,7 +609,7 @@ class Table(Resource):
 
         return TableScatterPlot2DView(self)
 
-    @view(view_type=TableBarPlotView, human_name='Bar plot', short_description='View columns as 2D-bar plots', specs={})
+    @view(view_type=TableBarPlotView, human_name='Bar plot', short_description='View columns as 2D-bar plots', specs={}, hide=True)
     def view_as_bar_plot(self, params: ConfigParams) -> TableBarPlotView:
         """
         View one or several columns as 2D-bar plots
@@ -614,7 +618,7 @@ class Table(Resource):
         return TableBarPlotView(self)
 
     @view(view_type=TableStackedBarPlotView, human_name='Stacked bar plot',
-          short_description='View columns as 2D-stacked bar plots', specs={})
+          short_description='View columns as 2D-stacked bar plots', specs={}, hide=True)
     def view_as_stacked_bar_plot(self, params: ConfigParams) -> TableStackedBarPlotView:
         """
         View one or several columns as 2D-stacked bar plots
@@ -622,7 +626,7 @@ class Table(Resource):
 
         return TableStackedBarPlotView(self)
 
-    @view(view_type=TableHistogramView, human_name='Histogram', short_description='View columns as 2D-line plots', specs={})
+    @view(view_type=TableHistogramView, human_name='Histogram', short_description='View columns as 2D-line plots', specs={}, hide=True)
     def view_as_histogram(self, params: ConfigParams) -> TableHistogramView:
         """
         View columns as 2D-line plots
@@ -630,7 +634,7 @@ class Table(Resource):
 
         return TableHistogramView(self)
 
-    @view(view_type=TableBoxPlotView, human_name='Box plot', short_description='View columns as box plots', specs={})
+    @view(view_type=TableBoxPlotView, human_name='Box plot', short_description='View columns as box plots', specs={}, hide=True)
     def view_as_box_plot(self, params: ConfigParams) -> TableBoxPlotView:
         """
         View one or several columns as box plots
@@ -638,7 +642,7 @@ class Table(Resource):
 
         return TableBoxPlotView(self)
 
-    @view(view_type=TableHeatmapView, human_name='Heatmap', short_description='View table as heatmap', specs={})
+    @view(view_type=TableHeatmapView, human_name='Heatmap', short_description='View table as heatmap', specs={}, hide=True)
     def view_as_heatmap(self, params: ConfigParams) -> TableHeatmapView:
         """
         View the table as heatmap
@@ -646,7 +650,7 @@ class Table(Resource):
 
         return TableHeatmapView(self)
 
-    @view(view_type=TableVennDiagramView, human_name='VennDiagram', short_description='View table as Venn diagram', specs={})
+    @view(view_type=TableVennDiagramView, human_name='VennDiagram', short_description='View table as Venn diagram', specs={}, hide=True)
     def view_as_venn_diagram(self, params: ConfigParams) -> TableHeatmapView:
         """
         View the table as Venn diagram
