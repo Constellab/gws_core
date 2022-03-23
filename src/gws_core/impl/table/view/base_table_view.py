@@ -79,7 +79,7 @@ class BaseTableView(View):
         """Extract a new dataframe
         """
         self.check_column_names(column_names)
-        return self._table.get_data[column_names]
+        return self._table.get_data()[column_names]
 
     def get_values_from_coords(self, ranges: List[CellRange]) -> List[Any]:
 
