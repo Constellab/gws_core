@@ -38,8 +38,8 @@ class TabularView(View):
     ```
     """
 
-    MAX_NUMBER_OF_ROWS_PER_PAGE = 5000
-    MAX_NUMBER_OF_COLUMNS_PER_PAGE = 99
+    MAX_NUMBER_OF_ROWS_PER_PAGE = 100
+    MAX_NUMBER_OF_COLUMNS_PER_PAGE = 100
 
     from_row: int = 1
     from_column: int = 1

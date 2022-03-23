@@ -66,7 +66,7 @@ class HistogramView(View):
     _type: str = "histogram-view"
     _title: str = "Histogram"
 
-    def add_data(self, *, data: Union[List[float], DataFrame] = None, name: str = None):
+    def add_data(self, data: List[float] = None, name: str = None):
         """
         Add series of raw data.
 
@@ -79,21 +79,26 @@ class HistogramView(View):
         if not self._series:
             self._series = []
 
-        if (data is None):
-            if not isinstance(data, list) and not isinstance(data, DataFrame):
-                raise BadRequestException("The data is required and must be a list of float or a DataFrame")
+        if data is None or not isinstance(data, list):
+            raise BadRequestException("The data is required and must be a list of float or a DataFrame")
 
-        if isinstance(data, DataFrame):
-            if data.shape[0] != 1 and data.shape[1] != 1:
-                raise BadRequestException("The data must be row or column vector")
+        data = self.list_to_float(data, remove_none=True)
 
         hist, bin_edges = numpy.histogram(data, bins=self.nbins, density=self.density)
-        bin_centers = (bin_edges[0:-2] + bin_edges[1:-1])/2
+        bin_centers = (bin_edges[:-1] + bin_edges[1:])/2
         self.add_series(
             x=bin_centers.tolist(),
             y=hist.tolist(),
             name=name
         )
+
+    def add_data_from_dataframe(self, dataframe: DataFrame = None, name: str = None) -> None:
+        """
+        Add series of raw data from a dataframe. The values are flattened by column
+        """
+        if dataframe.shape[0] != 1 and dataframe.shape[1] != 1:
+            raise BadRequestException("The data must be row or column vector")
+        return self.add_data(self.flatten_dataframe_by_column(dataframe), name=name)
 
     def add_series(self, *, x: Union[List[float], List[str]] = None, y: List[float] = None, name: str = None):
         """

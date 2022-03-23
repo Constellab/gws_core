@@ -8,9 +8,6 @@ from typing import List
 import numpy
 from pandas import DataFrame
 
-from ....core.exception.exceptions import BadRequestException
-from .table_aggregator_helper import TableAggregatorHelper
-
 
 class TableNanifyHelper:
     """

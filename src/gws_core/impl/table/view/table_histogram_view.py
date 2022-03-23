@@ -5,13 +5,16 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
+
+from gws_core.core.exception.exceptions.bad_request_exception import \
+    BadRequestException
 
 from ....config.config_types import ConfigParams
-from ....config.param_spec import BoolParam, IntParam, ParamSet, StrParam
+from ....config.param_spec import BoolParam, IntParam, ListParam
 from ....resource.view_types import ViewSpecs
 from ...view.histogram_view import HistogramView
-from .base_table_view import BaseTableView
+from .base_table_view import BaseTableView, Serie1d
 
 if TYPE_CHECKING:
     from ..table import Table
@@ -55,52 +58,30 @@ class TableHistogramView(BaseTableView):
     _table: Table
     _specs: ViewSpecs = {
         **BaseTableView._specs,
-        "series": ParamSet(
-            {
-                "y_data_column": StrParam(human_name="Y-data column", short_description="Data to distribute among bins"),
-            },
-            optional=True,
-            human_name="Series of data",
-            short_description=f"Select series of data. By default the first {DEFAULT_NUMBER_OF_COLUMNS} columns are plotted",
-            max_number_of_occurrences=10
-        ),
+        "series": ListParam(default_value=[]),
         "nbins": IntParam(default_value=10, min_value=0, optional=True, human_name="Nbins", short_description="The number of bins. Set zero (0) for auto."),
         "density": BoolParam(default_value=False, optional=True, human_name="Density", short_description="True to plot density"),
-        "x_label": StrParam(human_name="X-label", optional=True, visibility='protected', short_description="The x-axis label to display"),
-        "y_label": StrParam(human_name="Y-label", optional=True, visibility='protected', short_description="The y-axis label to display"),
     }
 
     def to_dict(self, params: ConfigParams) -> dict:
         nbins = params.get_value("nbins")
         density = params.get_value("density")
 
-        data = self._table.select_numeric_columns().get_data()
+        series: List[Serie1d] = params.get_value("series")
 
-        series = params.get_value("series", [])
-        if not series:
-            n = min(DEFAULT_NUMBER_OF_COLUMNS, data.shape[1])
-            series = [{"y_data_column": v} for v in data.columns[0:n]]
-
-        y_data_columns = []
-        for param_series in series:
-            name = param_series.get("y_data_column")
-            y_data_columns.append(name)
+        if len(series) == 0:
+            raise BadRequestException('There must be at least one serie')
 
         if nbins <= 0:
             nbins = "auto"
 
-        x_label = params.get_value("x_label", "")
-        y_label = params.get_value("y_label", "")
-
         # create view
         view = HistogramView()
-        view.x_label = x_label
-        view.y_label = y_label
         view.nbins = nbins
         view.density = density
-        for y_data_column in y_data_columns:
-            col_data = data[y_data_column].values.tolist()
-            name = y_data_column
-            view.add_data(data=col_data, name=name)
+        for serie in series:
+            view.add_data(
+                data=self.get_values_from_selection_range(serie["y"]),
+                name=serie["name"])
 
         return view.to_dict(params)

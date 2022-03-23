@@ -45,6 +45,7 @@ class TableMeta(TypedDict):
     row_tag_types: Dict[str, str]
     column_tag_types: Dict[str, str]
 
+
 @resource_decorator("Table")
 class Table(Resource):
 
@@ -134,12 +135,12 @@ class Table(Resource):
         if type not in self.ALLOWED_TAG_TYPES:
             raise BadRequestException(f"Invalid tag type '{type}'. The tag type must be in {self.ALLOWED_TAG_TYPES}")
 
-        key=str(key)
-        value=str(value)
+        key = str(key)
+        value = str(value)
 
-        self._meta[axis + "_tags"][index][key]=value
+        self._meta[axis + "_tags"][index][key] = value
         if key not in self._meta[axis + "_tag_types"]:
-            self._meta[axis + "_tag_types"][key]=type
+            self._meta[axis + "_tag_types"][key] = type
         else:
             if self._meta[axis + "_tag_types"][key] != type:
                 raise BadRequestException(f"Tag '{key}' already exists with a different type")
@@ -158,7 +159,7 @@ class Table(Resource):
         :param value: str, int, float
         """
 
-        self._add_tag("row", row_index, key, value, type = type)
+        self._add_tag("row", row_index, key, value, type=type)
 
     def add_column_tag(
             self, column_index: int, key: str, value: Union[str, int, float],
@@ -174,7 +175,21 @@ class Table(Resource):
         :param value: str, int, float
         """
 
-        self._add_tag("column", column_index, key, value, type = type)
+        self._add_tag("column", column_index, key, value, type=type)
+
+    def convert_row_tags_to_dummy_target_matrix(self, key: str) -> DataFrame:
+        tags = self.get_row_tags()
+        targets = [tag[key] for tag in tags]
+        labels = sorted(list(set(targets)))
+        nb_labels = len(labels)
+        nb_instances = len(targets)
+        data = np.zeros(shape=(nb_instances, nb_labels))
+        for i in range(0, nb_instances):
+            current_label = targets[i]
+            idx = labels.index(current_label)
+            data[i][idx] = 1.0
+
+        return DataFrame(data=data, index=targets, columns=labels)
 
     def set_row_tags(self, tags: list):
         if not isinstance(tags, list):
@@ -182,21 +197,21 @@ class Table(Resource):
         if len(tags) != self._data.shape[0]:
             raise BadRequestException("The length of tags must be equal to the number of rows")
 
-        self._meta["row_tags"]=self.clean_tags(tags)
+        self._meta["row_tags"] = self.clean_tags(tags)
 
     def set_row_tag_types(self, types: dict):
-        current_row_tags=self.get_row_tags()
-        current_row_tag_types=self.get_row_tag_types()
-        all_current_keys=list(set([k for t in current_row_tags for k in t]))
+        current_row_tags = self.get_row_tags()
+        current_row_tag_types = self.get_row_tag_types()
+        all_current_keys = list(set([k for t in current_row_tags for k in t]))
         for k, v in types.items():
             if k not in all_current_keys:
                 raise BadRequestException(f"The tag `{k}` does not exist")
             else:
                 if v not in self.ALLOWED_TAG_TYPES:
                     raise BadRequestException(f"Invalid tag type '{v}'. The tag type in {self.ALLOWED_TAG_TYPES}")
-                current_row_tag_types[k]=v
+                current_row_tag_types[k] = v
 
-        self._meta["row_tag_types"]=current_row_tag_types
+        self._meta["row_tag_types"] = current_row_tag_types
 
     def set_column_tags(self, tags: list):
         if not isinstance(tags, list):
@@ -204,20 +219,22 @@ class Table(Resource):
         if len(tags) != self._data.shape[1]:
             raise BadRequestException("The length of tags must be equal to the number of columns")
 
-        self._meta["column_tags"]=self.clean_tags(tags)
+        self._meta["column_tags"] = self.clean_tags(tags)
 
     def set_column_tag_types(self, types: dict):
-        current_column_tag_types=self.get_column_tag_types()
+        current_column_tags = self.get_column_tags()
+        current_column_tag_types = self.get_column_tag_types()
+        all_current_keys = list(set([k for t in current_column_tags for k in t]))
         for k, v in types.items():
-            if k not in current_column_tag_types:
+            if k not in all_current_keys:
                 raise BadRequestException(f"The tag `{k}` does not exist")
             else:
                 if v not in self.ALLOWED_TAG_TYPES:
                     raise BadRequestException(
                         f"Invalid tag type '{v}'. The tag type must be in {self.ALLOWED_TAG_TYPES}")
-                current_column_tag_types[k]=v
+                current_column_tag_types[k] = v
 
-        self._meta["column_tag_types"]=current_column_tag_types
+        self._meta["column_tag_types"] = current_column_tag_types
 
     def get_data(self):
         return self._data
@@ -231,7 +248,7 @@ class Table(Resource):
         except:
             raise BadRequestException("The tags are not valid. Please check")
 
-    @ property
+    @property
     def column_names(self) -> list:
         """
         Returns the column names of the Datatable.
@@ -245,19 +262,19 @@ class Table(Resource):
         except:
             return None
 
-    def column_exists(self, name, case_sensitive = True) -> bool:
+    def column_exists(self, name, case_sensitive=True) -> bool:
         if case_sensitive:
             return name in self.column_names
         else:
-            lower_names=[x.lower() for x in self.column_names]
+            lower_names = [x.lower() for x in self.column_names]
             return name.lower() in lower_names
 
     # -- F --
 
     @ classmethod
-    def from_dict(cls, data: dict, orient = 'index', dtype = None, columns = None) -> 'Table':
-        dataframe=DataFrame.from_dict(data, orient, dtype, columns)
-        res=cls(data = dataframe)
+    def from_dict(cls, data: dict, orient='index', dtype=None, columns=None) -> 'Table':
+        dataframe = DataFrame.from_dict(data, orient, dtype, columns)
+        res = cls(data=dataframe)
         return res
 
     # -- G --
@@ -277,13 +294,17 @@ class Table(Resource):
     def get_meta(self):
         return self._meta
 
-    def get_row_tags(self, none_if_empty: bool = False):
-        tags=self._meta["row_tags"]
-        are_tags_empty=[len(t) == 0 for t in tags]
+    def get_row_tags(self, none_if_empty: bool = False,
+                     from_index: int = None, to_index: int = None) -> List[Dict[str, str]]:
+        tags = self._meta["row_tags"]
+        are_tags_empty = [len(t) == 0 for t in tags]
         if all(are_tags_empty) and none_if_empty:
             return None
-        else:
-            return tags
+
+        if from_index is not None and to_index is not None:
+            return tags[from_index:to_index]
+
+        return tags
 
     def get_row_tag_types(self):
         return self._meta["row_tag_types"]
@@ -315,21 +336,21 @@ class Table(Resource):
 
     # -- I --
 
-    @ property
+    @property
     def is_vector(self) -> bool:
         return self.nb_rows == 1 or self.nb_columns == 1
 
-    @ property
+    @property
     def is_column_vector(self) -> bool:
         return self.nb_columns == 1
 
-    @ property
+    @property
     def is_row_vector(self) -> bool:
         return self.nb_rows == 1
 
     # -- N --
 
-    @ property
+    @property
     def nb_columns(self) -> int:
         """
         Returns the number of columns.
@@ -340,7 +361,7 @@ class Table(Resource):
 
         return self._data.shape[1]
 
-    @ property
+    @property
     def nb_rows(self) -> int:
         """
         Returns the number of rows.
@@ -353,7 +374,7 @@ class Table(Resource):
 
     # -- R --
 
-    @ property
+    @property
     def row_names(self) -> list:
         """
         Returns the row names.
@@ -553,7 +574,7 @@ class Table(Resource):
 
     # -- V ---
 
-    @ view(view_type = TableView, default_view = True, human_name = 'Tabular', short_description = 'View as a table', specs = {})
+    @view(view_type=TableView, default_view=True, human_name='Tabular', short_description='View as a table', specs={})
     def view_as_table(self, params: ConfigParams) -> TableView:
         """
         View as table
@@ -561,7 +582,11 @@ class Table(Resource):
 
         return TableView(self)
 
-    @ view(view_type = TableLinePlot2DView, human_name = 'Line plot 2D', short_description = 'View columns as 2D-line plots', specs = {})
+    ################################################# PLOT VIEW #################################################
+    # Plot view are hidden because they are manually called by the front
+    # /!\ DO NOT CHANGE THE FUNCTION NAMES OF THESES HIDDEN VIEWS /!\
+
+    @view(view_type=TableLinePlot2DView, human_name='Line plot 2D', short_description='View columns as 2D-line plots', specs={}, hide=True)
     def view_as_line_plot_2d(self, params: ConfigParams) -> TableLinePlot2DView:
         """
         View columns as 2D-line plots
@@ -585,8 +610,8 @@ class Table(Resource):
 
     #     return TableScatterPlot3DView(self)
 
-    @ view(view_type = TableScatterPlot2DView, human_name = 'Scatter plot 2D',
-           short_description='View columns as 2D-scatter plots', specs={})
+    @view(view_type=TableScatterPlot2DView, human_name='Scatter plot 2D',
+          short_description='View columns as 2D-scatter plots', specs={}, hide=True)
     def view_as_scatter_plot_2d(self, params: ConfigParams) -> TableScatterPlot2DView:
         """
         View one or several columns as 2D-line plots
@@ -594,7 +619,7 @@ class Table(Resource):
 
         return TableScatterPlot2DView(self)
 
-    @ view(view_type=TableBarPlotView, human_name='Bar plot', short_description='View columns as 2D-bar plots', specs={})
+    @view(view_type=TableBarPlotView, human_name='Bar plot', short_description='View columns as 2D-bar plots', specs={}, hide=True)
     def view_as_bar_plot(self, params: ConfigParams) -> TableBarPlotView:
         """
         View one or several columns as 2D-bar plots
@@ -602,8 +627,8 @@ class Table(Resource):
 
         return TableBarPlotView(self)
 
-    @ view(view_type=TableStackedBarPlotView, human_name='Stacked bar plot',
-           short_description='View columns as 2D-stacked bar plots', specs={})
+    @view(view_type=TableStackedBarPlotView, human_name='Stacked bar plot',
+          short_description='View columns as 2D-stacked bar plots', specs={}, hide=True)
     def view_as_stacked_bar_plot(self, params: ConfigParams) -> TableStackedBarPlotView:
         """
         View one or several columns as 2D-stacked bar plots
@@ -611,7 +636,7 @@ class Table(Resource):
 
         return TableStackedBarPlotView(self)
 
-    @ view(view_type=TableHistogramView, human_name='Histogram', short_description='View columns as 2D-line plots', specs={})
+    @view(view_type=TableHistogramView, human_name='Histogram', short_description='View columns as 2D-line plots', specs={}, hide=True)
     def view_as_histogram(self, params: ConfigParams) -> TableHistogramView:
         """
         View columns as 2D-line plots
@@ -619,7 +644,7 @@ class Table(Resource):
 
         return TableHistogramView(self)
 
-    @ view(view_type=TableBoxPlotView, human_name='Box plot', short_description='View columns as box plots', specs={})
+    @view(view_type=TableBoxPlotView, human_name='Box plot', short_description='View columns as box plots', specs={}, hide=True)
     def view_as_box_plot(self, params: ConfigParams) -> TableBoxPlotView:
         """
         View one or several columns as box plots
@@ -627,7 +652,7 @@ class Table(Resource):
 
         return TableBoxPlotView(self)
 
-    @ view(view_type=TableHeatmapView, human_name='Heatmap', short_description='View table as heatmap', specs={})
+    @view(view_type=TableHeatmapView, human_name='Heatmap', short_description='View table as heatmap', specs={}, hide=True)
     def view_as_heatmap(self, params: ConfigParams) -> TableHeatmapView:
         """
         View the table as heatmap
@@ -635,7 +660,7 @@ class Table(Resource):
 
         return TableHeatmapView(self)
 
-    @ view(view_type=TableVennDiagramView, human_name='VennDiagram', short_description='View table as Venn diagram', specs={})
+    @view(view_type=TableVennDiagramView, human_name='VennDiagram', short_description='View table as Venn diagram', specs={}, hide=True)
     def view_as_venn_diagram(self, params: ConfigParams) -> TableHeatmapView:
         """
         View the table as Venn diagram

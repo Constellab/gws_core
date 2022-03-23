@@ -3,11 +3,20 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from typing import TypedDict
+
+from pandas import DataFrame
+
 from ....config.config_types import ConfigParams
-from ....config.param_spec import IntParam, StrParam
+from ....config.param_spec import DictParam, IntParam, StrParam
 from ....resource.view_types import ViewSpecs
 from ...view.heatmap_view import HeatmapView
-from .base_table_view import BaseTableView
+from .base_table_view import BaseTableView, TableSelection
+
+
+class HeatMapSerie(TypedDict):
+    name: str
+    y: TableSelection
 
 
 class TableHeatmapView(BaseTableView):
@@ -39,26 +48,22 @@ class TableHeatmapView(BaseTableView):
 
     _specs: ViewSpecs = {
         **BaseTableView._specs,
-        "from_row": IntParam(default_value=1, human_name="From row"),
-        "number_of_rows_per_page":
-        IntParam(
-            default_value=HeatmapView.MAX_NUMBER_OF_ROWS_PER_PAGE, max_value=HeatmapView.MAX_NUMBER_OF_ROWS_PER_PAGE, min_value=1,
-            human_name="Number of rows per page"),
-        "from_column": IntParam(default_value=1, human_name="From column", visibility=StrParam.PROTECTED_VISIBILITY),
-        "number_of_columns_per_page":
-        IntParam(
-            default_value=HeatmapView.MAX_NUMBER_OF_COLUMNS_PER_PAGE, max_value=HeatmapView.MAX_NUMBER_OF_COLUMNS_PER_PAGE, min_value=1,
-            human_name="Number of columns per page", visibility=StrParam.PROTECTED_VISIBILITY)}
+        "serie": DictParam(default_value={}),
+    }
 
     def to_dict(self, params: ConfigParams) -> dict:
-        data = self._table.select_numeric_columns().get_data()
+        serie: HeatMapSerie = params.get('serie')
+
+        dataframe: DataFrame
+
+        if serie["y"]["type"] == 'range':
+            # extract a dataframe from the first selection of the range, ignore the rest
+            dataframe = self.get_dataframe_from_coords(serie["y"]["selection"][0])
+        else:
+            dataframe = self.get_dataframe_from_columns(serie["y"]["selection"])
 
         row_tags = self._table.get_row_tags(none_if_empty=True)
         column_tags = self._table.get_column_tags(none_if_empty=True)
         helper_view = HeatmapView()
-        helper_view.set_data(data=data, row_tags=row_tags, column_tags=column_tags)
-        helper_view.from_row = params["from_row"]
-        helper_view.number_of_rows_per_page = params["number_of_rows_per_page"]
-        helper_view.from_column = params["from_column"]
-        helper_view.number_of_columns_per_page = params["number_of_columns_per_page"]
+        helper_view.set_data(data=dataframe, row_tags=row_tags, column_tags=column_tags)
         return helper_view.to_dict(params)

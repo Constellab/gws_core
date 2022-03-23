@@ -94,7 +94,7 @@ class VennDiagramView(View):
         }
         return _data_dict
 
-    def add_group(self, *, name: str = None, data: Union[set, list] = None):
+    def add_group(self, name: str = None, data: Union[set, list] = None):
         if not self._groups:
             self._groups = {}
         if not isinstance(name, str):

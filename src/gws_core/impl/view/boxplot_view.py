@@ -68,7 +68,7 @@ class BoxPlotView(View):
     _type: str = "box-plot-view"
     _title: str = "Box Plot"
 
-    def add_data(self, *, data: Union[List[List[float]], DataFrame] = None, tags: List[Dict[str, str]] = None):
+    def add_data(self, data: Union[List[float], DataFrame] = None, tags: List[Dict[str, str]] = None) -> None:
         """
         Add series of raw data.
 
@@ -78,18 +78,24 @@ class BoxPlotView(View):
         :type tags: List[Dict[str, str]]
         """
 
+        if data is None or not isinstance(data, list):
+            raise BadRequestException("The data is required and must be an array of float")
+
+        data = DataFrame(data)
+        self.add_data_from_dataframe(DataFrame(data), tags)
+
+    def add_data_from_dataframe(self, data: DataFrame = None, tags: List[Dict[str, str]] = None) -> None:
+        if data is None or not isinstance(data, DataFrame):
+            raise BadRequestException("The data is required and must be a DataFrame")
+
         if not self._series:
             self._series = []
-
-        if not isinstance(data, list) and not isinstance(data, DataFrame):
-            raise BadRequestException("The data is required and must be an array of float or a DataFrame")
-
-        if isinstance(data, list):
-            data = DataFrame(data)
 
         if tags is not None:
             if not isinstance(tags, list) or len(tags) != data.shape[1]:
                 raise BadRequestException("The tags must a list of length equal to the number of columns in data")
+
+        data = self.dataframe_to_float(data)
 
         ymin = data.min(skipna=True).to_list()
         ymax = data.max(skipna=True).to_list()
@@ -116,7 +122,7 @@ class BoxPlotView(View):
         )
 
     def add_series(
-            self, *,
+            self,
             x: List[float] = None,
             median: List[float] = None,
             q1: List[float] = None,
@@ -125,7 +131,7 @@ class BoxPlotView(View):
             max: List[float] = None,
             lower_whisker: List[float] = None,
             upper_whisker: List[float] = None,
-            tags: List[Dict[str, str]] = None):
+            tags: List[Dict[str, str]] = None) -> None:
         """
         Add series of pre-computed x and y box values.
         Vector x is the vector of bin centers and y contains the magnitudes at corresponding x positions.

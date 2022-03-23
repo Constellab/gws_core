@@ -126,7 +126,7 @@ class CentralService(BaseService):
 
         if response.status_code != 200:
             Logger.error(f"Can't save the report in central. Error : {response.text}")
-            raise BadRequestException("Can't save the experiment in central")
+            raise BadRequestException("Can't save the report in central")
 
     @classmethod
     def _get_central_api_url(cls, route: str) -> str:

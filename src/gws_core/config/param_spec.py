@@ -272,15 +272,15 @@ class BoolParam(ParamSpec[bool]):
         return 'bool'
 
 
-# class DictParam(ParamSpec[dict]):
-#     """Any json dict param"""
+class DictParam(ParamSpec[dict]):
+    """Any json dict param"""
 
-#     def _get_validator(self) -> Validator:
-#         return DictValidator()
+    def _get_validator(self) -> Validator:
+        return DictValidator()
 
-#     @classmethod
-#     def get_str_type(cls) -> str:
-#         return 'dict'
+    @classmethod
+    def get_str_type(cls) -> str:
+        return 'dict'
 
 
 class ListParam(ParamSpec[list]):
