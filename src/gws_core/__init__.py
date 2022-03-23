@@ -155,9 +155,10 @@ from .impl.shell.shell_proxy import ShellProxy as ShellProxy
 # Impl > Table
 from .impl.table.data_frame_r_field import DataFrameRField as DataFrameRField
 from .impl.table.encoding.encoding_table import EncodingTable as EncodingTable
+from .impl.table.encoding.encoding_table import \
+    EncodingTableImporter as EncodingTableImporter
 from .impl.table.encoding.table_decoder import TableDecoder as TableDecoder
 from .impl.table.encoding.table_encoder import TableEncoder as TableEncoder
-from .impl.table.encoding.encoding_table import EncodingTableImporter as EncodingTableImporter
 from .impl.table.helper.table_aggregator_helper import \
     TableAggregatorHelper as TableAggregatorHelper
 from .impl.table.helper.table_filter_helper import \
@@ -188,6 +189,8 @@ from .impl.table.transformers.table_data_filter import \
 from .impl.table.transformers.table_row_tag_grouper import \
     TableRowTagGrouper as TableRowTagGrouper
 from .impl.table.transformers.table_scaler import TableScaler as TableScaler
+from .impl.table.transformers.table_transposer import \
+    TableTransposer as TableTransposer
 # Impl > Text
 from .impl.text.text import Text as Text
 from .impl.text.view.text_view import TextView as TextView
