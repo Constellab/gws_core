@@ -17,6 +17,7 @@ from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view
 from .data_frame_r_field import DataFrameRField
+from .table_types import TableHeaderInfo, TableMeta
 from .view.table_barplot_view import TableBarPlotView
 from .view.table_boxplot_view import TableBoxPlotView
 from .view.table_heatmap_view import TableHeatmapView
@@ -40,14 +41,6 @@ ALLOWED_TAG_TYPES = [CATEGORICAL_TAG_TYPE, NUMERICAL_TAG_TYPE]
 COMMENT_CHAR = "#"
 
 
-class TableMeta(TypedDict):
-    row_tags: List[Dict[str, str]]
-    column_tags: List[Dict[str, str]]
-    row_tag_types: Dict[str, str]
-    column_tag_types: Dict[str, str]
-    comments: str
-
-
 @resource_decorator("Table")
 class Table(Resource):
 
@@ -65,7 +58,7 @@ class Table(Resource):
     COMMENT_CHAR = COMMENT_CHAR
 
     _data: DataFrame = DataFrameRField()
-    _meta: Dict = DictRField()
+    _meta: TableMeta = DictRField()
 
     def __init__(self, data: Union[DataFrame, np.ndarray, list] = None,
                  row_names=None, column_names=None,  meta: TableMeta = None):
@@ -213,7 +206,6 @@ class Table(Resource):
         self._meta["row_tags"] = self.clean_tags(tags)
 
     def set_row_tag_types(self, types: dict):
-        current_row_tags = self.get_row_tags()
         current_row_tag_types = self.get_row_tag_types()
         all_current_keys = list(set([k for t in current_row_tags for k in t]))
         for k, v in types.items():
@@ -315,26 +307,79 @@ class Table(Resource):
             return None
 
         if from_index is not None and to_index is not None:
-            return tags[from_index:to_index]
+            return tags[from_index:to_index + 1]
 
         return tags
 
     def get_row_tag_types(self):
         return self._meta["row_tag_types"]
 
-    def get_column_tags(self, none_if_empty: bool = False):
+    def get_row_names_by_positions(self, positions: List[int]) -> List[str]:
+        """Function to retrieve the row names based on row positions
+        """
+        if not isinstance(positions, list):
+            raise BadRequestException("The positions must be a list of integers")
+        if not all(isinstance(x, int) for x in positions):
+            raise BadRequestException("The positions must be a list of integers")
+        # get the row names of the row positions
+        return list(self._data.iloc[positions, :].index)
+
+    def get_row_position_from_name(self, row_name: str) -> List[TableHeaderInfo]:
+        return self._data.index.get_loc(row_name)
+
+    def get_rows_info(self) -> List[TableHeaderInfo]:
+        rows_info: List[TableHeaderInfo] = []
+        for index, row in self._data.iterrows():
+            rows_info.append(self.get_row_info(row.name))
+        return rows_info
+
+    def get_row_info(self, row_name: str) -> TableHeaderInfo:
+        row_position = self.get_row_position_from_name(row_name)
+        return {
+            "name": row_name,
+            "tags": self.get_row_tags()[row_position]
+        }
+
+    def get_column_tags(self, none_if_empty: bool = False,
+                        from_index: int = None, to_index: int = None) -> List[Dict[str, str]]:
         tags = self._meta["column_tags"]
         are_tags_empty = [len(t) == 0 for t in tags]
         if all(are_tags_empty) and none_if_empty:
             return None
-        else:
-            return tags
+
+        if from_index is not None and to_index is not None:
+            return tags[from_index:to_index + 1]
+
+        return tags
 
     def get_column_tag_types(self):
         return self._meta["column_tag_types"]
 
-    def get_comments(self) -> str:
-        return self._meta["comments"]
+    def get_column_names_by_positions(self, positions: List[int]) -> List[str]:
+        """Function to retrieve the column names based on row positions
+        """
+        if not isinstance(positions, list):
+            raise BadRequestException("The positions must be a list of integers")
+        if not all(isinstance(x, int) for x in positions):
+            raise BadRequestException("The positions must be a list of integers")
+        # get the row names of the row positions
+        return list(self._data.iloc[:, positions].columns)
+
+    def get_column_position_from_name(self, column_name: str) -> List[TableHeaderInfo]:
+        return self._data.columns.get_loc(column_name)
+
+    def get_columns_info(self) -> List[TableHeaderInfo]:
+        column_infos: List[TableHeaderInfo] = []
+        for column in self._data:
+            column_infos.append(self.get_column_info(column))
+        return column_infos
+
+    def get_column_info(self, column_name: str) -> TableHeaderInfo:
+        column_position = self.get_column_position_from_name(column_name)
+        return {
+            "name": column_name,
+            "tags": self.get_column_tags()[column_position]
+        }
 
     # -- H --
 
@@ -404,28 +449,12 @@ class Table(Resource):
     # -- S --
 
     def select_by_row_positions(self, positions: List[int]) -> 'Table':
-        if not isinstance(positions, list):
-            raise BadRequestException("The positions must be a list of integers")
-        if not all(isinstance(x, int) for x in positions):
-            raise BadRequestException("The positions must be a list of integers")
-        data = self._data.iloc[positions, :]
-        meta = copy.deepcopy(self._meta)
-        if "row_tags" in self._meta:
-            meta["row_tags"] = [meta["row_tags"][k] for k in positions]
-        cls = type(self)
-        return cls(data=data, meta=meta)
+        row_names = self.get_row_names_by_positions(positions)
+        return self.select_by_row_names(row_names)
 
     def select_by_column_positions(self, positions: List[int]) -> 'Table':
-        if not isinstance(positions, list):
-            raise BadRequestException("The positions must be a list of integers")
-        if not all(isinstance(x, int) for x in positions):
-            raise BadRequestException("The positions must be a list of integers")
-        data = self._data.iloc[:, positions]
-        meta = copy.deepcopy(self._meta)
-        if "column_tags" in self._meta:
-            meta["column_tags"] = [meta["column_tags"][k] for k in positions]
-        cls = type(self)
-        return cls(data=data, meta=meta)
+        column_names = self.get_column_names_by_positions(positions)
+        return self.select_by_column_names(column_names)
 
     def select_by_row_names(self, names: List[str], use_regex=False) -> 'Table':
         if not isinstance(names, list):
@@ -460,6 +489,22 @@ class Table(Resource):
             meta["column_tags"] = [meta["column_tags"][k] for k in positions]
         cls = type(self)
         return cls(data=data, meta=meta)
+
+    def select_by_coords(self, from_row_id: int, from_column_id: int, to_row_id: int, to_column_id: int) -> 'Table':
+        """Create a new table from coords. It includes the to_row_id and to_column_id
+        """
+        dataframe: DataFrame = self._data.iloc[from_row_id: to_row_id + 1,
+                                               from_column_id: to_column_id + 1]
+
+        meta: TableMeta = {
+            "column_tag_types": copy.deepcopy(self.get_column_tag_types()),
+            "row_tag_types": copy.deepcopy(self.get_row_tag_types()),
+            "column_tags": copy.deepcopy(self.get_column_tags(from_index=from_column_id, to_index=to_column_id)),
+            "row_tags": copy.deepcopy(self.get_row_tags(from_index=from_row_id, to_index=to_row_id))
+        }
+
+        cls = type(self)
+        return cls(data=dataframe, meta=meta)
 
     def select_by_row_tags(self, tags: List[dict]) -> 'Table':
         """

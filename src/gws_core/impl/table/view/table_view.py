@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict
 
 from ....config.config_types import ConfigParams
 from ....config.param_spec import IntParam, StrParam
@@ -15,6 +15,8 @@ from .base_table_view import BaseTableView
 
 if TYPE_CHECKING:
     from ..table import Table
+
+# class TableViewHeader(TypedDict):
 
 
 class TableView(BaseTableView):

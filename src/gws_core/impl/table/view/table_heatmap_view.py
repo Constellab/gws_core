@@ -3,15 +3,18 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import TypedDict
+from __future__ import annotations
 
-from pandas import DataFrame
+from typing import TYPE_CHECKING, TypedDict
 
 from ....config.config_types import ConfigParams
-from ....config.param_spec import DictParam, IntParam, StrParam
+from ....config.param_spec import DictParam
 from ....resource.view_types import ViewSpecs
 from ...view.heatmap_view import HeatmapView
-from .base_table_view import BaseTableView, TableSelection
+from .base_table_view import BaseTableView, CellRange, TableSelection
+
+if TYPE_CHECKING:
+    from gws_core.impl.table.table import Table
 
 
 class HeatMapSerie(TypedDict):
@@ -54,16 +57,26 @@ class TableHeatmapView(BaseTableView):
     def to_dict(self, params: ConfigParams) -> dict:
         serie: HeatMapSerie = params.get('serie')
 
-        dataframe: DataFrame
+        table: Table
 
         if serie["y"]["type"] == 'range':
-            # extract a dataframe from the first selection of the range, ignore the rest
-            dataframe = self.get_dataframe_from_coords(serie["y"]["selection"][0])
-        else:
-            dataframe = self.get_dataframe_from_columns(serie["y"]["selection"])
 
-        row_tags = self._table.get_row_tags(none_if_empty=True)
-        column_tags = self._table.get_column_tags(none_if_empty=True)
+            cell_range: CellRange = serie["y"]["selection"][0]
+            # extract a dataframe from the first selection of the range, ignore the rest
+            table = self._table.select_by_coords(
+                from_row_id=cell_range["from"]["row"],
+                from_column_id=cell_range["from"]["column"],
+                to_row_id=cell_range["to"]["row"],
+                to_column_id=cell_range["to"]["column"],
+            )
+        else:
+            column_names = serie["y"]["selection"]
+            table = self._table.select_by_column_names(column_names)
+
+        table.get_columns_info()
         helper_view = HeatmapView()
-        helper_view.set_data(data=dataframe, row_tags=row_tags, column_tags=column_tags)
+        helper_view.set_data(
+            data=table.get_data(),
+            rows_info=table.get_rows_info(),
+            columns_info=table.get_columns_info())
         return helper_view.to_dict(params)
