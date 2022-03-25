@@ -28,11 +28,19 @@ from .metadata_table import MetadataTable
 class MetadataTableImporter(TableImporter):
 
     config_specs: ConfigSpecs = {
-        **TableImporter.config_specs,
-        'sample_id_column':
+        'delimiter':
         StrParam(
-            default_value=MetadataTable.DEFAULT_SAMPLE_ID_COLUMN,
-            short_description="The name of the column containing the sample ids"), }
+            allowed_values=Table.ALLOWED_DELIMITER, default_value=Table.DEFAULT_DELIMITER,
+            human_name="Delimiter",
+            short_description="Delimiter character. Only for parsing CSV files")
+    }
+
+    # config_specs: ConfigSpecs = {
+    #     **TableImporter.config_specs,
+    #     'sample_id_column':
+    #     StrParam(
+    #         default_value=MetadataTable.DEFAULT_SAMPLE_ID_COLUMN,
+    #         short_description="The name of the column containing the sample ids"), }
 
     async def import_from_path(self, file: File, params: ConfigParams, target_type: Type[MetadataTable]) -> MetadataTable:
         """
@@ -49,15 +57,19 @@ class MetadataTableImporter(TableImporter):
         params["index_column"] = None
         params["comment"] = "#"
         csv_table: MetadataTable = await super().import_from_path(file, params, target_type)
-        sample_id_column = params.get_value("sample_id_column", MetadataTable.DEFAULT_SAMPLE_ID_COLUMN)
 
-        if not csv_table.column_exists(sample_id_column):
+        sample_id_column = csv_table.column_names[0]
+        if not sample_id_column:
             raise BadRequestException(
-                f"Cannot import MetadataTable. No sample-id column found (no column with name '{sample_id_column}')")
+                f"Cannot import MetadataTable. A name is required for the sample_id column (i.e. the first column)")
 
-        csv_table.sample_id_column = sample_id_column
+        # sample_id_column = params.get_value("sample_id_column", MetadataTable.DEFAULT_SAMPLE_ID_COLUMN)
+        # if not csv_table.column_exists(sample_id_column):
+        #     raise BadRequestException(
+        #         f"Cannot import MetadataTable. No sample-id column found (no column with name '{sample_id_column}')")
 
         # check duplicates
+        csv_table.sample_id_column = sample_id_column
         sample_ids_list = csv_table.get_sample_ids()
         sample_ids_set = set(sample_ids_list)
         contains_duplicates = len(sample_ids_list) != len(sample_ids_set)

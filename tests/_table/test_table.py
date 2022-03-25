@@ -7,10 +7,10 @@ import os
 
 import numpy
 import pandas
-from pandas import DataFrame
 from gws_core import (BaseTestCase, File, GTest, Settings, Table,
                       TableExporter, TableImporter, TaskRunner)
 from gws_core_test_helper import GWSCoreTestHelper
+from pandas import DataFrame
 
 settings = Settings.retrieve()
 testdata_dir = settings.get_variable("gws_core:testdata_dir")
@@ -20,17 +20,22 @@ class TestTable(BaseTestCase):
     def test_table(self):
         table: Table = Table(data=[[1, 2, 3]], column_names=["a", "b", "c"])
         print(table.get_data())
-        self.assertEqual(table.get_meta(), 
-            {'row_tags': [{}], 'column_tags': [{}, {}, {}], 'column_tag_types': {}, 'row_tag_types': {}}
-        )
+        self.assertEqual(
+            table.get_meta(),
+            {'row_tags': [{}],
+             'column_tags': [{},
+                             {},
+                             {}],
+             'column_tag_types': {},
+             'row_tag_types': {},
+             'comments': ''})
 
         table._set_data(
             data=[1, 2, 3], column_names=["data"], row_names=["a", "b", "c"]
         )
         print(table.get_data())
-        self.assertEqual(table.get_meta(), 
-            {'row_tags': [{}, {}, {}], 'column_tags': [{}], 'column_tag_types': {}, 'row_tag_types': {}}
-        )
+        self.assertEqual(table.get_meta(), {'row_tags': [{}, {}, {}], 'column_tags': [
+                         {}], 'column_tag_types': {}, 'row_tag_types': {}, 'comments': ''})
         print(print(table.get_meta()))
 
     def test_table_select(self):
@@ -202,7 +207,7 @@ class TestTable(BaseTestCase):
         ))
         self.assertEqual(table.column_names, ["A", "B", "C", "D", "E"])
         self.assertEqual(table.row_names, [0, 1])
-        #self.assertEqual(table.row_names, ["R0", "R1"])
+        # self.assertEqual(table.row_names, ["R0", "R1"])
 
     def test_table_import_2(self):
 
@@ -217,7 +222,7 @@ class TestTable(BaseTestCase):
         ))
         self.assertEqual(table.column_names, ["A", "B", "3", "D", "1.5"])
         self.assertEqual(table.row_names, [0, 1])
-        #self.assertEqual(table.row_names, ["R0", "R1"])
+        # self.assertEqual(table.row_names, ["R0", "R1"])
 
     async def test_importer_exporter(self):
         # importer
@@ -235,6 +240,7 @@ class TestTable(BaseTestCase):
         ))
 
         # exporter
+        table.set_comments("This is a table")
         tester = TaskRunner(
             params={}, inputs={"source": table}, task_type=TableExporter
         )
@@ -242,5 +248,9 @@ class TestTable(BaseTestCase):
         file_ = outputs["target"]
 
         print(file_.path)
-        self.assertTrue(os.path.exists(file_.path))
+        with open(file_.path, 'r') as fp:
+            text = fp.read()
+            print(text)
+            self.assertTrue(text.startswith("#This is a table"))
 
+        self.assertTrue(os.path.exists(file_.path))

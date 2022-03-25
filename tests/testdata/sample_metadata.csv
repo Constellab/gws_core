@@ -1,7 +1,7 @@
 #author John
 #data 01/01/2020
 #project My project
-#metadata-type	categorical	numeric	numeric
+#column-type	categorical	numeric	numeric
 sample-id	Gender	Group	Age
 A	M	1	18
 B	F	15	15

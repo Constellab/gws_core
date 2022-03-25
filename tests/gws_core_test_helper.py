@@ -26,9 +26,7 @@ class GWSCoreTestHelper():
 
     @classmethod
     def get_sample_metadata_table(cls) -> Table:
-        return MetadataTableImporter.call(File(DataProvider.get_test_data_path("sample_metadata.csv")), {
-            "sample_id_column": "sample-id",
-        })
+        return MetadataTableImporter.call(File(DataProvider.get_test_data_path("sample_metadata.csv")))
 
     @classmethod
     def get_data_encoding_table(cls) -> Table:

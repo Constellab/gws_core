@@ -60,7 +60,7 @@ class MetadataTable(Table):
         table.sample_id_column = self.sample_id_column
         return table
 
-    def select_by_column_positions(self, positions: List[int], check_integrity: bool = True) -> 'MetadataTable':
+    def select_by_column_positions(self, positions: List[int]) -> 'MetadataTable':
         table = super().select_by_column_positions(positions)
         if not self.sample_id_column in table.column_names:
             raise BadRequestException("The sample_id_column is required and must be selected")

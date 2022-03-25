@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+import json
 import os
 from typing import Type
 
@@ -22,8 +23,9 @@ class TableExporter(ResourceExporter):
         'file_name': StrParam(optional=True, short_description="File name (without extension)"),
         'file_format': StrParam(optional=True, default_value=Table.DEFAULT_FILE_FORMAT, allowed_values=Table.ALLOWED_FILE_FORMATS, short_description="File format"),
         'delimiter': StrParam(allowed_values=Table.ALLOWED_DELIMITER, default_value=Table.DEFAULT_DELIMITER, short_description="Delimiter character. Only for CSV files"),
-        'write_header': BoolParam(default_value=True, short_description="True to write column names (header), False otherwise"),
-        'write_index': BoolParam(default_value=True, short_description="True to write row names (index), False otherwise"),
+        # 'write_metadata': BoolParam(default_value=True, short_description="Set True to write metadata"),
+        'write_header': BoolParam(default_value=True, visibility=BoolParam.PROTECTED_VISIBILITY, short_description="Set True to write column names (header), False otherwise"),
+        'write_index': BoolParam(default_value=True, visibility=BoolParam.PROTECTED_VISIBILITY, short_description="Set True to write row names (index), False otherwise"),
     }
 
     async def export_to_path(self, source: Table, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
@@ -47,6 +49,19 @@ class TableExporter(ResourceExporter):
                 header=params.get_value('write_header', True),
                 index=params.get_value('write_index', True)
             )
+
+            comments = source.get_comments()
+            # if params.get_value('write_metadata', True):
+            #     tags = source.get_meta()
+            #     if comments:
+            #         comments += "\n#" + json.dumps(tags)
+            #     else:
+            #         comments += "#" + json.dumps(tags)
+            with open(file_path, 'r+', encoding="utf-8") as fp:
+                content = fp.read()
+                fp.seek(0, 0)
+                if comments:
+                    fp.write(comments + '\n' + content)
         else:
             raise BadRequestException(
                 f"Valid file formats are {Table.ALLOWED_FILE_FORMATS}.")
