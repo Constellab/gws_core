@@ -78,3 +78,28 @@ class MetadataTableImporter(TableImporter):
                 f"Cannot import MetadataTable. The list of sample ids contains duplicates")
 
         return csv_table
+
+# ####################################################################
+#
+# MetadataTableExporter class
+#
+# ####################################################################
+
+
+@exporter_decorator("MetadataTableExporter", source_type=MetadataTable)
+class MetadataTableExporter(TableExporter):
+    config_specs: ConfigSpecs = {
+        'file_name': StrParam(optional=True, short_description="File name (without extension)"),
+        'file_format':
+        StrParam(
+            optional=True, default_value=Table.DEFAULT_FILE_FORMAT, allowed_values=Table.ALLOWED_FILE_FORMATS,
+            short_description="File format"),
+        'delimiter':
+        StrParam(
+            allowed_values=Table.ALLOWED_DELIMITER, default_value=Table.DEFAULT_DELIMITER,
+            short_description="Delimiter character. Only for CSV files")}
+
+    async def export_to_path(self, source: MetadataTable, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
+        params["write_header"] = True
+        params["write_index"] = False
+        return await super().export_to_path(source, dest_dir, params, target_type)

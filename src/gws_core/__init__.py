@@ -171,8 +171,8 @@ from .impl.table.helper.table_tag_grouper_helper import \
     TableTagGrouperHelper as TableTagGrouperHelper
 from .impl.table.metadata_table.metadata_table import \
     MetadataTable as MetadataTable
-from .impl.table.metadata_table.metadata_table_task import \
-    MetadataTableImporter
+from .impl.table.metadata_table.metadata_table_task import (
+    MetadataTableExporter, MetadataTableImporter)
 from .impl.table.metadata_table.table_annotator import \
     TableColumnAnnotator as TableColumnAnnotator
 from .impl.table.metadata_table.table_annotator import \

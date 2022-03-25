@@ -56,12 +56,12 @@ class TableExporter(ResourceExporter):
             #     if comments:
             #         comments += "\n#" + json.dumps(tags)
             #     else:
-            #         comments += "#" + json.dumps(tags)
+            #         comments +q= "#" + json.dumps(tags)
             with open(file_path, 'r+', encoding="utf-8") as fp:
                 content = fp.read()
                 fp.seek(0, 0)
                 if comments:
-                    fp.write(comments + '\n' + content)
+                    fp.write(comments.strip() + '\n' + content)
         else:
             raise BadRequestException(
                 f"Valid file formats are {Table.ALLOWED_FILE_FORMATS}.")
