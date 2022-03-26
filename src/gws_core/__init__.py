@@ -171,13 +171,17 @@ from .impl.table.helper.table_tag_grouper_helper import \
     TableTagGrouperHelper as TableTagGrouperHelper
 from .impl.table.metadata_table.metadata_table import \
     MetadataTable as MetadataTable
-from .impl.table.metadata_table.metadata_table_task import (
-    MetadataTableExporter, MetadataTableImporter)
+from .impl.table.metadata_table.metadata_table_task import \
+    MetadataTableExporter as MetadataTableExporter
+from .impl.table.metadata_table.metadata_table_task import \
+    MetadataTableImporter as MetadataTableImporter
 from .impl.table.metadata_table.table_annotator import \
     TableColumnAnnotator as TableColumnAnnotator
 from .impl.table.metadata_table.table_annotator import \
     TableRowAnnotator as TableRowAnnotator
 from .impl.table.table import Table as Table
+from .impl.table.table_types import TableHeaderInfo as TableHeaderInfo
+from .impl.table.table_types import TableMeta as TableMeta
 from .impl.table.tasks.table_exporter import TableExporter as TableExporter
 from .impl.table.tasks.table_importer import TableImporter as TableImporter
 from .impl.table.transformers.table_aggregator import \

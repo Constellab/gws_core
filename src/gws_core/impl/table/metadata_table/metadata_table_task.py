@@ -35,13 +35,6 @@ class MetadataTableImporter(TableImporter):
             short_description="Delimiter character. Only for parsing CSV files")
     }
 
-    # config_specs: ConfigSpecs = {
-    #     **TableImporter.config_specs,
-    #     'sample_id_column':
-    #     StrParam(
-    #         default_value=MetadataTable.DEFAULT_SAMPLE_ID_COLUMN,
-    #         short_description="The name of the column containing the sample ids"), }
-
     async def import_from_path(self, file: File, params: ConfigParams, target_type: Type[MetadataTable]) -> MetadataTable:
         """
         Import from a repository

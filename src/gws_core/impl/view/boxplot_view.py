@@ -52,7 +52,8 @@ class BoxPlotView(View):
                         "lower_whisker": List[Float],
                         "upper_whisker": List[Float],
                         "tags": List[Dict[str,str]] | None
-                    }
+                    },
+                    "name": str
                 },
                 ...
             ]
@@ -68,7 +69,9 @@ class BoxPlotView(View):
     _type: str = "box-plot-view"
     _title: str = "Box Plot"
 
-    def add_data(self, data: Union[List[float], DataFrame] = None, tags: List[Dict[str, str]] = None) -> None:
+    def add_data(
+            self, data: Union[List[float],
+                              DataFrame] = None, name: str = None, tags: List[Dict[str, str]] = None) -> None:
         """
         Add series of raw data.
 
@@ -82,9 +85,10 @@ class BoxPlotView(View):
             raise BadRequestException("The data is required and must be an array of float")
 
         data = DataFrame(data)
-        self.add_data_from_dataframe(DataFrame(data), tags)
+        self.add_data_from_dataframe(DataFrame(data), name, tags)
 
-    def add_data_from_dataframe(self, data: DataFrame = None, tags: List[Dict[str, str]] = None) -> None:
+    def add_data_from_dataframe(
+            self, data: DataFrame = None, name: str = None, tags: List[Dict[str, str]] = None) -> None:
         if data is None or not isinstance(data, DataFrame):
             raise BadRequestException("The data is required and must be a DataFrame")
 
@@ -118,6 +122,7 @@ class BoxPlotView(View):
             max=ymax,
             lower_whisker=lower_whisker.tolist(),
             upper_whisker=upper_whisker.tolist(),
+            name=name,
             tags=tags
         )
 
@@ -131,6 +136,7 @@ class BoxPlotView(View):
             max: List[float] = None,
             lower_whisker: List[float] = None,
             upper_whisker: List[float] = None,
+            name: str = None,
             tags: List[Dict[str, str]] = None) -> None:
         """
         Add series of pre-computed x and y box values.
@@ -186,6 +192,7 @@ class BoxPlotView(View):
                 "upper_whisker": self._clean_nan(upper_whisker),
                 "tags": tags
             },
+            "name": name
         })
 
     def to_dict(self, params: ConfigParams) -> dict:

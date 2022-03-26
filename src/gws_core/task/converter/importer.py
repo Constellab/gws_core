@@ -8,6 +8,7 @@ from abc import abstractmethod
 from typing import Callable, List, Type, final
 
 from gws_core.impl.file.file import File
+from gws_core.impl.file.file_helper import FileHelper
 
 from ...brick.brick_service import BrickService
 from ...config.config_types import ConfigParams, ConfigSpecs
@@ -110,7 +111,12 @@ class ResourceImporter(Converter):
 
     @final
     async def convert(self, source: FSNode, params: ConfigParams, target_type: Type[Resource]) -> Resource:
-        return await self.import_from_path(source, params, target_type)
+        target = await self.import_from_path(source, params, target_type)
+
+        if target.name is None:
+            # set the target name = FsNode name without extension
+            target.name = FileHelper.get_name(source.path)
+        return target
 
     @abstractmethod
     async def import_from_path(self, source: FSNode, params: ConfigParams, target_type: Type[Resource]) -> Resource:

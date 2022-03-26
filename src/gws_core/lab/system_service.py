@@ -139,7 +139,7 @@ class SystemService:
         result = CentralService.register_lab_start(LabConfigModel.get_current_config().to_json())
 
         if result:
-            Logger.info('Lab started successfully registered on central')
+            Logger.info('Lab start successfully registered on central')
         else:
             Logger.error('Error during lab start registration with central')
 

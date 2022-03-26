@@ -103,8 +103,8 @@ class TestTable(BaseTestCase):
             {"lg": "FR", "c": "FR", "user": "Jo"},
         ])
         self.assertEqual(t.get_column_tags(), [
-            {"lg": "CH", "c": "CH"},
             {"lg": "EN", "c": "UK"},
+            {"lg": "CH", "c": "CH"},
         ])
 
         # ------------------------------------------------------------

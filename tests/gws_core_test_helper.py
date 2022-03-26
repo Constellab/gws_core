@@ -1,6 +1,6 @@
 
-from gws_core import (EncodingTableImporter, File, MetadataTableImporter,
-                      Table, TableImporter)
+from gws_core import (EncodingTableImporter, File, MetadataTable,
+                      MetadataTableImporter, Table, TableImporter)
 from gws_core.data_provider.data_provider import DataProvider
 
 
@@ -25,8 +25,10 @@ class GWSCoreTestHelper():
         })
 
     @classmethod
-    def get_sample_metadata_table(cls) -> Table:
-        return MetadataTableImporter.call(File(DataProvider.get_test_data_path("sample_metadata.csv")))
+    def get_sample_metadata_table(cls) -> MetadataTable:
+        file = File(DataProvider.get_test_data_path("sample_metadata.csv"))
+        print(file.path)
+        return MetadataTableImporter.call(file)
 
     @classmethod
     def get_data_encoding_table(cls) -> Table:

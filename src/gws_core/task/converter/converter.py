@@ -9,6 +9,8 @@ from abc import abstractmethod
 from concurrent.futures.thread import ThreadPoolExecutor
 from typing import Type, final
 
+from numpy import source
+
 from ...brick.brick_service import BrickService
 from ...config.config_types import ConfigParams, ConfigParamsDict, ConfigSpecs
 from ...core.utils.utils import Utils
@@ -58,6 +60,13 @@ class Converter(Task):
 
         # call convert method
         target: Resource = await self.convert(resource, params, self.get_target_type())
+
+        if target is None:
+            raise Exception('The target resource is None')
+
+        if target.name is None:
+            # set the target name source name
+            target.name = resource.name
 
         return {'target': target}
 

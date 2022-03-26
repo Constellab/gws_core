@@ -3,8 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict, List
-
+from gws_core.impl.table.table_types import TableHeaderInfo
 from numpy import nan
 from pandas import DataFrame
 
@@ -28,24 +27,24 @@ class HeatmapView(View):
         "title": str,
         "caption": str,
         "data" List[List[float]],
-        "rows": List[Dict["name": str, tags: Dict[str, str]]],
-        "columns": List[Dict["name": str, tags: Dict[str, str]]],
+        "rows": TableHeaderInfo,
+        "columns": TableHeaderInfo,
     }
     ```
     """
 
     _type: str = "heatmap-view"
     _data: DataFrame = None
-    _row_tags: List[Dict[str, str]] = None
-    _column_tags: List[Dict[str, str]] = None
+    _rows_info: TableHeaderInfo = None
+    _columns_info: TableHeaderInfo = None
 
     def set_data(
-            self, data: DataFrame = None, row_tags: List[Dict[str, str]] = None, column_tags: List[Dict[str, str]] = None):
+            self, data: DataFrame = None, rows_info: TableHeaderInfo = None, columns_info: TableHeaderInfo = None):
         if not isinstance(data, DataFrame):
             raise BadRequestException("The data must be a DataFrame")
         self._data = self.dataframe_to_float(data)
-        self._row_tags = row_tags
-        self._column_tags = column_tags
+        self._rows_info = rows_info
+        self._columns_info = columns_info
 
     def to_dict(self, params: ConfigParams) -> dict:
         if self._data is None:
@@ -54,6 +53,6 @@ class HeatmapView(View):
         return {
             "type": self._type,
             "data": self._data.replace({nan: None}).values.tolist(),
-            "rows": self._row_tags,
-            "columns": self._column_tags
+            "rows": self._rows_info,
+            "columns": self._columns_info
         }

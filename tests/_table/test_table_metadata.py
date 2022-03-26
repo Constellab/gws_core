@@ -9,7 +9,7 @@ from gws_core.data_provider.data_provider import DataProvider
 from gws_core_test_helper import GWSCoreTestHelper
 
 
-class TestTableAnnotator(BaseTestCase):
+class TestTableMetadataExporter(BaseTestCase):
 
     async def test_table_metadata_exporter(self):
         # importer
@@ -27,8 +27,8 @@ class TestTableAnnotator(BaseTestCase):
         outputs = await tester.run()
         file = outputs["target"]
 
-        path = DataProvider.get_test_data_path("sample_metadata.csv")
-        with open(path, 'r', encoding="utf-8") as fp:
+        expected_file_path = DataProvider.get_test_data_path("sample_metadata.csv")
+        with open(expected_file_path, 'r', encoding="utf-8") as fp:
             expected_text = fp.read()
 
         with open(file.path, 'r', encoding="utf-8") as fp:

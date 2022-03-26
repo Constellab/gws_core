@@ -59,9 +59,8 @@ class ScatterPlot2DView(View):
     _type: str = "scatter-plot-2d-view"
     _title: str = "2D-Scatter Plot"
 
-    def add_series(
-            self, *, x: List[float], y: List[float], name: str = None,
-            x_name: str = None, y_name: str = None, tags: List[Dict[str, str]] = None):
+    def add_series(self, x: List[float], y: List[float], name: str = None,
+                   x_name: str = None, y_name: str = None, tags: List[Dict[str, str]] = None):
         """
         Add a series of points to plot
 
