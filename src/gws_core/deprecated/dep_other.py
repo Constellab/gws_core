@@ -3,7 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core.deprecated.dep_table_file import Table, TableFile
+
+from gws_core.impl.file.file import File
+from gws_core.impl.table.table import Table
 from gws_core.impl.table.encoding.encoding_table import EncodingTable
 from gws_core.impl.table.metadata_table.metadata_table import MetadataTable
 from gws_core.impl.table.tasks.table_exporter import TableExporter
@@ -40,5 +42,5 @@ class EncodedTableExporter(TableExporter):
                     human_name="MetadataTable file",
                     short_description="Table file of metadata", hide=True, deprecated_since='0.3.3',
                     deprecated_message='Use table file instead')
-class MetadataTableFile(TableFile):
+class MetadataTableFile(File):
     pass
