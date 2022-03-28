@@ -43,3 +43,37 @@ class TestTableAnnotator(BaseTestCase):
         self.assertEqual(
             annotated_table.get_row_tags(), expected_row_tags
         )
+
+    async def test_table_column_annotator_with_first_coolumn(self):
+        # importer
+        table = GWSCoreTestHelper.get_sample_table(index_column=None)
+        metatable = GWSCoreTestHelper.get_sample_metadata_table()
+        print(table)
+
+        self.assertTrue(isinstance(table.get_row_tags(), list))
+        self.assertTrue(isinstance(table.get_column_tags(), list))
+        self.assertEqual(table.get_row_tags(none_if_empty=True), None)
+        self.assertEqual(table.get_column_tags(none_if_empty=True), None)
+
+        # annotation
+        tester = TaskRunner(
+            task_type=TableRowAnnotator,
+            inputs={
+                "sample_table": table,
+                "metadata_table": metatable,
+            }
+        )
+        outputs = await tester.run()
+        annotated_table = outputs["sample_table"]
+        expected_row_tags = [{'Gender': 'M', 'Group': '15', 'Age': '15'},
+                             {'Gender': 'F', 'Group': '15', 'Age': '15'},
+                             {'Gender': 'M', 'Group': '1', 'Age': '18'},
+                             {'Gender': 'F', 'Group': '3', 'Age': '15'},
+                             {}]
+
+        self.assertEqual(
+            annotated_table.get_meta()['row_tags'], expected_row_tags
+        )
+        self.assertEqual(
+            annotated_table.get_row_tags(), expected_row_tags
+        )

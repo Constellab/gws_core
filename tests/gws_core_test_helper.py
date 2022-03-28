@@ -18,9 +18,9 @@ class GWSCoreTestHelper():
         })
 
     @classmethod
-    def get_sample_table(cls) -> Table:
+    def get_sample_table(cls, index_column=0) -> Table:
         return TableImporter.call(File(DataProvider.get_test_data_path("sample_data.csv")), {
-            "index_column": 0,
+            "index_column": index_column,
             "header": 0,
         })
 

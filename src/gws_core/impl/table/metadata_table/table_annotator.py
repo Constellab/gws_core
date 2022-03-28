@@ -36,26 +36,16 @@ class TableRowAnnotator(Task):
     config_specs: ConfigSpecs = {
         "reference_column":
         StrParam(
-            default_value="", human_name="Reference column",
-            short_description="Column whose data are used as reference for annotation. It empty, the row names are used.")
+            default_value="", human_name="Reference column in sample table",
+            short_description="Column in the `sample_table` whose values are used for annotation. If empty, try to use the `row_names` or the `fisrt_column` instead.")
     }
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         table: Table = inputs["sample_table"]
         metadata_table: MetadataTable = inputs["metadata_table"]
-        metadata = metadata_table.get_data()
-        metadata.set_index(metadata_table.sample_id_column, inplace=True)
-        unsorted_tags: dict = metadata.to_dict('index')
-
         reference_column = params.get_value("reference_column")
-        if reference_column:
-            if reference_column not in table.get_data().columns:
-                raise BadRequestException(f"No column name '{reference_column}' found in the sample table")
-            table_ids: list = table.get_data().loc[:, reference_column].tolist()
-        else:
-            table_ids: list = table.get_data().index.tolist()
-        tags = [unsorted_tags.get(ids, {}) for ids in table_ids]
-        table.set_row_tags(tags)
+        from .helper.table_annotator_helper import TableRowAnnotatorHelper
+        table: Table = TableRowAnnotatorHelper.annotate(table, metadata_table, reference_column)
         return {"sample_table": table}
 
 
@@ -81,24 +71,14 @@ class TableColumnAnnotator(Task):
     config_specs: ConfigSpecs = {
         "reference_row":
         StrParam(
-            default_value="", human_name="Reference row",
-            short_description="Row whose data are used as reference for annotation. It empty, the headers are used.")
+            default_value="", human_name="Reference row in sample table",
+            short_description="Row whose data are used as reference for annotation. If empty, try to use the `headers` or the `first_row` instead.")
     }
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         table: Table = inputs["sample_table"]
         metadata_table: MetadataTable = inputs["metadata_table"]
-        metadata = metadata_table.get_data()
-        metadata.set_index(metadata_table.sample_id_column, inplace=True)
-        unsorted_tags: dict = metadata.to_dict('index')
-
         reference_row = params.get_value("reference_row")
-        if reference_row:
-            if reference_row not in table.get_data().index:
-                raise BadRequestException(f"No row name '{reference_row}' found in the sample table")
-            table_ids: list = table.get_data().loc[reference_row, :].tolist()
-        else:
-            table_ids: list = table.get_data().columns.tolist()
-        tags = [unsorted_tags.get(ids, {}) for ids in table_ids]
-        table.set_column_tags(tags)
+        from .helper.table_annotator_helper import TableColumnAnnotatorHelper
+        table: Table = TableColumnAnnotatorHelper.annotate(table, metadata_table, reference_row)
         return {"sample_table": table}
