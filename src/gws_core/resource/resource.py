@@ -79,6 +79,9 @@ class Resource(Base):
             return False
         return (self is o) or ((self.uid is not None) and (self.uid == o.uid))
 
+    def __hash__(self):
+        return hash(self.uid)
+
     def get_default_name(self) -> str:
         """You can redefine this method to set a name of the resource.
         When saving the resource the name will be saved automatically

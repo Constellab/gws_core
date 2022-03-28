@@ -268,8 +268,10 @@ class UUIDRField(StrRField):
                               Do not mark huge fields as include in dict view, defaults to False
         :type include_in_dict_view: bool, optional
         """
-        default_value = str(uuid.uuid4())
-        super().__init__(default_value=default_value, searchable=searchable, include_in_dict_view=include_in_dict_view)
+        super().__init__(searchable=searchable, include_in_dict_view=include_in_dict_view)
+
+    def get_default_value(self) -> Any:
+        return str(uuid.uuid4())
 
 
 class ListRField(PrimitiveRField):

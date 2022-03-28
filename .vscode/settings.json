@@ -1,38 +1,38 @@
 {
-    "python.pythonPath": "/usr/bin/python3",
-    "workbench.editor.enablePreview": false,
-    // custom config for python
-    "[python]": {
-        // format the code on save
-        "editor.formatOnSave": true,
-        // actions run on save
-        "editor.codeActionsOnSave": {
-            // reoaganize imports on save
-            "source.organizeImports": true
-        },
-        // remove trailling whitespace on save
-        "files.trimTrailingWhitespace": true,
-    },
+  "python.pythonPath": "/usr/bin/python3",
+  "workbench.editor.enablePreview": false,
+  // custom config for python
+  "[python]": {
+      // format the code on save
+      "editor.formatOnSave": true,
+      // actions run on save
+      "editor.codeActionsOnSave": {
+          // reoaganize imports on save
+          "source.organizeImports": true
+      },
+      // remove trailling whitespace on save
+      "files.trimTrailingWhitespace": true,
+  },
 
-    
-    // python formatting (indentation)
-    "python.formatting.provider": "autopep8",
-    "python.formatting.autopep8Path": "/usr/local/bin/autopep8",
-    "python.formatting.autopep8Args": ["--max-line-length", "120", "--experimental"],
+  
+  // python formatting (indentation)
+  "python.formatting.provider": "autopep8",
+  "python.formatting.autopep8Path": "/usr/local/bin/autopep8",
+  "python.formatting.autopep8Args": ["--max-line-length", "120", "--experimental"],
 
 
-    // linting rules it takes the rules of .pylintrc file
-    "python.linting.pylintPath": "/usr/local/bin/pylint",
-    "python.linting.enabled": true,
-    "python.linting.pylintEnabled": true,
-    "python.linting.pylintUseMinimalCheckers": false,
-    "python.linting.lintOnSave": true,
+  // linting rules it takes the rules of .pylintrc file
+  "python.linting.pylintPath": "/usr/local/bin/pylint",
+  "python.linting.enabled": true,
+  "python.linting.pylintEnabled": true,
+  "python.linting.pylintUseMinimalCheckers": false,
+  "python.linting.lintOnSave": true,
 
-    // activate mypy to have type hint checking
-    "python.linting.mypyEnabled": true,
-    "python.linting.mypyPath": "/usr/local/bin/mypy",
-    "python.linting.mypyArgs": [
-        "--config-file=${workspaceFolder}/.mypy.ini"
-    ],
-    "autoDocstring.docstringFormat": "sphinx"
+  // activate mypy to have type hint checking
+  "python.linting.mypyEnabled": true,
+  "python.linting.mypyPath": "/usr/local/bin/mypy",
+  "python.linting.mypyArgs": [
+      "--config-file=${workspaceFolder}/.mypy.ini"
+  ],
+  "autoDocstring.docstringFormat": "sphinx"
 }
