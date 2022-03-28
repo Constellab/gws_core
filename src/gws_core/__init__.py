@@ -179,6 +179,10 @@ from .impl.table.metadata_table.table_annotator import \
     TableColumnAnnotator as TableColumnAnnotator
 from .impl.table.metadata_table.table_annotator import \
     TableRowAnnotator as TableRowAnnotator
+from .impl.table.metadata_table.helper.table_annotator_helper import \
+    TableRowAnnotatorHelper as TableRowAnnotatorHelper
+from .impl.table.metadata_table.helper.table_annotator_helper import \
+    TableColumnAnnotatorHelper as TableColumnAnnotatorHelper
 from .impl.table.table import Table as Table
 from .impl.table.table_types import TableHeaderInfo as TableHeaderInfo
 from .impl.table.table_types import TableMeta as TableMeta
