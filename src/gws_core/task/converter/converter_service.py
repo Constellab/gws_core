@@ -159,7 +159,7 @@ class ConverterService:
 
         # Create an experiment containing 1 source, 1 extractor , 1 sink
         experiment: IExperiment = IExperiment(
-            None, title=f"{FileHelper.get_name(sub_path)} extractor", type_=ExperimentType.EXPERIMENT)
+            None, title=f"{FileHelper.get_name(sub_path)} extractor", type_=ExperimentType.FS_NODE_EXTRACTOR)
         protocol: IProtocol = experiment.get_protocol()
 
         # Add the importer and the connector
