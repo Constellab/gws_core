@@ -29,7 +29,7 @@ class TableRowAnnotatorHelper(Task):
     """
 
     @classmethod
-    def annotate(self, table: Table, metadata_table: MetadataTable, reference_column: str) -> Table:
+    def annotate(self, table: Table, metadata_table: MetadataTable, reference_column: str = None) -> Table:
         metadata = metadata_table.get_data()
         metadata.set_index(metadata_table.sample_id_column, inplace=True)
         unsorted_tags: dict = metadata.to_dict('index')
@@ -69,7 +69,7 @@ class TableColumnAnnotatorHelper(Task):
     """
 
     @classmethod
-    def annotate(self, table: Table, metadata_table: MetadataTable, reference_row: str) -> Table:
+    def annotate(self, table: Table, metadata_table: MetadataTable, reference_row: str = None) -> Table:
         metadata = metadata_table.get_data()
         metadata.set_index(metadata_table.sample_id_column, inplace=True)
         unsorted_tags: dict = metadata.to_dict('index')
