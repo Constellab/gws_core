@@ -1,11 +1,13 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 
 import json
 import os
 from typing import Type
 
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.folder import Folder

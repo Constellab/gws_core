@@ -87,13 +87,14 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
 
     @transaction()
     def delete_instance(self, *args, **kwargs):
-        kv_store: Optional[KVStore] = self.get_kv_store()
-        if kv_store:
-            kv_store.remove()
-
         result = super().delete_instance(*args, **kwargs)
         if self.fs_node_model:
             self.fs_node_model.delete_instance()
+
+        # TODO to improve, if there is an error, the kvstore is not restored
+        kv_store: Optional[KVStore] = self.get_kv_store()
+        if kv_store:
+            kv_store.remove()
 
         return result
 
