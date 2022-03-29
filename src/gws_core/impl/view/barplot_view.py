@@ -62,7 +62,7 @@ class BarPlotView(View):
     _type: str = "bar-plot-view"
     _title: str = "Bar Plot"
 
-    def add_series(self, *, x: Union[List[float], List[str], ] = None, y: List[float] = None, name: str = None,
+    def add_series(self, x: Union[List[float], List[str], ] = None, y: List[float] = None, name: str = None,
                    tags: List[Dict[str, str]] = None):
         """
         Add a series of bars to plot

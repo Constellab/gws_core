@@ -18,7 +18,7 @@ class View:
     # Spec of the view. All the view spec must be optional or have a default value
     _specs: ViewSpecs = {}
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         self._check_view_specs()
 
     def _check_view_specs(self) -> None:

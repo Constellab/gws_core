@@ -33,8 +33,8 @@ class ResourcesListView(View):
     _type: str = 'resources-list-view'
     _title: str = "Resources list"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self):
+        super().__init__()
         self._resource_model = []
 
     def add_resource(self, resource_model: ResourceModel) -> None:

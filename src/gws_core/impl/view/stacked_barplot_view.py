@@ -49,11 +49,14 @@ class StackedBarPlotView(BarPlotView):
 
     _type: str = "stacked-bar-plot-view"
     _title: str = "Stacked-Bar Plot"
-    normalize = False
+    _normalize: bool = False
     _series_sums: DataFrame = None
 
-    def add_series(self, *,
-                   x: Union[List[float], List[str], ] = None, y: List[float] = None, name: str = None,
+    def __init__(self, normalize: bool = False):
+        super().__init__()
+        self._normalize = normalize
+
+    def add_series(self, x: Union[List[float], List[str], ] = None, y: List[float] = None, name: str = None,
                    tags: List[Dict[str, str]] = None):
         """
         Add a series of stacked-bars to plot
@@ -68,7 +71,7 @@ class StackedBarPlotView(BarPlotView):
         :type tags: List[Dict[str, str]]
         """
 
-        if self.normalize:
+        if self._normalize:
             if self._series_sums is None:
                 self._series_sums = DataFrame(y)
             else:
@@ -78,7 +81,7 @@ class StackedBarPlotView(BarPlotView):
 
     def to_dict(self, params: ConfigParams) -> dict:
         view_dict = super().to_dict(params)
-        if self.normalize:
+        if self._normalize:
             for i, _ in enumerate(view_dict["data"]["series"]):
                 df = view_dict["data"]["series"][i]["data"]["y"]
                 df = DataFrame(df) / self._series_sums

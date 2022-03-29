@@ -3,6 +3,12 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws_core.config.config_types import ConfigParams
+from gws_core.config.param_spec import BoolParam
+from gws_core.impl.table.view.base_table_view import BaseTableView
+from gws_core.impl.view.barplot_view import BarPlotView
+from gws_core.resource.view_types import ViewSpecs
+
 from ...view.stacked_barplot_view import StackedBarPlotView
 from .table_barplot_view import TableBarPlotView
 
@@ -41,4 +47,10 @@ class TableStackedBarPlotView(TableBarPlotView):
     ```
     """
 
-    _view_helper = StackedBarPlotView
+    _specs: ViewSpecs = {
+        **TableBarPlotView._specs,
+        "normalize": BoolParam(default_value=False, optional=True, human_name="Normalize", short_description="True to normalize values"),
+    }
+
+    def _get_view(sekf, params: ConfigParams) -> BarPlotView:
+        return StackedBarPlotView(normalize=params.get('normalize'))

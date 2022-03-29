@@ -5,6 +5,8 @@
 
 from typing import List, TypedDict
 
+from gws_core.resource.multi_views import MultiViews
+
 from ..config.config_types import ConfigParams, ConfigParamsDict
 from ..config.param_spec_helper import ParamSpecHelper
 from .view import View
@@ -29,10 +31,10 @@ class MixedViews(View):
     _type = "mixed-view"
     _allowed_view_types = []
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         """[summary]
         """
-        super().__init__(None, *args, **kwargs)
+        super().__init__()
         self._sub_views = []
 
     def add_view(self, view: View, params: ConfigParamsDict = None) -> None:

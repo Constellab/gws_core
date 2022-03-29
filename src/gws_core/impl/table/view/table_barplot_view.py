@@ -59,19 +59,18 @@ class TableBarPlotView(BaseTableView):
         **BaseTableView._specs,
         "series": ListParam(default_value=[])
     }
-    _view_helper = BarPlotView
+
+    def _get_view(self, params: ConfigParams) -> BarPlotView:
+        return BarPlotView()
 
     def to_dict(self, params: ConfigParams) -> dict:
-        if not issubclass(self._view_helper, BarPlotView):
-            raise BadRequestException("Invalid view helper. An subclass of BarPlotView is expected")
-
         series: List[Serie1d] = params.get_value("series")
 
         if len(series) == 0:
             raise BadRequestException('There must be at least one serie')
 
         # create view
-        view = self._view_helper()
+        view = self._get_view(params)
 
         for serie in series:
             y_data = self.get_values_from_selection_range(serie["y"])

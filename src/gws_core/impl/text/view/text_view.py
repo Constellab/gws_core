@@ -39,8 +39,8 @@ class TextView(View):
     _data: str
     MAX_NUMBER_OF_CHARS_PER_PAGE = MAX_NUMBER_OF_CHARS_PER_PAGE
 
-    def __init__(self, data: Any, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, data: Any):
+        super().__init__()
         self._check_and_set_data(data)
 
     def _check_and_set_data(self, data: Union[str, Text]):

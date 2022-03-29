@@ -20,9 +20,6 @@ class ViewGrid(TypedDict):
 class EmptyView(View):
     _type = "empty-view"
 
-    def __init__(self):
-        super().__init__(None)
-
 
 class MultiViews(View):
     """Class MultiView. This is use to multiple view in the same page
@@ -48,13 +45,13 @@ class MultiViews(View):
     _type = "multi-view"
     _nb_of_columns: int
 
-    def __init__(self, nb_of_columns: int, *args, **kwargs):
+    def __init__(self, nb_of_columns: int):
         """[summary]
 
         :param nb_of_columns: total number of columns of the grid
         :type nb_of_columns: int
         """
-        super().__init__(None, *args, **kwargs)
+        super().__init__(None)
         self._check_number(nb_of_columns, 'Number of columns')
         self._sub_views = []
         self._nb_of_columns = nb_of_columns
