@@ -8,7 +8,8 @@ from typing import Dict, List
 
 from fastapi import UploadFile
 from gws_core.core.classes.rich_text_content import RichText
-from gws_core.impl.file.file_helper import FileHelper
+from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.settings import Settings
 from gws_core.report.report_file_service import ReportFileService, ReportImage
 from peewee import ModelSelect
 
@@ -33,7 +34,8 @@ class ReportService():
     @transaction()
     def create(cls, report_dto: ReportDTO, experiment_ids: List[str] = None) -> Report:
         report = Report()
-        report.title = report_dto["title"]
+        report.title = report_dto.title
+        report.project = ProjectService.get_or_create_project_from_dto(report_dto.project)
         report.save()
 
         if experiment_ids is not None:
@@ -47,7 +49,17 @@ class ReportService():
     def update(cls, report_id: str, report_dto: ReportDTO) -> Report:
         report: Report = cls._get_and_check_before_update(report_id)
 
-        report.title = report_dto['title']
+        report.title = report_dto.title
+        report.project = ProjectService.get_or_create_project_from_dto(report_dto.project)
+
+        # check that all associated experiment are in same project
+        experiments: List[Experiment] = cls.get_experiments_by_report(report_id)
+
+        for experiment in experiments:
+            if experiment.project.id != report.project.id:
+                raise BadRequestException(GWSException.REPORT_VALIDATION_EXP_OTHER_PROJECT.value,
+                                          GWSException.REPORT_VALIDATION_EXP_OTHER_PROJECT.name, {'title': experiment.title})
+
         return report.save()
 
     @classmethod
@@ -66,6 +78,10 @@ class ReportService():
     @classmethod
     def validate(cls, report_id: str, project_dto: ProjectDto = None) -> Report:
         report: Report = cls._get_and_check_before_update(report_id)
+
+        rich_text = RichText(report.content)
+        if rich_text.is_empty():
+            raise BadRequestException('The report is empty')
 
         # set the project if it is provided
         if project_dto is not None:
@@ -94,9 +110,9 @@ class ReportService():
     def validate_and_send_to_central(cls, report_id: str, project_dto: ProjectDto = None) -> Report:
         report = cls.validate(report_id, project_dto)
 
-        # if Settings.is_local_env():
-        #     Logger.info('Skipping sending experiment to central as we are running in LOCAL')
-        #     return report
+        if Settings.is_local_env():
+            Logger.info('Skipping sending experiment to central as we are running in LOCAL')
+            return report
 
         json_: Dict = report.to_json(deep=True)
 

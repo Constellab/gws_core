@@ -41,7 +41,7 @@ class GWSException(Enum):
     REPORT_EXP_ALREADY_ASSOCIATED = "The experiment is already associated with the report"
     REPORT_VALIDATION_EXP_NOT_VALIDATED = "The associated experiment '{{title}}' must be validated first"
     REPORT_VALIDATION_EXP_OTHER_PROJECT = "The associated experiment '{{title}}' is linked to another project"
-    REPORT_ADD_EXP_OTHER_PROJECT = "Can't associate the experiment to the report because they have different projects"
+    REPORT_ADD_EXP_OTHER_PROJECT = "Can't associate the experiment to the report because they are in different projects"
     EMPTY_FILE = "The file is empty"
     INVALID_FILE_ON_UPLOAD = "The file is invalid. Error : '{{error}}'"
     INVALID_FOLDER_ON_UPLOAD = "The folder is invalid. Error : '{{error}}'"

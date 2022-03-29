@@ -32,9 +32,13 @@ class Report(ModelWithUser):
     def to_json(self, deep: bool = False, **kwargs) -> dict:
         json_ = super().to_json(deep=deep, **kwargs)
 
-        if deep:
-            json_["project"] = self.project.to_json() if self.project is not None else None
-        else:
+        if self.project:
+            json_["project"] = {
+                'id': self.project.id,
+                'title': self.project.title
+            }
+
+        if not deep:
             del json_["content"]
 
         return json_

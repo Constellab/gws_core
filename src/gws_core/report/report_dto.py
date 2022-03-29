@@ -4,8 +4,13 @@
 # About us: https://gencovery.com
 
 
-from typing_extensions import TypedDict
+from typing import Optional
+
+from pydantic import BaseModel
+
+from ..project.project_dto import ProjectDto
 
 
-class ReportDTO(TypedDict):
-    title: str
+class ReportDTO(BaseModel):
+    title: str = None
+    project: Optional[ProjectDto] = None

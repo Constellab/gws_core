@@ -39,6 +39,10 @@ class RichText():
     def __init__(self, rich_text_content: RichTextI) -> None:
         self._content = rich_text_content
 
+    def is_empty(self) -> bool:
+        return self._content is None or not self._content['ops'] or len(self._content['ops']) == 0 or \
+            all(x['insert'] == '\n' for x in self._content['ops'])  # empty if all the ops only contain '\n'
+
     def get_figures(self) -> List[RichTextFigure]:
         figures: List[RichTextFigure] = []
 
