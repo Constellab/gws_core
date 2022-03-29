@@ -8,6 +8,7 @@ import copy
 from typing import Dict, List, Literal, TypedDict, Union
 
 import numpy as np
+from gws_core.impl.table.helper.table_filter_helper import TableFilterHelper
 from pandas import DataFrame, Series
 
 from ...config.config_types import ConfigParams
@@ -315,7 +316,7 @@ class Table(Resource):
     def get_row_tag_types(self):
         return self._meta["row_tag_types"]
 
-    def get_row_names_by_positions(self, positions: List[int]) -> List[str]:
+    def get_row_names_by_positions(self, positions: List[int]) -> List[Union[str, int]]:
         """Function to retrieve the row names based on row positions
         """
         if not isinstance(positions, list):
@@ -356,7 +357,7 @@ class Table(Resource):
     def get_column_tag_types(self):
         return self._meta["column_tag_types"]
 
-    def get_column_names_by_positions(self, positions: List[int]) -> List[str]:
+    def get_column_names_by_positions(self, positions: List[int]) -> List[Union[str, int]]:
         """Function to retrieve the column names based on row positions
         """
         if not isinstance(positions, list):
@@ -460,37 +461,29 @@ class Table(Resource):
         column_names = self.get_column_names_by_positions(positions)
         return self.select_by_column_names(column_names)
 
-    def select_by_row_names(self, names: List[str], use_regex=False) -> 'Table':
-        if not isinstance(names, list):
-            raise BadRequestException("The names must be a list of strings")
-        if not all(isinstance(x, str) for x in names):
-            raise BadRequestException("The names must be a list of strings")
-        if use_regex:
-            regex = "(" + ")|(".join(names) + ")"
-            data = self._data.filter(regex=regex, axis=0)
-        else:
-            data = self._data.filter(items=names, axis=0)
+    def select_by_row_names(self, names: Union[List[str], str], use_regex=False) -> 'Table':
+        data = TableFilterHelper.filter_by_axis_names(self._data, 'row', names, use_regex)
+
+        # copy meta data
         positions = [self._data.index.get_loc(k) for k in self._data.index if k in data.index]
         meta = copy.deepcopy(self._meta)
         if "row_tags" in self._meta:
             meta["row_tags"] = [meta["row_tags"][k] for k in positions]
+
+        # create a new table
         cls = type(self)
         return cls(data=data, meta=meta)
 
-    def select_by_column_names(self, names: List[str], use_regex=False) -> 'Table':
-        if not isinstance(names, list):
-            raise BadRequestException("The names must be a list of strings")
-        if not all(isinstance(x, str) for x in names):
-            raise BadRequestException("The names must be a list of strings")
-        if use_regex:
-            regex = "(" + ")|(".join(names) + ")"
-            data = self._data.filter(regex=regex, axis=1)
-        else:
-            data = self._data.filter(items=names, axis=1)
+    def select_by_column_names(self, names: Union[List[str], str], use_regex=False) -> 'Table':
+        data = TableFilterHelper.filter_by_axis_names(self._data, 'column', names, use_regex)
+
+        # copy meta data
         positions = [self._data.columns.get_loc(k) for k in self._data.columns if k in data.columns]
         meta = copy.deepcopy(self._meta)
         if "column_tags" in self._meta:
             meta["column_tags"] = [meta["column_tags"][k] for k in positions]
+
+        # create a new table
         cls = type(self)
         return cls(data=data, meta=meta)
 

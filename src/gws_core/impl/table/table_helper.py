@@ -1,5 +1,8 @@
 
-from typing import List
+from typing import Any, List
+
+from gws_core.core.utils.numeric_helper import NumericHelper
+from pandas import DataFrame
 
 
 class TableHelper:
@@ -7,8 +10,8 @@ class TableHelper:
     CSV_DELIMITERS: List[str] = ['\t', ',', ';']
     DEFAULT_CSV_DELIMITER = ","
 
-    @classmethod
-    def detect_csv_delimiter(cls, csv_str: str) -> str:
+    @staticmethod
+    def detect_csv_delimiter(csv_str: str) -> str:
         """
         Method to guess the delimiter of a csv string based on delimiter count.
 
@@ -17,16 +20,33 @@ class TableHelper:
         if csv_str is None or len(csv_str) < 10:
             return None
 
-        max_delimiter: str = cls.DEFAULT_CSV_DELIMITER
+        max_delimiter: str = TableHelper.DEFAULT_CSV_DELIMITER
         max_delimiter_count: int = 0
 
         # use a sub csv to improve speed
         sub_csv = csv_str[0:10000]
 
-        for delimiter in cls.CSV_DELIMITERS:
+        for delimiter in TableHelper.CSV_DELIMITERS:
             count: int = sub_csv.count(delimiter)
             if(count > max_delimiter_count):
                 max_delimiter = delimiter
                 max_delimiter_count = count
 
         return max_delimiter
+
+    @staticmethod
+    def flatten_dataframe_by_column(dataframe: DataFrame) -> List[Any]:
+        """Flatten a 2d data to a list of value. The values are added by column
+        """
+        values: List[Any] = []
+        # flatten columns into values list
+        for column in dataframe:
+            values += dataframe[column].to_list()
+
+        return values
+
+    @staticmethod
+    def dataframe_to_float(dataframe: DataFrame) -> DataFrame:
+        """Convert all element of a dataframe to float, if element is not convertible, is sets Nan
+        """
+        return dataframe.applymap(NumericHelper.to_float,  na_action='ignore')

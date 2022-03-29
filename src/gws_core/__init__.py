@@ -83,10 +83,11 @@ from .core.service.external_api_service import \
 from .core.service.mysql_service import MySQLService as MySQLService
 from .core.service.settings_service import SettingsService as SettingsService
 # Core > Utils
-from .core.utils.cryptography import Cryptography
+from .core.utils.cryptography import Cryptography as Cryptography
 from .core.utils.event import EventListener as EventListener
 from .core.utils.http_helper import HTTPHelper as HTTPHelper
 from .core.utils.logger import Logger as Logger
+from .core.utils.numeric_helper import NumericHelper as NumericHelper
 from .core.utils.requests import Requests as Requests
 from .core.utils.serializer import Serializer as Serializer
 from .core.utils.settings import Settings as Settings
@@ -169,6 +170,10 @@ from .impl.table.helper.table_scaler_helper import \
     TableScalerHelper as TableScalerHelper
 from .impl.table.helper.table_tag_grouper_helper import \
     TableTagGrouperHelper as TableTagGrouperHelper
+from .impl.table.metadata_table.helper.table_annotator_helper import \
+    TableColumnAnnotatorHelper as TableColumnAnnotatorHelper
+from .impl.table.metadata_table.helper.table_annotator_helper import \
+    TableRowAnnotatorHelper as TableRowAnnotatorHelper
 from .impl.table.metadata_table.metadata_table import \
     MetadataTable as MetadataTable
 from .impl.table.metadata_table.metadata_table_task import \
@@ -179,10 +184,6 @@ from .impl.table.metadata_table.table_annotator import \
     TableColumnAnnotator as TableColumnAnnotator
 from .impl.table.metadata_table.table_annotator import \
     TableRowAnnotator as TableRowAnnotator
-from .impl.table.metadata_table.helper.table_annotator_helper import \
-    TableRowAnnotatorHelper as TableRowAnnotatorHelper
-from .impl.table.metadata_table.helper.table_annotator_helper import \
-    TableColumnAnnotatorHelper as TableColumnAnnotatorHelper
 from .impl.table.table import Table as Table
 from .impl.table.table_types import TableHeaderInfo as TableHeaderInfo
 from .impl.table.table_types import TableMeta as TableMeta

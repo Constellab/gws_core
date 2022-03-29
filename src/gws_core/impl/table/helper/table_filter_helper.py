@@ -3,13 +3,16 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List
+from ast import Index
+from typing import List, Literal, Union
 
 import numpy
 from pandas import DataFrame
 
 from ....core.exception.exceptions import BadRequestException
 from .table_aggregator_helper import TableAggregatorHelper
+
+AxisName = Literal['row', 'column']
 
 
 class TableFilterHelper:
@@ -40,18 +43,30 @@ class TableFilterHelper:
             )
 
     @classmethod
-    def filter_by_axis_names(cls, data: DataFrame, axis: str, value: str, use_regexp=False):
+    def filter_by_axis_names(cls, data: DataFrame, axis: AxisName, value: Union[List[str], str], use_regexp=False):
         if (not axis) or (value is None):
             return data
         cls._check_axis_name(axis)
-        if isinstance(value, str):
-            ax = 0 if axis == "row" else 1
-            if use_regexp:
-                return data.filter(regex=value, axis=ax)
-            else:
-                return data.filter(items=[value], axis=ax)
+
+        if not isinstance(value, list):
+            value = [value]
+
+        if not all(isinstance(x, str) for x in value) and not all(isinstance(x, int) for x in value):
+            raise BadRequestException("The names must be a list of strings or indexes")
+
+        ax = 0 if axis == "row" else 1
+
+        if use_regexp:
+            regex = "(" + ")|(".join(value) + ")"
+            return data.filter(regex=regex, axis=ax)
         else:
-            raise BadRequestException("A string is required")
+            ax_index: Index = data.index if axis == "row" else data.columns
+
+            # if the index is only numeric value (default) we must convert values to int to compare
+            if ax_index.is_numeric():
+                value = [int(i) for i in value]
+
+            return data.filter(items=value, axis=ax)
 
     @classmethod
     def filter_by_aggregated_values(

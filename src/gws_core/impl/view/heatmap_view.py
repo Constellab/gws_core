@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws_core.impl.table.table_helper import TableHelper
 from gws_core.impl.table.table_types import TableHeaderInfo
 from numpy import nan
 from pandas import DataFrame
@@ -42,7 +43,7 @@ class HeatmapView(View):
             self, data: DataFrame = None, rows_info: TableHeaderInfo = None, columns_info: TableHeaderInfo = None):
         if not isinstance(data, DataFrame):
             raise BadRequestException("The data must be a DataFrame")
-        self._data = self.dataframe_to_float(data)
+        self._data = TableHelper.dataframe_to_float(data)
         self._rows_info = rows_info
         self._columns_info = columns_info
 

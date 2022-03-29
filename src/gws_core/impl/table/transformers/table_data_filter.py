@@ -33,8 +33,8 @@ class TableDataFilter(Transformer):
 
     async def transform(self, source: Table, params: ConfigParams) -> Table:
         data: DataFrame = source.get_data()
-        data = NumericDataFilterParamConstructor.validate_filter("numeric_filter", data, params)
-        data = TextDataFilterParamConstructor.validate_filter("text_filter", data, params)
+        data = NumericDataFilterParamConstructor.validate_filter(data, params["numeric_filter"])
+        data = TextDataFilterParamConstructor.validate_filter(data, params["text_filter"])
 
         print("====>")
         print(data)

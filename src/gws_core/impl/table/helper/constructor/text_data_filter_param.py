@@ -3,9 +3,9 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from typing import List, TypedDict
 from pandas import DataFrame
 
-from .....config.config_types import ConfigParams
 from .....config.param_spec import ParamSet, StrParam
 from ..table_filter_helper import TableFilterHelper
 
@@ -16,11 +16,17 @@ from ..table_filter_helper import TableFilterHelper
 # ####################################################################
 
 
+class TextDataFilder(TypedDict):
+    column_name: str
+    comparator: str
+    value: str
+
+
 class TextDataFilterParamConstructor:
 
     @staticmethod
-    def validate_filter(name: str, data: DataFrame, params: ConfigParams):
-        for _filter in params[name]:
+    def validate_filter(data: DataFrame, params: List[TextDataFilder]):
+        for _filter in params:
             data = TableFilterHelper.filter_text_data(
                 data=data,
                 column_name=_filter["column_name"],

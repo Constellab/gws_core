@@ -3,9 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, List, Optional
-
-from pandas import DataFrame
+from typing import Any, List
 
 from ..config.config_types import ConfigParams
 from .view_types import ViewSpecs
@@ -72,52 +70,7 @@ class View:
         return True
 
     @classmethod
-    def list_to_float(cls, list_: List[Any], remove_none: bool = False) -> List[Optional[float]]:
-        """Convert a list of any to list of float. The element that
-        are not convertible to float are set to None
-
-        :param list_: _description_
-        :type list_: List[Any]
-        :param remove_none: if False, the non converted element are keep as None,
-                            if True they are removed
-        :type remove_none: List[Any]
-        :return: _description_
-        :rtype: List[Optional[float]]
-        """
-        data = [cls.to_float(val) for val in list_]
-
-        if remove_none:
-            return [i for i in data if i is not None]
-        return data
-
-    @classmethod
-    def dataframe_to_float(cls, dataframe: DataFrame) -> DataFrame:
-        """Convert all element of a dataframe to float, if element is not convertible, is sets Nan
-        """
-        return dataframe.applymap(cls.to_float,  na_action='ignore')
-
-    @classmethod
-    def to_float(cls, value: Any) -> Optional[float]:
-        """Convert any to list of float. If not convertible to float, returns None
-        """
-        try:
-            return float(value)
-        except:
-            return None
-
-    @classmethod
     def generate_range(cls, length: int) -> List[int]:
         """Generate range list like 0,1,2...length
         """
         return list(range(0, length))
-
-    @classmethod
-    def flatten_dataframe_by_column(cls, dataframe: DataFrame) -> List[Any]:
-        """Flatten a 2d data to a list of value. The values are added by column
-        """
-        values: List[Any] = []
-        # flatten columns into values list
-        for column in dataframe:
-            values += dataframe[column].to_list()
-
-        return values

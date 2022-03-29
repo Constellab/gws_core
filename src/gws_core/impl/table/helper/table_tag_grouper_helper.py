@@ -33,9 +33,11 @@ class TableTagGrouperHelper:
         :return: The DataFrame after row grouping according the `key`
         :rtype: DataFrame
         """
-
         if func not in cls.ALLOWED_FUNCTIONS:
             raise BadRequestException(f"The grouping function must in {cls.ALLOWED_FUNCTIONS}")
+
+        # work only on numerical columns
+        table = table.select_numeric_columns()
 
         row_tags = table.get_row_tags()
 
@@ -101,9 +103,11 @@ class TableTagGrouperHelper:
         :return: The DataFrame after row grouping according the `key`
         :rtype: DataFrame
         """
-
         if func not in cls.ALLOWED_FUNCTIONS:
             raise BadRequestException(f"The grouping function must in {cls.ALLOWED_FUNCTIONS}")
+
+        # work only on numerical columns
+        table = table.select_numeric_columns()
 
         column_tags = table.get_column_tags()
 

@@ -22,7 +22,10 @@ from ...impl.table.tasks.table_exporter import TableExporter
 from ...impl.table.tasks.table_importer import TableImporter
 from .dataset import Dataset
 
-@importer_decorator(unique_name="DatasetImporter", human_name="Dataset importer", target_type=Dataset, supported_extensions=Table.ALLOWED_FILE_FORMATS, hide=True, deprecated_since='0.3.3', deprecated_message='Use table importer')
+
+@importer_decorator(unique_name="DatasetImporter", human_name="Dataset importer", target_type=Dataset,
+                    supported_extensions=Table.ALLOWED_FILE_FORMATS, hide=True, deprecated_since='0.3.3',
+                    deprecated_message='Use table importer')
 class DatasetImporter(TableImporter):
     config_specs: ConfigSpecs = {
         'file_format': StrParam(default_value=Table.DEFAULT_FILE_FORMAT, allowed_values=Table.ALLOWED_FILE_FORMATS, human_name="File format", short_description="File format"),
@@ -33,7 +36,7 @@ class DatasetImporter(TableImporter):
             'type': StrParam(default_value=Table.CATEGORICAL_TAG_TYPE, optional=True, allowed_values=Table.ALLOWED_TAG_TYPES, visibility=StrParam.PUBLIC_VISIBILITY, human_name="Type", short_description="Types of metadata"),
             'keep_in_table': BoolParam(default_value=True, optional=True, visibility=BoolParam.PUBLIC_VISIBILITY, human_name="Keep in table", short_description="Set True to keep metadata in table; False otherwise"),
             'is_target': BoolParam(default_value=True, optional=True, visibility=BoolParam.PUBLIC_VISIBILITY, human_name="Is target", short_description="Set True to use the column as target; False otherwise"),
-        }, optional=True, visibility=ParamSet.PUBLIC_VISIBILITY, human_name="Metadata columns", short_description="Columns data to use to tag to rows of the table"),
+        }, optional=True, visibility=ParamSet.PUBLIC_VISIBILITY, human_name="Metadata columns", short_description="Columns data to use to tag rows of the table"),
         'index_column': IntParam(default_value=-1, min_value=-1, optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Index column", short_description="Column to use as the row names. By default no index is used (i.e. index_column=-1)."),
         'decimal': StrParam(default_value=".", optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Decimal character", short_description="Character to recognize as decimal point (e.g. use ‘,’ for European/French data)."),
         'nrows': IntParam(default_value=None, optional=True, min_value=0, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Nb. rows", short_description="Number of rows to import. Useful to read piece of data."),
@@ -42,7 +45,7 @@ class DatasetImporter(TableImporter):
 
     async def import_from_path(self, file: File, params: ConfigParams, target_type: Type[Dataset]) -> Dataset:
         dataset: Dataset = await super().import_from_path(file, params, target_type=target_type)
-        
+
         # set targets names if exist
         targets = []
         metadata_param_set = params.get_value('metadata', [])
@@ -57,7 +60,8 @@ class DatasetImporter(TableImporter):
         return dataset
 
 
-@exporter_decorator("DatasetExporter", human_name="Dataset exporter", source_type=Dataset, hide=True, deprecated_since='0.3.3', deprecated_message='Use table exporter')
+@exporter_decorator("DatasetExporter", human_name="Dataset exporter", source_type=Dataset, hide=True,
+                    deprecated_since='0.3.3', deprecated_message='Use table exporter')
 class DatasetExporter(TableExporter):
     config_specs: ConfigSpecs = {**TableExporter.config_specs}
 

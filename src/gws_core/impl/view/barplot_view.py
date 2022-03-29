@@ -5,6 +5,7 @@
 
 from typing import Dict, List, Union
 
+from gws_core.core.utils.numeric_helper import NumericHelper
 from pandas import DataFrame
 
 from ...config.config_types import ConfigParams
@@ -85,9 +86,9 @@ class BarPlotView(View):
         if x is None:
             x = self.generate_range(len(y))
         else:
-            x = self.list_to_float(x)
+            x = NumericHelper.list_to_float(x)
 
-        y = self.list_to_float(y)
+        y = NumericHelper.list_to_float(y)
 
         if tags is not None:
             if not isinstance(tags, list) or len(tags) != len(x):

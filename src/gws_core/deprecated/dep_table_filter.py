@@ -104,7 +104,7 @@ class TableFilter(Task):
                 comp=_filter["comparator"],
                 value=_filter["value"],
             )
-        data = NumericDataFilterParamConstructor.validate_filter("numeric_data_filter", data, params)
-        data = TextDataFilterParamConstructor.validate_filter("text_data_filter", data, params)
+        data = NumericDataFilterParamConstructor.validate_filter(data, params["numeric_data_filter"])
+        data = TextDataFilterParamConstructor.validate_filter(data, params["text_data_filter"])
 
         return {'target': Table(data=data)}

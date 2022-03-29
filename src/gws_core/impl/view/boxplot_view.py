@@ -8,6 +8,7 @@ from typing import Dict, List, Union
 
 import numpy
 import pandas
+from gws_core.impl.table.table_helper import TableHelper
 from pandas import DataFrame
 
 from ...config.config_types import ConfigParams
@@ -99,7 +100,7 @@ class BoxPlotView(View):
             if not isinstance(tags, list) or len(tags) != data.shape[1]:
                 raise BadRequestException("The tags must a list of length equal to the number of columns in data")
 
-        data = self.dataframe_to_float(data)
+        data = TableHelper.dataframe_to_float(data)
 
         ymin = data.min(skipna=True).to_list()
         ymax = data.max(skipna=True).to_list()

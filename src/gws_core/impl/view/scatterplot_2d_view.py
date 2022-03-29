@@ -5,6 +5,8 @@
 
 from typing import Any, Dict, List, Optional, Union
 
+from gws_core.core.utils.numeric_helper import NumericHelper
+
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
 from ...resource.view import View
@@ -87,10 +89,10 @@ class ScatterPlot2DView(View):
             x = list(range(0, len(y)))
         else:
             # Convert y to float
-            x = self.list_to_float(x)
+            x = NumericHelper.list_to_float(x)
 
         # Convert y to float
-        y = self.list_to_float(y)
+        y = NumericHelper.list_to_float(y)
 
         if tags is not None:
             if not isinstance(tags, list) or len(tags) != len(x):

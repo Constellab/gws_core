@@ -6,6 +6,8 @@
 from typing import List, Union
 
 import numpy
+from gws_core.core.utils.numeric_helper import NumericHelper
+from gws_core.impl.table.table_helper import TableHelper
 from pandas import DataFrame
 
 from ...config.config_types import ConfigParams
@@ -82,7 +84,7 @@ class HistogramView(View):
         if data is None or not isinstance(data, list):
             raise BadRequestException("The data is required and must be a list of float or a DataFrame")
 
-        data = self.list_to_float(data, remove_none=True)
+        data = NumericHelper.list_to_float(data, remove_none=True)
 
         hist, bin_edges = numpy.histogram(data, bins=self.nbins, density=self.density)
         bin_centers = (bin_edges[:-1] + bin_edges[1:])/2
@@ -98,7 +100,7 @@ class HistogramView(View):
         """
         if dataframe.shape[0] != 1 and dataframe.shape[1] != 1:
             raise BadRequestException("The data must be row or column vector")
-        return self.add_data(self.flatten_dataframe_by_column(dataframe), name=name)
+        return self.add_data(TableHelper.flatten_dataframe_by_column(dataframe), name=name)
 
     def add_series(self, *, x: Union[List[float], List[str]] = None, y: List[float] = None, name: str = None):
         """
