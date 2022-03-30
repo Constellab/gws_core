@@ -36,6 +36,27 @@ class ReportService():
         report = Report()
         report.title = report_dto.title
         report.project = ProjectService.get_or_create_project_from_dto(report_dto.project)
+
+        # Set default content for report
+        report.content = {
+            "ops":
+            [{"insert": "Introduction"},
+             {"attributes": {"header": 1},
+              "insert": "\n"},
+             {"insert": "\n\nMethods"},
+             {"attributes": {"header": 1},
+              "insert": "\n"},
+             {"insert": "\n\nResults"},
+             {"attributes": {"header": 1},
+              "insert": "\n"},
+             {"insert": "\n\nConclusion"},
+             {"attributes": {"header": 1},
+              "insert": "\n"},
+             {"insert": "\n\nReferences"},
+             {"attributes": {"header": 1},
+              "insert": "\n"},
+             {"insert": "\n"}]}
+
         report.save()
 
         if experiment_ids is not None:
