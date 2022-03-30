@@ -6,10 +6,10 @@
 
 from typing import Dict, Type
 
-from gws_core.brick.brick_helper import BrickHelper
 from gws_core.lab.lab_config_model import LabConfigModel
 from peewee import ModelSelect
 
+from ..central.central_dto import SaveExperimentToCentralDTO
 from ..central.central_service import CentralService
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import SearchBuilder, SearchDict
@@ -32,7 +32,7 @@ from ..user.activity_service import ActivityService
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
 from .experiment import Experiment, ExperimentType
-from .experiment_dto import ExperimentDTO, SaveExperimentToCentralDTO
+from .experiment_dto import ExperimentDTO
 
 
 class ExperimentService(BaseService):

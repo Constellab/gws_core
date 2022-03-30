@@ -8,7 +8,7 @@ from typing import Optional
 from fastapi import Cookie, Depends, Header
 from fastapi.responses import RedirectResponse
 from gws_core.core.classes.jsonable import ListJsonable
-from gws_core.core.utils.settings import Settings
+from gws_core.core.service.front_service import FrontService
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.jwt_service import JWTService
 from gws_core.user.user import User
@@ -89,13 +89,12 @@ def login_from_temp_token(unique_code: str) -> RedirectResponse:
         AuthService.check_unique_code(unique_code)
 
         token = AuthService.generate_user_access_token(CurrentUserService.get_and_check_current_user().id)
-        response = RedirectResponse(Settings.get_front_url() + '/auto-login?expiresIn=' +
-                                    str(JWTService.get_token_duration_in_seconds()))
+        response = RedirectResponse(FrontService.get_auto_login_url(JWTService.get_token_duration_in_seconds()))
         AuthService.set_token_in_response(token, JWTService.get_token_duration_in_seconds(), response)
         return response
     except Exception:
         # if there is any problem redirect to the front base url (login)
-        return RedirectResponse(Settings.get_front_url())
+        return RedirectResponse(FrontService.get_front_url())
 
 
 @core_app.post("/dev-login", tags=["User"], summary="Login to the dev lab using the prod token")

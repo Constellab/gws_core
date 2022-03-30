@@ -184,7 +184,7 @@ class Settings():
             return 'http://localhost:4200'
 
         if "FRONT_URL" not in os.environ:
-            return None
+            return ''
 
         return os.environ["FRONT_URL"]
 

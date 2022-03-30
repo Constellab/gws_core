@@ -4,12 +4,16 @@
 # About us: https://gencovery.com
 
 import json
-from typing import Dict, List, TypedDict
+from typing import Dict, List
 
 from gws_core.brick.brick_service import BrickService
-from gws_core.experiment.experiment_dto import SaveExperimentToCentralDTO
+from gws_core.central.central_dto import (CentralSendMailDTO, LabStartDTO,
+                                          SaveExperimentToCentralDTO,
+                                          SendExperimentFinishMailData)
+from gws_core.experiment.experiment import Experiment
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.lab.lab_config_model import LabConfig
+from requests.models import Response
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
@@ -20,10 +24,6 @@ from ..project.project_dto import CentralProject
 from ..user.credentials_dto import CredentialsDTO
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
-
-
-class LabStartDTO(TypedDict):
-    lab_config: LabConfig
 
 
 class CentralService(BaseService):
@@ -127,6 +127,23 @@ class CentralService(BaseService):
         if response.status_code != 200:
             Logger.error(f"Can't save the report in central. Error : {response.text}")
             raise BadRequestException("Can't save the report in central")
+
+    @classmethod
+    def send_experiment_finished_mail(cls, user_id: str, experiment: SendExperimentFinishMailData) -> None:
+        data: CentralSendMailDTO = {
+            "receiver_ids": [user_id],
+            "mail_template": "experiment-finished",
+            "data": {
+                "experiment": experiment
+            }
+        }
+        cls._send_mail(data)
+
+    @classmethod
+    def _send_mail(cls, send_mail_dto: CentralSendMailDTO) -> Response:
+        central_api_url: str = cls._get_central_api_url(
+            f"{cls._external_labs_route}/send-mail")
+        return ExternalApiService.post(central_api_url, send_mail_dto, cls._get_request_header())
 
     @classmethod
     def _get_central_api_url(cls, route: str) -> str:

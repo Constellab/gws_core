@@ -196,6 +196,9 @@ class ProgressBar(Model):
         else:
             return -1
 
+    def get_elapsed_time(self) -> float:
+        return self.data['elapsed_time']
+
     ################################################## TO JSON #################################################
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:

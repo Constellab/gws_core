@@ -8,6 +8,10 @@ import subprocess
 import traceback
 from typing import Any, Coroutine, List
 
+from gws_core.central.central_dto import SendExperimentFinishMailData
+from gws_core.central.central_service import CentralService
+from gws_core.core.service.front_service import FrontService
+
 from ..core.exception.exceptions import BadRequestException
 from ..core.exception.gws_exceptions import GWSException
 from ..core.model.sys_proc import SysProc
@@ -18,7 +22,7 @@ from ..user.activity import Activity
 from ..user.activity_service import ActivityService
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
-from .experiment import Experiment, ExperimentStatus
+from .experiment import Experiment, ExperimentStatus, ExperimentType
 
 
 class ExperimentRunService():
@@ -43,6 +47,8 @@ class ExperimentRunService():
                                       "unique_code": GWSException.EXPERIMENT_ERROR_BEFORE_RUN.name,
                                       "context": None, "instance_id": None})
         await cls.run_experiment(experiment)
+
+        cls._send_experiment_finished_mail(experiment)
 
     @classmethod
     async def run_experiment(cls, experiment: Experiment) -> Coroutine[Any, Any, Experiment]:
@@ -210,3 +216,26 @@ class ExperimentRunService():
             Experiment.select().where(
                 (Experiment.status == ExperimentStatus.RUNNING) |
                 (Experiment.status == ExperimentStatus.WAITING_FOR_CLI_PROCESS)))
+
+    @classmethod
+    def _send_experiment_finished_mail(cls, experiment: Experiment) -> None:
+        # if not Settings.is_prod or experiment.type != ExperimentType.EXPERIMENT:
+        #     return
+        try:
+            elapsed_time = experiment.protocol_model.progress_bar.get_elapsed_time()
+
+            # if the experiment runned in under 3 minutes, don't send an email
+            # if elapsed_time < 60 * 3:
+            #     return
+
+            user: User = CurrentUserService.get_and_check_current_user()
+            experiment_dto: SendExperimentFinishMailData = {
+                "title": experiment.title,
+                "status": experiment.status.value,
+                "experiment_link": FrontService.get_experiment_url(experiment_id=experiment.id)
+            }
+
+            CentralService.send_experiment_finished_mail(user.id, experiment_dto)
+        except Exception as err:
+            Logger.log_exception_stack_trace(err)
+            Logger.error(f"Error while sending the experiment finished mail : {err}")
