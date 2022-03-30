@@ -19,6 +19,7 @@ from ..metadata_table import MetadataTable
 #
 # ####################################################################
 
+
 class TableRowAnnotatorHelper(Task):
     """
     TableRowAnnotatorHelper
@@ -30,8 +31,7 @@ class TableRowAnnotatorHelper(Task):
 
     @classmethod
     def annotate(self, table: Table, metadata_table: MetadataTable, reference_column: str = None) -> Table:
-        metadata = metadata_table.get_data()
-        metadata.set_index(metadata_table.sample_id_column, inplace=True)
+        metadata = metadata_table.get_data().set_index(metadata_table.sample_id_column)
         unsorted_tags: dict = metadata.to_dict('index')
 
         if reference_column:
@@ -43,10 +43,10 @@ class TableRowAnnotatorHelper(Task):
             # try to use the index
             table_ids: list = table.get_data().index.tolist()
             tags = [unsorted_tags.get(id_, {}) for id_ in table_ids]
-            is_empty = all([ t == {} for t in tags ])
+            is_empty = all([t == {} for t in tags])
             if is_empty:
                 # try to use the first column instead
-                table_ids: list = table.get_data().iloc[:,0].tolist()
+                table_ids: list = table.get_data().iloc[:, 0].tolist()
                 tags = [unsorted_tags.get(id_, {}) for id_ in table_ids]
 
         table.set_row_tags(tags)
@@ -70,8 +70,7 @@ class TableColumnAnnotatorHelper(Task):
 
     @classmethod
     def annotate(self, table: Table, metadata_table: MetadataTable, reference_row: str = None) -> Table:
-        metadata = metadata_table.get_data()
-        metadata.set_index(metadata_table.sample_id_column, inplace=True)
+        metadata = metadata_table.get_data().set_index(metadata_table.sample_id_column)
         unsorted_tags: dict = metadata.to_dict('index')
 
         reference_row = params.get_value("reference_row")
@@ -84,10 +83,10 @@ class TableColumnAnnotatorHelper(Task):
             # try to use the header
             table_ids: list = table.get_data().columns.tolist()
             tags = [unsorted_tags.get(id_, {}) for id_ in table_ids]
-            is_empty = all([ t == {} for t in tags ])
+            is_empty = all([t == {} for t in tags])
             if is_empty:
                 # try to use the first column instead
-                table_ids: list = table.get_data().iloc[0,:].tolist()
+                table_ids: list = table.get_data().iloc[0, :].tolist()
                 tags = [unsorted_tags.get(id_, {}) for id_ in table_ids]
 
         table.set_column_tags(tags)
