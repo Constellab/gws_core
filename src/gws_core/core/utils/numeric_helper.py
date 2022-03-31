@@ -35,11 +35,12 @@ class NumericHelper():
     def to_float(value: Any) -> Optional[float]:
         """Convert any to float. If not convertible to float or NaN, returns None
         """
-        if isnan(value):
-            return None
 
         try:
-            return float(value)
+            result = float(value)
+            if isnan(result):
+                return None
+            return result
         except:
             return None
 
@@ -64,19 +65,11 @@ class NumericHelper():
     def to_int(value: Any) -> Optional[int]:
         """Convert any to int. If not convertible to int or NaN, returns None
         """
-        if isnan(value):
-            return None
 
         try:
-            return int(value)
-        except:
-            return None
-
-    @staticmethod
-    def to_int(value: Any) -> Optional[int]:
-        """Convert any to int. If not convertible to int, returns None
-        """
-        try:
-            return int(value)
+            result = int(value)
+            if isnan(result):
+                return None
+            return result
         except:
             return None
