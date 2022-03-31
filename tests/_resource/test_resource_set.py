@@ -55,6 +55,11 @@ class TestResourceSet(BaseTestCase):
         # check the age, this will mean the two where correctly saved separatly
         self.assertEqual(age, 98 + 99)
 
+        # test the view, reload the resource to simulate real view
+        resource_set = ResourceModel.get_by_id_and_check(resource_set._model_id).get_resource()
+
+        self.assertEqual(len(resource_set.view_resources_list({}).to_dict({})['data']), 2)
+
         experiment.reset()
         # check that the reset cleared the correct resources
         self.assertEqual(ResourceModel.select().count(), resource_count)

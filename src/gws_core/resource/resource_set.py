@@ -69,11 +69,13 @@ class ResourceSet(Resource):
 
         self._resources.add(resource)
 
-    def _load_resources(self,) -> Set[Resource]:
-        if not resource_ids:
+    def _load_resources(self) -> Set[Resource]:
+        from .resource_model import ResourceModel
+        if not self._resource_ids:
             return set()
 
-        resource_models: List[ResourceModel] = list(ResourceModel.select().where(ResourceModel.id.in_(resource_ids)))
+        resource_models: List[ResourceModel] = list(
+            ResourceModel.select().where(ResourceModel.id.in_(self._resource_ids)))
 
         resources: Set[Resource] = set()
         for resource_model in resource_models:
@@ -82,7 +84,7 @@ class ResourceSet(Resource):
 
     def _get_resource_models(self) -> List[ResourceModel]:
         from .resource_model import ResourceModel
-        return list(ResourceModel.select().where(ResourceModel.id.in_(self._resource_ids)))
+        return list(ResourceModel.select().where(ResourceModel.id.in_(self._resource_ids)).order_by(ResourceModel.name))
 
     @view(view_type=ResourcesListView, human_name='Resources list',
           short_description='List the resources', default_view=True)
