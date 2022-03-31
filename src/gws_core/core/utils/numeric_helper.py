@@ -6,6 +6,8 @@
 
 from typing import Any, List, Optional
 
+from numpy import isnan
+
 
 class NumericHelper():
     """Helper to manipulate numerics
@@ -31,8 +33,11 @@ class NumericHelper():
 
     @staticmethod
     def to_float(value: Any) -> Optional[float]:
-        """Convert any to float. If not convertible to float, returns None
+        """Convert any to float. If not convertible to float or NaN, returns None
         """
+        if isnan(value):
+            return None
+
         try:
             return float(value)
         except:
@@ -54,6 +59,18 @@ class NumericHelper():
         if remove_none:
             return [i for i in data if i is not None]
         return data
+
+    @staticmethod
+    def to_int(value: Any) -> Optional[int]:
+        """Convert any to int. If not convertible to int or NaN, returns None
+        """
+        if isnan(value):
+            return None
+
+        try:
+            return int(value)
+        except:
+            return None
 
     @staticmethod
     def to_int(value: Any) -> Optional[int]:
