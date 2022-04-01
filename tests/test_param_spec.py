@@ -1,6 +1,7 @@
 
 
-from gws_core import BaseTestCase, IntParam, ParamSet, ParamSpec, StrParam
+from gws_core import BaseTestCase, IntParam, ParamSet, StrParam
+from gws_core.config.param_spec_helper import ParamSpecHelper
 
 
 class TestParamSpec(BaseTestCase):
@@ -22,7 +23,7 @@ class TestParamSpec(BaseTestCase):
     def test_param_set(self):
         param: ParamSet = ParamSet({"str": StrParam(), 'int': IntParam(default_value=12)}, max_number_of_occurrences=3)
 
-        param_2: ParamSet = ParamSpec.create_from_json(param.to_json())
+        param_2: ParamSet = ParamSpecHelper.create_param_spec_from_json(param.to_json())
         self.assertIsInstance(param_2, ParamSet)
         self.assertEqual(param_2.max_number_of_occurrences, 3)
         self.assertIsInstance(param_2.param_set['str'], StrParam)

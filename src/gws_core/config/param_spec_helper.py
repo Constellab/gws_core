@@ -3,19 +3,24 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Dict, List
+from typing import Any, Dict, List, Type
 
-from gws_core.config.config_exceptions import MissingConfigsException
-from gws_core.config.config_types import ConfigParams, ConfigSpecs, ParamValue
-from gws_core.config.param_spec import ParamSpec
+from gws_core.core.exception.exceptions.bad_request_exception import \
+    BadRequestException
+
+from .config_exceptions import MissingConfigsException
+from .config_types import ConfigParams, ConfigSpecs, ParamValue
+from .param_set import ParamSet
+from .param_spec import (BoolParam, FloatParam, IntParam, ListParam, ParamSpec,
+                         StrParam)
+from .tags_param_spec import TagsParam
 
 
 class ParamSpecHelper():
 
-    @classmethod
-    def get_and_check_values(
-            cls, param_specs: Dict[str, ParamSpec],
-            param_values: Dict[str, ParamValue]) -> Dict[str, ParamValue]:
+    @staticmethod
+    def get_and_check_values(param_specs: Dict[str, ParamSpec],
+                             param_values: Dict[str, ParamValue]) -> Dict[str, ParamValue]:
         """
         Returns all the parameters including default value if not provided
 
@@ -50,8 +55,8 @@ class ParamSpecHelper():
 
         return full_values
 
-    @classmethod
-    def get_config_params(cls, param_specs: Dict[str, ParamSpec],
+    @staticmethod
+    def get_config_params(param_specs: Dict[str, ParamSpec],
                           param_values: Dict[str, ParamValue]) -> ConfigParams:
         """ Check the param_values with params_specs and return ConfigParams if ok. ConfigParams contains all value and default value if not provided
 
@@ -64,8 +69,8 @@ class ParamSpecHelper():
         """
         return ConfigParams(ParamSpecHelper.get_and_check_values(param_specs, param_values))
 
-    @classmethod
-    def check_config_specs(cls, config_specs: ConfigSpecs) -> None:
+    @staticmethod
+    def check_config_specs(config_specs: ConfigSpecs) -> None:
         """Check that the config specs are valid
         """
         if not config_specs:
@@ -77,3 +82,22 @@ class ParamSpecHelper():
         for key, item in config_specs.items():
             if not isinstance(item, ParamSpec):
                 raise Exception(f"The config spec '{key}' is invalid, it must be a ParamSpec but got {type(item)}")
+
+    @staticmethod
+    def create_param_spec_from_json(json_: Dict[str, Any]) -> ParamSpec:
+        param_spec_type = ParamSpecHelper._get_param_spec_type_from_str(json_.get('type'))
+
+        return param_spec_type.load_from_json(json_)
+
+    @staticmethod
+    def _get_param_spec_type_from_str(type_: str) -> Type[ParamSpec]:
+        param_spec_types = ParamSpecHelper._get_param_spec_types()
+        for param_spec_type in param_spec_types:
+            if param_spec_type.get_str_type() == type_:
+                return param_spec_type
+
+        raise BadRequestException(f"Invalid param spec str type '{type_}'")
+
+    @staticmethod
+    def _get_param_spec_types() -> List[Type[ParamSpec]]:
+        return [BoolParam, IntParam, FloatParam, StrParam, ListParam, ParamSet, TagsParam]

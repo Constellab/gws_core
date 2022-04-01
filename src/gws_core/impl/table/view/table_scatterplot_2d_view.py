@@ -6,10 +6,9 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Type
-from unicodedata import name
 
 from ....config.config_types import ConfigParams
-from ....config.param_spec import ListParam, ParamSet, StrParam
+from ....config.param_spec import ListParam
 from ....core.exception.exceptions import BadRequestException
 from ....resource.view_types import ViewSpecs
 from ...view.scatterplot_2d_view import ScatterPlot2DView

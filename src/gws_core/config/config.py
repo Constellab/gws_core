@@ -9,8 +9,9 @@ from ..config.param_spec_helper import ParamSpecHelper
 from ..core.model.model_with_user import ModelWithUser
 from ..model.typing_register_decorator import typing_registrator
 from .config_exceptions import InvalidParamValueException, UnkownParamException
+from .config_specs_helper import ConfigSpecsHelper
 from .config_types import (ConfigParams, ConfigParamsDict, ConfigSpecs,
-                           ConfigSpecsHelper, ParamValue)
+                           ParamValue)
 from .param_spec import ParamSpec
 
 

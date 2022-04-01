@@ -4,9 +4,11 @@
 # About us: https://gencovery.com
 
 from typing import List, TypedDict
+
 from pandas import DataFrame
 
-from .....config.param_spec import ParamSet, StrParam
+from .....config.param_set import ParamSet
+from .....config.param_spec import StrParam
 from ..table_filter_helper import TableFilterHelper
 
 # ####################################################################

@@ -6,7 +6,8 @@
 from pandas import DataFrame
 
 from ..config.config_types import ConfigParams, ConfigSpecs
-from ..config.param_spec import BoolParam, FloatParam, ParamSet, StrParam
+from ..config.param_set import ParamSet
+from ..config.param_spec import BoolParam, FloatParam, StrParam
 from ..impl.table.helper.constructor.num_data_filter_param import \
     NumericDataFilterParamConstructor
 from ..impl.table.helper.constructor.text_data_filter_param import \

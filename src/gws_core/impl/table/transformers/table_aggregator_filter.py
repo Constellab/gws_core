@@ -6,7 +6,8 @@
 from pandas import DataFrame
 
 from ....config.config_types import ConfigParams, ConfigSpecs
-from ....config.param_spec import FloatParam, ParamSet, StrParam
+from ....config.param_set import ParamSet
+from ....config.param_spec import FloatParam, StrParam
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ...table.table import Table
 from ..helper.table_aggregator_helper import TableAggregatorHelper

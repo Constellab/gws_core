@@ -6,7 +6,8 @@
 from pandas import DataFrame
 
 from .....config.config_types import ConfigParams
-from .....config.param_spec import ParamSet, StrParam
+from .....config.param_set import ParamSet
+from .....config.param_spec import StrParam
 from .....core.exception.exceptions import BadRequestException
 from ..table_scaler_helper import TableScalerHelper
 

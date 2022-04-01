@@ -7,10 +7,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Type
 
-from pandas import DataFrame
-
 from ....config.config_types import ConfigParams
-from ....config.param_spec import ListParam, ParamSet, StrParam
+from ....config.param_set import ParamSet
+from ....config.param_spec import ListParam, StrParam
 from ....core.exception.exceptions import BadRequestException
 from ....resource.view_types import ViewSpecs
 from ...view.scatterplot_3d_view import ScatterPlot3DView

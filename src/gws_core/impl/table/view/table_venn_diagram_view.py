@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List
 
 from ....config.config_types import ConfigParams
-from ....config.param_spec import ListParam, ParamSet, StrParam
+from ....config.param_spec import ListParam
 from ....core.exception.exceptions import BadRequestException
 from ....resource.view_types import ViewSpecs
 from ...view.venn_diagram_view import VennDiagramView

@@ -7,7 +7,8 @@ from typing import List, TypedDict
 
 from pandas import DataFrame
 
-from .....config.param_spec import FloatParam, ParamSet, StrParam
+from .....config.param_set import ParamSet
+from .....config.param_spec import FloatParam, StrParam
 from ..table_filter_helper import TableFilterHelper
 
 # ####################################################################
