@@ -74,7 +74,7 @@ class File(FSNode):
         Open the file
         """
 
-        if self._exists():
+        if self.exists():
             return open(self.path, mode, encoding='utf-8')
         else:
             if not os.path.exists(self.dir):

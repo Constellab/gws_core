@@ -32,5 +32,5 @@ class FSNode(Resource):
     def get_size(self) -> int:
         return FileHelper.get_size(self.path)
 
-    def _exists(self):
+    def exists(self):
         return os.path.exists(self.path)

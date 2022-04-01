@@ -37,7 +37,8 @@ class TableImporter(ResourceImporter):
 
     async def import_from_path(self, source: File, params: ConfigParams, target_type: Type[Table]) -> Table:
         if source.is_empty():
-            raise BadRequestException(GWSException.EMPTY_FILE.value, unique_code=GWSException.EMPTY_FILE.name)
+            raise BadRequestException(GWSException.EMPTY_FILE.value, unique_code=GWSException.EMPTY_FILE.name,
+                                      detail_args={'filename': source.name})
 
         file_format: str = params.get_value('file_format', Table.DEFAULT_FILE_FORMAT)
         sep = params.get_value('delimiter', Table.DEFAULT_DELIMITER)

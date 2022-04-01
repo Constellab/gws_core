@@ -111,6 +111,10 @@ class ResourceImporter(Converter):
 
     @final
     async def convert(self, source: FSNode, params: ConfigParams, target_type: Type[Resource]) -> Resource:
+
+        if not source.exists():
+            raise Exception(f"Cannot import file '{source.name}' because it doesn't exists.")
+
         target = await self.import_from_path(source, params, target_type)
 
         if target.name is None:
