@@ -3,6 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws_core.config.tags_param_spec import TagsParam
+
 from ....config.config_types import ConfigParams, ConfigSpecs
 from ....config.param_spec import BoolParam, StrParam
 from ....task.transformer.transformer import Transformer, transformer_decorator
@@ -51,3 +53,21 @@ class TableColumnSelector(Transformer):
         table = Table(data=data)
         # table.name = source.name + " (Column sliced)"
         return table
+
+
+@transformer_decorator(
+    unique_name="TableColumnTagsSelector",
+    resource_type=Table,
+    short_description="Select table column base on tag",
+)
+class TableColumnTagsSelector(Transformer):
+
+    config_specs: ConfigSpecs = {
+        "tags": TagsParam(
+            human_name="Column tags",
+            short_description="Filter on column tags",
+        ),
+    }
+
+    async def transform(self, source: Table, params: ConfigParams) -> Table:
+        return source.select_by_column_tags([params.get('tags')])
