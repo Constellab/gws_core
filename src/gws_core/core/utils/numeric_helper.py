@@ -14,7 +14,7 @@ class NumericHelper():
     """
 
     @staticmethod
-    def list_to_float(list_: List[Any], remove_none: bool = False) -> List[Optional[float]]:
+    def list_to_float(list_: List[Any], remove_none: bool = False, default_value: Any = None) -> List[Optional[float]]:
         """Convert a list of any to list of float.
 
         :param list_: _description_
@@ -25,24 +25,24 @@ class NumericHelper():
         :return: _description_
         :rtype: List[Optional[float]]
         """
-        data = [NumericHelper.to_float(val) for val in list_]
+        data = [NumericHelper.to_float(val, default_value) for val in list_]
 
         if remove_none:
             return [i for i in data if i is not None]
         return data
 
     @staticmethod
-    def to_float(value: Any) -> Optional[float]:
-        """Convert any to float. If not convertible to float or NaN, returns None
+    def to_float(value: Any, default_value: Any = None) -> Optional[float]:
+        """Convert any to float. If not convertible to float or NaN, returns default_value
         """
 
         try:
             result = float(value)
             if isnan(result):
-                return None
+                return default_value
             return result
         except:
-            return None
+            return default_value
 
     @staticmethod
     def list_to_int(list_: List[Any], remove_none: bool = False) -> List[Optional[int]]:
@@ -62,14 +62,14 @@ class NumericHelper():
         return data
 
     @staticmethod
-    def to_int(value: Any) -> Optional[int]:
+    def to_int(value: Any, default_value: Any = None) -> Optional[int]:
         """Convert any to int. If not convertible to int or NaN, returns None
         """
 
         try:
             result = int(value)
             if isnan(result):
-                return None
+                return default_value
             return result
         except:
-            return None
+            return default_value

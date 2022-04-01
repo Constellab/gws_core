@@ -5,6 +5,7 @@
 
 from typing import Dict, List, Union
 
+from gws_core.core.utils.numeric_helper import NumericHelper
 from pandas import DataFrame
 
 from ...config.config_types import ConfigParams
@@ -72,6 +73,7 @@ class StackedBarPlotView(BarPlotView):
         """
 
         if self._normalize:
+            y = NumericHelper.list_to_float(y, default_value=0)
             if self._series_sums is None:
                 self._series_sums = DataFrame(y)
             else:
