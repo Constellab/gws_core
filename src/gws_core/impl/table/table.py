@@ -5,10 +5,11 @@
 
 
 import copy
-from typing import Dict, List, Literal, TypedDict, Union
+from typing import Dict, List, Literal, Union
 
 import numpy as np
 from gws_core.impl.table.helper.table_filter_helper import TableFilterHelper
+from gws_core.tag.tag_helper import TagHelper
 from pandas import DataFrame, Series
 
 from ...config.config_types import ConfigParams
@@ -40,6 +41,12 @@ NUMERICAL_TAG_TYPE = "numerical"
 CATEGORICAL_TAG_TYPE = "categorical"
 ALLOWED_TAG_TYPES = [CATEGORICAL_TAG_TYPE, NUMERICAL_TAG_TYPE]
 COMMENT_CHAR = "#"
+
+AxisType = Literal[0, 1, "index", "columns"]
+
+
+def is_row_axis(axis: AxisType) -> bool:
+    return axis in [0, "index"]
 
 
 @resource_decorator("Table")
@@ -301,6 +308,9 @@ class Table(Resource):
     def get_meta(self):
         return self._meta
 
+    def get_tags(self, axis: AxisType) -> List[Dict[str, str]]:
+        return self.get_row_tags() if is_row_axis(axis) else self.get_column_tags()
+
     def get_row_tags(self, none_if_empty: bool = False,
                      from_index: int = None, to_index: int = None) -> List[Dict[str, str]]:
         tags = self._meta["row_tags"]
@@ -312,6 +322,11 @@ class Table(Resource):
             return tags[from_index:to_index + 1]
 
         return tags
+
+    def get_available_row_tags(self) -> Dict[str, List[str]]:
+        """Get the complete list of row tags with list of values for each
+        """
+        return TagHelper.get_distinct_values(self.get_row_tags())
 
     def get_row_tag_types(self):
         return self._meta["row_tag_types"]
@@ -353,6 +368,11 @@ class Table(Resource):
             return tags[from_index:to_index + 1]
 
         return tags
+
+    def get_available_column_tags(self) -> Dict[str, List[str]]:
+        """Get the complete list of column tags with list of values for each
+        """
+        return TagHelper.get_distinct_values(self.get_column_tags())
 
     def get_column_tag_types(self):
         return self._meta["column_tag_types"]
@@ -521,24 +541,7 @@ class Table(Resource):
         :rtype: Table
         """
 
-        if not isinstance(tags, list):
-            raise BadRequestException("A list of tags is required")
-
-        row_tags = self.get_row_tags()
-        position_union = []
-        for tag in tags:
-            position_instersect = []
-            for key, value in tag.items():
-                if not position_instersect:
-                    position_instersect = [i for i, t in enumerate(row_tags) if t.get(key) == value]
-                else:
-                    pos = [i for i, t in enumerate(row_tags) if t.get(key) == value]
-                    position_instersect = list(set(pos) & set(position_instersect))
-
-            position_union.extend(position_instersect)
-
-        position_union = sorted(list(set(position_union)))
-        return self.select_by_row_positions(position_union)
+        return self.select_by_tags("index", tags)
 
     def select_by_column_tags(self, tags: List[dict]) -> 'Table':
         """
@@ -557,25 +560,31 @@ class Table(Resource):
         :return: The selected table
         :rtype: Table
         """
+        return self.select_by_tags("columns", tags)
 
+    def select_by_tags(self, axis: AxisType, tags: List[dict]) -> 'Table':
         if not isinstance(tags, list):
             raise BadRequestException("A list of tags is required")
 
-        column_tags = self.get_column_tags()
+        header_tags = self.get_tags(axis)
         position_union = []
         for tag in tags:
             position_instersect = []
             for key, value in tag.items():
                 if not position_instersect:
-                    position_instersect = [i for i, t in enumerate(column_tags) if t.get(key) == value]
+                    position_instersect = [i for i, t in enumerate(header_tags) if t.get(key) == value]
                 else:
-                    pos = [i for i, t in enumerate(column_tags) if t.get(key) == value]
+                    pos = [i for i, t in enumerate(header_tags) if t.get(key) == value]
                     position_instersect = list(set(pos) & set(position_instersect))
+
+                if len(position_instersect) == 0:
+                    break
 
             position_union.extend(position_instersect)
 
         position_union = sorted(list(set(position_union)))
-        return self.select_by_column_positions(position_union)
+        return self.select_by_row_positions(position_union) if is_row_axis(axis) else self.select_by_column_positions(
+            position_union)
 
     def select_numeric_columns(self, drop_na: Literal['all', 'any'] = 'all') -> 'Table':
         """

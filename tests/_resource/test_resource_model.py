@@ -1,17 +1,16 @@
 
 
-from typing import Dict, List
+from typing import Dict
 
 from gws_core import (BaseTestCase, ConfigParams, File, IExperiment, ITask,
-                      Resource, ResourceModel, RField, Tag, Task, TaskInputs,
-                      TaskModel, TaskOutputs, resource_decorator,
+                      Resource, ResourceModel, RField, Tag, TagHelper, Task,
+                      TaskInputs, TaskModel, TaskOutputs, resource_decorator,
                       task_decorator)
 from gws_core.core.classes.search_builder import (SearchDict,
                                                   SearchFilterCriteria)
 from gws_core.data_provider.data_provider import DataProvider
 from gws_core.resource.resource_model import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
-from gws_core.tag.tag import TagHelper
 from gws_core.tag.tag_model import TagModel
 from gws_core.tag.tag_service import TagService
 

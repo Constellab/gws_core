@@ -295,7 +295,7 @@ from .resource.view_decorator import view as view
 from .resource.view_types import ViewSpecs as ViewSpecs
 # Tag
 from .tag.tag import Tag as Tag
-from .tag.tag import TagHelper as TagHelper
+from .tag.tag_helper import TagHelper as TagHelper
 # Task > Converter
 from .task.converter.converter import Converter as Converter
 from .task.converter.converter import ConverterRunner as ConverterRunner

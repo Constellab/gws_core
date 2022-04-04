@@ -1,3 +1,7 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 from typing import Dict, List
 
@@ -70,68 +74,3 @@ class Tag(BaseModel):
 
     def to_json(self) -> Dict:
         return {"key": self.key, "value": self.value}
-
-
-class TagHelper():
-
-    @classmethod
-    def add_or_replace_tag(cls, tags_str: str, tag_key: str, tag_value: str) -> str:
-        """Add of replace a tag key/value into a string
-        """
-
-        tags: List[Tag] = cls.tags_to_list(tags_str)
-
-        if not tags:
-            return str(Tag(tag_key, tag_value))
-
-        same_key: List[Tag] = [x for x in tags if x.key == tag_key]
-
-        if same_key:
-            same_key[0].set_value(tag_value)
-        else:
-            tags.append(Tag(tag_key, tag_value))
-
-        return cls.tags_to_str(tags)
-
-    @classmethod
-    def tags_to_str(cls, tags: List[Tag]) -> str:
-        if not tags:
-            return ''
-        return TAGS_SEPARATOR.join([str(tag) for tag in tags])
-
-    @classmethod
-    def tags_to_list(cls, tags: str) -> List[Tag]:
-        if not tags:
-            return []
-
-        tags_list: List[Tag] = []
-
-        for tag_str in tags.split(TAGS_SEPARATOR):
-            tags_list.append(Tag.from_string(tag_str))
-        return tags_list
-
-    @classmethod
-    def tags_dict_to_list(cls, tags: Dict[str, str]) -> List[Tag]:
-        if not tags:
-            return []
-
-        tags_list: List[Tag] = []
-
-        for tag_key, tag_value in tags.items():
-            tags_list.append(Tag(tag_key, tag_value))
-        return tags_list
-
-    @classmethod
-    def get_search_tag_expression(cls, tag_str: str, tag_field: CharField) -> Expression:
-        """ Get the filter expresion for a search in tags column
-
-        :param filter_: [description]
-        :type filter_: SearchFilterCriteria
-        :return: [description]
-        :rtype: Expression
-        """
-        tags: List[Tag] = cls.tags_to_list(tag_str)
-        query_builder: ExpressionBuilder = ExpressionBuilder()
-        for tag in tags:
-            query_builder.add_expression(tag_field.contains(str(tag)))
-        return query_builder.build()

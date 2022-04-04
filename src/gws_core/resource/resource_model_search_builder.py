@@ -8,7 +8,7 @@ from typing import List
 from peewee import Expression
 
 from ..core.classes.search_builder import SearchBuilder, SearchFilterCriteria
-from ..tag.tag import TagHelper
+from ..tag.tag_helper import TagHelper
 from .resource_model import ResourceModel
 
 

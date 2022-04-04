@@ -5,7 +5,8 @@ from typing import Dict, List, Optional
 from peewee import CharField
 from peewee import Model as PeeweeModel
 
-from .tag import Tag, TagHelper
+from .tag import Tag
+from .tag_helper import TagHelper
 
 
 class TaggableModel(PeeweeModel):
