@@ -13,7 +13,7 @@ from ....core.exception.exceptions import BadRequestException
 from ....core.utils.utils import Utils
 from ..table import AxisType, Table, is_row_axis
 
-TableGroupFunction = Literal['mean', 'median', 'sort', 'concat']
+TableGroupFunction = Literal['mean', 'median', 'sort']
 
 
 class TableTagGrouperHelper:
@@ -39,8 +39,6 @@ class TableTagGrouperHelper:
 
         if func == "sort":
             return cls.sort_by_row_tags(table, keys)
-        elif func == "concat":
-            return cls.flatten_rows_by_tags(table, keys)
         else:
             return cls._group_with_aggregate(table.select_numeric_columns(), keys, func, "index")
 
@@ -70,7 +68,7 @@ class TableTagGrouperHelper:
         return sorted_table
 
     @classmethod
-    def flatten_rows_by_tags(cls, table: Table, keys: List[str]) -> Table:
+    def unfold_rows_by_tags(cls, table: Table, keys: List[str]) -> Table:
         """Create new column for each column and tags combinaison
 
         """
@@ -143,8 +141,6 @@ class TableTagGrouperHelper:
 
         if func == "sort":
             return cls.sort_by_column_tags(table, keys)
-        elif func == "concat":
-            return cls.flatten_columns_by_tags(table, keys)
         else:
             return cls._group_with_aggregate(table.select_numeric_columns(), keys, func, "columns")
 
@@ -175,7 +171,7 @@ class TableTagGrouperHelper:
         return sorted_table
 
     @classmethod
-    def flatten_columns_by_tags(cls, table: Table, keys: List[str]) -> Table:
+    def unfold_columns_by_tags(cls, table: Table, keys: List[str]) -> Table:
 
         tags: Dict[str, List[str]] = table.get_available_column_tags()
 
