@@ -11,16 +11,17 @@ from pandas.api.types import is_string_dtype
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
+from ...impl.table.data_frame_r_field import DataFrameRField
+from ...impl.table.table import Table
 from ...resource.r_field import ListRField
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view
-from ...impl.table.data_frame_r_field import DataFrameRField
-from ...impl.table.table import Table
 from .dataset_view import DatasetView
 
 
 @final
-@resource_decorator("Dataset", human_name="Dataset", short_description="Data table for statistical and machine learning analysis")
+@resource_decorator("Dataset", human_name="Dataset",
+                    short_description="Data table for statistical and machine learning analysis")
 class Dataset(Table):
     """
     Dataset class
@@ -33,6 +34,9 @@ class Dataset(Table):
     def __init__(self, data: Union[DataFrame, np.ndarray, list] = None,
                  row_names=None, column_names=None, target_names: List[str] = None, meta: List = None):
         super().__init__(data, row_names=row_names, column_names=column_names, meta=meta)
+        self._set_target_names(target_names)
+
+    def set_target_names(self, target_names: List = None):
         self._set_target_names(target_names)
 
     def _set_target_names(self, target_names: List = None):
@@ -182,7 +186,7 @@ class Dataset(Table):
 
     def convert_row_tags_to_dummy_target_matrix(self, key: str) -> DataFrame:
         tags = self.get_row_tags()
-        targets = [ tag[key] for tag in tags ]
+        targets = [tag[key] for tag in tags]
         labels = sorted(list(set(targets)))
         nb_labels = len(labels)
         nb_instances = len(targets)
@@ -191,7 +195,7 @@ class Dataset(Table):
             current_label = targets[i]
             idx = labels.index(current_label)
             data[i][idx] = 1.0
-        
+
         return DataFrame(data=data, index=targets, columns=labels)
 
     def convert_targets_to_dummy_matrix(self) -> DataFrame:

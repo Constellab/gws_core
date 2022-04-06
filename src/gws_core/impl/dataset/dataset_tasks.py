@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 
+import copy
 import os
 from typing import Type
 
@@ -28,12 +29,12 @@ class DatasetImporter(TableImporter):
         'file_format': StrParam(default_value=Table.DEFAULT_FILE_FORMAT, allowed_values=Table.ALLOWED_FILE_FORMATS, human_name="File format", short_description="File format"),
         'delimiter': StrParam(allowed_values=Table.ALLOWED_DELIMITER, default_value=Table.DEFAULT_DELIMITER, human_name="Delimiter", short_description="Delimiter character. Only for parsing CSV files"),
         'header': IntParam(default_value=0, min_value=-1, human_name="Header", short_description="Row to use as the column names. By default the first row is used (i.e. header=0). Set header=-1 to not read column names."),
-        "metadata": ParamSet({
+        "metadata_columns": ParamSet({
             'column': StrParam(default_value=None, optional=True, visibility=StrParam.PUBLIC_VISIBILITY, human_name="Column", short_description="Column to use to tag rows using metadata."),
             'type': StrParam(default_value=Table.CATEGORICAL_TAG_TYPE, optional=True, allowed_values=Table.ALLOWED_TAG_TYPES, visibility=StrParam.PUBLIC_VISIBILITY, human_name="Type", short_description="Types of metadata"),
             'keep_in_table': BoolParam(default_value=True, optional=True, visibility=BoolParam.PUBLIC_VISIBILITY, human_name="Keep in table", short_description="Set True to keep metadata in table; False otherwise"),
             'is_target': BoolParam(default_value=True, optional=True, visibility=BoolParam.PUBLIC_VISIBILITY, human_name="Is target", short_description="Set True to use the column as target; False otherwise"),
-        }, optional=True, visibility=ParamSet.PUBLIC_VISIBILITY, human_name="Metadata columns", short_description="Columns data to use to tag rows of the table"),
+        }, optional=True, visibility=ParamSet.PUBLIC_VISIBILITY, human_name="Metadata and target columns", short_description="Columns data to use to tag rows of the dataset and also as targets"),
         'index_column': IntParam(default_value=-1, min_value=-1, optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Index column", short_description="Column to use as the row names. By default no index is used (i.e. index_column=-1)."),
         'decimal': StrParam(default_value=".", optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Decimal character", short_description="Character to recognize as decimal point (e.g. use ‘,’ for European/French data)."),
         'nrows': IntParam(default_value=None, optional=True, min_value=0, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Nb. rows", short_description="Number of rows to import. Useful to read piece of data."),
@@ -45,14 +46,15 @@ class DatasetImporter(TableImporter):
 
         # set targets names if exist
         targets = []
-        metadata_param_set = params.get_value('metadata', [])
+        metadata_param_set = params.get_value('metadata_columns', [])
         if metadata_param_set:
             for metadata in metadata_param_set:
                 colname = metadata.get("column")
                 if metadata.get("is_target"):
                     targets.append(colname)
+
         if targets:
-            dataset = target_type(data=dataset.get_data(), target_names=targets)
+            dataset.set_target_names(target_names=targets)
 
         return dataset
 

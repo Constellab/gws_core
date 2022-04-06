@@ -82,3 +82,7 @@ class ResourceSet(ResourceListBase):
             raise Exception('Resource name is not set')
 
         return resources[resource_name]
+
+    def resource_exists(self, resource_name: str) -> Resource:
+        resources = self.get_resources()
+        return resource_name in resources
