@@ -21,8 +21,10 @@ class RobotsGenerator(Task):
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         robot_1 = Robot.empty()
         robot_1.age = 98
+        robot_1.name = "Robot 1"
         robot_2 = Robot.empty()
         robot_2.age = 99
+        robot_2.name = "Robot 2"
 
         resource_set: ResourceSet = ResourceSet()
         resource_set.add_resource(robot_1)
@@ -45,15 +47,19 @@ class TestResourceSet(BaseTestCase):
 
         resource_set: ResourceSet = robot_generator.get_output('set')
 
-        self.assertEqual(len(resource_set.resources), 2)
+        self.assertEqual(len(resource_set.get_resources()), 2)
 
         age = 0
-        for resource in resource_set.resources:
+        for resource in resource_set.get_resources().values():
             self.assertIsInstance(resource, Robot)
             age += resource.age
 
         # check the age, this will mean the two where correctly saved separatly
         self.assertEqual(age, 98 + 99)
+
+        # Test get_resource
+        robot_1 = resource_set.get_resource('Robot 1')
+        self.assertEqual(robot_1.name, 'Robot 1')
 
         # test the view, reload the resource to simulate real view
         resource_set = ResourceModel.get_by_id_and_check(resource_set._model_id).get_resource()

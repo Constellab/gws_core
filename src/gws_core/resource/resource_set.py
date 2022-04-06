@@ -2,25 +2,19 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Set
+from typing import Dict, Set
 
-from gws_core.config.config_types import ConfigParams
-from gws_core.impl.view.resources_list_view import ResourcesListView
-from gws_core.resource.r_field import ListRField
-from gws_core.resource.view_decorator import view
+from gws_core.resource.r_field import DictRField
+from gws_core.resource.resource_list_base import ResourceListBase
 
 from .resource import Resource
 from .resource_decorator import resource_decorator
 
-if TYPE_CHECKING:
-    from gws_core.resource.resource_model import ResourceModel
-
 
 @resource_decorator(unique_name="ResourceSet", human_name="Resource set",
                     short_description="A set of resources")
-class ResourceSet(Resource):
+class ResourceSet(ResourceListBase):
     """Resource to manage a set of resources
 
     :param Resource: _description_
@@ -31,25 +25,34 @@ class ResourceSet(Resource):
     :rtype: _type_
     """
 
-    _resource_ids: List[str] = ListRField()
+    # dict where key is the initial name of the resource and value is the resource id
+    _resource_ids: Dict[str, str] = DictRField()
 
-    _resources: Set[Resource] = None
+    # dict provided before the resources are saved
+    _resources: Dict[str, Resource] = None
 
-    @property
-    def resources(self) -> Set[Resource]:
-        if self._resources is None:
-            self._resources = self._load_resources()
+    def get_resources(self) -> Dict[str, Resource]:
+        if not self._resources:
+            resources = self._load_resources()
+            self._resources = {}
+            for resource_name, id in self._resource_ids.items():
+                # search the resource with same id and set it in _resources
+                for resource in resources:
+                    if resource._model_id == id:
+                        self._resources[resource_name] = resource
+                        break
 
         return self._resources
 
-    @resources.setter
-    def resources(self, resources: Set[Resource]) -> None:
-        if not isinstance(resources, set):
-            raise Exception('The resource_set only takes set of resources')
-        self._resource_ids = []
-        self._resources = set()
-        for resource in resources:
-            self.add_resource(resource)
+    def _get_resource_ids(self) -> Set[str]:
+        return set(self._resource_ids.values())
+
+    def get_resources_as_set(self) -> Set[Resource]:
+        return set(self.get_resources().values())
+
+    def _set_r_field(self) -> None:
+        """ set _resource_ids with key = resource_name and value = resource_id"""
+        self._resource_ids = {name: resource._model_id for name, resource in self._resources.items()}
 
     def add_resource(self, resource: Resource) -> None:
         if not isinstance(resource, Resource):
@@ -58,40 +61,24 @@ class ResourceSet(Resource):
         if isinstance(resource, ResourceSet):
             raise Exception('ResourceSet does not support nested')
 
+        if self._model_id is not None:
+            raise Exception("The ResourceSet is already saved, you can't add a resource to it")
+
+        if resource.name is None:
+            raise Exception('Resource name is not set')
+
         if self._resources is None:
-            self._resources = set()
+            self._resources = {}
 
-        if self._resource_ids is None:
-            self._resource_ids = []
+        if resource.name in self._resources:
+            raise Exception(f'Resource with name {resource.name} already exists')
 
-        if resource._model_id is not None:
-            self._resource_ids.append(resource._model_id)
+        self._resources[resource.name] = resource
 
-        self._resources.add(resource)
+    def get_resource(self, resource_name: str) -> Resource:
+        resources = self.get_resources()
 
-    def _load_resources(self) -> Set[Resource]:
-        from .resource_model import ResourceModel
-        if not self._resource_ids:
-            return set()
+        if not resource_name in resources:
+            raise Exception('Resource name is not set')
 
-        resource_models: List[ResourceModel] = list(
-            ResourceModel.select().where(ResourceModel.id.in_(self._resource_ids)))
-
-        resources: Set[Resource] = set()
-        for resource_model in resource_models:
-            resources.add(resource_model.get_resource())
-        return resources
-
-    def _get_resource_models(self) -> List[ResourceModel]:
-        from .resource_model import ResourceModel
-        return list(ResourceModel.select().where(ResourceModel.id.in_(self._resource_ids)).order_by(ResourceModel.name))
-
-    @view(view_type=ResourcesListView, human_name='Resources list',
-          short_description='List the resources', default_view=True)
-    def view_resources_list(self, params: ConfigParams) -> ResourcesListView:
-        """
-        View the table as Venn diagram
-        """
-        view = ResourcesListView()
-        view.add_resources(self._get_resource_models())
-        return view
+        return resources[resource_name]

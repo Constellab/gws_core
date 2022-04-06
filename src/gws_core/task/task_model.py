@@ -4,9 +4,9 @@
 # About us: https://gencovery.com
 import inspect
 import zlib
-from typing import Any, Dict, List, Set, Type
+from typing import Any, Dict, List, Type
 
-from gws_core.resource.resource_set import ResourceSet
+from gws_core.resource.resource_list_base import ResourceListBase
 
 from ..config.config_types import ConfigParamsDict
 from ..core.decorator.transaction import transaction
@@ -257,20 +257,49 @@ class TaskModel(ProcessModel):
                 # We use the same resource
                 resource_model = ResourceModel.get_by_id_and_check(resource._model_id)
             else:
-
-                # Handle specific case of ResourceSet, it saves all the sub
-                if isinstance(resource, ResourceSet):
-                    self._save_resource_set(resource, port.name)
-
-                # check the resource r field before saving
-                self._check_resource_r_fields(resource, port.name)
-
-                # create ans save the resource model from the resource
-                resource_model = ResourceModel.save_from_resource(
-                    resource, origin=ResourceOrigin.GENERATED, experiment=self.experiment, task_model=self)
+                resource_model = self._save_resource(resource, port.name)
 
             # save the resource model into the output's port (even if it's None)
             port.resource_model = resource_model
+
+    def _save_resource(self, resource: Resource, port_name: str) -> ResourceModel:
+        """Save the resource
+        """
+
+        # Handle specific case of ResourceSet, it saves all the sub
+        if isinstance(resource, ResourceListBase):
+            self._save_resource_list(resource, port_name)
+
+        # check the resource r field before saving
+        self._check_resource_r_fields(resource, port_name)
+
+        # create and save the resource model from the resource
+        resource_model = ResourceModel.save_from_resource(
+            resource, origin=ResourceOrigin.GENERATED, experiment=self.experiment, task_model=self)
+
+        return resource_model
+
+    def _save_resource_list(self, resource_list: ResourceListBase, port_name: str) -> None:
+        """Specific management to save resources of a resource set
+        """
+
+        for resource in resource_list.get_resources_as_set():
+
+            # if this is a new resource
+            if resource._model_id is None:
+
+                # create and save the resource model from the resource
+                resource_model = self._save_resource(resource, port_name)
+
+                resource._model_id = resource_model.id
+            else:
+                # if the resource is not listed in task input, error
+                if not self.inputs.has_resource_model(resource.__model_id__):
+                    raise BadRequestException(GWSException.INVALID_RESOURCE_R_FIELD.value,
+                                              unique_code=GWSException.INVALID_RESOURCE_R_FIELD.name,
+                                              detail_args={'port_name': port_name})
+
+        resource_list._set_r_field()
 
     def _check_resource_r_fields(self, resource: Resource, port_name: str):
         """check all ResourceRField are resource that are input of the task
@@ -295,24 +324,6 @@ class TaskModel(ProcessModel):
                                           unique_code=GWSException.INVALID_RESOURCE_R_FIELD.name,
 
                                           detail_args={'port_name': port_name})
-
-    def _save_resource_set(self, resource_set: ResourceSet, port_name: str) -> None:
-        """Specific management to save resources of a resource set
-        """
-
-        saved_resources: Set[Resource] = set()
-        for resource in resource_set.resources:
-            # check the resource r field before saving
-            self._check_resource_r_fields(resource, port_name)
-
-            # create ans save the resource model from the resource
-            resource_model = ResourceModel.save_from_resource(
-                resource, origin=ResourceOrigin.GENERATED, experiment=self.experiment, task_model=self)
-
-            saved_resources.add(resource_model.get_resource())
-
-        # set the resources with the correct ids on the ResourceSet
-        resource_set.resources = saved_resources
 
     def data_to_json(self, deep: bool = False, **kwargs) -> dict:
         """

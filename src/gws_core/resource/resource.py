@@ -39,6 +39,7 @@ class Resource(Base):
     _is_exportable: bool = False
     # Set by the resource parent on creation
     _model_id: str = None
+    __model_id__: str = None
     _kv_store: KVStore = None
 
     def __init__(self):
