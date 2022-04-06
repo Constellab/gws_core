@@ -54,7 +54,17 @@ class ResourceSet(ResourceListBase):
         """ set _resource_ids with key = resource_name and value = resource_id"""
         self._resource_ids = {name: resource._model_id for name, resource in self._resources.items()}
 
-    def add_resource(self, resource: Resource) -> None:
+    def add_resource(self, resource: Resource, create_new_resource: bool = True) -> None:
+        """Add a resource to the set
+
+        :param resource: resource to Add
+        :type resource: Resource
+        :param create_new_resource: If true, a new resource is created when saving the resource.
+                                    Otherwise it doesn't create a new resource but reference it. In this case
+                                    the resource must be a input of the task that created the ResourceSet and the resource
+                                    must have been saved before, defaults to True
+        :type create_new_resource: bool, optional
+        """
         if not isinstance(resource, Resource):
             raise Exception('The resource_set only takes set of resources')
 
@@ -67,11 +77,18 @@ class ResourceSet(ResourceListBase):
         if resource.name is None:
             raise Exception('Resource name is not set')
 
+        if create_new_resource and resource._model_id is None:
+            raise Exception("The resource must be saved before, if you use the create_new_resource option")
+
         if self._resources is None:
             self._resources = {}
 
         if resource.name in self._resources:
             raise Exception(f'Resource with name {resource.name} already exists')
+
+        # if the create new resource is True, we clear the model id so it creates a new resource
+        if create_new_resource:
+            resource._model_id = None
 
         self._resources[resource.name] = resource
 
