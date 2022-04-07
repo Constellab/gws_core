@@ -13,6 +13,7 @@ from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchDict
 from gws_core.impl.robot.robot_protocol import RobotWorldTravelProto
 from gws_core.impl.robot.robot_resource import Robot
+from gws_core.impl.table.table import Table
 from gws_core.model.typing import Typing
 from gws_core.model.typing_service import TypingService
 from gws_core.resource.resource_decorator import resource_decorator
@@ -37,7 +38,7 @@ class SubFile(File):
     pass
 
 
-@transformer_decorator(unique_name="TableTransformer", resource_type=File, human_name='My file transformer',
+@transformer_decorator(unique_name="FileTransformer", resource_type=File, human_name='My file transformer',
                        short_description="Anything is possible")
 class FileTransformer(Transformer):
     pass
@@ -100,16 +101,16 @@ class TestTyping(BaseTestCase):
         # find task typings related to Table
         typings: List[Typing] = TaskTyping.get_by_related_resource(SubFile, 'TRANSFORMER')
 
-        # Check that we found the TableTransformer
-        self.assertEqual(len([x for x in typings if x.model_name == 'TableTransformer']), 1)
+        # Check that we found the FileTransformer
+        self.assertEqual(len([x for x in typings if x.model_name == 'FileTransformer']), 1)
         # Check that we found the SubFileTransformer
         self.assertEqual(len([x for x in typings if x.model_name == 'SubFileTransformer']), 1)
 
         # find task typings related to Table
         typings = TaskTyping.get_by_related_resource(File,  'TRANSFORMER')
 
-        # Check that we found the TableTransformer
-        self.assertEqual(len([x for x in typings if x.model_name == 'TableTransformer']), 1)
+        # Check that we found the FileTransformer
+        self.assertEqual(len([x for x in typings if x.model_name == 'FileTransformer']), 1)
         # Check that the SubFileTransformer is not present
         self.assertEqual(len([x for x in typings if x.model_name == 'SubFileTransformer']), 0)
 
@@ -136,15 +137,22 @@ class TestTyping(BaseTestCase):
         # Search on full text
         search_dict.filtersCriteria = [{'key': 'text', "operator": "MATCH", "value": "file"}]
         paginator: Paginator[Typing] = TypingService.search(search_dict)
-        # Test that it found the TableTransformer
-        self.assertTrue(len([x for x in paginator.current_items() if x.model_name == 'TableTransformer']) > 0)
+        # Test that it found the FileTransformer
+        self.assertTrue(len([x for x in paginator.current_items() if x.model_name == 'FileTransformer']) > 0)
 
         search_dict.filtersCriteria = [{'key': 'text', "operator": "MATCH", "value": "possible is"}]
         paginator: Paginator[Typing] = TypingService.search(search_dict)
-        # Test that it found the TableTransformer
-        self.assertTrue(len([x for x in paginator.current_items() if x.model_name == 'TableTransformer']) > 0)
+        # Test that it found the FileTransformer
+        self.assertTrue(len([x for x in paginator.current_items() if x.model_name == 'FileTransformer']) > 0)
 
-        search_dict.filtersCriteria = [{'key': 'text', "operator": "MATCH", "value": "TableTransformer"}]
+        search_dict.filtersCriteria = [{'key': 'text', "operator": "MATCH", "value": "FileTransformer"}]
         paginator: Paginator[Typing] = TypingService.search(search_dict)
-        # Test that it found the TableTransformer
-        self.assertTrue(len([x for x in paginator.current_items() if x.model_name == 'TableTransformer']) > 0)
+        # Test that it found the FileTransformer
+        self.assertTrue(len([x for x in paginator.current_items() if x.model_name == 'FileTransformer']) > 0)
+
+        # Test search on related model
+        search_dict.filtersCriteria = [{'key': 'related_model_typing_name',
+                                        "operator": "EQ", "value": SubFile._typing_name}]
+        paginator: Paginator[Typing] = TypingService.search(search_dict)
+        # Test that it found the FileTransformer
+        self.assertTrue(len([x for x in paginator.current_items() if x.model_name == 'FileTransformer']) > 0)
