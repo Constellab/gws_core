@@ -3,21 +3,17 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import List
 
-from gws_core.config.param_set import ParamSet
 from gws_core.config.tags_param_spec import TagsParam
 
 from ....config.config_types import ConfigParams, ConfigSpecs
-from ....config.param_spec import BoolParam, StrParam
 from ....task.transformer.transformer import Transformer, transformer_decorator
-from ...table.table import Table
-from ..helper.dataframe_filter_helper import (DataframeFilterHelper,
-                                              DataframeFilterName)
+from ..helper.dataframe_filter_helper import DataframeFilterHelper
+from ..table import Table
 
 # ####################################################################
 #
-# TableRowSelector class
+# Table selector
 #
 # ####################################################################
 
@@ -43,6 +39,32 @@ class TableRowSelector(Transformer):
 
 
 @transformer_decorator(
+    unique_name="TableColumnsSelector",
+    resource_type=Table,
+    short_description="Select table columns",
+)
+class TableColumnSelector(Transformer):
+    """
+    TableColumnSelector
+
+    Select part of a table using column name
+    """
+
+    config_specs: ConfigSpecs = {
+        "filters": DataframeFilterHelper.get_filter_param_set('column')
+    }
+
+    async def transform(self, source: Table, params: ConfigParams) -> Table:
+        return source.select_by_column_names(params.get('filters'))
+
+# ####################################################################
+#
+# Table tags selector
+#
+# ####################################################################
+
+
+@transformer_decorator(
     unique_name="TableRowTagsSelector",
     resource_type=Table,
     short_description="Select table rows base on tag",
@@ -58,3 +80,21 @@ class TableRowTagsSelector(Transformer):
 
     async def transform(self, source: Table, params: ConfigParams) -> Table:
         return source.select_by_row_tags([params.get('tags')])
+
+
+@transformer_decorator(
+    unique_name="TableColumnTagsSelector",
+    resource_type=Table,
+    short_description="Select table column base on tag",
+)
+class TableColumnTagsSelector(Transformer):
+
+    config_specs: ConfigSpecs = {
+        "tags": TagsParam(
+            human_name="Column tags",
+            short_description="Filter on column tags",
+        )
+    }
+
+    async def transform(self, source: Table, params: ConfigParams) -> Table:
+        return source.select_by_column_tags([params.get('tags')])

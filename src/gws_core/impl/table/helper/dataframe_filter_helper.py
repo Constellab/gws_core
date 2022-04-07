@@ -182,7 +182,10 @@ class DataframeFilterHelper:
         return data
 
     @classmethod
-    def get_filter_param_set(cls, axis_name: AxisName, optional: bool = False) -> ParamSet:
+    def get_filter_param_set(cls, axis_name: AxisName,
+                             param_set_human_name: str = None,
+                             param_set_short_description: str = None,
+                             optional: bool = False) -> ParamSet:
         """Get a param set that is of type DataframeFilterName
         """
 
@@ -197,4 +200,7 @@ class DataframeFilterHelper:
                 human_name="Use regular expression",
                 short_description="True to use regular expression, False otherwise",
             )
-        }, optional=optional)
+        },
+            human_name=param_set_human_name,
+            short_description=param_set_short_description,
+            optional=optional)

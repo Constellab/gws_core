@@ -188,15 +188,29 @@ from .impl.table.tasks.table_exporter import TableExporter as TableExporter
 from .impl.table.tasks.table_importer import TableImporter as TableImporter
 from .impl.table.transformers.table_aggregator import \
     TableAggregator as TableAggregator
-from .impl.table.transformers.table_column_tag_grouper import \
-    TableColumnTagGrouper as TableColumnTagGrouper
+from .impl.table.transformers.table_aggregator_filter import \
+    TableAggregatorFilter as TableAggregatorFilter
 from .impl.table.transformers.table_data_filter import \
     TableDataFilter as TableDataFilter
-from .impl.table.transformers.table_row_tag_grouper import \
-    TableRowTagGrouper as TableRowTagGrouper
 from .impl.table.transformers.table_scaler import TableScaler as TableScaler
+from .impl.table.transformers.table_selector import \
+    TableColumnSelector as TableColumnSelector
+from .impl.table.transformers.table_selector import \
+    TableColumnTagsSelector as TableColumnTagsSelector
+from .impl.table.transformers.table_selector import \
+    TableRowSelector as TableRowSelector
+from .impl.table.transformers.table_selector import \
+    TableRowTagsSelector as TableRowTagsSelector
+from .impl.table.transformers.table_tag_grouper import \
+    TableColumnTagGrouper as TableColumnTagGrouper
+from .impl.table.transformers.table_tag_grouper import \
+    TableRowTagGrouper as TableRowTagGrouper
 from .impl.table.transformers.table_transposer import \
     TableTransposer as TableTransposer
+from .impl.table.transformers.table_unfolder import \
+    TableColumnTagUnfolder as TableColumnTagUnfolder
+from .impl.table.transformers.table_unfolder import \
+    TableRowTagUnfolder as TableRowTagUnfolder
 # Impl > Text
 from .impl.text.text import Text as Text
 from .impl.text.view.text_view import TextView as TextView
