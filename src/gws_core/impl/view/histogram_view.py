@@ -7,7 +7,7 @@ from typing import List, Union
 
 import numpy
 from gws_core.core.utils.numeric_helper import NumericHelper
-from gws_core.impl.table.table_helper import TableHelper
+from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from pandas import DataFrame
 
 from ...config.config_types import ConfigParams
@@ -100,7 +100,7 @@ class HistogramView(View):
         """
         if dataframe.shape[0] != 1 and dataframe.shape[1] != 1:
             raise BadRequestException("The data must be row or column vector")
-        return self.add_data(TableHelper.flatten_dataframe_by_column(dataframe), name=name)
+        return self.add_data(DataframeHelper.flatten_dataframe_by_column(dataframe), name=name)
 
     def add_series(self, *, x: Union[List[float], List[str]] = None, y: List[float] = None, name: str = None):
         """

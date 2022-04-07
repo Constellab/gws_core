@@ -71,7 +71,7 @@ class TableHeatmapView(BaseTableView):
             )
         else:
             column_names = serie["y"]["selection"]
-            table = self._table.select_by_column_names(column_names)
+            table = self._table.select_by_column_names([{"name": column_names}])
 
         table.get_columns_info()
         helper_view = HeatmapView()

@@ -14,7 +14,7 @@ from ....config.param_spec import BoolParam, IntParam, StrParam
 from ....core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ....impl.file.file import File
-from ....impl.table.table_helper import TableHelper
+from ..helper.dataframe_helper import DataframeHelper
 from ....task.converter.importer import ResourceImporter, importer_decorator
 from ..table import Table
 
@@ -57,7 +57,7 @@ class TableImporter(ResourceImporter):
         elif sep == "space":
             sep = " "
         elif sep == "auto":
-            sep = TableHelper.detect_csv_delimiter(source.read(size=10000))
+            sep = DataframeHelper.detect_csv_delimiter(source.read(size=10000))
 
         if source.extension in Table.ALLOWED_XLS_FILE_FORMATS or file_format in Table.ALLOWED_XLS_FILE_FORMATS:
             df = pandas.read_excel(source.path)

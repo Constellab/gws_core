@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import (TYPE_CHECKING, Any, Dict, List, Literal, Optional,
                     TypedDict, Union)
 
-from gws_core.impl.table.table_helper import TableHelper
+from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from pandas import DataFrame
 
 from ....core.exception.exceptions.bad_request_exception import \
@@ -79,7 +79,7 @@ class BaseTableView(View):
         """Get all the values of multiple column flattened
         """
         dataframe = self.get_dataframe_from_columns(column_names)
-        return TableHelper.flatten_dataframe_by_column(dataframe)
+        return DataframeHelper.flatten_dataframe_by_column(dataframe)
 
     def get_dataframe_from_columns(self, column_names: List[str]) -> DataFrame:
         """Extract a new dataframe
@@ -94,7 +94,7 @@ class BaseTableView(View):
         for coord in ranges:
             sub_df = self.get_dataframe_from_coords(coord)
 
-            values += TableHelper.flatten_dataframe_by_column(sub_df)
+            values += DataframeHelper.flatten_dataframe_by_column(sub_df)
 
         return values
 

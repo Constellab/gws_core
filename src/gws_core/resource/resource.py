@@ -3,6 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from copy import deepcopy
 from typing import Dict, List, Union, final
 
 from gws_core.resource.kv_store import KVStore
@@ -15,7 +16,7 @@ from ..core.model.base import Base
 from ..core.utils.reflector_helper import ReflectorHelper
 from ..impl.json.json_view import JSONView
 from ..model.typing_register_decorator import typing_registrator
-from ..resource.r_field import BaseRField, StrRField, UUIDRField
+from ..resource.r_field import BaseRField, UUIDRField
 from ..resource.view_decorator import view
 
 # Typing names generated for the class resource
@@ -102,17 +103,17 @@ class Resource(Base):
         return None
 
     def clone(self) -> 'Resource':
-        """Clone the resource to create a new instance
+        """Clone the resource to create a new instance with a new id
             It copies the RFields
         """
         clone: Resource = type(self)()
-        clone._kv_store = self._kv_store
         clone._model_id = self._model_id
 
         # get the r_fields of the resource
         r_fields: Dict[str, BaseRField] = self.__get_resource_r_fields__()
-        for fieldname in r_fields:
-            setattr(clone, fieldname, getattr(self, fieldname))
+        for fieldname, r_field in r_fields.items():
+            value = getattr(self, fieldname)
+            setattr(clone, fieldname, deepcopy(value))
 
         return clone
 

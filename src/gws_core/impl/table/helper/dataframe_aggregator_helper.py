@@ -8,7 +8,7 @@ from pandas import DataFrame
 from ....core.exception.exceptions import BadRequestException
 
 
-class TableAggregatorHelper:
+class DataframeAggregatorHelper:
 
     VALID_AGGREGATION_DIRECTIONS = ["horizontal", "vertical"]
     VALID_AXIS_AGGREGATION_FUNCTIONS = ["mean", "std", "var", "min", "max", "median", "sum"]

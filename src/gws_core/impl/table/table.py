@@ -8,7 +8,8 @@ import copy
 from typing import Dict, List, Literal, Union
 
 import numpy as np
-from gws_core.impl.table.helper.table_filter_helper import TableFilterHelper
+from gws_core.core.utils.utils import Utils
+from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.tag.tag_helper import TagHelper
 from pandas import DataFrame, Series
 
@@ -19,7 +20,10 @@ from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view_decorator import view
 from .data_frame_r_field import DataFrameRField
-from .table_types import TableHeaderInfo, TableMeta
+from .helper.dataframe_filter_helper import (DataframeFilterHelper,
+                                             DataframeFilterName)
+from .table_types import (AxisType, TableHeaderInfo, TableMeta, TableTagType,
+                          is_row_axis)
 from .view.table_barplot_view import TableBarPlotView
 from .view.table_boxplot_view import TableBoxPlotView
 from .view.table_heatmap_view import TableHeatmapView
@@ -30,40 +34,26 @@ from .view.table_stacked_barplot_view import TableStackedBarPlotView
 from .view.table_venn_diagram_view import TableVennDiagramView
 from .view.table_view import TableView
 
-ALLOWED_DELIMITER = ["auto", "tab", "space", ",", ";"]
-DEFAULT_DELIMITER = "auto"
-DEFAULT_FILE_FORMAT = ".csv"
 ALLOWED_XLS_FILE_FORMATS = ['.xlsx', '.xls']
 ALLOWED_TXT_FILE_FORMATS = ['.csv', '.tsv', '.tab', '.txt']
 ALLOWED_FILE_FORMATS = [*ALLOWED_XLS_FILE_FORMATS, *ALLOWED_TXT_FILE_FORMATS]
-
-NUMERICAL_TAG_TYPE = "numerical"
-CATEGORICAL_TAG_TYPE = "categorical"
-ALLOWED_TAG_TYPES = [CATEGORICAL_TAG_TYPE, NUMERICAL_TAG_TYPE]
-COMMENT_CHAR = "#"
-
-AxisType = Literal[0, 1, "index", "columns"]
-
-
-def is_row_axis(axis: AxisType) -> bool:
-    return axis in [0, "index"]
 
 
 @resource_decorator("Table")
 class Table(Resource):
 
-    ALLOWED_DELIMITER = ALLOWED_DELIMITER
-    DEFAULT_DELIMITER = DEFAULT_DELIMITER
-    DEFAULT_FILE_FORMAT = DEFAULT_FILE_FORMAT
-    ALLOWED_FILE_FORMATS = ALLOWED_FILE_FORMATS
+    ALLOWED_DELIMITER = ["auto", "tab", "space", ",", ";"]
+    DEFAULT_DELIMITER = "auto"
+    DEFAULT_FILE_FORMAT = ".csv"
 
     ALLOWED_XLS_FILE_FORMATS = ALLOWED_XLS_FILE_FORMATS
     ALLOWED_TXT_FILE_FORMATS = ALLOWED_TXT_FILE_FORMATS
+    ALLOWED_FILE_FORMATS = ALLOWED_FILE_FORMATS
 
-    NUMERICAL_TAG_TYPE = NUMERICAL_TAG_TYPE
-    CATEGORICAL_TAG_TYPE = CATEGORICAL_TAG_TYPE
-    ALLOWED_TAG_TYPES = ALLOWED_TAG_TYPES
-    COMMENT_CHAR = COMMENT_CHAR
+    NUMERICAL_TAG_TYPE = "numerical"
+    CATEGORICAL_TAG_TYPE = "categorical"
+    ALLOWED_TAG_TYPES = Utils.get_literal_values(TableTagType)
+    COMMENT_CHAR = '#'
 
     _data: DataFrame = DataFrameRField()
     _meta: TableMeta = DictRField()
@@ -130,7 +120,7 @@ class Table(Resource):
 
     def _add_tag(
             self, axis, index: int, key: str, value: Union[str, int, float],
-            type: Literal['categorical', 'numerical'] = 'categorical'):
+            type_: TableTagType = 'categorical'):
         if axis not in ["row", "column"]:
             raise BadRequestException("The index must be an integer")
         if not isinstance(index, int):
@@ -139,22 +129,22 @@ class Table(Resource):
             raise BadRequestException("The tag key must be a string")
         if not isinstance(value, (str, int, float)):
             raise BadRequestException("The tag value must be a string, int or float")
-        if type not in self.ALLOWED_TAG_TYPES:
-            raise BadRequestException(f"Invalid tag type '{type}'. The tag type must be in {self.ALLOWED_TAG_TYPES}")
+        if type_ not in self.ALLOWED_TAG_TYPES:
+            raise BadRequestException(f"Invalid tag type '{type_}'. The tag type must be in {self.ALLOWED_TAG_TYPES}")
 
         key = str(key)
         value = str(value)
 
         self._meta[axis + "_tags"][index][key] = value
         if key not in self._meta[axis + "_tag_types"]:
-            self._meta[axis + "_tag_types"][key] = type
+            self._meta[axis + "_tag_types"][key] = type_
         else:
-            if self._meta[axis + "_tag_types"][key] != type:
+            if self._meta[axis + "_tag_types"][key] != type_:
                 raise BadRequestException(f"Tag '{key}' already exists with a different type")
 
     def add_row_tag(
             self, row_index: int, key: str, value: Union[str, int, float],
-            type: Literal['categorical', 'numerical'] = 'categorical'):
+            type_: TableTagType = 'categorical'):
         """
         Add a {key, value} tag to a row at a given index
 
@@ -166,11 +156,11 @@ class Table(Resource):
         :param value: str, int, float
         """
 
-        self._add_tag("row", row_index, key, value, type=type)
+        self._add_tag("row", row_index, key, value, type_=type_)
 
     def add_column_tag(
             self, column_index: int, key: str, value: Union[str, int, float],
-            type: Literal['categorical', 'numerical'] = 'categorical'):
+            type_: TableTagType = 'categorical'):
         """
         Add a {key, value} tag to a column at a given index
 
@@ -182,7 +172,7 @@ class Table(Resource):
         :param value: str, int, float
         """
 
-        self._add_tag("column", column_index, key, value, type=type)
+        self._add_tag("column", column_index, key, value, type_=type_)
 
     def convert_row_tags_to_dummy_target_matrix(self, key: str) -> DataFrame:
         tags = self.get_row_tags()
@@ -253,15 +243,6 @@ class Table(Resource):
     def get_data(self):
         return self._data
 
-    # -- C --
-
-    @ staticmethod
-    def clean_tags(tags):
-        try:
-            return [{str(k): str(v) for k, v in t.items()} for t in tags]
-        except:
-            raise BadRequestException("The tags are not valid. Please check")
-
     @property
     def column_names(self) -> list:
         """
@@ -283,27 +264,15 @@ class Table(Resource):
             lower_names = [x.lower() for x in self.column_names]
             return name.lower() in lower_names
 
-    # -- F --
+    def get_column_as_dataframe(self, column_name: str, rtype='list', skip_nan=False) -> DataFrame:
+        df = self._data[[column_name]]
+        if skip_nan:
+            df.dropna(inplace=True)
+        return df
 
-    @ classmethod
-    def from_dict(cls, data: dict, orient='index', dtype=None, columns=None) -> 'Table':
-        dataframe = DataFrame.from_dict(data, orient, dtype, columns)
-        res = cls(data=dataframe)
-        return res
-
-    # -- G --
-
-    def get_column(self, column_name: str, rtype='list', skip_nan=False) -> Union['DataFrame', list]:
-        if rtype == 'list':
-            df = self._data[column_name]
-            if skip_nan:
-                df.dropna(inplace=True)
-            return df.values.tolist()
-        else:
-            df = self._data[[column_name]]
-            if skip_nan:
-                df.dropna(inplace=True)
-            return df
+    def get_column_data(self, column_name: str, skip_nan=False) -> list:
+        dataframe = self.get_column_data(column_name, skip_nan)
+        return DataframeHelper.flatten_dataframe_by_column(dataframe)
 
     def get_meta(self):
         return self._meta
@@ -475,14 +444,14 @@ class Table(Resource):
 
     def select_by_row_positions(self, positions: List[int]) -> 'Table':
         row_names = self.get_row_names_by_positions(positions)
-        return self.select_by_row_names(row_names)
+        return self.select_by_row_names([{"name": row_names}])
 
     def select_by_column_positions(self, positions: List[int]) -> 'Table':
         column_names = self.get_column_names_by_positions(positions)
-        return self.select_by_column_names(column_names)
+        return self.select_by_column_names([{"name": column_names}])
 
-    def select_by_row_names(self, names: Union[List[str], str], use_regex=False) -> 'Table':
-        data = TableFilterHelper.filter_by_axis_names(self._data, 'row', names, use_regex)
+    def select_by_row_names(self, filters: List[DataframeFilterName]) -> 'Table':
+        data = DataframeFilterHelper.filter_by_axis_names_2(self._data, 'row', filters)
 
         # copy meta data
         positions = [self._data.index.get_loc(k) for k in self._data.index if k in data.index]
@@ -491,11 +460,10 @@ class Table(Resource):
             meta["row_tags"] = [meta["row_tags"][k] for k in positions]
 
         # create a new table
-        cls = type(self)
-        return cls(data=data, meta=meta)
+        return self._create_sub_table(data, meta)
 
-    def select_by_column_names(self, names: Union[List[str], str], use_regex=False) -> 'Table':
-        data = TableFilterHelper.filter_by_axis_names(self._data, 'column', names, use_regex)
+    def select_by_column_names(self, filters: List[DataframeFilterName]) -> 'Table':
+        data = DataframeFilterHelper.filter_by_axis_names_2(self._data, 'column', filters)
 
         # copy meta data
         positions = [self._data.columns.get_loc(k) for k in self._data.columns if k in data.columns]
@@ -504,14 +472,13 @@ class Table(Resource):
             meta["column_tags"] = [meta["column_tags"][k] for k in positions]
 
         # create a new table
-        cls = type(self)
-        return cls(data=data, meta=meta)
+        return self._create_sub_table(data, meta)
 
     def select_by_coords(self, from_row_id: int, from_column_id: int, to_row_id: int, to_column_id: int) -> 'Table':
         """Create a new table from coords. It includes the to_row_id and to_column_id
         """
-        dataframe: DataFrame = self._data.iloc[from_row_id: to_row_id + 1,
-                                               from_column_id: to_column_id + 1]
+        data: DataFrame = self._data.iloc[from_row_id: to_row_id + 1,
+                                          from_column_id: to_column_id + 1]
 
         meta: TableMeta = {
             "column_tag_types": copy.deepcopy(self.get_column_tag_types()),
@@ -520,8 +487,8 @@ class Table(Resource):
             "row_tags": copy.deepcopy(self.get_row_tags(from_index=from_row_id, to_index=to_row_id))
         }
 
-        cls = type(self)
-        return cls(data=dataframe, meta=meta)
+        # create a new table
+        return self._create_sub_table(data, meta)
 
     def select_by_row_tags(self, tags: List[dict]) -> 'Table':
         """
@@ -605,6 +572,15 @@ class Table(Resource):
         table.set_column_tags(selected_col_tags)
         return table
 
+    def _create_sub_table(self, dataframe: DataFrame, meta: TableMeta) -> 'Table':
+        """
+        Create a new table from a dataframe and a meta
+        """
+        new_table: Table = self.clone()
+        new_table._set_data(dataframe)
+        new_table._set_meta(meta)
+        return new_table
+
     def __str__(self):
         return super().__str__() + "\n" + \
             "Table:\n" + \
@@ -660,22 +636,6 @@ class Table(Resource):
         """
 
         return TableLinePlot2DView(self)
-
-    # @view(view_type=LinePlot3DView, human_name='LinePlot3D', short_description='View columns as 3D-line plots', specs={})
-    # def view_as_line_plot_3d(self, params: ConfigParams) -> LinePlot3DView:
-    #     """
-    #     View columns as 3D-line plots
-    #     """
-
-    #     return LinePlot3DView(self)
-
-    # @view(view_type=TableScatterPlot3DView, human_name='ScatterPlot3D', short_description='View columns as 3D-scatter plots', specs={})
-    # def view_as_scatter_plot_3d(self, params: ConfigParams) -> TableScatterPlot3DView:
-    #     """
-    #     View columns as 3D-scatter plots
-    #     """
-
-    #     return TableScatterPlot3DView(self)
 
     @view(view_type=TableScatterPlot2DView, human_name='Scatter plot 2D',
           short_description='View columns as 2D-scatter plots', specs={}, hide=True)
@@ -734,3 +694,34 @@ class Table(Resource):
         """
 
         return TableVennDiagramView(self)
+
+    # @view(view_type=LinePlot3DView, human_name='LinePlot3D', short_description='View columns as 3D-line plots', specs={})
+    # def view_as_line_plot_3d(self, params: ConfigParams) -> LinePlot3DView:
+    #     """
+    #     View columns as 3D-line plots
+    #     """
+
+    #     return LinePlot3DView(self)
+
+    # @view(view_type=TableScatterPlot3DView, human_name='ScatterPlot3D', short_description='View columns as 3D-scatter plots', specs={})
+    # def view_as_scatter_plot_3d(self, params: ConfigParams) -> TableScatterPlot3DView:
+    #     """
+    #     View columns as 3D-scatter plots
+    #     """
+
+    #     return TableScatterPlot3DView(self)
+
+    ############################## CLASS METHODS ###########################
+
+    @staticmethod
+    def clean_tags(tags):
+        try:
+            return [{str(k): str(v) for k, v in t.items()} for t in tags]
+        except:
+            raise BadRequestException("The tags are not valid. Please check")
+
+    @classmethod
+    def from_dict(cls, data: dict, orient='index', dtype=None, columns=None) -> 'Table':
+        dataframe = DataFrame.from_dict(data, orient, dtype, columns)
+        res = cls(data=dataframe)
+        return res

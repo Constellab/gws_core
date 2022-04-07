@@ -10,8 +10,8 @@ from ....config.param_set import ParamSet
 from ....config.param_spec import FloatParam, StrParam
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ...table.table import Table
-from ..helper.table_aggregator_helper import TableAggregatorHelper
-from ..helper.table_filter_helper import TableFilterHelper
+from ..helper.dataframe_aggregator_helper import DataframeAggregatorHelper
+from ..helper.dataframe_filter_helper import DataframeFilterHelper
 
 # ####################################################################
 #
@@ -31,17 +31,17 @@ class TableAggregatorFilter(Transformer):
             {
                 "direction": StrParam(
                     human_name="Aggregation direction",
-                    allowed_values=TableAggregatorHelper.VALID_AGGREGATION_DIRECTIONS,
+                    allowed_values=DataframeAggregatorHelper.VALID_AGGREGATION_DIRECTIONS,
                     short_description="Axis along which the filter is applied",
                 ),
                 "function": StrParam(
                     human_name="Aggregation function",
-                    allowed_values=TableAggregatorHelper.VALID_AXIS_AGGREGATION_FUNCTIONS,
+                    allowed_values=DataframeAggregatorHelper.VALID_AXIS_AGGREGATION_FUNCTIONS,
                     short_description="Function applied on the axis",
                 ),
                 "comparator": StrParam(
                     human_name="Comparator",
-                    allowed_values=TableFilterHelper.VALID_NUMERIC_COMPARATORS,
+                    allowed_values=DataframeFilterHelper.VALID_NUMERIC_COMPARATORS,
                     short_description="Comparator",
                 ),
                 "value": FloatParam(
@@ -60,7 +60,7 @@ class TableAggregatorFilter(Transformer):
         data: DataFrame = source.get_data()
 
         for _filter in params["aggregation_filter"]:
-            data = TableFilterHelper.filter_by_aggregated_values(
+            data = DataframeFilterHelper.filter_by_aggregated_values(
                 data=data,
                 direction=_filter["direction"],
                 func=_filter["function"],

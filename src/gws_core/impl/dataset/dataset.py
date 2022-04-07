@@ -6,6 +6,7 @@
 from typing import List, Union, final
 
 import numpy as np
+from gws_core.impl.table.table_types import TableMeta
 from pandas import DataFrame
 from pandas.api.types import is_string_dtype
 
@@ -143,30 +144,10 @@ class Dataset(Table):
 
         return self._data.shape[1]
 
-    # -- R --
-
-    # -- S --
-
-    def select_by_column_positions(self, positions: List[int]) -> 'Dataset':
-        dataset: Dataset = super().select_by_column_positions(positions)
+    def _create_sub_table(self, dataframe: DataFrame, meta: TableMeta) -> 'Table':
+        dataset: Dataset = super()._create_sub_table(dataframe, meta)
         new_target_names = [name for name in self.target_names if name in dataset.column_names]
         dataset._set_target_names(new_target_names)
-        return dataset
-
-    def select_by_column_names(self, names: str, use_regex=False) -> 'Dataset':
-        dataset: Dataset = super().select_by_column_names(names, use_regex=use_regex)
-        new_target_names = [name for name in self.target_names if name in dataset.column_names]
-        dataset._set_target_names(new_target_names)
-        return dataset
-
-    def select_by_row_positions(self, positions: List[int]) -> 'Dataset':
-        dataset: Dataset = super().select_by_row_positions(positions)
-        dataset._set_target_names(self.target_names)
-        return dataset
-
-    def select_by_row_names(self, names: str, use_regex=False) -> 'Dataset':
-        dataset: Dataset = super().select_by_row_names(names, use_regex=use_regex)
-        dataset._set_target_names(self.target_names)
         return dataset
 
     # -- T --
@@ -214,7 +195,7 @@ class Dataset(Table):
 
     # -- V ---
 
-    @ view(view_type=DatasetView, default_view=True, human_name='Tabular', short_description='View as a table', specs={})
+    @view(view_type=DatasetView, default_view=True, human_name='Tabular', short_description='View as a table', specs={})
     def view_as_table(self, params: ConfigParams) -> DatasetView:
         """
         View as table

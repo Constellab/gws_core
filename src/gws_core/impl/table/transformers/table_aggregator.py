@@ -8,7 +8,7 @@ from ....config.config_types import ConfigParams, ConfigSpecs
 from ....config.param_spec import BoolParam, StrParam
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ...table.table import Table
-from ..helper.table_aggregator_helper import TableAggregatorHelper
+from ..helper.dataframe_aggregator_helper import DataframeAggregatorHelper
 
 # ####################################################################
 #
@@ -23,12 +23,12 @@ class TableAggregator(Transformer):
     config_specs: ConfigSpecs = {
         "direction": StrParam(
             human_name="Direction",
-            allowed_values=TableAggregatorHelper.VALID_AGGREGATION_DIRECTIONS,
+            allowed_values=DataframeAggregatorHelper.VALID_AGGREGATION_DIRECTIONS,
             short_description="Aggregation direction",
         ),
         "function": StrParam(
             human_name="Aggregation function",
-            allowed_values=TableAggregatorHelper.VALID_AXIS_AGGREGATION_FUNCTIONS,
+            allowed_values=DataframeAggregatorHelper.VALID_AXIS_AGGREGATION_FUNCTIONS,
             short_description="Function applied to aggregate value along a direction",
         ),
         "skip_nan": BoolParam(
@@ -39,7 +39,7 @@ class TableAggregator(Transformer):
     }
 
     async def transform(self, source: Table, params: ConfigParams) -> Table:
-        data = TableAggregatorHelper.aggregate(
+        data = DataframeAggregatorHelper.aggregate(
             data=source.get_data(),
             direction=params["direction"],
             func=params["function"],

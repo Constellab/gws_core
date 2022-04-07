@@ -61,44 +61,20 @@ class EncodingTable(Table):
     encoded_column: str = StrRField(default_value=ENCODED_ROW)
     encoded_row: str = StrRField(default_value=ENCODED_COLUMN)
 
-    # -- C --
+    def get_original_column_data(self) -> list:
+        return self.get_column_data(self.original_column)
 
-    # -- E --
+    def get_original_row_data(self) -> list:
+        return self.get_column_data(self.original_row)
 
-    # -- G --
+    def get_encoded_row_data(self) -> list:
+        return self.get_column_data(self.encoded_row)
 
-    def get_original_column_data(self, rtype='list') -> ('DataFrame', list):
-        return self.get_column(self.original_column, rtype)
+    def get_encoded_column_data(self) -> list:
+        return self.get_column_data(self.encoded_column)
 
-    def get_original_row_data(self, rtype='list') -> ('DataFrame', list):
-        return self.get_column(self.original_row, rtype)
-
-    def get_encoded_row_data(self, rtype='list') -> ('DataFrame', list):
-        return self.get_column(self.encoded_row, rtype)
-
-    def get_encoded_column_data(self, rtype='list') -> ('DataFrame', list):
-        return self.get_column(self.encoded_column, rtype)
-
-    # -- S --
-
-    def select_by_row_positions(self, indexes: List[int]) -> 'EncodingTable':
-        table = super().select_by_row_positions(indexes)
-        table.original_column = self.original_column
-        table.original_row = self.original_row
-        table.encoded_column = self.encoded_column
-        table.encoded_row = self.encoded_row
-        return table
-
-    def select_by_column_positions(self, indexes: List[int]) -> 'EncodingTable':
+    def select_by_column_positions(self, positions: List[int]) -> 'EncodingTable':
         raise BadRequestException("Not allowed of EncodingTable")
-
-    def select_by_row_name(self, name_regex: str) -> 'EncodingTable':
-        table = super().select_by_row_name(name_regex)
-        table.original_column = self.original_column
-        table.original_row = self.original_row
-        table.encoded_column = self.encoded_column
-        table.encoded_row = self.encoded_row
-        return table
 
     def select_by_column_name(self, name_regex: str) -> 'Table':
         raise BadRequestException("Not allowed of EncodingTable")

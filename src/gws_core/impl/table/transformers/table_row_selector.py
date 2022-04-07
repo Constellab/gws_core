@@ -3,13 +3,17 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from typing import List
+
+from gws_core.config.param_set import ParamSet
 from gws_core.config.tags_param_spec import TagsParam
 
 from ....config.config_types import ConfigParams, ConfigSpecs
 from ....config.param_spec import BoolParam, StrParam
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ...table.table import Table
-from ..helper.table_filter_helper import TableFilterHelper
+from ..helper.dataframe_filter_helper import (DataframeFilterHelper,
+                                              DataframeFilterName)
 
 # ####################################################################
 #
@@ -31,28 +35,11 @@ class TableRowSelector(Transformer):
     """
 
     config_specs: ConfigSpecs = {
-        "row_name": StrParam(
-            human_name="Row name",
-            short_description="Searched text or pattern",
-        ),
-        "use_regexp": BoolParam(
-            default_value=False,
-            human_name="Use regular expression",
-            short_description="True to use regular expression, False otherwise",
-        )
+        "filters": DataframeFilterHelper.get_filter_param_set('row')
     }
 
     async def transform(self, source: Table, params: ConfigParams) -> Table:
-        data = TableFilterHelper.filter_by_axis_names(
-            data=source.get_data(),
-            axis="row",
-            value=params["row_name"],
-            use_regexp=params["use_regexp"]
-        )
-
-        table = Table(data=data)
-        # table.name = source.name + " (Row sliced)"
-        return table
+        return source.select_by_row_names(params.get('filters'))
 
 
 @transformer_decorator(

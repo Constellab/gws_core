@@ -5,12 +5,13 @@
 
 
 import numpy
+from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from pandas import DataFrame
 
 from ....core.exception.exceptions import BadRequestException
-from .table_nanify_helper import TableNanifyHelper
 
-class TableScalerHelper:
+
+class DataframeScalerHelper:
 
     VALID_SCALING_FUNCTIONS = ["none", "log2", "log10", "unit", "percent", "standard"]
 
@@ -29,11 +30,11 @@ class TableScalerHelper:
         cls._check_func(func)
 
         if func == "log10":
-            data = data.applymap(TableScalerHelper._log10, na_action='ignore')
+            data = data.applymap(DataframeScalerHelper._log10, na_action='ignore')
         elif func == "log2":
-            data = data.applymap(TableScalerHelper._log2, na_action='ignore')
+            data = data.applymap(DataframeScalerHelper._log2, na_action='ignore')
         else:
-            data = TableNanifyHelper.nanify(data)
+            data = DataframeHelper.nanify(data)
             if func == "unit":
                 data = data / data.sum(skipna=None)
             elif func == "percent":

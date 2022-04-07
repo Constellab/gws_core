@@ -9,7 +9,7 @@ from .....config.config_types import ConfigParams
 from .....config.param_set import ParamSet
 from .....config.param_spec import StrParam
 from .....core.exception.exceptions import BadRequestException
-from ..table_scaler_helper import TableScalerHelper
+from ..dataframe_scaler_helper import DataframeScalerHelper
 
 # ####################################################################
 #
@@ -23,7 +23,7 @@ class DataScaleFilterParamConstructor:
     @staticmethod
     def validate_filter(name: str, data: DataFrame, params: ConfigParams):
         for _filter in params[name]:
-            data = TableScalerHelper.scale(
+            data = DataframeScalerHelper.scale(
                 data=data,
                 func=_filter["scaling_function"]
             )
@@ -33,11 +33,11 @@ class DataScaleFilterParamConstructor:
     def construct_filter(visibility: str = 'public', allowed_values=None):
         if allowed_values is not None:
             for val in allowed_values:
-                if val not in TableScalerHelper.VALID_SCALING_FUNCTIONS:
+                if val not in DataframeScalerHelper.VALID_SCALING_FUNCTIONS:
                     raise BadRequestException(
-                        f"Value {val} cannot be an allowed value. Valid values are {TableScalerHelper.VALID_SCALING_FUNCTIONS}")
+                        f"Value {val} cannot be an allowed value. Valid values are {DataframeScalerHelper.VALID_SCALING_FUNCTIONS}")
         else:
-            allowed_values = TableScalerHelper.VALID_SCALING_FUNCTIONS
+            allowed_values = DataframeScalerHelper.VALID_SCALING_FUNCTIONS
 
         return ParamSet(
             {

@@ -9,7 +9,7 @@ from pandas import DataFrame
 
 from .....config.param_set import ParamSet
 from .....config.param_spec import FloatParam, StrParam
-from ..table_filter_helper import TableFilterHelper
+from ..dataframe_filter_helper import DataframeFilterHelper
 
 # ####################################################################
 #
@@ -29,7 +29,7 @@ class NumericDataFilterParamConstructor:
     @staticmethod
     def validate_filter(data: DataFrame, params: List[NumericDataFilder]):
         for _filter in params:
-            data = TableFilterHelper.filter_numeric_data(
+            data = DataframeFilterHelper.filter_numeric_data(
                 data=data,
                 column_name=_filter["column_name"],
                 comp=_filter["comparator"],
@@ -48,7 +48,7 @@ class NumericDataFilterParamConstructor:
                 ),
                 "comparator": StrParam(
                     human_name="Comparator",
-                    allowed_values=TableFilterHelper.VALID_NUMERIC_COMPARATORS,
+                    allowed_values=DataframeFilterHelper.VALID_NUMERIC_COMPARATORS,
                     short_description="Comparator",
                     optional=True,
                 ),

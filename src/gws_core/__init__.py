@@ -159,14 +159,12 @@ from .impl.table.encoding.encoding_table import \
     EncodingTableImporter as EncodingTableImporter
 from .impl.table.encoding.table_decoder import TableDecoder as TableDecoder
 from .impl.table.encoding.table_encoder import TableEncoder as TableEncoder
-from .impl.table.helper.table_aggregator_helper import \
-    TableAggregatorHelper as TableAggregatorHelper
-from .impl.table.helper.table_filter_helper import \
-    TableFilterHelper as TableFilterHelper
-from .impl.table.helper.table_nanify_helper import \
-    TableNanifyHelper as TableNanifyHelper
-from .impl.table.helper.table_scaler_helper import \
-    TableScalerHelper as TableScalerHelper
+from .impl.table.helper.dataframe_aggregator_helper import \
+    DataframeAggregatorHelper as DataframeAggregatorHelper
+from .impl.table.helper.dataframe_filter_helper import \
+    DataframeFilterHelper as DataframeFilterHelper
+from .impl.table.helper.dataframe_scaler_helper import \
+    DataframeScalerHelper as DataframeScalerHelper
 from .impl.table.helper.table_tag_grouper_helper import \
     TableTagGrouperHelper as TableTagGrouperHelper
 from .impl.table.metadata_table.helper.table_annotator_helper import \

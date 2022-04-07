@@ -7,6 +7,10 @@ from typing import List
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from gws_core.impl.table.helper.dataframe_filter_helper import \
+    DataframeFilterName
+from gws_core.impl.table.table_types import TableMeta
+from pandas import DataFrame
 
 from ....resource.r_field import StrRField
 from ....resource.resource_decorator import resource_decorator
@@ -46,35 +50,11 @@ class MetadataTable(Table):
 
     sample_id_column: str = StrRField(default_value=DEFAULT_SAMPLE_ID_COLUMN)
 
-    # -- F --
+    def get_sample_ids(self) -> list:
+        return self.get_column_data(self.sample_id_column)
 
-    def get_sample_ids(self, rtype='list') -> ('DataFrame', list):
-        return self.get_column(self.sample_id_column, rtype)
-
-    # -- G --
-
-    # -- S --
-
-    def select_by_row_positions(self, positions: List[int]) -> 'MetadataTable':
-        table = super().select_by_row_positions(positions)
-        table.sample_id_column = self.sample_id_column
-        return table
-
-    def select_by_column_positions(self, positions: List[int]) -> 'MetadataTable':
-        table = super().select_by_column_positions(positions)
+    def _create_sub_table(self, dataframe: DataFrame, meta: TableMeta) -> 'Table':
+        table: MetadataTable = super()._create_sub_table(dataframe, meta)
         if not self.sample_id_column in table.column_names:
             raise BadRequestException("The sample_id_column is required and must be selected")
-        table.sample_id_column = self.sample_id_column
-        return table
-
-    def select_by_row_names(self, names: List[str], use_regex=False) -> 'MetadataTable':
-        table = super().select_by_row_names(names, use_regex)
-        table.sample_id_column = self.sample_id_column
-        return table
-
-    def select_by_column_names(self, names: List[str], use_regex=False) -> 'MetadataTable':
-        table = super().select_by_column_names(names, use_regex)
-        if not self.sample_id_column in table.column_names:
-            raise BadRequestException("The sample_id_column is required and must be selected")
-        table.sample_id_column = self.sample_id_column
         return table

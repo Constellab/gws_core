@@ -3,13 +3,17 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from typing import List
+
+from gws_core.config.param_set import ParamSet
 from gws_core.config.tags_param_spec import TagsParam
 
 from ....config.config_types import ConfigParams, ConfigSpecs
 from ....config.param_spec import BoolParam, StrParam
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ...table.table import Table
-from ..helper.table_filter_helper import TableFilterHelper
+from ..helper.dataframe_filter_helper import (DataframeFilterHelper,
+                                              DataframeFilterName)
 
 # ####################################################################
 #
@@ -31,28 +35,11 @@ class TableColumnSelector(Transformer):
     """
 
     config_specs: ConfigSpecs = {
-        "column_name": StrParam(
-            human_name="Column name",
-            short_description="Searched text or pattern (i.e. regular expression)",
-        ),
-        "use_regexp": BoolParam(
-            default_value=False,
-            human_name="Use regular expression",
-            short_description="True to use regular expression, False otherwise",
-        )
+        "filters": DataframeFilterHelper.get_filter_param_set('column')
     }
 
     async def transform(self, source: Table, params: ConfigParams) -> Table:
-        data = TableFilterHelper.filter_by_axis_names(
-            data=source.get_data(),
-            axis="column",
-            value=params["column_name"],
-            use_regexp=params["use_regexp"]
-        )
-
-        table = Table(data=data)
-        # table.name = source.name + " (Column sliced)"
-        return table
+        return source.select_by_column_names(params.get('filters'))
 
 
 @transformer_decorator(
@@ -66,7 +53,7 @@ class TableColumnTagsSelector(Transformer):
         "tags": TagsParam(
             human_name="Column tags",
             short_description="Filter on column tags",
-        ),
+        )
     }
 
     async def transform(self, source: Table, params: ConfigParams) -> Table:

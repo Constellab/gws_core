@@ -9,7 +9,7 @@ from pandas import DataFrame
 
 from .....config.param_set import ParamSet
 from .....config.param_spec import StrParam
-from ..table_filter_helper import TableFilterHelper
+from ..dataframe_filter_helper import DataframeFilterHelper
 
 # ####################################################################
 #
@@ -29,7 +29,7 @@ class TextDataFilterParamConstructor:
     @staticmethod
     def validate_filter(data: DataFrame, params: List[TextDataFilder]):
         for _filter in params:
-            data = TableFilterHelper.filter_text_data(
+            data = DataframeFilterHelper.filter_text_data(
                 data=data,
                 column_name=_filter["column_name"],
                 comp=_filter["comparator"],
@@ -48,7 +48,7 @@ class TextDataFilterParamConstructor:
                 ),
                 "comparator": StrParam(
                     human_name="Comparator",
-                    allowed_values=TableFilterHelper.VALID_TEXT_COMPARATORS,
+                    allowed_values=DataframeFilterHelper.VALID_TEXT_COMPARATORS,
                     short_description="Comparator",
                     optional=True,
                 ),

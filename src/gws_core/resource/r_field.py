@@ -278,6 +278,8 @@ class ListRField(PrimitiveRField):
 
     def __init__(self, default_value: List = None, include_in_dict_view: bool = False) -> None:
         """
+        RField to save a json like list. The ListRField only supports element that are either primitives python object or dictionary or lists.
+        It does not support python classes.
         :param default_value: default value of the resource attribute
                               Support primitive value, Type of Callable function
                               If type or callable, it will be called without parameter to initialise the default value, defaults to []
@@ -303,6 +305,8 @@ class DictRField(PrimitiveRField):
 
     def __init__(self, default_value: Dict = None, include_in_dict_view: bool = False) -> None:
         """
+        RField to save a json like dictionary. The DictRField only supports element that are either primitives python object or dictionary or lists.
+        It does not support python classes.
         :param default_value: default value of the resource attribute
                               Support primitive value, Type of Callable function
                               If type or callable, it will be called without parameter to initialise the default value, defaults to {}

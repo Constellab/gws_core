@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from typing import Dict, List, TypedDict
+from typing import Dict, List, Literal, TypedDict
 
 
 class TableHeaderInfo(TypedDict):
@@ -21,3 +21,13 @@ class TableMeta(TypedDict):
     column_tags: List[Dict[str, str]]
     row_tag_types: Dict[str, str]
     column_tag_types: Dict[str, str]
+
+
+AxisType = Literal[0, 1, "index", "columns"]
+
+
+def is_row_axis(axis: AxisType) -> bool:
+    return axis in [0, "index"]
+
+
+TableTagType = Literal['categorical', 'numerical']

@@ -11,7 +11,8 @@ from pandas import DataFrame, concat
 
 from ....core.exception.exceptions import BadRequestException
 from ....core.utils.utils import Utils
-from ..table import AxisType, Table, is_row_axis
+from ..table import Table
+from ..table_types import AxisType, is_row_axis
 
 TableGroupFunction = Literal['mean', 'median', 'sort']
 

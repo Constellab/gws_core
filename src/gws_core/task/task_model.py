@@ -253,7 +253,7 @@ class TaskModel(ProcessModel):
             port: Port = self.outputs.get_port(key)
 
             if port.is_constant_out:
-                # If the port is mark as unmodified, we don't create a new resource
+                # If the port is mark as is_constant_out, we don't create a new resource
                 # We use the same resource
                 resource_model = ResourceModel.get_by_id_and_check(resource._model_id)
             else:
@@ -286,7 +286,7 @@ class TaskModel(ProcessModel):
         for resource in resource_list.get_resources_as_set():
 
             # if this is a new resource
-            if resource._model_id is None:
+            if resource_list._model_id is None:
 
                 # create and save the resource model from the resource
                 resource_model = self._save_resource(resource, port_name)

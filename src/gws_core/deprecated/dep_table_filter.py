@@ -12,8 +12,8 @@ from ..impl.table.helper.constructor.num_data_filter_param import \
     NumericDataFilterParamConstructor
 from ..impl.table.helper.constructor.text_data_filter_param import \
     TextDataFilterParamConstructor
-from ..impl.table.helper.table_aggregator_helper import TableAggregatorHelper
-from ..impl.table.helper.table_filter_helper import TableFilterHelper
+from ..impl.table.helper.dataframe_aggregator_helper import DataframeAggregatorHelper
+from ..impl.table.helper.dataframe_filter_helper import DataframeFilterHelper
 from ..impl.table.table import Table
 from ..task.task import Task
 from ..task.task_decorator import task_decorator
@@ -40,7 +40,7 @@ class TableFilter(Task):
                 "axis_type": StrParam(
                     default_value="column",
                     human_name="Axis type",
-                    allowed_values=TableFilterHelper.VALID_AXIS_NAMES,
+                    allowed_values=DataframeFilterHelper.VALID_AXIS_NAMES,
                     short_description="The axis whose name is searched",
                 ),
                 "value": StrParam(
@@ -62,17 +62,17 @@ class TableFilter(Task):
             {
                 "direction": StrParam(
                     human_name="Aggregation direction",
-                    allowed_values=TableAggregatorHelper.VALID_AGGREGATION_DIRECTIONS,
+                    allowed_values=DataframeAggregatorHelper.VALID_AGGREGATION_DIRECTIONS,
                     short_description="Axis along which the filter is applied",
                 ),
                 "function": StrParam(
                     human_name="Aggregation function",
-                    allowed_values=TableAggregatorHelper.VALID_AXIS_AGGREGATION_FUNCTIONS,
+                    allowed_values=DataframeAggregatorHelper.VALID_AXIS_AGGREGATION_FUNCTIONS,
                     short_description="Function applied on the axis",
                 ),
                 "comparator": StrParam(
                     human_name="Comparator",
-                    allowed_values=TableFilterHelper.VALID_NUMERIC_COMPARATORS,
+                    allowed_values=DataframeFilterHelper.VALID_NUMERIC_COMPARATORS,
                     short_description="Comparator",
                 ),
                 "value": FloatParam(
@@ -93,12 +93,12 @@ class TableFilter(Task):
         data: DataFrame = inputs["source"].get_data()
 
         for _filter in params["axis_name_filter"]:
-            data = TableFilterHelper.filter_by_axis_names(
+            data = DataframeFilterHelper.filter_by_axis_names(
                 data=data, axis=_filter["axis_type"], value=_filter["value"], use_regexp=_filter["use_regexp"]
             )
 
         for _filter in params["aggregation_filter"]:
-            data = TableFilterHelper.filter_by_aggregated_values(
+            data = DataframeFilterHelper.filter_by_aggregated_values(
                 data=data,
                 direction=_filter["direction"],
                 func=_filter["function"],

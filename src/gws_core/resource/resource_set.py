@@ -60,8 +60,8 @@ class ResourceSet(ResourceListBase):
         :param resource: resource to Add
         :type resource: Resource
         :param create_new_resource: If true, a new resource is created when saving the resource.
-                                    Otherwise it doesn't create a new resource but reference it. In this case
-                                    the resource must be a input of the task that created the ResourceSet and the resource
+                                    Otherwise it doesn't create a new resource but references it. In this case
+                                    the resource must be an input of the task that created the ResourceSet and the resource
                                     must have been saved before, defaults to True
         :type create_new_resource: bool, optional
         """

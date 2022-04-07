@@ -1,7 +1,6 @@
-from pandas import DataFrame
-
 from gws_core import BaseTestCase, Dataset
 from gws_core.extra import DataProvider
+from pandas import DataFrame
 
 
 class TestImporter(BaseTestCase):
@@ -23,7 +22,7 @@ class TestImporter(BaseTestCase):
     async def test_data_select(self):
         ds = DataProvider.get_iris_dataset()
 
-        selected_ds = ds.select_by_column_positions([1, 2])
+        selected_ds: Dataset = ds.select_by_column_positions([1, 2])
         self.assertEqual(selected_ds.feature_names, ["sepal.width", "petal.length"])
         self.assertEqual(selected_ds.target_names, [])
         self.assertEqual(selected_ds.nb_rows, 150)
@@ -33,7 +32,7 @@ class TestImporter(BaseTestCase):
         self.assertEqual(selected_ds.target_names, ["variety"])
         self.assertEqual(selected_ds.nb_rows, 150)
 
-        selected_ds = ds.select_by_column_names(["sepal.width", "petal.length", "variety"])
+        selected_ds = ds.select_by_column_names([{"name": ["sepal.width", "petal.length", "variety"]}])
         self.assertEqual(selected_ds.feature_names, ["sepal.width", "petal.length"])
         self.assertEqual(selected_ds.target_names, ["variety"])
         self.assertEqual(selected_ds.nb_rows, 150)
@@ -80,12 +79,12 @@ class TestImporter(BaseTestCase):
         data = dataset.convert_row_tags_to_dummy_target_matrix(key="lg")
 
         dummy = DataFrame(data=[
-            [1.0,0.0,0.0], 
-            [0.0,0.0,1.0],
-            [0.0,1.0,0.0],
-            [0.0,0.0,1.0]
-            ],
-            index=["EN","JP","FR","JP"],
-            columns=["EN","FR","JP"]
+            [1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 0.0, 1.0]
+        ],
+            index=["EN", "JP", "FR", "JP"],
+            columns=["EN", "FR", "JP"]
         )
         self.assertTrue(data.equals(dummy))

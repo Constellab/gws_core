@@ -4,18 +4,25 @@
 # About us: https://gencovery.com
 
 from ast import Index
-from typing import List, Literal, Union
+from typing import List, Literal, Optional, TypedDict, Union
 
 import numpy
+from gws_core.config.param_set import ParamSet
+from gws_core.config.param_spec import BoolParam, StrParam
 from pandas import DataFrame
 
 from ....core.exception.exceptions import BadRequestException
-from .table_aggregator_helper import TableAggregatorHelper
+from .dataframe_aggregator_helper import DataframeAggregatorHelper
 
 AxisName = Literal['row', 'column']
 
 
-class TableFilterHelper:
+class DataframeFilterName(TypedDict):
+    name: Union[List[str], str]
+    is_regex: Optional[bool]
+
+
+class DataframeFilterHelper:
 
     VALID_AXIS_NAMES = ["row", "column"]
     VALID_NUMERIC_COMPARATORS = ["=", "!=", ">=", "<=", ">", "<"]
@@ -69,17 +76,29 @@ class TableFilterHelper:
             return data.filter(items=value, axis=ax)
 
     @classmethod
+    def filter_by_axis_names_2(cls, data: DataFrame, axis: AxisName, filters: List[DataframeFilterName]):
+        dataframe: DataFrame = None
+        for filter_ in filters:
+            new_df = cls.filter_by_axis_names(data, axis, filter_["name"], filter_.get("is_regex", False))
+            if dataframe is None:
+                dataframe = new_df
+            else:
+                dataframe = dataframe.combine_first(new_df)
+
+        return dataframe
+
+    @classmethod
     def filter_by_aggregated_values(
             cls, data: DataFrame, direction: str, func: str, comp: str, value: float) -> DataFrame:
         if (not direction) or (not func) or (not comp) or (value is None):
             return data
-        TableAggregatorHelper._check_func(func)
-        TableAggregatorHelper._check_direction(direction)
+        DataframeAggregatorHelper._check_func(func)
+        DataframeAggregatorHelper._check_direction(direction)
         cls._check_numeric_comparator(comp)
         if value is None:
             return data
         if isinstance(value, (int, float,)):
-            aggregated_data: DataFrame = TableAggregatorHelper.aggregate(data, direction, func)
+            aggregated_data: DataFrame = DataframeAggregatorHelper.aggregate(data, direction, func)
 
             tf: List[bool]
             if comp == ">":
@@ -161,3 +180,21 @@ class TableFilterHelper:
         data = data.loc[tab, :]
 
         return data
+
+    @classmethod
+    def get_filter_param_set(cls, axis_name: AxisName, optional: bool = False) -> ParamSet:
+        """Get a param set that is of type DataframeFilterName
+        """
+
+        human_name = "Row name" if axis_name == "row" else "Column name"
+        return ParamSet({
+            "name": StrParam(
+                human_name=human_name,
+                short_description="Searched text or pattern (i.e. regular expression)",
+            ),
+            "is_regex": BoolParam(
+                default_value=False,
+                human_name="Use regular expression",
+                short_description="True to use regular expression, False otherwise",
+            )
+        }, optional=optional)
