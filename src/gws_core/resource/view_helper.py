@@ -11,7 +11,7 @@ from gws_core.resource.lazy_view_param import LazyViewParam
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view_types import ViewCallResult, ViewSpecs
 
-from ..config.config_types import ConfigParams, ConfigSpecs
+from ..config.config_types import ConfigParams, ConfigParamsDict, ConfigSpecs
 from ..config.param_spec_helper import ParamSpecHelper
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -25,8 +25,8 @@ from .view_meta_data import ResourceViewMetaData
 class ViewHelper():
 
     @classmethod
-    def call_view_on_resource(cls, resource: Resource,
-                              view_name: str, config: Dict[str, Any]) -> ViewCallResult:
+    def generate_view_on_resource(cls, resource: Resource,
+                                  view_name: str, config: ConfigParamsDict) -> View:
 
         # check if the view exists
         view_metadata: ResourceViewMetaData = ViewHelper.get_and_check_view(type(resource), view_name)
@@ -34,8 +34,16 @@ class ViewHelper():
         # Get the view object from the view method
         view: View = cls._call_view_method(resource, view_metadata, config)
 
+        # convert the view to dict using the config
+        return view
+
+    @classmethod
+    def call_view_to_dict(cls, view: View, config: ConfigParamsDict, resource_type: Type[Resource],
+                          view_name: str) -> ViewCallResult:
         # check the view config and set default values
         config_params: ConfigParams = ParamSpecHelper.get_config_params(view._specs, config)
+
+        view_metadata: ResourceViewMetaData = ViewHelper.get_and_check_view(resource_type, view_name)
 
         # convert the view to dict using the config
         return {

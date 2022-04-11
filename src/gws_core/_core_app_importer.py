@@ -11,6 +11,7 @@ from .experiment.experiment_api import *
 from .experiment.queue_api import *
 from .impl.file.fs_node_api import *
 from .impl.robot.robot_api import *
+from .impl.table.resource_table_api import *
 from .lab.monitor_api import *
 from .lab.system_api import *
 from .model.model_api import *

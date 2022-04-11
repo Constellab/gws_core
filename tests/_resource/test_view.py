@@ -12,7 +12,6 @@ from gws_core.resource.lazy_view_param import LazyViewParam
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.resource.view_helper import ViewHelper
 from gws_core.resource.view_meta_data import ResourceViewMetaData
-from gws_core.resource.view_types import ViewCallResult
 
 
 @resource_decorator("ResourceViewTest")
@@ -111,14 +110,12 @@ class TestView(BaseTestCase):
 
     def test_complete_call_view(self):
         resource = ResourceViewTestSub()
-        view_result: ViewCallResult = ViewHelper.call_view_on_resource(
+        view: TextView = ViewHelper.generate_view_on_resource(
             resource, 'sub_view_test',
             {"test_str_param": "Bonjour ", "test_any_param": '12', "page": 1, "page_size": 5000})
 
-        self.assertEqual(view_result["view_human_name"], "Sub View for test")
-        self.assertEqual(view_result["view_short_description"], "Description for sub test")
-        self.assertEqual(view_result["view_data"]["type"], TextView._type)
-        self.assertEqual(view_result["view_data"]["data"]['text'], "Bonjour 12")
+        self.assertEqual(view._type, TextView._type)
+        self.assertEqual(view._data, "Bonjour 12")
 
     def test_method_view_override_and_hide(self):
         """Test that the spec of a view are overrided but the children method. And check if hide param in view decorator works

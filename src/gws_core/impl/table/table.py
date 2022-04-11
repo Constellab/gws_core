@@ -626,8 +626,7 @@ class Table(Resource):
         return TableView(self)
 
     ################################################# PLOT VIEW #################################################
-    # Plot view are hidden because they are manually called by the front
-    # /!\ DO NOT CHANGE THE FUNCTION NAMES OF THESES HIDDEN VIEWS /!\
+    # Plot view are hidden because they are manually called by the ResourceTableService
 
     @view(view_type=TableLinePlot2DView, human_name='Line plot 2D', short_description='View columns as 2D-line plots', specs={}, hide=True)
     def view_as_line_plot_2d(self, params: ConfigParams) -> TableLinePlot2DView:

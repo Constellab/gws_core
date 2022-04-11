@@ -57,7 +57,7 @@ class BaseTableView(View):
     _type: str
     _table: Table
 
-    def __init__(self, table: Any):
+    def __init__(self, table: Table):
         super().__init__()
         self._check_and_set_data(table)
 

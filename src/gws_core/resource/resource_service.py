@@ -9,6 +9,8 @@ from fastapi.responses import FileResponse
 from gws_core.config.config_types import ConfigParamsDict, ConfigSpecs
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.file.fs_node import FSNode
+from gws_core.resource.view import View
+from gws_core.resource.view_types import ViewCallResult
 from gws_core.task.converter.converter_service import ConverterService
 from peewee import ModelSelect
 
@@ -127,30 +129,48 @@ class ResourceService(BaseService):
     @classmethod
     async def call_view_on_resource_type(cls, resource_model_id: str,
                                          view_name: str, config_values: Dict[str, Any],
-                                         transformers: List[TransformerDict]) -> Any:
+                                         transformers: List[TransformerDict]) -> ViewCallResult:
 
         resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
+        resource: Resource = resource_model.get_resource()
+        return cls.call_view_on_resource(resource, view_name, config_values, transformers)
 
+    @classmethod
+    async def call_view_on_resource(cls, resource: Resource,
+                                    view_name: str, config_values: Dict[str, Any],
+                                    transformers: List[TransformerDict]) -> ViewCallResult:
+
+        view = await cls.get_view_on_resource(resource, view_name, config_values, transformers)
+
+        # call the view to dict
+        return ViewHelper.call_view_to_dict(view, config_values, type(resource), view_name)
+
+    @classmethod
+    async def get_view_on_resource_type(cls, resource_model_id: str,
+                                        view_name: str, config_values: Dict[str, Any],
+                                        transformers: List[TransformerDict]) -> View:
+
+        resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
         resource: Resource = resource_model.get_resource()
 
-        view_method_name: str
+        return await cls.get_view_on_resource(resource, view_name, config_values, transformers)
+
+    @classmethod
+    async def get_view_on_resource(cls, resource: Resource,
+                                   view_name: str, config_values: Dict[str, Any],
+                                   transformers: List[TransformerDict] = None) -> View:
+
+        # if there is a transformer, call it before calling the view
+        if transformers is not None and len(transformers) > 0:
+            resource = await TransformerService.call_transformers(resource, transformers)
+
         # specific case for the default view, we retrieve the view name
         if view_name == 'default-view':
             view_method_name = ViewHelper.get_default_view_of_resource_type(type(resource)).method_name
         else:
             view_method_name = view_name
 
-        return await cls.call_view_on_resource(resource, view_method_name, config_values, transformers)
-
-    @classmethod
-    async def call_view_on_resource(cls, resource: Resource,
-                                    view_name: str, config_values: Dict[str, Any],
-                                    transformers: List[TransformerDict] = None) -> Any:
-        # if there is a transformer, call it before calling the view
-        if transformers is not None and len(transformers) > 0:
-            resource = await TransformerService.call_transformers(resource, transformers)
-
-        return ViewHelper.call_view_on_resource(resource, view_name, config_values)
+        return ViewHelper.generate_view_on_resource(resource, view_method_name, config_values)
 
     ############################# SEARCH ###########################
 
