@@ -13,10 +13,8 @@ from ....core.exception.exceptions import BadRequestException
 from ....impl.file.file import File
 from ....resource.r_field import StrRField
 from ....resource.resource_decorator import resource_decorator
-from ....task.converter.exporter import exporter_decorator
 from ....task.converter.importer import importer_decorator
 from ..table import Table
-from ..tasks.table_exporter import TableExporter
 from ..tasks.table_importer import TableImporter
 
 # ####################################################################
@@ -62,16 +60,16 @@ class EncodingTable(Table):
     encoded_row: str = StrRField(default_value=ENCODED_COLUMN)
 
     def get_original_column_data(self) -> list:
-        return self.get_column_data(self.original_column)
+        return self.get_column_as_list(self.original_column)
 
     def get_original_row_data(self) -> list:
-        return self.get_column_data(self.original_row)
+        return self.get_column_as_list(self.original_row)
 
     def get_encoded_row_data(self) -> list:
-        return self.get_column_data(self.encoded_row)
+        return self.get_column_as_list(self.encoded_row)
 
     def get_encoded_column_data(self) -> list:
-        return self.get_column_data(self.encoded_column)
+        return self.get_column_as_list(self.encoded_column)
 
     def select_by_column_positions(self, positions: List[int]) -> 'EncodingTable':
         raise BadRequestException("Not allowed of EncodingTable")

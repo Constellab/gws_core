@@ -51,7 +51,7 @@ class MetadataTable(Table):
     sample_id_column: str = StrRField(default_value=DEFAULT_SAMPLE_ID_COLUMN)
 
     def get_sample_ids(self) -> list:
-        return self.get_column_data(self.sample_id_column)
+        return self.get_column_as_list(self.sample_id_column)
 
     def _create_sub_table(self, dataframe: DataFrame, meta: TableMeta) -> 'Table':
         table: MetadataTable = super()._create_sub_table(dataframe, meta)

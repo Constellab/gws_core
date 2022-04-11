@@ -264,14 +264,14 @@ class Table(Resource):
             lower_names = [x.lower() for x in self.column_names]
             return name.lower() in lower_names
 
-    def get_column_as_dataframe(self, column_name: str, rtype='list', skip_nan=False) -> DataFrame:
+    def get_column_as_dataframe(self, column_name: str, skip_nan=False) -> DataFrame:
         df = self._data[[column_name]]
         if skip_nan:
             df.dropna(inplace=True)
         return df
 
-    def get_column_data(self, column_name: str, skip_nan=False) -> list:
-        dataframe = self.get_column_data(column_name, skip_nan)
+    def get_column_as_list(self, column_name: str, skip_nan=False) -> list:
+        dataframe = self.get_column_as_dataframe(column_name, skip_nan)
         return DataframeHelper.flatten_dataframe_by_column(dataframe)
 
     def get_meta(self):
@@ -567,10 +567,14 @@ class Table(Resource):
             return self
         column_tags = self.get_column_tags()
         selected_col_tags = [column_tags[i] for i, name in enumerate(self.column_names) if name in data.columns]
-        table = Table(data=data)
-        table.set_row_tags(self.get_row_tags())
-        table.set_column_tags(selected_col_tags)
-        return table
+
+        meta: TableMeta = {
+            "column_tag_types": copy.deepcopy(self.get_column_tag_types()),
+            "row_tag_types": copy.deepcopy(self.get_row_tag_types()),
+            "column_tags": copy.deepcopy(selected_col_tags),
+            "row_tags": copy.deepcopy(self.get_row_tags())
+        }
+        return self._create_sub_table(data, meta)
 
     def _create_sub_table(self, dataframe: DataFrame, meta: TableMeta) -> 'Table':
         """
