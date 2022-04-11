@@ -74,6 +74,10 @@ class ViewHelper():
 
     @classmethod
     def get_and_check_view(cls, resource_type: Type[Resource], view_name: str) -> ResourceViewMetaData:
+        # specific case for the default view, we retrieve the view name
+        if view_name == 'default-view':
+            return ViewHelper.get_default_view_of_resource_type(resource_type)
+
         # check that the method exists and is annotated with view
         if not hasattr(resource_type, view_name):
             raise BadRequestException(f"The resource does not have a view named '{view_name}'")
@@ -122,7 +126,7 @@ class ViewHelper():
         return list(view_meta_data.values())
 
     @classmethod
-    def get_default_view_of_resource_type(cls, resource_type: Type[Resource]) -> Optional[ResourceViewMetaData]:
+    def get_default_view_of_resource_type(cls, resource_type: Type[Resource]) -> ResourceViewMetaData:
         """ Method to get the default view of a resource type. It iterates from the parent class to the children and returns
         the last view found
 

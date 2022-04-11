@@ -133,7 +133,7 @@ class ResourceService(BaseService):
 
         resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
         resource: Resource = resource_model.get_resource()
-        return cls.call_view_on_resource(resource, view_name, config_values, transformers)
+        return await cls.call_view_on_resource(resource, view_name, config_values, transformers)
 
     @classmethod
     async def call_view_on_resource(cls, resource: Resource,
@@ -164,13 +164,7 @@ class ResourceService(BaseService):
         if transformers is not None and len(transformers) > 0:
             resource = await TransformerService.call_transformers(resource, transformers)
 
-        # specific case for the default view, we retrieve the view name
-        if view_name == 'default-view':
-            view_method_name = ViewHelper.get_default_view_of_resource_type(type(resource)).method_name
-        else:
-            view_method_name = view_name
-
-        return ViewHelper.generate_view_on_resource(resource, view_method_name, config_values)
+        return ViewHelper.generate_view_on_resource(resource, view_name, config_values)
 
     ############################# SEARCH ###########################
 
