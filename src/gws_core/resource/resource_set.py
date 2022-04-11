@@ -54,11 +54,16 @@ class ResourceSet(ResourceListBase):
         """ set _resource_ids with key = resource_name and value = resource_id"""
         self._resource_ids = {name: resource._model_id for name, resource in self._resources.items()}
 
-    def add_resource(self, resource: Resource, create_new_resource: bool = True) -> None:
+    def add_resource(self, resource: Resource,
+                     unique_name: str = None,
+                     create_new_resource: bool = True) -> None:
         """Add a resource to the set
 
         :param resource: resource to Add
         :type resource: Resource
+        :param unique_name: name used to store the resource in the dict. It must be unique. The resource
+        can be retrieve by calling the get_resource method with the name. If not provided, the resource name is used
+        :type unique_name: str
         :param create_new_resource: If true, a new resource is created when saving the resource.
                                     Otherwise it doesn't create a new resource but references it. In this case
                                     the resource must be an input of the task that created the ResourceSet and the resource
@@ -74,23 +79,23 @@ class ResourceSet(ResourceListBase):
         if self._model_id is not None:
             raise Exception("The ResourceSet is already saved, you can't add a resource to it")
 
-        if resource.name is None:
-            raise Exception('Resource name is not set')
-
-        if create_new_resource and resource._model_id is None:
+        if not create_new_resource and resource._model_id is None:
             raise Exception("The resource must be saved before, if you use the create_new_resource option")
 
         if self._resources is None:
             self._resources = {}
 
-        if resource.name in self._resources:
-            raise Exception(f'Resource with name {resource.name} already exists')
+        name = unique_name or resource.name
+        if name is None:
+            raise Exception('The unique name was not provided and the resource name is not set')
+        if name in self._resources:
+            raise Exception(f'Resource with name {name} already exists')
 
         # if the create new resource is True, we clear the model id so it creates a new resource
         if create_new_resource:
             resource._model_id = None
 
-        self._resources[resource.name] = resource
+        self._resources[name] = resource
 
     def get_resource(self, resource_name: str) -> Resource:
         resources = self.get_resources()

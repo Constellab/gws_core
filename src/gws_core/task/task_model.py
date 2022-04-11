@@ -286,7 +286,7 @@ class TaskModel(ProcessModel):
         for resource in resource_list.get_resources_as_set():
 
             # if this is a new resource
-            if resource_list._model_id is None:
+            if resource._model_id is None:
 
                 # create and save the resource model from the resource
                 resource_model = self._save_resource(resource, port_name)
@@ -294,9 +294,9 @@ class TaskModel(ProcessModel):
                 resource._model_id = resource_model.id
             else:
                 # if the resource is not listed in task input, error
-                if not self.inputs.has_resource_model(resource.__model_id__):
-                    raise BadRequestException(GWSException.INVALID_RESOURCE_R_FIELD.value,
-                                              unique_code=GWSException.INVALID_RESOURCE_R_FIELD.name,
+                if not self.inputs.has_resource_model(resource._model_id):
+                    raise BadRequestException(GWSException.INVALID_LINKED_RESOURCE.value,
+                                              unique_code=GWSException.INVALID_LINKED_RESOURCE.name,
                                               detail_args={'port_name': port_name})
 
         resource_list._set_r_field()
@@ -320,8 +320,8 @@ class TaskModel(ProcessModel):
 
             # if the resource r field is not listed in task input, error
             if not self.inputs.has_resource_model(resource_model_id):
-                raise BadRequestException(GWSException.INVALID_RESOURCE_R_FIELD.value,
-                                          unique_code=GWSException.INVALID_RESOURCE_R_FIELD.name,
+                raise BadRequestException(GWSException.INVALID_LINKED_RESOURCE.value,
+                                          unique_code=GWSException.INVALID_LINKED_RESOURCE.name,
 
                                           detail_args={'port_name': port_name})
 
