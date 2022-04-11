@@ -286,13 +286,14 @@ class TaskModel(ProcessModel):
         for resource in resource_list.get_resources_as_set():
 
             # if this is a new resource
-            if resource._model_id is None:
+            if not resource_list.resource_is_constant(resource.uid):
 
                 # create and save the resource model from the resource
                 resource_model = self._save_resource(resource, port_name)
 
                 resource._model_id = resource_model.id
             else:
+                # case when the resource is a constant and we don't create a new resource
                 # if the resource is not listed in task input, error
                 if not self.inputs.has_resource_model(resource._model_id):
                     raise BadRequestException(GWSException.INVALID_LINKED_RESOURCE.value,

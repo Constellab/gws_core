@@ -22,7 +22,13 @@ if TYPE_CHECKING:
 @resource_decorator(unique_name="ResourceListBase", human_name="Resource list base",
                     short_description="Abstract class for resource list", hide=True)
 class ResourceListBase(Resource):
-    """Abstract class for resource list, to use only if you want you're doing"""
+    """Abstract class for resource list, to use only if you want you're doing.
+    By default the sytem create a new
+    resource for each resource in the set when saving the set
+    """
+
+    # list the resource ids that are constant (the system doesn't create new resources on save)
+    _constant_resource_ids: Set[str] = None
 
     @abstractmethod
     def _get_resource_ids(self) -> Set[str]:
@@ -31,6 +37,9 @@ class ResourceListBase(Resource):
     @abstractmethod
     def get_resources_as_set(self) -> Set[Resource]:
         pass
+
+    def resource_is_constant(self, resource_uid: str) -> Set[Resource]:
+        return self._constant_resource_ids is not None and resource_uid in self._constant_resource_ids
 
     def _get_resource_by_model_id(self, resource_model_id: str) -> Resource:
         if not resource_model_id in self._get_resource_ids():

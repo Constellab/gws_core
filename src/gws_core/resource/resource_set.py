@@ -15,14 +15,8 @@ from .resource_decorator import resource_decorator
 @resource_decorator(unique_name="ResourceSet", human_name="Resource set",
                     short_description="A set of resources")
 class ResourceSet(ResourceListBase):
-    """Resource to manage a set of resources
-
-    :param Resource: _description_
-    :type Resource: _type_
-    :raises Exception: _description_
-    :raises Exception: _description_
-    :return: _description_
-    :rtype: _type_
+    """Resource to manage a set of resources. By default the sytem create a new
+    resource for each resource in the set when saving the set
     """
 
     # dict where key is the initial name of the resource and value is the resource id
@@ -91,9 +85,12 @@ class ResourceSet(ResourceListBase):
         if name in self._resources:
             raise Exception(f'Resource with name {name} already exists')
 
-        # if the create new resource is True, we clear the model id so it creates a new resource
-        if create_new_resource:
-            resource._model_id = None
+        # if the resource already exist, add it to the constant list so
+        # the system will not create a new resource on save
+        if not create_new_resource:
+            if self._constant_resource_ids is None:
+                self._constant_resource_ids = set()
+            self._constant_resource_ids.add(resource.uid)
 
         self._resources[name] = resource
 
