@@ -72,7 +72,7 @@ class TableHistogramView(BaseTableView):
         if len(series) == 0:
             raise BadRequestException('There must be at least one serie')
 
-        if nbins <= 0:
+        if nbins is None or nbins <= 0:
             nbins = "auto"
 
         # create view
