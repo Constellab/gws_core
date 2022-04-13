@@ -114,10 +114,10 @@ class CentralService(BaseService):
         # convert the file paths to file object supported by the form data request
         files = []
         for file_path in file_paths:
-            file = open(file_path, 'rb')
-            filename = FileHelper.get_name_with_extension(file_path)
-            content_type = FileHelper.get_mime(file_path)
-            files.append(('files', (filename, file, content_type)))
+            with open(file_path, 'rb') as file:
+                filename = FileHelper.get_name_with_extension(file_path)
+                content_type = FileHelper.get_mime(file_path)
+                files.append(('files', (filename, file, content_type)))
 
         response = ExternalApiService.put_form_data(
             central_api_url, data={'body': json.dumps(report)},
