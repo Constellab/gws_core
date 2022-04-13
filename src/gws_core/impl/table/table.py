@@ -258,6 +258,10 @@ class Table(Resource):
             return None
 
     def column_exists(self, name, case_sensitive=True) -> bool:
+        """
+        Test if a column exists
+        """
+
         if case_sensitive:
             return name in self.column_names
         else:
@@ -265,23 +269,42 @@ class Table(Resource):
             return name.lower() in lower_names
 
     def get_column_as_dataframe(self, column_name: str, skip_nan=False) -> DataFrame:
+        """
+        Get a column as a dataframe
+        """
+
         df = self._data[[column_name]]
         if skip_nan:
             df.dropna(inplace=True)
         return df
 
     def get_column_as_list(self, column_name: str, skip_nan=False) -> list:
+        """
+        Get a column as a list
+        """
+
         dataframe = self.get_column_as_dataframe(column_name, skip_nan)
         return DataframeHelper.flatten_dataframe_by_column(dataframe)
 
     def get_meta(self):
+        """
+        Get metadata
+        """
+
         return self._meta
 
     def get_tags(self, axis: AxisType) -> List[Dict[str, str]]:
+        """
+        Get tags
+        """
+
         return self.get_row_tags() if is_row_axis(axis) else self.get_column_tags()
 
     def get_row_tags(self, none_if_empty: bool = False,
                      from_index: int = None, to_index: int = None) -> List[Dict[str, str]]:
+        """
+        Get row tags
+        """
         tags = self._meta["row_tags"]
         are_tags_empty = [len(t) == 0 for t in tags]
         if all(are_tags_empty) and none_if_empty:

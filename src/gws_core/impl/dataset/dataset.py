@@ -63,10 +63,27 @@ class Dataset(Table):
 
     # -- F --
 
+    @classmethod
+    def from_table(cls, table: Table) -> 'Dataset':
+        """
+        Create a Dataset from a Table
+        """
+        dataset = cls(
+            data=table.get_data(),
+            meta=table.get_meta()
+        )
+        return dataset
+
     def get_features(self) -> DataFrame:
+        """
+        Get features
+        """
         return self._data.iloc[:, self._feature_positions]
 
     def get_targets(self) -> DataFrame:
+        """
+        Get targets
+        """
         return self._data.iloc[:, self._target_positions]
 
     @ property
@@ -81,11 +98,18 @@ class Dataset(Table):
         return self._data.columns[self._feature_positions].values.tolist()
 
     def feature_exists(self, name) -> bool:
+        """
+        Check if a feature exists
+        """
+
         return name in self.feature_names
 
     # -- H --
 
     def has_string_targets(self):
+        """
+        Check if some targets contain string data types
+        """
         return is_string_dtype(self.get_targets())
 
     # -- I --

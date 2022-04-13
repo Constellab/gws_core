@@ -45,7 +45,7 @@ class DataProvider():
         return DatasetImporter.call(cls.get_iris_file(), {
             "delimiter": ",",
             "header": 0,
-            "metadata": [{
+            "metadata_columns": [{
                 "column": "variety",
                 "type": Table.CATEGORICAL_TAG_TYPE,
                 "keep_in_data": True,
@@ -58,7 +58,7 @@ class DataProvider():
         return DatasetImporter.call(cls.get_no_head_iris_file(), {
             "delimiter": ",",
             "header": -1,
-            "metadata": [{
+            "metadata_columns": [{
                 "column": "4",
                 "type": Table.CATEGORICAL_TAG_TYPE,
                 "keep_in_data": True,
