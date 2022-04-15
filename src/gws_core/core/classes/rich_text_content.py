@@ -4,12 +4,21 @@
 # About us: https://gencovery.com
 
 
-from typing import Any, List, Optional, TypedDict
+from enum import Enum
+from typing import Any, Dict, List, Optional, TypedDict
+
+from gws_core.task.transformer.transformer_type import TransformerDict
 
 
 class RichTextI(TypedDict):
 
     ops: List[Any]
+
+
+class RichTextSpecialOps(Enum):
+    """List the special ops type that can be used in rich text """
+    FIGURE = 'figure'
+    RESOURCE_VIEW = 'resource_view'
 
 
 class RichTextFigure(TypedDict):
@@ -25,6 +34,17 @@ class RichTextFigure(TypedDict):
     height: int
     naturalWidth: int
     naturalHeight: int
+
+
+class RichTextResourceView(TypedDict):
+    """Object representing a resource view in a rich text"""
+    resource_id: str
+    experiment_id: str
+    view_method_name: str
+    view_config: Dict[str, Any]
+    transformers: List[TransformerDict]
+    title: Optional[str]
+    caption: Optional[str]
 
 
 class RichText():
@@ -44,10 +64,16 @@ class RichText():
             all(x['insert'] == '\n' for x in self._content['ops'])  # empty if all the ops only contain '\n'
 
     def get_figures(self) -> List[RichTextFigure]:
-        figures: List[RichTextFigure] = []
+        return self.get_special_ops(RichTextSpecialOps.FIGURE)
+
+    def get_resource_views(self) -> List[RichTextResourceView]:
+        return self.get_special_ops(RichTextSpecialOps.RESOURCE_VIEW)
+
+    def get_special_ops(self, ops_name: RichTextSpecialOps) -> List[Any]:
+        special_ops: List[RichTextFigure] = []
 
         for op in self._content['ops']:
-            if 'insert' in op and 'figure' in op['insert'] and isinstance(op['insert']['figure'], dict):
-                figures.append(op['insert']['figure'])
+            if 'insert' in op and ops_name in op['insert'] and isinstance(op['insert'][ops_name], dict):
+                special_ops.append(op['insert'][ops_name])
 
-        return figures
+        return special_ops
