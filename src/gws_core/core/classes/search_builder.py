@@ -65,20 +65,20 @@ class SearchBuilder:
     _model_type: Type[Model]
     _default_orders: List[Ordering]
 
-    def __init__(self, model_type: Type[Model], default_order: List[Ordering] = None) -> None:
+    def __init__(self, model_type: Type[Model], default_orders: List[Ordering] = None) -> None:
         """Create a search build to make dynamic search
 
 
         :param model_type: peewee type of the model to search
         :type model_type: Type[Model]
-        :param default_order: define a default sort for the request, defaults to None
-        :type default_order: List[Ordering], optional
+        :param default_orders: define a default sort for the request, defaults to None
+        :type default_orders: List[Ordering], optional
         """
         self._model_type = model_type
 
-        if default_order is None:
+        if default_orders is None:
             default_orders = []
-        self._default_orders = default_order
+        self._default_orders = default_orders
 
     def build_search(self, search: SearchDict) -> ModelSelect:
         filter_expression = self.build_search_filter_query(search.filtersCriteria)

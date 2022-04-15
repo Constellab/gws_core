@@ -15,7 +15,7 @@ from ..model.typing import Typing
 class TypingSearchBuilder(SearchBuilder):
 
     def __init__(self) -> None:
-        super().__init__(Typing, default_order=[Typing.human_name.asc()])
+        super().__init__(Typing, default_orders=[Typing.human_name.asc()])
 
     def get_filter_expression(self, filter_: SearchFilterCriteria) -> Expression:
         # Special case for the tags to filter on all tags

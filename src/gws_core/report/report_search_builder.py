@@ -9,4 +9,4 @@ from gws_core.report.report import Report
 
 class ReportSearchBuilder(SearchBuilder):
     def __init__(self) -> None:
-        super().__init__(Report, default_order=[Report.last_modified_at.desc()])
+        super().__init__(Report, default_orders=[Report.last_modified_at.desc()])
