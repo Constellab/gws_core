@@ -99,7 +99,9 @@ class SearchBuilder:
         query_builder: ExpressionBuilder = ExpressionBuilder()
 
         for filter_ in filters:
-            query_builder.add_expression(self.get_filter_expression(filter_))
+            expression = self.get_filter_expression(filter_)
+            if expression:
+                query_builder.add_expression(expression)
 
         return query_builder.build()
 
