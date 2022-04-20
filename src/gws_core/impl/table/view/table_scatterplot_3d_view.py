@@ -11,7 +11,7 @@ from ....config.config_types import ConfigParams
 from ....config.param_set import ParamSet
 from ....config.param_spec import ListParam, StrParam
 from ....core.exception.exceptions import BadRequestException
-from ....resource.view_types import ViewSpecs
+from ....resource.view_types import ViewSpecs, ViewType
 from ...view.scatterplot_3d_view import ScatterPlot3DView
 from .base_table_view import BaseTableView
 
@@ -61,7 +61,7 @@ class TableScatterPlot3DView(BaseTableView):
     See also ScatterPlot3DView
     """
 
-    _type: str = "scatter-plot-3d-view"
+    _type: ViewType = ViewType.SCATTER_PLOT_3D
     _table: Table
     _specs: ViewSpecs = {
         **BaseTableView._specs,

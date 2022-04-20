@@ -33,7 +33,7 @@ class SearchSortCriteria(TypedDict):
     nullOption: Optional[SearchOrderNullOption]
 
 
-class SearchDict(BaseModel):
+class SearchParams(BaseModel):
     """Dictionnary containing information to filter and order a search
 
     :param TypedDict: [description]
@@ -80,7 +80,7 @@ class SearchBuilder:
             default_orders = []
         self._default_orders = default_orders
 
-    def build_search(self, search: SearchDict) -> ModelSelect:
+    def build_search(self, search: SearchParams) -> ModelSelect:
         filter_expression = self.build_search_filter_query(search.filtersCriteria)
 
         orders: List[Ordering] = self.build_search_ordering(search.sortsCriteria)

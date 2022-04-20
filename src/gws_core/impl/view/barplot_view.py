@@ -6,6 +6,7 @@
 from typing import Dict, List, Union
 
 from gws_core.core.utils.numeric_helper import NumericHelper
+from gws_core.resource.view_types import ViewType
 from pandas import DataFrame
 
 from ...config.config_types import ConfigParams
@@ -59,7 +60,7 @@ class BarPlotView(View):
     x_tick_labels: List[str] = None
     x_tick_tags: List[Dict[str, str]] = None
     _series: List = None
-    _type: str = "bar-plot-view"
+    _type: ViewType = ViewType.BAR_PLOT
     _title: str = "Bar Plot"
 
     def add_series(self, x: Union[List[float], List[str], ] = None, y: List[float] = None, name: str = None,

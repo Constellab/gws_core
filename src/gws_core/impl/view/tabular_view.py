@@ -6,6 +6,7 @@
 
 from typing import Dict, List
 
+from gws_core.resource.view_types import ViewType
 from pandas import DataFrame
 
 from ...config.config_types import ConfigParams
@@ -22,7 +23,7 @@ class TabularView(View):
     The view model is:
     ```
     {
-        "type": "table"
+        "type": "table-view"
         "title": str,
         "caption": str,
         "data" List[List[float]],
@@ -47,7 +48,7 @@ class TabularView(View):
     number_of_columns_per_page: int = MAX_NUMBER_OF_COLUMNS_PER_PAGE
     replace_nan_by: str = ""
 
-    _type = "table-view"
+    _type: ViewType = ViewType.TABLE
     _data: DataFrame = None
     _row_tags: List[Dict[str, str]] = None
     _column_tags: List[Dict[str, str]] = None

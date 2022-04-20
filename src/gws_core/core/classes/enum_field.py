@@ -1,6 +1,7 @@
 from enum import Enum
-from typing import Any, Callable
+from typing import Any, Type
 
+from gws_core.core.utils.utils import Utils
 from peewee import CharField
 
 
@@ -9,7 +10,7 @@ class EnumField(CharField):
     This class enable an Enum like field for Peewee
     """
 
-    def __init__(self, choices: Callable, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, choices: Type, *args: Any, **kwargs: Any) -> None:
         super(CharField, self).__init__(*args, **kwargs)
         self.choices = choices
         self.max_length = 255
@@ -20,4 +21,4 @@ class EnumField(CharField):
         return value
 
     def python_value(self, value: Any) -> Any:
-        return self.choices(type(list(self.choices)[0].value)(value))
+        return Utils.str_to_enum(self.choices, value)

@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, TypedDict
 
 from ....config.config_types import ConfigParams
 from ....config.param_spec import DictParam
-from ....resource.view_types import ViewSpecs
+from ....resource.view_types import ViewSpecs, ViewType
 from ...view.heatmap_view import HeatmapView
 from .base_table_view import BaseTableView, CellRange, TableSelection
 
@@ -53,6 +53,7 @@ class TableHeatmapView(BaseTableView):
         **BaseTableView._specs,
         "serie": DictParam(default_value={}),
     }
+    _type: ViewType = ViewType.HEATMAP
 
     def to_dict(self, params: ConfigParams) -> dict:
         serie: HeatMapSerie = params.get('serie')

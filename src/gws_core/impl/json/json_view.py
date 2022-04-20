@@ -5,6 +5,8 @@
 
 from typing import Any, Dict
 
+from gws_core.resource.view_types import ViewType
+
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -23,7 +25,7 @@ class JSONView(View):
     }
     ```
     """
-    _type: str = "json-view"
+    _type: ViewType = ViewType.JSON
     _data: Any
 
     def __init__(self, data: Dict = None):

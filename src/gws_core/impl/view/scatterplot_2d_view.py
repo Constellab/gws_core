@@ -6,6 +6,7 @@
 from typing import Any, Dict, List, Optional, Union
 
 from gws_core.core.utils.numeric_helper import NumericHelper
+from gws_core.resource.view_types import ViewType
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
@@ -58,7 +59,7 @@ class ScatterPlot2DView(View):
     y_label: str = None
     x_tick_labels: List[str] = None
     _series: List = None
-    _type: str = "scatter-plot-2d-view"
+    _type: ViewType = ViewType.SCATTER_PLOT_2D
     _title: str = "2D-Scatter Plot"
 
     def add_series(self, x: List[float], y: List[float], name: str = None,

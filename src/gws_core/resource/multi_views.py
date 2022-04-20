@@ -5,6 +5,8 @@
 
 from typing import List, TypedDict
 
+from gws_core.resource.view_types import ViewType
+
 from ..config.config_types import ConfigParams, ConfigParamsDict
 from ..config.param_spec_helper import ParamSpecHelper
 from .view import View
@@ -18,7 +20,7 @@ class ViewGrid(TypedDict):
 
 
 class EmptyView(View):
-    _type = "empty-view"
+    _type: ViewType = ViewType.EMPTY
 
 
 class MultiViews(View):
@@ -42,7 +44,7 @@ class MultiViews(View):
     """
 
     _sub_views: List[ViewGrid]
-    _type = "multi-view"
+    _type: ViewType = ViewType.MULTI_VIEWS
     _nb_of_columns: int
 
     def __init__(self, nb_of_columns: int):

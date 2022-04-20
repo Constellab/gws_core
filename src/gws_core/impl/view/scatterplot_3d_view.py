@@ -5,6 +5,8 @@
 
 from typing import Dict, List
 
+from gws_core.resource.view_types import ViewType
+
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
 from ...resource.view import View
@@ -65,7 +67,7 @@ class ScatterPlot3DView(View):
     x_tick_labels: List[str] = None
     y_tick_labels: List[str] = None
     _series: List = None
-    _type: str = "scatter-plot-3d-view"
+    _type: ViewType = ViewType.SCATTER_PLOT_3D
     _title: str = "3D-Scatter Plot"
 
     def add_series(

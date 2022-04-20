@@ -5,6 +5,7 @@
 
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.impl.table.table_types import TableHeaderInfo
+from gws_core.resource.view_types import ViewType
 from numpy import nan
 from pandas import DataFrame
 
@@ -34,7 +35,7 @@ class HeatmapView(View):
     ```
     """
 
-    _type: str = "heatmap-view"
+    _type: ViewType = ViewType.HEATMAP
     _data: DataFrame = None
     _rows_info: TableHeaderInfo = None
     _columns_info: TableHeaderInfo = None

@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Union
 
 from gws_core.config.config_types import ConfigParams
+from gws_core.resource.view_types import ViewType
 
 from ...core.exception.exceptions import BadRequestException
 from ...impl.table.view.table_view import TableView
@@ -36,7 +37,7 @@ class DatasetView(TableView):
     ```
     """
 
-    _type = "dataset-view"
+    _type: ViewType = ViewType.DATASET
     _table: Dataset
 
     def _check_and_set_data(self, table: Dataset):

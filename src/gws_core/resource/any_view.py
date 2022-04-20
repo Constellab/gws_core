@@ -5,6 +5,9 @@
 
 from typing import Dict
 
+from gws_core.core.utils.utils import Utils
+from gws_core.resource.view_types import ViewType
+
 from ..config.config_types import ConfigParams
 from ..resource.view import View
 
@@ -16,8 +19,8 @@ class AnyView(View):
     _view_json: Dict
 
     def __init__(self, view_json: Dict):
+        self._type = Utils.str_to_enum(ViewType, view_json.get("type"))
         super().__init__()
-        self._type = view_json.get("type")
         self._view_json = view_json
 
     def to_dict(self, params: ConfigParams) -> dict:

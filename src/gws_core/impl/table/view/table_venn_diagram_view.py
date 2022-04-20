@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, List
 from ....config.config_types import ConfigParams
 from ....config.param_spec import ListParam
 from ....core.exception.exceptions import BadRequestException
-from ....resource.view_types import ViewSpecs
+from ....resource.view_types import ViewSpecs, ViewType
 from ...view.venn_diagram_view import VennDiagramView
 from .base_table_view import BaseTableView, Serie1d
 
@@ -49,7 +49,7 @@ class TableVennDiagramView(BaseTableView):
     ```
     """
 
-    _type: str = "venn-diagram-view"
+    _type: ViewType = ViewType.VENN_DIAGRAM
     _table: Table
 
     _specs: ViewSpecs = {

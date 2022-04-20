@@ -8,6 +8,7 @@ from typing import List, Union
 import numpy
 from gws_core.core.utils.numeric_helper import NumericHelper
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
+from gws_core.resource.view_types import ViewType
 from pandas import DataFrame
 
 from ...config.config_types import ConfigParams
@@ -65,7 +66,7 @@ class HistogramView(View):
     x_tick_labels: List[str] = None
 
     _series: List = None
-    _type: str = "histogram-view"
+    _type: ViewType = ViewType.HISTOGRAM
     _title: str = "Histogram"
 
     def add_data(self, data: List[float] = None, name: str = None):

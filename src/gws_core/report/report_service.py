@@ -11,14 +11,16 @@ from gws_core.core.classes.rich_text_content import (RichText,
                                                      RichTextResourceView)
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
-from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.report.report_file_service import ReportFileService, ReportImage
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
+from gws_core.resource.view_historic.view_historic_service import \
+    ViewHistoricService
 from peewee import ModelSelect
 
 from ..central.central_service import CentralService
 from ..core.classes.paginator import Paginator
-from ..core.classes.search_builder import SearchBuilder, SearchDict
+from ..core.classes.search_builder import SearchBuilder, SearchParams
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -246,7 +248,7 @@ class ReportService():
 
     @classmethod
     def search(cls,
-               search: SearchDict,
+               search: SearchParams,
                page: int = 0,
                number_of_items_per_page: int = 20) -> Paginator[Report]:
 
@@ -271,3 +273,20 @@ class ReportService():
         ReportFileService.delete_file(filename)
 
     ################################################# Resource View ########################################
+    @classmethod
+    def search_available_resource_view(cls, report_id: str, search: SearchParams,
+                                       page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
+        """Method to search the resource views that are available for a report. It seaches in the resource view historic
+        """
+
+        # add a filter on experiments of the report
+        experiments = ReportService.get_experiments_by_report(report_id)
+
+        if len(experiments) == 0:
+            raise BadRequestException(GWSException.REPORT_NO_ASSOCIATED_EXPERIMENT.value,
+                                      GWSException.REPORT_NO_ASSOCIATED_EXPERIMENT.name)
+
+        experiment_ids = [experiment.id for experiment in experiments]
+        search.override_filter_criteria('experiment', 'IN', experiment_ids)
+
+        return ViewHistoricService.search(search, page, number_of_items_per_page)

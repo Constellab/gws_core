@@ -6,6 +6,7 @@
 from typing import Dict, List, Union
 
 from gws_core.core.utils.numeric_helper import NumericHelper
+from gws_core.resource.view_types import ViewType
 from pandas import DataFrame
 
 from ...config.config_types import ConfigParams
@@ -48,7 +49,7 @@ class StackedBarPlotView(BarPlotView):
     See also BarPlotView
     """
 
-    _type: str = "stacked-bar-plot-view"
+    _type: ViewType = ViewType.STACKED_BAR_PLOT
     _title: str = "Stacked-Bar Plot"
     _normalize: bool = False
     _series_sums: DataFrame = None

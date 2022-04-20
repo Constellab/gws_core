@@ -180,3 +180,9 @@ class Utils:
         name = name.replace(' ', '')
         name = re.sub('(.)([A-Z][a-z]+)', r'\1 \2', name)
         return re.sub('([a-z0-9])([A-Z])', r'\1 \2', name).capitalize()
+
+    @staticmethod
+    def str_to_enum(enum_class: Type, str_value: str) -> Any:
+        """Convert a string to an enum value
+        """
+        return enum_class(str_value)

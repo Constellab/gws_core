@@ -6,6 +6,8 @@
 import copy
 from typing import Dict, Union
 
+from gws_core.resource.view_types import ViewType
+
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
 from ...resource.view import View
@@ -46,7 +48,7 @@ class VennDiagramView(View):
 
     label: str = None
     _groups: Dict[str, set] = None
-    _type: str = "venn-diagram-view"
+    _type: ViewType = ViewType.VENN_DIAGRAM
     _title: str = "Venn Diagram"
 
     def _compute_sections(self):

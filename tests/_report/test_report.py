@@ -6,6 +6,7 @@ from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.project.project import Project
 from gws_core.project.project_dto import ProjectDto
 from gws_core.report.report import Report
+from gws_core.report.report_dto import ReportDTO
 from gws_core.report.report_service import ReportService
 from gws_core.test.base_test_case import BaseTestCase
 
@@ -18,12 +19,12 @@ class TestReport(BaseTestCase):
         project = project.save()
         # test create an empty report
 
-        report = ReportService.create({'title': 'Test report'})
+        report = ReportService.create(ReportDTO(title='Test report'))
 
         self.assertIsInstance(report, Report)
         self.assertEqual(report.title, 'Test report')
 
-        report = ReportService.update(report.id, {'title': 'New title'})
+        report = ReportService.update(report.id, ReportDTO(title='New title'))
         self.assertEqual(report.title, 'New title')
 
         report = ReportService.update_content(report.id, {'hello': 'nice'})
@@ -33,7 +34,7 @@ class TestReport(BaseTestCase):
 
         # Create a second experiment with a report
         experiment_2: Experiment = ExperimentService.create_empty_experiment()
-        report_2 = ReportService.create({'title': 'Report 2'}, [experiment_2.id])
+        report_2 = ReportService.create(ReportDTO(title='Report 2'), [experiment_2.id])
 
         # Add exp 1 on report 1
         ReportService.add_experiment(report.id, experiment.id)

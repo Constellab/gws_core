@@ -8,7 +8,7 @@ from ....core.classes.paginator import PageInfo
 from ....core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ....resource.view import View
-from ....resource.view_types import ViewSpecs
+from ....resource.view_types import ViewSpecs, ViewType
 
 if TYPE_CHECKING:
     from ..text import Text
@@ -29,7 +29,7 @@ class TextView(View):
     ```
     """
 
-    _type: str = "text-view"
+    _type: ViewType = ViewType.TEXT
     _specs: ViewSpecs = {
         **View._specs,
         "page": IntParam(default_value=1, min_value=1, human_name="Page number"),

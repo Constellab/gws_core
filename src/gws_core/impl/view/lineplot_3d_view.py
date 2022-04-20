@@ -3,6 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws_core.resource.view_types import ViewType
+
 from .scatterplot_3d_view import ScatterPlot3DView
 
 
@@ -46,5 +48,5 @@ class LinePlot3DView(ScatterPlot3DView):
     See also ScatterPlot3DView
     """
 
-    _type: str = "line-plot-3d-view"
+    _type: ViewType = ViewType.LINE_PLOT_3D
     _title: str = "3D-Line Plot"

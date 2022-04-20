@@ -5,13 +5,16 @@
 
 from typing import Any, List
 
+from gws_core.core.exception.exceptions.bad_request_exception import \
+    BadRequestException
+
 from ..config.config_types import ConfigParams
-from .view_types import ViewSpecs
+from .view_types import ViewSpecs, ViewType
 
 
 class View:
 
-    _type: str = 'view'
+    _type: ViewType = ViewType.VIEW
     _title: str = ''
     _caption: str = ''
 
@@ -19,6 +22,10 @@ class View:
     _specs: ViewSpecs = {}
 
     def __init__(self):
+        # Check view type
+        if not isinstance(self._type, ViewType):
+            raise BadRequestException(f"The view type '{self._type}' is not a valid ViewType")
+
         self._check_view_specs()
 
     def _check_view_specs(self) -> None:
@@ -41,6 +48,18 @@ class View:
     def set_caption(self, caption: str):
         """ Set caption """
         self._caption = caption
+
+    def get_title(self) -> str:
+        """ Get title """
+        return self._title
+
+    def get_caption(self) -> str:
+        """ Get caption """
+        return self._caption
+
+    def get_type(self) -> str:
+        """ Get type """
+        return self._type
 
     def to_dict(self, params: ConfigParams) -> dict:
         """ Convert to dictioannry """

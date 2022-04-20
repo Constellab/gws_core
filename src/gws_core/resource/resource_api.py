@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import Depends, Request
 from fastapi.responses import FileResponse
-from gws_core.core.classes.search_builder import SearchDict
+from gws_core.core.classes.search_builder import SearchParams
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.transformer.transformer_service import TransformerService
@@ -41,6 +41,7 @@ async def get_view_specs(id: str, view_name: str,
 class ViewConfig(TypedDict):
     values: Dict[str, Any]
     transformers: List[TransformerDict]
+    save_view_config: bool
 
 
 @core_app.post("/resource/{id}/views/{view_name}", tags=["Resource"],
@@ -49,7 +50,8 @@ async def call_view_on_resource(id: str,
                                 view_name: str,
                                 view_config: ViewConfig,
                                 _: UserData = Depends(AuthService.check_user_access_token)) -> Any:
-    return await ResourceService.call_view_on_resource_type(id, view_name, view_config["values"], view_config["transformers"])
+    return await ResourceService.get_and_call_view_on_resource_model(id, view_name, view_config["values"],
+                                                                     view_config["transformers"], view_config["save_view_config"])
 
 
 ####################################### Resource Model ###################################
@@ -98,7 +100,7 @@ async def delete_file(id: str,
 
 
 @core_app.post("/resource/advanced-search", tags=["Resource"], summary="Advanced search for resource")
-async def advanced_search(search_dict: SearchDict,
+async def advanced_search(search_dict: SearchParams,
                           page: Optional[int] = 1,
                           number_of_items_per_page: Optional[int] = 20,
                           _: UserData = Depends(AuthService.check_user_access_token)) -> None:

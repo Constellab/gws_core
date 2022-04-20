@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any, List, Union
 from gws_core.config.config_types import ConfigParams
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.resource.view import View
+from gws_core.resource.view_types import ViewType
 
 if TYPE_CHECKING:
     from gws_core.impl.file.fs_node_model import FSNodeModel
@@ -35,7 +36,7 @@ class LocalFolderView(View):
      """
 
     _path: str
-    _type: str = "folder-view"
+    _type: ViewType = ViewType.FOLDER
 
     def __init__(self, dir_path: str):
         super().__init__()

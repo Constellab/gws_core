@@ -73,7 +73,7 @@ class RichText():
         special_ops: List[RichTextFigure] = []
 
         for op in self._content['ops']:
-            if 'insert' in op and ops_name in op['insert'] and isinstance(op['insert'][ops_name], dict):
-                special_ops.append(op['insert'][ops_name])
+            if 'insert' in op and ops_name.value in op['insert'] and isinstance(op['insert'][ops_name.value], dict):
+                special_ops.append(op['insert'][ops_name.value])
 
         return special_ops
