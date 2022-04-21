@@ -10,6 +10,7 @@ import string
 import uuid
 from importlib import import_module
 from importlib.util import find_spec
+from json import dumps
 from typing import Any, List, Optional, Set, Tuple, Type, Union, get_args
 
 from slugify import slugify as _slugify
@@ -186,3 +187,9 @@ class Utils:
         """Convert a string to an enum value
         """
         return enum_class(str_value)
+
+    @staticmethod
+    def json_are_equals(json1: Any, json2: Any) -> bool:
+        """Check if two json are equals
+        """
+        return dumps(json1, sort_keys=True) == dumps(json2, sort_keys=True)

@@ -6,18 +6,18 @@
 from peewee import Expression
 
 from ...core.classes.search_builder import SearchBuilder, SearchFilterCriteria
-from .view_historic import ViewHistoric
+from .view_config import ViewConfig
 
 
-class ViewHistoricSearchBuilder(SearchBuilder):
-    """Search build for the view historic
+class ViewConfigSearchBuilder(SearchBuilder):
+    """Search build for the view cofnig
 
     :param SearchBuilder: [description]
     :type SearchBuilder: [type]
     """
 
     def __init__(self) -> None:
-        super().__init__(ViewHistoric, default_order=[ViewHistoric.created_at.desc()])
+        super().__init__(ViewConfig, default_order=[ViewConfig.last_modified_at.desc()])
 
     def get_filter_expression(self, filter: SearchFilterCriteria) -> Expression:
         return super().get_filter_expression(filter)

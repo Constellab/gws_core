@@ -10,8 +10,7 @@ from gws_core.config.config_types import ConfigParamsDict, ConfigSpecs
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.resource.view import View
-from gws_core.resource.view_historic.view_historic_service import \
-    ViewHistoricService
+from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.resource.view_types import ViewCallResult
 from gws_core.task.converter.converter_service import ConverterService
 from numpy import save
@@ -149,7 +148,7 @@ class ResourceService(BaseService):
         view = await cls.get_view_on_resource(resource, view_name, config_values, transformers)
 
         if save_view_config:
-            ViewHistoricService.save_resource_view_historic(
+            ViewConfigService.save_view_config_in_async(
                 resource_model, view, view_name, config_values, transformers)
 
         # call the view to dict

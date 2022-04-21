@@ -15,8 +15,8 @@ from gws_core.report.report_file_service import ReportFileService, ReportImage
 from gws_core.report.report_resource import ReportResource
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
-from gws_core.resource.view_historic.view_historic_service import \
-    ViewHistoricService
+from gws_core.resource.view_config.view_config_service import \
+    ViewConfigService
 from peewee import ModelSelect
 
 from ..central.central_service import CentralService
@@ -283,7 +283,7 @@ class ReportService():
     @classmethod
     def search_available_resource_view(cls, report_id: str, search: SearchParams,
                                        page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
-        """Method to search the resource views that are available for a report. It seaches in the resource view historic
+        """Method to search the resource views that are available for a report. It searches in the resource view in view config
         """
 
         # add a filter on experiments of the report
@@ -296,7 +296,7 @@ class ReportService():
         experiment_ids = [experiment.id for experiment in experiments]
         search.override_filter_criteria('experiment', 'IN', experiment_ids)
 
-        return ViewHistoricService.search(search, page, number_of_items_per_page)
+        return ViewConfigService.search(search, page, number_of_items_per_page)
 
     @classmethod
     def _refresh_report_associated_resources(cls, report: Report) -> None:

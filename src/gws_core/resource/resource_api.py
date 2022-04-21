@@ -38,7 +38,7 @@ async def get_view_specs(id: str, view_name: str,
     return DictJsonable(ResourceService.get_view_specs(id, view_name)).to_json()
 
 
-class ViewConfig(TypedDict):
+class CallViewParams(TypedDict):
     values: Dict[str, Any]
     transformers: List[TransformerDict]
     save_view_config: bool
@@ -48,10 +48,10 @@ class ViewConfig(TypedDict):
                summary="Call the view name for a resource")
 async def call_view_on_resource(id: str,
                                 view_name: str,
-                                view_config: ViewConfig,
+                                call_view_params: CallViewParams,
                                 _: UserData = Depends(AuthService.check_user_access_token)) -> Any:
-    return await ResourceService.get_and_call_view_on_resource_model(id, view_name, view_config["values"],
-                                                                     view_config["transformers"], view_config["save_view_config"])
+    return await ResourceService.get_and_call_view_on_resource_model(id, view_name, call_view_params["values"],
+                                                                     call_view_params["transformers"], call_view_params["save_view_config"])
 
 
 ####################################### Resource Model ###################################
