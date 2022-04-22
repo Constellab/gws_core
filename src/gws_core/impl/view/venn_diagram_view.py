@@ -106,9 +106,5 @@ class VennDiagramView(View):
         data = [str(x) for x in data]
         self._groups[name] = set(data)
 
-    def to_dict(self, params: ConfigParams) -> dict:
-        _data_dict = self._compute_sections()
-        return {
-            **super().to_dict(params),
-            "data": _data_dict
-        }
+    def data_to_dict(self, params: ConfigParams) -> dict:
+        return self._compute_sections()

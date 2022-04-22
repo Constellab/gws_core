@@ -84,7 +84,7 @@ class TableScatterPlot3DView(BaseTableView):
     }
     _view_helper: Type = ScatterPlot3DView
 
-    def to_dict(self, params: ConfigParams) -> dict:
+    def data_to_dict(self, params: ConfigParams) -> dict:
         if not issubclass(self._view_helper, ScatterPlot3DView):
             raise BadRequestException("Invalid view helper. An subclass of ScatterPlot2DView is expected")
 
@@ -149,4 +149,4 @@ class TableScatterPlot3DView(BaseTableView):
                 tags=row_tags
             )
 
-        return view.to_dict(params)
+        return view.data_to_dict(params)

@@ -45,6 +45,7 @@ class RichTextResourceView(TypedDict):
     transformers: List[TransformerDict]
     title: Optional[str]
     caption: Optional[str]
+    technical_info: List[Dict]
 
 
 class RichText():

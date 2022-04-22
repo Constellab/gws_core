@@ -110,13 +110,10 @@ class ScatterPlot2DView(View):
             "y_name": y_name,
         })
 
-    def to_dict(self, params: ConfigParams) -> dict:
+    def data_to_dict(self, params: ConfigParams) -> dict:
         return {
-            **super().to_dict(params),
-            "data": {
-                "x_label": self.x_label,
-                "y_label": self.y_label,
-                "x_tick_labels": self.x_tick_labels,
-                "series": self._series,
-            }
+            "x_label": self.x_label,
+            "y_label": self.y_label,
+            "x_tick_labels": self.x_tick_labels,
+            "series": self._series,
         }

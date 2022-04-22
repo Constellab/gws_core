@@ -44,9 +44,5 @@ class ResourcesListView(View):
     def add_resources(self, resource_model_json: List[ResourceModel]) -> None:
         self._resource_model += resource_model_json
 
-    def to_dict(self, params: ConfigParams) -> dict:
-
-        return {
-            **super().to_dict(params),
-            "data": ListJsonable(self._resource_model).to_json()
-        }
+    def data_to_dict(self, params: ConfigParams) -> dict:
+        return ListJsonable(self._resource_model).to_json()

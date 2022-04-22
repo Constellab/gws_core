@@ -64,7 +64,7 @@ class TableBarPlotView(BaseTableView):
     def _get_view(self, params: ConfigParams) -> BarPlotView:
         return BarPlotView()
 
-    def to_dict(self, params: ConfigParams) -> dict:
+    def data_to_dict(self, params: ConfigParams) -> dict:
         series: List[Serie1d] = params.get_value("series")
 
         if len(series) == 0:
@@ -82,4 +82,4 @@ class TableBarPlotView(BaseTableView):
                 tags=self.get_row_tags_from_selection_range(serie["y"])
             )
 
-        return view.to_dict(params)
+        return view.data_to_dict(params)

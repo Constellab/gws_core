@@ -64,7 +64,7 @@ class TableHistogramView(BaseTableView):
     }
     _type: ViewType = ViewType.HISTOGRAM
 
-    def to_dict(self, params: ConfigParams) -> dict:
+    def data_to_dict(self, params: ConfigParams) -> dict:
         nbins = params.get_value("nbins")
         density = params.get_value("density")
 
@@ -85,4 +85,4 @@ class TableHistogramView(BaseTableView):
                 data=self.get_values_from_selection_range(serie["y"]),
                 name=serie["name"])
 
-        return view.to_dict(params)
+        return view.data_to_dict(params)

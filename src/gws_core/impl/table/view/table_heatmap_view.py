@@ -55,7 +55,7 @@ class TableHeatmapView(BaseTableView):
     }
     _type: ViewType = ViewType.HEATMAP
 
-    def to_dict(self, params: ConfigParams) -> dict:
+    def data_to_dict(self, params: ConfigParams) -> dict:
         serie: HeatMapSerie = params.get('serie')
 
         table: Table
@@ -80,4 +80,4 @@ class TableHeatmapView(BaseTableView):
             data=table.get_data(),
             rows_info=table.get_rows_info(),
             columns_info=table.get_columns_info())
-        return helper_view.to_dict(params)
+        return helper_view.data_to_dict(params)

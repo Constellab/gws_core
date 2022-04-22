@@ -82,12 +82,12 @@ class StackedBarPlotView(BarPlotView):
 
         super().add_series(x=x, y=y, name=name, tags=tags)
 
-    def to_dict(self, params: ConfigParams) -> dict:
-        view_dict = super().to_dict(params)
+    def data_to_dict(self, params: ConfigParams) -> dict:
+        view_data_dict = super().data_to_dict(params)
         if self._normalize:
-            for i, _ in enumerate(view_dict["data"]["series"]):
-                df = view_dict["data"]["series"][i]["data"]["y"]
+            for i, _ in enumerate(view_data_dict["series"]):
+                df = view_data_dict["series"][i]["data"]["y"]
                 df = DataFrame(df) / self._series_sums
-                view_dict["data"]["series"][i]["data"]["y"] = df.iloc[:, 0].values.tolist()
+                view_data_dict["series"][i]["data"]["y"] = df.iloc[:, 0].values.tolist()
 
-        return view_dict
+        return view_data_dict

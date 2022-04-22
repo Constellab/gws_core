@@ -63,7 +63,7 @@ class TableScatterPlot2DView(BaseTableView):
     _view_helper: Type = ScatterPlot2DView
     _type: ViewType = ViewType.SCATTER_PLOT_2D
 
-    def to_dict(self, params: ConfigParams) -> dict:
+    def data_to_dict(self, params: ConfigParams) -> dict:
         if not issubclass(self._view_helper, ScatterPlot2DView):
             raise BadRequestException("Invalid view helper. An subclass of ScatterPlot2DView is expected")
 
@@ -89,4 +89,4 @@ class TableScatterPlot2DView(BaseTableView):
                 tags=self.get_row_tags_from_selection_range(serie["y"])
             )
 
-        return view.to_dict(params)
+        return view.data_to_dict(params)

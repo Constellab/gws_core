@@ -57,7 +57,6 @@ class ViewConfigService():
                 resource_model=resource_model,
                 experiment=resource_model.experiment,
                 title=view.get_title(),
-                caption=view.get_caption(),
                 view_name=view_meta_data.method_name,
                 view_type=view.get_type(),
                 config_values=config,

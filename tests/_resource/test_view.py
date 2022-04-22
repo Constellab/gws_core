@@ -27,7 +27,6 @@ class ResourceViewTest(Resource):
     def a_view_test(self, params: ConfigParams) -> TextView:
         text_view = TextView('Test sub')
         text_view.set_title('Sub view title')
-        text_view.set_caption('Sub view caption')
         return text_view
 
 
@@ -41,7 +40,6 @@ class ResourceViewTestSub(ResourceViewTest):
     def sub_view_test(self, params: ConfigParams) -> TextView:
         text_view = TextView(params.get_value('test_str_param') + params.get_value('test_any_param'))
         text_view.set_title('Sub view title')
-        text_view.set_caption('Sub view caption')
         return text_view
 
 

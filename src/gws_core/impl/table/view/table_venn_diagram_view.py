@@ -57,7 +57,7 @@ class TableVennDiagramView(BaseTableView):
         "series": ListParam(default_value=[]),
     }
 
-    def to_dict(self, params: ConfigParams) -> dict:
+    def data_to_dict(self, params: ConfigParams) -> dict:
 
         series: List[Serie1d] = params.get_value("series")
 
@@ -71,4 +71,4 @@ class TableVennDiagramView(BaseTableView):
                 data=self.get_values_from_selection_range(serie["y"])
             )
 
-        return view.to_dict(params)
+        return view.data_to_dict(params)

@@ -53,7 +53,7 @@ class MultiViews(View):
         :param nb_of_columns: total number of columns of the grid
         :type nb_of_columns: int
         """
-        super().__init__(None)
+        super().__init__()
         self._check_number(nb_of_columns, 'Number of columns')
         self._sub_views = []
         self._nb_of_columns = nb_of_columns
@@ -112,7 +112,7 @@ class MultiViews(View):
             }
         )
 
-    def to_dict(self, params: ConfigParams) -> dict:
+    def data_to_dict(self, params: ConfigParams) -> dict:
         views_dict: List[dict] = []
         for sub_view in self._sub_views:
             view_dict = sub_view["view"].to_dict(sub_view["config_params"])
@@ -123,11 +123,8 @@ class MultiViews(View):
             })
 
         return {
-            "type": self._type,
-            "data": {
-                "nb_of_columns": self._nb_of_columns,
-                "views": views_dict
-            }
+            "nb_of_columns": self._nb_of_columns,
+            "views": views_dict
         }
 
     def _check_number(self, nb: int, name: str) -> None:

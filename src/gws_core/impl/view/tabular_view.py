@@ -120,7 +120,7 @@ class TabularView(View):
         }
         return sliced_data_info
 
-    def to_dict(self, params: ConfigParams) -> dict:
+    def data_to_dict(self, params: ConfigParams) -> dict:
         if self._data is None:
             raise BadRequestException("No data found")
 
@@ -160,8 +160,7 @@ class TabularView(View):
         columns = [{"name": name, "tags": column_tags[i]} for i, name in enumerate(data_dict["columns"])]
 
         return {
-            **super().to_dict(params),
-            "data": data_dict["data"],
+            "table": data_dict["data"],
             "rows": rows,
             "columns": columns,
             "from_row": from_row_index,

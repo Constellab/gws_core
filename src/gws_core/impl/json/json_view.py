@@ -39,8 +39,5 @@ class JSONView(View):
             raise BadRequestException("The data must be a json (dictionary, list of primitive or primitive object)")
         self._data = data
 
-    def to_dict(self, params: ConfigParams = None) -> dict:
-        return {
-            "type": self._type,
-            "data": self._data,
-        }
+    def data_to_dict(self, params: ConfigParams = None) -> dict:
+        return self._data

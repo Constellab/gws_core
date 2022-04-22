@@ -48,13 +48,12 @@ class HeatmapView(View):
         self._rows_info = rows_info
         self._columns_info = columns_info
 
-    def to_dict(self, params: ConfigParams) -> dict:
+    def data_to_dict(self, params: ConfigParams) -> dict:
         if self._data is None:
             raise BadRequestException("No data found")
 
         return {
-            "type": self._type,
-            "data": self._data.replace({nan: None}).values.tolist(),
+            "table": self._data.replace({nan: None}).values.tolist(),
             "rows": self._rows_info,
             "columns": self._columns_info
         }

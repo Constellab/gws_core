@@ -7,6 +7,7 @@ from copy import deepcopy
 from typing import Dict, List, Union, final
 
 from gws_core.resource.kv_store import KVStore
+from gws_core.resource.technical_info import TechnicalInfo, TechnicalInfoDict
 from gws_core.tag.tag import Tag
 
 from ..config.config_types import ConfigParams
@@ -16,7 +17,7 @@ from ..core.model.base import Base
 from ..core.utils.reflector_helper import ReflectorHelper
 from ..impl.json.json_view import JSONView
 from ..model.typing_register_decorator import typing_registrator
-from ..resource.r_field import BaseRField, UUIDRField
+from ..resource.r_field import BaseRField, JsonableObjectRField, UUIDRField
 from ..resource.view_decorator import view
 
 # Typing names generated for the class resource
@@ -28,6 +29,7 @@ class Resource(Base):
 
     uid: str = UUIDRField(searchable=True)
     name: str
+    technical_info: TechnicalInfoDict = JsonableObjectRField(TechnicalInfoDict)
 
     # provide tags to this attribute to save them on resource generation
     tags: Dict[str, str] = {}
@@ -92,6 +94,16 @@ class Resource(Base):
         :rtype: [type]
         """
         return self._human_name
+
+    def add_technical_info(self, technical_info: TechnicalInfo) -> None:
+        """Add a technical information to the resource
+        """
+        self.technical_info.add(technical_info)
+
+    def get_technical_info(self, key: str) -> TechnicalInfo:
+        """Get the technical information of the resource
+        """
+        return self.technical_info.get(key)
 
     def check_resource(self) -> Union[str, None]:
         """You can redefine this method to define custom logic to check this resource.

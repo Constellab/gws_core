@@ -42,16 +42,13 @@ class LocalFolderView(View):
         super().__init__()
         self._path = dir_path
 
-    def to_dict(self, params: ConfigParams) -> dict:
+    def data_to_dict(self, params: ConfigParams) -> dict:
         from gws_core.impl.file.fs_node_model import FSNodeModel
         nodes_models = FSNodeModel.path_start_with(self._path)
 
         return {
-            "type": self._type,
-            "data": {
-                "path": self._path,
-                "content": self._get_content(self._path, nodes_models)
-            }
+            "path": self._path,
+            "content": self._get_content(self._path, nodes_models)
         }
 
     def _get_content(self, path: str, node_models: List['FSNodeModel']) -> Union[dict, list]:

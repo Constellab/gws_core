@@ -18,7 +18,6 @@ from ..resource_model import ResourceModel
 class ViewConfig(ModelWithUser):
 
     title = CharField()
-    caption = CharField()
     view_type = EnumField(choices=ViewType)
     view_name = CharField()
     config_values = JSONField(null=False)
