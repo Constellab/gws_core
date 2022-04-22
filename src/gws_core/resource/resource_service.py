@@ -11,7 +11,6 @@ from gws_core.core.utils.utils import Utils
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.resource.view import View
 from gws_core.resource.view_config.view_config_service import ViewConfigService
-from gws_core.resource.view_types import ViewCallResult
 from gws_core.task.converter.converter_service import ConverterService
 from numpy import save
 from peewee import ModelSelect
@@ -132,7 +131,7 @@ class ResourceService(BaseService):
     async def get_and_call_view_on_resource_model(cls, resource_model_id: str,
                                                   view_name: str, config_values: Dict[str, Any],
                                                   transformers: List[TransformerDict],
-                                                  save_view_config: bool = False) -> ViewCallResult:
+                                                  save_view_config: bool = False) -> Dict:
 
         resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
         return await cls.call_view_on_resource_model(resource_model, view_name, config_values, transformers, save_view_config)
@@ -141,7 +140,7 @@ class ResourceService(BaseService):
     async def call_view_on_resource_model(cls, resource_model: ResourceModel,
                                           view_name: str, config_values: Dict[str, Any],
                                           transformers: List[TransformerDict],
-                                          save_view_config: bool = False) -> ViewCallResult:
+                                          save_view_config: bool = False) -> Dict:
 
         resource: Resource = resource_model.get_resource()
 
@@ -155,17 +154,7 @@ class ResourceService(BaseService):
         view = cls.set_default_info_in_view(view, resource_model)
 
         # call the view to dict
-        return ViewHelper.call_view_to_dict(view, config_values, type(resource), view_name)
-
-    @classmethod
-    async def call_view_on_resource(cls, resource: Resource,
-                                    view_name: str, config_values: Dict[str, Any],
-                                    transformers: List[TransformerDict]) -> ViewCallResult:
-
-        view = await cls.get_view_on_resource(resource, view_name, config_values, transformers)
-
-        # call the view to dict
-        return ViewHelper.call_view_to_dict(view, config_values, type(resource), view_name)
+        return ViewHelper.call_view_to_dict(view, config_values)
 
     @classmethod
     async def get_view_on_resource(cls, resource: Resource,

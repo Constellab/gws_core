@@ -12,17 +12,6 @@ from .lazy_view_param import LazyViewParam
 ViewSpecs = Dict[str, Union[ParamSpec, LazyViewParam]]
 
 
-class ViewCallResult(TypedDict):
-    """Object used to return the call of a view
-
-    :param TypedDict: [description]
-    :type TypedDict: [type]
-    """
-    view_human_name: str
-    view_short_description: str
-    view_data: Any
-
-
 class ViewType(Enum):
     """List of supported view type
     """
