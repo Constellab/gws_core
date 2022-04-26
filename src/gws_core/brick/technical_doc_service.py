@@ -15,8 +15,8 @@ from gws_core.protocol.protocol import Protocol
 from gws_core.resource.resource import Resource
 from gws_core.task.task import Task
 
-from .brick_helper import BrickHelper
 from ..resource.resource_typing import ResourceTyping
+from .brick_helper import BrickHelper
 
 
 class TechnicalDocService():
@@ -116,9 +116,13 @@ class TechnicalDocService():
             parent_class: Type[Base] = type_.__base__
             # retrieve the typing of the parent class
             parent_typing = Typing.get_by_model_type(parent_class)
+
+            brick_info = BrickHelper.get_brick_info(parent_typing.brick)
+
             parent = {
                 "unique_name": parent_typing.model_name,
                 "brick_name": parent_typing.brick,
+                "brick_version": brick_info["version"]
             }
 
         return{
