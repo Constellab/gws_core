@@ -48,10 +48,7 @@ class ResourceTableService:
         # otherwise, retrieve the table form the TableView
         table: Table = await cls._get_table(resource_id, table_view_name, table_config_values, table_transformers)
 
-        view = await ResourceService.get_view_on_resource(resource, view_name, chart_config_values, [])
-
-        # set title, and technical info if they are not defined in the view
-        view = ResourceService.set_default_info_in_view(view, resource_model)
+        view = await ResourceService.get_view_on_resource(table, view_name, chart_config_values, [])
 
         # call the view to dict
         return ViewHelper.call_view_to_dict(view, chart_config_values)

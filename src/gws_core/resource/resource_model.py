@@ -396,9 +396,6 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
                 'title': self.experiment.title
             }
 
-        if deep:
-            _json['technical_info'] = self.get_technical_info().to_json()
-
         return _json
 
     def data_to_json(self, deep: bool = False, **kwargs) -> dict:

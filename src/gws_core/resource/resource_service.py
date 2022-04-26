@@ -12,7 +12,6 @@ from gws_core.impl.file.fs_node import FSNode
 from gws_core.resource.view import View
 from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.task.converter.converter_service import ConverterService
-from numpy import save
 from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
@@ -150,9 +149,6 @@ class ResourceService(BaseService):
             ViewConfigService.save_view_config_in_async(
                 resource_model, view, view_name, config_values, transformers)
 
-        # set title, and technical info if they are not defined in the view
-        view = cls.set_default_info_in_view(view, resource_model)
-
         # call the view to dict
         return ViewHelper.call_view_to_dict(view, config_values)
 
@@ -166,16 +162,6 @@ class ResourceService(BaseService):
             resource = await TransformerService.call_transformers(resource, transformers)
 
         return ViewHelper.generate_view_on_resource(resource, view_name, config_values)
-
-    @classmethod
-    def set_default_info_in_view(cls, view: View, resource_model: ResourceModel) -> View:
-        if view.get_title() is None:
-            view.set_title(resource_model.name)
-
-        if(view.get_technical_info_dict().is_empty()):
-            view.set_technical_info_dict(resource_model.get_technical_info())
-
-        return view
 
     ############################# SEARCH ###########################
 

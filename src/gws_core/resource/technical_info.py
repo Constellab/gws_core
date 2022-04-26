@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from .r_field import JsonableObject
 
@@ -35,14 +35,15 @@ class TechnicalInfoDict(JsonableObject):
         self._technical_info = {}
 
     def add(self, technical_info: TechnicalInfo):
-        if technical_info.key in self._technical_info:
-            raise ValueError(f"Technical information key {technical_info.key} already exists")
         self._technical_info[technical_info.key] = technical_info
 
     def get(self, key: str) -> TechnicalInfo:
         if key not in self._technical_info:
-            raise ValueError(f"Technical information key {key} does not exist")
+            return None
         return self._technical_info[key]
+
+    def get_all(self) -> Dict[str, TechnicalInfo]:
+        return self._technical_info
 
     def to_json(self) -> List[Dict[str, str]]:
         return [technical_info.to_json() for technical_info in self._technical_info.values()]

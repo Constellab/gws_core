@@ -53,9 +53,10 @@ class ViewConfig(ModelWithUser):
         """
 
         view_configs_db: List[ViewConfig] = list(ViewConfig.select().where(
-            ViewConfig.resource_model == view_config.resource_model &
-            ViewConfig.view_name == view_config.view_name &
-            ViewConfig.view_type == view_config.view_type))
+            (ViewConfig.resource_model == view_config.resource_model) &
+            (ViewConfig.view_name == view_config.view_name) &
+            (ViewConfig.view_type == view_config.view_type)
+        ))
 
         for view_config_db in view_configs_db:
             if Utils.json_are_equals(view_config_db.config_values, view_config.config_values) and \
