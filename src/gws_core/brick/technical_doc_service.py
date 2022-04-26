@@ -122,7 +122,8 @@ class TechnicalDocService():
             parent = {
                 "unique_name": parent_typing.model_name,
                 "brick_name": parent_typing.brick,
-                "brick_version": brick_info["version"]
+                "brick_version": brick_info["version"],
+                "human_name": parent_typing.human_name
             }
 
         return{
