@@ -33,3 +33,10 @@ def call_migration(brick_name: str,
                    version: str,
                    _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
     return SystemService.call_migration_manually(brick_name, version)
+
+
+@core_app.post("/system/call-migration/{brick_name}/{version}",  tags=["System"], summary="Call a specific migration")
+def call_migration(brick_name: str,
+                   version: str,
+                   _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    return SystemService.call_migration_manually(brick_name, version)

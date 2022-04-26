@@ -4,9 +4,10 @@
 # About us: https://gencovery.com
 
 
-from typing import Any
+from typing import Any, Dict
 
 from fastapi import Depends
+from gws_core.brick.technical_doc_service import TechnicalDocService
 
 from ..core.classes.jsonable import ListJsonable
 from ..core_app import core_app
@@ -50,3 +51,9 @@ from .brick_service import BrickService
 async def get_bricks_status(_: UserData = Depends(AuthService.check_user_access_token)) -> Any:
     bricks = BrickService.get_all_brick_models()
     return ListJsonable(bricks).to_json()
+
+
+@core_app.get("/brick/{brick_name}/technical-doc", tags=["Bricks APIs"], summary="Generate technical doc for a brick")
+async def export_technical_doc(brick_name: str,
+                               _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
+    return TechnicalDocService.generate_technical_doc(brick_name)

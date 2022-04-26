@@ -48,6 +48,10 @@ class TaskTyping(Typing):
             .order_by(cls.human_name)
         )
 
+    @classmethod
+    def get_by_brick(cls, brick_name: str) -> List['TaskTyping']:
+        return cls.get_by_type_and_brick(cls._object_type, brick_name)
+
     def model_type_to_json(self, model_t: Type[Task]) -> dict:
         return {
             "input_specs": IOSpecsHelper.io_specs_to_json(model_t.input_specs),
