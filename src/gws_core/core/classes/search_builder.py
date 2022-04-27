@@ -64,6 +64,7 @@ class SearchBuilder:
 
     _model_type: Type[Model]
     _default_orders: List[Ordering]
+    _query_builder: ExpressionBuilder
 
     def __init__(self, model_type: Type[Model], default_orders: List[Ordering] = None) -> None:
         """Create a search build to make dynamic search
@@ -79,11 +80,12 @@ class SearchBuilder:
         if default_orders is None:
             default_orders = []
         self._default_orders = default_orders
+        self._query_builder = ExpressionBuilder()
 
     def build_search(self, search: SearchParams) -> ModelSelect:
-        filter_expression = self.build_search_filter_query(search.filtersCriteria)
+        filter_expression = self._build_search_filter_query(search.filtersCriteria)
 
-        orders: List[Ordering] = self.build_search_ordering(search.sortsCriteria)
+        orders: List[Ordering] = self._build_search_ordering(search.sortsCriteria)
 
         model_select = self._model_type.select()
 
@@ -95,37 +97,39 @@ class SearchBuilder:
 
         return model_select
 
-    def build_search_filter_query(self, filters: List[SearchFilterCriteria]) -> Expression:
-        query_builder: ExpressionBuilder = ExpressionBuilder()
-
+    def _build_search_filter_query(self, filters: List[SearchFilterCriteria]) -> Expression:
         for filter_ in filters:
-            expression = self.get_filter_expression(filter_)
+            expression = self.convert_filter_to_expression(filter_)
             if expression:
-                query_builder.add_expression(expression)
+                self.add_expression(expression)
 
-        return query_builder.build()
+        return self._query_builder.build()
 
-    def get_filter_expression(self, filter_: SearchFilterCriteria) -> Expression:
-        field: Field = self.get_model_field(filter_["key"])
+    def add_expression(self, expression: Expression) -> None:
+        self._query_builder.add_expression(expression)
+
+    def convert_filter_to_expression(self, filter_: SearchFilterCriteria) -> Expression:
+        field: Field = self._get_model_field(filter_["key"])
 
         # convert the value in the correct format
         value = self.convert_value(field, filter_["value"])
 
-        return self.get_expression(filter_["operator"], field, value)
+        return self._get_expression(filter_["operator"], field, value)
 
-    def build_search_ordering(self, orders: List[SearchSortCriteria]) -> List[Ordering]:
+    def _build_search_ordering(self, orders: List[SearchSortCriteria]) -> List[Ordering]:
         if not orders:
             return self._default_orders
 
         ordering: List[Ordering] = []
 
         for order in orders:
-            ordering.append(self.get_field_order(order))
+            ordering.append(self.convert_order_to_peewee_ordering(order))
 
         return ordering
 
-    def get_field_order(self, order: SearchSortCriteria) -> Ordering:
-        field: Field = self.get_model_field(order["key"])
+    def convert_order_to_peewee_ordering(self, order: SearchSortCriteria) -> Ordering:
+        """Convert a search order criteria to a peewee ordering"""
+        field: Field = self._get_model_field(order["key"])
 
         null_option: str = order.get('nullOption', 'LAST')
 
@@ -134,7 +138,7 @@ class SearchBuilder:
         else:
             return field.asc(nulls=null_option)
 
-    def get_model_field(self, key: str) -> Field:
+    def _get_model_field(self, key: str) -> Field:
         """Retrieve the peewee field of the model base on field name
         """
         if not hasattr(self._model_type, key):
@@ -176,7 +180,7 @@ class SearchBuilder:
         else:
             return None
 
-    def get_expression(self, operator: SearchOperatorStr, field: Field, value: Any) -> Expression:
+    def _get_expression(self, operator: SearchOperatorStr, field: Field, value: Any) -> Expression:
         if operator == 'EQ':
             return field == value
         elif operator == 'NEQ':

@@ -16,7 +16,7 @@ class ExperimentSearchBuilder(SearchBuilder):
     def __init__(self) -> None:
         super().__init__(Experiment, default_orders=[Experiment.last_modified_at.desc()])
 
-    def get_filter_expression(self, filter: SearchFilterCriteria) -> Expression:
+    def convert_filter_to_expression(self, filter: SearchFilterCriteria) -> Expression:
         # Special case for the tags to filter on all tags
         if filter['key'] == 'tags':
             return TagHelper.get_search_tag_expression(filter['value'], Experiment.tags)
@@ -24,4 +24,4 @@ class ExperimentSearchBuilder(SearchBuilder):
             # on text key, full text search on title and description
             return Match((Experiment.title, Experiment.description), filter['value'], modifier='IN BOOLEAN MODE')
 
-        return super().get_filter_expression(filter)
+        return super().convert_filter_to_expression(filter)

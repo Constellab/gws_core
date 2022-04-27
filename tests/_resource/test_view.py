@@ -126,7 +126,6 @@ class TestView(BaseTestCase):
         self.assertEqual(view._type, TextView._type)
         self.assertEqual(view._data, "Bonjour 12")
         self.assertEqual(view.get_title(), "Sub view title")
-        self.assertEqual(view.get_caption(), "Sub view caption")
 
     def test_method_view_override_and_hide(self):
         """Test that the spec of a view are overrided but the children method. And check if hide param in view decorator works
@@ -183,7 +182,6 @@ class TestView(BaseTestCase):
         self.assertEqual(view_config.view_name, 'a_view_test')
         self.assertEqual(view_config.view_type, ViewType.TEXT)
         self.assertEqual(view_config.title, 'Sub view title')
-        self.assertEqual(view_config.caption, 'Sub view caption')
         self.assert_json(view_config.config_values, {"page": 1, "page_size": 5000})
         self.assertEqual(view_config.transformers, [])
 

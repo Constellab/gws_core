@@ -9,6 +9,7 @@ from typing import Any, Dict, List
 
 from gws_core.config.param_spec_helper import ParamSpecHelper
 from gws_core.resource.view_helper import ViewHelper
+from gws_core.resource.view_types import ViewType
 from gws_core.user.current_user_service import CurrentUserService
 from peewee import ModelSelect
 
@@ -86,6 +87,22 @@ class ViewConfigService():
                page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
 
         search_builder: SearchBuilder = ViewConfigSearchBuilder()
+
+        model_select: ModelSelect = search_builder.build_search(search)
+        return Paginator(
+            model_select, page=page, number_of_items_per_page=number_of_items_per_page)
+
+    @classmethod
+    def search_for_report(cls, experiment_ids: List[str], view_types: List[ViewType], search: SearchParams,
+                          page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
+
+        search_builder: SearchBuilder = ViewConfigSearchBuilder()
+
+        # filter on experiment id
+        search_builder.add_expression((ViewConfig.experiment.in_(experiment_ids) | ViewConfig.experiment.is_null()))
+
+        # filter on view type
+        search_builder.add_expression(ViewConfig.view_type.in_(view_types))
 
         model_select: ModelSelect = search_builder.build_search(search)
         return Paginator(

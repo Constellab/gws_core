@@ -17,7 +17,7 @@ class TypingSearchBuilder(SearchBuilder):
     def __init__(self) -> None:
         super().__init__(Typing, default_orders=[Typing.human_name.asc()])
 
-    def get_filter_expression(self, filter_: SearchFilterCriteria) -> Expression:
+    def convert_filter_to_expression(self, filter_: SearchFilterCriteria) -> Expression:
         # Special case for the tags to filter on all tags
         if filter_['key'] == 'text':
             # on text key, full text search on title and description
@@ -42,4 +42,4 @@ class TypingSearchBuilder(SearchBuilder):
                 # if we include deprecated, set no filter
                 return None
 
-        return super().get_filter_expression(filter_)
+        return super().convert_filter_to_expression(filter_)

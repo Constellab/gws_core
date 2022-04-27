@@ -15,8 +15,8 @@ from gws_core.report.report_file_service import ReportFileService, ReportImage
 from gws_core.report.report_resource import ReportResource
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
-from gws_core.resource.view_config.view_config_service import \
-    ViewConfigService
+from gws_core.resource.view_config.view_config_service import ViewConfigService
+from gws_core.resource.view_types import report_supported_views
 from peewee import ModelSelect
 
 from ..central.central_service import CentralService
@@ -294,9 +294,9 @@ class ReportService():
                                       GWSException.REPORT_NO_ASSOCIATED_EXPERIMENT.name)
 
         experiment_ids = [experiment.id for experiment in experiments]
-        search.override_filter_criteria('experiment', 'IN', experiment_ids)
 
-        return ViewConfigService.search(search, page, number_of_items_per_page)
+        return ViewConfigService.search_for_report(
+            experiment_ids, report_supported_views, search, page, number_of_items_per_page)
 
     @classmethod
     def _refresh_report_associated_resources(cls, report: Report) -> None:

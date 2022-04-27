@@ -7,6 +7,7 @@ from typing import Any, List, final
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from gws_core.core.utils.utils import Utils
 from gws_core.resource.technical_info import TechnicalInfo, TechnicalInfoDict
 
 from ..config.config_types import ConfigParams
@@ -100,6 +101,12 @@ class View:
 
         # Check data
         if "data" not in json_ or json_["data"] is None:
+            return False
+
+        # check that the view type is valid
+        try:
+            Utils.str_to_enum(ViewType, json_["type"])
+        except:
             return False
 
         return True

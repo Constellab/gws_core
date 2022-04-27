@@ -3,9 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from peewee import Expression
 
-from ...core.classes.search_builder import SearchBuilder, SearchFilterCriteria
+from ...core.classes.search_builder import SearchBuilder
 from .view_config import ViewConfig
 
 
@@ -18,6 +17,3 @@ class ViewConfigSearchBuilder(SearchBuilder):
 
     def __init__(self) -> None:
         super().__init__(ViewConfig, default_order=[ViewConfig.last_modified_at.desc()])
-
-    def get_filter_expression(self, filter: SearchFilterCriteria) -> Expression:
-        return super().get_filter_expression(filter)
