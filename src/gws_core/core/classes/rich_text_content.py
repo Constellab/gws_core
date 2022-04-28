@@ -38,6 +38,7 @@ class RichTextFigure(TypedDict):
 
 class RichTextResourceView(TypedDict):
     """Object representing a resource view in a rich text"""
+    id: str
     resource_id: str
     experiment_id: str
     view_method_name: str

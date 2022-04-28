@@ -4,7 +4,10 @@
 # About us: https://gencovery.com
 
 from enum import Enum
-from typing import Dict, Union
+from typing import Any, Dict, List, Union
+
+from gws_core.task.transformer.transformer_type import TransformerDict
+from typing_extensions import TypedDict
 
 from ..config.param_spec import ParamSpec
 from .lazy_view_param import LazyViewParam
@@ -42,3 +45,9 @@ report_supported_views = [
     ViewType.JSON, ViewType.TEXT, ViewType.TABLE, ViewType.DATASET, ViewType.SCATTER_PLOT_2D,
     ViewType.LINE_PLOT_2D, ViewType.BAR_PLOT, ViewType.STACKED_BAR_PLOT, ViewType.HISTOGRAM,
     ViewType.BOX_PLOT, ViewType.HEATMAP, ViewType.VENN_DIAGRAM, ViewType.MULTI_VIEWS, ViewType.NETWORK]
+
+
+class CallViewParams(TypedDict):
+    values: Dict[str, Any]
+    transformers: List[TransformerDict]
+    save_view_config: bool

@@ -9,6 +9,7 @@ from fastapi import Depends, Request
 from fastapi.responses import FileResponse
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.resource.resource_model import ResourceModel
+from gws_core.resource.view_types import CallViewParams
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.transformer.transformer_service import TransformerService
 from gws_core.task.transformer.transformer_type import TransformerDict
@@ -36,12 +37,6 @@ async def get_resource_type_views(id: str,
 async def get_view_specs(id: str, view_name: str,
                          _: UserData = Depends(AuthService.check_user_access_token)) -> list:
     return DictJsonable(ResourceService.get_view_specs(id, view_name)).to_json()
-
-
-class CallViewParams(TypedDict):
-    values: Dict[str, Any]
-    transformers: List[TransformerDict]
-    save_view_config: bool
 
 
 @core_app.post("/resource/{id}/views/{view_name}", tags=["Resource"],

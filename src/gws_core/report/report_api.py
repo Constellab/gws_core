@@ -79,12 +79,10 @@ def upload_image(image: UploadFile = FastAPIFile(...),
     return ReportService.upload_image(image)
 
 
-@core_app.get("/report/image/{filename}", tags=["Report"], summary="Get an object")
+@core_app.get("/report/image/{filename}", tags=["Report"], summary="Get an image of the report")
 def get_image(filename: str,
               _: UserData = Depends(AuthService.check_user_access_token)) -> FileResponse:
-    file_path = ReportService.get_image_path(filename)
-    return FileResponse(file_path, media_type='application/octet-stream',
-                        filename=filename)
+    return ReportService.get_image_file_response(filename)
 
 
 @core_app.delete("/report/image/{filename}", tags=["Report"], summary="Delete an object")

@@ -16,4 +16,4 @@ class ViewConfigSearchBuilder(SearchBuilder):
     """
 
     def __init__(self) -> None:
-        super().__init__(ViewConfig, default_order=[ViewConfig.last_modified_at.desc()])
+        super().__init__(ViewConfig, default_orders=[ViewConfig.last_modified_at.desc()])
