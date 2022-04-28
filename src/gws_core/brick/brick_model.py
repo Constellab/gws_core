@@ -3,6 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from email.headerregistry import DateHeader
+from time import time
 from typing import Dict, Literal, TypedDict
 
 from gws_core.brick.brick_helper import BrickHelper
@@ -37,9 +39,12 @@ class BrickModel(Model):
         except:
             return None
 
-    def add_message(self, message: str, status: BrickMessageStatus, timestamp: float) -> None:
+    def add_message(self, message: str, status: BrickMessageStatus, timestamp: float = None) -> None:
         if 'messages' not in self.data:
             self.data['messages'] = []
+
+        if timestamp is None:
+            timestamp = time()
 
         brick_message: BrickMessage = {"message": message, "status": status, 'timestamp': timestamp}
         self.data['messages'].append(brick_message)
@@ -69,9 +74,13 @@ class BrickModel(Model):
     def to_json(self, deep: bool = False, **kwargs) -> Dict:
         json_ = super().to_json(deep=deep, **kwargs)
 
-        brick_info = self.get_brick_info()
-        json_['version'] = brick_info['version']
-        json_['repo_type'] = brick_info['repo_type']
-        json_['repo_commit'] = brick_info['repo_commit']
-
+        try:
+            brick_info = self.get_brick_info()
+            json_['version'] = brick_info['version']
+            json_['repo_type'] = brick_info['repo_type']
+            json_['repo_commit'] = brick_info['repo_commit']
+        except Exception as err:
+            # If there was a problem during the birck loading, add a critical error and return brick
+            self.add_message(str(err), 'CRITICAL')
+            return super().to_json(deep=deep, **kwargs)
         return json_

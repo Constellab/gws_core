@@ -6,6 +6,8 @@
 from abc import abstractmethod
 from typing import Literal, Optional, Type, TypedDict, final
 
+from gws_core.model.typing_register_decorator import typing_registrator
+
 from ..config.config_types import ConfigParams, ConfigSpecs
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -29,6 +31,7 @@ class CheckBeforeTaskResult(TypedDict, total=False):
     message: Optional[str]
 
 
+@typing_registrator(unique_name="Task", object_type="TASK", hide=True)
 class Task(Process):
 
     input_specs: InputSpecs = {}

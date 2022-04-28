@@ -37,6 +37,10 @@ class ResourceTyping(Typing):
 
         return cls.get_children_typings(cls._object_type, Folder)
 
+    @classmethod
+    def get_by_brick(cls, brick_name: str) -> List['ResourceTyping']:
+        return cls.get_by_type_and_brick(cls._object_type, brick_name)
+
     def model_type_to_json(self, model_t: Type[Base]) -> dict:
         return {
             "doc": self.get_model_type_doc(),

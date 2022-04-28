@@ -75,13 +75,13 @@ class File(FSNode):
         """
 
         if self.exists():
-            return open(self.path, mode, encoding='utf-8')
+            return open(self.path, mode, encoding='latin1')
         else:
             if not os.path.exists(self.dir):
                 os.makedirs(self.dir)
                 if not os.path.exists(self.dir):
                     raise BadRequestException(f"Cannot create directory {self.dir}")
-            return open(self.path, mode="w+", encoding='utf-8')
+            return open(self.path, mode="w+", encoding='latin1')
 
     def read_part(self, from_line: int = 1, to_line: int = 10) -> AnyStr:
         text = ""

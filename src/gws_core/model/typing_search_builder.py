@@ -15,7 +15,7 @@ from ..model.typing import Typing
 class TypingSearchBuilder(SearchBuilder):
 
     def __init__(self) -> None:
-        super().__init__(Typing, default_order=[Typing.human_name.asc()])
+        super().__init__(Typing, default_orders=[Typing.human_name.asc()])
 
     def get_filter_expression(self, filter_: SearchFilterCriteria) -> Expression:
         # Special case for the tags to filter on all tags
@@ -34,5 +34,12 @@ class TypingSearchBuilder(SearchBuilder):
             typings_names = [parent._typing_name for parent in parent_classes]
 
             return Typing.related_model_typing_name.in_(typings_names)
+
+        elif filter_['key'] == 'include_deprecated':
+            if not filter_['value']:
+                return Typing.deprecated_since.is_null()
+            else:
+                # if we include deprecated, set no filter
+                return None
 
         return super().get_filter_expression(filter_)

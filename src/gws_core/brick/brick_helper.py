@@ -58,7 +58,7 @@ class BrickHelper():
         bricks = cls.get_all_bricks()
 
         if brick_name not in bricks:
-            raise Exception(f"Can't find the brick information of object ${obj}")
+            raise Exception(f"Can't find the brick information of object '{obj}'")
 
         return bricks[brick_name]
 
