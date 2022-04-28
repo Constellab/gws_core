@@ -4,7 +4,11 @@
 # About us: https://gencovery.com
 
 
-from typing import Type
+from typing import List, Type
+
+from gws_core.brick.brick_model import BrickModel
+from gws_core.brick.brick_service import BrickService
+from gws_core.model.typing import Typing
 
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions.bad_request_exception import \
@@ -84,6 +88,26 @@ class ModelService(BaseService):
     @classmethod
     def register_all_processes_and_resources(cls) -> None:
         TypingManager.save_object_types_in_db()
+        cls.check_all_typings()
+
+    @classmethod
+    def check_all_typings(cls) -> None:
+        """Method to check if all typing registered in BD exists"""
+
+        bricks: List[BrickModel] = BrickService.get_all_brick_models()
+
+        for brick in bricks:
+            # don't check typing if the brick status is Crittical
+            if brick.status == 'CRITICAL':
+                continue
+
+            typings: List[Typing] = Typing.select().where(Typing.brick == brick.name)
+            for typing in typings:
+                if typing.get_type() is None:
+                    BrickService.log_brick_message(
+                        brick_name=typing.brick,
+                        message=f"The {typing.object_type} with unique name '{typing.model_name}' is invalid. Is the brick loaded ? Did you delete the corresponding python model or rename its unique name ?",
+                        status='ERROR')
 
     @classmethod
     def archive_model(cls, typing_name: str, id: str) -> Model:

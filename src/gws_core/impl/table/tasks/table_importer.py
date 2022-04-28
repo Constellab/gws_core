@@ -14,8 +14,8 @@ from ....config.param_spec import BoolParam, IntParam, StrParam
 from ....core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ....impl.file.file import File
-from ..helper.dataframe_helper import DataframeHelper
 from ....task.converter.importer import ResourceImporter, importer_decorator
+from ..helper.dataframe_helper import DataframeHelper
 from ..table import Table
 
 
@@ -68,7 +68,8 @@ class TableImporter(ResourceImporter):
                 header=header,
                 index_col=index_column,
                 nrows=nrows,
-                comment=comment_char
+                comment=comment_char,
+                encoding='latin1'
             )
         else:
             raise BadRequestException(
@@ -104,7 +105,7 @@ class TableImporter(ResourceImporter):
 
         # read comments
         comments = ""
-        with open(source.path, 'r', encoding="utf-8") as fp:
+        with open(source.path, 'r', encoding="latin1") as fp:
             for line in fp:
                 if line.startswith(comment_char):
                     comments += line
