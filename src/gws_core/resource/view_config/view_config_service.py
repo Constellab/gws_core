@@ -93,13 +93,13 @@ class ViewConfigService():
             model_select, page=page, number_of_items_per_page=number_of_items_per_page)
 
     @classmethod
-    def search_for_report(cls, experiment_ids: List[str], view_types: List[ViewType], search: SearchParams,
-                          page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
+    def search_by_resources(cls, resource_ids: List[str], view_types: List[ViewType], search: SearchParams,
+                            page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
 
         search_builder: SearchBuilder = ViewConfigSearchBuilder()
 
-        # filter on experiment id
-        search_builder.add_expression((ViewConfig.experiment.in_(experiment_ids) | ViewConfig.experiment.is_null()))
+        # filter on resource ids
+        search_builder.add_expression(ViewConfig.resource_model.in_(resource_ids))
 
         # filter on view type
         search_builder.add_expression(ViewConfig.view_type.in_(view_types))

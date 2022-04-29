@@ -100,6 +100,35 @@ class ResourceService(BaseService):
         resource_model.resource_typing_name = file_type._typing_name
         return resource_model.save()
 
+    @classmethod
+    def get_experiments_resources(cls, experiment_ids: List[str]) -> List[ResourceModel]:
+        """Return the list of reosurces used as input or output by the experiments
+
+        :param experiments: _description_
+        :type experiments: List[str]
+        :return: _description_
+        :rtype: List[ResourceModel]
+        """
+        generated_resources = cls.get_experiment_output_resources(experiment_ids)
+
+        task_inputs = cls.get_experiment_input_resources(experiment_ids)
+
+        resources: Dict[str, ResourceModel] = {}
+
+        for resource in generated_resources + task_inputs:
+            resources[resource.id] = resource
+
+        return list(resources.values())
+
+    @classmethod
+    def get_experiment_output_resources(cls, experiment_ids: List[str]) -> List[ResourceModel]:
+        return list(ResourceModel.get_by_experiments(experiment_ids))
+
+    @classmethod
+    def get_experiment_input_resources(cls, experiment_ids: List[str]) -> List[ResourceModel]:
+        task_inputs: List[TaskInputModel] = list(TaskInputModel.get_by_experiments(experiment_ids))
+        return [task_input.resource_model for task_input in task_inputs]
+
     ############################# RESOURCE TYPE ###########################
 
     @classmethod

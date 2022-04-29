@@ -144,6 +144,10 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
         return ResourceModel.select().where(ResourceModel.experiment == experiment_id)
 
     @classmethod
+    def get_by_experiments(cls, experiment_ids: str) -> ModelSelect:
+        return ResourceModel.select().where(ResourceModel.experiment.in_(experiment_ids))
+
+    @classmethod
     def delete_list(cls, resource_model_ids: str) -> ModelDelete:
         return ResourceModel.delete().where(ResourceModel.id.in_(resource_model_ids))
 

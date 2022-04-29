@@ -10,6 +10,8 @@ from fastapi import UploadFile
 from fastapi.responses import FileResponse
 from gws_core.core.classes.rich_text_content import (RichText, RichTextI,
                                                      RichTextResourceView)
+from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.report.report_file_service import ReportFileService, ReportImage
 from gws_core.report.report_resource import ReportResource
@@ -158,9 +160,9 @@ class ReportService():
     def validate_and_send_to_central(cls, report_id: str, project_dto: ProjectDto = None) -> Report:
         report = cls.validate(report_id, project_dto)
 
-        # if Settings.is_local_env():
-        #     Logger.info('Skipping sending experiment to central as we are running in LOCAL')
-        #     return report
+        if Settings.is_local_env():
+            Logger.info('Skipping sending experiment to central as we are running in LOCAL')
+            return report
 
         json_: Dict = report.to_json(deep=True)
 
@@ -292,8 +294,12 @@ class ReportService():
 
         experiment_ids = [experiment.id for experiment in experiments]
 
-        return ViewConfigService.search_for_report(
-            experiment_ids, report_supported_views, search, page, number_of_items_per_page)
+        # retrieve the resources associated with the experiments
+        resources = ResourceService.get_experiments_resources(experiment_ids)
+        resource_ids = [resource.id for resource in resources]
+
+        return ViewConfigService.search_by_resources(
+            resource_ids, report_supported_views, search, page, number_of_items_per_page)
 
     @classmethod
     def _refresh_report_associated_resources(cls, report: Report) -> None:

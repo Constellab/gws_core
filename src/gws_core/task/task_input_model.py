@@ -54,6 +54,10 @@ class TaskInputModel(BaseModel):
         return TaskInputModel.select().where(TaskInputModel.experiment == experiment_id)
 
     @classmethod
+    def get_by_experiments(cls, experiment_ids: List[str]) -> ModelSelect:
+        return TaskInputModel.select().where(TaskInputModel.experiment.in_(experiment_ids))
+
+    @classmethod
     def delete_by_experiment(cls, experiment_id: str) -> int:
         return TaskInputModel.delete().where(TaskInputModel.experiment == experiment_id).execute()
 
