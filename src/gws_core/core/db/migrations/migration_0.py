@@ -18,6 +18,16 @@ from ..db_migration import brick_migration
 from ..version import Version
 
 
+@brick_migration('0.2.6')
+class Migration01122(BrickMigration):
+    pass
+
+
+@brick_migration('0.1.0')
+class Migration0212(BrickMigration):
+    pass
+
+
 @brick_migration('0.2.2')
 class Migration022(BrickMigration):
 
