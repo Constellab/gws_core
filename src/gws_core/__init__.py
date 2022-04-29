@@ -307,6 +307,7 @@ from .resource.resource_typing import ResourceTyping as ResourceTyping
 from .resource.view import View as View
 from .resource.view_decorator import view as view
 from .resource.view_types import ViewSpecs as ViewSpecs
+from .resource.view_types import ViewType as ViewType
 # Tag
 from .tag.tag import Tag as Tag
 from .tag.tag_helper import TagHelper as TagHelper
