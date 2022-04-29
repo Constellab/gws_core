@@ -40,6 +40,7 @@ class GWSException(Enum):
     REPORT_VALIDATED = "The report can't be updated not delete because it is validated"
     REPORT_EXP_ALREADY_ASSOCIATED = "The experiment is already associated with the report"
     REPORT_VALIDATION_EXP_NOT_VALIDATED = "The associated experiment '{{title}}' must be validated first"
+    REPORT_VALIDATION_EXP_NO_PROJECT = "The associated experiment '{{title}}' is not link to a the report's project"
     REPORT_VALIDATION_EXP_OTHER_PROJECT = "The associated experiment '{{title}}' is linked to another project"
     REPORT_VALIDATION_RESOURCE_VIEW_OTHER_EXP = "The view '{{view_name}}' is from the experiment '{{exp_title}} but this experiment is not linked to the report. Please link this experiment to the report."
     REPORT_ADD_EXP_OTHER_PROJECT = "Can't associate the experiment to the report because they are in different projects"

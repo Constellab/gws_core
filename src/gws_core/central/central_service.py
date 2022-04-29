@@ -8,7 +8,7 @@ from typing import Dict, List
 
 from gws_core.brick.brick_service import BrickService
 from gws_core.central.central_dto import (CentralSendMailDTO, LabStartDTO,
-                                          SaveExperimentToCentralDTO,
+                                          SaveExperimentToCentralDTO, SaveReportToCentralDTO,
                                           SendExperimentFinishMailData)
 from gws_core.experiment.experiment import Experiment
 from gws_core.impl.file.file_helper import FileHelper
@@ -107,7 +107,7 @@ class CentralService(BaseService):
             raise BadRequestException("Can't save the experiment in central")
 
     @classmethod
-    def save_report(cls, project_id: str, report: dict) -> None:
+    def save_report(cls, project_id: str, report: SaveReportToCentralDTO) -> None:
         central_api_url: str = cls._get_central_api_url(
             f"{cls._external_labs_route}/project/{project_id}/report")
 

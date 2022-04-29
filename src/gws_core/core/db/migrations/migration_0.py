@@ -8,6 +8,7 @@ from gws_core.experiment.experiment import Experiment
 from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.model.typing import Typing
+from gws_core.report.report import Report
 from peewee import BigIntegerField
 from playhouse.migrate import MySQLMigrator, migrate
 
@@ -69,4 +70,20 @@ class Migration033(BrickMigration):
 
             migrator.alter_column_type(FSNodeModel.get_table_name(), FSNodeModel.size.column_name,
                                        BigIntegerField(null=True))
+        )
+
+
+@brick_migration('0.3.8')
+class Migration038(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        Logger.info('Create lab config column in report table')
+        migrator = MySQLMigrator(FSNodeModel.get_db_manager().db)
+
+        migrate(
+            migrator.add_column(
+                Report.get_table_name(),
+                Report.lab_config.column_name, Report.lab_config),
         )

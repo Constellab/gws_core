@@ -4,15 +4,17 @@
 # About us: https://gencovery.com
 
 
-from typing import Dict, List, Set
+from typing import List, Set
 
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
+from gws_core.central.central_dto import SaveReportToCentralDTO
 from gws_core.core.classes.rich_text_content import (RichText, RichTextI,
                                                      RichTextResourceView)
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.report.report_file_service import ReportFileService, ReportImage
 from gws_core.report.report_resource import ReportResource
 from gws_core.resource.resource_model import ResourceModel
@@ -85,6 +87,10 @@ class ReportService():
         experiments: List[Experiment] = cls.get_experiments_by_report(report_id)
 
         for experiment in experiments:
+            if experiment.project is None:
+                raise BadRequestException(GWSException.REPORT_VALIDATION_EXP_NO_PROJECT.value,
+                                          GWSException.REPORT_VALIDATION_EXP_NO_PROJECT.name, {'title': experiment.title})
+
             if experiment.project.id != report.project.id:
                 raise BadRequestException(GWSException.REPORT_VALIDATION_EXP_OTHER_PROJECT.value,
                                           GWSException.REPORT_VALIDATION_EXP_OTHER_PROJECT.name, {'title': experiment.title})
@@ -151,7 +157,7 @@ class ReportService():
                                               GWSException.REPORT_VALIDATION_RESOURCE_VIEW_OTHER_EXP.name,
                                               {'view_name': view_name, 'exp_title': resource.experiment.title})
 
-        report.is_validated = True
+        report.validate()
 
         return report.save()
 
@@ -160,18 +166,22 @@ class ReportService():
     def validate_and_send_to_central(cls, report_id: str, project_dto: ProjectDto = None) -> Report:
         report = cls.validate(report_id, project_dto)
 
-        if Settings.is_local_env():
-            Logger.info('Skipping sending experiment to central as we are running in LOCAL')
-            return report
-
-        json_: Dict = report.to_json(deep=True)
+        # if Settings.is_local_env():
+        #     Logger.info('Skipping sending experiment to central as we are running in LOCAL')
+        #     return report
 
         # retrieve the experiment ids
         experiments: List[Experiment] = cls.get_experiments_by_report(report_id)
-        json_["experimentIds"] = list(map(lambda x: x.id, experiments))
 
+        lab_config: LabConfigModel = report.lab_config or LabConfigModel.get_current_config()
+
+        save_report_dto: SaveReportToCentralDTO = {
+            "report": report.to_json(deep=True),
+            "experiment_ids": [experiment.id for experiment in experiments],
+            "lab_config": lab_config.to_json(),
+        }
         # Save the experiment in central
-        CentralService.save_report(report.project.id, json_)
+        CentralService.save_report(report.project.id, save_report_dto)
 
         return report
 
