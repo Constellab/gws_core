@@ -26,15 +26,15 @@ class TestMigration(BaseTestCase):
         self.assertGreater(Version('2.0.0'), Version('1.0.0'))
         self.assertGreater(Version('1.1.0'), Version('1.0.0'))
         self.assertGreater(Version('1.0.1'), Version('1.0.0'))
-        self.assertGreater(Version('1.0.0-beta1'), Version('1.0.0'))
+        self.assertGreater(Version('1.0.0-beta.1'), Version('1.0.0'))
 
-        version: Version = Version('1.2.0-beta1')
+        version: Version = Version('1.2.0-beta.1')
 
         self.assertEqual(version.major, 1)
         self.assertEqual(version.minor, 2)
         self.assertEqual(version.patch, 0)
         self.assertEqual(version.sub_patch, 1)
-        self.assertEqual(str(version),  '1.2.0-beta1')
+        self.assertEqual(str(version),  '1.2.0-beta.1')
 
         version_3: Version = Version('1.3.0')
 
@@ -51,6 +51,12 @@ class TestMigration(BaseTestCase):
 
         with self.assertRaises(VersionInvalidException):
             Version('1.-2.0')
+
+        with self.assertRaises(VersionInvalidException):
+            Version('1.2.a')
+
+        with self.assertRaises(VersionInvalidException):
+            Version('1.2.2-beta.a')
 
     def test_brick_migrator(self):
 

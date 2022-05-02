@@ -1,6 +1,9 @@
 
 
+from math import isnan
 from typing import List
+
+from pandas import isna
 
 
 class Version():
@@ -19,27 +22,57 @@ class Version():
     def __init__(self, version: str):
         self._init_from_str(version)
 
+    #     #     if (version == null || version.length < 5) {
+    #   throw new Error(`Version '${version}' is invalid`);
+    # }
+
+    # const versions = version.split('.');
+    # if (versions.length !== 3 && version.length !== 4) {
+    #   throw new Error(`Version '${version}' is invalid`);
+    # }
+
+    # // main version contain version before sub patch like 1.1.1
+    # let mainVersionsStr = version;
+
+    # // if there is a sub-patch, extract it
+    # let subPatch: number = null;
+    # if(version.includes('-beta.')){
+    #   let subPatchStr: string;
+    #   [mainVersionsStr, subPatchStr] = version.split('-beta.');
+
+    #   subPatch = parseInt(subPatchStr);
+    #   if (isNaN(subPatch)) {
+    #     throw new Error(`Sub-patch version of '${version}' is invalid`);
+    #   }
+    # }
+
     def _init_from_str(self, version: str) -> None:
         """Mehod to checkthe version str and set attributes
         """
         try:
-            parts = version.split('.')
+            versions = version.split('.')
 
-            if len(parts) != 3:
+            if len(versions) != 3 and len(versions) != 4:
                 raise VersionInvalidException(version)
 
-            major = int(parts[0])
-            minor = int(parts[1])
+            main_version_str = version
+            sub_patch: int = None
 
-            if '-beta' in parts[2]:
-                patches: List[str] = parts[2].split('-beta')
-                patch = int(patches[0])
-                sub_patch = int(patches[1])
-            else:
-                patch = int(parts[2])
-                sub_patch = None
+            # if the version contains a subpatch
+            if '-beta.' in version:
+                [main_version_str, sub_patch_str] = version.split('-beta.')
 
-            if major < 0 or minor < 0 or patch < 0:
+                sub_patch = int(sub_patch_str)
+                if isnan(sub_patch):
+                    raise VersionInvalidException(version)
+
+            # retrieve main version
+            main_versions = main_version_str.split('.')
+            major = int(main_versions[0])
+            minor = int(main_versions[1])
+            patch = int(main_versions[2])
+
+            if isnan(major) or major < 0 or isnan(minor) or minor < 0 or isnan(patch) or patch < 0:
                 raise VersionInvalidException(version)
 
             self.major = major
@@ -75,7 +108,7 @@ class Version():
         version_str = str(self.major) + '.' + str(self.minor) + '.' + str(self.patch)
 
         if self.has_sub_patch():
-            version_str += '-beta' + str(self.sub_patch)
+            version_str += '-beta.' + str(self.sub_patch)
         return version_str
 
     def _get_dif(self, other: 'Version') -> int:
