@@ -11,7 +11,7 @@ from gws_core.resource.resource import Resource
 from ..brick.brick_service import BrickService
 from ..config.param_spec_helper import ParamSpecHelper
 from ..core.utils.utils import Utils
-from ..io.io_spec import IOSpecsHelper
+from ..io.io_spec_helper import IOSpecsHelper
 from ..model.typing_register_decorator import register_gws_typing_class
 from ..user.user_group import UserGroup
 from .task import Task
@@ -83,8 +83,9 @@ def decorate_task(
 
     # Check the input, output and config specs
     try:
-        IOSpecsHelper.check_input_specs(task_class.input_specs)
-        IOSpecsHelper.check_output_specs(task_class.output_specs)
+
+        IOSpecsHelper.check_input_specs(task_class.input_specs, task_class)
+        IOSpecsHelper.check_output_specs(task_class.output_specs, task_class)
         ParamSpecHelper.check_config_specs(task_class.config_specs)
 
     except Exception as err:

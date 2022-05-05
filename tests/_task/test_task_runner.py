@@ -10,7 +10,7 @@ from gws_core.impl.json.json_dict import JSONDict
 from gws_core.io.io_exception import (InvalidInputsException,
                                       InvalidOutputsException,
                                       MissingInputResourcesException)
-from gws_core.io.io_spec import InputSpecs, OutputSpecs
+from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
 

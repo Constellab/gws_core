@@ -5,13 +5,14 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Dict, Generic, List, Type, TypeVar, final
 
+from gws_core.io.io_spec import IOSpec
+
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.base import Base
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
 from .io_exception import ResourceNotCompatibleException
-from .io_spec import IOSpec, IOSpecClass
 from .port import InPort, OutPort, Port, PortDict
 
 if TYPE_CHECKING:
@@ -127,7 +128,7 @@ class IO(Base, Generic[PortType]):
         """
 
         port_type: Type[PortType] = self._get_port_type()
-        port: PortType = port_type(self, name, IOSpecClass(resource_spec))
+        port: PortType = port_type(self, name, resource_spec)
         self.add_port(name, port)
         return port
 

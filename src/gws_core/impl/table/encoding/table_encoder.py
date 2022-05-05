@@ -5,8 +5,10 @@
 
 from pandas import DataFrame
 
+from gws_core.io.io_spec import InputSpec, OutputSpec
+
 from ....config.config_types import ConfigParams, ConfigSpecs
-from ....io.io_spec import InputSpecs, OutputSpecs
+from ....io.io_spec_helper import InputSpecs, OutputSpecs
 from ....task.task import Task
 from ....task.task_decorator import task_decorator
 from ....task.task_io import TaskInputs, TaskOutputs
@@ -22,8 +24,8 @@ from .encoding_table import EncodingTable
 
 @task_decorator(unique_name="TableEncoder", short_description="Table encoder")
 class TableEncoder(Task):
-    input_specs: InputSpecs = {"table": Table, "encoding_table": EncodingTable}
-    output_specs: OutputSpecs = {"encoded_table": Table}
+    input_specs: InputSpecs = {"table": InputSpec(Table), "encoding_table": InputSpec(EncodingTable)}
+    output_specs: OutputSpecs = {"encoded_table": OutputSpec(Table)}
     config_specs: ConfigSpecs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

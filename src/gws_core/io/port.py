@@ -10,8 +10,7 @@ from typing import TYPE_CHECKING, List, Type, TypedDict, final
 from ..core.model.base import Base
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
-from .io_spec import IOSpecClass, IOSpecsHelper
-from .io_special_type import TypeIODict
+from .io_spec import IOSpec, IOSpecDict
 
 if TYPE_CHECKING:
     from ..process.process_model import ProcessModel
@@ -20,7 +19,7 @@ if TYPE_CHECKING:
 
 class PortDict(TypedDict):
     resource_id: str
-    specs: TypeIODict  # list of supported resource typing names
+    specs: IOSpecDict  # list of supported resource typing names
 
 
 class Port(Base):
@@ -34,7 +33,7 @@ class Port(Base):
     name: str
 
     _resource_model: ResourceModel = None
-    _resource_spec: IOSpecClass = None
+    _resource_spec: IOSpec = None
     _prev: 'Port' = None
     _next: List['Port'] = []
     _parent: IO
@@ -42,7 +41,7 @@ class Port(Base):
     # Switch to true when the set_resource_model is set (even if it is set with a None value)
     _resource_provided: bool = False
 
-    def __init__(self, parent: IO, name: str, _resource_spec: IOSpecClass):
+    def __init__(self, parent: IO, name: str, _resource_spec: IOSpec):
         self._resource_model = None
         self._prev = None
         self._next = []
@@ -250,7 +249,7 @@ class Port(Base):
         self._resource_provided = False
 
     @property
-    def resource_spec(self) -> IOSpecClass:
+    def resource_spec(self) -> IOSpec:
         """
         Returns the resource types of the port.
 
@@ -296,7 +295,7 @@ class Port(Base):
         if self.is_optional and resource_type is None:
             return True
 
-        return IOSpecsHelper.spec_is_compatible(resource_type, self._resource_spec.type_io)
+        return self._resource_spec.is_compatible_with_resource_type(resource_type)
 
     def get_resource(self, new_instance: bool = False) -> Resource:
         return self.resource_model.get_resource(new_instance=new_instance)
@@ -314,7 +313,7 @@ class Port(Base):
 
     @classmethod
     def load_from_json(cls, json_: PortDict, parent: IO, name: str) -> 'Port':
-        specs: IOSpecClass = IOSpecClass.from_json(json_['specs'])
+        specs: IOSpec = IOSpec.from_json(json_['specs'])
         return cls(parent, name, specs)
 
 

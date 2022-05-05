@@ -504,12 +504,12 @@ class ProcessModel(ModelWithUser):
         return self.is_draft and self.inputs.is_ready
 
     def mark_as_started(self):
-        self.progress_bar.add_message("Start of process")
+        self.progress_bar.add_message(f"Start of process '{self.get_instance_name_context()}'")
         self.status = ProcessStatus.RUNNING
         self.save()
 
     def mark_as_success(self):
-        self.progress_bar.stop_success('End of process')
+        self.progress_bar.stop_success(f"End of process '{self.get_instance_name_context()}'")
         self.status = ProcessStatus.SUCCESS
         self.save()
 

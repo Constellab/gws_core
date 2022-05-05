@@ -84,7 +84,7 @@ class BrickService():
 
     @classmethod
     def _log_message(cls, brick_message: WaitingMessage) -> None:
-        message = f"Error in brick '{brick_message['brick_name']}. {brick_message['message']}'"
+        message = f"Brick '{brick_message['brick_name']}'. {brick_message['message']}'"
         if brick_message['status'] == 'INFO':
             Logger.info(message)
         elif brick_message['status'] == 'WARNING':
