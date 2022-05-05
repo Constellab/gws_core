@@ -1,9 +1,8 @@
 
 
 from math import isnan
-from typing import List
 
-from pandas import isna
+from numpy import Infinity
 
 
 class Version():
@@ -21,30 +20,6 @@ class Version():
 
     def __init__(self, version: str):
         self._init_from_str(version)
-
-    #     #     if (version == null || version.length < 5) {
-    #   throw new Error(`Version '${version}' is invalid`);
-    # }
-
-    # const versions = version.split('.');
-    # if (versions.length !== 3 && version.length !== 4) {
-    #   throw new Error(`Version '${version}' is invalid`);
-    # }
-
-    # // main version contain version before sub patch like 1.1.1
-    # let mainVersionsStr = version;
-
-    # // if there is a sub-patch, extract it
-    # let subPatch: number = null;
-    # if(version.includes('-beta.')){
-    #   let subPatchStr: string;
-    #   [mainVersionsStr, subPatchStr] = version.split('-beta.');
-
-    #   subPatch = parseInt(subPatchStr);
-    #   if (isNaN(subPatch)) {
-    #     throw new Error(`Sub-patch version of '${version}' is invalid`);
-    #   }
-    # }
 
     def _init_from_str(self, version: str) -> None:
         """Mehod to checkthe version str and set attributes
@@ -132,9 +107,10 @@ class Version():
         return self.sub_patch is not None
 
     def get_sub_patch_as_number(self) -> int:
-        """return the sub_patch as a number
+        """return the sub_patch as a number.
+        In there is no sub patch, return infinity so the beta version are always before real version
         """
-        return -1 if self.sub_patch is None else self.sub_patch
+        return Infinity if self.sub_patch is None else self.sub_patch
 
 
 class VersionInvalidException(Exception):
