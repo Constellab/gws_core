@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, List
 
 from gws_core.config.config_types import ConfigParams
 from gws_core.resource.view import View
+from gws_core.resource.view_types import ViewType
 
 from ...core.classes.jsonable import ListJsonable
 
@@ -30,7 +31,7 @@ class ResourcesListView(View):
     """
 
     _resource_model: List[ResourceModel]
-    _type: str = 'resources-list-view'
+    _type: ViewType = ViewType.RESOURCES_LIST_VIEW
     _title: str = "Resources list"
 
     def __init__(self):
@@ -43,9 +44,5 @@ class ResourcesListView(View):
     def add_resources(self, resource_model_json: List[ResourceModel]) -> None:
         self._resource_model += resource_model_json
 
-    def to_dict(self, params: ConfigParams) -> dict:
-
-        return {
-            **super().to_dict(params),
-            "data": ListJsonable(self._resource_model).to_json()
-        }
+    def data_to_dict(self, params: ConfigParams) -> dict:
+        return ListJsonable(self._resource_model).to_json()

@@ -8,7 +8,7 @@ from ....core.classes.paginator import PageInfo
 from ....core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ....resource.view import View
-from ....resource.view_types import ViewSpecs
+from ....resource.view_types import ViewSpecs, ViewType
 
 if TYPE_CHECKING:
     from ..text import Text
@@ -29,7 +29,7 @@ class TextView(View):
     ```
     """
 
-    _type: str = "text-view"
+    _type: ViewType = ViewType.TEXT
     _specs: ViewSpecs = {
         **View._specs,
         "page": IntParam(default_value=1, min_value=1, human_name="Page number"),
@@ -57,19 +57,14 @@ class TextView(View):
         to_char_index = min(min(to_char_index, from_char_index + self.MAX_NUMBER_OF_CHARS_PER_PAGE), length)
         return self._data[from_char_index:to_char_index]
 
-    def to_dict(self, params: ConfigParams) -> dict:
+    def data_to_dict(self, params: ConfigParams) -> dict:
         page = params.get_value("page")
         page_size = params.get_value("page_size")
         total_number_of_chars = len(self._data)
         page_info: PageInfo = PageInfo(page, page_size, total_number_of_chars, self.MAX_NUMBER_OF_CHARS_PER_PAGE, 1)
 
-        print(page_info.to_json())
-
         text = self._slice(from_char_index=page_info.from_index, to_char_index=page_info.to_index)
         return {
-            **super().to_dict(params),
-            "data": {
-                "text": text,
-                **page_info.to_json(),
-            }
+            "text": text,
+            **page_info.to_json(),
         }

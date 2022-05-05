@@ -1,6 +1,6 @@
 
 
-from gws_core.core.classes.search_builder import SearchDict
+from gws_core.core.classes.search_builder import SearchParams
 from gws_core.experiment.experiment import (Experiment, ExperimentStatus,
                                             ExperimentType)
 from gws_core.experiment.experiment_service import ExperimentService
@@ -25,7 +25,7 @@ class TestExperimentSearch(BaseTestCase):
         experiment_2.is_validated = True
         experiment_2.save()
 
-        search_dict: SearchDict = SearchDict()
+        search_dict: SearchParams = SearchParams()
 
         # Test full text search
         search_dict.filtersCriteria = [{"key": "text", "operator": "MATCH", "value": "title"}]
@@ -52,6 +52,6 @@ class TestExperimentSearch(BaseTestCase):
         search_dict.filtersCriteria = [{"key": "project", "operator": "IN", "value": [project.id]}]
         self.search(search_dict, 1)
 
-    def search(self, search_dict: SearchDict, expected_nb_of_result: int) -> None:
+    def search(self, search_dict: SearchParams, expected_nb_of_result: int) -> None:
         paginator = ExperimentService.search(search_dict).to_json()
         self.assertEqual(paginator['total_number_of_items'], expected_nb_of_result)

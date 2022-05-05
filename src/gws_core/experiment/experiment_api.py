@@ -6,7 +6,7 @@
 from typing import Dict, List, Optional
 
 from fastapi import Depends
-from gws_core.core.classes.search_builder import SearchDict
+from gws_core.core.classes.search_builder import SearchParams
 
 from ..core.classes.paginator import PaginatorDict
 from ..core_app import core_app
@@ -55,7 +55,7 @@ def get_the_list_of_experiments(page: Optional[int] = 1,
 
 
 @core_app.post("/experiment/advanced-search", tags=["Experiment"], summary="Advanced search for experiment")
-async def advanced_search(search_dict: SearchDict,
+async def advanced_search(search_dict: SearchParams,
                           page: Optional[int] = 1,
                           number_of_items_per_page: Optional[int] = 20,
                           _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:

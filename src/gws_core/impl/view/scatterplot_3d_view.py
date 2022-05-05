@@ -5,6 +5,8 @@
 
 from typing import Dict, List
 
+from gws_core.resource.view_types import ViewType
+
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
 from ...resource.view import View
@@ -65,7 +67,7 @@ class ScatterPlot3DView(View):
     x_tick_labels: List[str] = None
     y_tick_labels: List[str] = None
     _series: List = None
-    _type: str = "scatter-plot-3d-view"
+    _type: ViewType = ViewType.SCATTER_PLOT_3D
     _title: str = "3D-Scatter Plot"
 
     def add_series(
@@ -123,15 +125,12 @@ class ScatterPlot3DView(View):
             "z_name": z_name,
         })
 
-    def to_dict(self, params: ConfigParams) -> dict:
+    def data_to_dict(self, params: ConfigParams) -> dict:
         return {
-            **super().to_dict(params),
-            "data": {
-                "x_label": self.x_label,
-                "y_label": self.y_label,
-                "z_label": self.z_label,
-                "x_tick_labels": self.x_tick_labels,
-                "y_tick_labels": self.y_tick_labels,
-                "series": self._series,
-            }
+            "x_label": self.x_label,
+            "y_label": self.y_label,
+            "z_label": self.z_label,
+            "x_tick_labels": self.x_tick_labels,
+            "y_tick_labels": self.y_tick_labels,
+            "series": self._series,
         }

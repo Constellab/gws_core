@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, List
 from ....config.config_types import ConfigParams
 from ....config.param_spec import ListParam
 from ....core.exception.exceptions import BadRequestException
-from ....resource.view_types import ViewSpecs
+from ....resource.view_types import ViewSpecs, ViewType
 from ...view.barplot_view import BarPlotView
 from .base_table_view import BaseTableView, Serie1d
 
@@ -59,11 +59,12 @@ class TableBarPlotView(BaseTableView):
         **BaseTableView._specs,
         "series": ListParam(default_value=[])
     }
+    _type: ViewType = ViewType.BAR_PLOT
 
     def _get_view(self, params: ConfigParams) -> BarPlotView:
         return BarPlotView()
 
-    def to_dict(self, params: ConfigParams) -> dict:
+    def data_to_dict(self, params: ConfigParams) -> dict:
         series: List[Serie1d] = params.get_value("series")
 
         if len(series) == 0:
@@ -81,4 +82,4 @@ class TableBarPlotView(BaseTableView):
                 tags=self.get_row_tags_from_selection_range(serie["y"])
             )
 
-        return view.to_dict(params)
+        return view.data_to_dict(params)

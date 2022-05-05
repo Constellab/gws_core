@@ -5,6 +5,8 @@
 
 from typing import Any, Dict
 
+from gws_core.resource.view_types import ViewType
+
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -23,7 +25,7 @@ class JSONView(View):
     }
     ```
     """
-    _type: str = "json-view"
+    _type: ViewType = ViewType.JSON
     _data: Any
 
     def __init__(self, data: Dict = None):
@@ -37,8 +39,5 @@ class JSONView(View):
             raise BadRequestException("The data must be a json (dictionary, list of primitive or primitive object)")
         self._data = data
 
-    def to_dict(self, params: ConfigParams = None) -> dict:
-        return {
-            "type": self._type,
-            "data": self._data,
-        }
+    def data_to_dict(self, params: ConfigParams = None) -> dict:
+        return self._data

@@ -1,9 +1,12 @@
-
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 
 from typing import List
 
 from peewee import (BooleanField, CharField, CompositeKey, ForeignKeyField,
-                    ModelDelete, ModelSelect)
+                    ModelSelect)
 
 from ..core.model.base_model import BaseModel
 from ..experiment.experiment import Experiment
@@ -49,6 +52,10 @@ class TaskInputModel(BaseModel):
     @classmethod
     def get_by_experiment(cls, experiment_id: str) -> ModelSelect:
         return TaskInputModel.select().where(TaskInputModel.experiment == experiment_id)
+
+    @classmethod
+    def get_by_experiments(cls, experiment_ids: List[str]) -> ModelSelect:
+        return TaskInputModel.select().where(TaskInputModel.experiment.in_(experiment_ids))
 
     @classmethod
     def delete_by_experiment(cls, experiment_id: str) -> int:

@@ -1,10 +1,26 @@
 
 
 from gws_core import (BaseTestCase, BoolRField, DataFrameRField, DictRField,
-                      FloatRField, IntRField, KVStore, ListRField,
-                      ResourceModel, ResourceRField, Robot, StrRField)
+                      FloatRField, IntRField, JsonableObject, KVStore,
+                      ListRField, ResourceModel, ResourceRField, Robot,
+                      StrRField)
+from gws_core.resource.r_field import JsonableObjectRField
 from gws_core.resource.resource_model import ResourceOrigin
 from pandas.core.frame import DataFrame
+
+
+class TestJsonableObject(JsonableObject):
+    name: str
+
+    def __init__(self, name: str):
+        self.name = name
+
+    def to_json(self) -> dict:
+        return {"name": self.name}
+
+    @classmethod
+    def from_json(cls, json_data: dict):
+        return TestJsonableObject(json_data["name"])
 
 
 class TestRField(BaseTestCase):
@@ -127,3 +143,13 @@ class TestRField(BaseTestCase):
         self.assertEqual(robot.age, resource_deserilized.age)
         self.assertEqual(robot.position, resource_deserilized.position)
         self.assertEqual(robot.weight, resource_deserilized.weight)
+
+    async def test_jsonable_object_r_field(self):
+
+        r_field = JsonableObjectRField(TestJsonableObject)
+        value = TestJsonableObject("test")
+        serialized = r_field.serialize(value)
+        deserialized: TestJsonableObject = r_field.deserialize(serialized)
+
+        self.assertIsInstance(deserialized, TestJsonableObject)
+        self.assertEqual(value.name, deserialized.name)

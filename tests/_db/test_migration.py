@@ -22,34 +22,41 @@ class TestMigration(BaseTestCase):
 
     def test_version(self):
 
-        version: Version = Version('1.2.0')
+        self.assertEqual(Version('1.0.0'), Version('1.0.0'))
+        self.assertGreater(Version('2.0.0'), Version('1.0.0'))
+        self.assertGreater(Version('1.1.0'), Version('1.0.0'))
+        self.assertGreater(Version('1.0.1'), Version('1.0.0'))
+        self.assertGreater(Version('1.0.0-beta.1'), Version('1.0.0'))
+
+        version: Version = Version('1.2.0-beta.1')
 
         self.assertEqual(version.major, 1)
         self.assertEqual(version.minor, 2)
         self.assertEqual(version.patch, 0)
-        self.assertEqual(version.get_version_as_int(), 120)
+        self.assertEqual(version.sub_patch, 1)
+        self.assertEqual(str(version),  '1.2.0-beta.1')
 
-        version_2: Version = Version('1.2.0')
         version_3: Version = Version('1.3.0')
-
-        self.assertEqual(version, version_2)
-        self.assertNotEqual(version, version_3)
-        self.assertGreater(version_3, version)
-        self.assertGreaterEqual(version_3, version)
-        self.assertLess(version, version_3)
-        self.assertLessEqual(version, version_3)
 
         # Test sorting versions
         version_4: Version = Version('1.0.0')
-        sorted_version = [version_4, version_3, version]
+        version_5: Version = Version('2.0.0')
+        version_6: Version = Version('1.10.0')
+        sorted_version = [version_4, version_3, version, version_5, version_6]
         sorted_version.sort()
-        self.assertEqual(sorted_version, [version_4, version, version_3])
+        self.assertEqual(sorted_version, [version_4, version, version_3, version_6, version_5])
 
         with self.assertRaises(VersionInvalidException):
             Version('1.2')
 
         with self.assertRaises(VersionInvalidException):
             Version('1.-2.0')
+
+        with self.assertRaises(VersionInvalidException):
+            Version('1.2.a')
+
+        with self.assertRaises(VersionInvalidException):
+            Version('1.2.2-beta.a')
 
     def test_brick_migrator(self):
 

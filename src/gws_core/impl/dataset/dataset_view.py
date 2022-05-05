@@ -5,9 +5,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING
 
 from gws_core.config.config_types import ConfigParams
+from gws_core.resource.view_types import ViewType
 
 from ...core.exception.exceptions import BadRequestException
 from ...impl.table.view.table_view import TableView
@@ -36,7 +37,7 @@ class DatasetView(TableView):
     ```
     """
 
-    _type = "dataset-view"
+    _type: ViewType = ViewType.DATASET
     _table: Dataset
 
     def _check_and_set_data(self, table: Dataset):
@@ -45,8 +46,8 @@ class DatasetView(TableView):
             raise BadRequestException("The data must be a Table")
         super()._check_and_set_data(table)
 
-    def to_dict(self, params: ConfigParams) -> dict:
-        view_dict = super().to_dict(params)
-        view_dict["target_names"] = self._table.target_names
-        view_dict["type"] = self._type
-        return view_dict
+    def data_to_dict(self, params: ConfigParams) -> dict:
+        view_data_dict = super().data_to_dict(params)
+        view_data_dict["target_names"] = self._table.target_names
+        view_data_dict["type"] = self._type
+        return view_data_dict

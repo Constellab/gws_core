@@ -6,7 +6,7 @@ from gws_core import (BaseTestCase, ConfigParams, File, IExperiment, ITask,
                       Resource, ResourceModel, RField, Tag, TagHelper, Task,
                       TaskInputs, TaskModel, TaskOutputs, resource_decorator,
                       task_decorator)
-from gws_core.core.classes.search_builder import (SearchDict,
+from gws_core.core.classes.search_builder import (SearchParams,
                                                   SearchFilterCriteria)
 from gws_core.data_provider.data_provider import DataProvider
 from gws_core.resource.resource_model import ResourceOrigin
@@ -58,7 +58,7 @@ class TestResourceModel(BaseTestCase):
         self._create_resource_with_tag('the weather is not so great today',
                                        {'name': 'test', 'other': 'super'}, ResourceOrigin.UPLOADED)
 
-        search_dict: SearchDict = SearchDict()
+        search_dict: SearchParams = SearchParams()
 
         # Search on name tag
         search_dict.filtersCriteria = [self._get_tag_filter(str(nameTag))]
@@ -98,7 +98,7 @@ class TestResourceModel(BaseTestCase):
         search_dict.filtersCriteria = [self._get_data_filter("gre*")]
         self.search(search_dict, 2)
 
-    def search(self, search_dict: SearchDict, expected_nb_of_result: int) -> None:
+    def search(self, search_dict: SearchParams, expected_nb_of_result: int) -> None:
         paginator = ResourceService.search(search_dict).to_json()
         self.assertEqual(paginator['total_number_of_items'], expected_nb_of_result)
 

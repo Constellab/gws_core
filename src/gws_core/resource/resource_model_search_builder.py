@@ -22,9 +22,9 @@ class ResourceModelSearchBuilder(SearchBuilder):
     def __init__(self) -> None:
         super().__init__(ResourceModel, default_orders=[ResourceModel.created_at.desc()])
 
-    def get_filter_expression(self, filter: SearchFilterCriteria) -> Expression:
+    def convert_filter_to_expression(self, filter: SearchFilterCriteria) -> Expression:
         # Special case for the tags to filter on all tags
         if filter['key'] == 'tags':
             return TagHelper.get_search_tag_expression(filter['value'], ResourceModel.tags)
 
-        return super().get_filter_expression(filter)
+        return super().convert_filter_to_expression(filter)

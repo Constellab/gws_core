@@ -3,7 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, Dict, TypedDict, Union
+from enum import Enum
+from typing import Any, Dict, List, Union
+
+from gws_core.task.transformer.transformer_type import TransformerDict
+from typing_extensions import TypedDict
 
 from ..config.param_spec import ParamSpec
 from .lazy_view_param import LazyViewParam
@@ -11,12 +15,39 @@ from .lazy_view_param import LazyViewParam
 ViewSpecs = Dict[str, Union[ParamSpec, LazyViewParam]]
 
 
-class ViewCallResult(TypedDict):
-    """Object used to return the call of a view
-
-    :param TypedDict: [description]
-    :type TypedDict: [type]
+class ViewType(Enum):
+    """List of supported view type
     """
-    view_human_name: str
-    view_short_description: str
-    view_data: Any
+    VIEW = "view"
+    JSON = "json-view"
+    TEXT = "text-view"
+    TABLE = "table-view"
+    DATASET = "dataset-view"
+    FOLDER = "folder-view"
+    SCATTER_PLOT_2D = "scatter-plot-2d-view"
+    SCATTER_PLOT_3D = "scatter-plot-3d-view"
+    LINE_PLOT_2D = "line-plot-2d-view"
+    LINE_PLOT_3D = "line-plot-3d-view"
+    BAR_PLOT = "bar-plot-view"
+    STACKED_BAR_PLOT = "stacked-bar-plot-view"
+    HISTOGRAM = "histogram-view"
+    BOX_PLOT = "box-plot-view"
+    HEATMAP = "heatmap-view"
+    VENN_DIAGRAM = "venn-diagram-view"
+    RESOURCES_LIST_VIEW = "resources-list-view"
+    EMPTY = "empty-view"
+    MULTI_VIEWS = "multi-view"
+    NETWORK = "network-view"
+
+
+# List of view supported in reports
+report_supported_views = [
+    ViewType.JSON, ViewType.TEXT, ViewType.TABLE, ViewType.DATASET, ViewType.SCATTER_PLOT_2D,
+    ViewType.LINE_PLOT_2D, ViewType.BAR_PLOT, ViewType.STACKED_BAR_PLOT, ViewType.HISTOGRAM,
+    ViewType.BOX_PLOT, ViewType.HEATMAP, ViewType.VENN_DIAGRAM, ViewType.MULTI_VIEWS, ViewType.NETWORK]
+
+
+class CallViewParams(TypedDict):
+    values: Dict[str, Any]
+    transformers: List[TransformerDict]
+    save_view_config: bool

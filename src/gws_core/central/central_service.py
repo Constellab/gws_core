@@ -8,7 +8,7 @@ from typing import Dict, List
 
 from gws_core.brick.brick_service import BrickService
 from gws_core.central.central_dto import (CentralSendMailDTO, LabStartDTO,
-                                          SaveExperimentToCentralDTO,
+                                          SaveExperimentToCentralDTO, SaveReportToCentralDTO,
                                           SendExperimentFinishMailData)
 from gws_core.experiment.experiment import Experiment
 from gws_core.impl.file.file_helper import FileHelper
@@ -107,22 +107,13 @@ class CentralService(BaseService):
             raise BadRequestException("Can't save the experiment in central")
 
     @classmethod
-    def save_report(cls, project_id: str, report: dict, file_paths: List[str]) -> None:
+    def save_report(cls, project_id: str, report: SaveReportToCentralDTO) -> None:
         central_api_url: str = cls._get_central_api_url(
             f"{cls._external_labs_route}/project/{project_id}/report")
 
-        # convert the file paths to file object supported by the form data request
-        files = []
-        for file_path in file_paths:
-            with open(file_path, 'rb') as file:
-                filename = FileHelper.get_name_with_extension(file_path)
-                content_type = FileHelper.get_mime(file_path)
-                files.append(('files', (filename, file, content_type)))
-
-        response = ExternalApiService.put_form_data(
-            central_api_url, data={'body': json.dumps(report)},
-            headers=cls._get_request_header(),
-            files=files)
+        response = ExternalApiService.put(
+            central_api_url, body=report,
+            headers=cls._get_request_header())
 
         if response.status_code != 200:
             Logger.error(f"Can't save the report in central. Error : {response.text}")

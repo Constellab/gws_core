@@ -2,7 +2,7 @@
 
 from typing import List, Type
 from gws_core.core.classes.paginator import Paginator
-from gws_core.core.classes.search_builder import SearchBuilder, SearchDict
+from gws_core.core.classes.search_builder import SearchBuilder, SearchParams
 from gws_core.model.typing import Typing, TypingNameObj
 from gws_core.model.typing_manager import TypingManager
 from gws_core.model.typing_search_builder import TypingSearchBuilder
@@ -29,7 +29,7 @@ class TypingService():
             return Typing.get_by_typing_name(typing_name)
 
     @classmethod
-    def search(cls, search: SearchDict,
+    def search(cls, search: SearchParams,
                page: int = 0, number_of_items_per_page: int = 20) -> Paginator[Typing]:
 
         search_builder: SearchBuilder = TypingSearchBuilder()

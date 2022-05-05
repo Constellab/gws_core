@@ -3,7 +3,7 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from ....resource.view_types import ViewSpecs
+from ....resource.view_types import ViewSpecs, ViewType
 from ...view.lineplot_2d_view import LinePlot2DView
 from .table_scatterplot_2d_view import TableScatterPlot2DView
 
@@ -47,3 +47,5 @@ class TableLinePlot2DView(TableScatterPlot2DView):
 
     _specs: ViewSpecs = {**TableScatterPlot2DView._specs}
     _view_helper = LinePlot2DView
+
+    _type: ViewType = ViewType.LINE_PLOT_2D

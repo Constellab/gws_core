@@ -10,12 +10,12 @@ from gws_core.config.config_types import ConfigParamsDict, ConfigSpecs
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.resource.view import View
-from gws_core.resource.view_types import ViewCallResult
+from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.task.converter.converter_service import ConverterService
 from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
-from ..core.classes.search_builder import SearchBuilder, SearchDict
+from ..core.classes.search_builder import SearchBuilder, SearchParams
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.exception.gws_exceptions import GWSException
@@ -100,6 +100,35 @@ class ResourceService(BaseService):
         resource_model.resource_typing_name = file_type._typing_name
         return resource_model.save()
 
+    @classmethod
+    def get_experiments_resources(cls, experiment_ids: List[str]) -> List[ResourceModel]:
+        """Return the list of reosurces used as input or output by the experiments
+
+        :param experiments: _description_
+        :type experiments: List[str]
+        :return: _description_
+        :rtype: List[ResourceModel]
+        """
+        generated_resources = cls.get_experiment_output_resources(experiment_ids)
+
+        task_inputs = cls.get_experiment_input_resources(experiment_ids)
+
+        resources: Dict[str, ResourceModel] = {}
+
+        for resource in generated_resources + task_inputs:
+            resources[resource.id] = resource
+
+        return list(resources.values())
+
+    @classmethod
+    def get_experiment_output_resources(cls, experiment_ids: List[str]) -> List[ResourceModel]:
+        return list(ResourceModel.get_by_experiments(experiment_ids))
+
+    @classmethod
+    def get_experiment_input_resources(cls, experiment_ids: List[str]) -> List[ResourceModel]:
+        task_inputs: List[TaskInputModel] = list(TaskInputModel.get_by_experiments(experiment_ids))
+        return [task_input.resource_model for task_input in task_inputs]
+
     ############################# RESOURCE TYPE ###########################
 
     @classmethod
@@ -127,33 +156,30 @@ class ResourceService(BaseService):
         return ViewHelper.get_view_specs(resource_model, view_name)
 
     @classmethod
-    async def call_view_on_resource_type(cls, resource_model_id: str,
-                                         view_name: str, config_values: Dict[str, Any],
-                                         transformers: List[TransformerDict]) -> ViewCallResult:
+    async def get_and_call_view_on_resource_model(cls, resource_model_id: str,
+                                                  view_name: str, config_values: Dict[str, Any],
+                                                  transformers: List[TransformerDict],
+                                                  save_view_config: bool = False) -> Dict:
 
         resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
-        resource: Resource = resource_model.get_resource()
-        return await cls.call_view_on_resource(resource, view_name, config_values, transformers)
+        return await cls.call_view_on_resource_model(resource_model, view_name, config_values, transformers, save_view_config)
 
     @classmethod
-    async def call_view_on_resource(cls, resource: Resource,
-                                    view_name: str, config_values: Dict[str, Any],
-                                    transformers: List[TransformerDict]) -> ViewCallResult:
+    async def call_view_on_resource_model(cls, resource_model: ResourceModel,
+                                          view_name: str, config_values: Dict[str, Any],
+                                          transformers: List[TransformerDict],
+                                          save_view_config: bool = False) -> Dict:
+
+        resource: Resource = resource_model.get_resource()
 
         view = await cls.get_view_on_resource(resource, view_name, config_values, transformers)
 
+        if save_view_config:
+            ViewConfigService.save_view_config_in_async(
+                resource_model, view, view_name, config_values, transformers)
+
         # call the view to dict
-        return ViewHelper.call_view_to_dict(view, config_values, type(resource), view_name)
-
-    @classmethod
-    async def get_view_on_resource_type(cls, resource_model_id: str,
-                                        view_name: str, config_values: Dict[str, Any],
-                                        transformers: List[TransformerDict]) -> View:
-
-        resource_model: ResourceModel = cls.get_resource_by_id(resource_model_id)
-        resource: Resource = resource_model.get_resource()
-
-        return await cls.get_view_on_resource(resource, view_name, config_values, transformers)
+        return ViewHelper.call_view_to_dict(view, config_values)
 
     @classmethod
     async def get_view_on_resource(cls, resource: Resource,
@@ -169,7 +195,7 @@ class ResourceService(BaseService):
     ############################# SEARCH ###########################
 
     @classmethod
-    def search(cls, search: SearchDict,
+    def search(cls, search: SearchParams,
                page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
 
         search_builder: SearchBuilder = ResourceModelSearchBuilder()

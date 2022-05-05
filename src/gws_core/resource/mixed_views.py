@@ -68,15 +68,12 @@ class MixedViews(View):
             }
         )
 
-    def to_dict(self, params: ConfigParams) -> dict:
+    def data_to_dict(self, params: ConfigParams) -> dict:
         views_dict: List[dict] = []
         for sub_view in self._sub_views:
             view_dict = sub_view["view"].to_dict(sub_view["config_params"])
             views_dict.append(view_dict)
 
         return {
-            "type": self._type,
-            "data": {
-                "views": views_dict
-            }
+            "views": views_dict
         }

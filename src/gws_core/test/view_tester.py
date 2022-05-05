@@ -3,10 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Type, Union
-
 from ..config.config import Config
-from ..config.config_types import ConfigParams, ConfigParamsDict, ParamValue
+from ..config.config_types import ConfigParams, ConfigParamsDict
 from ..resource.view import View
 
 

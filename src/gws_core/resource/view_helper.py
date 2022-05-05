@@ -4,12 +4,12 @@
 # About us: https://gencovery.com
 
 import inspect
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type
+from typing import Any, Callable, Dict, List, Tuple, Type
 
 from gws_core.config.param_spec import ParamSpec
 from gws_core.resource.lazy_view_param import LazyViewParam
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.resource.view_types import ViewCallResult, ViewSpecs
+from gws_core.resource.view_types import ViewSpecs
 
 from ..config.config_types import ConfigParams, ConfigParamsDict, ConfigSpecs
 from ..config.param_spec_helper import ParamSpecHelper
@@ -38,19 +38,11 @@ class ViewHelper():
         return view
 
     @classmethod
-    def call_view_to_dict(cls, view: View, config: ConfigParamsDict, resource_type: Type[Resource],
-                          view_name: str) -> ViewCallResult:
+    def call_view_to_dict(cls, view: View, config: ConfigParamsDict) -> Dict:
         # check the view config and set default values
         config_params: ConfigParams = ParamSpecHelper.get_config_params(view._specs, config)
 
-        view_metadata: ResourceViewMetaData = ViewHelper.get_and_check_view(resource_type, view_name)
-
-        # convert the view to dict using the config
-        return {
-            "view_human_name": view_metadata.human_name,
-            "view_short_description": view_metadata.short_description,
-            "view_data": view.to_dict(config_params)
-        }
+        return view.to_dict(config_params)
 
     @classmethod
     def _call_view_method(cls, resource: Resource,
@@ -69,6 +61,15 @@ class ViewHelper():
 
         if view is None or not isinstance(view, View):
             raise Exception(f"The view method '{view_metadata.method_name}' didn't returned a View object")
+
+        # set view name if not defined
+        if view.get_title() is None:
+            view.set_title(resource.name)
+
+        # set the resource technical infos
+        if resource.technical_info:
+            for value in resource.technical_info.get_all().values():
+                view.add_technical_info(value)
 
         return view
 

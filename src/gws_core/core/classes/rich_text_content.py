@@ -4,12 +4,21 @@
 # About us: https://gencovery.com
 
 
-from typing import Any, List, Optional, TypedDict
+from enum import Enum
+from typing import Any, Dict, List, Optional, Set, TypedDict
+
+from gws_core.task.transformer.transformer_type import TransformerDict
 
 
 class RichTextI(TypedDict):
 
     ops: List[Any]
+
+
+class RichTextSpecialOps(Enum):
+    """List the special ops type that can be used in rich text """
+    FIGURE = 'figure'
+    RESOURCE_VIEW = 'resource_view'
 
 
 class RichTextFigure(TypedDict):
@@ -27,6 +36,19 @@ class RichTextFigure(TypedDict):
     naturalHeight: int
 
 
+class RichTextResourceView(TypedDict):
+    """Object representing a resource view in a rich text"""
+    id: str
+    resource_id: str
+    experiment_id: str
+    view_method_name: str
+    view_config: Dict[str, Any]
+    transformers: List[TransformerDict]
+    title: Optional[str]
+    caption: Optional[str]
+    technical_info: List[Dict]
+
+
 class RichText():
     """Class to manipulate the rich texts content
 
@@ -37,6 +59,8 @@ class RichText():
     _content: RichTextI
 
     def __init__(self, rich_text_content: RichTextI) -> None:
+        if not isinstance(rich_text_content, dict) or 'ops' not in rich_text_content:
+            raise Exception('The content is not correclty formatted')
         self._content = rich_text_content
 
     def is_empty(self) -> bool:
@@ -44,10 +68,22 @@ class RichText():
             all(x['insert'] == '\n' for x in self._content['ops'])  # empty if all the ops only contain '\n'
 
     def get_figures(self) -> List[RichTextFigure]:
-        figures: List[RichTextFigure] = []
+        return self.get_special_ops(RichTextSpecialOps.FIGURE)
+
+    def get_resource_views(self) -> List[RichTextResourceView]:
+        return self.get_special_ops(RichTextSpecialOps.RESOURCE_VIEW)
+
+    def get_associated_resources(self) -> Set[str]:
+        resource_views: List[RichTextResourceView] = self.get_resource_views()
+        return {rv['resource_id'] for rv in resource_views}
+
+    def get_special_ops(self, ops_name: RichTextSpecialOps) -> List[Any]:
+        special_ops: List[RichTextFigure] = []
 
         for op in self._content['ops']:
-            if 'insert' in op and 'figure' in op['insert'] and isinstance(op['insert']['figure'], dict):
-                figures.append(op['insert']['figure'])
+            if 'insert' in op and isinstance(op['insert'], dict)  \
+                    and ops_name.value in op['insert'] \
+                    and isinstance(op['insert'][ops_name.value], dict):
+                special_ops.append(op['insert'][ops_name.value])
 
-        return figures
+        return special_ops

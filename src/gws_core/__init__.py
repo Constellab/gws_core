@@ -289,6 +289,8 @@ from .resource.r_field import BoolRField as BoolRField
 from .resource.r_field import DictRField as DictRField
 from .resource.r_field import FloatRField as FloatRField
 from .resource.r_field import IntRField as IntRField
+from .resource.r_field import JsonableObject as JsonableObject
+from .resource.r_field import JsonableObjectRField as JsonableObjectRField
 from .resource.r_field import ListRField as ListRField
 from .resource.r_field import PrimitiveRField as PrimitiveRField
 from .resource.r_field import RField as RField
@@ -305,6 +307,7 @@ from .resource.resource_typing import ResourceTyping as ResourceTyping
 from .resource.view import View as View
 from .resource.view_decorator import view as view
 from .resource.view_types import ViewSpecs as ViewSpecs
+from .resource.view_types import ViewType as ViewType
 # Tag
 from .tag.tag import Tag as Tag
 from .tag.tag_helper import TagHelper as TagHelper
