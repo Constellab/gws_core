@@ -12,7 +12,7 @@ from peewee import ModelSelect
 from ..central.central_dto import SaveExperimentToCentralDTO
 from ..central.central_service import CentralService
 from ..core.classes.paginator import Paginator
-from ..core.classes.search_builder import SearchBuilder, SearchDict
+from ..core.classes.search_builder import SearchBuilder, SearchParams
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.base_service import BaseService
@@ -220,7 +220,7 @@ class ExperimentService(BaseService):
 
     @classmethod
     def search(cls,
-               search: SearchDict,
+               search: SearchParams,
                page: int = 0,
                number_of_items_per_page: int = 20) -> Paginator[Experiment]:
 

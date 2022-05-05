@@ -2,177 +2,101 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-
 from collections.abc import Iterable as IterableClass
-from typing import Dict, Iterable, List, Literal, Type, Union, get_args
+from typing import Any, Dict, Iterable, List, Optional, Type, TypedDict, Union
+
+from gws_core.core.utils.utils import Utils
 
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ..core.utils.utils import Utils
+from ..model.typing_manager import TypingManager
 from ..resource.resource import Resource
-from ..task.task_io import TaskInputs
-from .io_special_type import (ConstantOut, OptionalIn, SkippableIn,
-                              SpecialTypeIn, SpecialTypeIO, SpecialTypeOut,
-                              TypeIO, TypeIODict)
 
 ResourceType = Type[Resource]
-
-# Specs for a task Input, a resource type, a list of resource type or a SpecialTypeIn (check SpecialTypeIn for more information)
-InputSpec = Union[ResourceType, Iterable[ResourceType], SpecialTypeIn]
-InputSpecs = Dict[str, InputSpec]
-
-# Specs for a task Output, a resource type, a list of resource type or a SpecialTypeOut (check SpecialTypeOut for more information)
-OutputSpec = Union[ResourceType, Iterable[ResourceType], SpecialTypeOut]
-OutputSpecs = Dict[str, OutputSpec]
-
-IOSpec = Union[InputSpec, OutputSpec, TypeIO]
-IOSpecs = Dict[str, IOSpec]
+ResourceTypes = Union[ResourceType, Iterable[ResourceType]]
 
 
-class IOSpecClass:
+class ResourceTypeJson(TypedDict):
+    typing_name: str
+    human_name: str
+    short_description: str
 
-    type_io: TypeIO
 
-    resource_spec: IOSpec = None
+class IOSpecDict(TypedDict):
+    type_io: str
+    resource_types: List[ResourceTypeJson]
+    data: Dict[str, Any]
 
-    def __init__(self, spec: IOSpec) -> None:
 
-        if isinstance(spec, TypeIO):
-            self.type_io = spec
+class IOSpec:
+    resource_types: List[ResourceType]
+
+    # Human readable name of the param, showed in the interface
+    human_name: Optional[str]
+
+    # Description of the param, showed in the interface
+    short_description: Optional[str]
+
+    _name: str = "TypeIO"   # unique name to distinguish the types, do not modify
+
+    def __init__(self, resource_types: ResourceTypes, human_name: Optional[str] = None,
+                 short_description: Optional[str] = None,) -> None:
+        """[summary]
+
+        :param resource_types: type of supported resource or resources
+        :type resource_types: Type[Union[Resource, Iterable[Resource]]]
+        """
+
+        self.resource_types = []
+        if not isinstance(resource_types, IterableClass):
+            self.resource_types.append(resource_types)
         else:
-            self.type_io = TypeIO(spec)
+            for r_type in resource_types:
+                self.resource_types.append(r_type)
 
-    def to_resource_types(self) -> Iterable[ResourceType]:
-        return IOSpecsHelper.io_spec_to_resource_types(self.type_io)
+        self.human_name = human_name
+        self.short_description = short_description
 
-    def is_compatible_with_spec(self, spec: 'IOSpecClass') -> bool:
-        return IOSpecsHelper.specs_are_compatible(self.type_io, spec.type_io)
+        self.check_resource_types()
 
-    def is_compatible_with_type(self, resource_type: Type[Resource]) -> bool:
-        return IOSpecsHelper.spec_is_compatible(
-            io_type=resource_type, expected_types=self.to_resource_types())
+    def check_resource_types(self):
+        for resource_type in self.resource_types:
+            if not Utils.issubclass(resource_type, Resource):
+                raise BadRequestException(
+                    f"Invalid port specs. The type '{resource_type}' used inside the type '{type(self).__name__}' is not a resource")
 
-    def is_optional(self) -> bool:
-        return isinstance(self.type_io, OptionalIn) or None in self.to_resource_types()
-
-    def is_constant_out(self) -> bool:
-        return isinstance(self.type_io, ConstantOut)
-
-    def is_skippable_in(self) -> bool:
-        return isinstance(self.type_io, SkippableIn)
-
-    def to_json(self) -> TypeIODict:
-        return self.type_io.to_json()
-
-    @classmethod
-    def from_json(cls, json_: TypeIODict) -> 'IOSpecClass':
-        return IOSpecClass(TypeIO.from_json(json_))
-
-
-class IOSpecsHelper():
-    """Class containing only class method to simplify IOSpecs management
-    """
-
-    @classmethod
-    def io_specs_to_resource_types(cls, io_specs: IOSpecs) -> Dict[str, Iterable[ResourceType]]:
-        """Convert all specs (IOSpecs) to list of resources
-
-        :param io_specs: [description]
-        :type io_specs: IOSpecs
-        :raises BadRequestException: [description]
-        :return: [description]
-        :rtype: Dict[str, List[Type[Resource]]]
-        """
-
-        specs: Dict[str, Iterable[ResourceType]] = {}
-        for key, spec in io_specs.items():
-            specs[key] = cls.io_spec_to_resource_types(spec)
-
-        return specs
-
-    @classmethod
-    def io_spec_to_resource_types(cls, io_spec: IOSpec) -> Iterable[ResourceType]:
-        """Convert a IOSpec to list of resources types
-        It also checks that the type is a Resource
-        :param io_spec: [description]
-        :type io_spec: IOSpec
-        :return: [description]
-        :rtype: List[Type[Resource]]
-        """
-
-        io_spec_list: Iterable[IOSpec] = cls.io_spec_to_list(io_spec)
-
-        resource_types: List[ResourceType] = []
-
-        for spec in io_spec_list:
-            # convert the NoneType to None
-            if spec is type(None) or spec is None:
-                resource_types.append(None)
-                continue
-
-            if isinstance(spec, TypeIO):
-                spec.check_resource_types()
-                resource_types.extend(spec.resource_types)
-            else:
-                # check that the type is a Resource or a SubClasses
-                if not Utils.issubclass(spec, Resource):
-                    raise BadRequestException(f"Invalid port specs. The type '{spec}' is not a resource")
-                resource_types.append(spec)
-
-        return resource_types
-
-    @classmethod
-    def io_spec_to_list(cls, io_spec: IOSpec) -> Iterable[IOSpec]:
-        """Convert IOSpec to a list of types
-
-        :param io_spec: [description]
-        :type io_spec: IOSpec
-        :return: [description]
-        :rtype: List[IOSpecType]
-        """
-
-        if isinstance(io_spec, TypeIO):
-            return [io_spec]
-        # if the type is a Union or Optional (equivalient to Union[x, None])
-        elif hasattr(io_spec, "__args__") and isinstance(io_spec.__args__, tuple):
-            return get_args(io_spec)
-        elif not isinstance(io_spec, IterableClass):
-            return [io_spec]
-
-        return io_spec
-
-    @classmethod
-    def spec_is_compatible(cls, io_type: IOSpec,
-                           expected_types: IOSpec,
-                           exclude_none: bool = False) -> bool:
-        """Check if a resource type is compataible with excpeted types
-
-        :param resource_type: type to check
-        :type resource_type: Type[Resource]
-        :param expected_types: [description]
-        :type expected_types: List[Type[Resource]]
-        :param exclude_none: if True the None are considere incompatible
-        :type exclude_none: bool, optional
-        :return: [description]
-        :rtype: bool
-        """
-
+    def is_compatible_with_in_spec(self, in_spec: 'IOSpec',
+                                   exclude_none: bool = False) -> bool:
         # Handle the generic SubClasss
-        if isinstance(io_type, SpecialTypeOut) and io_type.sub_class:
-            resource_types_1: Iterable[ResourceType] = io_type.resource_types
+        if self.is_subclass_out():
             # check if type inside the SubClass is compatible with expected type
             # if not check if one of the expected type is compatible with SubClass
-            return cls.specs_are_compatible(
-                output_specs_1=resource_types_1, input_specs_2=expected_types) or cls.specs_are_compatible(
-                output_specs_1=expected_types, input_specs_2=resource_types_1)
+            return self._resource_types_are_compatible(
+                resource_types=self.resource_types, expected_types=in_spec.resource_types, exclude_none=True) or self._resource_types_are_compatible(
+                resource_types=in_spec.resource_types, expected_types=self.resource_types, exclude_none=True)
 
-        # Convert the io_type to resource types
-        resource_types: Iterable[ResourceType] = cls.io_spec_to_resource_types(io_type)
+        return self._resource_types_are_compatible(
+            resource_types=self.resource_types, expected_types=in_spec.resource_types, exclude_none=exclude_none)
 
-        expected_r_types: Iterable[ResourceType] = cls.io_spec_to_resource_types(expected_types)
+    def is_compatible_with_resource_type(self, resource_type: Type[Resource]) -> bool:
+        return self._resource_types_are_compatible(resource_types=[resource_type], expected_types=self.resource_types)
 
-        return cls._resource_types_are_compatible(
-            resource_types=resource_types, expected_types=expected_r_types, exclude_none=exclude_none)
+    def is_optional(self) -> bool:
+        return isinstance(self, OptionalIn) or None in self.resource_types
+
+    def is_constant_out(self) -> bool:
+        return isinstance(self, ConstantOut)
+
+    def is_skippable_in(self) -> bool:
+        return isinstance(self, SkippableIn)
+
+    def is_subclass_out(self) -> bool:
+        return isinstance(self, OutputSpec) and self.sub_class
+
+    def get_default_resource_type(self) -> Type[Resource]:
+        """return the first default type
+        """
+        return self.resource_types[0]
 
     @classmethod
     def _resource_types_are_compatible(cls, resource_types: Iterable[Type[Resource]],
@@ -201,62 +125,109 @@ class IOSpecsHelper():
 
         return False
 
-    @classmethod
-    def specs_are_compatible(
-            cls, output_specs_1: IOSpec,
-            input_specs_2: IOSpec) -> bool:
-
-        output_spec_list: Iterable[IOSpec] = cls.io_spec_to_list(output_specs_1)
-
-        for output_spec in output_spec_list:
-            # compare the type and exclude the None
-            if cls.spec_is_compatible(output_spec, input_specs_2, True):
-                return True
-
-        return False
-
-    @classmethod
-    def io_specs_to_json(cls, io_specs: IOSpecs) -> Dict[str, TypeIODict]:
-        """to_json method for IOSpecs
-        """
-
-        json_:  Dict[str, TypeIODict] = {}
-        for key, spec in io_specs.items():
-            json_[key] = IOSpecClass(spec).to_json()
+    def to_json(self) -> IOSpecDict:
+        json_: IOSpecDict = {"type_io": self._name, "resource_types": [], "data": {},
+                             "human_name": self.human_name, "short_description": self.short_description}
+        for resource_type in self.resource_types:
+            if resource_type is None:
+                json_["resource_types"].append({"typing_name": None, "human_name": None, 'short_description': None})
+            else:
+                json_["resource_types"].append(
+                    {"typing_name": resource_type._typing_name, "human_name": resource_type._human_name,
+                     'short_description': resource_type._short_description})
         return json_
 
     @classmethod
-    def check_input_specs(cls, input_specs: InputSpecs) -> None:
-        """Method to verify that input specs are valid
-        """
-        cls._check_io_spec_param(input_specs, 'input', SpecialTypeIn)
+    def from_json(cls, json_: IOSpecDict) -> 'IOSpec':
+        type_: Type[IOSpec] = cls._get_type_from_name(json_['type_io'])
+
+        resource_types: List[ResourceType] = []
+
+        # retrieve all the resource type from the json specs
+        for spec_json in json_['resource_types']:
+            resource_types.append(TypingManager.get_type_from_name(spec_json['typing_name']))
+
+        return type_(resource_types=resource_types, **json_['data'])
 
     @classmethod
-    def check_output_specs(cls, output_specs: OutputSpecs) -> None:
-        """Method to verify that output specs are valid
+    def _get_type_from_name(cls, type_name: str) -> Type['IOSpec']:
+        if type_name == 'TypeIO':
+            return IOSpec
+        elif type_name == 'InputSpec':
+            return InputSpec
+        elif type_name == 'OutputSpec':
+            return OutputSpec
+        elif type_name == 'OptionalIn':
+            return OptionalIn
+        elif type_name == 'SkippableIn':
+            return SkippableIn
+        elif type_name == 'ConstantOut':
+            return ConstantOut
+        else:
+            raise Exception(f"[TypeIO] The type name {type_name} does not correspond to a type")
+
+
+class InputSpec(IOSpec):
+    """ Spec for an input task port
+    """
+    _name: str = "InputSpec"
+
+
+class OutputSpec(IOSpec):
+    """ Spec for an output task port
+    """
+    _name: str = "OutputSpec"
+
+    sub_class: bool
+
+    def __init__(self, resource_types: ResourceTypes, sub_class: bool = False) -> None:
+        """[summary]
+
+        :param resource_types: [description]
+        :type resource_types: Type[Union[Resource, Iterable[Resource]]]
+        :param sub_class: When true, it tells that the resource_types
+                are compatible with any child class of the provided resource type, defaults to False
+        :type sub_class: bool, optional
         """
-        cls._check_io_spec_param(output_specs, 'output', SpecialTypeOut)
+        super().__init__(resource_types=resource_types)
+        self.sub_class = sub_class
 
-    @classmethod
-    def _check_io_spec_param(cls, io_specs: IOSpecs,
-                             param_type: Literal['input', 'output'], special_type: Type[SpecialTypeIO]) -> None:
-        if not io_specs:
-            return
+    # Add the sub class attribute
+    def to_json(self) -> IOSpecDict:
+        json_ = super().to_json()
+        json_['data']["sub_class"] = self.sub_class
 
-        if not isinstance(io_specs, dict):
-            raise Exception("The specs must be a dictionary")
+        return json_
 
-        for key, item in io_specs.items():
-            params: Iterable[ResourceType]
 
-            if isinstance(item, special_type):
-                params = item.resource_types
-            elif not isinstance(item, IterableClass):
-                params = [item]
-            else:
-                params = item
+class OptionalIn(InputSpec):
+    """Special type to use in Input specs
+    This type tell the system that the input is optional.
+    The input can be not connected and the task will still run (the input value will then be None)
+    If the input is connected, the task will wait for the resource to run himself (this is the difference from SkippableIn)
+    """
 
-            for param in params:
-                if param is not None and not Utils.issubclass(param, Resource):
-                    raise Exception(
-                        f"The {param_type} param of spec '{key}' is invalid. Expected a resource type, got {str(param)}")
+    _name: str = 'OptionalIn'
+
+
+class SkippableIn(OptionalIn):
+    """Special type to use in Input specs
+    This type tell the system that the input is skippable. This mean that the task can be called
+    even if this input was connected and the value no provided.
+    With this you can run your task even if the input vaue was not received
+    //!\\ WARNING If an input is skipped, the input is not set, the inputs['name'] will raise a KeyError exception (different from None)
+
+    Has no effect when there is only one input
+
+    """
+
+    _name: str = 'SkippableIn'
+
+
+class ConstantOut(OutputSpec):
+    """Special type to use in Output specs
+    This type tells the system that the output resource was not modified from the input resource
+    and it does not need to create a new resource after the task
+    """
+
+    _name: str = 'ConstantOut'

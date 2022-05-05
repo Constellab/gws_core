@@ -19,6 +19,12 @@ class SaveExperimentToCentralDTO(TypedDict):
     lab_config: dict
 
 
+class SaveReportToCentralDTO(TypedDict):
+    report: dict
+    experiment_ids: List[str]
+    lab_config: dict
+
+
 class CentralSendMailDTO(TypedDict):
     receiver_ids: List[str]
     mail_template: Literal['experiment-finished']

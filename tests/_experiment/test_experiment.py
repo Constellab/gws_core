@@ -16,7 +16,7 @@ from gws_core.experiment.experiment_interface import IExperiment
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.impl.robot.robot_protocol import (CreateSimpleRobot,
                                                 MoveSimpleRobot)
-from gws_core.io.io_spec import IOSpecClass
+from gws_core.io.io_spec import IOSpec
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.process.process_model import ProcessStatus
 from gws_core.project.project_dto import ProjectDto
@@ -100,9 +100,9 @@ class TestExperiment(BaseTestCase):
         self.assertEqual(robot1.position[0], robot2.position[0] + 2000)
 
         # Check if the port resource spec was correctly loaded
-        spec: IOSpecClass = fly_1.inputs.get_port('robot').resource_spec
-        self.assertIsInstance(spec, IOSpecClass)
-        self.assertEqual(spec.to_resource_types(), [Robot])
+        spec: IOSpec = fly_1.inputs.get_port('robot').resource_spec
+        self.assertIsInstance(spec, IOSpec)
+        self.assertEqual(spec.resource_types, [Robot])
 
         # Test the protocol (super_travel) config (weight of 10)
         super_travel: ProtocolModel = e2_bis.protocol_model.get_process('super_travel')

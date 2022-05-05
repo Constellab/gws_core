@@ -3,6 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws_core.resource.view_types import ViewType
+
 from .scatterplot_2d_view import ScatterPlot2DView
 
 
@@ -42,5 +44,5 @@ class LinePlot2DView(ScatterPlot2DView):
     See also ScatterPlot2DView
     """
 
-    _type: str = "line-plot-2d-view"
+    _type: ViewType = ViewType.LINE_PLOT_2D
     _title: str = "2D-Line Plot"

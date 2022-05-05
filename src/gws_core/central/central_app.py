@@ -4,9 +4,14 @@
 # About us: https://gencovery.com
 
 
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.responses import FileResponse
+from gws_core.impl.file.file_helper import FileHelper
+from gws_core.report.report_service import ReportService
+from gws_core.resource.resource_service import ResourceService
+from gws_core.resource.view_types import CallViewParams
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException
 
@@ -17,7 +22,7 @@ from ..core.utils.http_helper import HTTPHelper
 from ..impl.file.file import File
 from ..impl.file.fs_node_service import FsNodeService
 from ..user.auth_service import AuthService
-from ..user.user import User, UserTheme
+from ..user.user import User
 from ..user.user_dto import UserCentral, UserData
 from ..user.user_service import UserService
 from ._auth_central import AuthCentral
@@ -133,6 +138,22 @@ async def health_check() -> bool:
     """
 
     return True
+
+
+@central_app.post("/resource/{id}/views/{view_name}", tags=["Resource"],
+                  summary="Call the view name for a resource")
+async def call_view_on_resource(id: str,
+                                view_name: str,
+                                call_view_params: CallViewParams,
+                                _: UserData = Depends(AuthCentral.check_central_api_key)) -> Any:
+    return await ResourceService.get_and_call_view_on_resource_model(id, view_name, call_view_params["values"],
+                                                                     call_view_params["transformers"], call_view_params["save_view_config"])
+
+
+@central_app.get("/report/image/{filename}", tags=["Report"], summary="Get an object")
+def get_image(filename: str,
+              _: UserData = Depends(AuthCentral.check_central_api_key)) -> FileResponse:
+    return ReportService.get_image_file_response(filename)
 
 
 @central_app.get("/db/{db_manager_name}/dump", tags=["DB management"])

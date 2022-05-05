@@ -88,7 +88,7 @@ class BrickMigrator():
             x for x in self._migration_objects if x.version > self.current_brick_version]
 
         # sort them to migrate in order
-        to_migrate.sort(key=lambda x: x.version.get_version_as_int())
+        to_migrate.sort(key=lambda x: x.version)
         return to_migrate
 
     def _call_migration(self, migration_object: MigrationObject) -> None:

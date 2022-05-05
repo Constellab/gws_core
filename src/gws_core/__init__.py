@@ -233,14 +233,13 @@ from .io.connector import Connector as Connector
 from .io.io import IO as IO
 from .io.io import Inputs as Inputs
 from .io.io import Outputs as Outputs
-from .io.io_spec import InputSpecs as InputSpecs
-from .io.io_spec import OutputSpecs as OutputSpecs
-from .io.io_special_type import ConstantOut as ConstantOut
-from .io.io_special_type import OptionalIn as OptionalIn
-from .io.io_special_type import SkippableIn as SkippableIn
-from .io.io_special_type import SpecialTypeIn as SpecialTypeIn
-from .io.io_special_type import SpecialTypeIO as SpecialTypeIO
-from .io.io_special_type import SpecialTypeOut as SpecialTypeOut
+from .io.io_spec_helper import InputSpecs as InputSpecs
+from .io.io_spec_helper import OutputSpecs as OutputSpecs
+from .io.io_spec import ConstantOut as ConstantOut
+from .io.io_spec import InputSpec as InputSpec
+from .io.io_spec import OptionalIn as OptionalIn
+from .io.io_spec import OutputSpec as OutputSpec
+from .io.io_spec import SkippableIn as SkippableIn
 from .io.ioface import Interface as Interface
 from .io.ioface import IOface as IOface
 from .io.ioface import Outerface as Outerface
@@ -289,6 +288,8 @@ from .resource.r_field import BoolRField as BoolRField
 from .resource.r_field import DictRField as DictRField
 from .resource.r_field import FloatRField as FloatRField
 from .resource.r_field import IntRField as IntRField
+from .resource.r_field import JsonableObject as JsonableObject
+from .resource.r_field import JsonableObjectRField as JsonableObjectRField
 from .resource.r_field import ListRField as ListRField
 from .resource.r_field import PrimitiveRField as PrimitiveRField
 from .resource.r_field import RField as RField
@@ -305,6 +306,7 @@ from .resource.resource_typing import ResourceTyping as ResourceTyping
 from .resource.view import View as View
 from .resource.view_decorator import view as view
 from .resource.view_types import ViewSpecs as ViewSpecs
+from .resource.view_types import ViewType as ViewType
 # Tag
 from .tag.tag import Tag as Tag
 from .tag.tag_helper import TagHelper as TagHelper

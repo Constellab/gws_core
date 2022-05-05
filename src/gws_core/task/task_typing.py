@@ -10,7 +10,7 @@ from gws_core.resource.resource import Resource
 from peewee import CharField, ModelSelect
 
 from ..config.config_specs_helper import ConfigSpecsHelper
-from ..io.io_spec import IOSpecsHelper
+from ..io.io_spec_helper import IOSpecsHelper
 from ..model.typing import Typing, TypingObjectType
 from ..task.task import Task
 

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, List, Type
 from ....config.config_types import ConfigParams
 from ....config.param_spec import ListParam
 from ....core.exception.exceptions import BadRequestException
-from ....resource.view_types import ViewSpecs
+from ....resource.view_types import ViewSpecs, ViewType
 from ...view.scatterplot_2d_view import ScatterPlot2DView
 from .base_table_view import BaseTableView, Serie2d
 
@@ -61,8 +61,9 @@ class TableScatterPlot2DView(BaseTableView):
         "series": ListParam(default_value=[]),
     }
     _view_helper: Type = ScatterPlot2DView
+    _type: ViewType = ViewType.SCATTER_PLOT_2D
 
-    def to_dict(self, params: ConfigParams) -> dict:
+    def data_to_dict(self, params: ConfigParams) -> dict:
         if not issubclass(self._view_helper, ScatterPlot2DView):
             raise BadRequestException("Invalid view helper. An subclass of ScatterPlot2DView is expected")
 
@@ -88,4 +89,4 @@ class TableScatterPlot2DView(BaseTableView):
                 tags=self.get_row_tags_from_selection_range(serie["y"])
             )
 
-        return view.to_dict(params)
+        return view.data_to_dict(params)

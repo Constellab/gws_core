@@ -4,17 +4,13 @@
 # About us: https://gencovery.com
 
 
-from typing import Any, Dict, Type
-
-from pydantic.main import BaseModel
+from typing import Type
 
 from ..resource.view import View
 from .view_types import ViewSpecs
 
 METHOD_SPEC_PREFIX: str = 'method_'
 VIEW_SPEC_PREFIX: str = 'view_'
-
-ViewConfig = Dict[str, Any]
 
 
 class ResourceViewMetaData():

@@ -3,10 +3,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Type
 
+from gws_core.io.io_spec import IOSpec
+
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.exception.gws_exceptions import GWSException
-from .io_spec import IOSpecClass
 
 if TYPE_CHECKING:
     from ..io.port import InPort, OutPort
@@ -22,16 +23,16 @@ class ResourceNotCompatibleException(BadRequestException):
 
     port_name: str
     resource_type: Type[Resource]
-    spec: IOSpecClass
+    spec: IOSpec
 
-    def __init__(self, port_name: str, resource_type: Type[Resource],  spec: IOSpecClass) -> None:
+    def __init__(self, port_name: str, resource_type: Type[Resource],  spec: IOSpec) -> None:
         self.port_name = port_name
         self.resource_type = resource_type
         self.excepted_types = spec
         super().__init__(
             detail=GWSException.RESOURCE_NOT_COMPATIBLE.value,
             unique_code=GWSException.RESOURCE_NOT_COMPATIBLE.name,
-            detail_args={"port": port_name, "resource_type": resource_type, "expected_types": spec.to_resource_types()})
+            detail_args={"port": port_name, "resource_type": resource_type, "expected_types": spec.resource_types})
 
 
 class MissingInputResourcesException(BadRequestException):
@@ -67,8 +68,8 @@ class ImcompatiblePortsException(BadRequestException):
         super().__init__(
             detail=GWSException.IMCOMPATIBLE_PORT.value,
             unique_code=GWSException.IMCOMPATIBLE_PORT.name,
-            detail_args={"out_port_name": out_port.name, "out_port_types": out_port.resource_spec.to_resource_types(),
-                         "in_port_name": in_port.name, "in_port_types": in_port.resource_spec.to_resource_types()})
+            detail_args={"out_port_name": out_port.name, "out_port_types": out_port.resource_spec.resource_types,
+                         "in_port_name": in_port.name, "in_port_types": in_port.resource_spec.resource_types})
 
 
 class InvalidInputsException(Exception):
@@ -95,5 +96,5 @@ class InvalidOutputsException(Exception):
 #         super().__init__(
 #             detail=GWSException.IMCOMPATIBLE_PORT.value,
 #             unique_code=GWSException.IMCOMPATIBLE_PORT.name,
-#             detail_args={"out_port_name": out_port.name, "out_port_types": out_port.resource_spec.to_resource_types(),
-#                          "in_port_name": in_port.name, "in_port_types": in_port.resource_spec.to_resource_types()})
+#             detail_args={"out_port_name": out_port.name, "out_port_types": out_port.resource_spec.resource_types,
+#                          "in_port_name": in_port.name, "in_port_types": in_port.resource_spec.resource_types})

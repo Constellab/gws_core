@@ -5,6 +5,8 @@
 
 from typing import List, TypedDict
 
+from gws_core.resource.view_types import ViewType
+
 from ..config.config_types import ConfigParams, ConfigParamsDict
 from ..config.param_spec_helper import ParamSpecHelper
 from .view import View
@@ -18,7 +20,7 @@ class ViewGrid(TypedDict):
 
 
 class EmptyView(View):
-    _type = "empty-view"
+    _type: ViewType = ViewType.EMPTY
 
 
 class MultiViews(View):
@@ -42,7 +44,7 @@ class MultiViews(View):
     """
 
     _sub_views: List[ViewGrid]
-    _type = "multi-view"
+    _type: ViewType = ViewType.MULTI_VIEWS
     _nb_of_columns: int
 
     def __init__(self, nb_of_columns: int):
@@ -51,7 +53,7 @@ class MultiViews(View):
         :param nb_of_columns: total number of columns of the grid
         :type nb_of_columns: int
         """
-        super().__init__(None)
+        super().__init__()
         self._check_number(nb_of_columns, 'Number of columns')
         self._sub_views = []
         self._nb_of_columns = nb_of_columns
@@ -110,7 +112,7 @@ class MultiViews(View):
             }
         )
 
-    def to_dict(self, params: ConfigParams) -> dict:
+    def data_to_dict(self, params: ConfigParams) -> dict:
         views_dict: List[dict] = []
         for sub_view in self._sub_views:
             view_dict = sub_view["view"].to_dict(sub_view["config_params"])
@@ -121,11 +123,8 @@ class MultiViews(View):
             })
 
         return {
-            "type": self._type,
-            "data": {
-                "nb_of_columns": self._nb_of_columns,
-                "views": views_dict
-            }
+            "nb_of_columns": self._nb_of_columns,
+            "views": views_dict
         }
 
     def _check_number(self, nb: int, name: str) -> None:

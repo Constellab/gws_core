@@ -4,14 +4,16 @@
 # About us: https://gencovery.com
 
 
+from importlib.resources import Resource
 from typing import Any, Dict, List, Literal
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.impl.table.table import Table
 from gws_core.impl.table.view.table_view import TableView
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
-from gws_core.resource.view_types import ViewCallResult
+from gws_core.resource.view_helper import ViewHelper
 from gws_core.task.transformer.transformer_type import TransformerDict
 
 # List of chart callable on a Table
@@ -28,26 +30,39 @@ class ResourceTableService:
                                table_config_values: Dict[str, Any],
                                table_transformers: List[TransformerDict],
                                chart_type: TableChart,
-                               chart_config_values: Dict[str, Any]) -> ViewCallResult:
+                               chart_config_values: Dict[str, Any]) -> Dict:
         """Method to call a chart on a table from the table view
         """
-        table: Table = await cls._get_table(resource_id, table_view_name, table_config_values, table_transformers)
+        resource_model: ResourceModel = ResourceService.get_resource_by_id(resource_id)
+        resource: Resource = resource_model.get_resource()
 
         view_name = cls._get_table_view_method_name(chart_type)
 
-        # call the chart view on the table (without transformer, they where used to generate the table)
-        return await ResourceService.call_view_on_resource(table, view_name, chart_config_values, [])
+        # if the resource is a table, call directly the view on it
+        if isinstance(resource, Table):
+            # call the view and ignore table_config_values as the resource is the Table
+            return await ResourceService.call_view_on_resource_model(
+                resource_model=resource_model, view_name=view_name, config_values=chart_config_values,
+                transformers=table_transformers, save_view_config=True)
+
+        # otherwise, retrieve the table form the TableView
+        table: Table = await cls._get_table(resource_id, table_view_name, table_config_values, table_transformers)
+
+        view = await ResourceService.get_view_on_resource(table, view_name, chart_config_values, [])
+
+        # call the view to dict
+        return ViewHelper.call_view_to_dict(view, chart_config_values)
 
     @classmethod
-    async def _get_table(cls, resource_id: str, table_view_name: str,
+    async def _get_table(cls, resource: Resource, table_view_name: str,
                          table_config_values: Dict[str, Any],
                          table_transformers: List[TransformerDict]) -> Table:
         """Method to retrieve the Table object from the view of a resource
         """
 
         # Get the table view
-        view: TableView = await ResourceService.get_view_on_resource_type(
-            resource_model_id=resource_id, view_name=table_view_name, config_values=table_config_values,
+        view: TableView = await ResourceService.get_view_on_resource(
+            resource=resource, view_name=table_view_name, config_values=table_config_values,
             transformers=table_transformers)
 
         if not isinstance(view, TableView):

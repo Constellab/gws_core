@@ -1,12 +1,18 @@
 
 from typing import List
 
-from gws_core.experiment.experiment import Experiment
+from gws_core import Experiment, Robot
+from gws_core.core.classes.rich_text_content import (RichTextI,
+                                                     RichTextResourceView,
+                                                     RichTextSpecialOps)
 from gws_core.experiment.experiment_service import ExperimentService
 from gws_core.project.project import Project
 from gws_core.project.project_dto import ProjectDto
 from gws_core.report.report import Report
+from gws_core.report.report_dto import ReportDTO
+from gws_core.report.report_resource import ReportResource
 from gws_core.report.report_service import ReportService
+from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
 from gws_core.test.base_test_case import BaseTestCase
 
 
@@ -18,22 +24,23 @@ class TestReport(BaseTestCase):
         project = project.save()
         # test create an empty report
 
-        report = ReportService.create({'title': 'Test report'})
+        report = ReportService.create(ReportDTO(title='Test report'))
 
         self.assertIsInstance(report, Report)
         self.assertEqual(report.title, 'Test report')
 
-        report = ReportService.update(report.id, {'title': 'New title'})
+        report = ReportService.update(report.id, ReportDTO(title='New title'))
         self.assertEqual(report.title, 'New title')
 
-        report = ReportService.update_content(report.id, {'hello': 'nice'})
-        self.assert_json(report.content, {'hello': 'nice'})
+        content: RichTextI = {'ops': [{'insert': 'Hello'}]}
+        report = ReportService.update_content(report.id, content)
+        self.assert_json(report.content, content)
 
         experiment: Experiment = ExperimentService.create_empty_experiment()
 
         # Create a second experiment with a report
         experiment_2: Experiment = ExperimentService.create_empty_experiment()
-        report_2 = ReportService.create({'title': 'Report 2'}, [experiment_2.id])
+        report_2 = ReportService.create(ReportDTO(title='Report 2'), [experiment_2.id])
 
         # Add exp 1 on report 1
         ReportService.add_experiment(report.id, experiment.id)
@@ -74,3 +81,36 @@ class TestReport(BaseTestCase):
         ReportService.delete(report.id)
         self.assertIsNone(Report.get_by_id(report.id))
         self.assertEqual(len(ReportService.get_experiments_by_report(report.id)), 0)
+
+    def test_associated_resource(self):
+        """ Test when we add a resource view, it created an associated resource for the report
+        """
+        # create report and resource
+        report = ReportService.create(ReportDTO(title='Test report'))
+        resource_model = ResourceModel.save_from_resource(Robot.empty(), ResourceOrigin.UPLOADED)
+
+        # simulate the rich text with resource id
+        rich_text_resource_view: RichTextResourceView = {
+            "resource_id": resource_model.id,
+        }
+        operation = {"insert": {RichTextSpecialOps.RESOURCE_VIEW.value: rich_text_resource_view}}
+
+        # update report content
+        new_content = {"ops": [operation]}
+        ReportService.update_content(report.id, new_content)
+
+        # check that the associated resource is created
+        report_resources = ReportResource.get_by_report(report.id)
+        self.assertEqual(len(report_resources), 1)
+
+        # test adding the same resource a second time it shouldn't create a new associated resource
+        new_content = {"ops": [operation, operation]}
+        ReportService.update_content(report.id, new_content)
+        report_resources = ReportResource.get_by_report(report.id)
+        self.assertEqual(len(report_resources), 1)
+
+        # test removing the resource
+        new_content = {"ops": []}
+        ReportService.update_content(report.id, new_content)
+        report_resources = ReportResource.get_by_report(report.id)
+        self.assertEqual(len(report_resources), 0)

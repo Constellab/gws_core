@@ -10,7 +10,7 @@ from gws_core import (BaseTestCase, ConfigParams, File, GTest, ProcessSpec,
                       ResourceTyping, RobotCreate, RobotEat, Sink, TaskService,
                       TaskTyping, protocol_decorator, transformer_decorator)
 from gws_core.core.classes.paginator import Paginator
-from gws_core.core.classes.search_builder import SearchDict
+from gws_core.core.classes.search_builder import SearchParams
 from gws_core.impl.robot.robot_protocol import RobotWorldTravelProto
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.table.table import Table
@@ -125,7 +125,7 @@ class TestTyping(BaseTestCase):
         self.assertIsInstance(typing, ProtocolTyping)
 
     async def test_typing_search(self):
-        search_dict: SearchDict = SearchDict()
+        search_dict: SearchParams = SearchParams()
 
         # Search on name brick
         search_dict.filtersCriteria = [{'key': 'brick', "operator": "EQ", "value": "gws_core"}]

@@ -10,6 +10,7 @@ from enum import Enum
 from typing import (TYPE_CHECKING, Any, Dict, Generic, Optional, Type, TypeVar,
                     final)
 
+from gws_core.resource.technical_info import TechnicalInfoDict
 from peewee import (CharField, DeferredForeignKey, ForeignKeyField,
                     ModelDelete, ModelSelect)
 
@@ -141,6 +142,10 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
     @classmethod
     def get_by_experiment(cls, experiment_id: str) -> ModelSelect:
         return ResourceModel.select().where(ResourceModel.experiment == experiment_id)
+
+    @classmethod
+    def get_by_experiments(cls, experiment_ids: str) -> ModelSelect:
+        return ResourceModel.select().where(ResourceModel.experiment.in_(experiment_ids))
 
     @classmethod
     def delete_list(cls, resource_model_ids: str) -> ModelDelete:
@@ -407,7 +412,13 @@ class ResourceModel(ModelWithUser, TaggableModel, Generic[ResourceType]):
 
     ########################################## OTHER ######################################
 
-    @property
+    def get_technical_info(self) -> TechnicalInfoDict:
+        kv_store = self.get_kv_store()
+        if 'technical_info' in kv_store:
+            return TechnicalInfoDict.from_json(kv_store.get('technical_info'))
+        return TechnicalInfoDict()
+
+    @ property
     def is_downloadable(self) -> bool:
         # the resource is downloadable if it's a file or if the export_to_path is defined
         return self.fs_node_model is not None or self.get_resource_type()._is_exportable

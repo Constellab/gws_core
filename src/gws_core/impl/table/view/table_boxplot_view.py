@@ -12,7 +12,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
 
 from ....config.config_types import ConfigParams
 from ....config.param_spec import ListParam
-from ....resource.view_types import ViewSpecs
+from ....resource.view_types import ViewSpecs, ViewType
 from ...view.boxplot_view import BoxPlotView
 from .base_table_view import BaseTableView, Serie1d
 
@@ -62,14 +62,14 @@ class TableBoxPlotView(BaseTableView):
 
     DEFAULT_NUMBER_OF_COLUMNS = 3
 
-    _type: str = "box-plot-view"
+    _type: ViewType = ViewType.BOX_PLOT
     _table: Table
     _specs: ViewSpecs = {
         **BaseTableView._specs,
         "series": ListParam(default_value=[]),
     }
 
-    def to_dict(self, params: ConfigParams) -> dict:
+    def data_to_dict(self, params: ConfigParams) -> dict:
 
         series: List[Serie1d] = params.get_value("series")
 
@@ -86,4 +86,4 @@ class TableBoxPlotView(BaseTableView):
                 # tags=self.get_row_tags_from_selection_range(serie["y"])
             )
 
-        return box_view.to_dict(params)
+        return box_view.data_to_dict(params)

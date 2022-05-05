@@ -3,10 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
+from gws_core.io.io_spec import InputSpec, OutputSpec
+
 from ....config.config_types import ConfigParams, ConfigSpecs
 from ....config.param_spec import StrParam
-from ....core.exception.exceptions import BadRequestException
-from ....io.io_spec import InputSpecs, OutputSpecs
+from ....io.io_spec_helper import InputSpecs, OutputSpecs
 from ....task.task import Task
 from ....task.task_decorator import task_decorator
 from ....task.task_io import TaskInputs, TaskOutputs
@@ -31,8 +32,8 @@ class TableRowAnnotator(Task):
     * if an `id` matches against a reference value of the `sample_table`, the corresponding row of the `sample_table` is taggeg with the metadata given by the `id`.
     """
 
-    input_specs: InputSpecs = {"sample_table": Table, "metadata_table": MetadataTable}
-    output_specs: OutputSpecs = {"sample_table": Table}
+    input_specs: InputSpecs = {"sample_table": InputSpec(Table), "metadata_table": InputSpec(MetadataTable)}
+    output_specs: OutputSpecs = {"sample_table": OutputSpec(Table)}
     config_specs: ConfigSpecs = {
         "reference_column":
         StrParam(
@@ -66,8 +67,8 @@ class TableColumnAnnotator(Task):
     * if an `id` matches against a reference value of the `sample_table`, the corresponding column of the `sample_table` is taggeg with the metadata given by the `id`.
     """
 
-    input_specs: InputSpecs = {"sample_table": Table, "metadata_table": MetadataTable}
-    output_specs: OutputSpecs = {"sample_table": Table}
+    input_specs: InputSpecs = {"sample_table": InputSpec(Table), "metadata_table": InputSpec(MetadataTable)}
+    output_specs: OutputSpecs = {"sample_table": OutputSpec(Table)}
     config_specs: ConfigSpecs = {
         "reference_row":
         StrParam(

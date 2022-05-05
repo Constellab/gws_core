@@ -12,6 +12,7 @@ from ..core.model.base_model import BaseModel
 from ..core.model.db_field import JSONField
 from ..core.model.model_with_user import ModelWithUser
 from ..experiment.experiment import Experiment
+from ..lab.lab_config_model import LabConfigModel
 from ..model.typing_register_decorator import typing_registrator
 from ..project.project import Project
 
@@ -26,6 +27,8 @@ class Report(ModelWithUser):
     project: Project = ForeignKeyField(Project, null=True)
 
     is_validated: bool = BooleanField(default=False)
+
+    lab_config: LabConfigModel = ForeignKeyField(LabConfigModel, null=True)
 
     _table_name = 'gws_report'
 
@@ -42,6 +45,10 @@ class Report(ModelWithUser):
             del json_["content"]
 
         return json_
+
+    def validate(self) -> None:
+        self.is_validated = True
+        self.lab_config = LabConfigModel.get_current_config()
 
 
 class ReportExperiment(BaseModel):

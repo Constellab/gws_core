@@ -8,6 +8,8 @@ import traceback
 from abc import abstractmethod
 from typing import Callable, Type, TypedDict, final
 
+from gws_core.io.io_spec import InputSpec, OutputSpec
+
 from ...brick.brick_service import BrickService
 from ...config.config_types import ConfigParams, ConfigSpecs
 from ...core.utils.settings import Settings
@@ -103,11 +105,11 @@ class ResourceExporter(Converter):
     """
 
     # The output spec can't be overrided, it will be automatically define with the correct resource type
-    input_specs = {"source": Resource}
+    input_specs = {"source": InputSpec(Resource)}
 
     # /!\ The output specs can be overrided, BUT the ResourceExporter task must
     # have 1 output called file that extend FsNode (like File or Folder)
-    output_specs = {"target": FSNode}
+    output_specs = {"target": OutputSpec(FSNode)}
 
     # Override the config_spec to define custom spec for the importer
     config_specs: ConfigSpecs = {}

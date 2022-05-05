@@ -1,5 +1,6 @@
 
 
+from time import sleep
 from typing import Dict, List
 
 from gws_core import (BaseTestCase, ConfigParams, IntParam, JSONView, Resource,
@@ -7,11 +8,15 @@ from gws_core import (BaseTestCase, ConfigParams, IntParam, JSONView, Resource,
                       view)
 from gws_core.config.config_types import ConfigSpecs
 from gws_core.config.param_spec import ParamSpec
+from gws_core.core.classes.search_builder import SearchParams
 from gws_core.resource.any_view import AnyView
 from gws_core.resource.lazy_view_param import LazyViewParam
 from gws_core.resource.resource_model import ResourceModel, ResourceOrigin
+from gws_core.resource.view_config.view_config import ViewConfig
+from gws_core.resource.view_config.view_config_service import ViewConfigService
 from gws_core.resource.view_helper import ViewHelper
 from gws_core.resource.view_meta_data import ResourceViewMetaData
+from gws_core.resource.view_types import ViewType
 
 
 @resource_decorator("ResourceViewTest")
@@ -20,7 +25,9 @@ class ResourceViewTest(Resource):
     @view(view_type=TextView, human_name='View for test', short_description='Description for test',
           default_view=True)
     def a_view_test(self, params: ConfigParams) -> TextView:
-        return TextView('Test sub')
+        text_view = TextView('Test sub')
+        text_view.set_title('Sub view title')
+        return text_view
 
 
 @resource_decorator("ResourceViewTestSub")
@@ -31,7 +38,9 @@ class ResourceViewTestSub(ResourceViewTest):
                  'test_any_param': StrParam('Nice')},
           default_view=True)
     def sub_view_test(self, params: ConfigParams) -> TextView:
-        return TextView(params.get_value('test_str_param') + params.get_value('test_any_param'))
+        text_view = TextView(params.get_value('test_str_param') + params.get_value('test_any_param'))
+        text_view.set_title('Sub view title')
+        return text_view
 
 
 @resource_decorator("ResourceViewTestOverideParent")
@@ -116,6 +125,7 @@ class TestView(BaseTestCase):
 
         self.assertEqual(view._type, TextView._type)
         self.assertEqual(view._data, "Bonjour 12")
+        self.assertEqual(view.get_title(), "Sub view title")
 
     def test_method_view_override_and_hide(self):
         """Test that the spec of a view are overrided but the children method. And check if hide param in view decorator works
@@ -151,3 +161,29 @@ class TestView(BaseTestCase):
         self.assertTrue('lazy' in specs)
         self.assertIsInstance(specs['lazy'], ParamSpec)
         self.assertEqual(specs['lazy'].allowed_values, ['super'])
+
+    async def test_view_config(self):
+
+        resource: Resource = ResourceViewTestSub()
+        resource_model: ResourceModel = ResourceModel.save_from_resource(resource, origin=ResourceOrigin.UPLOADED)
+
+        await ResourceService.get_and_call_view_on_resource_model(resource_model.id, 'a_view_test', {"page": 1, "page_size": 5000}, [], True)
+
+        # use a while because the view config is saved asynchronously
+        count = 0
+        while ViewConfig.select().count() == 0:
+            sleep(1)
+            count += 1
+            if count > 10:
+                raise Exception("View config not created")
+        view_config: ViewConfig = ViewConfig.select()[0]
+
+        self.assertEqual(view_config.resource_model.id, resource_model.id)
+        self.assertEqual(view_config.view_name, 'a_view_test')
+        self.assertEqual(view_config.view_type, ViewType.TEXT)
+        self.assertEqual(view_config.title, 'Sub view title')
+        self.assert_json(view_config.config_values, {"page": 1, "page_size": 5000})
+        self.assertEqual(view_config.transformers, [])
+
+        result = ViewConfigService.search(SearchParams())
+        self.assertTrue(result.page_info.total_number_of_items > 0)

@@ -4,14 +4,13 @@
 # About us: https://gencovery.com
 
 import time
-from typing import Type
 
 from ..config.config_types import ConfigParams, ConfigSpecs
 from ..config.param_spec import FloatParam, IntParam, StrParam
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ..io.io_spec import InputSpecs, OutputSpecs
-from ..io.io_special_type import ConstantOut, SkippableIn
+from ..io.io_spec_helper import InputSpecs, OutputSpecs
+from ..io.io_spec import ConstantOut, InputSpec, SkippableIn
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
 from ..task.task_io import TaskInputs, TaskOutputs
@@ -52,7 +51,7 @@ class Sink(Task):
     A sink task is used to recieve a resource. No action is done.
     """
 
-    input_specs: InputSpecs = {'resource': Resource}
+    input_specs: InputSpecs = {'resource': InputSpec(Resource)}
     output_specs: OutputSpecs = {}
     config_specs: ConfigSpecs = {}
 
@@ -128,7 +127,7 @@ class Wait(Task):
     This proccess waits during a given time before continuing.
     """
 
-    input_specs: InputSpecs = {'resource': Resource}
+    input_specs: InputSpecs = {'resource': InputSpec(Resource)}
     output_specs: OutputSpecs = {'resource': ConstantOut(resource_types=Resource, sub_class=True)}
     config_specs: ConfigSpecs = {"waiting_time": FloatParam(
         default_value=3, min_value=0, short_description="The waiting time in seconds. Defaults to 3 second.")}
@@ -144,6 +143,7 @@ class Wait(Task):
         resource = inputs["resource"]
         return {"resource": resource}
 
+
 @task_decorator(unique_name="Dispatch2")
 class Dispatch2(Task):
     """
@@ -152,7 +152,7 @@ class Dispatch2(Task):
     The Dispatch2 proccess dispatch the input data to the 2 outputs
     """
 
-    input_specs: InputSpecs = {'resource': Resource}
+    input_specs: InputSpecs = {'resource': InputSpec(Resource)}
     output_specs: OutputSpecs = {
         'resource_1': ConstantOut(resource_types=Resource, sub_class=True),
         'resource_2': ConstantOut(resource_types=Resource, sub_class=True)

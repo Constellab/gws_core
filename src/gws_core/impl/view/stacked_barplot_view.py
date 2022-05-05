@@ -6,6 +6,7 @@
 from typing import Dict, List, Union
 
 from gws_core.core.utils.numeric_helper import NumericHelper
+from gws_core.resource.view_types import ViewType
 from pandas import DataFrame
 
 from ...config.config_types import ConfigParams
@@ -48,7 +49,7 @@ class StackedBarPlotView(BarPlotView):
     See also BarPlotView
     """
 
-    _type: str = "stacked-bar-plot-view"
+    _type: ViewType = ViewType.STACKED_BAR_PLOT
     _title: str = "Stacked-Bar Plot"
     _normalize: bool = False
     _series_sums: DataFrame = None
@@ -81,12 +82,12 @@ class StackedBarPlotView(BarPlotView):
 
         super().add_series(x=x, y=y, name=name, tags=tags)
 
-    def to_dict(self, params: ConfigParams) -> dict:
-        view_dict = super().to_dict(params)
+    def data_to_dict(self, params: ConfigParams) -> dict:
+        view_data_dict = super().data_to_dict(params)
         if self._normalize:
-            for i, _ in enumerate(view_dict["data"]["series"]):
-                df = view_dict["data"]["series"][i]["data"]["y"]
+            for i, _ in enumerate(view_data_dict["series"]):
+                df = view_data_dict["series"][i]["data"]["y"]
                 df = DataFrame(df) / self._series_sums
-                view_dict["data"]["series"][i]["data"]["y"] = df.iloc[:, 0].values.tolist()
+                view_data_dict["series"][i]["data"]["y"] = df.iloc[:, 0].values.tolist()
 
-        return view_dict
+        return view_data_dict
