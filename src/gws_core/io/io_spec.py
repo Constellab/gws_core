@@ -151,11 +151,12 @@ class IOSpec:
 
     @classmethod
     def _get_type_from_name(cls, type_name: str) -> Type['IOSpec']:
-        if type_name == 'TypeIO':
+        # SpecialTypeIO, SpecialTypeIn, SpecialTypeOut are set for retro compatibility
+        if type_name == 'TypeIO' or type_name == 'SpecialTypeIO':
             return IOSpec
-        elif type_name == 'InputSpec':
+        elif type_name == 'InputSpec' or type_name == 'SpecialTypeIn':
             return InputSpec
-        elif type_name == 'OutputSpec':
+        elif type_name == 'OutputSpec' or type_name == 'SpecialTypeOut':
             return OutputSpec
         elif type_name == 'OptionalIn':
             return OptionalIn
