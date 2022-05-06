@@ -27,7 +27,6 @@ class GWSCoreTestHelper():
     @classmethod
     def get_sample_metadata_table(cls) -> MetadataTable:
         file = File(DataProvider.get_test_data_path("sample_metadata.csv"))
-        print(file.path)
         return MetadataTableImporter.call(file)
 
     @classmethod

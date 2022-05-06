@@ -35,6 +35,7 @@ class TableImporter(ResourceImporter):
         'decimal': StrParam(default_value=".", optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Decimal character", short_description="Character to recognize as decimal point (e.g. use ‘,’ for European/French data)."),
         'nrows': IntParam(default_value=None, optional=True, min_value=0, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Number of rows", short_description="Number of rows to import. Useful to read piece of data."),
         'comment': StrParam(default_value="#", optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Comment character", short_description="Character used to comment lines."),
+        'encoding': StrParam(default_value="auto", optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="File encoding", short_description="Encoding of the file, 'auto' for automatic detection."),
     }
 
     async def import_from_path(self, source: File, params: ConfigParams, target_type: Type[Table]) -> Table:
@@ -42,8 +43,10 @@ class TableImporter(ResourceImporter):
             raise BadRequestException(GWSException.EMPTY_FILE.value, unique_code=GWSException.EMPTY_FILE.name,
                                       detail_args={'filename': source.name})
 
-        encoding = FileHelper.detect_file_encoding(source.path)
-        self.log_info_message(f"Detected encoding: {encoding}")
+        encoding = params.get('encoding')
+        if encoding == 'auto' or encoding is None or len(encoding) == 0:
+            encoding = FileHelper.detect_file_encoding(source.path)
+            self.log_info_message(f"Detected encoding: {encoding}")
 
         file_format: str = params.get_value('file_format', Table.DEFAULT_FILE_FORMAT)
         sep = params.get_value('delimiter', Table.DEFAULT_DELIMITER)
