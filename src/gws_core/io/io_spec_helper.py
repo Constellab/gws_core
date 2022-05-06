@@ -6,7 +6,7 @@
 from typing import Dict, Literal, Type
 
 from ..brick.brick_service import BrickService
-from .io_spec import InputSpec, OutputSpec, IOSpec, IOSpecDict
+from .io_spec import InputSpec, IOSpec, IOSpecDict, OutputSpec
 
 # Specs for a task Input
 InputSpecs = Dict[str, InputSpec]
@@ -45,7 +45,7 @@ class IOSpecsHelper():
 
     @classmethod
     def _check_io_spec_param(cls, io_specs: IOSpecs,
-                             param_type: Literal['input', 'output'], type_io: Type[IOSpec], task_type: Type) -> None:
+                             param_type: Literal['input', 'output'], io_spec: Type[IOSpec], task_type: Type) -> None:
         if not io_specs:
             return
 
@@ -56,7 +56,7 @@ class IOSpecsHelper():
 
             if not isinstance(item, IOSpec):
                 # TODO for now this is just a warninig, to remove
-                item = type_io(item)
+                item = io_spec(item)
                 io_specs[key] = item
                 BrickService.log_brick_warning(
                     task_type,

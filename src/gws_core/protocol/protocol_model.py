@@ -510,7 +510,7 @@ class ProtocolModel(ProcessModel):
     def add_interface(self, name: str,  target_port: InPort) -> None:
         self._check_port(target_port)
         # Create the input's port
-        source_port: InPort = self.inputs.create_port(name, target_port.resource_spec.type_io)
+        source_port: InPort = self.inputs.create_port(name, target_port.resource_spec)
 
         # create the interface
         self._interfaces[name] = Interface(
@@ -602,7 +602,7 @@ class ProtocolModel(ProcessModel):
         self._check_port(source_port)
 
         # Create the output's port
-        target_port: OutPort = self.outputs.create_port(name, source_port.resource_spec.type_io)
+        target_port: OutPort = self.outputs.create_port(name, source_port.resource_spec)
 
         # create the interface
         self._outerfaces[name] = Outerface(

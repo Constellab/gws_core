@@ -37,7 +37,7 @@ class IOSpec:
     # Description of the param, showed in the interface
     short_description: Optional[str]
 
-    _name: str = "TypeIO"   # unique name to distinguish the types, do not modify
+    _name: str = "IOSpec"   # unique name to distinguish the types, do not modify
 
     def __init__(self, resource_types: ResourceTypes, human_name: Optional[str] = None,
                  short_description: Optional[str] = None,) -> None:
@@ -152,11 +152,11 @@ class IOSpec:
     @classmethod
     def _get_type_from_name(cls, type_name: str) -> Type['IOSpec']:
         # SpecialTypeIO, SpecialTypeIn, SpecialTypeOut are set for retro compatibility
-        if type_name == 'TypeIO' or type_name == 'SpecialTypeIO':
+        if type_name in ['IOSpec', 'TypeIO', 'SpecialTypeIO']:
             return IOSpec
-        elif type_name == 'InputSpec' or type_name == 'SpecialTypeIn':
+        elif type_name in ['InputSpec', 'SpecialTypeIn']:
             return InputSpec
-        elif type_name == 'OutputSpec' or type_name == 'SpecialTypeOut':
+        elif type_name == ['OutputSpec', 'SpecialTypeOut']:
             return OutputSpec
         elif type_name == 'OptionalIn':
             return OptionalIn
