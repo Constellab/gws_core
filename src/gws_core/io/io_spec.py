@@ -3,7 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 from collections.abc import Iterable as IterableClass
-from typing import Any, Dict, Iterable, List, Optional, Type, TypedDict, Union
+from typing import (Any, Dict, Iterable, List, Optional, Tuple, Type,
+                    TypedDict, Union)
 
 from gws_core.core.utils.utils import Utils
 
@@ -97,6 +98,10 @@ class IOSpec:
         """return the first default type
         """
         return self.resource_types[0]
+
+    def get_resource_type_tuples(self) -> Tuple[Type[Resource]]:
+        return tuple(self.resource_types)
+
 
     @classmethod
     def _resource_types_are_compatible(cls, resource_types: Iterable[Type[Resource]],
