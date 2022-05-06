@@ -7,7 +7,7 @@
 import asyncio
 from abc import abstractmethod
 from concurrent.futures.thread import ThreadPoolExecutor
-from typing import Type, final
+from typing import Tuple, Type, final
 
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from numpy import source
@@ -109,13 +109,13 @@ class Converter(Task):
 
     @final
     @classmethod
-    def get_source_type(cls) -> Type[Resource]:
+    def get_source_type(cls) -> Tuple[Type[Resource]]:
         """Get the type of the input source
 
         :return: [description]
         :rtype: Type[Resource]
         """
-        return cls.input_specs['source']
+        return cls.input_specs['source'].get_resource_type_tuples()
 
     @final
     @classmethod
@@ -125,7 +125,7 @@ class Converter(Task):
         :return: [description]
         :rtype: Type[Resource]
         """
-        return cls.output_specs['target'].resource_types[0]
+        return cls.output_specs['target'].get_default_resource_type()
 
 
 class ConverterRunner():

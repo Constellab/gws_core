@@ -254,3 +254,11 @@ class TestTable(BaseTestCase):
             self.assertTrue(text.startswith("#This is a table"))
 
         self.assertTrue(os.path.exists(file_.path))
+
+    async def test_generate_column_name(self):
+        dataframe = DataFrame({'A': range(1, 6)})
+
+        table = Table(data=dataframe)
+        self.assertEqual(table.generate_new_column_name('Test'), 'Test')
+        # test generating a new that already exists
+        self.assertEqual(table.generate_new_column_name('A'), 'A_1')

@@ -122,7 +122,7 @@ class Table(Resource):
             self, axis, index: int, key: str, value: Union[str, int, float],
             type_: TableTagType = 'categorical'):
         if axis not in ["row", "column"]:
-            raise BadRequestException("The index must be an integer")
+            raise BadRequestException("The axis must be either 'row' or 'column'")
         if not isinstance(index, int):
             raise BadRequestException("The index must be an integer")
         if not isinstance(key, str):
@@ -240,7 +240,7 @@ class Table(Resource):
 
         self._meta["column_tag_types"] = current_column_tag_types
 
-    def get_data(self):
+    def get_data(self) -> DataFrame:
         return self._data
 
     @property
@@ -257,16 +257,26 @@ class Table(Resource):
         except:
             return None
 
-    def column_exists(self, name, case_sensitive=True) -> bool:
-        """
-        Test if a column exists
-        """
-
+    def column_exists(self, name: str, case_sensitive: bool = True) -> bool:
         if case_sensitive:
             return name in self.column_names
         else:
             lower_names = [x.lower() for x in self.column_names]
             return name.lower() in lower_names
+
+    def generate_new_column_name(self, name: str) -> str:
+        """  Generates a column name that is unique in the Dataframe base on name.
+        If the column name doesn't exist, return name, otherwise return name_1 or name_2, ...
+        """
+        if not self.column_exists(name):
+            return name
+        else:
+            i = 1
+            while True:
+                new_name = f"{name}_{i}"
+                if not self.column_exists(new_name):
+                    return new_name
+                i += 1
 
     def get_column_as_dataframe(self, column_name: str, skip_nan=False) -> DataFrame:
         """
@@ -285,6 +295,39 @@ class Table(Resource):
 
         dataframe = self.get_column_as_dataframe(column_name, skip_nan)
         return DataframeHelper.flatten_dataframe_by_column(dataframe)
+
+    def add_column(self, column_name: str, column_data: Union[list, Series], column_index: int = None):
+        """ Add a new column to the Dataframe.
+        :param column_name: name of the column
+        :type column_name: str
+        :param column_data: data for the column, must be the same length as other colums
+        :type column_data: list
+        :param column_index: index for the column, if none, the column is append to the end, defaults to None
+        :type column_index: int, optional
+        """
+
+        if isinstance(column_data, Series):
+            column_data = column_data.tolist()
+
+        if not isinstance(column_data, list):
+            raise BadRequestException("The column data must be a list")
+        if len(column_data) != self.nb_rows:
+            raise BadRequestException("The length of column data must be equal to the number of rows")
+        if self.column_exists(column_name):
+            raise BadRequestException(f"The column name `{column_name}` already exists")
+        if column_index is None:
+            self._data[column_name] = column_data
+        else:
+            self._data.insert(0, column_name, column_data)
+
+        self._add_column_info(column_index)
+
+    def _add_column_info(self, column_index: int = None):
+        """ Add a new column to the meta data. """
+        if column_index is None:
+            self._meta["column_tags"].append({})
+        else:
+            self._meta["column_tags"][column_index] = {}
 
     def get_meta(self):
         """
@@ -394,6 +437,14 @@ class Table(Resource):
             "name": column_name,
             "tags": self.get_column_tags()[column_position]
         }
+
+    def copy_column_tags(self, table: 'Table', from_index: int = None, to_index: int = None) -> None:
+        self.set_column_tag_types(copy.deepcopy(table.get_column_tag_types()))
+        self.set_column_tags(copy.deepcopy(table.get_column_tags(from_index=from_index, to_index=to_index)))
+
+    def copy_row_tags(self, table: 'Table', from_index: int = None, to_index: int = None) -> None:
+        self.set_row_tag_types(copy.deepcopy(table.get_row_tag_types()))
+        self.set_row_tags(copy.deepcopy(table.get_row_tags(from_index=from_index, to_index=to_index)))
 
     def get_comments(self):
         return self._meta.get("comments")
@@ -613,7 +664,21 @@ class Table(Resource):
             "Table:\n" + \
             self._data.__str__()
 
-    # -- T --
+    def transpose(self) -> 'Table':
+        return Table(
+            data=self._data.T,
+            row_names=self.column_names,
+            column_names=self.row_names,
+            meta=self._transpose_meta()
+        )
+
+    def _transpose_meta(self) -> TableMeta:
+        return {
+            "row_tags": self._meta["column_tags"],
+            "column_tags": self._meta["row_tags"],
+            "row_tag_types": self._meta["column_tag_types"],
+            "column_tag_types": self._meta["row_tag_types"]
+        }
 
     def to_list(self) -> list:
         return self.to_numpy().tolist()

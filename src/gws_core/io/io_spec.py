@@ -3,7 +3,8 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 from collections.abc import Iterable as IterableClass
-from typing import Any, Dict, Iterable, List, Optional, Type, TypedDict, Union
+from typing import (Any, Dict, Iterable, List, Optional, Tuple, Type,
+                    TypedDict, Union)
 
 from gws_core.core.utils.utils import Utils
 
@@ -23,7 +24,7 @@ class ResourceTypeJson(TypedDict):
 
 
 class IOSpecDict(TypedDict):
-    type_io: str
+    io_spec: str
     resource_types: List[ResourceTypeJson]
     data: Dict[str, Any]
 
@@ -98,6 +99,10 @@ class IOSpec:
         """
         return self.resource_types[0]
 
+    def get_resource_type_tuples(self) -> Tuple[Type[Resource]]:
+        return tuple(self.resource_types)
+
+
     @classmethod
     def _resource_types_are_compatible(cls, resource_types: Iterable[Type[Resource]],
                                        expected_types: Iterable[Type[Resource]],
@@ -126,7 +131,7 @@ class IOSpec:
         return False
 
     def to_json(self) -> IOSpecDict:
-        json_: IOSpecDict = {"type_io": self._name, "resource_types": [], "data": {},
+        json_: IOSpecDict = {"io_spec": self._name, "resource_types": [], "data": {},
                              "human_name": self.human_name, "short_description": self.short_description}
         for resource_type in self.resource_types:
             if resource_type is None:
@@ -139,7 +144,7 @@ class IOSpec:
 
     @classmethod
     def from_json(cls, json_: IOSpecDict) -> 'IOSpec':
-        type_: Type[IOSpec] = cls._get_type_from_name(json_['type_io'])
+        type_: Type[IOSpec] = cls._get_type_from_name(json_['io_spec'])
 
         resource_types: List[ResourceType] = []
 
@@ -151,12 +156,11 @@ class IOSpec:
 
     @classmethod
     def _get_type_from_name(cls, type_name: str) -> Type['IOSpec']:
-        # SpecialTypeIO, SpecialTypeIn, SpecialTypeOut are set for retro compatibility
-        if type_name in ['IOSpec', 'TypeIO', 'SpecialTypeIO']:
+        if type_name == 'IOSpec':
             return IOSpec
-        elif type_name in ['InputSpec', 'SpecialTypeIn']:
+        elif type_name == 'InputSpec':
             return InputSpec
-        elif type_name == ['OutputSpec', 'SpecialTypeOut']:
+        elif type_name == 'OutputSpec':
             return OutputSpec
         elif type_name == 'OptionalIn':
             return OptionalIn
