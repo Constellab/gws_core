@@ -59,13 +59,12 @@ async def delete_process(id: str,
 async def add_connector(id: str,
                         add_connector: AddConnectorDTO,
                         _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
-
     return ProtocolService.add_connector_to_protocol_id(
         protocol_id=id,
         output_process_name=add_connector.output_process_name,
-        out_port_name=add_connector.out_port_name,
+        out_port_name=add_connector.output_port_name,
         input_process_name=add_connector.input_process_name,
-        in_port_name=add_connector.in_port_name,
+        in_port_name=add_connector.input_port_name,
     ).to_json(deep=True)
 
 
