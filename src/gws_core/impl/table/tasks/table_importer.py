@@ -7,6 +7,7 @@ from typing import Type
 
 import pandas
 from gws_core.core.exception.gws_exceptions import GWSException
+from gws_core.impl.file.file_helper import FileHelper
 
 from ....config.config_types import ConfigParams, ConfigSpecs
 from ....config.param_set import ParamSet
@@ -41,6 +42,9 @@ class TableImporter(ResourceImporter):
             raise BadRequestException(GWSException.EMPTY_FILE.value, unique_code=GWSException.EMPTY_FILE.name,
                                       detail_args={'filename': source.name})
 
+        encoding = FileHelper.detect_file_encoding(source.path)
+        self.log_info_message(f"Detected encoding: {encoding}")
+
         file_format: str = params.get_value('file_format', Table.DEFAULT_FILE_FORMAT)
         sep = params.get_value('delimiter', Table.DEFAULT_DELIMITER)
         header = params.get_value('header', 0)
@@ -69,7 +73,7 @@ class TableImporter(ResourceImporter):
                 index_col=index_column,
                 nrows=nrows,
                 comment=comment_char,
-                encoding='latin1'
+                encoding=encoding
             )
         else:
             raise BadRequestException(
@@ -105,7 +109,7 @@ class TableImporter(ResourceImporter):
 
         # read comments
         comments = ""
-        with open(source.path, 'r', encoding="latin1") as fp:
+        with open(source.path, 'r', encoding=encoding) as fp:
             for line in fp:
                 if line.startswith(comment_char):
                     comments += line
