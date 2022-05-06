@@ -41,7 +41,7 @@ class IOSpec:
     _name: str = "IOSpec"   # unique name to distinguish the types, do not modify
 
     def __init__(self, resource_types: ResourceTypes, human_name: Optional[str] = None,
-                 short_description: Optional[str] = None,) -> None:
+                 short_description: Optional[str] = None) -> None:
         """[summary]
 
         :param resource_types: type of supported resource or resources
@@ -101,7 +101,6 @@ class IOSpec:
 
     def get_resource_type_tuples(self) -> Tuple[Type[Resource]]:
         return tuple(self.resource_types)
-
 
     @classmethod
     def _resource_types_are_compatible(cls, resource_types: Iterable[Type[Resource]],
@@ -185,7 +184,9 @@ class OutputSpec(IOSpec):
 
     sub_class: bool
 
-    def __init__(self, resource_types: ResourceTypes, sub_class: bool = False) -> None:
+    def __init__(self, resource_types: ResourceTypes, sub_class: bool = False,
+                 human_name: Optional[str] = None,
+                 short_description: Optional[str] = None) -> None:
         """[summary]
 
         :param resource_types: [description]
@@ -194,7 +195,7 @@ class OutputSpec(IOSpec):
                 are compatible with any child class of the provided resource type, defaults to False
         :type sub_class: bool, optional
         """
-        super().__init__(resource_types=resource_types)
+        super().__init__(resource_types=resource_types, human_name=human_name, short_description=short_description)
         self.sub_class = sub_class
 
     # Add the sub class attribute
