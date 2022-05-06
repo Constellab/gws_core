@@ -8,7 +8,8 @@ from typing import Dict, List
 
 from gws_core.brick.brick_service import BrickService
 from gws_core.central.central_dto import (CentralSendMailDTO, LabStartDTO,
-                                          SaveExperimentToCentralDTO, SaveReportToCentralDTO,
+                                          SaveExperimentToCentralDTO,
+                                          SaveReportToCentralDTO,
                                           SendExperimentFinishMailData)
 from gws_core.experiment.experiment import Experiment
 from gws_core.impl.file.file_helper import FileHelper
@@ -144,7 +145,10 @@ class CentralService(BaseService):
 
         central_api_url = Settings.get_central_api_url()
         if central_api_url is None:
-            raise BadRequestException('The CENTRAL_API_URL environment variable is not set')
+            if Settings.is_dev:
+                raise BadRequestException("The central routes are desactivated in dev environment")
+            else:
+                raise BadRequestException('The CENTRAL_API_URL environment variable is not set')
         return central_api_url + '/' + route
 
     @classmethod

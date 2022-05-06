@@ -138,6 +138,15 @@ class Settings():
         return os.environ["VIRTUAL_HOST"]
 
     @classmethod
+    def get_lab_name(cls) -> str:
+        """Returns the name of the lab
+        """
+
+        if "LAB_NAME" not in os.environ:
+            return 'Lab'
+        return os.environ["LAB_NAME"]
+
+    @classmethod
     def get_central_api_key(cls) -> str:
         """Return the central api key
 

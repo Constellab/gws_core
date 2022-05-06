@@ -1,12 +1,24 @@
 
 
 from fastapi.param_functions import Depends
+from gws_core.core.utils.settings import Settings
 
 from ..core.service.settings_service import SettingsService
 from ..core_app import core_app
 from ..user.auth_service import AuthService
 from ..user.user_dto import UserData
 from .system_service import SystemService
+
+
+@core_app.get("/system/info", tags=["System"], summary="Get system info")
+async def system_info(_: UserData = Depends(AuthService.check_user_access_token)) -> None:
+    """
+    Reset dev environment
+    """
+
+    return {
+        "lab_name": Settings.get_lab_name(),
+    }
 
 
 @core_app.post("/system/dev-reset", tags=["System"], summary="Reset dev environment")

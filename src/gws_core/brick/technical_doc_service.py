@@ -11,7 +11,6 @@ from gws_core.core.model.base import Base
 from gws_core.io.io_spec_helper import IOSpecs, IOSpecsHelper
 from gws_core.model.typing import Typing, TypingObjectType
 from gws_core.model.typing_manager import TypingManager
-from gws_core.protocol.protocol import Protocol
 from gws_core.resource.resource import Resource
 from gws_core.task.task import Task
 
