@@ -23,7 +23,7 @@ class ResourceTypeJson(TypedDict):
 
 
 class IOSpecDict(TypedDict):
-    type_io: str
+    io_spec: str
     resource_types: List[ResourceTypeJson]
     data: Dict[str, Any]
 
@@ -126,7 +126,7 @@ class IOSpec:
         return False
 
     def to_json(self) -> IOSpecDict:
-        json_: IOSpecDict = {"type_io": self._name, "resource_types": [], "data": {},
+        json_: IOSpecDict = {"io_spec": self._name, "resource_types": [], "data": {},
                              "human_name": self.human_name, "short_description": self.short_description}
         for resource_type in self.resource_types:
             if resource_type is None:
@@ -139,7 +139,7 @@ class IOSpec:
 
     @classmethod
     def from_json(cls, json_: IOSpecDict) -> 'IOSpec':
-        type_: Type[IOSpec] = cls._get_type_from_name(json_['type_io'])
+        type_: Type[IOSpec] = cls._get_type_from_name(json_['io_spec'])
 
         resource_types: List[ResourceType] = []
 
@@ -151,12 +151,11 @@ class IOSpec:
 
     @classmethod
     def _get_type_from_name(cls, type_name: str) -> Type['IOSpec']:
-        # SpecialTypeIO, SpecialTypeIn, SpecialTypeOut are set for retro compatibility
-        if type_name in ['IOSpec', 'TypeIO', 'SpecialTypeIO']:
+        if type_name == 'IOSpec':
             return IOSpec
-        elif type_name in ['InputSpec', 'SpecialTypeIn']:
+        elif type_name == 'InputSpec':
             return InputSpec
-        elif type_name == ['OutputSpec', 'SpecialTypeOut']:
+        elif type_name == 'OutputSpec':
             return OutputSpec
         elif type_name == 'OptionalIn':
             return OptionalIn
