@@ -22,7 +22,7 @@ class TableColumnRatio(Transformer):
         "result_in_new_column":
         BoolParam(
             default_value=False, human_name="Set result in new column",
-            short_description="Create a new column for the result, otherwise it only returns the reuslt column"), }
+            short_description="Create a new column for the result, otherwise it only returns the result column"), }
 
     async def transform(self, source: Table, params: ConfigParams) -> Table:
         return TableRatioHelper.columns_ratio(source, params["operation"], params["result_in_new_column"])

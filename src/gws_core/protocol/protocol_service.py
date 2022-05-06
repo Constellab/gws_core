@@ -179,6 +179,11 @@ class ProtocolService(BaseService):
         return process_model
 
     @classmethod
+    def delete_process_of_protocol_id(cls, protocol_id: str, process_instance_name: str) -> None:
+        protocol_model = cls.get_protocol_by_id(protocol_id)
+        cls.delete_process_of_protocol(protocol_model=protocol_model, process_instance_name=process_instance_name)
+
+    @classmethod
     @transaction()
     def delete_process_of_protocol(cls, protocol_model: ProtocolModel, process_instance_name: str) -> None:
         protocol_model.check_is_updatable()
@@ -270,15 +275,15 @@ class ProtocolService(BaseService):
 
     @classmethod
     @transaction()
-    def configure_process(cls, protocol_id: str, process_instance_name: str, config: ConfigParamsDict) -> ProcessModel:
+    def configure_process(cls, protocol_id: str, process_instance_name: str, config_values: ConfigParamsDict) -> None:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
 
         protocol_model.check_is_updatable()
         process_model: ProcessModel = protocol_model.get_process(process_instance_name)
 
         # delete the process form the DB
-        process_model.config.set_values(config)
-        return protocol_model.save()
+        process_model.config.set_values(config_values)
+        process_model.config.save()
 
     ########################## SPECIFIC PROCESS #####################
     @classmethod
