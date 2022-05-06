@@ -26,7 +26,7 @@ class TestMigration(BaseTestCase):
         self.assertGreater(Version('2.0.0'), Version('1.0.0'))
         self.assertGreater(Version('1.1.0'), Version('1.0.0'))
         self.assertGreater(Version('1.0.1'), Version('1.0.0'))
-        self.assertGreater(Version('1.0.0-beta.1'), Version('1.0.0'))
+        self.assertLess(Version('1.0.0-beta.1'), Version('1.0.0'))
 
         version: Version = Version('1.2.0-beta.1')
 

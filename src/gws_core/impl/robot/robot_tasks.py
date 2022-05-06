@@ -1,8 +1,7 @@
 import time
-from typing import Optional
 
 from gws_core.config.param_spec import FloatParam, StrParam
-from gws_core.io.io_special_type import OptionalIn
+from gws_core.io.io_spec import InputSpec, OptionalIn, OutputSpec
 
 from ...config.config_types import ConfigParams
 from ...impl.robot.robot_resource import (MegaRobot, Robot, RobotAddOn,
@@ -15,7 +14,7 @@ from ...task.task_io import TaskInputs, TaskOutputs
 @task_decorator("RobotCreate", human_name="Create robot", short_description="This task creates a robot", hide=True)
 class RobotCreate(Task):
     input_specs = {}  # no required input
-    output_specs = {'robot': Robot}
+    output_specs = {'robot': OutputSpec(Robot)}
     config_specs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -28,8 +27,8 @@ class RobotCreate(Task):
 @task_decorator("RobotMove", human_name="Move robot",
                 short_description="This task emulates a short moving step of the robot", hide=True)
 class RobotMove(Task):
-    input_specs = {'robot': Robot}  # just for testing
-    output_specs = {'robot': Robot}
+    input_specs = {'robot': InputSpec(Robot)}  # just for testing
+    output_specs = {'robot': OutputSpec(Robot)}
     config_specs = {'moving_step': FloatParam(default_value=0.1, short_description="The moving step of the robot"), 'direction': StrParam(
         default_value="north", allowed_values=["north", "south", "east", "west"], short_description="The moving direction")}
 
@@ -43,8 +42,8 @@ class RobotMove(Task):
 @task_decorator("RobotEat", human_name="Eat task",
                 short_description="This task emulates the meal of the robot before its flight!", hide=True)
 class RobotEat(Task):
-    input_specs = {'robot': Robot, 'food': OptionalIn(RobotFood)}
-    output_specs = {'robot': Robot}
+    input_specs = {'robot': InputSpec(Robot), 'food': OptionalIn(RobotFood)}
+    output_specs = {'robot': OutputSpec(Robot)}
     config_specs = {
         'food_weight': FloatParam(default_value=3.14)
     }
@@ -65,8 +64,8 @@ class RobotEat(Task):
 @task_decorator("RobotWait", human_name="Wait task",
                 short_description="This task emulates the resting time of the robot before its flight!", hide=True)
 class RobotWait(Task):
-    input_specs = {'robot': Robot}
-    output_specs = {'robot': Robot}
+    input_specs = {'robot': InputSpec(Robot)}
+    output_specs = {'robot': OutputSpec(Robot)}
     config_specs = {
         # wait for .5 secs by default
         'waiting_time': FloatParam(default_value=0.5)
@@ -91,8 +90,8 @@ class RobotFly(RobotMove):
 
 @task_decorator("RobotAdd", hide=True)
 class RobotAdd(Task):
-    input_specs = {'robot': Robot, 'addon': RobotAddOn}
-    output_specs = {'mega_robot': MegaRobot}
+    input_specs = {'robot': InputSpec(Robot), 'addon': InputSpec(RobotAddOn)}
+    output_specs = {'mega_robot': OutputSpec(MegaRobot)}
     config_specs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -107,7 +106,7 @@ class RobotAdd(Task):
                 short_description="This is the travel of astro composed of several steps", hide=True)
 class RobotAddOnCreate(Task):
     input_specs = {}
-    output_specs = {'addon': RobotAddOn}
+    output_specs = {'addon': OutputSpec(RobotAddOn)}
     config_specs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -122,7 +121,7 @@ class RobotSugarCreate(Task):
     used in TestRobotWithSugarProtocol
     """
     input_specs = {}
-    output_specs = {'sugar': RobotFood}
+    output_specs = {'sugar': OutputSpec(RobotFood)}
     config_specs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

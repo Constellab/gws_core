@@ -6,12 +6,13 @@
 from typing import Dict, List, Type
 
 from gws_core.core.utils.logger import Logger
+from gws_core.io.io_spec import OutputSpec
 
 from ..config.config import Config
 from ..config.config_types import ConfigParams, ConfigParamsDict, ParamValue
 from ..io.io_exception import (InvalidInputsException, InvalidOutputsException,
                                MissingInputResourcesException)
-from ..io.io_spec import IOSpecClass, IOSpecsHelper, OutputSpec
+from ..io.io_spec_helper import InputSpecs, OutputSpecs
 from ..progress_bar.progress_bar import ProgressBar
 from ..resource.resource import Resource
 from ..task.task import CheckBeforeTaskResult, Task
@@ -125,9 +126,7 @@ class TaskRunner():
 
         task_io: TaskInputs = TaskInputs()
 
-        input_specs: Dict[str, IOSpecClass] = self._get_task_inputs_specs()
-
-        for key, spec in input_specs.items():
+        for key, spec in self._get_task_inputs_specs().items():
             # If the resource is None
             if key not in self._inputs or self._inputs[key] is None:
                 # If the resource is empty and the spec not optional, add an error
@@ -136,7 +135,7 @@ class TaskRunner():
                 continue
 
             resource: Resource = self._inputs[key]
-            if not spec.is_compatible_with_type(type(resource)):
+            if not spec.is_compatible_with_resource_type(type(resource)):
                 invalid_input_text = invalid_input_text + \
                     f"The input '{key}' of type '{resource}' is not a compatible with the corresponding input spec."
 
@@ -150,12 +149,11 @@ class TaskRunner():
 
         return task_io
 
-    def _get_task_inputs_specs(self) -> Dict[str, IOSpecClass]:
-        specs: Dict[str, IOSpecClass] = {}
+    def _get_task_inputs_specs(self) -> InputSpecs:
+        return self._task_type.input_specs
 
-        for key, spec in self._task_type.input_specs.items():
-            specs[key] = IOSpecClass(spec)
-        return specs
+    def _get_task_outputs_specs(self) -> OutputSpecs:
+        return self._task_type.output_specs
 
     def _get_and_check_config(self) -> ConfigParams:
         """Check and convert the config to ConfigParams
@@ -186,14 +184,13 @@ class TaskRunner():
 
         verified_outputs: TaskOutputs = {}
 
-        for key, spec in self._task_type.output_specs.items():
-            spec_class = IOSpecClass(spec)
+        for key, spec in self._get_task_outputs_specs().items():
 
             # If the resource for the output port was provided
             if key in task_outputs:
                 resource: Resource = task_outputs[key]
 
-                error = self._check_output(resource, spec_class, key)
+                error = self._check_output(resource, spec, key)
                 if error is not None and len(error) > 0:
                     error_text = error_text + error
 
@@ -202,7 +199,7 @@ class TaskRunner():
 
             # If the output is missing
             else:
-                if not spec_class.is_optional():
+                if not spec.is_optional():
                     error_text = error_text + f"The output '{key}' was not provided."
 
         # save the verified outputs before thowing an error
@@ -213,7 +210,7 @@ class TaskRunner():
 
         return self._outputs
 
-    def _check_output(self, output_resource: Resource, spec: IOSpecClass, key: str) -> str:
+    def _check_output(self, output_resource: Resource, spec: OutputSpec, key: str) -> str:
         """Method to check a output resource, return str if there is an error with the resource
         """
 
@@ -227,7 +224,7 @@ class TaskRunner():
             return f"The output '{key}' of type '{type(output_resource)}' is not a resource. It must extend the Resource class"
 
         # Check resource is compatible with specs
-        if not spec.is_compatible_with_type(type(output_resource)):
+        if not spec.is_compatible_with_resource_type(type(output_resource)):
             return f"The output '{key}' of type '{type(output_resource)}' is not a compatble with the corresponding output spec."
 
         # Check that the resource is well formed

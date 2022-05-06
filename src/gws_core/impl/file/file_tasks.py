@@ -12,6 +12,7 @@ from gws_core.core.utils.utils import Utils
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.folder import Folder
 from gws_core.impl.file.fs_node import FSNode
+from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.model.typing_manager import TypingManager
 
 from ...config.config_types import ConfigParams, ConfigSpecs
@@ -19,7 +20,7 @@ from ...config.param_spec import StrParam
 from ...impl.file.file import File
 from ...impl.file.file_store import FileStore
 from ...impl.file.local_file_store import LocalFileStore
-from ...io.io_spec import InputSpecs, OutputSpecs
+from ...io.io_spec_helper import InputSpecs, OutputSpecs
 from ...resource.resource import Resource
 from ...task.task import Task
 from ...task.task_decorator import task_decorator
@@ -29,8 +30,8 @@ from ...task.task_io import TaskInputs, TaskOutputs
 @task_decorator(unique_name="WriteToJsonFile", human_name="Write to file",
                 short_description="Simple task to write a resource json data to a file in local store")
 class WriteToJsonFile(Task):
-    input_specs: InputSpecs = {'resource': Resource}
-    output_specs: OutputSpecs = {'file': File}
+    input_specs: InputSpecs = {'resource': InputSpec(Resource)}
+    output_specs: OutputSpecs = {'file': OutputSpec(File)}
     config_specs: ConfigSpecs = {'filename': StrParam(short_description='Name of the file')}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -55,8 +56,8 @@ class FsNodeExtractor(Task):
     :rtype: _type_
     """
 
-    input_specs = {"source": Folder}
-    output_specs = {"target": FSNode}
+    input_specs = {"source": InputSpec(Folder)}
+    output_specs = {"target": OutputSpec(FSNode)}
 
     # Override the config_spec to define custom spec for the importer
     config_specs: ConfigSpecs = {"fs_node_path": StrParam(), "fs_node_typing_name": StrParam()}

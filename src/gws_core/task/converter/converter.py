@@ -9,6 +9,7 @@ from abc import abstractmethod
 from concurrent.futures.thread import ThreadPoolExecutor
 from typing import Type, final
 
+from gws_core.io.io_spec import InputSpec, OutputSpec
 from numpy import source
 
 from ...brick.brick_service import BrickService
@@ -36,8 +37,8 @@ def decorate_converter(task_class: Type['Converter'], unique_name: str, task_typ
         return
 
     # force the input and output specs
-    task_class.input_specs = {'source': source_type}
-    task_class.output_specs = {'target': target_type}
+    task_class.input_specs = {'source': InputSpec(source_type)}
+    task_class.output_specs = {'target': OutputSpec(target_type)}
 
     # register the task and set the human_name and short_description dynamically based on resource
     decorate_task(task_class, unique_name, human_name=human_name, related_resource=related_resource,
@@ -47,8 +48,8 @@ def decorate_converter(task_class: Type['Converter'], unique_name: str, task_typ
 
 @task_decorator("Converter", hide=True)
 class Converter(Task):
-    input_specs = {"source": Resource}
-    output_specs = {"target": Resource}
+    input_specs = {"source": InputSpec(Resource)}
+    output_specs = {"target": OutputSpec(Resource)}
 
     # Override the config_spec to define custom spec for the importer
     config_specs: ConfigSpecs = {}
@@ -124,7 +125,7 @@ class Converter(Task):
         :return: [description]
         :rtype: Type[Resource]
         """
-        return cls.output_specs['target']
+        return cls.output_specs['target'].resource_types[0]
 
 
 class ConverterRunner():

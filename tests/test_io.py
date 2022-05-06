@@ -6,12 +6,13 @@
 
 from gws_core import (FIFO2, BadRequestException, BaseTestCase, ConfigParams,
                       Connector, ConstantOut, Experiment, ExperimentService,
-                      GTest, OptionalIn, ProcessFactory, ProcessSpec, Protocol,
-                      ProtocolModel, Resource, ResourceModel, SpecialTypeOut,
-                      Task, TaskInputs, TaskModel, TaskOutputs, Wait,
-                      protocol_decorator, resource_decorator, task_decorator)
+                      OptionalIn, ProcessFactory, ProcessSpec, Protocol,
+                      ProtocolModel, Resource, ResourceModel, Task, TaskInputs,
+                      TaskModel, TaskOutputs, Wait, protocol_decorator,
+                      resource_decorator, task_decorator)
 from gws_core.experiment.experiment_run_service import ExperimentRunService
 from gws_core.io.io_exception import ImcompatiblePortsException
+from gws_core.io.io_spec import InputSpec, OutputSpec
 
 
 @resource_decorator("Person")
@@ -37,7 +38,7 @@ class Car(Resource):
 @task_decorator("Create")
 class Create(Task):
     input_specs = {}
-    output_specs = {'create_person_out': Person}
+    output_specs = {'create_person_out': OutputSpec(Person)}
     config_specs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -46,8 +47,8 @@ class Create(Task):
 
 @task_decorator("Move")
 class Move(Task):
-    input_specs = {'move_person_in': Person}
-    output_specs = {'move_person_out': Person}
+    input_specs = {'move_person_in': InputSpec(Person)}
+    output_specs = {'move_person_out': OutputSpec(Person)}
     config_specs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -56,8 +57,8 @@ class Move(Task):
 
 @task_decorator("Drive")
 class Drive(Task):
-    input_specs = {'move_drive_in': Car}
-    output_specs = {'move_drive_out': Car}
+    input_specs = {'move_drive_in': InputSpec(Car)}
+    output_specs = {'move_drive_out': OutputSpec(Car)}
     config_specs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -66,10 +67,10 @@ class Drive(Task):
 
 @task_decorator("Jump")
 class Jump(Task):
-    input_specs = {'jump_person_in_1': Person,
-                   'jump_person_in_2': Person}
-    output_specs = {'jump_person_out': Person,
-                    'jump_person_out_any': SpecialTypeOut(resource_types=Person, sub_class=True)}
+    input_specs = {'jump_person_in_1': InputSpec(Person),
+                   'jump_person_in_2': InputSpec(Person)}
+    output_specs = {'jump_person_out': OutputSpec(Person),
+                    'jump_person_out_any': OutputSpec(resource_types=Person, sub_class=True)}
     config_specs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -78,10 +79,10 @@ class Jump(Task):
 
 @task_decorator("Multi")
 class Multi(Task):
-    input_specs = {'resource_1': (Car, Person),
-                   'resource_2': [Car, Person]}
-    output_specs = {'resource_1': (Car, Person),
-                    'resource_2': [Car, Person]}
+    input_specs = {'resource_1': InputSpec((Car, Person)),
+                   'resource_2': InputSpec([Car, Person])}
+    output_specs = {'resource_1': OutputSpec((Car, Person)),
+                    'resource_2': OutputSpec([Car, Person])}
     config_specs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -90,7 +91,7 @@ class Multi(Task):
 
 @task_decorator("Fly")
 class Fly(Task):
-    input_specs = {'superman': SuperMan}
+    input_specs = {'superman': InputSpec(SuperMan)}
     output_specs = {}
     config_specs = {}
 
@@ -102,7 +103,7 @@ class Fly(Task):
 class OptionalTask(Task):
     input_specs = {'first': OptionalIn([Person]),
                    'second': OptionalIn(Person),
-                   'third': Person}
+                   'third': InputSpec(Person)}
     output_specs = {}
     config_specs = {}
 
@@ -115,7 +116,7 @@ class OptionalTask(Task):
 @task_decorator("OptionalTaskOut")
 class OptionalTaskOut(Task):
     input_specs = {}
-    output_specs = {'out': Car}
+    output_specs = {'out': OutputSpec(Car)}
     config_specs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -125,9 +126,9 @@ class OptionalTaskOut(Task):
 # This is to test the ConstantOut type
 @task_decorator("Log")
 class Log(Task):
-    input_specs = {'person': Person}
+    input_specs = {'person': InputSpec(Person)}
     output_specs = {'samePerson': ConstantOut(Person),
-                    'otherPerson': Person}
+                    'otherPerson': OutputSpec(Person)}
     config_specs = {}
 
     async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:

@@ -45,7 +45,7 @@ class Connector:
                 "The output port is not associated with a process")
 
         # hard checking of port compatibility
-        if check_compatiblity and not out_port.resource_spec.is_compatible_with_spec(in_port.resource_spec):
+        if check_compatiblity and not out_port.resource_spec.is_compatible_with_in_spec(in_port.resource_spec):
             raise ImcompatiblePortsException(out_port=out_port, in_port=in_port)
 
         self.in_port = in_port

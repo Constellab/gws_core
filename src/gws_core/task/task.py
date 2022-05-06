@@ -11,7 +11,7 @@ from gws_core.model.typing_register_decorator import typing_registrator
 from ..config.config_types import ConfigParams, ConfigSpecs
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from ..io.io_spec import InputSpecs, IOSpecsHelper, OutputSpecs
+from ..io.io_spec_helper import InputSpecs, OutputSpecs
 from ..process.process import Process
 from ..progress_bar.progress_bar import ProgressBar, ProgressBarMessageType
 from ..resource.resource import Resource
@@ -94,12 +94,7 @@ class Task(Process):
         if spec_name not in self.output_specs:
             raise BadRequestException(f"The output spec does not have a spec named '{spec_name}'")
 
-        resource_types = IOSpecsHelper.io_spec_to_resource_types(self.output_specs[spec_name])
-
-        # return first element
-        for resource_type in resource_types:
-            return resource_type
-        return None
+        return self.output_specs[spec_name].get_default_resource_type()
 
     @final
     def update_progress_value(self, value: float, message: str = None) -> None:

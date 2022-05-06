@@ -5,6 +5,8 @@
 
 from pandas import DataFrame
 
+from gws_core.io.io_spec import InputSpec, OutputSpec
+
 from ..config.config_types import ConfigParams, ConfigSpecs
 from ..config.param_set import ParamSet
 from ..config.param_spec import BoolParam, FloatParam, StrParam
@@ -31,8 +33,8 @@ from ..task.task_io import TaskInputs, TaskOutputs
                 hide=True, deprecated_since='0.2.2',
                 deprecated_message='Please use TableDataFilter or TableAggregatorFilter instead')
 class TableFilter(Task):
-    input_specs = {'source': Table}
-    output_specs = {'target': Table}
+    input_specs = {'source': InputSpec(Table)}
+    output_specs = {'target': OutputSpec(Table)}
 
     config_specs: ConfigSpecs = {
         "axis_name_filter": ParamSet(
