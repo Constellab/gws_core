@@ -307,6 +307,7 @@ from .resource.resource_r_field import ResourceRField as ResourceRField
 from .resource.resource_service import ResourceService as ResourceService
 from .resource.resource_set import ResourceSet as ResourceSet
 from .resource.resource_typing import ResourceTyping as ResourceTyping
+from .resource.technical_info import TechnicalInfo
 from .resource.view import View as View
 from .resource.view_decorator import view as view
 from .resource.view_types import ViewSpecs as ViewSpecs
