@@ -165,6 +165,8 @@ from .impl.table.helper.dataframe_filter_helper import \
     DataframeFilterHelper as DataframeFilterHelper
 from .impl.table.helper.dataframe_scaler_helper import \
     DataframeScalerHelper as DataframeScalerHelper
+from .impl.table.helper.table_ratio_helper import \
+    TableRatioHelper as TableRatioHelper
 from .impl.table.helper.table_tag_grouper_helper import \
     TableTagGrouperHelper as TableTagGrouperHelper
 from .impl.table.metadata_table.helper.table_annotator_helper import \
@@ -192,6 +194,8 @@ from .impl.table.transformers.table_aggregator_filter import \
     TableAggregatorFilter as TableAggregatorFilter
 from .impl.table.transformers.table_data_filter import \
     TableDataFilter as TableDataFilter
+from .impl.table.transformers.table_ratio import \
+    TableColumnRatio as TableColumnRatio
 from .impl.table.transformers.table_scaler import TableScaler as TableScaler
 from .impl.table.transformers.table_selector import \
     TableColumnSelector as TableColumnSelector
@@ -233,13 +237,13 @@ from .io.connector import Connector as Connector
 from .io.io import IO as IO
 from .io.io import Inputs as Inputs
 from .io.io import Outputs as Outputs
-from .io.io_spec_helper import InputSpecs as InputSpecs
-from .io.io_spec_helper import OutputSpecs as OutputSpecs
 from .io.io_spec import ConstantOut as ConstantOut
 from .io.io_spec import InputSpec as InputSpec
 from .io.io_spec import OptionalIn as OptionalIn
 from .io.io_spec import OutputSpec as OutputSpec
 from .io.io_spec import SkippableIn as SkippableIn
+from .io.io_spec_helper import InputSpecs as InputSpecs
+from .io.io_spec_helper import OutputSpecs as OutputSpecs
 from .io.ioface import Interface as Interface
 from .io.ioface import IOface as IOface
 from .io.ioface import Outerface as Outerface
@@ -303,6 +307,7 @@ from .resource.resource_r_field import ResourceRField as ResourceRField
 from .resource.resource_service import ResourceService as ResourceService
 from .resource.resource_set import ResourceSet as ResourceSet
 from .resource.resource_typing import ResourceTyping as ResourceTyping
+from .resource.technical_info import TechnicalInfo
 from .resource.view import View as View
 from .resource.view_decorator import view as view
 from .resource.view_types import ViewSpecs as ViewSpecs

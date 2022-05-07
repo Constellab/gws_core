@@ -5,7 +5,7 @@
 
 import json
 import os
-from typing import Any, AnyStr, List, Type, Union
+from typing import Any, AnyStr, Type
 
 from ...config.config_types import ConfigParams
 from ...core.exception.exceptions import BadRequestException
@@ -69,19 +69,22 @@ class File(FSNode):
 
     # -- O --
 
-    def open(self, mode: str):
+    def open(self, mode: str, encoding: str = None) -> Any:
         """
         Open the file
         """
 
+        if encoding is None:
+            encoding = self.detect_file_encoding()
+
         if self.exists():
-            return open(self.path, mode, encoding='latin1')
+            return open(self.path, mode, encoding=encoding)
         else:
             if not os.path.exists(self.dir):
                 os.makedirs(self.dir)
                 if not os.path.exists(self.dir):
                     raise BadRequestException(f"Cannot create directory {self.dir}")
-            return open(self.path, mode="w+", encoding='latin1')
+            return open(self.path, mode="w+", encoding=encoding)
 
     def read_part(self, from_line: int = 1, to_line: int = 10) -> AnyStr:
         text = ""
@@ -105,6 +108,9 @@ class File(FSNode):
             return self.read_part()
         else:
             return self._read_all(size=-1)
+
+    def detect_file_encoding(self, default_encoding: str = 'utf-8') -> str:
+        return FileHelper.detect_file_encoding(self.path, default_encoding)
 
     # def readline(self) -> AnyStr:
     #     mode = "r+"+self._mode

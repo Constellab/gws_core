@@ -4,6 +4,7 @@
 # About us: https://gencovery.com
 
 
+from gws_core.core.model.model import Model
 from gws_core.experiment.experiment import Experiment
 from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.lab.lab_config_model import LabConfigModel
@@ -97,3 +98,19 @@ class Migration038(BrickMigration):
                 Report.get_table_name(),
                 Report.lab_config.column_name, Report.lab_config),
         )
+
+
+@brick_migration('0.3.9-beta.1')
+class Migration039(BrickMigration):
+
+    @classmethod
+    def migrate(cls, from_version: Version, to_version: Version) -> None:
+
+        Logger.info('In TASK, replace type_io with io_spec')
+
+        # Replace all old type io with new spec io
+        Model.get_db_manager().db.execute_sql("UPDATE gws_task SET data = REPLACE(data,  'type_io',  'io_spec');", commit=True)
+        Model.get_db_manager().db.execute_sql("UPDATE gws_task SET data = REPLACE(data,  'TypeIO',  'IOSpec');", commit=True)
+        Model.get_db_manager().db.execute_sql("UPDATE gws_task SET data = REPLACE(data,  'SpecialTypeIO',  'IOSpec');", commit=True)
+        Model.get_db_manager().db.execute_sql("UPDATE gws_task SET data = REPLACE(data,  'SpecialTypeIn',  'InputSpec');", commit=True)
+        Model.get_db_manager().db.execute_sql("UPDATE gws_task SET data = REPLACE(data,  'SpecialTypeOut',  'OutputSpec');", commit=True)

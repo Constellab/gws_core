@@ -7,6 +7,7 @@ from typing import Type
 
 import pandas
 from gws_core.core.exception.gws_exceptions import GWSException
+from gws_core.impl.file.file_helper import FileHelper
 
 from ....config.config_types import ConfigParams, ConfigSpecs
 from ....config.param_set import ParamSet
@@ -34,12 +35,18 @@ class TableImporter(ResourceImporter):
         'decimal': StrParam(default_value=".", optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Decimal character", short_description="Character to recognize as decimal point (e.g. use ‘,’ for European/French data)."),
         'nrows': IntParam(default_value=None, optional=True, min_value=0, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Number of rows", short_description="Number of rows to import. Useful to read piece of data."),
         'comment': StrParam(default_value="#", optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Comment character", short_description="Character used to comment lines."),
+        'encoding': StrParam(default_value="auto", optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="File encoding", short_description="Encoding of the file, 'auto' for automatic detection."),
     }
 
     async def import_from_path(self, source: File, params: ConfigParams, target_type: Type[Table]) -> Table:
         if source.is_empty():
             raise BadRequestException(GWSException.EMPTY_FILE.value, unique_code=GWSException.EMPTY_FILE.name,
                                       detail_args={'filename': source.name})
+
+        encoding = params.get('encoding')
+        if encoding == 'auto' or encoding is None or len(encoding) == 0:
+            encoding = FileHelper.detect_file_encoding(source.path)
+            self.log_info_message(f"Detected encoding: {encoding}")
 
         file_format: str = params.get_value('file_format', Table.DEFAULT_FILE_FORMAT)
         sep = params.get_value('delimiter', Table.DEFAULT_DELIMITER)
@@ -69,7 +76,7 @@ class TableImporter(ResourceImporter):
                 index_col=index_column,
                 nrows=nrows,
                 comment=comment_char,
-                encoding='latin1'
+                encoding=encoding
             )
         else:
             raise BadRequestException(
@@ -105,7 +112,7 @@ class TableImporter(ResourceImporter):
 
         # read comments
         comments = ""
-        with open(source.path, 'r', encoding="latin1") as fp:
+        with open(source.path, 'r', encoding=encoding) as fp:
             for line in fp:
                 if line.startswith(comment_char):
                     comments += line

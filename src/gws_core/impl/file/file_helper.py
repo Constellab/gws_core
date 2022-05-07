@@ -10,6 +10,8 @@ from pathlib import Path
 from re import sub
 from typing import Any, List, Union
 
+from charset_normalizer import from_path
+
 PathType = Union[str, Path]
 
 
@@ -171,3 +173,16 @@ class FileHelper():
             Basically, it keeps only the alphanumeric characters and -,_,\,/
         """
         return sub(r"[^a-zA-Z0-9-_/.]", '', name)
+
+    @classmethod
+    def detect_file_encoding(cls, file_path: PathType, default_encoding: str = 'utf-8') -> str:
+        """Detect the encoding of a file """
+
+        if not cls.exists_on_os(file_path):
+            return default_encoding
+
+        encoding_result = from_path(file_path)
+        if encoding_result.best():
+            return encoding_result.best().encoding
+        else:
+            return default_encoding

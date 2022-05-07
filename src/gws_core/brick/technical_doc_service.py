@@ -93,7 +93,7 @@ class TechnicalDocService():
 
             json_ = {
                 "name": name,
-                "type_io": spec["type_io"],
+                "io_spec": spec["io_spec"],
                 "data": spec["data"],
                 "resource_types": resource_types
             }

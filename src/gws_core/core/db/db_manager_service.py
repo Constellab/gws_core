@@ -9,6 +9,7 @@ from gws_core.core.db.db_config import DbConfig, DbMode
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.utils.settings import Settings
+from gws_core.core.utils.logger import Logger
 
 from .db_manager import AbstractDbManager
 
@@ -37,7 +38,9 @@ class DbManagerService():
         unique_name = db_manager_type.get_unique_name()
 
         if unique_name in cls._db_managers:
-            raise Exception(f"The db manager with the name '{unique_name}' was already initialized")
+            Logger.warning(f"The db manager with the name '{unique_name}' was already initialized")
+            return
+            #raise Exception(f"The db manager with the name '{unique_name}' was already initialized")
 
         db_manager_type.init(mode)
 
@@ -54,7 +57,7 @@ class DbManagerService():
 
         if not db_manager_name in cls._db_managers:
             raise BadRequestException(
-                f"The db manager with the name '{db_manager_name}' doesn't exist or was not initialized")
+                f"The db manager with the name '{db_manager_name}' doesn't exist")
 
         return cls._db_managers[db_manager_name].get_config(cls.get_db_mode())
 
