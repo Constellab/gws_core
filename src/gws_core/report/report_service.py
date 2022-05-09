@@ -93,7 +93,8 @@ class ReportService():
 
             if experiment.project.id != report.project.id:
                 raise BadRequestException(GWSException.REPORT_VALIDATION_EXP_OTHER_PROJECT.value,
-                                          GWSException.REPORT_VALIDATION_EXP_OTHER_PROJECT.name, {'title': experiment.title})
+                                          GWSException.REPORT_VALIDATION_EXP_OTHER_PROJECT.name, {'title': experiment.title},
+                                          )
 
         return report.save()
 

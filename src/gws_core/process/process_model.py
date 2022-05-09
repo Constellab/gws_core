@@ -463,35 +463,37 @@ class ProcessModel(ModelWithUser):
 
     ########################### STATUS MANAGEMENT ##################################
 
-    @ property
+    @property
     def is_running(self) -> bool:
         return self.status == ProcessStatus.RUNNING
 
-    @ property
+    @property
     def is_finished(self) -> bool:
         return self.status == ProcessStatus.SUCCESS or self.is_error
 
-    @ property
+    @property
     def is_draft(self) -> bool:
         return self.status == ProcessStatus.DRAFT
 
-    @ property
+    @property
     def is_updatable(self) -> bool:
-        return not self.is_archived and (self.experiment is None or not self.experiment.is_validated)
+        return not self.is_archived and (self.experiment is None or not self.experiment.is_validated) \
+            and self.is_draft
 
     def check_is_updatable(self) -> None:
         if not self.is_updatable:
-            raise BadRequestException("The protocol can't be modified")
+            raise BadRequestException("The protocol can't be modified, please reset the experiment first",
+                                      show_as='warning')
 
-    @ property
+    @property
     def is_error(self) -> bool:
         return self.status == ProcessStatus.ERROR
 
-    @ property
+    @property
     def is_success(self) -> bool:
         return self.status == ProcessStatus.SUCCESS
 
-    @ property
+    @property
     def is_ready(self) -> bool:
         """
         Returns True if the process is ready (i.e. all its ports are

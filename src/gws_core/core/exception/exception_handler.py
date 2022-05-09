@@ -15,7 +15,6 @@ from starlette.requests import Request
 from ...brick.brick_helper import BrickHelper
 from ..classes.cors_config import CorsConfig
 from ..utils.logger import Logger
-from ..utils.utils import Utils
 from .exception_response import ExceptionResponse
 from .exceptions.base_http_exception import BaseHTTPException
 
@@ -60,9 +59,9 @@ class ExceptionHandler():
         Logger.info(
             f"Handle exception - {unique_code}{route_info} - {detail} - Instance id : {exception.instance_id}")
 
-        return ExceptionResponse(status_code=exception.status_code, code=unique_code,
-                                 detail=detail,
-                                 instance_id=exception.instance_id, headers=exception.headers)
+        return ExceptionResponse(
+            status_code=exception.status_code, code=unique_code, detail=detail, instance_id=exception.instance_id,
+            show_as=exception.show_as, headers=exception.headers)
 
     @ classmethod
     def _handle_http_exception(cls, request: Request, exception: HTTPException) -> ExceptionResponse:

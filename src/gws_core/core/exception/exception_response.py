@@ -3,9 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 import json
-from typing import Dict
+from typing import Dict, Literal
 
 from fastapi.responses import JSONResponse
+
+# If error, the interface will show the messgae in an error box
+# If info, the interface will show the message in a info box
+ExceptionShowMode = Literal["error", "info"]
 
 
 class ExceptionResponse(JSONResponse):
@@ -14,7 +18,7 @@ class ExceptionResponse(JSONResponse):
     """
 
     def __init__(self, status_code: int, code: str, detail: str, instance_id: str,
-                 headers: Dict = None):
+                 show_as: ExceptionShowMode = 'error', headers: Dict = None):
         """
 
         Arguments:
@@ -26,7 +30,7 @@ class ExceptionResponse(JSONResponse):
         """
 
         super().__init__(status_code=status_code, content={
-            "code": code, "status": status_code, "detail": detail, "instance_id": instance_id},
+            "code": code, "status": status_code, "detail": detail, "instance_id": instance_id, "show_as": show_as},
             headers=headers)
 
     def get_json_body(self) -> dict:

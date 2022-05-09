@@ -112,5 +112,6 @@ class Migration039(BrickMigration):
         Model.get_db_manager().db.execute_sql("UPDATE gws_task SET data = REPLACE(data,  'type_io',  'io_spec');", commit=True)
         Model.get_db_manager().db.execute_sql("UPDATE gws_task SET data = REPLACE(data,  'TypeIO',  'IOSpec');", commit=True)
         Model.get_db_manager().db.execute_sql("UPDATE gws_task SET data = REPLACE(data,  'SpecialTypeIO',  'IOSpec');", commit=True)
+        Model.get_db_manager().db.execute_sql("UPDATE gws_task SET data = REPLACE(data,  'SpecialIOSpec',  'IOSpec');", commit=True)
         Model.get_db_manager().db.execute_sql("UPDATE gws_task SET data = REPLACE(data,  'SpecialTypeIn',  'InputSpec');", commit=True)
         Model.get_db_manager().db.execute_sql("UPDATE gws_task SET data = REPLACE(data,  'SpecialTypeOut',  'OutputSpec');", commit=True)
