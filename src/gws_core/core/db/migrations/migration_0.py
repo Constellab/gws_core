@@ -19,23 +19,12 @@ from ..db_migration import brick_migration
 from ..version import Version
 
 
-@brick_migration('0.2.6')
-class Migration01122(BrickMigration):
-    pass
-
-
-@brick_migration('0.1.0')
-class Migration0212(BrickMigration):
-    pass
-
-
-@brick_migration('0.2.2')
+@brick_migration('0.2.2', short_description='Adding deprecated columns to Typing')
 class Migration022(BrickMigration):
 
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
 
-        Logger.info('Adding deprecated columns to Typing')
         migrator = MySQLMigrator(Typing.get_db_manager().db)
 
         migrate(
@@ -48,7 +37,7 @@ class Migration022(BrickMigration):
         )
 
 
-@brick_migration('0.2.3')
+@brick_migration('0.2.3', short_description='Create LabConfigModel table and add lab_config_id to experiment')
 class Migration023(BrickMigration):
 
     @classmethod
@@ -65,7 +54,7 @@ class Migration023(BrickMigration):
         )
 
 
-@brick_migration('0.3.3')
+@brick_migration('0.3.3', short_description='Create symbolic link in FsNodeModel and convert size to BigInt')
 class Migration033(BrickMigration):
 
     @classmethod
@@ -84,7 +73,7 @@ class Migration033(BrickMigration):
         )
 
 
-@brick_migration('0.3.8')
+@brick_migration('0.3.8', short_description='Create lab config column in report table')
 class Migration038(BrickMigration):
 
     @classmethod
@@ -100,14 +89,11 @@ class Migration038(BrickMigration):
         )
 
 
-@brick_migration('0.3.9-beta.1')
+@brick_migration('0.3.9-beta.1', short_description='In TASK, replace type_io with io_spec')
 class Migration039(BrickMigration):
 
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
-
-        Logger.info('In TASK, replace type_io with io_spec')
-
         # Replace all old type io with new spec io
         Model.get_db_manager().db.execute_sql("UPDATE gws_task SET data = REPLACE(data,  'type_io',  'io_spec');", commit=True)
         Model.get_db_manager().db.execute_sql("UPDATE gws_task SET data = REPLACE(data,  'TypeIO',  'IOSpec');", commit=True)

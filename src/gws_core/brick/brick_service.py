@@ -94,8 +94,9 @@ class BrickService():
 
     @classmethod
     def init(cls) -> None:
-        """Log all the messages that were waiting on start
+        """Clear the BrickModel table and log all the messages that were waiting on start
         """
+        BrickModel.clear_all_message()
         bricks_info: Dict[str, ModuleInfo] = BrickHelper.get_all_bricks()
         for brick_info in bricks_info.values():
             cls._init_brick_model(brick_info)

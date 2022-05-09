@@ -4,9 +4,7 @@
 # About us: https://gencovery.com
 
 import sys
-from typing import Dict
 
-from gws_core.brick.brick_helper import BrickHelper
 from gws_core.central.central_service import CentralService
 from gws_core.core.db.db_migration import DbMigrationService
 from gws_core.core.utils.logger import Logger
@@ -142,7 +140,3 @@ class SystemService:
             Logger.info('Lab start successfully registered on central')
         else:
             Logger.error('Error during lab start registration with central')
-
-    @classmethod
-    def call_migration_manually(cls, brick_name: str, version_str: str) -> None:
-        DbMigrationService.call_migration_manually(brick_name, version_str)

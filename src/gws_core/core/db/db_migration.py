@@ -99,14 +99,13 @@ class DbMigrationService:
                     status="ERROR")
                 continue
 
-            brick_migrator.append_migration(migration_obj.brick_migration, migration_version)
+            brick_migrator.append_migration(migration_obj)
 
         cls._brick_migrators = brick_migrators
 
     @classmethod
-    def register_migration_object(
-            cls, brick_migration: Type['BrickMigration'], version: Version) -> None:
-        cls._migration_objects.append(MigrationObject(brick_migration, version))
+    def register_migration_object(cls, migration_object: MigrationObject) -> None:
+        cls._migration_objects.append(migration_object)
 
     @classmethod
     def call_migration_manually(cls, brick_name: str, version_str: str) -> None:
@@ -118,8 +117,15 @@ class DbMigrationService:
 
         brick_migrator.call_migration_manually(version)
 
+    @classmethod
+    def get_brick_migration_versions(cls, brick_name: str) -> List[MigrationObject]:
+        if brick_name not in cls._brick_migrators:
+            return []
 
-def brick_migration(version: str) -> Callable:
+        return cls._brick_migrators[brick_name].get_migration_objects()
+
+
+def brick_migration(version: str, short_description: str) -> Callable:
     """Decorator to place on sub class of BrickMigration to declare a new migration code
 
     :param version: version of this migration
@@ -145,7 +151,8 @@ def brick_migration(version: str) -> Callable:
             return class_
 
             # Register the migration
-        DbMigrationService.register_migration_object(class_, version_obj)
+
+        DbMigrationService.register_migration_object(MigrationObject(class_, version_obj, short_description))
 
         return class_
 

@@ -4,10 +4,11 @@
 # About us: https://gencovery.com
 
 
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from fastapi import Depends
 from gws_core.brick.technical_doc_service import TechnicalDocService
+from gws_core.core.db.db_migration import DbMigrationService
 
 from ..core.classes.jsonable import ListJsonable
 from ..core_app import core_app
@@ -47,13 +48,27 @@ from .brick_service import BrickService
 #             f"Cannot call custom brick api. Error {err}.") from err
 
 
-@core_app.get("/brick", tags=["Bricks APIs"], summary="Get all brick with status")
+@core_app.get("/brick", tags=["Bricks"], summary="Get all brick with status")
 async def get_bricks_status(_: UserData = Depends(AuthService.check_user_access_token)) -> Any:
     bricks = BrickService.get_all_brick_models()
     return ListJsonable(bricks).to_json()
 
 
-@core_app.get("/brick/{brick_name}/technical-doc", tags=["Bricks APIs"], summary="Generate technical doc for a brick")
+@core_app.get("/brick/{brick_name}/technical-doc", tags=["Bricks"], summary="Generate technical doc for a brick")
 async def export_technical_doc(brick_name: str,
                                _: UserData = Depends(AuthService.check_user_access_token)) -> Dict:
     return TechnicalDocService.generate_technical_doc(brick_name)
+
+
+@core_app.post("/brick/{brick_name}/call-migration/{version}",  tags=["Bricks"], summary="Call a specific migration")
+def call_migration(brick_name: str,
+                   version: str,
+                   _: UserData = Depends(AuthService.check_user_access_token)) -> dict:
+    return DbMigrationService.call_migration_manually(brick_name, version)
+
+
+@core_app.get("/brick/{brick_name}/migrations", tags=["Bricks"],
+              summary="Get the list of migration version available for a brick")
+def get_brick_migration_versions(brick_name: str,
+                                 _: UserData = Depends(AuthService.check_user_access_token)) -> List[str]:
+    return ListJsonable(DbMigrationService.get_brick_migration_versions(brick_name)).to_json()

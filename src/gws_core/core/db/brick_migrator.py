@@ -31,10 +31,18 @@ class MigrationObject():
     """
     brick_migration: Type['BrickMigration']
     version: Version
+    short_description: str
 
-    def __init__(self, brick_migration: Type['BrickMigration'], version: Version) -> None:
+    def __init__(self, brick_migration: Type['BrickMigration'], version: Version, short_description: str) -> None:
         self.brick_migration = brick_migration
         self.version = version
+        self.short_description = short_description
+
+    def to_json(self) -> dict:
+        return {
+            "version": str(self.version),
+            "short_description": self.short_description
+        }
 
 
 class BrickMigrator():
@@ -55,14 +63,14 @@ class BrickMigrator():
         self.current_brick_version = brick_version
         self._migration_objects = []
 
-    def append_migration(self, brick_migration: Type['BrickMigration'], version: Version) -> None:
+    def append_migration(self, migration_obj: MigrationObject) -> None:
 
         # Check if that version was already added
-        if self.has_migration_version(version):
+        if self.has_migration_version(migration_obj.version):
             raise Exception(
-                f"Error on migrator for brick '{self.brick_name}'. The migration version '{str(version)}' was already registered. ")
+                f"Error on migrator for brick '{self.brick_name}'. The migration version '{str(migration_obj.version)}' was already registered. ")
 
-        self._migration_objects.append(MigrationObject(brick_migration, version))
+        self._migration_objects.append(migration_obj)
 
     def migrate(self) -> bool:
         """Migrate the brick by calling all the migration scripts. If there were not migration return false, otherwise True
@@ -93,7 +101,7 @@ class BrickMigrator():
 
     def _call_migration(self, migration_object: MigrationObject) -> None:
         Logger.info(
-            f"Start migrating '{self.brick_name}' from version '{self.current_brick_version}' to version '{migration_object.version}'")
+            f"Start migrating '{self.brick_name}' from version '{self.current_brick_version}' to version '{migration_object.version}'. Description: {migration_object.short_description}")
 
         try:
             migration_object.brick_migration.migrate(self.current_brick_version, migration_object.version)
@@ -118,7 +126,7 @@ class BrickMigrator():
                 f"The migration for version '{str(version)}' for brick '{self.brick_name}' doesn't exist")
 
         Logger.info(
-            f"Start migrating manually '{self.brick_name}' from version '{self.current_brick_version}' to version '{migration_object.version}'")
+            f"Start migrating manually '{self.brick_name}' from version '{self.current_brick_version}' to version '{migration_object.version}'. Description: {migration_object.short_description}")
 
         try:
             migration_object.brick_migration.migrate(self.current_brick_version, migration_object.version)
@@ -139,3 +147,9 @@ class BrickMigrator():
         # Check if that version was already added
         migration_objects = list([x for x in self._migration_objects if x.version == version])
         return migration_objects[0] if len(migration_objects) > 0 else None
+
+    def get_migration_objects(self) -> List[MigrationObject]:
+        migration_object = [*self._migration_objects]
+        migration_object.sort(key=lambda x: x.version)
+        migration_object.reverse()
+        return migration_object

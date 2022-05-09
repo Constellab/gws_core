@@ -71,6 +71,10 @@ class BrickModel(Model):
     def delete_all(cls) -> None:
         cls.delete().execute(cls._db_manager.db)
 
+    @classmethod
+    def clear_all_message(cls) -> None:
+        BrickModel.update(data={'messages': []}).execute(cls._db_manager.db)
+
     def to_json(self, deep: bool = False, **kwargs) -> Dict:
         json_ = super().to_json(deep=deep, **kwargs)
 
