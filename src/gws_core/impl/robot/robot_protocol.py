@@ -36,7 +36,7 @@ class RobotSimpleTravel(Protocol):
         ])
 
 
-@protocol_decorator("RobotTravelProto", hide=True)
+@protocol_decorator("RobotTravelProto", hide=False)
 class RobotTravelProto(Protocol):
 
     def configure_protocol(self, config_params: ConfigParams) -> None:

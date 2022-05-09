@@ -27,7 +27,8 @@ class RobotCreate(Task):
 @task_decorator("RobotMove", human_name="Move robot",
                 short_description="This task emulates a short moving step of the robot", hide=True)
 class RobotMove(Task):
-    input_specs = {'robot': InputSpec(Robot)}  # just for testing
+    input_specs = {'robot': InputSpec(Robot, human_name="Robot",
+                                      short_description="The robot to feed")}  # just for testing
     output_specs = {'robot': OutputSpec(Robot)}
     config_specs = {'moving_step': FloatParam(default_value=0.1, short_description="The moving step of the robot"), 'direction': StrParam(
         default_value="north", allowed_values=["north", "south", "east", "west"], short_description="The moving direction")}

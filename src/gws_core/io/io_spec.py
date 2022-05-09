@@ -142,11 +142,14 @@ class IOSpec:
                              "human_name": self.human_name, "short_description": self.short_description}
         for resource_type in self.resource_types:
             if resource_type is None:
-                json_["resource_types"].append({"typing_name": None, "human_name": None, 'short_description': None})
+                json_["resource_types"].append({"typing_name": None, "human_name": None, 'short_description': None,
+                                                "brick_name": None, "unique_name": None})
             else:
+                typing = TypingManager.get_typing_from_name(resource_type._typing_name)
                 json_["resource_types"].append(
-                    {"typing_name": resource_type._typing_name, "human_name": resource_type._human_name,
-                     'short_description': resource_type._short_description})
+                    {"typing_name": typing.typing_name, "human_name": typing.human_name,
+                     "short_description": typing.short_description, "brick_name": typing.brick,
+                     "unique_name": typing.model_name})
         return json_
 
     @classmethod

@@ -67,36 +67,9 @@ class TechnicalDocService():
             json_["type"] = process_typing.object_sub_type
 
             type_: Type[Task] = process_typing.get_type()
-            json_["input_specs"] = cls._get_io_specs(type_.input_specs)
-            json_["output_specs"] = cls._get_io_specs(type_.input_specs)
+            json_["input_specs"] = IOSpecsHelper.io_specs_to_json(type_.input_specs)
+            json_["output_specs"] = IOSpecsHelper.io_specs_to_json(type_.input_specs)
             json_["config_specs"] = ConfigSpecsHelper.config_specs_to_json(type_.config_specs)
-
-            json_list.append(json_)
-
-        return json_list
-
-    @classmethod
-    def _get_io_specs(cls, io_specs: IOSpecs) -> dict:
-        json_specs = IOSpecsHelper.io_specs_to_json(io_specs)
-
-        json_list = []
-        for name, spec in json_specs.items():
-
-            # retrieve the resource unique names and brick names
-            resource_types: List = []
-            for resource_type in spec["resource_types"]:
-                if resource_type["typing_name"] is None:
-                    resource_types.append({"unique_name": None, "brick_name": None})
-                else:
-                    typing = TypingManager.get_typing_from_name(resource_type["typing_name"])
-                    resource_types.append({"unique_name": typing.model_name, "brick_name": typing.brick})
-
-            json_ = {
-                "name": name,
-                "io_spec": spec["io_spec"],
-                "data": spec["data"],
-                "resource_types": resource_types
-            }
 
             json_list.append(json_)
 
