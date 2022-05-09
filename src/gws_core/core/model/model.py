@@ -65,8 +65,9 @@ class Model(BaseModel, PeeweeModel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # If there is not id, we consider the model as not saved and generate an id
-        if self.id is None:
+        # If the id is not set and the __no_default__ is set, we consider that this is a new model object (not created from peewee)
+        # We must use the __no_default__ because peewee does'nt always set the id directly in the __init__ (like when there are joins)
+        if self.id is None and '__no_default__' not in kwargs:
             self.id = str(uuid.uuid4())
             # self.id = str(uuid.uuid4())
             self._is_saved = False

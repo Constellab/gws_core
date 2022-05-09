@@ -6,6 +6,8 @@
 
 from typing import Dict, Type
 
+from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.settings import Settings
 from gws_core.lab.lab_config_model import LabConfigModel
 from peewee import ModelSelect
 
@@ -144,12 +146,22 @@ class ExperimentService(BaseService):
 
     @classmethod
     @transaction()
-    def validate_experiment(cls, id: str, project_dto: ProjectDto = None) -> Experiment:
+    def validate_experiment_from_id(cls, id: str, project_dto: ProjectDto = None) -> Experiment:
         experiment: Experiment = Experiment.get_by_id_and_check(id)
 
+        project: Project = None
         # set the project if it is provided
         if project_dto is not None:
-            experiment.project = ProjectService.get_or_create_project_from_dto(project_dto)
+            project = ProjectService.get_or_create_project_from_dto(project_dto)
+
+        return cls.validate_experiment(experiment, project)
+
+    @classmethod
+    @transaction()
+    def validate_experiment(cls, experiment: Experiment, project: Project = None) -> Experiment:
+        # set the project if it is provided
+        if project is not None:
+            experiment.project = project
 
         experiment.validate()
 
@@ -164,11 +176,11 @@ class ExperimentService(BaseService):
     @classmethod
     @transaction()
     def validate_experiment_send_to_central(cls, id: str, project_dto: ProjectDto = None) -> Experiment:
-        experiment = cls.validate_experiment(id, project_dto)
+        experiment = cls.validate_experiment_from_id(id, project_dto)
 
-        # if Settings.is_local_env():
-        #     Logger.info('Skipping sending experiment to central as we are running in LOCAL')
-        #     return experiment
+        if Settings.is_local_env():
+            Logger.info('Skipping sending experiment to central as we are running in LOCAL')
+            return experiment
 
         lab_config: LabConfigModel = experiment.lab_config
         if lab_config is None:
