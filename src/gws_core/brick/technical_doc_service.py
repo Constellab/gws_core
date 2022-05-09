@@ -3,14 +3,13 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from multiprocessing.dummy import Process
 from typing import List, Type
 
 from gws_core.config.config_specs_helper import ConfigSpecsHelper
 from gws_core.core.model.base import Base
-from gws_core.io.io_spec_helper import IOSpecs, IOSpecsHelper
+from gws_core.io.io_spec_helper import IOSpecsHelper
 from gws_core.model.typing import Typing, TypingObjectType
-from gws_core.model.typing_manager import TypingManager
+from gws_core.process.process import Process
 from gws_core.resource.resource import Resource
 from gws_core.task.task import Task
 
