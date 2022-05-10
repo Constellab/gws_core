@@ -55,11 +55,19 @@ class IOSpec:
         else:
             for r_type in resource_types:
                 self.resource_types.append(r_type)
-
-        self.human_name = human_name
-        self.short_description = short_description
-
         self.check_resource_types()
+
+        # set the human name with a default value
+        if human_name is not None:
+            self.human_name = human_name
+        else:
+            self.human_name = self.get_default_resource_type()._human_name
+
+        # set the short description with a default value
+        if short_description is not None:
+            self.short_description = short_description
+        else:
+            self.short_description = self.get_default_resource_type()._short_description
 
     def check_resource_types(self):
         for resource_type in self.resource_types:
