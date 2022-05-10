@@ -68,8 +68,8 @@ class ImcompatiblePortsException(BadRequestException):
         super().__init__(
             detail=GWSException.IMCOMPATIBLE_PORT.value,
             unique_code=GWSException.IMCOMPATIBLE_PORT.name,
-            detail_args={"out_port_name": out_port.name, "out_port_types": out_port.resource_spec.resource_types,
-                         "in_port_name": in_port.name, "in_port_types": in_port.resource_spec.resource_types})
+            detail_args={"out_port_name": out_port.name, "out_port_types": out_port.resource_spec.get_resources_human_names(),
+                         "in_port_name": in_port.name, "in_port_types": in_port.resource_spec.get_resources_human_names()})
 
 
 class InvalidInputsException(Exception):
