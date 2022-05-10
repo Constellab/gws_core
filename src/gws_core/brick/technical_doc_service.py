@@ -67,7 +67,7 @@ class TechnicalDocService():
 
             type_: Type[Task] = process_typing.get_type()
             json_["input_specs"] = IOSpecsHelper.io_specs_to_json(type_.input_specs)
-            json_["output_specs"] = IOSpecsHelper.io_specs_to_json(type_.input_specs)
+            json_["output_specs"] = IOSpecsHelper.io_specs_to_json(type_.output_specs)
             json_["config_specs"] = ConfigSpecsHelper.config_specs_to_json(type_.config_specs)
 
             json_list.append(json_)
