@@ -102,6 +102,14 @@ class IOSpec:
     def get_resource_type_tuples(self) -> Tuple[Type[Resource]]:
         return tuple(self.resource_types)
 
+    def get_resources_human_names(self) -> str:
+        list_str = [(resource_type._human_name if resource_type else 'None') for resource_type in self.resource_types]
+
+        if len(list_str) == 1:
+            return list_str[0]
+        else:
+            return ', '.join(list_str)
+
     @classmethod
     def _resource_types_are_compatible(cls, resource_types: Iterable[Type[Resource]],
                                        expected_types: Iterable[Type[Resource]],

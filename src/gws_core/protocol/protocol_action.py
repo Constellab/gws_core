@@ -25,7 +25,7 @@ class AddProcessWithLink():
 
 
 class AddConnectorDTO(BaseModel):
-    output_process_name: str
-    out_port_name: str
-    input_process_name: str
-    in_port_name: str
+    output_process_name: str = None
+    output_port_name: str = None
+    input_process_name: str = None
+    input_port_name: str = None

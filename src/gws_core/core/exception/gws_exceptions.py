@@ -27,7 +27,7 @@ class GWSException(Enum):
     TASK_BUILD_EXCEPTION = "{{error}} | Task : '{{instance_name}}'"
     PROTOCOL_BUILD_EXCEPTION = "{{error}} | Protocol : '{{instance_name}}'"
     MISSING_INPUT_RESOURCES = "The inputs '{{port_names}}' were not provided but are mandatory"
-    IMCOMPATIBLE_PORT = "Invalid connection, port are imcompatible. The output '{{out_port_name}}' types ({{out_port_types}}) can't be converted to input '{{in_port_name}}' types ({{in_port_types}})"
+    IMCOMPATIBLE_PORT = "Invalid connection, port are imcompatible. The output '{{out_port_name}}' types {{out_port_types}} can't be converted to input '{{in_port_name}}' types {{in_port_types}}"
     EXPERIMENT_STOPPED_MANUALLY = "Experiment manually stopped by a user."
     EXPERIMENT_ERROR_BEFORE_RUN = "Error before running the experiment."
     TASK_CHECK_BEFORE_STOP = "Check before task returned false. Reason: {{message}}"
