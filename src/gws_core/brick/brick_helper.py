@@ -4,7 +4,9 @@
 # About us: https://gencovery.com
 
 import inspect
-from typing import Any, Dict, List, TypedDict
+from typing import Any, Dict, List
+
+from gws_core.core.db.version import Version
 
 from ..core.utils.settings import ModuleInfo, Settings
 from .brick_dto import BrickVersion
@@ -61,6 +63,16 @@ class BrickHelper():
             raise Exception(f"Can't find the brick information of object '{obj}'")
 
         return bricks[brick_name]
+
+    @classmethod
+    def get_brick_version(cls, obj: Any) -> Version:
+        """Methode to return a brick version of any object
+           If object, retrieve the brick of the object
+           If string, retrieve the brick of name
+        """
+
+        brick_info = cls.get_brick_info(obj)
+        return Version(brick_info.get("version"))
 
     @classmethod
     def get_all_brick_versions(cls) -> List[BrickVersion]:

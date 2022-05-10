@@ -6,6 +6,7 @@ from collections.abc import Iterable as IterableClass
 from typing import (Any, Dict, Iterable, List, Optional, Tuple, Type,
                     TypedDict, Union)
 
+from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.utils.utils import Utils
 
 from ..core.exception.exceptions.bad_request_exception import \
@@ -143,13 +144,13 @@ class IOSpec:
         for resource_type in self.resource_types:
             if resource_type is None:
                 json_["resource_types"].append({"typing_name": None, "human_name": None, 'short_description': None,
-                                                "brick_name": None, "unique_name": None})
+                                                "brick_name": None, "unique_name": None, 'brick_version': None})
             else:
                 typing = TypingManager.get_typing_from_name(resource_type._typing_name)
                 json_["resource_types"].append(
                     {"typing_name": typing.typing_name, "human_name": typing.human_name,
                      "short_description": typing.short_description, "brick_name": typing.brick,
-                     "unique_name": typing.model_name})
+                     "unique_name": typing.model_name, "brick_version": str(BrickHelper.get_brick_version(typing.brick))})
         return json_
 
     @classmethod
