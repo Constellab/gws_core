@@ -123,9 +123,6 @@ class ProtocolModel(ProcessModel):
         for process in self.processes.values():
             process.set_experiment(experiment)
 
-    def set_protocol_type(self, protocol_type: Type[Protocol]) -> None:
-        self.process_typing_name = protocol_type._typing_name
-
     @transaction()
     def delete_instance(self, *args, **kwargs):
         """Override delete instance to delete all the sub processes

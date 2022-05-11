@@ -56,27 +56,6 @@ class TaskModel(ProcessModel):
         if self.is_saved():
             self._init_io_from_data()
 
-    def _init_io_from_type(self):
-        """Method used when creating a new task model, it init the input and output from task specs
-        """
-        task_type: Type[Task] = self.get_process_type()
-
-        self._inputs = Inputs(self)
-        # create the input ports from the Task input specs
-        for k in task_type.input_specs:
-            self._inputs.create_port(k, task_type.input_specs[k])
-
-        # Set the data inputs dict
-        self.data["inputs"] = self.inputs.to_json()
-
-        self._outputs = Outputs(self)
-        # create the output ports from the Task output specs
-        for k in task_type.output_specs:
-            self._outputs.create_port(k, task_type.output_specs[k])
-
-        # Set the data inputs dict
-        self.data["outputs"] = self.outputs.to_json()
-
     def _init_io_from_data(self):
         """Method used when instantiating a TaskModel from the DB, it init the input and output from the
           data object and it does not use the task specs
@@ -99,9 +78,30 @@ class TaskModel(ProcessModel):
         source = inspect.getsource(model_t)
         return zlib.compress(source.encode())
 
-    def set_task_type(self, typing_name: str) -> None:
-        self.process_typing_name = typing_name
+    def set_process_type(self, typing_name: str) -> None:
+        super().set_process_type(typing_name)
         self._init_io_from_type()
+
+    def _init_io_from_type(self):
+        """Method used when creating a new task model, it init the input and output from task specs
+        """
+        task_type: Type[Task] = self.get_process_type()
+
+        self._inputs = Inputs(self)
+        # create the input ports from the Task input specs
+        for k in task_type.input_specs:
+            self._inputs.create_port(k, task_type.input_specs[k])
+
+        # Set the data inputs dict
+        self.data["inputs"] = self.inputs.to_json()
+
+        self._outputs = Outputs(self)
+        # create the output ports from the Task output specs
+        for k in task_type.output_specs:
+            self._outputs.create_port(k, task_type.output_specs[k])
+
+        # Set the data inputs dict
+        self.data["outputs"] = self.outputs.to_json()
 
     def _create_task_instance(self) -> Task:
         return self.get_process_type()()

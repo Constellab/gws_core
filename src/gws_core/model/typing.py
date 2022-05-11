@@ -5,7 +5,7 @@
 
 import inspect
 from os import path
-from typing import Any, Dict, List, Literal, Set, Type
+from typing import Any, Dict, List, Literal, Type
 
 from peewee import BooleanField, CharField, ModelSelect
 
@@ -62,6 +62,7 @@ class Typing(Model):
     # Full python type of the model
     model_type: CharField = CharField(null=False, max_length=511)
     brick: CharField = CharField(null=False, max_length=50)
+    brick_version: CharField = CharField(null=False, max_length=50, default="")
     model_name: CharField = CharField(null=False)
     object_type: CharField = CharField(null=False, max_length=20)
     human_name: CharField = CharField(default=False, max_length=255)
@@ -219,6 +220,10 @@ class Typing(Model):
     @staticmethod
     def typing_obj_to_str(object_type: str, brick_name: str, model_name: str) -> str:
         return object_type + SEPARATOR + brick_name + SEPARATOR + model_name
+
+    @staticmethod
+    def typing_name_is_protocol(typing_name: str) -> bool:
+        return typing_name.startswith("PROTOCOL")
 
     class Meta:
         # Unique constrains on brick, model_name and object_type

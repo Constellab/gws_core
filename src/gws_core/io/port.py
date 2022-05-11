@@ -5,12 +5,13 @@
 
 from __future__ import annotations
 
+from abc import abstractmethod
 from typing import TYPE_CHECKING, List, Type, TypedDict, final
 
 from ..core.model.base import Base
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
-from .io_spec import IOSpec, IOSpecDict
+from .io_spec import InputSpec, IOSpec, IOSpecDict, OutputSpec
 
 if TYPE_CHECKING:
     from ..process.process_model import ProcessModel
@@ -148,7 +149,7 @@ class Port(Base):
         :rtype: bool
         """
 
-        return self.resource_spec.is_optional()
+        return self.resource_spec.is_optional
 
     @property
     def is_empty(self) -> bool:
@@ -313,8 +314,14 @@ class Port(Base):
 
     @classmethod
     def load_from_json(cls, json_: PortDict, parent: IO, name: str) -> 'Port':
-        specs: IOSpec = IOSpec.from_json(json_['specs'])
+        spec_type: Type[IOSpec] = cls._get_io_spec_type()
+        specs: IOSpec = spec_type.from_json(json_['specs'])
         return cls(parent, name, specs)
+
+    @classmethod
+    @abstractmethod
+    def _get_io_spec_type(cls) -> Type[IOSpec]:
+        pass
 
 
 # ####################################################################
@@ -328,6 +335,10 @@ class InPort(Port):
     IntPort class representing input port
     """
 
+    @classmethod
+    def _get_io_spec_type(cls) -> Type[IOSpec]:
+        return InputSpec
+
 
 # ####################################################################
 #
@@ -339,3 +350,7 @@ class OutPort(Port):
     """
     OutPort class representing output port
     """
+
+    @classmethod
+    def _get_io_spec_type(cls) -> Type[IOSpec]:
+        return OutputSpec

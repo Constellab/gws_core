@@ -14,9 +14,6 @@ from ..process.process import Process
 from .protocol_spec import (ConnectorPartSpec, ConnectorSpec, InterfaceSpec,
                             ProcessSpec)
 
-# Typing names generated for the class Protocol
-CONST_PROTOCOL_TYPING_NAME = "PROTOCOL.gws_core.Protocol"
-
 
 class ProtocolCreateConfig(TypedDict):
     process_specs: Dict[str, ProcessSpec]

@@ -100,6 +100,10 @@ class TypingManager:
         query: ModelSelect = Typing.get_by_brick_and_model_name(
             typing.object_type, typing.brick, typing.model_name)
 
+        # set the version because the bricks are not loaded before
+        brick_info = BrickHelper.get_brick_info(typing.brick)
+        typing.brick_version = brick_info["version"]
+
         # refresh or set the ancestors list
         typing.refresh_ancestors()
 
@@ -120,7 +124,8 @@ class TypingManager:
 
         # If another value has changed only udpate the DB
         if typing_db.hide != typing.hide or typing_db.human_name != typing.human_name or typing_db.short_description != typing.short_description or \
-                typing_db.deprecated_since != typing.deprecated_since or typing_db.deprecated_message != typing.deprecated_message:
+                typing_db.deprecated_since != typing.deprecated_since or typing_db.deprecated_message != typing.deprecated_message or \
+                typing_db.brick_version != typing.brick_version:
             cls._update_typing(typing, typing_db)
             return
 

@@ -4,12 +4,21 @@
 # About us: https://gencovery.com
 
 
+from typing import List
+
+from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.model.model import Model
 from gws_core.experiment.experiment import Experiment
 from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.model.typing import Typing
+from gws_core.model.typing_manager import TypingManager
+from gws_core.process.process_model import ProcessModel
+from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.report.report import Report
+from gws_core.task.task_model import TaskModel
+from gws_core.user.current_user_service import CurrentUserService
+from gws_core.user.user import User
 from peewee import BigIntegerField
 from playhouse.migrate import MySQLMigrator, migrate
 
@@ -89,15 +98,35 @@ class Migration038(BrickMigration):
         )
 
 
-@brick_migration('0.3.9-beta.1', short_description='In TASK, replace type_io with io_spec')
+@brick_migration('0.3.9-beta.1', short_description='Refactor io specs, add brick_version to process')
 class Migration039(BrickMigration):
 
     @classmethod
     def migrate(cls, from_version: Version, to_version: Version) -> None:
-        # Replace all old type io with new spec io
-        Model.get_db_manager().db.execute_sql("UPDATE gws_task SET data = REPLACE(data,  'type_io',  'io_spec');", commit=True)
-        Model.get_db_manager().db.execute_sql("UPDATE gws_task SET data = REPLACE(data,  'TypeIO',  'IOSpec');", commit=True)
-        Model.get_db_manager().db.execute_sql("UPDATE gws_task SET data = REPLACE(data,  'SpecialTypeIO',  'IOSpec');", commit=True)
-        Model.get_db_manager().db.execute_sql("UPDATE gws_task SET data = REPLACE(data,  'SpecialIOSpec',  'IOSpec');", commit=True)
-        Model.get_db_manager().db.execute_sql("UPDATE gws_task SET data = REPLACE(data,  'SpecialTypeIn',  'InputSpec');", commit=True)
-        Model.get_db_manager().db.execute_sql("UPDATE gws_task SET data = REPLACE(data,  'SpecialTypeOut',  'OutputSpec');", commit=True)
+
+        migrator = MySQLMigrator(FSNodeModel.get_db_manager().db)
+
+        migrate(
+            migrator.add_column(
+                Typing.get_table_name(),
+                Typing.brick_version.column_name, Typing.brick_version),
+            migrator.add_column(
+                TaskModel.get_table_name(),
+                TaskModel.brick_version.column_name, TaskModel.brick_version),
+            migrator.add_column(
+                ProtocolModel.get_table_name(),
+                ProtocolModel.brick_version.column_name, ProtocolModel.brick_version),
+        )
+
+        # Authenticate the system user
+        CurrentUserService.set_current_user(User.get_sysuser())
+
+        process_model_list: List[ProcessModel] = list(TaskModel.select()) + list(ProtocolModel.select())
+        for process_model in process_model_list:
+            # update io specs
+            process_model.set_process_type(process_model.process_typing_name)
+
+            # set brick version
+            typing = TypingManager.get_typing_from_name(process_model.process_typing_name)
+            process_model.brick_version = BrickHelper.get_brick_version(typing.brick)
+            process_model.save()

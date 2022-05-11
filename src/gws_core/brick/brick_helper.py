@@ -60,6 +60,16 @@ class BrickHelper():
         bricks = cls.get_all_bricks()
 
         if brick_name not in bricks:
+            # secific case for the test mode when brick name is test filename
+            if Settings.retrieve().is_test:
+                return {
+                    "name": brick_name,
+                    "is_brick": True,
+                    "path": '',
+                    "repo_commit": '',
+                    "repo_type": 'app',
+                    "version": '0.0.0'
+                }
             raise Exception(f"Can't find the brick information of object '{obj}'")
 
         return bricks[brick_name]

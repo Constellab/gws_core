@@ -5,12 +5,13 @@
 
 
 from gws_core import (FIFO2, BadRequestException, BaseTestCase, ConfigParams,
-                      Connector, ConstantOut, Experiment, ExperimentService,
-                      OptionalIn, ProcessFactory, ProcessSpec, Protocol,
-                      ProtocolModel, Resource, ResourceModel, Task, TaskInputs,
-                      TaskModel, TaskOutputs, Wait, protocol_decorator,
-                      resource_decorator, task_decorator)
+                      Connector, Experiment, ExperimentService, ProcessFactory,
+                      ProcessSpec, Protocol, ProtocolModel, Resource,
+                      ResourceModel, Task, TaskInputs, TaskModel, TaskOutputs,
+                      Wait, protocol_decorator, resource_decorator,
+                      task_decorator)
 from gws_core.experiment.experiment_run_service import ExperimentRunService
+from gws_core.io.io import Inputs
 from gws_core.io.io_exception import ImcompatiblePortsException
 from gws_core.io.io_spec import InputSpec, OutputSpec
 
@@ -101,8 +102,8 @@ class Fly(Task):
 
 @task_decorator("OptionalTask")
 class OptionalTask(Task):
-    input_specs = {'first': OptionalIn([Person]),
-                   'second': OptionalIn(Person),
+    input_specs = {'first': InputSpec([Person], is_optional=True),
+                   'second': InputSpec(Person, is_optional=True),
                    'third': InputSpec(Person)}
     output_specs = {}
     config_specs = {}
@@ -127,7 +128,7 @@ class OptionalTaskOut(Task):
 @task_decorator("Log")
 class Log(Task):
     input_specs = {'person': InputSpec(Person)}
-    output_specs = {'samePerson': ConstantOut(Person),
+    output_specs = {'samePerson': OutputSpec(Person, is_constant=True),
                     'otherPerson': OutputSpec(Person)}
     config_specs = {}
 

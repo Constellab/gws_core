@@ -11,6 +11,7 @@ from abc import abstractmethod
 from enum import Enum
 from typing import TYPE_CHECKING, Dict, Type, TypedDict, final
 
+from gws_core.model.typing import Typing
 from peewee import CharField, ForeignKeyField
 from starlette_context import context
 
@@ -66,6 +67,7 @@ class ProcessModel(ModelWithUser):
     progress_bar: ProgressBar = ForeignKeyField(
         ProgressBar, null=True, backref='+')
     process_typing_name = CharField(null=False)
+    brick_version = CharField(null=False, max_length=50, default="")
     status: ProcessStatus = EnumField(choices=ProcessStatus,
                                       default=ProcessStatus.DRAFT)
     error_info: ProcessErrorInfo = JSONField(null=True)
@@ -179,6 +181,11 @@ class ProcessModel(ModelWithUser):
         if parent_protocol.id:
             self.parent_protocol_id = parent_protocol.id
         self._parent_protocol = parent_protocol
+
+    def set_process_type(self, typing_name: str) -> None:
+        typing: Typing = TypingManager.get_typing_from_name(typing_name)
+        self.process_typing_name = typing_name
+        self.brick_version = typing.brick_version
 
     def set_experiment(self, experiment: Experiment):
         if not isinstance(experiment, Experiment):
@@ -403,7 +410,8 @@ class ProcessModel(ModelWithUser):
         """
         return {
             "id": self.id,
-            "process_typing_name": self.process_typing_name
+            "process_typing_name": self.process_typing_name,
+
         }
 
     def to_json(self, deep: bool = False, **kwargs) -> dict:
@@ -448,9 +456,11 @@ class ProcessModel(ModelWithUser):
 
         process_type: Type[Process] = TypingManager.get_type_from_name(
             self.process_typing_name)
-        _json["title"] = process_type._human_name
-        _json["description"] = process_type._short_description
-        _json["doc"] = inspect.getdoc(process_type)
+
+        if process_type:
+            _json["title"] = process_type._human_name
+            _json["description"] = process_type._short_description
+            _json["doc"] = inspect.getdoc(process_type)
 
         return _json
 

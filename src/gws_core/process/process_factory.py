@@ -12,17 +12,14 @@ from ..config.config_types import ConfigParamsDict
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..io.connector import Connector
-from ..io.port import InPort, OutPort, Port
+from ..io.port import InPort, OutPort
 from ..model.typing_manager import TypingManager
 from ..progress_bar.progress_bar import ProgressBar
-from ..protocol.protocol import (CONST_PROTOCOL_TYPING_NAME, Protocol,
-                                 ProtocolCreateConfig)
+from ..protocol.protocol import Protocol, ProtocolCreateConfig
 from ..protocol.protocol_exception import ProtocolBuildException
 from ..protocol.protocol_model import ProtocolModel
 from ..task.task import Task
 from ..task.task_model import TaskModel
-from ..user.current_user_service import CurrentUserService
-from ..user.user import User
 from .process import Process
 from .process_model import ProcessModel, ProcessStatus
 from .protocol_sub_process_builder import SubProcessBuilderCreate
@@ -51,7 +48,7 @@ class ProcessFactory():
                 f"The task {task_type.full_classname()} is not register. Did you add the @task_decorator decorator on your task class ?")
 
         task_model: TaskModel = TaskModel()
-        task_model.set_task_type(task_type._typing_name)
+        task_model.set_process_type(task_type._typing_name)
 
         config: Config = Config()
         config.set_specs(task_type.config_specs)
@@ -88,7 +85,7 @@ class ProcessFactory():
                     f"The protocol {protocol_type.full_classname()} is not register. Did you add the @ProtocolDecorator decorator on your protocol class ?")
 
             protocol_model: ProtocolModel = ProtocolModel()
-            protocol_model.set_protocol_type(protocol_type)
+            protocol_model.set_process_type(protocol_type._typing_name)
 
             config: Config = Config()
             config.set_specs(protocol_type.config_specs)
@@ -157,7 +154,7 @@ class ProcessFactory():
         protocol_model: ProtocolModel = ProtocolModel()
 
         # Use the Protocol default type because the protocol is not linked to a specific type
-        protocol_model.process_typing_name = CONST_PROTOCOL_TYPING_NAME
+        protocol_model.process_typing_name = Protocol._typing_name
 
         cls._init_process_model(
             process_model=protocol_model, config=Config(), instance_name=instance_name)

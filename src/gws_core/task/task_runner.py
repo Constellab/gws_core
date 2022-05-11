@@ -130,7 +130,7 @@ class TaskRunner():
             # If the resource is None
             if key not in self._inputs or self._inputs[key] is None:
                 # If the resource is empty and the spec not optional, add an error
-                if not spec.is_optional():
+                if not spec.is_optional:
                     missing_resource.append(key)
                 continue
 
@@ -199,7 +199,7 @@ class TaskRunner():
 
             # If the output is missing
             else:
-                if not spec.is_optional():
+                if not spec.is_optional:
                     error_text = error_text + f"The output '{key}' was not provided."
 
         # save the verified outputs before thowing an error
@@ -216,7 +216,7 @@ class TaskRunner():
 
         if output_resource is None:
             # No error if the spec is optional
-            if spec.is_optional():
+            if spec.is_optional:
                 return None
             return f"The output '{key}' is None."
 

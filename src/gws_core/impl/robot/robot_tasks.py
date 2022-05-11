@@ -1,7 +1,7 @@
 import time
 
 from gws_core.config.param_spec import FloatParam, StrParam
-from gws_core.io.io_spec import InputSpec, OptionalIn, OutputSpec
+from gws_core.io.io_spec import InputSpec, OutputSpec
 
 from ...config.config_types import ConfigParams
 from ...impl.robot.robot_resource import (MegaRobot, Robot, RobotAddOn,
@@ -43,7 +43,7 @@ class RobotMove(Task):
 @task_decorator("RobotEat", human_name="Eat task",
                 short_description="This task emulates the meal of the robot before its flight!", hide=True)
 class RobotEat(Task):
-    input_specs = {'robot': InputSpec(Robot), 'food': OptionalIn(RobotFood)}
+    input_specs = {'robot': InputSpec(Robot), 'food': InputSpec(RobotFood, is_optional=True)}
     output_specs = {'robot': OutputSpec(Robot)}
     config_specs = {
         'food_weight': FloatParam(default_value=3.14)

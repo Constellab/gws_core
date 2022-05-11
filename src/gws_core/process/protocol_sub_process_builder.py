@@ -6,13 +6,13 @@
 from abc import abstractmethod
 from typing import Dict, Optional, Type
 
-from pydantic.types import NoneBytes
+from gws_core.model.typing import Typing
 
 from ..config.config_types import ConfigParamsDict
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..model.typing_manager import TypingManager
-from ..task.task import Task
+from ..protocol.protocol import Protocol
 from ..task.task_model import TaskModel
 from .process import Process
 from .process_model import ProcessModel
@@ -45,18 +45,17 @@ class ProtocolSubProcessBuilder():
                              node_json: Dict) -> ProcessModel:
         """Overriden by the children
         """
-        pass
 
     def _get_process_from_db(self, process_id: Optional[str],
-                             process_type: Type[Process]) -> ProcessModel:
+                             is_protocol: bool) -> ProcessModel:
         """Method to retrieve the process from the DB
         """
         # Instantiate a process
-        if issubclass(process_type, Task):
-            return TaskModel.get_by_id_and_check(process_id)
-        else:
+        if is_protocol:
             from ..protocol.protocol_model import ProtocolModel
             return ProtocolModel.get_by_id_and_check(process_id)
+        else:
+            return TaskModel.get_by_id_and_check(process_id)
 
     def _create_new_process(self, process_type: Type[Process],
                             instance_name: str, node_json: Dict) -> ProcessModel:
@@ -78,15 +77,19 @@ class SubProcessBuilderReadFromDb(ProtocolSubProcessBuilder):
     from the DB
     """
 
+    def instantiate_process_from_json(self, node_json: Dict, instance_name: str) -> ProcessModel:
+        proc_id: str = node_json.get("id", None)
+
+        proc_type_str: str = node_json["process_typing_name"]
+        is_protocol = Typing.typing_name_is_protocol(proc_type_str)
+
+        return self._get_process_from_db(process_id=proc_id, is_protocol=is_protocol)
+
     def _instantiate_process(self, process_id: Optional[str],
                              process_type: Type[Process],
                              instance_name: str,
                              node_json: Dict) -> ProcessModel:
-        if process_id is None:
-            raise BadRequestException(
-                f"Cannot instantiate the process {instance_name} because it does not have an id")
-
-        return self._get_process_from_db(process_id=process_id, process_type=process_type)
+        pass
 
 
 class SubProcessBuilderCreate(ProtocolSubProcessBuilder):
@@ -113,7 +116,7 @@ class SubProcessBuilderUpdate(ProtocolSubProcessBuilder):
 
         if process_id is not None:
             process_model: ProcessModel = self._get_process_from_db(
-                process_id=process_id, process_type=process_type)
+                process_id=process_id, is_protocol=issubclass(process_type, Protocol))
 
             # Update the process config
             if node_json.get('config'):

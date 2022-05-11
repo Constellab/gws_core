@@ -9,8 +9,8 @@ from ..config.config_types import ConfigParams, ConfigSpecs
 from ..config.param_spec import FloatParam, IntParam, StrParam
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from ..io.io_spec import InputSpec, OutputSpec
 from ..io.io_spec_helper import InputSpecs, OutputSpecs
-from ..io.io_spec import ConstantOut, InputSpec, SkippableIn
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
 from ..task.task_io import TaskInputs, TaskOutputs
@@ -27,7 +27,8 @@ class Source(Task):
     """
 
     input_specs: InputSpecs = {}
-    output_specs: OutputSpecs = {'resource': ConstantOut(Resource, sub_class=True)}
+    output_specs: OutputSpecs = {'resource': OutputSpec(Resource, sub_class=True, is_constant=True,
+                                                        human_name="Resource", short_description="Loaded resource")}
     config_specs: ConfigSpecs = {
         'resource_id': StrParam(optional=True, short_description="The id of the resource"),
     }
@@ -67,9 +68,9 @@ class FIFO2(Task):
     The FIFO2 (First-In-First-Out) task sends to the output port the first resource received in an input port
     """
 
-    input_specs: InputSpecs = {'resource_1': SkippableIn(Resource),
-                               'resource_2': SkippableIn(Resource)}
-    output_specs: OutputSpecs = {'resource': ConstantOut(resource_types=Resource, sub_class=True)}
+    input_specs: InputSpecs = {'resource_1': InputSpec(Resource, is_skippable=True),
+                               'resource_2': InputSpec(Resource, is_skippable=True)}
+    output_specs: OutputSpecs = {'resource': OutputSpec(resource_types=Resource, sub_class=True, is_constant=True)}
     config_specs: ConfigSpecs = {}
 
     def check_before_run(self, params: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
@@ -100,9 +101,9 @@ class Switch2(Task):
     The Switch2 proccess sends to the output port the resource corresponding to the parameter `index`
     """
 
-    input_specs: InputSpecs = {'resource_1': SkippableIn(Resource),
-                               'resource_2': SkippableIn(Resource)}
-    output_specs: OutputSpecs = {'resource': ConstantOut(resource_types=Resource, sub_class=True)}
+    input_specs: InputSpecs = {'resource_1': InputSpec(Resource, is_skippable=True),
+                               'resource_2': InputSpec(Resource, is_skippable=True)}
+    output_specs: OutputSpecs = {'resource': OutputSpec(resource_types=Resource, sub_class=True, is_constant=True)}
     config_specs: ConfigSpecs = {"index": IntParam(
         default_value=1, min_value=1, max_value=2, short_description="The index of the input resource to switch on. Defaults to 1.")}
 
@@ -128,7 +129,7 @@ class Wait(Task):
     """
 
     input_specs: InputSpecs = {'resource': InputSpec(Resource)}
-    output_specs: OutputSpecs = {'resource': ConstantOut(resource_types=Resource, sub_class=True)}
+    output_specs: OutputSpecs = {'resource': OutputSpec(resource_types=Resource, sub_class=True, is_constant=True)}
     config_specs: ConfigSpecs = {"waiting_time": FloatParam(
         default_value=3, min_value=0, short_description="The waiting time in seconds. Defaults to 3 second.")}
 
@@ -154,8 +155,8 @@ class Dispatch2(Task):
 
     input_specs: InputSpecs = {'resource': InputSpec(Resource)}
     output_specs: OutputSpecs = {
-        'resource_1': ConstantOut(resource_types=Resource, sub_class=True),
-        'resource_2': ConstantOut(resource_types=Resource, sub_class=True)
+        'resource_1': OutputSpec(resource_types=Resource, sub_class=True, is_constant=True),
+        'resource_2': OutputSpec(resource_types=Resource, sub_class=True, is_constant=True)
     }
     config_specs: ConfigSpecs = {}
 
