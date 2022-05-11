@@ -67,7 +67,7 @@ class IOSpec:
 
         # set the human name with a default value
         if human_name is not None:
-            self.human_name = human_name
+            self.human_name = Utils.snake_case_to_sentence(human_name)
         else:
             self.human_name = self.get_default_resource_type()._human_name
 

@@ -183,6 +183,14 @@ class Utils:
         return re.sub('([a-z0-9])([A-Z])', r'\1 \2', name).capitalize()
 
     @staticmethod
+    def snake_case_to_sentence(name: str) -> str:
+        """Convert a snake case to sentence like"""
+        if name is None:
+            return None
+        name = name.replace(' ', '').replace('_', ' ')
+        return name.capitalize()
+
+    @staticmethod
     def str_to_enum(enum_class: Type, str_value: str) -> Any:
         """Convert a string to an enum value
         """
@@ -193,3 +201,11 @@ class Utils:
         """Check if two json are equals
         """
         return dumps(json1, sort_keys=True) == dumps(json2, sort_keys=True)
+
+    @staticmethod
+    def str_is_alphanumeric(str_: str) -> bool:
+        """Check if a string is alphanumeric with underscore"""
+        if str_ is None:
+            return False
+
+        return bool(re.match("^[a-zA-Z0-9_]+$", str_))
