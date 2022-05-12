@@ -91,8 +91,7 @@ class TechnicalDocService():
             brick_info = BrickHelper.get_brick_info(parent_typing.brick)
 
             parent = {
-                "unique_name": parent_typing.model_name,
-                "brick_name": parent_typing.brick,
+                "typing_name": parent_typing.typing_name,
                 "brick_version": brick_info["version"],
                 "human_name": parent_typing.human_name
             }
