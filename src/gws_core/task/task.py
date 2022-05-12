@@ -135,3 +135,13 @@ class Task(Process):
     @final
     def log_warning_message(self, message: str):
         self.log_message(message, ProgressBarMessageType.WARNING)
+
+    @final
+    @classmethod
+    def get_input_specs(cls) -> InputSpecs:
+        return cls.input_specs
+
+    @final
+    @classmethod
+    def get_output_specs(cls) -> OutputSpecs:
+        return cls.output_specs

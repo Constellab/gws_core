@@ -8,6 +8,7 @@ from typing import Iterable, List, Optional, Tuple, Type, TypedDict, Union
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.utils.utils import Utils
+from gws_core.model.typing_dict import TypingRef
 
 from ..model.typing_manager import TypingManager
 from ..resource.resource import Resource
@@ -16,15 +17,9 @@ ResourceType = Type[Resource]
 ResourceTypes = Union[ResourceType, Iterable[ResourceType]]
 
 
-class ResourceTypeJson(TypedDict):
-    typing_name: str
-    human_name: str
-    short_description: str
-
-
 class IOSpecDict(TypedDict):
     io_spec: str
-    resource_types: List[ResourceTypeJson]
+    resource_types: List[TypingRef]
     human_name: Optional[str]
     short_description: Optional[str]
     is_optional: bool
@@ -161,9 +156,11 @@ class IOSpec:
                              "human_name": self.human_name, "short_description": self.short_description}
         for resource_type in self.resource_types:
             typing = TypingManager.get_typing_from_name(resource_type._typing_name)
-            json_["resource_types"].append(
-                {"typing_name": typing.typing_name, "brick_version": str(BrickHelper.get_brick_version(typing.brick)),
-                 "human_name": typing.human_name, "short_description": typing.short_description})
+            resource_json: TypingRef = {"typing_name": typing.typing_name,
+                                        "brick_version": str(BrickHelper.get_brick_version(typing.brick)),
+                                        "human_name": typing.human_name}
+
+            json_["resource_types"].append(resource_json)
         return json_
 
     @classmethod

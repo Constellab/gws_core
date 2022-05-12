@@ -9,7 +9,8 @@ from gws_core.core.utils.logger import Logger
 from gws_core.io.io_spec import OutputSpec
 
 from ..config.config import Config
-from ..config.config_types import ConfigParams, ConfigParamsDict, ParamValue
+from ..config.config_types import ConfigParams, ConfigParamsDict
+from ..config.param_types import ParamValue
 from ..io.io_exception import (InvalidInputsException, InvalidOutputsException,
                                MissingInputResourcesException)
 from ..io.io_spec_helper import InputSpecs, OutputSpecs

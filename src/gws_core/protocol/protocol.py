@@ -4,6 +4,9 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import Dict, List, Type, TypedDict, final
 
+from gws_core.config.config import Config
+from gws_core.io.io_spec import OutputSpec
+from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
 from peewee import Tuple
 
 from ..config.config_types import ConfigParams, ConfigParamsDict, ConfigSpecs
@@ -198,3 +201,63 @@ class Protocol(Process):
             "process_instance_name": to_process.instance_name,
             "port_name": process_output_name
         }
+
+    @final
+    def get_process_spec(self, instance_name: str) -> ProcessSpec:
+        """Get the process spec of the process with the given instance name """
+
+        if instance_name not in self._process_specs:
+            raise Exception(f"The process with instance name '{instance_name}' doesn't exist.")
+        return self._process_specs[instance_name]
+
+    @classmethod
+    @final
+    def instantiate_protocol(cls) -> Protocol:
+        """Instantiate the protocol with the default config"""
+        protocol: Protocol = cls()
+
+        config: Config = Config()
+        config.set_specs(protocol.config_specs)
+        protocol.configure_protocol(config.get_and_check_values())
+
+        return protocol
+
+    @classmethod
+    @final
+    def get_input_specs(cls) -> InputSpecs:
+        """Get the input specs of the protocol """
+        protocol: Protocol = cls.instantiate_protocol()
+        return protocol.get_input_specs_self()
+
+    @classmethod
+    @final
+    def get_output_specs(cls) -> OutputSpec:
+        """Get the input specs of the protocol """
+        protocol: Protocol = cls.instantiate_protocol()
+        return protocol.get_output_specs_self()
+
+    @final
+    def get_input_specs_self(self) -> InputSpecs:
+        input_specs: InputSpecs = {}
+
+        for name, interface in self._interfaces.items():
+            # retreive the process spec
+            process_spec = self.get_process_spec(interface["process_instance_name"])
+
+            # retrieve the corresponding input spec
+            input_specs[name] = process_spec.process_type.get_input_specs()[interface["port_name"]]
+
+        return input_specs
+
+    @final
+    def get_output_specs_self(self) -> OutputSpecs:
+        output_specs: OutputSpecs = {}
+
+        for name, outerface in self._outerfaces.items():
+            # retreive the process spec
+            process_spec = self.get_process_spec(outerface["process_instance_name"])
+
+            # retrieve the corresponding input spec
+            output_specs[name] = process_spec.process_type.get_output_specs()[outerface["port_name"]]
+
+        return output_specs

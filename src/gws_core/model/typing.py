@@ -4,8 +4,7 @@
 # About us: https://gencovery.com
 
 import inspect
-from os import path
-from typing import Any, Dict, List, Literal, Type
+from typing import Any, Dict, List, Optional, Type
 
 from peewee import BooleanField, CharField, ModelSelect
 
@@ -15,6 +14,7 @@ from ..core.exception.exceptions.bad_request_exception import \
 from ..core.model.base import Base
 from ..core.model.model import Model
 from ..core.utils.utils import Utils
+from .typing_dict import TypingDict, TypingObjectType, TypingRef
 
 # ####################################################################
 #
@@ -23,30 +23,27 @@ from ..core.utils.utils import Utils
 # ####################################################################
 SEPARATOR: str = "."
 
-# different object typed store in the typing table
-TypingObjectType = Literal["TASK", "RESOURCE", "PROTOCOL", "MODEL"]
-
 
 class TypingNameObj():
     object_type: TypingObjectType
     brick_name: str
-    model_name: str
+    unique_name: str
 
-    def __init__(self, object_type: TypingObjectType, brick_name: str, model_name: str) -> None:
+    def __init__(self, object_type: TypingObjectType, brick_name: str, unique_name: str) -> None:
         self.object_type = object_type
         self.brick_name = brick_name
-        self.model_name = model_name
+        self.unique_name = unique_name
 
     @staticmethod
     def from_typing_name(typing_name: str) -> 'TypingNameObj':
         try:
             parts: List[str] = typing_name.split(SEPARATOR)
-            return TypingNameObj(object_type=parts[0], brick_name=parts[1], model_name=parts[2])
+            return TypingNameObj(object_type=parts[0], brick_name=parts[1], unique_name=parts[2])
         except:
             raise BadRequestException(f"The typing name '{typing_name}' is invalid")
 
 
-@json_ignore(["model_type", "hide"])
+@json_ignore(["model_type", "related_model_typing_name", "data", "brick", "brick_version", "is_archived"])
 class Typing(Model):
     """
     Typing class. This class allows storing information on all the types of the models in the system.
@@ -63,7 +60,7 @@ class Typing(Model):
     model_type: CharField = CharField(null=False, max_length=511)
     brick: CharField = CharField(null=False, max_length=50)
     brick_version: CharField = CharField(null=False, max_length=50, default="")
-    model_name: CharField = CharField(null=False)
+    unique_name: CharField = CharField(null=False, column_name="model_name")
     object_type: CharField = CharField(null=False, max_length=20)
     human_name: CharField = CharField(default=False, max_length=255)
     short_description: CharField = CharField(default=False)
@@ -76,6 +73,7 @@ class Typing(Model):
     # For process, this is a linked resource to the model (useful for IMPORTER, TRANFORMERS...)
     related_model_typing_name: CharField = CharField(null=True, index=True)
 
+    _object_type: TypingObjectType = "MODEL"
     _table_name = 'gws_typing'
 
     def __init__(self, *args, **kwargs):
@@ -123,11 +121,18 @@ class Typing(Model):
     def get_type(self) -> Type[Any]:
         return Utils.get_model_type(self.model_type)
 
+    def get_typing_ref(self) -> TypingRef:
+        return {
+            "typing_name": self.typing_name,
+            "brick_version": self.brick_version,
+            "human_name": self.human_name
+        }
+
     @property
     def typing_name(self) -> str:
-        return Typing.typing_obj_to_str(self.object_type, self.brick, self.model_name)
+        return Typing.typing_obj_to_str(self.object_type, self.brick, self.unique_name)
 
-    def to_json(self, deep: bool = False, **kwargs) -> dict:
+    def to_json(self, deep: bool = False, **kwargs) -> TypingDict:
         _json: Dict[str, Any] = super().to_json(deep=deep, **kwargs)
 
         _json["typing_name"] = self.typing_name
@@ -141,12 +146,32 @@ class Typing(Model):
             _json["status"] = 'SUCCESS'
 
         if deep and model_t:
-            _json['type'] = self.model_type_to_json(model_t)
+            _json['doc'] = self.get_model_type_doc()
+
+            # handle parent ref
+            parent_typing: Typing = self.get_parent_typing()
+            if parent_typing:
+                parent: TypingRef = parent_typing.get_typing_ref()
+            else:
+                parent = None
+            _json["parent"] = parent
 
         return _json
 
-    def model_type_to_json(self, model_t: Type[Base]) -> dict:
-        return {}
+    def get_parent_typing(self) -> Optional['Typing']:
+        # retrieve the task python type
+        model_t: Type[Base] = self.get_type()
+
+        if model_t is None:
+            return None
+
+        parent_class: Type[Base] = model_t.__base__
+
+        # If the parent class has the attribute _typing_name, it means that this is a typing
+        if hasattr(parent_class, "_typing_name"):
+            # retrieve the typing of the parent class
+            return Typing.get_by_model_type(parent_class)
+        return None
 
     def get_model_type_doc(self) -> str:
         """Return the python documentation of the model type
@@ -159,15 +184,15 @@ class Typing(Model):
     ############################################# CLASS METHODS #########################################
 
     @classmethod
-    def get_by_brick_and_model_name(cls, object_type: TypingObjectType, brick: str, model_name: str) -> ModelSelect:
+    def get_by_brick_and_unique_name(cls, object_type: TypingObjectType, brick: str, unique_name: str) -> ModelSelect:
         return cls.select().where(
-            cls.object_type == object_type, cls.brick == brick, cls.model_name == model_name)
+            cls.object_type == object_type, cls.brick == brick, cls.unique_name == unique_name)
 
     @classmethod
     def get_by_typing_name(cls, typing_name: str) -> 'Typing':
         typing_obj: TypingNameObj = TypingNameObj.from_typing_name(typing_name)
-        return cls.get_by_brick_and_model_name(
-            typing_obj.object_type, typing_obj.brick_name, typing_obj.model_name).first()
+        return cls.get_by_brick_and_unique_name(
+            typing_obj.object_type, typing_obj.brick_name, typing_obj.unique_name).first()
 
     @classmethod
     def get_by_object_type(cls, object_type: TypingObjectType) -> ModelSelect:
@@ -202,6 +227,10 @@ class Typing(Model):
         return cls.select().where((cls.model_type == model_type.full_classname()))
 
     @classmethod
+    def get_by_brick_and_object_type(cls, brick_name: str) -> List['Typing']:
+        return cls.get_by_type_and_brick(cls._object_type, brick_name)
+
+    @classmethod
     def get_children_typings(cls, typing_type: TypingObjectType,  base_type: Type[Base]) -> List['Typing']:
         """Retunr the list of typings that are a child class of the provided model_type
         """
@@ -216,10 +245,10 @@ class Typing(Model):
         cls.create_full_text_index(['human_name', 'short_description', 'model_name'], 'I_F_TYP_TXT')
     ############################################# STATIC METHODS #########################################
 
-    # Simple method to build the typing name  = object_type.brick.model_name
+    # Simple method to build the typing name  = object_type.brick.unique_name
     @staticmethod
-    def typing_obj_to_str(object_type: str, brick_name: str, model_name: str) -> str:
-        return object_type + SEPARATOR + brick_name + SEPARATOR + model_name
+    def typing_obj_to_str(object_type: str, brick_name: str, unique_name: str) -> str:
+        return object_type + SEPARATOR + brick_name + SEPARATOR + unique_name
 
     @staticmethod
     def typing_name_is_protocol(typing_name: str) -> bool:

@@ -342,7 +342,8 @@ class Model(BaseModel, PeeweeModel):
             _json[prop] = jsonable_encoder(val)
 
         # convert the data to json
-        _json["data"] = self.data_to_json(deep=deep, **kwargs)
+        if self._json_ignore_fields and 'data' not in self._json_ignore_fields:
+            _json["data"] = self.data_to_json(deep=deep, **kwargs)
 
         return _json
 

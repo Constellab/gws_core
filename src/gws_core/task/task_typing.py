@@ -3,15 +3,17 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, Dict, List, Literal, Type, final
+from typing import List, Literal, Type, final
 
 from gws_core.core.utils.utils import Utils
+from gws_core.process.process_types import ProcessSpecDict
 from gws_core.resource.resource import Resource
 from peewee import CharField, ModelSelect
 
 from ..config.config_specs_helper import ConfigSpecsHelper
 from ..io.io_spec_helper import IOSpecsHelper
-from ..model.typing import Typing, TypingObjectType
+from ..model.typing import Typing
+from ..model.typing_dict import TypingDict, TypingObjectType
 from ..task.task import Task
 
 TaskSubType = Literal["TASK", "IMPORTER", "EXPORTER", "TRANSFORMER"]
@@ -52,10 +54,16 @@ class TaskTyping(Typing):
     def get_by_brick(cls, brick_name: str) -> List['TaskTyping']:
         return cls.get_by_type_and_brick(cls._object_type, brick_name)
 
-    def model_type_to_json(self, model_t: Type[Task]) -> dict:
-        return {
-            "input_specs": IOSpecsHelper.io_specs_to_json(model_t.input_specs),
-            "output_specs": IOSpecsHelper.io_specs_to_json(model_t.output_specs),
-            "config_specs": ConfigSpecsHelper.config_specs_to_json(model_t.config_specs),
-            "doc": self.get_model_type_doc(),
-        }
+    def to_json(self, deep: bool = False, **kwargs) -> ProcessSpecDict:
+        json_: ProcessSpecDict = super().to_json(deep=deep, **kwargs)
+
+        if deep:
+            # retrieve the task python type
+            model_t: Type[Task] = self.get_type()
+
+            if model_t:
+                json_["input_specs"] = IOSpecsHelper.io_specs_to_json(model_t.input_specs)
+                json_["output_specs"] = IOSpecsHelper.io_specs_to_json(model_t.output_specs)
+                json_["config_specs"] = ConfigSpecsHelper.config_specs_to_json(model_t.config_specs)
+
+        return json_

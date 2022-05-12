@@ -5,15 +5,12 @@
 
 from typing import List, Type
 
-from gws_core.config.config_specs_helper import ConfigSpecsHelper
-from gws_core.core.model.base import Base
-from gws_core.io.io_spec_helper import IOSpecsHelper
-from gws_core.model.typing import Typing, TypingObjectType
-from gws_core.process.process import Process
-from gws_core.resource.resource import Resource
-from gws_core.task.task import Task
+from gws_core.protocol.protocol_typing import ProtocolTyping
 
+from ..model.typing import Typing
+from ..resource.resource import Resource
 from ..resource.resource_typing import ResourceTyping
+from ..task.task_typing import TaskTyping
 from .brick_helper import BrickHelper
 
 
@@ -30,19 +27,19 @@ class TechnicalDocService():
             "json_version": 1,
             "brick_name": brick_info["name"],
             "brick_version": brick_info["version"],
-            "resources": cls._generate_resource_technical_doc(brick_name),
-            "tasks": cls._export_process_technical_doc(brick_name, 'TASK', Task),
+            "resources": cls.export_typing_technical_doc(brick_name, ResourceTyping),
+            "tasks": cls.export_typing_technical_doc(brick_name, TaskTyping),
+            "protocols": cls.export_typing_technical_doc(brick_name, ProtocolTyping),
         }
 
     @classmethod
-    def _generate_resource_technical_doc(cls, brick_name: str) -> list:
-
-        resource_typings: List[ResourceTyping] = ResourceTyping.get_by_brick(brick_name)
-        sorted_resources = sorted(resource_typings, key=lambda x: len(x.get_ancestors()))
+    def export_typing_technical_doc(cls, brick_name: str, typing_class: Type[Typing]) -> list:
+        typings: List[Typing] = typing_class.get_by_brick_and_object_type(brick_name)
+        sorted_typings = sorted(typings, key=lambda x: len(x.get_ancestors()))
 
         json_list = []
-        for resource_typing in sorted_resources:
-            json_ = cls._get_typing_technical_doc(resource_typing, Resource)
+        for typing in sorted_typings:
+            json_ = cls._get_typing_technical_doc(typing)
 
             if json_ is None:
                 continue
@@ -51,59 +48,9 @@ class TechnicalDocService():
         return json_list
 
     @classmethod
-    def _export_process_technical_doc(
-            cls, brick_name: str, object_type: TypingObjectType, process_type: Type[Process]) -> list:
-        process_typings: List[Typing] = Typing.get_by_type_and_brick(object_type, brick_name)
-        sorted_processes = sorted(process_typings, key=lambda x: len(x.get_ancestors()))
-
-        json_list = []
-        for process_typing in sorted_processes:
-            json_ = cls._get_typing_technical_doc(process_typing, process_type)
-
-            if json_ is None:
-                continue
-
-            json_["type"] = process_typing.object_sub_type
-
-            type_: Type[Task] = process_typing.get_type()
-            json_["input_specs"] = IOSpecsHelper.io_specs_to_json(type_.input_specs)
-            json_["output_specs"] = IOSpecsHelper.io_specs_to_json(type_.output_specs)
-            json_["config_specs"] = ConfigSpecsHelper.config_specs_to_json(type_.config_specs)
-
-            json_list.append(json_)
-
-        return json_list
-
-    @classmethod
-    def _get_typing_technical_doc(cls, typing: Typing, parent_limit_type: Type) -> dict:
+    def _get_typing_technical_doc(cls, typing: Typing) -> dict:
         type_: Type[Resource] = typing.get_type()
 
         if type_ is None:
             return None
-
-        parent: dict = None
-
-        if type_ != parent_limit_type:
-            parent_class: Type[Base] = type_.__base__
-            # retrieve the typing of the parent class
-            parent_typing = Typing.get_by_model_type(parent_class)
-
-            brick_info = BrickHelper.get_brick_info(parent_typing.brick)
-
-            parent = {
-                "typing_name": parent_typing.typing_name,
-                "brick_version": brick_info["version"],
-                "human_name": parent_typing.human_name
-            }
-
-        return{
-            "unique_name": typing.model_name,
-            "class_name": type_.__name__,
-            "human_name": typing.human_name,
-            "short_description": typing.short_description,
-            "doc": typing.get_model_type_doc(),
-            "hide": typing.hide,
-            "deprecated_since": typing.deprecated_since,
-            "deprecated_message": typing.deprecated_message,
-            "parent": parent,
-        }
+        return typing.to_json(deep=True)

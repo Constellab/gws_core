@@ -4,13 +4,14 @@
 # About us: https://gencovery.com
 
 from inspect import isclass
-from typing import List, Optional, Tuple, Type
+from typing import List, Tuple, Type
 
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.task.plug import Sink, Source
 
-from ..config.config_types import ConfigParamsDict, ParamValue
+from ..config.config_types import ConfigParamsDict
+from ..config.param_types import ParamValue
 from ..io.port import InPort, OutPort
 from ..process.process import Process
 from ..process.process_interface import IProcess

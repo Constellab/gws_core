@@ -4,16 +4,22 @@
 # About us: https://gencovery.com
 
 
-from typing import Any, Dict, Literal, Type, final
+from typing import Literal, Type, final
 
+from gws_core.config.config import Config
+from gws_core.config.config_types import ConfigParams
+from gws_core.core.utils.date_helper import DateHelper
+from gws_core.io.io_spec_helper import IOSpecsHelper
+from gws_core.protocol.protocol_types import ProtocolSpecDict
 from peewee import CharField, ModelSelect
 
-from ..model.typing import Typing, TypingObjectType
+from ..model.typing import Typing
+from ..model.typing_dict import TypingDict, TypingObjectType
 from ..process.process_factory import ProcessFactory
 from ..protocol.protocol import Protocol
 from ..protocol.protocol_model import ProtocolModel
 
-ProtocolSubType = Literal["PROTOCOL"]
+ProtocolSubType = Literal["PROTOCOL", "MANUAL_PROTOCOL"]
 
 
 @final
@@ -31,10 +37,46 @@ class ProtocolTyping(Typing):
     def get_types(cls) -> ModelSelect:
         return cls.get_by_object_type(cls._object_type)
 
-    def model_type_to_json(self, model_t: Type[Protocol]) -> dict:
-        protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_type(
-            model_t)
-        return {
-            "graph": protocol.dumps_data(minimize=False),
-            "doc": self.get_model_type_doc(),
-        }
+    @classmethod
+    def new_manual_protocol(cls, graph: dict,
+                            human_name: str, short_description: str = None) -> 'ProtocolTyping':
+
+        # retrieve the protocol typing to copy info from it
+        protocol_typing: Typing = Typing.get_by_object_type(Protocol)
+
+        typing = ProtocolTyping(
+            model_type=protocol_typing.model_type,
+            brick=protocol_typing.brick,
+            brick_version=protocol_typing.brick_version,
+            unique_name=str(DateHelper.now_utc_as_milliseconds()),
+            object_type=cls._object_type,
+            human_name=human_name,
+            short_description=short_description,
+            hide=False,
+            object_sub_type="MANUAL_PROTOCOL",
+        )
+
+        typing.data['graph'] = graph
+        return typing
+
+    def to_json(self, deep: bool = False, **kwargs) -> ProtocolSpecDict:
+        json_: ProtocolSpecDict = super().to_json(deep=deep, **kwargs)
+
+        if deep:
+            # retrieve the task python type
+            model_t: Type[Protocol] = self.get_type()
+
+            if model_t:
+
+                if self.object_sub_type == "PROTOCOL":
+                    protocol: Protocol = model_t.instantiate_protocol()
+                    # json_["graph"] = protocol.dumps_data(minimize=False)
+                    json_["input_specs"] = IOSpecsHelper.io_specs_to_json(protocol.get_input_specs_self())
+                    json_["output_specs"] = IOSpecsHelper.io_specs_to_json(protocol.get_output_specs_self())
+                    json_['config_specs'] = {}
+
+                else:
+                    # json_["graph"] = self.data.get('graph', None)
+                    pass
+
+        return json_

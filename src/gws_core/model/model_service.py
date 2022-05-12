@@ -106,7 +106,7 @@ class ModelService(BaseService):
                 if typing.get_type() is None:
                     BrickService.log_brick_message(
                         brick_name=typing.brick,
-                        message=f"The {typing.object_type} with unique name '{typing.model_name}' is invalid. Is the brick loaded ? Did you delete the corresponding python model or rename its unique name ?",
+                        message=f"The {typing.object_type} with unique name '{typing.unique_name}' is invalid. Is the brick loaded ? Did you delete the corresponding python model or rename its unique name ?",
                         status='ERROR')
 
     @classmethod

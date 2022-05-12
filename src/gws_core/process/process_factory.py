@@ -8,7 +8,7 @@ from typing import Dict, List, Type
 from gws_core.task.plug import Sink, Source
 
 from ..config.config import Config
-from ..config.config_types import ConfigParamsDict
+from ..config.config_types import ConfigParams, ConfigParamsDict
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..io.connector import Connector
@@ -94,7 +94,7 @@ class ProcessFactory():
 
             cls._init_process_model(process_model=protocol_model, config=config, instance_name=instance_name)
 
-            protocol: Protocol = protocol_type()
+            protocol: Protocol = cls.create_protocol_from_type(protocol_type, config.get_and_check_values())
             protocol.configure_protocol(config.get_and_check_values())
             create_config: ProtocolCreateConfig = protocol.get_create_config()
 
@@ -140,6 +140,13 @@ class ProcessFactory():
             raise ProtocolBuildException.from_build_exception(parent_instance_name=instance_name, exception=err)
         except Exception as err:
             raise ProtocolBuildException.from_exception('Protocol', instance_name, err)
+
+    @classmethod
+    def create_protocol_from_type(cls, protocol_type: Type[Protocol],
+                                  config_params: ConfigParams) -> Protocol:
+        protocol: Protocol = protocol_type()
+        protocol.configure_protocol(config_params)
+        return protocol
 
     @classmethod
     def create_protocol_empty(cls, instance_name: str = None) -> ProtocolModel:

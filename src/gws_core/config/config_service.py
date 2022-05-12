@@ -3,10 +3,10 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from gws_core.config.config_types import ConfigParamsDict, ParamValue
-
 from ..core.service.base_service import BaseService
 from .config import Config
+from .config_types import ConfigParamsDict
+from .param_types import ParamValue
 
 
 class ConfigService(BaseService):

@@ -22,7 +22,7 @@ class TypingSearchBuilder(SearchBuilder):
         if filter_['key'] == 'text':
             # on text key, full text search on title and description
             return Match(
-                (Typing.human_name, Typing.short_description, Typing.model_name),
+                (Typing.human_name, Typing.short_description, Typing.unique_name),
                 filter_['value'],
                 modifier='IN BOOLEAN MODE')
         # Special case to filter on relate_model and parent of the model

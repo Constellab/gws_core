@@ -4,7 +4,7 @@
 # About us: https://gencovery.com
 
 from abc import abstractmethod
-from typing import Any, Dict, Generic, List, Literal, Optional, Type, TypeVar
+from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
 
 from gws_core.core.utils.logger import Logger
 
@@ -13,15 +13,9 @@ from ..core.classes.validator import (BoolValidator, DictValidator,
                                       ListValidator, StrValidator, Validator)
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from .param_types import ParamSpecDict, ParamSpecVisibilty
 
 ParamSpecType = TypeVar("ParamSpecType")
-
-
-# Visibility of a param
-# Public --> main param visible in the first config section in the interface
-# Protected --> considered as advanced param, it will be in the advanced section in the interface (it must have a default value or be optional)
-# Public --> private param, it will not be visible in the interface (it must have a default value or be optional)
-ParamSpecVisibilty = Literal["public", "protected", "private"]
 
 
 class ParamSpec(Generic[ParamSpecType]):
@@ -93,8 +87,8 @@ class ParamSpec(Generic[ParamSpecType]):
     def _get_validator(self) -> Validator:
         pass
 
-    def to_json(self) -> Dict[str, Any]:
-        _json: Dict[str, Any] = {
+    def to_json(self) -> ParamSpecDict:
+        _json: ParamSpecDict = {
             "type": self.get_str_type(),
             "optional": self.optional,
             "visibility": self.visibility,
@@ -177,6 +171,7 @@ class ParamSpec(Generic[ParamSpecType]):
         # elif type_ == 'dict':
         #     return DictParam
         elif type_ == 'param_set':
+            from .param_set import ParamSet
             return ParamSet
         else:
             raise BadRequestException("Invalid type")
@@ -245,8 +240,8 @@ class StrParam(ParamSpec[str]):
             max_length=self.max_length
         )
 
-    def to_json(self) -> Dict[str, Any]:
-        json_: Dict[str, Any] = super().to_json()
+    def to_json(self) -> ParamSpecDict:
+        json_: ParamSpecDict = super().to_json()
         if self.allowed_values:
             json_["allowed_values"] = self.allowed_values
         return json_
@@ -363,8 +358,8 @@ class NumericParam(ParamSpec[ParamSpecType], Generic[ParamSpecType]):
     def _get_validator(self) -> Validator:
         pass
 
-    def to_json(self) -> Dict[str, Any]:
-        json_: Dict[str, Any] = super().to_json()
+    def to_json(self) -> ParamSpecDict:
+        json_: ParamSpecDict = super().to_json()
 
         if self.allowed_values:
             json_["allowed_values"] = self.allowed_values

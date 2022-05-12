@@ -11,7 +11,8 @@ from gws_core.core.utils.utils import Utils
 
 from ..brick.brick_helper import BrickHelper
 from ..core.model.base import Base
-from ..model.typing import Typing, TypingObjectType
+from ..model.typing import Typing
+from ..model.typing_dict import TypingObjectType
 from .typing_manager import TypingManager
 
 
@@ -48,7 +49,7 @@ def register_typing_class(
     typing = Typing(
         brick=BrickHelper.get_brick_name(object_class),
         brick_version=None,  # set to None because the version is not loaded yet
-        model_name=unique_name,
+        unique_name=unique_name,
         model_type=object_class.full_classname(),
         object_type=object_type,
         human_name=human_name,

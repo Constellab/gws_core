@@ -6,7 +6,8 @@
 from typing import Any, Dict, List, Optional
 
 from ..core.classes.validator import DictValidator, ListValidator, Validator
-from .param_spec import ParamSpec, ParamSpecType, ParamSpecVisibilty
+from .param_spec import ParamSpec, ParamSpecType
+from .param_types import ParamSpecDict, ParamSpecVisibilty
 
 
 class ParamSet(ParamSpec[list]):
@@ -80,8 +81,8 @@ class ParamSet(ParamSpec[list]):
 
         return list_
 
-    def to_json(self) -> Dict[str, Any]:
-        json_: Dict[str, Any] = super().to_json()
+    def to_json(self) -> ParamSpecDict:
+        json_: ParamSpecDict = super().to_json()
 
         json_["max_number_of_occurrences"] = self.max_number_of_occurrences
         json_["param_set"] = {}

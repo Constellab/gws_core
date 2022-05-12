@@ -3,12 +3,11 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from typing import Any, Dict, Type, Union
+from typing import Any, Dict
 
 from .param_spec import ParamSpec
+from .param_types import ParamValue
 
-ParamValue = Union[str, int, float, bool, list, dict]
-ParamValueType = Type[ParamValue]
 ConfigParamsDict = Dict[str, ParamValue]
 ConfigSpecs = Dict[str, ParamSpec]
 

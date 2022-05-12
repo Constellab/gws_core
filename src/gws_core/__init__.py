@@ -16,8 +16,6 @@ from .config.config_service import ConfigService as ConfigService
 from .config.config_types import ConfigParams as ConfigParams
 from .config.config_types import ConfigParamsDict as ConfigParamsDict
 from .config.config_types import ConfigSpecs as ConfigSpecs
-from .config.config_types import ParamValue as ParamValue
-from .config.config_types import ParamValueType as ParamValueType
 from .config.param_set import ParamSet as ParamSet
 # from .config.param_spec import DictParam as DictParam
 from .config.param_spec import BoolParam as BoolParam
@@ -27,6 +25,7 @@ from .config.param_spec import ListParam as ListParam
 from .config.param_spec import NumericParam as NumericParam
 from .config.param_spec import ParamSpec as ParamSpec
 from .config.param_spec import StrParam as StrParam
+from .config.param_types import ParamValue as ParamValue
 from .config.tags_param_spec import TagsParam as TagsParam
 # Core
 # Core > Classes

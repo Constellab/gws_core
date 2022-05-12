@@ -76,7 +76,7 @@ class TypingManager:
 
         if typing.typing_name in cls._typings_before_save:
             raise Exception(
-                f"""2 differents {typing.object_type} in the brick {typing.brick} register with the same name : {typing.model_name}.
+                f"""2 differents {typing.object_type} in the brick {typing.brick} register with the same name : {typing.unique_name}.
                                 {typing.object_type} already register: [{cls._typings_before_save[typing.typing_name]['model_type'] }].
                                 {typing.object_type} trying to register : {object_class.full_classname()}
                                 Please update one of the unique name""")
@@ -97,8 +97,8 @@ class TypingManager:
 
     @classmethod
     def _save_object_type_in_db(cls, typing: Typing) -> None:
-        query: ModelSelect = Typing.get_by_brick_and_model_name(
-            typing.object_type, typing.brick, typing.model_name)
+        query: ModelSelect = Typing.get_by_brick_and_unique_name(
+            typing.object_type, typing.brick, typing.unique_name)
 
         # set the version because the bricks are not loaded before
         brick_info = BrickHelper.get_brick_info(typing.brick)
@@ -118,7 +118,7 @@ class TypingManager:
         # If the model type has changed, log a message and update the DB
         if typing_db.model_type != typing.model_type or typing_db.related_model_typing_name != typing.related_model_typing_name or \
                 typing_db.object_sub_type != typing.object_sub_type or str(typing_db.data) != str(typing.data):
-            Logger.info(f"""Typing {typing.model_name} in brick {typing.brick} has changed.""")
+            Logger.info(f"""Typing {typing.unique_name} in brick {typing.brick} has changed.""")
             cls._update_typing(typing, typing_db)
             return
 
