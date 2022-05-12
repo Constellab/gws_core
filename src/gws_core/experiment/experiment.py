@@ -19,7 +19,6 @@ from ..core.model.db_field import JSONField
 from ..core.model.model_with_user import ModelWithUser
 from ..core.model.sys_proc import SysProc
 from ..core.utils.logger import Logger
-from ..model.typing_register_decorator import typing_registrator
 from ..project.project import Project
 from ..resource.resource_model import ResourceModel
 from ..tag.taggable_model import TaggableModel
@@ -61,7 +60,6 @@ class ExperimentErrorInfo(TypedDict):
 
 
 @final
-@typing_registrator(unique_name="Experiment", object_type="MODEL", hide=True)
 class Experiment(ModelWithUser, TaggableModel):
     """
     Experiment class.

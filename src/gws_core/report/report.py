@@ -13,12 +13,10 @@ from ..core.model.db_field import JSONField
 from ..core.model.model_with_user import ModelWithUser
 from ..experiment.experiment import Experiment
 from ..lab.lab_config_model import LabConfigModel
-from ..model.typing_register_decorator import typing_registrator
 from ..project.project import Project
 
 
 @final
-@typing_registrator(unique_name="Report", object_type="MODEL", hide=True)
 class Report(ModelWithUser):
     title = CharField()
 

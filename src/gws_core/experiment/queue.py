@@ -11,12 +11,10 @@ from peewee import BooleanField, ForeignKeyField, IntegerField, ModelSelect
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
 from ..core.utils.logger import Logger
-from ..model.typing_register_decorator import typing_registrator
 from ..user.user import User
 from .experiment import Experiment
 
 
-@typing_registrator(unique_name="Queue", object_type="MODEL", hide=True)
 class Queue(Model):
     """
     Singleton Class representing experiment queue
@@ -120,7 +118,6 @@ class Queue(Model):
         return Job.get_queue_jobs(queue.id)
 
 
-@typing_registrator(unique_name="Job", object_type="MODEL", hide=True)
 class Job(Model):
     """
     Class representing queue job

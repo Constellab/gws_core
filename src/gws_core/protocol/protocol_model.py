@@ -13,16 +13,13 @@ from ..io.connector import Connector
 from ..io.io import Inputs, Outputs
 from ..io.ioface import Interface, Outerface
 from ..io.port import InPort, OutPort, Port
-from ..model.typing_register_decorator import typing_registrator
 from ..process.process_model import ProcessModel
 from ..process.protocol_sub_process_builder import (
     ProtocolSubProcessBuilder, SubProcessBuilderReadFromDb)
-from ..protocol.protocol import Protocol
 from ..user.activity import Activity
 from ..user.user import User
 
 
-@typing_registrator(unique_name="Protocol", object_type="MODEL", hide=True)
 class ProtocolModel(ProcessModel):
     """
     Protocol class.

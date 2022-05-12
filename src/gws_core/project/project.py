@@ -6,10 +6,8 @@
 from peewee import CharField
 
 from ..core.model.model_with_user import ModelWithUser
-from ..model.typing_register_decorator import typing_registrator
 
 
-@typing_registrator(unique_name="Project", object_type="MODEL", hide=True)
 class Project(ModelWithUser):
     """
     Project class.

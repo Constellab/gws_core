@@ -19,7 +19,6 @@ from ..io.io import Inputs, Outputs
 from ..io.io_exception import InvalidOutputsException
 from ..io.port import Port
 from ..model.typing_manager import TypingManager
-from ..model.typing_register_decorator import typing_registrator
 from ..process.process_exception import (CheckBeforeTaskStopException,
                                          ProcessRunException)
 from ..process.process_model import ProcessModel
@@ -31,7 +30,6 @@ from .task import CheckBeforeTaskResult, Task
 from .task_runner import TaskRunner
 
 
-@typing_registrator(unique_name="Task", object_type="MODEL", hide=True)
 class TaskModel(ProcessModel):
     """
     Task model class.

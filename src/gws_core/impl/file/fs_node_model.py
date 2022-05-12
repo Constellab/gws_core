@@ -7,18 +7,16 @@
 from typing import TYPE_CHECKING, List, Union, final
 
 from gws_core.impl.file.file_helper import FileHelper
-from peewee import BigIntegerField, BooleanField, CharField, DeferredForeignKey
+from peewee import BigIntegerField, BooleanField, CharField
 
 from ...core.model.model import Model
 from ...impl.file.file_store import FileStore
-from ...model.typing_register_decorator import typing_registrator
 
 if TYPE_CHECKING:
     from ...resource.resource_model import ResourceModel
 
 
 @final
-@typing_registrator(unique_name="FSNodeModel", object_type="MODEL", hide=True)
 class FSNodeModel(Model):
     """Table link to ResourceModel to store all the file that are in a file_store
 

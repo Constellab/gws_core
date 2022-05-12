@@ -2,20 +2,17 @@
 # This software is the exclusive property of Gencovery SAS.
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
-
 import json
-from typing import Union, final
+from typing import final
 
 from peewee import CharField, ForeignKeyField
 
 from ..core.model.model import Model
-from ..model.typing_register_decorator import typing_registrator
 from .current_user_service import CurrentUserService
 from .user import User
 
 
 @final
-@typing_registrator(unique_name="Activity", object_type="MODEL", hide=True)
 class Activity(Model):
     """
     (User) Activity class

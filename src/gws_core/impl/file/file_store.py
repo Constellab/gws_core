@@ -12,7 +12,6 @@ from gws_core.impl.file.folder import Folder
 
 from ...core.exception.exceptions import BadRequestException
 from ...core.model.model import Model
-from ...model.typing_register_decorator import typing_registrator
 from .file import File
 from .fs_node import FSNode
 
@@ -23,7 +22,6 @@ from .fs_node import FSNode
 # ####################################################################
 
 
-@typing_registrator(unique_name="FileStore", object_type="MODEL", hide=True)
 class FileStore(Model):
     """
     FileStore class

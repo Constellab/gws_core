@@ -7,7 +7,6 @@ from typing import Any, Dict, final
 
 from ..config.param_spec_helper import ParamSpecHelper
 from ..core.model.model_with_user import ModelWithUser
-from ..model.typing_register_decorator import typing_registrator
 from .config_exceptions import InvalidParamValueException, UnkownParamException
 from .config_specs_helper import ConfigSpecsHelper
 from .config_types import (ConfigParams, ConfigParamsDict, ConfigSpecs,
@@ -16,7 +15,6 @@ from .param_spec import ParamSpec
 
 
 @final
-@typing_registrator(unique_name="Config", object_type="MODEL", hide=True)
 class Config(ModelWithUser):
     """
     Config class that represents the configuration of a process. A configuration is

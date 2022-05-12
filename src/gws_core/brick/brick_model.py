@@ -3,7 +3,6 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-from email.headerregistry import DateHeader
 from time import time
 from typing import Dict, Literal, TypedDict
 
@@ -12,7 +11,6 @@ from gws_core.core.utils.settings import ModuleInfo
 from peewee import CharField
 
 from ..core.model.model import Model
-from ..model.typing_register_decorator import typing_registrator
 
 BrickStatus = Literal['SUCCESS', 'ERROR', 'CRITICAL', 'WARNING']
 BrickMessageStatus = Literal['INFO', 'ERROR', 'CRITICAL', 'WARNING']
@@ -24,7 +22,6 @@ class BrickMessage(TypedDict):
     timestamp: float
 
 
-@typing_registrator(unique_name="BrickModel", object_type="MODEL", hide=True)
 class BrickModel(Model):
 
     name: str = CharField(unique=True)

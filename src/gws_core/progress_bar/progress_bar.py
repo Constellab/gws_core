@@ -17,7 +17,6 @@ from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
 from ..core.utils.http_helper import HTTPHelper
 from ..core.utils.logger import Logger
-from ..model.typing_register_decorator import typing_registrator
 
 
 class ProgressBarMessageType(str, Enum):
@@ -30,7 +29,6 @@ class ProgressBarMessageType(str, Enum):
 
 @final
 @json_ignore(['process_id', 'process_typing_name'])
-@typing_registrator(unique_name="ProgressBar", object_type="MODEL", hide=True)
 class ProgressBar(Model):
     """
     ProgressBar class
