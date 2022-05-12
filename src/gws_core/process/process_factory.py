@@ -316,7 +316,7 @@ class ProcessFactory():
         :rtype: ProtocolModel
         """
         new_protocol_model: ProtocolModel = cls.create_protocol_empty()
-        new_protocol_model.set_protocol_type(protocol_model.get_process_type())
+        new_protocol_model.set_process_type(protocol_model.get_process_type()._typing_name)
 
         # If the instance name is the same as the id, don't set it
         instance_name = protocol_model.instance_name if protocol_model.instance_name != protocol_model.id else None
