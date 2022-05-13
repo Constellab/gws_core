@@ -139,7 +139,7 @@ class Log(Task):
 
 @protocol_decorator("TestPersonProtocol")
 class TestPersonProtocol(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self) -> None:
         create: ProcessSpec = self.add_process(Create, 'create')
         log: ProcessSpec = self.add_process(Log, 'log')
 
@@ -163,7 +163,7 @@ class Skippable(FIFO2):
 
 @protocol_decorator("TestSkippable")
 class TestSkippable(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self) -> None:
         create1: ProcessSpec = self.add_process(Create, 'create1')
         wait: ProcessSpec = self.add_process(Wait, 'wait').set_param('waiting_time', '3')
         create2: ProcessSpec = self.add_process(Create, 'create2')

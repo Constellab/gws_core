@@ -6,18 +6,14 @@
 
 from typing import Literal, Type, final
 
-from gws_core.config.config import Config
-from gws_core.config.config_types import ConfigParams
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.io.io_spec_helper import IOSpecsHelper
 from gws_core.protocol.protocol_types import ProtocolSpecDict
 from peewee import CharField, ModelSelect
 
 from ..model.typing import Typing
-from ..model.typing_dict import TypingDict, TypingObjectType
-from ..process.process_factory import ProcessFactory
+from ..model.typing_dict import TypingObjectType
 from ..protocol.protocol import Protocol
-from ..protocol.protocol_model import ProtocolModel
 
 ProtocolSubType = Literal["PROTOCOL", "MANUAL_PROTOCOL"]
 

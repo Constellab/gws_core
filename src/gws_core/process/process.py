@@ -7,15 +7,11 @@ from abc import abstractmethod
 
 from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
 
-from ..config.config_types import ConfigSpecs
 from ..core.model.base import Base
 from ..user.user_group import UserGroup
 
 
 class Process(Base):
-
-    # Config spec of the process at the class level
-    config_specs: ConfigSpecs = {}
 
     # Provided at the Class level automatically by the Decorator
     # //!\\ Do not modify theses values

@@ -1,3 +1,8 @@
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
+
 from typing import Type, TypedDict
 
 from ..config.config_types import ConfigParamsDict
@@ -35,6 +40,13 @@ class InterfaceSpec(TypedDict):
     """
     process_instance_name: str
     port_name: str
+
+
+class ConfigMapping(TypedDict):
+    """Simple spec representing a config at protocol level that is map to a process config"""
+    protocol_config_name: str
+    process_instance_name: str
+    process_config_name: str
 
 
 class ProcessSpec():
@@ -79,12 +91,12 @@ class ProcessSpec():
         return self
 
     def __lshift__(self, name: str) -> ConnectorPartSpec:
-        return self.get_spec(name)
+        return self.get_connector(name)
 
     def __rshift__(self, name: str) -> ConnectorPartSpec:
-        return self.get_spec(name)
+        return self.get_connector(name)
 
-    def get_spec(self, name: str) -> ConnectorPartSpec:
+    def get_connector(self, name: str) -> ConnectorPartSpec:
         return {
             "process_instance_name": self.instance_name,
             "port_name": name,

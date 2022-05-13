@@ -22,7 +22,7 @@ from gws_core.task.transformer.transformer import Transformer
 
 @protocol_decorator("CreateSimpleRobot2")
 class CreateSimpleRobot2(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self) -> None:
         facto: ProcessSpec = self.add_process(RobotCreate, 'facto')
 
         # define the protocol output

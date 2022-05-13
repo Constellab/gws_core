@@ -1,4 +1,7 @@
-
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 from __future__ import annotations
 
 from abc import abstractmethod
@@ -9,13 +12,13 @@ from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_spec_helper import InputSpecs, OutputSpecs
 from peewee import Tuple
 
-from ..config.config_types import ConfigParams, ConfigParamsDict, ConfigSpecs
+from ..config.config_types import ConfigParamsDict, ConfigSpecs
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..model.typing_register_decorator import typing_registrator
 from ..process.process import Process
-from .protocol_spec import (ConnectorPartSpec, ConnectorSpec, InterfaceSpec,
-                            ProcessSpec)
+from .protocol_spec import (ConfigMapping, ConnectorPartSpec, ConnectorSpec,
+                            InterfaceSpec, ProcessSpec)
 
 
 class ProtocolCreateConfig(TypedDict):
@@ -37,6 +40,7 @@ class Protocol(Process):
     _connectors: List[ConnectorSpec]
     _interfaces: Dict[str, InterfaceSpec]
     _outerfaces: Dict[str, InterfaceSpec]
+    _config_mappings: Dict[str, ConfigMapping]
 
     @final
     def __init__(self) -> None:
@@ -45,6 +49,7 @@ class Protocol(Process):
         self._connectors = []
         self._interfaces = {}
         self._outerfaces = {}
+        self._config_mapping = {}
 
     @final
     def get_create_config(self) -> ProtocolCreateConfig:
@@ -62,7 +67,7 @@ class Protocol(Process):
         }
 
     @abstractmethod
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self) -> None:
         """Extend this method to configure the protocol (
         In this method you can reate sub process, add connectors and configure interface and outerface
 
@@ -202,6 +207,34 @@ class Protocol(Process):
             "port_name": process_output_name
         }
 
+    # @final
+    # def add_config_mapping(self, config_name: str,  process: ProcessSpec, process_config_name: str = None) -> None:
+    #     """Add a configuration mapping to the protocol
+
+    #     :param config_name: Name of the protocol level config
+    #     :type config_name: str
+    #       :param from_process: process of the protocol to map config on
+    #       :type from_process: IProcess
+    #     :param process_config_name: Name of the config at process level. If none, the config_name is used, defaults to None
+    #     :type process_config_name: str, optional
+    #     :raises Exception: _description_
+    #     :return: _description_
+    #     :rtype: _type_
+    #     """
+
+    #     # Check if the config was already set
+    #     if config_name in self._config_mappings:
+    #         raise BadRequestException(
+    #             f"The config mapping with name '{config_name}' was already set.")
+
+    #     config_mapping: ConfigMapping = {
+    #         "protocol_config_name": config_name,
+    #         "process_instance_name": process.instance_name,
+    #         "process_config_name": process_config_name or config_name
+    #     }
+
+    #     self._config_mappings[config_name] = config_mapping
+
     @final
     def get_process_spec(self, instance_name: str) -> ProcessSpec:
         """Get the process spec of the process with the given instance name """
@@ -215,10 +248,7 @@ class Protocol(Process):
     def instantiate_protocol(cls) -> Protocol:
         """Instantiate the protocol with the default config"""
         protocol: Protocol = cls()
-
-        config: Config = Config()
-        config.set_specs(protocol.config_specs)
-        protocol.configure_protocol(config.get_and_check_values())
+        protocol.configure_protocol()
 
         return protocol
 

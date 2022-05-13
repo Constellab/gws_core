@@ -184,10 +184,12 @@ class Utils:
 
     @staticmethod
     def snake_case_to_sentence(name: str) -> str:
-        """Convert a snake case to sentence like"""
+        """Convert a snake case to sentence like
+        Ex 'test_class2_build' -> 'Test class2 build'
+        """
         if name is None:
             return None
-        name = name.replace(' ', '').replace('_', ' ')
+        name = name.lower().replace(' ', '').replace('_', ' ')
         return name.capitalize()
 
     @staticmethod

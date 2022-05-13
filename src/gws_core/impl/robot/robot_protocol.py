@@ -1,5 +1,7 @@
-from ...config.config_types import ConfigParams
-from ...config.param_spec import FloatParam
+# LICENSE
+# This software is the exclusive property of Gencovery SAS.
+# The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
+# About us: https://gencovery.com
 from ...protocol.protocol import ProcessSpec, Protocol
 from ...protocol.protocol_decorator import protocol_decorator
 from ...task.plug import Sink, Source
@@ -9,7 +11,7 @@ from .robot_tasks import (RobotAdd, RobotAddOnCreate, RobotCreate, RobotEat,
 
 @protocol_decorator("RobotSimpleTravel", hide=True)
 class RobotSimpleTravel(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self) -> None:
         facto: ProcessSpec = self.add_process(RobotCreate, 'facto')
         move_1: ProcessSpec = self.add_process(RobotMove, 'move_1')
         eat_1: ProcessSpec = self.add_process(RobotEat, 'eat_1')
@@ -39,7 +41,7 @@ class RobotSimpleTravel(Protocol):
 @protocol_decorator("RobotTravelProto", hide=False)
 class RobotTravelProto(Protocol):
 
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self) -> None:
         move_1: ProcessSpec = self.add_process(RobotMove, "move_1")
         eat_1: ProcessSpec = self.add_process(RobotEat, "eat_1")
         move_2: ProcessSpec = self.add_process(RobotMove, "move_2")
@@ -65,20 +67,15 @@ class RobotTravelProto(Protocol):
         self.add_outerface('robot', eat_2, 'robot')
 
 
-@protocol_decorator("RobotSuperTravelProto", human_name="The super travel of Astro", hide=True)
+@protocol_decorator("RobotSuperTravelProto", human_name="The super travel of Astro", hide=False)
 class RobotSuperTravelProto(Protocol):
-    # config for the eat_3 task
-    config_specs = {'third_eat': FloatParam(default_value=3.14)}
-
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self) -> None:
         sub_travel: ProcessSpec = self.add_process(RobotTravelProto, 'sub_travel')
 
         move_4: ProcessSpec = self.add_process(RobotMove, "move_4")
         fly_1: ProcessSpec = self.add_process(RobotFly, "fly_1")
         wait_2: ProcessSpec = self.add_process(RobotWait, "wait_2")
-        eat_3: ProcessSpec = self.add_process(
-            RobotEat, "eat_3").set_param(
-            'food_weight', config_params['third_eat'])
+        eat_3: ProcessSpec = self.add_process(RobotEat, "eat_3")
 
         self.add_connectors([
             (move_4 >> 'robot', sub_travel << 'robot'),
@@ -94,7 +91,7 @@ class RobotSuperTravelProto(Protocol):
 @protocol_decorator("RobotWorldTravelProto", human_name="The world trip of Astro", hide=True)
 class RobotWorldTravelProto(Protocol):
 
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self) -> None:
 
         super_travel: ProcessSpec = self.add_process(RobotSuperTravelProto, "super_travel").set_param('third_eat', 10)
 
@@ -118,7 +115,7 @@ class RobotWorldTravelProto(Protocol):
 
 @protocol_decorator("CreateSimpleRobot", hide=True)
 class CreateSimpleRobot(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self) -> None:
         facto: ProcessSpec = self.add_process(RobotCreate, 'facto')
 
         # define the protocol output
@@ -134,7 +131,7 @@ class MoveSimpleRobot(Protocol):
 
     config_specs = Source.config_specs
 
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self) -> None:
         source: ProcessSpec = self.add_process(Source, 'source')
         move: ProcessSpec = self.add_process(RobotMove, 'move')
 

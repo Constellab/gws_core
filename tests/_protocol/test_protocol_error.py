@@ -29,7 +29,7 @@ class ErrorTask(Task):
 
 @protocol_decorator("TestSubErrorProtocol")
 class TestSubErrorProtocol(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self) -> None:
         create: ProcessSpec = self.add_process(RobotCreate, 'create')
         error: ProcessSpec = self.add_process(ErrorTask, 'error')
 
@@ -38,7 +38,7 @@ class TestSubErrorProtocol(Protocol):
 
 @protocol_decorator("TestErrorProtocol")
 class TestErrorProtocol(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self) -> None:
         self.add_process(TestSubErrorProtocol, 'sub_proto')
 
 ############## Before task error ###################
@@ -55,7 +55,7 @@ class CheckBeforeTaskError(Task):
 
 @protocol_decorator("CheckBeforeTaskErrorProtocol")
 class CheckBeforeTaskErrorProtocol(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self) -> None:
         self.add_process(CheckBeforeTaskError, 'error')
 
 #################### Error on protocol build ###########################
@@ -78,7 +78,7 @@ class NotRobotCreate(Task):
 
 @protocol_decorator("TestSubProtocolBuildError")
 class TestSubProtocolBuildError(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self) -> None:
         not_robot: ProcessSpec = self.add_process(NotRobotCreate, 'not_robot')
         move: ProcessSpec = self.add_process(RobotMove, 'move')
 
@@ -89,7 +89,7 @@ class TestSubProtocolBuildError(Protocol):
 
 @protocol_decorator("TestNestedProtocol")
 class TestProtocolBuildError(Protocol):
-    def configure_protocol(self, config_params: ConfigParams) -> None:
+    def configure_protocol(self) -> None:
         self.add_process(TestSubProtocolBuildError, 'sub_proto')
 
 
